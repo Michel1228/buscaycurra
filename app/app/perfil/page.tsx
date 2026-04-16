@@ -15,6 +15,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import PerfilForm, { type DatosPerfil } from "@/components/PerfilForm";
+import CVUploader from "@/components/CVUploader";
 
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -231,6 +232,18 @@ function TabPerfil({
           datosIniciales={datosIniciales}
           onGuardado={onGuardado}
         />
+      </div>
+
+      {/* ── Sección: Mi CV ─────────────────────────────────────────── */}
+      <div>
+        <h2 className="text-lg font-bold text-gray-900">Mi CV</h2>
+        <p className="text-sm text-gray-500">
+          Tu CV en PDF se enviará automáticamente a las empresas al postular
+        </p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <CVUploader />
       </div>
     </div>
   );
