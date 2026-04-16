@@ -15,6 +15,11 @@
  *
  * Props:
  *   onComplete — callback que se llama al terminar la animación
+ *
+ * ButterflyFullSVG props:
+ *   size    — tamaño en px
+ *   small   — versión reducida sin animación (para mostrar junto al título)
+ *   folding — activa animación de plegado de alas (fase de cierre antes del fade)
  */
 
 import { useEffect, useState } from "react";

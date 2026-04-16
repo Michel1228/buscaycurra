@@ -54,8 +54,7 @@ export default function RevelacionMariposa({ userId, onContinuar }: RevelacionMa
 
   const handleCompartir = () => {
     if (!especie) return;
-    const rarezaLabel = especie.rareza.charAt(0).toUpperCase() + especie.rareza.slice(1);
-    const texto = `🦋 ¡He encontrado trabajo! Mi mariposa es una ${especie.nombre} (${especie.nombreCientifico}) — especie ${rarezaLabel}. ${especie.descripcion} #BuscayCurra`;
+    const texto = `🦋 ¡He encontrado trabajo! Mi mariposa es una ${especie.nombre} (${especie.nombreCientifico}) — especie ${especie.rareza}. ${especie.descripcion} #BuscayCurra`;
     navigator.clipboard.writeText(texto).then(() => {
       setCopiado(true);
       setTimeout(() => setCopiado(false), 3000);
@@ -113,11 +112,12 @@ export default function RevelacionMariposa({ userId, onContinuar }: RevelacionMa
 
           {/* Badge de rareza */}
           <span
-            className="text-xs font-bold px-3 py-1 rounded-full border uppercase tracking-widest"
+            className="text-xs font-bold px-3 py-1 rounded-full border tracking-widest"
             style={{
               backgroundColor: rarezaColores.bg,
               color: rarezaColores.text,
               borderColor: rarezaColores.border,
+              textTransform: "capitalize",
             }}
           >
             ✦ {especie.rareza}
