@@ -23,9 +23,18 @@ export async function GET(request: NextRequest) {
   // Obtener el secret del header de la petición
   const adminSecret = request.headers.get("x-admin-secret");
 
+  // Verificar que ADMIN_SECRET está configurado en el entorno
+  const expectedSecret = process.env.ADMIN_SECRET;
+  if (!expectedSecret) {
+    console.error("❌ ADMIN_SECRET no está configurado en las variables de entorno");
+    return NextResponse.json(
+      { error: "Configuración incorrecta", mensaje: "El servidor no tiene configurado ADMIN_SECRET" },
+      { status: 500 }
+    );
+  }
+
   // Verificar que el secret coincide con el configurado en las variables de entorno
   // Usamos comparación en tiempo constante para evitar ataques de temporización
-  const expectedSecret = process.env.ADMIN_SECRET ?? "";
   const secretsMatch =
     adminSecret !== null &&
     adminSecret.length === expectedSecret.length &&
