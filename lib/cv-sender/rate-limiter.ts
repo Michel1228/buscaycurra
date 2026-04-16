@@ -272,6 +272,6 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
     return "free";
   }
 
-  const plan = (data).plan as UserPlan;
+  const plan = data.plan as UserPlan;
   return ["free", "pro", "empresa"].includes(plan) ? plan : "free";
 }

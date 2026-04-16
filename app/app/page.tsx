@@ -114,12 +114,12 @@ export default function DashboardPage() {
       // Obtener nombre del perfil de usuario
       const { data: perfil } = await getSupabaseBrowser()
         .from("profiles")
-        .select("nombre")
+        .select("full_name")
         .eq("id", user.id)
         .single();
 
-      if (perfil?.nombre) {
-        setNombreUsuario(perfil.nombre);
+      if (perfil?.full_name) {
+        setNombreUsuario(perfil.full_name);
       } else {
         // Usar el email si no hay nombre en el perfil
         setNombreUsuario(user.email?.split("@")[0] || "Usuario");
