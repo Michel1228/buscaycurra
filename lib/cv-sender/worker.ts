@@ -24,11 +24,19 @@ import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
 import { recordSent, updateSendStatus } from "./tracker";
 
-// ─── Cliente Supabase ────────────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _supabase: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSupabase(): any {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return _supabase;
+}
 
 // ─── Tipos internos ───────────────────────────────────────────────────────────
 
@@ -70,8 +78,8 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   console.log(`[Worker] Paso 1/6: Obteniendo datos del usuario ${userId}...`);
 
   const [profileResult, cvResult] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, email, phone, linkedin_url").eq("id", userId).single(),
-    supabase.from("cvs").select("id, user_id, file_url, text_content, file_name").eq("user_id", userId).eq("is_primary", true).single(),
+    getSupabase().from("profiles").select("id, full_name, email, phone, linkedin_url").eq("id", userId).single(),
+    getSupabase().from("cvs").select("id, user_id, file_url, text_content, file_name").eq("user_id", userId).eq("is_primary", true).single(),
   ]);
 
   if (profileResult.error || !profileResult.data) {

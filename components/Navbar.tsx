@@ -9,15 +9,9 @@
  */
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-// ─── Cliente de Supabase ──────────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
@@ -34,7 +28,7 @@ export default function Navbar() {
   const handleCerrarSesion = async () => {
     setCerrando(true);
     try {
-      await supabase.auth.signOut();
+      await getSupabaseBrowser().auth.signOut();
       router.push("/auth/login");
     } catch {
       // Si hay error al cerrar sesión, redirigir igualmente
@@ -63,10 +57,34 @@ export default function Navbar() {
           {/* ── Navegación principal (escritorio) ─────────────────── */}
           <div className="hidden md:flex items-center gap-1">
             <Link
+              href="/app"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition"
+            >
+              🏠 Inicio
+            </Link>
+            <Link
+              href="/app/buscar"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition"
+            >
+              🔍 Buscar
+            </Link>
+            <Link
+              href="/app/curriculum"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition"
+            >
+              📄 CV
+            </Link>
+            <Link
               href="/app/envios"
               className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition"
             >
               📧 Envíos
+            </Link>
+            <Link
+              href="/app/empresas"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition"
+            >
+              🏢 Empresas
             </Link>
             <Link
               href="/app/perfil"
@@ -114,11 +132,39 @@ export default function Navbar() {
       {menuAbierto && (
         <div className="md:hidden border-t border-gray-200 bg-white px-4 py-3 space-y-1">
           <Link
+            href="/app"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+            onClick={() => setMenuAbierto(false)}
+          >
+            🏠 Inicio
+          </Link>
+          <Link
+            href="/app/buscar"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+            onClick={() => setMenuAbierto(false)}
+          >
+            🔍 Buscar ofertas
+          </Link>
+          <Link
+            href="/app/curriculum"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+            onClick={() => setMenuAbierto(false)}
+          >
+            📄 Mejorar CV
+          </Link>
+          <Link
             href="/app/envios"
             className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
             onClick={() => setMenuAbierto(false)}
           >
             📧 Envíos
+          </Link>
+          <Link
+            href="/app/empresas"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+            onClick={() => setMenuAbierto(false)}
+          >
+            🏢 Empresas
           </Link>
           <Link
             href="/app/perfil"

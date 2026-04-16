@@ -12,15 +12,10 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import PerfilForm, { type DatosPerfil } from "@/components/PerfilForm";
 
-// ─── Cliente de Supabase ──────────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -61,7 +56,7 @@ export default function PerfilPage() {
   const cargarDatos = useCallback(async () => {
     try {
       // Obtener sesión activa de Supabase
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
 
       if (!session) {
         // Si no hay sesión, redirigir al login
@@ -74,7 +69,7 @@ export default function PerfilPage() {
       setEmail(session.user.email ?? "");
 
       // Cargar perfil desde la tabla profiles
-      const { data: perfil } = await supabase
+      const { data: perfil } = await getSupabaseBrowser()
         .from("profiles")
         .select("full_name, phone, city, sector")
         .eq("id", session.user.id)
@@ -283,7 +278,7 @@ function TabSeguridad({ token }: { token: string | null }) {
     setGuardandoContrasena(true);
     try {
       // Verificar la contraseña actual haciendo un sign-in
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       const emailUsuario = session?.user.email;
 
       if (!emailUsuario) {
@@ -292,7 +287,7 @@ function TabSeguridad({ token }: { token: string | null }) {
       }
 
       // Verificar contraseña actual con signInWithPassword
-      const { error: errorVerif } = await supabase.auth.signInWithPassword({
+      const { error: errorVerif } = await getSupabaseBrowser().auth.signInWithPassword({
         email: emailUsuario,
         password: contrasenaActual,
       });
@@ -303,7 +298,7 @@ function TabSeguridad({ token }: { token: string | null }) {
       }
 
       // Actualizar la contraseña en Supabase
-      const { error: errorUpdate } = await supabase.auth.updateUser({
+      const { error: errorUpdate } = await getSupabaseBrowser().auth.updateUser({
         password: nuevaContrasena,
       });
 
@@ -564,7 +559,7 @@ function TabPeligro({ token }: { token: string | null }) {
       }
 
       // Cuenta eliminada: cerrar sesión local y redirigir a la landing con mensaje de despedida
-      await supabase.auth.signOut();
+      await getSupabaseBrowser().auth.signOut();
       router.push("/?despedida=1");
     } catch {
       setError("Error de red. Por favor, inténtalo de nuevo.");

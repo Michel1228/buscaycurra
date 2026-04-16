@@ -12,11 +12,20 @@
 import { createClient } from "@supabase/supabase-js";
 import { RATE_LIMITS } from "./queue";
 
-// ─── Cliente Supabase ────────────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _supabase: any = null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSupabase(): any {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return _supabase;
+}
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -105,14 +114,14 @@ export async function checkRateLimit(
   const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).toISOString();
   const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
 
-  const { count: enviadosHoy } = await supabase
+  const { count: enviadosHoy } = await getSupabase()
     .from("cv_sends")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .in("status", ["enviado", "pendiente"]) // Contamos también los pendientes
     .gte("created_at", inicioHoy);
 
-  const { count: enviadosEsteMes } = await supabase
+  const { count: enviadosEsteMes } = await getSupabase()
     .from("cv_sends")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
@@ -165,7 +174,7 @@ export async function checkRateLimit(
  * @returns true si está en la blacklist (NO se debe enviar)
  */
 export async function isInBlacklist(companyEmail: string): Promise<boolean> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("cv_blacklist")
     .select("id")
     .eq("company_email", companyEmail.toLowerCase())
@@ -190,7 +199,7 @@ export async function addToBlacklist(
   companyEmail: string,
   reason?: string
 ): Promise<void> {
-  const { error } = await supabase.from("cv_blacklist").upsert(
+  const { error } = await getSupabase().from("cv_blacklist").upsert(
     {
       company_email: companyEmail.toLowerCase(),
       reason: reason ?? "No especificado",
@@ -214,7 +223,7 @@ export async function addToBlacklist(
  * @param companyEmail - Email de la empresa a desbloquear
  */
 export async function removeFromBlacklist(companyEmail: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from("cv_blacklist")
     .delete()
     .eq("company_email", companyEmail.toLowerCase());
@@ -232,7 +241,7 @@ export async function removeFromBlacklist(companyEmail: string): Promise<void> {
  * Útil para el panel de administración.
  */
 export async function getBlacklist(): Promise<Array<{ company_email: string; reason: string; added_at: string }>> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("cv_blacklist")
     .select("company_email, reason, added_at")
     .order("added_at", { ascending: false });
@@ -252,7 +261,7 @@ export async function getBlacklist(): Promise<Array<{ company_email: string; rea
  * @param userId - ID del usuario
  */
 export async function getUserPlan(userId: string): Promise<UserPlan> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("profiles")
     .select("plan")
     .eq("id", userId)

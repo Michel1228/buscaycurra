@@ -4,19 +4,14 @@
  * app/auth/registro/page.tsx — Página de registro de nueva cuenta
  *
  * Formulario con nombre, email, contraseña y confirmación de contraseña.
- * Usa supabase.auth.signUp() para crear la cuenta del usuario.
+ * Usa getSupabaseBrowser().auth.signUp() para crear la cuenta del usuario.
  * Colores de marca: azul #2563EB y naranja #F97316.
  */
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 
-// ─── Cliente de Supabase ──────────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
@@ -65,7 +60,7 @@ export default function RegistroPage() {
     setCargando(true);
     try {
       // Crear cuenta en Supabase con metadatos del usuario
-      const { error: supabaseError } = await supabase.auth.signUp({
+      const { error: supabaseError } = await getSupabaseBrowser().auth.signUp({
         email: email.trim(),
         password: contrasena,
         options: {

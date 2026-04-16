@@ -10,13 +10,8 @@
  */
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
-// ─── Cliente de Supabase ──────────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -104,7 +99,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
     setGuardando(true);
     try {
       // Guardar perfil en Supabase (tabla profiles)
-      const { error: supabaseError } = await supabase
+      const { error: supabaseError } = await getSupabaseBrowser()
         .from("profiles")
         .upsert({
           id: userId,

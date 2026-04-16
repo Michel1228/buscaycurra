@@ -12,18 +12,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// ─── Cliente con clave anónima (para verificar sesión del usuario) ────────────
-const supabasePublico = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-// ─── Cliente con service role (para tener permisos de escritura) ──────────────
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 // ─── Estados que se consideran "terminados" y se pueden borrar ────────────────
 // Estos estados corresponden a envíos completados o fallidos definitivamente.
 // Los estados 'pendiente' y 'processing' no se borran.
@@ -32,6 +20,17 @@ const ESTADOS_BORRAR = ["completed", "failed", "enviado", "fallido", "cancelado"
 // ─── DELETE /api/cuenta/limpiar-historial ────────────────────────────────────
 
 export async function DELETE(request: NextRequest) {
+  // ─── Cliente con clave anónima (para verificar sesión del usuario) ──────
+  const supabasePublico = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // ─── Cliente con service role (para tener permisos de escritura) ────────
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
   try {
     // ── Verificar autenticación del usuario ────────────────────────────────
     const authHeader = request.headers.get("Authorization");
