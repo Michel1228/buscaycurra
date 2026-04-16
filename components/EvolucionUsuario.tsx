@@ -82,7 +82,6 @@ function HuevoSVG({ size = 60 }: { size?: number }) {
 }
 
 function OrugaSVG({ size = 60 }: { size?: number }) {
-  const scale = size / 80;
   return (
     <svg width={size * 1.5} height={size} viewBox="0 0 120 60" fill="none"
       style={{ animation: "worm-wiggle 1.2s ease-in-out infinite" }}>
@@ -92,11 +91,11 @@ function OrugaSVG({ size = 60 }: { size?: number }) {
           <stop offset="100%" stopColor="#00ff88" stopOpacity="0.85" />
         </radialGradient>
       </defs>
-      <circle cx="20" cy="38" r={10 * scale * 2.5} fill="url(#og)" />
-      <circle cx="34" cy="34" r={11 * scale * 2.5} fill="url(#og)" />
-      <circle cx="50" cy="32" r={11.5 * scale * 2.5} fill="url(#og)" />
-      <circle cx="66" cy="31" r={11 * scale * 2.5} fill="url(#og)" />
-      <circle cx="82" cy="28" r={13 * scale * 2.5} fill="url(#og)" />
+      <circle cx="20" cy="38" r="10" fill="url(#og)" />
+      <circle cx="34" cy="34" r="11" fill="url(#og)" />
+      <circle cx="50" cy="32" r="11.5" fill="url(#og)" />
+      <circle cx="66" cy="31" r="11" fill="url(#og)" />
+      <circle cx="82" cy="28" r="13" fill="url(#og)" />
       <circle cx="77" cy="24" r="3.5" fill="#0a0a0a" />
       <circle cx="77" cy="24" r="1.5" fill="#f0f0f0" />
       <circle cx="86" cy="23" r="3.5" fill="#0a0a0a" />

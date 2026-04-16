@@ -22,7 +22,8 @@ interface MariposaSectorProps {
 // ─── Detalles SVG por sector (coordenadas para viewBox 160×128) ───────────────
 
 function DetalleSector({ sector }: { sector: string }) {
-  switch (sector?.toLowerCase()) {
+  const s = sector?.toLowerCase() ?? "";
+  switch (s) {
 
     case "tecnologia":
     case "tecnología":

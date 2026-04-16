@@ -17,16 +17,14 @@ export default function SplashWrapper() {
   const [mostrar, setMostrar] = useState(false);
 
   useEffect(() => {
-    // Solo mostrar si no se ha visto antes
-    if (typeof window !== "undefined" && !localStorage.getItem(SPLASH_KEY)) {
+    // Only show if not seen before (useEffect always runs in the browser)
+    if (!localStorage.getItem(SPLASH_KEY)) {
       setMostrar(true);
     }
   }, []);
 
   const handleComplete = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(SPLASH_KEY, "1");
-    }
+    localStorage.setItem(SPLASH_KEY, "1");
     setMostrar(false);
   };
 
