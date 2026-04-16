@@ -1,0 +1,41 @@
+# ═══════════════════════════════════════════════════════════════
+# docker-compose.yml — Servicios de infraestructura para BuscayCurra
+# ═══════════════════════════════════════════════════════════════
+#
+# Cómo usar:
+#   1. Arrancar Redis:        docker-compose up -d redis
+#   2. Parar Redis:           docker-compose stop redis
+#   3. Ver logs de Redis:     docker-compose logs redis
+#   4. Eliminar todo:         docker-compose down -v
+#
+# Requisitos: tener Docker Desktop instalado
+#   Descarga: https://www.docker.com/products/docker-desktop/
+# ═══════════════════════════════════════════════════════════════
+
+version: "3.9"
+
+services:
+
+  # ─── Redis ─────────────────────────────────────────────────
+  # Redis es la base de datos en memoria que gestiona las colas de BullMQ.
+  # Almacena los trabajos pendientes, en proceso y completados.
+  redis:
+    image: redis:7-alpine          # Versión ligera de Redis
+    container_name: buscaycurra-redis
+    restart: unless-stopped         # Se reinicia automáticamente si falla
+    ports:
+      - "6379:6379"                 # Puerto Redis accesible en localhost:6379
+    volumes:
+      - redis_data:/data            # Volumen persistente: los datos no se pierden al reiniciar
+    command: redis-server --appendonly yes  # Persistencia en disco activada
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+# ─── Volúmenes ─────────────────────────────────────────────────
+# Los volúmenes guardan los datos de Redis aunque reinicies el contenedor.
+volumes:
+  redis_data:
+    name: buscaycurra_redis_data
