@@ -29,9 +29,9 @@ export interface RateLimitResult {
   reason?: string; // Si no puede, ¿por qué?
   enviadosHoy: number; // CVs enviados hoy
   enviadosEsteMes: number; // CVs enviados este mes
-  limiteHoy: number; // Límite diario del plan
-  limiteMes: number; // Límite mensual del plan
-  cvsRestantesHoy: number; // CVs que puede enviar hoy todavía
+  limiteHoy: number | typeof Infinity; // Límite diario del plan (Infinity = ilimitado)
+  limiteMes: number | typeof Infinity; // Límite mensual del plan (Infinity = ilimitado)
+  cvsRestantesHoy: number | typeof Infinity; // CVs que puede enviar hoy todavía
 }
 
 // ─── Funciones Principales ───────────────────────────────────────────────────
@@ -81,7 +81,7 @@ export async function checkRateLimit(
       limiteHoy: Infinity,
       limiteMes: Infinity,
       cvsRestantesHoy: Infinity,
-    } as unknown as RateLimitResult;
+    } satisfies RateLimitResult;
   }
 
   // ── Verificar blacklist ──────────────────────────────────────────────────
@@ -173,7 +173,7 @@ export async function isInBlacklist(companyEmail: string): Promise<boolean> {
 
   if (error && error.code !== "PGRST116") {
     // PGRST116 = no encontrado, es normal
-    console.error(`[RateLimiter] Error verificando blacklist para ${companyEmail}:`, error.message);
+    console.error("[RateLimiter] Error verificando blacklist:", error.message);
   }
 
   return !!data;

@@ -20,12 +20,14 @@ import { canSendToCompany } from "./tracker";
 /**
  * Lista de festivos nacionales de España.
  * Formato: "MM-DD" (mes-día)
- * Se actualiza cada año si cambian los festivos.
+ * ⚠️  ATENCIÓN: El Viernes Santo varía cada año (entre marzo y abril).
+ *     Actualiza "04-18" con la fecha correcta cada año o implementa
+ *     el algoritmo de cálculo de Pascua (algoritmo de Butcher/Meeus).
  */
 const FESTIVOS_NACIONALES = new Set([
   "01-01", // Año Nuevo
   "01-06", // Reyes Magos
-  "04-18", // Viernes Santo (aproximado, varía cada año)
+  "04-18", // Viernes Santo — ⚠️ VARÍA CADA AÑO, actualizar manualmente
   "05-01", // Día del Trabajo
   "08-15", // Asunción de la Virgen
   "10-12", // Fiesta Nacional de España
@@ -369,10 +371,10 @@ export async function cancelJob(jobId: string, userId: string): Promise<boolean>
     }
 
     await job.remove();
-    console.log(`[Scheduler] Job ${jobId} cancelado correctamente`);
+    console.log("[Scheduler] Job cancelado correctamente:", jobId);
     return true;
   } catch (err) {
-    console.error(`[Scheduler] Error cancelando job ${jobId}:`, (err as Error).message);
+    console.error("[Scheduler] Error cancelando job:", jobId, (err as Error).message);
     return false;
   }
 }

@@ -60,8 +60,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validación básica del email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(companyEmail)) {
+    // Usamos una regex simple y segura para evitar ataques ReDoS
+    const emailRegex = /^[^@\s]{1,64}@[^@\s]{1,253}$/;
+    if (!emailRegex.test(companyEmail) || !companyEmail.includes(".")) {
       return NextResponse.json(
         { error: "El email de la empresa no tiene un formato válido" },
         { status: 400 }

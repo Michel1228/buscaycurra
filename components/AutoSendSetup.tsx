@@ -214,7 +214,7 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
           />
           <p className="text-xs text-gray-400 mt-1">
-            Puedes encontrar el email en la sección &quot;Trabaja con nosotros&quot; de su web
+            Puedes encontrar el email en la sección &ldquo;Trabaja con nosotros&rdquo; de su web
           </p>
         </div>
 

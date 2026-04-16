@@ -115,7 +115,7 @@ export async function updateSendStatus(
     .eq("job_id", jobId);
 
   if (error) {
-    console.error(`[Tracker] Error actualizando estado del job ${jobId}:`, error.message);
+    console.error("[Tracker] Error actualizando estado del job", jobId, ":", error.message);
   }
 }
 
@@ -141,7 +141,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
     .eq("status", "enviado");
 
   if (error || !data) {
-    console.error(`[Tracker] Error obteniendo estadísticas de ${userId}:`, error?.message);
+    console.error("[Tracker] Error obteniendo estadísticas de usuario:", error?.message);
     return {
       totalEnviados: 0,
       empresasContactadas: 0,
@@ -270,7 +270,7 @@ export async function getUserSendHistory(
     .limit(limit);
 
   if (error) {
-    console.error(`[Tracker] Error obteniendo historial de ${userId}:`, error.message);
+    console.error("[Tracker] Error obteniendo historial del usuario:", error.message);
     return [];
   }
 
