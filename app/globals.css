@@ -4,13 +4,115 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Variables CSS de los colores de marca */
+/* Variables CSS de los colores de marca — paleta "La Metamorfosis" */
 :root {
-  --color-azul: #2563eb;
-  --color-naranja: #f97316;
+  --color-fondo: #0a0a0a;
+  --color-neon: #00ff88;
+  --color-verde: #4ade80;
+  --color-superficie: #0d1f0d;
+  --color-texto: #f0f0f0;
+  --color-texto-sec: #a0a0a0;
 }
 
-/* Estilos base suaves para toda la app */
+/* Estilos base — negro con texto claro */
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  @apply antialiased;
+}
+
+/* ── Keyframes para animaciones de la metamorfosis ─────────────────────────── */
+
+@keyframes worm-wiggle {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25%       { transform: translateY(-3px) rotate(2deg); }
+  75%       { transform: translateY(3px) rotate(-2deg); }
+}
+
+@keyframes worm-crawl {
+  0%   { transform: translateX(-120%) scaleX(1); }
+  45%  { transform: translateX(0%) scaleX(1); }
+  50%  { transform: translateX(0%) scaleX(0.8); }
+  55%  { transform: translateX(0%) scaleX(1); }
+  100% { transform: translateX(120%) scaleX(1); }
+}
+
+@keyframes cocoon-form {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  50%  { transform: scale(0.6) rotate(10deg); opacity: 0.9; }
+  100% { transform: scale(0.4) rotate(0deg); opacity: 0; }
+}
+
+@keyframes cocoon-show {
+  0%   { transform: scale(0.2); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes butterfly-emerge {
+  0%   { transform: scale(0.3) translateY(20px); opacity: 0; }
+  60%  { transform: scale(1.05) translateY(-5px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes butterfly-fly-up {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-200px) scale(0.3); opacity: 0; }
+}
+
+@keyframes wing-flap {
+  0%, 100% { transform: scaleX(1); }
+  50%       { transform: scaleX(0.4); }
+}
+
+@keyframes title-appear {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes neon-pulse {
+  0%, 100% { text-shadow: 0 0 8px #00ff88, 0 0 20px #00ff88; }
+  50%       { text-shadow: 0 0 20px #00ff88, 0 0 50px #00ff88, 0 0 80px #00ff88; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px #00ff88); }
+  50%       { filter: drop-shadow(0 0 14px #00ff88) drop-shadow(0 0 28px #4ade80); }
+}
+
+@keyframes progress-bar-glow {
+  0%, 100% { box-shadow: 0 0 6px #00ff88; }
+  50%       { box-shadow: 0 0 18px #00ff88, 0 0 30px #4ade80; }
+}
+
+@keyframes level-up-burst {
+  0%   { transform: scale(1); opacity: 1; }
+  50%  { transform: scale(1.5); opacity: 0.7; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+@keyframes particle-float {
+  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-60px) translateX(var(--px, 0px)) scale(0); opacity: 0; }
+}
+
+/* ── Clases de utilidad de animación ────────────────────────────────────────── */
+
+.animate-worm-wiggle {
+  animation: worm-wiggle 1.2s ease-in-out infinite;
+}
+
+.animate-wing-flap {
+  animation: wing-flap 0.6s ease-in-out infinite;
+}
+
+.animate-neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-progress-glow {
+  animation: progress-bar-glow 2s ease-in-out infinite;
 }
