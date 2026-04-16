@@ -384,7 +384,7 @@ function TabSeguridad({ token }: { token: string | null }) {
                 onChange={(e) => setContrasenaActual(e.target.value)}
                 placeholder="Tu contraseña actual"
                 required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
             </div>
 
@@ -401,7 +401,7 @@ function TabSeguridad({ token }: { token: string | null }) {
                 placeholder="Mínimo 8 caracteres"
                 required
                 minLength={8}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
             </div>
 
@@ -417,7 +417,7 @@ function TabSeguridad({ token }: { token: string | null }) {
                 onChange={(e) => setConfirmarContrasena(e.target.value)}
                 placeholder="Repite la nueva contraseña"
                 required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
             </div>
 

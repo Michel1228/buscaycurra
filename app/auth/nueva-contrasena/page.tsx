@@ -174,7 +174,7 @@ export default function NuevaContrasenaPage() {
                   placeholder="Mínimo 8 caracteres"
                   required
                   minLength={8}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
                 {/* Indicador de longitud */}
                 {nuevaContrasena.length > 0 && (
@@ -201,7 +201,7 @@ export default function NuevaContrasenaPage() {
                   onChange={(e) => setConfirmarContrasena(e.target.value)}
                   placeholder="Repite la contraseña"
                   required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
                 {/* Indicador de coincidencia */}
                 {confirmarContrasena.length > 0 && (

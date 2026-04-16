@@ -147,7 +147,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
           onChange={(e) => setNombre(e.target.value)}
           placeholder="Tu nombre completo"
           required
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
         />
       </div>
 
@@ -162,7 +162,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
           value={telefono}
           onChange={(e) => setTelefono(e.target.value)}
           placeholder="+34 600 000 000"
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
         />
       </div>
 
@@ -177,7 +177,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
           value={ciudad}
           onChange={(e) => setCiudad(e.target.value)}
           placeholder="Madrid, Barcelona, Valencia..."
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition"
+          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
         />
       </div>
 
@@ -190,7 +190,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
           id="pf-sector"
           value={sector}
           onChange={(e) => setSector(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition bg-white"
+          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
         >
           <option value="">Selecciona tu sector</option>
           {SECTORES.map((s) => (
