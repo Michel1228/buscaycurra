@@ -10,13 +10,22 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-// ─── Cliente Supabase ────────────────────────────────────────────────────────
+// ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // Usamos la clave de servicio (service role) para operaciones del servidor.
 // NUNCA expongas SUPABASE_SERVICE_ROLE_KEY en el frontend.
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _supabase: any = null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSupabase(): any {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return _supabase;
+}
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -75,7 +84,7 @@ export async function recordSent(
     ...extras,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("cv_sends")
     .insert(record)
     .select("id")
@@ -109,7 +118,7 @@ export async function updateSendStatus(
     ...(errorMessage && { error_message: errorMessage }),
   };
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from("cv_sends")
     .update(updates)
     .eq("job_id", jobId);
@@ -134,7 +143,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
   // Obtenemos todos los envíos del usuario (solo los enviados)
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("*")
     .eq("user_id", userId)
@@ -176,7 +185,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
  * @returns Lista de envíos ordenada por fecha descendente
  */
 export async function getCompanyHistory(companyEmail: string): Promise<CVSendRecord[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("*")
     .eq("company_email", companyEmail)
@@ -204,7 +213,7 @@ export async function canSendToCompany(
   companyEmail: string,
   minDays = 90
 ): Promise<boolean> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("sent_at")
     .eq("user_id", userId)
@@ -237,7 +246,7 @@ export async function canSendToCompany(
  * @param userId - ID del usuario
  */
 export async function getUserPendingSends(userId: string): Promise<CVSendRecord[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("*")
     .eq("user_id", userId)
@@ -262,7 +271,7 @@ export async function getUserSendHistory(
   userId: string,
   limit = 50
 ): Promise<CVSendRecord[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("*")
     .eq("user_id", userId)

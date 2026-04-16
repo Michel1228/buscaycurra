@@ -9,14 +9,9 @@
  */
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 
-// ─── Cliente de Supabase (solo lectura anónima) ───────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
@@ -38,7 +33,7 @@ export default function RecuperarPage() {
 
     try {
       // Llamada a Supabase: enviar email de recuperación
-      const { error: supabaseError } = await supabase.auth.resetPasswordForEmail(
+      const { error: supabaseError } = await getSupabaseBrowser().auth.resetPasswordForEmail(
         email.trim(),
         {
           // URL a la que redirigirá el enlace del email

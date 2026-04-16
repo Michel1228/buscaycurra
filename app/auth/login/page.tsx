@@ -5,20 +5,15 @@
  *
  * Formulario de login con email y contraseña.
  * Incluye enlace a "¿Olvidaste tu contraseña?" y a la página de registro.
- * Usa supabase.auth.signInWithPassword() para autenticar al usuario.
+ * Usa getSupabaseBrowser().auth.signInWithPassword() para autenticar al usuario.
  * Colores de marca: azul #2563EB y naranja #F97316.
  */
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-// ─── Cliente de Supabase ──────────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
@@ -42,7 +37,7 @@ export default function LoginPage() {
 
     try {
       // Autenticar con Supabase
-      const { error: supabaseError } = await supabase.auth.signInWithPassword({
+      const { error: supabaseError } = await getSupabaseBrowser().auth.signInWithPassword({
         email: email.trim(),
         password: contrasena,
       });

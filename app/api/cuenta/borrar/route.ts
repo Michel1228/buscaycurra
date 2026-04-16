@@ -13,21 +13,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// ─── Cliente con clave anónima (para verificar sesión del usuario) ────────────
-const supabasePublico = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-// ─── Cliente con service role (para operaciones de admin: borrar usuario auth) ─
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 // ─── DELETE /api/cuenta/borrar ────────────────────────────────────────────────
 
 export async function DELETE(request: NextRequest) {
+  // ─── Cliente con clave anónima (para verificar sesión del usuario) ──────
+  const supabasePublico = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // ─── Cliente con service role (para operaciones de admin: borrar usuario auth) ─
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   try {
     // ── Verificar autenticación del usuario ────────────────────────────────
     // Obtenemos el token del header Authorization

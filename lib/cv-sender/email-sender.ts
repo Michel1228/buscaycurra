@@ -66,7 +66,7 @@ export async function sendCVEmail(
     const { data, error } = await resend.emails.send({
       from: `${cvData.userName} via BuscayCurra <${FROM_EMAIL}>`,
       to: [to],
-      replyTo: cvData.userEmail, // Las respuestas van directamente al candidato
+      reply_to: cvData.userEmail, // Las respuestas van directamente al candidato
       subject,
       html: buildCVEmailHTML(cvData, coverLetter, companyName),
       attachments: [

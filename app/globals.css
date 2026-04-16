@@ -1,0 +1,16 @@
+/* app/globals.css — Estilos globales de BuscayCurra con directivas de Tailwind CSS */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables CSS de los colores de marca */
+:root {
+  --color-azul: #2563eb;
+  --color-naranja: #f97316;
+}
+
+/* Estilos base suaves para toda la app */
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+}

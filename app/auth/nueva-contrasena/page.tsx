@@ -10,15 +10,10 @@
  */
 
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-// ─── Cliente de Supabase ──────────────────────────────────────────────────────
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
@@ -37,7 +32,7 @@ export default function NuevaContrasenaPage() {
   useEffect(() => {
     // Verificar que hay una sesión activa (el token de Supabase es válido)
     const comprobarSesion = async () => {
-      const { data } = await supabase.auth.getSession();
+      const { data } = await getSupabaseBrowser().auth.getSession();
       if (!data.session) {
         // Si no hay sesión, el enlace puede haber expirado
         setError("El enlace de recuperación no es válido o ha expirado. Solicita uno nuevo.");
@@ -78,7 +73,7 @@ export default function NuevaContrasenaPage() {
     setCargando(true);
     try {
       // Actualizar contraseña en Supabase
-      const { error: supabaseError } = await supabase.auth.updateUser({
+      const { error: supabaseError } = await getSupabaseBrowser().auth.updateUser({
         password: nuevaContrasena,
       });
 
