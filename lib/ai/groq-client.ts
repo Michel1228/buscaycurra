@@ -65,7 +65,7 @@ function obtenerClienteGroq(): Groq | null {
  * Comprueba si hemos superado el límite diario de Groq
  * Devuelve true si podemos hacer más llamadas, false si no
  */
-async function podemoUsarGroq(): Promise<boolean> {
+async function podemosUsarGroq(): Promise<boolean> {
   const fecha = new Date().toISOString().split("T")[0];
   const clave = `groq:calls:${fecha}`;
 
@@ -118,8 +118,8 @@ export async function llamarGroq(
     // Si llegamos aquí, hay que llamar a Groq de verdad
 
     // Comprobar límite diario
-    const puedeUsarGroq = await podemoUsarGroq();
-    if (!puedeUsarGroq) {
+    const groqDisponible = await podemosUsarGroq();
+    if (!groqDisponible) {
       throw new Error("GROQ_LIMIT_REACHED");
     }
 

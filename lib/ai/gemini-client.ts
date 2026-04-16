@@ -60,7 +60,7 @@ function obtenerClienteGemini(): GenerativeModel | null {
 /**
  * Comprueba si hemos superado el límite diario de Gemini
  */
-async function podemoUsarGemini(): Promise<boolean> {
+async function podemosUsarGemini(): Promise<boolean> {
   const fecha = new Date().toISOString().split("T")[0];
   const clave = `gemini:calls:${fecha}`;
 
@@ -103,8 +103,8 @@ export async function llamarGemini(
   // Primero intentar desde caché
   return await obtenerConCacheIA(prompt, tipo, async () => {
     // Comprobar límite diario
-    const puedeUsarGemini = await podemoUsarGemini();
-    if (!puedeUsarGemini) {
+    const geminiDisponible = await podemosUsarGemini();
+    if (!geminiDisponible) {
       throw new Error("GEMINI_LIMIT_REACHED");
     }
 
