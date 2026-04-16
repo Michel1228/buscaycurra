@@ -10,6 +10,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import NavbarWrapper from "@/components/NavbarWrapper";
+// Banner de consentimiento de cookies (RGPD) — aparece en todas las páginas
+import CookieBanner from "@/components/CookieBanner";
 
 // ─── Metadatos de SEO ─────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -42,6 +44,8 @@ export default function RootLayout({
          */}
         <NavbarWrapper />
         {children}
+        {/* Banner de cookies — se muestra a usuarios nuevos que no han dado consentimiento */}
+        <CookieBanner />
       </body>
     </html>
   );

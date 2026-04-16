@@ -268,8 +268,8 @@ export default function LandingPage() {
               </div>
               <span className="font-bold text-white">BuscayCurra</span>
             </div>
-            {/* Links del footer */}
-            <div className="flex gap-6 text-sm">
+            {/* Links del footer — acceso y legales */}
+            <div className="flex flex-wrap gap-6 text-sm justify-center md:justify-end">
               <Link href="/auth/login" className="hover:text-white transition">
                 Iniciar sesión
               </Link>
@@ -278,8 +278,32 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-            © {new Date().getFullYear()} BuscayCurra — Encuentra trabajo con IA
+
+          {/* Links legales obligatorios (LSSI + RGPD) */}
+          <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
+            <div className="flex flex-wrap gap-5 justify-center">
+              <Link href="/aviso-legal" className="hover:text-white transition">
+                Aviso Legal
+              </Link>
+              <Link href="/privacidad" className="hover:text-white transition">
+                Política de Privacidad
+              </Link>
+              <Link href="/terminos" className="hover:text-white transition">
+                Términos y Condiciones
+              </Link>
+              <Link href="/cookies" className="hover:text-white transition">
+                Política de Cookies
+              </Link>
+              <a
+                href="mailto:privacidad@buscaycurra.es"
+                className="hover:text-white transition"
+              >
+                privacidad@buscaycurra.es
+              </a>
+            </div>
+            <div className="text-gray-500 text-xs">
+              © {new Date().getFullYear()} BuscayCurra — Encuentra trabajo con IA
+            </div>
           </div>
         </div>
       </footer>
