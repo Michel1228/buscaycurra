@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { obtenerMetricasCache, obtenerReporteDiario, obtenerEstadoRedis } from "../../../../lib/cache/cache-monitor";
 
 /**
@@ -23,7 +24,13 @@ export async function GET(request: NextRequest) {
   const adminSecret = request.headers.get("x-admin-secret");
 
   // Verificar que el secret coincide con el configurado en las variables de entorno
-  if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+  // Usamos comparación en tiempo constante para evitar ataques de temporización
+  const expectedSecret = process.env.ADMIN_SECRET ?? "";
+  const secretsMatch =
+    adminSecret !== null &&
+    adminSecret.length === expectedSecret.length &&
+    timingSafeEqual(Buffer.from(adminSecret), Buffer.from(expectedSecret));
+  if (!adminSecret || !secretsMatch) {
     console.warn("⚠️  Intento de acceso no autorizado a /api/cache/stats");
     return NextResponse.json(
       {
