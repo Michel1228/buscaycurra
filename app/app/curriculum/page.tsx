@@ -20,6 +20,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { jsPDF } from "jspdf";
 
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
@@ -39,6 +40,8 @@ export default function CurriculumPage() {
   const [error, setError] = useState("");
   // Indica si se ha copiado el texto al portapapeles
   const [copiado, setCopiado] = useState(false);
+  // Indica si el resultado actual es una carta de presentación (true) o CV mejorado (false)
+  const [esCarta, setEsCarta] = useState(false);
 
   // Referencia al área de resultados para hacer scroll automático
   const resultadoRef = useRef<HTMLDivElement>(null);
@@ -82,6 +85,8 @@ export default function CurriculumPage() {
 
       const datos = await respuesta.json();
       setCvMejorado(datos.cvMejorado || "");
+      // Marcar que el resultado es un CV mejorado (no carta)
+      setEsCarta(false);
 
       // Scroll automático al resultado
       setTimeout(() => {
@@ -125,6 +130,8 @@ export default function CurriculumPage() {
 
       const datos = await respuesta.json();
       setCvMejorado(datos.cvMejorado || "");
+      // Marcar que el resultado es una carta de presentación
+      setEsCarta(true);
 
       setTimeout(() => {
         resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -134,6 +141,100 @@ export default function CurriculumPage() {
     } finally {
       setProcesando(false);
     }
+  }
+
+  /**
+   * Genera y descarga un PDF con el texto del CV mejorado o la carta de presentación.
+   * Usa jsPDF para crear el documento en el cliente, sin necesidad de API.
+   *
+   * Estructura del PDF:
+   *   - Cabecera con el nombre "BuscayCurra" en azul (#2563EB)
+   *   - Línea separadora naranja (#F97316)
+   *   - Texto del contenido bien formateado con saltos de línea
+   *   - Pie de página con "Generado por BuscayCurra — buscaycurra.es"
+   *
+   * @param esCarta - true si es carta de presentación, false si es CV mejorado
+   */
+  function descargarComoPDF(esCarta: boolean) {
+    if (!cvMejorado) return;
+
+    // Crear nuevo documento PDF (A4, puntos)
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+
+    const margenIzq = 40;
+    const margenDer = 40;
+    const anchoPagina = doc.internal.pageSize.getWidth();
+    const altoPagina = doc.internal.pageSize.getHeight();
+    const anchoUtil = anchoPagina - margenIzq - margenDer;
+    let y = 50; // Posición vertical actual
+
+    // ── Cabecera: nombre de la marca en azul ─────────────────────────────────
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(37, 99, 235); // Azul #2563EB en RGB
+    doc.text("BuscayCurra", margenIzq, y);
+    y += 8;
+
+    // Subtítulo de la marca
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139); // Gris neutro
+    doc.text("buscaycurra.es", margenIzq, y + 10);
+    y += 28;
+
+    // ── Línea separadora naranja ──────────────────────────────────────────────
+    doc.setDrawColor(249, 115, 22); // Naranja #F97316 en RGB
+    doc.setLineWidth(2);
+    doc.line(margenIzq, y, anchoPagina - margenDer, y);
+    y += 20;
+
+    // ── Título del documento ──────────────────────────────────────────────────
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(17, 24, 39); // Gris oscuro
+    const tituloDoc = esCarta
+      ? `Carta de presentación — ${puesto}`
+      : `CV mejorado — ${puesto}`;
+    doc.text(tituloDoc, margenIzq, y);
+    y += 24;
+
+    // ── Contenido del CV/carta ────────────────────────────────────────────────
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(55, 65, 81); // Gris texto
+
+    // Dividir el texto en líneas que quepan en el ancho disponible
+    const lineas = doc.splitTextToSize(cvMejorado, anchoUtil) as string[];
+
+    for (const linea of lineas) {
+      // Si la línea no cabe en la página actual, crear una nueva
+      if (y > altoPagina - 60) {
+        doc.addPage();
+        y = 40;
+      }
+      doc.text(linea, margenIzq, y);
+      y += 14; // Interlineado
+    }
+
+    // ── Pie de página en la última página ────────────────────────────────────
+    doc.setFontSize(8);
+    doc.setTextColor(156, 163, 175); // Gris claro
+    doc.text(
+      "Generado por BuscayCurra — buscaycurra.es",
+      anchoPagina / 2,
+      altoPagina - 20,
+      { align: "center" }
+    );
+
+    // ── Nombre del archivo según el tipo de documento ─────────────────────────
+    // Limpiamos el nombre del puesto para usarlo en el nombre de archivo
+    const puestoLimpio = puesto.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_áéíóúÁÉÍÓÚñÑ]/g, "") || "Puesto";
+    const nombreArchivo = esCarta
+      ? `Carta_Presentacion_${puestoLimpio}_BuscayCurra.pdf`
+      : `CV_Mejorado_${puestoLimpio}_BuscayCurra.pdf`;
+
+    // Guardar y descargar el PDF en el cliente
+    doc.save(nombreArchivo);
   }
 
   /**
@@ -234,16 +335,30 @@ export default function CurriculumPage() {
           {/* Columna derecha: resultado de la IA */}
           <div ref={resultadoRef} className="bg-white rounded-2xl border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-semibold text-gray-900">CV mejorado</h2>
-              {/* Botón copiar (naranja, solo visible si hay resultado) */}
+              {/* Título dinámico según si es CV o carta de presentación */}
+              <h2 className="font-semibold text-gray-900">
+                {esCarta ? "Carta de presentación" : "CV mejorado"}
+              </h2>
+              {/* Botones de acción: solo visibles cuando hay resultado */}
               {cvMejorado && (
-                <button
-                  onClick={copiarAlPortapapeles}
-                  className="px-4 py-2 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
-                  style={{ backgroundColor: "#F97316" }}
-                >
-                  {copiado ? "✓ Copiado" : "📋 Copiar"}
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* Botón copiar al portapapeles */}
+                  <button
+                    onClick={copiarAlPortapapeles}
+                    className="px-4 py-2 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
+                    style={{ backgroundColor: "#F97316" }}
+                  >
+                    {copiado ? "✓ Copiado" : "📋 Copiar"}
+                  </button>
+                  {/* Botón descargar como PDF — generación 100% en el cliente con jspdf */}
+                  <button
+                    onClick={() => descargarComoPDF(esCarta)}
+                    className="px-4 py-2 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
+                    style={{ backgroundColor: "#F97316" }}
+                  >
+                    {esCarta ? "⬇️ Descargar carta en PDF" : "⬇️ Descargar CV mejorado en PDF"}
+                  </button>
+                </div>
               )}
             </div>
 

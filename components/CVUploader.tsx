@@ -8,9 +8,10 @@
  *   - Vista cuando ya hay CV: nombre, botones de Ver, Actualizar y Eliminar
  *
  * Usa las APIs:
- *   - POST /api/cv/subir    → subir o actualizar el CV
- *   - GET  /api/cv/obtener  → obtener la URL del CV actual
- *   - DELETE /api/cv/borrar → eliminar el CV
+ *   - POST /api/cv/subir       → subir o actualizar el CV
+ *   - GET  /api/cv/obtener    → obtener la URL del CV actual
+ *   - GET  /api/cv/descargar  → descargar el PDF directamente al dispositivo
+ *   - DELETE /api/cv/borrar   → eliminar el CV
  *
  * Colores de marca: azul #2563EB y naranja #F97316.
  */
@@ -55,6 +56,9 @@ export default function CVUploader() {
   // ─── Estado de confirmación de borrado ───────────────────────────
   const [confirmarBorrar, setConfirmarBorrar] = useState(false);
   const [borrando, setBorrando] = useState(false);
+
+  // ─── Estado de descarga del CV ───────────────────────────────────
+  const [descargando, setDescargando] = useState(false);
 
   // ─── Referencia al input de archivo ─────────────────────────────
   const inputRef = useRef<HTMLInputElement>(null);
@@ -199,6 +203,51 @@ export default function CVUploader() {
   };
 
   /**
+   * Descarga el CV del usuario directamente al dispositivo.
+   * Llama a GET /api/cv/descargar que devuelve el PDF con cabeceras de descarga.
+   */
+  const handleDescargarCV = async () => {
+    const token = await obtenerToken();
+    if (!token) {
+      setError("No estás autenticado. Por favor, recarga la página.");
+      return;
+    }
+
+    setDescargando(true);
+    setError("");
+
+    try {
+      // Llamar a la API de descarga con autenticación
+      const response = await fetch("/api/cv/descargar", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const datos = await response.json() as { error?: string };
+        setError(datos.error ?? "No se pudo descargar el CV. Por favor, inténtalo de nuevo.");
+        return;
+      }
+
+      // Convertir la respuesta a Blob y crear un enlace de descarga temporal
+      const blob = await response.blob();
+      const urlDescarga = URL.createObjectURL(blob);
+      const enlace = document.createElement("a");
+      enlace.href = urlDescarga;
+      enlace.download = "CV_BuscayCurra.pdf";
+      document.body.appendChild(enlace);
+      enlace.click();
+
+      // Limpiar el enlace y la URL temporal tras la descarga
+      document.body.removeChild(enlace);
+      URL.revokeObjectURL(urlDescarga);
+    } catch {
+      setError("Error de red al intentar descargar el CV.");
+    } finally {
+      setDescargando(false);
+    }
+  };
+
+  /**
    * Borra el CV del usuario tras confirmación.
    */
   const handleBorrarCV = async () => {
@@ -292,6 +341,16 @@ export default function CVUploader() {
             >
               👁️ Ver CV
             </a>
+
+            {/* Descargar CV — descarga directamente al dispositivo del usuario */}
+            <button
+              onClick={() => void handleDescargarCV()}
+              disabled={descargando}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
+              style={{ backgroundColor: "#2563EB" }}
+            >
+              {descargando ? "⏳ Descargando..." : "⬇️ Descargar CV"}
+            </button>
 
             {/* Actualizar CV */}
             <button
