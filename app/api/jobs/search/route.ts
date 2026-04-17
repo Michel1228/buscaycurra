@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { obtenerOfertasCacheadas } from "@/lib/cache/job-cache";
 import { buscarOfertas } from "@/lib/job-scraper";
+import { buscarOfertasReales } from "@/lib/job-search/real-search";
 
 // ─── Handler GET ──────────────────────────────────────────────────────────────
 
@@ -38,19 +39,29 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Buscar en caché Redis primero; si no hay, ejecutar el scraper
-    let ofertas = await obtenerOfertasCacheadas(
-      keyword,
-      location,
-      () => buscarOfertas(keyword, location)
-    );
+    // Intentar búsqueda real primero, fallback al scraper mock
+    let ofertasReales;
+    try {
+      ofertasReales = await buscarOfertasReales(keyword, location, 10);
+    } catch {
+      ofertasReales = null;
+    }
+
+    // Si la búsqueda real devuelve resultados, usarlos directamente
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let ofertas: any[] = ofertasReales && ofertasReales.length > 0
+      ? ofertasReales
+      : await obtenerOfertasCacheadas(
+          keyword, location,
+          () => buscarOfertas(keyword, location)
+        );
 
     // ─── Aplicar filtros sobre los resultados ─────────────────────────────
 
     // Filtrar por tipo de jornada (si se especificó)
     if (jornada) {
       ofertas = ofertas.filter((oferta) => {
-        const modalidad = oferta.modalidad?.toLowerCase() || "";
+        const modalidad = (oferta.modalidad || "").toLowerCase();
         if (jornada === "remoto") return modalidad === "remoto";
         if (jornada === "completa") return modalidad === "presencial" || modalidad === "hibrido";
         if (jornada === "parcial") return modalidad.includes("parcial");

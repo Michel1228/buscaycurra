@@ -164,7 +164,7 @@ function detectIntent(text: string): string {
   return "chat";
 }
 
-/** Busca ofertas de trabajo y calcula % de compatibilidad */
+/** Busca ofertas de trabajo REALES y calcula % de compatibilidad */
 async function searchJobs(message: string, query?: string, city?: string) {
   try {
     const searchTerm = query || extractJobTerm(message);
@@ -172,16 +172,22 @@ async function searchJobs(message: string, query?: string, city?: string) {
     
     if (!searchTerm) return null;
 
-    // Generar ofertas simuladas con % de match basado en el término
-    // En producción esto conectaría con APIs reales de empleo
-    const ofertas = generarOfertas(searchTerm, searchCity || "España");
+    // Buscar ofertas reales via la API interna
+    let ofertas;
+    try {
+      const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
+      ofertas = await buscarOfertasReales(searchTerm, searchCity || "España", 5);
+    } catch {
+      // Fallback a generación local
+      ofertas = generarOfertas(searchTerm, searchCity || "España");
+    }
     
     let text = `🔍 He encontrado **${ofertas.length} ofertas** de **${searchTerm}**${searchCity ? ` en **${searchCity}**` : ""}:\n\n`;
     
-    ofertas.forEach((o, i) => {
-      const emoji = o.match >= 80 ? "🟢" : o.match >= 60 ? "🟡" : "🟠";
+    ofertas.forEach((o) => {
+      const emoji = (o.match || 0) >= 80 ? "🟢" : (o.match || 0) >= 60 ? "🟡" : "🟠";
       text += `${emoji} **${o.titulo}** — ${o.empresa}\n`;
-      text += `   📍 ${o.ubicacion} · 💰 ${o.salario} · **${o.match}% compatible**\n\n`;
+      text += `   📍 ${o.ubicacion} · 💰 ${o.salario} · **${o.match || 0}% compatible**\n\n`;
     });
     
     text += `📧 **¿Envío tu CV a todas?** ¡Es nuestro FUERTE! Solo di "envía" y me encargo automáticamente. 🐛→🦋\n\nO ve a 🔍 **Buscar** para más filtros.`;
