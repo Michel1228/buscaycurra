@@ -1,26 +1,13 @@
 "use client";
 
 /**
- * AutoSendSetup.tsx — Formulario de configuración del envío automático de CV
- *
- * Permite al usuario:
- *   - Introducir la URL de la empresa destino
- *   - Especificar el puesto al que aplica (opcional)
- *   - Elegir la urgencia (normal o prioritario)
- *   - Activar/desactivar la personalización con IA
- *   - Ver una vista previa del email antes de enviar
- *   - Programar el envío con un clic
- *
- * Colores de marca:
- *   - Azul: #2563EB
- *   - Naranja: #F97316
+ * AutoSendSetup.tsx — Formulario de envío automático de CV
+ * Tema: Bosque Encantado (oscuro)
+ * Frecuencia: cada 4-5 días (no diario)
  */
 
 import { useState } from "react";
 
-// ─── Tipos ───────────────────────────────────────────────────────────────────
-
-/** Resultado exitoso al programar un envío */
 interface ScheduleSuccess {
   jobId: string;
   estimatedTime: string;
@@ -35,49 +22,39 @@ interface ScheduleSuccess {
   };
 }
 
-/** Props del componente */
 interface AutoSendSetupProps {
   userId: string;
   onJobScheduled?: (result: ScheduleSuccess) => void;
 }
 
-// ─── Componente Principal ─────────────────────────────────────────────────────
-
 export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupProps) {
-  // ── Estado del formulario ──────────────────────────────────────────────
   const [companyUrl, setCompanyUrl] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [companyEmail, setCompanyEmail] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [priority, setPriority] = useState<"normal" | "prioritario">("normal");
   const [useAI, setUseAI] = useState(true);
+  const [frecuencia, setFrecuencia] = useState<"unico" | "cada4dias">("cada4dias");
   const [showPreview, setShowPreview] = useState(false);
-
-  // ── Estado de la petición ──────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<ScheduleSuccess | null>(null);
 
-  // ── Enviar el formulario ───────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
 
-    // Validación básica del email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(companyEmail)) {
-      setError("Por favor introduce un email de empresa válido (ej: rrhh@empresa.com)");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) {
+      setError("Introduce un email de empresa válido (ej: rrhh@empresa.com)");
       return;
     }
-
     if (!companyName.trim()) {
-      setError("Por favor introduce el nombre de la empresa");
+      setError("Introduce el nombre de la empresa");
       return;
     }
 
     setLoading(true);
-
     try {
       const response = await fetch("/api/cv-sender/send", {
         method: "POST",
@@ -90,25 +67,17 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
           jobTitle: jobTitle.trim() || undefined,
           priority,
           useAIPersonalization: useAI,
+          frecuencia,
         }),
       });
 
       const data = await response.json() as ScheduleSuccess & { error?: string };
-
-      if (!response.ok || data.error) {
-        throw new Error(data.error ?? "Error al programar el envío");
-      }
+      if (!response.ok || data.error) throw new Error(data.error ?? "Error al programar");
 
       setSuccess(data);
       onJobScheduled?.(data);
-
-      // Limpiar el formulario después del éxito
-      setCompanyUrl("");
-      setCompanyName("");
-      setCompanyEmail("");
-      setJobTitle("");
-      setPriority("normal");
-      setShowPreview(false);
+      setCompanyUrl(""); setCompanyName(""); setCompanyEmail(""); setJobTitle("");
+      setPriority("normal"); setShowPreview(false);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -116,233 +85,186 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
     }
   };
 
-  // ── Vista previa del email ─────────────────────────────────────────────
-  const emailPreview = (
-    <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-2 text-sm">
-      <p className="font-semibold text-gray-700">Vista previa del email:</p>
-      <div className="space-y-1 text-gray-600">
-        <p><span className="text-gray-400 w-16 inline-block">Para:</span> {companyEmail || "rrhh@empresa.com"}</p>
-        <p>
-          <span className="text-gray-400 w-16 inline-block">Asunto:</span>{" "}
-          {jobTitle
-            ? `Candidatura para ${jobTitle} — Tu Nombre`
-            : `Candidatura espontánea — ${companyName || "Tu Nombre"}`}
-        </p>
-        <p>
-          <span className="text-gray-400 w-16 inline-block">Adjunto:</span>{" "}
-          <span className="text-blue-600">📎 CV_Tu_Nombre.pdf</span>
-        </p>
-        <hr className="border-gray-200" />
-        <p className="text-gray-500 italic text-xs">
-          {useAI
-            ? "✨ La carta de presentación será personalizada por OpenClaw IA para esta empresa específica."
-            : "📝 Se usará una carta de presentación genérica profesional."}
-        </p>
-        <p className="text-gray-500 text-xs">
-          📅 Envío programado en horario laboral (lun-vie 9:00-18:00, zona horaria España)
-        </p>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h2 className="text-lg font-bold text-gray-900 mb-1">Programar envío de CV</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Tu CV se enviará automáticamente en horario laboral español con una carta personalizada.
+    <div className="card-game p-6">
+      <h2 className="text-lg font-bold mb-1" style={{ color: "#f0ebe0" }}>📧 Programar envío de CV</h2>
+      <p className="text-sm mb-6" style={{ color: "#706a58" }}>
+        Tu CV se envía automáticamente en horario laboral con carta personalizada por IA.
       </p>
 
-      {/* ── Mensaje de éxito ──────────────────────────────────────────── */}
       {success && (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-5">
+        <div className="mb-6 rounded-xl p-5" style={{ background: "rgba(126,213,111,0.1)", border: "1px solid rgba(126,213,111,0.2)" }}>
           <div className="flex items-start gap-3">
             <span className="text-2xl">✅</span>
             <div>
-              <p className="font-semibold text-green-800">¡Envío programado correctamente!</p>
-              <p className="text-sm text-green-700 mt-1">
-                📅 Fecha estimada: <strong>{success.estimatedTimeFormatted}</strong>
-              </p>
-              <p className="text-sm text-green-700">
-                📋 Posición en cola: <strong>#{success.positionInQueue}</strong>
-              </p>
-              <p className="text-xs text-green-600 mt-2">
-                ID del envío: {success.jobId}
-              </p>
+              <p className="font-bold" style={{ color: "#7ed56f" }}>¡Envío programado!</p>
+              <p className="text-sm mt-1" style={{ color: "#a8e6a1" }}>📅 {success.estimatedTimeFormatted}</p>
+              <p className="text-sm" style={{ color: "#a8e6a1" }}>📋 Cola: #{success.positionInQueue}</p>
+              <p className="text-xs mt-2" style={{ color: "#706a58" }}>ID: {success.jobId}</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Mensaje de error ──────────────────────────────────────────── */}
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-red-700 text-sm font-medium">❌ {error}</p>
+        <div className="mb-6 rounded-xl p-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
+          <p className="text-sm font-medium" style={{ color: "#f87171" }}>❌ {error}</p>
         </div>
       )}
 
-      {/* ── Formulario ────────────────────────────────────────────────── */}
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
-
-        {/* Nombre de la empresa */}
+        {/* Nombre empresa */}
         <div>
-          <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Nombre de la empresa <span className="text-red-500">*</span>
+          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
+            Empresa <span style={{ color: "#f87171" }}>*</span>
           </label>
-          <input
-            id="companyName"
-            type="text"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            placeholder="ej: Telefónica España"
-            required
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-          />
+          <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
+            placeholder="ej: Telefónica España" required className="w-full" />
         </div>
 
-        {/* Email de RRHH */}
+        {/* Email RRHH */}
         <div>
-          <label htmlFor="companyEmail" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Email de RRHH de la empresa <span className="text-red-500">*</span>
+          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
+            Email de RRHH <span style={{ color: "#f87171" }}>*</span>
           </label>
-          <input
-            id="companyEmail"
-            type="email"
-            value={companyEmail}
-            onChange={(e) => setCompanyEmail(e.target.value)}
-            placeholder="ej: rrhh@empresa.com o empleo@empresa.es"
-            required
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-          />
-          <p className="text-xs text-gray-400 mt-1">
-            Puedes encontrar el email en la sección &ldquo;Trabaja con nosotros&rdquo; de su web
-          </p>
+          <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)}
+            placeholder="rrhh@empresa.com" required className="w-full" />
+          <p className="text-xs mt-1" style={{ color: "#504a3a" }}>Búscalo en "Trabaja con nosotros"</p>
         </div>
 
-        {/* URL de la empresa (opcional) */}
+        {/* URL empresa */}
         <div>
-          <label htmlFor="companyUrl" className="block text-sm font-medium text-gray-700 mb-1.5">
-            URL de la empresa{" "}
-            <span className="text-gray-400 font-normal">(opcional, mejora la personalización)</span>
+          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
+            Web <span className="font-normal" style={{ color: "#504a3a" }}>(mejora la personalización IA)</span>
           </label>
-          <input
-            id="companyUrl"
-            type="url"
-            value={companyUrl}
-            onChange={(e) => setCompanyUrl(e.target.value)}
-            placeholder="https://www.empresa.com"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-          />
+          <input type="url" value={companyUrl} onChange={(e) => setCompanyUrl(e.target.value)}
+            placeholder="https://www.empresa.com" className="w-full" />
         </div>
 
-        {/* Puesto al que aplica (opcional) */}
+        {/* Puesto */}
         <div>
-          <label htmlFor="jobTitle" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Puesto al que aplicas{" "}
-            <span className="text-gray-400 font-normal">(opcional)</span>
+          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
+            Puesto <span className="font-normal" style={{ color: "#504a3a" }}>(opcional)</span>
           </label>
-          <input
-            id="jobTitle"
-            type="text"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-            placeholder="ej: Desarrollador Frontend, Diseñador UX..."
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-          />
-          <p className="text-xs text-gray-400 mt-1">
-            Si no especificas, se enviará como candidatura espontánea
-          </p>
+          <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)}
+            placeholder="ej: Camarero, Electricista..." className="w-full" />
+        </div>
+
+        {/* Frecuencia de envío */}
+        <div>
+          <label className="block text-sm font-semibold mb-2" style={{ color: "#b0a890" }}>📅 Frecuencia</label>
+          <div className="flex gap-3">
+            <button type="button" onClick={() => setFrecuencia("unico")}
+              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition"
+              style={{
+                background: frecuencia === "unico" ? "rgba(126,213,111,0.15)" : "rgba(42,42,30,0.5)",
+                border: frecuencia === "unico" ? "2px solid rgba(126,213,111,0.4)" : "1px solid #3d3c30",
+                color: frecuencia === "unico" ? "#7ed56f" : "#706a58",
+              }}>
+              📧 Envío único
+            </button>
+            <button type="button" onClick={() => setFrecuencia("cada4dias")}
+              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition"
+              style={{
+                background: frecuencia === "cada4dias" ? "rgba(126,213,111,0.15)" : "rgba(42,42,30,0.5)",
+                border: frecuencia === "cada4dias" ? "2px solid rgba(126,213,111,0.4)" : "1px solid #3d3c30",
+                color: frecuencia === "cada4dias" ? "#7ed56f" : "#706a58",
+              }}>
+              🔄 Cada 4-5 días
+            </button>
+          </div>
+          {frecuencia === "cada4dias" && (
+            <p className="text-xs mt-2" style={{ color: "#7ed56f" }}>
+              🔄 Tu CV se enviará automáticamente cada 4-5 días a nuevas empresas del sector
+            </p>
+          )}
         </div>
 
         {/* Urgencia */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Urgencia
-          </label>
+          <label className="block text-sm font-semibold mb-2" style={{ color: "#b0a890" }}>⚡ Urgencia</label>
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setPriority("normal")}
-              className={`flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition ${
-                priority === "normal"
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                  : "border-gray-200 text-gray-600 hover:border-gray-300"
-              }`}
-            >
+            <button type="button" onClick={() => setPriority("normal")}
+              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition"
+              style={{
+                background: priority === "normal" ? "rgba(126,213,111,0.15)" : "rgba(42,42,30,0.5)",
+                border: priority === "normal" ? "2px solid rgba(126,213,111,0.4)" : "1px solid #3d3c30",
+                color: priority === "normal" ? "#7ed56f" : "#706a58",
+              }}>
               🕒 Normal
             </button>
-            <button
-              type="button"
-              onClick={() => setPriority("prioritario")}
-              className={`flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition ${
-                priority === "prioritario"
-                  ? "border-orange-500 bg-orange-50 text-orange-700"
-                  : "border-gray-200 text-gray-600 hover:border-gray-300"
-              }`}
-            >
+            <button type="button" onClick={() => setPriority("prioritario")}
+              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition"
+              style={{
+                background: priority === "prioritario" ? "rgba(240,192,64,0.15)" : "rgba(42,42,30,0.5)",
+                border: priority === "prioritario" ? "2px solid rgba(240,192,64,0.4)" : "1px solid #3d3c30",
+                color: priority === "prioritario" ? "#f0c040" : "#706a58",
+              }}>
               ⚡ Prioritario
             </button>
           </div>
-          {priority === "prioritario" && (
-            <p className="text-xs text-orange-600 mt-1.5">
-              ⚡ Tu envío irá al principio de la cola
-            </p>
-          )}
         </div>
 
-        {/* Personalización con IA */}
-        <div className="flex items-start gap-3 bg-blue-50 rounded-xl p-4">
-          <input
-            id="useAI"
-            type="checkbox"
-            checked={useAI}
-            onChange={(e) => setUseAI(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded accent-blue-600 cursor-pointer"
-          />
+        {/* IA toggle */}
+        <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: "rgba(126,213,111,0.06)", border: "1px solid rgba(126,213,111,0.12)" }}>
+          <input id="useAI" type="checkbox" checked={useAI} onChange={(e) => setUseAI(e.target.checked)}
+            className="mt-0.5 w-4 h-4 rounded accent-green-500 cursor-pointer" />
           <div>
-            <label htmlFor="useAI" className="text-sm font-medium text-blue-900 cursor-pointer">
-              ✨ Personalizar carta de presentación con OpenClaw IA
+            <label htmlFor="useAI" className="text-sm font-semibold cursor-pointer" style={{ color: "#a8e6a1" }}>
+              ✨ Personalizar carta con IA
             </label>
-            <p className="text-xs text-blue-700 mt-0.5">
-              La IA analizará la empresa y adaptará tu carta destacando las skills más relevantes.
-              Aumenta significativamente las posibilidades de respuesta.
+            <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>
+              La IA analiza la empresa y adapta tu carta. Aumenta mucho las respuestas.
             </p>
           </div>
         </div>
 
-        {/* Vista previa */}
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowPreview(!showPreview)}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-          >
-            {showPreview ? "▲ Ocultar" : "▼ Ver"} vista previa del email
-          </button>
-          {showPreview && <div className="mt-3">{emailPreview}</div>}
-        </div>
+        {/* Preview */}
+        <button type="button" onClick={() => setShowPreview(!showPreview)}
+          className="text-sm font-medium flex items-center gap-1" style={{ color: "#7ed56f" }}>
+          {showPreview ? "▲ Ocultar" : "▼ Ver"} vista previa
+        </button>
+        {showPreview && (
+          <div className="rounded-xl p-5 space-y-2 text-sm" style={{ background: "rgba(42,42,30,0.5)", border: "1px solid #3d3c30" }}>
+            <p className="font-semibold" style={{ color: "#b0a890" }}>Vista previa:</p>
+            <div className="space-y-1" style={{ color: "#706a58" }}>
+              <p><span style={{ color: "#504a3a" }}>Para:</span> {companyEmail || "rrhh@empresa.com"}</p>
+              <p><span style={{ color: "#504a3a" }}>Asunto:</span>{" "}
+                {jobTitle ? `Candidatura: ${jobTitle}` : `Candidatura — ${companyName || "Tu Nombre"}`}
+              </p>
+              <p><span style={{ color: "#504a3a" }}>Adjunto:</span>{" "}
+                <span style={{ color: "#7ed56f" }}>📎 Tu_CV.pdf</span>
+              </p>
+              <hr style={{ borderColor: "#3d3c30" }} />
+              <p className="text-xs italic" style={{ color: "#706a58" }}>
+                {useAI ? "✨ Carta personalizada por IA para esta empresa." : "📝 Carta genérica profesional."}
+              </p>
+              <p className="text-xs" style={{ color: "#504a3a" }}>
+                📅 Envío en horario laboral (lun-vie 9:00-18:00 España)
+              </p>
+            </div>
+          </div>
+        )}
 
-        {/* Botón enviar */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
-          style={{ backgroundColor: loading ? undefined : "#2563EB" }}
-        >
+        {/* Submit */}
+        <button type="submit" disabled={loading}
+          className="w-full py-3.5 px-6 font-bold rounded-xl transition flex items-center justify-center gap-2 text-sm"
+          style={{
+            background: loading ? "#3d3c30" : "linear-gradient(135deg, #7ed56f, #5cb848)",
+            color: loading ? "#706a58" : "#1a1a12",
+            boxShadow: loading ? "none" : "0 4px 16px rgba(126,213,111,0.25)",
+          }}>
           {loading ? (
-            <>
-              <span className="animate-spin">⏳</span>
-              Programando envío...
-            </>
+            <><span className="animate-spin">⏳</span> Programando...</>
           ) : (
-            <>
-              📧 Programar envío de CV
-            </>
+            <>📧 {frecuencia === "cada4dias" ? "Activar envío automático" : "Programar envío"}</>
           )}
         </button>
 
-        <p className="text-xs text-center text-gray-400">
-          Tu CV se enviará en horario laboral español (lun-vie 9:00-18:00).<br />
-          Recibirás un email de confirmación cuando se envíe.
+        <p className="text-xs text-center" style={{ color: "#504a3a" }}>
+          {frecuencia === "cada4dias"
+            ? "🔄 Se enviarán CVs cada 4-5 días a empresas del sector en horario laboral."
+            : "📅 Se enviará una vez en horario laboral español (lun-vie 9:00-18:00)."}
         </p>
       </form>
     </div>

@@ -1,187 +1,112 @@
 "use client";
 
 /**
- * CVSenderDashboard.tsx — Panel de control del sistema de envíos automáticos de CV
- *
- * Muestra al usuario:
- *   - Límite diario restante (ej: "3/5 CVs enviados hoy")
- *   - Lista de envíos pendientes con posición en la cola
- *   - Historial de CVs enviados con fecha y empresa
- *   - Estadísticas visuales (total, esta semana, este mes)
- *   - Botón para cancelar envíos pendientes
- *
- * Colores de marca BuscayCurra:
- *   - Azul principal: #2563EB
- *   - Naranja acento: #F97316
+ * CVSenderDashboard.tsx — Panel de envíos automáticos de CV
+ * Tema: Bosque Encantado (oscuro)
  */
 
 import { useEffect, useState, useCallback } from "react";
 
-// ─── Tipos ───────────────────────────────────────────────────────────────────
-
-/** Un envío pendiente en la cola */
 interface PendingJob {
   id: string;
   companyName: string;
-  scheduledFor: string;
   scheduledForFormatted: string;
-  priority: "normal" | "prioritario";
-  state: string;
+  priority: string;
 }
-
-/** Un envío en el historial */
 interface HistoryRecord {
   id: string;
   companyName: string;
   companyEmail: string;
   jobTitle?: string;
-  status: "pendiente" | "enviado" | "fallido" | "cancelado";
+  status: string;
   sentAt?: string;
-  createdAt?: string;
 }
-
-/** Estadísticas del usuario */
 interface UserStats {
   totalEnviados: number;
-  empresasContactadas: number;
   enviadosEstaSemana: number;
   enviadosEsteMes: number;
-  enviadosHoy: number;
+  empresasContactadas: number;
 }
-
-/** Información del límite de envíos */
 interface RateLimitInfo {
   enviadosHoy: number;
   limiteHoy: number;
-  enviadosEsteMes: number;
-  limiteMes: number;
   cvsRestantesHoy: number;
   puedeEnviar: boolean;
 }
-
-/** Props del componente */
 interface CVSenderDashboardProps {
   userId: string;
   userPlan?: "free" | "pro" | "empresa";
 }
 
-// ─── Colores de estado ────────────────────────────────────────────────────────
-
-/** Devuelve las clases de color según el estado del envío */
-function getStatusColor(status: string): string {
-  switch (status) {
-    case "enviado":
-      return "bg-green-100 text-green-700";
-    case "pendiente":
-      return "bg-blue-100 text-blue-700";
-    case "fallido":
-      return "bg-red-100 text-red-700";
-    case "cancelado":
-      return "bg-gray-100 text-gray-500";
-    default:
-      return "bg-gray-100 text-gray-500";
-  }
+function statusStyle(s: string) {
+  if (s === "enviado") return { bg: "rgba(126,213,111,0.12)", color: "#7ed56f" };
+  if (s === "pendiente") return { bg: "rgba(240,192,64,0.12)", color: "#f0c040" };
+  if (s === "fallido") return { bg: "rgba(239,68,68,0.12)", color: "#f87171" };
+  return { bg: "rgba(61,60,48,0.3)", color: "#706a58" };
 }
-
-/** Devuelve el emoji según el estado */
-function getStatusEmoji(status: string): string {
-  switch (status) {
-    case "enviado": return "✅";
-    case "pendiente": return "⏳";
-    case "fallido": return "❌";
-    case "cancelado": return "🚫";
-    default: return "📄";
-  }
+function statusEmoji(s: string) {
+  if (s === "enviado") return "✅";
+  if (s === "pendiente") return "⏳";
+  if (s === "fallido") return "❌";
+  if (s === "cancelado") return "🚫";
+  return "📄";
 }
-
-// ─── Componente Principal ─────────────────────────────────────────────────────
 
 export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSenderDashboardProps) {
-  // Estado del componente
   const [pendingJobs, setPendingJobs] = useState<PendingJob[]>([]);
   const [history, setHistory] = useState<HistoryRecord[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
-  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(null);
+  const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cancellingJobId, setCancellingJobId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  // ── Cargar datos del servidor ──────────────────────────────────────────
   const loadData = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`);
-      const data = await response.json() as {
-        success?: boolean;
-        error?: string;
-        pendingJobs?: PendingJob[];
-        history?: HistoryRecord[];
-        stats?: UserStats;
-        rateLimitInfo?: RateLimitInfo;
+      setLoading(true); setError(null);
+      const res = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json() as {
+        success?: boolean; error?: string;
+        pendingJobs?: PendingJob[]; history?: HistoryRecord[];
+        stats?: UserStats; rateLimitInfo?: RateLimitInfo;
       };
-
-      if (!response.ok || data.error) {
-        throw new Error(data.error ?? "Error cargando los datos");
-      }
-
+      if (!res.ok || data.error) throw new Error(data.error ?? "Error cargando datos");
       setPendingJobs(data.pendingJobs ?? []);
       setHistory(data.history ?? []);
       setStats(data.stats ?? null);
-      setRateLimitInfo(data.rateLimitInfo ?? null);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
+      setRateLimit(data.rateLimitInfo ?? null);
+    } catch (err) { setError((err as Error).message); }
+    finally { setLoading(false); }
   }, [userId]);
 
-  // Cargar datos al montar el componente
   useEffect(() => {
     void loadData();
-
-    // Actualizar cada 30 segundos automáticamente
-    const interval = setInterval(() => void loadData(), 30_000);
-    return () => clearInterval(interval);
+    const iv = setInterval(() => void loadData(), 30_000);
+    return () => clearInterval(iv);
   }, [loadData]);
 
-  // ── Cancelar un envío pendiente ────────────────────────────────────────
-  const handleCancelJob = async (jobId: string) => {
-    if (!confirm("¿Seguro que quieres cancelar este envío?")) return;
-
-    setCancellingJobId(jobId);
+  const cancelJob = async (jobId: string) => {
+    if (!confirm("¿Cancelar este envío?")) return;
+    setCancellingId(jobId);
     try {
-      const response = await fetch("/api/cv-sender/cancel", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch("/api/cv-sender/cancel", {
+        method: "DELETE", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobId, userId }),
       });
-
-      const data = await response.json() as { success?: boolean; message?: string; error?: string };
-
+      const data = await res.json() as { success?: boolean; error?: string };
       if (data.success) {
-        // Actualizar la lista localmente sin recargar
-        setPendingJobs((prev) => prev.filter((j) => j.id !== jobId));
-        alert("✅ Envío cancelado correctamente");
-      } else {
-        alert(`❌ ${data.message ?? data.error ?? "No se pudo cancelar el envío"}`);
+        setPendingJobs(prev => prev.filter(j => j.id !== jobId));
       }
-    } catch {
-      alert("❌ Error de conexión al cancelar el envío");
-    } finally {
-      setCancellingJobId(null);
-    }
+    } catch {} finally { setCancellingId(null); }
   };
-
-  // ── Renderizado ────────────────────────────────────────────────────────
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">Cargando tus envíos...</p>
+          <div className="animate-spin rounded-full h-10 w-10 mx-auto mb-3"
+            style={{ border: "4px solid #3d3c30", borderTopColor: "#7ed56f" }} />
+          <p className="text-sm" style={{ color: "#706a58" }}>Cargando tus envíos...</p>
         </div>
       </div>
     );
@@ -189,140 +114,101 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-        <p className="text-red-600 font-medium">❌ {error}</p>
-        <button
-          onClick={() => void loadData()}
-          className="mt-3 text-sm text-blue-600 hover:underline"
-        >
-          Reintentar
-        </button>
+      <div className="card-game p-6 text-center">
+        <p className="font-medium" style={{ color: "#f87171" }}>❌ {error}</p>
+        <button onClick={() => void loadData()} className="mt-3 text-sm" style={{ color: "#7ed56f" }}>Reintentar</button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
-      {/* ── Indicador de límite diario ────────────────────────────────── */}
-      {rateLimitInfo && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      {/* Rate limit */}
+      {rateLimit && (
+        <div className="card-game p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-800">Límite diario de envíos</h3>
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium capitalize">
+            <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>Límite diario</h3>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+              style={{ background: "rgba(126,213,111,0.12)", color: "#7ed56f" }}>
               Plan {userPlan}
             </span>
           </div>
-
-          {/* Barra de progreso del límite diario */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
+            <div className="flex-1 h-2.5 rounded-full" style={{ background: "#2a2a1e" }}>
+              <div className="h-full rounded-full transition-all duration-500"
                 style={{
-                  width: `${Math.min(100, (rateLimitInfo.enviadosHoy / (rateLimitInfo.limiteHoy || 1)) * 100)}%`,
-                  background: rateLimitInfo.cvsRestantesHoy === 0 ? "#EF4444" : "#2563EB",
-                }}
-              />
+                  width: `${Math.min(100, (rateLimit.enviadosHoy / (rateLimit.limiteHoy || 1)) * 100)}%`,
+                  background: rateLimit.cvsRestantesHoy === 0 ? "#f87171" : "#7ed56f",
+                }} />
             </div>
-            <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-              {rateLimitInfo.enviadosHoy}/{rateLimitInfo.limiteHoy === Infinity ? "∞" : rateLimitInfo.limiteHoy}
+            <span className="text-sm font-bold" style={{ color: "#f0ebe0" }}>
+              {rateLimit.enviadosHoy}/{rateLimit.limiteHoy === Infinity ? "∞" : rateLimit.limiteHoy}
             </span>
           </div>
-
-          <p className="text-xs text-gray-500 mt-2">
-            {rateLimitInfo.cvsRestantesHoy > 0
-              ? `Te quedan ${rateLimitInfo.cvsRestantesHoy} CVs para enviar hoy`
-              : "Has alcanzado el límite diario. El contador se reinicia a las 00:00."}
+          <p className="text-xs mt-2" style={{ color: "#706a58" }}>
+            {rateLimit.cvsRestantesHoy > 0
+              ? `${rateLimit.cvsRestantesHoy} CVs restantes hoy`
+              : "Límite alcanzado. Se reinicia a las 00:00."}
           </p>
         </div>
       )}
 
-      {/* ── Estadísticas ──────────────────────────────────────────────── */}
+      {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {/* Total enviados */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-            <p className="text-3xl font-bold text-blue-600">{stats.totalEnviados}</p>
-            <p className="text-xs text-gray-500 mt-1">Total enviados</p>
-          </div>
-
-          {/* Esta semana */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-            <p className="text-3xl font-bold text-orange-500">{stats.enviadosEstaSemana}</p>
-            <p className="text-xs text-gray-500 mt-1">Esta semana</p>
-          </div>
-
-          {/* Este mes */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-            <p className="text-3xl font-bold text-blue-600">{stats.enviadosEsteMes}</p>
-            <p className="text-xs text-gray-500 mt-1">Este mes</p>
-          </div>
-
-          {/* Empresas contactadas */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-            <p className="text-3xl font-bold text-orange-500">{stats.empresasContactadas}</p>
-            <p className="text-xs text-gray-500 mt-1">Empresas contactadas</p>
-          </div>
+          {[
+            { val: stats.totalEnviados, label: "Total enviados", color: "#7ed56f" },
+            { val: stats.enviadosEstaSemana, label: "Esta semana", color: "#f0c040" },
+            { val: stats.enviadosEsteMes, label: "Este mes", color: "#7ed56f" },
+            { val: stats.empresasContactadas, label: "Empresas", color: "#f0c040" },
+          ].map((s, i) => (
+            <div key={i} className="card-game p-4 text-center">
+              <p className="text-2xl font-bold" style={{ color: s.color }}>{s.val}</p>
+              <p className="text-[10px] mt-1" style={{ color: "#706a58" }}>{s.label}</p>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* ── Envíos pendientes en la cola ──────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-800">
-            Envíos pendientes
+      {/* Pending */}
+      <div className="card-game overflow-hidden">
+        <div className="px-5 py-4 flex items-center justify-between"
+          style={{ borderBottom: "1px solid #3d3c30" }}>
+          <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>
+            ⏳ Pendientes
             {pendingJobs.length > 0 && (
-              <span className="ml-2 bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
+              <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold"
+                style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}>
                 {pendingJobs.length}
               </span>
             )}
           </h3>
-          <button
-            onClick={() => void loadData()}
-            className="text-xs text-blue-600 hover:underline"
-          >
-            🔄 Actualizar
-          </button>
+          <button onClick={() => void loadData()} className="text-xs" style={{ color: "#7ed56f" }}>🔄</button>
         </div>
-
         {pendingJobs.length === 0 ? (
-          <div className="px-5 py-10 text-center">
-            <p className="text-gray-400 text-sm">No tienes envíos pendientes</p>
-            <p className="text-gray-400 text-xs mt-1">¡Programa tu primer envío!</p>
+          <div className="px-5 py-8 text-center">
+            <p className="text-sm" style={{ color: "#504a3a" }}>No tienes envíos pendientes</p>
           </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
-            {pendingJobs.map((job, index) => (
-              <li key={job.id} className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                {/* Posición en la cola */}
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
-                  {index + 1}
-                </div>
-
-                {/* Info del envío */}
+          <ul>
+            {pendingJobs.map((job, i) => (
+              <li key={job.id} className="px-5 py-3.5 flex items-center gap-3 transition"
+                style={{ borderBottom: i < pendingJobs.length - 1 ? "1px solid rgba(61,60,48,0.3)" : "none" }}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                  style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}>{i + 1}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 truncate">{job.companyName}</p>
-                  <p className="text-xs text-gray-500">
-                    📅 {job.scheduledForFormatted}
-                  </p>
+                  <p className="font-semibold text-sm truncate" style={{ color: "#f0ebe0" }}>{job.companyName}</p>
+                  <p className="text-[10px]" style={{ color: "#706a58" }}>📅 {job.scheduledForFormatted}</p>
                 </div>
-
-                {/* Badge de prioridad */}
                 {job.priority === "prioritario" && (
-                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
-                    ⚡ Prioritario
-                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                    style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}>⚡</span>
                 )}
-
-                {/* Botón cancelar */}
-                <button
-                  onClick={() => void handleCancelJob(job.id)}
-                  disabled={cancellingJobId === job.id}
-                  className="flex-shrink-0 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-                  aria-label={`Cancelar envío a ${job.companyName}`}
-                >
-                  {cancellingJobId === job.id ? "..." : "Cancelar"}
+                <button onClick={() => void cancelJob(job.id)} disabled={cancellingId === job.id}
+                  className="text-[10px] px-2 py-1 rounded-lg transition"
+                  style={{ color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  {cancellingId === job.id ? "..." : "Cancelar"}
                 </button>
               </li>
             ))}
@@ -330,52 +216,44 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
         )}
       </div>
 
-      {/* ── Historial de envíos ───────────────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-800">Historial de envíos</h3>
+      {/* History */}
+      <div className="card-game overflow-hidden">
+        <div className="px-5 py-4" style={{ borderBottom: "1px solid #3d3c30" }}>
+          <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>📋 Historial</h3>
         </div>
-
         {history.length === 0 ? (
-          <div className="px-5 py-10 text-center">
-            <p className="text-gray-400 text-sm">Aún no has enviado ningún CV</p>
+          <div className="px-5 py-8 text-center">
+            <p className="text-sm" style={{ color: "#504a3a" }}>Aún no has enviado ningún CV</p>
           </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
-            {history.map((record) => (
-              <li key={record.id} className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                {/* Emoji de estado */}
-                <span className="text-xl">{getStatusEmoji(record.status)}</span>
-
-                {/* Info del envío */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 truncate">{record.companyName}</p>
-                  {record.jobTitle && (
-                    <p className="text-xs text-gray-500 truncate">💼 {record.jobTitle}</p>
-                  )}
-                  {record.sentAt && (
-                    <p className="text-xs text-gray-400">
-                      {new Date(record.sentAt).toLocaleDateString("es-ES", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  )}
-                </div>
-
-                {/* Badge de estado */}
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${getStatusColor(record.status)}`}>
-                  {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                </span>
-              </li>
-            ))}
+          <ul>
+            {history.map((rec, i) => {
+              const st = statusStyle(rec.status);
+              return (
+                <li key={rec.id} className="px-5 py-3.5 flex items-center gap-3 transition"
+                  style={{ borderBottom: i < history.length - 1 ? "1px solid rgba(61,60,48,0.3)" : "none" }}>
+                  <span className="text-lg">{statusEmoji(rec.status)}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate" style={{ color: "#f0ebe0" }}>{rec.companyName}</p>
+                    {rec.jobTitle && <p className="text-[10px] truncate" style={{ color: "#706a58" }}>💼 {rec.jobTitle}</p>}
+                    {rec.sentAt && (
+                      <p className="text-[10px]" style={{ color: "#504a3a" }}>
+                        {new Date(rec.sentAt).toLocaleDateString("es-ES", {
+                          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                        })}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                    style={{ background: st.bg, color: st.color }}>
+                    {rec.status.charAt(0).toUpperCase() + rec.status.slice(1)}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
-
     </div>
   );
 }
