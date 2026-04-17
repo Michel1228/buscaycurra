@@ -1,300 +1,171 @@
-/**
- * app/precios/page.tsx — Página pública de planes y precios
- *
- * Muestra tres planes de suscripción:
- *   - Free (0€): funcionalidades básicas
- *   - Pro (9.99€/mes): funcionalidades avanzadas con IA — PLAN DESTACADO
- *   - Empresa (49.99€/mes): plan ilimitado para empresas
- *
- * Colores de marca: azul #2563EB y naranja #F97316.
- */
-
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import Link from "next/link";
+import LogoGusano from "@/components/LogoGusano";
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
-interface Caracteristica {
-  texto: string;
-  incluida: boolean;
-}
-
-interface Plan {
-  id: string;
-  nombre: string;
-  precio: string;
-  periodo: string;
-  descripcion: string;
-  caracteristicas: Caracteristica[];
-  destacado: boolean;
-  botonTexto: string;
-  accion: "registro" | "pro" | "empresa";
-}
-
-// ─── Datos de los planes ──────────────────────────────────────────────────────
-
-const PLANES: Plan[] = [
+const PLANES = [
   {
-    id: "free",
-    nombre: "Free",
-    precio: "0€",
-    periodo: "para siempre",
-    descripcion: "Perfecto para empezar tu búsqueda de empleo",
-    caracteristicas: [
-      { texto: "2 CVs enviados por día", incluida: true },
-      { texto: "Buscador básico de ofertas", incluida: true },
-      { texto: "Mejora de CV básica con IA", incluida: true },
-      { texto: "Historial de envíos", incluida: true },
-      { texto: "IA avanzada (Llama + Gemini)", incluida: false },
-      { texto: "Estadísticas detalladas", incluida: false },
-      { texto: "Soporte prioritario", incluida: false },
-      { texto: "Acceso a API", incluida: false },
+    id: "free", nombre: "Gratis", precio: "0€", periodo: "para siempre", emoji: "🥚",
+    desc: "Para empezar tu aventura",
+    items: [
+      { t: "2 CVs enviados por día", ok: true },
+      { t: "Buscador básico", ok: true },
+      { t: "Mejora CV con IA", ok: true },
+      { t: "Historial de envíos", ok: true },
+      { t: "IA avanzada", ok: false },
+      { t: "Estadísticas", ok: false },
+      { t: "Soporte prioritario", ok: false },
     ],
-    destacado: false,
-    botonTexto: "Empezar gratis",
-    accion: "registro",
+    dest: false, btn: "Empezar gratis", accion: "registro" as const,
   },
   {
-    id: "pro",
-    nombre: "Pro",
-    precio: "9.99€",
-    periodo: "mes",
-    descripcion: "Para candidatos serios que quieren destacar",
-    caracteristicas: [
-      { texto: "10 CVs enviados por día", incluida: true },
-      { texto: "Buscador avanzado de ofertas", incluida: true },
-      { texto: "IA avanzada (Llama + Gemini)", incluida: true },
-      { texto: "Estadísticas detalladas", incluida: true },
-      { texto: "Soporte prioritario", incluida: true },
-      { texto: "Historial completo", incluida: true },
-      { texto: "Envíos ilimitados", incluida: false },
-      { texto: "Acceso a API", incluida: false },
+    id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛",
+    desc: "Para profesionales serios",
+    items: [
+      { t: "10 CVs enviados por día", ok: true },
+      { t: "Buscador avanzado", ok: true },
+      { t: "IA avanzada (Llama + Gemini)", ok: true },
+      { t: "Estadísticas detalladas", ok: true },
+      { t: "Soporte prioritario", ok: true },
+      { t: "Historial completo", ok: true },
+      { t: "Acceso API", ok: false },
     ],
-    destacado: true,
-    botonTexto: "Elegir Pro",
-    accion: "pro",
+    dest: true, btn: "Elegir Pro", accion: "pro" as const,
   },
   {
-    id: "empresa",
-    nombre: "Empresa",
-    precio: "49.99€",
-    periodo: "mes",
-    descripcion: "Solución completa para equipos y empresas",
-    caracteristicas: [
-      { texto: "Envíos ilimitados", incluida: true },
-      { texto: "Todo lo del plan Pro", incluida: true },
-      { texto: "Acceso a API", incluida: true },
-      { texto: "Dashboard de equipo", incluida: true },
-      { texto: "Soporte dedicado 24/7", incluida: true },
-      { texto: "Onboarding personalizado", incluida: true },
-      { texto: "SLA garantizado", incluida: true },
-      { texto: "Factura empresarial", incluida: true },
+    id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🦋",
+    desc: "Sin límites para equipos",
+    items: [
+      { t: "Envíos ilimitados", ok: true },
+      { t: "Todo lo del Pro", ok: true },
+      { t: "Acceso API", ok: true },
+      { t: "Dashboard de equipo", ok: true },
+      { t: "Soporte 24/7", ok: true },
+      { t: "Onboarding personalizado", ok: true },
+      { t: "Factura empresarial", ok: true },
     ],
-    destacado: false,
-    botonTexto: "Elegir Empresa",
-    accion: "empresa",
+    dest: false, btn: "Elegir Empresa", accion: "empresa" as const,
   },
 ];
 
-// ─── Componente Principal ─────────────────────────────────────────────────────
-
 export default function PreciosPage() {
   const router = useRouter();
-
-  // Estado de carga individual por plan
   const [cargando, setCargando] = useState<string | null>(null);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState("");
 
-  /**
-   * Maneja el clic en el botón de un plan.
-   * - Free: redirige al registro
-   * - Pro / Empresa: inicia el flujo de pago con Stripe
-   */
-  const handleElegirPlan = async (plan: Plan) => {
+  const handlePlan = async (plan: typeof PLANES[0]) => {
     setError("");
-
-    // Plan gratuito: redirigir al registro
-    if (plan.accion === "registro") {
-      router.push("/auth/registro");
-      return;
-    }
-
+    if (plan.accion === "registro") { router.push("/auth/registro"); return; }
     setCargando(plan.id);
-
     try {
-      // Obtener el token de sesión del usuario
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-
-      // Si no está autenticado, redirigir al login
-      if (!session) {
-        router.push("/auth/login");
-        return;
-      }
-
-      // Llamar a la API de checkout de Stripe
-      const response = await fetch("/api/stripe/checkout", {
+      if (!session) { router.push("/auth/login"); return; }
+      const res = await fetch("/api/stripe/checkout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ plan: plan.accion }),
       });
-
-      const data = await response.json() as { url?: string; error?: string };
-
-      if (!response.ok || data.error) {
-        setError(data.error ?? "No se pudo iniciar el pago. Por favor, inténtalo de nuevo.");
-        return;
-      }
-
-      // Redirigir a la página de pago de Stripe
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch {
-      setError("Error de red. Por favor, comprueba tu conexión e inténtalo de nuevo.");
-    } finally {
-      setCargando(null);
-    }
+      const data = await res.json() as { url?: string; error?: string };
+      if (!res.ok || data.error) { setError(data.error ?? "Error al iniciar el pago."); return; }
+      if (data.url) window.location.href = data.url;
+    } catch { setError("Error de red."); }
+    finally { setCargando(null); }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen px-4 py-16 relative overflow-hidden"
+      style={{ background: "linear-gradient(180deg, #0f1a0a, #1a1a12, #15200e)" }}>
 
-      {/* ── Cabecera ──────────────────────────────────────────────── */}
-      <div
-        className="text-white py-16 px-4 text-center"
-        style={{ background: "linear-gradient(135deg, #2563EB, #1d4ed8)" }}
-      >
-        <h1 className="text-4xl font-bold mb-3">Planes y precios</h1>
-        <p className="text-blue-200 text-lg max-w-xl mx-auto">
-          Elige el plan que mejor se adapta a tu búsqueda de empleo.
-          Sin permanencia, cancela cuando quieras.
-        </p>
+      {/* Fondo */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div style={{ position: "absolute", top: "-10%", left: "10%", width: "40%", height: "50%",
+          background: "radial-gradient(ellipse, rgba(126,213,111,0.06) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "0", right: "10%", width: "40%", height: "40%",
+          background: "radial-gradient(ellipse, rgba(240,192,64,0.04) 0%, transparent 70%)" }} />
       </div>
 
-      {/* ── Error global ──────────────────────────────────────────── */}
-      {error && (
-        <div className="max-w-4xl mx-auto px-4 mt-6">
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+      <div className="max-w-5xl mx-auto relative z-10">
+        {/* Header */}
+        <div className="text-center mb-14">
+          <Link href="/" className="inline-flex items-center gap-2 mb-6">
+            <LogoGusano size={36} animated />
+            <span className="font-bold" style={{ color: "#7ed56f" }}>BuscayCurra</span>
+          </Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#f0ebe0" }}>
+            Planes y precios
+          </h1>
+          <p className="text-base" style={{ color: "#706a58" }}>
+            Sin permanencia. Cancela cuando quieras. Evoluciona a tu ritmo.
+          </p>
+        </div>
+
+        {error && (
+          <div className="max-w-md mx-auto mb-6 rounded-xl px-4 py-3 text-sm"
+            style={{ background: "#2a1a1a", border: "1px solid #ff606030", color: "#ff8080" }}>
             {error}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Grid de planes ────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        {/* Grid de planes */}
+        <div className="grid md:grid-cols-3 gap-6 items-start">
           {PLANES.map((plan) => (
-            <div
-              key={plan.id}
-              className={`bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col ${
-                plan.destacado
-                  ? "border-2 ring-2 ring-offset-2 relative"
-                  : "border border-gray-200"
-              }`}
-              style={
-                plan.destacado
-                  ? { borderColor: "#2563EB" }
-                  : {}
-              }
-            >
-              {/* Badge "Más popular" para el plan Pro */}
-              {plan.destacado && (
-                <div
-                  className="text-white text-xs font-bold text-center py-1.5 tracking-wide"
-                  style={{ backgroundColor: "#2563EB" }}
-                >
-                  ⭐ Más popular
+            <div key={plan.id}
+              className={`card-game p-7 text-center relative flex flex-col ${plan.dest ? "scale-[1.03]" : ""}`}
+              style={plan.dest ? { borderColor: "#7ed56f", boxShadow: "0 0 40px rgba(126,213,111,0.12)" } : {}}>
+
+              {plan.dest && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="badge-game badge-dorado text-[10px]">⭐ Más popular</span>
                 </div>
               )}
 
-              {/* Cabecera del plan */}
-              <div className="p-6 pb-4">
-                <h2 className="text-xl font-bold text-gray-900">{plan.nombre}</h2>
-                <p className="text-gray-500 text-sm mt-1">{plan.descripcion}</p>
+              <div className="text-4xl mb-3">{plan.emoji}</div>
+              <h2 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h2>
+              <p className="text-xs mt-1 mb-4" style={{ color: "#706a58" }}>{plan.desc}</p>
 
-                {/* Precio */}
-                <div className="mt-4 flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-gray-900">
-                    {plan.precio}
-                  </span>
-                  {plan.periodo !== "para siempre" && (
-                    <span className="text-gray-500 text-sm mb-1">/{plan.periodo}</span>
-                  )}
-                  {plan.periodo === "para siempre" && (
-                    <span className="text-gray-500 text-sm mb-1">para siempre</span>
-                  )}
-                </div>
+              <div className="mb-5">
+                <span className="text-4xl font-black" style={{ color: plan.dest ? "#7ed56f" : "#f0ebe0" }}>
+                  {plan.precio}
+                </span>
+                <span className="text-sm ml-1" style={{ color: "#706a58" }}>{plan.periodo}</span>
               </div>
 
-              {/* Lista de características */}
-              <div className="px-6 pb-6 flex-1">
-                <ul className="space-y-2.5">
-                  {plan.caracteristicas.map((caracteristica, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5 text-sm">
-                      {/* Icono de check o cruz */}
-                      <span
-                        className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold ${
-                          caracteristica.incluida
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-400"
-                        }`}
-                      >
-                        {caracteristica.incluida ? "✓" : "✕"}
-                      </span>
-                      <span
-                        className={
-                          caracteristica.incluida ? "text-gray-700" : "text-gray-400"
-                        }
-                      >
-                        {caracteristica.texto}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Botón de acción */}
-              <div className="px-6 pb-6">
-                <button
-                  onClick={() => void handleElegirPlan(plan)}
-                  disabled={cargando === plan.id}
-                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${
-                    plan.destacado
-                      ? "text-white hover:opacity-90 disabled:opacity-60"
-                      : "border-2 hover:opacity-80 disabled:opacity-60"
-                  }`}
-                  style={
-                    plan.destacado
-                      ? { backgroundColor: "#2563EB", borderColor: "#2563EB" }
-                      : plan.id === "empresa"
-                      ? { borderColor: "#F97316", color: "#F97316" }
-                      : { borderColor: "#6b7280", color: "#6b7280" }
-                  }
-                >
-                  {cargando === plan.id ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-                      Procesando...
+              <ul className="space-y-2.5 mb-6 text-left flex-1">
+                {plan.items.map((item) => (
+                  <li key={item.t} className="flex items-start gap-2 text-sm">
+                    <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                      style={{
+                        background: item.ok ? "rgba(126,213,111,0.15)" : "rgba(80,74,58,0.3)",
+                        color: item.ok ? "#7ed56f" : "#504a3a",
+                      }}>
+                      {item.ok ? "✓" : "✕"}
                     </span>
-                  ) : (
-                    plan.botonTexto
-                  )}
-                </button>
-              </div>
+                    <span style={{ color: item.ok ? "#b0a890" : "#504a3a" }}>{item.t}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button onClick={() => void handlePlan(plan)} disabled={cargando === plan.id}
+                className={plan.dest ? "btn-game w-full" : "btn-game-outline w-full"}
+                style={{ opacity: cargando === plan.id ? 0.6 : 1 }}>
+                {cargando === plan.id ? "Procesando..." : plan.btn}
+              </button>
             </div>
           ))}
         </div>
 
-        {/* ── Nota de pie de página ────────────────────────────────── */}
-        <p className="text-center text-gray-400 text-sm mt-8">
+        <p className="text-center text-xs mt-10" style={{ color: "#504a3a" }}>
           💳 Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
         </p>
+
+        <div className="text-center mt-6">
+          <Link href="/" className="text-sm hover:underline" style={{ color: "#706a58" }}>
+            ← Volver a la landing
+          </Link>
+        </div>
       </div>
     </div>
   );

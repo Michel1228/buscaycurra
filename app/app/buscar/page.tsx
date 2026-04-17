@@ -108,10 +108,10 @@ function BuscarPageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pt-16">
 
       {/* ── Cabecera de búsqueda ──────────────────────────────────────── */}
-      <div className="text-white py-10 px-4" style={{ backgroundColor: "#2563EB" }}>
+      <div className="text-white py-10 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold mb-6">🔍 Buscar ofertas de trabajo</h1>
 
@@ -123,7 +123,7 @@ function BuscarPageInner() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="¿Qué trabajo buscas? (electricista, contable...)"
-              className="flex-1 px-4 py-3 rounded-xl text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="flex-1 px-4 py-3 rounded-xl text-[#f0ebe0] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
             />
             {/* Campo: dónde buscas */}
             <input
@@ -131,14 +131,14 @@ function BuscarPageInner() {
               value={ubicacion}
               onChange={(e) => setUbicacion(e.target.value)}
               placeholder="¿Dónde? (Madrid, Barcelona...)"
-              className="w-full sm:w-56 px-4 py-3 rounded-xl text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="w-full sm:w-56 px-4 py-3 rounded-xl text-[#f0ebe0] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
             />
             {/* Botón buscar */}
             <button
               type="submit"
               disabled={cargando}
-              className="px-8 py-3 bg-white font-semibold rounded-xl shadow-sm hover:bg-gray-50 transition disabled:opacity-50"
-              style={{ color: "#2563EB" }}
+              className="px-8 py-3 bg-white font-semibold rounded-xl shadow-sm hover: transition disabled:opacity-50"
+              style={{ color: "#7ed56f" }}
             >
               {cargando ? "Buscando..." : "Buscar"}
             </button>
@@ -151,18 +151,18 @@ function BuscarPageInner() {
 
           {/* ── Panel de filtros (columna izquierda) ─────────────────── */}
           <aside className="hidden md:block w-56 shrink-0">
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-20">
-              <h2 className="font-semibold text-gray-900 mb-4">Filtros</h2>
+            <div className="card-game p-5 sticky top-20">
+              <h2 className="font-semibold text-[#f0ebe0] mb-4">Filtros</h2>
 
               {/* Filtro: tipo de jornada */}
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[#b0a890] mb-2">
                   Tipo de jornada
                 </label>
                 <select
                   value={jornada}
                   onChange={(e) => setJornada(e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full text-sm border border-[#3d3c30] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 >
                   {opcionesJornada.map((op) => (
                     <option key={op.valor} value={op.valor}>
@@ -174,13 +174,13 @@ function BuscarPageInner() {
 
               {/* Filtro: experiencia requerida */}
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[#b0a890] mb-2">
                   Experiencia
                 </label>
                 <select
                   value={experiencia}
                   onChange={(e) => setExperiencia(e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full text-sm border border-[#3d3c30] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 >
                   {opcionesExperiencia.map((op) => (
                     <option key={op.valor} value={op.valor}>
@@ -192,7 +192,7 @@ function BuscarPageInner() {
 
               {/* Filtro: salario mínimo */}
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[#b0a890] mb-2">
                   Salario mínimo (€/año)
                 </label>
                 <input
@@ -200,7 +200,7 @@ function BuscarPageInner() {
                   value={salarioMin}
                   onChange={(e) => setSalarioMin(e.target.value)}
                   placeholder="Ej: 20000"
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full text-sm border border-[#3d3c30] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 />
               </div>
 
@@ -208,7 +208,7 @@ function BuscarPageInner() {
               <button
                 onClick={() => buscar()}
                 className="w-full py-2.5 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
-                style={{ backgroundColor: "#2563EB" }}
+                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >
                 Aplicar filtros
               </button>
@@ -222,7 +222,7 @@ function BuscarPageInner() {
             {cargando && (
               <div className="grid sm:grid-cols-2 gap-4">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
+                  <div key={i} className="card-game p-5 animate-pulse">
                     <div className="h-3 bg-gray-200 rounded w-1/4 mb-4" />
                     <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
                     <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
@@ -245,10 +245,10 @@ function BuscarPageInner() {
 
             {/* Estado: búsqueda realizada sin resultados */}
             {!cargando && !error && buscado && ofertas.length === 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+              <div className="card-game p-12 text-center">
                 <p className="text-5xl mb-4">🔍</p>
-                <p className="font-semibold text-gray-900 mb-2">No se encontraron ofertas</p>
-                <p className="text-gray-500 text-sm">
+                <p className="font-semibold text-[#f0ebe0] mb-2">No se encontraron ofertas</p>
+                <p className="text-[#706a58] text-sm">
                   Prueba con otras palabras clave o cambia la ubicación
                 </p>
               </div>
@@ -256,12 +256,12 @@ function BuscarPageInner() {
 
             {/* Estado: sin buscar aún */}
             {!cargando && !buscado && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+              <div className="card-game p-12 text-center">
                 <p className="text-5xl mb-4">🚀</p>
-                <p className="font-semibold text-gray-900 mb-2">
+                <p className="font-semibold text-[#f0ebe0] mb-2">
                   ¡Empieza tu búsqueda!
                 </p>
-                <p className="text-gray-500 text-sm">
+                <p className="text-[#706a58] text-sm">
                   Introduce el trabajo que buscas y la ciudad para ver ofertas
                 </p>
               </div>
@@ -270,7 +270,7 @@ function BuscarPageInner() {
             {/* Estado: hay resultados */}
             {!cargando && ofertas.length > 0 && (
               <>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-[#706a58] mb-4">
                   {ofertas.length} oferta{ofertas.length !== 1 ? "s" : ""} encontrada
                   {ofertas.length !== 1 ? "s" : ""}
                 </p>
@@ -296,7 +296,7 @@ export default function BuscarPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center">
           <div
             className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin"
             style={{ borderColor: "#2563EB", borderTopColor: "transparent" }}

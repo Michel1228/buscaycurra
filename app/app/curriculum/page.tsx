@@ -253,10 +253,10 @@ export default function CurriculumPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pt-16">
 
       {/* ── Cabecera de la página ──────────────────────────────────────── */}
-      <div className="text-white py-10 px-4" style={{ backgroundColor: "#2563EB" }}>
+      <div className="text-white py-10 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold">📄 Mejorar CV con IA</h1>
           <p className="text-blue-100 mt-1 text-sm">
@@ -278,13 +278,13 @@ export default function CurriculumPage() {
         <div className="grid md:grid-cols-2 gap-6">
 
           {/* Columna izquierda: formulario de entrada */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="font-semibold text-gray-900 mb-5">Tu CV actual</h2>
+          <div className="card-game p-6">
+            <h2 className="font-semibold text-[#f0ebe0] mb-5">Tu CV actual</h2>
             <form onSubmit={mejorarCV} className="flex flex-col gap-4">
 
               {/* Campo: puesto objetivo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#b0a890] mb-1.5">
                   ¿Para qué puesto?
                 </label>
                 <input
@@ -292,13 +292,13 @@ export default function CurriculumPage() {
                   value={puesto}
                   onChange={(e) => setPuesto(e.target.value)}
                   placeholder="Ej: Desarrollador Full Stack, Contable, Electricista..."
-                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  className="w-full text-sm border border-[#3d3c30] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 />
               </div>
 
               {/* Campo: texto del CV */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#b0a890] mb-1.5">
                   Pega tu CV aquí
                 </label>
                 <textarea
@@ -306,9 +306,9 @@ export default function CurriculumPage() {
                   onChange={(e) => setTextoCv(e.target.value)}
                   placeholder="Copia y pega el texto de tu CV actual..."
                   rows={14}
-                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none leading-relaxed"
+                  className="w-full text-sm border border-[#3d3c30] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none leading-relaxed"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-[#504a3a] mt-1">
                   {textoCv.split(/\s+/).filter(Boolean).length} palabras
                 </p>
               </div>
@@ -318,7 +318,7 @@ export default function CurriculumPage() {
                 type="submit"
                 disabled={procesando || !textoCv.trim()}
                 className="w-full py-3 font-semibold text-white rounded-xl transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: "#2563EB" }}
+                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >
                 {procesando ? (
                   <span className="flex items-center justify-center gap-2">
@@ -333,10 +333,10 @@ export default function CurriculumPage() {
           </div>
 
           {/* Columna derecha: resultado de la IA */}
-          <div ref={resultadoRef} className="bg-white rounded-2xl border border-gray-100 p-6">
+          <div ref={resultadoRef} className="card-game p-6">
             <div className="flex items-center justify-between mb-5">
               {/* Título dinámico según si es CV o carta de presentación */}
-              <h2 className="font-semibold text-gray-900">
+              <h2 className="font-semibold text-[#f0ebe0]">
                 {esCarta ? "Carta de presentación" : "CV mejorado"}
               </h2>
               {/* Botones de acción: solo visibles cuando hay resultado */}
@@ -376,14 +376,14 @@ export default function CurriculumPage() {
               </div>
             ) : cvMejorado ? (
               // CV mejorado con formato preservado
-              <pre className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-sans">
+              <pre className="text-sm text-[#b0a890] whitespace-pre-wrap leading-relaxed font-sans">
                 {cvMejorado}
               </pre>
             ) : (
               // Estado vacío inicial
               <div className="h-full flex flex-col items-center justify-center text-center py-20">
                 <p className="text-4xl mb-3">🤖</p>
-                <p className="text-gray-500 text-sm">
+                <p className="text-[#706a58] text-sm">
                   Aquí aparecerá tu CV mejorado por la IA
                 </p>
               </div>
@@ -392,10 +392,10 @@ export default function CurriculumPage() {
         </div>
 
         {/* ── Sección inferior: carta de presentación ───────────────────── */}
-        <div className="mt-6 bg-white rounded-2xl border border-gray-100 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-6 card-game p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <h3 className="font-semibold text-gray-900">Carta de presentación</h3>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <h3 className="font-semibold text-[#f0ebe0]">Carta de presentación</h3>
+            <p className="text-sm text-[#706a58] mt-0.5">
               Genera una carta personalizada para el puesto que elijas
             </p>
           </div>

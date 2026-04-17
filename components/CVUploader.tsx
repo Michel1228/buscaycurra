@@ -290,7 +290,7 @@ export default function CVUploader() {
       <div className="flex items-center justify-center py-10">
         <div
           className="animate-spin rounded-full h-8 w-8 border-4 border-t-transparent"
-          style={{ borderColor: "#2563EB", borderTopColor: "transparent" }}
+          style={{ borderColor: "#7ed56f", borderTopColor: "transparent" }}
         />
       </div>
     );
@@ -301,89 +301,86 @@ export default function CVUploader() {
 
       {/* ── Mensajes de éxito ────────────────────────────────────────── */}
       {exito && (
-        <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm">
+        <div className="rounded-lg px-4 py-3 text-sm" style={{ background: "rgba(126,213,111,0.1)", border: "1px solid rgba(126,213,111,0.2)", color: "#7ed56f" }}>
           {exito}
         </div>
       )}
 
       {/* ── Mensajes de error ─────────────────────────────────────────── */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-3 text-sm">
+        <div className="rounded-lg px-4 py-3 text-sm" style={{ background: "rgba(220,60,60,0.1)", border: "1px solid rgba(220,60,60,0.2)", color: "#e05050" }}>
           {error}
         </div>
       )}
 
       {/* ── Vista: CV ya subido ───────────────────────────────────────── */}
       {estadoCV.url ? (
-        <div className="border border-gray-200 rounded-xl p-5 bg-white">
+        <div className="card-game p-5">
           <div className="flex items-center gap-3 mb-4">
-            {/* Icono de PDF */}
             <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0"
-              style={{ backgroundColor: "#2563EB" }}
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+              style={{ background: "rgba(126,213,111,0.15)", border: "1px solid rgba(126,213,111,0.2)" }}
             >
               📄
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 text-sm">cv.pdf</p>
-              <p className="text-gray-400 text-xs">CV subido · listo para enviar</p>
+              <p className="font-medium text-sm" style={{ color: "#f0ebe0" }}>cv.pdf</p>
+              <p className="text-xs" style={{ color: "#706a58" }}>CV subido · listo para enviar</p>
             </div>
           </div>
 
-          {/* Botones de acción */}
           <div className="flex flex-wrap gap-2">
-            {/* Ver CV */}
             <a
               href={estadoCV.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-80"
+              style={{ border: "1px solid rgba(126,213,111,0.2)", color: "#b0a890" }}
             >
               👁️ Ver CV
             </a>
 
-            {/* Descargar CV — descarga directamente al dispositivo del usuario */}
             <button
               onClick={() => void handleDescargarCV()}
               disabled={descargando}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
-              style={{ backgroundColor: "#2563EB" }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-90 disabled:opacity-60"
+              style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
             >
               {descargando ? "⏳ Descargando..." : "⬇️ Descargar CV"}
             </button>
 
-            {/* Actualizar CV */}
             <button
               onClick={() => inputRef.current?.click()}
               disabled={subiendo}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
-              style={{ backgroundColor: "#F97316" }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-90 disabled:opacity-60"
+              style={{ background: "rgba(240,192,64,0.15)", border: "1px solid rgba(240,192,64,0.3)", color: "#f0c040" }}
             >
               🔄 Actualizar CV
             </button>
 
-            {/* Eliminar CV */}
             {!confirmarBorrar ? (
               <button
                 onClick={() => setConfirmarBorrar(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-red-600 border border-red-200 hover:bg-red-50 transition"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-80"
+                style={{ border: "1px solid rgba(220,60,60,0.2)", color: "#e05050" }}
               >
                 🗑️ Eliminar
               </button>
             ) : (
-              // Confirmación de borrado
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">¿Seguro?</span>
+                <span className="text-sm" style={{ color: "#706a58" }}>¿Seguro?</span>
                 <button
                   onClick={() => void handleBorrarCV()}
                   disabled={borrando}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-red-500 hover:bg-red-600 transition disabled:opacity-60"
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-white transition disabled:opacity-60"
+                  style={{ background: "#c03030" }}
                 >
                   {borrando ? "Borrando..." : "Sí, eliminar"}
                 </button>
                 <button
                   onClick={() => setConfirmarBorrar(false)}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 transition"
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition hover:opacity-80"
+                  style={{ border: "1px solid #3d3c30", color: "#706a58" }}
                 >
                   Cancelar
                 </button>
@@ -399,38 +396,31 @@ export default function CVUploader() {
           onDragLeave={() => setArrastrandoEncima(false)}
           onDrop={handleDrop}
           onClick={() => !subiendo && inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-            arrastrandoEncima
-              ? "bg-blue-50 border-blue-400"
-              : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
-          }`}
+          className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all"
+          style={{
+            borderColor: arrastrandoEncima ? "rgba(126,213,111,0.5)" : "rgba(61,60,48,0.6)",
+            background: arrastrandoEncima ? "rgba(126,213,111,0.05)" : "transparent",
+          }}
         >
-          {/* Icono */}
           <div className="text-4xl mb-3">{subiendo ? "⏳" : "📤"}</div>
 
           {subiendo ? (
-            /* Estado: subiendo */
             <div className="space-y-3">
-              <p className="text-sm font-medium text-gray-700">Subiendo tu CV...</p>
-              {/* Barra de progreso */}
-              <div className="w-full max-w-xs mx-auto bg-gray-200 rounded-full h-2">
+              <p className="text-sm font-medium" style={{ color: "#f0ebe0" }}>Subiendo tu CV...</p>
+              <div className="w-full max-w-xs mx-auto rounded-full h-2" style={{ background: "#2a2a1e" }}>
                 <div
                   className="h-2 rounded-full transition-all duration-300"
-                  style={{
-                    width: `${progreso}%`,
-                    backgroundColor: "#2563EB",
-                  }}
+                  style={{ width: `${progreso}%`, background: "linear-gradient(90deg, #7ed56f, #5cb848)" }}
                 />
               </div>
-              <p className="text-xs text-gray-400">{progreso}%</p>
+              <p className="text-xs" style={{ color: "#706a58" }}>{progreso}%</p>
             </div>
           ) : (
-            /* Estado: sin CV */
             <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium" style={{ color: "#f0ebe0" }}>
                 Arrastra tu CV aquí o haz clic para seleccionar
               </p>
-              <p className="text-xs text-gray-400">Solo PDF · Máximo 5 MB</p>
+              <p className="text-xs" style={{ color: "#706a58" }}>Solo PDF · Máximo 5 MB</p>
             </div>
           )}
         </div>

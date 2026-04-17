@@ -74,7 +74,7 @@ function PagoExitosoContenido() {
         ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 pt-16">
       <div
         className={`bg-white rounded-2xl shadow-lg p-10 max-w-md w-full text-center transition-all duration-500 ${
           visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
@@ -89,16 +89,16 @@ function PagoExitosoContenido() {
         </div>
 
         {/* Título */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-[#f0ebe0] mb-2">
           ¡Pago completado!
         </h1>
 
         {/* Descripción */}
-        <p className="text-gray-500 mb-2">
+        <p className="text-[#706a58] mb-2">
           Ya tienes el plan{" "}
-          <strong className="text-gray-700">{planActivo}</strong> activado.
+          <strong className="text-[#b0a890]">{planActivo}</strong> activado.
         </p>
-        <p className="text-gray-400 text-sm mb-8">
+        <p className="text-[#504a3a] text-sm mb-8">
           Disfruta de todas las funcionalidades avanzadas de BuscayCurra.
           Tu plan estará activo en unos segundos.
         </p>
@@ -116,7 +116,7 @@ function PagoExitosoContenido() {
         <button
           onClick={() => router.push("/app")}
           className="w-full py-3 rounded-xl font-semibold text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#2563EB" }}
+          style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
         >
           Ir al dashboard →
         </button>
@@ -124,7 +124,7 @@ function PagoExitosoContenido() {
         {/* Enlace secundario */}
         <button
           onClick={() => router.push("/precios")}
-          className="mt-3 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          className="mt-3 text-sm text-[#504a3a] hover:text-[#b0a890] transition-colors"
         >
           Ver detalles del plan
         </button>
@@ -139,7 +139,7 @@ export default function PagoExitosoPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center">
           <div
             className="animate-spin rounded-full h-10 w-10 border-4 border-t-transparent"
             style={{ borderColor: "#2563EB", borderTopColor: "transparent" }}

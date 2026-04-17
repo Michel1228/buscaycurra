@@ -97,10 +97,10 @@ export default function EmpresasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pt-16">
 
       {/* ── Cabecera de la página ──────────────────────────────────────── */}
-      <div className="text-white py-10 px-4" style={{ backgroundColor: "#2563EB" }}>
+      <div className="text-white py-10 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
         <div className="max-w-2xl mx-auto">
           <h1 className="text-2xl font-bold">🏢 Extractor de empresas</h1>
           <p className="text-blue-100 mt-1 text-sm">
@@ -112,7 +112,7 @@ export default function EmpresasPage() {
       <div className="max-w-2xl mx-auto px-4 py-8">
 
         {/* ── Formulario de análisis ─────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+        <div className="card-game p-6 mb-6">
           <form onSubmit={analizarEmpresa} className="flex flex-col sm:flex-row gap-3">
             {/* Input de URL */}
             <input
@@ -120,14 +120,14 @@ export default function EmpresasPage() {
               value={urlEmpresa}
               onChange={(e) => setUrlEmpresa(e.target.value)}
               placeholder="https://www.empresa.com"
-              className="flex-1 text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="flex-1 text-sm border border-[#3d3c30] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
             {/* Botón analizar */}
             <button
               type="submit"
               disabled={analizando || !urlEmpresa.trim()}
               className="px-6 py-3 text-sm font-semibold text-white rounded-xl transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-              style={{ backgroundColor: "#2563EB" }}
+              style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
             >
               {analizando ? (
                 <span className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export default function EmpresasPage() {
 
         {/* ── Skeleton de carga ──────────────────────────────────────────── */}
         {analizando && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
+          <div className="card-game p-6 animate-pulse">
             <div className="h-5 bg-gray-200 rounded w-1/2 mb-6" />
             <div className="space-y-4">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -165,12 +165,12 @@ export default function EmpresasPage() {
 
         {/* ── Tarjeta de resultados ──────────────────────────────────────── */}
         {!analizando && infoEmpresa && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="card-game overflow-hidden">
 
             {/* Cabecera de la tarjeta */}
-            <div className="px-6 py-5 border-b border-gray-100">
-              <h2 className="font-bold text-gray-900 text-lg">{infoEmpresa.nombre}</h2>
-              <p className="text-sm text-gray-500 mt-0.5">{urlEmpresa}</p>
+            <div className="px-6 py-5 border-b border-[#3d3c30]">
+              <h2 className="font-bold text-[#f0ebe0] text-lg">{infoEmpresa.nombre}</h2>
+              <p className="text-sm text-[#706a58] mt-0.5">{urlEmpresa}</p>
             </div>
 
             {/* Datos extraídos */}
@@ -180,19 +180,19 @@ export default function EmpresasPage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📧</span>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                  <p className="text-xs text-[#706a58] uppercase tracking-wide font-medium">
                     Email de RRHH
                   </p>
                   {infoEmpresa.emailRrhh ? (
                     <a
                       href={`mailto:${infoEmpresa.emailRrhh}`}
                       className="text-sm font-medium hover:underline"
-                      style={{ color: "#2563EB" }}
+                      style={{ color: "#7ed56f" }}
                     >
                       {infoEmpresa.emailRrhh}
                     </a>
                   ) : (
-                    <p className="text-sm text-gray-400">No encontrado</p>
+                    <p className="text-sm text-[#504a3a]">No encontrado</p>
                   )}
                 </div>
               </div>
@@ -201,19 +201,19 @@ export default function EmpresasPage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📞</span>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                  <p className="text-xs text-[#706a58] uppercase tracking-wide font-medium">
                     Teléfono
                   </p>
                   {infoEmpresa.telefono ? (
                     <a
                       href={`tel:${infoEmpresa.telefono}`}
                       className="text-sm font-medium hover:underline"
-                      style={{ color: "#2563EB" }}
+                      style={{ color: "#7ed56f" }}
                     >
                       {infoEmpresa.telefono}
                     </a>
                   ) : (
-                    <p className="text-sm text-gray-400">No encontrado</p>
+                    <p className="text-sm text-[#504a3a]">No encontrado</p>
                   )}
                 </div>
               </div>
@@ -222,7 +222,7 @@ export default function EmpresasPage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">💼</span>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                  <p className="text-xs text-[#706a58] uppercase tracking-wide font-medium">
                     Página de empleo
                   </p>
                   {infoEmpresa.paginaEmpleo ? (
@@ -231,23 +231,23 @@ export default function EmpresasPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm font-medium hover:underline"
-                      style={{ color: "#2563EB" }}
+                      style={{ color: "#7ed56f" }}
                     >
                       Ver ofertas internas
                     </a>
                   ) : (
-                    <p className="text-sm text-gray-400">No encontrada</p>
+                    <p className="text-sm text-[#504a3a]">No encontrada</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Botón de acción principal */}
-            <div className="px-6 py-5 border-t border-gray-100">
+            <div className="px-6 py-5 border-t border-[#3d3c30]">
               <Link
                 href={`/app/envios?empresa=${encodeURIComponent(infoEmpresa.nombre)}`}
-                className="block w-full text-center py-3 text-sm font-semibold text-white rounded-xl transition hover:opacity-90"
-                style={{ backgroundColor: "#F97316" }}
+                className="block w-full text-center py-3 text-sm font-bold rounded-xl transition hover:opacity-90"
+                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >
                 📧 Enviar CV a esta empresa
               </Link>
@@ -257,15 +257,58 @@ export default function EmpresasPage() {
 
         {/* ── Estado inicial (sin búsqueda) ──────────────────────────────── */}
         {!analizando && !infoEmpresa && !error && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+          <div className="card-game p-12 text-center">
             <p className="text-5xl mb-4">🏢</p>
-            <p className="font-semibold text-gray-900 mb-2">Analiza cualquier empresa</p>
-            <p className="text-gray-500 text-sm leading-relaxed">
+            <p className="font-semibold text-[#f0ebe0] mb-2">Analiza cualquier empresa</p>
+            <p className="text-[#706a58] text-sm leading-relaxed">
               Introduce la URL de la empresa y encontraremos automáticamente
               su email de RRHH, teléfono y página de empleo.
             </p>
           </div>
         )}
+
+        {/* ── Sección ETTs ──────────────────────────────────────────── */}
+        <div className="mt-8">
+          <h2 className="text-lg font-bold mb-4" style={{ color: "#f0ebe0" }}>🏢 ETTs y Agencias de Empleo</h2>
+          <p className="text-sm mb-4" style={{ color: "#706a58" }}>
+            Las ETTs son una de las mejores vías para encontrar trabajo rápido. Aquí tienes las principales en España:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { nombre: "Adecco", url: "https://www.adecco.es", desc: "Líder mundial en RRHH", icon: "🔵" },
+              { nombre: "Randstad", url: "https://www.randstad.es", desc: "Segunda ETT más grande", icon: "🟠" },
+              { nombre: "ManpowerGroup", url: "https://www.manpower.es", desc: "Presente en 80 países", icon: "🔴" },
+              { nombre: "Eurofirms", url: "https://www.eurofirms.es", desc: "ETT española líder", icon: "🟢" },
+              { nombre: "Synergie", url: "https://www.synergie.es", desc: "Especialista en industria", icon: "🟡" },
+              { nombre: "Gi Group", url: "https://www.gigroup.es", desc: "Global, multisector", icon: "🟣" },
+              { nombre: "Page Personnel", url: "https://www.pagepersonnel.es", desc: "Perfiles cualificados", icon: "⚪" },
+              { nombre: "Hays", url: "https://www.hays.es", desc: "Especialista en selección", icon: "🔵" },
+              { nombre: "SEPE", url: "https://www.sepe.es", desc: "Servicio público de empleo", icon: "🏛️" },
+              { nombre: "InfoJobs", url: "https://www.infojobs.net", desc: "Portal #1 en España", icon: "🟦" },
+            ].map((ett) => (
+              <div key={ett.nombre} className="card-game p-4 flex items-center gap-3 group cursor-pointer"
+                onClick={() => { setUrlEmpresa(ett.url); }}>
+                <span className="text-xl">{ett.icon}</span>
+                <div className="flex-1">
+                  <p className="font-bold text-sm" style={{ color: "#f0ebe0" }}>{ett.nombre}</p>
+                  <p className="text-[11px]" style={{ color: "#706a58" }}>{ett.desc}</p>
+                </div>
+                <div className="flex gap-2">
+                  <a href={ett.url} target="_blank" rel="noopener noreferrer"
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-medium transition hover:opacity-80"
+                    style={{ border: "1px solid rgba(126,213,111,0.2)", color: "#b0a890" }}
+                    onClick={(e) => e.stopPropagation()}>Visitar</a>
+                  <button onClick={(e) => { e.stopPropagation(); setUrlEmpresa(ett.url); }}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:opacity-90"
+                    style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>Analizar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs mt-4 text-center" style={{ color: "#504a3a" }}>
+            💡 Tip: Inscríbete en al menos 3-4 ETTs para maximizar tus opciones
+          </p>
+        </div>
 
       </div>
     </div>

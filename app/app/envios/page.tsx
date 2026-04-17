@@ -39,7 +39,8 @@ const TABS: Tab[] = [
 export default function EnviosPage() {
   // En producción, este ID vendrá de la sesión de Supabase Auth
   // Aquí usamos un ejemplo para el desarrollo
-  const userId = "usuario-ejemplo-id";
+  // Get real userId from Supabase
+  const [userId, setUserId] = useState<string>("usuario-ejemplo-id");
 
   const [activeTab, setActiveTab] = useState<TabId>("nuevo");
   const [refreshKey, setRefreshKey] = useState(0);
@@ -54,12 +55,12 @@ export default function EnviosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pt-16">
 
       {/* ── Cabecera de la página ─────────────────────────────────────── */}
       <div
         className="text-white py-10 px-4"
-        style={{ background: "linear-gradient(135deg, #2563EB, #1d4ed8)" }}
+        style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.08), rgba(139,111,71,0.05))" }}
       >
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
@@ -91,7 +92,7 @@ export default function EnviosPage() {
       </div>
 
       {/* ── Navegación por pestañas ───────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white border-b border-[#3d3c30] sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4">
           <nav className="flex" aria-label="Pestañas de envíos">
             {TABS.map((tab) => (
@@ -101,7 +102,7 @@ export default function EnviosPage() {
                 className={`flex items-center gap-2 px-5 py-4 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    : "border-transparent text-[#706a58] hover:text-[#b0a890] hover:border-[#3d3c30]"
                 }`}
                 aria-current={activeTab === tab.id ? "page" : undefined}
               >
@@ -184,8 +185,8 @@ function StatsTab({ userId }: { userId: string }) {
 
   if (!stats) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
-        <p className="text-gray-400">No hay estadísticas disponibles</p>
+      <div className="card-game p-10 text-center">
+        <p className="text-[#504a3a]">No hay estadísticas disponibles</p>
       </div>
     );
   }
@@ -195,8 +196,8 @@ function StatsTab({ userId }: { userId: string }) {
 
       {/* Título de sección */}
       <div>
-        <h2 className="text-lg font-bold text-gray-900">Tu actividad de envíos</h2>
-        <p className="text-sm text-gray-500">Resumen de todos tus envíos automáticos de CV</p>
+        <h2 className="text-lg font-bold text-[#f0ebe0]">Tu actividad de envíos</h2>
+        <p className="text-sm text-[#706a58]">Resumen de todos tus envíos automáticos de CV</p>
       </div>
 
       {/* Tarjetas de estadísticas grandes */}
@@ -204,7 +205,7 @@ function StatsTab({ userId }: { userId: string }) {
 
         <div
           className="rounded-xl p-6 text-white text-center"
-          style={{ background: "linear-gradient(135deg, #2563EB, #1d4ed8)" }}
+          style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.08), rgba(139,111,71,0.05))" }}
         >
           <p className="text-4xl font-bold">{stats.totalEnviados}</p>
           <p className="text-blue-100 text-sm mt-1">CVs enviados en total</p>
@@ -218,15 +219,15 @@ function StatsTab({ userId }: { userId: string }) {
           <p className="text-orange-100 text-sm mt-1">Empresas contactadas</p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200 text-center">
+        <div className="bg-white rounded-xl p-6 border border-[#3d3c30] text-center">
           <p className="text-4xl font-bold text-gray-800">{stats.enviadosEsteMes}</p>
-          <p className="text-gray-500 text-sm mt-1">CVs este mes</p>
+          <p className="text-[#706a58] text-sm mt-1">CVs este mes</p>
         </div>
 
       </div>
 
       {/* Desglose semanal */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="card-game p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Desglose por período</h3>
         <div className="space-y-3">
           {[
@@ -237,15 +238,15 @@ function StatsTab({ userId }: { userId: string }) {
           ].map(({ label, value, max }) => (
             <div key={label}>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">{label}</span>
+                <span className="text-[#b0a890]">{label}</span>
                 <span className="font-semibold text-gray-800">{value}</span>
               </div>
-              <div className="bg-gray-100 rounded-full h-2">
+              <div className="bg-[#2a2a1e] rounded-full h-2">
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${Math.min(100, (value / max) * 100)}%`,
-                    backgroundColor: "#2563EB",
+                    background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12",
                   }}
                 />
               </div>

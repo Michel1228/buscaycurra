@@ -1,10 +1,6 @@
-// tailwind.config.ts — Configuración de Tailwind CSS para BuscayCurra
-// Paleta "La Metamorfosis": verde neón sobre negro
-
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  // Rutas donde Tailwind buscará clases CSS usadas
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -12,22 +8,30 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // Colores personalizados de la marca — paleta metamorfosis
       colors: {
         marca: {
-          // Paleta original (mantenida por compatibilidad)
-          azul: "#2563EB",
-          naranja: "#F97316",
-          // Nueva paleta metamorfosis
-          fondo: "#0a0a0a",
-          neon: "#00ff88",
-          verde: "#4ade80",
-          superficie: "#0d1f0d",
-          texto: "#f0f0f0",
-          textoSec: "#a0a0a0",
+          fondo: "#1a1a12",
+          fondoAlt: "#22211a",
+          superficie: "#2a2a1e",
+          superficie2: "#33322a",
+          borde: "#3d3c30",
+          verde: "#7ed56f",
+          verdeClaro: "#a8e6a1",
+          verdeNeon: "#00ff88",
+          marron: "#8b6f47",
+          marronClaro: "#c4a265",
+          dorado: "#f0c040",
+          doradoSuave: "#e8d48b",
+          crema: "#f5f0e0",
+          texto: "#f0ebe0",
+          textoSec: "#b0a890",
+          textoDim: "#706a58",
         },
       },
-      // Animaciones personalizadas
+      borderRadius: {
+        "xl": "1.5rem",
+        "pill": "9999px",
+      },
       keyframes: {
         wiggle: {
           "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
@@ -38,15 +42,15 @@ const config: Config = {
           "0%, 100%": { transform: "scaleX(1)" },
           "50%": { transform: "scaleX(0.4)" },
         },
-        neonPulse: {
-          "0%, 100%": { textShadow: "0 0 8px #00ff88, 0 0 20px #00ff88" },
-          "50%": { textShadow: "0 0 20px #00ff88, 0 0 50px #00ff88, 0 0 80px #00ff88" },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-12px)" },
         },
       },
       animation: {
         wiggle: "wiggle 1.2s ease-in-out infinite",
         "wing-flap": "wingFlap 0.6s ease-in-out infinite",
-        "neon-pulse": "neonPulse 2s ease-in-out infinite",
+        float: "float 3s ease-in-out infinite",
       },
     },
   },

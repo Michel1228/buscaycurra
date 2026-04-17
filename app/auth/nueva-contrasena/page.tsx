@@ -97,39 +97,39 @@ export default function NuevaContrasenaPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
 
         {/* ── Logotipo y título ──────────────────────────────────────── */}
         <div className="text-center mb-8">
           <div
             className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white text-2xl font-bold mb-4"
-            style={{ backgroundColor: "#2563EB" }}
+            style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
           >
             B
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Nueva contraseña</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[#f0ebe0]">Nueva contraseña</h1>
+          <p className="text-[#706a58] text-sm mt-1">
             Elige una contraseña segura para tu cuenta
           </p>
         </div>
 
         {/* ── Tarjeta del formulario ─────────────────────────────────── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <div className="card-game p-8">
 
           {/* Mensaje de éxito tras cambiar la contraseña */}
           {exito ? (
             <div className="text-center">
               <div
                 className="inline-flex items-center justify-center w-16 h-16 rounded-full text-white text-2xl mb-4"
-                style={{ backgroundColor: "#2563EB" }}
+                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >
                 ✓
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              <h2 className="text-lg font-semibold text-[#f0ebe0] mb-2">
                 ¡Contraseña actualizada!
               </h2>
-              <p className="text-gray-500 text-sm">Redirigiendo al panel de control...</p>
+              <p className="text-[#706a58] text-sm">Redirigiendo al panel de control...</p>
             </div>
           ) : (
             // Formulario para nueva contraseña
@@ -144,7 +144,7 @@ export default function NuevaContrasenaPage() {
                       <Link
                         href="/auth/recuperar"
                         className="font-medium underline"
-                        style={{ color: "#2563EB" }}
+                        style={{ color: "#7ed56f" }}
                       >
                         Solicitar nuevo enlace
                       </Link>
@@ -157,7 +157,7 @@ export default function NuevaContrasenaPage() {
               <div>
                 <label
                   htmlFor="nueva"
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                  className="block text-sm font-medium text-[#b0a890] mb-1.5"
                 >
                   Nueva contraseña
                 </label>
@@ -169,7 +169,7 @@ export default function NuevaContrasenaPage() {
                   placeholder="Mínimo 8 caracteres"
                   required
                   minLength={8}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  className="w-full border border-[#3d3c30] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
                 {/* Indicador de longitud */}
                 {nuevaContrasena.length > 0 && (
@@ -185,7 +185,7 @@ export default function NuevaContrasenaPage() {
               <div>
                 <label
                   htmlFor="confirmar"
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                  className="block text-sm font-medium text-[#b0a890] mb-1.5"
                 >
                   Confirmar contraseña
                 </label>
@@ -196,7 +196,7 @@ export default function NuevaContrasenaPage() {
                   onChange={(e) => setConfirmarContrasena(e.target.value)}
                   placeholder="Repite la contraseña"
                   required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  className="w-full border border-[#3d3c30] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
                 {/* Indicador de coincidencia */}
                 {confirmarContrasena.length > 0 && (
@@ -213,7 +213,7 @@ export default function NuevaContrasenaPage() {
                 type="submit"
                 disabled={cargando || !nuevaContrasena || !confirmarContrasena}
                 className="w-full text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: "#2563EB" }}
+                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >
                 {cargando ? "Guardando..." : "Guardar nueva contraseña"}
               </button>

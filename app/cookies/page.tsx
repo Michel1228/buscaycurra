@@ -22,19 +22,19 @@ export default function CookiesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ background: "#1a1a12", color: "#f0ebe0" }}>
 
       {/* ── Cabecera ─────────────────────────────────────────────────── */}
-      <header className="border-b border-gray-100 bg-white sticky top-0 z-50">
+      <header className="glass-warm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{ backgroundColor: "#2563EB" }}
+              style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
             >
               B
             </div>
-            <span className="font-bold text-gray-900 text-lg">BuscayCurra</span>
+            <span className="font-bold text-lg" style={{ color: "#7ed56f" }}>BuscayCurra</span>
           </Link>
           <Link
             href="/"
@@ -52,7 +52,7 @@ export default function CookiesPage() {
         <div className="mb-10">
           <h1
             className="text-4xl font-extrabold mb-3"
-            style={{ color: "#2563EB" }}
+            style={{ color: "#7ed56f" }}
           >
             Política de Cookies
           </h1>
@@ -98,7 +98,7 @@ export default function CookiesPage() {
                 <thead>
                   <tr
                     className="text-white text-left"
-                    style={{ backgroundColor: "#2563EB" }}
+                    style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
                   >
                     <th className="px-4 py-3 font-semibold">Cookie</th>
                     <th className="px-4 py-3 font-semibold">Tipo</th>
@@ -260,21 +260,21 @@ export default function CookiesPage() {
             <Link
               href="/privacidad"
               className="hover:underline"
-              style={{ color: "#2563EB" }}
+              style={{ color: "#7ed56f" }}
             >
               Política de Privacidad
             </Link>
             <Link
               href="/terminos"
               className="hover:underline"
-              style={{ color: "#2563EB" }}
+              style={{ color: "#7ed56f" }}
             >
               Términos y Condiciones
             </Link>
             <Link
               href="/aviso-legal"
               className="hover:underline"
-              style={{ color: "#2563EB" }}
+              style={{ color: "#7ed56f" }}
             >
               Aviso Legal
             </Link>

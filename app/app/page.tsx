@@ -1,31 +1,20 @@
 "use client";
-
-// Deshabilitar prerenderizado estático — la página requiere autenticación dinámica
 export const dynamic = "force-dynamic";
 
 /**
- * app/app/page.tsx — Dashboard principal del usuario (panel tras login)
- *
- * Muestra:
- *   - Saludo personalizado con el nombre del usuario
- *   - 4 tarjetas con estadísticas de actividad
- *   - 4 accesos directos a las secciones principales
- *   - Lista de los 5 últimos CVs enviados (desde Supabase tabla `cv_sends`)
- *
- * Si el usuario no ha iniciado sesión, redirige a /auth/login.
- * Colores de marca: azul #2563EB y naranja #F97316.
+ * Dashboard — Flujo bloqueante de metamorfosis estilo videojuego.
+ * Cada paso es un "nivel" que se desbloquea al completar el anterior.
+ * 🥚 Registro → 🐛 Perfil → 📄 CV → 🔍 Buscar → 📧 Enviar → 🦋 Metamorfosis
  */
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import LogoGusano from "@/components/LogoGusano";
 import EvolucionUsuario from "@/components/EvolucionUsuario";
 import RevelacionMariposa from "@/components/RevelacionMariposa";
 import { getEspecieForUser } from "@/lib/especies";
-
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface EnvioCV {
   id: string;
@@ -35,420 +24,370 @@ interface EnvioCV {
   creado_en: string;
 }
 
-// ─── Accesos directos ─────────────────────────────────────────────────────────
-const accesosDirectos = [
+// ── Niveles del juego (flujo bloqueante) ────────────────────
+const niveles = [
   {
-    emoji: "🔍",
-    titulo: "Buscar ofertas",
-    descripcion: "Miles de empleos en España",
-    href: "/app/buscar",
-    color: "#2563EB",
+    id: "perfil",
+    titulo: "Completa tu perfil",
+    desc: "Nombre, teléfono, LinkedIn",
+    icon: "👤",
+    href: "/app/perfil",
+    color: "#7ed56f",
+    emoji_logro: "🐛",
+    fase: "De huevo a oruga",
   },
   {
-    emoji: "📧",
-    titulo: "Enviar CV",
-    descripcion: "Envío automático de candidaturas",
-    href: "/app/envios",
-    color: "#F97316",
-  },
-  {
-    emoji: "📄",
-    titulo: "Mejorar CV",
-    descripcion: "Adapta tu CV con IA",
+    id: "cv",
+    titulo: "Crea tu CV",
+    desc: "La IA lo adapta por sector",
+    icon: "📄",
     href: "/app/curriculum",
-    color: "#2563EB",
+    color: "#f0c040",
+    emoji_logro: "🐛",
+    fase: "Oruga creciendo",
   },
   {
-    emoji: "🏢",
-    titulo: "Buscar empresas",
-    descripcion: "Encuentra contactos de RRHH",
+    id: "buscar",
+    titulo: "Busca ofertas",
+    desc: "Miles de empleos en España",
+    icon: "🔍",
+    href: "/app/buscar",
+    color: "#e07850",
+    emoji_logro: "🫘",
+    fase: "Formando capullo",
+  },
+  {
+    id: "enviar",
+    titulo: "Envía candidaturas",
+    desc: "Automático. Tú descansas.",
+    icon: "📧",
+    href: "/app/envios",
+    color: "#a070d0",
+    emoji_logro: "🦋",
+    fase: "Alas abriéndose",
+  },
+  {
+    id: "empresas",
+    titulo: "Busca empresas",
+    desc: "Encuentra contactos RRHH",
+    icon: "🏢",
     href: "/app/empresas",
-    color: "#F97316",
+    color: "#60a0d0",
+    emoji_logro: "🦋",
+    fase: "Volando alto",
   },
 ];
 
-// ─── Colores según estado del envío ──────────────────────────────────────────
-const colorEstado: Record<EnvioCV["estado"], string> = {
-  pendiente: "bg-yellow-100 text-yellow-700",
-  enviado: "bg-blue-100 text-blue-700",
-  visto: "bg-purple-100 text-purple-700",
-  respuesta: "bg-green-100 text-green-700",
+const colorEstado: Record<string, { bg: string; text: string }> = {
+  pendiente: { bg: "#f0c04020", text: "#f0c040" },
+  enviado: { bg: "#7ed56f20", text: "#7ed56f" },
+  visto: { bg: "#a070d020", text: "#a070d0" },
+  respuesta: { bg: "#60d09020", text: "#60d090" },
 };
-
-const etiquetaEstado: Record<EnvioCV["estado"], string> = {
-  pendiente: "Pendiente",
-  enviado: "Enviado",
-  visto: "Visto",
-  respuesta: "Con respuesta",
-};
-
-// ─── Componente Principal ─────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const router = useRouter();
-
-  // Estado del usuario
-  const [nombreUsuario, setNombreUsuario] = useState<string>("Usuario");
+  const [nombre, setNombre] = useState("Usuario");
   const [userId, setUserId] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
-
-  // Datos para la evolución del usuario
   const [evolucion, setEvolucion] = useState({
-    tieneNombre: false,
-    tieneTelefono: false,
-    tieneLinkedin: false,
-    tieneCv: false,
-    cvsEnviados: 0,
-    trabajoEncontrado: false,
+    tieneNombre: false, tieneTelefono: false, tieneLinkedin: false,
+    tieneCv: false, cvsEnviados: 0, trabajoEncontrado: false,
   });
-
-  // Revelación de mariposa
   const [mostrarRevelacion, setMostrarRevelacion] = useState(false);
-
-  // Estadísticas de la semana
-  const [stats, setStats] = useState({
-    hoyCvs: 0,
-    semanaCvs: 0,
-    empresas: 0,
-    tasaRespuesta: 0,
-  });
-
-  // Últimos envíos de CV
+  const [stats, setStats] = useState({ hoyCvs: 0, semanaCvs: 0, empresas: 0, tasaRespuesta: 0 });
   const [ultimosEnvios, setUltimosEnvios] = useState<EnvioCV[]>([]);
 
-  // Cargar datos al montar el componente
   useEffect(() => {
-    async function cargarDatos() {
-      // Verificar si el usuario está autenticado
+    async function cargar() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-
-      if (!user) {
-        // Si no hay sesión, redirigir al login
-        router.push("/auth/login");
-        return;
-      }
-
+      if (!user) { router.push("/auth/login"); return; }
       setUserId(user.id);
 
-      // Obtener perfil del usuario (incluyendo nuevas columnas de evolución)
-      const { data: perfil } = await getSupabaseBrowser()
-        .from("profiles")
+      const { data: perfil } = await getSupabaseBrowser().from("profiles")
         .select("full_name, phone, linkedin_url, trabajo_encontrado")
-        .eq("id", user.id)
-        .single();
+        .eq("id", user.id).single();
 
-      if (perfil?.full_name) {
-        setNombreUsuario(perfil.full_name);
-      } else {
-        // Usar el email si no hay nombre en el perfil
-        setNombreUsuario(user.email?.split("@")[0] || "Usuario");
-      }
+      setNombre(perfil?.full_name || user.email?.split("@")[0] || "Usuario");
 
-      // Comprobar si tiene CV subido
-      const { count: cvCount } = await getSupabaseBrowser()
-        .from("cvs")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+      const { count: cvCount } = await getSupabaseBrowser().from("cvs")
+        .select("*", { count: "exact", head: true }).eq("user_id", user.id);
 
-      // Obtener datos de envíos de CV desde la tabla cv_sends
-      const { data: envios } = await getSupabaseBrowser()
-        .from("cv_sends")
+      const { data: envios } = await getSupabaseBrowser().from("cv_sends")
         .select("id, empresa, puesto, estado, creado_en")
-        .eq("user_id", user.id)
-        .order("creado_en", { ascending: false })
-        .limit(5);
+        .eq("user_id", user.id).order("creado_en", { ascending: false }).limit(5);
 
-      if (envios) {
-        setUltimosEnvios(envios as EnvioCV[]);
+      if (envios) setUltimosEnvios(envios as EnvioCV[]);
 
-        // Calcular estadísticas a partir de los envíos reales
+      const { data: todos } = await getSupabaseBrowser().from("cv_sends")
+        .select("empresa, estado, creado_en").eq("user_id", user.id);
+
+      if (todos) {
         const ahora = new Date();
         const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
-        const haceUnaSemana = new Date(hoy.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-        // Todos los envíos (no solo los 5 últimos) para estadísticas
-        const { data: todosEnvios } = await getSupabaseBrowser()
-          .from("cv_sends")
-          .select("empresa, estado, creado_en")
-          .eq("user_id", user.id);
-
-        if (todosEnvios) {
-          const hoyCvs = todosEnvios.filter(
-            (e) => new Date(e.creado_en) >= hoy
-          ).length;
-          const semanaCvs = todosEnvios.filter(
-            (e) => new Date(e.creado_en) >= haceUnaSemana
-          ).length;
-          const empresasUnicas = new Set(todosEnvios.map((e) => e.empresa)).size;
-          const conRespuesta = todosEnvios.filter((e) => e.estado === "respuesta").length;
-          const tasa =
-            todosEnvios.length > 0
-              ? Math.round((conRespuesta / todosEnvios.length) * 100)
-              : 0;
-
-          setStats({
-            hoyCvs,
-            semanaCvs,
-            empresas: empresasUnicas,
-            tasaRespuesta: tasa,
-          });
-
-          // Actualizar estado de evolución del usuario
-          setEvolucion({
-            tieneNombre:       !!(perfil?.full_name),
-            tieneTelefono:     !!(perfil?.phone),
-            tieneLinkedin:     !!(perfil?.linkedin_url),
-            trabajoEncontrado: !!(perfil?.trabajo_encontrado),
-            tieneCv:           (cvCount ?? 0) > 0,
-            cvsEnviados:       todosEnvios.length,
-          });
-        }
+        const semana = new Date(hoy.getTime() - 7 * 86400000);
+        setStats({
+          hoyCvs: todos.filter(e => new Date(e.creado_en) >= hoy).length,
+          semanaCvs: todos.filter(e => new Date(e.creado_en) >= semana).length,
+          empresas: new Set(todos.map(e => e.empresa)).size,
+          tasaRespuesta: todos.length > 0 ? Math.round((todos.filter(e => e.estado === "respuesta").length / todos.length) * 100) : 0,
+        });
+        setEvolucion({
+          tieneNombre: !!perfil?.full_name, tieneTelefono: !!perfil?.phone,
+          tieneLinkedin: !!perfil?.linkedin_url, trabajoEncontrado: !!perfil?.trabajo_encontrado,
+          tieneCv: (cvCount ?? 0) > 0, cvsEnviados: todos.length,
+        });
       }
-
       setCargando(false);
     }
-
-    cargarDatos();
+    cargar();
   }, [router]);
 
-  // Handler: marcar trabajo encontrado + mostrar revelación
-  const handleTrabajoEncontrado = async () => {
+  const handleTrabajo = async () => {
     if (!userId) return;
     const especie = getEspecieForUser(userId);
-    await getSupabaseBrowser()
-      .from("profiles")
-      .update({
-        trabajo_encontrado: true,
-        trabajo_encontrado_at: new Date().toISOString(),
-        especie_id: especie.id,
-      })
-      .eq("id", userId);
-    setEvolucion((prev) => ({ ...prev, trabajoEncontrado: true }));
+    await getSupabaseBrowser().from("profiles").update({
+      trabajo_encontrado: true, trabajo_encontrado_at: new Date().toISOString(), especie_id: especie.id,
+    }).eq("id", userId);
+    setEvolucion(p => ({ ...p, trabajoEncontrado: true }));
     setMostrarRevelacion(true);
   };
 
-  // Mostrar spinner mientras carga
+  // Calcular qué niveles están desbloqueados
+  const perfilCompleto = evolucion.tieneNombre && evolucion.tieneTelefono;
+  const tieneCv = evolucion.tieneCv;
+  const haEnviado = evolucion.cvsEnviados > 0;
+
+  const nivelesEstado = niveles.map(n => {
+    switch (n.id) {
+      case "perfil": return { ...n, desbloqueado: true, completado: perfilCompleto };
+      case "cv": return { ...n, desbloqueado: perfilCompleto, completado: tieneCv };
+      case "buscar": return { ...n, desbloqueado: tieneCv, completado: tieneCv };
+      case "enviar": return { ...n, desbloqueado: tieneCv, completado: haEnviado };
+      case "empresas": return { ...n, desbloqueado: tieneCv, completado: haEnviado };
+      default: return { ...n, desbloqueado: false, completado: false };
+    }
+  });
+
   if (cargando) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center pt-16" style={{ background: "#1a1a12" }}>
         <div className="text-center">
-          <div
-            className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-3"
-            style={{ borderColor: "#2563EB", borderTopColor: "transparent" }}
-          />
-          <p className="text-gray-500 text-sm">Cargando tu panel...</p>
+          <div className="animate-float mb-4"><LogoGusano size={60} animated /></div>
+          <p className="text-sm" style={{ color: "#706a58" }}>Cargando tu aventura...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Revelación de mariposa */}
+    <div className="min-h-screen relative pt-16" style={{ background: "linear-gradient(180deg, #0f1a0a, #1a1a12 20%, #1a1a12 80%, #15200e)" }}>
+      {/* Revelación */}
       {mostrarRevelacion && userId && (
-        <RevelacionMariposa
-          userId={userId}
-          onContinuar={() => setMostrarRevelacion(false)}
-        />
+        <RevelacionMariposa userId={userId} onContinuar={() => setMostrarRevelacion(false)} />
       )}
 
-      <div className="max-w-6xl mx-auto px-4 py-10">
+      {/* Fondo */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div style={{ position: "absolute", top: "5%", left: "5%", width: "40%", height: "40%",
+          background: "radial-gradient(ellipse, rgba(126,213,111,0.05) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "10%", right: "5%", width: "35%", height: "35%",
+          background: "radial-gradient(ellipse, rgba(240,192,64,0.03) 0%, transparent 70%)" }} />
+      </div>
 
-        {/* ── Saludo personalizado ───────────────────────────────────── */}
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold text-gray-900">
-            ¡Hola, {nombreUsuario}! 👋
-          </h1>
-          <p className="text-gray-500 mt-1">Aquí tienes el resumen de tu actividad.</p>
+      <div className="max-w-5xl mx-auto px-4 py-8 relative z-10">
+
+        {/* ── Saludo ──────────────────────────────────────── */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: "#f0ebe0" }}>
+              ¡Hola, {nombre}! 👋
+            </h1>
+            <p className="text-sm mt-1" style={{ color: "#706a58" }}>Tu camino de metamorfosis</p>
+          </div>
+          <EvolucionUsuario {...evolucion} compact />
         </div>
 
-        {/* ── Tarjetas de estadísticas ───────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          <TarjetaEstadistica
-            titulo="CVs enviados hoy"
-            valor={stats.hoyCvs}
-            emoji="📧"
-          />
-          <TarjetaEstadistica
-            titulo="CVs esta semana"
-            valor={stats.semanaCvs}
-            emoji="📅"
-          />
-          <TarjetaEstadistica
-            titulo="Empresas contactadas"
-            valor={stats.empresas}
-            emoji="🏢"
-          />
-          <TarjetaEstadistica
-            titulo="Tasa de respuesta"
-            valor={`${stats.tasaRespuesta}%`}
-            emoji="📈"
-          />
-        </div>
-
-        {/* ── Accesos directos ───────────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          {accesosDirectos.map((acceso) => (
-            <Link
-              key={acceso.href}
-              href={acceso.href}
-              className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-md transition flex flex-col items-center text-center gap-3"
-            >
-              <div
-                className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl"
-                style={{ backgroundColor: `${acceso.color}15` }}
-              >
-                {acceso.emoji}
+        {/* ── Stats rápidas ───────────────────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          {[
+            { label: "Hoy", valor: stats.hoyCvs, icon: "📧", color: "#7ed56f" },
+            { label: "Semana", valor: stats.semanaCvs, icon: "📅", color: "#f0c040" },
+            { label: "Empresas", valor: stats.empresas, icon: "🏢", color: "#e07850" },
+            { label: "Respuestas", valor: `${stats.tasaRespuesta}%`, icon: "📈", color: "#a070d0" },
+          ].map(s => (
+            <div key={s.label} className="card-game p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg">{s.icon}</span>
+                <span className="text-xs" style={{ color: "#706a58" }}>{s.label}</span>
               </div>
-              <div>
-                <p className="font-semibold text-gray-900 text-sm">{acceso.titulo}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{acceso.descripcion}</p>
-              </div>
-            </Link>
+              <div className="text-xl font-bold" style={{ color: s.color }}>{s.valor}</div>
+            </div>
           ))}
         </div>
 
-        {/* ── Últimos envíos ─────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-10">
-          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">Últimos envíos</h2>
-            <Link
-              href="/app/envios"
-              className="text-sm font-medium hover:underline"
-              style={{ color: "#2563EB" }}
-            >
-              Ver todos →
-            </Link>
-          </div>
+        {/* ── NIVELES — El camino de la metamorfosis ──────── */}
+        <div className="mb-8">
+          <h2 className="text-lg font-bold mb-4" style={{ color: "#f0ebe0" }}>
+            🎮 Tu camino
+          </h2>
+          <div className="space-y-3">
+            {nivelesEstado.map((nivel, i) => {
+              const bloqueado = !nivel.desbloqueado;
+              return (
+                <div key={nivel.id} className="relative">
+                  {/* Línea conectora */}
+                  {i > 0 && (
+                    <div className="absolute -top-3 left-7 w-0.5 h-3"
+                      style={{ background: nivel.desbloqueado ? nivel.color + "40" : "#3d3c30" }} />
+                  )}
 
-          {ultimosEnvios.length === 0 ? (
-            // Mensaje cuando no hay envíos aún
-            <div className="px-6 py-12 text-center">
-              <p className="text-4xl mb-3">📭</p>
-              <p className="text-gray-500 text-sm">Aún no has enviado ningún CV</p>
-              <Link
-                href="/app/buscar"
-                className="inline-block mt-4 px-4 py-2 text-sm font-medium text-white rounded-lg transition hover:opacity-90"
-                style={{ backgroundColor: "#2563EB" }}
-              >
-                Buscar ofertas
-              </Link>
-            </div>
-          ) : (
-            <ul className="divide-y divide-gray-50">
-              {ultimosEnvios.map((envio) => (
-                <li key={envio.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="font-medium text-gray-900 text-sm truncate">
-                      {envio.puesto || "Candidatura espontánea"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">{envio.empresa}</p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span
-                      className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                        colorEstado[envio.estado] || "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {etiquetaEstado[envio.estado] || envio.estado}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(envio.creado_en).toLocaleDateString("es-ES")}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+                  {bloqueado ? (
+                    /* NIVEL BLOQUEADO */
+                    <div className="card-game p-5 flex items-center gap-4 opacity-40 cursor-not-allowed">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+                        style={{ background: "#2a2a1e", border: "1.5px solid #3d3c30" }}>
+                        🔒
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-bold text-sm" style={{ color: "#706a58" }}>{nivel.titulo}</p>
+                        <p className="text-xs" style={{ color: "#504a3a" }}>
+                          Completa el paso anterior para desbloquear
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* NIVEL DESBLOQUEADO */
+                    <Link href={nivel.href}>
+                      <div className="card-game p-5 flex items-center gap-4 cursor-pointer group"
+                        style={nivel.completado ? { borderColor: nivel.color + "30" } : {}}>
+                        {/* Icono del nivel */}
+                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl relative transition-transform group-hover:scale-110"
+                          style={{
+                            background: `${nivel.color}15`,
+                            border: `1.5px solid ${nivel.color}30`,
+                            boxShadow: nivel.completado ? `0 0 16px ${nivel.color}20` : "none",
+                          }}>
+                          {nivel.icon}
+                          {/* Check de completado */}
+                          {nivel.completado && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
+                              style={{ background: nivel.color, color: "#1a1a12" }}>
+                              ✓
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-sm" style={{ color: "#f0ebe0" }}>{nivel.titulo}</p>
+                            {nivel.completado && (
+                              <span className="badge-game text-[10px]"
+                                style={{ background: `${nivel.color}20`, color: nivel.color, border: `1px solid ${nivel.color}30` }}>
+                                {nivel.emoji_logro} {nivel.fase}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs mt-0.5" style={{ color: "#b0a890" }}>{nivel.desc}</p>
+                        </div>
+
+                        {/* Flecha */}
+                        <span className="text-lg transition-transform group-hover:translate-x-1" style={{ color: nivel.color }}>
+                          →
+                        </span>
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* ── Sección inferior: Evolución + Botón trabajo encontrado ─── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-          {/* Evolución del usuario */}
+        {/* ── Panel inferior: Evolución + Trabajo encontrado ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          {/* Evolución completa */}
           <EvolucionUsuario {...evolucion} />
 
-          {/* Botón "¿Ya encontraste trabajo?" */}
-          {!evolucion.trabajoEncontrado && (
-            <div
-              className="rounded-2xl p-6 border flex flex-col items-center justify-center gap-4 text-center"
-              style={{ backgroundColor: "#0d1f0d", borderColor: "#00ff8820" }}
-            >
-              <p className="text-4xl">🎉</p>
+          {/* Botón trabajo encontrado */}
+          {!evolucion.trabajoEncontrado ? (
+            <div className="card-game p-6 flex flex-col items-center justify-center gap-4 text-center"
+              style={{ borderColor: "#7ed56f20" }}>
+              <div className="text-4xl animate-float">🎉</div>
               <div>
-                <p className="font-semibold text-lg" style={{ color: "#f0f0f0" }}>
-                  ¿Ya encontraste trabajo?
-                </p>
-                <p className="text-sm mt-1" style={{ color: "#a0a0a0" }}>
-                  Revela tu mariposa única y celebra tu logro.
+                <p className="font-bold text-lg" style={{ color: "#f0ebe0" }}>¿Ya encontraste trabajo?</p>
+                <p className="text-sm mt-1" style={{ color: "#b0a890" }}>
+                  Revela tu mariposa única. 50 especies esperan.
                 </p>
               </div>
-              <button
-                onClick={handleTrabajoEncontrado}
-                className="w-full py-3 rounded-xl font-bold text-sm transition"
-                style={{
-                  backgroundColor: "#00ff8820",
-                  color: "#00ff88",
-                  border: "1.5px solid #00ff8840",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#00ff8830";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#00ff8820";
-                }}
-              >
-                ¡He encontrado trabajo! 🦋
+              <button onClick={handleTrabajo} className="btn-game w-full">
+                🦋 ¡He encontrado trabajo!
               </button>
             </div>
-          )}
-
-          {/* Mensaje si ya encontró trabajo */}
-          {evolucion.trabajoEncontrado && (
-            <div
-              className="rounded-2xl p-6 border flex flex-col items-center justify-center gap-3 text-center"
-              style={{ backgroundColor: "#0d1f0d", borderColor: "#fbbf2430" }}
-            >
-              <p className="text-4xl">✨</p>
-              <p className="font-semibold text-lg" style={{ color: "#fbbf24" }}>
-                ¡Metamorfosis completa!
-              </p>
-              <p className="text-sm" style={{ color: "#a0a0a0" }}>
-                Has completado tu viaje. Tu mariposa ya fue revelada.
-              </p>
+          ) : (
+            <div className="card-game p-6 flex flex-col items-center justify-center gap-3 text-center"
+              style={{ borderColor: "#f0c04030" }}>
+              <div className="text-4xl">✨</div>
+              <p className="font-bold text-lg" style={{ color: "#f0c040" }}>¡Metamorfosis completa!</p>
+              <p className="text-sm" style={{ color: "#b0a890" }}>Tu mariposa ya fue revelada.</p>
               {userId && (
-                <button
-                  onClick={() => setMostrarRevelacion(true)}
-                  className="mt-2 px-4 py-2 rounded-lg text-sm font-medium transition"
-                  style={{ color: "#fbbf24", border: "1px solid #fbbf2440" }}
-                >
+                <button onClick={() => setMostrarRevelacion(true)}
+                  className="btn-game-outline text-sm">
                   Ver mi mariposa →
                 </button>
               )}
             </div>
           )}
         </div>
+
+        {/* ── Últimos envíos ──────────────────────────────── */}
+        <div className="card-game overflow-hidden">
+          <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid #3d3c3030" }}>
+            <h2 className="font-bold" style={{ color: "#f0ebe0" }}>Últimos envíos</h2>
+            <Link href="/app/envios" className="text-xs font-medium hover:underline" style={{ color: "#7ed56f" }}>
+              Ver todos →
+            </Link>
+          </div>
+
+          {ultimosEnvios.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <p className="text-3xl mb-3">📭</p>
+              <p className="text-sm" style={{ color: "#706a58" }}>Aún no has enviado ningún CV</p>
+              {tieneCv && (
+                <Link href="/app/envios" className="btn-game inline-block mt-4 text-sm">
+                  Empezar a enviar
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div>
+              {ultimosEnvios.map((envio) => {
+                const est = colorEstado[envio.estado] || colorEstado.pendiente;
+                return (
+                  <div key={envio.id} className="px-6 py-3 flex items-center justify-between gap-4"
+                    style={{ borderBottom: "1px solid #2a2a1e" }}>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate" style={{ color: "#f0ebe0" }}>
+                        {envio.puesto || "Candidatura espontánea"}
+                      </p>
+                      <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>{envio.empresa}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
+                        style={{ background: est.bg, color: est.text }}>
+                        {envio.estado}
+                      </span>
+                      <span className="text-[10px]" style={{ color: "#504a3a" }}>
+                        {new Date(envio.creado_en).toLocaleDateString("es-ES")}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
-
-// ─── Componente tarjeta de estadística ────────────────────────────────────────
-
-function TarjetaEstadistica({
-  titulo,
-  valor,
-  emoji,
-}: {
-  titulo: string;
-  valor: number | string;
-  emoji: string;
-}) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5">
-      <div className="text-2xl mb-2">{emoji}</div>
-      <div className="text-2xl font-bold text-gray-900">{valor}</div>
-      <div className="text-xs text-gray-500 mt-1">{titulo}</div>
     </div>
   );
 }

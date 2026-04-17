@@ -1,32 +1,224 @@
-/* app/globals.css — Estilos globales de BuscayCurra con directivas de Tailwind CSS */
+/* app/globals.css — BuscayCurra "Metamorfosis" UI — Estilo videojuego elegante */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Variables CSS de los colores de marca — paleta "La Metamorfosis" */
+/* ── Paleta "Bosque Encantado" — Verde + Marrón + Dorado ──────────────── */
 :root {
-  --color-fondo: #0a0a0a;
-  --color-neon: #00ff88;
-  --color-verde: #4ade80;
-  --color-superficie: #0d1f0d;
-  --color-texto: #f0f0f0;
-  --color-texto-sec: #a0a0a0;
+  --color-fondo:       #1a1a12;
+  --color-fondo-alt:   #22211a;
+  --color-superficie:  #2a2a1e;
+  --color-superficie2: #33322a;
+  --color-borde:       #3d3c30;
+  --color-verde:       #7ed56f;
+  --color-verde-claro: #a8e6a1;
+  --color-verde-neon:  #00ff88;
+  --color-marron:      #8b6f47;
+  --color-marron-claro:#c4a265;
+  --color-dorado:      #f0c040;
+  --color-dorado-suave:#e8d48b;
+  --color-crema:       #f5f0e0;
+  --color-texto:       #f0ebe0;
+  --color-texto-sec:   #b0a890;
+  --color-texto-dim:   #706a58;
+  --sombra-card:       0 8px 32px rgba(0,0,0,0.3), 0 2px 8px rgba(126,213,111,0.08);
+  --sombra-boton:      0 4px 16px rgba(126,213,111,0.25);
+  --radio-xl:          1.5rem;
+  --radio-pill:        9999px;
 }
 
-/* Estilos base — negro con texto claro */
+/* ── Fuente Nunito (redondeada, coqueta) ────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
 body {
-  background-color: var(--color-fondo);
+  background: var(--color-fondo);
   color: var(--color-texto);
+  font-family: 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   @apply antialiased;
 }
 
-/* ── Keyframes para animaciones de la metamorfosis ─────────────────────────── */
+/* ── Inputs bonitos, claros y redondeados ────────────────────────────────── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="number"],
+textarea,
+select {
+  background: rgba(42, 42, 30, 0.8) !important;
+  color: #f0ebe0 !important;
+  border: 2px solid rgba(126, 213, 111, 0.15) !important;
+  border-radius: 14px !important;
+  padding: 12px 16px !important;
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  outline: none !important;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(126, 213, 111, 0.4) !important;
+  box-shadow: 0 0 0 3px rgba(126, 213, 111, 0.08), 0 0 20px rgba(126, 213, 111, 0.06) !important;
+  background: rgba(42, 42, 30, 0.95) !important;
+}
+input::placeholder, textarea::placeholder {
+  color: #706a58 !important;
+  font-weight: 400 !important;
+}
+label {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  color: #b0a890;
+}
+
+/* ── Scrollbar bonita ────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-fondo); }
+::-webkit-scrollbar-thumb { background: var(--color-borde); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-marron); }
+
+/* ── Glassmorphism cálido ────────────────────────────────────────────────── */
+.glass-warm {
+  background: rgba(42, 42, 30, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(126, 213, 111, 0.12);
+}
+
+/* ── Tarjetas con brillo suave ───────────────────────────────────────────── */
+.card-game {
+  background: linear-gradient(145deg, #2a2a1e 0%, #22211a 100%);
+  border: 2px solid rgba(126, 213, 111, 0.2);
+  border-radius: var(--radio-xl);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(126,213,111,0.1), inset 0 1px 0 rgba(126,213,111,0.05);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.card-game:hover {
+  border-color: rgba(126, 213, 111, 0.45);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 4px 20px rgba(126,213,111,0.18), inset 0 1px 0 rgba(126,213,111,0.08);
+  transform: translateY(-4px);
+}
+
+/* ── Botón principal (estilo juego) ──────────────────────────────────────── */
+.btn-game {
+  background: linear-gradient(135deg, #7ed56f 0%, #5cb848 100%);
+  color: #1a1a12;
+  font-weight: 700;
+  border-radius: var(--radio-pill);
+  padding: 0.85rem 2rem;
+  box-shadow: var(--sombra-boton), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.btn-game::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transition: left 0.5s;
+}
+.btn-game:hover::after {
+  left: 100%;
+}
+.btn-game:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(126,213,111,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.btn-game:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ── Botón secundario ────────────────────────────────────────────────────── */
+.btn-game-outline {
+  background: transparent;
+  color: var(--color-verde-claro);
+  font-weight: 600;
+  border: 2px solid rgba(126, 213, 111, 0.3);
+  border-radius: var(--radio-pill);
+  padding: 0.85rem 2rem;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.btn-game-outline:hover {
+  border-color: var(--color-verde);
+  background: rgba(126, 213, 111, 0.08);
+  transform: translateY(-2px);
+}
+
+/* ── Mascota flotante (oruga en esquina) ─────────────────────────────────── */
+.mascota-flotante {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 50;
+  animation: mascota-bounce 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(126,213,111,0.3));
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.mascota-flotante:hover {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+/* ── Badge/Pill ──────────────────────────────────────────────────────────── */
+.badge-game {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radio-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.badge-verde {
+  background: rgba(126,213,111,0.15);
+  color: #7ed56f;
+  border: 1px solid rgba(126,213,111,0.25);
+}
+.badge-dorado {
+  background: rgba(240,192,64,0.15);
+  color: #f0c040;
+  border: 1px solid rgba(240,192,64,0.25);
+}
+
+/* ── Partículas de fondo (hojas flotando) ────────────────────────────────── */
+.leaf-particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.15;
+  animation: leaf-fall linear infinite;
+}
+
+/* ── Separador decorativo ────────────────────────────────────────────────── */
+.divider-forest {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--color-verde) 30%, var(--color-dorado) 70%, transparent);
+  border: none;
+  border-radius: 2px;
+  opacity: 0.3;
+}
+
+/* ═══════ KEYFRAMES ═══════════════════════════════════════════════════════ */
+
+@keyframes mascota-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30%      { transform: translateY(-8px) rotate(2deg); }
+  60%      { transform: translateY(-4px) rotate(-1deg); }
+}
 
 @keyframes worm-wiggle {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  25%       { transform: translateY(-3px) rotate(2deg); }
-  75%       { transform: translateY(3px) rotate(-2deg); }
+  25%      { transform: translateY(-3px) rotate(2deg); }
+  75%      { transform: translateY(3px) rotate(-2deg); }
 }
 
 @keyframes worm-crawl {
@@ -61,27 +253,27 @@ body {
 
 @keyframes wing-flap {
   0%, 100% { transform: scaleX(1); }
-  50%       { transform: scaleX(0.4); }
+  50%      { transform: scaleX(0.4); }
 }
 
 @keyframes title-appear {
-  0%   { opacity: 0; transform: translateY(20px) scale(0.9); }
+  0%   { opacity: 0; transform: translateY(30px) scale(0.9); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes neon-pulse {
-  0%, 100% { text-shadow: 0 0 8px #00ff88, 0 0 20px #00ff88; }
-  50%       { text-shadow: 0 0 20px #00ff88, 0 0 50px #00ff88, 0 0 80px #00ff88; }
+  0%, 100% { text-shadow: 0 0 8px #7ed56f, 0 0 20px #7ed56f; }
+  50%      { text-shadow: 0 0 20px #7ed56f, 0 0 40px #7ed56f; }
 }
 
 @keyframes glow-pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px #00ff88); }
-  50%       { filter: drop-shadow(0 0 14px #00ff88) drop-shadow(0 0 28px #4ade80); }
+  0%, 100% { filter: drop-shadow(0 0 4px #7ed56f); }
+  50%      { filter: drop-shadow(0 0 12px #7ed56f) drop-shadow(0 0 24px #5cb848); }
 }
 
 @keyframes progress-bar-glow {
-  0%, 100% { box-shadow: 0 0 6px #00ff88; }
-  50%       { box-shadow: 0 0 18px #00ff88, 0 0 30px #4ade80; }
+  0%, 100% { box-shadow: 0 0 6px #7ed56f; }
+  50%      { box-shadow: 0 0 14px #7ed56f, 0 0 24px #5cb848; }
 }
 
 @keyframes level-up-burst {
@@ -95,24 +287,47 @@ body {
   100% { transform: translateY(-60px) translateX(var(--px, 0px)) scale(0); opacity: 0; }
 }
 
-/* ── Clases de utilidad de animación ────────────────────────────────────────── */
-
-.animate-worm-wiggle {
-  animation: worm-wiggle 1.2s ease-in-out infinite;
+@keyframes leaf-fall {
+  0%   { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+  10%  { opacity: 0.15; }
+  90%  { opacity: 0.15; }
+  100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
 }
 
-.animate-wing-flap {
-  animation: wing-flap 0.6s ease-in-out infinite;
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
 }
 
-.animate-neon-pulse {
-  animation: neon-pulse 2s ease-in-out infinite;
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-.animate-progress-glow {
-  animation: progress-bar-glow 2s ease-in-out infinite;
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
+
+/* ── Clases de utilidad ──────────────────────────────────────────────────── */
+.animate-worm-wiggle   { animation: worm-wiggle 1.2s ease-in-out infinite; }
+.animate-wing-flap     { animation: wing-flap 0.6s ease-in-out infinite; }
+.animate-neon-pulse    { animation: neon-pulse 2s ease-in-out infinite; }
+.animate-glow-pulse    { animation: glow-pulse 2s ease-in-out infinite; }
+.animate-progress-glow { animation: progress-bar-glow 2s ease-in-out infinite; }
+.animate-float         { animation: float-gentle 3s ease-in-out infinite; }
+.animate-slide-up      { animation: slide-up 0.8s ease-out forwards; }
+.animate-fade-in       { animation: fade-in 0.6s ease-out forwards; }
+.animate-shimmer       { animation: shimmer 2s linear infinite; background-size: 200% 100%; }
+
+/* ── Delay helpers ───────────────────────────────────────────────────────── */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }

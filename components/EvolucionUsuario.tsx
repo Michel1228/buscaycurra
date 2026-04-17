@@ -64,21 +64,21 @@ interface Fase {
 
 function getFase(progreso: number, trabajoEncontrado: boolean): Fase {
   if (trabajoEncontrado || progreso === 100) {
-    return { nombre: "¡Metamorfosis completa!", emoji: "✨", mensaje: "¡Lo conseguiste! Tu mariposa se ha revelado.", color: "#fbbf24" };
+    return { nombre: "¡Metamorfosis completa!", emoji: "✨", mensaje: "¡Lo conseguiste! Tu mariposa se ha revelado.", color: "#f0c040" };
   }
   if (progreso >= 76) {
-    return { nombre: "Mariposa emergiendo", emoji: "🦋", mensaje: "Ya casi estás. ¡Sigue enviando CVs!", color: "#00ff88" };
+    return { nombre: "Mariposa emergiendo", emoji: "🦋", mensaje: "Ya casi estás. ¡Sigue enviando CVs!", color: "#7ed56f" };
   }
   if (progreso >= 56) {
-    return { nombre: "Capullo", emoji: "🫘", mensaje: "Preparándote para algo grande.", color: "#00e07a" };
+    return { nombre: "Capullo", emoji: "🫘", mensaje: "Preparándote para algo grande.", color: "#a8e6a1" };
   }
   if (progreso >= 31) {
-    return { nombre: "Oruga grande", emoji: "🐛", mensaje: "Cogiendo ritmo. ¡Buen trabajo!", color: "#4ade80" };
+    return { nombre: "Oruga grande", emoji: "🐛", mensaje: "Cogiendo ritmo. ¡Buen trabajo!", color: "#7ed56f" };
   }
   if (progreso >= 11) {
-    return { nombre: "Oruga pequeña", emoji: "🐛", mensaje: "Dando tus primeros pasos.", color: "#86efac" };
+    return { nombre: "Oruga pequeña", emoji: "🐛", mensaje: "Dando tus primeros pasos.", color: "#a8e6a1" };
   }
-  return { nombre: "Huevo", emoji: "🥚", mensaje: "Acabas de llegar. ¡Completa tu perfil!", color: "#a0a0a0" };
+  return { nombre: "Huevo", emoji: "🥚", mensaje: "Acabas de llegar. ¡Completa tu perfil!", color: "#b0a890" };
 }
 
 function HuevoSVG({ size = 60 }: { size?: number }) {
@@ -255,12 +255,12 @@ export default function EvolucionUsuario(props: EvolucionUsuarioProps) {
   const puntos = calcularPuntos(props);
 
   return (
-    <div className="rounded-2xl p-6 border" style={{ backgroundColor: "#0d1f0d", borderColor: "#00ff8830" }}>
+    <div className="card-game p-6">
       {/* Cabecera */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-bold" style={{ color: "#f0f0f0" }}>Tu evolución</h3>
-          <p className="text-sm mt-0.5" style={{ color: "#a0a0a0" }}>{fase.nombre}</p>
+          <h3 className="text-lg font-bold" style={{ color: "#f0ebe0" }}>Tu evolución</h3>
+          <p className="text-sm mt-0.5" style={{ color: "#b0a890" }}>{fase.nombre}</p>
         </div>
         <span className="text-3xl font-extrabold" style={{ color: fase.color }}>
           {props.trabajoEncontrado ? "✨" : `${progreso}%`}
@@ -279,14 +279,14 @@ export default function EvolucionUsuario(props: EvolucionUsuarioProps) {
 
       {/* Barra de progreso */}
       <div className="relative mt-4 mb-3">
-        <div className="h-3 rounded-full" style={{ backgroundColor: "#1a2e1a" }}>
+        <div className="h-3 rounded-full" style={{ backgroundColor: "#2a2a1e" }}>
           <div
             className="h-3 rounded-full transition-all duration-700 animate-progress-glow"
             style={{
               width: `${props.trabajoEncontrado ? 100 : progreso}%`,
               background: props.trabajoEncontrado
-                ? "linear-gradient(90deg, #fbbf24, #f59e0b)"
-                : "linear-gradient(90deg, #00ff88, #4ade80)",
+                ? "linear-gradient(90deg, #f0c040, #e8d48b)"
+                : "linear-gradient(90deg, #7ed56f, #5cb848)",
             }}
           />
         </div>
@@ -299,7 +299,7 @@ export default function EvolucionUsuario(props: EvolucionUsuarioProps) {
       </div>
 
       {/* Texto motivacional */}
-      <p className="text-sm text-center mt-4" style={{ color: "#a0a0a0" }}>{fase.mensaje}</p>
+      <p className="text-sm text-center mt-4" style={{ color: "#b0a890" }}>{fase.mensaje}</p>
 
       {/* Checklist de puntos */}
       <div className="mt-5 grid grid-cols-2 gap-2">
@@ -312,16 +312,16 @@ export default function EvolucionUsuario(props: EvolucionUsuarioProps) {
           { label: "Trabajo encontrado", ok: props.trabajoEncontrado ?? false,     pts: "🦋" },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-2 text-xs">
-            <span style={{ color: item.ok ? "#00ff88" : "#555" }}>{item.ok ? "✓" : "○"}</span>
-            <span style={{ color: item.ok ? "#f0f0f0" : "#555" }}>{item.label}</span>
-            <span className="ml-auto" style={{ color: "#a0a0a0" }}>
+            <span style={{ color: item.ok ? "#7ed56f" : "#504a3a" }}>{item.ok ? "✓" : "○"}</span>
+            <span style={{ color: item.ok ? "#f0ebe0" : "#504a3a" }}>{item.label}</span>
+            <span className="ml-auto" style={{ color: "#b0a890" }}>
               {typeof item.pts === "number" ? `+${item.pts}` : item.pts}
             </span>
           </div>
         ))}
       </div>
 
-      <div className="mt-3 text-xs text-right" style={{ color: "#555" }}>
+      <div className="mt-3 text-xs text-right" style={{ color: "#706a58" }}>
         {puntos}/{PUNTOS_MAX} pts
       </div>
     </div>

@@ -56,25 +56,25 @@ export default function RecuperarPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
 
         {/* ── Logotipo y título ──────────────────────────────────────── */}
         <div className="text-center mb-8">
           <div
             className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white text-2xl font-bold mb-4"
-            style={{ backgroundColor: "#2563EB" }}
+            style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
           >
             B
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">¿Olvidaste tu contraseña?</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[#f0ebe0]">¿Olvidaste tu contraseña?</h1>
+          <p className="text-[#706a58] text-sm mt-1">
             Te enviaremos un enlace para que puedas recuperar tu cuenta
           </p>
         </div>
 
         {/* ── Tarjeta del formulario ─────────────────────────────────── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <div className="card-game p-8">
 
           {/* Mensaje de éxito tras enviar el email */}
           {enviado ? (
@@ -82,12 +82,12 @@ export default function RecuperarPage() {
               {/* Icono de éxito */}
               <div
                 className="inline-flex items-center justify-center w-16 h-16 rounded-full text-white text-2xl mb-4"
-                style={{ backgroundColor: "#2563EB" }}
+                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >
                 ✓
               </div>
               {/* Mensaje principal */}
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Email enviado</h2>
+              <h2 className="text-lg font-semibold text-[#f0ebe0] mb-2">Email enviado</h2>
               <p className="text-gray-600 text-sm mb-6">
                 Te hemos enviado un email con el enlace para recuperar tu cuenta.
                 Revisa también la carpeta de spam.
@@ -96,7 +96,7 @@ export default function RecuperarPage() {
               <Link
                 href="/auth/login"
                 className="text-sm font-medium"
-                style={{ color: "#2563EB" }}
+                style={{ color: "#7ed56f" }}
               >
                 ← Volver al inicio de sesión
               </Link>
@@ -109,7 +109,7 @@ export default function RecuperarPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                  className="block text-sm font-medium text-[#b0a890] mb-1.5"
                 >
                   Tu email
                 </label>
@@ -120,7 +120,7 @@ export default function RecuperarPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
                   required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  className="w-full border border-[#3d3c30] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   style={{ "--tw-ring-color": "#2563EB" } as React.CSSProperties}
                 />
               </div>
@@ -137,7 +137,7 @@ export default function RecuperarPage() {
                 type="submit"
                 disabled={cargando || !email.trim()}
                 className="w-full text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: "#2563EB" }}
+                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >
                 {cargando ? "Enviando..." : "Enviar email de recuperación"}
               </button>
@@ -147,7 +147,7 @@ export default function RecuperarPage() {
                 <Link
                   href="/auth/login"
                   className="text-sm"
-                  style={{ color: "#2563EB" }}
+                  style={{ color: "#7ed56f" }}
                 >
                   ← Volver al inicio de sesión
                 </Link>
