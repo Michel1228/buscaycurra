@@ -14,6 +14,7 @@ import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import EvolucionUsuario from "@/components/EvolucionUsuario";
 import RevelacionMariposa from "@/components/RevelacionMariposa";
+import AvatarMariposa, { MARIPOSAS_AVATARES } from "@/components/AvatarMariposa";
 import { getEspecieForUser } from "@/lib/especies";
 
 interface EnvioCV {
@@ -97,6 +98,9 @@ export default function DashboardPage() {
   const [mostrarRevelacion, setMostrarRevelacion] = useState(false);
   const [stats, setStats] = useState({ hoyCvs: 0, semanaCvs: 0, empresas: 0, tasaRespuesta: 0 });
   const [ultimosEnvios, setUltimosEnvios] = useState<EnvioCV[]>([]);
+  const [avatarId, setAvatarId] = useState<string | null>(null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function cargar() {
@@ -108,7 +112,7 @@ export default function DashboardPage() {
         .select("full_name, phone, linkedin_url, trabajo_encontrado")
         .eq("id", user.id).single();
 
-      setNombre(perfil?.full_name || user.email?.split("@")[0] || "Usuario");
+      setNombre(perfil?.full_name || "");
 
       const { count: cvCount } = await getSupabaseBrowser().from("cvs")
         .select("*", { count: "exact", head: true }).eq("user_id", user.id);
@@ -198,12 +202,53 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto px-4 py-8 relative z-10">
 
         {/* ── Saludo ──────────────────────────────────────── */}
+        {/* Avatar picker overlay */}
+        {showAvatarPicker && (
+          <div className="card-game p-4 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold" style={{ color: "#f0c040" }}>🦋 Elige tu mariposa</h3>
+              <button onClick={() => setShowAvatarPicker(false)}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                style={{ background: "rgba(42,42,30,0.8)", color: "#706a58" }}>✖</button>
+            </div>
+            <AvatarMariposa
+              selected={avatarId}
+              onSelect={(id) => { setAvatarId(id); setShowAvatarPicker(false); }}
+              fotoUrl={fotoUrl}
+            />
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: "#f0ebe0" }}>
-              ¡Hola, {nombre}! 👋
-            </h1>
-            <p className="text-sm mt-1" style={{ color: "#706a58" }}>Tu camino de metamorfosis</p>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition hover:scale-105"
+              style={{
+                background: "linear-gradient(135deg, rgba(126,213,111,0.15), rgba(92,184,72,0.1))",
+                border: "2px solid rgba(126,213,111,0.2)",
+              }}>
+              {fotoUrl ? (
+                <img src={fotoUrl} alt="" className="w-full h-full rounded-2xl object-cover" />
+              ) : (
+                <span className="text-2xl">
+                  {avatarId ? (MARIPOSAS_AVATARES.find(m => m.id === avatarId)?.emoji || "🦋") : "🦋"}
+                </span>
+              )}
+            </button>
+            <div>
+              {nombre ? (
+                <h1 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>
+                  Bienvenido, <span style={{ color: "#7ed56f" }}>{nombre}</span>
+                </h1>
+              ) : (
+                <h1 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>
+                  Bienvenido a <span style={{ color: "#7ed56f" }}>BuscayCurra</span>
+                </h1>
+              )}
+              <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>
+                {nombre ? "Tu camino de metamorfosis 🐛→🦋" : "Toca la mariposa para elegir avatar"}
+              </p>
+            </div>
           </div>
           <EvolucionUsuario {...evolucion} compact />
         </div>
