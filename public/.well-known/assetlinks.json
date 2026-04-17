@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "es.buscaycurra.app",
+    "sha256_cert_fingerprints": [
+      "B6:ED:25:14:27:30:37:ED:21:68:22:35:C7:1C:8B:4D:98:CB:98:FE:26:93:E6:1F:86:70:E3:EC:06:16:14:FC"
+    ]
+  }
+}]
