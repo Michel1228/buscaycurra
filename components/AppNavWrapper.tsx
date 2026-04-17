@@ -18,6 +18,7 @@ const navItems = [
   { href: "/app/envios", label: "Envíos", icon: "📧" },
   { href: "/app/perfil", label: "Perfil", icon: "👤" },
   { href: "/precios", label: "Pro", icon: "⭐" },
+  { href: "/empresas/publicar", label: "Empresas", icon: "🏢" },
 ];
 
 export default function AppNavWrapper() {
