@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "BuscayCurra",
+    "slug": "buscaycurra",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0B0E17"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "es.buscaycurra.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0E17"
+      },
+      "package": "es.buscaycurra.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "extra": {
+      "apiUrl": "https://api.buscaycurra.es/api"
+    }
+  }
+}
