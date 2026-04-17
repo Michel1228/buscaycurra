@@ -2,8 +2,9 @@
  * app/api/cv-sender/status/route.ts
  * API endpoint GET para ver el estado de los envíos de un usuario
  *
- * Query params:
- *   - userId: ID del usuario (obligatorio)
+ * Auth:
+ *   Header obligatorio: Authorization: Bearer <supabase_access_token>
+ *   El userId se extrae del token, NUNCA de query params.
  *
  * Devuelve:
  *   - pendingJobs: Lista de envíos pendientes en la cola
@@ -13,6 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getUserPendingJobs } from "@/lib/cv-sender/scheduler";
 import { getUserStats, getUserSendHistory } from "@/lib/cv-sender/tracker";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
@@ -20,17 +22,33 @@ import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 // ─── GET /api/cv-sender/status ────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
-  try {
-    // ── Leer y validar el query param ─────────────────────────────────────
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+  // ─── Cliente Supabase con clave anónima (para verificar sesión) ───────────
+  const supabasePublico = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
-    if (!userId) {
+  try {
+    // ── Verificar autenticación del usuario ─────────────────────────────────
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: "El parámetro userId es obligatorio" },
-        { status: 400 }
+        { error: "No autorizado. Debes iniciar sesión para ver tus envíos." },
+        { status: 401 }
       );
     }
+
+    const token = authHeader.slice(7);
+    const { data: { user }, error: authError } = await supabasePublico.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Sesión no válida. Por favor, inicia sesión de nuevo." },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.id;
 
     // ── Obtener todos los datos en paralelo (más rápido) ─────────────────
     const [pendingJobs, stats, history, userPlan] = await Promise.all([

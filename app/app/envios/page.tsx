@@ -15,6 +15,7 @@
 import { useState, useEffect } from "react";
 import AutoSendSetup from "@/components/AutoSendSetup";
 import CVSenderDashboard from "@/components/CVSenderDashboard";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -37,10 +38,6 @@ const TABS: Tab[] = [
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
 export default function EnviosPage() {
-  // En producción, este ID vendrá de la sesión de Supabase Auth
-  // Aquí usamos un ejemplo para el desarrollo
-  const userId = "usuario-ejemplo-id";
-
   const [activeTab, setActiveTab] = useState<TabId>("nuevo");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -119,7 +116,6 @@ export default function EnviosPage() {
         {/* Pestaña: Nuevo envío */}
         {activeTab === "nuevo" && (
           <AutoSendSetup
-            userId={userId}
             onJobScheduled={handleJobScheduled}
           />
         )}
@@ -128,13 +124,12 @@ export default function EnviosPage() {
         {activeTab === "envios" && (
           <CVSenderDashboard
             key={refreshKey} // Forzar re-montaje cuando se programa un nuevo envío
-            userId={userId}
           />
         )}
 
         {/* Pestaña: Estadísticas */}
         {activeTab === "estadisticas" && (
-          <StatsTab userId={userId} />
+          <StatsTab />
         )}
 
       </main>
@@ -147,7 +142,7 @@ export default function EnviosPage() {
 /**
  * Pestaña de estadísticas con información más detallada sobre la actividad.
  */
-function StatsTab({ userId }: { userId: string }) {
+function StatsTab() {
   const [stats, setStats] = useState<{
     totalEnviados: number;
     empresasContactadas: number;
@@ -160,7 +155,15 @@ function StatsTab({ userId }: { userId: string }) {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const response = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`);
+        const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+        const accessToken = session?.access_token;
+        if (!accessToken) {
+          setLoading(false);
+          return;
+        }
+        const response = await fetch(`/api/cv-sender/status`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
         const data = await response.json() as { stats?: typeof stats };
         if (data.stats) {
           setStats(data.stats);
@@ -172,7 +175,7 @@ function StatsTab({ userId }: { userId: string }) {
       }
     };
     void loadStats();
-  }, [userId]);
+  }, []);
 
   if (loading) {
     return (

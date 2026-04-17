@@ -79,8 +79,16 @@ export default function EmpresasPage() {
     setInfoEmpresa(null);
 
     try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        throw new Error("Tu sesión ha caducado. Vuelve a iniciar sesión.");
+      }
+
       const params = new URLSearchParams({ url: urlEmpresa.trim() });
-      const respuesta = await fetch(`/api/empresas/analizar?${params.toString()}`);
+      const respuesta = await fetch(`/api/empresas/analizar?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
       if (!respuesta.ok) {
         const datos = await respuesta.json();

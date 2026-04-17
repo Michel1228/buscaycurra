@@ -17,6 +17,7 @@
  */
 
 import { useState } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -37,13 +38,12 @@ interface ScheduleSuccess {
 
 /** Props del componente */
 interface AutoSendSetupProps {
-  userId: string;
   onJobScheduled?: (result: ScheduleSuccess) => void;
 }
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
-export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupProps) {
+export default function AutoSendSetup({ onJobScheduled }: AutoSendSetupProps) {
   // ── Estado del formulario ──────────────────────────────────────────────
   const [companyUrl, setCompanyUrl] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -79,11 +79,20 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
     setLoading(true);
 
     try {
+      // Obtener el token de sesión para autenticar la petición
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        throw new Error("Tu sesión ha caducado. Vuelve a iniciar sesión.");
+      }
+
       const response = await fetch("/api/cv-sender/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
-          userId,
           companyUrl: companyUrl.trim() || undefined,
           companyEmail: companyEmail.trim().toLowerCase(),
           companyName: companyName.trim(),

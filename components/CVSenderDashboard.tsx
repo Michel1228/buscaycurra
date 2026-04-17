@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -61,7 +62,6 @@ interface RateLimitInfo {
 
 /** Props del componente */
 interface CVSenderDashboardProps {
-  userId: string;
   userPlan?: "free" | "pro" | "empresa";
 }
 
@@ -96,7 +96,7 @@ function getStatusEmoji(status: string): string {
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
-export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSenderDashboardProps) {
+export default function CVSenderDashboard({ userPlan = "free" }: CVSenderDashboardProps) {
   // Estado del componente
   const [pendingJobs, setPendingJobs] = useState<PendingJob[]>([]);
   const [history, setHistory] = useState<HistoryRecord[]>([]);
@@ -112,7 +112,15 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`);
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        throw new Error("Tu sesión ha caducado. Vuelve a iniciar sesión.");
+      }
+
+      const response = await fetch(`/api/cv-sender/status`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       const data = await response.json() as {
         success?: boolean;
         error?: string;
@@ -135,7 +143,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, []);
 
   // Cargar datos al montar el componente
   useEffect(() => {
@@ -152,10 +160,21 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
 
     setCancellingJobId(jobId);
     try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        alert("❌ Tu sesión ha caducado. Vuelve a iniciar sesión.");
+        setCancellingJobId(null);
+        return;
+      }
+
       const response = await fetch("/api/cv-sender/cancel", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId, userId }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ jobId }),
       });
 
       const data = await response.json() as { success?: boolean; message?: string; error?: string };

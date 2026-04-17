@@ -1,6 +1,10 @@
 /**
  * app/api/jobs/search/route.ts — API de búsqueda de ofertas de trabajo
  *
+ * Auth:
+ *   Header obligatorio: Authorization: Bearer <supabase_access_token>
+ *   Evita scraping anónimo que podría causar baneos en las fuentes.
+ *
  * Recibe:  keyword (palabra clave) y location (ciudad/provincia)
  * Proceso: primero busca en caché Redis; si no hay → llama al scraper
  * Devuelve: array de ofertas de trabajo en formato JSON
@@ -14,12 +18,38 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { obtenerOfertasCacheadas } from "@/lib/cache/job-cache";
 import { buscarOfertas } from "@/lib/job-scraper";
 
 // ─── Handler GET ──────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
+  // ─── Cliente Supabase con clave anónima (para verificar sesión) ───────────
+  const supabasePublico = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // ── Verificar autenticación del usuario ─────────────────────────────────
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { error: "No autorizado. Debes iniciar sesión para buscar ofertas." },
+      { status: 401 }
+    );
+  }
+
+  const token = authHeader.slice(7);
+  const { data: { user }, error: authError } = await supabasePublico.auth.getUser(token);
+
+  if (authError || !user) {
+    return NextResponse.json(
+      { error: "Sesión no válida. Por favor, inicia sesión de nuevo." },
+      { status: 401 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
 
   // Leer parámetros de búsqueda

@@ -91,7 +91,15 @@ function BuscarPageInner() {
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
 
-      const respuesta = await fetch(`/api/jobs/search?${params.toString()}`);
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        throw new Error("Tu sesión ha caducado. Vuelve a iniciar sesión.");
+      }
+
+      const respuesta = await fetch(`/api/jobs/search?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
       if (!respuesta.ok) {
         throw new Error("Error al buscar ofertas. Inténtalo de nuevo.");
