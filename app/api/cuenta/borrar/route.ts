@@ -84,15 +84,8 @@ export async function DELETE(request: NextRequest) {
       console.error("[borrar cuenta] Error al borrar cvs:", errorCvs.message);
     }
 
-    // ── Borrar entradas en la lista negra de empresas ──────────────────────
-    const { error: errorBlacklist } = await supabaseAdmin
-      .from("cv_blacklist")
-      .delete()
-      .eq("user_id", userId);
-
-    if (errorBlacklist) {
-      console.error("[borrar cuenta] Error al borrar cv_blacklist:", errorBlacklist.message);
-    }
+    // ── Nota: cv_blacklist es una lista compartida (por company_email),
+    //    no contiene datos personales del usuario, así que no se borra.
 
     // ── Borrar registros de cv_sends del usuario ───────────────────────────
     const { error: errorEnvios } = await supabaseAdmin
