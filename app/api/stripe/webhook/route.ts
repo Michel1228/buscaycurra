@@ -2,8 +2,10 @@
  * app/api/stripe/webhook/route.ts — API POST para webhooks de Stripe
  *
  * Recibe y procesa eventos de Stripe:
- *   - checkout.session.completed → activa el plan pro o empresa en el perfil
- *   - customer.subscription.deleted → resetea el plan a 'free'
+ *   - checkout.session.completed     → activa el plan pro o empresa
+ *   - customer.subscription.updated  → refleja cambios de plan y estado
+ *   - customer.subscription.deleted  → resetea el plan a 'free'
+ *   - invoice.payment_failed         → marca la suscripción como past_due
  *
  * IMPORTANTE: usa el body raw (sin parsear) para verificar la firma del webhook.
  */
@@ -113,6 +115,25 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Obtener datos de periodo si hay suscripción
+        let subscriptionId: string | null = null;
+        let currentPeriodEnd: string | null = null;
+        if (session.subscription) {
+          try {
+            const suscripcion = await getStripe().subscriptions.retrieve(
+              session.subscription as string
+            );
+            subscriptionId = suscripcion.id;
+            if (suscripcion.items.data[0]?.current_period_end) {
+              currentPeriodEnd = new Date(
+                suscripcion.items.data[0].current_period_end * 1000
+              ).toISOString();
+            }
+          } catch {
+            // Si falla, seguimos sin estos datos
+          }
+        }
+
         // Actualizar el plan en el perfil del usuario
         const { error } = await supabaseAdmin
           .from("profiles")
@@ -120,6 +141,9 @@ export async function POST(request: NextRequest) {
             id: userId,
             plan: planFinal,
             stripe_customer_id: session.customer as string,
+            stripe_subscription_id: subscriptionId,
+            subscription_status: "active",
+            current_period_end: currentPeriodEnd,
             updated_at: new Date().toISOString(),
           });
 
@@ -131,28 +155,82 @@ export async function POST(request: NextRequest) {
         break;
       }
 
-      // ── Suscripción cancelada: resetear el plan a 'free' ─────────────────
+      // ── Suscripción actualizada: reflejar cambios de plan o estado ───────
+      case "customer.subscription.updated": {
+        const suscripcion = event.data.object as Stripe.Subscription;
+        const customerId = suscripcion.customer as string;
+
+        // Determinar el plan actual según el price ID
+        const priceId = suscripcion.items.data[0]?.price.id;
+        const planActual = priceId ? getPlanFromPriceId(priceId) : "free";
+
+        // Periodo actual (para mostrar "renueva el …" en la UI)
+        const periodEndUnix = suscripcion.items.data[0]?.current_period_end;
+        const currentPeriodEnd = periodEndUnix
+          ? new Date(periodEndUnix * 1000).toISOString()
+          : null;
+
+        const { error: errorUpdate } = await supabaseAdmin
+          .from("profiles")
+          .update({
+            plan: planActual,
+            subscription_status: suscripcion.status,
+            stripe_subscription_id: suscripcion.id,
+            current_period_end: currentPeriodEnd,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_customer_id", customerId);
+
+        if (errorUpdate) {
+          console.error("[stripe/webhook] Error al actualizar suscripción:", errorUpdate.message);
+        } else {
+          console.log(
+            `[stripe/webhook] Suscripción ${suscripcion.id} actualizada: plan=${planActual}, estado=${suscripcion.status}`
+          );
+        }
+        break;
+      }
+
+      // ── Pago fallido: marcar estado como past_due (sin quitar el plan) ───
+      // Stripe seguirá reintentando el cobro durante varios días. Solo cuando
+      // agote los reintentos disparará subscription.deleted, y entonces sí
+      // quitamos el plan. Mientras tanto, el usuario mantiene su acceso pero
+      // el frontend puede avisarle con el estado past_due.
+      case "invoice.payment_failed": {
+        const factura = event.data.object as Stripe.Invoice;
+        const customerId = factura.customer as string;
+
+        const { error: errorFallo } = await supabaseAdmin
+          .from("profiles")
+          .update({
+            subscription_status: "past_due",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_customer_id", customerId);
+
+        if (errorFallo) {
+          console.error("[stripe/webhook] Error marcando past_due:", errorFallo.message);
+        } else {
+          console.log(`[stripe/webhook] Pago fallido para customer ${customerId}, marcado past_due`);
+        }
+        break;
+      }
+
+      // ── Suscripción cancelada definitivamente: resetear a 'free' ─────────
+      // Stripe dispara este evento al final del periodo pagado (cuando el
+      // usuario canceló con cancel_at_period_end) o al agotar los reintentos
+      // tras un pago fallido. En ambos casos, el acceso debe terminar aquí.
       case "customer.subscription.deleted": {
         const suscripcion = event.data.object as Stripe.Subscription;
         const customerId = suscripcion.customer as string;
 
-        // Buscar el usuario por su stripe_customer_id
-        const { data: perfiles, error: errorBusqueda } = await supabaseAdmin
-          .from("profiles")
-          .select("id")
-          .eq("stripe_customer_id", customerId)
-          .limit(1);
-
-        if (errorBusqueda || !perfiles?.length) {
-          console.error("[stripe/webhook] No se encontró usuario con customer_id:", customerId);
-          break;
-        }
-
-        // Resetear el plan a 'free'
         const { error: errorUpdate } = await supabaseAdmin
           .from("profiles")
           .update({
             plan: "free",
+            subscription_status: "canceled",
+            stripe_subscription_id: null,
+            current_period_end: null,
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_customer_id", customerId);

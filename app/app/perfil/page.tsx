@@ -370,6 +370,9 @@ function TabSeguridad({ token }: { token: string | null }) {
   return (
     <div className="space-y-8">
 
+      {/* ── Sección: Gestionar suscripción ───────────────────────── */}
+      <SuscripcionSection token={token} />
+
       {/* ── Sección: Cambiar contraseña ──────────────────────────── */}
       <div>
         <h2 className="text-lg font-bold text-gray-900 mb-1">Cambiar contraseña</h2>
@@ -522,6 +525,134 @@ function TabSeguridad({ token }: { token: string | null }) {
         </div>
       </div>
 
+    </div>
+  );
+}
+
+// ─── Sección: Gestionar suscripción ──────────────────────────────────────────
+
+/**
+ * Muestra el plan actual y un botón que abre el Customer Portal de Stripe,
+ * donde el usuario puede actualizar método de pago, ver facturas y cancelar.
+ */
+function SuscripcionSection({ token }: { token: string | null }) {
+  const [plan, setPlan] = useState<string>("free");
+  const [estado, setEstado] = useState<string>("inactive");
+  const [cargando, setCargando] = useState(true);
+  const [abriendo, setAbriendo] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function cargar() {
+      try {
+        const { data: { user } } = await getSupabaseBrowser().auth.getUser();
+        if (!user) return;
+        const { data } = await getSupabaseBrowser()
+          .from("profiles")
+          .select("plan, subscription_status")
+          .eq("id", user.id)
+          .single();
+        if (data) {
+          setPlan((data.plan as string) ?? "free");
+          setEstado((data.subscription_status as string) ?? "inactive");
+        }
+      } finally {
+        setCargando(false);
+      }
+    }
+    void cargar();
+  }, []);
+
+  const handleAbrirPortal = async () => {
+    if (!token) return;
+    setAbriendo(true);
+    setError("");
+    try {
+      const response = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json() as { url?: string; error?: string };
+      if (!response.ok || !data.url) {
+        setError(data.error ?? "No se pudo abrir el portal.");
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setError("Error de red. Inténtalo de nuevo.");
+    } finally {
+      setAbriendo(false);
+    }
+  };
+
+  if (cargando) return null;
+
+  const esPlanPago = plan === "pro" || plan === "empresa";
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold text-gray-900 mb-1">Mi suscripción</h2>
+      <p className="text-sm text-gray-500 mb-4">
+        Gestiona tu plan, método de pago y facturas
+      </p>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        {/* Plan actual */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">Plan actual</p>
+            <p className="text-xl font-bold text-gray-900 capitalize">{plan}</p>
+          </div>
+          {estado === "past_due" && (
+            <span className="text-xs font-medium bg-red-100 text-red-700 px-3 py-1 rounded-full">
+              ⚠️ Pago pendiente
+            </span>
+          )}
+          {estado === "active" && (
+            <span className="text-xs font-medium bg-green-100 text-green-700 px-3 py-1 rounded-full">
+              ✓ Activa
+            </span>
+          )}
+          {estado === "canceled" && (
+            <span className="text-xs font-medium bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+              Cancelada
+            </span>
+          )}
+        </div>
+
+        {estado === "past_due" && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-800 mb-4">
+            Hemos tenido problemas cobrando la última factura. Actualiza tu
+            método de pago desde el portal antes de que se cancele la
+            suscripción.
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700 mb-4">
+            {error}
+          </div>
+        )}
+
+        {esPlanPago ? (
+          <button
+            onClick={handleAbrirPortal}
+            disabled={abriendo}
+            className="w-full py-3 text-sm font-semibold text-white rounded-lg transition disabled:opacity-50"
+            style={{ backgroundColor: "#2563EB" }}
+          >
+            {abriendo ? "Abriendo portal..." : "🧾 Gestionar suscripción y facturas"}
+          </button>
+        ) : (
+          <a
+            href="/precios"
+            className="block w-full text-center py-3 text-sm font-semibold text-white rounded-lg transition hover:opacity-90"
+            style={{ backgroundColor: "#F97316" }}
+          >
+            🚀 Ver planes disponibles
+          </a>
+        )}
+      </div>
     </div>
   );
 }
