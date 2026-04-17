@@ -2,15 +2,16 @@
  * app/page.tsx — Landing page principal de BuscayCurra
  *
  * Página de inicio pública con:
- *   - Hero: título, subtítulo y botones de registro/login
+ *   - Hero: título, subtítulo, gusano animado y botones de registro/login
  *   - Features: 3 tarjetas con las funcionalidades principales
  *   - Precios: 3 columnas (Free, Pro, Empresa)
  *   - Footer: logo y enlaces
  *
- * Colores de marca: azul #2563EB y naranja #F97316.
+ * Paleta "La Metamorfosis": verde neón #00ff88 sobre negro #0a0a0a.
  */
 
 import Link from "next/link";
+import LogoGusano from "@/components/LogoGusano";
 
 // ─── Datos de las funcionalidades ────────────────────────────────────────────
 const features = [
@@ -63,34 +64,43 @@ const planes = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ backgroundColor: "#0a0a0a", color: "#f0f0f0" }}>
 
       {/* ── Cabecera pública ──────────────────────────────────────────── */}
-      <header className="border-b border-gray-100 bg-white sticky top-0 z-50">
+      <header
+        className="border-b sticky top-0 z-50"
+        style={{
+          backgroundColor: "rgba(10,10,10,0.9)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderColor: "#00ff8820",
+        }}
+      >
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{ backgroundColor: "#2563EB" }}
-            >
-              B
-            </div>
-            <span className="font-bold text-gray-900 text-lg">BuscayCurra</span>
+            <LogoGusano size={36} animated />
+            <span className="font-bold text-lg tracking-wide" style={{ color: "#00ff88" }}>
+              BuscayCurra
+            </span>
           </div>
 
           {/* Botones de acceso */}
           <div className="flex items-center gap-3">
             <Link
               href="/auth/login"
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition"
+              className="px-4 py-2 text-sm font-medium transition"
+              style={{ color: "#a0a0a0" }}
             >
               Iniciar sesión
             </Link>
             <Link
               href="/auth/registro"
-              className="px-4 py-2 text-sm font-medium text-white rounded-lg transition"
-              style={{ backgroundColor: "#2563EB" }}
+              className="px-4 py-2 text-sm font-semibold rounded-lg transition"
+              style={{
+                backgroundColor: "#00ff88",
+                color: "#0a0a0a",
+              }}
             >
               Empezar gratis
             </Link>
@@ -100,12 +110,36 @@ export default function LandingPage() {
 
       <main>
         {/* ── Hero ──────────────────────────────────────────────────────── */}
-        <section className="py-24 px-4 text-center bg-gradient-to-b from-blue-50 to-white">
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-5xl font-extrabold text-gray-900 leading-tight mb-6">
-              Encuentra trabajo más rápido con IA 🚀
+        <section
+          className="py-28 px-4 text-center relative overflow-hidden"
+          style={{
+            background: "radial-gradient(ellipse at 50% 40%, #0d1f0d 0%, #0a0a0a 70%)",
+          }}
+        >
+          {/* Gusano decorativo animado */}
+          <div className="flex justify-center mb-10 opacity-80">
+            <LogoGusano size={90} animated />
+          </div>
+
+          <div className="max-w-3xl mx-auto relative z-10">
+            <h1
+              className="text-5xl font-extrabold leading-tight mb-6"
+              style={{
+                color: "#f0f0f0",
+              }}
+            >
+              Encuentra trabajo más rápido{" "}
+              <span
+                style={{
+                  color: "#00ff88",
+                  textShadow: "0 0 20px #00ff88, 0 0 40px #4ade80",
+                }}
+              >
+                con IA
+              </span>{" "}
+              🚀
             </h1>
-            <p className="text-xl text-gray-600 mb-10 leading-relaxed">
+            <p className="text-xl mb-10 leading-relaxed" style={{ color: "#a0a0a0" }}>
               Mejora tu CV automáticamente, busca ofertas en toda España y envía tu candidatura
               a cientos de empresas con un solo clic.
             </p>
@@ -113,38 +147,61 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/auth/registro"
-                className="px-8 py-4 text-lg font-semibold text-white rounded-xl shadow-lg hover:opacity-90 transition"
-                style={{ backgroundColor: "#2563EB" }}
+                className="px-8 py-4 text-lg font-semibold rounded-xl transition"
+                style={{
+                  backgroundColor: "#00ff88",
+                  color: "#0a0a0a",
+                  boxShadow: "0 0 20px #00ff8866",
+                }}
               >
                 Empezar gratis
               </Link>
               <Link
                 href="/auth/login"
-                className="px-8 py-4 text-lg font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition"
+                className="px-8 py-4 text-lg font-semibold rounded-xl border transition"
+                style={{
+                  color: "#f0f0f0",
+                  borderColor: "#00ff8840",
+                  backgroundColor: "transparent",
+                }}
               >
                 Iniciar sesión
               </Link>
             </div>
           </div>
+
+          {/* Efecto gradiente verde difuso en el fondo */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "radial-gradient(circle at 20% 80%, #00ff8808 0%, transparent 50%), radial-gradient(circle at 80% 20%, #4ade8008 0%, transparent 50%)",
+            }}
+          />
         </section>
 
         {/* ── Sección Features ──────────────────────────────────────────── */}
-        <section className="py-20 px-4 bg-white">
+        <section className="py-20 px-4" style={{ backgroundColor: "#0a0a0a" }}>
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-14">
+            <h2 className="text-3xl font-bold text-center mb-14" style={{ color: "#f0f0f0" }}>
               Todo lo que necesitas para encontrar trabajo
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
               {features.map((feature) => (
                 <div
                   key={feature.titulo}
-                  className="bg-gray-50 rounded-2xl p-8 text-center border border-gray-100 hover:shadow-md transition"
+                  className="rounded-2xl p-8 text-center border transition hover:scale-105"
+                  style={{
+                    backgroundColor: "#0d1f0d",
+                    borderColor: "#00ff8825",
+                  }}
                 >
                   <div className="text-5xl mb-5">{feature.emoji}</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  <h3 className="text-xl font-semibold mb-3" style={{ color: "#f0f0f0" }}>
                     {feature.titulo}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.descripcion}</p>
+                  <p style={{ color: "#a0a0a0" }} className="leading-relaxed">
+                    {feature.descripcion}
+                  </p>
                 </div>
               ))}
             </div>
@@ -152,62 +209,56 @@ export default function LandingPage() {
         </section>
 
         {/* ── Sección Precios ───────────────────────────────────────────── */}
-        <section className="py-20 px-4 bg-gray-50">
+        <section className="py-20 px-4" style={{ backgroundColor: "#050505" }}>
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-center mb-4" style={{ color: "#f0f0f0" }}>
               Planes simples y transparentes
             </h2>
-            <p className="text-center text-gray-600 mb-14">
+            <p className="text-center mb-14" style={{ color: "#a0a0a0" }}>
               Empieza gratis y escala cuando lo necesites
             </p>
             <div className="grid md:grid-cols-3 gap-8">
               {planes.map((plan) => (
                 <div
                   key={plan.nombre}
-                  className={`rounded-2xl p-8 border transition hover:shadow-lg ${
-                    plan.destacado
-                      ? "text-white shadow-xl scale-105"
-                      : "bg-white border-gray-200"
-                  }`}
+                  className="rounded-2xl p-8 border transition hover:scale-105"
                   style={
                     plan.destacado
-                      ? { backgroundColor: "#2563EB", borderColor: "#2563EB" }
-                      : {}
+                      ? {
+                          backgroundColor: "#0d1f0d",
+                          borderColor: "#00ff88",
+                          boxShadow: "0 0 30px #00ff8830",
+                          transform: "scale(1.05)",
+                        }
+                      : {
+                          backgroundColor: "#0d1f0d",
+                          borderColor: "#00ff8820",
+                        }
                   }
                 >
                   {plan.destacado && (
-                    <div className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-3">
+                    <div
+                      className="text-xs font-bold uppercase tracking-widest mb-3"
+                      style={{ color: "#00ff88" }}
+                    >
                       Más popular
                     </div>
                   )}
-                  <h3
-                    className={`text-xl font-bold mb-1 ${
-                      plan.destacado ? "text-white" : "text-gray-900"
-                    }`}
-                  >
+                  <h3 className="text-xl font-bold mb-1" style={{ color: "#f0f0f0" }}>
                     {plan.nombre}
                   </h3>
-                  <p
-                    className={`text-sm mb-4 ${
-                      plan.destacado ? "text-blue-200" : "text-gray-500"
-                    }`}
-                  >
+                  <p className="text-sm mb-4" style={{ color: "#a0a0a0" }}>
                     {plan.descripcion}
                   </p>
                   {/* Precio */}
                   <div className="mb-6">
                     <span
-                      className={`text-4xl font-extrabold ${
-                        plan.destacado ? "text-white" : "text-gray-900"
-                      }`}
+                      className="text-4xl font-extrabold"
+                      style={{ color: plan.destacado ? "#00ff88" : "#f0f0f0" }}
                     >
                       {plan.precio}
                     </span>
-                    <span
-                      className={`text-sm ${
-                        plan.destacado ? "text-blue-200" : "text-gray-500"
-                      }`}
-                    >
+                    <span className="text-sm" style={{ color: "#a0a0a0" }}>
                       {plan.periodo}
                     </span>
                   </div>
@@ -216,17 +267,10 @@ export default function LandingPage() {
                     {plan.caracteristicas.map((item) => (
                       <li
                         key={item}
-                        className={`flex items-center gap-2 text-sm ${
-                          plan.destacado ? "text-blue-100" : "text-gray-600"
-                        }`}
+                        className="flex items-center gap-2 text-sm"
+                        style={{ color: "#a0a0a0" }}
                       >
-                        <span
-                          className={`text-base ${
-                            plan.destacado ? "text-blue-200" : "text-green-500"
-                          }`}
-                        >
-                          ✓
-                        </span>
+                        <span style={{ color: "#00ff88" }}>✓</span>
                         {item}
                       </li>
                     ))}
@@ -234,15 +278,11 @@ export default function LandingPage() {
                   {/* Botón del plan */}
                   <Link
                     href="/auth/registro"
-                    className={`block text-center py-3 rounded-xl font-semibold text-sm transition ${
-                      plan.destacado
-                        ? "bg-white hover:bg-blue-50"
-                        : "text-white hover:opacity-90"
-                    }`}
+                    className="block text-center py-3 rounded-xl font-semibold text-sm transition"
                     style={
                       plan.destacado
-                        ? { color: "#2563EB" }
-                        : { backgroundColor: "#F97316" }
+                        ? { backgroundColor: "#00ff88", color: "#0a0a0a" }
+                        : { backgroundColor: "#1a2e1a", color: "#00ff88", border: "1px solid #00ff8840" }
                     }
                   >
                     Empezar con {plan.nombre}
@@ -255,53 +295,46 @@ export default function LandingPage() {
       </main>
 
       {/* ── Footer ────────────────────────────────────────────────────── */}
-      <footer className="bg-gray-900 text-gray-400 py-12 px-4">
+      <footer className="py-12 px-4" style={{ backgroundColor: "#050505", borderTop: "1px solid #00ff8815" }}>
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             {/* Logo en el footer */}
             <div className="flex items-center gap-2">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                style={{ backgroundColor: "#2563EB" }}
-              >
-                B
-              </div>
-              <span className="font-bold text-white">BuscayCurra</span>
+              <LogoGusano size={28} />
+              <span className="font-bold" style={{ color: "#00ff88" }}>BuscayCurra</span>
             </div>
-            {/* Links del footer — acceso y legales */}
+            {/* Links del footer */}
             <div className="flex flex-wrap gap-6 text-sm justify-center md:justify-end">
-              <Link href="/auth/login" className="hover:text-white transition">
+              <Link href="/auth/login" className="transition" style={{ color: "#a0a0a0" }}>
                 Iniciar sesión
               </Link>
-              <Link href="/auth/registro" className="hover:text-white transition">
+              <Link href="/auth/registro" className="transition" style={{ color: "#a0a0a0" }}>
                 Registro
               </Link>
             </div>
           </div>
 
           {/* Links legales obligatorios (LSSI + RGPD) */}
-          <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
+          <div
+            className="border-t mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm"
+            style={{ borderColor: "#00ff8815" }}
+          >
             <div className="flex flex-wrap gap-5 justify-center">
-              <Link href="/aviso-legal" className="hover:text-white transition">
-                Aviso Legal
-              </Link>
-              <Link href="/privacidad" className="hover:text-white transition">
-                Política de Privacidad
-              </Link>
-              <Link href="/terminos" className="hover:text-white transition">
-                Términos y Condiciones
-              </Link>
-              <Link href="/cookies" className="hover:text-white transition">
-                Política de Cookies
-              </Link>
-              <a
-                href="mailto:privacidad@buscaycurra.es"
-                className="hover:text-white transition"
-              >
+              {[
+                { href: "/aviso-legal",  label: "Aviso Legal" },
+                { href: "/privacidad",   label: "Política de Privacidad" },
+                { href: "/terminos",     label: "Términos y Condiciones" },
+                { href: "/cookies",      label: "Política de Cookies" },
+              ].map(({ href, label }) => (
+                <Link key={href} href={href} className="transition" style={{ color: "#555" }}>
+                  {label}
+                </Link>
+              ))}
+              <a href="mailto:privacidad@buscaycurra.es" className="transition" style={{ color: "#555" }}>
                 privacidad@buscaycurra.es
               </a>
             </div>
-            <div className="text-gray-500 text-xs">
+            <div className="text-xs" style={{ color: "#333" }}>
               © {new Date().getFullYear()} BuscayCurra — Encuentra trabajo con IA
             </div>
           </div>
@@ -310,3 +343,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
