@@ -405,7 +405,7 @@ export default function CVUploader() {
           onClick={() => !subiendo && inputRef.current?.click()}
           onKeyDown={(e) => {
             if ((e.key === "Enter" || e.key === " ") && !subiendo) {
-              e.preventDefault();
+              if (e.key === " ") e.preventDefault(); // Evitar scroll de página
               inputRef.current?.click();
             }
           }}

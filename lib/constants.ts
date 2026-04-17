@@ -27,14 +27,14 @@ export function esPlanValido(valor: string): valor is Plan {
 export const LIMITE_CVS_DIA: Record<Plan, number> = {
   free: 2,
   pro: 10,
-  empresa: Infinity,
+  empresa: 999999, // "ilimitado" — valor alto seguro para JSON/DB
 };
 
 /** CVs máximos por mes según el plan */
 export const LIMITE_CVS_MES: Record<Plan, number> = {
   free: 20,
   pro: 200,
-  empresa: Infinity,
+  empresa: 999999, // "ilimitado" — valor alto seguro para JSON/DB
 };
 
 // ─── Colores de marca ─────────────────────────────────────────────────────────

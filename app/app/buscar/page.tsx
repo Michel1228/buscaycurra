@@ -118,10 +118,7 @@ function BuscarPageInner() {
       setError((err as Error).message || "Error al buscar ofertas");
       setOfertas([]);
     } finally {
-      // Solo quitar cargando si esta es la búsqueda activa
-      if (abortControllerRef.current === controller) {
-        setCargando(false);
-      }
+      setCargando(false);
     }
   }
 
