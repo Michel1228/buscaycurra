@@ -53,6 +53,47 @@ export async function DELETE(request: NextRequest) {
 
     const userId = user.id;
 
+    // ── Borrar ficheros del bucket 'cvs' (Storage) ─────────────────────────
+    // RGPD: el borrado de cuenta debe eliminar TODOS los datos personales,
+    // incluido el PDF del CV. Listamos el directorio del usuario y borramos.
+    try {
+      const { data: ficheros } = await supabaseAdmin.storage
+        .from("cvs")
+        .list(userId);
+
+      if (ficheros && ficheros.length > 0) {
+        const rutas = ficheros.map((f) => `${userId}/${f.name}`);
+        const { error: errorStorage } = await supabaseAdmin.storage
+          .from("cvs")
+          .remove(rutas);
+        if (errorStorage) {
+          console.error("[borrar cuenta] Error al borrar ficheros Storage:", errorStorage.message);
+        }
+      }
+    } catch (err) {
+      console.error("[borrar cuenta] Error listando Storage:", (err as Error).message);
+    }
+
+    // ── Borrar registros de la tabla cvs (metadatos del CV) ────────────────
+    const { error: errorCvs } = await supabaseAdmin
+      .from("cvs")
+      .delete()
+      .eq("user_id", userId);
+
+    if (errorCvs) {
+      console.error("[borrar cuenta] Error al borrar cvs:", errorCvs.message);
+    }
+
+    // ── Borrar entradas en la lista negra de empresas ──────────────────────
+    const { error: errorBlacklist } = await supabaseAdmin
+      .from("cv_blacklist")
+      .delete()
+      .eq("user_id", userId);
+
+    if (errorBlacklist) {
+      console.error("[borrar cuenta] Error al borrar cv_blacklist:", errorBlacklist.message);
+    }
+
     // ── Borrar registros de cv_sends del usuario ───────────────────────────
     const { error: errorEnvios } = await supabaseAdmin
       .from("cv_sends")

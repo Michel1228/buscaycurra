@@ -2,9 +2,14 @@
  * app/api/cv-sender/send/route.ts
  * API endpoint POST para programar el envío automático de un CV
  *
+ * Auth:
+ *   Header obligatorio: Authorization: Bearer <supabase_access_token>
+ *   El userId se extrae del token, NUNCA del body.
+ *
  * Recibe:
- *   - userId: ID del usuario en Supabase
  *   - companyUrl: URL de la empresa destino
+ *   - companyEmail: Email de RRHH de la empresa (obligatorio)
+ *   - companyName: Nombre de la empresa (obligatorio)
  *   - jobTitle: Puesto al que aplica (opcional)
  *   - priority: "normal" | "prioritario" (opcional)
  *   - useAIPersonalization: boolean (opcional)
@@ -17,16 +22,43 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { scheduleCV } from "@/lib/cv-sender/scheduler";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 
 // ─── POST /api/cv-sender/send ─────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  // ─── Cliente Supabase con clave anónima (para verificar sesión) ───────────
+  const supabasePublico = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   try {
+    // ── Verificar autenticación del usuario ─────────────────────────────────
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { error: "No autorizado. Debes iniciar sesión para programar envíos." },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.slice(7);
+    const { data: { user }, error: authError } = await supabasePublico.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Sesión no válida. Por favor, inicia sesión de nuevo." },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.id;
+
     // ── Leer y validar el cuerpo de la petición ────────────────────────────
     const body = await request.json() as {
-      userId?: string;
       companyUrl?: string;
       companyEmail?: string;
       companyName?: string;
@@ -35,15 +67,7 @@ export async function POST(request: NextRequest) {
       useAIPersonalization?: boolean;
     };
 
-    const { userId, companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization } = body;
-
-    // Validación de campos obligatorios
-    if (!userId) {
-      return NextResponse.json(
-        { error: "El campo userId es obligatorio" },
-        { status: 400 }
-      );
-    }
+    const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization } = body;
 
     if (!companyEmail) {
       return NextResponse.json(
@@ -129,11 +153,11 @@ export async function POST(request: NextRequest) {
         rateLimitInfo: {
           enviadosHoy: rateLimitCheck.enviadosHoy,
           limiteHoy: rateLimitCheck.limiteHoy,
-          cvsRestantesHoy: rateLimitCheck.cvsRestantesHoy - 1, // Restamos el que acabamos de añadir
+          cvsRestantesHoy: rateLimitCheck.cvsRestantesHoy - 1,
           userPlan,
         },
       },
-      { status: 201 } // 201 = Created
+      { status: 201 }
     );
   } catch (error) {
     console.error("[API send] Error inesperado:", (error as Error).message);
