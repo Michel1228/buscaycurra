@@ -54,6 +54,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Idempotencia: registrar el event.id antes de procesar ───────────────
+    // Si Stripe reenvía el mismo evento, la inserción falla por UNIQUE y
+    // devolvemos 200 OK sin re-ejecutar la lógica.
+    const { error: errorIdempotencia } = await supabaseAdmin
+      .from("stripe_webhook_events")
+      .insert({ event_id: event.id, event_type: event.type });
+
+    if (errorIdempotencia) {
+      // Código 23505 = unique_violation en PostgreSQL
+      const codigo = (errorIdempotencia as { code?: string }).code;
+      if (codigo === "23505") {
+        console.log(`[stripe/webhook] Evento duplicado ignorado: ${event.id}`);
+        return NextResponse.json({ recibido: true, duplicado: true });
+      }
+      console.error("[stripe/webhook] Error registrando evento:", errorIdempotencia.message);
+      // No abortamos: si la tabla aún no existe preferimos procesar el evento
+      // a perderlo, pero queda el log para investigar.
+    }
+
     // ── Procesar eventos de Stripe ───────────────────────────────────────────
 
     switch (event.type) {
