@@ -84,6 +84,18 @@ export async function POST(request: NextRequest) {
     // ── Convertir el archivo a ArrayBuffer para subirlo ─────────────────────
     const buffer = await archivo.arrayBuffer();
 
+    // ── Validar "magic bytes" del PDF (cabecera %PDF-) ──────────────────────
+    // El MIME type lo define el cliente y se puede falsificar. Los primeros
+    // 5 bytes de un PDF real son siempre "%PDF-" (0x25 50 44 46 2D).
+    const primerosBytes = new Uint8Array(buffer.slice(0, 5));
+    const cabecera = String.fromCharCode(...primerosBytes);
+    if (cabecera !== "%PDF-") {
+      return NextResponse.json(
+        { error: "El archivo no es un PDF válido. Comprueba que sea un documento PDF auténtico." },
+        { status: 400 }
+      );
+    }
+
     // ── Subir el archivo a Supabase Storage ─────────────────────────────────
     // Ruta: {userId}/cv.pdf — cada usuario tiene su propio directorio
     const rutaArchivo = `${userId}/cv.pdf`;
@@ -104,10 +116,12 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Obtener la URL pública firmada del archivo ───────────────────────────
-    // Usamos createSignedUrl para URLs temporales de archivos privados
+    // URL firmada de corta duración (48 h). Si el usuario la necesita después,
+    // el cliente pide una nueva a /api/cv/obtener — así nunca circulan URLs
+    // de larga vida que, si se filtran, darían acceso prolongado al PDF.
     const { data: urlData, error: errorUrl } = await supabaseAdmin.storage
       .from("cvs")
-      .createSignedUrl(rutaArchivo, 60 * 60 * 24 * 365); // URL válida 1 año
+      .createSignedUrl(rutaArchivo, 60 * 60 * 48);
 
     if (errorUrl || !urlData?.signedUrl) {
       console.error("[cv/subir] Error al obtener URL firmada:", errorUrl?.message);
