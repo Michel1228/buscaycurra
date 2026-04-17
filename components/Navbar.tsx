@@ -28,7 +28,7 @@ export default function Navbar() {
     full_name?: string | null;
     phone?: string | null;
     linkedin_url?: string | null;
-    avatar_url?: string | null;
+    trabajo_encontrado?: boolean | null;
   } | null>(null);
   const [cvsEnviados, setCvsEnviados] = useState(0);
   const [tieneCv, setTieneCv] = useState(false);
@@ -40,7 +40,7 @@ export default function Navbar() {
       if (!user) return;
 
       const [{ data: p }, { count: enviados }, { count: cvs }] = await Promise.all([
-        supabase.from("profiles").select("full_name,phone,linkedin_url,avatar_url").eq("id", user.id).single(),
+        supabase.from("profiles").select("full_name,phone,linkedin_url,trabajo_encontrado").eq("id", user.id).single(),
         supabase.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("cvs").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
@@ -65,10 +65,10 @@ export default function Navbar() {
   };
 
   const evolucionProps = {
-    tieneFoto:      !!(perfil?.avatar_url),
-    tieneNombre:    !!(perfil?.full_name),
-    tieneTelefono:  !!(perfil?.phone),
-    tieneLinkedin:  !!(perfil?.linkedin_url),
+    tieneNombre:       !!(perfil?.full_name),
+    tieneTelefono:     !!(perfil?.phone),
+    tieneLinkedin:     !!(perfil?.linkedin_url),
+    trabajoEncontrado: !!(perfil?.trabajo_encontrado),
     tieneCv,
     cvsEnviados,
     compact: true,

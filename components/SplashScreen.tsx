@@ -3,15 +3,23 @@
 /**
  * components/SplashScreen.tsx — Pantalla de carga con animación de metamorfosis
  *
- * Secuencia de ~3 segundos:
- *   1. Gusano se arrastra de izquierda a derecha sobre una hoja
- *   2. Gusano se envuelve formando un capullo
- *   3. Del capullo emerge una mariposa verde
- *   4. La mariposa vuela hacia arriba y desaparece
- *   5. Aparece el nombre "BuscayCurra" con brillo neón
+ * Secuencia de ~3.5 segundos:
+ *   1. Gusano verde se arrastra de izquierda a derecha
+ *   2. El gusano se envuelve formando un capullo verde
+ *   3. Flash de luz blanca que llena la pantalla ✨
+ *   4. La luz se disipa → aparece mariposa verde con alas abiertas
+ *   5. La mariposa pliega las alas suavemente
+ *   6. Fade out → arranca la app
+ *
+ * Solo se muestra una vez por sesión (gestionado por SplashWrapper con localStorage).
  *
  * Props:
  *   onComplete — callback que se llama al terminar la animación
+ *
+ * ButterflyFullSVG props:
+ *   size    — tamaño en px
+ *   small   — versión reducida sin animación (para mostrar junto al título)
+ *   folding — activa animación de plegado de alas (fase de cierre antes del fade)
  */
 
 import { useEffect, useState } from "react";
@@ -21,29 +29,32 @@ interface SplashScreenProps {
 }
 
 // Fases de la animación
-type Fase = "worm" | "cocoon" | "butterfly" | "title" | "done";
+type Fase = "worm" | "cocoon" | "flash" | "butterfly" | "fold" | "done";
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [fase, setFase] = useState<Fase>("worm");
 
   useEffect(() => {
-    // Fase 1: gusano durante 1s
+    // Fase 1: gusano (0–900ms)
     const t1 = setTimeout(() => setFase("cocoon"), 900);
-    // Fase 2: capullo durante 0.8s
-    const t2 = setTimeout(() => setFase("butterfly"), 1700);
-    // Fase 3: mariposa abre alas 0.8s, luego vuela
-    const t3 = setTimeout(() => setFase("title"), 2500);
-    // Fase 4: título aparece 0.8s, luego llama onComplete
-    const t4 = setTimeout(() => {
+    // Fase 2: capullo (900–1600ms)
+    const t2 = setTimeout(() => setFase("flash"), 1600);
+    // Fase 3: flash blanco (1600–2000ms)
+    const t3 = setTimeout(() => setFase("butterfly"), 2000);
+    // Fase 4: mariposa abre alas (2000–2800ms)
+    const t4 = setTimeout(() => setFase("fold"), 2800);
+    // Fase 5: pliega alas y fade (2800–3500ms)
+    const t5 = setTimeout(() => {
       setFase("done");
       onComplete();
-    }, 3400);
+    }, 3500);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
       clearTimeout(t4);
+      clearTimeout(t5);
     };
   }, [onComplete]);
 
@@ -126,41 +137,25 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         </div>
       )}
 
-      {/* ── Fase 3: Mariposa emergiendo ───────────────────────────────── */}
+      {/* ── Fase 3: Flash de luz blanca ──────────────────────────────── */}
+      {fase === "flash" && (
+        <div
+          className="absolute inset-0"
+          style={{ animation: "splash-flash 0.4s ease-out forwards", backgroundColor: "#ffffff" }}
+        />
+      )}
+
+      {/* ── Fase 4: Mariposa abre alas ───────────────────────────────── */}
       {fase === "butterfly" && (
-        <div style={{ animation: "splash-butterfly-up 0.9s ease-in-out forwards" }}>
+        <div style={{ animation: "splash-butterfly-appear 0.7s ease-out forwards" }}>
           <ButterflyFullSVG size={160} />
         </div>
       )}
 
-      {/* ── Fase 4: Título BuscayCurra ───────────────────────────────── */}
-      {fase === "title" && (
-        <div
-          className="flex flex-col items-center gap-4"
-          style={{ animation: "splash-title-appear 0.8s ease-out forwards" }}
-        >
-          <ButterflyFullSVG size={90} small />
-          <h1
-            className="text-5xl font-extrabold tracking-widest"
-            style={{
-              color: "#00ff88",
-              textShadow: "0 0 20px #00ff88, 0 0 50px #4ade80",
-              fontFamily: "system-ui, sans-serif",
-              letterSpacing: "0.08em",
-            }}
-          >
-            BuscayCurra
-          </h1>
-          <p
-            style={{
-              color: "#4ade80",
-              fontSize: "0.85rem",
-              letterSpacing: "0.25em",
-              textTransform: "uppercase",
-            }}
-          >
-            Encuentra trabajo con IA
-          </p>
+      {/* ── Fase 5: Mariposa pliega alas y fade out ──────────────────── */}
+      {fase === "fold" && (
+        <div style={{ animation: "splash-butterfly-fold 0.7s ease-in-out forwards" }}>
+          <ButterflyFullSVG size={160} folding />
         </div>
       )}
 
@@ -177,15 +172,24 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           60%  { transform: scale(1.05) rotate(2deg); opacity: 1; }
           100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
-        @keyframes splash-butterfly-up {
-          0%   { transform: translateY(40px) scale(0.4); opacity: 0; }
-          40%  { transform: translateY(-5px) scale(1.05); opacity: 1; }
-          70%  { transform: translateY(0) scale(1); opacity: 1; }
-          100% { transform: translateY(-100px) scale(0.6); opacity: 0; }
+        @keyframes splash-flash {
+          0%   { opacity: 0; }
+          30%  { opacity: 1; }
+          100% { opacity: 0; }
         }
-        @keyframes splash-title-appear {
-          0%   { transform: translateY(24px) scale(0.9); opacity: 0; }
-          100% { transform: translateY(0) scale(1); opacity: 1; }
+        @keyframes splash-butterfly-appear {
+          0%   { transform: scale(0.3); opacity: 0; }
+          50%  { transform: scale(1.06); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes splash-butterfly-fold {
+          0%   { transform: scale(1) scaleX(1); opacity: 1; }
+          60%  { transform: scale(0.95) scaleX(0.3); opacity: 0.8; }
+          100% { transform: scale(0.8) scaleX(0.1); opacity: 0; }
+        }
+        @keyframes splash-wing-flap {
+          0%, 100% { transform: scaleX(1); }
+          50%       { transform: scaleX(0.5); }
         }
       `}</style>
     </div>
@@ -197,9 +201,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 interface ButterflyFullSVGProps {
   size?: number;
   small?: boolean;
+  folding?: boolean;
 }
 
-function ButterflyFullSVG({ size = 160, small = false }: ButterflyFullSVGProps) {
+function ButterflyFullSVG({ size = 160, small = false, folding = false }: ButterflyFullSVGProps) {
+  const animStyle = folding
+    ? {}
+    : small
+      ? {}
+      : { animation: "splash-wing-flap 0.5s ease-in-out 3" };
   return (
     <svg
       width={size}
@@ -207,7 +217,7 @@ function ButterflyFullSVG({ size = 160, small = false }: ButterflyFullSVGProps) 
       viewBox="0 0 160 128"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={small ? {} : { animation: "splash-wing-flap 0.5s ease-in-out 3" }}
+      style={animStyle}
     >
       <defs>
         <radialGradient id="wg1" cx="30%" cy="40%" r="70%">
@@ -267,13 +277,6 @@ function ButterflyFullSVG({ size = 160, small = false }: ButterflyFullSVGProps) 
       <circle cx="65" cy="5" r="2.5" fill="#00ff88" />
       <path d="M83 33 C88 22 92 12 95 6" stroke="#00ff88" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
       <circle cx="95" cy="5" r="2.5" fill="#00ff88" />
-
-      <style>{`
-        @keyframes splash-wing-flap {
-          0%, 100% { transform: scaleX(1); }
-          50%       { transform: scaleX(0.5); }
-        }
-      `}</style>
     </svg>
   );
 }

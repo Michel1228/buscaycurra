@@ -20,6 +20,9 @@ import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import EvolucionUsuario from "@/components/EvolucionUsuario";
+import RevelacionMariposa from "@/components/RevelacionMariposa";
+import { getEspecieForUser } from "@/lib/especies";
 
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -86,7 +89,21 @@ export default function DashboardPage() {
 
   // Estado del usuario
   const [nombreUsuario, setNombreUsuario] = useState<string>("Usuario");
+  const [userId, setUserId] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
+
+  // Datos para la evolución del usuario
+  const [evolucion, setEvolucion] = useState({
+    tieneNombre: false,
+    tieneTelefono: false,
+    tieneLinkedin: false,
+    tieneCv: false,
+    cvsEnviados: 0,
+    trabajoEncontrado: false,
+  });
+
+  // Revelación de mariposa
+  const [mostrarRevelacion, setMostrarRevelacion] = useState(false);
 
   // Estadísticas de la semana
   const [stats, setStats] = useState({
@@ -111,10 +128,12 @@ export default function DashboardPage() {
         return;
       }
 
-      // Obtener nombre del perfil de usuario
+      setUserId(user.id);
+
+      // Obtener perfil del usuario (incluyendo nuevas columnas de evolución)
       const { data: perfil } = await getSupabaseBrowser()
         .from("profiles")
-        .select("full_name")
+        .select("full_name, phone, linkedin_url, trabajo_encontrado")
         .eq("id", user.id)
         .single();
 
@@ -124,6 +143,12 @@ export default function DashboardPage() {
         // Usar el email si no hay nombre en el perfil
         setNombreUsuario(user.email?.split("@")[0] || "Usuario");
       }
+
+      // Comprobar si tiene CV subido
+      const { count: cvCount } = await getSupabaseBrowser()
+        .from("cvs")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
 
       // Obtener datos de envíos de CV desde la tabla cv_sends
       const { data: envios } = await getSupabaseBrowser()
@@ -167,6 +192,16 @@ export default function DashboardPage() {
             empresas: empresasUnicas,
             tasaRespuesta: tasa,
           });
+
+          // Actualizar estado de evolución del usuario
+          setEvolucion({
+            tieneNombre:       !!(perfil?.full_name),
+            tieneTelefono:     !!(perfil?.phone),
+            tieneLinkedin:     !!(perfil?.linkedin_url),
+            trabajoEncontrado: !!(perfil?.trabajo_encontrado),
+            tieneCv:           (cvCount ?? 0) > 0,
+            cvsEnviados:       todosEnvios.length,
+          });
         }
       }
 
@@ -175,6 +210,22 @@ export default function DashboardPage() {
 
     cargarDatos();
   }, [router]);
+
+  // Handler: marcar trabajo encontrado + mostrar revelación
+  const handleTrabajoEncontrado = async () => {
+    if (!userId) return;
+    const especie = getEspecieForUser(userId);
+    await getSupabaseBrowser()
+      .from("profiles")
+      .update({
+        trabajo_encontrado: true,
+        trabajo_encontrado_at: new Date().toISOString(),
+        especie_id: especie.id,
+      })
+      .eq("id", userId);
+    setEvolucion((prev) => ({ ...prev, trabajoEncontrado: true }));
+    setMostrarRevelacion(true);
+  };
 
   // Mostrar spinner mientras carga
   if (cargando) {
@@ -193,6 +244,14 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Revelación de mariposa */}
+      {mostrarRevelacion && userId && (
+        <RevelacionMariposa
+          userId={userId}
+          onContinuar={() => setMostrarRevelacion(false)}
+        />
+      )}
+
       <div className="max-w-6xl mx-auto px-4 py-10">
 
         {/* ── Saludo personalizado ───────────────────────────────────── */}
@@ -250,7 +309,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Últimos envíos ─────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-10">
           <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Últimos envíos</h2>
             <Link
@@ -300,6 +359,73 @@ export default function DashboardPage() {
                 </li>
               ))}
             </ul>
+          )}
+        </div>
+
+        {/* ── Sección inferior: Evolución + Botón trabajo encontrado ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* Evolución del usuario */}
+          <EvolucionUsuario {...evolucion} />
+
+          {/* Botón "¿Ya encontraste trabajo?" */}
+          {!evolucion.trabajoEncontrado && (
+            <div
+              className="rounded-2xl p-6 border flex flex-col items-center justify-center gap-4 text-center"
+              style={{ backgroundColor: "#0d1f0d", borderColor: "#00ff8820" }}
+            >
+              <p className="text-4xl">🎉</p>
+              <div>
+                <p className="font-semibold text-lg" style={{ color: "#f0f0f0" }}>
+                  ¿Ya encontraste trabajo?
+                </p>
+                <p className="text-sm mt-1" style={{ color: "#a0a0a0" }}>
+                  Revela tu mariposa única y celebra tu logro.
+                </p>
+              </div>
+              <button
+                onClick={handleTrabajoEncontrado}
+                className="w-full py-3 rounded-xl font-bold text-sm transition"
+                style={{
+                  backgroundColor: "#00ff8820",
+                  color: "#00ff88",
+                  border: "1.5px solid #00ff8840",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#00ff8830";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#00ff8820";
+                }}
+              >
+                ¡He encontrado trabajo! 🦋
+              </button>
+            </div>
+          )}
+
+          {/* Mensaje si ya encontró trabajo */}
+          {evolucion.trabajoEncontrado && (
+            <div
+              className="rounded-2xl p-6 border flex flex-col items-center justify-center gap-3 text-center"
+              style={{ backgroundColor: "#0d1f0d", borderColor: "#fbbf2430" }}
+            >
+              <p className="text-4xl">✨</p>
+              <p className="font-semibold text-lg" style={{ color: "#fbbf24" }}>
+                ¡Metamorfosis completa!
+              </p>
+              <p className="text-sm" style={{ color: "#a0a0a0" }}>
+                Has completado tu viaje. Tu mariposa ya fue revelada.
+              </p>
+              {userId && (
+                <button
+                  onClick={() => setMostrarRevelacion(true)}
+                  className="mt-2 px-4 py-2 rounded-lg text-sm font-medium transition"
+                  style={{ color: "#fbbf24", border: "1px solid #fbbf2440" }}
+                >
+                  Ver mi mariposa →
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
