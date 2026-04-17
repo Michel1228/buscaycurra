@@ -11,18 +11,18 @@
     "worker": "tsx scripts/start-worker.ts"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
+    "@google/generative-ai": "^0.24.1",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.39.0",
     "bullmq": "^5.1.0",
-    "groq-sdk": "^0.12.0",
+    "groq-sdk": "^1.1.2",
     "ioredis": "^5.3.2",
     "jspdf": "^4.2.1",
-    "next": "15.5.15",
+    "next": "16.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "redis": "^4.7.0",
-    "resend": "^3.1.0",
+    "redis": "^5.12.1",
+    "resend": "^6.12.0",
     "stripe": "^22.0.2",
     "ws": "^8.16.0"
   },
