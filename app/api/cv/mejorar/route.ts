@@ -26,15 +26,20 @@ export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
 
-  if (token) {
-    // Verificar que el token es válido
-    const { error: authError } = await supabase.auth.getUser(token);
-    if (authError) {
-      return NextResponse.json(
-        { error: "No autorizado. Por favor, inicia sesión." },
-        { status: 401 }
-      );
-    }
+  // La autenticación es obligatoria para usar la IA
+  if (!token) {
+    return NextResponse.json(
+      { error: "No autorizado. Por favor, inicia sesión." },
+      { status: 401 }
+    );
+  }
+
+  const { error: authError } = await supabase.auth.getUser(token);
+  if (authError) {
+    return NextResponse.json(
+      { error: "No autorizado. Por favor, inicia sesión." },
+      { status: 401 }
+    );
   }
 
   // ── Leer y validar el cuerpo de la petición ───────────────────────────────

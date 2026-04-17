@@ -125,49 +125,41 @@ export default function DashboardPage() {
         setNombreUsuario(user.email?.split("@")[0] || "Usuario");
       }
 
-      // Obtener datos de envíos de CV desde la tabla cv_sends
-      const { data: envios } = await getSupabaseBrowser()
+      // Obtener TODOS los envíos del usuario en una sola query y derivar las estadísticas
+      const { data: todosEnvios } = await getSupabaseBrowser()
         .from("cv_sends")
         .select("id, empresa, puesto, estado, creado_en")
         .eq("user_id", user.id)
-        .order("creado_en", { ascending: false })
-        .limit(5);
+        .order("creado_en", { ascending: false });
 
-      if (envios) {
-        setUltimosEnvios(envios as EnvioCV[]);
+      if (todosEnvios) {
+        // Los 5 más recientes para la lista
+        setUltimosEnvios(todosEnvios.slice(0, 5) as EnvioCV[]);
 
-        // Calcular estadísticas a partir de los envíos reales
+        // Calcular estadísticas a partir de todos los envíos (una sola query)
         const ahora = new Date();
         const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
         const haceUnaSemana = new Date(hoy.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        // Todos los envíos (no solo los 5 últimos) para estadísticas
-        const { data: todosEnvios } = await getSupabaseBrowser()
-          .from("cv_sends")
-          .select("empresa, estado, creado_en")
-          .eq("user_id", user.id);
+        const hoyCvs = todosEnvios.filter(
+          (e) => new Date(e.creado_en) >= hoy
+        ).length;
+        const semanaCvs = todosEnvios.filter(
+          (e) => new Date(e.creado_en) >= haceUnaSemana
+        ).length;
+        const empresasUnicas = new Set(todosEnvios.map((e) => e.empresa)).size;
+        const conRespuesta = todosEnvios.filter((e) => e.estado === "respuesta").length;
+        const tasa =
+          todosEnvios.length > 0
+            ? Math.round((conRespuesta / todosEnvios.length) * 100)
+            : 0;
 
-        if (todosEnvios) {
-          const hoyCvs = todosEnvios.filter(
-            (e) => new Date(e.creado_en) >= hoy
-          ).length;
-          const semanaCvs = todosEnvios.filter(
-            (e) => new Date(e.creado_en) >= haceUnaSemana
-          ).length;
-          const empresasUnicas = new Set(todosEnvios.map((e) => e.empresa)).size;
-          const conRespuesta = todosEnvios.filter((e) => e.estado === "respuesta").length;
-          const tasa =
-            todosEnvios.length > 0
-              ? Math.round((conRespuesta / todosEnvios.length) * 100)
-              : 0;
-
-          setStats({
-            hoyCvs,
-            semanaCvs,
-            empresas: empresasUnicas,
-            tasaRespuesta: tasa,
-          });
-        }
+        setStats({
+          hoyCvs,
+          semanaCvs,
+          empresas: empresasUnicas,
+          tasaRespuesta: tasa,
+        });
       }
 
       setCargando(false);

@@ -338,6 +338,7 @@ export default function CVUploader() {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+              aria-label="Ver CV en una nueva pestaña"
             >
               👁️ Ver CV
             </a>
@@ -348,6 +349,7 @@ export default function CVUploader() {
               disabled={descargando}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
               style={{ backgroundColor: "#2563EB" }}
+              aria-label="Descargar CV en PDF"
             >
               {descargando ? "⏳ Descargando..." : "⬇️ Descargar CV"}
             </button>
@@ -358,6 +360,7 @@ export default function CVUploader() {
               disabled={subiendo}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
               style={{ backgroundColor: "#F97316" }}
+              aria-label="Subir un nuevo CV para reemplazar el actual"
             >
               🔄 Actualizar CV
             </button>
@@ -367,6 +370,7 @@ export default function CVUploader() {
               <button
                 onClick={() => setConfirmarBorrar(true)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-red-600 border border-red-200 hover:bg-red-50 transition"
+                aria-label="Eliminar CV"
               >
                 🗑️ Eliminar
               </button>
@@ -399,6 +403,15 @@ export default function CVUploader() {
           onDragLeave={() => setArrastrandoEncima(false)}
           onDrop={handleDrop}
           onClick={() => !subiendo && inputRef.current?.click()}
+          onKeyDown={(e) => {
+            if ((e.key === "Enter" || e.key === " ") && !subiendo) {
+              e.preventDefault();
+              inputRef.current?.click();
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Zona para subir CV. Arrastra un archivo PDF aquí o pulsa para seleccionar"
           className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
             arrastrandoEncima
               ? "bg-blue-50 border-blue-400"

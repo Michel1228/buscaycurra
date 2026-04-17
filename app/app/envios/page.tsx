@@ -8,11 +8,12 @@
  *   - "Mis envíos":    Panel con la cola y el historial (CVSenderDashboard)
  *   - "Estadísticas":  Resumen visual de la actividad del usuario
  *
- * Nota: En producción, el userId vendría de la sesión de Supabase Auth.
- * Para desarrollo, usamos un ID de ejemplo.
+ * Obtiene el userId de la sesión de Supabase Auth.
  */
 
 import { useState, useEffect } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { useRouter } from "next/navigation";
 import AutoSendSetup from "@/components/AutoSendSetup";
 import CVSenderDashboard from "@/components/CVSenderDashboard";
 
@@ -37,12 +38,28 @@ const TABS: Tab[] = [
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
 export default function EnviosPage() {
-  // En producción, este ID vendrá de la sesión de Supabase Auth
-  // Aquí usamos un ejemplo para el desarrollo
-  const userId = "usuario-ejemplo-id";
+  const router = useRouter();
+
+  // userId obtenido de la sesión de Supabase Auth
+  const [userId, setUserId] = useState<string | null>(null);
+  const [cargandoAuth, setCargandoAuth] = useState(true);
 
   const [activeTab, setActiveTab] = useState<TabId>("nuevo");
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Obtener el usuario autenticado al montar
+  useEffect(() => {
+    async function cargarUsuario() {
+      const { data: { user } } = await getSupabaseBrowser().auth.getUser();
+      if (!user) {
+        router.push("/auth/login");
+        return;
+      }
+      setUserId(user.id);
+      setCargandoAuth(false);
+    }
+    cargarUsuario();
+  }, [router]);
 
   // Cuando se programa un envío, cambiar a "Mis envíos" automáticamente
   const handleJobScheduled = () => {
@@ -52,6 +69,21 @@ export default function EnviosPage() {
       setRefreshKey((prev) => prev + 1);
     }, 2000);
   };
+
+  // Mostrar spinner mientras se carga la autenticación
+  if (cargandoAuth || !userId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div
+            className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-3"
+            style={{ borderColor: "#2563EB", borderTopColor: "transparent" }}
+          />
+          <p className="text-gray-500 text-sm">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

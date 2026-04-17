@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
  * Colores de marca: azul #2563EB y naranja #F97316.
  */
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
@@ -61,6 +61,9 @@ function BuscarPageInner() {
   const [buscado, setBuscado] = useState(false);
   const [error, setError] = useState("");
 
+  // Referencia para deduplicar búsquedas simultáneas
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // Verificar sesión al cargar
   useEffect(() => {
     async function verificarSesion() {
@@ -73,10 +76,18 @@ function BuscarPageInner() {
   /**
    * Ejecuta la búsqueda llamando al endpoint de la API.
    * Construye los parámetros de búsqueda con los filtros activos.
+   * Cancela búsquedas previas si se dispara otra antes de terminar.
    */
   async function buscar(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (!keyword.trim() && !ubicacion.trim()) return;
+
+    // Cancelar búsqueda anterior si existe (previene resultados duplicados)
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setCargando(true);
     setError("");
@@ -91,7 +102,9 @@ function BuscarPageInner() {
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
 
-      const respuesta = await fetch(`/api/jobs/search?${params.toString()}`);
+      const respuesta = await fetch(`/api/jobs/search?${params.toString()}`, {
+        signal: controller.signal,
+      });
 
       if (!respuesta.ok) {
         throw new Error("Error al buscar ofertas. Inténtalo de nuevo.");
@@ -100,10 +113,15 @@ function BuscarPageInner() {
       const datos = await respuesta.json();
       setOfertas(datos.ofertas || []);
     } catch (err) {
+      // Ignorar errores de cancelación (el usuario lanzó otra búsqueda)
+      if ((err as Error).name === "AbortError") return;
       setError((err as Error).message || "Error al buscar ofertas");
       setOfertas([]);
     } finally {
-      setCargando(false);
+      // Solo quitar cargando si esta es la búsqueda activa
+      if (abortControllerRef.current === controller) {
+        setCargando(false);
+      }
     }
   }
 
@@ -123,6 +141,7 @@ function BuscarPageInner() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="¿Qué trabajo buscas? (electricista, contable...)"
+              aria-label="Palabra clave del trabajo que buscas"
               className="flex-1 px-4 py-3 rounded-xl text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
             />
             {/* Campo: dónde buscas */}
@@ -131,6 +150,7 @@ function BuscarPageInner() {
               value={ubicacion}
               onChange={(e) => setUbicacion(e.target.value)}
               placeholder="¿Dónde? (Madrid, Barcelona...)"
+              aria-label="Ciudad o ubicación del trabajo"
               className="w-full sm:w-56 px-4 py-3 rounded-xl text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
             />
             {/* Botón buscar */}

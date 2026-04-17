@@ -46,11 +46,18 @@ export default function CurriculumPage() {
   // Referencia al área de resultados para hacer scroll automático
   const resultadoRef = useRef<HTMLDivElement>(null);
 
-  // Verificar sesión al cargar
+  // Token de autenticación del usuario
+  const [token, setToken] = useState<string | null>(null);
+
+  // Verificar sesión al cargar y obtener token
   useEffect(() => {
     async function verificarSesion() {
-      const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-      if (!user) router.push("/auth/login");
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) {
+        router.push("/auth/login");
+        return;
+      }
+      setToken(session.access_token);
     }
     verificarSesion();
   }, [router]);
@@ -74,7 +81,10 @@ export default function CurriculumPage() {
     try {
       const respuesta = await fetch("/api/cv/mejorar", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ cvText: textoCv, jobTitle: puesto }),
       });
 
@@ -115,7 +125,10 @@ export default function CurriculumPage() {
     try {
       const respuesta = await fetch("/api/cv/mejorar", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           cvText: textoCv,
           jobTitle: puesto,
@@ -284,10 +297,11 @@ export default function CurriculumPage() {
 
               {/* Campo: puesto objetivo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="cv-puesto" className="block text-sm font-medium text-gray-700 mb-1.5">
                   ¿Para qué puesto?
                 </label>
                 <input
+                  id="cv-puesto"
                   type="text"
                   value={puesto}
                   onChange={(e) => setPuesto(e.target.value)}
@@ -298,10 +312,11 @@ export default function CurriculumPage() {
 
               {/* Campo: texto del CV */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="cv-texto" className="block text-sm font-medium text-gray-700 mb-1.5">
                   Pega tu CV aquí
                 </label>
                 <textarea
+                  id="cv-texto"
                   value={textoCv}
                   onChange={(e) => setTextoCv(e.target.value)}
                   placeholder="Copia y pega el texto de tu CV actual..."
@@ -347,6 +362,7 @@ export default function CurriculumPage() {
                     onClick={copiarAlPortapapeles}
                     className="px-4 py-2 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
                     style={{ backgroundColor: "#F97316" }}
+                    aria-label="Copiar texto al portapapeles"
                   >
                     {copiado ? "✓ Copiado" : "📋 Copiar"}
                   </button>
@@ -355,6 +371,7 @@ export default function CurriculumPage() {
                     onClick={() => descargarComoPDF(esCarta)}
                     className="px-4 py-2 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
                     style={{ backgroundColor: "#F97316" }}
+                    aria-label={esCarta ? "Descargar carta de presentación en PDF" : "Descargar CV mejorado en PDF"}
                   >
                     {esCarta ? "⬇️ Descargar carta en PDF" : "⬇️ Descargar CV mejorado en PDF"}
                   </button>

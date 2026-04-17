@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getStripe, getPlanFromPriceId } from "@/lib/stripe";
+import { esPlanValido } from "@/lib/constants";
 import Stripe from "stripe";
 
 // ─── Necesario: deshabilitar el body parser de Next.js para webhooks ──────────
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        if (!plan || (plan !== "pro" && plan !== "empresa")) {
+        if (!plan || !esPlanValido(plan) || plan === "free") {
           console.error("[stripe/webhook] checkout.session.completed con plan inválido en metadata:", plan);
           break;
         }
