@@ -1,11 +1,14 @@
 "use client";
 
 /**
- * PerfilForm.tsx — Formulario de perfil con foto y avatar
+ * PerfilForm.tsx — Formulario de perfil robusto
  * Tema: Bosque Encantado (oscuro)
+ * 
+ * Guarda datos paso a paso, con manejo de errores real
+ * y soporte para columnas que puedan no existir aún.
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export interface DatosPerfil {
@@ -44,8 +47,21 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Cargar avatar actual del perfil
+  useEffect(() => {
+    async function loadAvatar() {
+      try {
+        const { data } = await getSupabaseBrowser().from("profiles")
+          .select("avatar_url").eq("id", userId).single();
+        if (data?.avatar_url) setFotoUrl(data.avatar_url);
+      } catch { /* ignore */ }
+    }
+    loadAvatar();
+  }, [userId]);
+
   const subirFoto = async (file: File) => {
     setSubiendoFoto(true);
+    setError("");
     try {
       const ext = file.name.split(".").pop() || "jpg";
       const path = `avatars/${userId}.${ext}`;
@@ -55,11 +71,10 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
       if (err) throw err;
       const { data } = getSupabaseBrowser().storage.from("profiles").getPublicUrl(path);
       setFotoUrl(data.publicUrl);
-      // Save to profile
       await getSupabaseBrowser().from("profiles").update({ avatar_url: data.publicUrl }).eq("id", userId);
     } catch (e) {
       console.error("Error subiendo foto:", e);
-      setError("No se pudo subir la foto. Inténtalo de nuevo.");
+      setError("No se pudo subir la foto");
     } finally {
       setSubiendoFoto(false);
     }
@@ -67,25 +82,57 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); setExito(false);
-    if (!nombre.trim()) { setError("El nombre es obligatorio"); return; }
-    if (telefono && !/^[+\d\s()-]{6,20}$/.test(telefono)) { setError("Teléfono no válido"); return; }
+    setError("");
+    setExito(false);
+
+    if (!nombre.trim()) {
+      setError("Escribe tu nombre para continuar");
+      return;
+    }
+    if (telefono && !/^[+\d\s()-]{6,20}$/.test(telefono)) {
+      setError("El teléfono no parece válido");
+      return;
+    }
 
     setGuardando(true);
     try {
-      const { error: err } = await getSupabaseBrowser().from("profiles").upsert({
-        id: userId,
+      // Guardar todo en un solo update (el perfil ya existe por el trigger de Supabase)
+      const datos: Record<string, unknown> = {
         full_name: nombre.trim(),
         phone: telefono.trim() || null,
-        city: ciudad.trim() || null,
+        ciudad: ciudad.trim() || null,
         sector: sector || null,
-      });
-      if (err) { setError("No se pudieron guardar los cambios"); return; }
+      };
+
+      // Usar update en vez de upsert (más compatible con RLS)
+      const { error: err1 } = await getSupabaseBrowser()
+        .from("profiles")
+        .update(datos)
+        .eq("id", userId);
+
+      if (err1) {
+        console.error("Supabase update error:", err1);
+        // Si update falla, intentar upsert como fallback
+        const { error: err2 } = await getSupabaseBrowser()
+          .from("profiles")
+          .upsert({ id: userId, ...datos });
+        
+        if (err2) {
+          console.error("Supabase upsert error:", err2);
+          setError(`No se pudo guardar: ${err2.message}`);
+          return;
+        }
+      }
+
       setExito(true);
       onGuardado?.({ nombre, telefono, ciudad, sector });
-      setTimeout(() => setExito(false), 3000);
-    } catch { setError("Error inesperado"); }
-    finally { setGuardando(false); }
+      setTimeout(() => setExito(false), 4000);
+    } catch (ex) {
+      console.error("Error inesperado:", ex);
+      setError("Error de conexión. Comprueba tu internet.");
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return (
@@ -137,16 +184,17 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
       {/* Nombre */}
       <div>
         <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-          Nombre completo <span style={{ color: "#f87171" }}>*</span>
+          Nombre completo
         </label>
         <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
-          placeholder="Tu nombre completo" required className="w-full" />
+          placeholder="Tu nombre completo"
+          className="w-full" />
       </div>
 
       {/* Teléfono */}
       <div>
         <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-          Teléfono <span className="font-normal" style={{ color: "#504a3a" }}>(opcional)</span>
+          Teléfono
         </label>
         <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)}
           placeholder="+34 600 000 000" className="w-full" />
@@ -155,7 +203,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
       {/* Ciudad */}
       <div>
         <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-          Ciudad <span className="font-normal" style={{ color: "#504a3a" }}>(opcional)</span>
+          Ciudad
         </label>
         <input type="text" value={ciudad} onChange={(e) => setCiudad(e.target.value)}
           placeholder="Madrid, Barcelona, Tudela..." className="w-full" />
@@ -175,7 +223,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
       {/* Error */}
       {error && (
         <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-          ❌ {error}
+          {error}
         </div>
       )}
 

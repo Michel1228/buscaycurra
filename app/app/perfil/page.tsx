@@ -30,8 +30,8 @@ export default function PerfilPage() {
       setToken(session.access_token);
       setEmail(session.user.email ?? "");
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, city, sector").eq("id", session.user.id).single();
-      if (p) setDatos({ nombre: p.full_name ?? "", telefono: p.phone ?? "", ciudad: p.city ?? "", sector: p.sector ?? "" });
+        .select("full_name, phone, ciudad, sector").eq("id", session.user.id).single();
+      if (p) setDatos({ nombre: p.full_name ?? "", telefono: p.phone ?? "", ciudad: p.ciudad ?? "", sector: p.sector ?? "" });
     } catch { /* */ } finally { setCargando(false); }
   }, [router]);
 
