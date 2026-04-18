@@ -13,14 +13,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import PerfilForm, { type DatosPerfil } from "@/components/PerfilForm";
 import CVUploader from "@/components/CVUploader";
 
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-type TabId = "perfil" | "seguridad" | "peligro";
+type TabId = "perfil" | "cv" | "seguridad" | "peligro";
 
 interface Tab {
   id: TabId;
@@ -32,6 +32,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { id: "perfil", label: "Mi Perfil", emoji: "👤" },
+  { id: "cv", label: "Mi CV", emoji: "📄" },
   { id: "seguridad", label: "Seguridad", emoji: "🔒" },
   { id: "peligro", label: "Zona de peligro", emoji: "⚠️" },
 ];
@@ -40,6 +41,7 @@ const TABS: Tab[] = [
 
 export default function PerfilPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Estado de la sesión y el perfil del usuario
   const [userId, setUserId] = useState<string | null>(null);
@@ -48,8 +50,13 @@ export default function PerfilPage() {
   const [datosPerfil, setDatosPerfil] = useState<Partial<DatosPerfil>>({});
   const [cargando, setCargando] = useState(true);
 
-  // Pestaña activa
-  const [activeTab, setActiveTab] = useState<TabId>("perfil");
+  // Pestaña activa — lee ?tab= de la URL si se especifica
+  const tabParam = searchParams.get("tab") as TabId | null;
+  const [activeTab, setActiveTab] = useState<TabId>(
+    tabParam && ["perfil", "cv", "seguridad", "peligro"].includes(tabParam)
+      ? tabParam
+      : "perfil"
+  );
 
   /**
    * Carga los datos de la sesión y el perfil del usuario al montar el componente.
@@ -186,6 +193,9 @@ export default function PerfilPage() {
           />
         )}
 
+        {/* Pestaña: Mi CV */}
+        {activeTab === "cv" && <TabCV />}
+
         {/* Pestaña: Seguridad */}
         {activeTab === "seguridad" && (
           <TabSeguridad token={token} />
@@ -225,7 +235,6 @@ function TabPerfil({
         </p>
       </div>
 
-      {/* Formulario de edición de perfil */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <PerfilForm
           userId={userId}
@@ -233,15 +242,21 @@ function TabPerfil({
           onGuardado={onGuardado}
         />
       </div>
+    </div>
+  );
+}
 
-      {/* ── Sección: Mi CV ─────────────────────────────────────────── */}
+// ─── Pestaña: Mi CV ───────────────────────────────────────────────────────────
+
+function TabCV() {
+  return (
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-gray-900">Mi CV</h2>
+        <h2 className="text-lg font-bold text-gray-900">Mi currículum</h2>
         <p className="text-sm text-gray-500">
-          Tu CV en PDF se enviará automáticamente a las empresas al postular
+          Tu CV en PDF se adjuntará automáticamente a cada candidatura que envíes
         </p>
       </div>
-
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <CVUploader />
       </div>

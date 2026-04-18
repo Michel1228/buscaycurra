@@ -88,6 +88,14 @@ export default function DashboardPage() {
   const [nombreUsuario, setNombreUsuario] = useState<string>("Usuario");
   const [cargando, setCargando] = useState(true);
 
+  // Progreso del perfil (para la tarjeta de onboarding)
+  const [progreso, setProgreso] = useState({
+    tieneNombre: false,
+    tieneTelefono: false,
+    tieneCv: false,
+    tieneEnvios: false,
+  });
+
   // Estadísticas de la semana
   const [stats, setStats] = useState({
     hoyCvs: 0,
@@ -111,19 +119,25 @@ export default function DashboardPage() {
         return;
       }
 
-      // Obtener nombre del perfil de usuario
+      // Obtener nombre y datos de progreso del perfil
       const { data: perfil } = await getSupabaseBrowser()
         .from("profiles")
-        .select("full_name")
+        .select("full_name, phone, cv_url")
         .eq("id", user.id)
         .single();
 
       if (perfil?.full_name) {
         setNombreUsuario(perfil.full_name);
       } else {
-        // Usar el email si no hay nombre en el perfil
         setNombreUsuario(user.email?.split("@")[0] || "Usuario");
       }
+
+      setProgreso((prev) => ({
+        ...prev,
+        tieneNombre: !!(perfil?.full_name),
+        tieneTelefono: !!(perfil?.phone),
+        tieneCv: !!(perfil?.cv_url),
+      }));
 
       // Obtener datos de envíos de CV desde la tabla cv_sends
       const { data: envios } = await getSupabaseBrowser()
@@ -167,6 +181,8 @@ export default function DashboardPage() {
             empresas: empresasUnicas,
             tasaRespuesta: tasa,
           });
+
+          setProgreso((prev) => ({ ...prev, tieneEnvios: todosEnvios.length > 0 }));
         }
       }
 
@@ -202,6 +218,14 @@ export default function DashboardPage() {
           </h1>
           <p className="text-gray-500 mt-1">Aquí tienes el resumen de tu actividad.</p>
         </div>
+
+        {/* ── Progreso de configuración ──────────────────────────────── */}
+        <TarjetaProgreso
+          tieneNombre={progreso.tieneNombre}
+          tieneTelefono={progreso.tieneTelefono}
+          tieneCv={progreso.tieneCv}
+          tieneEnvios={progreso.tieneEnvios}
+        />
 
         {/* ── Tarjetas de estadísticas ───────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
@@ -302,6 +326,96 @@ export default function DashboardPage() {
             </ul>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Componente tarjeta de progreso de configuración ─────────────────────────
+
+function TarjetaProgreso({
+  tieneNombre,
+  tieneTelefono,
+  tieneCv,
+  tieneEnvios,
+}: {
+  tieneNombre: boolean;
+  tieneTelefono: boolean;
+  tieneCv: boolean;
+  tieneEnvios: boolean;
+}) {
+  const pasos = [
+    {
+      label: "Añade tu nombre completo",
+      ok: tieneNombre,
+      href: "/app/perfil",
+      emoji: "👤",
+    },
+    {
+      label: "Añade tu teléfono",
+      ok: tieneTelefono,
+      href: "/app/perfil",
+      emoji: "📱",
+    },
+    {
+      label: "Sube tu currículum (PDF)",
+      ok: tieneCv,
+      href: "/app/perfil?tab=cv",
+      emoji: "📄",
+    },
+    {
+      label: "Envía tu primera candidatura",
+      ok: tieneEnvios,
+      href: "/app/envios",
+      emoji: "📧",
+    },
+  ];
+
+  const completados = pasos.filter((p) => p.ok).length;
+  if (completados === pasos.length) return null;
+
+  const porcentaje = Math.round((completados / pasos.length) * 100);
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-10">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h2 className="font-semibold text-gray-900">Configura tu cuenta</h2>
+          <p className="text-xs text-gray-400 mt-0.5">{completados} de {pasos.length} pasos completados</p>
+        </div>
+        <span className="text-sm font-bold" style={{ color: "#2563EB" }}>{porcentaje}%</span>
+      </div>
+
+      <div className="h-2 bg-gray-100 rounded-full mb-5 overflow-hidden">
+        <div
+          className="h-2 rounded-full transition-all duration-700"
+          style={{ width: `${porcentaje}%`, backgroundColor: "#2563EB" }}
+        />
+      </div>
+
+      <div className="space-y-2">
+        {pasos.map((paso) =>
+          paso.ok ? (
+            <div key={paso.label} className="flex items-center gap-3 px-3 py-2.5">
+              <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600 text-sm flex-shrink-0">
+                ✓
+              </div>
+              <p className="text-sm text-gray-400 line-through">{paso.label}</p>
+            </div>
+          ) : (
+            <Link
+              key={paso.label}
+              href={paso.href}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-base flex-shrink-0">
+                {paso.emoji}
+              </div>
+              <p className="text-sm font-medium text-gray-800 flex-1">{paso.label}</p>
+              <span className="text-xs font-semibold group-hover:translate-x-0.5 transition-transform" style={{ color: "#2563EB" }}>→</span>
+            </Link>
+          )
+        )}
       </div>
     </div>
   );

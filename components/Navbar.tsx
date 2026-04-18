@@ -29,6 +29,7 @@ export default function Navbar() {
     phone?: string | null;
     linkedin_url?: string | null;
     avatar_url?: string | null;
+    cv_url?: string | null;
   } | null>(null);
   const [cvsEnviados, setCvsEnviados] = useState(0);
   const [tieneCv, setTieneCv] = useState(false);
@@ -39,15 +40,14 @@ export default function Navbar() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [{ data: p }, { count: enviados }, { count: cvs }] = await Promise.all([
-        supabase.from("profiles").select("full_name,phone,linkedin_url,avatar_url").eq("id", user.id).single(),
+      const [{ data: p }, { count: enviados }] = await Promise.all([
+        supabase.from("profiles").select("full_name,phone,linkedin_url,avatar_url,cv_url").eq("id", user.id).single(),
         supabase.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("cvs").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
 
       if (p) setPerfil(p);
       setCvsEnviados(enviados ?? 0);
-      setTieneCv((cvs ?? 0) > 0);
+      setTieneCv(!!(p?.cv_url));
     };
     cargar();
   }, []);
@@ -88,7 +88,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
 
           {/* ── Logotipo ──────────────────────────────────────────── */}
-          <Link href="/app/envios" className="flex items-center gap-2 group">
+          <Link href="/app" className="flex items-center gap-2 group">
             <LogoGusano size={36} animated />
             <span
               className="font-bold text-lg tracking-wide group-hover:opacity-80 transition"
