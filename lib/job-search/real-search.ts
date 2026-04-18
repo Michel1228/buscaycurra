@@ -2,11 +2,12 @@
  * lib/job-search/real-search.ts — Búsqueda MASIVA de ofertas reales
  * 
  * Estrategia multi-búsqueda:
- * 1. LinkedIn Jobs (API pública guest) — multiple páginas + keywords relacionados
+ * 1. LinkedIn Jobs (API pública guest) — múltiples páginas + keywords + ciudades cercanas
  * 2. Caché en memoria (15min TTL) para no repetir búsquedas
- * 3. Expansión geográfica: ciudad → provincia → comunidad → España
+ * 3. Expansión geográfica: ciudad → ciudades cercanas → provincia → comunidad → España
  * 4. Keywords relacionados para ampliar resultados
- * 5. Fallback con empresas reales españolas
+ * 5. Polígonos industriales de la zona
+ * 6. Fallback con empresas reales españolas + emails RRHH
  */
 
 export interface OfertaReal {
@@ -21,11 +22,12 @@ export interface OfertaReal {
   fecha: string;
   match?: number;
   emailEmpresa?: string;
+  distancia?: string; // "🏠 Tu ciudad" | "📍 15km" | "🗺️ Navarra" etc.
 }
 
 // ── Caché en memoria (15 min TTL) ────────────────────────────────────────
 const cache = new Map<string, { data: OfertaReal[]; ts: number }>();
-const CACHE_TTL = 15 * 60 * 1000; // 15 min
+const CACHE_TTL = 15 * 60 * 1000;
 
 function getCached(key: string): OfertaReal[] | null {
   const entry = cache.get(key);
@@ -36,8 +38,7 @@ function getCached(key: string): OfertaReal[] | null {
 
 function setCache(key: string, data: OfertaReal[]) {
   cache.set(key, { data, ts: Date.now() });
-  // Limit cache size
-  if (cache.size > 200) {
+  if (cache.size > 300) {
     const oldest = [...cache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
     if (oldest) cache.delete(oldest[0]);
   }
@@ -45,18 +46,23 @@ function setCache(key: string, data: OfertaReal[]) {
 
 // ── Keywords relacionados por sector ─────────────────────────────────────
 const KEYWORDS_RELACIONADOS: Record<string, string[]> = {
-  "camarero": ["camarero", "hostelería", "restaurante", "hotel", "cocina", "barman"],
-  "cocinero": ["cocinero", "chef", "cocina", "hostelería", "restaurante"],
-  "limpieza": ["limpieza", "limpiador", "mantenimiento", "auxiliar limpieza"],
-  "conductor": ["conductor", "transporte", "repartidor", "logística", "camión"],
-  "electricista": ["electricista", "instalador", "mantenimiento", "técnico eléctrico"],
-  "dependiente": ["dependiente", "vendedor", "tienda", "comercio", "cajero", "retail"],
-  "programador": ["programador", "developer", "software", "web", "frontend", "backend"],
-  "enfermero": ["enfermero", "enfermería", "auxiliar enfermería", "sanitario", "salud"],
-  "administrativo": ["administrativo", "administración", "secretaria", "recepcionista", "oficina"],
-  "mecánico": ["mecánico", "taller", "automoción", "técnico mecánico"],
-  "albañil": ["albañil", "construcción", "peón", "obra", "reformas"],
-  "almacén": ["almacén", "mozo", "carretillero", "logística", "picking"],
+  "camarero": ["camarero", "hostelería", "restaurante", "hotel", "cocina", "barman", "sala"],
+  "cocinero": ["cocinero", "chef", "cocina", "hostelería", "restaurante", "ayudante cocina"],
+  "limpieza": ["limpieza", "limpiador", "mantenimiento", "auxiliar limpieza", "higiene"],
+  "conductor": ["conductor", "transporte", "repartidor", "logística", "camión", "chofer"],
+  "electricista": ["electricista", "instalador", "mantenimiento eléctrico", "técnico eléctrico"],
+  "dependiente": ["dependiente", "vendedor", "tienda", "comercio", "cajero", "retail", "atención al cliente"],
+  "programador": ["programador", "developer", "software", "web", "frontend", "backend", "IT"],
+  "enfermero": ["enfermero", "enfermería", "auxiliar enfermería", "sanitario", "salud", "cuidador"],
+  "administrativo": ["administrativo", "administración", "secretaria", "recepcionista", "oficina", "contable"],
+  "mecánico": ["mecánico", "taller", "automoción", "técnico mecánico", "electromecánico"],
+  "albañil": ["albañil", "construcción", "peón", "obra", "reformas", "encofrador"],
+  "almacén": ["almacén", "mozo", "carretillero", "logística", "picking", "operario"],
+  "soldador": ["soldador", "soldadura", "metalúrgico", "calderería", "tubería"],
+  "fontanero": ["fontanero", "fontanería", "instalador", "climatización"],
+  "peluquero": ["peluquero", "peluquería", "estética", "barbería"],
+  "cuidador": ["cuidador", "auxiliar", "residencia", "geriátrico", "dependencia"],
+  "operario": ["operario", "producción", "fábrica", "industria", "manufactura", "montaje"],
 };
 
 function getKeywordsRelacionados(puesto: string): string[] {
@@ -64,34 +70,112 @@ function getKeywordsRelacionados(puesto: string): string[] {
   for (const [key, values] of Object.entries(KEYWORDS_RELACIONADOS)) {
     if (p.includes(key) || key.includes(p)) return values;
   }
-  // Si no hay match exacto, buscar parcial
   for (const [key, values] of Object.entries(KEYWORDS_RELACIONADOS)) {
     const words = p.split(/\s+/);
-    if (words.some(w => key.includes(w) || w.includes(key))) return values;
+    if (words.some(w => w.length > 2 && (key.includes(w) || w.includes(key)))) return values;
   }
-  return [puesto]; // Sin expansión
+  return [puesto];
 }
 
-// ── Mapeo geográfico ─────────────────────────────────────────────────────
+// ── Mapeo geográfico completo ────────────────────────────────────────────
 const PROVINCIAS_CA: Record<string, string> = {
   "tudela": "Navarra", "pamplona": "Navarra", "navarra": "Navarra",
+  "estella": "Navarra", "tafalla": "Navarra", "sangüesa": "Navarra",
+  "calahorra": "La Rioja", "logroño": "La Rioja", "arnedo": "La Rioja",
+  "la rioja": "La Rioja",
   "madrid": "Madrid", "barcelona": "Cataluña", "valencia": "Valencia",
   "sevilla": "Andalucía", "málaga": "Andalucía", "malaga": "Andalucía",
   "granada": "Andalucía", "córdoba": "Andalucía", "cádiz": "Andalucía",
-  "zaragoza": "Aragón", "bilbao": "País Vasco", "san sebastián": "País Vasco",
-  "vitoria": "País Vasco", "murcia": "Murcia", "alicante": "Valencia",
+  "almería": "Andalucía", "huelva": "Andalucía", "jaén": "Andalucía",
+  "zaragoza": "Aragón", "huesca": "Aragón", "teruel": "Aragón",
+  "bilbao": "País Vasco", "san sebastián": "País Vasco", "vitoria": "País Vasco",
+  "murcia": "Murcia", "alicante": "Valencia", "castellón": "Valencia",
   "valladolid": "Castilla y León", "salamanca": "Castilla y León",
-  "a coruña": "Galicia", "vigo": "Galicia", "oviedo": "Asturias",
-  "santander": "Cantabria", "logroño": "La Rioja",
+  "león": "Castilla y León", "burgos": "Castilla y León", "segovia": "Castilla y León",
+  "a coruña": "Galicia", "vigo": "Galicia", "ourense": "Galicia",
+  "oviedo": "Asturias", "gijón": "Asturias",
+  "santander": "Cantabria",
   "las palmas": "Canarias", "tenerife": "Canarias",
-  "palma": "Baleares", "badajoz": "Extremadura",
-  "tarragona": "Cataluña", "girona": "Cataluña",
-  "castellón": "Valencia", "toledo": "Castilla-La Mancha",
-  "albacete": "Castilla-La Mancha",
+  "palma": "Baleares", "badajoz": "Extremadura", "cáceres": "Extremadura",
+  "tarragona": "Cataluña", "girona": "Cataluña", "lleida": "Cataluña",
+  "toledo": "Castilla-La Mancha", "albacete": "Castilla-La Mancha",
+  "ciudad real": "Castilla-La Mancha",
+};
+
+// ── Ciudades cercanas (radio 50km para expansión) ────────────────────────
+const CIUDADES_CERCANAS: Record<string, { nombre: string; distancia: string }[]> = {
+  "tudela": [
+    { nombre: "Calahorra", distancia: "30km" },
+    { nombre: "Tarazona", distancia: "20km" },
+    { nombre: "Corella", distancia: "15km" },
+    { nombre: "Cintruénigo", distancia: "12km" },
+    { nombre: "Cascante", distancia: "8km" },
+    { nombre: "Fitero", distancia: "20km" },
+    { nombre: "Alfaro", distancia: "25km" },
+    { nombre: "Murchante", distancia: "5km" },
+    { nombre: "Ablitas", distancia: "10km" },
+    { nombre: "Ribaforada", distancia: "6km" },
+    { nombre: "Fontellas", distancia: "4km" },
+    { nombre: "Ejea de los Caballeros", distancia: "45km" },
+    { nombre: "Tafalla", distancia: "50km" },
+  ],
+  "pamplona": [
+    { nombre: "Barañáin", distancia: "5km" },
+    { nombre: "Burlada", distancia: "4km" },
+    { nombre: "Villava", distancia: "5km" },
+    { nombre: "Huarte", distancia: "7km" },
+    { nombre: "Estella", distancia: "45km" },
+    { nombre: "Tafalla", distancia: "35km" },
+    { nombre: "Sangüesa", distancia: "45km" },
+  ],
+  "zaragoza": [
+    { nombre: "Utebo", distancia: "10km" },
+    { nombre: "Calatayud", distancia: "85km" },
+    { nombre: "Ejea de los Caballeros", distancia: "70km" },
+  ],
+  "calahorra": [
+    { nombre: "Tudela", distancia: "30km" },
+    { nombre: "Alfaro", distancia: "15km" },
+    { nombre: "Arnedo", distancia: "15km" },
+    { nombre: "Logroño", distancia: "50km" },
+    { nombre: "Corella", distancia: "20km" },
+  ],
+  "logroño": [
+    { nombre: "Calahorra", distancia: "50km" },
+    { nombre: "Arnedo", distancia: "50km" },
+    { nombre: "Nájera", distancia: "25km" },
+    { nombre: "Haro", distancia: "40km" },
+    { nombre: "Laguardia", distancia: "20km" },
+  ],
+};
+
+// ── Polígonos industriales por zona ──────────────────────────────────────
+const POLIGONOS: Record<string, string[]> = {
+  "tudela": [
+    "Polígono Industrial Las Labradas Tudela",
+    "Polígono Industrial Montes del Cierzo Tudela",
+    "Polígono Industrial Centro Logístico Ribera Navarra",
+    "Polígono Industrial Tarazona",
+  ],
+  "pamplona": [
+    "Polígono Industrial Landaben Pamplona",
+    "Polígono Industrial Agustinos Pamplona",
+    "Polígono Industrial Noáin Pamplona",
+    "Polígono Industrial Orkoien",
+  ],
+  "calahorra": [
+    "Polígono Industrial Tejerías Calahorra",
+    "Polígono Industrial El Recuenco Calahorra",
+  ],
+  "zaragoza": [
+    "Polígono Industrial Cogullada Zaragoza",
+    "Polígono PLAZA Zaragoza",
+    "Polígono Industrial Malpica Zaragoza",
+  ],
 };
 
 /**
- * Búsqueda MASIVA — combina múltiples búsquedas para maximizar resultados
+ * Búsqueda MASIVA — combina múltiples estrategias para maximizar resultados
  */
 export async function buscarOfertasReales(
   puesto: string,
@@ -102,119 +186,115 @@ export async function buscarOfertasReales(
 
   const seen = new Set<string>();
   const resultados: OfertaReal[] = [];
+  const ciudadLower = ciudad.toLowerCase().trim();
 
-  function addResults(ofertas: OfertaReal[]) {
+  function addResults(ofertas: OfertaReal[], distanciaTag?: string) {
     for (const o of ofertas) {
       const key = `${o.titulo.toLowerCase().replace(/\s+/g, "")}-${o.empresa.toLowerCase().replace(/\s+/g, "")}`;
       if (!seen.has(key)) {
         seen.add(key);
+        if (distanciaTag && !o.distancia) o.distancia = distanciaTag;
         resultados.push(o);
       }
     }
   }
 
-  // 1. Búsqueda principal: puesto exacto + ciudad
-  const mainKey = `${puesto}|${ciudad}`.toLowerCase();
-  const cached = getCached(mainKey);
-  if (cached) {
-    addResults(cached);
-    console.log(`[JobSearch] Cache hit: ${cached.length} ofertas`);
-  } else {
+  async function searchWithCache(kw: string, loc: string, tag?: string): Promise<OfertaReal[]> {
+    const cacheKey = `${kw}|${loc}`.toLowerCase();
+    const cached = getCached(cacheKey);
+    if (cached) {
+      if (tag) cached.forEach(o => { if (!o.distancia) o.distancia = tag; });
+      return cached;
+    }
     try {
-      const main = await buscarLinkedIn(puesto, ciudad);
-      addResults(main);
-      setCache(mainKey, main);
-      console.log(`[JobSearch] LinkedIn "${puesto}" en "${ciudad}": ${main.length}`);
+      await new Promise(r => setTimeout(r, 400));
+      const results = await buscarLinkedIn(kw, loc);
+      setCache(cacheKey, results);
+      if (tag) results.forEach(o => { if (!o.distancia) o.distancia = tag; });
+      console.log(`[JobSearch] LinkedIn "${kw}" en "${loc}": ${results.length}`);
+      return results;
     } catch (e) {
-      console.warn("[JobSearch] Main search error:", (e as Error).message);
+      console.warn(`[JobSearch] Error "${kw}"+"${loc}":`, (e as Error).message);
+      return [];
     }
   }
 
-  // 2. Keywords relacionados (en paralelo, con delay)
+  // ── FASE 1: Búsqueda exacta en la ciudad ────────────────────────────
+  const main = await searchWithCache(puesto, ciudad, "🏠 Tu ciudad");
+  addResults(main, "🏠 Tu ciudad");
+
+  // ── FASE 2: Keywords relacionados en la misma ciudad ─────────────────
   if (resultados.length < limit) {
     const keywords = getKeywordsRelacionados(puesto);
-    const extraKeywords = keywords.filter(k => k.toLowerCase() !== puesto.toLowerCase()).slice(0, 3);
-    
-    for (const kw of extraKeywords) {
+    const extras = keywords.filter(k => k.toLowerCase() !== puesto.toLowerCase()).slice(0, 4);
+    for (const kw of extras) {
       if (resultados.length >= limit) break;
-      const kwKey = `${kw}|${ciudad}`.toLowerCase();
-      const kwCached = getCached(kwKey);
-      if (kwCached) {
-        addResults(kwCached);
-      } else {
-        try {
-          await new Promise(r => setTimeout(r, 500)); // Rate limit
-          const extra = await buscarLinkedIn(kw, ciudad);
-          addResults(extra);
-          setCache(kwKey, extra);
-          console.log(`[JobSearch] LinkedIn "${kw}" en "${ciudad}": ${extra.length}`);
-        } catch (e) {
-          console.warn(`[JobSearch] Extra search "${kw}" error:`, (e as Error).message);
-        }
-      }
+      const r = await searchWithCache(kw, ciudad, "🏠 Tu ciudad");
+      addResults(r, "🏠 Tu ciudad");
     }
   }
 
-  // 3. Expandir a provincia/comunidad autónoma
+  // ── FASE 3: Ciudades cercanas (radio 50km) ──────────────────────────
   if (resultados.length < limit) {
-    const ca = PROVINCIAS_CA[ciudad.toLowerCase()];
-    if (ca && ca.toLowerCase() !== ciudad.toLowerCase()) {
-      const caKey = `${puesto}|${ca}`.toLowerCase();
-      const caCached = getCached(caKey);
-      if (caCached) {
-        addResults(caCached);
-      } else {
-        try {
-          await new Promise(r => setTimeout(r, 500));
-          const regional = await buscarLinkedIn(puesto, ca);
-          addResults(regional);
-          setCache(caKey, regional);
-          console.log(`[JobSearch] LinkedIn "${puesto}" en "${ca}": ${regional.length}`);
-        } catch (e) {
-          console.warn("[JobSearch] Regional error:", (e as Error).message);
-        }
-      }
+    const cercanas = CIUDADES_CERCANAS[ciudadLower] || [];
+    for (const c of cercanas.slice(0, 5)) {
+      if (resultados.length >= limit) break;
+      const r = await searchWithCache(puesto, c.nombre, `📍 ${c.distancia}`);
+      addResults(r, `📍 ${c.distancia}`);
     }
   }
 
-  // 4. Búsqueda genérica de TODOS los empleos en la zona
+  // ── FASE 4: Polígonos industriales ──────────────────────────────────
   if (resultados.length < limit) {
-    const allKey = `ALL|${ciudad}`.toLowerCase();
-    const allCached = getCached(allKey);
-    if (allCached) {
-      addResults(allCached);
-    } else {
-      try {
-        await new Promise(r => setTimeout(r, 500));
-        const all = await buscarLinkedIn("", ciudad);
-        addResults(all);
-        setCache(allKey, all);
-        console.log(`[JobSearch] LinkedIn ALL en "${ciudad}": ${all.length}`);
-      } catch { /* ignore */ }
+    const polis = POLIGONOS[ciudadLower] || [];
+    for (const poli of polis.slice(0, 2)) {
+      if (resultados.length >= limit) break;
+      const r = await searchWithCache("", poli, "🏭 Polígono");
+      addResults(r, "🏭 Polígono");
     }
   }
 
-  // 5. Expandir a toda España si sigue habiendo poco
+  // ── FASE 5: Expandir a provincia/comunidad ──────────────────────────
+  if (resultados.length < limit) {
+    const ca = PROVINCIAS_CA[ciudadLower];
+    if (ca && ca.toLowerCase() !== ciudadLower) {
+      const r = await searchWithCache(puesto, ca, `🗺️ ${ca}`);
+      addResults(r, `🗺️ ${ca}`);
+    }
+  }
+
+  // ── FASE 6: Todos los empleos de la zona (sin keyword) ─────────────
+  if (resultados.length < limit) {
+    const r = await searchWithCache("", ciudad, "🏠 Tu ciudad");
+    addResults(r, "🏠 Tu ciudad");
+  }
+
+  // ── FASE 7: España entera si aún hay pocos ─────────────────────────
   if (resultados.length < 10) {
-    try {
-      await new Promise(r => setTimeout(r, 500));
-      const nacional = await buscarLinkedIn(puesto, "Spain");
-      addResults(nacional);
-      console.log(`[JobSearch] LinkedIn "${puesto}" en España: ${nacional.length}`);
-    } catch { /* ignore */ }
+    const r = await searchWithCache(puesto, "Spain", "🇪🇸 España");
+    addResults(r, "🇪🇸 España");
   }
 
-  // 6. Fallback con empresas reales si hay muy poco
+  // ── FASE 8: Fallback con empresas reales + emails ──────────────────
   if (resultados.length < 5) {
     const fb = generarOfertasFallback(puesto, ciudad, Math.min(10, limit - resultados.length));
     addResults(fb);
   }
 
-  // Scoring: priorizar las que están en la ciudad del usuario
+  // ── Scoring final ──────────────────────────────────────────────────
   for (const o of resultados) {
     if (!o.match) o.match = 50;
-    if (o.ubicacion.toLowerCase().includes(ciudad.toLowerCase())) {
-      o.match = Math.min(o.match + 15, 99);
+    const ubLower = o.ubicacion.toLowerCase();
+    if (ubLower.includes(ciudadLower)) {
+      o.match = Math.min(o.match + 20, 99);
+    } else {
+      // Check if it's a nearby city
+      const cercanas = CIUDADES_CERCANAS[ciudadLower] || [];
+      const cercana = cercanas.find(c => ubLower.includes(c.nombre.toLowerCase()));
+      if (cercana) {
+        const km = parseInt(cercana.distancia);
+        o.match = Math.min(o.match + Math.max(15 - Math.floor(km / 5), 5), 95);
+      }
     }
   }
 
@@ -222,7 +302,7 @@ export async function buscarOfertasReales(
     .sort((a, b) => (b.match || 0) - (a.match || 0))
     .slice(0, limit);
 
-  console.log(`[JobSearch] TOTAL: ${final.length} ofertas (${seen.size} únicas encontradas)`);
+  console.log(`[JobSearch] TOTAL: ${final.length} ofertas (${seen.size} únicas de ${resultados.length} totales)`);
   return final;
 }
 
@@ -239,7 +319,7 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
     `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${kw}&location=${locEnc}&start=25&f_TPR=r2592000`,
   ];
 
-  const headers = {
+  const headers: Record<string, string> = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml",
     "Accept-Language": "es-ES,es;q=0.9",
@@ -257,7 +337,6 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
   }
   if (!html) throw new Error("LinkedIn: no response");
 
-  // Parse HTML
   const titleRegex = /base-search-card__title[^"]*"[^>]*>([^<]+)/g;
   const companyRegex = /base-search-card__subtitle[^"]*"[^>]*>\s*(?:<[^>]+>)?\s*([^<]+)/g;
   const locationRegex = /job-search-card__location[^"]*"[^>]*>([^<]+)/g;
@@ -279,7 +358,7 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
     const words = puestoLower.split(/\s+/).filter(w => w.length > 2);
     const matching = words.length > 0 ? words.filter(w => titleLower.includes(w)) : [];
     const baseMatch = words.length > 0 ? Math.round((matching.length / words.length) * 100) : 50;
-    const matchScore = Math.max(Math.min(baseMatch + 10 - i, 99), 35);
+    const matchScore = Math.max(Math.min(baseMatch + 10 - Math.floor(i / 2), 99), 30);
 
     ofertas.push({
       id: `li-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
@@ -299,14 +378,14 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
 }
 
 /**
- * Fallback: empresas reales españolas + emails de RRHH
+ * Fallback: empresas reales españolas + emails de RRHH conocidos
  */
 function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number): OfertaReal[] {
   const empresasPorSector: Record<string, { empresas: string[]; salarioBase: number; emails: string[] }> = {
     hosteleria: {
-      empresas: ["Meliá Hotels", "NH Hotels", "Paradores", "Grupo Vips", "Rodilla", "McDonald's España", "100 Montaditos"],
+      empresas: ["Meliá Hotels", "NH Hotels", "Paradores", "Grupo Vips", "Rodilla", "McDonald's España", "100 Montaditos", "Burger King España"],
       salarioBase: 1300,
-      emails: ["rrhh@melia.com", "careers@nh-hotels.com", "empleo@paradores.es", "rrhh@grupovips.com", "", "", ""]
+      emails: ["rrhh@melia.com", "careers@nh-hotels.com", "empleo@paradores.es", "rrhh@grupovips.com", "", "", "", ""]
     },
     construccion: {
       empresas: ["ACS Grupo", "Ferrovial", "Acciona", "Sacyr", "FCC", "OHL"],
@@ -319,19 +398,24 @@ function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number
       emails: ["empleo@indra.es", "talento@telefonica.com", "", "", "", ""]
     },
     comercio: {
-      empresas: ["Mercadona", "Inditex", "El Corte Inglés", "Carrefour", "Lidl", "Aldi"],
+      empresas: ["Mercadona", "Inditex", "El Corte Inglés", "Carrefour", "Lidl", "Aldi", "DIA"],
       salarioBase: 1300,
-      emails: ["", "empleo@inditex.com", "", "empleo@carrefour.es", "empleo@lidl.es", "empleo@aldi.es"]
+      emails: ["", "empleo@inditex.com", "", "empleo@carrefour.es", "empleo@lidl.es", "empleo@aldi.es", ""]
     },
     logistica: {
-      empresas: ["SEUR", "MRW", "DHL España", "Amazon Logistics", "GLS Spain"],
+      empresas: ["SEUR", "MRW", "DHL España", "Amazon Logistics", "GLS Spain", "Correos"],
       salarioBase: 1400,
-      emails: ["empleo@seur.com", "empleo@mrw.es", "", "", ""]
+      emails: ["empleo@seur.com", "empleo@mrw.es", "", "", "", "empleo@correos.com"]
     },
     limpieza: {
-      empresas: ["ISS Facility", "Clece", "Eulen", "Sacyr Facilities"],
+      empresas: ["ISS Facility", "Clece", "Eulen", "Sacyr Facilities", "Ferrovial Servicios"],
       salarioBase: 1200,
-      emails: ["empleo@es.issworld.com", "empleo@clece.es", "empleo@eulen.com", ""]
+      emails: ["empleo@es.issworld.com", "empleo@clece.es", "empleo@eulen.com", "", ""]
+    },
+    industria: {
+      empresas: ["Viscofan", "AN Group", "Florette", "Congelados de Navarra", "MTorres", "Samca"],
+      salarioBase: 1500,
+      emails: ["rrhh@viscofan.com", "", "", "", "", ""]
     },
     ett: {
       empresas: ["Adecco", "Randstad", "ManpowerGroup", "Eurofirms", "Gi Group", "Synergie", "Page Personnel", "Hays"],
@@ -339,9 +423,9 @@ function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number
       emails: ["info@adecco.es", "info@randstad.es", "info@manpower.es", "info@eurofirms.es", "info@gigroup.es", "info@synergie.es", "", ""]
     },
     default: {
-      empresas: ["Adecco", "Randstad", "ManpowerGroup", "Eurofirms", "Gi Group"],
+      empresas: ["Adecco", "Randstad", "ManpowerGroup", "Eurofirms", "Gi Group", "Synergie"],
       salarioBase: 1300,
-      emails: ["info@adecco.es", "info@randstad.es", "info@manpower.es", "info@eurofirms.es", "info@gigroup.es"]
+      emails: ["info@adecco.es", "info@randstad.es", "info@manpower.es", "info@eurofirms.es", "info@gigroup.es", "info@synergie.es"]
     },
   };
 
@@ -353,6 +437,7 @@ function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number
   else if (/vendedor|cajero|depend|comerci|tienda|reponedor/i.test(p)) sector = "comercio";
   else if (/conduc|repartid|almacén|logíst|carretill|mozo/i.test(p)) sector = "logistica";
   else if (/limpi|mantenim|conserjería/i.test(p)) sector = "limpieza";
+  else if (/operario|fábrica|producc|industri|montaj|soldad/i.test(p)) sector = "industria";
   else if (/ett|temporal|agencia/i.test(p)) sector = "ett";
 
   const { empresas, salarioBase, emails } = empresasPorSector[sector];
@@ -362,11 +447,12 @@ function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number
     empresa: empresas[i],
     ubicacion: ciudad,
     salario: `${salarioBase + (4 - i) * 150}€ - ${salarioBase + 600 + (4 - i) * 200}€/mes`,
-    descripcion: `${empresas[i]} busca ${puesto} en ${ciudad}. Envía tu CV.`,
+    descripcion: `${empresas[i]} busca ${puesto} en ${ciudad}. Envía tu CV directamente.`,
     fuente: "BuscayCurra",
     url: `https://www.linkedin.com/jobs/search?keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ciudad + " Spain")}`,
     fecha: new Date().toISOString(),
-    match: Math.max(65 - i * 7, 35),
+    match: Math.max(65 - i * 7, 30),
     emailEmpresa: emails[i] || undefined,
+    distancia: "📧 Envío directo",
   }));
 }

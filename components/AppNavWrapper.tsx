@@ -10,6 +10,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import NotificacionesBell from "@/components/NotificacionesBell";
 
 const navItems = [
   { href: "/app", label: "Inicio", icon: "🏠" },
@@ -63,6 +64,7 @@ export default function AppNavWrapper() {
           </span>
         </Link>
         <div className="flex items-center gap-0.5 sm:gap-1">
+          <NotificacionesBell />
           {navItems.map((item) => {
             const activo =
               pathname === item.href ||

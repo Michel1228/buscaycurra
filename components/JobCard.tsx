@@ -19,6 +19,8 @@ export interface PropiedadesJobCard {
   modalidad?: "presencial" | "remoto" | "hibrido";
   descripcion?: string;
   match?: number; // 0-100 % de compatibilidad
+  distancia?: string; // "🏠 Tu ciudad" | "📍 15km" etc.
+  emailEmpresa?: string; // email RRHH si disponible
 }
 
 function colorMatch(pct: number): string {
@@ -41,7 +43,7 @@ function colorFuente(fuente: string): { bg: string; text: string } {
 
 export default function JobCard({
   titulo, empresa, ubicacion, salario, fuente = "Otro",
-  url, modalidad, descripcion, match,
+  url, modalidad, descripcion, match, distancia, emailEmpresa,
 }: PropiedadesJobCard) {
   const fc = colorFuente(fuente);
   const matchColor = match !== undefined ? colorMatch(match) : "#706a58";
@@ -78,6 +80,16 @@ export default function JobCard({
         {salario && (
           <div className="flex items-center gap-1 mt-1 text-xs font-semibold" style={{ color: "#7ed56f" }}>
             <span>💰</span><span>{salario}</span>
+          </div>
+        )}
+        {distancia && (
+          <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#a8e6a1" }}>
+            <span>{distancia}</span>
+          </div>
+        )}
+        {emailEmpresa && (
+          <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#f0c040" }}>
+            <span>✉️</span><span>{emailEmpresa}</span>
           </div>
         )}
         {descripcion && (
