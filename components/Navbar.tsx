@@ -101,12 +101,12 @@ export default function Navbar() {
           {/* ── Navegación principal (escritorio) ─────────────────── */}
           <div className="hidden md:flex items-center gap-1">
             {[
-              { href: "/app",          label: "Inicio"   },
-              { href: "/app/buscar",   label: "Buscar"   },
-              { href: "/app/curriculum", label: "CV"     },
-              { href: "/app/envios",   label: "Envíos"   },
-              { href: "/app/empresas", label: "Empresas" },
-              { href: "/app/perfil",   label: "Mi Cuenta"},
+              { href: "/app",            label: "Inicio"   },
+              { href: "/app/buscar",     label: "Buscar"   },
+              { href: "/app/gusi",       label: "🐛 Gusi"  },
+              { href: "/app/envios",     label: "Envíos"   },
+              { href: "/app/empresas",   label: "Empresas" },
+              { href: "/app/perfil",     label: "Mi Cuenta"},
             ].map(({ href, label }) => (
               <Link
                 key={href}
@@ -183,7 +183,7 @@ export default function Navbar() {
           {[
             { href: "/app",            label: "🏠 Inicio"         },
             { href: "/app/buscar",     label: "🔍 Buscar ofertas" },
-            { href: "/app/curriculum", label: "📄 Mejorar CV"     },
+            { href: "/app/gusi",       label: "🐛 Gusi"           },
             { href: "/app/envios",     label: "📧 Envíos"         },
             { href: "/app/empresas",   label: "🏢 Empresas"       },
             { href: "/app/perfil",     label: "👤 Mi Cuenta"      },
