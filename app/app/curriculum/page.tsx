@@ -21,6 +21,7 @@ import { useState, useEffect, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
+import CVUploader from "@/components/CVUploader";
 
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
@@ -388,6 +389,27 @@ export default function CurriculumPage() {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* ── Subir CV PDF ──────────────────────────── */}
+        <div className="mt-6 card-game p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-[#f0ebe0]">Sube tu CV en PDF</h3>
+              <p className="text-sm text-[#706a58] mt-0.5">
+                Tu CV PDF se enviará automáticamente a las empresas
+              </p>
+            </div>
+          </div>
+          <CVUploader />
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => router.push("/app/buscar")}
+              className="px-6 py-3 text-sm font-semibold rounded-xl transition hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+              🔍 Siguiente: Buscar ofertas →
+            </button>
           </div>
         </div>
 

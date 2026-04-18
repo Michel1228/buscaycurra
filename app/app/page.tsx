@@ -114,8 +114,22 @@ export default function DashboardPage() {
 
       setNombre(perfil?.full_name || "");
 
-      const { count: cvCount } = await getSupabaseBrowser().from("cvs")
-        .select("*", { count: "exact", head: true }).eq("user_id", user.id);
+      // Check CV in Storage (bucket 'cvs') — more reliable than cvs table
+      let cvExists = false;
+      try {
+        const res = await fetch("/api/cv/obtener", {
+          headers: { Authorization: `Bearer ${(await getSupabaseBrowser().auth.getSession()).data.session?.access_token}` },
+        });
+        const cvData = await res.json();
+        cvExists = !!cvData?.cvUrl;
+      } catch { /* ignore */ }
+      
+      // Fallback: also check cvs table
+      if (!cvExists) {
+        const { count: cvCount } = await getSupabaseBrowser().from("cvs")
+          .select("*", { count: "exact", head: true }).eq("user_id", user.id);
+        cvExists = (cvCount ?? 0) > 0;
+      }
 
       const { data: envios } = await getSupabaseBrowser().from("cv_sends")
         .select("id, empresa, puesto, estado, creado_en")
@@ -139,7 +153,7 @@ export default function DashboardPage() {
         setEvolucion({
           tieneNombre: !!perfil?.full_name, tieneTelefono: !!perfil?.phone,
           tieneLinkedin: !!perfil?.linkedin_url, trabajoEncontrado: !!perfil?.trabajo_encontrado,
-          tieneCv: (cvCount ?? 0) > 0, cvsEnviados: todos.length,
+          tieneCv: cvExists, cvsEnviados: todos.length,
         });
       }
       setCargando(false);

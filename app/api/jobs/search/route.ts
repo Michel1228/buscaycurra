@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     // Intentar búsqueda real primero, fallback al scraper mock
     let ofertasReales;
     try {
-      ofertasReales = await buscarOfertasReales(keyword, location, 10);
+      ofertasReales = await buscarOfertasReales(keyword, location, 25);
     } catch {
       ofertasReales = null;
     }

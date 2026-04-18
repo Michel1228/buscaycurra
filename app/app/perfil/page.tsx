@@ -97,7 +97,11 @@ export default function PerfilPage() {
               <p className="text-sm" style={{ color: "#706a58" }}>Se usa para personalizar tu carta de presentación</p>
             </div>
             <div className="card-game p-6">
-              <PerfilForm userId={userId} datosIniciales={datos} onGuardado={setDatos} />
+              <PerfilForm userId={userId} datosIniciales={datos} onGuardado={(d) => {
+                setDatos(d);
+                // Auto-redirect to next step (CV) after saving profile
+                setTimeout(() => router.push("/app/curriculum"), 1200);
+              }} />
             </div>
             <div>
               <h2 className="text-lg font-bold" style={{ color: "#f0ebe0" }}>Mi CV</h2>

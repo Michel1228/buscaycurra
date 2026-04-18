@@ -128,19 +128,31 @@ export async function buscarOfertasReales(
  */
 async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<OfertaReal[]> {
   const loc = ubicacion.includes("Spain") ? ubicacion : `${ubicacion}, Spain`;
-  const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(loc)}&start=0&f_TPR=r604800`;
+  // Fetch two pages for more results
+  const urls = [
+    `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(loc)}&start=0&f_TPR=r604800`,
+    `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(loc)}&start=25&f_TPR=r604800`,
+  ];
 
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept": "text/html",
-      "Accept-Language": "es-ES,es;q=0.9",
-    },
-    signal: AbortSignal.timeout(10000),
-  });
+  // Fetch both pages in parallel
+  const responses = await Promise.allSettled(
+    urls.map(u => fetch(u, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html",
+        "Accept-Language": "es-ES,es;q=0.9",
+      },
+      signal: AbortSignal.timeout(10000),
+    }))
+  );
 
-  if (!res.ok) throw new Error(`LinkedIn ${res.status}`);
-  const html = await res.text();
+  let html = "";
+  for (const r of responses) {
+    if (r.status === "fulfilled" && r.value.ok) {
+      html += await r.value.text();
+    }
+  }
+  if (!html) throw new Error("LinkedIn: no response");
 
   // Parse HTML
   const titleRegex = /base-search-card__title[^"]*"[^>]*>([^<]+)/g;

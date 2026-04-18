@@ -32,14 +32,14 @@ const SECTORES = [
   "Limpieza y mantenimiento", "Agricultura", "Industria", "Otro",
 ];
 
-const AVATARES = ["🐛", "🦋", "🌿", "🌳", "🍃", "🐜", "🦎", "🐸", "🌻", "🦉"];
+// Avatar emojis removed — avatar selection is in AvatarMariposa component
 
 export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: PerfilFormProps) {
   const [nombre, setNombre] = useState(datosIniciales.nombre ?? "");
   const [telefono, setTelefono] = useState(datosIniciales.telefono ?? "");
   const [ciudad, setCiudad] = useState(datosIniciales.ciudad ?? "");
   const [sector, setSector] = useState(datosIniciales.sector ?? "");
-  const [avatarEmoji, setAvatarEmoji] = useState("🐛");
+
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -126,7 +126,6 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
 
       setExito(true);
       onGuardado?.({ nombre, telefono, ciudad, sector });
-      setTimeout(() => setExito(false), 4000);
     } catch (ex) {
       console.error("Error inesperado:", ex);
       setError("Error de conexión. Comprueba tu internet.");
@@ -138,7 +137,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
 
-      {/* Foto de perfil / Avatar */}
+      {/* Foto de perfil */}
       <div className="flex flex-col items-center gap-3 mb-2">
         <div className="relative group cursor-pointer" onClick={() => fileRef.current?.click()}>
           {fotoUrl ? (
@@ -147,12 +146,12 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
           ) : (
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl"
               style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.15), rgba(92,184,72,0.1))", border: "3px solid rgba(126,213,111,0.2)" }}>
-              {avatarEmoji}
+              📷
             </div>
           )}
           <div className="absolute inset-0 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
             style={{ background: "rgba(0,0,0,0.5)" }}>
-            <span className="text-sm">📷</span>
+            <span className="text-sm text-white">Cambiar foto</span>
           </div>
           {subiendoFoto && (
             <div className="absolute inset-0 rounded-2xl flex items-center justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
@@ -162,23 +161,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) subirFoto(f); }} />
-
-        {/* Selector de avatar emoji */}
-        {!fotoUrl && (
-          <div className="flex gap-2 flex-wrap justify-center">
-            {AVATARES.map(a => (
-              <button key={a} type="button" onClick={() => setAvatarEmoji(a)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-sm transition"
-                style={{
-                  background: avatarEmoji === a ? "rgba(126,213,111,0.2)" : "rgba(42,42,30,0.5)",
-                  border: avatarEmoji === a ? "2px solid rgba(126,213,111,0.4)" : "1px solid #3d3c30",
-                }}>
-                {a}
-              </button>
-            ))}
-          </div>
-        )}
-        <p className="text-[10px]" style={{ color: "#504a3a" }}>Toca para subir foto o elige un avatar</p>
+        <p className="text-[10px]" style={{ color: "#504a3a" }}>Toca para subir tu foto de perfil</p>
       </div>
 
       {/* Nombre */}

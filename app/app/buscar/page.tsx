@@ -49,6 +49,7 @@ function BuscarPageInner() {
   // Campos de búsqueda
   const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
   const [ubicacion, setUbicacion] = useState(searchParams.get("location") || "");
+  const [geoDetected, setGeoDetected] = useState(false);
 
   // Filtros adicionales
   const [jornada, setJornada] = useState("");
@@ -61,14 +62,52 @@ function BuscarPageInner() {
   const [buscado, setBuscado] = useState(false);
   const [error, setError] = useState("");
 
-  // Verificar sesión al cargar
+  // Verificar sesión + geolocalización automática
   useEffect(() => {
-    async function verificarSesion() {
+    async function init() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-      if (!user) router.push("/auth/login");
+      if (!user) { router.push("/auth/login"); return; }
+
+      // Si no hay ubicación, intentar detectarla
+      if (!ubicacion) {
+        // 1. Primero mirar el perfil del usuario
+        const { data: perfil } = await getSupabaseBrowser().from("profiles")
+          .select("ciudad").eq("id", user.id).single();
+        if (perfil?.ciudad) {
+          setUbicacion(perfil.ciudad);
+          setGeoDetected(true);
+          return;
+        }
+
+        // 2. Si no hay ciudad en perfil, usar geolocalización del navegador
+        if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              try {
+                // Reverse geocode con API gratuita
+                const res = await fetch(
+                  `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`
+                );
+                const data = await res.json();
+                const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
+                if (city) {
+                  setUbicacion(city);
+                  setGeoDetected(true);
+                  // Guardar en perfil para futuras visitas
+                  await getSupabaseBrowser().from("profiles")
+                    .update({ ciudad: city })
+                    .eq("id", user.id);
+                }
+              } catch { /* ignore geo errors */ }
+            },
+            () => { /* user denied geolocation */ },
+            { timeout: 5000, enableHighAccuracy: false }
+          );
+        }
+      }
     }
-    verificarSesion();
-  }, [router]);
+    init();
+  }, [router, ubicacion]);
 
   /**
    * Ejecuta la búsqueda llamando al endpoint de la API.
@@ -126,13 +165,20 @@ function BuscarPageInner() {
               className="flex-1 px-4 py-3 rounded-xl text-[#f0ebe0] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
             />
             {/* Campo: dónde buscas */}
-            <input
-              type="text"
-              value={ubicacion}
-              onChange={(e) => setUbicacion(e.target.value)}
-              placeholder="¿Dónde? (Madrid, Barcelona...)"
-              className="w-full sm:w-56 px-4 py-3 rounded-xl text-[#f0ebe0] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-            />
+            <div className="relative w-full sm:w-64">
+              <input
+                type="text"
+                value={ubicacion}
+                onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
+                placeholder="¿Dónde? (Madrid, Barcelona...)"
+                className="w-full px-4 py-3 rounded-xl text-[#f0ebe0] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+              />
+              {geoDetected && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#1a1a12" }}>
+                  📍 Auto
+                </span>
+              )}
+            </div>
             {/* Botón buscar */}
             <button
               type="submit"
