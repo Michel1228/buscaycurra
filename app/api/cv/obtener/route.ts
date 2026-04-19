@@ -11,16 +11,17 @@ import { createClient } from "@supabase/supabase-js";
 // ─── GET /api/cv/obtener ──────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
-  // ─── Cliente Supabase con clave anónima (para verificar sesión) ───────────
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ cvUrl: null });
+  }
+
   const supabasePublico = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-
-  // ─── Cliente Supabase con service role (para acceder a Storage) ───────────
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
   try {

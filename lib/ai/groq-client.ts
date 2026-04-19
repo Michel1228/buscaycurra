@@ -187,8 +187,9 @@ Instrucciones:
 - Resalta las habilidades más relevantes para el puesto
 - Usa vocabulario profesional en español
 - Formato limpio y legible
+- IMPORTANTE: devuelve SOLO texto plano. Sin markdown, sin asteriscos (*), sin almohadillas (#), sin guiones bajos (_), sin backticks (\`). Solo texto limpio con espacios y saltos de línea normales.
 
-Devuelve solo el CV mejorado, sin comentarios adicionales.`;
+Devuelve solo el CV mejorado, sin comentarios, sin símbolos de formato.`;
 
   return await llamarGroq(prompt, "mejora-cv", {
     sistemaPrompt: "Eres un experto en recursos humanos especializado en el mercado laboral español.",
@@ -224,8 +225,9 @@ Instrucciones:
 - Conecta mis habilidades con las necesidades del puesto
 - Termina con llamada a la acción (solicitar entrevista)
 - No usar frases hechas como "me dirijo a ustedes"
+- IMPORTANTE: devuelve SOLO texto plano. Sin markdown, sin asteriscos (*), sin almohadillas (#), sin guiones bajos (_). Solo texto limpio.
 
-Devuelve solo la carta, sin comentarios.`;
+Devuelve solo la carta, sin comentarios, sin símbolos de formato.`;
 
   return await llamarGroq(prompt, "carta-presentacion", {
     maxTokens: 1500,

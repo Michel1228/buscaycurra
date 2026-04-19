@@ -1,413 +1,469 @@
 "use client";
 
-// Deshabilitar prerenderizado estático — la página requiere autenticación dinámica
 export const dynamic = "force-dynamic";
-
-/**
- * app/app/curriculum/page.tsx — Mejorador de CV con IA
- *
- * Diseño en dos columnas:
- *   - Izquierda: textarea con el CV del usuario, input con el puesto objetivo
- *                y botón "Mejorar con IA"
- *   - Derecha:   área con el CV mejorado por la IA y botón "Copiar"
- *
- * También incluye un botón inferior para generar carta de presentación.
- * Llama a POST /api/cv/mejorar con el texto del CV y el título del puesto.
- * Si el usuario no está logado, redirige a /auth/login.
- * Colores de marca: azul #2563EB y naranja #F97316.
- */
 
 import { useState, useEffect, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { jsPDF } from "jspdf";
+import CVUploader from "@/components/CVUploader";
 
-
-// ─── Componente Principal ─────────────────────────────────────────────────────
+type Paso = 1 | 2 | 3;
 
 export default function CurriculumPage() {
   const router = useRouter();
+  const fotoInputRef = useRef<HTMLInputElement>(null);
 
-  // Texto del CV original (introducido por el usuario)
+  const [paso, setPaso] = useState<Paso>(1);
+
+  // Paso 2
   const [textoCv, setTextoCv] = useState("");
-  // Puesto al que quiere aplicar
   const [puesto, setPuesto] = useState("");
-  // CV mejorado devuelto por la IA
-  const [cvMejorado, setCvMejorado] = useState("");
-  // Estado de carga mientras la IA procesa
+  const [infoExtra, setInfoExtra] = useState("");
+  const [fotoDatos, setFotoDatos] = useState<string | null>(null);
   const [procesando, setProcesando] = useState(false);
-  // Mensaje de error
+  const [cargandoTexto, setCargandoTexto] = useState(false);
   const [error, setError] = useState("");
-  // Indica si se ha copiado el texto al portapapeles
-  const [copiado, setCopiado] = useState(false);
-  // Indica si el resultado actual es una carta de presentación (true) o CV mejorado (false)
+
+  // Paso 3
+  const [cvMejorado, setCvMejorado] = useState("");
   const [esCarta, setEsCarta] = useState(false);
+  const [copiado, setCopiado] = useState(false);
 
-  // Referencia al área de resultados para hacer scroll automático
-  const resultadoRef = useRef<HTMLDivElement>(null);
-
-  // Verificar sesión al cargar
   useEffect(() => {
-    async function verificarSesion() {
+    async function verificar() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) router.push("/auth/login");
     }
-    verificarSesion();
+    void verificar();
   }, [router]);
 
-  /**
-   * Envía el CV a la API de IA para mejorarlo.
-   * Valida que haya texto antes de llamar.
-   */
-  async function mejorarCV(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!textoCv.trim()) {
-      setError("Por favor, pega tu CV antes de continuar.");
-      return;
+  // Comprueba que el texto extraído del PDF es legible (no binario/garbled)
+  function esTextoLegible(texto: string): boolean {
+    if (!texto || texto.length < 20) return false;
+    let legibles = 0;
+    for (const c of texto) {
+      const code = c.charCodeAt(0);
+      // Contar como legibles: ASCII imprimible, saltos de línea/tab, Latin-1 (acentos, ñ, ü...)
+      if (
+        (code >= 32 && code <= 126) ||
+        code === 10 || code === 13 || code === 9 ||
+        (code >= 160 && code <= 255)
+      ) legibles++;
     }
+    return legibles / texto.length >= 0.80; // 80%+ de chars legibles
+  }
 
+  // Al pasar al paso 2, cargar el texto del CV subido automáticamente
+  async function irAPaso2() {
+    setPaso(2);
+    if (textoCv.trim()) return; // ya hay texto, no sobreescribir
+    setCargandoTexto(true);
+    try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) return;
+      const res = await fetch("/api/cv/texto", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const datos = await res.json() as { texto?: string | null; error?: string };
+      if (datos.texto && esTextoLegible(datos.texto)) {
+        setTextoCv(datos.texto);
+      }
+      // Si el texto es ilegible o vacío, el textarea queda en blanco para pegar manualmente
+    } catch {
+      // Si falla, el usuario puede pegar manualmente — no es crítico
+    } finally {
+      setCargandoTexto(false);
+    }
+  }
+
+  async function mejorarCV() {
+    if (!textoCv.trim()) { setError("Por favor, pega el texto de tu CV."); return; }
     setProcesando(true);
     setError("");
-    setCvMejorado("");
-
     try {
-      const respuesta = await fetch("/api/cv/mejorar", {
+      const textoFinal = infoExtra.trim()
+        ? `${textoCv}\n\n--- INFORMACIÓN ADICIONAL ---\n${infoExtra}`
+        : textoCv;
+      const res = await fetch("/api/cv/mejorar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvText: textoCv, jobTitle: puesto }),
+        body: JSON.stringify({ cvText: textoFinal, jobTitle: puesto }),
       });
-
-      if (!respuesta.ok) {
-        const datos = await respuesta.json();
-        throw new Error(datos.error || "Error al mejorar el CV. Inténtalo de nuevo.");
-      }
-
-      const datos = await respuesta.json();
-      setCvMejorado(datos.cvMejorado || "");
-      // Marcar que el resultado es un CV mejorado (no carta)
+      const datos = await res.json() as { cvMejorado?: string; error?: string };
+      if (!res.ok) throw new Error(datos.error ?? "Error al mejorar el CV");
+      setCvMejorado(datos.cvMejorado ?? "");
       setEsCarta(false);
-
-      // Scroll automático al resultado
-      setTimeout(() => {
-        resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
+      setPaso(3);
     } catch (err) {
-      setError((err as Error).message || "Error al procesar tu CV");
+      setError((err as Error).message);
     } finally {
       setProcesando(false);
     }
   }
 
-  /**
-   * Genera una carta de presentación basada en el CV mejorado.
-   * Llama a la misma API con una petición especial.
-   */
   async function generarCarta() {
     if (!textoCv.trim() || !puesto.trim()) {
       setError("Necesitas el CV y el nombre del puesto para generar la carta.");
       return;
     }
-
     setProcesando(true);
     setError("");
-
     try {
-      const respuesta = await fetch("/api/cv/mejorar", {
+      const res = await fetch("/api/cv/mejorar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cvText: textoCv,
-          jobTitle: puesto,
-          tipo: "carta",
-        }),
+        body: JSON.stringify({ cvText: textoCv, jobTitle: puesto, tipo: "carta" }),
       });
-
-      if (!respuesta.ok) {
-        const datos = await respuesta.json();
-        throw new Error(datos.error || "Error al generar la carta");
-      }
-
-      const datos = await respuesta.json();
-      setCvMejorado(datos.cvMejorado || "");
-      // Marcar que el resultado es una carta de presentación
+      const datos = await res.json() as { cvMejorado?: string; error?: string };
+      if (!res.ok) throw new Error(datos.error ?? "Error al generar la carta");
+      setCvMejorado(datos.cvMejorado ?? "");
       setEsCarta(true);
-
-      setTimeout(() => {
-        resultadoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
+      setPaso(3);
     } catch (err) {
-      setError((err as Error).message || "Error al generar la carta");
+      setError((err as Error).message);
     } finally {
       setProcesando(false);
     }
   }
 
-  /**
-   * Genera y descarga un PDF con el texto del CV mejorado o la carta de presentación.
-   * Usa jsPDF para crear el documento en el cliente, sin necesidad de API.
-   *
-   * Estructura del PDF:
-   *   - Cabecera con el nombre "BuscayCurra" en azul (#2563EB)
-   *   - Línea separadora naranja (#F97316)
-   *   - Texto del contenido bien formateado con saltos de línea
-   *   - Pie de página con "Generado por BuscayCurra — buscaycurra.es"
-   *
-   * @param esCarta - true si es carta de presentación, false si es CV mejorado
-   */
-  function descargarComoPDF(esCarta: boolean) {
-    if (!cvMejorado) return;
-
-    // Crear nuevo documento PDF (A4, puntos)
-    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-
-    const margenIzq = 40;
-    const margenDer = 40;
-    const anchoPagina = doc.internal.pageSize.getWidth();
-    const altoPagina = doc.internal.pageSize.getHeight();
-    const anchoUtil = anchoPagina - margenIzq - margenDer;
-    let y = 50; // Posición vertical actual
-
-    // ── Cabecera: nombre de la marca en azul ─────────────────────────────────
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.setTextColor(37, 99, 235); // Azul #2563EB en RGB
-    doc.text("BuscayCurra", margenIzq, y);
-    y += 8;
-
-    // Subtítulo de la marca
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 116, 139); // Gris neutro
-    doc.text("buscaycurra.es", margenIzq, y + 10);
-    y += 28;
-
-    // ── Línea separadora naranja ──────────────────────────────────────────────
-    doc.setDrawColor(249, 115, 22); // Naranja #F97316 en RGB
-    doc.setLineWidth(2);
-    doc.line(margenIzq, y, anchoPagina - margenDer, y);
-    y += 20;
-
-    // ── Título del documento ──────────────────────────────────────────────────
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(17, 24, 39); // Gris oscuro
-    const tituloDoc = esCarta
-      ? `Carta de presentación — ${puesto}`
-      : `CV mejorado — ${puesto}`;
-    doc.text(tituloDoc, margenIzq, y);
-    y += 24;
-
-    // ── Contenido del CV/carta ────────────────────────────────────────────────
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(55, 65, 81); // Gris texto
-
-    // Dividir el texto en líneas que quepan en el ancho disponible
-    const lineas = doc.splitTextToSize(cvMejorado, anchoUtil) as string[];
-
-    for (const linea of lineas) {
-      // Si la línea no cabe en la página actual, crear una nueva
-      if (y > altoPagina - 60) {
-        doc.addPage();
-        y = 40;
-      }
-      doc.text(linea, margenIzq, y);
-      y += 14; // Interlineado
-    }
-
-    // ── Pie de página en la última página ────────────────────────────────────
-    doc.setFontSize(8);
-    doc.setTextColor(156, 163, 175); // Gris claro
-    doc.text(
-      "Generado por BuscayCurra — buscaycurra.es",
-      anchoPagina / 2,
-      altoPagina - 20,
-      { align: "center" }
-    );
-
-    // ── Nombre del archivo según el tipo de documento ─────────────────────────
-    // Limpiamos el nombre del puesto para usarlo en el nombre de archivo
-    const puestoLimpio = puesto.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_áéíóúÁÉÍÓÚñÑ]/g, "") || "Puesto";
-    const nombreArchivo = esCarta
-      ? `Carta_Presentacion_${puestoLimpio}_BuscayCurra.pdf`
-      : `CV_Mejorado_${puestoLimpio}_BuscayCurra.pdf`;
-
-    // Guardar y descargar el PDF en el cliente
-    doc.save(nombreArchivo);
+  function handleFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setFotoDatos(ev.target?.result as string);
+    reader.readAsDataURL(file);
   }
 
-  /**
-   * Copia el texto del CV mejorado al portapapeles.
-   */
-  async function copiarAlPortapapeles() {
+  function descargarPDF() {
     if (!cvMejorado) return;
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    const mL = 40, mR = 40;
+    const w = doc.internal.pageSize.getWidth();
+    const h = doc.internal.pageSize.getHeight();
+    let y = 50;
+
+    if (fotoDatos) {
+      try { doc.addImage(fotoDatos, "JPEG", w - mR - 80, 30, 80, 80); } catch { /* ignorar */ }
+    }
+
+    doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(37, 99, 235);
+    doc.text("BuscayCurra", mL, y);
+    doc.setFontSize(10).setFont("helvetica", "normal").setTextColor(100, 116, 139);
+    doc.text("buscaycurra.es", mL, y + 18);
+    y += 34;
+
+    doc.setDrawColor(249, 115, 22).setLineWidth(2).line(mL, y, w - mR, y);
+    y += 20;
+
+    if (puesto) {
+      doc.setFont("helvetica", "bold").setFontSize(13).setTextColor(17, 24, 39);
+      doc.text(esCarta ? `Carta de presentación — ${puesto}` : `CV mejorado — ${puesto}`, mL, y);
+      y += 24;
+    }
+
+    doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(55, 65, 81);
+    const lineas = doc.splitTextToSize(cvMejorado, w - mL - mR) as string[];
+    for (const linea of lineas) {
+      if (y > h - 60) { doc.addPage(); y = 40; }
+      doc.text(linea, mL, y);
+      y += 14;
+    }
+
+    doc.setFontSize(8).setTextColor(156, 163, 175);
+    doc.text("Generado por BuscayCurra — buscaycurra.es", w / 2, h - 20, { align: "center" });
+
+    const p = puesto.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_áéíóúÁÉÍÓÚñÑ]/g, "") || "Documento";
+    doc.save(esCarta ? `Carta_${p}_BuscayCurra.pdf` : `CV_Mejorado_${p}_BuscayCurra.pdf`);
+  }
+
+  async function copiar() {
     try {
       await navigator.clipboard.writeText(cvMejorado);
       setCopiado(true);
-      // Restaurar el texto del botón tras 2 segundos
       setTimeout(() => setCopiado(false), 2000);
     } catch {
-      setError("No se pudo copiar al portapapeles. Selecciona el texto manualmente.");
+      setError("No se pudo copiar. Selecciona el texto manualmente.");
     }
   }
+
+  const pasoLabels = ["Subir CV", "Mejorar con IA", "Descargar"];
 
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* ── Cabecera de la página ──────────────────────────────────────── */}
-      <div className="text-white py-10 px-4" style={{ backgroundColor: "#2563EB" }}>
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-2xl font-bold">📄 Mejorar CV con IA</h1>
+      {/* Cabecera */}
+      <div className="text-white py-8 px-4" style={{ backgroundColor: "#2563EB" }}>
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-2xl font-bold">📄 Mi Currículum</h1>
           <p className="text-blue-100 mt-1 text-sm">
-            Nuestra IA adapta tu CV al puesto perfecto en segundos
+            Sube tu CV, mejóralo con IA y descárgalo listo para enviar
           </p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* Indicador de pasos */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-2">
+          {([1, 2, 3] as Paso[]).map((n, i) => (
+            <div key={n} className="flex items-center gap-2">
+              {i > 0 && <div className="w-10 h-px bg-gray-200 flex-shrink-0" />}
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors"
+                  style={{
+                    backgroundColor: paso > n ? "#10b981" : paso === n ? "#2563EB" : "#e5e7eb",
+                    color: paso >= n ? "white" : "#6b7280",
+                  }}
+                >
+                  {paso > n ? "✓" : n}
+                </div>
+                <span
+                  className="text-sm font-medium hidden sm:block transition-colors"
+                  style={{ color: paso === n ? "#2563EB" : "#9ca3af" }}
+                >
+                  {pasoLabels[n - 1]}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        {/* ── Mensaje de error ───────────────────────────────────────────── */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-2xl px-5 py-4 text-sm">
-            ⚠️ {error}
+      <div className="max-w-3xl mx-auto px-4 py-8">
+
+        {/* ── Paso 1: Subir CV ─────────────────────────────────────────── */}
+        {paso === 1 && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Sube tu CV en PDF</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Tu CV se adjuntará automáticamente a cada candidatura que envíes
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <CVUploader />
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => void irAPaso2()}
+                className="px-6 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition"
+                style={{ backgroundColor: "#2563EB" }}
+              >
+                Continuar: Mejorar con IA →
+              </button>
+            </div>
           </div>
         )}
 
-        {/* ── Dos columnas: entrada y resultado ─────────────────────────── */}
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* ── Paso 2: Mejorar con IA ───────────────────────────────────── */}
+        {paso === 2 && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Mejora tu CV con IA</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Pega el texto de tu CV y la IA lo optimizará para pasar los filtros ATS
+              </p>
+            </div>
 
-          {/* Columna izquierda: formulario de entrada */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="font-semibold text-gray-900 mb-5">Tu CV actual</h2>
-            <form onSubmit={mejorarCV} className="flex flex-col gap-4">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+                ⚠️ {error}
+              </div>
+            )}
 
-              {/* Campo: puesto objetivo */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  ¿Para qué puesto?
+                  ¿Para qué puesto? <span className="text-gray-400 font-normal">(opcional)</span>
                 </label>
                 <input
                   type="text"
                   value={puesto}
                   onChange={(e) => setPuesto(e.target.value)}
-                  placeholder="Ej: Desarrollador Full Stack, Contable, Electricista..."
-                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Ej: Desarrollador Full Stack, Administrativo, Electricista..."
+                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200 transition"
                 />
               </div>
 
-              {/* Campo: texto del CV */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Pega tu CV aquí
+                  Texto de tu CV
+                  {cargandoTexto && (
+                    <span className="ml-2 text-blue-500 font-normal text-xs">
+                      Cargando desde tu PDF...
+                    </span>
+                  )}
                 </label>
-                <textarea
-                  value={textoCv}
-                  onChange={(e) => setTextoCv(e.target.value)}
-                  placeholder="Copia y pega el texto de tu CV actual..."
-                  rows={14}
-                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none leading-relaxed"
-                />
+                {cargandoTexto ? (
+                  <div className="w-full border border-gray-200 rounded-xl px-4 py-10 flex items-center justify-center gap-2 bg-gray-50">
+                    <span className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                    <span className="text-sm text-gray-500">Extrayendo texto del PDF...</span>
+                  </div>
+                ) : (
+                  <textarea
+                    value={textoCv}
+                    onChange={(e) => setTextoCv(e.target.value)}
+                    placeholder="El texto de tu CV aparecerá aquí automáticamente, o pégalo manualmente..."
+                    rows={10}
+                    className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none leading-relaxed transition"
+                  />
+                )}
                 <p className="text-xs text-gray-400 mt-1">
                   {textoCv.split(/\s+/).filter(Boolean).length} palabras
                 </p>
               </div>
 
-              {/* Botón mejorar CV */}
-              <button
-                type="submit"
-                disabled={procesando || !textoCv.trim()}
-                className="w-full py-3 font-semibold text-white rounded-xl transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: "#2563EB" }}
-              >
-                {procesando ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    La IA está mejorando tu CV...
-                  </span>
-                ) : (
-                  "✨ Mejorar con IA"
-                )}
-              </button>
-            </form>
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  ¿Quieres añadir algo más? <span className="text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <textarea
+                  value={infoExtra}
+                  onChange={(e) => setInfoExtra(e.target.value)}
+                  placeholder="Cursos recientes, habilidades nuevas, logros que quieras destacar..."
+                  rows={3}
+                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none transition"
+                />
+              </div>
 
-          {/* Columna derecha: resultado de la IA */}
-          <div ref={resultadoRef} className="bg-white rounded-2xl border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-5">
-              {/* Título dinámico según si es CV o carta de presentación */}
-              <h2 className="font-semibold text-gray-900">
-                {esCarta ? "Carta de presentación" : "CV mejorado"}
-              </h2>
-              {/* Botones de acción: solo visibles cuando hay resultado */}
-              {cvMejorado && (
-                <div className="flex items-center gap-2">
-                  {/* Botón copiar al portapapeles */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Foto de perfil para el PDF <span className="text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <div className="flex items-center gap-3">
                   <button
-                    onClick={copiarAlPortapapeles}
-                    className="px-4 py-2 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
+                    type="button"
+                    onClick={() => fotoInputRef.current?.click()}
+                    className="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition"
                     style={{ backgroundColor: "#F97316" }}
                   >
-                    {copiado ? "✓ Copiado" : "📋 Copiar"}
+                    📷 Elegir foto
                   </button>
-                  {/* Botón descargar como PDF — generación 100% en el cliente con jspdf */}
+                  {fotoDatos ? (
+                    <div className="flex items-center gap-2">
+                      <img src={fotoDatos} alt="Preview foto" className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
+                      <span className="text-xs text-green-600 font-medium">Foto lista ✓</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400">Se incluirá en la esquina del PDF</span>
+                  )}
+                </div>
+                <input
+                  ref={fotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFoto}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-between">
+              <button
+                onClick={() => setPaso(1)}
+                className="px-5 py-2.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-50 transition"
+              >
+                ← Volver
+              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => void generarCarta()}
+                  disabled={procesando || !textoCv.trim() || !puesto.trim()}
+                  className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: "#F97316" }}
+                >
+                  {procesando ? "Generando..." : "✉️ Generar carta de presentación"}
+                </button>
+                <button
+                  onClick={() => void mejorarCV()}
+                  disabled={procesando || !textoCv.trim()}
+                  className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: "#2563EB" }}
+                >
+                  {procesando ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Mejorando...
+                    </span>
+                  ) : "✨ Mejorar CV con IA →"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Paso 3: Resultado y descarga ─────────────────────────────── */}
+        {paso === 3 && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">
+                  {esCarta ? "Carta de presentación lista" : "CV mejorado listo"}
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Revisa el resultado, descárgalo y empieza a enviar candidaturas
+                </p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <button
+                  onClick={() => void copiar()}
+                  className="px-4 py-2 text-sm font-medium text-white rounded-xl hover:opacity-90 transition"
+                  style={{ backgroundColor: "#F97316" }}
+                >
+                  {copiado ? "✓ Copiado" : "📋 Copiar"}
+                </button>
+                <button
+                  onClick={descargarPDF}
+                  className="px-4 py-2 text-sm font-medium text-white rounded-xl hover:opacity-90 transition"
+                  style={{ backgroundColor: "#2563EB" }}
+                >
+                  ⬇️ Descargar PDF
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 max-h-[500px] overflow-y-auto">
+              {esTextoLegible(cvMejorado) ? (
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-sans">
+                  {cvMejorado}
+                </pre>
+              ) : (
+                <div className="text-center py-10 text-gray-400">
+                  <p className="text-2xl mb-2">⚠️</p>
+                  <p className="text-sm">La IA no pudo procesar el contenido. Pega el texto del CV manualmente y vuelve a intentarlo.</p>
                   <button
-                    onClick={() => descargarComoPDF(esCarta)}
-                    className="px-4 py-2 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
-                    style={{ backgroundColor: "#F97316" }}
+                    onClick={() => { setCvMejorado(""); setPaso(2); }}
+                    className="mt-4 px-4 py-2 text-sm font-medium text-white rounded-xl"
+                    style={{ backgroundColor: "#2563EB" }}
                   >
-                    {esCarta ? "⬇️ Descargar carta en PDF" : "⬇️ Descargar CV mejorado en PDF"}
+                    ← Volver a intentarlo
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Área del resultado */}
-            {procesando ? (
-              // Skeleton de carga mientras la IA procesa
-              <div className="animate-pulse space-y-3">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-3 bg-gray-200 rounded"
-                    style={{ width: `${60 + (i % 4) * 10}%` }}
-                  />
-                ))}
-              </div>
-            ) : cvMejorado ? (
-              // CV mejorado con formato preservado
-              <pre className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-sans">
-                {cvMejorado}
-              </pre>
-            ) : (
-              // Estado vacío inicial
-              <div className="h-full flex flex-col items-center justify-center text-center py-20">
-                <p className="text-4xl mb-3">🤖</p>
-                <p className="text-gray-500 text-sm">
-                  Aquí aparecerá tu CV mejorado por la IA
-                </p>
-              </div>
-            )}
+            <div className="flex flex-col sm:flex-row gap-3 justify-between">
+              <button
+                onClick={() => { setError(""); setPaso(2); }}
+                className="px-5 py-2.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-50 transition"
+              >
+                ← Volver a mejorar
+              </button>
+              <Link
+                href="/app/buscar"
+                className="px-6 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition text-center"
+                style={{ backgroundColor: "#2563EB" }}
+              >
+                🔍 Buscar ofertas de trabajo →
+              </Link>
+            </div>
           </div>
-        </div>
-
-        {/* ── Sección inferior: carta de presentación ───────────────────── */}
-        <div className="mt-6 bg-white rounded-2xl border border-gray-100 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="font-semibold text-gray-900">Carta de presentación</h3>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Genera una carta personalizada para el puesto que elijas
-            </p>
-          </div>
-          <button
-            onClick={generarCarta}
-            disabled={procesando || !textoCv.trim() || !puesto.trim()}
-            className="shrink-0 px-6 py-3 text-sm font-semibold text-white rounded-xl transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ backgroundColor: "#F97316" }}
-          >
-            {procesando ? "Generando..." : "✉️ Generar carta de presentación"}
-          </button>
-        </div>
+        )}
 
       </div>
     </div>

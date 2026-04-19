@@ -1,67 +1,90 @@
 /**
- * lib/job-scraper.ts — Módulo de scraping de ofertas de trabajo
+ * lib/job-scraper.ts — Búsqueda de ofertas via Adzuna API
  *
- * Busca ofertas en las principales plataformas de empleo españolas:
- * InfoJobs, LinkedIn, Indeed, Tecnoempleo y Computrabajo.
- *
- * En producción, cada función realizaría el scraping real con herramientas
- * como Playwright o Puppeteer. Por ahora devuelve datos de ejemplo
- * para desarrollo y pruebas de integración.
- *
- * Colores de marca: azul #2563EB y naranja #F97316.
+ * Adzuna es una API de empleo real con cobertura en España.
+ * Credenciales en variables de entorno: ADZUNA_APP_ID, ADZUNA_APP_KEY
  */
 
 import type { OfertaTrabajo } from "./cache/job-cache";
 
-// ─── Función principal de scraping ───────────────────────────────────────────
+const ADZUNA_BASE = "https://api.adzuna.com/v1/api/jobs/es/search/1";
 
-/**
- * Busca ofertas de trabajo en todas las plataformas disponibles.
- *
- * @param keyword  - Palabra clave de búsqueda (ej: "electricista")
- * @param location - Ubicación (ej: "Madrid")
- * @returns        Array de ofertas de trabajo encontradas
- */
+interface AdzunaResult {
+  id: string;
+  title: string;
+  company: { display_name: string };
+  location: { display_name: string };
+  description: string;
+  redirect_url: string;
+  created: string;
+  salary_min?: number;
+  salary_max?: number;
+  contract_time?: string;
+}
+
+interface AdzunaResponse {
+  results: AdzunaResult[];
+}
+
 export async function buscarOfertas(
   keyword: string,
   location: string
 ): Promise<OfertaTrabajo[]> {
-  console.log(`🔍 Scraper iniciado: "${keyword}" en "${location}"`);
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
 
-  // En producción aquí iría el scraping real de cada plataforma.
-  // Por ahora generamos datos de ejemplo para desarrollo.
-  const ofertas: OfertaTrabajo[] = generarOfertasEjemplo(keyword, location);
+  if (!appId || !appKey) {
+    console.error("❌ ADZUNA_APP_ID o ADZUNA_APP_KEY no configuradas");
+    return [];
+  }
 
-  console.log(`✅ Scraper: ${ofertas.length} ofertas encontradas`);
-  return ofertas;
-}
+  const params = new URLSearchParams({
+    app_id: appId,
+    app_key: appKey,
+    results_per_page: "20",
+    "content-type": "application/json",
+  });
 
-// ─── Generador de datos de ejemplo ───────────────────────────────────────────
+  if (keyword.trim()) params.set("what", keyword.trim());
+  if (location.trim()) params.set("where", location.trim());
 
-/**
- * Genera un array de ofertas de ejemplo para desarrollo.
- * Se reemplazará por el scraper real en producción.
- */
-function generarOfertasEjemplo(keyword: string, location: string): OfertaTrabajo[] {
-  const fuentes = ["InfoJobs", "LinkedIn", "Indeed", "Tecnoempleo", "Computrabajo"];
-  const modalidades: Array<"presencial" | "remoto" | "hibrido"> = [
-    "presencial",
-    "remoto",
-    "hibrido",
-  ];
+  console.log(`🔍 Adzuna: buscando "${keyword}" en "${location}"`);
 
-  return Array.from({ length: 8 }, (_, i) => ({
-    id: `oferta-${Date.now()}-${i}`,
-    titulo: `${keyword} — Posición ${i + 1}`,
-    empresa: `Empresa Ejemplo ${i + 1} S.L.`,
-    ubicacion: location || "España",
-    descripcion: `Buscamos un profesional con experiencia en ${keyword} para unirse a nuestro equipo. Ofrecemos buen ambiente de trabajo y posibilidades de crecimiento.`,
-    url: `https://www.infojobs.net/ejemplo-${i + 1}`,
-    fechaPublicacion: new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
-    salario: i % 3 === 0 ? `${18000 + i * 2000}€ - ${22000 + i * 2000}€/año` : undefined,
-    modalidad: modalidades[i % modalidades.length],
-    fuente: fuentes[i % fuentes.length],
-  }));
+  const res = await fetch(`${ADZUNA_BASE}?${params.toString()}`);
+
+  if (!res.ok) {
+    const texto = await res.text();
+    console.error(`❌ Adzuna error ${res.status}: ${texto.slice(0, 200)}`);
+    return [];
+  }
+
+  const datos = await res.json() as AdzunaResponse;
+  const resultados = datos.results ?? [];
+
+  console.log(`✅ Adzuna: ${resultados.length} ofertas encontradas`);
+
+  return resultados.map((r): OfertaTrabajo => {
+    let salario: string | undefined;
+    if (r.salary_min && r.salary_max) {
+      salario = `${Math.round(r.salary_min).toLocaleString("es-ES")}€ - ${Math.round(r.salary_max).toLocaleString("es-ES")}€/año`;
+    } else if (r.salary_min) {
+      salario = `Desde ${Math.round(r.salary_min).toLocaleString("es-ES")}€/año`;
+    }
+
+    let modalidad: OfertaTrabajo["modalidad"];
+    if (r.contract_time === "part_time") modalidad = "presencial";
+    else if (r.contract_time === "full_time") modalidad = "presencial";
+
+    return {
+      id: r.id,
+      titulo: r.title,
+      empresa: r.company?.display_name ?? "Empresa",
+      ubicacion: r.location?.display_name ?? location,
+      descripcion: r.description,
+      url: r.redirect_url,
+      fechaPublicacion: r.created ? r.created.split("T")[0] : undefined,
+      salario,
+      modalidad,
+    };
+  });
 }

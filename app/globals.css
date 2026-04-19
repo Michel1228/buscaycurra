@@ -21,6 +21,29 @@ body {
   @apply antialiased;
 }
 
+/* Inputs siempre con texto oscuro — body usa #f0f0f0 para fondos oscuros,
+   pero los formularios tienen fondo blanco */
+input, textarea, select {
+  color: #111827;
+}
+
+/* Forzar color correcto en autofill del navegador (Chrome/Safari/Edge)
+   El truco del transition 9999s evita que el navegador cambie el fondo amarillo */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+select:-webkit-autofill,
+select:-webkit-autofill:hover {
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  caret-color: #111827 !important;
+  transition: background-color 9999s ease-in-out 0s !important;
+  color: #111827 !important;
+}
+
 /* ── Keyframes para animaciones de la metamorfosis ─────────────────────────── */
 
 @keyframes worm-wiggle {

@@ -128,7 +128,13 @@ export default function CVUploader() {
       return;
     }
 
-    const token = await obtenerToken();
+    let token: string | null;
+    try {
+      token = await obtenerToken();
+    } catch {
+      setError("Error al verificar la sesión. Por favor, recarga la página.");
+      return;
+    }
     if (!token) {
       setError("No estás autenticado. Por favor, recarga la página.");
       return;
@@ -186,8 +192,12 @@ export default function CVUploader() {
    */
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const archivo = e.target.files?.[0];
-    if (archivo) void subirArchivo(archivo);
-    // Limpiar el input para poder volver a seleccionar el mismo archivo
+    if (archivo) {
+      subirArchivo(archivo).catch(() => {
+        setError("Error inesperado al subir el archivo. Inténtalo de nuevo.");
+        setSubiendo(false);
+      });
+    }
     e.target.value = "";
   };
 
@@ -199,7 +209,12 @@ export default function CVUploader() {
     setArrastrandoEncima(false);
 
     const archivo = e.dataTransfer.files?.[0];
-    if (archivo) void subirArchivo(archivo);
+    if (archivo) {
+      subirArchivo(archivo).catch(() => {
+        setError("Error inesperado al subir el archivo. Inténtalo de nuevo.");
+        setSubiendo(false);
+      });
+    }
   };
 
   /**

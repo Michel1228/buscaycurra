@@ -360,7 +360,7 @@ function TarjetaProgreso({
     {
       label: "Sube tu currículum (PDF)",
       ok: tieneCv,
-      href: "/app/perfil?tab=cv",
+      href: "/app/curriculum",
       emoji: "📄",
     },
     {

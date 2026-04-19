@@ -20,6 +20,14 @@ const TIPO_ACEPTADO = "application/pdf";
 // ─── POST /api/cv/subir ───────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("[cv/subir] SUPABASE_SERVICE_ROLE_KEY no está configurada");
+    return NextResponse.json(
+      { error: "Servicio no configurado. Contacta con soporte." },
+      { status: 503 }
+    );
+  }
+
   // ─── Cliente Supabase con clave anónima (para verificar sesión) ───────────
   const supabasePublico = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,7 +37,7 @@ export async function POST(request: NextRequest) {
   // ─── Cliente Supabase con service role (para subir archivos en Storage) ───
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
   try {
@@ -96,21 +104,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Asegurar que el bucket 'cvs' existe (lo crea si no) ────────────────
+    const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+    const bucketExiste = buckets?.some((b) => b.id === "cvs");
+    if (!bucketExiste) {
+      await supabaseAdmin.storage.createBucket("cvs", { public: false });
+    }
+
     // ── Subir el archivo a Supabase Storage ─────────────────────────────────
-    // Ruta: {userId}/cv.pdf — cada usuario tiene su propio directorio
     const rutaArchivo = `${userId}/cv.pdf`;
 
     const { error: errorSubida } = await supabaseAdmin.storage
       .from("cvs")
       .upload(rutaArchivo, buffer, {
         contentType: TIPO_ACEPTADO,
-        upsert: true, // Sobreescribir si ya existe
+        upsert: true,
       });
 
     if (errorSubida) {
       console.error("[cv/subir] Error al subir a Storage:", errorSubida.message);
       return NextResponse.json(
-        { error: "No se pudo subir el CV. Por favor, inténtalo de nuevo." },
+        { error: `No se pudo subir el CV: ${errorSubida.message}` },
         { status: 500 }
       );
     }
