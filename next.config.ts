@@ -53,6 +53,10 @@ const nextConfig: NextConfig = {
   // Habilitar React estricto para detectar problemas en desarrollo
   reactStrictMode: true,
 
+  // pdf-parse accede al sistema de ficheros durante su inicialización;
+  // excluirlo del bundle de Next.js evita errores en la fase de build.
+  serverExternalPackages: ["pdf-parse"],
+
   async headers() {
     return [
       {
