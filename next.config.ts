@@ -53,6 +53,9 @@ const nextConfig: NextConfig = {
   // Habilitar React estricto para detectar problemas en desarrollo
   reactStrictMode: true,
 
+  // Necesario para el Dockerfile que usa standalone output
+  output: "standalone",
+
   async headers() {
     return [
       {
