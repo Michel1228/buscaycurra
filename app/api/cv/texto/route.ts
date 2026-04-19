@@ -7,7 +7,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import pdfParse from "pdf-parse";
+// pdf-parse has ESM/CJS compat issues with bundler moduleResolution — use require
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
 
 export async function GET(request: NextRequest) {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
