@@ -338,22 +338,30 @@ export default function CurriculumPage() {
             <div className="card-game p-6 space-y-4">
               <h2 className="font-bold" style={{ color: "#f0ebe0" }}>📸 Foto para el CV</h2>
               
-              {/* Guía 3 pasos */}
+              {/* Truco: prompt para ChatGPT */}
               <div className="p-4 rounded-xl" style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)" }}>
-                <p className="text-sm font-bold mb-3" style={{ color: "#7ed56f" }}>3 pasos para la foto perfecta:</p>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-3">
-                    <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#7ed56f", color: "#1a1a12" }}>1</span>
-                    <p className="text-sm" style={{ color: "#f0ebe0" }}><strong>Luz natural de frente</strong> — Ponte junto a una ventana. La luz debe iluminar tu cara sin sombras.</p>
+                <p className="text-sm font-bold mb-2" style={{ color: "#7ed56f" }}>Truco: Consigue una foto profesional GRATIS</p>
+                <p className="text-xs mb-3" style={{ color: "#b0a890" }}>Hazte un selfie cualquiera y usa este prompt en ChatGPT para que te la retoque:</p>
+                <div className="relative">
+                  <div className="p-3 rounded-lg text-xs leading-relaxed" style={{ background: "#111", color: "#ffffff", border: "1px solid #3d3c30", fontFamily: "monospace" }}>
+                    Retoca esta foto para un currículum profesional: pon fondo blanco liso, iluminación frontal suave, aspecto limpio y formal tipo foto carnet. No cambies mi cara ni mis rasgos, solo mejora la luz, limpia el fondo y haz que parezca una foto de estudio profesional. Tamaño cuadrado.
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#7ed56f", color: "#1a1a12" }}>2</span>
-                    <p className="text-sm" style={{ color: "#f0ebe0" }}><strong>Camisa blanca + fondo liso</strong> — Una pared blanca o clara de fondo. Ropa formal sin estampados.</p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#7ed56f", color: "#1a1a12" }}>3</span>
-                    <p className="text-sm" style={{ color: "#f0ebe0" }}><strong>Encuadre tipo carnet</strong> — De hombros para arriba, mirando a cámara, sonrisa natural.</p>
-                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("Retoca esta foto para un currículum profesional: pon fondo blanco liso, iluminación frontal suave, aspecto limpio y formal tipo foto carnet. No cambies mi cara ni mis rasgos, solo mejora la luz, limpia el fondo y haz que parezca una foto de estudio profesional. Tamaño cuadrado.");
+                      const btn = document.getElementById("copy-prompt-btn");
+                      if (btn) { btn.textContent = "¡Copiado!"; setTimeout(() => btn.textContent = "Copiar prompt", 2000); }
+                    }}
+                    id="copy-prompt-btn"
+                    className="mt-2 px-4 py-1.5 text-xs font-semibold rounded-lg transition"
+                    style={{ background: "#7ed56f", color: "#1a1a12" }}
+                  >
+                    Copiar prompt
+                  </button>
+                </div>
+                <div className="mt-3 flex items-start gap-2">
+                  <span style={{ color: "#f0c040" }}>💡</span>
+                  <p className="text-xs" style={{ color: "#706a58" }}>Sube cualquier foto tuya a ChatGPT junto con ese texto. En segundos tendrás una foto profesional lista para tu CV.</p>
                 </div>
               </div>
 
