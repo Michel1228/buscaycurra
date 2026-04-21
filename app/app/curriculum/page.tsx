@@ -264,8 +264,26 @@ export default function CurriculumPage() {
     finally { setProcesando(false); }
   }
 
-  function descargar(ref: React.RefObject<HTMLIFrameElement | null>) {
-    ref.current?.contentWindow?.print();
+  function descargar(html: string) {
+    // Abrir ventana nueva con el HTML del CV para imprimir/guardar como PDF
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      // Esperar a que cargue y lanzar print
+      setTimeout(() => {
+        try { win.print(); } catch { /* mobile may block */ }
+      }, 500);
+    } else {
+      // Fallback: descargar como HTML
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `CV-${form.nombre}-${form.apellidos}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   }
 
   function f(field: keyof CVForm, val: string) {
@@ -499,7 +517,7 @@ export default function CurriculumPage() {
                   className="px-4 py-2 text-sm rounded-xl" style={{ border: "1px solid #3d3c30", color: "#b0a890" }}>
                   ← Editar datos
                 </button>
-                <button onClick={() => descargar(iframeMejRef)}
+                <button onClick={() => descargar(mejoradoHTML)}
                   className="btn-game px-6 py-2 text-sm">
                   ⬇️ Descargar PDF
                 </button>
