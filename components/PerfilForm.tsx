@@ -60,21 +60,26 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
   }, [userId]);
 
   const subirFoto = async (file: File) => {
+    const aceptados = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!aceptados.includes(file.type)) { setError("Solo se aceptan imágenes JPG, PNG o WebP"); return; }
+    if (file.size > 3 * 1024 * 1024) { setError("La imagen no puede superar 3 MB"); return; }
     setSubiendoFoto(true);
     setError("");
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `avatars/${userId}.${ext}`;
-      const { error: err } = await getSupabaseBrowser().storage
-        .from("profiles")
-        .upload(path, file, { upsert: true });
-      if (err) throw err;
-      const { data } = getSupabaseBrowser().storage.from("profiles").getPublicUrl(path);
-      setFotoUrl(data.publicUrl);
-      await getSupabaseBrowser().from("profiles").update({ avatar_url: data.publicUrl }).eq("id", userId);
-    } catch (e) {
-      console.error("Error subiendo foto:", e);
-      setError("No se pudo subir la foto");
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) { setError("Sesión expirada. Recarga la página."); return; }
+      const formData = new FormData();
+      formData.append("foto", file);
+      const res = await fetch("/api/perfil/foto", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) { setError(data.error || "No se pudo subir la foto"); return; }
+      setFotoUrl(data.url);
+    } catch {
+      setError("Error de conexión al subir la foto");
     } finally {
       setSubiendoFoto(false);
     }

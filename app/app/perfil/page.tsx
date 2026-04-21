@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import PerfilForm, { type DatosPerfil } from "@/components/PerfilForm";
-import CVUploader from "@/components/CVUploader";
 
 type TabId = "perfil" | "seguridad" | "peligro";
 const TABS: { id: TabId; label: string; icon: string }[] = [
@@ -103,13 +102,7 @@ export default function PerfilPage() {
                 setTimeout(() => router.push("/app/curriculum"), 1200);
               }} />
             </div>
-            <div>
-              <h2 className="text-lg font-bold" style={{ color: "#f0ebe0" }}>Mi CV</h2>
-              <p className="text-sm" style={{ color: "#706a58" }}>Tu CV PDF se envía automáticamente al postular</p>
-            </div>
-            <div className="card-game p-6">
-              <CVUploader />
-            </div>
+
           </div>
         )}
 

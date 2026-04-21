@@ -1,13 +1,18 @@
 /**
- * lib/job-search/real-search.ts — Búsqueda MASIVA de ofertas reales
+ * lib/job-search/real-search.ts — Búsqueda MASIVA multi-API de ofertas reales
+ * 
+ * FUENTES:
+ * 1. Jooble API — 162.000+ ofertas, agrega InfoJobs + Indeed + locales (500 req/día)
+ * 2. Adzuna API — Agregador de múltiples bolsas de empleo (300 req/mes)
+ * 3. Careerjet API — Red global de ofertas de empleo
+ * 4. LinkedIn Jobs (API guest pública) — Scraping de listados públicos
  * 
  * Estrategia multi-búsqueda:
- * 1. LinkedIn Jobs (API pública guest) — múltiples páginas + keywords + ciudades cercanas
- * 2. Caché en memoria (15min TTL) para no repetir búsquedas
- * 3. Expansión geográfica: ciudad → ciudades cercanas → provincia → comunidad → España
- * 4. Keywords relacionados para ampliar resultados
- * 5. Polígonos industriales de la zona
- * 6. Fallback con empresas reales españolas + emails RRHH
+ * - Busca en paralelo en todas las APIs disponibles
+ * - Expansión geográfica: ciudad → cercanas → provincia → comunidad → España
+ * - Keywords relacionados para ampliar resultados
+ * - Caché en memoria (15min TTL)
+ * - Deduplicación por título+empresa
  */
 
 export interface OfertaReal {
@@ -22,7 +27,7 @@ export interface OfertaReal {
   fecha: string;
   match?: number;
   emailEmpresa?: string;
-  distancia?: string; // "🏠 Tu ciudad" | "📍 15km" | "🗺️ Navarra" etc.
+  distancia?: string;
 }
 
 // ── Caché en memoria (15 min TTL) ────────────────────────────────────────
@@ -38,7 +43,7 @@ function getCached(key: string): OfertaReal[] | null {
 
 function setCache(key: string, data: OfertaReal[]) {
   cache.set(key, { data, ts: Date.now() });
-  if (cache.size > 300) {
+  if (cache.size > 500) {
     const oldest = [...cache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
     if (oldest) cache.delete(oldest[0]);
   }
@@ -77,7 +82,7 @@ function getKeywordsRelacionados(puesto: string): string[] {
   return [puesto];
 }
 
-// ── Mapeo geográfico completo ────────────────────────────────────────────
+// ── Mapeo geográfico ─────────────────────────────────────────────────────
 const PROVINCIAS_CA: Record<string, string> = {
   "tudela": "Navarra", "pamplona": "Navarra", "navarra": "Navarra",
   "estella": "Navarra", "tafalla": "Navarra", "sangüesa": "Navarra",
@@ -102,7 +107,6 @@ const PROVINCIAS_CA: Record<string, string> = {
   "ciudad real": "Castilla-La Mancha",
 };
 
-// ── Ciudades cercanas (radio 50km para expansión) ────────────────────────
 const CIUDADES_CERCANAS: Record<string, { nombre: string; distancia: string }[]> = {
   "tudela": [
     { nombre: "Calahorra", distancia: "30km" },
@@ -149,166 +153,169 @@ const CIUDADES_CERCANAS: Record<string, { nombre: string; distancia: string }[]>
   ],
 };
 
-// ── Polígonos industriales por zona ──────────────────────────────────────
 const POLIGONOS: Record<string, string[]> = {
   "tudela": [
     "Polígono Industrial Las Labradas Tudela",
     "Polígono Industrial Montes del Cierzo Tudela",
-    "Polígono Industrial Centro Logístico Ribera Navarra",
-    "Polígono Industrial Tarazona",
   ],
   "pamplona": [
     "Polígono Industrial Landaben Pamplona",
-    "Polígono Industrial Agustinos Pamplona",
     "Polígono Industrial Noáin Pamplona",
-    "Polígono Industrial Orkoien",
-  ],
-  "calahorra": [
-    "Polígono Industrial Tejerías Calahorra",
-    "Polígono Industrial El Recuenco Calahorra",
   ],
   "zaragoza": [
-    "Polígono Industrial Cogullada Zaragoza",
     "Polígono PLAZA Zaragoza",
-    "Polígono Industrial Malpica Zaragoza",
+    "Polígono Industrial Cogullada Zaragoza",
   ],
 };
 
-/**
- * Búsqueda MASIVA — combina múltiples estrategias para maximizar resultados
- */
-export async function buscarOfertasReales(
-  puesto: string,
-  ciudad: string,
-  limit = 50,
-): Promise<OfertaReal[]> {
-  console.log(`[JobSearch] Buscando "${puesto}" en "${ciudad}" (limit: ${limit})`);
+// ═══════════════════════════════════════════════════════════════════════════
+// API 1: JOOBLE — 162.000+ ofertas, agrega InfoJobs + Indeed + locales
+// ═══════════════════════════════════════════════════════════════════════════
+async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
+  const apiKey = process.env.JOOBLE_API_KEY;
+  if (!apiKey) { console.warn("[Jooble] No API key"); return []; }
 
-  const seen = new Set<string>();
-  const resultados: OfertaReal[] = [];
-  const ciudadLower = ciudad.toLowerCase().trim();
+  try {
+    const res = await fetch(`https://jooble.org/api/${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        keywords: puesto,
+        location: ubicacion,
+        page: 1,
+      }),
+      signal: AbortSignal.timeout(12000),
+    });
 
-  function addResults(ofertas: OfertaReal[], distanciaTag?: string) {
-    for (const o of ofertas) {
-      const key = `${o.titulo.toLowerCase().replace(/\s+/g, "")}-${o.empresa.toLowerCase().replace(/\s+/g, "")}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        if (distanciaTag && !o.distancia) o.distancia = distanciaTag;
-        resultados.push(o);
-      }
-    }
-  }
-
-  async function searchWithCache(kw: string, loc: string, tag?: string): Promise<OfertaReal[]> {
-    const cacheKey = `${kw}|${loc}`.toLowerCase();
-    const cached = getCached(cacheKey);
-    if (cached) {
-      if (tag) cached.forEach(o => { if (!o.distancia) o.distancia = tag; });
-      return cached;
-    }
-    try {
-      await new Promise(r => setTimeout(r, 400));
-      const results = await buscarLinkedIn(kw, loc);
-      setCache(cacheKey, results);
-      if (tag) results.forEach(o => { if (!o.distancia) o.distancia = tag; });
-      console.log(`[JobSearch] LinkedIn "${kw}" en "${loc}": ${results.length}`);
-      return results;
-    } catch (e) {
-      console.warn(`[JobSearch] Error "${kw}"+"${loc}":`, (e as Error).message);
+    if (!res.ok) {
+      console.warn(`[Jooble] HTTP ${res.status}`);
       return [];
     }
+
+    const data = await res.json();
+    const jobs = data.jobs || [];
+    console.log(`[Jooble] "${puesto}" en "${ubicacion}": ${jobs.length} ofertas`);
+
+    return jobs.slice(0, limit).map((j: Record<string, string>, i: number) => ({
+      id: `jooble-${Date.now()}-${i}`,
+      titulo: j.title || puesto,
+      empresa: j.company || "Ver en oferta",
+      ubicacion: j.location || ubicacion,
+      salario: j.salary || "Ver en oferta",
+      descripcion: (j.snippet || j.title || "").replace(/<[^>]+>/g, "").slice(0, 200),
+      fuente: "Jooble",
+      url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ubicacion)}`,
+      fecha: j.updated || new Date().toISOString(),
+      match: Math.max(85 - i * 3, 40),
+    }));
+  } catch (e) {
+    console.warn("[Jooble] Error:", (e as Error).message);
+    return [];
   }
-
-  // ── FASE 1: Búsqueda exacta en la ciudad ────────────────────────────
-  const main = await searchWithCache(puesto, ciudad, "🏠 Tu ciudad");
-  addResults(main, "🏠 Tu ciudad");
-
-  // ── FASE 2: Keywords relacionados en la misma ciudad ─────────────────
-  if (resultados.length < limit) {
-    const keywords = getKeywordsRelacionados(puesto);
-    const extras = keywords.filter(k => k.toLowerCase() !== puesto.toLowerCase()).slice(0, 4);
-    for (const kw of extras) {
-      if (resultados.length >= limit) break;
-      const r = await searchWithCache(kw, ciudad, "🏠 Tu ciudad");
-      addResults(r, "🏠 Tu ciudad");
-    }
-  }
-
-  // ── FASE 3: Ciudades cercanas (radio 50km) ──────────────────────────
-  if (resultados.length < limit) {
-    const cercanas = CIUDADES_CERCANAS[ciudadLower] || [];
-    for (const c of cercanas.slice(0, 5)) {
-      if (resultados.length >= limit) break;
-      const r = await searchWithCache(puesto, c.nombre, `📍 ${c.distancia}`);
-      addResults(r, `📍 ${c.distancia}`);
-    }
-  }
-
-  // ── FASE 4: Polígonos industriales ──────────────────────────────────
-  if (resultados.length < limit) {
-    const polis = POLIGONOS[ciudadLower] || [];
-    for (const poli of polis.slice(0, 2)) {
-      if (resultados.length >= limit) break;
-      const r = await searchWithCache("", poli, "🏭 Polígono");
-      addResults(r, "🏭 Polígono");
-    }
-  }
-
-  // ── FASE 5: Expandir a provincia/comunidad ──────────────────────────
-  if (resultados.length < limit) {
-    const ca = PROVINCIAS_CA[ciudadLower];
-    if (ca && ca.toLowerCase() !== ciudadLower) {
-      const r = await searchWithCache(puesto, ca, `🗺️ ${ca}`);
-      addResults(r, `🗺️ ${ca}`);
-    }
-  }
-
-  // ── FASE 6: Todos los empleos de la zona (sin keyword) ─────────────
-  if (resultados.length < limit) {
-    const r = await searchWithCache("", ciudad, "🏠 Tu ciudad");
-    addResults(r, "🏠 Tu ciudad");
-  }
-
-  // ── FASE 7: España entera si aún hay pocos ─────────────────────────
-  if (resultados.length < 10) {
-    const r = await searchWithCache(puesto, "Spain", "🇪🇸 España");
-    addResults(r, "🇪🇸 España");
-  }
-
-  // ── FASE 8: Fallback con empresas reales + emails ──────────────────
-  if (resultados.length < 5) {
-    const fb = generarOfertasFallback(puesto, ciudad, Math.min(10, limit - resultados.length));
-    addResults(fb);
-  }
-
-  // ── Scoring final ──────────────────────────────────────────────────
-  for (const o of resultados) {
-    if (!o.match) o.match = 50;
-    const ubLower = o.ubicacion.toLowerCase();
-    if (ubLower.includes(ciudadLower)) {
-      o.match = Math.min(o.match + 20, 99);
-    } else {
-      // Check if it's a nearby city
-      const cercanas = CIUDADES_CERCANAS[ciudadLower] || [];
-      const cercana = cercanas.find(c => ubLower.includes(c.nombre.toLowerCase()));
-      if (cercana) {
-        const km = parseInt(cercana.distancia);
-        o.match = Math.min(o.match + Math.max(15 - Math.floor(km / 5), 5), 95);
-      }
-    }
-  }
-
-  const final = resultados
-    .sort((a, b) => (b.match || 0) - (a.match || 0))
-    .slice(0, limit);
-
-  console.log(`[JobSearch] TOTAL: ${final.length} ofertas (${seen.size} únicas de ${resultados.length} totales)`);
-  return final;
 }
 
-/**
- * LinkedIn Jobs — API guest pública, 2 páginas
- */
+// ═══════════════════════════════════════════════════════════════════════════
+// API 2: ADZUNA — Agregador multi-bolsa (300 calls/month)
+// ═══════════════════════════════════════════════════════════════════════════
+async function buscarAdzuna(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
+  const appId = process.env.ADZUNA_APP_ID;
+  const apiKey = process.env.ADZUNA_API_KEY;
+  if (!appId || !apiKey) { console.warn("[Adzuna] No credentials"); return []; }
+
+  try {
+    const where = encodeURIComponent(ubicacion);
+    const what = encodeURIComponent(puesto);
+    const url = `https://api.adzuna.com/v1/api/jobs/es/search/1?app_id=${appId}&app_key=${apiKey}&results_per_page=${limit}&what=${what}&where=${where}&content-type=application/json`;
+    
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+
+    if (!res.ok) {
+      console.warn(`[Adzuna] HTTP ${res.status}`);
+      return [];
+    }
+
+    const data = await res.json();
+    const results = data.results || [];
+    console.log(`[Adzuna] "${puesto}" en "${ubicacion}": ${results.length} ofertas (total: ${data.count || 0})`);
+
+    return results.slice(0, limit).map((j: Record<string, unknown>, i: number) => {
+      const company = j.company as Record<string, string> | undefined;
+      const location = j.location as Record<string, unknown> | undefined;
+      const locationDisplay = location?.display_name as string || ubicacion;
+      const salMin = j.salary_min ? `${Math.round(j.salary_min as number)}€` : "";
+      const salMax = j.salary_max ? `${Math.round(j.salary_max as number)}€` : "";
+      const salario = salMin && salMax ? `${salMin} - ${salMax}/año` : salMin || salMax || "Ver en oferta";
+
+      return {
+        id: `adzuna-${Date.now()}-${i}`,
+        titulo: (j.title as string || puesto).replace(/<[^>]+>/g, ""),
+        empresa: company?.display_name || "Ver en oferta",
+        ubicacion: locationDisplay,
+        salario,
+        descripcion: ((j.description as string) || "").replace(/<[^>]+>/g, "").slice(0, 200),
+        fuente: "Adzuna",
+        url: (j.redirect_url as string) || `https://www.adzuna.es/search?q=${what}&loc=${where}`,
+        fecha: (j.created as string) || new Date().toISOString(),
+        match: Math.max(82 - i * 3, 35),
+      };
+    });
+  } catch (e) {
+    console.warn("[Adzuna] Error:", (e as Error).message);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API 3: CAREERJET — Red global de empleo
+// ═══════════════════════════════════════════════════════════════════════════
+async function buscarCareerjet(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
+  const apiKey = process.env.CAREERJET_API_KEY;
+  if (!apiKey) { console.warn("[Careerjet] No API key"); return []; }
+
+  try {
+    // Careerjet API v4 — Basic Auth (key:empty password)
+    const auth = Buffer.from(`${apiKey}:`).toString("base64");
+    const url = `https://search.api.careerjet.net/v4/query?locale_code=es_ES&keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ubicacion)}&page_size=${limit}&page=1&sort=relevance&user_ip=187.124.37.183&user_agent=BuscayCurra/1.0`;
+    
+    const res = await fetch(url, { 
+      headers: { "Authorization": `Basic ${auth}` },
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (!res.ok) {
+      console.warn(`[Careerjet] HTTP ${res.status}`);
+      return [];
+    }
+
+    const data = await res.json();
+    if (data.type === "ERROR") {
+      console.warn(`[Careerjet] API Error: ${data.error}`);
+      return [];
+    }
+    const jobs = data.jobs || [];
+    console.log(`[Careerjet] "${puesto}" en "${ubicacion}": ${jobs.length} ofertas (total: ${data.hits || 0})`);
+
+    return jobs.slice(0, limit).map((j: Record<string, string>, i: number) => ({
+      id: `cj-${Date.now()}-${i}`,
+      titulo: j.title || puesto,
+      empresa: j.company || "Ver en oferta",
+      ubicacion: j.locations || ubicacion,
+      salario: j.salary || "Ver en oferta",
+      descripcion: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 200),
+      fuente: "Careerjet",
+      url: j.url || `https://www.careerjet.es/${encodeURIComponent(puesto)}-empleo.html`,
+      fecha: j.date || new Date().toISOString(),
+      match: Math.max(80 - i * 3, 35),
+    }));
+  } catch (e) {
+    console.warn("[Careerjet] Error:", (e as Error).message);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API 4: LINKEDIN — Guest API (scraping público)
+// ═══════════════════════════════════════════════════════════════════════════
 async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<OfertaReal[]> {
   const loc = ubicacion.includes("Spain") ? ubicacion : `${ubicacion}, Spain`;
   const kw = encodeURIComponent(puesto);
@@ -335,7 +342,7 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
       html += await r.value.text();
     }
   }
-  if (!html) throw new Error("LinkedIn: no response");
+  if (!html) return [];
 
   const titleRegex = /base-search-card__title[^"]*"[^>]*>([^<]+)/g;
   const companyRegex = /base-search-card__subtitle[^"]*"[^>]*>\s*(?:<[^>]+>)?\s*([^<]+)/g;
@@ -351,34 +358,197 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
   while ((m = linkRegex.exec(html)) !== null) links.push(m[1].split("?")[0]);
   while ((m = dateRegex.exec(html)) !== null) dates.push(m[1]);
 
-  const ofertas: OfertaReal[] = [];
-  for (let i = 0; i < titles.length; i++) {
-    const titleLower = titles[i].toLowerCase();
+  return titles.map((title, i) => {
     const puestoLower = puesto.toLowerCase();
     const words = puestoLower.split(/\s+/).filter(w => w.length > 2);
-    const matching = words.length > 0 ? words.filter(w => titleLower.includes(w)) : [];
+    const matching = words.length > 0 ? words.filter(w => title.toLowerCase().includes(w)) : [];
     const baseMatch = words.length > 0 ? Math.round((matching.length / words.length) * 100) : 50;
-    const matchScore = Math.max(Math.min(baseMatch + 10 - Math.floor(i / 2), 99), 30);
 
-    ofertas.push({
+    return {
       id: `li-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
-      titulo: titles[i],
+      titulo: title,
       empresa: companies[i] || "Ver en LinkedIn",
       ubicacion: locations[i] || ubicacion,
       salario: "Ver en oferta",
-      descripcion: `Oferta real — ${companies[i] || "empresa"} busca ${titles[i].toLowerCase()}`,
+      descripcion: `${companies[i] || "Empresa"} busca ${title.toLowerCase()}`,
       fuente: "LinkedIn",
       url: links[i] || `https://www.linkedin.com/jobs/search?keywords=${kw}&location=${locEnc}`,
       fecha: dates[i] || new Date().toISOString(),
-      match: matchScore,
-    });
+      match: Math.max(Math.min(baseMatch + 10, 99), 30),
+    };
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BÚSQUEDA PRINCIPAL — Combina todas las APIs en paralelo
+// ═══════════════════════════════════════════════════════════════════════════
+export async function buscarOfertasReales(
+  puesto: string,
+  ciudad: string,
+  limit = 50,
+): Promise<OfertaReal[]> {
+  console.log(`[JobSearch] ═══ Buscando "${puesto}" en "${ciudad}" (limit: ${limit}) ═══`);
+
+  const seen = new Set<string>();
+  const resultados: OfertaReal[] = [];
+  const ciudadLower = ciudad.toLowerCase().trim();
+
+  function addResults(ofertas: OfertaReal[], distanciaTag?: string) {
+    for (const o of ofertas) {
+      const key = `${o.titulo.toLowerCase().replace(/\s+/g, "")}-${o.empresa.toLowerCase().replace(/\s+/g, "")}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        if (distanciaTag && !o.distancia) o.distancia = distanciaTag;
+        resultados.push(o);
+      }
+    }
   }
 
-  return ofertas;
+  // ── FASE 1: Todas las APIs en paralelo para la ciudad principal ──────
+  const cacheKey = `multi|${puesto}|${ciudad}`.toLowerCase();
+  const cached = getCached(cacheKey);
+  
+  if (cached) {
+    console.log(`[JobSearch] Cache hit: ${cached.length} ofertas`);
+    addResults(cached, "🏠 Tu ciudad");
+  } else {
+    console.log("[JobSearch] Fase 1: Búsqueda paralela en 4 APIs...");
+    const [joobleRes, adzunaRes, careerjetRes, linkedinRes] = await Promise.allSettled([
+      buscarJooble(puesto, ciudad, 20),
+      buscarAdzuna(puesto, ciudad, 20),
+      buscarCareerjet(puesto, ciudad, 20),
+      buscarLinkedIn(puesto, ciudad),
+    ]);
+
+    const allResults: OfertaReal[] = [];
+    if (joobleRes.status === "fulfilled") allResults.push(...joobleRes.value);
+    if (adzunaRes.status === "fulfilled") allResults.push(...adzunaRes.value);
+    if (careerjetRes.status === "fulfilled") allResults.push(...careerjetRes.value);
+    if (linkedinRes.status === "fulfilled") allResults.push(...linkedinRes.value);
+
+    console.log(`[JobSearch] Fase 1 total: ${allResults.length} ofertas (Jooble: ${joobleRes.status === "fulfilled" ? joobleRes.value.length : "ERR"}, Adzuna: ${adzunaRes.status === "fulfilled" ? adzunaRes.value.length : "ERR"}, Careerjet: ${careerjetRes.status === "fulfilled" ? careerjetRes.value.length : "ERR"}, LinkedIn: ${linkedinRes.status === "fulfilled" ? linkedinRes.value.length : "ERR"})`);
+
+    setCache(cacheKey, allResults);
+    addResults(allResults, "🏠 Tu ciudad");
+  }
+
+  // ── FASE 2: Keywords relacionados (solo Jooble + Adzuna — rápidos) ───
+  if (resultados.length < limit) {
+    const keywords = getKeywordsRelacionados(puesto);
+    const extras = keywords.filter(k => k.toLowerCase() !== puesto.toLowerCase()).slice(0, 3);
+    
+    for (const kw of extras) {
+      if (resultados.length >= limit) break;
+      const kwCacheKey = `multi|${kw}|${ciudad}`.toLowerCase();
+      const kwCached = getCached(kwCacheKey);
+      
+      if (kwCached) {
+        addResults(kwCached, "🏠 Tu ciudad");
+      } else {
+        console.log(`[JobSearch] Fase 2: keyword "${kw}" en "${ciudad}"`);
+        const [j, a] = await Promise.allSettled([
+          buscarJooble(kw, ciudad, 10),
+          buscarAdzuna(kw, ciudad, 10),
+        ]);
+        const kwResults: OfertaReal[] = [];
+        if (j.status === "fulfilled") kwResults.push(...j.value);
+        if (a.status === "fulfilled") kwResults.push(...a.value);
+        setCache(kwCacheKey, kwResults);
+        addResults(kwResults, "🏠 Tu ciudad");
+      }
+    }
+  }
+
+  // ── FASE 3: Ciudades cercanas ────────────────────────────────────────
+  if (resultados.length < limit) {
+    const cercanas = CIUDADES_CERCANAS[ciudadLower] || [];
+    for (const c of cercanas.slice(0, 4)) {
+      if (resultados.length >= limit) break;
+      const cCacheKey = `multi|${puesto}|${c.nombre}`.toLowerCase();
+      const cCached = getCached(cCacheKey);
+      
+      if (cCached) {
+        addResults(cCached, `📍 ${c.distancia}`);
+      } else {
+        console.log(`[JobSearch] Fase 3: "${puesto}" en "${c.nombre}" (${c.distancia})`);
+        // Solo Jooble para ciudades cercanas (conservar cuota Adzuna)
+        const r = await buscarJooble(puesto, c.nombre, 10);
+        setCache(cCacheKey, r);
+        addResults(r, `📍 ${c.distancia}`);
+      }
+    }
+  }
+
+  // ── FASE 4: Polígonos industriales ──────────────────────────────────
+  if (resultados.length < limit) {
+    const polis = POLIGONOS[ciudadLower] || [];
+    for (const poli of polis.slice(0, 2)) {
+      if (resultados.length >= limit) break;
+      const r = await buscarJooble("", poli, 5);
+      addResults(r, "🏭 Polígono");
+    }
+  }
+
+  // ── FASE 5: Expandir a comunidad autónoma ───────────────────────────
+  if (resultados.length < limit) {
+    const ca = PROVINCIAS_CA[ciudadLower];
+    if (ca && ca.toLowerCase() !== ciudadLower) {
+      console.log(`[JobSearch] Fase 5: "${puesto}" en "${ca}"`);
+      const [j, a] = await Promise.allSettled([
+        buscarJooble(puesto, ca, 15),
+        buscarAdzuna(puesto, ca, 10),
+      ]);
+      if (j.status === "fulfilled") addResults(j.value, `🗺️ ${ca}`);
+      if (a.status === "fulfilled") addResults(a.value, `🗺️ ${ca}`);
+    }
+  }
+
+  // ── FASE 6: España entera si pocos resultados ──────────────────────
+  if (resultados.length < 15) {
+    console.log(`[JobSearch] Fase 6: "${puesto}" en toda España`);
+    const [j, a, li] = await Promise.allSettled([
+      buscarJooble(puesto, "España", 15),
+      buscarAdzuna(puesto, "España", 10),
+      buscarLinkedIn(puesto, "Spain"),
+    ]);
+    if (j.status === "fulfilled") addResults(j.value, "🇪🇸 España");
+    if (a.status === "fulfilled") addResults(a.value, "🇪🇸 España");
+    if (li.status === "fulfilled") addResults(li.value, "🇪🇸 España");
+  }
+
+  // ── FASE 7: Fallback con empresas reales + emails ──────────────────
+  if (resultados.length < 5) {
+    const fb = generarOfertasFallback(puesto, ciudad, Math.min(10, limit - resultados.length));
+    addResults(fb);
+  }
+
+  // ── Scoring final ──────────────────────────────────────────────────
+  for (const o of resultados) {
+    if (!o.match) o.match = 50;
+    const ubLower = o.ubicacion.toLowerCase();
+    if (ubLower.includes(ciudadLower)) {
+      o.match = Math.min(o.match + 15, 99);
+    } else {
+      const cercanas = CIUDADES_CERCANAS[ciudadLower] || [];
+      const cercana = cercanas.find(c => ubLower.includes(c.nombre.toLowerCase()));
+      if (cercana) {
+        const km = parseInt(cercana.distancia);
+        o.match = Math.min(o.match + Math.max(10 - Math.floor(km / 5), 3), 95);
+      }
+    }
+  }
+
+  const final = resultados
+    .sort((a, b) => (b.match || 0) - (a.match || 0))
+    .slice(0, limit);
+
+  console.log(`[JobSearch] ═══ TOTAL: ${final.length} ofertas únicas (de ${resultados.length} antes de dedup) ═══`);
+  console.log(`[JobSearch] Fuentes: ${[...new Set(final.map(o => o.fuente))].join(", ")}`);
+  return final;
 }
 
 /**
- * Fallback: empresas reales españolas + emails de RRHH conocidos
+ * Fallback: empresas reales españolas + emails de RRHH
  */
 function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number): OfertaReal[] {
   const empresasPorSector: Record<string, { empresas: string[]; salarioBase: number; emails: string[] }> = {
@@ -407,11 +577,6 @@ function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number
       salarioBase: 1400,
       emails: ["empleo@seur.com", "empleo@mrw.es", "", "", "", "empleo@correos.com"]
     },
-    limpieza: {
-      empresas: ["ISS Facility", "Clece", "Eulen", "Sacyr Facilities", "Ferrovial Servicios"],
-      salarioBase: 1200,
-      emails: ["empleo@es.issworld.com", "empleo@clece.es", "empleo@eulen.com", "", ""]
-    },
     industria: {
       empresas: ["Viscofan", "AN Group", "Florette", "Congelados de Navarra", "MTorres", "Samca"],
       salarioBase: 1500,
@@ -436,8 +601,7 @@ function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number
   else if (/program|desarroll|web|software|devops|data|informátic/i.test(p)) sector = "tecnologia";
   else if (/vendedor|cajero|depend|comerci|tienda|reponedor/i.test(p)) sector = "comercio";
   else if (/conduc|repartid|almacén|logíst|carretill|mozo/i.test(p)) sector = "logistica";
-  else if (/limpi|mantenim|conserjería/i.test(p)) sector = "limpieza";
-  else if (/operario|fábrica|producc|industri|montaj|soldad/i.test(p)) sector = "industria";
+  else if (/operario|fábrica|producc|industri|montaj/i.test(p)) sector = "industria";
   else if (/ett|temporal|agencia/i.test(p)) sector = "ett";
 
   const { empresas, salarioBase, emails } = empresasPorSector[sector];
@@ -449,7 +613,7 @@ function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number
     salario: `${salarioBase + (4 - i) * 150}€ - ${salarioBase + 600 + (4 - i) * 200}€/mes`,
     descripcion: `${empresas[i]} busca ${puesto} en ${ciudad}. Envía tu CV directamente.`,
     fuente: "BuscayCurra",
-    url: `https://www.linkedin.com/jobs/search?keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ciudad + " Spain")}`,
+    url: `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ciudad)}`,
     fecha: new Date().toISOString(),
     match: Math.max(65 - i * 7, 30),
     emailEmpresa: emails[i] || undefined,

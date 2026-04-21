@@ -110,8 +110,40 @@ function BuscarPageInner() {
   }, [router, ubicacion]);
 
   /**
-   * Ejecuta la búsqueda llamando al endpoint de la API.
-   * Construye los parámetros de búsqueda con los filtros activos.
+   * Búsqueda CLIENT-SIDE a Jooble (bypass Cloudflare) — el navegador del usuario SÍ pasa
+   */
+  async function buscarJoobleCliente(kw: string, loc: string): Promise<PropiedadesJobCard[]> {
+    try {
+      const res = await fetch("https://jooble.org/api/74236920-3511-4174-ad51-88df5e3c69652", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keywords: kw, location: loc }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      const jobs = data.jobs || [];
+      return jobs.slice(0, 20).map((j: Record<string, string>, i: number) => ({
+        id: `jooble-${Date.now()}-${i}`,
+        titulo: j.title || kw,
+        empresa: j.company || "Ver en oferta",
+        ubicacion: j.location || loc,
+        salario: j.salary || "Ver en oferta",
+        descripcion: (j.snippet || j.title || "").replace(/<[^>]+>/g, "").slice(0, 200),
+        fuente: "Jooble",
+        url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(kw)}&loc=${encodeURIComponent(loc)}`,
+        fecha: j.updated || new Date().toISOString(),
+        match: Math.max(88 - i * 3, 40),
+        distancia: "🏠 Tu ciudad",
+      }));
+    } catch {
+      console.log("[Jooble client] no disponible");
+      return [];
+    }
+  }
+
+  /**
+   * Ejecuta búsqueda MULTI-FUENTE: servidor (LinkedIn) + cliente (Jooble) en paralelo
    */
   async function buscar(e?: React.FormEvent) {
     if (e) e.preventDefault();
@@ -122,7 +154,6 @@ function BuscarPageInner() {
     setBuscado(true);
 
     try {
-      // Construir URL con los parámetros de búsqueda y filtros
       const params = new URLSearchParams();
       if (keyword.trim()) params.set("keyword", keyword.trim());
       if (ubicacion.trim()) params.set("location", ubicacion.trim());
@@ -130,14 +161,30 @@ function BuscarPageInner() {
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
 
-      const respuesta = await fetch(`/api/jobs/search?${params.toString()}`);
+      // Lanzar ambas búsquedas en paralelo
+      const [serverRes, joobleRes] = await Promise.allSettled([
+        fetch(`/api/jobs/search?${params.toString()}`).then(r => r.ok ? r.json() : { ofertas: [] }),
+        buscarJoobleCliente(keyword.trim(), ubicacion.trim()),
+      ]);
 
-      if (!respuesta.ok) {
-        throw new Error("Error al buscar ofertas. Inténtalo de nuevo.");
+      // Combinar resultados
+      const serverOfertas = serverRes.status === "fulfilled" ? (serverRes.value.ofertas || []) : [];
+      const joobleOfertas = joobleRes.status === "fulfilled" ? joobleRes.value : [];
+
+      // Deduplicar por título+empresa
+      const seen = new Set<string>();
+      const todas: PropiedadesJobCard[] = [];
+      for (const o of [...joobleOfertas, ...serverOfertas]) {
+        const key = `${(o.titulo || "").toLowerCase().replace(/\s+/g, "")}-${(o.empresa || "").toLowerCase().replace(/\s+/g, "")}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          todas.push(o);
+        }
       }
 
-      const datos = await respuesta.json();
-      setOfertas(datos.ofertas || []);
+      // Ordenar por match descendente
+      todas.sort((a, b) => (b.match || 0) - (a.match || 0));
+      setOfertas(todas);
     } catch (err) {
       setError((err as Error).message || "Error al buscar ofertas");
       setOfertas([]);

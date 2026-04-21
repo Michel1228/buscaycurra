@@ -104,24 +104,24 @@ export function generarCVHTML(data: CVData): string {
   .cv-body { display: flex; flex: 1; }
 
   /* LEFT COLUMN */
-  .left-column { width: 30%; background: #f0f0f0; padding: 35px 22px 30px; display: flex; flex-direction: column; align-items: center; }
+  .left-column { width: 30%; background: #1B2845; padding: 35px 22px 30px; display: flex; flex-direction: column; align-items: center; }
   .photo-wrapper { width: 155px; height: 155px; border-radius: 50%; border: 3px solid ${accent}; overflow: hidden; margin-bottom: 18px; }
   .photo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-  .photo-placeholder { width: 100%; height: 100%; background: #d0d0d0; display: flex; align-items: center; justify-content: center; color: #999; font-size: 10px; text-align: center; border-radius: 50%; }
+  .photo-placeholder { width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 10px; text-align: center; border-radius: 50%; }
   .name-block { text-align: center; margin-bottom: 8px; }
-  .name-block .first-name { font-size: 21px; font-style: italic; font-weight: 600; color: #2d2d2d; line-height: 1.2; }
+  .name-block .first-name { font-size: 21px; font-style: italic; font-weight: 600; color: #ffffff; line-height: 1.2; }
   .name-block .last-name { font-size: 21px; font-style: italic; font-weight: 700; color: ${accent}; line-height: 1.2; }
-  .name-block .subtitle { font-size: 10.5px; color: #999; font-weight: 400; margin-top: 6px; }
+  .name-block .subtitle { font-size: 10.5px; color: rgba(255,255,255,0.65); font-weight: 400; margin-top: 6px; }
   .sidebar-section-title { font-size: 12px; font-weight: 700; color: ${accent}; text-transform: uppercase; letter-spacing: 1.5px; align-self: flex-start; margin-top: 22px; margin-bottom: 12px; }
   .contact-list { align-self: flex-start; list-style: none; }
-  .contact-list li { font-size: 10px; color: #333; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
+  .contact-list li { font-size: 10px; color: #cdd8e8; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
   .contact-icon { color: ${accent}; font-size: 10px; flex-shrink: 0; margin-top: 1px; }
   .aptitudes-list { align-self: flex-start; display: flex; flex-direction: column; gap: 7px; }
-  .aptitude-pill { background: #fff; border: 1px solid #ccc; border-radius: 18px; padding: 5px 16px; font-size: 10px; color: #444; display: inline-block; align-self: flex-start; }
+  .aptitude-pill { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 18px; padding: 5px 16px; font-size: 10px; color: #e0eaf5; display: inline-block; align-self: flex-start; }
   .idiomas-list { align-self: flex-start; width: 100%; }
   .idioma-item { margin-bottom: 10px; }
-  .idioma-name { font-size: 10.5px; color: #333; margin-bottom: 5px; }
-  .progress-bar-track { width: 100%; height: 5px; background: #d5d5d5; border-radius: 3px; overflow: hidden; }
+  .idioma-name { font-size: 10.5px; color: #cdd8e8; margin-bottom: 5px; }
+  .progress-bar-track { width: 100%; height: 5px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
   .progress-bar-fill { height: 100%; background: ${accent}; border-radius: 3px; }
 
   /* RIGHT COLUMN */
@@ -141,7 +141,7 @@ export function generarCVHTML(data: CVData): string {
   .education-entry { margin-bottom: 15px; }
   .edu-title { font-size: 12.5px; font-weight: 700; color: #222; }
   .edu-center { font-size: 10.5px; color: #777; font-weight: 400; }
-  .cv-footer { background: #2B2B3D; padding: 12px 30px; text-align: center; }
+  .cv-footer { background: #131e35; padding: 12px 30px; text-align: center; }
   .cv-footer p { font-size: 9px; color: #fff; letter-spacing: 0.5px; }
 
   @media print {
