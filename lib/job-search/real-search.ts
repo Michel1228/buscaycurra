@@ -412,9 +412,9 @@ export async function buscarOfertasReales(
     console.log(`[JobSearch] Cache hit: ${cached.length} ofertas`);
     addResults(cached, "🏠 Tu ciudad");
   } else {
-    console.log("[JobSearch] Fase 1: Búsqueda paralela en 4 APIs...");
+    console.log("[JobSearch] Fase 1: Búsqueda paralela en 3 APIs (Adzuna + Careerjet + LinkedIn)...");
     const [joobleRes, adzunaRes, careerjetRes, linkedinRes] = await Promise.allSettled([
-      buscarJooble(puesto, ciudad, 20),
+      Promise.resolve([]), // Jooble: 0 results for Spain from server, client-side only
       buscarAdzuna(puesto, ciudad, 20),
       buscarCareerjet(puesto, ciudad, 20),
       buscarLinkedIn(puesto, ciudad),
@@ -446,13 +446,13 @@ export async function buscarOfertasReales(
         addResults(kwCached, "🏠 Tu ciudad");
       } else {
         console.log(`[JobSearch] Fase 2: keyword "${kw}" en "${ciudad}"`);
-        const [j, a] = await Promise.allSettled([
-          buscarJooble(kw, ciudad, 10),
+        const [a, li] = await Promise.allSettled([
           buscarAdzuna(kw, ciudad, 10),
+          buscarLinkedIn(kw, ciudad),
         ]);
         const kwResults: OfertaReal[] = [];
-        if (j.status === "fulfilled") kwResults.push(...j.value);
         if (a.status === "fulfilled") kwResults.push(...a.value);
+        if (li.status === "fulfilled") kwResults.push(...li.value);
         setCache(kwCacheKey, kwResults);
         addResults(kwResults, "🏠 Tu ciudad");
       }
@@ -471,8 +471,7 @@ export async function buscarOfertasReales(
         addResults(cCached, `📍 ${c.distancia}`);
       } else {
         console.log(`[JobSearch] Fase 3: "${puesto}" en "${c.nombre}" (${c.distancia})`);
-        // Solo Jooble para ciudades cercanas (conservar cuota Adzuna)
-        const r = await buscarJooble(puesto, c.nombre, 10);
+        const r = await buscarAdzuna(puesto, c.nombre, 10);
         setCache(cCacheKey, r);
         addResults(r, `📍 ${c.distancia}`);
       }
@@ -484,7 +483,7 @@ export async function buscarOfertasReales(
     const polis = POLIGONOS[ciudadLower] || [];
     for (const poli of polis.slice(0, 2)) {
       if (resultados.length >= limit) break;
-      const r = await buscarJooble("", poli, 5);
+      const r = await buscarAdzuna("", poli, 5);
       addResults(r, "🏭 Polígono");
     }
   }
@@ -494,24 +493,22 @@ export async function buscarOfertasReales(
     const ca = PROVINCIAS_CA[ciudadLower];
     if (ca && ca.toLowerCase() !== ciudadLower) {
       console.log(`[JobSearch] Fase 5: "${puesto}" en "${ca}"`);
-      const [j, a] = await Promise.allSettled([
-        buscarJooble(puesto, ca, 15),
-        buscarAdzuna(puesto, ca, 10),
+      const [a, li] = await Promise.allSettled([
+        buscarAdzuna(puesto, ca, 15),
+        buscarLinkedIn(puesto, ca),
       ]);
-      if (j.status === "fulfilled") addResults(j.value, `🗺️ ${ca}`);
       if (a.status === "fulfilled") addResults(a.value, `🗺️ ${ca}`);
+      if (li.status === "fulfilled") addResults(li.value, `🗺️ ${ca}`);
     }
   }
 
   // ── FASE 6: España entera si pocos resultados ──────────────────────
   if (resultados.length < 15) {
     console.log(`[JobSearch] Fase 6: "${puesto}" en toda España`);
-    const [j, a, li] = await Promise.allSettled([
-      buscarJooble(puesto, "España", 15),
-      buscarAdzuna(puesto, "España", 10),
+    const [a, li] = await Promise.allSettled([
+      buscarAdzuna(puesto, "España", 15),
       buscarLinkedIn(puesto, "Spain"),
     ]);
-    if (j.status === "fulfilled") addResults(j.value, "🇪🇸 España");
     if (a.status === "fulfilled") addResults(a.value, "🇪🇸 España");
     if (li.status === "fulfilled") addResults(li.value, "🇪🇸 España");
   }

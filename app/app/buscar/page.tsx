@@ -114,7 +114,7 @@ function BuscarPageInner() {
    */
   async function buscarJoobleCliente(kw: string, loc: string): Promise<PropiedadesJobCard[]> {
     try {
-      const res = await fetch("https://jooble.org/api/74236920-3511-4174-ad51-88df5e3c69652", {
+      const res = await fetch("https://jooble.org/api/74a369ac-3511-4f74-ad51-88d5e3c69652", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keywords: kw, location: loc }),
