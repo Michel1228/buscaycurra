@@ -209,7 +209,7 @@ function BuscarPageInner() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="¿Qué trabajo buscas? (electricista, contable...)"
-              className="flex-1 px-4 py-3 rounded-xl text-[#f0ebe0] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="flex-1 px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
             />
             {/* Campo: dónde buscas */}
             <div className="relative w-full sm:w-64">
@@ -218,7 +218,7 @@ function BuscarPageInner() {
                 value={ubicacion}
                 onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
                 placeholder="¿Dónde? (Madrid, Barcelona...)"
-                className="w-full px-4 py-3 rounded-xl text-[#f0ebe0] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
               />
               {geoDetected && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#1a1a12" }}>
