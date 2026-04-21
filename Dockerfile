@@ -27,6 +27,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Instalar poppler-utils para pdftotext (extracción de CV)
+RUN apk add --no-cache poppler-utils
+
 # Copiar archivos necesarios
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static

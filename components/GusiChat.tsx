@@ -163,20 +163,43 @@ export default function GusiChat() {
         return;
       }
 
-      const formData = new FormData();
-      formData.append("cv", file);
+      // 1. Subir PDF a storage
+      const uploadData = new FormData();
+      uploadData.append("cv", file);
 
       const res = await fetch("/api/cv/subir", {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: formData,
+        body: uploadData,
       });
 
-      if (res.ok) {
-        addMsg("gusi", "✅ **¡CV subido correctamente!** 🐛🎉\n\nAhora puedo:\n📧 **Enviar tu CV automáticamente** a empresas\n🔍 Buscar ofertas que encajen contigo\n\n¿Qué hacemos? ¡Un paso más cerca de ser mariposa! 🦋");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        addMsg("gusi", `⚠️ ${(data as {error?: string}).error || "No pude subir el CV. Inténtalo de nuevo."} 🐛`);
+        setCargando(false);
+        return;
+      }
+
+      // 2. Extraer datos con IA
+      addMsg("gusi", "🔍 Leyendo tu CV con IA... un momento 🐛");
+      const extractData = new FormData();
+      extractData.append("file", file);
+      const extractRes = await fetch("/api/cv/extraer", {
+        method: "POST",
+        body: extractData,
+      });
+
+      if (extractRes.ok) {
+        const parsed = await extractRes.json();
+        if (parsed.fuente && parsed.nombre) {
+          const exp = (parsed.experiencia || []).slice(0, 3);
+          const expText = exp.map((e: {puesto?: string; empresa?: string}) => `  • ${e.puesto || "?"} en ${e.empresa || "?"}`).join("\n");
+          addMsg("gusi", `✅ **¡CV subido y analizado!** 🐛🎉\n\n👤 **${parsed.nombre} ${parsed.apellidos || ""}**\n📞 ${parsed.telefono || "Sin teléfono"}\n📧 ${parsed.email || "Sin email"}\n📍 ${parsed.ciudad || "Sin ciudad"}\n${expText ? `\n💼 Experiencia:\n${expText}` : ""}\n\n✨ **Los campos se han rellenado** en la página de CV.\n\n¿Qué hacemos ahora?\n📧 **Enviar CV automáticamente**\n🔍 Buscar ofertas que encajen\n✨ Mejorar el CV con IA`);
+        } else {
+          addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nNo pude leer todos los datos automáticamente, pero tu PDF está guardado.\n\nVe a 📄 **Currículum** para rellenar los campos manualmente o mejorarlos con IA. 🦋");
+        }
       } else {
-        const data = await res.json();
-        addMsg("gusi", `⚠️ ${data.error || "No pude subir el CV. Inténtalo de nuevo."} 🐛`);
+        addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nAhora puedo:\n📧 **Enviar tu CV automáticamente** a empresas\n🔍 Buscar ofertas que encajen contigo\n\n¿Qué hacemos? ¡Un paso más cerca de ser mariposa! 🦋");
       }
     } catch {
       addMsg("gusi", "⚠️ Error al subir. Comprueba tu conexión. 🐛");

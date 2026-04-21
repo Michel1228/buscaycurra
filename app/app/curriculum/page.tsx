@@ -90,13 +90,13 @@ export default function CurriculumPage() {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       if (!session) { setError("Sesión expirada. Recarga la página."); return; }
 
-      // Upload via server-side API (uses service role key — permisos correctos)
-      const formData = new FormData();
-      formData.append("cv", file);
+      // 1. Subir PDF a Supabase Storage
+      const uploadData = new FormData();
+      uploadData.append("cv", file);
       const subirRes = await fetch("/api/cv/subir", {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: formData,
+        body: uploadData,
       });
       if (!subirRes.ok) {
         const err = await subirRes.json().catch(() => ({}));
@@ -104,46 +104,62 @@ export default function CurriculumPage() {
         return;
       }
 
-      // Extraer texto del PDF subido
-      const textoRes = await fetch("/api/cv/texto", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+      // 2. Extraer datos del PDF con IA (un solo paso: texto + parseo)
+      const extractData = new FormData();
+      extractData.append("file", file);
+      const extractRes = await fetch("/api/cv/extraer", {
+        method: "POST",
+        body: extractData,
       });
-      const { texto } = await textoRes.json();
 
-      if (texto) {
-        try {
-          const parseRes = await fetch("/api/cv/parsear", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ texto }),
-          });
-          if (parseRes.ok) {
-            const parsed = await parseRes.json();
-            if (!parsed.error) {
-              // Normalizar descripcion: parsear puede devolver array o string
-              const normExp = (parsed.experiencia || []).map((e: Exp & { descripcion: string | string[] }) => ({
-                ...e,
-                descripcion: Array.isArray(e.descripcion)
-                  ? e.descripcion.join("\n")
-                  : (e.descripcion || ""),
-              }));
-              setForm(prev => ({
-                nombre: parsed.nombre || prev.nombre,
-                apellidos: parsed.apellidos || prev.apellidos,
-                subtitulo: parsed.subtitulo || prev.subtitulo,
-                telefono: parsed.telefono || prev.telefono,
-                email: parsed.email || prev.email,
-                ciudad: parsed.ciudad || prev.ciudad,
-                perfilProfesional: parsed.perfilProfesional || prev.perfilProfesional,
-                aptitudes: parsed.aptitudes || prev.aptitudes,
-                idiomas: parsed.idiomas || prev.idiomas,
-                experiencia: normExp.length ? normExp : prev.experiencia,
-                formacion: parsed.formacion?.length ? parsed.formacion : prev.formacion,
-              }));
-            }
-          }
-        } catch { /* parsear failed silently — user still has PDF uploaded */ }
+      if (extractRes.ok) {
+        const parsed = await extractRes.json();
+        if (!parsed.error && parsed.fuente) {
+          // Normalizar aptitudes: puede venir como array o string
+          let aptStr = "";
+          if (Array.isArray(parsed.aptitudes)) aptStr = parsed.aptitudes.join(", ");
+          else if (typeof parsed.aptitudes === "string") aptStr = parsed.aptitudes;
+
+          // Normalizar idiomas: puede venir como array de objetos o string
+          let idiomaStr = "";
+          if (Array.isArray(parsed.idiomas)) {
+            idiomaStr = parsed.idiomas.map((i: { nombre: string; nivel: number } | string) =>
+              typeof i === "string" ? i : `${i.nombre}:${i.nivel}`
+            ).join(", ");
+          } else if (typeof parsed.idiomas === "string") idiomaStr = parsed.idiomas;
+
+          // Normalizar experiencia
+          const normExp = (parsed.experiencia || []).map((e: Exp & { descripcion: string | string[] }) => ({
+            fechas: e.fechas || "",
+            puesto: e.puesto || "",
+            empresa: e.empresa || "",
+            ubicacion: e.ubicacion || "",
+            descripcion: Array.isArray(e.descripcion) ? e.descripcion.join("\n") : (e.descripcion || ""),
+          }));
+
+          // Normalizar formación
+          const normEdu = (parsed.formacion || []).map((f: Edu) => ({
+            titulo: f.titulo || "",
+            centro: f.centro || "",
+            ubicacion: f.ubicacion || "",
+          }));
+
+          setForm(prev => ({
+            nombre: parsed.nombre || prev.nombre,
+            apellidos: parsed.apellidos || prev.apellidos,
+            subtitulo: parsed.subtitulo || prev.subtitulo,
+            telefono: parsed.telefono || prev.telefono,
+            email: parsed.email || prev.email,
+            ciudad: parsed.ciudad || prev.ciudad,
+            perfilProfesional: parsed.perfilProfesional || prev.perfilProfesional,
+            aptitudes: aptStr || prev.aptitudes,
+            idiomas: idiomaStr || prev.idiomas,
+            experiencia: normExp.length > 0 ? normExp : prev.experiencia,
+            formacion: normEdu.length > 0 ? normEdu : prev.formacion,
+          }));
+        }
       }
+
       setPdfSubido(true);
     } catch {
       setError("No se pudo subir el PDF. Comprueba tu conexión.");
