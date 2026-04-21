@@ -54,6 +54,8 @@ export default function CurriculumPage() {
   const [pdfSubido, setPdfSubido] = useState(false);
   const [error, setError] = useState("");
   const [token, setToken] = useState("");
+  const [fotoUrl, setFotoUrl] = useState("");
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeMejRef = useRef<HTMLIFrameElement>(null);
 
@@ -76,6 +78,7 @@ export default function CurriculumPage() {
           email: p.email || session.user.email || "",
           ciudad: p.ciudad || "",
         }));
+        if ((p as Record<string, string>).avatar_url) setFotoUrl((p as Record<string, string>).avatar_url);
       }
     }
     init();
@@ -168,8 +171,33 @@ export default function CurriculumPage() {
     }
   }
 
+  async function subirFoto(file: File) {
+    if (!file.type.startsWith("image/")) { setError("Solo se aceptan imágenes."); return; }
+    if (file.size > 3 * 1024 * 1024) { setError("La imagen no puede superar 3 MB."); return; }
+    setSubiendoFoto(true);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("foto", file);
+      const res = await fetch("/api/perfil/foto", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (res.ok) {
+        const { url } = await res.json();
+        setFotoUrl(url);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setError((err as { error?: string }).error || "No se pudo subir la foto.");
+      }
+    } catch { setError("Error al subir la foto."); }
+    finally { setSubiendoFoto(false); }
+  }
+
   function buildCVData() {
     return {
+      fotoUrl: fotoUrl || undefined,
       nombre: form.nombre,
       apellidos: form.apellidos,
       subtitulo: form.subtitulo,
@@ -304,6 +332,54 @@ export default function CurriculumPage() {
                   onChange={e => e.target.files?.[0] && subirPDF(e.target.files[0])}
                   disabled={subiendoPDF} />
               </label>
+            </div>
+
+            {/* Foto para el CV */}
+            <div className="card-game p-6 space-y-4">
+              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>📸 Foto para el CV</h2>
+              
+              {/* Guía 3 pasos */}
+              <div className="p-4 rounded-xl" style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)" }}>
+                <p className="text-sm font-bold mb-3" style={{ color: "#7ed56f" }}>3 pasos para la foto perfecta:</p>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-3">
+                    <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#7ed56f", color: "#1a1a12" }}>1</span>
+                    <p className="text-sm" style={{ color: "#f0ebe0" }}><strong>Luz natural de frente</strong> — Ponte junto a una ventana. La luz debe iluminar tu cara sin sombras.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#7ed56f", color: "#1a1a12" }}>2</span>
+                    <p className="text-sm" style={{ color: "#f0ebe0" }}><strong>Camisa blanca + fondo liso</strong> — Una pared blanca o clara de fondo. Ropa formal sin estampados.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: "#7ed56f", color: "#1a1a12" }}>3</span>
+                    <p className="text-sm" style={{ color: "#f0ebe0" }}><strong>Encuadre tipo carnet</strong> — De hombros para arriba, mirando a cámara, sonrisa natural.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upload + preview */}
+              <div className="flex items-center gap-5">
+                <div className="shrink-0 w-24 h-24 rounded-full overflow-hidden" style={{ border: "3px solid rgba(126,213,111,0.4)", background: "#111" }}>
+                  {fotoUrl ? (
+                    <img src={fotoUrl} alt="Tu foto" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl opacity-30">📷</div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className={`inline-block px-5 py-2.5 text-sm font-semibold rounded-xl cursor-pointer transition ${subiendoFoto ? "opacity-50 pointer-events-none" : ""}`}
+                    style={{ background: "linear-gradient(135deg,#7ed56f,#5cb848)", color: "#1a1a12" }}>
+                    {subiendoFoto ? "Subiendo…" : fotoUrl ? "Cambiar foto" : "Subir foto"}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                      onChange={e => e.target.files?.[0] && subirFoto(e.target.files[0])}
+                      disabled={subiendoFoto} />
+                  </label>
+                  {fotoUrl && (
+                    <button onClick={() => setFotoUrl("")} className="ml-3 text-xs" style={{ color: "#ef4444" }}>Quitar foto</button>
+                  )}
+                  <p className="text-xs mt-2" style={{ color: "#706a58" }}>JPG o PNG, máximo 3 MB</p>
+                </div>
+              </div>
             </div>
 
             {/* Datos personales */}
