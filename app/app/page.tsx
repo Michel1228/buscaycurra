@@ -114,48 +114,51 @@ export default function DashboardPage() {
 
       setNombre(perfil?.full_name || "");
 
-      // Check CV in Storage (bucket 'cvs') — more reliable than cvs table
+      // Check CV in Storage (bucket 'cvs')
       let cvExists = false;
       try {
-        const res = await fetch("/api/cv/obtener", {
-          headers: { Authorization: `Bearer ${(await getSupabaseBrowser().auth.getSession()).data.session?.access_token}` },
-        });
-        const cvData = await res.json();
-        cvExists = !!cvData?.cvUrl;
+        const session = (await getSupabaseBrowser().auth.getSession()).data.session;
+        if (session) {
+          const res = await fetch("/api/cv/obtener", {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          if (res.ok) {
+            const cvData = await res.json();
+            cvExists = !!cvData?.cvUrl;
+          }
+        }
       } catch { /* ignore */ }
-      
-      // Fallback: also check cvs table
-      if (!cvExists) {
-        const { count: cvCount } = await getSupabaseBrowser().from("cvs")
-          .select("*", { count: "exact", head: true }).eq("user_id", user.id);
-        cvExists = (cvCount ?? 0) > 0;
-      }
 
-      const { data: envios } = await getSupabaseBrowser().from("cv_sends")
-        .select("id, empresa, puesto, estado, creado_en")
-        .eq("user_id", user.id).order("creado_en", { ascending: false }).limit(5);
+      // Try cv_sends table (may not exist yet — wrap in try/catch)
+      let enviosData: EnvioCV[] = [];
+      let todosEnvios: { empresa: string; estado: string; creado_en: string }[] = [];
+      try {
+        const { data: envios } = await getSupabaseBrowser().from("cv_sends")
+          .select("id, empresa, puesto, estado, creado_en")
+          .eq("user_id", user.id).order("creado_en", { ascending: false }).limit(5);
+        if (envios) enviosData = envios as EnvioCV[];
 
-      if (envios) setUltimosEnvios(envios as EnvioCV[]);
+        const { data: todos } = await getSupabaseBrowser().from("cv_sends")
+          .select("empresa, estado, creado_en").eq("user_id", user.id);
+        if (todos) todosEnvios = todos;
+      } catch { /* cv_sends table may not exist */ }
 
-      const { data: todos } = await getSupabaseBrowser().from("cv_sends")
-        .select("empresa, estado, creado_en").eq("user_id", user.id);
+      setUltimosEnvios(enviosData);
 
-      if (todos) {
-        const ahora = new Date();
-        const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
-        const semana = new Date(hoy.getTime() - 7 * 86400000);
-        setStats({
-          hoyCvs: todos.filter(e => new Date(e.creado_en) >= hoy).length,
-          semanaCvs: todos.filter(e => new Date(e.creado_en) >= semana).length,
-          empresas: new Set(todos.map(e => e.empresa)).size,
-          tasaRespuesta: todos.length > 0 ? Math.round((todos.filter(e => e.estado === "respuesta").length / todos.length) * 100) : 0,
-        });
-        setEvolucion({
-          tieneNombre: !!perfil?.full_name, tieneTelefono: !!perfil?.phone,
-          tieneLinkedin: !!perfil?.linkedin_url, trabajoEncontrado: !!perfil?.trabajo_encontrado,
-          tieneCv: cvExists, cvsEnviados: todos.length,
-        });
-      }
+      const ahora = new Date();
+      const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+      const semana = new Date(hoy.getTime() - 7 * 86400000);
+      setStats({
+        hoyCvs: todosEnvios.filter(e => new Date(e.creado_en) >= hoy).length,
+        semanaCvs: todosEnvios.filter(e => new Date(e.creado_en) >= semana).length,
+        empresas: new Set(todosEnvios.map(e => e.empresa)).size,
+        tasaRespuesta: todosEnvios.length > 0 ? Math.round((todosEnvios.filter(e => e.estado === "respuesta").length / todosEnvios.length) * 100) : 0,
+      });
+      setEvolucion({
+        tieneNombre: !!perfil?.full_name, tieneTelefono: !!perfil?.phone,
+        tieneLinkedin: !!perfil?.linkedin_url, trabajoEncontrado: !!perfil?.trabajo_encontrado,
+        tieneCv: cvExists, cvsEnviados: todosEnvios.length,
+      });
       setCargando(false);
     }
     cargar();
