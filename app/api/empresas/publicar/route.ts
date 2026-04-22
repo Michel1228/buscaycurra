@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as {
@@ -29,9 +31,9 @@ export async function POST(request: NextRequest) {
 
     // Guardar en Supabase
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://placeholder',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder',
+);
 
     const { error: dbError } = await supabase.from("ofertas_empresas").insert({
       empresa: empresa.trim(),

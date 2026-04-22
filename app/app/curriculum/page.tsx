@@ -50,6 +50,10 @@ export default function CurriculumPage() {
   const [previewHTML, setPreviewHTML] = useState("");
   const [mejoradoHTML, setMejoradoHTML] = useState("");
   const [procesando, setProcesando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [guardadoId, setGuardadoId] = useState("");
+  const [nombreCV, setNombreCV] = useState("");
+  const [mostrarModalGuardar, setMostrarModalGuardar] = useState(false);
   const [subiendoPDF, setSubiendoPDF] = useState(false);
   const [pdfSubido, setPdfSubido] = useState(false);
   const [error, setError] = useState("");
@@ -65,24 +69,63 @@ export default function CurriculumPage() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { router.push("/auth/login"); return; }
       setToken(session.access_token);
+      const uid = session.user.id;
+
+      // Restaurar CV generado si existe
+      const htmlGuardado = localStorage.getItem("cv_html_" + uid);
+      if (htmlGuardado) { setMejoradoHTML(htmlGuardado); setPaso("mejorado"); }
+
       const { data: p } = await sb.from("profiles")
-        .select("full_name, phone, ciudad, email")
-        .eq("id", session.user.id).single();
+        .select("full_name, phone, ciudad, email, avatar_url")
+        .eq("id", uid).single();
+
+      // Cargar borrador guardado (tiene prioridad sobre perfil vacío)
+      const borrador = localStorage.getItem("cv_draft_" + uid);
+      const draft = borrador ? JSON.parse(borrador) : null;
+
       if (p) {
         const parts = (p.full_name || "").split(" ");
         setForm(prev => ({
           ...prev,
-          nombre: parts[0] || "",
-          apellidos: parts.slice(1).join(" ") || "",
-          telefono: p.phone || "",
-          email: p.email || session.user.email || "",
-          ciudad: p.ciudad || "",
+          // Datos del perfil (base)
+          nombre: draft?.nombre || parts[0] || "",
+          apellidos: draft?.apellidos || parts.slice(1).join(" ") || "",
+          telefono: draft?.telefono || p.phone || "",
+          email: draft?.email || p.email || session.user.email || "",
+          ciudad: draft?.ciudad || p.ciudad || "",
+          // Datos CV: del borrador si existen
+          subtitulo: draft?.subtitulo || prev.subtitulo,
+          perfilProfesional: draft?.perfilProfesional || prev.perfilProfesional,
+          aptitudes: draft?.aptitudes || prev.aptitudes,
+          idiomas: draft?.idiomas || prev.idiomas,
+          experiencia: draft?.experiencia?.length ? draft.experiencia : prev.experiencia,
+          formacion: draft?.formacion?.length ? draft.formacion : prev.formacion,
         }));
-        if ((p as Record<string, string>).avatar_url) setFotoUrl((p as Record<string, string>).avatar_url);
+        if (p.avatar_url) setFotoUrl(p.avatar_url as string);
+      } else if (draft) {
+        setForm(draft);
       }
     }
     init();
   }, [router]);
+
+  // Guardar borrador en localStorage cada vez que cambia el formulario
+  useEffect(() => {
+    if (!token) return;
+    getSupabaseBrowser().auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      localStorage.setItem("cv_draft_" + session.user.id, JSON.stringify(form));
+    });
+  }, [form, token]);
+
+  // Guardar HTML generado en localStorage
+  useEffect(() => {
+    if (!mejoradoHTML || !token) return;
+    getSupabaseBrowser().auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      localStorage.setItem("cv_html_" + session.user.id, mejoradoHTML);
+    });
+  }, [mejoradoHTML, token]);
 
   async function subirPDF(file: File) {
     if (file.type !== "application/pdf") { setError("Solo se aceptan archivos PDF."); return; }
@@ -195,6 +238,24 @@ export default function CurriculumPage() {
     finally { setSubiendoFoto(false); }
   }
 
+  async function guardarCV(nombre: string) {
+    if (!mejoradoHTML || !token) return;
+    setGuardando(true);
+    try {
+      const res = await fetch("/api/cv/guardar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ nombre: nombre || "Mi CV", html: mejoradoHTML, formData: form }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setGuardadoId(data.id);
+        setMostrarModalGuardar(false);
+      }
+    } catch { /* silencioso */ }
+    finally { setGuardando(false); }
+  }
+
   function buildCVData() {
     return {
       fotoUrl: fotoUrl || undefined,
@@ -265,17 +326,21 @@ export default function CurriculumPage() {
   }
 
   function descargar(html: string) {
-    // Abrir ventana nueva con el HTML del CV para imprimir/guardar como PDF
+    const banner = `
+    <div id="cv-banner" style="position:fixed;top:0;left:0;right:0;background:#1B2845;color:#fff;padding:12px 20px;font-family:sans-serif;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+      <span style="flex:1">💡 <strong>Para guardar con los colores del diseño:</strong> haz clic en "Guardar PDF" y en la ventana que aparece activa <strong>"Gráficos de fondo"</strong></span>
+      <button onclick="document.getElementById('cv-banner').style.display='none';window.print();" style="background:#7ed56f;color:#1a1a12;border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap;">⬇️ Guardar PDF</button>
+    </div>
+    <div style="height:56px"></div>
+    <style>@media print{#cv-banner,div[style*="height:56px"]{display:none!important}}</style>`;
+
+    const htmlConBanner = html.replace("</body>", banner + "</body>");
+
     const win = window.open("", "_blank");
     if (win) {
-      win.document.write(html);
+      win.document.write(htmlConBanner);
       win.document.close();
-      // Esperar a que cargue y lanzar print
-      setTimeout(() => {
-        try { win.print(); } catch { /* mobile may block */ }
-      }, 500);
     } else {
-      // Fallback: descargar como HTML
       const blob = new Blob([html], { type: "text/html" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -521,18 +586,62 @@ export default function CurriculumPage() {
                   className="btn-game px-6 py-2 text-sm">
                   ⬇️ Descargar PDF
                 </button>
+                <button
+                  onClick={() => { setNombreCV(form.subtitulo || "Mi CV"); setMostrarModalGuardar(true); }}
+                  disabled={guardando}
+                  className="px-5 py-2 text-sm rounded-xl font-semibold transition disabled:opacity-50"
+                  style={{ background: "rgba(126,213,111,0.15)", border: "1px solid rgba(126,213,111,0.4)", color: "#7ed56f" }}>
+                  {guardadoId ? "✅ Guardado" : guardando ? "Guardando…" : "💾 Guardar CV"}
+                </button>
               </div>
             </div>
             <div className="rounded-2xl overflow-hidden" style={{ border: "2px solid rgba(126,213,111,0.3)" }}>
               <iframe ref={iframeMejRef} srcDoc={mejoradoHTML} className="w-full bg-white"
                 style={{ height: "900px", border: "none" }} title="CV Mejorado" />
             </div>
-            <div className="text-center py-4">
+            <div className="flex items-center justify-center gap-4 py-4 flex-wrap">
+              <button onClick={() => router.push("/app/curriculum/guardados")}
+                className="px-6 py-3 text-sm rounded-xl font-semibold transition"
+                style={{ border: "1px solid #3d3c30", color: "#b0a890" }}>
+                📂 Mis currículums
+              </button>
               <button onClick={() => router.push("/app/buscar")}
                 className="btn-game px-12 py-3 text-base">
                 🔍 Siguiente: Buscar ofertas →
               </button>
             </div>
+
+            {/* Modal: nombre del CV */}
+            {mostrarModalGuardar && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                style={{ background: "rgba(0,0,0,0.7)" }}
+                onClick={() => setMostrarModalGuardar(false)}>
+                <div className="w-full max-w-sm rounded-2xl p-6 space-y-4"
+                  style={{ background: "#1a1a12", border: "1px solid #3d3c30" }}
+                  onClick={e => e.stopPropagation()}>
+                  <h3 className="font-bold text-lg" style={{ color: "#f0ebe0" }}>💾 Guardar currículum</h3>
+                  <p className="text-sm" style={{ color: "#706a58" }}>Ponle un nombre para identificarlo fácilmente</p>
+                  <input
+                    autoFocus
+                    placeholder="Ej: CV Camarero, CV Almacén…"
+                    value={nombreCV}
+                    onChange={e => setNombreCV(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && guardarCV(nombreCV)}
+                    className="input-game w-full"
+                  />
+                  <div className="flex gap-3 justify-end">
+                    <button onClick={() => setMostrarModalGuardar(false)}
+                      className="px-4 py-2 text-sm rounded-xl" style={{ border: "1px solid #3d3c30", color: "#b0a890" }}>
+                      Cancelar
+                    </button>
+                    <button onClick={() => guardarCV(nombreCV)} disabled={guardando}
+                      className="btn-game px-6 py-2 text-sm disabled:opacity-50">
+                      {guardando ? "Guardando…" : "Guardar"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

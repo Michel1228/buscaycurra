@@ -13,6 +13,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { enrutarMejoraCV, enrutarPeticionIA } from "@/lib/ai/ai-router";
 
+export const dynamic = "force-dynamic";
+
 // ─── Handler POST ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {

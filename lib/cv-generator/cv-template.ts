@@ -95,10 +95,11 @@ export function generarCVHTML(data: CVData): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
 <title>CV - ${data.nombre}${data.apellidos ? " " + data.apellidos : ""}</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font-family: 'Montserrat', sans-serif; background: #c0c0c0; display: flex; justify-content: center; padding: 20px; }
   .cv-page { width: 794px; min-height: 1123px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; }
   .cv-body { display: flex; flex: 1; }
@@ -145,8 +146,14 @@ export function generarCVHTML(data: CVData): string {
   .cv-footer p { font-size: 9px; color: #fff; letter-spacing: 0.5px; }
 
   @media print {
-    body { background: none; padding: 0; }
-    .cv-page { box-shadow: none; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    body { background: none !important; padding: 0 !important; margin: 0 !important; }
+    .cv-page { box-shadow: none !important; width: 100% !important; min-height: 0 !important; }
+    .left-column { background: #1B2845 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .cv-footer { background: #131e35 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .date-badge { background: #4a90d9 !important; -webkit-print-color-adjust: exact !important; }
+    .aptitude-pill { background: rgba(255,255,255,0.12) !important; border: 1px solid rgba(255,255,255,0.2) !important; -webkit-print-color-adjust: exact !important; }
+    .progress-bar-fill { -webkit-print-color-adjust: exact !important; }
   }
 </style>
 </head>

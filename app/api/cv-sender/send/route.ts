@@ -1,30 +1,12 @@
-/**
- * app/api/cv-sender/send/route.ts
- * API endpoint POST para programar el envío automático de un CV
- *
- * Recibe:
- *   - userId: ID del usuario en Supabase
- *   - companyUrl: URL de la empresa destino
- *   - jobTitle: Puesto al que aplica (opcional)
- *   - priority: "normal" | "prioritario" (opcional)
- *   - useAIPersonalization: boolean (opcional)
- *
- * Devuelve:
- *   - jobId: ID del job en BullMQ
- *   - estimatedTime: Fecha/hora estimada de envío
- *   - positionInQueue: Posición en la cola
- *   - rateLimitInfo: Información sobre el límite restante del usuario
- */
-
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { scheduleCV } from "@/lib/cv-sender/scheduler";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 
-// ─── POST /api/cv-sender/send ─────────────────────────────────────────────────
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    // ── Leer y validar el cuerpo de la petición ────────────────────────────
     const body = await request.json() as {
       userId?: string;
       companyUrl?: string;
@@ -37,39 +19,23 @@ export async function POST(request: NextRequest) {
 
     const { userId, companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization } = body;
 
-    // Validación de campos obligatorios
     if (!userId) {
-      return NextResponse.json(
-        { error: "El campo userId es obligatorio" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "El campo userId es obligatorio" }, { status: 400 });
     }
 
     if (!companyEmail) {
-      return NextResponse.json(
-        { error: "El campo companyEmail es obligatorio" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "El campo companyEmail es obligatorio" }, { status: 400 });
     }
 
     if (!companyName) {
-      return NextResponse.json(
-        { error: "El campo companyName es obligatorio" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "El campo companyName es obligatorio" }, { status: 400 });
     }
 
-    // Validación básica del email
-    // Usamos una regex simple y segura para evitar ataques ReDoS
     const emailRegex = /^[^@\s]{1,64}@[^@\s]{1,253}$/;
     if (!emailRegex.test(companyEmail) || !companyEmail.includes(".")) {
-      return NextResponse.json(
-        { error: "El email de la empresa no tiene un formato válido" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "El email de la empresa no tiene un formato valido" }, { status: 400 });
     }
 
-    // ── Verificar límite de envíos del usuario ────────────────────────────
     const userPlan = await getUserPlan(userId);
     const rateLimitCheck = await checkRateLimit(userId, userPlan, companyEmail);
 
@@ -85,11 +51,10 @@ export async function POST(request: NextRequest) {
             cvsRestantesHoy: 0,
           },
         },
-        { status: 429 } // 429 = Too Many Requests
+        { status: 429 }
       );
     }
 
-    // ── Programar el envío ────────────────────────────────────────────────
     const resultado = await scheduleCV(
       userId,
       {
@@ -104,12 +69,23 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Si scheduleCV devuelve un error
     if ("error" in resultado) {
       return NextResponse.json({ error: resultado.error }, { status: 400 });
     }
 
-    // ── Respuesta exitosa ─────────────────────────────────────────────────
+    // Enviar email de confirmacion al usuario (silencioso si falla)
+    try {
+      const sb = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "http://placeholder",
+        process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
+      );
+      const { data: profile } = await sb.from("profiles").select("email, nombre").eq("id", userId).single();
+      if (profile?.email) {
+        const { sendConfirmationEmail } = await import("@/lib/email/smtp-sender");
+        await sendConfirmationEmail(profile.email, profile.nombre || "Usuario", companyName);
+      }
+    } catch { /* silencioso si no hay SMTP configurado */ }
+
     return NextResponse.json(
       {
         success: true,
@@ -129,17 +105,14 @@ export async function POST(request: NextRequest) {
         rateLimitInfo: {
           enviadosHoy: rateLimitCheck.enviadosHoy,
           limiteHoy: rateLimitCheck.limiteHoy,
-          cvsRestantesHoy: rateLimitCheck.cvsRestantesHoy - 1, // Restamos el que acabamos de añadir
+          cvsRestantesHoy: rateLimitCheck.cvsRestantesHoy - 1,
           userPlan,
         },
       },
-      { status: 201 } // 201 = Created
+      { status: 201 }
     );
   } catch (error) {
     console.error("[API send] Error inesperado:", (error as Error).message);
-    return NextResponse.json(
-      { error: "Error interno del servidor. Por favor, inténtalo de nuevo." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Error interno del servidor. Por favor, intentalo de nuevo." }, { status: 500 });
   }
 }

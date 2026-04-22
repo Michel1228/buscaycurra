@@ -181,8 +181,9 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Prom
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         keywords: puesto,
-        location: ubicacion,
+        location: "Spain",
         page: 1,
+        resultonpage: limit,
       }),
       signal: AbortSignal.timeout(12000),
     });
@@ -196,6 +197,7 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Prom
     const jobs = data.jobs || [];
     console.log(`[Jooble] "${puesto}" en "${ubicacion}": ${jobs.length} ofertas`);
 
+    console.log(`[Jooble] "${puesto}" en Spain: ${jobs.length} ofertas (mostrando para ${ubicacion})`);
     return jobs.slice(0, limit).map((j: Record<string, string>, i: number) => ({
       id: `jooble-${Date.now()}-${i}`,
       titulo: j.title || puesto,
@@ -219,7 +221,7 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Prom
 // ═══════════════════════════════════════════════════════════════════════════
 async function buscarAdzuna(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
   const appId = process.env.ADZUNA_APP_ID;
-  const apiKey = process.env.ADZUNA_API_KEY;
+  const apiKey = process.env.ADZUNA_APP_KEY;
   if (!appId || !apiKey) { console.warn("[Adzuna] No credentials"); return []; }
 
   try {
@@ -273,12 +275,10 @@ async function buscarCareerjet(puesto: string, ubicacion: string, limit = 20): P
   if (!apiKey) { console.warn("[Careerjet] No API key"); return []; }
 
   try {
-    // Careerjet API v4 — Basic Auth (key:empty password)
-    const auth = Buffer.from(`${apiKey}:`).toString("base64");
-    const url = `https://search.api.careerjet.net/v4/query?locale_code=es_ES&keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ubicacion)}&page_size=${limit}&page=1&sort=relevance&user_ip=187.124.37.183&user_agent=BuscayCurra/1.0`;
+    const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ubicacion)}&affid=${apiKey}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F1.0&pagesize=${limit}&page=1&sort=relevance`;
     
     const res = await fetch(url, { 
-      headers: { "Authorization": `Basic ${auth}` },
+      headers: { "Referer": "https://buscaycurra.es" },
       signal: AbortSignal.timeout(12000),
     });
 
@@ -412,9 +412,9 @@ export async function buscarOfertasReales(
     console.log(`[JobSearch] Cache hit: ${cached.length} ofertas`);
     addResults(cached, "🏠 Tu ciudad");
   } else {
-    console.log("[JobSearch] Fase 1: Búsqueda paralela en 3 APIs (Adzuna + Careerjet + LinkedIn)...");
+    console.log("[JobSearch] Fase 1: Búsqueda paralela en 4 APIs (Jooble + Adzuna + Careerjet + LinkedIn)...");
     const [joobleRes, adzunaRes, careerjetRes, linkedinRes] = await Promise.allSettled([
-      Promise.resolve([]), // Jooble: 0 results for Spain from server, client-side only
+      buscarJooble(puesto, ciudad, 20),
       buscarAdzuna(puesto, ciudad, 20),
       buscarCareerjet(puesto, ciudad, 20),
       buscarLinkedIn(puesto, ciudad),

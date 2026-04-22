@@ -59,8 +59,12 @@ function BuscarPageInner() {
   // Estado de la búsqueda
   const [ofertas, setOfertas] = useState<PropiedadesJobCard[]>([]);
   const [cargando, setCargando] = useState(false);
+  const [cargandoMas, setCargandoMas] = useState(false);
   const [buscado, setBuscado] = useState(false);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResultados, setTotalResultados] = useState(0);
+  const [hayMas, setHayMas] = useState(false);
 
   // Verificar sesión + geolocalización automática
   useEffect(() => {
@@ -185,12 +189,41 @@ function BuscarPageInner() {
       // Ordenar por match descendente
       todas.sort((a, b) => (b.match || 0) - (a.match || 0));
       setOfertas(todas);
+      setCurrentPage(1);
+      setTotalResultados(serverRes.status === "fulfilled" ? (serverRes.value.total || todas.length) : todas.length);
+      setHayMas(serverRes.status === "fulfilled" ? (serverRes.value.hasMore || false) : false);
     } catch (err) {
       setError((err as Error).message || "Error al buscar ofertas");
       setOfertas([]);
     } finally {
       setCargando(false);
     }
+  }
+
+  async function cargarMas() {
+    if (cargandoMas || !hayMas) return;
+    setCargandoMas(true);
+    try {
+      const nextPage = currentPage + 1;
+      const params = new URLSearchParams();
+      if (keyword.trim()) params.set("keyword", keyword.trim());
+      if (ubicacion.trim()) params.set("location", ubicacion.trim());
+      if (jornada) params.set("jornada", jornada);
+      params.set("page", String(nextPage));
+      const res = await fetch(`/api/jobs/search?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        const nuevas = data.ofertas || [];
+        // Deduplicar
+        const seen = new Set(ofertas.map(o => o.id));
+        const sinDuplicados = nuevas.filter((o: {id: string}) => !seen.has(o.id));
+        setOfertas(prev => [...prev, ...sinDuplicados]);
+        setCurrentPage(nextPage);
+        setHayMas(data.hasMore || false);
+        setTotalResultados(data.total || totalResultados);
+      }
+    } catch { /* silencioso */ }
+    finally { setCargandoMas(false); }
   }
 
   return (
@@ -364,14 +397,25 @@ function BuscarPageInner() {
             {!cargando && ofertas.length > 0 && (
               <>
                 <p className="text-sm text-[#706a58] mb-4">
-                  {ofertas.length} oferta{ofertas.length !== 1 ? "s" : ""} encontrada
-                  {ofertas.length !== 1 ? "s" : ""}
+                  {ofertas.length} de {totalResultados > ofertas.length ? totalResultados.toLocaleString("es-ES") : ofertas.length} oferta{ofertas.length !== 1 ? "s" : ""}
                 </p>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {ofertas.map((oferta) => (
                     <JobCard key={oferta.id} {...oferta} />
                   ))}
                 </div>
+                {hayMas && (
+                  <div className="flex justify-center mt-6">
+                    <button
+                      onClick={cargarMas}
+                      disabled={cargandoMas}
+                      className="px-8 py-3 rounded-xl font-semibold text-sm transition disabled:opacity-50"
+                      style={{ background: "linear-gradient(135deg,#7ed56f,#5cb848)", color: "#1a1a12" }}
+                    >
+                      {cargandoMas ? "Cargando…" : `Cargar más ofertas (${(totalResultados - ofertas.length).toLocaleString("es-ES")} restantes)`}
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>

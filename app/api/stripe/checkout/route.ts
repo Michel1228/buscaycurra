@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getStripe, PLANES } from "@/lib/stripe";
 
+export const dynamic = "force-dynamic";
+
 // ─── POST /api/stripe/checkout ────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {

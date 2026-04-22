@@ -1,23 +1,17 @@
-/**
- * /api/cv-sender/webhook — Webhook para rastrear respuestas de empresas
- * 
- * Se activa cuando:
- * 1. Un email de respuesta llega (via SMTP inbox)
- * 2. Un tracking pixel se carga (el email fue abierto/visto)
- * 3. Manualmente desde el dashboard (el usuario marca respuesta)
- * 
- * Crea notificaciones automáticas para el usuario
- */
-
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+export const dynamic = "force-dynamic";
+
+function getSb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 export async function POST(request: NextRequest) {
+  const supabase = getSb();
   try {
     const body = await request.json();
     const { tipo, envioId, userId, empresa, detalles } = body;
@@ -26,16 +20,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "tipo y userId requeridos" }, { status: 400 });
     }
 
-    // Update cv_sends record if envioId provided
     if (envioId) {
       const nuevoEstado = tipo === "respuesta" ? "respuesta" : tipo === "visto" ? "visto" : "enviado";
-      await supabase
-        .from("cv_sends")
-        .update({ estado: nuevoEstado })
-        .eq("id", envioId);
+      await supabase.from("cv_sends").update({ estado: nuevoEstado }).eq("id", envioId);
     }
 
-    // Create notification
     const titulos: Record<string, string> = {
       respuesta: `💬 ${empresa || "Una empresa"} ha respondido`,
       visto: `👀 ${empresa || "Una empresa"} ha visto tu CV`,
@@ -60,7 +49,6 @@ export async function POST(request: NextRequest) {
         leida: false,
       });
     } catch {
-      // Table might not exist yet — that's OK
       console.warn("[Webhook] Could not create notification (table may not exist)");
     }
 
@@ -71,23 +59,15 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET — Tracking pixel para detectar apertura de emails
- * Usage: <img src="https://buscaycurra.es/api/cv-sender/webhook?track=ENVIO_ID&uid=USER_ID" />
- */
 export async function GET(request: NextRequest) {
+  const supabase = getSb();
   const { searchParams } = new URL(request.url);
   const trackId = searchParams.get("track");
   const uid = searchParams.get("uid");
 
   if (trackId && uid) {
-    // Mark as "visto"
     try {
-      await supabase
-        .from("cv_sends")
-        .update({ estado: "visto" })
-        .eq("id", trackId);
-
+      await supabase.from("cv_sends").update({ estado: "visto" }).eq("id", trackId);
       await supabase.from("notificaciones").insert({
         user_id: uid,
         tipo: "cv_visto",
@@ -97,16 +77,11 @@ export async function GET(request: NextRequest) {
         leida: false,
       });
     } catch {
-      // notification insert optional
+      // optional
     }
   }
 
-  // Return 1x1 transparent pixel
-  const pixel = Buffer.from(
-    "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-    "base64"
-  );
-
+  const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
   return new NextResponse(pixel, {
     headers: {
       "Content-Type": "image/gif",
