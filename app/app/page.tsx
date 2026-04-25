@@ -121,6 +121,7 @@ export default function DashboardPage() {
         if (session) {
           const res = await fetch("/api/cv/obtener", {
             headers: { Authorization: `Bearer ${session.access_token}` },
+            signal: AbortSignal.timeout(5000),
           });
           if (res.ok) {
             const cvData = await res.json();

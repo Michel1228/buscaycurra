@@ -1,86 +1,66 @@
 "use client";
 
-/**
- * AppNavWrapper — Nav que se oculta/muestra al hacer scroll
- * Solo visible en rutas /app/*
- * Scroll down → se esconde suavemente
- * Scroll up → aparece suavemente
- */
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
-import NotificacionesBell from "@/components/NotificacionesBell";
+import { useState, useEffect } from "react";
 
-const navItems = [
-  { href: "/app", label: "Inicio", icon: "🏠" },
-  { href: "/app/curriculum", label: "CV", icon: "📄" },
-  { href: "/app/buscar", label: "Buscar", icon: "🔍" },
-  { href: "/app/envios", label: "Envíos", icon: "📧" },
-  { href: "/app/perfil", label: "Perfil", icon: "👤" },
-  { href: "/precios", label: "Pro", icon: "⭐" },
-  { href: "/empresas/publicar", label: "Empresas", icon: "🏢" },
+const NAV_ITEMS = [
+  { href: "/app/gusi",   label: "Guzzi",     icon: "🐛" },
+  { href: "/app/buscar", label: "Buscar",     icon: "🔍" },
+  { href: "/app/envios", label: "Envíos",     icon: "📧" },
+  { href: "/app/perfil", label: "Mi cuenta",  icon: "👤" },
 ];
 
 export default function AppNavWrapper() {
   const pathname = usePathname();
-  const [visible, setVisible] = useState(true);
-  const lastScrollY = useRef(0);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      // Mostrar si scrollea hacia arriba o está cerca del top
-      if (currentY < 60 || currentY < lastScrollY.current - 5) {
-        setVisible(true);
-      }
-      // Ocultar si scrollea hacia abajo más de 5px
-      else if (currentY > lastScrollY.current + 5) {
-        setVisible(false);
-      }
-      lastScrollY.current = currentY;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Solo mostrar en /app y /app/*
+  // Solo mostrar nav en rutas /app/*
   if (!pathname.startsWith("/app")) return null;
 
   return (
     <nav
-      className="glass-warm fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ease-in-out"
+      className="fixed top-0 left-0 right-0 z-50 transition-all"
       style={{
+        background: scrolled ? "rgba(15,26,10,0.97)" : "rgba(15,26,10,0.90)",
         borderBottom: "1px solid rgba(126,213,111,0.1)",
-        transform: visible ? "translateY(0)" : "translateY(-100%)",
+        backdropFilter: "blur(12px)",
+        height: "56px",
       }}
     >
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/app" className="flex items-center gap-2">
+      <div className="h-full max-w-5xl mx-auto px-4 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/app/gusi" className="flex items-center gap-2">
           <span className="text-xl">🐛</span>
           <span className="font-bold text-sm hidden sm:inline" style={{ color: "#7ed56f" }}>
             BuscayCurra
           </span>
         </Link>
-        <div className="flex items-center gap-0.5 sm:gap-1">
-          <NotificacionesBell />
-          {navItems.map((item) => {
+
+        {/* Nav items */}
+        <div className="flex items-center gap-1">
+          {NAV_ITEMS.map((item) => {
             const activo =
               pathname === item.href ||
-              (item.href !== "/app" && pathname.startsWith(item.href));
+              (item.href !== "/app" && pathname.startsWith(item.href + "/"));
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-medium transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition"
                 style={{
                   background: activo ? "rgba(126,213,111,0.12)" : "transparent",
                   color: activo ? "#7ed56f" : "#706a58",
                   border: activo ? "1px solid rgba(126,213,111,0.2)" : "1px solid transparent",
                 }}
               >
-                <span className="text-sm">{item.icon}</span>
+                <span>{item.icon}</span>
                 <span className="hidden sm:inline">{item.label}</span>
               </Link>
             );

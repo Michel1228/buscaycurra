@@ -61,13 +61,58 @@ Al final: "¡CV listo! 🦋 ¿Lo mejoro con IA o lo envías directamente?"
 Nunca inventes datos de empresas reales. Nunca respondas en otro idioma que español.
 Si el usuario escribe algo que no entiendes, ofrece las opciones disponibles.`;
 
+const PREP_ENTREVISTA_PROMPT = `Eres Guzzi, coach de entrevistas de BuscayCurra. El usuario tiene una entrevista.
+RESPONDE SIEMPRE EN ESPAÑOL. Genera una ficha de preparacion estructurada con estas 4 secciones:
+
+**1. Lo que valora [empresa]**
+Escribe 3-4 puntos sobre la cultura y valores de esta empresa y que perfil buscan en sus candidatos.
+Si no conoces la empresa exacta, da consejos del sector correspondiente.
+
+**2. Preguntas que te pueden hacer**
+Escribe 3 preguntas tipicas de esta empresa o sector, con una pista breve de como responder cada una.
+
+**3. Que resaltar de tu perfil**
+Si tienes datos del CV del usuario, menciona 2-3 puntos concretos de su experiencia o habilidades que encajan bien.
+Si no hay CV disponible, da consejos generales segun el puesto.
+
+**4. Animo**
+Un mensaje corto, sincero y calido. Que se tranquilice. Que sienta que lleva ventaja por haberse preparado.
+
+Usa emojis con moderacion. Formato markdown. Tono: mentor cercano que te conoce y te apoya.`;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { message, history = [], mode = "chat", searchQuery, searchCity } = body;
+    const { message, history = [], mode = "chat", searchQuery, searchCity, cvData } = body;
 
     if (!message) {
       return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
+    }
+
+    // Modo preparacion de entrevista — respuesta especializada
+    if (mode === "prep_entrevista") {
+      const userPrompt = cvData
+        ? `El usuario tiene una entrevista: "${message}". Sus datos de CV: ${cvData}`
+        : `El usuario tiene una entrevista: "${message}". No tenemos su CV todavia.`;
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: PREP_ENTREVISTA_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 700,
+        }),
+      });
+      const groqData = await groqRes.json() as { choices?: Array<{ message?: { content?: string } }> };
+      const reply = groqData.choices?.[0]?.message?.content || "No pude generar la ficha. Intentalo de nuevo. 🐛";
+      return NextResponse.json({ reply });
     }
 
     // Detectar intención del mensaje — SIEMPRE se ejecuta primero

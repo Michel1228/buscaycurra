@@ -8,7 +8,6 @@ import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 import AppNavWrapper from "@/components/AppNavWrapper";
 import SplashWrapper from "@/components/SplashWrapper";
-import GusiChat from "@/components/GusiChat";
 import BosqueAmbiente from "@/components/BosqueAmbiente";
 
 export const metadata: Metadata = {
@@ -38,7 +37,6 @@ export default function RootLayout({
         {children}
         <CookieBanner />
         <BosqueAmbiente />
-        <GusiChat />
       </body>
     </html>
   );

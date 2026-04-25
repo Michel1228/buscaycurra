@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * JobCard — Tarjeta de oferta con % de compatibilidad
+ * JobCard — Tarjeta de oferta con relevancia de búsqueda
  * Tema oscuro "Bosque Encantado"
- * Badge de fuente, barra de match, botón enviar CV
+ * Badge de fuente, barra de relevancia, botón enviar CV
  */
 
 import Link from "next/link";
@@ -18,7 +18,7 @@ export interface PropiedadesJobCard {
   url: string;
   modalidad?: "presencial" | "remoto" | "hibrido";
   descripcion?: string;
-  match?: number; // 0-100 % de compatibilidad
+  match?: number; // 0-100 relevancia de búsqueda
   distancia?: string; // "🏠 Tu ciudad" | "📍 15km" etc.
   emailEmpresa?: string; // email RRHH si disponible
 }
@@ -50,7 +50,7 @@ export default function JobCard({
 
   return (
     <div className="card-game p-5 flex flex-col gap-3 group hover:scale-[1.01] transition-transform">
-      {/* Header: fuente + match + modalidad */}
+      {/* Header: fuente + relevancia + modalidad */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
@@ -61,8 +61,9 @@ export default function JobCard({
           )}
         </div>
         {match !== undefined && (
-          <div className="flex items-center gap-2">
-            <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: "#2a2a1e" }}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px]" style={{ color: "#706a58" }}>Relevancia</span>
+            <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: "#2a2a1e" }}>
               <div className="h-full rounded-full transition-all" style={{ width: `${match}%`, background: matchColor }} />
             </div>
             <span className="text-xs font-bold" style={{ color: matchColor }}>{match}%</span>

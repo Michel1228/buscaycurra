@@ -1,95 +1,57 @@
 /**
- * app/page.tsx — Landing "La Metamorfosis" — Vibrante, con vida, interactiva
- * Fondo con ramas/hojas, mariposas reales, pasos claros, colores vivos.
+ * app/page.tsx — Landing BuscayCurra v3 — diseño premium
  */
 
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 
-// Imágenes de mariposas (Unsplash, libres de copyright)
-const mariposaImages = [
-  "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=80", // Morpho azul
-  "https://images.unsplash.com/photo-1559235038-1b0fadf76f78?w=400&q=80", // Monarca naranja
-  "https://images.unsplash.com/photo-1470058869958-2a77ade41c02?w=400&q=80", // Mariposa en flor
-  "https://images.unsplash.com/photo-1517022812141-23620dba5c23?w=400&q=80", // Mariposa naturaleza
-];
-
 const pasos = [
-  {
-    num: "01",
-    titulo: "Crea tu perfil",
-    desc: "30 segundos. Sin tarjeta. Empiezas como un huevo 🥚",
-    icon: "✨",
-    color: "#7ed56f",
-    detalle: "Tu aventura comienza aquí",
-  },
-  {
-    num: "02",
-    titulo: "Sube tu CV",
-    desc: "Nuestra IA lo analiza y mejora automáticamente para cada sector",
-    icon: "📄",
-    color: "#f0c040",
-    detalle: "Te conviertes en oruga 🐛",
-  },
-  {
-    num: "03",
-    titulo: "Busca ofertas",
-    desc: "Miles de ofertas en toda España filtradas por zona y sector",
-    icon: "🔍",
-    color: "#e07850",
-    detalle: "Empiezas tu capullo 🫘",
-  },
-  {
-    num: "04",
-    titulo: "Envía candidaturas",
-    desc: "Automáticamente a cientos de empresas. Tú descansas.",
-    icon: "📧",
-    color: "#a070d0",
-    detalle: "Alas abriéndose 🦋",
-  },
-  {
-    num: "05",
-    titulo: "¡Encuentra trabajo!",
-    desc: "Tu mariposa se revela. 50 especies únicas esperan.",
-    icon: "🎉",
-    color: "#ff6090",
-    detalle: "¡Metamorfosis completa! ✨",
-  },
+  { num: "01", titulo: "Sube tu CV", desc: "Guzzi lo analiza y lo mejora con IA para que destaque en cada oferta.", color: "#7ed56f" },
+  { num: "02", titulo: "Dile qué buscas", desc: "Puesto y ciudad. Guzzi encuentra las mejores ofertas de toda España.", color: "#f0c040" },
+  { num: "03", titulo: "Ves adónde va tu CV", desc: "Guzzi te muestra empresa por empresa antes de enviar. Tú apruebas.", color: "#e07850" },
+  { num: "04", titulo: "Guzzi envía por ti", desc: "Carta personalizada para cada empresa. Automático. Mientras duermes.", color: "#a070d0" },
+  { num: "05", titulo: "Consigues el trabajo", desc: "Empleo directo. Sin intermediarios. Tu salario completo, para ti.", color: "#ff6090" },
 ];
 
-const especies = [
-  { nombre: "Morpho Azul", color: "#1a6bff", rareza: "Épica" },
-  { nombre: "Monarca", color: "#e8720c", rareza: "Rara" },
-  { nombre: "Atlas", color: "#c45a20", rareza: "Legendaria" },
-  { nombre: "Polilla Luna", color: "#90eebf", rareza: "Épica" },
-  { nombre: "Cola de Golondrina", color: "#f0e040", rareza: "Rara" },
-  { nombre: "Glasswing", color: "#d0d0d0", rareza: "Rara" },
+const comparativa = [
+  { aspecto: "Tipo de contrato", ett: "Temporal, a través de ellos", nosotros: "Directo en la empresa", clave: true },
+  { aspecto: "Tu salario", ett: "Ellos se quedan un margen siempre", nosotros: "100% tuyo. Negocias tú.", clave: true },
+  { aspecto: "Control del envío", ett: "Donde ellos decidan", nosotros: "Ves y apruebas cada candidatura", clave: false },
+  { aspecto: "Coste para ti", ett: "Gratis (lo pagan con tu margen)", nosotros: "9,99 €/mes. Sin letra pequeña.", clave: false },
+  { aspecto: "Candidaturas/mes", ett: "Las que ellos gestionen", nosotros: "Hasta 200, con IA personalizada", clave: false },
 ];
 
 const features = [
+  { titulo: "IA que personaliza", desc: "Cada carta de presentación se escribe para esa empresa en concreto. No hay copy-paste." },
+  { titulo: "Tú decides siempre", desc: "Guzzi nunca envía sin mostrarte adónde. Ves el nombre de la empresa antes de aprobar." },
+  { titulo: "Estadísticas en tiempo real", desc: "Cuántas empresas tienen tu CV, cuántas lo abrieron, cuántas respondieron." },
+  { titulo: "Privacidad total", desc: "Tus datos son tuyos. RGPD completo. Sin venderlos ni compartirlos." },
+];
+
+const planes = [
   {
-    icon: "🧠",
-    titulo: "IA que Aprende",
-    desc: "Adapta tu CV a cada oferta. Cada envío es más inteligente.",
-    grad: "from-green-500/20 to-emerald-600/10",
+    nombre: "Gratis", precio: "0", periodo: "", tag: null,
+    desc: "Para probar sin riesgo",
+    items: ["5 candidaturas al mes", "Mejora de CV con IA", "Búsqueda de ofertas en España", "Ves adónde va tu CV"],
+    nota: "Sin tarjeta de crédito", destacado: false, cta: "Empezar gratis",
   },
   {
-    icon: "⚡",
-    titulo: "Envío Masivo",
-    desc: "Envía a cientos de empresas mientras duermes.",
-    grad: "from-yellow-500/20 to-amber-600/10",
+    nombre: "Básico", precio: "4,99", periodo: "/mes", tag: null,
+    desc: "Para buscadores ocasionales",
+    items: ["60 candidaturas al mes", "Carta personalizada por IA", "Búsqueda avanzada de ofertas", "Ves adónde va tu CV"],
+    nota: null, destacado: false, cta: "Empezar",
   },
   {
-    icon: "📊",
-    titulo: "Tu Progreso",
-    desc: "Estadísticas en tiempo real. Ve cómo evolucionas.",
-    grad: "from-purple-500/20 to-violet-600/10",
+    nombre: "Pro", precio: "9,99", periodo: "/mes", tag: "Más popular",
+    desc: "Para encontrar trabajo de verdad",
+    items: ["200 candidaturas al mes", "Carta avanzada por IA", "Estadísticas: quién abrió tu CV", "Email diario con nuevas ofertas", "Soporte prioritario"],
+    nota: null, destacado: true, cta: "Empezar",
   },
   {
-    icon: "🔒",
-    titulo: "Privacidad Total",
-    desc: "Tus datos son tuyos. RGPD completo. Sin sorpresas.",
-    grad: "from-red-500/20 to-rose-600/10",
+    nombre: "Empresa", precio: "49,99", periodo: "/mes", tag: null,
+    desc: "Para RRHH y reclutadores",
+    items: ["Candidaturas ilimitadas", "Múltiples perfiles", "Panel de gestión", "API e integraciones"],
+    nota: null, destacado: false, cta: "Contactar",
   },
 ];
 
@@ -97,70 +59,28 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: "linear-gradient(180deg, #0f1a0a 0%, #1a1a12 15%, #15200e 50%, #1a1a12 85%, #0f1a0a 100%)" }}>
 
-      {/* ══════ FONDO VIVO — Ramas, hojas, partículas ══════ */}
+      {/* Fondo ambiente */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Gradientes orgánicos */}
-        <div style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%",
-          background: `
-            radial-gradient(ellipse 800px 600px at 15% 20%, rgba(126,213,111,0.08) 0%, transparent 70%),
-            radial-gradient(ellipse 600px 800px at 85% 70%, rgba(139,111,71,0.06) 0%, transparent 70%),
-            radial-gradient(ellipse 500px 500px at 50% 50%, rgba(240,192,64,0.04) 0%, transparent 60%),
-            radial-gradient(ellipse 300px 300px at 70% 30%, rgba(126,213,111,0.05) 0%, transparent 60%)
-          `
+        <div style={{
+          position: "absolute", inset: 0,
+          background: `radial-gradient(ellipse 800px 600px at 15% 20%, rgba(126,213,111,0.07) 0%, transparent 70%),
+                       radial-gradient(ellipse 600px 800px at 85% 70%, rgba(139,111,71,0.05) 0%, transparent 70%)`,
         }} />
-
-        {/* SVG ramas decorativas */}
-        <svg className="absolute top-0 left-0 w-full h-full opacity-[0.07]" viewBox="0 0 1440 900" preserveAspectRatio="none">
-          {/* Rama superior izquierda */}
-          <path d="M-20 80 Q100 120 200 60 Q300 10 400 50 Q450 70 500 30" stroke="#7ed56f" strokeWidth="2" fill="none" />
-          <path d="M200 60 Q180 20 160 -10" stroke="#7ed56f" strokeWidth="1.5" fill="none" />
-          <path d="M300 10 Q280 -20 310 -40" stroke="#7ed56f" strokeWidth="1" fill="none" />
-          {/* Hojas en la rama */}
-          <ellipse cx="170" cy="10" rx="12" ry="6" fill="#7ed56f" transform="rotate(-30 170 10)" />
-          <ellipse cx="290" cy="-15" rx="10" ry="5" fill="#5cb848" transform="rotate(-45 290 -15)" />
-          <ellipse cx="420" cy="55" rx="11" ry="5" fill="#7ed56f" transform="rotate(15 420 55)" />
-          {/* Rama inferior derecha */}
-          <path d="M1460 750 Q1300 720 1200 780 Q1100 830 1000 800 Q920 780 850 810" stroke="#8b6f47" strokeWidth="2" fill="none" />
-          <path d="M1200 780 Q1230 820 1250 860" stroke="#8b6f47" strokeWidth="1.5" fill="none" />
-          <ellipse cx="1240" cy="840" rx="12" ry="6" fill="#7ed56f" transform="rotate(40 1240 840)" />
-          <ellipse cx="1050" cy="810" rx="10" ry="5" fill="#5cb848" transform="rotate(-20 1050 810)" />
-          {/* Rama media */}
-          <path d="M-30 500 Q80 480 150 520 Q220 550 280 510" stroke="#5cb848" strokeWidth="1.5" fill="none" opacity="0.6" />
-          <ellipse cx="100" cy="490" rx="9" ry="4" fill="#7ed56f" transform="rotate(10 100 490)" opacity="0.5" />
-          {/* Ramas derecha */}
-          <path d="M1460 300 Q1380 320 1320 280 Q1260 250 1200 290" stroke="#8b6f47" strokeWidth="1.5" fill="none" opacity="0.5" />
-          <ellipse cx="1350" cy="300" rx="10" ry="5" fill="#5cb848" transform="rotate(-25 1350 300)" opacity="0.4" />
-        </svg>
-
-        {/* Partículas flotantes (esporas/polen) */}
-        {[...Array(12)].map((_, i) => (
-          <div key={i} className="absolute rounded-full"
-            style={{
-              width: `${3 + Math.random() * 4}px`,
-              height: `${3 + Math.random() * 4}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              background: i % 3 === 0 ? "#7ed56f" : i % 3 === 1 ? "#f0c040" : "#8b6f47",
-              opacity: 0.15 + Math.random() * 0.15,
-              animation: `float-gentle ${4 + Math.random() * 4}s ease-in-out ${Math.random() * 3}s infinite`,
-            }}
-          />
-        ))}
       </div>
 
-      {/* ══════ HEADER ══════ */}
-      <header className="glass-warm sticky top-0 z-50" style={{ borderBottom: "1px solid rgba(126,213,111,0.12)" }}>
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      {/* Header */}
+      <header className="glass-warm sticky top-0 z-50" style={{ borderBottom: "1px solid rgba(126,213,111,0.1)" }}>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <LogoGusano size={34} animated />
-            <span className="font-bold text-lg" style={{ color: "#7ed56f" }}>BuscayCurra</span>
+            <LogoGusano size={32} animated />
+            <span className="font-bold text-base tracking-tight" style={{ color: "#7ed56f" }}>BuscayCurra</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="px-4 py-2 text-sm font-medium" style={{ color: "#b0a890" }}>
+          <div className="flex items-center gap-2">
+            <Link href="/auth/login" className="px-4 py-2 text-sm rounded-lg transition-colors" style={{ color: "#706a58" }}>
               Entrar
             </Link>
             <Link href="/auth/registro" className="btn-game text-sm !py-2 !px-5">
-              🌱 Empezar
+              Empezar gratis
             </Link>
           </div>
         </div>
@@ -168,107 +88,123 @@ export default function LandingPage() {
 
       <main className="relative z-10">
 
-        {/* ══════ HERO — Grande, vivo, con mariposa de fondo ══════ */}
-        <section className="relative py-20 md:py-28 px-4 overflow-hidden">
-          {/* Mariposa de fondo grande semi-transparente */}
-          <div className="absolute right-0 top-10 opacity-[0.06] pointer-events-none hidden md:block"
-            style={{ width: "500px", height: "500px" }}>
-            <svg viewBox="0 0 200 160" fill="none" style={{ width: "100%", height: "100%", animation: "wing-flap 3s ease-in-out infinite" }}>
-              <path d="M100 80 C75 45 15 10 10 55 C5 85 55 100 100 90Z" fill="#7ed56f" />
-              <path d="M100 80 C125 45 185 10 190 55 C195 85 145 100 100 90Z" fill="#5cb848" />
-              <path d="M100 88 C78 92 25 100 30 130 C35 150 75 145 100 120Z" fill="#7ed56f" opacity="0.8" />
-              <path d="M100 88 C122 92 175 100 170 130 C165 150 125 145 100 120Z" fill="#5cb848" opacity="0.8" />
-              <ellipse cx="100" cy="100" rx="6" ry="30" fill="#3a5a2a" />
-            </svg>
-          </div>
+        {/* ── HERO ── */}
+        <section className="relative py-24 md:py-32 px-6">
+          <div className="max-w-4xl mx-auto text-center">
 
-          <div className="max-w-4xl mx-auto text-center relative">
-            {/* Oruga animada */}
-            <div className="flex justify-center mb-8">
-              <div className="animate-float" style={{ filter: "drop-shadow(0 12px 30px rgba(126,213,111,0.3))" }}>
-                <LogoGusano size={110} animated />
+            <div className="flex justify-center mb-10">
+              <div className="animate-float" style={{ filter: "drop-shadow(0 16px 40px rgba(126,213,111,0.25))" }}>
+                <LogoGusano size={100} animated />
               </div>
             </div>
 
-            {/* Badge de estado */}
-            <div className="flex justify-center mb-5">
-              <span className="badge-game badge-verde text-xs">🌱 +2.400 personas ya evolucionando</span>
+            <div className="flex justify-center mb-6">
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.2)", color: "#7ed56f" }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
+                +2.400 personas ya buscando empleo con Guzzi
+              </div>
             </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-[1.1] mb-6">
-              <span style={{ color: "#f0ebe0" }}>Tu trabajo </span>
+            <h1 className="text-5xl md:text-7xl font-black leading-[1.05] mb-6 tracking-tight">
+              <span style={{ color: "#f0ebe0" }}>200 candidaturas.</span>
+              <br />
               <span style={{
-                background: "linear-gradient(135deg, #7ed56f 0%, #f0c040 50%, #e07850 100%)",
+                background: "linear-gradient(135deg, #7ed56f 0%, #f0c040 70%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}>
-                está ahí fuera
+                Tú sin mover un dedo.
               </span>
-              <br />
-              <span style={{ color: "#f0ebe0" }}>Nosotros te </span>
-              <span style={{ color: "#7ed56f" }}>llevamos</span>
             </h1>
 
-            <p className="text-lg md:text-xl mb-10 leading-relaxed max-w-2xl mx-auto" style={{ color: "#b0a890" }}>
-              IA que mejora tu CV, busca ofertas y envía candidaturas.
-              <br />
-              <strong style={{ color: "#f0c040" }}>Empieza como oruga. Termina como mariposa.</strong>
+            <p className="text-lg md:text-xl mb-10 leading-relaxed max-w-2xl mx-auto" style={{ color: "#8a8472" }}>
+              Guzzi busca ofertas, mejora tu CV y envía candidaturas con carta personalizada
+              <span style={{ color: "#c8c3b4" }}> a empresas reales, una por una.</span>
             </p>
 
-            {/* CTAs grandes */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-              <Link href="/auth/registro" className="btn-game text-lg !py-4 !px-12 !text-base">
-                🦋 Comenzar mi metamorfosis
+            {/* Stat row */}
+            <div className="flex items-center justify-center gap-0 mb-10">
+              <div className="px-8 py-3 text-center">
+                <div className="text-3xl font-black tracking-tight" style={{ color: "#f0ebe0" }}>400 h</div>
+                <div className="text-xs mt-0.5" style={{ color: "#504a3a" }}>a mano, sin Guzzi</div>
+              </div>
+              <div className="text-2xl font-black mx-2" style={{ color: "#7ed56f" }}>→</div>
+              <div className="px-8 py-3 text-center">
+                <div className="text-3xl font-black tracking-tight" style={{ color: "#7ed56f" }}>9,99 €</div>
+                <div className="text-xs mt-0.5" style={{ color: "#504a3a" }}>al mes con Guzzi</div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/auth/registro" className="btn-game !py-3.5 !px-10 text-base font-semibold">
+                Empezar gratis
               </Link>
-              <Link href="#pasos" className="btn-game-outline text-lg !py-4 !px-10 !text-base">
-                Ver cómo funciona ↓
+              <Link href="#comparativa" className="btn-game-outline !py-3.5 !px-8 text-base">
+                ¿Por qué no una ETT?
               </Link>
             </div>
-
-            <p className="text-xs" style={{ color: "#706a58" }}>Gratis para siempre. Sin tarjeta de crédito.</p>
+            <p className="mt-4 text-xs" style={{ color: "#3d3c30" }}>Sin tarjeta de crédito. Cancela cuando quieras.</p>
           </div>
         </section>
 
-        {/* ══════ PASOS — El camino de la metamorfosis ══════ */}
-        <section id="pasos" className="py-20 px-4 relative">
-          {/* Línea conectora vertical */}
-          <div className="absolute left-1/2 top-32 bottom-20 w-0.5 hidden md:block" 
-            style={{ background: "linear-gradient(180deg, #7ed56f 0%, #f0c040 40%, #e07850 70%, #a070d0 90%, #ff6090 100%)", opacity: 0.2 }} />
-          
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-4" style={{ color: "#f0ebe0" }}>
-              Tu camino: de oruga a mariposa
+        {/* ── COMPARATIVA ETT ── */}
+        <section id="comparativa" className="py-24 px-6" style={{ background: "rgba(15,26,10,0.5)" }}>
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-3 tracking-tight" style={{ color: "#f0ebe0" }}>
+              No somos una ETT
             </h2>
-            <p className="text-center mb-16" style={{ color: "#706a58" }}>
-              5 pasos. Como un juego, pero de verdad funciona.
+            <p className="text-center mb-12 text-sm" style={{ color: "#504a3a" }}>
+              Las ETTs son gratis para ti porque cobran a las empresas con tu salario. Nosotros no.
             </p>
 
-            <div className="space-y-8">
-              {pasos.map((paso, i) => (
-                <div key={paso.num}
-                  className={`flex items-start gap-6 ${i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"} flex-col md:flex-row`}
-                >
-                  {/* Número y línea */}
-                  <div className="flex-shrink-0 flex flex-col items-center">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black shadow-lg"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${paso.color}20, ${paso.color}40)`,
-                        border: `2px solid ${paso.color}50`,
-                        color: paso.color,
-                        boxShadow: `0 4px 20px ${paso.color}25`,
-                      }}>
-                      {paso.num}
-                    </div>
-                  </div>
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(126,213,111,0.12)" }}>
+              <div className="grid grid-cols-3 text-xs font-semibold uppercase tracking-widest"
+                style={{ background: "rgba(126,213,111,0.05)", borderBottom: "1px solid rgba(126,213,111,0.1)" }}>
+                <div className="px-5 py-3" style={{ color: "#3d3c30" }} />
+                <div className="px-5 py-3 text-center" style={{ color: "#504a3a" }}>ETT</div>
+                <div className="px-5 py-3 text-center" style={{ color: "#7ed56f" }}>BuscayCurra</div>
+              </div>
+              {comparativa.map((fila, i) => (
+                <div key={fila.aspecto} className="grid grid-cols-3 text-sm"
+                  style={{
+                    borderBottom: i < comparativa.length - 1 ? "1px solid rgba(126,213,111,0.06)" : "none",
+                    background: fila.clave ? "rgba(126,213,111,0.03)" : "transparent",
+                  }}>
+                  <div className="px-5 py-4 font-medium text-xs" style={{ color: "#8a8472" }}>{fila.aspecto}</div>
+                  <div className="px-5 py-4 text-center text-xs" style={{ color: fila.clave ? "#6b3a3a" : "#504a3a" }}>{fila.ett}</div>
+                  <div className="px-5 py-4 text-center text-xs font-semibold" style={{ color: fila.clave ? "#7ed56f" : "#b0a890" }}>{fila.nosotros}</div>
+                </div>
+              ))}
+            </div>
 
-                  {/* Contenido */}
-                  <div className="card-game p-6 flex-1 max-w-lg">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{paso.icon}</span>
-                      <h3 className="text-lg font-bold" style={{ color: paso.color }}>{paso.titulo}</h3>
-                    </div>
-                    <p className="text-sm leading-relaxed mb-2" style={{ color: "#b0a890" }}>{paso.desc}</p>
-                    <span className="text-xs font-medium" style={{ color: "#706a58" }}>{paso.detalle}</span>
+            <p className="text-center mt-8 text-sm" style={{ color: "#504a3a" }}>
+              Con una ETT, trabajas <em>para ellos</em>. Con BuscayCurra, encuentras trabajo{" "}
+              <span style={{ color: "#c8c3b4" }}>para ti</span>.
+            </p>
+          </div>
+        </section>
+
+        {/* ── CÓMO FUNCIONA ── */}
+        <section className="py-24 px-6">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-3 tracking-tight" style={{ color: "#f0ebe0" }}>
+              Cómo funciona
+            </h2>
+            <p className="text-center mb-16 text-sm" style={{ color: "#504a3a" }}>
+              5 pasos. Guzzi hace el trabajo pesado.
+            </p>
+
+            <div className="space-y-3">
+              {pasos.map((paso) => (
+                <div key={paso.num} className="flex items-start gap-5 p-5 rounded-2xl"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black"
+                    style={{ background: `${paso.color}14`, color: paso.color, border: `1px solid ${paso.color}30` }}>
+                    {paso.num}
+                  </div>
+                  <div className="pt-1">
+                    <h3 className="text-sm font-bold mb-1" style={{ color: paso.color }}>{paso.titulo}</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "#706a58" }}>{paso.desc}</p>
                   </div>
                 </div>
               ))}
@@ -276,169 +212,168 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ══════ PREVIEW ESPECIES — Las mariposas que puedes desbloquear ══════ */}
-        <section className="py-20 px-4" style={{ background: "linear-gradient(180deg, transparent, rgba(126,213,111,0.03), transparent)" }}>
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
-              50 especies te esperan
+        {/* ── VALOR DEL TIEMPO ── */}
+        <section className="py-24 px-6" style={{ background: "rgba(15,26,10,0.5)" }}>
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-3 tracking-tight" style={{ color: "#f0ebe0" }}>
+              ¿Cuánto vale tu tiempo?
             </h2>
-            <p className="text-center mb-12" style={{ color: "#706a58" }}>
-              Cada usuario tiene una mariposa única. ¿Cuál será la tuya?
+            <p className="mb-12 text-sm" style={{ color: "#504a3a" }}>
+              Enviar 200 candidaturas a mano, con carta personalizada, significa:
             </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {especies.map((esp) => (
-                <div key={esp.nombre} className="card-game p-4 text-center group cursor-pointer">
-                  {/* SVG mariposa mini */}
-                  <div className="mx-auto mb-3 w-16 h-14 flex items-center justify-center">
-                    <svg viewBox="0 0 80 64" width="64" height="52" style={{ filter: `drop-shadow(0 2px 8px ${esp.color}40)` }}>
-                      <path d={`M40 32 C30 18 5 5 4 25 C3 38 22 44 40 38Z`} fill={esp.color} opacity="0.85" />
-                      <path d={`M40 32 C50 18 75 5 76 25 C77 38 58 44 40 38Z`} fill={esp.color} opacity="0.7" />
-                      <path d={`M40 37 C32 39 12 44 14 56 C16 63 32 62 40 52Z`} fill={esp.color} opacity="0.65" />
-                      <path d={`M40 37 C48 39 68 44 66 56 C64 63 48 62 40 52Z`} fill={esp.color} opacity="0.55" />
-                      <ellipse cx="40" cy="42" rx="2.5" ry="14" fill="#2a2a1e" />
-                    </svg>
-                  </div>
-                  <p className="text-xs font-semibold mb-1" style={{ color: "#f0ebe0" }}>{esp.nombre}</p>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full"
-                    style={{
-                      background: esp.rareza === "Legendaria" ? "#f0c04020" : esp.rareza === "Épica" ? "#a070d020" : "#7ed56f20",
-                      color: esp.rareza === "Legendaria" ? "#f0c040" : esp.rareza === "Épica" ? "#a070d0" : "#7ed56f",
-                      border: `1px solid ${esp.rareza === "Legendaria" ? "#f0c04030" : esp.rareza === "Épica" ? "#a070d030" : "#7ed56f30"}`,
-                    }}>
-                    {esp.rareza}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-center mt-8 text-sm" style={{ color: "#706a58" }}>
-              ...y 44 más. Desde la común <strong style={{ color: "#b0a890" }}>Mariposa de la Col</strong> hasta la legendaria <strong style={{ color: "#f0c040" }}>Mariposa Atlas</strong>.
-            </p>
-          </div>
-        </section>
-
-        {/* ══════ FEATURES — Lo que hace especial la app ══════ */}
-        <section className="py-20 px-4">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-14" style={{ color: "#f0ebe0" }}>
-              Superpoderes incluidos
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {features.map((f) => (
-                <div key={f.titulo} className="card-game p-7 flex items-start gap-5">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)" }}>
-                    {f.icon}
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold mb-1" style={{ color: "#f0ebe0" }}>{f.titulo}</h3>
-                    <p className="text-sm leading-relaxed" style={{ color: "#b0a890" }}>{f.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════ PRECIOS ══════ */}
-        <section className="py-20 px-4" style={{ background: "rgba(15,26,10,0.5)" }}>
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
-              Planes simples
-            </h2>
-            <p className="text-center mb-14" style={{ color: "#706a58" }}>
-              Empieza gratis. Evoluciona cuando quieras.
-            </p>
-
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-4 mb-12">
               {[
-                { nombre: "Gratis", precio: "0€", periodo: "", emoji: "🥚", desc: "Para empezar", items: ["2 CVs/día", "Buscador básico", "Evolución oruga"], dest: false },
-                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛", desc: "Para profesionales", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: true },
-                { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🦋", desc: "Sin límites", items: ["Envíos ilimitados", "Todo incluido", "Multi-usuarios", "API"], dest: false },
-              ].map((plan) => (
-                <div key={plan.nombre}
-                  className={`card-game p-7 text-center relative ${plan.dest ? "scale-[1.03]" : ""}`}
-                  style={plan.dest ? { borderColor: "#7ed56f", boxShadow: "0 0 40px rgba(126,213,111,0.12)" } : {}}>
-                  {plan.dest && (
+                { numero: "400 h", label: "de búsqueda y redacción", color: "#e07850" },
+                { numero: "3.400 €", label: "en tiempo al salario mínimo", color: "#f0c040" },
+                { numero: "9,99 €", label: "lo que cuesta Guzzi al mes", color: "#7ed56f" },
+              ].map((stat) => (
+                <div key={stat.label} className="p-8 rounded-2xl"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div className="text-4xl font-black mb-2 tracking-tight" style={{ color: stat.color }}>{stat.numero}</div>
+                  <div className="text-xs leading-relaxed" style={{ color: "#504a3a" }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-base font-semibold mb-1" style={{ color: "#c8c3b4" }}>
+              Una entrevista vale más que 12 meses de suscripción.
+            </p>
+            <p className="text-sm" style={{ color: "#3d3c30" }}>Y Guzzi te va a conseguir varias.</p>
+          </div>
+        </section>
+
+        {/* ── FEATURES ── */}
+        <section className="py-24 px-6">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-16 tracking-tight" style={{ color: "#f0ebe0" }}>
+              Lo que incluye Guzzi
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              {features.map((f) => (
+                <div key={f.titulo} className="p-7 rounded-2xl flex items-start gap-5"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: "linear-gradient(180deg, #7ed56f, #5cb84830)" }} />
+                  <div>
+                    <h3 className="text-sm font-bold mb-2" style={{ color: "#f0ebe0" }}>{f.titulo}</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "#706a58" }}>{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── PRECIOS ── */}
+        <section className="py-24 px-6" style={{ background: "rgba(15,26,10,0.5)" }}>
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-3 tracking-tight" style={{ color: "#f0ebe0" }}>
+              Sin letra pequeña
+            </h2>
+            <p className="text-center mb-16 text-sm" style={{ color: "#504a3a" }}>
+              Empieza gratis. Paga solo si quieres más candidaturas.
+            </p>
+
+            <div className="grid md:grid-cols-4 gap-4 items-start">
+              {planes.map((plan) => (
+                <div key={plan.nombre} className="rounded-2xl p-6 flex flex-col relative"
+                  style={{
+                    background: plan.destacado ? "rgba(126,213,111,0.05)" : "rgba(255,255,255,0.02)",
+                    border: plan.destacado ? "1px solid rgba(126,213,111,0.3)" : "1px solid rgba(255,255,255,0.05)",
+                    boxShadow: plan.destacado ? "0 0 50px rgba(126,213,111,0.08)" : "none",
+                  }}>
+                  {plan.tag && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="badge-game badge-dorado text-[10px]">⭐ Popular</span>
+                      <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: "#7ed56f", color: "#0a0f07" }}>
+                        {plan.tag}
+                      </span>
                     </div>
                   )}
-                  <div className="text-4xl mb-3">{plan.emoji}</div>
-                  <h3 className="text-lg font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h3>
-                  <p className="text-xs mb-4" style={{ color: "#706a58" }}>{plan.desc}</p>
+
                   <div className="mb-5">
-                    <span className="text-3xl font-black" style={{ color: plan.dest ? "#7ed56f" : "#f0ebe0" }}>{plan.precio}</span>
-                    <span className="text-xs" style={{ color: "#706a58" }}>{plan.periodo}</span>
+                    <div className="text-xs font-semibold uppercase tracking-widest mb-1"
+                      style={{ color: plan.destacado ? "#7ed56f" : "#504a3a" }}>
+                      {plan.nombre}
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-black tracking-tight" style={{ color: "#f0ebe0" }}>{plan.precio}€</span>
+                      <span className="text-xs" style={{ color: "#504a3a" }}>{plan.periodo}</span>
+                    </div>
+                    <div className="text-xs mt-1" style={{ color: "#3d3c30" }}>{plan.desc}</div>
                   </div>
-                  <ul className="space-y-2 mb-6 text-left">
+
+                  <ul className="space-y-2 mb-6 flex-1">
                     {plan.items.map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm" style={{ color: "#b0a890" }}>
-                        <span style={{ color: "#7ed56f" }}>✓</span>{item}
+                      <li key={item} className="flex items-start gap-2 text-xs" style={{ color: "#8a8472" }}>
+                        <span className="mt-0.5 flex-shrink-0 font-bold" style={{ color: plan.destacado ? "#7ed56f" : "#504a3a" }}>✓</span>
+                        {item}
                       </li>
                     ))}
                   </ul>
-                  <Link href="/auth/registro" className={plan.dest ? "btn-game w-full block text-center text-sm" : "btn-game-outline w-full block text-center text-sm"}>
-                    Empezar
+
+                  <Link href="/auth/registro"
+                    className={`text-center text-xs font-semibold py-2.5 rounded-xl transition-all ${plan.destacado ? "btn-game" : "btn-game-outline"}`}>
+                    {plan.cta}
                   </Link>
+                  {plan.nota && (
+                    <p className="mt-2 text-center text-[10px]" style={{ color: "#3d3c30" }}>{plan.nota}</p>
+                  )}
                 </div>
               ))}
             </div>
+
+            <p className="text-center mt-10 text-xs" style={{ color: "#3d3c30" }}>
+              Cancela en cualquier momento. Sin permanencia. Sin sorpresas.
+            </p>
           </div>
         </section>
 
-        {/* ══════ CTA FINAL ══════ */}
-        <section className="py-24 px-4 text-center relative">
-          <div className="max-w-2xl mx-auto">
-            <div className="flex justify-center mb-6 animate-float">
-              <div style={{ filter: "drop-shadow(0 8px 24px rgba(126,213,111,0.3))" }}>
-                <LogoGusano size={80} animated />
+        {/* ── CTA FINAL ── */}
+        <section className="py-28 px-6 text-center">
+          <div className="max-w-xl mx-auto">
+            <div className="flex justify-center mb-8 animate-float">
+              <div style={{ filter: "drop-shadow(0 8px 32px rgba(126,213,111,0.25))" }}>
+                <LogoGusano size={72} animated />
               </div>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#f0ebe0" }}>
-              ¿Listo para tu <span style={{ color: "#7ed56f" }}>metamorfosis</span>?
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight" style={{ color: "#f0ebe0" }}>
+              Tu próximo trabajo ya existe.
             </h2>
-            <p className="mb-8 text-lg" style={{ color: "#b0a890" }}>
-              Miles de personas ya están evolucionando. Es tu turno.
+            <p className="text-lg mb-2" style={{ color: "#7ed56f" }}>Guzzi lo encuentra.</p>
+            <p className="mb-10 text-sm" style={{ color: "#504a3a" }}>
+              Mientras tú sigues con tu vida, Guzzi envía candidaturas.<br />
+              Sin ETTs. Sin intermediarios. Sin perder el tiempo.
             </p>
-            <Link href="/auth/registro" className="btn-game text-lg !py-4 !px-12">
-              🦋 Comenzar ahora — Es gratis
+            <Link href="/auth/registro" className="btn-game !py-3.5 !px-12 text-base font-semibold">
+              Empezar gratis
             </Link>
+            <p className="mt-4 text-xs" style={{ color: "#3d3c30" }}>Sin tarjeta de crédito. En 30 segundos.</p>
           </div>
         </section>
+
       </main>
 
-      {/* ══════ FOOTER ══════ */}
-      <footer className="py-10 px-4" style={{ backgroundColor: "#0d0d08", borderTop: "1px solid rgba(126,213,111,0.08)" }}>
+      {/* Footer */}
+      <footer className="py-10 px-6" style={{ background: "#0d0d08", borderTop: "1px solid rgba(126,213,111,0.07)" }}>
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-2">
-              <LogoGusano size={24} />
+              <LogoGusano size={22} />
               <span className="font-bold text-sm" style={{ color: "#7ed56f" }}>BuscayCurra</span>
             </div>
-            <div className="flex flex-wrap gap-5 text-sm">
-              {[
-                { href: "/auth/login", label: "Entrar" },
-                { href: "/auth/registro", label: "Registro" },
-                { href: "/precios", label: "Precios" },
-              ].map((l) => (
-                <Link key={l.href} href={l.href} style={{ color: "#706a58" }}>{l.label}</Link>
+            <div className="flex flex-wrap gap-6 text-xs">
+              {[{ href: "/auth/login", label: "Entrar" }, { href: "/auth/registro", label: "Registro" }, { href: "/precios", label: "Precios" }].map((l) => (
+                <Link key={l.href} href={l.href} style={{ color: "#504a3a" }}>{l.label}</Link>
               ))}
             </div>
           </div>
           <div className="border-t pt-6 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderColor: "rgba(126,213,111,0.06)" }}>
-            <div className="flex flex-wrap gap-4 text-xs">
-              {[
-                { href: "/aviso-legal", label: "Aviso Legal" },
-                { href: "/privacidad", label: "Privacidad" },
-                { href: "/terminos", label: "Términos" },
-                { href: "/cookies", label: "Cookies" },
-              ].map((l) => (
-                <Link key={l.href} href={l.href} style={{ color: "#504a3a" }}>{l.label}</Link>
+            <div className="flex flex-wrap gap-5 text-[11px]">
+              {[{ href: "/aviso-legal", label: "Aviso Legal" }, { href: "/privacidad", label: "Privacidad" }, { href: "/terminos", label: "Términos" }, { href: "/cookies", label: "Cookies" }].map((l) => (
+                <Link key={l.href} href={l.href} style={{ color: "#3d3c30" }}>{l.label}</Link>
               ))}
             </div>
-            <span className="text-[10px]" style={{ color: "#3a3628" }}>© {new Date().getFullYear()} BuscayCurra</span>
+            <span className="text-[10px]" style={{ color: "#2a2a20" }}>© 2025 BuscayCurra</span>
           </div>
         </div>
       </footer>

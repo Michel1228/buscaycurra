@@ -5,8 +5,9 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import PerfilForm, { type DatosPerfil } from "@/components/PerfilForm";
 
-type TabId = "perfil" | "seguridad" | "peligro";
+type TabId = "curriculum" | "perfil" | "seguridad" | "peligro";
 const TABS: { id: TabId; label: string; icon: string }[] = [
+  { id: "curriculum", label: "Mis Currículum", icon: "📄" },
   { id: "perfil", label: "Mi Perfil", icon: "👤" },
   { id: "seguridad", label: "Seguridad", icon: "🔒" },
   { id: "peligro", label: "Peligro", icon: "⚠️" },
@@ -18,8 +19,9 @@ export default function PerfilPage() {
   const [token, setToken] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [datos, setDatos] = useState<Partial<DatosPerfil>>({});
+  const [cvUrl, setCvUrl] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
-  const [tab, setTab] = useState<TabId>("perfil");
+  const [tab, setTab] = useState<TabId>("curriculum");
 
   const cargar = useCallback(async () => {
     try {
@@ -29,8 +31,11 @@ export default function PerfilPage() {
       setToken(session.access_token);
       setEmail(session.user.email ?? "");
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, ciudad, sector").eq("id", session.user.id).single();
-      if (p) setDatos({ nombre: p.full_name ?? "", telefono: p.phone ?? "", ciudad: p.ciudad ?? "", sector: p.sector ?? "" });
+        .select("full_name, phone, ciudad, sector, cv_url").eq("id", session.user.id).single();
+      if (p) {
+        setDatos({ nombre: p.full_name ?? "", telefono: p.phone ?? "", ciudad: p.ciudad ?? "", sector: p.sector ?? "" });
+        setCvUrl(p.cv_url ?? null);
+      }
     } catch { /* */ } finally { setCargando(false); }
   }, [router]);
 
@@ -89,6 +94,67 @@ export default function PerfilPage() {
 
       {/* Contenido */}
       <main className="max-w-2xl mx-auto px-4 py-8">
+        {tab === "curriculum" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-bold" style={{ color: "#f0ebe0" }}>Mis Currículum</h2>
+              <p className="text-sm" style={{ color: "#706a58" }}>Tu CV guardado para envíos automáticos a empresas</p>
+            </div>
+
+            {/* Estado CV */}
+            <div className="card-game p-6 flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+                style={{ background: cvUrl ? "rgba(126,213,111,0.15)" : "rgba(112,106,88,0.1)" }}>
+                {cvUrl ? "📄" : "📋"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>
+                  {cvUrl ? "CV guardado" : "Todavía no tienes CV"}
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>
+                  {cvUrl
+                    ? "Tu CV se adjunta automáticamente en los envíos"
+                    : "Sube o crea tu CV para enviar solicitudes a empresas"}
+                </p>
+              </div>
+              <a href="/app/curriculum"
+                className="px-4 py-2 text-xs font-bold rounded-xl transition hover:opacity-90 flex-shrink-0"
+                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+                {cvUrl ? "Ver / editar" : "Crear CV"}
+              </a>
+            </div>
+
+            {/* Acceso rápido: buscar y enviar */}
+            <div className="card-game p-6">
+              <h3 className="font-bold text-sm mb-1" style={{ color: "#f0ebe0" }}>Enviar mi CV a empresas</h3>
+              <p className="text-xs mb-4" style={{ color: "#706a58" }}>
+                Busca ofertas de empleo y envía tu CV directamente desde el buscador
+              </p>
+              <div className="flex gap-3">
+                <a href="/app/buscar"
+                  className="flex-1 text-center py-3 text-xs font-medium rounded-xl transition hover:opacity-80"
+                  style={{ border: "1.5px solid rgba(126,213,111,0.25)", color: "#b0a890" }}>
+                  🔍 Buscar empleos
+                </a>
+                <a href="/app/envios"
+                  className="flex-1 text-center py-3 text-xs font-bold rounded-xl transition hover:opacity-90"
+                  style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+                  📧 Mis Envíos
+                </a>
+              </div>
+            </div>
+
+            {/* Info envíos */}
+            <div className="rounded-2xl p-4" style={{ background: "rgba(126,213,111,0.05)", border: "1px solid rgba(126,213,111,0.1)" }}>
+              <p className="text-xs" style={{ color: "#706a58" }}>
+                💡 Desde el <strong style={{ color: "#b0a890" }}>Buscador</strong>, cada oferta tiene un botón
+                <strong style={{ color: "#7ed56f" }}> 📧 Enviar CV</strong> que abre el formulario de envío
+                con la empresa ya rellenada.
+              </p>
+            </div>
+          </div>
+        )}
+
         {tab === "perfil" && (
           <div className="space-y-6">
             <div>
@@ -98,11 +164,9 @@ export default function PerfilPage() {
             <div className="card-game p-6">
               <PerfilForm userId={userId} datosIniciales={datos} onGuardado={(d) => {
                 setDatos(d);
-                // Auto-redirect to next step (CV) after saving profile
                 setTimeout(() => router.push("/app/curriculum"), 1200);
               }} />
             </div>
-
           </div>
         )}
 

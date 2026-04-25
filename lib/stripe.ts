@@ -38,6 +38,7 @@ export const stripe = getStripe;
  * Se configuran en las variables de entorno para flexibilidad entre entornos.
  */
 export const PLANES = {
+  BASICO: process.env.STRIPE_PRICE_BASICO ?? "price_basico",
   PRO: process.env.STRIPE_PRICE_PRO ?? "price_pro",
   EMPRESA: process.env.STRIPE_PRICE_EMPRESA ?? "price_empresa",
 } as const;
@@ -53,7 +54,8 @@ export const PLANES = {
  */
 export function getPlanFromPriceId(
   priceId: string
-): "free" | "pro" | "empresa" {
+): "free" | "basico" | "pro" | "empresa" {
+  if (priceId === PLANES.BASICO) return "basico";
   if (priceId === PLANES.PRO) return "pro";
   if (priceId === PLANES.EMPRESA) return "empresa";
   return "free";

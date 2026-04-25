@@ -28,7 +28,7 @@ export default function LoginPage() {
         else setError("Error al iniciar sesión. Inténtalo de nuevo.");
         return;
       }
-      router.push("/app");
+      router.push("/app/gusi");
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
     } finally {

@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +83,7 @@ export default function EnviosPage() {
 
       {/* Content */}
       <main className="max-w-3xl mx-auto px-4 py-6">
-        {activeTab === "nuevo" && <AutoSendSetup userId={userId} onJobScheduled={handleJobScheduled} />}
+        {activeTab === "nuevo" && <Suspense fallback={null}><AutoSendSetup userId={userId} onJobScheduled={handleJobScheduled} /></Suspense>}
         {activeTab === "envios" && <CVSenderDashboard key={refreshKey} userId={userId} />}
         {activeTab === "estadisticas" && <StatsTab userId={userId} />}
       </main>

@@ -3,21 +3,6 @@
 // Deshabilitar prerenderizado estático — la página requiere autenticación dinámica
 export const dynamic = "force-dynamic";
 
-/**
- * app/app/buscar/page.tsx — Buscador de ofertas de trabajo
- *
- * Permite al usuario:
- *   - Buscar ofertas por palabra clave y ubicación
- *   - Filtrar por tipo de jornada, experiencia y salario mínimo
- *   - Ver resultados en un grid de tarjetas JobCard
- *   - Estado de carga con skeleton animado
- *   - Mensaje si no hay resultados
- *
- * Llama al endpoint GET /api/jobs/search?keyword=X&location=Y.
- * Si el usuario no está logado, redirige a /auth/login.
- * Colores de marca: azul #2563EB y naranja #F97316.
- */
-
 import { useState, useEffect, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -65,6 +50,7 @@ function BuscarPageInner() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResultados, setTotalResultados] = useState(0);
   const [hayMas, setHayMas] = useState(false);
+  const [fuenteResultados, setFuenteResultados] = useState<string>("");
 
   // Verificar sesión + geolocalización automática
   useEffect(() => {
@@ -147,7 +133,7 @@ function BuscarPageInner() {
   }
 
   /**
-   * Ejecuta búsqueda MULTI-FUENTE: servidor (LinkedIn) + cliente (Jooble) en paralelo
+   * Ejecuta búsqueda MULTI-FUENTE: servidor (BD local) + cliente (Jooble) en paralelo
    */
   async function buscar(e?: React.FormEvent) {
     if (e) e.preventDefault();
@@ -190,6 +176,8 @@ function BuscarPageInner() {
       todas.sort((a, b) => (b.match || 0) - (a.match || 0));
       setOfertas(todas);
       setCurrentPage(1);
+      const source = serverRes.status === "fulfilled" ? (serverRes.value.source || "") : "";
+      setFuenteResultados(source);
       setTotalResultados(serverRes.status === "fulfilled" ? (serverRes.value.total || todas.length) : todas.length);
       setHayMas(serverRes.status === "fulfilled" ? (serverRes.value.hasMore || false) : false);
     } catch (err) {
@@ -221,10 +209,13 @@ function BuscarPageInner() {
         setCurrentPage(nextPage);
         setHayMas(data.hasMore || false);
         setTotalResultados(data.total || totalResultados);
+        setFuenteResultados(data.source || fuenteResultados);
       }
     } catch { /* silencioso */ }
     finally { setCargandoMas(false); }
   }
+
+  const esEnTiempoReal = fuenteResultados.startsWith("live-api");
 
   return (
     <div className="min-h-screen pt-16">
@@ -396,9 +387,19 @@ function BuscarPageInner() {
             {/* Estado: hay resultados */}
             {!cargando && ofertas.length > 0 && (
               <>
-                <p className="text-sm text-[#706a58] mb-4">
-                  {ofertas.length} de {totalResultados > ofertas.length ? totalResultados.toLocaleString("es-ES") : ofertas.length} oferta{ofertas.length !== 1 ? "s" : ""}
-                </p>
+                <div className="mb-4">
+                  <p className="text-sm text-[#706a58]">
+                    {esEnTiempoReal
+                      ? `${ofertas.length} oferta${ofertas.length !== 1 ? "s" : ""} encontrada${ofertas.length !== 1 ? "s" : ""}`
+                      : `${ofertas.length} de ${(totalResultados > ofertas.length ? totalResultados : ofertas.length).toLocaleString("es-ES")} oferta${ofertas.length !== 1 ? "s" : ""}`
+                    }
+                  </p>
+                  {esEnTiempoReal && (
+                    <p className="text-xs mt-0.5" style={{ color: "#3d3c30" }}>
+                      Resultados en tiempo real — ampliando la base de datos cada día
+                    </p>
+                  )}
+                </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {ofertas.map((oferta) => (
                     <JobCard key={oferta.id} {...oferta} />

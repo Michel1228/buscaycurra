@@ -30,7 +30,7 @@ function getSupabase(): any {
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 /** Planes de usuario disponibles */
-export type UserPlan = "free" | "pro" | "empresa";
+export type UserPlan = "free" | "basico" | "pro" | "empresa";
 
 /** Resultado de la verificación de límites */
 export interface RateLimitResult {
@@ -66,8 +66,12 @@ export async function checkRateLimit(
   // Usamos las variables de entorno si están definidas, o los valores por defecto del plan
   const limites = {
     free: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_FREE ?? "2"),
-      perMonth: 20,
+      perDay: parseInt(process.env.MAX_CVS_PER_DAY_FREE ?? "1"),
+      perMonth: 5,
+    },
+    basico: {
+      perDay: parseInt(process.env.MAX_CVS_PER_DAY_BASICO ?? "5"),
+      perMonth: 60,
     },
     pro: {
       perDay: parseInt(process.env.MAX_CVS_PER_DAY_PRO ?? "10"),

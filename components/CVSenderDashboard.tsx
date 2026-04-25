@@ -35,7 +35,7 @@ interface RateLimitInfo {
 }
 interface CVSenderDashboardProps {
   userId: string;
-  userPlan?: "free" | "pro" | "empresa";
+  userPlan?: "free" | "basico" | "pro" | "empresa";
 }
 
 function statusStyle(s: string) {

@@ -35,16 +35,17 @@ interface Mensaje {
 }
 
 const SUGERENCIAS = [
-  { icon: "📧", label: "Enviar CV automático", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
+  { icon: "📧", label: "Enviar CV automático", msg: "__ENVIO_AUTO__", destacado: true },
   { icon: "📝", label: "Crear mi CV", msg: "__ENTREVISTA__" },
   { icon: "🔍", label: "Buscar trabajo", msg: "Quiero buscar trabajo, ¿me ayudas?" },
-  { icon: "📸", label: "Mejorar mi foto", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
-  { icon: "🎯", label: "Preparar entrevista", msg: "Quiero preparar una entrevista de trabajo" },
+  { icon: "📸", label: "Mejorar mi foto", msg: "__FOTO_CV__" },
+  { icon: "🎯", label: "Preparar entrevista", msg: "__PREP_ENTREVISTA__" },
+  { icon: "🦋", label: "¡Conseguí trabajo!", msg: "__CONSEGUI_TRABAJO__" },
   { icon: "📄", label: "Subir mi CV", msg: "__SUBIR_CV__" },
 ];
 
-export default function GusiChat() {
-  const [abierto, setAbierto] = useState(false);
+export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: boolean }) {
+  const [abierto, setAbierto] = useState(modoIncrustado);
   const [logueado, setLogueado] = useState<boolean | null>(null);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
 
@@ -55,7 +56,13 @@ export default function GusiChat() {
         const { data: { user } } = await getSupabaseBrowser().auth.getUser();
         setLogueado(!!user);
         if (user) {
-          setMensajes([{ role: "gusi", text: `¡Hola! 🐛 Soy Gusi. ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Mejorar tu foto\n🎯 Preparar entrevistas` }]);
+          const esNuevo = user.created_at && (Date.now() - new Date(user.created_at).getTime()) < 30 * 60 * 1000;
+          const nombre = (user.user_metadata?.full_name || "").split(" ")[0];
+          const saludo = nombre ? `¡Hola, ${nombre}!` : "¡Hola!";
+          const msgBienvenida = esNuevo
+            ? `${saludo} 🐛 Soy Guzzi, tu asistente personal de empleo.\n\nEstoy aquí para que nunca más tengas que buscar trabajo solo. Yo trabajo, tú eliges.\n\n¿Por dónde empezamos?\n\n📄 **Tengo CV** → súbemelo y te busco las mejores ofertas\n📝 **No tengo CV** → te ayudo a crearlo en 5 minutos\n📧 Cuando esté listo, **envío tu candidatura automáticamente**\n\n¡Tú relájate, que yo me pongo a trabajar! 🐛→🦋`
+            : `${saludo} 🐛 Soy Guzzi. ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Mejorar mi foto\n🎯 Preparar entrevistas`;
+          setMensajes([{ role: "gusi", text: msgBienvenida }]);
         } else {
           setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Gusi, tu asistente de empleo.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**\n\n¡Y luego te ayudo con todo! 🐛→🦋" }]);
         }
@@ -69,11 +76,17 @@ export default function GusiChat() {
   const [input, setInput] = useState("");
   const [cargando, setCargando] = useState(false);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(true);
+  const [contextoFoto, setContextoFoto] = useState(false);
   const [modoEntrevista, setModoEntrevista] = useState(false);
+  const [modoEnvio, setModoEnvio] = useState(false);
+  const queryEnvioRef = useRef<string>("");
+  const [modoPreparaEntrevista, setModoPreparaEntrevista] = useState(false);
+  const empresaEntrevistaRef = useRef<string>("");
   const [pulso, setPulso] = useState(true);
   const [notif, setNotif] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const lastParsedCV = useRef<Record<string, unknown> | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -91,13 +104,33 @@ export default function GusiChat() {
     setMensajes(prev => [...prev, { role, text, action }]);
   };
 
+  const actualizarEtapa = async (etapa: number) => {
+    try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) return;
+      await getSupabaseBrowser()
+        .from("profiles")
+        .update({ oruga_stage: etapa })
+        .eq("id", session.user.id);
+    } catch { /* silent fail - column may not exist yet */ }
+  };
+
   const enviar = async (texto: string) => {
     if (!texto.trim() || cargando) return;
 
     // Acción especial: subir CV
     if (texto === "__SUBIR_CV__") {
       addMsg("user", "Quiero subir mi CV");
-      addMsg("gusi", "📄 ¡Perfecto! Tienes dos opciones:\n\n1. **Aquí abajo** → Pulsa el clip 📎 para subir tu PDF\n2. **En Perfil** → Ve a 👤 Perfil → Mi CV\n\n¿Tienes tu CV en PDF? ¡Súbelo y yo me encargo del resto! 🐛", "upload_hint");
+      addMsg("gusi", "📄 ¡Perfecto! Súbeme tu CV en PDF directamente aquí.\n\n👇 Pulsa el botón 📎 que ves abajo a la izquierda del chat — ese es el clip para subir archivos.\n\nCuando lo tengas listo te lo analizo con IA y te digo cómo mejorarlo. 🐛", "upload_hint");
+      setMostrarSugerencias(false);
+      return;
+    }
+
+    // Preparacion de entrevista — pregunta empresa y puesto
+    if (texto === "__PREP_ENTREVISTA__") {
+      addMsg("user", "Quiero preparar una entrevista");
+      addMsg("gusi", "¡Genial! Voy a prepararte como un coach. 🎯\n\n**¿Con qué empresa tienes la entrevista y para qué puesto?**\n\nEjemplo: *\"Entrevista en Mercadona para cajero\"* o *\"Inditex, puesto de dependienta\"* 🐛");
+      setModoPreparaEntrevista(true);
       setMostrarSugerencias(false);
       return;
     }
@@ -111,7 +144,158 @@ export default function GusiChat() {
       return;
     }
 
+    // Accion especial: consegui trabajo - butterfly moment
+    if (texto === "__CONSEGUI_TRABAJO__") {
+      addMsg("user", "¡Conseguí trabajo! 🦋");
+      addMsg("gusi", "🦋 **¡INCREÍBLE!!!** \n\nEsto es lo que esperábamos desde el día uno. La metamorfosis está completa.\n\n¡Eres una mariposa! 🦋✨\n\nTe llevo ahora mismo a celebrarlo como se merece...");
+      actualizarEtapa(4);
+      setTimeout(() => router.push("/app/mariposa"), 2000);
+      setMostrarSugerencias(false);
+      return;
+    }
+
+    // Accion especial: envio automatico con visibilidad
+    if (texto === "__ENVIO_AUTO__") {
+      addMsg("user", "Quiero enviar mi CV automáticamente a empresas");
+      addMsg("gusi", "📧 ¡Perfecto! Para encontrarte las empresas correctas necesito saber:\n\n**¿Qué puesto buscas y en qué ciudad?**\n\nEjemplo: *\"Administrativo en Madrid\"* o *\"Cocinero en Barcelona\"* 🐛");
+      setModoEnvio(true);
+      setMostrarSugerencias(false);
+      return;
+    }
+
+    // Accion especial: foto CV
+    if (texto === "__FOTO_CV__") {
+      addMsg("user", "Quiero mejorar mi foto de CV");
+      addMsg("gusi", "📸 Tu foto es lo primero que ven los reclutadores. Así funciona el proceso completo:\n\n**Paso 1 — Mejora la foto con ChatGPT:**\nAbre ChatGPT, sube tu foto y pega este prompt tal cual:\n\n---\n📋 **COPIA ESTO:**\n_Retoca esta foto para un currículum profesional: pon fondo blanco liso, iluminación frontal suave, aspecto limpio y formal tipo foto carnet. No cambies mi cara ni mis rasgos, solo mejora la luz, limpia el fondo y haz que parezca una foto de estudio profesional. Tamaño cuadrado._\n---\n\n**Paso 2 — Descarga la foto mejorada** de ChatGPT.\n\n**Paso 3 — Súbela a tu CV:**\nVe a 📄 **Currículum → sección Foto para el CV** y sube la foto descargada. Quedará vinculada directamente a tu CV. 🐛→🦋");
+      setTimeout(() => {
+        addMsg("gusi", "👉 ¿Vamos a tu CV para subir la foto cuando la tengas lista?");
+        setContextoFoto(true);
+        setMostrarSugerencias(true);
+      }, 800);
+      setMostrarSugerencias(false);
+      return;
+    }
+
+    // Accion especial: ir a curriculum
+    if (texto === "__IR_CURRICULUM__") {
+      addMsg("user", "Sí, vamos al CV");
+      addMsg("gusi", "📄 ¡Perfecto! Te llevo ahora mismo. En la sección **Foto para el CV** tienes el prompt listo y el botón para subir la foto. 🐛");
+      setTimeout(() => router.push("/app/curriculum"), 1200);
+      setMostrarSugerencias(false);
+      return;
+    }
+
+    // Accion especial: mejorar CV
+    if (texto === "__MEJORAR_CV__") {
+      addMsg("user", "Sí, mejora mi CV con IA");
+      addMsg("gusi", "✨ Analizando tu CV con IA... un momento 🐛");
+      setMostrarSugerencias(false);
+      try {
+        const { getSupabaseBrowser } = await import("@/lib/supabase-browser");
+        const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+        const parsed = lastParsedCV.current;
+        if (!session || !parsed) {
+          addMsg("gusi", "⚠️ No encuentro tu CV. Súbelo primero con el clip 📎");
+          return;
+        }
+        const exp = ((parsed.experiencia as Array<{puesto?: string; empresa?: string; periodo?: string}>) || [])
+          .map(e => `- ${e.puesto || ""} en ${e.empresa || ""} ${e.periodo ? "(" + e.periodo + ")" : ""}`)
+          .join("\n");
+        const cvText = [
+          `Nombre: ${parsed.nombre || ""} ${parsed.apellidos || ""}`,
+          `Email: ${parsed.email || ""}`,
+          `Teléfono: ${parsed.telefono || ""}`,
+          `Ciudad: ${parsed.ciudad || ""}`,
+          `Resumen: ${parsed.resumen || ""}`,
+          exp ? `Experiencia:\n${exp}` : "",
+          parsed.habilidades ? `Habilidades: ${(parsed.habilidades as string[]).join(", ")}` : "",
+          parsed.formacion ? `Formación: ${JSON.stringify(parsed.formacion)}` : "",
+        ].filter(Boolean).join("\n");
+
+        const res = await fetch("/api/cv/mejorar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ cvText, jobTitle: "" }),
+        });
+        const data = await res.json();
+        if (data.cvMejorado) {
+          addMsg("gusi", `✅ **¡CV mejorado!** 🐛🎉\n\nAquí tienes tu CV optimizado:\n\n---\n${data.cvMejorado}\n---\n\n💾 Ve a 📄 **Currículum** para guardarlo y descargarlo en PDF.`);
+        } else {
+          addMsg("gusi", `⚠️ ${data.error || "No pude mejorar el CV. Inténtalo de nuevo."} 🐛`);
+        }
+      } catch {
+        addMsg("gusi", "⚠️ Error al mejorar el CV. Comprueba tu conexión. 🐛");
+      }
+      return;
+    }
+
+    // Modo preparacion entrevista — el usuario acaba de decir empresa y puesto
+    if (modoPreparaEntrevista) {
+      setModoPreparaEntrevista(false);
+      empresaEntrevistaRef.current = texto;
+      const nuevosMensajesEnt = [...mensajes, { role: "user" as const, text: texto }];
+      setMensajes(nuevosMensajesEnt);
+      setInput("");
+      setCargando(true);
+      try {
+        const cvResumen = lastParsedCV.current
+          ? JSON.stringify({
+              nombre: lastParsedCV.current.nombre,
+              experiencia: (lastParsedCV.current.experiencia as unknown[] || []).slice(0, 3),
+              habilidades: lastParsedCV.current.habilidades,
+              estudios: lastParsedCV.current.estudios,
+            })
+          : null;
+        const res = await fetch("/api/gusi/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: texto,
+            history: [],
+            mode: "prep_entrevista",
+            cvData: cvResumen,
+          }),
+        });
+        const data = await res.json();
+        setMensajes(prev => [...prev, { role: "gusi", text: data.reply || "Algo salió mal, inténtalo de nuevo 🐛" }]);
+      } catch {
+        addMsg("gusi", "Sin conexión. Comprueba tu internet 🐛");
+      }
+      setCargando(false);
+      return;
+    }
+
+    // Modo envio: el usuario acaba de decir qué puesto/ciudad busca
+    if (modoEnvio) {
+      setModoEnvio(false);
+      queryEnvioRef.current = texto;
+      const nuevosMensajesEnvio = [...mensajes, { role: "user" as const, text: texto }];
+      setMensajes(nuevosMensajesEnvio);
+      setInput("");
+      setCargando(true);
+      try {
+        const res = await fetch(`/api/jobs/search?q=${encodeURIComponent(texto)}&page=1`);
+        const data = await res.json();
+        const ofertas: Oferta[] = (data.ofertas || []).slice(0, 5);
+        if (ofertas.length === 0) {
+          addMsg("gusi", `🔍 No encontré ofertas para "${texto}". Prueba con términos más generales o diferente ciudad. 🐛`);
+        } else {
+          const lista = ofertas.map((o, i) => `${i + 1}. **${o.empresa}** — ${o.titulo} · ${o.ubicacion}`).join("\n");
+          setMensajes(prev => [...prev, {
+            role: "gusi",
+            text: `📧 Encontré **${data.total} ofertas**. Las más relevantes son:\n\n${lista}\n\n¿Envío tu CV a estas empresas?`,
+            jobs: ofertas,
+          }]);
+        }
+      } catch {
+        addMsg("gusi", "⚠️ Error al buscar ofertas. Comprueba tu conexión. 🐛");
+      }
+      setCargando(false);
+      return;
+    }
+
     setMostrarSugerencias(false);
+    setContextoFoto(false);
     const nuevosMensajes = [...mensajes, { role: "user" as const, text: texto }];
     setMensajes(nuevosMensajes);
     setInput("");
@@ -192,14 +376,29 @@ export default function GusiChat() {
       if (extractRes.ok) {
         const parsed = await extractRes.json();
         if (parsed.fuente && parsed.nombre) {
+          lastParsedCV.current = parsed;
+          actualizarEtapa(1);
           const exp = (parsed.experiencia || []).slice(0, 3);
           const expText = exp.map((e: {puesto?: string; empresa?: string}) => `  • ${e.puesto || "?"} en ${e.empresa || "?"}`).join("\n");
-          addMsg("gusi", `✅ **¡CV subido y analizado!** 🐛🎉\n\n👤 **${parsed.nombre} ${parsed.apellidos || ""}**\n📞 ${parsed.telefono || "Sin teléfono"}\n📧 ${parsed.email || "Sin email"}\n📍 ${parsed.ciudad || "Sin ciudad"}\n${expText ? `\n💼 Experiencia:\n${expText}` : ""}\n\n✨ **Los campos se han rellenado** en la página de CV.\n\n¿Qué hacemos ahora?\n📧 **Enviar CV automáticamente**\n🔍 Buscar ofertas que encajen\n✨ Mejorar el CV con IA`);
+          addMsg("gusi", `✅ **¡CV subido y analizado!** 🐛🎉\n\n👤 **${parsed.nombre} ${parsed.apellidos || ""}**\n📞 ${parsed.telefono || "Sin teléfono"}\n📧 ${parsed.email || "Sin email"}\n📍 ${parsed.ciudad || "Sin ciudad"}\n${expText ? `\n💼 Experiencia:\n${expText}` : ""}\n\n✨ Los datos están guardados en tu perfil.`);
+          setTimeout(() => {
+            addMsg("gusi", "✨ **¿Quieres que mejoremos tu CV con IA?**\n\nPuedo optimizar el texto para que destaque más ante los reclutadores. Tarda 30 segundos. 🐛");
+            setMostrarSugerencias(true);
+          }, 900);
         } else {
-          addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nNo pude leer todos los datos automáticamente, pero tu PDF está guardado.\n\nVe a 📄 **Currículum** para rellenar los campos manualmente o mejorarlos con IA. 🦋");
+          lastParsedCV.current = parsed;
+          addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nNo pude extraer todos los datos automáticamente, pero el PDF está guardado.\n\n📄 Si quieres, puedes rellenar los datos manualmente en **Currículum**. Pero primero... 👇");
+          setTimeout(() => {
+            addMsg("gusi", "✨ **¿Quieres que mejoremos tu CV con IA?**\n\nPuedo optimizar el texto para que destaque más ante los reclutadores y consiga más respuestas. Tarda 30 segundos. 🐛");
+            setMostrarSugerencias(true);
+          }, 900);
         }
       } else {
-        addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nAhora puedo:\n📧 **Enviar tu CV automáticamente** a empresas\n🔍 Buscar ofertas que encajen contigo\n\n¿Qué hacemos? ¡Un paso más cerca de ser mariposa! 🦋");
+        addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nTu PDF está guardado y listo para enviar.");
+          setTimeout(() => {
+            addMsg("gusi", "✨ **¿Quieres que mejoremos tu CV con IA?**\n\nPuedo optimizar el texto para que destaque más ante los reclutadores y consiga más respuestas. Tarda 30 segundos. 🐛");
+            setMostrarSugerencias(true);
+          }, 900);
       }
     } catch {
       addMsg("gusi", "⚠️ Error al subir. Comprueba tu conexión. 🐛");
@@ -216,10 +415,17 @@ export default function GusiChat() {
   return (
     <>
       {/* ── Chat panel ───────────────────── */}
-      {abierto && (
+      {(modoIncrustado || abierto) && (
         <div
-          className="fixed z-[9998] flex flex-col overflow-hidden"
-          style={{
+          className={modoIncrustado ? "flex flex-col overflow-hidden w-full" : "fixed z-[9998] flex flex-col overflow-hidden"}
+          style={modoIncrustado ? {
+            height: "100%",
+            minHeight: "520px",
+            background: "#12160d",
+            borderRadius: "1.25rem",
+            border: "2px solid rgba(126,213,111,0.25)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
+          } : {
             bottom: "5rem", right: "1rem", left: "1rem",
             maxWidth: "420px", marginLeft: "auto",
             height: "min(70vh, 560px)",
@@ -251,8 +457,8 @@ export default function GusiChat() {
             <div className="flex items-center gap-1.5">
               <button onClick={limpiar} title="Limpiar" className="w-7 h-7 rounded-full flex items-center justify-center text-xs transition hover:opacity-80"
                 style={{ background: "rgba(126,213,111,0.08)", color: "#706a58" }}>🗑</button>
-              <button onClick={() => setAbierto(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-sm transition hover:opacity-80"
-                style={{ background: "rgba(126,213,111,0.08)", color: "#706a58" }}>✕</button>
+              {!modoIncrustado && <button onClick={() => setAbierto(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-sm transition hover:opacity-80"
+                style={{ background: "rgba(126,213,111,0.08)", color: "#706a58" }}>✕</button>}
             </div>
           </div>
 
@@ -309,10 +515,20 @@ export default function GusiChat() {
                       onClick={() => {
                         addMsg("user", "Envía mi CV a todas las ofertas");
                         addMsg("gusi", "📧 **¡Enviando tu CV a todas las ofertas!** 🐛\n\nVe a 📧 **Envíos** para ver el progreso. ¡Un paso más cerca de ser mariposa! 🦋");
+                        actualizarEtapa(2);
                       }}
                       className="w-full py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90"
                       style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.15), rgba(92,184,72,0.15))", border: "1.5px solid rgba(126,213,111,0.3)", color: "#7ed56f" }}>
                       📧 Enviar CV a TODAS ({m.jobs.length} ofertas)
+                    </button>
+                    <button
+                      onClick={() => {
+                        const q = queryEnvioRef.current;
+                        router.push(`/app/buscar${q ? "?q=" + encodeURIComponent(q) : ""}`);
+                      }}
+                      className="w-full py-2 rounded-xl text-[12px] font-medium transition hover:opacity-90"
+                      style={{ background: "transparent", border: "1px solid rgba(126,213,111,0.2)", color: "#706a58" }}>
+                      🔍 Ver todas las ofertas →
                     </button>
                   </div>
                 )}
@@ -352,8 +568,21 @@ export default function GusiChat() {
                   </button>
                 </>
               ) : (
-                /* Logueado: todas las sugerencias */
-                SUGERENCIAS.map((s, i) => (
+                /* Logueado: sugerencias contextuales o todas */
+                contextoFoto ? (
+                  <>
+                    <button key="ir-cv" onClick={() => { setContextoFoto(false); enviar("__IR_CURRICULUM__"); }}
+                      className="flex items-center gap-1 px-3 py-2 rounded-full text-[12px] font-bold transition hover:opacity-80"
+                      style={{ background: "rgba(126,213,111,0.18)", color: "#7ed56f", border: "1.5px solid rgba(126,213,111,0.35)" }}>
+                      📄 Ir a mi CV ahora
+                    </button>
+                    <button key="despues" onClick={() => { setContextoFoto(false); setMostrarSugerencias(false); addMsg("gusi", "Sin problema. Cuando tengas la foto lista, vuelve aquí o ve directamente a 📄 Currículum → Foto para el CV. 🐛"); }}
+                      className="flex items-center gap-1 px-3 py-2 rounded-full text-[12px] font-medium transition hover:opacity-80"
+                      style={{ background: "rgba(126,213,111,0.06)", color: "#b0a890", border: "1px solid rgba(126,213,111,0.12)" }}>
+                      ⏱ Lo hago después
+                    </button>
+                  </>
+                ) : SUGERENCIAS.map((s, i) => (
                   <button key={i} onClick={() => enviar(s.msg)}
                     className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition hover:opacity-80"
                     style={{
@@ -395,7 +624,7 @@ export default function GusiChat() {
         </div>
       )}
 
-      {/* ── Burbuja flotante ──────────────── */}
+      {!modoIncrustado && (<>
       <button onClick={() => { setAbierto(!abierto); setPulso(false); setNotif(false); }}
         className="fixed bottom-4 right-4 z-[9999] w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
         style={{
@@ -430,6 +659,8 @@ export default function GusiChat() {
         </div>
       )}
 
+      </>
+      )}
       <style jsx global>{`
         @keyframes gusi-pulse {
           0%, 100% { transform: scale(1); box-shadow: 0 4px 24px rgba(126,213,111,0.4); }
