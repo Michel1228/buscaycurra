@@ -5,467 +5,419 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { jsPDF } from "jspdf";
-import CVUploader from "@/components/CVUploader";
 
-type Paso = 1 | 2 | 3;
+interface Exp {
+  fechas: string;
+  puesto: string;
+  empresa: string;
+  ubicacion: string;
+  descripcion: string;
+}
+
+interface Edu {
+  titulo: string;
+  centro: string;
+  ubicacion: string;
+}
+
+interface CVForm {
+  nombre: string;
+  apellidos: string;
+  subtitulo: string;
+  telefono: string;
+  email: string;
+  ciudad: string;
+  perfilProfesional: string;
+  aptitudes: string;
+  idiomas: string;
+  experiencia: Exp[];
+  formacion: Edu[];
+}
+
+const emptyForm: CVForm = {
+  nombre: "", apellidos: "", subtitulo: "", telefono: "", email: "", ciudad: "",
+  perfilProfesional: "", aptitudes: "", idiomas: "",
+  experiencia: [{ fechas: "", puesto: "", empresa: "", ubicacion: "", descripcion: "" }],
+  formacion: [{ titulo: "", centro: "", ubicacion: "" }],
+};
+
+type Paso = "form" | "preview" | "mejorado";
 
 export default function CurriculumPage() {
   const router = useRouter();
-  const fotoInputRef = useRef<HTMLInputElement>(null);
-
-  const [paso, setPaso] = useState<Paso>(1);
-
-  // Paso 2
-  const [textoCv, setTextoCv] = useState("");
-  const [puesto, setPuesto] = useState("");
-  const [infoExtra, setInfoExtra] = useState("");
-  const [fotoDatos, setFotoDatos] = useState<string | null>(null);
+  const [paso, setPaso] = useState<Paso>("form");
+  const [form, setForm] = useState<CVForm>(emptyForm);
+  const [previewHTML, setPreviewHTML] = useState("");
+  const [mejoradoHTML, setMejoradoHTML] = useState("");
   const [procesando, setProcesando] = useState(false);
-  const [cargandoTexto, setCargandoTexto] = useState(false);
+  const [subiendoPDF, setSubiendoPDF] = useState(false);
+  const [pdfSubido, setPdfSubido] = useState(false);
   const [error, setError] = useState("");
-
-  // Paso 3
-  const [cvMejorado, setCvMejorado] = useState("");
-  const [esCarta, setEsCarta] = useState(false);
-  const [copiado, setCopiado] = useState(false);
+  const [token, setToken] = useState("");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeMejRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    async function verificar() {
-      const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-      if (!user) router.push("/auth/login");
+    async function init() {
+      const sb = getSupabaseBrowser();
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { router.push("/auth/login"); return; }
+      setToken(session.access_token);
+      const { data: p } = await sb.from("profiles")
+        .select("full_name, phone, ciudad, email")
+        .eq("id", session.user.id).single();
+      if (p) {
+        const parts = (p.full_name || "").split(" ");
+        setForm(prev => ({
+          ...prev,
+          nombre: parts[0] || "",
+          apellidos: parts.slice(1).join(" ") || "",
+          telefono: p.phone || "",
+          email: p.email || session.user.email || "",
+          ciudad: p.ciudad || "",
+        }));
+      }
     }
-    void verificar();
+    init();
   }, [router]);
 
-  // Comprueba que el texto extraído del PDF es legible (no binario/garbled)
-  function esTextoLegible(texto: string): boolean {
-    if (!texto || texto.length < 20) return false;
-    let legibles = 0;
-    for (const c of texto) {
-      const code = c.charCodeAt(0);
-      // Contar como legibles: ASCII imprimible, saltos de línea/tab, Latin-1 (acentos, ñ, ü...)
-      if (
-        (code >= 32 && code <= 126) ||
-        code === 10 || code === 13 || code === 9 ||
-        (code >= 160 && code <= 255)
-      ) legibles++;
-    }
-    return legibles / texto.length >= 0.80; // 80%+ de chars legibles
-  }
-
-  // Al pasar al paso 2, cargar el texto del CV subido automáticamente
-  async function irAPaso2() {
-    setPaso(2);
-    if (textoCv.trim()) return; // ya hay texto, no sobreescribir
-    setCargandoTexto(true);
+  async function subirPDF(file: File) {
+    if (file.type !== "application/pdf") { setError("Solo se aceptan archivos PDF."); return; }
+    if (file.size > 5 * 1024 * 1024) { setError("El PDF no puede superar 5 MB."); return; }
+    setSubiendoPDF(true);
+    setError("");
     try {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-      if (!session) return;
-      const res = await fetch("/api/cv/texto", {
+      if (!session) { setError("Sesión expirada. Recarga la página."); return; }
+
+      // Upload via server-side API (uses service role key — permisos correctos)
+      const formData = new FormData();
+      formData.append("cv", file);
+      const subirRes = await fetch("/api/cv/subir", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: formData,
+      });
+      if (!subirRes.ok) {
+        const err = await subirRes.json().catch(() => ({}));
+        setError((err as { error?: string }).error || "No se pudo subir el PDF.");
+        return;
+      }
+
+      // Extraer texto del PDF subido
+      const textoRes = await fetch("/api/cv/texto", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      const datos = await res.json() as { texto?: string | null; error?: string };
-      if (datos.texto && esTextoLegible(datos.texto)) {
-        setTextoCv(datos.texto);
+      const { texto } = await textoRes.json();
+
+      if (texto) {
+        try {
+          const parseRes = await fetch("/api/cv/parsear", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ texto }),
+          });
+          if (parseRes.ok) {
+            const parsed = await parseRes.json();
+            if (!parsed.error) {
+              // Normalizar descripcion: parsear puede devolver array o string
+              const normExp = (parsed.experiencia || []).map((e: Exp & { descripcion: string | string[] }) => ({
+                ...e,
+                descripcion: Array.isArray(e.descripcion)
+                  ? e.descripcion.join("\n")
+                  : (e.descripcion || ""),
+              }));
+              setForm(prev => ({
+                nombre: parsed.nombre || prev.nombre,
+                apellidos: parsed.apellidos || prev.apellidos,
+                subtitulo: parsed.subtitulo || prev.subtitulo,
+                telefono: parsed.telefono || prev.telefono,
+                email: parsed.email || prev.email,
+                ciudad: parsed.ciudad || prev.ciudad,
+                perfilProfesional: parsed.perfilProfesional || prev.perfilProfesional,
+                aptitudes: parsed.aptitudes || prev.aptitudes,
+                idiomas: parsed.idiomas || prev.idiomas,
+                experiencia: normExp.length ? normExp : prev.experiencia,
+                formacion: parsed.formacion?.length ? parsed.formacion : prev.formacion,
+              }));
+            }
+          }
+        } catch { /* parsear failed silently — user still has PDF uploaded */ }
       }
-      // Si el texto es ilegible o vacío, el textarea queda en blanco para pegar manualmente
+      setPdfSubido(true);
     } catch {
-      // Si falla, el usuario puede pegar manualmente — no es crítico
+      setError("No se pudo subir el PDF. Comprueba tu conexión.");
     } finally {
-      setCargandoTexto(false);
+      setSubiendoPDF(false);
     }
   }
 
-  async function mejorarCV() {
-    if (!textoCv.trim()) { setError("Por favor, pega el texto de tu CV."); return; }
+  function buildCVData() {
+    return {
+      nombre: form.nombre,
+      apellidos: form.apellidos,
+      subtitulo: form.subtitulo,
+      telefono: form.telefono,
+      email: form.email,
+      ciudad: form.ciudad,
+      perfilProfesional: form.perfilProfesional,
+      aptitudes: form.aptitudes.split(",").map(a => a.trim()).filter(Boolean),
+      idiomas: form.idiomas.split(",").map(i => {
+        const [nombre, nivel] = i.trim().split(":");
+        return { nombre: nombre?.trim() || "", nivel: parseInt(nivel) || 50 };
+      }).filter(i => i.nombre),
+      experiencia: form.experiencia.filter(e => e.puesto).map(e => ({
+        ...e,
+        // descripcion puede llegar como string (textarea) o array (parsear AI)
+        descripcion: Array.isArray(e.descripcion)
+          ? (e.descripcion as string[]).filter(Boolean)
+          : (e.descripcion || "").split("\n").filter(Boolean),
+      })),
+      formacion: form.formacion.filter(f => f.titulo),
+    };
+  }
+
+  // Un solo botón: genera CV + mejora con IA en un paso
+  async function generarYMejorar() {
+    if (!form.nombre.trim()) { setError("Escribe tu nombre para continuar"); return; }
     setProcesando(true);
     setError("");
     try {
-      const textoFinal = infoExtra.trim()
-        ? `${textoCv}\n\n--- INFORMACIÓN ADICIONAL ---\n${infoExtra}`
-        : textoCv;
-      const res = await fetch("/api/cv/mejorar", {
+      const cvText = [
+        `${form.nombre} ${form.apellidos}${form.subtitulo ? ` — ${form.subtitulo}` : ""}`,
+        form.perfilProfesional,
+        form.experiencia.filter(e => e.puesto).map(e =>
+          `${e.puesto} en ${e.empresa}${e.fechas ? ` (${e.fechas})` : ""}:\n${Array.isArray(e.descripcion) ? (e.descripcion as string[]).join("\n") : e.descripcion}`
+        ).join("\n\n"),
+        form.aptitudes ? `Aptitudes: ${form.aptitudes}` : "",
+        form.idiomas ? `Idiomas: ${form.idiomas}` : "",
+        form.formacion.filter(f => f.titulo).map(f => `${f.titulo} · ${f.centro}`).join("\n"),
+      ].filter(Boolean).join("\n\n");
+
+      const mejorarRes = await fetch("/api/cv/mejorar", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvText: textoFinal, jobTitle: puesto }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ cvText, jobTitle: form.subtitulo }),
       });
-      const datos = await res.json() as { cvMejorado?: string; error?: string };
-      if (!res.ok) throw new Error(datos.error ?? "Error al mejorar el CV");
-      setCvMejorado(datos.cvMejorado ?? "");
-      setEsCarta(false);
-      setPaso(3);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setProcesando(false);
-    }
+      if (!mejorarRes.ok) throw new Error("Error al mejorar");
+      const { cvMejorado } = await mejorarRes.json();
+
+      if (cvMejorado) {
+        // Extraer perfil profesional: primer párrafo sustancial del resultado IA
+        const lineas = cvMejorado.split("\n").filter((l: string) => l.trim().length > 30);
+        const perfilMejorado = lineas.slice(0, 3).join(" ").replace(/^[^a-zA-ZáéíóúÁÉÍÓÚ]+/, "").trim();
+        const cvData = { ...buildCVData(), perfilProfesional: perfilMejorado || cvMejorado.slice(0, 500) };
+        const genRes = await fetch("/api/cv/generar-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(cvData),
+        });
+        const genData = await genRes.json();
+        if (genData.html) { setMejoradoHTML(genData.html); setPaso("mejorado"); }
+        else setError("Error generando CV mejorado");
+      }
+    } catch { setError("Error al mejorar con IA"); }
+    finally { setProcesando(false); }
   }
 
-  async function generarCarta() {
-    if (!textoCv.trim() || !puesto.trim()) {
-      setError("Necesitas el CV y el nombre del puesto para generar la carta.");
-      return;
-    }
-    setProcesando(true);
-    setError("");
-    try {
-      const res = await fetch("/api/cv/mejorar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvText: textoCv, jobTitle: puesto, tipo: "carta" }),
-      });
-      const datos = await res.json() as { cvMejorado?: string; error?: string };
-      if (!res.ok) throw new Error(datos.error ?? "Error al generar la carta");
-      setCvMejorado(datos.cvMejorado ?? "");
-      setEsCarta(true);
-      setPaso(3);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setProcesando(false);
-    }
+  function descargar(ref: React.RefObject<HTMLIFrameElement | null>) {
+    ref.current?.contentWindow?.print();
   }
 
-  function handleFoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setFotoDatos(ev.target?.result as string);
-    reader.readAsDataURL(file);
+  function f(field: keyof CVForm, val: string) {
+    setForm(p => ({ ...p, [field]: val }));
   }
 
-  function descargarPDF() {
-    if (!cvMejorado) return;
-    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-    const mL = 40, mR = 40;
-    const w = doc.internal.pageSize.getWidth();
-    const h = doc.internal.pageSize.getHeight();
-    let y = 50;
-
-    if (fotoDatos) {
-      try { doc.addImage(fotoDatos, "JPEG", w - mR - 80, 30, 80, 80); } catch { /* ignorar */ }
-    }
-
-    doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(37, 99, 235);
-    doc.text("BuscayCurra", mL, y);
-    doc.setFontSize(10).setFont("helvetica", "normal").setTextColor(100, 116, 139);
-    doc.text("buscaycurra.es", mL, y + 18);
-    y += 34;
-
-    doc.setDrawColor(249, 115, 22).setLineWidth(2).line(mL, y, w - mR, y);
-    y += 20;
-
-    if (puesto) {
-      doc.setFont("helvetica", "bold").setFontSize(13).setTextColor(17, 24, 39);
-      doc.text(esCarta ? `Carta de presentación — ${puesto}` : `CV mejorado — ${puesto}`, mL, y);
-      y += 24;
-    }
-
-    doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(55, 65, 81);
-    const lineas = doc.splitTextToSize(cvMejorado, w - mL - mR) as string[];
-    for (const linea of lineas) {
-      if (y > h - 60) { doc.addPage(); y = 40; }
-      doc.text(linea, mL, y);
-      y += 14;
-    }
-
-    doc.setFontSize(8).setTextColor(156, 163, 175);
-    doc.text("Generado por BuscayCurra — buscaycurra.es", w / 2, h - 20, { align: "center" });
-
-    const p = puesto.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_áéíóúÁÉÍÓÚñÑ]/g, "") || "Documento";
-    doc.save(esCarta ? `Carta_${p}_BuscayCurra.pdf` : `CV_Mejorado_${p}_BuscayCurra.pdf`);
+  function updExp(i: number, k: string, v: string) {
+    setForm(p => { const e = [...p.experiencia]; e[i] = { ...e[i], [k]: v }; return { ...p, experiencia: e }; });
   }
 
-  async function copiar() {
-    try {
-      await navigator.clipboard.writeText(cvMejorado);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 2000);
-    } catch {
-      setError("No se pudo copiar. Selecciona el texto manualmente.");
-    }
+  function updEdu(i: number, k: string, v: string) {
+    setForm(p => { const e = [...p.formacion]; e[i] = { ...e[i], [k]: v }; return { ...p, formacion: e }; });
   }
 
-  const pasoLabels = ["Subir CV", "Mejorar con IA", "Descargar"];
+  const stepLabels = ["Tus datos", "CV con IA"];
+  const stepIdx = paso === "form" ? 0 : 1;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-
-      {/* Cabecera */}
-      <div className="text-white py-8 px-4" style={{ backgroundColor: "#2563EB" }}>
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-bold">📄 Mi Currículum</h1>
-          <p className="text-blue-100 mt-1 text-sm">
-            Sube tu CV, mejóralo con IA y descárgalo listo para enviar
-          </p>
-        </div>
-      </div>
-
-      {/* Indicador de pasos */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-2">
-          {([1, 2, 3] as Paso[]).map((n, i) => (
-            <div key={n} className="flex items-center gap-2">
-              {i > 0 && <div className="w-10 h-px bg-gray-200 flex-shrink-0" />}
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors"
-                  style={{
-                    backgroundColor: paso > n ? "#10b981" : paso === n ? "#2563EB" : "#e5e7eb",
-                    color: paso >= n ? "white" : "#6b7280",
-                  }}
-                >
-                  {paso > n ? "✓" : n}
+    <div className="min-h-screen pt-16">
+      <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">📄 Tu Currículum</h1>
+            <p className="text-sm mt-1 opacity-75">Completa tus datos y mejóralos con IA</p>
+          </div>
+          <div className="flex items-center gap-1 text-xs font-medium">
+            {stepLabels.map((label, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
+                  i === stepIdx ? "bg-white text-[#1a1a12]" : i < stepIdx ? "bg-white/50 text-white" : "bg-white/20 text-white/50"
+                }`}>
+                  {i < stepIdx ? "✓" : i + 1}
                 </div>
-                <span
-                  className="text-sm font-medium hidden sm:block transition-colors"
-                  style={{ color: paso === n ? "#2563EB" : "#9ca3af" }}
-                >
-                  {pasoLabels[n - 1]}
-                </span>
+                <span className={`hidden sm:inline ${i === stepIdx ? "text-white" : "text-white/50"}`}>{label}</span>
+                {i < 2 && <div className="w-4 h-0.5 mx-1" style={{ background: i < stepIdx ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.2)" }} />}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
-
-        {/* ── Paso 1: Subir CV ─────────────────────────────────────────── */}
-        {paso === 1 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">Sube tu CV en PDF</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Tu CV se adjuntará automáticamente a cada candidatura que envíes
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <CVUploader />
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={() => void irAPaso2()}
-                className="px-6 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition"
-                style={{ backgroundColor: "#2563EB" }}
-              >
-                Continuar: Mejorar con IA →
-              </button>
-            </div>
+      <main className="max-w-4xl mx-auto px-4 py-6">
+        {error && (
+          <div className="mb-4 p-3 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+            {error}
           </div>
         )}
 
-        {/* ── Paso 2: Mejorar con IA ───────────────────────────────────── */}
-        {paso === 2 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">Mejora tu CV con IA</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Pega el texto de tu CV y la IA lo optimizará para pasar los filtros ATS
-              </p>
+        {/* ── PASO 1: FORMULARIO ─────────────────────────────────── */}
+        {paso === "form" && (
+          <div className="space-y-5">
+
+            {/* Upload PDF */}
+            <div className="card-game p-5 flex items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm" style={{ color: "#f0ebe0" }}>¿Ya tienes un CV en PDF?</p>
+                <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>Súbelo y los campos se rellenan solos</p>
+                {pdfSubido && <p className="text-xs mt-1 font-medium" style={{ color: "#7ed56f" }}>✅ PDF procesado — revisa los campos</p>}
+              </div>
+              <label className={`shrink-0 px-5 py-2.5 text-sm font-semibold rounded-xl cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
+                style={{ background: "linear-gradient(135deg,#7ed56f,#5cb848)", color: "#1a1a12" }}>
+                {subiendoPDF ? "Procesando…" : "📎 Subir PDF"}
+                <input type="file" accept=".pdf" className="hidden"
+                  onChange={e => e.target.files?.[0] && subirPDF(e.target.files[0])}
+                  disabled={subiendoPDF} />
+              </label>
             </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
-                ⚠️ {error}
+            {/* Datos personales */}
+            <div className="card-game p-6 space-y-4">
+              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>👤 Datos personales</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input placeholder="Nombre" value={form.nombre} onChange={e => f("nombre", e.target.value)} className="input-game" />
+                <input placeholder="Apellidos" value={form.apellidos} onChange={e => f("apellidos", e.target.value)} className="input-game" />
+                <input placeholder="Título profesional (ej: Operario · Atención al Cliente)" value={form.subtitulo}
+                  onChange={e => f("subtitulo", e.target.value)} className="input-game sm:col-span-2" />
+                <input placeholder="Teléfono" value={form.telefono} onChange={e => f("telefono", e.target.value)} className="input-game" />
+                <input placeholder="Email" value={form.email} onChange={e => f("email", e.target.value)} className="input-game" />
+                <input placeholder="Ciudad, Provincia CP" value={form.ciudad}
+                  onChange={e => f("ciudad", e.target.value)} className="input-game sm:col-span-2" />
               </div>
-            )}
+            </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  ¿Para qué puesto? <span className="text-gray-400 font-normal">(opcional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={puesto}
-                  onChange={(e) => setPuesto(e.target.value)}
-                  placeholder="Ej: Desarrollador Full Stack, Administrativo, Electricista..."
-                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Texto de tu CV
-                  {cargandoTexto && (
-                    <span className="ml-2 text-blue-500 font-normal text-xs">
-                      Cargando desde tu PDF...
-                    </span>
-                  )}
-                </label>
-                {cargandoTexto ? (
-                  <div className="w-full border border-gray-200 rounded-xl px-4 py-10 flex items-center justify-center gap-2 bg-gray-50">
-                    <span className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
-                    <span className="text-sm text-gray-500">Extrayendo texto del PDF...</span>
+            {/* Experiencia */}
+            <div className="card-game p-6 space-y-4">
+              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>💼 Experiencia laboral</h2>
+              {form.experiencia.map((exp, i) => (
+                <div key={i} className="p-4 rounded-xl space-y-3" style={{ background: "rgba(42,42,30,0.5)", border: "1px solid #3d3c30" }}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold" style={{ color: "#7ed56f" }}>Experiencia {i + 1}</span>
+                    {form.experiencia.length > 1 && (
+                      <button onClick={() => setForm(p => ({ ...p, experiencia: p.experiencia.filter((_, j) => j !== i) }))}
+                        className="text-xs" style={{ color: "#ef4444" }}>Eliminar</button>
+                    )}
                   </div>
-                ) : (
-                  <textarea
-                    value={textoCv}
-                    onChange={(e) => setTextoCv(e.target.value)}
-                    placeholder="El texto de tu CV aparecerá aquí automáticamente, o pégalo manualmente..."
-                    rows={10}
-                    className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none leading-relaxed transition"
-                  />
-                )}
-                <p className="text-xs text-gray-400 mt-1">
-                  {textoCv.split(/\s+/).filter(Boolean).length} palabras
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  ¿Quieres añadir algo más? <span className="text-gray-400 font-normal">(opcional)</span>
-                </label>
-                <textarea
-                  value={infoExtra}
-                  onChange={(e) => setInfoExtra(e.target.value)}
-                  placeholder="Cursos recientes, habilidades nuevas, logros que quieras destacar..."
-                  rows={3}
-                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Foto de perfil para el PDF <span className="text-gray-400 font-normal">(opcional)</span>
-                </label>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => fotoInputRef.current?.click()}
-                    className="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition"
-                    style={{ backgroundColor: "#F97316" }}
-                  >
-                    📷 Elegir foto
-                  </button>
-                  {fotoDatos ? (
-                    <div className="flex items-center gap-2">
-                      <img src={fotoDatos} alt="Preview foto" className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
-                      <span className="text-xs text-green-600 font-medium">Foto lista ✓</span>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-gray-400">Se incluirá en la esquina del PDF</span>
-                  )}
+                  <input placeholder="Fechas (ej: May 2021 – Sep 2025)" value={exp.fechas}
+                    onChange={e => updExp(i, "fechas", e.target.value)} className="input-game" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input placeholder="Puesto" value={exp.puesto} onChange={e => updExp(i, "puesto", e.target.value)} className="input-game" />
+                    <input placeholder="Empresa" value={exp.empresa} onChange={e => updExp(i, "empresa", e.target.value)} className="input-game" />
+                  </div>
+                  <input placeholder="Ubicación" value={exp.ubicacion} onChange={e => updExp(i, "ubicacion", e.target.value)} className="input-game" />
+                  <textarea placeholder="Tareas (una por línea)" value={exp.descripcion} rows={3}
+                    onChange={e => updExp(i, "descripcion", e.target.value)} className="input-game resize-none" />
                 </div>
-                <input
-                  ref={fotoInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFoto}
-                  className="hidden"
-                />
+              ))}
+              <button onClick={() => setForm(p => ({ ...p, experiencia: [...p.experiencia, { fechas: "", puesto: "", empresa: "", ubicacion: "", descripcion: "" }] }))}
+                className="text-sm font-medium" style={{ color: "#7ed56f" }}>+ Añadir experiencia</button>
+            </div>
+
+            {/* Formación */}
+            <div className="card-game p-6 space-y-4">
+              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>🎓 Formación</h2>
+              {form.formacion.map((edu, i) => (
+                <div key={i} className="p-4 rounded-xl space-y-3" style={{ background: "rgba(42,42,30,0.5)", border: "1px solid #3d3c30" }}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold" style={{ color: "#f0c040" }}>Formación {i + 1}</span>
+                    {form.formacion.length > 1 && (
+                      <button onClick={() => setForm(p => ({ ...p, formacion: p.formacion.filter((_, j) => j !== i) }))}
+                        className="text-xs" style={{ color: "#ef4444" }}>Eliminar</button>
+                    )}
+                  </div>
+                  <input placeholder="Título / Estudios" value={edu.titulo}
+                    onChange={e => updEdu(i, "titulo", e.target.value)} className="input-game" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input placeholder="Centro" value={edu.centro} onChange={e => updEdu(i, "centro", e.target.value)} className="input-game" />
+                    <input placeholder="Ubicación" value={edu.ubicacion} onChange={e => updEdu(i, "ubicacion", e.target.value)} className="input-game" />
+                  </div>
+                </div>
+              ))}
+              <button onClick={() => setForm(p => ({ ...p, formacion: [...p.formacion, { titulo: "", centro: "", ubicacion: "" }] }))}
+                className="text-sm font-medium" style={{ color: "#f0c040" }}>+ Añadir formación</button>
+            </div>
+
+            {/* Habilidades */}
+            <div className="card-game p-6 space-y-4">
+              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>🎯 Habilidades</h2>
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: "#b0a890" }}>Aptitudes (separadas por comas)</label>
+                <input placeholder="Trabajo en equipo, Organización, Polivalente…" value={form.aptitudes}
+                  onChange={e => f("aptitudes", e.target.value)} className="input-game" />
+              </div>
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: "#b0a890" }}>Idiomas (nombre:nivel 0–100, separados por comas)</label>
+                <input placeholder="Español:95, Inglés:30, Francés:15" value={form.idiomas}
+                  onChange={e => f("idiomas", e.target.value)} className="input-game" />
+              </div>
+              <div>
+                <label className="text-xs mb-1 block" style={{ color: "#b0a890" }}>Perfil profesional (opcional — la IA lo mejora)</label>
+                <textarea placeholder="Escribe un resumen o déjalo vacío y la IA lo creará…" value={form.perfilProfesional}
+                  onChange={e => f("perfilProfesional", e.target.value)} rows={3} className="input-game resize-none" />
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-between">
-              <button
-                onClick={() => setPaso(1)}
-                className="px-5 py-2.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-50 transition"
-              >
-                ← Volver
+            <div className="flex justify-end pb-8">
+              <button onClick={generarYMejorar} disabled={procesando || !form.nombre.trim()}
+                className="btn-game px-12 py-3 text-base disabled:opacity-50">
+                {procesando ? "Generando con IA…" : "✨ Generar CV con IA →"}
               </button>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => void generarCarta()}
-                  disabled={procesando || !textoCv.trim() || !puesto.trim()}
-                  className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: "#F97316" }}
-                >
-                  {procesando ? "Generando..." : "✉️ Generar carta de presentación"}
-                </button>
-                <button
-                  onClick={() => void mejorarCV()}
-                  disabled={procesando || !textoCv.trim()}
-                  className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: "#2563EB" }}
-                >
-                  {procesando ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Mejorando...
-                    </span>
-                  ) : "✨ Mejorar CV con IA →"}
-                </button>
-              </div>
             </div>
           </div>
         )}
 
-        {/* ── Paso 3: Resultado y descarga ─────────────────────────────── */}
-        {paso === 3 && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">
-                  {esCarta ? "Carta de presentación lista" : "CV mejorado listo"}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Revisa el resultado, descárgalo y empieza a enviar candidaturas
-                </p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <button
-                  onClick={() => void copiar()}
-                  className="px-4 py-2 text-sm font-medium text-white rounded-xl hover:opacity-90 transition"
-                  style={{ backgroundColor: "#F97316" }}
-                >
-                  {copiado ? "✓ Copiado" : "📋 Copiar"}
+        {/* ── PASO 2: CV CON IA ─────────────────────────────────── */}
+        {paso === "mejorado" && mejoradoHTML && (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl text-sm font-medium"
+              style={{ background: "rgba(126,213,111,0.1)", color: "#7ed56f", border: "1px solid rgba(126,213,111,0.2)" }}>
+              ✅ Tu CV ha sido mejorado con IA
+            </div>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <h2 className="font-bold text-lg" style={{ color: "#f0ebe0" }}>CV mejorado con IA</h2>
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={() => setPaso("form")}
+                  className="px-4 py-2 text-sm rounded-xl" style={{ border: "1px solid #3d3c30", color: "#b0a890" }}>
+                  ← Editar datos
                 </button>
-                <button
-                  onClick={descargarPDF}
-                  className="px-4 py-2 text-sm font-medium text-white rounded-xl hover:opacity-90 transition"
-                  style={{ backgroundColor: "#2563EB" }}
-                >
+                <button onClick={() => descargar(iframeMejRef)}
+                  className="btn-game px-6 py-2 text-sm">
                   ⬇️ Descargar PDF
                 </button>
               </div>
             </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 max-h-[500px] overflow-y-auto">
-              {esTextoLegible(cvMejorado) ? (
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-sans">
-                  {cvMejorado}
-                </pre>
-              ) : (
-                <div className="text-center py-10 text-gray-400">
-                  <p className="text-2xl mb-2">⚠️</p>
-                  <p className="text-sm">La IA no pudo procesar el contenido. Pega el texto del CV manualmente y vuelve a intentarlo.</p>
-                  <button
-                    onClick={() => { setCvMejorado(""); setPaso(2); }}
-                    className="mt-4 px-4 py-2 text-sm font-medium text-white rounded-xl"
-                    style={{ backgroundColor: "#2563EB" }}
-                  >
-                    ← Volver a intentarlo
-                  </button>
-                </div>
-              )}
+            <div className="rounded-2xl overflow-hidden" style={{ border: "2px solid rgba(126,213,111,0.3)" }}>
+              <iframe ref={iframeMejRef} srcDoc={mejoradoHTML} className="w-full bg-white"
+                style={{ height: "900px", border: "none" }} title="CV Mejorado" />
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-between">
-              <button
-                onClick={() => { setError(""); setPaso(2); }}
-                className="px-5 py-2.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-50 transition"
-              >
-                ← Volver a mejorar
+            <div className="text-center py-4">
+              <button onClick={() => router.push("/app/buscar")}
+                className="btn-game px-12 py-3 text-base">
+                🔍 Siguiente: Buscar ofertas →
               </button>
-              <Link
-                href="/app/buscar"
-                className="px-6 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition text-center"
-                style={{ backgroundColor: "#2563EB" }}
-              >
-                🔍 Buscar ofertas de trabajo →
-              </Link>
             </div>
           </div>
         )}
-
-      </div>
+      </main>
     </div>
   );
 }
