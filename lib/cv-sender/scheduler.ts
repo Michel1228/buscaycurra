@@ -20,22 +20,54 @@ import { canSendToCompany } from "./tracker";
 /**
  * Lista de festivos nacionales de España.
  * Formato: "MM-DD" (mes-día)
- * ⚠️  ATENCIÓN: El Viernes Santo varía cada año (entre marzo y abril).
- *     Actualiza "04-18" con la fecha correcta cada año o implementa
- *     el algoritmo de cálculo de Pascua (algoritmo de Butcher/Meeus).
+ * Viernes Santo se calcula automáticamente con el algoritmo de Pascua.
  */
-const FESTIVOS_NACIONALES = new Set([
-  "01-01", // Año Nuevo
-  "01-06", // Reyes Magos
-  "04-18", // Viernes Santo — ⚠️ VARÍA CADA AÑO, actualizar manualmente
-  "05-01", // Día del Trabajo
-  "08-15", // Asunción de la Virgen
-  "10-12", // Fiesta Nacional de España
-  "11-01", // Todos los Santos
-  "12-06", // Día de la Constitución Española
-  "12-08", // Inmaculada Concepción
-  "12-25", // Navidad
-]);
+
+/** Algoritmo de Butcher para calcular la fecha de Pascua ( Domingo de Resurrección ) */
+function calcularPascua(ano: number): Date {
+  const a = ano % 19;
+  const b = Math.floor(ano / 100);
+  const c = ano % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mes = Math.floor((h + l - 7 * m + 114) / 31);
+  const dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(ano, mes - 1, dia);
+}
+
+/** Calcula el Viernes Santo para un año dado (2 días antes de Pascua) */
+function calcularViernesSanto(ano: number): string {
+  const pascua = calcularPascua(ano);
+  const viernesSanto = new Date(pascua);
+  viernesSanto.setDate(pascua.getDate() - 2);
+  return `${String(viernesSanto.getMonth() + 1).padStart(2, "0")}-${String(viernesSanto.getDate()).padStart(2, "0")}`;
+}
+
+/** Obtiene los festivos nacionales para el año actual */
+function getFestivosNacionales(): Set<string> {
+  const ano = new Date().getFullYear();
+  const viernesSanto = calcularViernesSanto(ano);
+
+  return new Set([
+    "01-01", // Año Nuevo
+    "01-06", // Reyes Magos
+    viernesSanto, // Viernes Santo — calculado automáticamente
+    "05-01", // Día del Trabajo
+    "08-15", // Asunción de la Virgen
+    "10-12", // Fiesta Nacional de España
+    "11-01", // Todos los Santos
+    "12-06", // Día de la Constitución Española
+    "12-08", // Inmaculada Concepción
+    "12-25", // Navidad
+  ]);
+}
 
 // ─── Configuración de Horario Laboral ────────────────────────────────────────
 const HORA_INICIO = 9; // 9:00 (hora española)
@@ -75,7 +107,7 @@ export interface ScheduleResult {
  */
 function esFestivo(date: Date): boolean {
   const mesdia = `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  return FESTIVOS_NACIONALES.has(mesdia);
+  return getFestivosNacionales().has(mesdia);
 }
 
 /**

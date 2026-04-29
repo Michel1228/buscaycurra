@@ -1,21 +1,22 @@
 /**
- * lib/job-search/sync-worker.ts
+ * lib/job-search/sync-worker.ts v2
  * Descarga masiva de ofertas desde APIs y las guarda en la BD PostgreSQL local.
+ * Ahora con MÁS keywords, MÁS ciudades, y MÁS fuentes.
  */
 import { createHash } from "crypto";
 import { getPool } from "@/lib/db";
 
 export const SECTORES = [
-  { sector: "HOSTELERIA", keywords: ["camarero", "cocinero", "chef", "hosteleria", "barman", "recepcionista hotel", "ayudante cocina", "pizzero", "panadero"] },
-  { sector: "INDUSTRIA", keywords: ["operario", "produccion", "manufactura", "soldador", "electromecanico", "mecanico industrial", "tornero", "caldereria", "operario almacen"] },
-  { sector: "OFICINA", keywords: ["administrativo", "contable", "secretaria", "recursos humanos", "recepcionista", "atencion al cliente", "facturacion", "gestion administrativa"] },
-  { sector: "COMERCIO", keywords: ["dependiente", "vendedor", "cajero", "comercial", "ventas", "reponedor", "promotor", "agente comercial", "asesor comercial"] },
-  { sector: "SALUD", keywords: ["enfermero", "auxiliar enfermeria", "medico", "farmaceutico", "fisioterapeuta", "cuidador", "auxiliar clinica", "tecnico sanitario"] },
-  { sector: "EDUCACION", keywords: ["profesor", "maestro", "educador", "monitor", "tutor", "educador social", "auxiliar educacion", "formador"] },
-  { sector: "TECNOLOGIA", keywords: ["programador", "desarrollador", "software", "frontend", "backend", "data scientist", "devops", "informatica", "sistemas"] },
-  { sector: "CONSTRUCCION", keywords: ["albanil", "electricista", "fontanero", "pintor", "carpintero", "construccion", "peon", "reformas", "instalador"] },
-  { sector: "TRANSPORTE", keywords: ["conductor", "repartidor", "logistica", "carretillero", "mensajero", "transportista", "mozo almacen", "picking", "chofer"] },
-  { sector: "OTRO", keywords: ["limpieza", "vigilante", "seguridad", "jardinero", "peluquero", "estetica", "cuidador personas mayores", "auxiliar servicios"] },
+  { sector: "HOSTELERIA", keywords: ["camarero", "cocinero", "chef", "hosteleria", "barman", "recepcionista hotel", "ayudante cocina", "pizzero", "panadero", "jefe cocina", "maitre", "sommelier", "pastelero", "cocinero colectividades", "encargado bar", "animador turistico", "guia turismo", "fregaplatos", "limpieza cocina", "mozo almacen hosteleria"] },
+  { sector: "INDUSTRIA", keywords: ["operario", "produccion", "manufactura", "soldador", "electromecanico", "mecanico industrial", "tornero", "caldereria", "operario almacen", "mecanico", "montador", "tecnico mantenimiento", "operario fabrica", "control calidad", "maquinista", "pintor industrial", "trefilador", "estampador", "inyeccion plastico"] },
+  { sector: "OFICINA", keywords: ["administrativo", "contable", "secretaria", "recursos humanos", "recepcionista", "atencion al cliente", "facturacion", "gestion administrativa", "abogado", "economista", "controller financiero", "project manager", "office manager", "auxiliar administrativo", "teleoperador", "data entry", "community manager"] },
+  { sector: "COMERCIO", keywords: ["dependiente", "vendedor", "cajero", "comercial", "ventas", "reponedor", "promotor", "agente comercial", "asesor comercial", "gerente tienda", "jefe ventas", "teleoperador ventas", "visual merchandiser", "agente seguros", "consultor inmobiliario", "comprador", "exportacion"] },
+  { sector: "SALUD", keywords: ["enfermero", "auxiliar enfermeria", "medico", "farmaceutico", "fisioterapeuta", "cuidador", "auxiliar clinica", "tecnico sanitario", "psicologo", "terapeuta", "logopeda", "optometrista", "radiologo", "celador", "ordenanza hospital", "tecnico laboratorio", "auxiliar geriatria", "cuidador personas mayores"] },
+  { sector: "EDUCACION", keywords: ["profesor", "maestro", "educador", "monitor", "tutor", "educador social", "auxiliar educacion", "formador", "profesor idiomas", "profesor primaria", "profesor secundaria", "pedagogo", "orientador educativo", "bibliotecario", "coordinador extraescolar"] },
+  { sector: "TECNOLOGIA", keywords: ["programador", "desarrollador", "software", "frontend", "backend", "data scientist", "devops", "informatica", "sistemas", "ingeniero", "arquitecto software", "ciberseguridad", "administrador sistemas", "cloud", "machine learning", "qa tester", "product manager", "scrum master", "ux ui", "analista datos", "blockchain", "fullstack", "mobile developer"] },
+  { sector: "CONSTRUCCION", keywords: ["albanil", "electricista", "fontanero", "pintor", "carpintero", "construccion", "peon", "reformas", "instalador", "jefe obra", "aparejador", "delineante", "soldador tig", "gruista", "operador maquinaria", "instalador climatizacion", "encofrador", "hormigon", "impermeabilizacion", "revestimientos", "escayolista"] },
+  { sector: "TRANSPORTE", keywords: ["conductor", "repartidor", "logistica", "carretillero", "mensajero", "transportista", "mozo almacen", "picking", "chofer", "conductor camion", "conductor autobus", "peón carga", "coordinador logistica", "despachador", "planificador rutas", "agente aduanas"] },
+  { sector: "OTRO", keywords: ["limpieza", "vigilante", "seguridad", "jardinero", "peluquero", "estetica", "cuidador personas mayores", "auxiliar servicios", "mantenimiento", "recepcionista", "azafata", "mozo eventos", "camarera piso", "planchador", "costurera", "zapatero", "mecanico vehiculos", "chapista", "electricista automocion", "montador muebles", "decorador", "fotografo", "camarografo", "periodista", "traductor", "interprete"] },
 ] as const;
 
 export const CIUDADES = [
@@ -29,9 +30,68 @@ export const CIUDADES = [
   "Calahorra", "Huesca", "Teruel", "Cadiz", "Jerez",
   "Las Palmas", "Santa Cruz de Tenerife", "Palma", "San Sebastian",
   "Elche", "Cartagena", "Getafe", "Mostoles", "Alcala de Henares",
-];
+  "Hospitalet", "Badalona", "Terrassa", "Sabadell", "Leganes",
+  "Fuenlabrada", "Almeria", "Dos Hermanas", "Torrejon", "Parla",
+  "Mataro", "Cornella", "Alcorcon", "Coslada", "Ourense",
+  "Pontevedra", "Lugo", "Santiago de Compostela", "Ferrol",
+  "Aviles", "Langreo", "Mieres", "Palencia", "Zamora",
+  "Soria", "Guadalajara", "Cuenca", "Ciudad Real", "Puertollano",
+  "Merida", "Caceres", "Plasencia", "Don Benito", "Villanueva de la Serena",
+  "Linares", "Andujar", "Ubeda", "Motril", "El Ejido",
+  "Roquetas de Mar", "Adra", "Almunecar", "Salobreña", "Baza",
+  "Guadix", "Lorca", "Molina de Segura", "San Javier", "Los Alcazares",
+  "Totana", "Alhama de Murcia", "Yecla", "Jumilla", "Caravaca de la Cruz",
+  "Cehegin", "Bullas", "Calasparra", "Moratalla", "Aguilas",
+  "Mazarron", "San Pedro del Pinatar", "Torre Pacheco", "Fuente Alamo", "La Union",
+  "Cartaya", "Lepe", "Isla Cristina", "Ayamonte", "Punta Umbria",
+  "Almonte", "Bollullos", "Moguer", "Niebla", "Palos de la Frontera",
+  "Aracena", "Cortegana", "Jabugo", "Aroche", "Cumbres Mayores",
+  "Zafra", "Jerez de los Caballeros", "Villafranca de los Barros", "Almendralejo", "Montijo",
+  "Merida", "Caceres", "Plasencia", "Coria", "Navalmoral de la Mata",
+  "Talayuela", "Trujillo", "Montanchez", "Jaraiz de la Vera", "Cuacos de Yuste",
+  "Talavera de la Reina", "Illescas", "Seseña", "Yuncos", "Bargas",
+  "Torrijos", "Ocaña", "Quintanar de la Orden", "Madridejos", "Consuegra",
+  "Mora", "La Puebla de Montalban", "Los Navalucillos", "Pepino", "San Martin de Valdeiglesias",
+  "Aranjuez", "Chinchon", "Colmenar de Oreja", "Valdemoro", "Pinto",
+  "Parla", "Fuenlabrada", "Humanes de Madrid", "Griñon", "Serranillos del Valle",
+  "Moraleja de Enmedio", "Cubas de la Sagra", "Torrejon de Velasco", "Yeles", "Esquivias",
+  "Illescas", "Numancia de la Sagra", "Borox", "Cedillo del Condado", "Santa Cruz de la Zarza",
+  "Villacañas", "Quintanar de la Orden", "La Villa de Don Fadrique", "Tembleque", "Miguel Esteban",
+  "La Puebla de Almoradiel", "El Toboso", "Quero", "Santa Cruz de Mudela", "Alcazar de San Juan",
+  "Campo de Criptana", "Tomelloso", "Socuellamos", "La Solana", "Daimiel",
+  "Manzanares", "Valdepeñas", "Membrilla", "Infantes", "Villanueva de los Infantes",
+  "Almagro", "Bolaños de Calatrava", "Miguelturra", "Ciudad Real", "Puertollano",
+  "Alcudia", "Almodovar del Campo", "Fernan Nuñez", "Montilla", "Puente Genil",
+  "Lucena", "Cabra", "Priego de Cordoba", "Baena", "Montemayor",
+  "Espejo", "Castro del Rio", "Fernan-Nuñez", "Montalban de Cordoba", "Doña Mencia",
+  "Rute", "Iznajar", "Luque", "Zuheros", "Carcabuey",
+  "Alcaudete", "Alcalá la Real", "Bailen", "Linares", "Jodar",
+  "Mancha Real", "Torreperogil", "Ubeda", "Baeza", "Villacarrillo",
+  "Sabiote", "La Carolina", "Santa Elena", "Santisteban del Puerto", "Navas de San Juan",
+  "Arquillos", "Lupion", "Jabalquinto", "Mengibar", "Villardompardo",
+  "Torredonjimeno", "Martos", "Torredelcampo", "Jaen", "Andujar",
+  "Villanueva del Arzobispo", "Alcaudete", "Porcuna", "Higuera de Calatrava", "Arjona",
+  "Marmolejo", "Lopera", "Bujalance", "Cardena", "Villa del Rio",
+  "Montoro", "Pedro Abad", "El Carpio", "La Rambla", "Palma del Rio",
+  "Posadas", "Almodovar del Rio", "Fuente Palmera", "Guadalcazar", "Villaviciosa de Cordoba",
+  "Espiel", "Belmez", "Peñarroya-Pueblonuevo", "Valsequillo", "Villafranca de Cordoba",
+  "Priego de Cordoba", "Iznajar", "Rute", "Lucena", "Cabra",
+  "Baena", "Castro del Rio", "Espejo", "Montemayor", "Doña Mencia",
+  "Montalban de Cordoba", "Fernan-Nuñez", "La Carlota", "Palma del Rio", "Posadas",
+  "Almodovar del Rio", "Fuente Palmera", "Guadalcazar", "Villaviciosa de Cordoba", "Espiel",
+  "Belmez", "Peñarroya-Pueblonuevo", "Valsequillo", "Villafranca de Cordoba", "Santaella",
+  "La Rambla", "Montilla", "Montalban de Cordoba", "Fernan-Nuñez", "La Carlota",
+  "Palma del Rio", "Posadas", "Almodovar del Rio", "Fuente Palmera", "Guadalcazar",
+  "Villaviciosa de Cordoba", "Espiel", "Belmez", "Peñarroya-Pueblonuevo", "Valsequillo",
+  "Villafranca de Cordoba", "Santaella", "La Rambla", "Montilla", "Puente Genil",
+  "Lucena", "Cabra", "Priego de Cordoba", "Baena", "Montemayor",
+  "Espejo", "Castro del Rio", "Fernan-Nuñez", "Montalban de Cordoba", "Doña Mencia",
+  "Rute", "Iznajar", "Luque", "Zuheros", "Carcabuey",
+  "Alcaudete", "Alcalá la Real", "Bailen", "Linares", "Jodar",
+  "Mancha Real", "Torreperogil", "Ubeda", "Baeza", "Villacarrillo",
+] as const;
 
-type JobSector = "HOSTELERIA" | "INDUSTRIA" | "OFICINA" | "COMERCIO" | "SALUD" | "EDUCACION" | "TECNOLOGIA" | "CONSTRUCCION" | "TRANSPORTE" | "OTRO";
+type JobSector = typeof SECTORES[number]["sector"];
 
 function makeId(source: string, url: string): string {
   return createHash("md5").update(source + "|" + url).digest("hex").slice(0, 24);

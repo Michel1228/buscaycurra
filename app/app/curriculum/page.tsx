@@ -1,8 +1,16 @@
 "use client";
 
-export const dynamic = "force-dynamic";
+/**
+ * Curriculum — Generador de CV profesional
+ * 1. Subir PDF (extrae datos automáticamente)
+ * 2. Foto profesional + tips
+ * 3. Formulario completo con plantilla profesional
+ * 4. Generar CV con IA
+ * 5. Descargar PDF
+ * 6. Auto-guardado
+ */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 
@@ -41,91 +49,86 @@ const emptyForm: CVForm = {
   formacion: [{ titulo: "", centro: "", ubicacion: "" }],
 };
 
-type Paso = "form" | "preview" | "mejorado";
-
 export default function CurriculumPage() {
   const router = useRouter();
-  const [paso, setPaso] = useState<Paso>("form");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [token, setToken] = useState("");
   const [form, setForm] = useState<CVForm>(emptyForm);
-  const [previewHTML, setPreviewHTML] = useState("");
+  const [fotoUrl, setFotoUrl] = useState("");
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [subiendoPDF, setSubiendoPDF] = useState(false);
   const [mejoradoHTML, setMejoradoHTML] = useState("");
   const [procesando, setProcesando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [guardadoId, setGuardadoId] = useState("");
   const [nombreCV, setNombreCV] = useState("");
   const [mostrarModalGuardar, setMostrarModalGuardar] = useState(false);
-  const [subiendoPDF, setSubiendoPDF] = useState(false);
-  const [pdfSubido, setPdfSubido] = useState(false);
   const [error, setError] = useState("");
-  const [token, setToken] = useState("");
-  const [fotoUrl, setFotoUrl] = useState("");
-  const [subiendoFoto, setSubiendoFoto] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const iframeMejRef = useRef<HTMLIFrameElement>(null);
+  const [guardado, setGuardado] = useState(false);
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     async function init() {
-      const sb = getSupabaseBrowser();
-      const { data: { session } } = await sb.auth.getSession();
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       if (!session) { router.push("/auth/login"); return; }
+      setUserId(session.user.id);
       setToken(session.access_token);
-      const uid = session.user.id;
 
-      // Restaurar CV generado si existe
-      const htmlGuardado = localStorage.getItem("cv_html_" + uid);
-      if (htmlGuardado) { setMejoradoHTML(htmlGuardado); setPaso("mejorado"); }
+      // Cargar CV guardado
+      try {
+        const res = await fetch(`/api/gusi/cv?userId=${session.user.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.cv) {
+            setForm(prev => ({ ...prev, ...data.cv }));
+          }
+        }
+      } catch { /* ignore */ }
 
-      const { data: p } = await sb.from("profiles")
-        .select("full_name, phone, ciudad, email, avatar_url")
-        .eq("id", uid).single();
-
-      // Cargar borrador guardado (tiene prioridad sobre perfil vacío)
-      const borrador = localStorage.getItem("cv_draft_" + uid);
-      const draft = borrador ? JSON.parse(borrador) : null;
+      // Cargar perfil
+      const { data: p } = await getSupabaseBrowser().from("profiles")
+        .select("full_name, phone, ciudad, email, avatar_url, cv_url")
+        .eq("id", session.user.id).single();
 
       if (p) {
         const parts = (p.full_name || "").split(" ");
         setForm(prev => ({
           ...prev,
-          // Datos del perfil (base)
-          nombre: draft?.nombre || parts[0] || "",
-          apellidos: draft?.apellidos || parts.slice(1).join(" ") || "",
-          telefono: draft?.telefono || p.phone || "",
-          email: draft?.email || p.email || session.user.email || "",
-          ciudad: draft?.ciudad || p.ciudad || "",
-          // Datos CV: del borrador si existen
-          subtitulo: draft?.subtitulo || prev.subtitulo,
-          perfilProfesional: draft?.perfilProfesional || prev.perfilProfesional,
-          aptitudes: draft?.aptitudes || prev.aptitudes,
-          idiomas: draft?.idiomas || prev.idiomas,
-          experiencia: draft?.experiencia?.length ? draft.experiencia : prev.experiencia,
-          formacion: draft?.formacion?.length ? draft.formacion : prev.formacion,
+          nombre: prev.nombre || parts[0] || "",
+          apellidos: prev.apellidos || parts.slice(1).join(" ") || "",
+          telefono: prev.telefono || p.phone || "",
+          email: prev.email || p.email || session.user.email || "",
+          ciudad: prev.ciudad || p.ciudad || "",
         }));
-        if (p.avatar_url) setFotoUrl(p.avatar_url as string);
-      } else if (draft) {
-        setForm(draft);
+        setFotoUrl(p.avatar_url || "");
       }
+
+      setCargando(false);
     }
     init();
   }, [router]);
 
-  // Guardar borrador en localStorage cada vez que cambia el formulario
+  // Auto-guardar
   useEffect(() => {
-    if (!token) return;
-    getSupabaseBrowser().auth.getSession().then(({ data: { session } }) => {
-      if (!session) return;
-      localStorage.setItem("cv_draft_" + session.user.id, JSON.stringify(form));
-    });
-  }, [form, token]);
+    if (!userId) return;
+    const timeout = setTimeout(() => {
+      guardarCV();
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [form, userId]);
 
-  // Guardar HTML generado en localStorage
-  useEffect(() => {
-    if (!mejoradoHTML || !token) return;
-    getSupabaseBrowser().auth.getSession().then(({ data: { session } }) => {
-      if (!session) return;
-      localStorage.setItem("cv_html_" + session.user.id, mejoradoHTML);
-    });
-  }, [mejoradoHTML, token]);
+  async function guardarCV() {
+    if (!userId) return;
+    try {
+      await fetch("/api/gusi/cv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, cvData: form, cvText: JSON.stringify(form) }),
+      });
+      setGuardado(true);
+      setTimeout(() => setGuardado(false), 2000);
+    } catch { /* ignore */ }
+  }
 
   async function subirPDF(file: File) {
     if (file.type !== "application/pdf") { setError("Solo se aceptan archivos PDF."); return; }
@@ -134,9 +137,8 @@ export default function CurriculumPage() {
     setError("");
     try {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-      if (!session) { setError("Sesión expirada. Recarga la página."); return; }
+      if (!session) { setError("Sesión expirada."); return; }
 
-      // 1. Subir PDF a Supabase Storage
       const uploadData = new FormData();
       uploadData.append("cv", file);
       const subirRes = await fetch("/api/cv/subir", {
@@ -150,23 +152,18 @@ export default function CurriculumPage() {
         return;
       }
 
-      // 2. Extraer datos del PDF con IA (un solo paso: texto + parseo)
+      // Extraer datos del PDF
       const extractData = new FormData();
       extractData.append("file", file);
-      const extractRes = await fetch("/api/cv/extraer", {
-        method: "POST",
-        body: extractData,
-      });
+      const extractRes = await fetch("/api/cv/extraer", { method: "POST", body: extractData });
 
       if (extractRes.ok) {
         const parsed = await extractRes.json();
         if (!parsed.error && parsed.fuente) {
-          // Normalizar aptitudes: puede venir como array o string
           let aptStr = "";
           if (Array.isArray(parsed.aptitudes)) aptStr = parsed.aptitudes.join(", ");
           else if (typeof parsed.aptitudes === "string") aptStr = parsed.aptitudes;
 
-          // Normalizar idiomas: puede venir como array de objetos o string
           let idiomaStr = "";
           if (Array.isArray(parsed.idiomas)) {
             idiomaStr = parsed.idiomas.map((i: { nombre: string; nivel: number } | string) =>
@@ -174,7 +171,6 @@ export default function CurriculumPage() {
             ).join(", ");
           } else if (typeof parsed.idiomas === "string") idiomaStr = parsed.idiomas;
 
-          // Normalizar experiencia
           const normExp = (parsed.experiencia || []).map((e: Exp & { descripcion: string | string[] }) => ({
             fechas: e.fechas || "",
             puesto: e.puesto || "",
@@ -183,7 +179,6 @@ export default function CurriculumPage() {
             descripcion: Array.isArray(e.descripcion) ? e.descripcion.join("\n") : (e.descripcion || ""),
           }));
 
-          // Normalizar formación
           const normEdu = (parsed.formacion || []).map((f: Edu) => ({
             titulo: f.titulo || "",
             centro: f.centro || "",
@@ -205,10 +200,10 @@ export default function CurriculumPage() {
           }));
         }
       }
-
-      setPdfSubido(true);
+      setError("✅ PDF procesado — revisa los campos");
+      setTimeout(() => setError(""), 3000);
     } catch {
-      setError("No se pudo subir el PDF. Comprueba tu conexión.");
+      setError("Error al procesar el PDF.");
     } finally {
       setSubiendoPDF(false);
     }
@@ -238,66 +233,56 @@ export default function CurriculumPage() {
     finally { setSubiendoFoto(false); }
   }
 
-  async function guardarCV(nombre: string) {
-    if (!mejoradoHTML || !token) return;
-    setGuardando(true);
-    try {
-      const res = await fetch("/api/cv/guardar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ nombre: nombre || "Mi CV", html: mejoradoHTML, formData: form }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setGuardadoId(data.id);
-        setMostrarModalGuardar(false);
-      }
-    } catch { /* silencioso */ }
-    finally { setGuardando(false); }
-  }
-
-  function buildCVData() {
-    return {
-      fotoUrl: fotoUrl || undefined,
-      nombre: form.nombre,
-      apellidos: form.apellidos,
-      subtitulo: form.subtitulo,
-      telefono: form.telefono,
-      email: form.email,
-      ciudad: form.ciudad,
-      perfilProfesional: form.perfilProfesional,
-      aptitudes: form.aptitudes.split(",").map(a => a.trim()).filter(Boolean),
-      idiomas: form.idiomas.split(",").map(i => {
-        const [nombre, nivel] = i.trim().split(":");
-        return { nombre: nombre?.trim() || "", nivel: parseInt(nivel) || 50 };
-      }).filter(i => i.nombre),
-      experiencia: form.experiencia.filter(e => e.puesto).map(e => ({
-        ...e,
-        // descripcion puede llegar como string (textarea) o array (parsear AI)
-        descripcion: Array.isArray(e.descripcion)
-          ? (e.descripcion as string[]).filter(Boolean)
-          : (e.descripcion || "").split("\n").filter(Boolean),
-      })),
-      formacion: form.formacion.filter(f => f.titulo),
-    };
-  }
-
-  // Un solo botón: genera CV + mejora con IA en un paso
   async function generarYMejorar() {
     if (!form.nombre.trim()) { setError("Escribe tu nombre para continuar"); return; }
     setProcesando(true);
     setError("");
     try {
+      // Texto en formato exacto de la plantilla de Michel
       const cvText = [
-        `${form.nombre} ${form.apellidos}${form.subtitulo ? ` — ${form.subtitulo}` : ""}`,
-        form.perfilProfesional,
-        form.experiencia.filter(e => e.puesto).map(e =>
-          `${e.puesto} en ${e.empresa}${e.fechas ? ` (${e.fechas})` : ""}:\n${Array.isArray(e.descripcion) ? (e.descripcion as string[]).join("\n") : e.descripcion}`
-        ).join("\n\n"),
-        form.aptitudes ? `Aptitudes: ${form.aptitudes}` : "",
-        form.idiomas ? `Idiomas: ${form.idiomas}` : "",
-        form.formacion.filter(f => f.titulo).map(f => `${f.titulo} · ${f.centro}`).join("\n"),
-      ].filter(Boolean).join("\n\n");
+        `# ${form.nombre} ${form.apellidos}`,
+        ``,
+        `**📞** ${form.telefono || ""}  `,
+        `**✉** ${form.email || ""}  `,
+        `**📍** ${form.ciudad || ""}`,
+        ``,
+        `---`,
+        ``,
+        `## Perfil Profesional`,
+        ``,
+        form.perfilProfesional || "Profesional con experiencia en diversos sectores. Actitud dinámica y proactiva.",
+        ``,
+        `---`,
+        ``,
+        `## Aptitudes`,
+        ``,
+        ...(form.aptitudes ? form.aptitudes.split(",").map(a => `- ${a.trim()}`) : ["- Rápido aprendizaje"]),
+        ``,
+        `---`,
+        ``,
+        `## Idiomas`,
+        ``,
+        ...(form.idiomas ? form.idiomas.split(",").map(i => `- ${i.trim()}`) : ["- Español (nativo)"]),
+        ``,
+        `---`,
+        ``,
+        `## Experiencia Laboral`,
+        ``,
+        ...form.experiencia.filter(e => e.puesto).flatMap(e => {
+          const bullets = e.descripcion.split("\n").filter(d => d.trim()).map(d => `- ${d.trim().replace(/^[-•]\s*/, "")}`);
+          return [
+            `### ${e.fechas || ""} — ${e.puesto}`,
+            `**${e.empresa || ""}**${e.ubicacion ? ` · ${e.ubicacion}` : ""}`,
+            ...bullets,
+            ``,
+          ];
+        }),
+        `---`,
+        ``,
+        `## Formación`,
+        ``,
+        ...form.formacion.filter(f => f.titulo).map(f => `- **${f.titulo}** — ${f.centro}${f.ubicacion ? ` · ${f.ubicacion}` : ""}`),
+      ].filter(Boolean).join("\n");
 
       const mejorarRes = await fetch("/api/cv/mejorar", {
         method: "POST",
@@ -308,46 +293,173 @@ export default function CurriculumPage() {
       const { cvMejorado } = await mejorarRes.json();
 
       if (cvMejorado) {
-        // Extraer perfil profesional: primer párrafo sustancial del resultado IA
-        const lineas = cvMejorado.split("\n").filter((l: string) => l.trim().length > 30);
-        const perfilMejorado = lineas.slice(0, 3).join(" ").replace(/^[^a-zA-ZáéíóúÁÉÍÓÚ]+/, "").trim();
-        const cvData = { ...buildCVData(), perfilProfesional: perfilMejorado || cvMejorado.slice(0, 500) };
-        const genRes = await fetch("/api/cv/generar-pdf", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(cvData),
-        });
-        const genData = await genRes.json();
-        if (genData.html) { setMejoradoHTML(genData.html); setPaso("mejorado"); }
-        else setError("Error generando CV mejorado");
+        const html = generarHTMLCV(form, cvMejorado);
+        setMejoradoHTML(html);
       }
     } catch { setError("Error al mejorar con IA"); }
     finally { setProcesando(false); }
   }
 
-  function descargar(html: string) {
-    const banner = `
-    <div id="cv-banner" style="position:fixed;top:0;left:0;right:0;background:#1B2845;color:#fff;padding:12px 20px;font-family:sans-serif;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
-      <span style="flex:1">💡 <strong>Para guardar con los colores del diseño:</strong> haz clic en "Guardar PDF" y en la ventana que aparece activa <strong>"Gráficos de fondo"</strong></span>
-      <button onclick="document.getElementById('cv-banner').style.display='none';window.print();" style="background:#7ed56f;color:#1a1a12;border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap;">⬇️ Guardar PDF</button>
+  function generarHTMLCV(form: CVForm, perfilMejorado: string): string {
+    // Ordenar experiencia: más reciente primero (intentar parsear fechas)
+    const experienciaOrdenada = [...form.experiencia]
+      .filter(e => e.puesto)
+      .sort((a, b) => {
+        const getYear = (f: string) => {
+          const m = f.match(/(\d{4})/g);
+          return m ? parseInt(m[m.length - 1]) : 0;
+        };
+        return getYear(b.fechas) - getYear(a.fechas);
+      });
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; max-width: 210mm; margin: 0 auto; padding: 40px 50px; color: #1a1a1a; line-height: 1.6; background: #fff; }
+    
+    /* Header - Nombre grande centrado + contacto */
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 32px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; letter-spacing: -0.5px; }
+    .contact-line { font-size: 13px; color: #444; line-height: 1.8; }
+    .contact-line .icon { font-size: 14px; margin-right: 4px; }
+    
+    /* Separadores --- */
+    hr.sep { border: none; border-top: 1.5px solid #1a1a1a; margin: 18px 0; }
+    
+    /* Secciones */
+    .section { margin-bottom: 18px; }
+    .section h2 { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
+    
+    /* Perfil */
+    .perfil-text { font-size: 13px; color: #333; line-height: 1.7; }
+    
+    /* Aptitudes e Idiomas - lista simple */
+    .simple-list { list-style: disc; padding-left: 20px; font-size: 13px; color: #333; line-height: 1.8; }
+    .simple-list li { margin-bottom: 2px; }
+    
+    /* Experiencia Laboral - formato exacto plantilla */
+    .exp-item { margin-bottom: 18px; }
+    .exp-item:last-child { margin-bottom: 0; }
+    .exp-header { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
+    .exp-title { font-weight: 400; }
+    .exp-company { font-size: 13px; color: #333; margin-bottom: 6px; }
+    .exp-company strong { font-weight: 600; }
+    .exp-company .dot { color: #666; margin: 0 4px; }
+    .exp-desc { list-style: disc; padding-left: 20px; font-size: 12.5px; color: #444; line-height: 1.7; }
+    .exp-desc li { margin-bottom: 1px; }
+    
+    /* Formación - formato exacto plantilla */
+    .edu-list { list-style: disc; padding-left: 20px; font-size: 13px; color: #333; line-height: 1.9; }
+    .edu-list li { margin-bottom: 4px; }
+    .edu-list strong { font-weight: 600; }
+    .edu-list .dot { color: #666; margin: 0 4px; }
+    
+    @media print {
+      body { padding: 30px 40px; }
+      .section { break-inside: avoid; }
+      .exp-item { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER: Nombre + Contacto -->
+  <div class="header">
+    <h1>${form.nombre || "Nombre"} ${form.apellidos || ""}</h1>
+    <div class="contact-line">
+      ${form.telefono ? `<div><span class="icon">📞</span> ${form.telefono}</div>` : ""}
+      ${form.email ? `<div><span class="icon">✉</span> ${form.email}</div>` : ""}
+      ${form.ciudad ? `<div><span class="icon">📍</span> ${form.ciudad}</div>` : ""}
     </div>
-    <div style="height:56px"></div>
-    <style>@media print{#cv-banner,div[style*="height:56px"]{display:none!important}}</style>`;
+  </div>
+  
+  <hr class="sep">
+  
+  <!-- PERFIL PROFESIONAL -->
+  <div class="section">
+    <h2>Perfil Profesional</h2>
+    <p class="perfil-text">${perfilMejorado}</p>
+  </div>
+  
+  <hr class="sep">
+  
+  <!-- APTITUDES -->
+  ${form.aptitudes ? `
+  <div class="section">
+    <h2>Aptitudes</h2>
+    <ul class="simple-list">
+      ${form.aptitudes.split(",").map(a => a.trim()).filter(Boolean).map(a => `<li>${a}</li>`).join("")}
+    </ul>
+  </div>
+  
+  <hr class="sep">
+  ` : ""}
+  
+  <!-- IDIOMAS -->
+  ${form.idiomas ? `
+  <div class="section">
+    <h2>Idiomas</h2>
+    <ul class="simple-list">
+      ${form.idiomas.split(",").map(i => i.trim()).filter(Boolean).map(i => {
+        const parts = i.split(":");
+        return `<li>${parts[0].trim()}${parts[1] ? ` (${parts[1].trim()})` : ""}</li>`;
+      }).join("")}
+    </ul>
+  </div>
+  
+  <hr class="sep">
+  ` : ""}
+  
+  <!-- EXPERIENCIA LABORAL -->
+  ${experienciaOrdenada.length > 0 ? `
+  <div class="section">
+    <h2>Experiencia Laboral</h2>
+    ${experienciaOrdenada.map(e => {
+      const bullets = e.descripcion.split("\n").filter(d => d.trim()).map(d => `<li>${d.trim().replace(/^[-•]\s*/, "")}</li>`).join("");
+      return `
+    <div class="exp-item">
+      <div class="exp-header">${e.fechas || "Fecha"} — ${e.puesto}</div>
+      <div class="exp-company">
+        <strong>${e.empresa || "Empresa"}</strong>
+        ${e.ubicacion ? `<span class="dot">·</span>${e.ubicacion}` : ""}
+      </div>
+      ${bullets ? `<ul class="exp-desc">${bullets}</ul>` : ""}
+    </div>
+    `;
+    }).join("")}
+  </div>
+  
+  <hr class="sep">
+  ` : ""}
+  
+  <!-- FORMACIÓN -->
+  ${form.formacion.filter(f => f.titulo).length > 0 ? `
+  <div class="section">
+    <h2>Formación</h2>
+    <ul class="edu-list">
+      ${form.formacion.filter(f => f.titulo).map(f => `
+      <li>
+        <strong>${f.titulo}</strong>
+        ${f.centro ? `<span class="dot">—</span>${f.centro}${f.ubicacion ? ` · ${f.ubicacion}` : ""}` : ""}
+      </li>
+      `).join("")}
+    </ul>
+  </div>
+  ` : ""}
+</body>
+</html>`;
+  }
 
-    const htmlConBanner = html.replace("</body>", banner + "</body>");
-
+  function descargarPDF() {
+    if (!mejoradoHTML) return;
     const win = window.open("", "_blank");
     if (win) {
-      win.document.write(htmlConBanner);
+      win.document.write(mejoradoHTML);
       win.document.close();
-    } else {
-      const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `CV-${form.nombre}-${form.apellidos}.html`;
-      a.click();
-      URL.revokeObjectURL(url);
+      win.print();
     }
   }
 
@@ -363,53 +475,55 @@ export default function CurriculumPage() {
     setForm(p => { const e = [...p.formacion]; e[i] = { ...e[i], [k]: v }; return { ...p, formacion: e }; });
   }
 
-  const stepLabels = ["Tus datos", "CV con IA"];
-  const stepIdx = paso === "form" ? 0 : 1;
+  if (cargando) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-16" style={{ background: "#0f1117" }}>
+        <div className="animate-spin rounded-full h-10 w-10 border-3" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen pt-16">
-      <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+    <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
+      {/* Header */}
+      <div className="px-4 py-8" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">📄 Tu Currículum</h1>
-            <p className="text-sm mt-1 opacity-75">Completa tus datos y mejóralos con IA</p>
+            <h1 className="text-xl font-bold text-white">Mi Currículum</h1>
+            <p className="text-xs mt-1 text-white/80">Completa tus datos y genera un CV profesional</p>
           </div>
-          <div className="flex items-center gap-1 text-xs font-medium">
-            {stepLabels.map((label, i) => (
-              <div key={i} className="flex items-center gap-1">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-                  i === stepIdx ? "bg-white text-[#1a1a12]" : i < stepIdx ? "bg-white/50 text-white" : "bg-white/20 text-white/50"
-                }`}>
-                  {i < stepIdx ? "✓" : i + 1}
-                </div>
-                <span className={`hidden sm:inline ${i === stepIdx ? "text-white" : "text-white/50"}`}>{label}</span>
-                {i < 2 && <div className="w-4 h-0.5 mx-1" style={{ background: i < stepIdx ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.2)" }} />}
-              </div>
-            ))}
-          </div>
+          {guardado && (
+            <span className="text-xs font-medium px-3 py-1 rounded-full bg-white/20 text-white">
+              ✅ Guardado
+            </span>
+          )}
         </div>
       </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-8">
         {error && (
-          <div className="mb-4 p-3 rounded-xl text-sm" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+          <div className={`mb-4 p-3 rounded-lg text-xs ${error.startsWith("✅") ? "" : ""}`}
+            style={{ background: error.startsWith("✅") ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", 
+                     color: error.startsWith("✅") ? "#22c55e" : "#ef4444",
+                     border: `1px solid ${error.startsWith("✅") ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)"}` }}>
             {error}
           </div>
         )}
 
-        {/* ── PASO 1: FORMULARIO ─────────────────────────────────── */}
-        {paso === "form" && (
-          <div className="space-y-5">
-
-            {/* Upload PDF */}
-            <div className="card-game p-5 flex items-center gap-4">
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm" style={{ color: "#f0ebe0" }}>¿Ya tienes un CV en PDF?</p>
-                <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>Súbelo y los campos se rellenan solos</p>
-                {pdfSubido && <p className="text-xs mt-1 font-medium" style={{ color: "#7ed56f" }}>✅ PDF procesado — revisa los campos</p>}
+        {!mejoradoHTML ? (
+          <div className="space-y-6">
+            {/* Subir PDF */}
+            <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                style={{ background: "rgba(59,130,246,0.15)" }}>
+                📎
               </div>
-              <label className={`shrink-0 px-5 py-2.5 text-sm font-semibold rounded-xl cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
-                style={{ background: "linear-gradient(135deg,#7ed56f,#5cb848)", color: "#1a1a12" }}>
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¿Ya tienes un CV en PDF?</h3>
+                <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Súbelo y extraigo los datos automáticamente</p>
+              </div>
+              <label className={`shrink-0 px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
+                style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }}>
                 {subiendoPDF ? "Procesando…" : "📎 Subir PDF"}
                 <input type="file" accept=".pdf" className="hidden"
                   onChange={e => e.target.files?.[0] && subirPDF(e.target.files[0])}
@@ -417,231 +531,182 @@ export default function CurriculumPage() {
               </label>
             </div>
 
-            {/* Foto para el CV */}
-            <div className="card-game p-6 space-y-4">
-              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>📸 Foto para el CV</h2>
+            {/* Foto profesional */}
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>📸 Foto profesional para tu CV</h2>
               
-              {/* Truco: prompt para ChatGPT */}
-              <div className="p-4 rounded-xl" style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)" }}>
-                <p className="text-sm font-bold mb-2" style={{ color: "#7ed56f" }}>Truco: Consigue una foto profesional GRATIS</p>
-                <p className="text-xs mb-3" style={{ color: "#b0a890" }}>Hazte un selfie cualquiera y usa este prompt en ChatGPT para que te la retoque:</p>
-                <div className="relative">
-                  <div className="p-3 rounded-lg text-xs leading-relaxed" style={{ background: "#111", color: "#ffffff", border: "1px solid #3d3c30", fontFamily: "monospace" }}>
-                    Retoca esta foto para un currículum profesional: pon fondo blanco liso, iluminación frontal suave, aspecto limpio y formal tipo foto carnet. No cambies mi cara ni mis rasgos, solo mejora la luz, limpia el fondo y haz que parezca una foto de estudio profesional. Tamaño cuadrado.
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText("Retoca esta foto para un currículum profesional: pon fondo blanco liso, iluminación frontal suave, aspecto limpio y formal tipo foto carnet. No cambies mi cara ni mis rasgos, solo mejora la luz, limpia el fondo y haz que parezca una foto de estudio profesional. Tamaño cuadrado.");
-                      const btn = document.getElementById("copy-prompt-btn");
-                      if (btn) { btn.textContent = "¡Copiado!"; setTimeout(() => btn.textContent = "Copiar prompt", 2000); }
-                    }}
-                    id="copy-prompt-btn"
-                    className="mt-2 px-4 py-1.5 text-xs font-semibold rounded-lg transition"
-                    style={{ background: "#7ed56f", color: "#1a1a12" }}
-                  >
-                    Copiar prompt
-                  </button>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ border: "2px solid rgba(34,197,94,0.3)" }}>
+                  {fotoUrl ? (
+                    <img src={fotoUrl} alt="Foto CV" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl" style={{ background: "#1e212b", color: "#475569" }}>👤</div>
+                  )}
                 </div>
-                <div className="mt-3 flex items-start gap-2">
-                  <span style={{ color: "#f0c040" }}>💡</span>
-                  <p className="text-xs" style={{ color: "#706a58" }}>Sube cualquier foto tuya a ChatGPT junto con ese texto. En segundos tendrás una foto profesional lista para tu CV.</p>
+                <div>
+                  <label className={`inline-block px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer transition ${subiendoFoto ? "opacity-50" : ""}`}
+                    style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                    {subiendoFoto ? "Subiendo…" : fotoUrl ? "Cambiar foto" : "Subir foto"}
+                    <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && subirFoto(e.target.files[0])} />
+                  </label>
+                  <p className="text-[10px] mt-1.5" style={{ color: "#64748b" }}>JPG/PNG, máx 3MB</p>
                 </div>
               </div>
 
-              {/* Upload + preview */}
-              <div className="flex items-center gap-5">
-                <div className="shrink-0 w-24 h-24 rounded-full overflow-hidden" style={{ border: "3px solid rgba(126,213,111,0.4)", background: "#111" }}>
-                  {fotoUrl ? (
-                    <img src={fotoUrl} alt="Tu foto" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl opacity-30">📷</div>
-                  )}
+              {/* Tips de foto */}
+              <div className="p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}>
+                <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>💡 Truco: Foto profesional gratis con IA</p>
+                <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie y usa este prompt en ChatGPT:</p>
+                <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
+                  Retoca esta foto para un currículum profesional: pon fondo blanco liso, iluminación frontal suave, aspecto limpio y formal tipo foto carnet. No cambies mi cara ni mis rasgos, solo mejora la luz, limpia el fondo y haz que parezca una foto de estudio profesional.
                 </div>
-                <div className="flex-1">
-                  <label className={`inline-block px-5 py-2.5 text-sm font-semibold rounded-xl cursor-pointer transition ${subiendoFoto ? "opacity-50 pointer-events-none" : ""}`}
-                    style={{ background: "linear-gradient(135deg,#7ed56f,#5cb848)", color: "#1a1a12" }}>
-                    {subiendoFoto ? "Subiendo…" : fotoUrl ? "Cambiar foto" : "Subir foto"}
-                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
-                      onChange={e => e.target.files?.[0] && subirFoto(e.target.files[0])}
-                      disabled={subiendoFoto} />
-                  </label>
-                  {fotoUrl && (
-                    <button onClick={() => setFotoUrl("")} className="ml-3 text-xs" style={{ color: "#ef4444" }}>Quitar foto</button>
-                  )}
-                  <p className="text-xs mt-2" style={{ color: "#706a58" }}>JPG o PNG, máximo 3 MB</p>
-                </div>
+                <button
+                  onClick={() => navigator.clipboard.writeText("Retoca esta foto para un currículum profesional: pon fondo blanco liso, iluminación frontal suave, aspecto limpio y formal tipo foto carnet. No cambies mi cara ni mis rasgos, solo mejora la luz, limpia el fondo y haz que parezca una foto de estudio profesional.")}
+                  className="mt-2 px-3 py-1 text-[10px] font-semibold rounded-md" style={{ background: "#22c55e", color: "#fff" }}>
+                  Copiar prompt
+                </button>
               </div>
             </div>
 
             {/* Datos personales */}
-            <div className="card-game p-6 space-y-4">
-              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>👤 Datos personales</h2>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>👤 Datos personales</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input placeholder="Nombre" value={form.nombre} onChange={e => f("nombre", e.target.value)} className="input-game" />
-                <input placeholder="Apellidos" value={form.apellidos} onChange={e => f("apellidos", e.target.value)} className="input-game" />
-                <input placeholder="Título profesional (ej: Operario · Atención al Cliente)" value={form.subtitulo}
-                  onChange={e => f("subtitulo", e.target.value)} className="input-game sm:col-span-2" />
-                <input placeholder="Teléfono" value={form.telefono} onChange={e => f("telefono", e.target.value)} className="input-game" />
-                <input placeholder="Email" value={form.email} onChange={e => f("email", e.target.value)} className="input-game" />
-                <input placeholder="Ciudad, Provincia CP" value={form.ciudad}
-                  onChange={e => f("ciudad", e.target.value)} className="input-game sm:col-span-2" />
+                <input placeholder="Nombre" value={form.nombre} onChange={e => f("nombre", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <input placeholder="Apellidos" value={form.apellidos} onChange={e => f("apellidos", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <input placeholder="Título profesional" value={form.subtitulo} onChange={e => f("subtitulo", e.target.value)}
+                  className="sm:col-span-2 w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <input placeholder="Teléfono" value={form.telefono} onChange={e => f("telefono", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <input placeholder="Email" value={form.email} onChange={e => f("email", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <input placeholder="Ciudad" value={form.ciudad} onChange={e => f("ciudad", e.target.value)}
+                  className="sm:col-span-2 w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               </div>
             </div>
 
             {/* Experiencia */}
-            <div className="card-game p-6 space-y-4">
-              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>💼 Experiencia laboral</h2>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>💼 Experiencia laboral</h2>
               {form.experiencia.map((exp, i) => (
-                <div key={i} className="p-4 rounded-xl space-y-3" style={{ background: "rgba(42,42,30,0.5)", border: "1px solid #3d3c30" }}>
+                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid #252836" }}>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold" style={{ color: "#7ed56f" }}>Experiencia {i + 1}</span>
+                    <span className="text-[11px] font-semibold" style={{ color: "#22c55e" }}>Experiencia {i + 1}</span>
                     {form.experiencia.length > 1 && (
                       <button onClick={() => setForm(p => ({ ...p, experiencia: p.experiencia.filter((_, j) => j !== i) }))}
-                        className="text-xs" style={{ color: "#ef4444" }}>Eliminar</button>
+                        className="text-[11px]" style={{ color: "#ef4444" }}>Eliminar</button>
                     )}
                   </div>
-                  <input placeholder="Fechas (ej: May 2021 – Sep 2025)" value={exp.fechas}
-                    onChange={e => updExp(i, "fechas", e.target.value)} className="input-game" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input placeholder="Puesto" value={exp.puesto} onChange={e => updExp(i, "puesto", e.target.value)} className="input-game" />
-                    <input placeholder="Empresa" value={exp.empresa} onChange={e => updExp(i, "empresa", e.target.value)} className="input-game" />
+                  <input placeholder="Fechas (ej: 2020 - 2023)" value={exp.fechas}
+                    onChange={e => updExp(i, "fechas", e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input placeholder="Puesto" value={exp.puesto} onChange={e => updExp(i, "puesto", e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    <input placeholder="Empresa" value={exp.empresa} onChange={e => updExp(i, "empresa", e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                   </div>
-                  <input placeholder="Ubicación" value={exp.ubicacion} onChange={e => updExp(i, "ubicacion", e.target.value)} className="input-game" />
-                  <textarea placeholder="Tareas (una por línea)" value={exp.descripcion} rows={3}
-                    onChange={e => updExp(i, "descripcion", e.target.value)} className="input-game resize-none" />
+                  <input placeholder="Ubicación" value={exp.ubicacion} onChange={e => updExp(i, "ubicacion", e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  <textarea placeholder="Descripción de tareas (una por línea)" value={exp.descripcion} rows={3}
+                    onChange={e => updExp(i, "descripcion", e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg text-sm resize-none" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                 </div>
               ))}
               <button onClick={() => setForm(p => ({ ...p, experiencia: [...p.experiencia, { fechas: "", puesto: "", empresa: "", ubicacion: "", descripcion: "" }] }))}
-                className="text-sm font-medium" style={{ color: "#7ed56f" }}>+ Añadir experiencia</button>
+                className="text-xs font-medium" style={{ color: "#22c55e" }}>+ Añadir experiencia</button>
             </div>
 
             {/* Formación */}
-            <div className="card-game p-6 space-y-4">
-              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>🎓 Formación</h2>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>🎓 Formación</h2>
               {form.formacion.map((edu, i) => (
-                <div key={i} className="p-4 rounded-xl space-y-3" style={{ background: "rgba(42,42,30,0.5)", border: "1px solid #3d3c30" }}>
+                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid #252836" }}>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold" style={{ color: "#f0c040" }}>Formación {i + 1}</span>
+                    <span className="text-[11px] font-semibold" style={{ color: "#f59e0b" }}>Formación {i + 1}</span>
                     {form.formacion.length > 1 && (
                       <button onClick={() => setForm(p => ({ ...p, formacion: p.formacion.filter((_, j) => j !== i) }))}
-                        className="text-xs" style={{ color: "#ef4444" }}>Eliminar</button>
+                        className="text-[11px]" style={{ color: "#ef4444" }}>Eliminar</button>
                     )}
                   </div>
                   <input placeholder="Título / Estudios" value={edu.titulo}
-                    onChange={e => updEdu(i, "titulo", e.target.value)} className="input-game" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input placeholder="Centro" value={edu.centro} onChange={e => updEdu(i, "centro", e.target.value)} className="input-game" />
-                    <input placeholder="Ubicación" value={edu.ubicacion} onChange={e => updEdu(i, "ubicacion", e.target.value)} className="input-game" />
+                    onChange={e => updEdu(i, "titulo", e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input placeholder="Centro" value={edu.centro} onChange={e => updEdu(i, "centro", e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    <input placeholder="Ubicación" value={edu.ubicacion} onChange={e => updEdu(i, "ubicacion", e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                   </div>
                 </div>
               ))}
               <button onClick={() => setForm(p => ({ ...p, formacion: [...p.formacion, { titulo: "", centro: "", ubicacion: "" }] }))}
-                className="text-sm font-medium" style={{ color: "#f0c040" }}>+ Añadir formación</button>
+                className="text-xs font-medium" style={{ color: "#f59e0b" }}>+ Añadir formación</button>
             </div>
 
-            {/* Habilidades */}
-            <div className="card-game p-6 space-y-4">
-              <h2 className="font-bold" style={{ color: "#f0ebe0" }}>🎯 Habilidades</h2>
-              <div>
-                <label className="text-xs mb-1 block" style={{ color: "#b0a890" }}>Aptitudes (separadas por comas)</label>
-                <input placeholder="Trabajo en equipo, Organización, Polivalente…" value={form.aptitudes}
-                  onChange={e => f("aptitudes", e.target.value)} className="input-game" />
+            {/* Habilidades e idiomas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+                <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>🎯 Habilidades</h2>
+                <input placeholder="Separadas por comas" value={form.aptitudes}
+                  onChange={e => f("aptitudes", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               </div>
-              <div>
-                <label className="text-xs mb-1 block" style={{ color: "#b0a890" }}>Idiomas (nombre:nivel 0–100, separados por comas)</label>
-                <input placeholder="Español:95, Inglés:30, Francés:15" value={form.idiomas}
-                  onChange={e => f("idiomas", e.target.value)} className="input-game" />
-              </div>
-              <div>
-                <label className="text-xs mb-1 block" style={{ color: "#b0a890" }}>Perfil profesional (opcional — la IA lo mejora)</label>
-                <textarea placeholder="Escribe un resumen o déjalo vacío y la IA lo creará…" value={form.perfilProfesional}
-                  onChange={e => f("perfilProfesional", e.target.value)} rows={3} className="input-game resize-none" />
+              <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+                <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>🌍 Idiomas</h2>
+                <input placeholder="Español: nativo, Inglés: básico..." value={form.idiomas}
+                  onChange={e => f("idiomas", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               </div>
             </div>
 
-            <div className="flex justify-end pb-8">
-              <button onClick={generarYMejorar} disabled={procesando || !form.nombre.trim()}
-                className="btn-game px-12 py-3 text-base disabled:opacity-50">
-                {procesando ? "Generando con IA…" : "✨ Generar CV con IA →"}
+            {/* Perfil profesional */}
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>📝 Perfil profesional (opcional)</h2>
+              <textarea placeholder="Breve descripción de ti como profesional... (la IA lo mejorará)"
+                value={form.perfilProfesional} onChange={e => f("perfilProfesional", e.target.value)} rows={3}
+                className="w-full px-4 py-2.5 rounded-lg text-sm resize-none" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+            </div>
+
+            {/* Generar CV */}
+            <div className="rounded-xl p-6 text-center" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <p className="text-3xl mb-3">✨</p>
+              <h3 className="font-semibold text-sm mb-2" style={{ color: "#f1f5f9" }}>¿Listo para crear tu CV profesional?</h3>
+              <p className="text-xs mb-4" style={{ color: "#64748b" }}>La IA mejorará tu perfil y generará un CV en formato PDF con diseño profesional</p>
+              <button onClick={generarYMejorar} disabled={procesando}
+                className="px-8 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                {procesando ? "Generando..." : "🚀 Generar mi CV con IA"}
               </button>
             </div>
           </div>
-        )}
-
-        {/* ── PASO 2: CV CON IA ─────────────────────────────────── */}
-        {paso === "mejorado" && mejoradoHTML && (
+        ) : (
           <div className="space-y-4">
-            <div className="p-3 rounded-xl text-sm font-medium"
-              style={{ background: "rgba(126,213,111,0.1)", color: "#7ed56f", border: "1px solid rgba(126,213,111,0.2)" }}>
-              ✅ Tu CV ha sido mejorado con IA
-            </div>
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="font-bold text-lg" style={{ color: "#f0ebe0" }}>CV mejorado con IA</h2>
-              <div className="flex gap-2 flex-wrap">
-                <button onClick={() => setPaso("form")}
-                  className="px-4 py-2 text-sm rounded-xl" style={{ border: "1px solid #3d3c30", color: "#b0a890" }}>
-                  ← Editar datos
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Tu CV generado</h2>
+              <div className="flex gap-2">
+                <button onClick={() => setMejoradoHTML("")}
+                  className="px-3 py-1.5 text-xs rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+                  ← Volver a editar
                 </button>
-                <button onClick={() => descargar(mejoradoHTML)}
-                  className="btn-game px-6 py-2 text-sm">
+                <button onClick={descargarPDF}
+                  className="px-4 py-1.5 text-xs font-semibold rounded-lg"
+                  style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
                   ⬇️ Descargar PDF
                 </button>
-                <button
-                  onClick={() => { setNombreCV(form.subtitulo || "Mi CV"); setMostrarModalGuardar(true); }}
-                  disabled={guardando}
-                  className="px-5 py-2 text-sm rounded-xl font-semibold transition disabled:opacity-50"
-                  style={{ background: "rgba(126,213,111,0.15)", border: "1px solid rgba(126,213,111,0.4)", color: "#7ed56f" }}>
-                  {guardadoId ? "✅ Guardado" : guardando ? "Guardando…" : "💾 Guardar CV"}
-                </button>
               </div>
             </div>
-            <div className="rounded-2xl overflow-hidden" style={{ border: "2px solid rgba(126,213,111,0.3)" }}>
-              <iframe ref={iframeMejRef} srcDoc={mejoradoHTML} className="w-full bg-white"
-                style={{ height: "900px", border: "none" }} title="CV Mejorado" />
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #252836" }}>
+              <iframe srcDoc={mejoradoHTML} className="w-full bg-white" style={{ height: "900px", border: "none" }} title="CV Generado" />
             </div>
-            <div className="flex items-center justify-center gap-4 py-4 flex-wrap">
-              <button onClick={() => router.push("/app/curriculum/guardados")}
-                className="px-6 py-3 text-sm rounded-xl font-semibold transition"
-                style={{ border: "1px solid #3d3c30", color: "#b0a890" }}>
-                📂 Mis currículums
-              </button>
-              <button onClick={() => router.push("/app/buscar")}
-                className="btn-game px-12 py-3 text-base">
-                🔍 Siguiente: Buscar ofertas →
-              </button>
-            </div>
-
-            {/* Modal: nombre del CV */}
-            {mostrarModalGuardar && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                style={{ background: "rgba(0,0,0,0.7)" }}
-                onClick={() => setMostrarModalGuardar(false)}>
-                <div className="w-full max-w-sm rounded-2xl p-6 space-y-4"
-                  style={{ background: "#1a1a12", border: "1px solid #3d3c30" }}
-                  onClick={e => e.stopPropagation()}>
-                  <h3 className="font-bold text-lg" style={{ color: "#f0ebe0" }}>💾 Guardar currículum</h3>
-                  <p className="text-sm" style={{ color: "#706a58" }}>Ponle un nombre para identificarlo fácilmente</p>
-                  <input
-                    autoFocus
-                    placeholder="Ej: CV Camarero, CV Almacén…"
-                    value={nombreCV}
-                    onChange={e => setNombreCV(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && guardarCV(nombreCV)}
-                    className="input-game w-full"
-                  />
-                  <div className="flex gap-3 justify-end">
-                    <button onClick={() => setMostrarModalGuardar(false)}
-                      className="px-4 py-2 text-sm rounded-xl" style={{ border: "1px solid #3d3c30", color: "#b0a890" }}>
-                      Cancelar
-                    </button>
-                    <button onClick={() => guardarCV(nombreCV)} disabled={guardando}
-                      className="btn-game px-6 py-2 text-sm disabled:opacity-50">
-                      {guardando ? "Guardando…" : "Guardar"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </main>

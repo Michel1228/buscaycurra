@@ -25,13 +25,11 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
   const [success, setSuccess] = useState(false);
   const [scheduled, setScheduled] = useState<{ fecha: string } | null>(null);
 
-  // Extractor de email
   const [urlBusqueda, setUrlBusqueda] = useState("");
   const [buscandoEmail, setBuscandoEmail] = useState(false);
   const [emailEncontrado, setEmailEncontrado] = useState<string | null>(null);
   const [busquedaRealizada, setBusquedaRealizada] = useState(false);
 
-  // Pre-rellenar desde parámetros URL (cuando viene de Guzzi o de ofertas)
   useEffect(() => {
     const empresa = searchParams.get("empresa");
     const url = searchParams.get("url");
@@ -54,9 +52,7 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
         setCompanyEmail(data.emailRrhh);
         if (data.nombre && !companyName.trim()) setCompanyName(data.nombre);
       }
-    } catch {
-      // silencioso — mostrar opciones al usuario
-    }
+    } catch { /* silencioso */ }
     setBusquedaRealizada(true);
     setBuscandoEmail(false);
   };
@@ -75,7 +71,7 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
     }
 
     if (modo === "buscar-email" && !companyEmail.trim()) {
-      setError("Necesitas el email para enviar automáticamente. Si no lo encuentras, usa 'Ya apliqué yo' para registrarlo.");
+      setError("Necesitas el email para enviar automáticamente. Si no lo encuentras, usa 'Ya apliqué yo'.");
       return;
     }
 
@@ -120,24 +116,22 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
 
   if (success) {
     return (
-      <div className="card-game p-8 text-center space-y-4">
-        <h3 className="text-xl font-bold" style={{ color: "#7ed56f" }}>
+      <div className="card-game p-6 text-center space-y-3">
+        <h3 className="text-base font-semibold" style={{ color: "#22c55e" }}>
           {modo === "ya-aplique" ? "Candidatura registrada" : "CV programado para envío"}
         </h3>
         {scheduled?.fecha && (
-          <p className="text-sm" style={{ color: "#a8e6a1" }}>Se enviará el {scheduled.fecha}</p>
+          <p className="text-xs" style={{ color: "#4ade80" }}>Se enviará el {scheduled.fecha}</p>
         )}
-        <p className="text-xs" style={{ color: "#706a58" }}>
-          Recibirás un email de confirmación cuando se procese.
-        </p>
-        <div className="flex gap-3 justify-center mt-4">
+        <p className="text-[11px]" style={{ color: "#64748b" }}>Recibirás un email de confirmación cuando se procese.</p>
+        <div className="flex gap-2 justify-center mt-3">
           <button onClick={() => { setSuccess(false); setScheduled(null); }}
-            className="px-5 py-2 rounded-xl text-sm font-semibold"
-            style={{ border: "1px solid #3d3c30", color: "#b0a890" }}>
+            className="px-4 py-2 rounded-lg text-xs font-medium"
+            style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
             + Otro envío
           </button>
-          <button onClick={() => router.push("/app/envios")} className="btn-game px-5 py-2 text-sm">
-            Ver mis envíos
+          <button onClick={() => router.push("/app/envios")} className="btn-game px-4 py-2 text-xs">
+            Ver envíos
           </button>
         </div>
       </div>
@@ -145,209 +139,196 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
   }
 
   return (
-    <div className="card-game p-6">
-      <h2 className="text-lg font-bold mb-1" style={{ color: "#f0ebe0" }}>Enviar candidatura</h2>
-      <p className="text-sm mb-5" style={{ color: "#706a58" }}>
-        Tu CV se envía con carta personalizada por IA. Elige cómo quieres gestionar el contacto.
+    <div className="card-game p-5">
+      <h2 className="text-base font-semibold mb-0.5" style={{ color: "#f1f5f9" }}>Enviar candidatura</h2>
+      <p className="text-[11px] mb-4" style={{ color: "#64748b" }}>
+        Tu CV se envía con carta personalizada por IA.
       </p>
 
       {/* Selector de modo */}
-      <div className="grid grid-cols-3 gap-2 mb-6">
+      <div className="grid grid-cols-3 gap-2 mb-4">
         {([
-          { id: "buscar-email" as Modo, titulo: "Buscar email", sub: "Pega la web de la empresa" },
-          { id: "tengo-email" as Modo, titulo: "Tengo el email", sub: "Ya sé el contacto de RRHH" },
-          { id: "ya-aplique" as Modo, titulo: "Ya apliqué yo", sub: "Solo quiero registrarlo" },
+          { id: "buscar-email" as Modo, titulo: "Buscar email", sub: "Pega la web" },
+          { id: "tengo-email" as Modo, titulo: "Tengo email", sub: "Contacto directo" },
+          { id: "ya-aplice" as Modo, titulo: "Ya apliqué", sub: "Solo registrar" },
         ]).map(m => (
           <button key={m.id} type="button" onClick={() => { setModo(m.id); setError(null); }}
-            className="py-3 px-3 rounded-xl text-xs font-semibold transition text-left"
+            className="py-2.5 px-2 rounded-lg text-[10px] font-medium transition text-center"
             style={{
-              background: modo === m.id ? "rgba(126,213,111,0.12)" : "rgba(42,42,30,0.5)",
-              border: modo === m.id ? "2px solid rgba(126,213,111,0.4)" : "1px solid #3d3c30",
-              color: modo === m.id ? "#7ed56f" : "#706a58",
+              background: modo === m.id ? "rgba(34,197,94,0.1)" : "#161922",
+              border: modo === m.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+              color: modo === m.id ? "#22c55e" : "#64748b",
             }}>
-            <div className="font-bold mb-0.5 text-xs">{m.titulo}</div>
-            <div style={{ opacity: 0.7, fontSize: "10px", lineHeight: "1.3" }}>{m.sub}</div>
+            <div className="font-semibold mb-0.5 text-[11px]">{m.titulo}</div>
+            <div style={{ opacity: 0.7, fontSize: "9px" }}>{m.sub}</div>
           </button>
         ))}
       </div>
 
       {error && (
-        <div className="mb-4 rounded-xl p-3" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <p className="text-xs font-medium" style={{ color: "#f87171" }}>{error}</p>
+        <div className="mb-3 rounded-lg p-2.5" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
+          <p className="text-[11px] font-medium" style={{ color: "#ef4444" }}>{error}</p>
         </div>
       )}
 
-      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-3">
 
-        {/* ── Modo: BUSCAR EMAIL ── */}
+        {/* Modo: BUSCAR EMAIL */}
         {modo === "buscar-email" && (
           <>
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                Web de la empresa <span style={{ color: "#f87171" }}>*</span>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Web de la empresa <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={urlBusqueda}
+                <input type="url" value={urlBusqueda}
                   onChange={e => { setUrlBusqueda(e.target.value); setCompanyUrl(e.target.value); }}
-                  placeholder="https://www.empresa.com"
-                  className="input-game flex-1"
-                />
+                  placeholder="https://www.empresa.com" className="flex-1 text-sm" />
                 <button type="button" onClick={() => void buscarEmail()} disabled={buscandoEmail || !urlBusqueda.trim()}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold transition flex-shrink-0"
+                  className="px-3 py-2 rounded-lg text-xs font-medium transition flex-shrink-0"
                   style={{
-                    background: buscandoEmail ? "#3d3c30" : "rgba(126,213,111,0.15)",
-                    border: "1px solid rgba(126,213,111,0.3)",
-                    color: buscandoEmail ? "#706a58" : "#7ed56f",
+                    background: buscandoEmail ? "#252836" : "rgba(34,197,94,0.1)",
+                    border: "1px solid rgba(34,197,94,0.2)",
+                    color: buscandoEmail ? "#64748b" : "#22c55e",
                   }}>
-                  {buscandoEmail ? "Buscando..." : "Buscar email"}
+                  {buscandoEmail ? "Buscando…" : "Buscar"}
                 </button>
               </div>
-              <p className="text-xs mt-1.5" style={{ color: "#504a3a" }}>
-                Pega la URL de la empresa o de la oferta. Intentaremos encontrar el email de RRHH.
-              </p>
+              <p className="text-[10px] mt-1" style={{ color: "#475569" }}>Pega la URL de la empresa o de la oferta.</p>
             </div>
 
             {busquedaRealizada && (
-              <div className="rounded-xl p-4" style={{
-                background: emailEncontrado ? "rgba(126,213,111,0.06)" : "rgba(240,192,64,0.06)",
-                border: emailEncontrado ? "1px solid rgba(126,213,111,0.2)" : "1px solid rgba(240,192,64,0.2)",
+              <div className="rounded-lg p-3" style={{
+                background: emailEncontrado ? "rgba(34,197,94,0.05)" : "rgba(245,158,11,0.05)",
+                border: emailEncontrado ? "1px solid rgba(34,197,94,0.15)" : "1px solid rgba(245,158,11,0.15)",
               }}>
                 {emailEncontrado ? (
                   <>
-                    <p className="text-xs font-semibold mb-2" style={{ color: "#7ed56f" }}>Email encontrado</p>
-                    <input type="email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)}
-                      className="input-game w-full text-sm" />
-                    <p className="text-xs mt-1" style={{ color: "#504a3a" }}>Puedes editarlo si no es correcto.</p>
+                    <p className="text-[11px] font-semibold mb-1.5" style={{ color: "#22c55e" }}>Email encontrado</p>
+                    <input type="email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)} className="w-full text-sm" />
+                    <p className="text-[10px] mt-1" style={{ color: "#475569" }}>Puedes editarlo si no es correcto.</p>
                   </>
                 ) : (
                   <>
-                    <p className="text-xs font-semibold mb-1" style={{ color: "#f0c040" }}>No encontramos el email automáticamente</p>
-                    <p className="text-xs mb-2" style={{ color: "#706a58" }}>
-                      Busca en la web de la empresa su sección de empleo o contacto, copia el email y pégalo aquí:
-                    </p>
+                    <p className="text-[11px] font-semibold mb-1" style={{ color: "#f59e0b" }}>No encontramos el email</p>
+                    <p className="text-[10px] mb-2" style={{ color: "#64748b" }}>Búscalo en la web de la empresa y pégalo aquí:</p>
                     <input type="email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)}
-                      placeholder="rrhh@empresa.com (pégalo tú)" className="input-game w-full text-sm" />
-                    <p className="text-xs mt-2" style={{ color: "#504a3a" }}>
-                      O usa "Ya apliqué yo" para registrar que aplicaste por la web de la empresa.
-                    </p>
+                      placeholder="rrhh@empresa.com" className="w-full text-sm" />
                   </>
                 )}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>Empresa</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>Empresa</label>
               <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
-                placeholder="ej: Mercadona, Telefónica..." className="input-game w-full" />
+                placeholder="ej: Mercadona, Telefónica..." className="w-full text-sm" />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                Puesto <span className="font-normal text-xs" style={{ color: "#504a3a" }}>(opcional)</span>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Puesto <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(opcional)</span>
               </label>
               <input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)}
-                placeholder="ej: Camarero, Electricista..." className="input-game w-full" />
+                placeholder="ej: Camarero, Electricista..." className="w-full text-sm" />
             </div>
           </>
         )}
 
-        {/* ── Modo: TENGO EMAIL ── */}
+        {/* Modo: TENGO EMAIL */}
         {modo === "tengo-email" && (
           <>
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                Empresa <span style={{ color: "#f87171" }}>*</span>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Empresa <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
-                placeholder="ej: Mercadona, Telefónica, Bar El Rincón..." className="input-game w-full" />
+                placeholder="ej: Mercadona, Telefónica..." className="w-full text-sm" />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                Puesto <span className="font-normal text-xs" style={{ color: "#504a3a" }}>(opcional)</span>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Puesto <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(opcional)</span>
               </label>
               <input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)}
-                placeholder="ej: Camarero, Electricista, Administrativo..." className="input-game w-full" />
+                placeholder="ej: Camarero, Electricista..." className="w-full text-sm" />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                Email de RRHH <span style={{ color: "#f87171" }}>*</span>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Email de RRHH <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <input type="email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)}
-                placeholder="rrhh@empresa.com" className="input-game w-full" />
+                placeholder="rrhh@empresa.com" className="w-full text-sm" />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                Web de la empresa <span className="font-normal text-xs" style={{ color: "#504a3a" }}>(mejora la carta IA)</span>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Web <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(mejora la carta IA)</span>
               </label>
               <input type="url" value={companyUrl} onChange={e => setCompanyUrl(e.target.value)}
-                placeholder="https://www.empresa.com" className="input-game w-full" />
+                placeholder="https://www.empresa.com" className="w-full text-sm" />
             </div>
           </>
         )}
 
-        {/* ── Modo: YA APLIQUÉ ── */}
+        {/* Modo: YA APLIQUÉ */}
         {modo === "ya-aplique" && (
           <>
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                Empresa <span style={{ color: "#f87171" }}>*</span>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Empresa <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
-                placeholder="ej: Mercadona, Telefónica..." className="input-game w-full" />
+                placeholder="ej: Mercadona, Telefónica..." className="w-full text-sm" />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                Puesto <span className="font-normal text-xs" style={{ color: "#504a3a" }}>(opcional)</span>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Puesto <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(opcional)</span>
               </label>
               <input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)}
-                placeholder="ej: Camarero, Electricista..." className="input-game w-full" />
+                placeholder="ej: Camarero, Electricista..." className="w-full text-sm" />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                Link de la oferta <span className="font-normal text-xs" style={{ color: "#504a3a" }}>(para hacer seguimiento)</span>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Link de la oferta <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(para seguimiento)</span>
               </label>
               <input type="url" value={companyUrl} onChange={e => setCompanyUrl(e.target.value)}
-                placeholder="https://infojobs.net/oferta/..." className="input-game w-full" />
+                placeholder="https://infojobs.net/oferta/..." className="w-full text-sm" />
             </div>
 
-            <div className="rounded-xl p-4" style={{ background: "rgba(126,213,111,0.06)", border: "1px solid rgba(126,213,111,0.12)" }}>
-              <p className="text-sm" style={{ color: "#a8e6a1" }}>
-                Se guardará en tu historial para hacer seguimiento. No se enviará ningún email automático.
+            <div className="rounded-lg p-3" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.1)" }}>
+              <p className="text-[11px]" style={{ color: "#4ade80" }}>
+                Se guardará en tu historial para hacer seguimiento. No se enviará ningún email.
               </p>
             </div>
           </>
         )}
 
-        {/* Personalización IA (solo modos de envío real) */}
+        {/* Personalización IA */}
         {modo !== "ya-aplique" && (
-          <div className="flex items-start gap-3 rounded-xl p-4"
-            style={{ background: "rgba(126,213,111,0.06)", border: "1px solid rgba(126,213,111,0.12)" }}>
+          <div className="flex items-start gap-2.5 rounded-lg p-3"
+            style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.1)" }}>
             <input id="useAI" type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded accent-green-500 cursor-pointer" />
+              className="mt-0.5 w-3.5 h-3.5 rounded accent-green-500 cursor-pointer" />
             <div>
-              <label htmlFor="useAI" className="text-sm font-semibold cursor-pointer" style={{ color: "#a8e6a1" }}>
+              <label htmlFor="useAI" className="text-xs font-medium cursor-pointer" style={{ color: "#4ade80" }}>
                 Personalizar carta con IA
               </label>
-              <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>
-                La IA adapta la carta a esta empresa. Aumenta mucho las respuestas.
+              <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>
+                La IA adapta la carta a esta empresa. Aumenta las respuestas.
               </p>
             </div>
           </div>
         )}
 
         <button type="submit" disabled={loading}
-          className="w-full py-3.5 font-bold rounded-xl transition text-sm"
+          className="w-full py-2.5 font-semibold rounded-lg transition text-xs"
           style={{
-            background: loading ? "#3d3c30" : "linear-gradient(135deg, #7ed56f, #5cb848)",
-            color: loading ? "#706a58" : "#1a1a12",
-            boxShadow: loading ? "none" : "0 4px 16px rgba(126,213,111,0.25)",
+            background: loading ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+            color: loading ? "#64748b" : "#fff",
           }}>
           {loading
             ? "Procesando..."

@@ -1,0 +1,71 @@
+{
+  "nombre": "Michel Batista González",
+  "contacto": {
+    "telefono": "685 60 34 79",
+    "email": "michelbatistagonzalez1992@gmail.com",
+    "ubicacion": "Tudela, Navarra 31500"
+  },
+  "perfil": "Profesional con experiencia en diversos sectores, incluyendo restauración, logística y agricultura. Dispone de habilidades en trabajo en equipo, fuerza física y rápido aprendizaje. Actitud dinámica y proactiva, con capacidad para adaptarse a nuevos entornos y desafíos.",
+  "aptitudes": [
+    "Rápido aprendizaje",
+    "Actitud dinámica y proactiva",
+    "Capacidad para trabajar en equipo",
+    "Fuerza física"
+  ],
+  "idiomas": [
+    { "idioma": "Español", "nivel": "Nativo" }
+  ],
+  "experiencia": [
+    {
+      "periodo": "2005-2008",
+      "puesto": "Reponedor, repartidor, encargado de almacén y venta al público",
+      "empresa": "Congelados Siete Mares",
+      "ubicacion": "Calahorra (La Rioja)",
+      "tareas": ["Reponer mercancías", "Realizar entregas", "Gestionar el almacén", "Venta al público"]
+    },
+    {
+      "periodo": "2009",
+      "puesto": "Ayudante de cocina y camarero de barra y comedor",
+      "empresa": "Bar Consenti2",
+      "ubicacion": "Tudela",
+      "tareas": ["Ayudante de cocina", "Camarero de barra y comedor"]
+    },
+    {
+      "periodo": "2010-2012",
+      "puesto": "Contrato de formación-prácticas de albañilería",
+      "empresa": "Escuela Taller Municipal 'La Vll'",
+      "ubicacion": "Tudela",
+      "tareas": ["Formación práctica en albañilería"]
+    },
+    {
+      "periodo": "2013",
+      "puesto": "Peón de agricultura",
+      "empresa": "",
+      "ubicacion": "Calahorra",
+      "tareas": ["Trabajo en explotación agrícola"]
+    },
+    {
+      "periodo": "2014-2015",
+      "puesto": "Empleado",
+      "empresa": "Burger King",
+      "ubicacion": "",
+      "tareas": ["Trabajo en restauración"]
+    },
+    {
+      "periodo": "2015",
+      "puesto": "Peón",
+      "empresa": "Congelados Navarra de Fustiñana",
+      "ubicacion": "Fustiñana",
+      "tareas": ["Trabajo en fábrica"]
+    }
+  ],
+  "formacion": [
+    { "titulo": "ESO", "centro": "Colegio Santa Teresa de Jesús", "ubicacion": "Calahorra (La Rioja)" },
+    { "titulo": "Curso de Cocina", "centro": "Centro de Formación Escuela Taller 'El Castillo'", "ubicacion": "Tudela" },
+    { "titulo": "Curso de Prevención de Riesgos Laborales", "centro": "Fundación Laboral de la Construcción", "ubicacion": "Tudela" },
+    { "titulo": "Módulo de Albañilería", "centro": "Escuela Taller Municipal 'La Obra Vl'", "ubicacion": "Tudela" },
+    { "titulo": "Curso de Alfabetización Informática", "centro": "FOREM", "ubicacion": "Tudela" },
+    { "titulo": "Curso de Prevención de Riesgos Laborales", "centro": "Unidad de Promoción y Desarrollo de INAFRE", "ubicacion": "Tudela" },
+    { "titulo": "Curso de Camarero barra y comedor", "centro": "ANAFE", "ubicacion": "Tudela" }
+  ]
+}

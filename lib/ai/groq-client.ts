@@ -176,23 +176,29 @@ export async function mejorarCV(
   textoCv: string,
   tituloPuesto: string
 ): Promise<string> {
-  const prompt = `Eres un experto en recursos humanos en España. Mejora este CV para el puesto de "${tituloPuesto}".
+  const prompt = `Eres un experto en recursos humanos en España. Mejora el texto del Perfil Profesional de este CV para el puesto de "${tituloPuesto}".
 
 CV ACTUAL:
 ${textoCv}
 
-Instrucciones:
-- Mantén la información real, no inventes datos
-- Mejora la redacción y presentación
-- Resalta las habilidades más relevantes para el puesto
+Instrucciones IMPORTANTES:
+- SOLO mejora el texto del "Perfil Profesional" (la sección ## Perfil Profesional)
+- NO modifiques las demás secciones (Aptitudes, Idiomas, Experiencia Laboral, Formación)
+- Mantén la información real, no inventes datos que no existan
+- Mejora la redacción para que suene profesional y atractivo para el puesto
 - Usa vocabulario profesional en español
-- Formato limpio y legible
+- El perfil debe ser conciso (3-5 líneas) y destacar las habilidades relevantes
+- El formato del CV sigue esta estructura exacta:
+  * Header: Nombre grande centrado + línea de contacto con iconos (📞 ✉ 📍)
+  * Secciones en orden: Perfil Profesional → Aptitudes → Idiomas → Experiencia Laboral → Formación
+  * Experiencia: "AÑOS — Puesto", "**Empresa** · Ubicación", bullets de tareas
+  * Formación: "**Título** — Centro · Ubicación"
 
-Devuelve solo el CV mejorado, sin comentarios adicionales.`;
+Devuelve SOLO el texto mejorado del Perfil Profesional, sin comentarios adicionales.`;
 
   return await llamarGroq(prompt, "mejora-cv", {
-    sistemaPrompt: "Eres un experto en recursos humanos especializado en el mercado laboral español.",
-    maxTokens: 3000,
+    sistemaPrompt: "Eres un experto en recursos humanos especializado en el mercado laboral español. Solo mejoras el texto del Perfil Profesional, manteniendo todo lo demás igual.",
+    maxTokens: 1500,
   });
 }
 

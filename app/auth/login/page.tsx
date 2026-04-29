@@ -4,7 +4,6 @@ import { useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import LogoGusano from "@/components/LogoGusano";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,94 +35,61 @@ export default function LoginPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: "linear-gradient(180deg, #0f1a0a, #1a1a12, #15200e)" }}>
-      
-      {/* Fondo decorativo */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div style={{ position: "absolute", top: "-20%", left: "-10%", width: "50%", height: "60%",
-          background: "radial-gradient(ellipse, rgba(126,213,111,0.06) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", bottom: "-10%", right: "-10%", width: "45%", height: "50%",
-          background: "radial-gradient(ellipse, rgba(139,111,71,0.06) 0%, transparent 70%)" }} />
-      </div>
+  const inputStyle = {
+    background: "#0f1117",
+    border: "1.5px solid #2d3142",
+    color: "#f1f5f9",
+  };
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo + título */}
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#0f1117" }}>
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4 animate-float">
-            <LogoGusano size={60} animated />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4"
+            style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08))", border: "2px solid rgba(34,197,94,0.25)" }}>
+            🐛
           </div>
-          <h1 className="text-2xl font-bold" style={{ color: "#f0ebe0" }}>Bienvenido de vuelta</h1>
-          <p className="text-sm mt-1" style={{ color: "#706a58" }}>Sigue tu evolución donde la dejaste</p>
+          <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Bienvenido de vuelta</h1>
+          <p className="text-xs mt-1" style={{ color: "#64748b" }}>Sigue tu evolución donde la dejaste</p>
         </div>
 
-        {/* Tarjeta formulario */}
-        <div className="card-game p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
+        <div className="card-game p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1.5" style={{ color: "#b0a890" }}>
-                Email
-              </label>
+              <label htmlFor="email" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>Email</label>
               <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com" required autoComplete="email"
-                className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
-                style={{
-                  background: "#1a1a12", border: "1.5px solid #3d3c30", color: "#f0ebe0",
-                  // @ts-expect-error ring color
-                  "--tw-ring-color": "#7ed56f",
-                }}
-              />
+                className="w-full rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                style={{ ...inputStyle, outline: "none" }} />
             </div>
 
-            {/* Contraseña */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="contrasena" className="text-sm font-medium" style={{ color: "#b0a890" }}>
-                  Contraseña
-                </label>
-                <Link href="/auth/recuperar" className="text-xs font-medium hover:underline" style={{ color: "#7ed56f" }}>
-                  ¿Olvidaste tu contraseña?
-                </Link>
+                <label htmlFor="contrasena" className="text-xs font-medium" style={{ color: "#94a3b8" }}>Contraseña</label>
+                <Link href="/auth/recuperar" className="text-[11px] font-medium hover:underline" style={{ color: "#22c55e" }}>¿Olvidaste?</Link>
               </div>
               <input id="contrasena" type="password" value={contrasena} onChange={(e) => setContrasena(e.target.value)}
                 placeholder="Tu contraseña" required autoComplete="current-password"
-                className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 transition"
-                style={{
-                  background: "#1a1a12", border: "1.5px solid #3d3c30", color: "#f0ebe0",
-                  // @ts-expect-error ring color
-                  "--tw-ring-color": "#7ed56f",
-                }}
-              />
+                className="w-full rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 transition"
+                style={inputStyle} />
             </div>
 
-            {/* Error */}
             {error && (
-              <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "#2a1a1a", border: "1px solid #ff606030", color: "#ff8080" }}>
+              <div className="rounded-lg px-3.5 py-2.5 text-xs" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
                 {error}
               </div>
             )}
 
-            {/* Botón */}
             <button type="submit" disabled={cargando || !email.trim() || !contrasena}
-              className="btn-game w-full !py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed">
-              {cargando ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#1a1a12", borderTopColor: "transparent" }} />
-                  Entrando...
-                </span>
-              ) : "🐛 Entrar"}
+              className="btn-game w-full !py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+              {cargando ? "Entrando..." : "Entrar"}
             </button>
           </form>
         </div>
 
-        {/* Enlace a registro */}
-        <p className="text-center text-sm mt-6" style={{ color: "#706a58" }}>
+        <p className="text-center text-xs mt-5" style={{ color: "#64748b" }}>
           ¿No tienes cuenta?{" "}
-          <Link href="/auth/registro" className="font-semibold hover:underline" style={{ color: "#7ed56f" }}>
-            Empieza tu metamorfosis 🌱
-          </Link>
+          <Link href="/auth/registro" className="font-semibold hover:underline" style={{ color: "#22c55e" }}>Regístrate gratis</Link>
         </p>
       </div>
     </div>

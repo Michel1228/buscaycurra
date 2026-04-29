@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   const location = (searchParams.get("location") || "").trim();
   const page     = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const jornada  = searchParams.get("jornada") || "";
-  const limit    = 50;
+  const limit    = 500;
   const offset   = (page - 1) * limit;
 
   if (!keyword && !location) {
@@ -61,8 +61,31 @@ export async function GET(request: NextRequest) {
       idx++;
     }
 
-    // Ciudad: busqueda normalizada sin acentos
-    const cityParts = location ? stripAccents(location.split(",")[0].trim()) : "";
+    // Ciudad: extraer solo el nombre de ciudad, ignorando provincia/comunidad
+    // Ej: "Tudela Navarra" → "Tudela", "Madrid, Comunidad de Madrid" → "Madrid"
+    let cityParts = "";
+    if (location) {
+      const partes = location.split(/[,\-]/).map(p => p.trim());
+      // Lista de palabras que indican provincia/comunidad (ignorar)
+      const provincias = [
+        "navarra", "la rioja", "madrid", "cataluña", "valencia", "andalucía", "andalucia",
+        "aragon", "aragón", "pais vasco", "país vasco", "murcia", "extremadura", "galicia",
+        "asturias", "cantabria", "castilla y leon", "castilla y león", "castilla la mancha",
+        "castilla-la mancha", "baleares", "canarias", "comunidad", "provincia", "region", "región"
+      ];
+      // Buscar la primera parte que NO sea una provincia/comunidad
+      for (const parte of partes) {
+        const parteLower = parte.toLowerCase();
+        if (!provincias.some(p => parteLower.includes(p) || p.includes(parteLower))) {
+          cityParts = stripAccents(parte);
+          break;
+        }
+      }
+      // Si todas son provincias, usar la primera parte
+      if (!cityParts && partes.length > 0) {
+        cityParts = stripAccents(partes[0]);
+      }
+    }
     if (cityParts) {
       conditions.push(`(${cityLike("city", idx)} OR ${cityLike("province", idx)})`);
       params.push(`%${cityParts}%`);
@@ -71,8 +94,8 @@ export async function GET(request: NextRequest) {
 
     const whereClause = conditions.join(" AND ");
     const countRes = await pool.query(`SELECT COUNT(*) FROM "JobListing" WHERE ${whereClause}`, params);
-    const total = parseInt(countRes.rows[0].count);
-
+    const totalDB = parseInt(countRes.rows[0].count);
+    
     const sql = `
       SELECT id, title, company, city, province, salary, description,
              "sourceUrl", "sourceName", "scrapedAt"
@@ -88,7 +111,7 @@ export async function GET(request: NextRequest) {
       let ofertas = dbResult.rows.map((j, i) => rowToOferta(j, i, offset, location));
       if (jornada === "remoto") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("remoto") || (o.titulo as string).toLowerCase().includes("teletrabajo"));
       else if (jornada === "parcial") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("parcial"));
-      return NextResponse.json({ ofertas, total, page, hasMore: offset + dbResult.rows.length < total, keyword, location, source: "database" });
+      return NextResponse.json({ ofertas, total: totalDB, page, hasMore: offset + dbResult.rows.length < totalDB, keyword, location, source: "database" });
     }
 
     // Si keyword+ciudad = 0, mostrar todas las ofertas de esa ciudad (total real)

@@ -10,10 +10,10 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 type TabId = "nuevo" | "envios" | "estadisticas";
 
-const TABS: { id: TabId; label: string; emoji: string }[] = [
-  { id: "nuevo", label: "Nuevo envío", emoji: "📧" },
-  { id: "envios", label: "Mis envíos", emoji: "📋" },
-  { id: "estadisticas", label: "Estadísticas", emoji: "📊" },
+const TABS: { id: TabId; label: string; icon: string }[] = [
+  { id: "nuevo", label: "Nuevo envío", icon: "📧" },
+  { id: "envios", label: "Mis envíos", icon: "📋" },
+  { id: "estadisticas", label: "Estadísticas", icon: "📊" },
 ];
 
 export default function EnviosPage() {
@@ -39,22 +39,18 @@ export default function EnviosPage() {
   };
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
 
-      {/* Header */}
-      <div className="py-10 px-4" style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.08), rgba(139,111,71,0.05))" }}>
+      <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.05))" }}>
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-3xl">📧</span>
-            <h1 className="text-2xl font-bold" style={{ color: "#f0ebe0" }}>Envíos automáticos de CV</h1>
-          </div>
-          <p className="text-sm" style={{ color: "#b0a890" }}>
+          <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Envíos automáticos de CV</h1>
+          <p className="text-xs mt-1" style={{ color: "#64748b" }}>
             Tu CV se envía cada 4-5 días a nuevas empresas, en horario laboral, con carta personalizada por IA.
           </p>
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-3">
             {["🤖 IA personaliza", "⏰ Lun-Vie 9-18h", "🔄 Cada 4-5 días", "📊 Seguimiento"].map(f => (
-              <span key={f} className="text-xs px-3 py-1 rounded-full"
-                style={{ background: "rgba(126,213,111,0.1)", color: "#7ed56f", border: "1px solid rgba(126,213,111,0.15)" }}>
+              <span key={f} className="text-[10px] px-2.5 py-1 rounded-md font-medium"
+                style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.15)" }}>
                 {f}
               </span>
             ))}
@@ -62,18 +58,17 @@ export default function EnviosPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="sticky top-0 z-10" style={{ background: "#1a1a12", borderBottom: "1px solid #3d3c30" }}>
+      <div className="sticky top-14 z-10" style={{ background: "#0f1117", borderBottom: "1px solid #2d3142" }}>
         <div className="max-w-3xl mx-auto px-4">
           <nav className="flex">
             {TABS.map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className="flex items-center gap-2 px-5 py-4 text-sm font-medium transition"
+                className="flex items-center gap-2 px-4 py-3 text-xs font-medium transition"
                 style={{
-                  borderBottom: activeTab === tab.id ? "2px solid #7ed56f" : "2px solid transparent",
-                  color: activeTab === tab.id ? "#7ed56f" : "#706a58",
+                  borderBottom: activeTab === tab.id ? "2px solid #22c55e" : "2px solid transparent",
+                  color: activeTab === tab.id ? "#22c55e" : "#64748b",
                 }}>
-                <span>{tab.emoji}</span>
+                <span>{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
@@ -81,7 +76,6 @@ export default function EnviosPage() {
         </div>
       </div>
 
-      {/* Content */}
       <main className="max-w-3xl mx-auto px-4 py-6">
         {activeTab === "nuevo" && <Suspense fallback={null}><AutoSendSetup userId={userId} onJobScheduled={handleJobScheduled} /></Suspense>}
         {activeTab === "envios" && <CVSenderDashboard key={refreshKey} userId={userId} />}
@@ -110,38 +104,38 @@ function StatsTab({ userId }: { userId: string }) {
 
   if (loading) return (
     <div className="flex justify-center py-16">
-      <div className="animate-spin rounded-full h-8 w-8" style={{ border: "4px solid #3d3c30", borderTopColor: "#7ed56f" }} />
+      <div className="animate-spin rounded-full h-8 w-8" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
     </div>
   );
 
   if (!stats) return (
     <div className="card-game p-10 text-center">
-      <p style={{ color: "#504a3a" }}>No hay estadísticas disponibles</p>
+      <p className="text-sm" style={{ color: "#475569" }}>No hay estadísticas disponibles</p>
     </div>
   );
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold" style={{ color: "#f0ebe0" }}>Tu actividad de envíos</h2>
-        <p className="text-sm" style={{ color: "#706a58" }}>Resumen de todos tus envíos automáticos</p>
+        <h2 className="text-lg font-semibold" style={{ color: "#f1f5f9" }}>Tu actividad</h2>
+        <p className="text-xs" style={{ color: "#64748b" }}>Resumen de envíos automáticos</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          { val: stats.totalEnviados, label: "CVs enviados", color: "#7ed56f" },
-          { val: stats.empresasContactadas, label: "Empresas", color: "#f0c040" },
-          { val: stats.enviadosEsteMes, label: "Este mes", color: "#a8e6a1" },
+          { val: stats.totalEnviados, label: "CVs enviados", color: "#22c55e" },
+          { val: stats.empresasContactadas, label: "Empresas", color: "#f59e0b" },
+          { val: stats.enviadosEsteMes, label: "Este mes", color: "#3b82f6" },
         ].map((s, i) => (
-          <div key={i} className="card-game p-6 text-center">
-            <p className="text-4xl font-bold" style={{ color: s.color }}>{s.val}</p>
-            <p className="text-sm mt-1" style={{ color: "#706a58" }}>{s.label}</p>
+          <div key={i} className="card-game p-5 text-center">
+            <p className="text-3xl font-bold" style={{ color: s.color }}>{s.val}</p>
+            <p className="text-xs mt-1" style={{ color: "#64748b" }}>{s.label}</p>
           </div>
         ))}
       </div>
 
-      <div className="card-game p-6">
-        <h3 className="font-bold mb-4" style={{ color: "#f0ebe0" }}>Desglose</h3>
+      <div className="card-game p-5">
+        <h3 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>Desglose</h3>
         <div className="space-y-3">
           {[
             { label: "Hoy", value: stats.enviadosHoy, max: 10 },
@@ -150,13 +144,13 @@ function StatsTab({ userId }: { userId: string }) {
             { label: "Total", value: stats.totalEnviados, max: stats.totalEnviados || 1 },
           ].map(({ label, value, max }) => (
             <div key={label}>
-              <div className="flex justify-between text-sm mb-1">
-                <span style={{ color: "#b0a890" }}>{label}</span>
-                <span className="font-bold" style={{ color: "#f0ebe0" }}>{value}</span>
+              <div className="flex justify-between text-xs mb-1">
+                <span style={{ color: "#94a3b8" }}>{label}</span>
+                <span className="font-semibold" style={{ color: "#f1f5f9" }}>{value}</span>
               </div>
-              <div className="h-2 rounded-full" style={{ background: "#2a2a1e" }}>
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${Math.min(100, (value / max) * 100)}%`, background: "linear-gradient(135deg, #7ed56f, #5cb848)" }} />
+              <div className="h-1.5 rounded-full" style={{ background: "#252836" }}>
+                <div className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, (value / max) * 100)}%`, background: "linear-gradient(135deg, #22c55e, #16a34a)" }} />
               </div>
             </div>
           ))}
@@ -164,11 +158,11 @@ function StatsTab({ userId }: { userId: string }) {
       </div>
 
       <div className="card-game p-5">
-        <h3 className="font-bold mb-2" style={{ color: "#a8e6a1" }}>ℹ️ Cómo funciona</h3>
-        <ul className="space-y-2 text-sm" style={{ color: "#b0a890" }}>
-          <li>📅 CVs enviados lun-vie 9:00-18:00 horario España</li>
+        <h3 className="font-semibold text-sm mb-3" style={{ color: "#22c55e" }}>ℹ️ Cómo funciona</h3>
+        <ul className="space-y-2 text-xs" style={{ color: "#94a3b8" }}>
+          <li>📅 Envíos lun-vie 9:00-18:00 horario España</li>
           <li>🤖 Carta personalizada por IA para cada empresa</li>
-          <li>🔄 Envío automático cada 4-5 días a nuevas empresas</li>
+          <li>🔄 Automático cada 4-5 días a nuevas empresas</li>
           <li>⏱️ Distribuidos para no parecer spam</li>
           <li>🔄 Reintentos automáticos si falla (hasta 3x)</li>
           <li>🛡️ Mínimo 90 días entre envíos a la misma empresa</li>

@@ -1,15 +1,12 @@
 "use client";
 
-// Deshabilitar prerenderizado estático — la página requiere autenticación dinámica
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
 
-
-// ─── Opciones de filtros ──────────────────────────────────────────────────────
 const opcionesJornada = [
   { valor: "", etiqueta: "Todas" },
   { valor: "completa", etiqueta: "Jornada completa" },
@@ -25,23 +22,17 @@ const opcionesExperiencia = [
   { valor: "5+", etiqueta: "Más de 5 años" },
 ];
 
-// ─── Componente Principal ─────────────────────────────────────────────────────
-
 function BuscarPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Campos de búsqueda
   const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
   const [ubicacion, setUbicacion] = useState(searchParams.get("location") || "");
   const [geoDetected, setGeoDetected] = useState(false);
-
-  // Filtros adicionales
   const [jornada, setJornada] = useState("");
   const [experiencia, setExperiencia] = useState("");
   const [salarioMin, setSalarioMin] = useState("");
 
-  // Estado de la búsqueda
   const [ofertas, setOfertas] = useState<PropiedadesJobCard[]>([]);
   const [cargando, setCargando] = useState(false);
   const [cargandoMas, setCargandoMas] = useState(false);
@@ -52,15 +43,16 @@ function BuscarPageInner() {
   const [hayMas, setHayMas] = useState(false);
   const [fuenteResultados, setFuenteResultados] = useState<string>("");
 
-  // Verificar sesión + geolocalización automática
+  const [mostrarAlertaModal, setMostrarAlertaModal] = useState(false);
+  const [alertaCreada, setAlertaCreada] = useState(false);
+  const [creandoAlerta, setCreandoAlerta] = useState(false);
+
   useEffect(() => {
     async function init() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
-      // Si no hay ubicación, intentar detectarla
       if (!ubicacion) {
-        // 1. Primero mirar el perfil del usuario
         const { data: perfil } = await getSupabaseBrowser().from("profiles")
           .select("ciudad").eq("id", user.id).single();
         if (perfil?.ciudad) {
@@ -69,12 +61,10 @@ function BuscarPageInner() {
           return;
         }
 
-        // 2. Si no hay ciudad en perfil, usar geolocalización del navegador
         if ("geolocation" in navigator) {
           navigator.geolocation.getCurrentPosition(
             async (pos) => {
               try {
-                // Reverse geocode con API gratuita
                 const res = await fetch(
                   `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`
                 );
@@ -83,14 +73,11 @@ function BuscarPageInner() {
                 if (city) {
                   setUbicacion(city);
                   setGeoDetected(true);
-                  // Guardar en perfil para futuras visitas
-                  await getSupabaseBrowser().from("profiles")
-                    .update({ ciudad: city })
-                    .eq("id", user.id);
+                  await getSupabaseBrowser().from("profiles").update({ ciudad: city }).eq("id", user.id);
                 }
-              } catch { /* ignore geo errors */ }
+              } catch { /* ignore */ }
             },
-            () => { /* user denied geolocation */ },
+            () => { /* denied */ },
             { timeout: 5000, enableHighAccuracy: false }
           );
         }
@@ -99,16 +86,15 @@ function BuscarPageInner() {
     init();
   }, [router, ubicacion]);
 
-  /**
-   * Búsqueda CLIENT-SIDE a Jooble (bypass Cloudflare) — el navegador del usuario SÍ pasa
-   */
   async function buscarJoobleCliente(kw: string, loc: string): Promise<PropiedadesJobCard[]> {
+    // Solo buscar en Jooble si hay keyword, no para búsquedas solo por ciudad
+    if (!kw.trim()) return [];
     try {
-      const res = await fetch("https://jooble.org/api/74a369ac-3511-4f74-ad51-88d5e3c69652", {
+      const res = await fetch("/api/jobs/jooble", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keywords: kw, location: loc }),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(12000),
       });
       if (!res.ok) return [];
       const data = await res.json();
@@ -127,14 +113,12 @@ function BuscarPageInner() {
         distancia: "🏠 Tu ciudad",
       }));
     } catch {
-      console.log("[Jooble client] no disponible");
       return [];
     }
   }
 
-  /**
-   * Ejecuta búsqueda MULTI-FUENTE: servidor (BD local) + cliente (Jooble) en paralelo
-   */
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   async function buscar(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (!keyword.trim() && !ubicacion.trim()) return;
@@ -151,20 +135,33 @@ function BuscarPageInner() {
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
 
-      // Lanzar ambas búsquedas en paralelo
       const [serverRes, joobleRes] = await Promise.allSettled([
         fetch(`/api/jobs/search?${params.toString()}`).then(r => r.ok ? r.json() : { ofertas: [] }),
         buscarJoobleCliente(keyword.trim(), ubicacion.trim()),
       ]);
 
-      // Combinar resultados
       const serverOfertas = serverRes.status === "fulfilled" ? (serverRes.value.ofertas || []) : [];
       const joobleOfertas = joobleRes.status === "fulfilled" ? joobleRes.value : [];
+      const serverTotal = serverRes.status === "fulfilled" ? (serverRes.value.total || 0) : 0;
+      const serverHasMore = serverRes.status === "fulfilled" ? (serverRes.value.hasMore || false) : false;
+      
+      console.log(`[Buscar] Server: ${serverOfertas.length} ofertas, total: ${serverTotal}, hasMore: ${serverHasMore}`);
 
-      // Deduplicar por título+empresa
+      // Priorizar ofertas de la BD (más completas) sobre Jooble
       const seen = new Set<string>();
       const todas: PropiedadesJobCard[] = [];
-      for (const o of [...joobleOfertas, ...serverOfertas]) {
+      
+      // Primero las de la base de datos
+      for (const o of serverOfertas) {
+        const key = `${(o.titulo || "").toLowerCase().replace(/\s+/g, "")}-${(o.empresa || "").toLowerCase().replace(/\s+/g, "")}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          todas.push(o);
+        }
+      }
+      
+      // Luego las de Jooble si no están duplicadas
+      for (const o of joobleOfertas) {
         const key = `${(o.titulo || "").toLowerCase().replace(/\s+/g, "")}-${(o.empresa || "").toLowerCase().replace(/\s+/g, "")}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -172,14 +169,14 @@ function BuscarPageInner() {
         }
       }
 
-      // Ordenar por match descendente
       todas.sort((a, b) => (b.match || 0) - (a.match || 0));
       setOfertas(todas);
       setCurrentPage(1);
       const source = serverRes.status === "fulfilled" ? (serverRes.value.source || "") : "";
       setFuenteResultados(source);
-      setTotalResultados(serverRes.status === "fulfilled" ? (serverRes.value.total || todas.length) : todas.length);
-      setHayMas(serverRes.status === "fulfilled" ? (serverRes.value.hasMore || false) : false);
+      setTotalResultados(serverTotal > 0 ? serverTotal : todas.length);
+      setHayMas(serverHasMore);
+      console.log(`[Buscar] Final: ${todas.length} ofertas, hayMas: ${serverHasMore}, total: ${serverTotal}`);
     } catch (err) {
       setError((err as Error).message || "Error al buscar ofertas");
       setOfertas([]);
@@ -202,7 +199,6 @@ function BuscarPageInner() {
       if (res.ok) {
         const data = await res.json();
         const nuevas = data.ofertas || [];
-        // Deduplicar
         const seen = new Set(ofertas.map(o => o.id));
         const sinDuplicados = nuevas.filter((o: {id: string}) => !seen.has(o.id));
         setOfertas(prev => [...prev, ...sinDuplicados]);
@@ -211,210 +207,148 @@ function BuscarPageInner() {
         setTotalResultados(data.total || totalResultados);
         setFuenteResultados(data.source || fuenteResultados);
       }
-    } catch { /* silencioso */ }
+    } catch (err) { console.error("Error cargarMas:", err); }
     finally { setCargandoMas(false); }
   }
+
+
 
   const esEnTiempoReal = fuenteResultados.startsWith("live-api");
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
 
-      {/* ── Cabecera de búsqueda ──────────────────────────────────────── */}
-      <div className="text-white py-10 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+      {/* Cabecera de búsqueda */}
+      <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}>
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">🔍 Buscar ofertas de trabajo</h1>
-
-          {/* Formulario de búsqueda */}
-          <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-3">
-            {/* Campo: qué trabajo buscas */}
-            <input
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="¿Qué trabajo buscas? (electricista, contable...)"
-              className="flex-1 px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-            />
-            {/* Campo: dónde buscas */}
-            <div className="relative w-full sm:w-64">
-              <input
-                type="text"
-                value={ubicacion}
-                onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
-                placeholder="¿Dónde? (Madrid, Barcelona...)"
-                className="w-full px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-              {geoDetected && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#1a1a12" }}>
-                  📍 Auto
-                </span>
-              )}
+          <h1 className="text-xl font-bold mb-4">Buscar ofertas de trabajo</h1>
+          <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-2">
+            <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
+              placeholder="¿Qué trabajo buscas?" className="flex-1 px-4 py-2.5 rounded-lg text-sm"
+              style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
+            <div className="relative w-full sm:w-56">
+              <input type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
+                placeholder="¿Dónde?" className="w-full px-4 py-2.5 rounded-lg text-sm"
+                style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
+              {geoDetected && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-70">📍 Auto</span>}
             </div>
-            {/* Botón buscar */}
-            <button
-              type="submit"
-              disabled={cargando}
-              className="px-8 py-3 bg-white font-semibold rounded-xl shadow-sm hover: transition disabled:opacity-50"
-              style={{ color: "#7ed56f" }}
-            >
+            <button type="submit" disabled={cargando}
+              className="px-6 py-2.5 bg-white font-semibold rounded-lg text-sm transition disabled:opacity-50"
+              style={{ color: "#16a34a" }}>
               {cargando ? "Buscando..." : "Buscar"}
             </button>
           </form>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex gap-8">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="flex gap-6">
 
-          {/* ── Panel de filtros (columna izquierda) ─────────────────── */}
-          <aside className="hidden md:block w-56 shrink-0">
-            <div className="card-game p-5 sticky top-20">
-              <h2 className="font-semibold text-[#f0ebe0] mb-4">Filtros</h2>
-
-              {/* Filtro: tipo de jornada */}
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-[#b0a890] mb-2">
-                  Tipo de jornada
-                </label>
-                <select
-                  value={jornada}
-                  onChange={(e) => setJornada(e.target.value)}
-                  className="w-full text-sm border border-[#3d3c30] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                >
-                  {opcionesJornada.map((op) => (
-                    <option key={op.valor} value={op.valor}>
-                      {op.etiqueta}
-                    </option>
-                  ))}
+          {/* Filtros */}
+          <aside className="hidden md:block w-52 shrink-0">
+            <div className="card-game p-4 sticky top-20">
+              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>Filtros</h2>
+              <div className="mb-4">
+                <label className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Tipo de jornada</label>
+                <select value={jornada} onChange={(e) => setJornada(e.target.value)} className="w-full text-sm">
+                  {opcionesJornada.map(op => <option key={op.valor} value={op.valor}>{op.etiqueta}</option>)}
                 </select>
               </div>
-
-              {/* Filtro: experiencia requerida */}
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-[#b0a890] mb-2">
-                  Experiencia
-                </label>
-                <select
-                  value={experiencia}
-                  onChange={(e) => setExperiencia(e.target.value)}
-                  className="w-full text-sm border border-[#3d3c30] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                >
-                  {opcionesExperiencia.map((op) => (
-                    <option key={op.valor} value={op.valor}>
-                      {op.etiqueta}
-                    </option>
-                  ))}
+              <div className="mb-4">
+                <label className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Experiencia</label>
+                <select value={experiencia} onChange={(e) => setExperiencia(e.target.value)} className="w-full text-sm">
+                  {opcionesExperiencia.map(op => <option key={op.valor} value={op.valor}>{op.etiqueta}</option>)}
                 </select>
               </div>
-
-              {/* Filtro: salario mínimo */}
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-[#b0a890] mb-2">
-                  Salario mínimo (€/año)
-                </label>
-                <input
-                  type="number"
-                  value={salarioMin}
-                  onChange={(e) => setSalarioMin(e.target.value)}
-                  placeholder="Ej: 20000"
-                  className="w-full text-sm border border-[#3d3c30] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                />
+              <div className="mb-4">
+                <label className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario mínimo (€/año)</label>
+                <input type="number" value={salarioMin} onChange={(e) => setSalarioMin(e.target.value)}
+                  placeholder="Ej: 20000" className="w-full text-sm" />
               </div>
-
-              {/* Botón aplicar filtros */}
-              <button
-                onClick={() => buscar()}
-                className="w-full py-2.5 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
-              >
-                Aplicar filtros
-              </button>
+              <button onClick={() => buscar()} className="btn-game w-full text-xs py-2">Aplicar filtros</button>
             </div>
           </aside>
 
-          {/* ── Resultados (columna derecha) ─────────────────────────── */}
+          {/* Resultados */}
           <div className="flex-1 min-w-0">
-
-            {/* Estado: cargando → mostrar skeleton */}
             {cargando && (
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="card-game p-5 animate-pulse">
-                    <div className="h-3 bg-gray-200 rounded w-1/4 mb-4" />
-                    <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
-                    <div className="h-3 bg-gray-200 rounded w-1/3 mb-6" />
+                  <div key={i} className="card-game p-4 animate-pulse">
+                    <div className="h-3 rounded w-1/4 mb-3" style={{ background: "#252836" }} />
+                    <div className="h-4 rounded w-3/4 mb-2" style={{ background: "#252836" }} />
+                    <div className="h-3 rounded w-1/2 mb-2" style={{ background: "#252836" }} />
+                    <div className="h-3 rounded w-1/3 mb-4" style={{ background: "#252836" }} />
                     <div className="flex gap-2">
-                      <div className="flex-1 h-10 bg-gray-200 rounded-xl" />
-                      <div className="flex-1 h-10 bg-gray-200 rounded-xl" />
+                      <div className="flex-1 h-9 rounded-lg" style={{ background: "#252836" }} />
+                      <div className="flex-1 h-9 rounded-lg" style={{ background: "#252836" }} />
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Estado: error en la búsqueda */}
             {!cargando && error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl px-5 py-4 text-sm">
+              <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
                 ⚠️ {error}
               </div>
             )}
 
-            {/* Estado: búsqueda realizada sin resultados */}
             {!cargando && !error && buscado && ofertas.length === 0 && (
-              <div className="card-game p-12 text-center">
-                <p className="text-5xl mb-4">🔍</p>
-                <p className="font-semibold text-[#f0ebe0] mb-2">No se encontraron ofertas</p>
-                <p className="text-[#706a58] text-sm">
-                  Prueba con otras palabras clave o cambia la ubicación
-                </p>
+              <div className="card-game p-10 text-center">
+                <p className="text-4xl mb-3">🔍</p>
+                <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No se encontraron ofertas</p>
+                <p className="text-xs mt-1" style={{ color: "#64748b" }}>Prueba con otras palabras clave</p>
               </div>
             )}
 
-            {/* Estado: sin buscar aún */}
             {!cargando && !buscado && (
-              <div className="card-game p-12 text-center">
-                <p className="text-5xl mb-4">🚀</p>
-                <p className="font-semibold text-[#f0ebe0] mb-2">
-                  ¡Empieza tu búsqueda!
-                </p>
-                <p className="text-[#706a58] text-sm">
-                  Introduce el trabajo que buscas y la ciudad para ver ofertas
-                </p>
+              <div className="card-game p-10 text-center">
+                <p className="text-4xl mb-3">🚀</p>
+                <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¡Empieza tu búsqueda!</p>
+                <p className="text-xs mt-1" style={{ color: "#64748b" }}>Introduce el trabajo y la ciudad</p>
               </div>
             )}
 
-            {/* Estado: hay resultados */}
             {!cargando && ofertas.length > 0 && (
               <>
-                <div className="mb-4">
-                  <p className="text-sm text-[#706a58]">
-                    {esEnTiempoReal
-                      ? `${ofertas.length} oferta${ofertas.length !== 1 ? "s" : ""} encontrada${ofertas.length !== 1 ? "s" : ""}`
-                      : `${ofertas.length} de ${(totalResultados > ofertas.length ? totalResultados : ofertas.length).toLocaleString("es-ES")} oferta${ofertas.length !== 1 ? "s" : ""}`
-                    }
-                  </p>
-                  {esEnTiempoReal && (
-                    <p className="text-xs mt-0.5" style={{ color: "#3d3c30" }}>
-                      Resultados en tiempo real — ampliando la base de datos cada día
+                <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <p className="text-xs" style={{ color: "#64748b" }}>
+                      {esEnTiempoReal ? `${ofertas.length} ofertas` : `${ofertas.length} de ${(totalResultados > ofertas.length ? totalResultados : ofertas.length).toLocaleString("es-ES")} ofertas`}
                     </p>
-                  )}
+                    {esEnTiempoReal && <p className="text-[10px]" style={{ color: "#475569" }}>Resultados en tiempo real</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setMostrarAlertaModal(true)}
+                      className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
+                      style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
+                      🔔 Alerta
+                    </button>
+                    <a href="/app/guardados"
+                      className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
+                      style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
+                      ❤️ Guardados
+                    </a>
+                  </div>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {ofertas.map((oferta) => (
-                    <JobCard key={oferta.id} {...oferta} />
-                  ))}
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {ofertas.map(oferta => <JobCard key={oferta.id} {...oferta} />)}
                 </div>
+                
                 {hayMas && (
-                  <div className="flex justify-center mt-6">
+                  <div className="flex flex-col items-center mt-6 gap-2">
                     <button
                       onClick={cargarMas}
                       disabled={cargandoMas}
-                      className="px-8 py-3 rounded-xl font-semibold text-sm transition disabled:opacity-50"
-                      style={{ background: "linear-gradient(135deg,#7ed56f,#5cb848)", color: "#1a1a12" }}
+                      className="px-8 py-3 rounded-xl text-sm font-semibold transition disabled:opacity-50"
+                      style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
                     >
-                      {cargandoMas ? "Cargando…" : `Cargar más ofertas (${(totalResultados - ofertas.length).toLocaleString("es-ES")} restantes)`}
+                      {cargandoMas ? "⏳ Cargando..." : `📥 Cargar más ofertas (${(totalResultados - ofertas.length).toLocaleString("es-ES")} restantes)`}
                     </button>
+                    <p className="text-[10px]" style={{ color: "#475569" }}>
+                      Mostrando {ofertas.length.toLocaleString("es-ES")} de {totalResultados.toLocaleString("es-ES")} ofertas
+                    </p>
                   </div>
                 )}
               </>
@@ -422,26 +356,92 @@ function BuscarPageInner() {
           </div>
         </div>
       </div>
+
+      {/* Modal alerta */}
+      {mostrarAlertaModal && (
+        <AlertaModal keyword={keyword} location={ubicacion}
+          onClose={() => setMostrarAlertaModal(false)} onCreada={() => setAlertaCreada(true)} />
+      )}
+
+      {alertaCreada && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-xl text-xs font-medium"
+          style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}>
+          ✅ Alerta creada. Te avisaremos de nuevas ofertas.
+        </div>
+      )}
     </div>
   );
 }
 
+function AlertaModal({ keyword, location, onClose, onCreada }: {
+  keyword: string; location: string; onClose: () => void; onCreada: () => void;
+}) {
+  const [freq, setFreq] = useState<"daily" | "weekly">("daily");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-// ─── Wrapper con Suspense ─────────────────────────────────────────────────────
-// useSearchParams() requiere un boundary de Suspense en Next.js 15
+  async function crear() {
+    setLoading(true);
+    setError("");
+    try {
+      const session = (await getSupabaseBrowser().auth.getSession()).data.session;
+      if (!session) { setError("Debes iniciar sesión"); return; }
+      const res = await fetch("/api/jobs/alertas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ keyword, location, frequency: freq }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error || "Error al crear alerta");
+        return;
+      }
+      onCreada(); onClose();
+    } catch { setError("Error de red"); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+      <div className="w-full max-w-sm rounded-xl p-5 space-y-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }} onClick={e => e.stopPropagation()}>
+        <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🔔 Crear alerta de empleo</h3>
+        <p className="text-xs" style={{ color: "#64748b" }}>Te avisaremos cuando haya nuevas ofertas para:</p>
+        <div className="p-2.5 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
+          <p className="text-xs font-medium" style={{ color: "#22c55e" }}>{keyword || "Cualquier puesto"} {location ? `en ${location}` : ""}</p>
+        </div>
+        <div>
+          <label className="text-[11px] block mb-1.5" style={{ color: "#94a3b8" }}>Frecuencia</label>
+          <div className="flex gap-2">
+            {(["daily", "weekly"] as const).map(f => (
+              <button key={f} onClick={() => setFreq(f)}
+                className="flex-1 py-2 rounded-lg text-[11px] font-medium transition"
+                style={{
+                  background: freq === f ? "rgba(34,197,94,0.12)" : "#252836",
+                  border: freq === f ? "1px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
+                  color: freq === f ? "#22c55e" : "#64748b",
+                }}>
+                {f === "daily" ? "📅 Diaria" : "📆 Semanal"}
+              </button>
+            ))}
+          </div>
+        </div>
+        {error && <p className="text-[11px]" style={{ color: "#ef4444" }}>{error}</p>}
+        <div className="flex gap-2 justify-end">
+          <button onClick={onClose} className="px-4 py-2 text-[11px] rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>Cancelar</button>
+          <button onClick={crear} disabled={loading} className="btn-game px-5 py-2 text-[11px] disabled:opacity-50">{loading ? "Creando..." : "Crear"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function BuscarPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div
-            className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin"
-            style={{ borderColor: "#2563EB", borderTopColor: "transparent" }}
-          />
-        </div>
-      }
-    >
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
+      </div>
+    }>
       <BuscarPageInner />
     </Suspense>
   );

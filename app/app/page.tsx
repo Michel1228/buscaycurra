@@ -1,17 +1,10 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-/**
- * Dashboard — Flujo bloqueante de metamorfosis estilo videojuego.
- * Cada paso es un "nivel" que se desbloquea al completar el anterior.
- * 🥚 Registro → 🐛 Perfil → 📄 CV → 🔍 Buscar → 📧 Enviar → 🦋 Metamorfosis
- */
-
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import LogoGusano from "@/components/LogoGusano";
 import EvolucionUsuario from "@/components/EvolucionUsuario";
 import RevelacionMariposa from "@/components/RevelacionMariposa";
 import AvatarMariposa, { MARIPOSAS_AVATARES } from "@/components/AvatarMariposa";
@@ -25,70 +18,23 @@ interface EnvioCV {
   creado_en: string;
 }
 
-// ── Niveles del juego (flujo bloqueante) ────────────────────
-const niveles = [
-  {
-    id: "perfil",
-    titulo: "Completa tu perfil",
-    desc: "Nombre, teléfono, LinkedIn",
-    icon: "👤",
-    href: "/app/perfil",
-    color: "#7ed56f",
-    emoji_logro: "🐛",
-    fase: "De huevo a oruga",
-  },
-  {
-    id: "cv",
-    titulo: "Crea tu CV",
-    desc: "La IA lo adapta por sector",
-    icon: "📄",
-    href: "/app/curriculum",
-    color: "#f0c040",
-    emoji_logro: "🐛",
-    fase: "Oruga creciendo",
-  },
-  {
-    id: "buscar",
-    titulo: "Busca ofertas",
-    desc: "Miles de empleos en España",
-    icon: "🔍",
-    href: "/app/buscar",
-    color: "#e07850",
-    emoji_logro: "🫘",
-    fase: "Formando capullo",
-  },
-  {
-    id: "enviar",
-    titulo: "Envía candidaturas",
-    desc: "Automático. Tú descansas.",
-    icon: "📧",
-    href: "/app/envios",
-    color: "#a070d0",
-    emoji_logro: "🦋",
-    fase: "Alas abriéndose",
-  },
-  {
-    id: "empresas",
-    titulo: "Busca empresas",
-    desc: "Encuentra contactos RRHH",
-    icon: "🏢",
-    href: "/app/empresas",
-    color: "#60a0d0",
-    emoji_logro: "🦋",
-    fase: "Volando alto",
-  },
+const ACCIONES_RAPIDAS = [
+  { href: "/app/perfil", icon: "👤", label: "Mi Perfil", desc: "Foto, datos y CV en un sitio", color: "#22c55e" },
+  { href: "/app/buscar", icon: "🔍", label: "Buscar ofertas", desc: "Encuentra trabajo en tu ciudad", color: "#3b82f6" },
+  { href: "/app/envios", icon: "📧", label: "Enviar CVs", desc: "Envío automático a empresas", color: "#f59e0b" },
+  { href: "/app/pipeline", icon: "📊", label: "Pipeline", desc: "Seguimiento de candidaturas", color: "#a855f7" },
 ];
 
 const colorEstado: Record<string, { bg: string; text: string }> = {
-  pendiente: { bg: "#f0c04020", text: "#f0c040" },
-  enviado: { bg: "#7ed56f20", text: "#7ed56f" },
-  visto: { bg: "#a070d020", text: "#a070d0" },
-  respuesta: { bg: "#60d09020", text: "#60d090" },
+  pendiente: { bg: "rgba(245,158,11,0.12)", text: "#f59e0b" },
+  enviado: { bg: "rgba(34,197,94,0.12)", text: "#22c55e" },
+  visto: { bg: "rgba(168,85,247,0.12)", text: "#a855f7" },
+  respuesta: { bg: "rgba(59,130,246,0.12)", text: "#3b82f6" },
 };
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [nombre, setNombre] = useState("Usuario");
+  const [nombre, setNombre] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [evolucion, setEvolucion] = useState({
@@ -109,12 +55,13 @@ export default function DashboardPage() {
       setUserId(user.id);
 
       const { data: perfil } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, linkedin_url, trabajo_encontrado")
+        .select("full_name, phone, linkedin_url, trabajo_encontrado, avatar_id, foto_url")
         .eq("id", user.id).single();
 
       setNombre(perfil?.full_name || "");
+      setAvatarId(perfil?.avatar_id || null);
+      setFotoUrl(perfil?.foto_url || null);
 
-      // Check CV in Storage (bucket 'cvs')
       let cvExists = false;
       try {
         const session = (await getSupabaseBrowser().auth.getSession()).data.session;
@@ -130,7 +77,6 @@ export default function DashboardPage() {
         }
       } catch { /* ignore */ }
 
-      // Try cv_sends table (may not exist yet — wrap in try/catch)
       let enviosData: EnvioCV[] = [];
       let todosEnvios: { empresa: string; estado: string; creado_en: string }[] = [];
       try {
@@ -175,274 +121,118 @@ export default function DashboardPage() {
     setMostrarRevelacion(true);
   };
 
-  // Calcular qué niveles están desbloqueados
-  const perfilCompleto = evolucion.tieneNombre && evolucion.tieneTelefono;
-  const tieneCv = evolucion.tieneCv;
-  const haEnviado = evolucion.cvsEnviados > 0;
-
-  const nivelesEstado = niveles.map(n => {
-    switch (n.id) {
-      case "perfil": return { ...n, desbloqueado: true, completado: perfilCompleto };
-      case "cv": return { ...n, desbloqueado: perfilCompleto, completado: tieneCv };
-      case "buscar": return { ...n, desbloqueado: tieneCv, completado: tieneCv };
-      case "enviar": return { ...n, desbloqueado: tieneCv, completado: haEnviado };
-      case "empresas": return { ...n, desbloqueado: tieneCv, completado: haEnviado };
-      default: return { ...n, desbloqueado: false, completado: false };
-    }
-  });
-
   if (cargando) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-16" style={{ background: "#1a1a12" }}>
+      <div className="min-h-screen flex items-center justify-center pt-16" style={{ background: "#0f1117" }}>
         <div className="text-center">
-          <div className="animate-float mb-4"><LogoGusano size={60} animated /></div>
-          <p className="text-sm" style={{ color: "#706a58" }}>Cargando tu aventura...</p>
+          <div className="animate-spin rounded-full h-10 w-10 mx-auto mb-4" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
+          <p className="text-sm" style={{ color: "#64748b" }}>Cargando...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative pt-16" style={{ background: "linear-gradient(180deg, #0f1a0a, #1a1a12 20%, #1a1a12 80%, #15200e)" }}>
-      {/* Revelación */}
+    <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       {mostrarRevelacion && userId && (
         <RevelacionMariposa userId={userId} onContinuar={() => setMostrarRevelacion(false)} />
       )}
 
-      {/* Fondo */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div style={{ position: "absolute", top: "5%", left: "5%", width: "40%", height: "40%",
-          background: "radial-gradient(ellipse, rgba(126,213,111,0.05) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", bottom: "10%", right: "5%", width: "35%", height: "35%",
-          background: "radial-gradient(ellipse, rgba(240,192,64,0.03) 0%, transparent 70%)" }} />
-      </div>
+      <div className="max-w-5xl mx-auto px-4 py-8">
 
-      <div className="max-w-5xl mx-auto px-4 py-8 relative z-10">
-
-        {/* ── Saludo ──────────────────────────────────────── */}
-        {/* Avatar picker overlay */}
-        {showAvatarPicker && (
-          <div className="card-game p-4 mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold" style={{ color: "#f0c040" }}>🦋 Elige tu mariposa</h3>
-              <button onClick={() => setShowAvatarPicker(false)}
-                className="w-6 h-6 rounded-full flex items-center justify-center text-xs"
-                style={{ background: "rgba(42,42,30,0.8)", color: "#706a58" }}>✖</button>
-            </div>
-            <AvatarMariposa
-              selected={avatarId}
-              onSelect={(id) => { setAvatarId(id); setShowAvatarPicker(false); }}
-              fotoUrl={fotoUrl}
-            />
-          </div>
-        )}
-
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setShowAvatarPicker(!showAvatarPicker)}
-              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition hover:scale-105"
-              style={{
-                background: "linear-gradient(135deg, rgba(126,213,111,0.15), rgba(92,184,72,0.1))",
-                border: "2px solid rgba(126,213,111,0.2)",
-              }}>
-              {fotoUrl ? (
-                <img src={fotoUrl} alt="" className="w-full h-full rounded-2xl object-cover" />
-              ) : (
-                <span className="text-2xl">
-                  {avatarId ? (MARIPOSAS_AVATARES.find(m => m.id === avatarId)?.emoji || "🦋") : "🦋"}
-                </span>
-              )}
-            </button>
-            <div>
-              {nombre ? (
-                <h1 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>
-                  Bienvenido, <span style={{ color: "#7ed56f" }}>{nombre}</span>
-                </h1>
-              ) : (
-                <h1 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>
-                  Bienvenido a <span style={{ color: "#7ed56f" }}>BuscayCurra</span>
-                </h1>
-              )}
-              <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>
-                {nombre ? "Tu camino de metamorfosis 🐛→🦋" : "Toca la mariposa para elegir avatar"}
-              </p>
-            </div>
+        {/* ── Header con perfil ──────────────────────────────────────── */}
+        <div className="flex items-center gap-4 mb-8">
+          <button onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+            className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition hover:scale-105"
+            style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.1))", border: "2px solid rgba(34,197,94,0.2)" }}>
+            {fotoUrl ? (
+              <img src={fotoUrl} alt="" className="w-full h-full rounded-xl object-cover" />
+            ) : (
+              <span className="text-2xl">{avatarId ? (MARIPOSAS_AVATARES.find(m => m.id === avatarId)?.emoji || "🦋") : "👤"}</span>
+            )}
+          </button>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>
+              {nombre ? `Hola, ${nombre}` : "Bienvenido a BuscayCurra"}
+            </h1>
+            <p className="text-xs" style={{ color: "#64748b" }}>
+              {nombre ? "Tu panel de control" : "Completa tu perfil para empezar"}
+            </p>
           </div>
           <EvolucionUsuario {...evolucion} compact />
         </div>
 
-        {/* ── Stats rápidas ───────────────────────────────── */}
+        {/* Avatar picker */}
+        {showAvatarPicker && (
+          <div className="card-game p-4 mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold" style={{ color: "#f59e0b" }}>Elige tu avatar</h3>
+              <button onClick={() => setShowAvatarPicker(false)} className="w-6 h-6 rounded-full flex items-center justify-center text-xs" style={{ background: "#252836", color: "#64748b" }}>✕</button>
+            </div>
+            <AvatarMariposa selected={avatarId} onSelect={(id) => { setAvatarId(id); setShowAvatarPicker(false); }} fotoUrl={fotoUrl} />
+          </div>
+        )}
+
+        {/* ── Stats rápidas ─────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           {[
-            { label: "Hoy", valor: stats.hoyCvs, icon: "📧", color: "#7ed56f" },
-            { label: "Semana", valor: stats.semanaCvs, icon: "📅", color: "#f0c040" },
-            { label: "Empresas", valor: stats.empresas, icon: "🏢", color: "#e07850" },
-            { label: "Respuestas", valor: `${stats.tasaRespuesta}%`, icon: "📈", color: "#a070d0" },
+            { label: "Hoy", valor: stats.hoyCvs, icon: "📧", color: "#22c55e" },
+            { label: "Semana", valor: stats.semanaCvs, icon: "📅", color: "#3b82f6" },
+            { label: "Empresas", valor: stats.empresas, icon: "🏢", color: "#f59e0b" },
+            { label: "Respuestas", valor: `${stats.tasaRespuesta}%`, icon: "📈", color: "#a855f7" },
           ].map(s => (
             <div key={s.label} className="card-game p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">{s.icon}</span>
-                <span className="text-xs" style={{ color: "#706a58" }}>{s.label}</span>
+              <div className="flex items-center gap-2 mb-2">
+                <span style={{ color: s.color }}>{s.icon}</span>
+                <span className="text-xs" style={{ color: "#64748b" }}>{s.label}</span>
               </div>
-              <div className="text-xl font-bold" style={{ color: s.color }}>{s.valor}</div>
+              <div className="text-2xl font-bold" style={{ color: s.color }}>{s.valor}</div>
             </div>
           ))}
         </div>
 
-        {/* ── NIVELES — El camino de la metamorfosis ──────── */}
-        <div className="mb-8">
-          <h2 className="text-lg font-bold mb-4" style={{ color: "#f0ebe0" }}>
-            🎮 Tu camino
-          </h2>
-          <div className="space-y-3">
-            {nivelesEstado.map((nivel, i) => {
-              const bloqueado = !nivel.desbloqueado;
-              return (
-                <div key={nivel.id} className="relative">
-                  {/* Línea conectora */}
-                  {i > 0 && (
-                    <div className="absolute -top-3 left-7 w-0.5 h-3"
-                      style={{ background: nivel.desbloqueado ? nivel.color + "40" : "#3d3c30" }} />
-                  )}
-
-                  {bloqueado ? (
-                    /* NIVEL BLOQUEADO */
-                    <div className="card-game p-5 flex items-center gap-4 opacity-40 cursor-not-allowed">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
-                        style={{ background: "#2a2a1e", border: "1.5px solid #3d3c30" }}>
-                        🔒
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-sm" style={{ color: "#706a58" }}>{nivel.titulo}</p>
-                        <p className="text-xs" style={{ color: "#504a3a" }}>
-                          Completa el paso anterior para desbloquear
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    /* NIVEL DESBLOQUEADO */
-                    <Link href={nivel.href}>
-                      <div className="card-game p-5 flex items-center gap-4 cursor-pointer group"
-                        style={nivel.completado ? { borderColor: nivel.color + "30" } : {}}>
-                        {/* Icono del nivel */}
-                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl relative transition-transform group-hover:scale-110"
-                          style={{
-                            background: `${nivel.color}15`,
-                            border: `1.5px solid ${nivel.color}30`,
-                            boxShadow: nivel.completado ? `0 0 16px ${nivel.color}20` : "none",
-                          }}>
-                          {nivel.icon}
-                          {/* Check de completado */}
-                          {nivel.completado && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
-                              style={{ background: nivel.color, color: "#1a1a12" }}>
-                              ✓
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-sm" style={{ color: "#f0ebe0" }}>{nivel.titulo}</p>
-                            {nivel.completado && (
-                              <span className="badge-game text-[10px]"
-                                style={{ background: `${nivel.color}20`, color: nivel.color, border: `1px solid ${nivel.color}30` }}>
-                                {nivel.emoji_logro} {nivel.fase}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs mt-0.5" style={{ color: "#b0a890" }}>{nivel.desc}</p>
-                        </div>
-
-                        {/* Flecha */}
-                        <span className="text-lg transition-transform group-hover:translate-x-1" style={{ color: nivel.color }}>
-                          →
-                        </span>
-                      </div>
-                    </Link>
-                  )}
+        {/* ── Acciones rápidas ──────────────────────────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          {ACCIONES_RAPIDAS.map(a => (
+            <Link key={a.href} href={a.href}>
+              <div className="card-game p-4 hover:scale-[1.02] transition-transform cursor-pointer h-full">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl mb-3"
+                  style={{ background: `${a.color}15`, border: `1px solid ${a.color}25` }}>
+                  {a.icon}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── Panel inferior: Evolución + Trabajo encontrado ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {/* Evolución completa */}
-          <EvolucionUsuario {...evolucion} />
-
-          {/* Botón trabajo encontrado */}
-          {!evolucion.trabajoEncontrado ? (
-            <div className="card-game p-6 flex flex-col items-center justify-center gap-4 text-center"
-              style={{ borderColor: "#7ed56f20" }}>
-              <div className="text-4xl animate-float">🎉</div>
-              <div>
-                <p className="font-bold text-lg" style={{ color: "#f0ebe0" }}>¿Ya encontraste trabajo?</p>
-                <p className="text-sm mt-1" style={{ color: "#b0a890" }}>
-                  Revela tu mariposa única. 50 especies esperan.
-                </p>
+                <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>{a.label}</p>
+                <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>{a.desc}</p>
               </div>
-              <button onClick={handleTrabajo} className="btn-game w-full">
-                🦋 ¡He encontrado trabajo!
-              </button>
-            </div>
-          ) : (
-            <div className="card-game p-6 flex flex-col items-center justify-center gap-3 text-center"
-              style={{ borderColor: "#f0c04030" }}>
-              <div className="text-4xl">✨</div>
-              <p className="font-bold text-lg" style={{ color: "#f0c040" }}>¡Metamorfosis completa!</p>
-              <p className="text-sm" style={{ color: "#b0a890" }}>Tu mariposa ya fue revelada.</p>
-              {userId && (
-                <button onClick={() => setMostrarRevelacion(true)}
-                  className="btn-game-outline text-sm">
-                  Ver mi mariposa →
-                </button>
-              )}
-            </div>
-          )}
+            </Link>
+          ))}
         </div>
 
-        {/* ── Últimos envíos ──────────────────────────────── */}
+        {/* ── Últimos envíos ────────────────────────────────────────── */}
         <div className="card-game overflow-hidden">
-          <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid #3d3c3030" }}>
-            <h2 className="font-bold" style={{ color: "#f0ebe0" }}>Últimos envíos</h2>
-            <Link href="/app/envios" className="text-xs font-medium hover:underline" style={{ color: "#7ed56f" }}>
-              Ver todos →
-            </Link>
+          <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid #2d3142" }}>
+            <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Últimos envíos</h2>
+            <Link href="/app/envios" className="text-xs font-medium hover:underline" style={{ color: "#22c55e" }}>Ver todos →</Link>
           </div>
 
           {ultimosEnvios.length === 0 ? (
-            <div className="px-6 py-12 text-center">
+            <div className="px-5 py-10 text-center">
               <p className="text-3xl mb-3">📭</p>
-              <p className="text-sm" style={{ color: "#706a58" }}>Aún no has enviado ningún CV</p>
-              {tieneCv && (
-                <Link href="/app/envios" className="btn-game inline-block mt-4 text-sm">
-                  Empezar a enviar
-                </Link>
-              )}
+              <p className="text-sm" style={{ color: "#64748b" }}>Aún no has enviado ningún CV</p>
+              <Link href="/app/envios" className="btn-game inline-block mt-4 text-xs">Empezar a enviar</Link>
             </div>
           ) : (
             <div>
               {ultimosEnvios.map((envio) => {
                 const est = colorEstado[envio.estado] || colorEstado.pendiente;
                 return (
-                  <div key={envio.id} className="px-6 py-3 flex items-center justify-between gap-4"
-                    style={{ borderBottom: "1px solid #2a2a1e" }}>
+                  <div key={envio.id} className="px-5 py-3 flex items-center justify-between gap-4" style={{ borderBottom: "1px solid #252836" }}>
                     <div className="min-w-0">
-                      <p className="font-medium text-sm truncate" style={{ color: "#f0ebe0" }}>
-                        {envio.puesto || "Candidatura espontánea"}
-                      </p>
-                      <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>{envio.empresa}</p>
+                      <p className="font-medium text-sm truncate" style={{ color: "#f1f5f9" }}>{envio.puesto || "Candidatura espontánea"}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{envio.empresa}</p>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
-                        style={{ background: est.bg, color: est.text }}>
-                        {envio.estado}
-                      </span>
-                      <span className="text-[10px]" style={{ color: "#504a3a" }}>
-                        {new Date(envio.creado_en).toLocaleDateString("es-ES")}
-                      </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: est.bg, color: est.text }}>{envio.estado}</span>
+                      <span className="text-[10px]" style={{ color: "#475569" }}>{new Date(envio.creado_en).toLocaleDateString("es-ES")}</span>
                     </div>
                   </div>
                 );
@@ -450,6 +240,30 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* ── Trabajo encontrado ────────────────────────────────────── */}
+        {!evolucion.trabajoEncontrado ? (
+          <div className="card-game p-6 mt-6 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¿Ya encontraste trabajo?</p>
+              <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Revela tu mariposa única</p>
+            </div>
+            <button onClick={handleTrabajo} className="btn-game text-xs">🦋 ¡Lo encontré!</button>
+          </div>
+        ) : (
+          <div className="card-game p-6 mt-6 flex items-center justify-between gap-4" style={{ borderColor: "rgba(245,158,11,0.2)" }}>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">✨</span>
+              <div>
+                <p className="font-semibold text-sm" style={{ color: "#f59e0b" }}>¡Metamorfosis completa!</p>
+                <p className="text-xs" style={{ color: "#64748b" }}>Tu mariposa ya fue revelada</p>
+              </div>
+            </div>
+            {userId && (
+              <button onClick={() => setMostrarRevelacion(true)} className="btn-game-outline text-xs">Ver mi mariposa</button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

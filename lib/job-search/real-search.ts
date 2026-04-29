@@ -171,7 +171,7 @@ const POLIGONOS: Record<string, string[]> = {
 // ═══════════════════════════════════════════════════════════════════════════
 // API 1: JOOBLE — 162.000+ ofertas, agrega InfoJobs + Indeed + locales
 // ═══════════════════════════════════════════════════════════════════════════
-async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
+async function buscarJooble(puesto: string, ubicacion: string, limit = 50): Promise<OfertaReal[]> {
   const apiKey = process.env.JOOBLE_API_KEY;
   if (!apiKey) { console.warn("[Jooble] No API key"); return []; }
 
@@ -219,7 +219,7 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Prom
 // ═══════════════════════════════════════════════════════════════════════════
 // API 2: ADZUNA — Agregador multi-bolsa (300 calls/month)
 // ═══════════════════════════════════════════════════════════════════════════
-async function buscarAdzuna(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
+async function buscarAdzuna(puesto: string, ubicacion: string, limit = 50): Promise<OfertaReal[]> {
   const appId = process.env.ADZUNA_APP_ID;
   const apiKey = process.env.ADZUNA_APP_KEY;
   if (!appId || !apiKey) { console.warn("[Adzuna] No credentials"); return []; }
@@ -270,7 +270,7 @@ async function buscarAdzuna(puesto: string, ubicacion: string, limit = 20): Prom
 // ═══════════════════════════════════════════════════════════════════════════
 // API 3: CAREERJET — Red global de empleo
 // ═══════════════════════════════════════════════════════════════════════════
-async function buscarCareerjet(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
+async function buscarCareerjet(puesto: string, ubicacion: string, limit = 50): Promise<OfertaReal[]> {
   const apiKey = process.env.CAREERJET_API_KEY;
   if (!apiKey) { console.warn("[Careerjet] No API key"); return []; }
 
@@ -385,7 +385,7 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
 export async function buscarOfertasReales(
   puesto: string,
   ciudad: string,
-  limit = 50,
+  limit = 200,
 ): Promise<OfertaReal[]> {
   console.log(`[JobSearch] ═══ Buscando "${puesto}" en "${ciudad}" (limit: ${limit}) ═══`);
 
@@ -414,9 +414,9 @@ export async function buscarOfertasReales(
   } else {
     console.log("[JobSearch] Fase 1: Búsqueda paralela en 4 APIs (Jooble + Adzuna + Careerjet + LinkedIn)...");
     const [joobleRes, adzunaRes, careerjetRes, linkedinRes] = await Promise.allSettled([
-      buscarJooble(puesto, ciudad, 20),
-      buscarAdzuna(puesto, ciudad, 20),
-      buscarCareerjet(puesto, ciudad, 20),
+      buscarJooble(puesto, ciudad, 50),
+      buscarAdzuna(puesto, ciudad, 50),
+      buscarCareerjet(puesto, ciudad, 50),
       buscarLinkedIn(puesto, ciudad),
     ]);
 
@@ -447,7 +447,7 @@ export async function buscarOfertasReales(
       } else {
         console.log(`[JobSearch] Fase 2: keyword "${kw}" en "${ciudad}"`);
         const [a, li] = await Promise.allSettled([
-          buscarAdzuna(kw, ciudad, 10),
+          buscarAdzuna(kw, ciudad, 30),
           buscarLinkedIn(kw, ciudad),
         ]);
         const kwResults: OfertaReal[] = [];
@@ -471,7 +471,7 @@ export async function buscarOfertasReales(
         addResults(cCached, `📍 ${c.distancia}`);
       } else {
         console.log(`[JobSearch] Fase 3: "${puesto}" en "${c.nombre}" (${c.distancia})`);
-        const r = await buscarAdzuna(puesto, c.nombre, 10);
+        const r = await buscarAdzuna(puesto, c.nombre, 30);
         setCache(cCacheKey, r);
         addResults(r, `📍 ${c.distancia}`);
       }
@@ -494,7 +494,7 @@ export async function buscarOfertasReales(
     if (ca && ca.toLowerCase() !== ciudadLower) {
       console.log(`[JobSearch] Fase 5: "${puesto}" en "${ca}"`);
       const [a, li] = await Promise.allSettled([
-        buscarAdzuna(puesto, ca, 15),
+        buscarAdzuna(puesto, ca, 50),
         buscarLinkedIn(puesto, ca),
       ]);
       if (a.status === "fulfilled") addResults(a.value, `🗺️ ${ca}`);
@@ -506,7 +506,7 @@ export async function buscarOfertasReales(
   if (resultados.length < 15) {
     console.log(`[JobSearch] Fase 6: "${puesto}" en toda España`);
     const [a, li] = await Promise.allSettled([
-      buscarAdzuna(puesto, "España", 15),
+      buscarAdzuna(puesto, "España", 50),
       buscarLinkedIn(puesto, "Spain"),
     ]);
     if (a.status === "fulfilled") addResults(a.value, "🇪🇸 España");

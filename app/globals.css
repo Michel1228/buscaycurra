@@ -1,45 +1,47 @@
-/* app/globals.css — BuscayCurra "Metamorfosis" UI — Estilo videojuego elegante */
+/* app/globals.css — BuscayCurra "Professional" UI — Estilo limpio y realista */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Paleta "Bosque Encantado" — Verde + Marrón + Dorado ──────────────── */
+/* ── Paleta profesional ───────────────────────────────────────────────── */
 :root {
-  --color-fondo:       #1a1a12;
-  --color-fondo-alt:   #22211a;
-  --color-superficie:  #2a2a1e;
-  --color-superficie2: #33322a;
-  --color-borde:       #3d3c30;
-  --color-verde:       #7ed56f;
-  --color-verde-claro: #a8e6a1;
+  --color-fondo:       #0f1117;
+  --color-fondo-alt:   #161922;
+  --color-superficie:  #1e212b;
+  --color-superficie2: #252836;
+  --color-borde:       #2d3142;
+  --color-borde-hover: #3d4256;
+  --color-verde:       #22c55e;
+  --color-verde-claro: #4ade80;
   --color-verde-neon:  #00ff88;
-  --color-marron:      #8b6f47;
-  --color-marron-claro:#c4a265;
-  --color-dorado:      #f0c040;
-  --color-dorado-suave:#e8d48b;
-  --color-crema:       #f5f0e0;
-  --color-texto:       #f0ebe0;
-  --color-texto-sec:   #b0a890;
-  --color-texto-dim:   #706a58;
-  --sombra-card:       0 8px 32px rgba(0,0,0,0.3), 0 2px 8px rgba(126,213,111,0.08);
-  --sombra-boton:      0 4px 16px rgba(126,213,111,0.25);
-  --radio-xl:          1.5rem;
+  --color-azul:        #3b82f6;
+  --color-azul-claro:  #60a5fa;
+  --color-dorado:      #f59e0b;
+  --color-dorado-suave:#fbbf24;
+  --color-crema:       #e2e8f0;
+  --color-texto:       #f1f5f9;
+  --color-texto-sec:   #94a3b8;
+  --color-texto-dim:   #64748b;
+  --sombra-card:       0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+  --sombra-card-hover: 0 4px 12px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.3);
+  --sombra-boton:      0 2px 8px rgba(34,197,94,0.25);
+  --radio-xl:          1rem;
   --radio-pill:        9999px;
 }
 
-/* ── Fuente Nunito (redondeada, coqueta) ────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+/* ── Fuente Inter (profesional) ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ── Base ────────────────────────────────────────────────────────────────── */
+/* ── Base ──────────────────────────────────────────────────────────────── */
 body {
   background: var(--color-fondo);
   color: var(--color-texto);
-  font-family: 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   @apply antialiased;
 }
 
-/* ── Inputs bonitos, claros y redondeados ────────────────────────────────── */
+/* ── Inputs profesionales ──────────────────────────────────────────────── */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -49,268 +51,139 @@ input[type="search"],
 input[type="number"],
 textarea,
 select {
-  background: #111111 !important;
-  color: #ffffff !important;
-  border: 2px solid rgba(126, 213, 111, 0.25) !important;
-  border-radius: 14px !important;
-  padding: 12px 16px !important;
-  font-family: 'Nunito', sans-serif !important;
+  background: #0f1117 !important;
+  color: #f1f5f9 !important;
+  border: 1.5px solid #2d3142 !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  font-family: 'Inter', sans-serif !important;
   font-size: 14px !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
+  font-weight: 400 !important;
+  transition: all 0.2s ease !important;
   outline: none !important;
 }
 input:focus, textarea:focus, select:focus {
-  border-color: rgba(126, 213, 111, 0.5) !important;
-  box-shadow: 0 0 0 3px rgba(126, 213, 111, 0.12), 0 0 20px rgba(126, 213, 111, 0.08) !important;
-  background: #0a0a0a !important;
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.1) !important;
+  background: #0a0c10 !important;
 }
 input::placeholder, textarea::placeholder {
-  color: #888888 !important;
+  color: #475569 !important;
   font-weight: 400 !important;
 }
-/* Autofill oscuro: evita el fondo amarillo de Chrome en campos pre-rellenados */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #111111 inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  caret-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px #0f1117 inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  caret-color: #f1f5f9 !important;
   transition: background-color 9999s ease-in-out 0s !important;
 }
 label {
-  font-family: 'Nunito', sans-serif;
-  font-weight: 600;
-  color: #b0a890;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
-/* ── Scrollbar bonita ────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 8px; }
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--color-fondo); }
-::-webkit-scrollbar-thumb { background: var(--color-borde); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-marron); }
+::-webkit-scrollbar-thumb { background: var(--color-borde); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-borde-hover); }
 
-/* ── Glassmorphism cálido ────────────────────────────────────────────────── */
+/* ── Glassmorphism ─────────────────────────────────────────────────────── */
 .glass-warm {
-  background: rgba(42, 42, 30, 0.7);
+  background: rgba(22, 25, 34, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(126, 213, 111, 0.12);
+  border: 1px solid rgba(45, 49, 66, 0.6);
 }
 
-/* ── Tarjetas con brillo suave ───────────────────────────────────────────── */
+/* ── Tarjetas profesionales ────────────────────────────────────────────── */
 .card-game {
-  background: linear-gradient(145deg, #2a2a1e 0%, #22211a 100%);
-  border: 2px solid rgba(126, 213, 111, 0.2);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
   border-radius: var(--radio-xl);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(126,213,111,0.1), inset 0 1px 0 rgba(126,213,111,0.05);
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: var(--sombra-card);
+  transition: all 0.25s ease;
 }
 .card-game:hover {
-  border-color: rgba(126, 213, 111, 0.45);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 4px 20px rgba(126,213,111,0.18), inset 0 1px 0 rgba(126,213,111,0.08);
-  transform: translateY(-4px);
+  border-color: var(--color-borde-hover);
+  box-shadow: var(--sombra-card-hover);
+  transform: translateY(-2px);
 }
 
-/* ── Botón principal (estilo juego) ──────────────────────────────────────── */
+/* ── Botón principal ───────────────────────────────────────────────────── */
 .btn-game {
-  background: linear-gradient(135deg, #7ed56f 0%, #5cb848 100%);
-  color: #1a1a12;
-  font-weight: 700;
-  border-radius: var(--radio-pill);
-  padding: 0.85rem 2rem;
-  box-shadow: var(--sombra-boton), inset 0 1px 0 rgba(255,255,255,0.2);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  box-shadow: var(--sombra-boton);
+  transition: all 0.2s ease;
   border: none;
   cursor: pointer;
   position: relative;
   overflow: hidden;
 }
-.btn-game::after {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%; width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-  transition: left 0.5s;
-}
-.btn-game:hover::after {
-  left: 100%;
-}
 .btn-game:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 24px rgba(126,213,111,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(34,197,94,0.35);
 }
 .btn-game:active {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(0);
 }
 
-/* ── Botón secundario ────────────────────────────────────────────────────── */
+/* ── Botón secundario ──────────────────────────────────────────────────── */
 .btn-game-outline {
   background: transparent;
   color: var(--color-verde-claro);
-  font-weight: 600;
-  border: 2px solid rgba(126, 213, 111, 0.3);
-  border-radius: var(--radio-pill);
-  padding: 0.85rem 2rem;
-  transition: all 0.3s;
+  font-weight: 500;
+  border: 1.5px solid rgba(34, 197, 94, 0.3);
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.2s ease;
   cursor: pointer;
 }
 .btn-game-outline:hover {
   border-color: var(--color-verde);
-  background: rgba(126, 213, 111, 0.08);
-  transform: translateY(-2px);
+  background: rgba(34, 197, 94, 0.08);
 }
 
-/* ── Mascota flotante (oruga en esquina) ─────────────────────────────────── */
-.mascota-flotante {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 50;
-  animation: mascota-bounce 3s ease-in-out infinite;
-  filter: drop-shadow(0 4px 12px rgba(126,213,111,0.3));
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-.mascota-flotante:hover {
-  transform: scale(1.15) rotate(-5deg);
-}
-
-/* ── Badge/Pill ──────────────────────────────────────────────────────────── */
+/* ── Badge/Pill ────────────────────────────────────────────────────────── */
 .badge-game {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.3rem 0.8rem;
+  padding: 0.25rem 0.75rem;
   border-radius: var(--radio-pill);
   font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 .badge-verde {
-  background: rgba(126,213,111,0.15);
-  color: #7ed56f;
-  border: 1px solid rgba(126,213,111,0.25);
+  background: rgba(34,197,94,0.12);
+  color: #22c55e;
+  border: 1px solid rgba(34,197,94,0.2);
 }
 .badge-dorado {
-  background: rgba(240,192,64,0.15);
-  color: #f0c040;
-  border: 1px solid rgba(240,192,64,0.25);
+  background: rgba(245,158,11,0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245,158,11,0.2);
 }
 
-/* ── Partículas de fondo (hojas flotando) ────────────────────────────────── */
-.leaf-particle {
-  position: fixed;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.15;
-  animation: leaf-fall linear infinite;
-}
-
-/* ── Separador decorativo ────────────────────────────────────────────────── */
-.divider-forest {
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--color-verde) 30%, var(--color-dorado) 70%, transparent);
-  border: none;
-  border-radius: 2px;
-  opacity: 0.3;
-}
-
-/* ═══════ KEYFRAMES ═══════════════════════════════════════════════════════ */
-
-@keyframes mascota-bounce {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  30%      { transform: translateY(-8px) rotate(2deg); }
-  60%      { transform: translateY(-4px) rotate(-1deg); }
-}
-
-@keyframes worm-wiggle {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25%      { transform: translateY(-3px) rotate(2deg); }
-  75%      { transform: translateY(3px) rotate(-2deg); }
-}
-
-@keyframes worm-crawl {
-  0%   { transform: translateX(-120%) scaleX(1); }
-  45%  { transform: translateX(0%) scaleX(1); }
-  50%  { transform: translateX(0%) scaleX(0.8); }
-  55%  { transform: translateX(0%) scaleX(1); }
-  100% { transform: translateX(120%) scaleX(1); }
-}
-
-@keyframes cocoon-form {
-  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
-  50%  { transform: scale(0.6) rotate(10deg); opacity: 0.9; }
-  100% { transform: scale(0.4) rotate(0deg); opacity: 0; }
-}
-
-@keyframes cocoon-show {
-  0%   { transform: scale(0.2); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes butterfly-emerge {
-  0%   { transform: scale(0.3) translateY(20px); opacity: 0; }
-  60%  { transform: scale(1.05) translateY(-5px); opacity: 1; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-
-@keyframes butterfly-fly-up {
-  0%   { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(-200px) scale(0.3); opacity: 0; }
-}
-
-@keyframes wing-flap {
-  0%, 100% { transform: scaleX(1); }
-  50%      { transform: scaleX(0.4); }
-}
-
-@keyframes title-appear {
-  0%   { opacity: 0; transform: translateY(30px) scale(0.9); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes neon-pulse {
-  0%, 100% { text-shadow: 0 0 8px #7ed56f, 0 0 20px #7ed56f; }
-  50%      { text-shadow: 0 0 20px #7ed56f, 0 0 40px #7ed56f; }
-}
-
-@keyframes glow-pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px #7ed56f); }
-  50%      { filter: drop-shadow(0 0 12px #7ed56f) drop-shadow(0 0 24px #5cb848); }
-}
-
-@keyframes progress-bar-glow {
-  0%, 100% { box-shadow: 0 0 6px #7ed56f; }
-  50%      { box-shadow: 0 0 14px #7ed56f, 0 0 24px #5cb848; }
-}
-
-@keyframes level-up-burst {
-  0%   { transform: scale(1); opacity: 1; }
-  50%  { transform: scale(1.5); opacity: 0.7; }
-  100% { transform: scale(0); opacity: 0; }
-}
-
-@keyframes particle-float {
-  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 1; }
-  100% { transform: translateY(-60px) translateX(var(--px, 0px)) scale(0); opacity: 0; }
-}
-
-@keyframes leaf-fall {
-  0%   { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-  10%  { opacity: 0.15; }
-  90%  { opacity: 0.15; }
-  100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
-}
+/* ═══════ KEYFRAMES ══════════════════════════════════════════════════════ */
 
 @keyframes float-gentle {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-12px); }
+  50%      { transform: translateY(-8px); }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(40px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -324,18 +197,13 @@ label {
   100% { background-position: 200% 0; }
 }
 
-/* ── Clases de utilidad ──────────────────────────────────────────────────── */
-.animate-worm-wiggle   { animation: worm-wiggle 1.2s ease-in-out infinite; }
-.animate-wing-flap     { animation: wing-flap 0.6s ease-in-out infinite; }
-.animate-neon-pulse    { animation: neon-pulse 2s ease-in-out infinite; }
-.animate-glow-pulse    { animation: glow-pulse 2s ease-in-out infinite; }
-.animate-progress-glow { animation: progress-bar-glow 2s ease-in-out infinite; }
+/* ── Clases de utilidad ────────────────────────────────────────────────── */
 .animate-float         { animation: float-gentle 3s ease-in-out infinite; }
-.animate-slide-up      { animation: slide-up 0.8s ease-out forwards; }
-.animate-fade-in       { animation: fade-in 0.6s ease-out forwards; }
+.animate-slide-up      { animation: slide-up 0.5s ease-out forwards; }
+.animate-fade-in       { animation: fade-in 0.4s ease-out forwards; }
 .animate-shimmer       { animation: shimmer 2s linear infinite; background-size: 200% 100%; }
 
-/* ── Delay helpers ───────────────────────────────────────────────────────── */
+/* ── Delay helpers ─────────────────────────────────────────────────────── */
 .delay-100 { animation-delay: 0.1s; }
 .delay-200 { animation-delay: 0.2s; }
 .delay-300 { animation-delay: 0.3s; }

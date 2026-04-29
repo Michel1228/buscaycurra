@@ -7,6 +7,8 @@
  *  - "entrevista": guía paso a paso para crear CV
  *  - "buscar": busca ofertas y ofrece enviar CV
  *  - "enviar": trigger de envío automático de CV a ofertas
+ *  - "cv_mejorado": devuelve CV en formato limpio profesional
+ *  - "carta_recomendacion": genera carta de recomendación adaptada por empresa
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -31,6 +33,8 @@ CAPACIDADES (dile al usuario que puede hacer todo esto contigo):
 5. 📧 ENVIAR CVs AUTOMÁTICO — nuestro FUERTE: envías su CV a empresas automáticamente
 6. 🎯 PREPARAR ENTREVISTA — simulas preguntas de entrevista
 7. ✉️ CARTA DE PRESENTACIÓN — generas una personalizada
+8. 📄 CV MEJORADO — devuelves el CV en formato limpio y profesional
+9. 📝 CARTA DE RECOMENDACIÓN — generas carta adaptada para cada empresa
 
 FLUJO DE BÚSQUEDA Y ENVÍO (nuestro diferencial):
 Cuando el usuario quiere buscar trabajo:
@@ -39,6 +43,22 @@ Cuando el usuario quiere buscar trabajo:
 3. Responde con: "🔍 Buscando ofertas de [puesto] en [ciudad]..."
 4. Luego: "He encontrado X ofertas. ¿Quieres que envíe tu CV automáticamente a todas?"
 5. Si dice sí: "📧 ¡Listo! Enviando tu CV a X empresas. Te avisaré cuando haya respuestas. ¡A esperar buenas noticias! 🦋"
+
+CV MEJORADO:
+Cuando el usuario pide mejorar su CV o ver su CV mejorado:
+1. Genera un CV en formato limpio y profesional
+2. Estructura: Datos personales, Perfil profesional, Experiencia, Formación, Habilidades, Idiomas
+3. Usa formato markdown limpio con emojis como separadores
+4. Adapta el perfil profesional al sector del usuario
+5. Destaca logros cuantificables cuando sea posible
+
+CARTA DE RECOMENDACIÓN:
+Cuando el usuario pide una carta de recomendación o carta para una empresa:
+1. Pregunta el nombre de la empresa y el puesto
+2. Genera una carta personalizada adaptada a esa empresa
+3. Menciona por qué el usuario encaja en esa empresa específica
+4. Incluye datos del CV del usuario cuando estén disponibles
+5. Formato: Saludo, Introducción, Por qué encajo, Cierre profesional
 
 FOTO DE CV:
 Si preguntan sobre foto, da estos prompts EXACTOS:
@@ -80,16 +100,80 @@ Un mensaje corto, sincero y calido. Que se tranquilice. Que sienta que lleva ven
 
 Usa emojis con moderacion. Formato markdown. Tono: mentor cercano que te conoce y te apoya.`;
 
+const CV_MEJORADO_PROMPT = `Eres un experto en RRHH y redacción de CVs profesionales.
+Genera un CV mejorado en formato limpio y profesional usando markdown.
+
+ESTRUCTURA OBLIGATORIA:
+# [Nombre Completo]
+📞 [Teléfono] | ✉ [Email] | 📍 [Ciudad]
+
+## 🎯 Perfil Profesional
+[2-3 frases impactantes sobre el perfil, adaptadas al sector. Destaca años de experiencia y fortalezas principales]
+
+## 💼 Experiencia Laboral
+### [Puesto] — [Empresa] | [Fechas]
+- [Logro/responsabilidad cuantificable]
+- [Logro/responsabilidad cuantificable]
+- [Logro/responsabilidad cuantificable]
+
+[Repetir para cada experiencia]
+
+## 🎓 Formación
+- [Título] — [Centro] | [Año]
+
+## 🛠️ Habilidades
+[Lista de habilidades separadas por comas, ordenadas por relevancia]
+
+## 🌍 Idiomas
+- [Idioma]: [Nivel]
+
+REGLAS:
+- Usa verbos de acción al inicio de cada bullet (Gestioné, Lideré, Optimicé, Coordiné...)
+- Cuantifica siempre que sea posible (+20% ventas, 50 clientes/día, equipo de 5 personas...)
+- Adapta el perfil profesional al sector específico
+- Mantén un tono profesional pero cercano
+- NO inventes datos que no te den
+- Si faltan datos, deja espacios con [PENDIENTE]`;
+
+const CARTA_RECOMENDACION_PROMPT = `Eres un experto en redacción de cartas de presentación para empleo.
+Genera una carta de recomendación/presentación personalizada para una empresa específica.
+
+ESTRUCTURA:
+[CIUDAD], [FECHA]
+
+Estimado/a responsable de selección de [EMPRESA]:
+
+Me dirijo a usted en relación a la oferta de empleo de [PUESTO]. Con [X años] de experiencia en [SECTOR], estoy convencido/a de que puedo aportar valor a su equipo.
+
+[PÁRRAFO PERSONALIZADO: Por qué encajo en esta empresa específica. Menciona 2-3 puntos del CV que encajan con lo que busca la empresa.]
+
+[PÁRRAFO DE VALOR: Qué puedo aportar. Logros cuantificables. Habilidades clave.]
+
+Quedo a su disposición para una entrevista en la que podamos profundizar en cómo puedo contribuir al éxito de [EMPRESA].
+
+Atentamente,
+[NOMBRE]
+📞 [TELÉFONO]
+✉ [EMAIL]
+
+REGLAS:
+- Personaliza SIEMPRE para la empresa específica (no uses plantillas genéricas)
+- Menciona el nombre de la empresa al menos 3 veces
+- Adapta el tono al sector (más formal para banca, más cercano para startups)
+- Máximo 250 palabras
+- NO inventes datos que no te den
+- Si faltan datos del CV, usa información genérica del sector`;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { message, history = [], mode = "chat", searchQuery, searchCity, cvData } = body;
+    const { message, history = [], mode = "chat", searchQuery, searchCity, cvData, empresa, puesto } = body;
 
     if (!message) {
       return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
     }
 
-    // Modo preparacion de entrevista — respuesta especializada
+    // Modo preparacion de entrevista
     if (mode === "prep_entrevista") {
       const userPrompt = cvData
         ? `El usuario tiene una entrevista: "${message}". Sus datos de CV: ${cvData}`
@@ -115,10 +199,78 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply });
     }
 
-    // Detectar intención del mensaje — SIEMPRE se ejecuta primero
+    // Modo CV mejorado
+    if (mode === "cv_mejorado" || detectIntent(message) === "cv_mejorado") {
+      const userPrompt = cvData
+        ? `Mejora este CV y devuélvelo en formato limpio profesional:\n\n${cvData}`
+        : `El usuario quiere ver su CV mejorado. Pídele que proporcione sus datos o suba su CV.`;
+      
+      if (!cvData) {
+        return NextResponse.json({ 
+          reply: "📝 Para mejorar tu CV, necesito tus datos. Puedes:\n\n1. Subir tu CV en PDF desde 📄 Mi CV\n2. Contarme tus datos aquí (nombre, experiencia, formación...)\n\n¡Yo me encargo de hacerlo brillar! ✨",
+          action: "need_cv_data"
+        });
+      }
+
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: CV_MEJORADO_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 1200,
+        }),
+      });
+      const groqData = await groqRes.json() as { choices?: Array<{ message?: { content?: string } }> };
+      const reply = groqData.choices?.[0]?.message?.content || "No pude mejorar el CV. Intentalo de nuevo. 🐛";
+      return NextResponse.json({ reply, action: "cv_mejorado", format: "markdown" });
+    }
+
+    // Modo carta de recomendación
+    if (mode === "carta_recomendacion" || detectIntent(message) === "carta_recomendacion") {
+      if (!empresa || !puesto) {
+        return NextResponse.json({
+          reply: "✉️ Para generar una carta de recomendación personalizada, necesito:\n\n1. 🏢 Nombre de la empresa\n2. 🎯 Puesto al que aplicas\n\nDime estos datos y te hago una carta que destaque. 🐛",
+          action: "need_empresa_puesto"
+        });
+      }
+
+      const userPrompt = cvData
+        ? `Genera una carta de recomendación para ${empresa}, puesto de ${puesto}. Datos del candidato: ${cvData}`
+        : `Genera una carta de recomendación para ${empresa}, puesto de ${puesto}.`;
+
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: CARTA_RECOMENDACION_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 800,
+        }),
+      });
+      const groqData = await groqRes.json() as { choices?: Array<{ message?: { content?: string } }> };
+      const reply = groqData.choices?.[0]?.message?.content || "No pude generar la carta. Intentalo de nuevo. 🐛";
+      return NextResponse.json({ reply, action: "carta_recomendacion", empresa, puesto });
+    }
+
+    // Detectar intención del mensaje
     const intent = detectIntent(message);
     
-    // Búsqueda de trabajo → devolver ofertas con % match DIRECTAMENTE (sin IA)
+    // Búsqueda de trabajo
     if (intent === "buscar" || mode === "buscar") {
       const jobResults = await searchJobs(message, searchQuery, searchCity);
       if (jobResults) {
@@ -131,7 +283,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Enviar CV → flujo directo (sin IA)
+    // Enviar CV
     if (intent === "enviar") {
       return NextResponse.json({
         reply: "📧 ¡Perfecto! Para enviar tu CV automáticamente necesito:\n\n1. ✅ Que tengas tu CV subido (puedes hacerlo desde Perfil o aquí mismo)\n2. 🎯 El puesto y ciudad que buscas\n\n¿Tienes tu CV subido? Si no, ve a 👤 Perfil → Mi CV y súbelo. ¡Luego dime qué trabajo buscas y yo me encargo! 🐛→📧",
@@ -188,7 +340,13 @@ export async function POST(req: NextRequest) {
 /** Detecta la intención del usuario */
 function detectIntent(text: string): string {
   const t = text.toLowerCase();
-  // Búsqueda de trabajo — prioridad máxima, muchos patrones
+  // CV mejorado
+  if (t.includes("cv mejorado") || t.includes("mejora mi cv") || t.includes("mejorar cv") || t.includes("cv en formato") || t.includes("cv profesional")) return "cv_mejorado";
+  if (t.includes("mi cv") && (t.includes("mejorar") || t.includes("formato") || t.includes("limpio"))) return "cv_mejorado";
+  // Carta de recomendación
+  if (t.includes("carta de recomendacion") || t.includes("carta recomendacion") || t.includes("carta para") || t.includes("carta empresa") || t.includes("presentacion empresa")) return "carta_recomendacion";
+  if (t.includes("carta") && t.includes("presentacion") && t.includes("empresa")) return "carta_recomendacion";
+  // Búsqueda de trabajo
   if (t.includes("busco trabajo") || t.includes("buscar trabajo") || t.includes("busco empleo")) return "buscar";
   if (t.includes("busco") && (t.includes("de ") || t.includes("como "))) return "buscar";
   if (t.includes("trabajo de ") || t.includes("trabajo como ")) return "buscar";
@@ -217,13 +375,11 @@ async function searchJobs(message: string, query?: string, city?: string) {
     
     if (!searchTerm) return null;
 
-    // Buscar ofertas reales via la API interna
     let ofertas;
     try {
       const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
       ofertas = await buscarOfertasReales(searchTerm, searchCity || "España", 5);
     } catch {
-      // Fallback a generación local
       ofertas = generarOfertas(searchTerm, searchCity || "España");
     }
     
@@ -267,7 +423,6 @@ function generarOfertas(puesto: string, ciudad: string) {
 
 function extractJobTerm(text: string): string {
   const t = text.toLowerCase();
-  // Common patterns
   const patterns = [
     /busco?\s+(?:trabajo\s+(?:de|como)\s+)?(.+?)(?:\s+en\s+|$)/i,
     /(?:trabajo|empleo|puesto)\s+(?:de|como)\s+(.+?)(?:\s+en\s+|$)/i,
@@ -305,7 +460,11 @@ function getLocalReply(text: string, intent: string): string {
       return "🎯 ¡Preparemos tu entrevista!\n\nTop 5 preguntas:\n1. \"Háblame de ti\" → 2 min: experiencia + logros\n2. \"¿Por qué esta empresa?\" → Investiga antes\n3. \"Tu mayor debilidad\" → Algo real que mejoras\n4. \"¿Dónde en 5 años?\" → Crecimiento\n5. \"¿Por qué dejaste tu trabajo?\" → Siempre positivo\n\n¿Quieres que simulemos una entrevista? 🐛🎯";
     case "carta":
       return "✉️ Para generar tu carta de presentación:\n\nVe a 📄 CV → abajo verás \"Generar carta de presentación\"\nO dime el puesto y la empresa y te la hago aquí. 🐛";
+    case "cv_mejorado":
+      return "📝 Para mejorar tu CV, necesito tus datos. Puedes:\n\n1. Subir tu CV en PDF desde 📄 Mi CV\n2. Contarme tus datos aquí\n\n¡Yo me encargo de hacerlo brillar! ✨";
+    case "carta_recomendacion":
+      return "✉️ Para generar una carta de recomendación personalizada, necesito:\n\n1. 🏢 Nombre de la empresa\n2. 🎯 Puesto al que aplicas\n\nDime estos datos y te hago una carta que destaque. 🐛";
     default:
-      return "¡Hola! 🐛 Soy Gusi y puedo:\n\n📝 Crear tu CV paso a paso\n📸 Mejorar tu foto de CV\n🔍 Buscar ofertas de trabajo\n📧 **Enviar tu CV automáticamente** (¡NUESTRO FUERTE!)\n🎯 Preparar entrevistas\n✉️ Generar cartas de presentación\n\n¿Qué necesitas? 🦋";
+      return "¡Hola! 🐛 Soy Gusi y puedo:\n\n📝 Crear tu CV paso a paso\n📸 Mejorar tu foto de CV\n🔍 Buscar ofertas de trabajo\n📧 **Enviar tu CV automáticamente** (¡NUESTRO FUERTE!)\n🎯 Preparar entrevistas\n✉️ Generar cartas de presentación\n📄 **CV Mejorado** en formato limpio\n📝 **Carta de recomendación** adaptada por empresa\n\n¿Qué necesitas? 🦋";
   }
 }
