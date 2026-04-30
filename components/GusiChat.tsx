@@ -1,15 +1,17 @@
 "use client";
 
 /**
- * GusiChat v2 — Chatbot con historial de conversaciones y CV guardado
- * - Sidebar con conversaciones previas
- - CV guardado persistente
- * - Diseño limpio sin saturar
+ * GusiChat v3 — AGUSTÍN: Asistente Guzzi Ultra-Sofisticado
+ * - Interacción paso a paso (no manual, todo conversacional)
+ * - CV siempre en UNA SOLA PÁGINA
+ * - Integración total con todas las funciones
+ * - Plantilla de CV profesional estricta
  */
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import CVVisual from "./CVVisual";
 
 interface Oferta {
   id: string;
@@ -27,6 +29,7 @@ interface Mensaje {
   text: string;
   action?: string;
   jobs?: Oferta[];
+  cvData?: string;
 }
 
 interface Conversacion {
@@ -36,11 +39,23 @@ interface Conversacion {
   updated_at: string;
 }
 
+// Pasos de la entrevista para crear CV
+const PASOS_ENTREVISTA = [
+  { campo: "nombre", pregunta: "📝 ¡Vamos a crear tu CV!\n\n**Paso 1/8: ¿Cuál es tu nombre completo?**" },
+  { campo: "contacto", pregunta: "📞 **Paso 2/8: ¿Tu teléfono y email?**\n\n(Ej: 685 60 34 79, michel@email.com)" },
+  { campo: "ciudad", pregunta: "📍 **Paso 3/8: ¿En qué ciudad vives?**" },
+  { campo: "perfil", pregunta: "💼 **Paso 4/8: Cuéntame brevemente tu perfil profesional**\n\n(Ej: Profesional con 5 años en hostelería, rápido aprendizaje...)" },
+  { campo: "experiencia1", pregunta: "🏢 **Paso 5/8: Tu último trabajo**\n\nFormato: AÑOS — PUESTO en EMPRESA (Ubicación)\nEj: 2020-2023 — Camarero en Bar La Plaza (Madrid)" },
+  { campo: "experiencia2", pregunta: "🏢 **Paso 6/8: ¿Tienes otro trabajo anterior?**\n\n(Si no, escribe 'no')" },
+  { campo: "formacion", pregunta: "🎓 **Paso 7/8: Tus estudios o formación**\n\nFormato: TÍTULO — CENTRO (Ubicación)\nEj: ESO — Colegio Santa Teresa (Calahorra)" },
+  { campo: "aptitudes", pregunta: "🎯 **Paso 8/8: Tus 3-5 aptitudes principales**\n\n(Ej: Rápido aprendizaje, trabajo en equipo, fuerza física...)" },
+];
+
 const SUGERENCIAS = [
   { icon: "📧", label: "Enviar CV automático", msg: "__ENVIO_AUTO__", destacado: true },
   { icon: "📎", label: "Subir mi CV", msg: "__SUBIR_CV__", destacado: true },
   { icon: "📝", label: "Crear mi CV", msg: "__ENTREVISTA__" },
-  { icon: "🔍", label: "Buscar trabajo", msg: "Quiero buscar trabajo, ¿me ayudas?" },
+  { icon: "🔍", label: "Buscar trabajo", msg: "Quiero buscar trabajo" },
   { icon: "📸", label: "Mejorar mi foto", msg: "__FOTO_CV__" },
   { icon: "🎯", label: "Preparar entrevista", msg: "__PREP_ENTREVISTA__" },
   { icon: "📄", label: "Ver mi CV", msg: "__VER_CV__" },
@@ -59,55 +74,28 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   const [input, setInput] = useState("");
   const [cargando, setCargando] = useState(false);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(true);
+  
+  // Estados de modos
   const [modoEntrevista, setModoEntrevista] = useState(false);
+  const [pasoEntrevista, setPasoEntrevista] = useState(0);
+  const [datosCV, setDatosCV] = useState<Record<string, string>>({});
+  
   const [modoEnvio, setModoEnvio] = useState(false);
-  const queryEnvioRef = useRef<string>("");
-  const [modoPreparaEntrevista, setModoPreparaEntrevista] = useState(false);
-  const empresaEntrevistaRef = useRef<string>("");
+  const [pasoEnvio, setPasoEnvio] = useState(0);
+  const [datosEnvio, setDatosEnvio] = useState<Record<string, string>>({});
+  
+  // Estado para esperando confirmación de CV
+  const [esperandoConfirmacionCV, setEsperandoConfirmacionCV] = useState(false);
+  const [cvHtml, setCvHtml] = useState(null);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const lastParsedCV = useRef<Record<string, unknown> | null>(null);
   const router = useRouter();
 
-  async function handleFileUpload(file: File) {
-    if (!file.type.includes("pdf")) {
-      setMensajes((prev) => [...prev, { role: "gusi", text: "❌ Solo acepto archivos PDF. Intenta de nuevo." }]);
-      return;
-    }
-    setCargando(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/cv/extraer", { method: "POST", body: fd });
-      if (res.ok) {
-        const parsed = await res.json();
-        if (!parsed.error) {
-          lastParsedCV.current = parsed;
-          setCvGuardado(parsed);
-          // Guardar en BD
-          if (userId) {
-            await fetch("/api/gusi/cv", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId, cvData: parsed, cvText: JSON.stringify(parsed) }),
-            });
-          }
-          setMensajes((prev) => [...prev, { 
-            role: "gusi", 
-            text: `✅ **CV recibido y analizado.**\n\nHe extraído tus datos. ¿Quieres que:\n\n1. ✨ **Mejore tu CV** con IA\n2. 📧 **Envíe tu CV** a ofertas\n3. ✉️ **Genere una carta** de presentación\n\n¿Qué prefieres?` 
-          }]);
-        } else {
-          setMensajes((prev) => [...prev, { role: "gusi", text: "⚠️ No pude leer bien el PDF. ¿Puedes escribirme tus datos directamente?" }]);
-        }
-      }
-    } catch {
-      setMensajes((prev) => [...prev, { role: "gusi", text: "❌ Error al procesar el PDF. Intenta de nuevo o escribe tus datos." }]);
-    } finally {
-      setCargando(false);
-    }
-  }
+  // ============================================
+  // EFECTOS INICIALES
+  // ============================================
 
-  // Verificar login y cargar datos
   useEffect(() => {
     async function init() {
       try {
@@ -116,45 +104,45 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         
         if (user) {
           setUserId(user.id);
-          // Cargar conversaciones
           await cargarConversaciones(user.id);
-          // Cargar CV guardado
           await cargarCV(user.id);
           
           const esNuevo = user.created_at && (Date.now() - new Date(user.created_at).getTime()) < 30 * 60 * 1000;
           const nombre = (user.user_metadata?.full_name || "").split(" ")[0];
           const saludo = nombre ? `¡Hola, ${nombre}!` : "¡Hola!";
+          
           const msgBienvenida = esNuevo
-            ? `${saludo} 🐛 Soy Guzzi, tu asistente personal de empleo.\n\nEstoy aquí para que nunca más tengas que buscar trabajo solo. Yo trabajo, tú eliges.\n\n¿Por dónde empezamos?\n\n📄 **Tengo CV** → súbemelo y te busco las mejores ofertas\n📝 **No tengo CV** → te ayudo a crearlo en 5 minutos\n📧 Cuando esté listo, **envío tu candidatura automáticamente**\n\n¡Tú relájate, que yo me pongo a trabajar! 🐛→🦋`
+            ? `${saludo} 🐛 Soy Guzzi, tu asistente personal de empleo.\n\nEstoy aquí para que nunca más tengas que buscar trabajo solo. Yo trabajo, tú eliges.\n\n¿Por dónde empezamos?\n\n📄 **Tengo CV** → súbemelo y te busco las mejores ofertas\n📝 **No tengo CV** → te ayudo a crearlo en 5 minutos paso a paso\n📧 Cuando esté listo, **envío tu candidatura automáticamente**\n\n¡Tú relájate, que yo me pongo a trabajar! 🐛→🦋`
             : `${saludo} 🐛 ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Mejorar mi foto\n🎯 Preparar entrevistas\n📄 Ver mi CV guardado`;
+          
           setMensajes([{ role: "gusi", text: msgBienvenida }]);
         } else {
-          setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Gusi. Regístrate primero para que pueda ayudarte." }]);
+          setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Guzzi. Regístrate primero para que pueda ayudarte." }]);
         }
       } catch {
-        setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Gusi. Regístrate primero." }]);
+        setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Guzzi. Regístrate primero." }]);
         setLogueado(false);
       }
     }
     init();
   }, [abierto]);
 
-  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [mensajes, cargando]);
 
-  // Guardar conversación automáticamente
   useEffect(() => {
     if (userId && mensajes.length > 1) {
-      const timeout = setTimeout(() => {
-        guardarConversacion();
-      }, 2000);
+      const timeout = setTimeout(() => guardarConversacion(), 2000);
       return () => clearTimeout(timeout);
     }
   }, [mensajes, userId]);
+
+  // ============================================
+  // FUNCIONES AUXILIARES
+  // ============================================
 
   async function cargarConversaciones(uid: string) {
     try {
@@ -168,6 +156,22 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
   }
 
+  async function cargarConversacion(id: string) {
+    if (!userId) return;
+    try {
+      const res = await fetch(`/api/gusi/conversations/${id}?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.messages) {
+          setMensajes(data.messages);
+          setConversacionActual(id);
+        }
+      }
+    } catch (e) {
+      console.error("Error cargando conversación:", e);
+    }
+  }
+
   async function cargarCV(uid: string) {
     try {
       const res = await fetch(`/api/gusi/cv?userId=${uid}`);
@@ -175,7 +179,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         const data = await res.json();
         if (data.cv) {
           setCvGuardado(data.cv);
-          lastParsedCV.current = data.cv;
         }
       }
     } catch (e) {
@@ -201,30 +204,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
   }
 
-  async function cargarConversacion(id: string) {
-    if (!userId) return;
-    try {
-      const res = await fetch(`/api/gusi/conversations?userId=${userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        const conv = data.conversations?.find((c: Conversacion) => c.id === id);
-        if (conv) {
-          setConversacionActual(id);
-          // Cargar mensajes de la conversación
-          const detailRes = await fetch(`/api/gusi/conversations/${id}?userId=${userId}`);
-          if (detailRes.ok) {
-            const detail = await detailRes.json();
-            if (detail.messages) {
-              setMensajes(detail.messages);
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Error cargando conversación:", e);
-    }
-  }
-
   async function nuevaConversacion() {
     setConversacionActual(null);
     setMensajes([{ 
@@ -232,7 +211,172 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
       text: "¡Nueva conversación! 🐛 ¿Qué necesitas?\n\n📧 Enviar CV automático\n📝 Crear mi CV\n🔍 Buscar trabajo\n📸 Mejorar foto\n🎯 Preparar entrevista" 
     }]);
     setMostrarSugerencias(true);
+    setModoEntrevista(false);
+    setPasoEntrevista(0);
+    setDatosCV({});
   }
+
+  // ============================================
+  // MANEJO DE ARCHIVOS
+  // ============================================
+
+  async function handleFileUpload(file: File) {
+    if (!file.type.includes("pdf")) {
+      setMensajes((prev) => [...prev, { role: "gusi", text: "❌ Solo acepto archivos PDF. Intenta de nuevo." }]);
+      return;
+    }
+    setCargando(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/cv/extraer", { method: "POST", body: fd });
+      if (res.ok) {
+        const parsed = await res.json();
+        if (!parsed.error) {
+          setCvGuardado(parsed);
+          if (userId) {
+            await fetch("/api/gusi/cv", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId, cvData: parsed, cvText: JSON.stringify(parsed) }),
+            });
+          }
+          const resumen = formatCVResumen(parsed);
+          setEsperandoConfirmacionCV(true);
+          setMensajes((prev) => [...prev, { 
+            role: "gusi", 
+            text: `✅ **CV analizado.** He extraído esto:\n\n${resumen}\n\n**¿Quieres añadir o cambiar algo?**\n\n(Escribe lo que quieras añadir, o di "**no**" para que lo mejore con IA directamente)` 
+          }]);
+        } else {
+          setMensajes((prev) => [...prev, { role: "gusi", text: "⚠️ No pude leer bien el PDF. ¿Puedes escribirme tus datos directamente?" }]);
+        }
+      }
+    } catch {
+      setMensajes((prev) => [...prev, { role: "gusi", text: "❌ Error al procesar el PDF. Intenta de nuevo o escribe tus datos." }]);
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  // ============================================
+  // RESUMEN DE CV PARA MOSTRAR AL USUARIO
+  // ============================================
+
+  function formatCVResumen(cv: Record<string, unknown>): string {
+    let text = "";
+    if (cv.nombre) text += `👤 **Nombre:** ${cv.nombre}\n`;
+    if (cv.email) text += `📧 **Email:** ${cv.email}\n`;
+    if (cv.telefono) text += `📞 **Teléfono:** ${cv.telefono}\n`;
+    if (cv.ciudad) text += `📍 **Ciudad:** ${cv.ciudad}\n`;
+    if (cv.perfilProfesional || cv.perfil) text += `💼 **Perfil:** ${cv.perfilProfesional || cv.perfil}\n`;
+    if (cv.experiencia) text += `🏢 **Experiencia:** ${String(cv.experiencia).substring(0, 100)}...\n`;
+    if (cv.formacion || cv.estudios) text += `🎓 **Formación:** ${cv.formacion || cv.estudios}\n`;
+    return text || "*(Datos básicos extraídos)*";
+  }
+
+  // ============================================
+  // GENERAR CV EN FORMATO EXACTO
+  // ============================================
+
+  function generarEnlaceCV(datos: Record<string, unknown>): string {
+    // Redirigir a la página de curriculum con la plantilla visual profesional
+    return `https://buscaycurra.es/app/curriculum`;
+  }
+
+  function generarCVTexto(datos: Record<string, unknown>): string {
+    // Extraer datos del formato cvGuardado (puede venir de PDF o de entrevista)
+    const nombre = String(datos.nombre || datos.full_name || "[Nombre Apellidos]");
+    const telefono = String(datos.telefono || datos.phone || "");
+    const email = String(datos.email || "");
+    const ciudad = String(datos.ciudad || datos.location || "");
+    const perfil = String(datos.perfil || datos.perfilProfesional || datos.summary || "");
+    const experiencia = String(datos.experiencia || datos.experience || "");
+    const formacion = String(datos.formacion || datos.estudios || datos.education || "");
+    const aptitudes = String(datos.aptitudes || datos.habilidades || datos.skills || "");
+    const idiomas = String(datos.idiomas || datos.languages || "Español (nativo)");
+
+    // Generar enlace al CV visual
+    const enlaceCV = generarEnlaceCV(datos);
+
+    // Formato exacto de la plantilla de Michel - UNA SOLA PÁGINA
+    let cv = `${nombre}\n`;
+    cv += `■ ${telefono || "[Teléfono]"} ✉ ${email || "[Email]"} ■ ${ciudad || "[Ciudad]"}\n\n`;
+    
+    // APTITUDES (máximo 4-5)
+    if (aptitudes) {
+      cv += `APTITUDES\n`;
+      const aptList = aptitudes.includes(",") ? aptitudes.split(",") : aptitudes.split("\n");
+      const aptitudesLimitadas = aptList.slice(0, 5); // Máximo 5 aptitudes
+      aptitudesLimitadas.forEach((apt: string) => {
+        const trimmed = apt.trim().replace(/^[-•]\s*/, "");
+        if (trimmed) cv += `${trimmed}\n`;
+      });
+      cv += `\n`;
+    }
+    
+    // IDIOMAS
+    if (idiomas) {
+      cv += `IDIOMAS\n`;
+      const langList = idiomas.includes(",") ? idiomas.split(",") : idiomas.split("\n");
+      langList.forEach((lang: string) => {
+        const trimmed = lang.trim().replace(/^[-•]\s*/, "");
+        if (trimmed) cv += `${trimmed}\n`;
+      });
+      cv += `\n`;
+    }
+    
+    // PERFIL PROFESIONAL (máximo 2-3 líneas)
+    if (perfil) {
+      cv += `PERFIL PROFESIONAL\n`;
+      const perfilCorto = perfil.length > 200 ? perfil.substring(0, 200) + "..." : perfil;
+      cv += `${perfilCorto}\n\n`;
+    }
+    
+    // EXPERIENCIA LABORAL (máximo 3 trabajos)
+    if (experiencia) {
+      cv += `EXPERIENCIA LABORAL\n`;
+      const expLines = experiencia.split("\n").filter((l: string) => l.trim());
+      let trabajosCount = 0;
+      
+      for (let i = 0; i < expLines.length && trabajosCount < 3; i++) {
+        const line = expLines[i].trim();
+        if (!line) continue;
+        
+        // Detectar formato: AÑOS — PUESTO
+        if (line.match(/^\d{4}/) || line.includes("—") || line.includes("-")) {
+          cv += `${line}\n`;
+          trabajosCount++;
+          
+          // Buscar empresa en la siguiente línea
+          if (i + 1 < expLines.length) {
+            const nextLine = expLines[i + 1].trim();
+            if (nextLine.includes("·") || nextLine.includes("en") || nextLine.includes("@")) {
+              cv += `${nextLine}\n`;
+              i++;
+            }
+          }
+          cv += `\n`;
+        }
+      }
+    }
+    
+    // FORMACIÓN (máximo 2)
+    if (formacion) {
+      cv += `FORMACIÓN\n`;
+      const formLines = formacion.split("\n").filter((l: string) => l.trim());
+      const formacionLimitada = formLines.slice(0, 2);
+      formacionLimitada.forEach((line: string) => {
+        const trimmed = line.trim().replace(/^[-•]\s*/, "");
+        if (trimmed) cv += `${trimmed}\n`;
+      });
+    }
+    
+    return cv;
+  }
+
+  // ============================================
+  // ENVIAR MENSAJE PRINCIPAL
+  // ============================================
 
   async function enviarMensaje(texto: string) {
     if (!texto.trim() || cargando) return;
@@ -243,14 +387,159 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     setCargando(true);
     setMostrarSugerencias(false);
 
-    // Manejar comandos especiales
+    // ============================================
+    // ESPERANDO CONFIRMACIÓN DE CV (después de subir PDF)
+    // ============================================
+    if (esperandoConfirmacionCV) {
+      setEsperandoConfirmacionCV(false);
+      
+      if (texto.toLowerCase() === "no" || texto.toLowerCase() === "no gracias") {
+        // Mejorar CV directamente con IA
+        setCargando(true);
+        try {
+          const res = await fetch("/api/gusi/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: "Mejora mi CV profesionalmente",
+              mode: "cv_mejorado",
+              cvData: cvGuardado ? JSON.stringify(cvGuardado) : undefined,
+            }),
+          });
+          const data = await res.json();
+          setCargando(false);
+          setMensajes((prev) => [...prev, { 
+            role: "gusi", 
+            text: data.reply || "✨ **CV mejorado:**\n\nHe reestructurado tu CV profesionalmente. ¿Quieres enviarlo a ofertas o generar una carta de presentación?",
+            cvData: data.reply
+          }]);
+        } catch {
+          setCargando(false);
+          setMensajes((prev) => [...prev, { role: "gusi", text: "❌ Error al mejorar el CV. Inténtalo de nuevo." }]);
+        }
+        return;
+      } else {
+        // El usuario quiere añadir algo
+        setCargando(false);
+        setMensajes((prev) => [...prev, { 
+          role: "gusi", 
+          text: `✅ **Anotado.** He añadido: "${texto}"\n\n**¿Algo más?**\n\n(Escribe más o di "**no**" para que mejore el CV con IA)` 
+        }]);
+        setEsperandoConfirmacionCV(true);
+        return;
+      }
+    }
+
+    // ============================================
+    // MODO ENTREVISTA (Crear CV paso a paso)
+    // ============================================
+    if (modoEntrevista) {
+      const nuevoDatos = { ...datosCV, [PASOS_ENTREVISTA[pasoEntrevista].campo]: texto };
+      setDatosCV(nuevoDatos);
+      
+      const siguientePaso = pasoEntrevista + 1;
+      
+      if (siguientePaso < PASOS_ENTREVISTA.length) {
+        setPasoEntrevista(siguientePaso);
+        setCargando(false);
+        setMensajes((prev) => [...prev, { 
+          role: "gusi", 
+          text: PASOS_ENTREVISTA[siguientePaso].pregunta 
+        }]);
+      } else {
+        // Último paso - generar CV
+        setModoEntrevista(false);
+        setPasoEntrevista(0);
+        
+        const cvTexto = generarCVTexto(nuevoDatos);
+        
+        // Guardar CV
+        const cvData = {
+          nombre: nuevoDatos.nombre,
+          contacto: nuevoDatos.contacto,
+          ciudad: nuevoDatos.ciudad,
+          perfil: nuevoDatos.perfil,
+          experiencia: `${nuevoDatos.experiencia1}${nuevoDatos.experiencia2 && nuevoDatos.experiencia2.toLowerCase() !== "no" ? "\n" + nuevoDatos.experiencia2 : ""}`,
+          formacion: nuevoDatos.formacion,
+          aptitudes: nuevoDatos.aptitudes,
+        };
+        
+        setCvGuardado(cvData);
+        if (userId) {
+          await fetch("/api/gusi/cv", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, cvData, cvText: JSON.stringify(cvData) }),
+          });
+        }
+        
+        setCargando(false);
+        setMensajes((prev) => [...prev, { 
+          role: "gusi", 
+          text: `✅ **¡CV completado!** 🦋\n\nAquí está tu currículum:\n\n${cvTexto}\n\n**¿Qué quieres hacer ahora?**\n\n1. 📧 **Enviar mi CV** a ofertas de trabajo\n2. ✉️ **Generar carta** de presentación\n3. 📝 **Modificar** algún dato\n4. 💾 **Guardar** para más tarde`,
+          cvData: cvTexto
+        }]);
+      }
+      return;
+    }
+
+    // ============================================
+    // COMANDOS ESPECIALES
+    // ============================================
+    
     if (texto === "__ENTREVISTA__") {
+      // Si ya tiene CV guardado, preguntar si quiere mejorarlo o crear nuevo
+      if (cvGuardado && Object.keys(cvGuardado).length > 0) {
+        setCargando(false);
+        setMensajes((prev) => [...prev, { 
+          role: "gusi", 
+          text: `📄 **Ya tengo tus datos guardados.**\n\n¿Quieres:\n\n1. ✨ **Mejorar mi CV** con IA (más presentable)\n2. 📝 **Crear uno nuevo** desde cero\n3. 📄 **Ver mi CV** actual\n\n¿Qué prefieres?` 
+        }]);
+        return;
+      }
       setModoEntrevista(true);
+      setPasoEntrevista(0);
+      setDatosCV({});
       setCargando(false);
       setMensajes((prev) => [...prev, { 
         role: "gusi", 
-        text: "📝 ¡Vamos a crear tu CV! Te voy preguntando paso a paso.\n\n👉 **¿Cuál es tu nombre completo?**\n\n(Responde y sigo con la siguiente pregunta)" 
+        text: PASOS_ENTREVISTA[0].pregunta 
       }]);
+      return;
+    }
+
+    if (texto === "__VER_CV__") {
+      setCargando(false);
+      if (cvGuardado && Object.keys(cvGuardado).length > 0) {
+        setMensajes((prev) => [...prev, { 
+          role: "gusi", 
+          text: `📄 **Aquí tienes tu CV visual:**\n\nAsí se ve tu currículum con la plantilla profesional. Puedes editarlo o enviarlo a ofertas.`,
+          action: "ver_cv"
+        }]);
+      } else if (Object.keys(datosCV).length > 0) {
+        // Convertir datosCV a cvGuardado temporalmente para mostrar
+        const tempCV = {
+          nombre: datosCV.nombre,
+          telefono: datosCV.contacto?.split(",")[0]?.trim(),
+          email: datosCV.contacto?.split(",")[1]?.trim(),
+          ciudad: datosCV.ciudad,
+          perfil: datosCV.perfil,
+          experiencia: datosCV.experiencia1 + (datosCV.experiencia2 ? "\n" + datosCV.experiencia2 : ""),
+          formacion: datosCV.formacion,
+          aptitudes: datosCV.aptitudes,
+        };
+        setCvGuardado(tempCV);
+        setMensajes((prev) => [...prev, { 
+          role: "gusi", 
+          text: `📄 **Aquí tienes tu CV visual:**\n\nAsí se ve tu currículum con la plantilla profesional. Puedes editarlo o enviarlo a ofertas.`,
+          action: "ver_cv"
+        }]);
+      } else {
+        setMensajes((prev) => [...prev, { 
+          role: "gusi", 
+          text: "📄 No tienes CV guardado todavía.\n\nPuedes:\n1. Subir tu CV en PDF\n2. Crearlo paso a paso conmigo\n3. Ir a 📄 Mi CV para crearlo visualmente\n\n¿Qué prefieres?" 
+        }]);
+      }
       return;
     }
 
@@ -264,7 +553,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
 
     if (texto === "__PREP_ENTREVISTA__") {
-      setModoPreparaEntrevista(true);
       setCargando(false);
       setMensajes((prev) => [...prev, { 
         role: "gusi", 
@@ -275,28 +563,13 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
 
     if (texto === "__ENVIO_AUTO__") {
       setModoEnvio(true);
+      setPasoEnvio(0);
+      setDatosEnvio({});
       setCargando(false);
       setMensajes((prev) => [...prev, { 
         role: "gusi", 
-        text: "📧 ¡Perfecto! Para enviar tu CV automáticamente:\n\n1. ¿Qué trabajo buscas? (ej: camarero, programador...)\n2. ¿En qué ciudad?\n\nYo busco las ofertas y envío tu CV a todas. 🐛→📧" 
+        text: "📧 ¡Perfecto! Para enviar tu CV automáticamente:\n\n**Paso 1/2: ¿Qué trabajo buscas?**\n\n(Ej: camarero, programador, albañil...)" 
       }]);
-      return;
-    }
-
-    if (texto === "__VER_CV__") {
-      setCargando(false);
-      if (cvGuardado) {
-        const cvText = formatCV(cvGuardado);
-        setMensajes((prev) => [...prev, { 
-          role: "gusi", 
-          text: `📄 **Tu CV guardado:**\n\n${cvText}\n\n¿Quieres mejorarlo o enviarlo?` 
-        }]);
-      } else {
-        setMensajes((prev) => [...prev, { 
-          role: "gusi", 
-          text: "📄 No tienes CV guardado todavía.\n\nPuedes:\n1. Subir tu CV en PDF\n2. Crearlo paso a paso conmigo\n\n¿Qué prefieres?" 
-        }]);
-      }
       return;
     }
 
@@ -315,12 +588,91 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         role: "gusi", 
         text: "📎 **Sube tu CV en PDF** y yo lo mejoro con IA.\n\nTambién puedes escribirme tus datos directamente." 
       }]);
-      // Abrir selector de archivo
       fileRef.current?.click();
       return;
     }
 
-    // Llamar a la API de Gusi
+    // ============================================
+    // MODO ENVÍO (Paso a paso)
+    // ============================================
+    if (modoEnvio) {
+      if (pasoEnvio === 0) {
+        setDatosEnvio({ puesto: texto });
+        setPasoEnvio(1);
+        setCargando(false);
+        setMensajes((prev) => [...prev, { 
+          role: "gusi", 
+          text: `📧 **Paso 2/2: ¿En qué ciudad?**\n\n(Buscando ofertas de **${texto}**...)` 
+        }]);
+        return;
+      } else if (pasoEnvio === 1) {
+        const puesto = datosEnvio.puesto;
+        const ciudad = texto;
+        setModoEnvio(false);
+        setPasoEnvio(0);
+        
+        // Buscar ofertas
+        try {
+          const res = await fetch(`/api/jobs/search?q=${encodeURIComponent(puesto)}&city=${encodeURIComponent(ciudad)}&limit=5`);
+          const data = await res.json();
+          const ofertas = data.ofertas || [];
+          
+          if (ofertas.length > 0) {
+            let text = `🔍 He encontrado **${ofertas.length} ofertas** de **${puesto}** en **${ciudad}**:\n\n`;
+            ofertas.forEach((o: Oferta, i: number) => {
+              const emoji = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "📌";
+              text += `${emoji} **${o.titulo}**\n   📍 ${o.ubicacion} · 💰 ${o.salario}\n\n`;
+            });
+            text += `📧 **¿Envío tu CV a todas estas ofertas?**\n\nSolo di "**sí**" y me encargo automáticamente. 🐛→📧`;
+            
+            setCargando(false);
+            setMensajes((prev) => [...prev, { role: "gusi", text, jobs: ofertas }]);
+          } else {
+            setCargando(false);
+            setMensajes((prev) => [...prev, { 
+              role: "gusi", 
+              text: `🔍 No encontré ofertas de **${puesto}** en **${ciudad}** en este momento.\n\n¿Quieres que busque en otra ciudad o con otro término?` 
+            }]);
+          }
+        } catch {
+          setCargando(false);
+          setMensajes((prev) => [...prev, { 
+            role: "gusi", 
+            text: "❌ Error al buscar ofertas. Inténtalo de nuevo." 
+          }]);
+        }
+        return;
+      }
+    }
+
+    // ============================================
+    // DETECTAR "MEJORAR CV" CUANDO YA TIENE DATOS
+    // ============================================
+    const textoLower = texto.toLowerCase();
+    if ((textoLower.includes("mejorar") || textoLower.includes("mejora")) && 
+        (textoLower.includes("cv") || textoLower.includes("currículum") || textoLower.includes("curriculum"))) {
+      if (cvGuardado && Object.keys(cvGuardado).length > 0) {
+        setCargando(false);
+        setMensajes((prev) => [...prev, { 
+          role: "gusi", 
+          text: `✨ **¡Perfecto! Voy a mejorar tu CV con IA.**
+
+Ya tengo tus datos guardados. Voy a:
+- Reestructurarlo profesionalmente
+- Destacar tus fortalezas
+- Adaptarlo para que las empresas no puedan ignorarlo
+
+**¿Quieres que lo adapte para algún puesto en específico?**
+
+(Si no, lo haré genérico y profesional)` 
+        }]);
+        return;
+      }
+    }
+
+    // ============================================
+    // LLAMADA A LA API DE GUSI
+    // ============================================
     try {
       const res = await fetch("/api/gusi/chat", {
         method: "POST",
@@ -328,7 +680,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         body: JSON.stringify({
           message: texto,
           history: mensajes.slice(-10),
-          mode: modoEntrevista ? "entrevista" : modoEnvio ? "buscar" : "chat",
+          mode: "chat",
           cvData: cvGuardado ? JSON.stringify(cvGuardado) : undefined,
         }),
       });
@@ -353,20 +705,10 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
   }
 
-  function formatCV(cv: Record<string, unknown>): string {
-    if (!cv) return "";
-    let text = "";
-    if (cv.nombre) text += `**${cv.nombre}**\n`;
-    if (cv.email) text += `📧 ${cv.email}\n`;
-    if (cv.telefono) text += `📞 ${cv.telefono}\n`;
-    if (cv.ciudad) text += `📍 ${cv.ciudad}\n\n`;
-    if (cv.experiencia) text += `**Experiencia:** ${cv.experiencia}\n`;
-    if (cv.estudios) text += `**Formación:** ${cv.estudios}\n`;
-    if (cv.habilidades) text += `**Habilidades:** ${cv.habilidades}\n`;
-    return text;
-  }
+  // ============================================
+  // RENDER
+  // ============================================
 
-  // Si no está abierto, mostrar botón flotante
   if (!abierto && !modoIncrustado) {
     return (
       <button
@@ -409,7 +751,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         </div>
       </div>
 
-      {/* Sidebar de conversaciones */}
+      {/* Sidebar */}
       {mostrarSidebar && (
         <div className="absolute left-0 top-[52px] bottom-0 w-64 bg-[#1a1d24] border-r border-[#2a2d35] z-10 flex flex-col">
           <div className="p-3 border-b border-[#2a2d35]">
@@ -436,7 +778,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
                 >
                   <p className="text-sm text-white truncate">{conv.title}</p>
                   <p className="text-xs text-gray-500 truncate mt-1">{conv.last_message}</p>
-                  <p className="text-xs text-gray-600 mt-1">{new Date(conv.updated_at).toLocaleDateString("es-ES")}</p>
                 </button>
               ))
             )}
@@ -448,12 +789,38 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {mensajes.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+            <div className={`max-w-[95%] rounded-2xl px-4 py-2.5 text-sm ${
               msg.role === "user" 
                 ? "bg-[#22c55e] text-white rounded-br-md" 
                 : "bg-[#2a2d35] text-gray-200 rounded-bl-md"
             }`}>
               <div className="whitespace-pre-wrap">{msg.text}</div>
+              
+              {/* CV Visual cuando Guzzi muestra el CV */}
+              {(msg.action === "ver_cv" || msg.action === "cv_mejorado") && cvGuardado && (
+                <div className="mt-3">
+                  {cvHtml ? (
+                    <iframe srcDoc={cvHtml} className='w-full rounded-lg border border-gray-600' style={{height:'520px',background:'white'}} title='CV Profesional' />
+                  ) : (
+                    <CVVisual data={cvGuardado} />
+                  )}
+                  <div className="mt-2 flex gap-2">
+                    <a 
+                      href="/app/curriculum" 
+                      target="_blank"
+                      className="text-xs bg-[#22c55e] text-white px-3 py-1.5 rounded-lg hover:bg-[#16a34a] transition-colors"
+                    >
+                      ✏️ Editar y descargar
+                    </a>
+                    <button 
+                      onClick={() => enviarMensaje("enviar cv")}
+                      className="text-xs bg-[#3b82f6] text-white px-3 py-1.5 rounded-lg hover:bg-[#2563eb] transition-colors"
+                    >
+                      📧 Enviar a ofertas
+                    </button>
+                  </div>
+                </div>
+              )}
               
               {/* Botones de acción para ofertas */}
               {msg.jobs && msg.jobs.length > 0 && (
@@ -466,10 +833,10 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
                     </div>
                   ))}
                   <button 
-                    onClick={() => enviarMensaje("__ENVIO_AUTO__")}
+                    onClick={() => enviarMensaje("sí")}
                     className="w-full py-2 bg-[#22c55e] text-white rounded-lg text-xs font-medium hover:bg-[#16a34a] transition-colors"
                   >
-                    📧 Enviar mi CV a todas
+                    📧 Sí, enviar mi CV a todas
                   </button>
                 </div>
               )}
@@ -537,7 +904,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && enviarMensaje(input)}
-            placeholder="Escribe a Guzzi o adjunta un PDF..."
+            placeholder={modoEntrevista ? `Paso ${pasoEntrevista + 1}/8: Responde aquí...` : modoEnvio ? "Responde aquí..." : "Escribe a Guzzi..."}
             className="flex-1 bg-[#1a1d24] border border-[#2a2d35] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#22c55e] transition-colors"
           />
           <button
