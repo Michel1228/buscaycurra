@@ -21,6 +21,12 @@ export const metadata: Metadata = {
   description:
     "Encuentra trabajo más rápido con inteligencia artificial. Mejora tu CV, busca ofertas en toda España y envía tu candidatura automáticamente.",
   keywords: ["buscar trabajo", "empleo", "CV", "inteligencia artificial", "España"],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "BuscayCurra",
+  },
   openGraph: {
     title: "BuscayCurra — Encuentra trabajo con IA",
     description:
@@ -39,6 +45,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        <meta name="theme-color" content="#00ff88" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="icon" href="/gusi-icon.svg" type="image/svg+xml" />
+      </head>
       <body>
         {/* Splash Screen de metamorfosis — solo primera visita */}
         <SplashWrapper />

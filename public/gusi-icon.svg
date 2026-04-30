@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fondo negro -->
+  <rect width="512" height="512" fill="#0a0a0a" rx="90"/>
+
+  <!-- Franja verde neón arriba -->
+  <rect x="60" y="52" width="392" height="10" fill="#00ff88" rx="5"/>
+
+  <!-- GUSI — grande, arriba -->
+  <text
+    x="256" y="210"
+    font-family="Arial Black, Arial, sans-serif"
+    font-size="168"
+    font-weight="900"
+    text-anchor="middle"
+    fill="#00ff88"
+    letter-spacing="-4"
+  >GUSI</text>
+
+  <!-- Línea separadora -->
+  <rect x="100" y="240" width="312" height="3" fill="#00ff88" opacity="0.3" rx="2"/>
+
+  <!-- BuscayCurra — abajo -->
+  <text
+    x="256" y="330"
+    font-family="Arial, sans-serif"
+    font-size="52"
+    font-weight="700"
+    text-anchor="middle"
+    fill="#ffffff"
+    letter-spacing="1"
+  >BuscayCurra</text>
+
+  <!-- Tagline -->
+  <text
+    x="256" y="385"
+    font-family="Arial, sans-serif"
+    font-size="28"
+    font-weight="400"
+    text-anchor="middle"
+    fill="#555555"
+    letter-spacing="1"
+  >Busca trabajo con IA</text>
+
+  <!-- Punto verde decorativo -->
+  <circle cx="256" cy="435" r="10" fill="#00ff88" opacity="0.6"/>
+</svg>
