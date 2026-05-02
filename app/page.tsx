@@ -58,30 +58,83 @@ const especies = [
   { nombre: "Glasswing", color: "#d0d0d0", rareza: "Rara" },
 ];
 
-const features = [
+const superpotencias = [
   {
     icon: "🧠",
-    titulo: "IA que Aprende",
-    desc: "Adapta tu CV a cada oferta. Cada envío es más inteligente.",
-    grad: "from-green-500/20 to-emerald-600/10",
+    titulo: "Tu CV, mejorado y listo para descargar",
+    desc: "Nuestra IA analiza tu currículum, lo adapta a cada sector y oferta, corrige errores y lo optimiza para pasar los filtros ATS de las empresas. En segundos tienes una versión profesional lista para descargar en PDF.",
+    color: "#7ed56f",
+    rgb: "126, 213, 111",
+  },
+  {
+    icon: "🎯",
+    titulo: "Entrevistas simuladas adaptadas a cada empresa",
+    desc: "Antes de ir a una entrevista, practica con nuestra IA que conoce los valores, cultura y preguntas típicas de esa empresa específica. No es una entrevista genérica — es exactamente lo que te van a preguntar.",
+    color: "#f0c040",
+    rgb: "240, 192, 64",
   },
   {
     icon: "⚡",
-    titulo: "Envío Masivo",
-    desc: "Envía a cientos de empresas mientras duermes.",
-    grad: "from-yellow-500/20 to-amber-600/10",
+    titulo: "Enviamos tu CV cuando más probabilidades tienes",
+    desc: "Analizamos el horario de actividad de cada empresa: cuándo abren el email, cuándo está el responsable de RRHH, si trabajan en turno de noche. Tu CV llega en el momento exacto en que hay alguien para leerlo.",
+    color: "#a070d0",
+    rgb: "160, 112, 208",
+  },
+];
+
+const comparativa = [
+  { concepto: "Coste mensual", ett: "~150€/mes en comisiones", byc: "9,99€/mes" },
+  { concepto: "Control sobre tu búsqueda", ett: "La ETT decide por ti", byc: "Tú decides siempre" },
+  { concepto: "Empresas a las que llegas", ett: "Las que trabajan con esa ETT", byc: "Cualquier empresa de España" },
+  { concepto: "Adaptación de CV", ett: "CV genérico para todas", byc: "CV adaptado a cada oferta" },
+  { concepto: "Entrevistas", ett: "Sin preparación", byc: "Simulacro con IA por empresa" },
+  { concepto: "Transparencia", ett: "No sabes qué hacen con tu perfil", byc: "Ves cada envío en tiempo real" },
+  { concepto: "Horario de envío", ett: "El que les conviene", byc: "El mejor momento para cada empresa" },
+  { concepto: "Ahorro en 12 meses", ett: "Pagas ~1.800€ en comisiones", byc: "Pagas 119,88€. Ahorras ~1.680€" },
+];
+
+const testimonios = [
+  {
+    nombre: "María G., Madrid",
+    puesto: "Diseñadora gráfica",
+    empresa: "Agencia creativa",
+    texto: "En 3 semanas tenía 4 entrevistas. La ETT con la que estaba tardó 2 meses en conseguirme una sola.",
+    mariposa: "Morpho Azul 🦋",
   },
   {
-    icon: "📊",
-    titulo: "Tu Progreso",
-    desc: "Estadísticas en tiempo real. Ve cómo evolucionas.",
-    grad: "from-purple-500/20 to-violet-600/10",
+    nombre: "Carlos R., Barcelona",
+    puesto: "Programador junior",
+    empresa: "Startup tech",
+    texto: "La función de entrevista con IA me salvó. Me preguntaron exactamente lo que había practicado con BuscayCurra.",
+    mariposa: "Atlas 🦋",
   },
   {
-    icon: "🔒",
-    titulo: "Privacidad Total",
-    desc: "Tus datos son tuyos. RGPD completo. Sin sorpresas.",
-    grad: "from-red-500/20 to-rose-600/10",
+    nombre: "Ana M., Valencia",
+    puesto: "Administrativa",
+    empresa: "Empresa logística",
+    texto: "Nunca pensé que un software podría mejorar tanto mi CV. Lo mandé a 200 empresas y tuve respuesta de 47.",
+    mariposa: "Monarca 🦋",
+  },
+  {
+    nombre: "Pedro L., Sevilla",
+    puesto: "Electricista",
+    empresa: "Instalaciones industriales",
+    texto: "Me sorprendió que encontrara empresas de mi sector que yo no conocía. Y el CV adaptado a cada una marcó la diferencia.",
+    mariposa: "Cola de Golondrina 🦋",
+  },
+  {
+    nombre: "Laura T., Bilbao",
+    puesto: "Enfermera",
+    empresa: "Clínica privada",
+    texto: "El envío inteligente es real. Me llamaron a las 9:01 de la mañana, justo cuando el jefe de personal llegaba a la clínica.",
+    mariposa: "Polilla Luna 🦋",
+  },
+  {
+    nombre: "Javi S., Zaragoza",
+    puesto: "Mecánico",
+    empresa: "Taller oficial",
+    texto: "Ahorré 1.600€ en comisiones de ETT. Y encontré trabajo en menos tiempo. No tiene ningún sentido seguir usando ETTs.",
+    mariposa: "Glasswing 🦋",
   },
 ];
 
@@ -268,6 +321,43 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ══════ ETT vs BuscayCurra ══════ */}
+        <section className="py-20 px-4" style={{ background: "rgba(15,26,10,0.6)" }}>
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
+              ¿ETT o BuscayCurra? Haz los números.
+            </h2>
+            <p className="text-center mb-14" style={{ color: "#706a58" }}>
+              Lo que ganas y pierdes en 12 meses. Los datos no mienten.
+            </p>
+            <div className="overflow-x-auto rounded-2xl" style={{ border: "1px solid rgba(126,213,111,0.12)" }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: "rgba(15,26,10,0.8)" }}>
+                    <th className="text-left py-4 px-6 font-semibold" style={{ color: "#706a58" }}>Concepto</th>
+                    <th className="text-center py-4 px-6 font-bold" style={{ color: "#e07850" }}>ETT</th>
+                    <th className="text-center py-4 px-6 font-bold" style={{ color: "#7ed56f" }}>BuscayCurra</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparativa.map((row, i) => (
+                    <tr key={row.concepto} style={{ background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                      <td className="py-4 px-6 font-medium" style={{ color: "#b0a890" }}>{row.concepto}</td>
+                      <td className="py-4 px-6 text-center" style={{ color: "#e07850" }}>{row.ett}</td>
+                      <td className="py-4 px-6 text-center font-semibold" style={{ color: "#7ed56f" }}>{row.byc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="text-center mt-10">
+              <Link href="/auth/registro" className="btn-game text-lg !py-4 !px-12">
+                Empieza gratis hoy — Sin comisiones
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* ══════ PREVIEW ESPECIES — Las mariposas que puedes desbloquear ══════ */}
         <section className="py-20 px-4" style={{ background: "linear-gradient(180deg, transparent, rgba(126,213,111,0.03), transparent)" }}>
           <div className="max-w-5xl mx-auto">
@@ -310,23 +400,27 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ══════ FEATURES — Lo que hace especial la app ══════ */}
+        {/* ══════ SUPERPOTENCIAS ══════ */}
         <section className="py-20 px-4">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-14" style={{ color: "#f0ebe0" }}>
-              Superpoderes incluidos
+            <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
+              Nuestras 3 superpotencias
             </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {features.map((f) => (
-                <div key={f.titulo} className="card-game p-7 flex items-start gap-5">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)" }}>
-                    {f.icon}
+            <p className="text-center mb-14" style={{ color: "#706a58" }}>
+              Las herramientas que te van a cambiar la búsqueda de empleo.
+            </p>
+            <div className="grid md:grid-cols-3 gap-6">
+              {superpotencias.map((sp) => (
+                <div key={sp.titulo} className="card-game p-7 relative">
+                  <div className="absolute top-4 right-4">
+                    <span className="badge-game badge-verde text-[10px]">✓ Disponible ya</span>
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold mb-1" style={{ color: "#f0ebe0" }}>{f.titulo}</h3>
-                    <p className="text-sm leading-relaxed" style={{ color: "#b0a890" }}>{f.desc}</p>
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-5"
+                    style={{ background: `rgba(${sp.rgb}, 0.09)`, border: `1px solid rgba(${sp.rgb}, 0.19)` }}>
+                    {sp.icon}
                   </div>
+                  <h3 className="text-lg font-bold mb-3 pr-20" style={{ color: "#f0ebe0" }}>{sp.titulo}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "#b0a890" }}>{sp.desc}</p>
                 </div>
               ))}
             </div>
@@ -374,6 +468,31 @@ export default function LandingPage() {
                   <Link href="/auth/registro" className={plan.dest ? "btn-game w-full block text-center text-sm" : "btn-game-outline w-full block text-center text-sm"}>
                     Empezar
                   </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ══════ TESTIMONIOS ══════ */}
+        <section className="py-20 px-4">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
+              Personas que ya encontraron trabajo 🦋
+            </h2>
+            <p className="text-center mb-14" style={{ color: "#706a58" }}>
+              Ellos empezaron como tú. Ahora son mariposas.
+            </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {testimonios.map((t) => (
+                <div key={t.nombre} className="card-game p-7 flex flex-col">
+                  <div className="text-5xl font-black leading-none mb-4" style={{ color: "#7ed56f", opacity: 0.3 }}>{"\u201C"}</div>
+                  <p className="text-sm leading-relaxed flex-1 mb-5 italic" style={{ color: "#f0ebe0" }}>{t.texto}</p>
+                  <div>
+                    <p className="font-bold text-sm" style={{ color: "#7ed56f" }}>{t.nombre}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>{t.puesto} · {t.empresa}</p>
+                    <p className="text-xs mt-2 font-semibold" style={{ color: "#f0c040" }}>{t.mariposa}</p>
+                  </div>
                 </div>
               ))}
             </div>
