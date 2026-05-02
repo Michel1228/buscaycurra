@@ -241,6 +241,40 @@ function BuscarPageInner() {
         </div>
       </div>
 
+      {/* Franja SEO: por qué BuscayCurra */}
+      <div className="border-b" style={{ background: "#111827", borderColor: "#1e212b" }}>
+        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-4 md:gap-8">
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">👥</span>
+            <div>
+              <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>2.400+ personas</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>ya encontraron trabajo con nosotros</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">💸</span>
+            <div>
+              <p className="text-xs font-bold" style={{ color: "#22c55e" }}>Ahorra hasta 3.600 €/año</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>vs usar una ETT — tu salario es 100% tuyo</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">🎯</span>
+            <div>
+              <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>Contrato directo con la empresa</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>sin intermediarios, sin comisiones ocultas</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 ml-auto">
+            <a href="/app/gusi"
+              className="text-[11px] font-semibold px-4 py-2 rounded-lg transition"
+              style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e" }}>
+              🐛 Que Guzzi busque por mí
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex gap-6">
 
