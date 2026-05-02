@@ -25,6 +25,7 @@ const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
 export const redisConnection = new IORedis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
+  lazyConnect: true,
 });
 
 // ─── Opciones por defecto para todos los jobs ────────────────────────────────
@@ -100,6 +101,7 @@ export const cvSenderQueueEvents = new QueueEvents("cv-sender-queue", {
   connection: new IORedis(redisUrl, {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
+    lazyConnect: true,
   }),
 });
 
