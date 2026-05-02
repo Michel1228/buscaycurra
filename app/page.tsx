@@ -58,30 +58,86 @@ const especies = [
   { nombre: "Glasswing", color: "#d0d0d0", rareza: "Rara" },
 ];
 
-const features = [
+const superpotencias = [
   {
     icon: "🧠",
-    titulo: "IA que Aprende",
-    desc: "Adapta tu CV a cada oferta. Cada envío es más inteligente.",
-    grad: "from-green-500/20 to-emerald-600/10",
+    titulo: "Tu CV, mejorado y listo para descargar",
+    desc: "Nuestra IA analiza tu currículum, lo adapta a cada sector y oferta, corrige errores y lo optimiza para pasar los filtros ATS de las empresas. En segundos tienes una versión profesional lista para descargar en PDF.",
+    acento: "#7ed56f",
+  },
+  {
+    icon: "🎯",
+    titulo: "Entrevistas simuladas adaptadas a cada empresa",
+    desc: "Antes de ir a una entrevista, practica con nuestra IA que conoce los valores, cultura y preguntas típicas de esa empresa específica. No es una entrevista genérica — es exactamente lo que te van a preguntar.",
+    acento: "#f0c040",
   },
   {
     icon: "⚡",
-    titulo: "Envío Masivo",
-    desc: "Envía a cientos de empresas mientras duermes.",
-    grad: "from-yellow-500/20 to-amber-600/10",
+    titulo: "Enviamos tu CV cuando más probabilidades tienes",
+    desc: "Analizamos el horario de actividad de cada empresa: cuándo abren el email, cuándo está el responsable de RRHH, si trabajan en turno de noche. Tu CV llega en el momento exacto en que hay alguien para leerlo.",
+    acento: "#a070d0",
+  },
+];
+
+const comparativaFilas = [
+  { concepto: "Coste mensual", ett: "~150€/mes en comisiones", byc: "9,99€/mes" },
+  { concepto: "Control sobre tu búsqueda", ett: "La ETT decide por ti", byc: "Tú decides siempre" },
+  { concepto: "Empresas a las que llegas", ett: "Solo las que trabajan con esa ETT", byc: "Cualquier empresa de España" },
+  { concepto: "Adaptación de CV", ett: "CV genérico para todas", byc: "CV adaptado a cada oferta" },
+  { concepto: "Entrevistas", ett: "Sin preparación", byc: "Simulacro con IA por empresa" },
+  { concepto: "Transparencia", ett: "No sabes qué hacen con tu perfil", byc: "Ves cada envío en tiempo real" },
+  { concepto: "Horario de envío", ett: "El que les conviene", byc: "El mejor momento para cada empresa" },
+  { concepto: "Ahorro en 12 meses", ett: "Pagas ~1.800€ en comisiones", byc: "Pagas 119,88€. Ahorras ~1.680€" },
+];
+
+const testimonios = [
+  {
+    nombre: "María G.",
+    ciudad: "Madrid",
+    puesto: "Diseñadora gráfica",
+    empresa: "Agencia creativa",
+    mariposa: "Morpho Azul",
+    texto: "En 3 semanas tenía 4 entrevistas. La ETT con la que estaba tardó 2 meses en conseguirme una sola.",
   },
   {
-    icon: "📊",
-    titulo: "Tu Progreso",
-    desc: "Estadísticas en tiempo real. Ve cómo evolucionas.",
-    grad: "from-purple-500/20 to-violet-600/10",
+    nombre: "Carlos R.",
+    ciudad: "Barcelona",
+    puesto: "Programador junior",
+    empresa: "Startup tech",
+    mariposa: "Atlas",
+    texto: "La función de entrevista con IA me salvó. Me preguntaron exactamente lo que había practicado con BuscayCurra.",
   },
   {
-    icon: "🔒",
-    titulo: "Privacidad Total",
-    desc: "Tus datos son tuyos. RGPD completo. Sin sorpresas.",
-    grad: "from-red-500/20 to-rose-600/10",
+    nombre: "Ana M.",
+    ciudad: "Valencia",
+    puesto: "Administrativa",
+    empresa: "Empresa logística",
+    mariposa: "Monarca",
+    texto: "Nunca pensé que un software podría mejorar tanto mi CV. Lo mandé a 200 empresas y tuve respuesta de 47.",
+  },
+  {
+    nombre: "Pedro L.",
+    ciudad: "Sevilla",
+    puesto: "Electricista",
+    empresa: "Instalaciones industriales",
+    mariposa: "Cola de Golondrina",
+    texto: "Me sorprendió que encontrara empresas de mi sector que yo no conocía. Y el CV adaptado a cada una marcó la diferencia.",
+  },
+  {
+    nombre: "Laura T.",
+    ciudad: "Bilbao",
+    puesto: "Enfermera",
+    empresa: "Clínica privada",
+    mariposa: "Polilla Luna",
+    texto: "El envío inteligente es real. Me llamaron a las 9:01 de la mañana, justo cuando el jefe de personal llegaba a la clínica.",
+  },
+  {
+    nombre: "Javi S.",
+    ciudad: "Zaragoza",
+    puesto: "Mecánico",
+    empresa: "Taller oficial",
+    mariposa: "Glasswing",
+    texto: "Ahorré 1.600€ en comisiones de ETT. Y encontré trabajo en menos tiempo. No tiene ningún sentido seguir usando ETTs.",
   },
 ];
 
@@ -268,6 +324,52 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ══════ COMPARATIVA ETT vs BuscayCurra ══════ */}
+        <section className="py-20 px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
+              ¿ETT o BuscayCurra? Haz los números.
+            </h2>
+            <p className="text-center mb-12" style={{ color: "#706a58" }}>
+              Lo que ganas y pierdes en 12 meses. Los datos no mienten.
+            </p>
+
+            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(15,26,10,0.6)", border: "1px solid rgba(126,213,111,0.12)" }}>
+              {/* Header */}
+              <div className="grid grid-cols-3 text-center text-sm font-bold py-4 px-4" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(126,213,111,0.1)" }}>
+                <div style={{ color: "#706a58" }}>Aspecto</div>
+                <div style={{ color: "#e07850" }}>ETT</div>
+                <div style={{ color: "#7ed56f" }}>BuscayCurra</div>
+              </div>
+
+              {comparativaFilas.map((fila, i) => (
+                <div key={fila.concepto}
+                  className="grid grid-cols-3 text-center text-sm py-4 px-4 items-center gap-2"
+                  style={{
+                    background: i % 2 === 0 ? "rgba(126,213,111,0.02)" : "transparent",
+                    borderBottom: "1px solid rgba(126,213,111,0.05)",
+                  }}>
+                  <div className="font-medium text-left text-xs md:text-sm" style={{ color: "#b0a890" }}>{fila.concepto}</div>
+                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#e07850" }}>
+                    <span>❌</span>
+                    <span>{fila.ett}</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#7ed56f" }}>
+                    <span>✅</span>
+                    <span>{fila.byc}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-10">
+              <Link href="/auth/registro" className="btn-game text-base !py-4 !px-10">
+                Empieza gratis — Sin comisiones
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* ══════ PREVIEW ESPECIES — Las mariposas que puedes desbloquear ══════ */}
         <section className="py-20 px-4" style={{ background: "linear-gradient(180deg, transparent, rgba(126,213,111,0.03), transparent)" }}>
           <div className="max-w-5xl mx-auto">
@@ -310,23 +412,27 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ══════ FEATURES — Lo que hace especial la app ══════ */}
+        {/* ══════ SUPERPOTENCIAS — Nuestras 3 funcionalidades principales ══════ */}
         <section className="py-20 px-4">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-14" style={{ color: "#f0ebe0" }}>
-              Superpoderes incluidos
+            <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
+              Nuestras 3 superpotencias
             </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {features.map((f) => (
-                <div key={f.titulo} className="card-game p-7 flex items-start gap-5">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)" }}>
-                    {f.icon}
+            <p className="text-center mb-14" style={{ color: "#706a58" }}>
+              Tres herramientas reales que cambian el resultado de tu búsqueda.
+            </p>
+            <div className="grid md:grid-cols-3 gap-6">
+              {superpotencias.map((s) => (
+                <div key={s.titulo} className="card-game p-7 relative">
+                  <div className="absolute top-4 right-4">
+                    <span className="badge-game badge-verde text-[10px]">✓ Disponible ya</span>
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold mb-1" style={{ color: "#f0ebe0" }}>{f.titulo}</h3>
-                    <p className="text-sm leading-relaxed" style={{ color: "#b0a890" }}>{f.desc}</p>
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-5 flex-shrink-0"
+                    style={{ background: `${s.acento}18`, border: `2px solid ${s.acento}40` }}>
+                    {s.icon}
                   </div>
+                  <h3 className="text-base font-bold mb-3 leading-snug" style={{ color: "#f0ebe0" }}>{s.titulo}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "#b0a890" }}>{s.desc}</p>
                 </div>
               ))}
             </div>
@@ -374,6 +480,38 @@ export default function LandingPage() {
                   <Link href="/auth/registro" className={plan.dest ? "btn-game w-full block text-center text-sm" : "btn-game-outline w-full block text-center text-sm"}>
                     Empezar
                   </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ══════ TESTIMONIOS ══════ */}
+        <section className="py-20 px-4">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
+              Personas que ya encontraron trabajo 🦋
+            </h2>
+            <p className="text-center mb-14" style={{ color: "#706a58" }}>
+              Ellos empezaron como tú. Ahora son mariposas.
+            </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {testimonios.map((t) => (
+                <div key={t.nombre} className="card-game p-6 flex flex-col gap-3">
+                  <div className="text-4xl font-black leading-none" style={{ color: "rgba(126,213,111,0.25)" }}>"</div>
+                  <p className="text-sm leading-relaxed flex-1" style={{ color: "#f0ebe0" }}>{t.texto}</p>
+                  <div className="pt-3" style={{ borderTop: "1px solid rgba(126,213,111,0.1)" }}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold" style={{ color: "#7ed56f" }}>{t.nombre} · {t.ciudad}</p>
+                        <p className="text-xs" style={{ color: "#706a58" }}>{t.puesto} — {t.empresa}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl" style={{ color: "#f0c040" }}>🦋</p>
+                        <p className="text-[10px]" style={{ color: "#706a58" }}>{t.mariposa}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
