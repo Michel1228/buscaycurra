@@ -1,5 +1,7 @@
 /* app/globals.css — BuscayCurra "Metamorfosis" UI — Estilo videojuego elegante */
 
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -27,9 +29,6 @@
   --radio-xl:          1.5rem;
   --radio-pill:        9999px;
 }
-
-/* ── Fuente Nunito (redondeada, coqueta) ────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
 body {
