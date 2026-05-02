@@ -6,14 +6,6 @@
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 
-// Imágenes de mariposas (Unsplash, libres de copyright)
-const mariposaImages = [
-  "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=80", // Morpho azul
-  "https://images.unsplash.com/photo-1559235038-1b0fadf76f78?w=400&q=80", // Monarca naranja
-  "https://images.unsplash.com/photo-1470058869958-2a77ade41c02?w=400&q=80", // Mariposa en flor
-  "https://images.unsplash.com/photo-1517022812141-23620dba5c23?w=400&q=80", // Mariposa naturaleza
-];
-
 const pasos = [
   {
     num: "01",
