@@ -511,9 +511,10 @@ export default function CurriculumPage() {
               </div>
               <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
                 <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>🌍 Idiomas</h2>
-                <input placeholder="Español: nativo, Inglés: básico..." value={form.idiomas}
+                <input placeholder="Español:95, Inglés:60, Francés:40" value={form.idiomas}
                   onChange={e => f("idiomas", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <p className="text-[10px] mt-1" style={{ color: "#475569" }}>Formato: Idioma:nivel (0-100). Ej: Español:95, Inglés:60</p>
               </div>
             </div>
 
@@ -525,11 +526,46 @@ export default function CurriculumPage() {
                 className="w-full px-4 py-2.5 rounded-lg text-sm resize-none" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
             </div>
 
+            {/* Completitud del CV */}
+            {(() => {
+              const checks = [
+                { ok: !!form.nombre.trim(), label: "Nombre" },
+                { ok: !!form.apellidos.trim(), label: "Apellidos" },
+                { ok: !!form.telefono.trim(), label: "Teléfono" },
+                { ok: !!form.email.trim(), label: "Email" },
+                { ok: !!fotoUrl, label: "Foto" },
+                { ok: form.experiencia.some(e => e.puesto.trim()), label: "Experiencia" },
+                { ok: form.formacion.some(f => f.titulo.trim()), label: "Formación" },
+                { ok: !!form.aptitudes.trim(), label: "Habilidades" },
+                { ok: !!form.idiomas.trim(), label: "Idiomas" },
+                { ok: !!form.perfilProfesional.trim(), label: "Perfil profesional" },
+              ];
+              const pct = Math.round((checks.filter(c => c.ok).length / checks.length) * 100);
+              const color = pct < 50 ? "#ef4444" : pct < 80 ? "#f59e0b" : "#22c55e";
+              const pending = checks.filter(c => !c.ok).map(c => c.label);
+              return (
+                <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #252836" }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>Completitud del CV</span>
+                    <span className="text-sm font-extrabold" style={{ color }}>{pct}%</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full mb-2" style={{ background: "#252836" }}>
+                    <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+                  </div>
+                  {pending.length > 0 && (
+                    <p className="text-[10px]" style={{ color: "#64748b" }}>
+                      Faltan: {pending.join(", ")}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Generar CV */}
             <div className="rounded-xl p-6 text-center" style={{ background: "#161922", border: "1px solid #252836" }}>
               <p className="text-3xl mb-3">✨</p>
               <h3 className="font-semibold text-sm mb-2" style={{ color: "#f1f5f9" }}>¿Listo para crear tu CV profesional?</h3>
-              <p className="text-xs mb-4" style={{ color: "#64748b" }}>La IA mejorará tu perfil y generará un CV en formato PDF con diseño profesional</p>
+              <p className="text-xs mb-4" style={{ color: "#64748b" }}>La IA mejorará tu perfil y generará un CV en formato PDF con diseño profesional de dos columnas</p>
               <button onClick={generarYMejorar} disabled={procesando}
                 className="px-8 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
@@ -554,7 +590,7 @@ export default function CurriculumPage() {
               </div>
             </div>
             <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #252836" }}>
-              <iframe srcDoc={mejoradoHTML} className="w-full bg-white" style={{ height: "900px", border: "none" }} title="CV Generado" />
+              <iframe srcDoc={mejoradoHTML} className="w-full bg-white" style={{ height: "1200px", border: "none" }} title="CV Generado" />
             </div>
           </div>
         )}

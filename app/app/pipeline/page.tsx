@@ -36,6 +36,11 @@ export default function PipelinePage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [candidaturaEdit, setCandidaturaEdit] = useState<Candidatura | null>(null);
+  const [notasEdit, setNotasEdit] = useState("");
+  const [guardandoNotas, setGuardandoNotas] = useState(false);
+  const [modalNueva, setModalNueva] = useState(false);
+  const [nueva, setNueva] = useState({ empresa: "", puesto: "", notas: "" });
+  const [guardandoNueva, setGuardandoNueva] = useState(false);
 
   useEffect(() => {
     async function cargar() {
@@ -67,6 +72,50 @@ export default function PipelinePage() {
     }
     cargar();
   }, [router]);
+
+  async function guardarNotas() {
+    if (!candidaturaEdit) return;
+    setGuardandoNotas(true);
+    try {
+      const session = (await getSupabaseBrowser().auth.getSession()).data.session;
+      if (!session) return;
+      await getSupabaseBrowser().from("cv_sends").update({ notas: notasEdit }).eq("id", candidaturaEdit.id);
+      setCandidaturas(prev => prev.map(c => c.id === candidaturaEdit.id ? { ...c, notas: notasEdit } : c));
+      setModalAbierto(false);
+    } catch (e) {
+      console.error("Error guardando notas:", e);
+    } finally {
+      setGuardandoNotas(false);
+    }
+  }
+
+  async function crearCandidatura() {
+    if (!nueva.empresa.trim()) return;
+    setGuardandoNueva(true);
+    try {
+      const session = (await getSupabaseBrowser().auth.getSession()).data.session;
+      if (!session) return;
+      const { data } = await getSupabaseBrowser().from("cv_sends").insert({
+        user_id: session.user.id,
+        empresa: nueva.empresa.trim(),
+        puesto: nueva.puesto.trim() || "Candidatura espontánea",
+        estado: "enviado",
+        notas: nueva.notas.trim() || null,
+      }).select().single();
+      if (data) {
+        setCandidaturas(prev => [{
+          id: data.id, empresa: data.empresa, puesto: data.puesto,
+          estado: "aplicado", fecha: data.creado_en, notas: data.notas,
+        }, ...prev]);
+      }
+      setNueva({ empresa: "", puesto: "", notas: "" });
+      setModalNueva(false);
+    } catch (e) {
+      console.error("Error creando candidatura:", e);
+    } finally {
+      setGuardandoNueva(false);
+    }
+  }
 
   function mapEstado(estado: string): EstadoCandidatura {
     const map: Record<string, EstadoCandidatura> = {
@@ -118,8 +167,17 @@ export default function PipelinePage() {
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.05))" }}>
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Pipeline de candidaturas</h1>
-          <p className="text-xs mt-1" style={{ color: "#64748b" }}>Arrastra las tarjetas entre columnas</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Pipeline de candidaturas</h1>
+              <p className="text-xs mt-1" style={{ color: "#64748b" }}>Arrastra las tarjetas entre columnas</p>
+            </div>
+            <button onClick={() => setModalNueva(true)}
+              className="px-4 py-2 text-xs font-semibold rounded-xl transition hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+              + Nueva candidatura
+            </button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
             {[
               { label: "Total", valor: stats.total, color: "#22c55e" },
@@ -160,7 +218,7 @@ export default function PipelinePage() {
                       <div key={item.id} draggable onDragStart={() => handleDragStart(item.id)}
                         className="card-game p-3 cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-transform"
                         style={{ borderLeft: `3px solid ${col.color}` }}
-                        onClick={() => { setCandidaturaEdit(item); setModalAbierto(true); }}>
+                        onClick={() => { setCandidaturaEdit(item); setNotasEdit(item.notas || ""); setModalAbierto(true); }}>
                         <p className="text-xs font-semibold truncate" style={{ color: "#f1f5f9" }}>{item.puesto}</p>
                         <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>{item.empresa}</p>
                         <p className="text-[10px] mt-1" style={{ color: "#475569" }}>{new Date(item.fecha).toLocaleDateString("es-ES")}</p>
@@ -182,18 +240,79 @@ export default function PipelinePage() {
             <div className="space-y-1.5">
               <p className="text-[11px]" style={{ color: "#64748b" }}><span className="font-medium">Estado:</span> {COLUMNAS.find(c => c.id === candidaturaEdit.estado)?.label}</p>
               <p className="text-[11px]" style={{ color: "#64748b" }}><span className="font-medium">Fecha:</span> {new Date(candidaturaEdit.fecha).toLocaleDateString("es-ES")}</p>
-              {candidaturaEdit.notas && <p className="text-[11px]" style={{ color: "#64748b" }}><span className="font-medium">Notas:</span> {candidaturaEdit.notas}</p>}
             </div>
+
+            {/* Notas editables */}
+            <div>
+              <label className="text-[11px] font-semibold block mb-1" style={{ color: "#94a3b8" }}>Notas / Recruiter / Teléfono</label>
+              <textarea
+                rows={3}
+                value={notasEdit}
+                onChange={e => setNotasEdit(e.target.value)}
+                placeholder="Nombre del recruiter, teléfono, resultado entrevista..."
+                className="w-full px-3 py-2 rounded-lg text-xs resize-none"
+                style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+              />
+            </div>
+
+            {/* Mover a columna */}
             <div className="flex gap-2 flex-wrap">
               {COLUMNAS.filter(c => c.id !== candidaturaEdit.estado && c.id !== "rechazado").map(c => (
                 <button key={c.id} onClick={() => { moverCandidatura(candidaturaEdit.id, c.id); setModalAbierto(false); }}
                   className="px-2.5 py-1 rounded-lg text-[10px] font-medium transition"
                   style={{ background: `${c.color}12`, border: `1px solid ${c.color}25`, color: c.color }}>
-                  Mover a {c.label}
+                  → {c.label}
                 </button>
               ))}
             </div>
-            <button onClick={() => setModalAbierto(false)} className="w-full py-2 rounded-lg text-[11px]" style={{ border: "1px solid #2d3142", color: "#64748b" }}>Cerrar</button>
+
+            <div className="flex gap-2">
+              <button onClick={guardarNotas} disabled={guardandoNotas}
+                className="flex-1 py-2 rounded-lg text-[11px] font-semibold transition disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                {guardandoNotas ? "Guardando..." : "Guardar notas"}
+              </button>
+              <button onClick={() => setModalAbierto(false)} className="px-4 py-2 rounded-lg text-[11px]" style={{ border: "1px solid #2d3142", color: "#64748b" }}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal nueva candidatura */}
+      {modalNueva && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setModalNueva(false)}>
+          <div className="w-full max-w-sm rounded-xl p-5 space-y-3" style={{ background: "#1e212b", border: "1px solid #2d3142" }} onClick={e => e.stopPropagation()}>
+            <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Nueva candidatura</h3>
+            <input
+              placeholder="Empresa *"
+              value={nueva.empresa}
+              onChange={e => setNueva(p => ({ ...p, empresa: e.target.value }))}
+              className="w-full px-3 py-2.5 rounded-lg text-sm"
+              style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+            />
+            <input
+              placeholder="Puesto (opcional)"
+              value={nueva.puesto}
+              onChange={e => setNueva(p => ({ ...p, puesto: e.target.value }))}
+              className="w-full px-3 py-2.5 rounded-lg text-sm"
+              style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+            />
+            <textarea
+              placeholder="Notas (recruiter, teléfono...)"
+              value={nueva.notas}
+              onChange={e => setNueva(p => ({ ...p, notas: e.target.value }))}
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg text-sm resize-none"
+              style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+            />
+            <div className="flex gap-2">
+              <button onClick={crearCandidatura} disabled={guardandoNueva || !nueva.empresa.trim()}
+                className="flex-1 py-2.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                {guardandoNueva ? "Guardando..." : "Añadir candidatura"}
+              </button>
+              <button onClick={() => setModalNueva(false)} className="px-4 rounded-lg text-xs" style={{ border: "1px solid #2d3142", color: "#64748b" }}>Cancelar</button>
+            </div>
           </div>
         </div>
       )}
