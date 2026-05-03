@@ -63,6 +63,40 @@ export async function sendConfirmationEmail(
   }
 }
 
+/** Email de bienvenida al registrarse */
+export async function sendWelcomeEmail(userEmail: string, userName: string): Promise<void> {
+  try {
+    await sendEmail(
+      userEmail,
+      "¡Bienvenido/a a BuscayCurra! 🐛",
+      `
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:560px;margin:0 auto;background:#111827;border-radius:16px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#22c55e,#16a34a);padding:40px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:12px;">🐛</div>
+          <h1 style="color:#fff;margin:0;font-size:24px;font-weight:700;">¡Hola, ${userName}!</h1>
+          <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:15px;">Bienvenido/a a BuscayCurra</p>
+        </div>
+        <div style="padding:40px;color:#e2e8f0;">
+          <p style="font-size:15px;line-height:1.7;margin:0 0 20px;">Soy <strong style="color:#22c55e;">Guzzi</strong>, tu asistente de empleo con IA. A partir de ahora trabajo yo, tú solo apareces a la entrevista. 🦋</p>
+          <div style="background:#1e212b;border-radius:12px;padding:20px;margin:0 0 24px;">
+            <p style="margin:0 0 12px;font-weight:700;color:#f1f5f9;font-size:14px;">¿Por dónde empezar?</p>
+            <p style="margin:0 0 8px;font-size:13px;color:#94a3b8;">1. 📎 <strong style="color:#f1f5f9;">Sube tu CV</strong> — Guzzi lo mejora con IA</p>
+            <p style="margin:0 0 8px;font-size:13px;color:#94a3b8;">2. 🔍 <strong style="color:#f1f5f9;">Dile qué buscas</strong> — Guzzi escanea miles de ofertas</p>
+            <p style="margin:0;font-size:13px;color:#94a3b8;">3. 📧 <strong style="color:#f1f5f9;">Aprueba y Guzzi envía</strong> — carta personalizada por IA</p>
+          </div>
+          <div style="text-align:center;">
+            <a href="https://buscaycurra.es/app/gusi" style="display:inline-block;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;">Empezar con Guzzi →</a>
+          </div>
+          <p style="margin:28px 0 0;font-size:12px;color:#475569;text-align:center;">Tenemos más de 148.000 ofertas activas en España esperándote.</p>
+        </div>
+      </div>
+      `,
+    );
+  } catch (err) {
+    console.error("[Resend] Error en bienvenida:", (err as Error).message);
+  }
+}
+
 /** Datos para enviar un CV adjunto a una empresa */
 export interface CVEmailPayload {
   toEmail: string;

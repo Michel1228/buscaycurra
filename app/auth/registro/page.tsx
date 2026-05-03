@@ -39,6 +39,11 @@ export default function RegistroPage() {
         return;
       }
       setRegistrado(true);
+      fetch("/api/auth/welcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), nombre: nombre.trim() }),
+      }).catch(() => {});
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
     } finally {
