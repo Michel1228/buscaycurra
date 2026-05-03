@@ -41,17 +41,11 @@ export function generarCVHTML(data: CVData): string {
   const accent = data.accentColor || "#3B5FE0";
 
   const aptitudesHTML = (data.aptitudes || [])
-    .map(a => `<span class="aptitude-pill">${a}</span>`)
+    .map(a => `<div class="aptitude-item">${a}</div>`)
     .join("\n              ");
 
   const idiomasHTML = (data.idiomas || [])
-    .map(i => `
-            <div class="idioma-item">
-              <div class="idioma-name">${i.nombre}</div>
-              <div class="progress-bar-track">
-                <div class="progress-bar-fill" style="width: ${i.nivel}%"></div>
-              </div>
-            </div>`)
+    .map(i => `<div class="idioma-item"><div class="idioma-name">${i.nombre}</div></div>`)
     .join("");
 
   const experienciaHTML = (data.experiencia || [])
@@ -105,25 +99,24 @@ export function generarCVHTML(data: CVData): string {
   .cv-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
   /* LEFT COLUMN */
-  .left-column { width: 30%; background: #1B2845; padding: 24px 18px 20px; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
-  .photo-wrapper { width: 120px; height: 120px; border-radius: 50%; border: 3px solid ${accent}; overflow: hidden; margin-bottom: 12px; flex-shrink: 0; }
+  .left-column { width: 30%; background: #ffffff; padding: 24px 16px 20px; display: flex; flex-direction: column; align-items: center; overflow: hidden; border-right: 1px solid #e0e4ea; }
+  .photo-wrapper { width: 110px; height: 110px; border-radius: 50%; border: 3px solid ${accent}; overflow: hidden; margin-bottom: 10px; flex-shrink: 0; background: #f0f4f8; }
   .photo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-  .photo-placeholder { width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 9px; text-align: center; border-radius: 50%; }
-  .name-block { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
-  .name-block .first-name { font-size: 17px; font-style: italic; font-weight: 600; color: #ffffff; line-height: 1.2; }
-  .name-block .last-name { font-size: 17px; font-style: italic; font-weight: 700; color: ${accent}; line-height: 1.2; }
-  .name-block .subtitle { font-size: 9px; color: rgba(255,255,255,0.65); font-weight: 400; margin-top: 4px; }
-  .sidebar-section-title { font-size: 10px; font-weight: 700; color: ${accent}; text-transform: uppercase; letter-spacing: 1.5px; align-self: flex-start; margin-top: 14px; margin-bottom: 8px; flex-shrink: 0; }
-  .contact-list { align-self: flex-start; list-style: none; }
-  .contact-list li { font-size: 9px; color: #cdd8e8; margin-bottom: 5px; display: flex; align-items: flex-start; gap: 6px; line-height: 1.3; }
+  .photo-placeholder { width: 100%; height: 100%; background: #f0f4f8; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 9px; text-align: center; border-radius: 50%; }
+  .name-block { text-align: center; margin-bottom: 12px; flex-shrink: 0; }
+  .name-block .first-name { font-size: 14px; font-style: italic; font-weight: 400; color: #666; line-height: 1.2; }
+  .name-block .last-name { font-size: 14px; font-weight: 700; color: ${accent}; line-height: 1.3; }
+  .name-block .subtitle { font-size: 9px; color: #888; font-weight: 400; margin-top: 4px; }
+  .sidebar-section-title { font-size: 10px; font-weight: 700; color: ${accent}; text-transform: uppercase; letter-spacing: 1.5px; align-self: flex-start; margin-top: 0; margin-bottom: 4px; flex-shrink: 0; }
+  .sidebar-divider { width: 100%; height: 1.5px; background: ${accent}; margin-bottom: 8px; }
+  .contact-list { align-self: flex-start; list-style: none; margin-bottom: 12px; width: 100%; }
+  .contact-list li { font-size: 9px; color: #444; margin-bottom: 5px; display: flex; align-items: flex-start; gap: 6px; line-height: 1.3; }
   .contact-icon { color: ${accent}; font-size: 9px; flex-shrink: 0; margin-top: 1px; }
-  .aptitudes-list { align-self: flex-start; display: flex; flex-direction: column; gap: 5px; }
-  .aptitude-pill { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 18px; padding: 3px 12px; font-size: 9px; color: #e0eaf5; display: inline-block; align-self: flex-start; }
-  .idiomas-list { align-self: flex-start; width: 100%; }
-  .idioma-item { margin-bottom: 7px; }
-  .idioma-name { font-size: 9px; color: #cdd8e8; margin-bottom: 4px; }
-  .progress-bar-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
-  .progress-bar-fill { height: 100%; background: ${accent}; border-radius: 3px; }
+  .aptitudes-list { align-self: flex-start; display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; width: 100%; }
+  .aptitude-item { font-size: 9px; color: #555; line-height: 1.4; }
+  .idiomas-list { align-self: flex-start; width: 100%; margin-bottom: 12px; }
+  .idioma-item { margin-bottom: 5px; }
+  .idioma-name { font-size: 9px; color: #555; }
 
   /* RIGHT COLUMN */
   .right-column { width: 70%; padding: 28px 26px 20px 28px; overflow: hidden; }
@@ -142,19 +135,16 @@ export function generarCVHTML(data: CVData): string {
   .education-entry { margin-bottom: 10px; }
   .edu-title { font-size: 11px; font-weight: 700; color: #222; }
   .edu-center { font-size: 9.5px; color: #777; font-weight: 400; }
-  .cv-footer { background: #131e35; padding: 9px 30px; text-align: center; flex-shrink: 0; }
-  .cv-footer p { font-size: 8px; color: #fff; letter-spacing: 0.5px; }
+  .cv-footer { background: #f5f7fa; border-top: 1px solid #e0e4ea; padding: 7px 30px; text-align: center; flex-shrink: 0; }
+  .cv-footer p { font-size: 8px; color: #888; letter-spacing: 0.3px; }
 
   @page { size: A4; margin: 0; }
   @media print {
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
     body { background: none !important; padding: 0 !important; margin: 0 !important; }
     .cv-page { box-shadow: none !important; width: 210mm !important; height: 297mm !important; max-height: 297mm !important; }
-    .left-column { background: #1B2845 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .cv-footer { background: #131e35 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .date-badge { background: #4a90d9 !important; -webkit-print-color-adjust: exact !important; }
-    .aptitude-pill { background: rgba(255,255,255,0.12) !important; border: 1px solid rgba(255,255,255,0.2) !important; -webkit-print-color-adjust: exact !important; }
-    .progress-bar-fill { -webkit-print-color-adjust: exact !important; }
+    .left-column { background: #ffffff !important; }
+    .cv-footer { background: #f5f7fa !important; }
   }
 </style>
 </head>
@@ -174,18 +164,21 @@ export function generarCVHTML(data: CVData): string {
 
       ${contactItems ? `
       <div class="sidebar-section-title">Contacto</div>
+      <div class="sidebar-divider"></div>
       <ul class="contact-list">
         ${contactItems}
       </ul>` : ""}
 
       ${(data.aptitudes || []).length > 0 ? `
       <div class="sidebar-section-title">Aptitudes</div>
+      <div class="sidebar-divider"></div>
       <div class="aptitudes-list">
         ${aptitudesHTML}
       </div>` : ""}
 
       ${(data.idiomas || []).length > 0 ? `
       <div class="sidebar-section-title">Idiomas</div>
+      <div class="sidebar-divider"></div>
       <div class="idiomas-list">
         ${idiomasHTML}
       </div>` : ""}
