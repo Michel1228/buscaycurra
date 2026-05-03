@@ -31,3 +31,5 @@ next-env.d.ts
 
 # Tests
 coverage/
+.mcp.json
+.claude/
