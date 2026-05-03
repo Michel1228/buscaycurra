@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
 
     const pool = getPool();
     const result = await pool.query(
-      `SELECT cv_data, cv_text, created_at, updated_at 
-       FROM user_cvs 
+      `SELECT form_data, html, created_at, updated_at
+       FROM user_cvs
        WHERE user_id = $1`,
       [userId]
     );
@@ -28,9 +28,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ cv: null });
     }
 
-    return NextResponse.json({ 
-      cv: result.rows[0].cv_data,
-      cvText: result.rows[0].cv_text,
+    return NextResponse.json({
+      cv: result.rows[0].form_data,
+      cvText: result.rows[0].html,
       updatedAt: result.rows[0].updated_at
     });
   } catch (error) {
@@ -53,11 +53,11 @@ export async function POST(req: NextRequest) {
     
     // Upsert: insertar o actualizar
     await pool.query(
-      `INSERT INTO user_cvs (user_id, cv_data, cv_text, updated_at)
-       VALUES ($1, $2, $3, NOW())
-       ON CONFLICT (user_id) 
-       DO UPDATE SET cv_data = $2, cv_text = $3, updated_at = NOW()`,
-      [userId, JSON.stringify(cvData), cvText || null]
+      `INSERT INTO user_cvs (user_id, nombre, html, form_data, updated_at)
+       VALUES ($1, 'Mi CV', $2, $3, NOW())
+       ON CONFLICT (user_id)
+       DO UPDATE SET html = $2, form_data = $3, updated_at = NOW()`,
+      [userId, cvText || "", JSON.stringify(cvData)]
     );
 
     return NextResponse.json({ success: true });
