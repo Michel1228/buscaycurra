@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         empresa: j.company || "Ver en oferta",
         ubicacion: j.city || j.province || "España",
         salario: j.salary || "Ver en oferta",
-        descripcion: (j.description || "").slice(0, 200),
+        descripcion: j.description || "",
         fuente: j.sourceName || "BuscayCurra",
         url: j.sourceUrl || "#",
         match: 85,

@@ -45,6 +45,9 @@ export default function JobCard({
   const matchColor = match !== undefined ? colorMatch(match) : "#64748b";
   const [guardado, setGuardado] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [expandida, setExpandida] = useState(false);
+  const [descripcionFull, setDescripcionFull] = useState<string | null>(null);
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
   useEffect(() => {
     async function checkSaved() {
@@ -60,6 +63,26 @@ export default function JobCard({
     }
     checkSaved();
   }, [id]);
+
+  async function toggleExpand() {
+    if (expandida) { setExpandida(false); return; }
+    setExpandida(true);
+    if (descripcionFull !== null) return;
+    // Intentar cargar descripción completa desde BD (IDs de Jooble son "jooble-xxx")
+    if (!id.startsWith("jooble-") && !id.startsWith("gusi-")) {
+      setCargandoDetalle(true);
+      try {
+        const res = await fetch(`/api/jobs/detail?id=${id}`);
+        if (res.ok) {
+          const data = await res.json() as { oferta?: { descripcion?: string } };
+          setDescripcionFull(data.oferta?.descripcion || descripcion || "");
+        }
+      } catch { /* usa descripcion corta */ }
+      finally { setCargandoDetalle(false); }
+    } else {
+      setDescripcionFull(descripcion || "");
+    }
+  }
 
   async function toggleGuardar() {
     setGuardando(true);
@@ -139,7 +162,14 @@ export default function JobCard({
           </div>
         )}
         {descripcion && (
-          <p className="text-[10px] mt-1.5 line-clamp-2 leading-relaxed" style={{ color: "#64748b" }}>{descripcion}</p>
+          <div className="mt-1.5">
+            <p className="text-[10px] leading-relaxed" style={{ color: "#64748b", display: "-webkit-box", WebkitLineClamp: expandida ? "unset" : 2, WebkitBoxOrient: "vertical", overflow: expandida ? "visible" : "hidden" } as React.CSSProperties}>
+              {cargandoDetalle ? "Cargando..." : (expandida && descripcionFull !== null ? descripcionFull : descripcion)}
+            </p>
+            <button onClick={toggleExpand} className="text-[10px] mt-0.5 transition hover:opacity-80" style={{ color: "#22c55e" }}>
+              {expandida ? "Ver menos ▲" : "Ver más ▼"}
+            </button>
+          </div>
         )}
       </div>
 

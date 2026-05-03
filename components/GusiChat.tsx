@@ -243,9 +243,10 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
           }
           const resumen = formatCVResumen(parsed);
           setEsperandoConfirmacionCV(true);
-          setMensajes((prev) => [...prev, { 
-            role: "gusi", 
-            text: `✅ **CV analizado.** He extraído esto:\n\n${resumen}\n\n**¿Quieres añadir o cambiar algo?**\n\n(Escribe lo que quieras añadir, o di "**no**" para que lo mejore con IA directamente)` 
+          setMensajes((prev) => [...prev, {
+            role: "gusi",
+            text: `✅ **CV analizado.** He extraído esto:\n\n${resumen}\n\n**¿Quieres añadir o cambiar algo?**\n\n(Escribe lo que quieras añadir, o di "**no**" para que lo mejore con IA directamente)`,
+            action: "ver_cv"
           }]);
         } else {
           setMensajes((prev) => [...prev, { role: "gusi", text: "⚠️ No pude leer bien el PDF. ¿Puedes escribirme tus datos directamente?" }]);
@@ -408,9 +409,10 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
           });
           const data = await res.json();
           setCargando(false);
-          setMensajes((prev) => [...prev, { 
-            role: "gusi", 
+          setMensajes((prev) => [...prev, {
+            role: "gusi",
             text: data.reply || "✨ **CV mejorado:**\n\nHe reestructurado tu CV profesionalmente. ¿Quieres enviarlo a ofertas o generar una carta de presentación?",
+            action: "cv_mejorado",
             cvData: data.reply
           }]);
         } catch {
@@ -474,9 +476,10 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         }
         
         setCargando(false);
-        setMensajes((prev) => [...prev, { 
-          role: "gusi", 
-          text: `✅ **¡CV completado!** 🦋\n\nAquí está tu currículum:\n\n${cvTexto}\n\n**¿Qué quieres hacer ahora?**\n\n1. 📧 **Enviar mi CV** a ofertas de trabajo\n2. ✉️ **Generar carta** de presentación\n3. 📝 **Modificar** algún dato\n4. 💾 **Guardar** para más tarde`,
+        setMensajes((prev) => [...prev, {
+          role: "gusi",
+          text: `✅ **¡CV completado!** 🦋\n\n**¿Qué quieres hacer ahora?**\n\n1. 📧 **Enviar mi CV** a ofertas de trabajo\n2. ✉️ **Generar carta** de presentación\n3. 📝 **Modificar** algún dato\n4. 💾 **Guardar** para más tarde`,
+          action: "ver_cv",
           cvData: cvTexto
         }]);
       }
