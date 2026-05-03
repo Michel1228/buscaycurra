@@ -13,6 +13,8 @@
 import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { generarCVHTML } from "@/lib/cv-generator/cv-template";
+import type { CVData } from "@/lib/cv-generator/cv-template";
 
 interface Exp {
   fechas: string;
@@ -233,224 +235,71 @@ export default function CurriculumPage() {
     finally { setSubiendoFoto(false); }
   }
 
+  function formToCVData(perfilMejorado?: string): CVData {
+    const expOrdenada = [...form.experiencia]
+      .filter(e => e.puesto)
+      .sort((a, b) => {
+        const getYear = (f: string) => { const m = f.match(/(\d{4})/g); return m ? parseInt(m[m.length - 1]) : 0; };
+        return getYear(b.fechas) - getYear(a.fechas);
+      });
+
+    return {
+      nombre: form.nombre,
+      apellidos: form.apellidos || undefined,
+      subtitulo: form.subtitulo || undefined,
+      telefono: form.telefono || undefined,
+      email: form.email || undefined,
+      ciudad: form.ciudad || undefined,
+      fotoUrl: fotoUrl || undefined,
+      perfilProfesional: perfilMejorado || form.perfilProfesional || undefined,
+      aptitudes: form.aptitudes
+        ? form.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
+        : undefined,
+      idiomas: form.idiomas
+        ? form.idiomas.split(",").map(i => {
+            const parts = i.trim().split(":");
+            return { nombre: parts[0].trim(), nivel: parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70 };
+          }).filter(i => i.nombre)
+        : undefined,
+      experiencia: expOrdenada.map(e => ({
+        fechas: e.fechas,
+        puesto: e.puesto,
+        empresa: e.empresa,
+        ubicacion: e.ubicacion || undefined,
+        descripcion: e.descripcion ? e.descripcion.split("\n").filter(d => d.trim()).map(d => d.trim().replace(/^[-•]\s*/, "")) : undefined,
+      })),
+      formacion: form.formacion.filter(f => f.titulo).map(f => ({
+        titulo: f.titulo,
+        centro: f.centro,
+        ubicacion: f.ubicacion || undefined,
+      })),
+    };
+  }
+
   async function generarYMejorar() {
     if (!form.nombre.trim()) { setError("Escribe tu nombre para continuar"); return; }
     setProcesando(true);
     setError("");
     try {
-      // Texto en formato exacto de la plantilla de Michel
-      const cvText = [
-        `# ${form.nombre} ${form.apellidos}`,
-        ``,
-        `**📞** ${form.telefono || ""}  `,
-        `**✉** ${form.email || ""}  `,
-        `**📍** ${form.ciudad || ""}`,
-        ``,
-        `---`,
-        ``,
-        `## Perfil Profesional`,
-        ``,
-        form.perfilProfesional || "Profesional con experiencia en diversos sectores. Actitud dinámica y proactiva.",
-        ``,
-        `---`,
-        ``,
-        `## Aptitudes`,
-        ``,
-        ...(form.aptitudes ? form.aptitudes.split(",").map(a => `- ${a.trim()}`) : ["- Rápido aprendizaje"]),
-        ``,
-        `---`,
-        ``,
-        `## Idiomas`,
-        ``,
-        ...(form.idiomas ? form.idiomas.split(",").map(i => `- ${i.trim()}`) : ["- Español (nativo)"]),
-        ``,
-        `---`,
-        ``,
-        `## Experiencia Laboral`,
-        ``,
-        ...form.experiencia.filter(e => e.puesto).flatMap(e => {
-          const bullets = e.descripcion.split("\n").filter(d => d.trim()).map(d => `- ${d.trim().replace(/^[-•]\s*/, "")}`);
-          return [
-            `### ${e.fechas || ""} — ${e.puesto}`,
-            `**${e.empresa || ""}**${e.ubicacion ? ` · ${e.ubicacion}` : ""}`,
-            ...bullets,
-            ``,
-          ];
-        }),
-        `---`,
-        ``,
-        `## Formación`,
-        ``,
-        ...form.formacion.filter(f => f.titulo).map(f => `- **${f.titulo}** — ${f.centro}${f.ubicacion ? ` · ${f.ubicacion}` : ""}`),
-      ].filter(Boolean).join("\n");
+      const cvText = form.perfilProfesional || "Profesional con experiencia en diversos sectores. Actitud dinámica y proactiva.";
 
-      const mejorarRes = await fetch("/api/cv/mejorar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ cvText, jobTitle: form.subtitulo }),
-      });
-      if (!mejorarRes.ok) throw new Error("Error al mejorar");
-      const { cvMejorado } = await mejorarRes.json();
+      let perfilMejorado: string | undefined;
+      try {
+        const mejorarRes = await fetch("/api/cv/mejorar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ cvText, jobTitle: form.subtitulo }),
+        });
+        if (mejorarRes.ok) {
+          const data = await mejorarRes.json();
+          perfilMejorado = data.cvMejorado || undefined;
+        }
+      } catch { /* usa el perfil original si la IA falla */ }
 
-      if (cvMejorado) {
-        const html = generarHTMLCV(form, cvMejorado);
-        setMejoradoHTML(html);
-      }
-    } catch { setError("Error al mejorar con IA"); }
+      const html = generarCVHTML(formToCVData(perfilMejorado));
+      setMejoradoHTML(html);
+    } catch { setError("Error al generar el CV"); }
     finally { setProcesando(false); }
-  }
-
-  function generarHTMLCV(form: CVForm, perfilMejorado: string): string {
-    // Ordenar experiencia: más reciente primero (intentar parsear fechas)
-    const experienciaOrdenada = [...form.experiencia]
-      .filter(e => e.puesto)
-      .sort((a, b) => {
-        const getYear = (f: string) => {
-          const m = f.match(/(\d{4})/g);
-          return m ? parseInt(m[m.length - 1]) : 0;
-        };
-        return getYear(b.fechas) - getYear(a.fechas);
-      });
-
-    return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; max-width: 210mm; margin: 0 auto; padding: 40px 50px; color: #1a1a1a; line-height: 1.6; background: #fff; }
-    
-    /* Header - Nombre grande centrado + contacto */
-    .header { text-align: center; margin-bottom: 20px; }
-    .header h1 { font-size: 32px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; letter-spacing: -0.5px; }
-    .contact-line { font-size: 13px; color: #444; line-height: 1.8; }
-    .contact-line .icon { font-size: 14px; margin-right: 4px; }
-    
-    /* Separadores --- */
-    hr.sep { border: none; border-top: 1.5px solid #1a1a1a; margin: 18px 0; }
-    
-    /* Secciones */
-    .section { margin-bottom: 18px; }
-    .section h2 { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
-    
-    /* Perfil */
-    .perfil-text { font-size: 13px; color: #333; line-height: 1.7; }
-    
-    /* Aptitudes e Idiomas - lista simple */
-    .simple-list { list-style: disc; padding-left: 20px; font-size: 13px; color: #333; line-height: 1.8; }
-    .simple-list li { margin-bottom: 2px; }
-    
-    /* Experiencia Laboral - formato exacto plantilla */
-    .exp-item { margin-bottom: 18px; }
-    .exp-item:last-child { margin-bottom: 0; }
-    .exp-header { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
-    .exp-title { font-weight: 400; }
-    .exp-company { font-size: 13px; color: #333; margin-bottom: 6px; }
-    .exp-company strong { font-weight: 600; }
-    .exp-company .dot { color: #666; margin: 0 4px; }
-    .exp-desc { list-style: disc; padding-left: 20px; font-size: 12.5px; color: #444; line-height: 1.7; }
-    .exp-desc li { margin-bottom: 1px; }
-    
-    /* Formación - formato exacto plantilla */
-    .edu-list { list-style: disc; padding-left: 20px; font-size: 13px; color: #333; line-height: 1.9; }
-    .edu-list li { margin-bottom: 4px; }
-    .edu-list strong { font-weight: 600; }
-    .edu-list .dot { color: #666; margin: 0 4px; }
-    
-    @media print {
-      body { padding: 30px 40px; }
-      .section { break-inside: avoid; }
-      .exp-item { break-inside: avoid; }
-    }
-  </style>
-</head>
-<body>
-  <!-- HEADER: Nombre + Contacto -->
-  <div class="header">
-    <h1>${form.nombre || "Nombre"} ${form.apellidos || ""}</h1>
-    <div class="contact-line">
-      ${form.telefono ? `<div><span class="icon">📞</span> ${form.telefono}</div>` : ""}
-      ${form.email ? `<div><span class="icon">✉</span> ${form.email}</div>` : ""}
-      ${form.ciudad ? `<div><span class="icon">📍</span> ${form.ciudad}</div>` : ""}
-    </div>
-  </div>
-  
-  <hr class="sep">
-  
-  <!-- PERFIL PROFESIONAL -->
-  <div class="section">
-    <h2>Perfil Profesional</h2>
-    <p class="perfil-text">${perfilMejorado}</p>
-  </div>
-  
-  <hr class="sep">
-  
-  <!-- APTITUDES -->
-  ${form.aptitudes ? `
-  <div class="section">
-    <h2>Aptitudes</h2>
-    <ul class="simple-list">
-      ${form.aptitudes.split(",").map(a => a.trim()).filter(Boolean).map(a => `<li>${a}</li>`).join("")}
-    </ul>
-  </div>
-  
-  <hr class="sep">
-  ` : ""}
-  
-  <!-- IDIOMAS -->
-  ${form.idiomas ? `
-  <div class="section">
-    <h2>Idiomas</h2>
-    <ul class="simple-list">
-      ${form.idiomas.split(",").map(i => i.trim()).filter(Boolean).map(i => {
-        const parts = i.split(":");
-        return `<li>${parts[0].trim()}${parts[1] ? ` (${parts[1].trim()})` : ""}</li>`;
-      }).join("")}
-    </ul>
-  </div>
-  
-  <hr class="sep">
-  ` : ""}
-  
-  <!-- EXPERIENCIA LABORAL -->
-  ${experienciaOrdenada.length > 0 ? `
-  <div class="section">
-    <h2>Experiencia Laboral</h2>
-    ${experienciaOrdenada.map(e => {
-      const bullets = e.descripcion.split("\n").filter(d => d.trim()).map(d => `<li>${d.trim().replace(/^[-•]\s*/, "")}</li>`).join("");
-      return `
-    <div class="exp-item">
-      <div class="exp-header">${e.fechas || "Fecha"} — ${e.puesto}</div>
-      <div class="exp-company">
-        <strong>${e.empresa || "Empresa"}</strong>
-        ${e.ubicacion ? `<span class="dot">·</span>${e.ubicacion}` : ""}
-      </div>
-      ${bullets ? `<ul class="exp-desc">${bullets}</ul>` : ""}
-    </div>
-    `;
-    }).join("")}
-  </div>
-  
-  <hr class="sep">
-  ` : ""}
-  
-  <!-- FORMACIÓN -->
-  ${form.formacion.filter(f => f.titulo).length > 0 ? `
-  <div class="section">
-    <h2>Formación</h2>
-    <ul class="edu-list">
-      ${form.formacion.filter(f => f.titulo).map(f => `
-      <li>
-        <strong>${f.titulo}</strong>
-        ${f.centro ? `<span class="dot">—</span>${f.centro}${f.ubicacion ? ` · ${f.ubicacion}` : ""}` : ""}
-      </li>
-      `).join("")}
-    </ul>
-  </div>
-  ` : ""}
-</body>
-</html>`;
   }
 
   function descargarPDF() {

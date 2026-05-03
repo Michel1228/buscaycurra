@@ -101,54 +101,55 @@ export function generarCVHTML(data: CVData): string {
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font-family: 'Montserrat', sans-serif; background: #c0c0c0; display: flex; justify-content: center; padding: 20px; }
-  .cv-page { width: 794px; min-height: 1123px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; }
-  .cv-body { display: flex; flex: 1; }
+  .cv-page { width: 794px; height: 1123px; max-height: 1123px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; }
+  .cv-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
   /* LEFT COLUMN */
-  .left-column { width: 30%; background: #1B2845; padding: 35px 22px 30px; display: flex; flex-direction: column; align-items: center; }
-  .photo-wrapper { width: 155px; height: 155px; border-radius: 50%; border: 3px solid ${accent}; overflow: hidden; margin-bottom: 18px; }
+  .left-column { width: 30%; background: #1B2845; padding: 24px 18px 20px; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+  .photo-wrapper { width: 120px; height: 120px; border-radius: 50%; border: 3px solid ${accent}; overflow: hidden; margin-bottom: 12px; flex-shrink: 0; }
   .photo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-  .photo-placeholder { width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 10px; text-align: center; border-radius: 50%; }
-  .name-block { text-align: center; margin-bottom: 8px; }
-  .name-block .first-name { font-size: 21px; font-style: italic; font-weight: 600; color: #ffffff; line-height: 1.2; }
-  .name-block .last-name { font-size: 21px; font-style: italic; font-weight: 700; color: ${accent}; line-height: 1.2; }
-  .name-block .subtitle { font-size: 10.5px; color: rgba(255,255,255,0.65); font-weight: 400; margin-top: 6px; }
-  .sidebar-section-title { font-size: 12px; font-weight: 700; color: ${accent}; text-transform: uppercase; letter-spacing: 1.5px; align-self: flex-start; margin-top: 22px; margin-bottom: 12px; }
+  .photo-placeholder { width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 9px; text-align: center; border-radius: 50%; }
+  .name-block { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
+  .name-block .first-name { font-size: 17px; font-style: italic; font-weight: 600; color: #ffffff; line-height: 1.2; }
+  .name-block .last-name { font-size: 17px; font-style: italic; font-weight: 700; color: ${accent}; line-height: 1.2; }
+  .name-block .subtitle { font-size: 9px; color: rgba(255,255,255,0.65); font-weight: 400; margin-top: 4px; }
+  .sidebar-section-title { font-size: 10px; font-weight: 700; color: ${accent}; text-transform: uppercase; letter-spacing: 1.5px; align-self: flex-start; margin-top: 14px; margin-bottom: 8px; flex-shrink: 0; }
   .contact-list { align-self: flex-start; list-style: none; }
-  .contact-list li { font-size: 10px; color: #cdd8e8; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
-  .contact-icon { color: ${accent}; font-size: 10px; flex-shrink: 0; margin-top: 1px; }
-  .aptitudes-list { align-self: flex-start; display: flex; flex-direction: column; gap: 7px; }
-  .aptitude-pill { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 18px; padding: 5px 16px; font-size: 10px; color: #e0eaf5; display: inline-block; align-self: flex-start; }
+  .contact-list li { font-size: 9px; color: #cdd8e8; margin-bottom: 5px; display: flex; align-items: flex-start; gap: 6px; line-height: 1.3; }
+  .contact-icon { color: ${accent}; font-size: 9px; flex-shrink: 0; margin-top: 1px; }
+  .aptitudes-list { align-self: flex-start; display: flex; flex-direction: column; gap: 5px; }
+  .aptitude-pill { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 18px; padding: 3px 12px; font-size: 9px; color: #e0eaf5; display: inline-block; align-self: flex-start; }
   .idiomas-list { align-self: flex-start; width: 100%; }
-  .idioma-item { margin-bottom: 10px; }
-  .idioma-name { font-size: 10.5px; color: #cdd8e8; margin-bottom: 5px; }
-  .progress-bar-track { width: 100%; height: 5px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
+  .idioma-item { margin-bottom: 7px; }
+  .idioma-name { font-size: 9px; color: #cdd8e8; margin-bottom: 4px; }
+  .progress-bar-track { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
   .progress-bar-fill { height: 100%; background: ${accent}; border-radius: 3px; }
 
   /* RIGHT COLUMN */
-  .right-column { width: 70%; padding: 38px 32px 30px 35px; }
-  .section-title { font-size: 14px; font-weight: 700; color: ${accent}; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .right-column { width: 70%; padding: 28px 26px 20px 28px; overflow: hidden; }
+  .section-title { font-size: 12px; font-weight: 700; color: ${accent}; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .section-title::after { content: ''; flex: 1; height: 1.5px; background: ${accent}; }
-  .profile-text { font-size: 10.5px; color: #444; line-height: 1.65; margin-bottom: 22px; }
-  .experience-section { margin-bottom: 22px; }
-  .experience-entry { margin-bottom: 20px; }
-  .date-badge { display: inline-block; background: ${accent}; color: #fff; font-size: 9px; font-weight: 600; padding: 4px 14px; border-radius: 14px; margin-bottom: 6px; }
-  .job-title { font-size: 13px; font-weight: 700; color: #222; margin-bottom: 3px; }
-  .job-company { font-size: 10.5px; color: #777; font-style: italic; margin-bottom: 8px; }
-  .job-bullets { list-style: none; padding-left: 15px; }
-  .job-bullets li { font-size: 10px; color: #444; line-height: 1.65; margin-bottom: 3px; position: relative; padding-left: 12px; }
-  .job-bullets li::before { content: '●'; color: ${accent}; position: absolute; left: 0; font-size: 7px; top: 2px; }
-  .education-section { margin-bottom: 20px; }
-  .education-entry { margin-bottom: 15px; }
-  .edu-title { font-size: 12.5px; font-weight: 700; color: #222; }
-  .edu-center { font-size: 10.5px; color: #777; font-weight: 400; }
-  .cv-footer { background: #131e35; padding: 12px 30px; text-align: center; }
-  .cv-footer p { font-size: 9px; color: #fff; letter-spacing: 0.5px; }
+  .profile-text { font-size: 9.5px; color: #444; line-height: 1.55; margin-bottom: 16px; }
+  .experience-section { margin-bottom: 16px; }
+  .experience-entry { margin-bottom: 13px; }
+  .date-badge { display: inline-block; background: ${accent}; color: #fff; font-size: 8px; font-weight: 600; padding: 3px 11px; border-radius: 14px; margin-bottom: 4px; }
+  .job-title { font-size: 11px; font-weight: 700; color: #222; margin-bottom: 2px; }
+  .job-company { font-size: 9.5px; color: #777; font-style: italic; margin-bottom: 5px; }
+  .job-bullets { list-style: none; padding-left: 12px; }
+  .job-bullets li { font-size: 9px; color: #444; line-height: 1.5; margin-bottom: 2px; position: relative; padding-left: 10px; }
+  .job-bullets li::before { content: '●'; color: ${accent}; position: absolute; left: 0; font-size: 6px; top: 2px; }
+  .education-section { margin-bottom: 14px; }
+  .education-entry { margin-bottom: 10px; }
+  .edu-title { font-size: 11px; font-weight: 700; color: #222; }
+  .edu-center { font-size: 9.5px; color: #777; font-weight: 400; }
+  .cv-footer { background: #131e35; padding: 9px 30px; text-align: center; flex-shrink: 0; }
+  .cv-footer p { font-size: 8px; color: #fff; letter-spacing: 0.5px; }
 
+  @page { size: A4; margin: 0; }
   @media print {
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
     body { background: none !important; padding: 0 !important; margin: 0 !important; }
-    .cv-page { box-shadow: none !important; width: 100% !important; min-height: 0 !important; }
+    .cv-page { box-shadow: none !important; width: 210mm !important; height: 297mm !important; max-height: 297mm !important; }
     .left-column { background: #1B2845 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .cv-footer { background: #131e35 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .date-badge { background: #4a90d9 !important; -webkit-print-color-adjust: exact !important; }
