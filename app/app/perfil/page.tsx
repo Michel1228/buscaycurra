@@ -29,7 +29,9 @@ export default function PerfilPage() {
   const [perfil, setPerfil] = useState<PerfilData>(emptyPerfil);
   const [guardado, setGuardado] = useState(false);
   const [cargando, setCargando] = useState(true);
-  const [tab, setTab] = useState<"perfil" | "seguridad">("perfil");
+  const [tab, setTab] = useState<"perfil" | "seguridad" | "plan">("perfil");
+  const [planActual, setPlanActual] = useState<"free" | "basico" | "pro" | "empresa">("free");
+  const [cargandoPlan, setCargandoPlan] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -39,7 +41,7 @@ export default function PerfilPage() {
       setEmail(session.user.email ?? "");
 
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, ciudad, sector")
+        .select("full_name, phone, ciudad, sector, plan")
         .eq("id", session.user.id).single();
 
       if (p) {
@@ -52,6 +54,9 @@ export default function PerfilPage() {
           ciudad: p.ciudad || "",
           sector: p.sector || "",
         });
+        if (p.plan && ["basico", "pro", "empresa"].includes(p.plan)) {
+          setPlanActual(p.plan as "basico" | "pro" | "empresa");
+        }
       }
       setCargando(false);
     }
@@ -81,6 +86,22 @@ export default function PerfilPage() {
 
   function updateField(field: keyof PerfilData, value: string) {
     setPerfil(prev => ({ ...prev, [field]: value }));
+  }
+
+  async function irACheckout(plan: "basico" | "pro" | "empresa") {
+    setCargandoPlan(true);
+    try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) { router.push("/auth/login"); return; }
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json() as { url?: string; error?: string };
+      if (data.url) window.location.href = data.url;
+    } catch { /* ignore */ }
+    finally { setCargandoPlan(false); }
   }
 
   if (cargando) {
@@ -126,6 +147,7 @@ export default function PerfilPage() {
         <div className="max-w-2xl mx-auto px-4 flex">
           {[
             { id: "perfil" as const, label: "👤 Mi Perfil", icon: "👤" },
+            { id: "plan" as const, label: "⚡ Mi Plan", icon: "⚡" },
             { id: "seguridad" as const, label: "🔒 Seguridad", icon: "🔒" },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -190,6 +212,73 @@ export default function PerfilPage() {
             </div>
           </div>
         )}
+
+        {tab === "plan" && (() => {
+          const PLANES_INFO = {
+            free:    { emoji: "🥚", nombre: "Gratis",  color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
+            basico:  { emoji: "🐣", nombre: "Básico",  color: "#22c55e", desc: "5 CVs/día · IA básica" },
+            pro:     { emoji: "🐛", nombre: "Pro",     color: "#a855f7", desc: "10 CVs/día · IA avanzada · Estadísticas" },
+            empresa: { emoji: "🦋", nombre: "Empresa", color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
+          };
+          const info = PLANES_INFO[planActual];
+          return (
+            <div className="space-y-5">
+              {/* Plan actual */}
+              <div className="rounded-xl p-5" style={{ background: "#161922", border: `1px solid ${info.color}30` }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="text-3xl">{info.emoji}</div>
+                  <div>
+                    <p className="text-xs font-medium" style={{ color: "#64748b" }}>Plan actual</p>
+                    <h2 className="text-lg font-bold" style={{ color: info.color }}>Plan {info.nombre}</h2>
+                  </div>
+                  <span className="ml-auto text-[11px] font-semibold px-3 py-1 rounded-full"
+                    style={{ background: `${info.color}15`, color: info.color }}>
+                    Activo
+                  </span>
+                </div>
+                <p className="text-xs" style={{ color: "#94a3b8" }}>{info.desc}</p>
+              </div>
+
+              {/* Opciones de upgrade */}
+              {planActual !== "empresa" && (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold" style={{ color: "#64748b" }}>Mejorar plan</p>
+                  {planActual === "free" && (
+                    <div className="rounded-xl p-4 flex items-center justify-between"
+                      style={{ background: "#161922", border: "1px solid #252836" }}>
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🐛 Plan Pro — 9,99€/mes</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>10 CVs/día · IA avanzada · Estadísticas</p>
+                      </div>
+                      <button onClick={() => void irACheckout("pro")} disabled={cargandoPlan}
+                        className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
+                        {cargandoPlan ? "..." : "Contratar"}
+                      </button>
+                    </div>
+                  )}
+                  <div className="rounded-xl p-4 flex items-center justify-between"
+                    style={{ background: "#161922", border: "1px solid #252836" }}>
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🦋 Plan Empresa — 49,99€/mes</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
+                    </div>
+                    <button onClick={() => void irACheckout("empresa")} disabled={cargandoPlan}
+                      className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
+                      {cargandoPlan ? "..." : "Contratar"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Link a precios */}
+              <p className="text-xs text-center" style={{ color: "#475569" }}>
+                <button onClick={() => router.push("/precios")} className="underline hover:opacity-80" style={{ color: "#22c55e" }}>
+                  Ver comparativa completa de planes →
+                </button>
+              </p>
+            </div>
+          );
+        })()}
 
         {tab === "seguridad" && (
           <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
