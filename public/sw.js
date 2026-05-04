@@ -3,7 +3,7 @@
  * Cache-first para assets estáticos, network-first para APIs
  */
 
-const CACHE_NAME = "buscaycurra-v3";
+const CACHE_NAME = "buscaycurra-v4";
 const STATIC_ASSETS = [
   "/",
   "/app",
