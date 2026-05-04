@@ -82,14 +82,72 @@ export default function CurriculumPage() {
         if (res.ok) {
           const data = await res.json();
           if (data.cv) {
-            setForm(prev => ({ ...prev, ...data.cv }));
+            const cv = data.cv as Record<string, unknown>;
+
+            // Normalizar experiencia (puede ser string o array con distinto formato)
+            let experiencia = emptyForm.experiencia;
+            if (Array.isArray(cv.experiencia) && (cv.experiencia as unknown[]).length > 0) {
+              experiencia = (cv.experiencia as Record<string, unknown>[]).map(e => ({
+                fechas: String(e.fechas || ""),
+                puesto: String(e.puesto || ""),
+                empresa: String(e.empresa || ""),
+                ubicacion: String(e.ubicacion || ""),
+                descripcion: Array.isArray(e.descripcion)
+                  ? (e.descripcion as string[]).join("\n")
+                  : String(e.descripcion || ""),
+              }));
+            }
+
+            // Normalizar formacion (puede ser string o array)
+            let formacion = emptyForm.formacion;
+            if (Array.isArray(cv.formacion) && (cv.formacion as unknown[]).length > 0) {
+              formacion = (cv.formacion as Record<string, unknown>[]).map(f => ({
+                titulo: String(f.titulo || ""),
+                centro: String(f.centro || ""),
+                ubicacion: String(f.ubicacion || ""),
+              }));
+            }
+
+            // Normalizar aptitudes (puede ser string[] o string)
+            const aptRaw = cv.aptitudes || cv.habilidades || cv.skills;
+            const aptitudes = Array.isArray(aptRaw)
+              ? (aptRaw as string[]).join(", ")
+              : String(aptRaw || "");
+
+            // Normalizar idiomas (puede ser array de objetos o string)
+            const idiomasRaw = cv.idiomas || cv.languages;
+            const idiomas = Array.isArray(idiomasRaw)
+              ? (idiomasRaw as Record<string, unknown>[]).map(i =>
+                  typeof i === "string" ? i : `${i.nombre}:${i.nivel || 70}`
+                ).join(", ")
+              : String(idiomasRaw || "");
+
+            // Foto desde CV guardado
+            if (cv.fotoUrl && typeof cv.fotoUrl === "string") {
+              setFotoUrl(cv.fotoUrl);
+            }
+
+            setForm(prev => ({
+              ...prev,
+              nombre: String(cv.nombre || cv.full_name || prev.nombre),
+              apellidos: String(cv.apellidos || prev.apellidos),
+              subtitulo: String(cv.subtitulo || prev.subtitulo),
+              telefono: String(cv.telefono || cv.phone || cv.contacto || prev.telefono),
+              email: String(cv.email || prev.email),
+              ciudad: String(cv.ciudad || cv.location || prev.ciudad),
+              perfilProfesional: String(cv.perfilProfesional || cv.perfil || cv.summary || prev.perfilProfesional),
+              aptitudes: aptitudes || prev.aptitudes,
+              idiomas: idiomas || prev.idiomas,
+              experiencia,
+              formacion,
+            }));
           }
         }
       } catch { /* ignore */ }
 
-      // Cargar perfil
+      // Cargar perfil (solo para rellenar huecos que no estén en el CV)
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, ciudad, email, avatar_url, cv_url")
+        .select("full_name, phone, ciudad, sector")
         .eq("id", session.user.id).single();
 
       if (p) {
@@ -99,10 +157,9 @@ export default function CurriculumPage() {
           nombre: prev.nombre || parts[0] || "",
           apellidos: prev.apellidos || parts.slice(1).join(" ") || "",
           telefono: prev.telefono || p.phone || "",
-          email: prev.email || p.email || session.user.email || "",
+          email: prev.email || session.user.email || "",
           ciudad: prev.ciudad || p.ciudad || "",
         }));
-        setFotoUrl(p.avatar_url || "");
       }
 
       setCargando(false);
