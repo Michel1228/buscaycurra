@@ -44,19 +44,20 @@ export default function PerfilPage() {
         .select("full_name, phone, ciudad, sector, plan")
         .eq("id", session.user.id).single();
 
-      if (p) {
-        const parts = (p.full_name || "").split(" ");
-        setPerfil({
-          nombre: parts[0] || "",
-          apellidos: parts.slice(1).join(" ") || "",
-          telefono: p.phone || "",
-          email: session.user.email || "",
-          ciudad: p.ciudad || "",
-          sector: p.sector || "",
-        });
-        if (p.plan && ["basico", "pro", "empresa"].includes(p.plan)) {
-          setPlanActual(p.plan as "basico" | "pro" | "empresa");
-        }
+      // Fallback a metadatos de auth si el perfil no tiene nombre
+      const metaName = (session.user.user_metadata?.full_name as string) || "";
+      const fullName = (p?.full_name || metaName || "").trim();
+      const parts = fullName.split(" ");
+      setPerfil({
+        nombre: parts[0] || "",
+        apellidos: parts.slice(1).join(" ") || "",
+        telefono: p?.phone || "",
+        email: session.user.email || "",
+        ciudad: p?.ciudad || "",
+        sector: p?.sector || "",
+      });
+      if (p?.plan && ["basico", "pro", "empresa"].includes(p.plan)) {
+        setPlanActual(p.plan as "basico" | "pro" | "empresa");
       }
       setCargando(false);
     }
@@ -73,12 +74,13 @@ export default function PerfilPage() {
   async function guardarPerfil() {
     if (!userId) return;
     try {
-      await getSupabaseBrowser().from("profiles").update({
+      await getSupabaseBrowser().from("profiles").upsert({
+        id: userId,
         full_name: `${perfil.nombre} ${perfil.apellidos}`.trim(),
         phone: perfil.telefono,
         ciudad: perfil.ciudad,
         sector: perfil.sector,
-      }).eq("id", userId);
+      }, { onConflict: "id" });
       setGuardado(true);
       setTimeout(() => setGuardado(false), 2000);
     } catch { /* ignore */ }
