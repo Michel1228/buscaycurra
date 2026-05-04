@@ -90,6 +90,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   // ============================================
@@ -105,17 +106,24 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         if (user) {
           setUserId(user.id);
           await cargarConversaciones(user.id);
-          await cargarCV(user.id);
-          
+          const cvExistente = await cargarCV(user.id);
+
           const esNuevo = user.created_at && (Date.now() - new Date(user.created_at).getTime()) < 30 * 60 * 1000;
           const nombre = (user.user_metadata?.full_name || "").split(" ")[0];
           const saludo = nombre ? `¡Hola, ${nombre}!` : "¡Hola!";
-          
-          const msgBienvenida = esNuevo
-            ? `${saludo} 🐛 Soy Guzzi, tu asistente personal de empleo.\n\nEstoy aquí para que nunca más tengas que buscar trabajo solo. Yo trabajo, tú eliges.\n\n¿Por dónde empezamos?\n\n📄 **Tengo CV** → súbemelo y te busco las mejores ofertas\n📝 **No tengo CV** → te ayudo a crearlo en 5 minutos paso a paso\n📧 Cuando esté listo, **envío tu candidatura automáticamente**\n\n¡Tú relájate, que yo me pongo a trabajar! 🐛→🦋`
-            : `${saludo} 🐛 ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Mejorar mi foto\n🎯 Preparar entrevistas\n📄 Ver mi CV guardado`;
-          
-          setMensajes([{ role: "gusi", text: msgBienvenida }]);
+
+          if (cvExistente && !esNuevo) {
+            // Usuario con CV guardado: mostrar CV directamente
+            setMensajes([{
+              role: "gusi",
+              text: `${saludo} 🐛 Aquí tienes tu CV actualizado.\n\n¿Qué hacemos hoy?\n\n📧 **Enviar a ofertas** · ✨ **Mejorar con IA** · 📸 **Añadir/cambiar foto**`,
+              action: "ver_cv",
+            }]);
+          } else if (esNuevo) {
+            setMensajes([{ role: "gusi", text: `${saludo} 🐛 Soy Guzzi, tu asistente personal de empleo.\n\nEstoy aquí para que nunca más tengas que buscar trabajo solo. Yo trabajo, tú eliges.\n\n¿Por dónde empezamos?\n\n📄 **Tengo CV** → súbemelo y te busco las mejores ofertas\n📝 **No tengo CV** → te ayudo a crearlo en 5 minutos paso a paso\n📧 Cuando esté listo, **envío tu candidatura automáticamente**\n\n¡Tú relájate, que yo me pongo a trabajar! 🐛→🦋` }]);
+          } else {
+            setMensajes([{ role: "gusi", text: `${saludo} 🐛 ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Añadir foto al CV\n🎯 Preparar entrevistas\n📄 Ver mi CV guardado` }]);
+          }
         } else {
           setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Guzzi. Regístrate primero para que pueda ayudarte." }]);
         }
@@ -172,18 +180,20 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
   }
 
-  async function cargarCV(uid: string) {
+  async function cargarCV(uid: string): Promise<Record<string, unknown> | null> {
     try {
       const res = await fetch(`/api/gusi/cv?userId=${uid}`);
       if (res.ok) {
         const data = await res.json();
         if (data.cv) {
           setCvGuardado(data.cv);
+          return data.cv;
         }
       }
     } catch (e) {
       console.error("Error cargando CV:", e);
     }
+    return null;
   }
 
   async function guardarConversacion() {
@@ -217,6 +227,61 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   }
 
   // ============================================
+  // MANEJO DE FOTO
+  // ============================================
+
+  async function handlePhotoUpload(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setMensajes(prev => [...prev, { role: "gusi", text: "❌ Solo acepto imágenes (JPG, PNG). Inténtalo de nuevo." }]);
+      return;
+    }
+    setCargando(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const size = 200;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext("2d")!;
+            const min = Math.min(img.width, img.height);
+            ctx.drawImage(img, (img.width - min) / 2, (img.height - min) / 2, min, min, 0, 0, size, size);
+            resolve(canvas.toDataURL("image/jpeg", 0.85));
+          };
+          img.onerror = reject;
+          img.src = reader.result as string;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const cvActualizado = { ...(cvGuardado || {}), fotoUrl: dataUrl };
+      setCvGuardado(cvActualizado);
+
+      if (userId) {
+        await fetch("/api/gusi/cv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, cvData: cvActualizado, cvText: JSON.stringify(cvActualizado) }),
+        });
+      }
+
+      setMensajes(prev => [...prev, {
+        role: "gusi",
+        text: "📸 **¡Foto añadida!** Ya aparece en tu CV profesional.",
+        action: "ver_cv",
+      }]);
+    } catch {
+      setMensajes(prev => [...prev, { role: "gusi", text: "❌ Error al procesar la foto. Inténtalo de nuevo." }]);
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  // ============================================
   // MANEJO DE ARCHIVOS
   // ============================================
 
@@ -245,7 +310,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
           setEsperandoConfirmacionCV(true);
           setMensajes((prev) => [...prev, {
             role: "gusi",
-            text: `✅ **CV analizado.** He extraído esto:\n\n${resumen}\n\n**¿Quieres añadir o cambiar algo?**\n\n(Escribe lo que quieras añadir, o di "**no**" para que lo mejore con IA directamente)`,
+            text: `✅ **CV analizado.** He extraído esto:\n\n${resumen}\n**¿Quieres añadir o cambiar algo?**\n\n(Escribe lo que quieras añadir, di "**no**" para mejorar con IA, o di "**foto**" para añadir tu foto de perfil)`,
             action: "ver_cv"
           }]);
         } else {
@@ -392,8 +457,16 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     // ESPERANDO CONFIRMACIÓN DE CV (después de subir PDF)
     // ============================================
     if (esperandoConfirmacionCV) {
+      // Opción foto: pedir foto sin cerrar el modo confirmación
+      if (texto.toLowerCase() === "foto" || texto.toLowerCase() === "añadir foto" || texto.toLowerCase() === "foto cv") {
+        setCargando(false);
+        setMensajes(prev => [...prev, { role: "gusi", text: "📸 Perfecto, sube tu foto de perfil:" }]);
+        photoRef.current?.click();
+        return;
+      }
+
       setEsperandoConfirmacionCV(false);
-      
+
       if (texto.toLowerCase() === "no" || texto.toLowerCase() === "no gracias") {
         // Mejorar CV directamente con IA
         setCargando(true);
@@ -548,10 +621,11 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
 
     if (texto === "__FOTO_CV__") {
       setCargando(false);
-      setMensajes((prev) => [...prev, { 
-        role: "gusi", 
-        text: "📸 Para mejorar tu foto de CV:\n\n**Opción 1 — ChatGPT:**\nCopia este prompt exacto:\n_\"Limpia esta foto de perfil profesional, mejora la iluminación, elimina el fondo y pon un fondo gris claro degradado. Mantén la expresión natural.\"_\n\n**Opción 2 — Gratis:**\n1. Remove.bg → quita el fondo\n2. Canva → añade fondo profesional\n\n**Tips:** Luz de ventana, ropa formal, sonrisa natural, pecho arriba.\n\n¡Una buena foto = +40% respuestas! 🐛📸" 
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "📸 **Sube tu foto de perfil** y la añado directamente a tu CV.\n\nConsejos para una buena foto:\n• Fondo liso (blanco o gris)\n• Ropa formal, pecho arriba\n• Buena iluminación (luz de ventana)\n• Expresión natural y sonrisa\n\n**Una buena foto = +40% de respuestas.** 🐛📸",
       }]);
+      photoRef.current?.click();
       return;
     }
 
@@ -587,9 +661,9 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
 
     if (texto === "__SUBIR_CV__") {
       setCargando(false);
-      setMensajes((prev) => [...prev, { 
-        role: "gusi", 
-        text: "📎 **Sube tu CV en PDF** y yo lo mejoro con IA.\n\nTambién puedes escribirme tus datos directamente." 
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "📎 **Sube tu CV en PDF** y lo analizo al instante.\n\nDespués te pediré también una foto de perfil para que tu CV quede completo. 📸",
       }]);
       fileRef.current?.click();
       return;
@@ -894,13 +968,31 @@ Ya tengo tus datos guardados. Voy a:
             e.target.value = "";
           }}
         />
+        <input
+          type="file"
+          ref={photoRef}
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handlePhotoUpload(file);
+            e.target.value = "";
+          }}
+        />
         <div className="flex gap-2">
           <button
             onClick={() => fileRef.current?.click()}
-            className="px-3 py-2.5 text-gray-400 hover:text-white rounded-xl text-sm transition-colors"
-            title="Subir PDF"
+            className="px-2 py-2.5 text-gray-400 hover:text-white rounded-xl text-sm transition-colors"
+            title="Subir CV en PDF"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+          </button>
+          <button
+            onClick={() => photoRef.current?.click()}
+            className="px-2 py-2.5 text-gray-400 hover:text-white rounded-xl text-sm transition-colors"
+            title="Añadir foto al CV"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           </button>
           <input
             type="text"
