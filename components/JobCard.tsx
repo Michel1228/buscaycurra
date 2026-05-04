@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
@@ -174,15 +173,26 @@ export default function JobCard({
       </div>
 
       <div className="flex gap-2 mt-auto">
-        <a href={url} target="_blank" rel="noopener noreferrer"
-          className="flex-1 text-center py-2 text-[11px] font-medium rounded-lg transition hover:opacity-80"
-          style={{ border: "1px solid rgba(34,197,94,0.2)", color: "#94a3b8" }}>
-          Ver oferta
-        </a>
-        <Link href={`/app/envios?empresa=${encodeURIComponent(empresa)}`}
+        {url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            className="flex-1 text-center py-2 text-[11px] font-medium rounded-lg transition hover:opacity-80"
+            style={{ border: "1px solid rgba(34,197,94,0.2)", color: "#94a3b8" }}>
+            Ver oferta ↗
+          </a>
+        ) : (
+          <span
+            className="flex-1 text-center py-2 text-[11px] font-medium rounded-lg"
+            style={{ border: "1px solid rgba(100,116,139,0.15)", color: "#475569", cursor: "default" }}
+            title="URL de oferta no disponible">
+            Sin URL
+          </span>
+        )}
+        <a
+          href={`/app/envios?empresa=${encodeURIComponent(empresa)}&puesto=${encodeURIComponent(titulo)}&url=${encodeURIComponent(url || "")}`}
+          target="_blank" rel="noopener noreferrer"
           className="flex-1 text-center py-2 text-[11px] font-semibold rounded-lg transition hover:opacity-90 btn-game">
           Enviar CV
-        </Link>
+        </a>
       </div>
     </div>
   );

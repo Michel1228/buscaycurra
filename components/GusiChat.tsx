@@ -62,6 +62,17 @@ const SUGERENCIAS = [
   { icon: "✉️", label: "Carta recomendación", msg: "__CARTA_RECOMENDACION__" },
 ];
 
+function renderMd(text: string): React.ReactNode[] {
+  // Split on **bold** and render React nodes
+  const segments = text.split(/(\*\*[^*]+\*\*)/g);
+  return segments.map((seg, i) => {
+    if (seg.startsWith("**") && seg.endsWith("**")) {
+      return <strong key={i} style={{ fontWeight: 700, color: "#f1f5f9" }}>{seg.slice(2, -2)}</strong>;
+    }
+    return seg;
+  });
+}
+
 export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: boolean }) {
   const [abierto, setAbierto] = useState(modoIncrustado);
   const [logueado, setLogueado] = useState<boolean | null>(null);
@@ -310,11 +321,24 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
           setEsperandoConfirmacionCV(true);
           setMensajes((prev) => [...prev, {
             role: "gusi",
-            text: `✅ **CV analizado.** He extraído esto:\n\n${resumen}\n**¿Quieres añadir o cambiar algo?**\n\n(Escribe lo que quieras añadir, di "**no**" para mejorar con IA, o di "**foto**" para añadir tu foto de perfil)`,
+            text: `✅ **CV analizado.** He extraído esto:\n\n${resumen}\n¿Quieres añadir o cambiar algo?\n\n(Escribe lo que quieras añadir, di "no" para mejorar con IA, o di "foto" para añadir tu foto de perfil)`,
             action: "ver_cv"
           }]);
         } else {
-          setMensajes((prev) => [...prev, { role: "gusi", text: "⚠️ No pude leer bien el PDF. ¿Puedes escribirme tus datos directamente?" }]);
+          setMensajes((prev) => [...prev, {
+            role: "gusi",
+            text: `⚠️ Tu PDF usa imágenes en lugar de texto, así que no puedo leerlo automáticamente.\n\n**Opciones:**\n1. Ve a 📄 **Mi CV** para rellenar los datos manualmente (recomendado)\n2. O escríbeme tus datos aquí directamente\n3. Si tienes el CV en Word/Google Docs, expórtalo como PDF con texto seleccionable`,
+          }]);
+        }
+      } else {
+        const errData = await res.json().catch(() => ({})) as { error?: string };
+        if (errData.error?.includes("no contiene texto")) {
+          setMensajes((prev) => [...prev, {
+            role: "gusi",
+            text: `⚠️ Tu PDF es de imagen (escaneado o diseñado en Canva/Photoshop) y no tiene texto legible.\n\n**Opciones:**\n1. Ve a 📄 **Mi CV** para rellenar los datos manualmente\n2. O escríbeme tus datos aquí y te hago el CV`,
+          }]);
+        } else {
+          setMensajes((prev) => [...prev, { role: "gusi", text: "❌ Error al procesar el PDF. Inténtalo de nuevo o escribe tus datos." }]);
         }
       }
     } catch {
@@ -329,15 +353,27 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   // ============================================
 
   function formatCVResumen(cv: Record<string, unknown>): string {
-    let text = "";
-    if (cv.nombre) text += `👤 **Nombre:** ${cv.nombre}\n`;
-    if (cv.email) text += `📧 **Email:** ${cv.email}\n`;
-    if (cv.telefono) text += `📞 **Teléfono:** ${cv.telefono}\n`;
-    if (cv.ciudad) text += `📍 **Ciudad:** ${cv.ciudad}\n`;
-    if (cv.perfilProfesional || cv.perfil) text += `💼 **Perfil:** ${cv.perfilProfesional || cv.perfil}\n`;
-    if (cv.experiencia) text += `🏢 **Experiencia:** ${String(cv.experiencia).substring(0, 100)}...\n`;
-    if (cv.formacion || cv.estudios) text += `🎓 **Formación:** ${cv.formacion || cv.estudios}\n`;
-    return text || "*(Datos básicos extraídos)*";
+    const lines: string[] = [];
+    if (cv.nombre) lines.push(`**Nombre:** ${cv.nombre}${cv.apellidos ? " " + cv.apellidos : ""}`);
+    if (cv.email) lines.push(`**Email:** ${cv.email}`);
+    if (cv.telefono) lines.push(`**Teléfono:** ${cv.telefono}`);
+    if (cv.ciudad) lines.push(`**Ciudad:** ${cv.ciudad}`);
+    if (cv.subtitulo) lines.push(`**Puesto:** ${cv.subtitulo}`);
+    if (cv.perfilProfesional || cv.perfil) lines.push(`**Perfil:** ${String(cv.perfilProfesional || cv.perfil).substring(0, 120)}`);
+    if (Array.isArray(cv.experiencia) && cv.experiencia.length > 0) {
+      const exp = cv.experiencia as Array<{fechas?: string; puesto?: string; empresa?: string}>;
+      lines.push(`**Experiencia:** ${exp.length} entrada(s) — ${exp[0]?.puesto || ""} en ${exp[0]?.empresa || ""}`);
+    } else if (cv.experiencia) {
+      lines.push(`**Experiencia:** ${String(cv.experiencia).substring(0, 80)}`);
+    }
+    if (Array.isArray(cv.formacion) && cv.formacion.length > 0) {
+      const edu = cv.formacion as Array<{titulo?: string; centro?: string}>;
+      lines.push(`**Formación:** ${edu[0]?.titulo || ""}`);
+    }
+    if (Array.isArray(cv.aptitudes) && cv.aptitudes.length > 0) {
+      lines.push(`**Aptitudes:** ${(cv.aptitudes as string[]).slice(0, 4).join(", ")}`);
+    }
+    return lines.length > 0 ? lines.join("\n") + "\n\n" : "*(Datos básicos extraídos)*\n\n";
   }
 
   // ============================================
@@ -871,7 +907,7 @@ Ya tengo tus datos guardados. Voy a:
                 ? "bg-[#22c55e] text-white rounded-br-md" 
                 : "bg-[#2a2d35] text-gray-200 rounded-bl-md"
             }`}>
-              <div className="whitespace-pre-wrap">{msg.text}</div>
+              <div className="whitespace-pre-wrap">{renderMd(msg.text)}</div>
               
               {/* CV Visual cuando Guzzi muestra el CV */}
               {(msg.action === "ver_cv" || msg.action === "cv_mejorado") && cvGuardado && (
