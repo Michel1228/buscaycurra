@@ -250,7 +250,7 @@ export default function CVVisual({ data }: CVVisualProps) {
                   <div style={{ fontSize: "9.5px", color: "#666", fontStyle: "italic", marginBottom: "4px" }}>
                     {exp.empresa}{exp.ubicacion ? ` · ${exp.ubicacion}` : ""}
                   </div>
-                  {(exp.descripcion || []).map((d, j) => (
+                  {(Array.isArray(exp.descripcion) ? exp.descripcion : typeof exp.descripcion === "string" ? exp.descripcion.split("\n").filter(Boolean) : []).map((d, j) => (
                     <div key={j} style={{ display: "flex", gap: "6px", marginBottom: "2px" }}>
                       <span style={{ color: ACCENT, fontSize: "9px", marginTop: "1px" }}>•</span>
                       <span style={{ fontSize: "9px", color: "#444", lineHeight: 1.5 }}>{d}</span>

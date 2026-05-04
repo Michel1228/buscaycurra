@@ -50,7 +50,7 @@ export function generarCVHTML(data: CVData): string {
 
   const experienciaHTML = (data.experiencia || [])
     .map(exp => {
-      const bullets = (exp.descripcion || [])
+      const bullets = (Array.isArray(exp.descripcion) ? exp.descripcion : typeof exp.descripcion === "string" ? exp.descripcion.split("\n").filter(Boolean) : [])
         .map(d => `<li>${d}</li>`)
         .join("\n                  ");
       return `
