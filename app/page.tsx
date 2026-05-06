@@ -156,7 +156,11 @@ export default function LandingPage() {
             <LogoGusano size={34} animated />
             <span className="font-bold text-lg" style={{ color: "#7ed56f" }}>BuscayCurra</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Link href="/precios" className="px-3 py-1.5 text-sm font-bold rounded-xl transition"
+              style={{ color: "#f0c040", border: "1px solid rgba(240,192,64,0.3)", background: "rgba(240,192,64,0.06)" }}>
+              ⭐ Precios
+            </Link>
             <Link href="/auth/login" className="px-4 py-2 text-sm font-medium" style={{ color: "#b0a890" }}>
               Entrar
             </Link>
@@ -419,45 +423,57 @@ export default function LandingPage() {
         </section>
 
         {/* ══════ PRECIOS ══════ */}
-        <section className="py-20 px-4" style={{ background: "rgba(15,26,10,0.5)" }}>
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
+        <section className="py-20 px-4" style={{ background: "rgba(15,26,10,0.5)" }} id="precios">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-2" style={{ color: "#f0ebe0" }}>
               Planes simples
             </h2>
-            <p className="text-center mb-14" style={{ color: "#706a58" }}>
+            <p className="text-center mb-3" style={{ color: "#706a58" }}>
               Empieza gratis. Evoluciona cuando quieras.
             </p>
+            {/* Comparativa InfoJobs */}
+            <div className="flex justify-center mb-10">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs"
+                style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)" }}>
+                <span style={{ color: "#706a58" }}>💡 InfoJobs cobra</span>
+                <span className="font-bold line-through" style={{ color: "#ef4444" }}>€369 por una oferta</span>
+                <span style={{ color: "#706a58" }}>·</span>
+                <span className="font-bold" style={{ color: "#7ed56f" }}>Nosotros: 50 envíos/día por €9,99/mes</span>
+              </div>
+            </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-4 gap-4">
               {[
-                { nombre: "Gratis", precio: "0€", periodo: "", emoji: "🥚", desc: "Para empezar", items: ["2 CVs/día", "Buscador básico", "Evolución oruga"], dest: false },
-                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛", desc: "Para profesionales", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: true },
-                { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🦋", desc: "Sin límites", items: ["Envíos ilimitados", "Todo incluido", "Multi-usuarios", "API"], dest: false },
+                { nombre: "Gratis", precio: "0€", periodo: "", emoji: "🥚", desc: "Para empezar", items: ["3 CVs/día", "Buscador básico", "CV con IA"], dest: false, badge: null },
+                { nombre: "Básico", precio: "2,99€", periodo: "/mes", emoji: "🐛", desc: "Lo esencial", items: ["15 CVs/día", "IA avanzada", "Carta presentación"], dest: false, badge: null },
+                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🦋", desc: "Para encontrar trabajo rápido", items: ["50 CVs/día", "ATS Score", "Estadísticas", "Soporte"], dest: true, badge: "⭐ Popular · 7 días gratis" },
+                { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🏢", desc: "Sin límites", items: ["Ilimitado", "API acceso", "Dashboard equipo", "Factura B2B"], dest: false, badge: null },
               ].map((plan) => (
                 <div key={plan.nombre}
-                  className={`card-game p-7 text-center relative ${plan.dest ? "scale-[1.03]" : ""}`}
+                  className={`card-game p-6 text-center relative flex flex-col ${plan.dest ? "scale-[1.02]" : ""}`}
                   style={plan.dest ? { borderColor: "#7ed56f", boxShadow: "0 0 40px rgba(126,213,111,0.12)" } : {}}>
-                  {plan.dest && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="badge-game badge-dorado text-[10px]">⭐ Popular</span>
+                  {plan.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                      <span className="badge-game badge-dorado text-[10px] px-3">{plan.badge}</span>
                     </div>
                   )}
-                  <div className="text-4xl mb-3">{plan.emoji}</div>
-                  <h3 className="text-lg font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h3>
-                  <p className="text-xs mb-4" style={{ color: "#706a58" }}>{plan.desc}</p>
-                  <div className="mb-5">
-                    <span className="text-3xl font-black" style={{ color: plan.dest ? "#7ed56f" : "#f0ebe0" }}>{plan.precio}</span>
+                  <div className="text-3xl mb-2">{plan.emoji}</div>
+                  <h3 className="text-base font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h3>
+                  <p className="text-[11px] mb-3" style={{ color: "#706a58" }}>{plan.desc}</p>
+                  <div className="mb-4">
+                    <span className="text-2xl font-black" style={{ color: plan.dest ? "#7ed56f" : "#f0ebe0" }}>{plan.precio}</span>
                     <span className="text-xs" style={{ color: "#706a58" }}>{plan.periodo}</span>
                   </div>
-                  <ul className="space-y-2 mb-6 text-left">
+                  <ul className="space-y-1.5 mb-5 text-left flex-1">
                     {plan.items.map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm" style={{ color: "#b0a890" }}>
+                      <li key={item} className="flex items-center gap-2 text-xs" style={{ color: "#b0a890" }}>
                         <span style={{ color: "#7ed56f" }}>✓</span>{item}
                       </li>
                     ))}
                   </ul>
-                  <Link href="/auth/registro" className={plan.dest ? "btn-game w-full block text-center text-sm" : "btn-game-outline w-full block text-center text-sm"}>
-                    Empezar
+                  <Link href="/precios"
+                    className={plan.dest ? "btn-game w-full block text-center text-sm py-2" : "btn-game-outline w-full block text-center text-sm py-2"}>
+                    {plan.nombre === "Gratis" ? "Empezar gratis" : plan.dest ? "7 días gratis →" : "Ver plan"}
                   </Link>
                 </div>
               ))}

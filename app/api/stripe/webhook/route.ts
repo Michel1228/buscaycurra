@@ -68,13 +68,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        if (!plan || (plan !== "pro" && plan !== "empresa")) {
+        if (!plan || !["basico", "pro", "empresa"].includes(plan)) {
           console.error("[stripe/webhook] checkout.session.completed con plan inválido en metadata:", plan);
           break;
         }
 
-        // Obtener el plan real desde el precio de la suscripción (si hay line items)
-        let planFinal = plan as "pro" | "empresa";
+        let planFinal = plan as "basico" | "pro" | "empresa";
 
         // Si hay suscripción, obtener el price ID para determinar el plan exacto
         if (session.subscription) {
@@ -86,7 +85,7 @@ export async function POST(request: NextRequest) {
             if (priceId) {
               const planDesdePrice = getPlanFromPriceId(priceId);
               if (planDesdePrice !== "free") {
-                planFinal = planDesdePrice;
+                planFinal = planDesdePrice as "basico" | "pro" | "empresa";
               }
             }
           } catch {

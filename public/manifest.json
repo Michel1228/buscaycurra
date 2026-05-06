@@ -1,0 +1,43 @@
+{
+  "name": "BuscayCurra — Encuentra trabajo con IA",
+  "short_name": "BuscayCurra",
+  "description": "Mejora tu CV con IA, busca ofertas en toda España y envía candidaturas automáticamente.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1a0a",
+  "theme_color": "#7ed56f",
+  "orientation": "portrait",
+  "categories": ["business", "productivity", "lifestyle"],
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/qr-buscaycurra.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/qr-buscaycurra.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Buscar trabajo",
+      "url": "/app/buscar",
+      "description": "Buscar ofertas de empleo"
+    },
+    {
+      "name": "Mi CV",
+      "url": "/app/curriculum",
+      "description": "Crear y mejorar mi CV"
+    },
+    {
+      "name": "Mis envíos",
+      "url": "/app/envios",
+      "description": "Ver estado de mis candidaturas"
+    }
+  ]
+}

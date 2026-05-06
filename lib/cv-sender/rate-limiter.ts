@@ -30,7 +30,7 @@ function getSupabase(): any {
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 /** Planes de usuario disponibles */
-export type UserPlan = "free" | "pro" | "empresa";
+export type UserPlan = "free" | "basico" | "pro" | "empresa";
 
 /** Resultado de la verificación de límites */
 export interface RateLimitResult {
@@ -66,12 +66,16 @@ export async function checkRateLimit(
   // Usamos las variables de entorno si están definidas, o los valores por defecto del plan
   const limites = {
     free: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_FREE ?? "2"),
-      perMonth: 20,
+      perDay: parseInt(process.env.MAX_CVS_PER_DAY_FREE ?? "3"),
+      perMonth: 30,
+    },
+    basico: {
+      perDay: 15,
+      perMonth: 150,
     },
     pro: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_PRO ?? "10"),
-      perMonth: 200,
+      perDay: parseInt(process.env.MAX_CVS_PER_DAY_PRO ?? "50"),
+      perMonth: 500,
     },
     empresa: {
       perDay: Infinity,
@@ -81,7 +85,7 @@ export async function checkRateLimit(
 
   const limite = limites[plan] ?? limites.free;
 
-  // Si el plan es "empresa", siempre puede enviar
+  // Si el plan es "empresa", siempre puede enviar (ilimitado)
   if (plan === "empresa") {
     return {
       allowed: true,
@@ -273,5 +277,5 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
   }
 
   const plan = data.plan as UserPlan;
-  return ["free", "pro", "empresa"].includes(plan) ? plan : "free";
+  return ["free", "basico", "pro", "empresa"].includes(plan) ? plan : "free";
 }

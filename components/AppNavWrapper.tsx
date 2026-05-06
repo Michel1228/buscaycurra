@@ -74,11 +74,20 @@ export default function AppNavWrapper() {
                 key={item.href}
                 href={item.href}
                 className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-medium transition"
-                style={{
-                  background: activo ? "rgba(126,213,111,0.12)" : "transparent",
-                  color: activo ? "#7ed56f" : "#706a58",
-                  border: activo ? "1px solid rgba(126,213,111,0.2)" : "1px solid transparent",
-                }}
+                style={
+                  item.href === "/precios"
+                    ? {
+                        background: activo ? "rgba(240,192,64,0.2)" : "rgba(240,192,64,0.1)",
+                        color: "#f0c040",
+                        border: "1px solid rgba(240,192,64,0.4)",
+                        fontWeight: 700,
+                      }
+                    : {
+                        background: activo ? "rgba(126,213,111,0.12)" : "transparent",
+                        color: activo ? "#7ed56f" : "#706a58",
+                        border: activo ? "1px solid rgba(126,213,111,0.2)" : "1px solid transparent",
+                      }
+                }
               >
                 <span className="text-sm">{item.icon}</span>
                 <span className="hidden sm:inline">{item.label}</span>
