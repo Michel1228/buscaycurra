@@ -24,10 +24,32 @@ import { canSendToCompany } from "./tracker";
  *     Actualiza "04-18" con la fecha correcta cada año o implementa
  *     el algoritmo de cálculo de Pascua (algoritmo de Butcher/Meeus).
  */
+// Calcula el Viernes Santo de cualquier año (algoritmo de Butcher/Meeus)
+function calcularViernesSanto(year: number): string {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31); // mes Pascua
+  const day = ((h + l - 7 * m + 114) % 31) + 1;         // día Pascua
+  // Viernes Santo = 2 días antes de Pascua
+  const pascua = new Date(year, month - 1, day);
+  pascua.setDate(pascua.getDate() - 2);
+  return `${String(pascua.getMonth() + 1).padStart(2, "0")}-${String(pascua.getDate()).padStart(2, "0")}`;
+}
+
 const FESTIVOS_NACIONALES = new Set([
   "01-01", // Año Nuevo
   "01-06", // Reyes Magos
-  "04-18", // Viernes Santo — ⚠️ VARÍA CADA AÑO, actualizar manualmente
+  calcularViernesSanto(new Date().getFullYear()), // Viernes Santo (dinámico)
   "05-01", // Día del Trabajo
   "08-15", // Asunción de la Virgen
   "10-12", // Fiesta Nacional de España

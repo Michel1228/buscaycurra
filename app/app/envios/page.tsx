@@ -2,7 +2,8 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import AutoSendSetup from "@/components/AutoSendSetup";
 import CVSenderDashboard from "@/components/CVSenderDashboard";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -15,7 +16,13 @@ const TABS: { id: TabId; label: string; emoji: string }[] = [
   { id: "estadisticas", label: "Estadísticas", emoji: "📊" },
 ];
 
-export default function EnviosPage() {
+function EnviosPageInner() {
+  const searchParams = useSearchParams();
+  const empresaParam = searchParams.get("empresa") ?? "";
+  const emailParam = searchParams.get("email") ?? "";
+  const puestoParam = searchParams.get("puesto") ?? "";
+  const webParam = searchParams.get("web") ?? "";
+
   const [userId, setUserId] = useState<string>("");
   const [activeTab, setActiveTab] = useState<TabId>("nuevo");
   const [refreshKey, setRefreshKey] = useState(0);
@@ -82,11 +89,30 @@ export default function EnviosPage() {
 
       {/* Content */}
       <main className="max-w-3xl mx-auto px-4 py-6">
-        {activeTab === "nuevo" && <AutoSendSetup userId={userId} onJobScheduled={handleJobScheduled} />}
+        {activeTab === "nuevo" && (
+          <AutoSendSetup
+            userId={userId}
+            onJobScheduled={handleJobScheduled}
+            initialValues={{
+              companyName: empresaParam,
+              companyEmail: emailParam,
+              jobTitle: puestoParam,
+              companyUrl: webParam,
+            }}
+          />
+        )}
         {activeTab === "envios" && <CVSenderDashboard key={refreshKey} userId={userId} />}
         {activeTab === "estadisticas" && <StatsTab userId={userId} />}
       </main>
     </div>
+  );
+}
+
+export default function EnviosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen pt-16 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8" style={{ border: "4px solid #3d3c30", borderTopColor: "#7ed56f" }} /></div>}>
+      <EnviosPageInner />
+    </Suspense>
   );
 }
 

@@ -25,13 +25,19 @@ interface ScheduleSuccess {
 interface AutoSendSetupProps {
   userId: string;
   onJobScheduled?: (result: ScheduleSuccess) => void;
+  initialValues?: {
+    companyName?: string;
+    companyEmail?: string;
+    jobTitle?: string;
+    companyUrl?: string;
+  };
 }
 
-export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupProps) {
-  const [companyUrl, setCompanyUrl] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [companyEmail, setCompanyEmail] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
+export default function AutoSendSetup({ userId, onJobScheduled, initialValues }: AutoSendSetupProps) {
+  const [companyUrl, setCompanyUrl] = useState(initialValues?.companyUrl ?? "");
+  const [companyName, setCompanyName] = useState(initialValues?.companyName ?? "");
+  const [companyEmail, setCompanyEmail] = useState(initialValues?.companyEmail ?? "");
+  const [jobTitle, setJobTitle] = useState(initialValues?.jobTitle ?? "");
   const [priority, setPriority] = useState<"normal" | "prioritario">("normal");
   const [useAI, setUseAI] = useState(true);
   const [frecuencia, setFrecuencia] = useState<"unico" | "cada4dias">("cada4dias");

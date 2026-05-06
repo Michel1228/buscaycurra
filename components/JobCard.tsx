@@ -104,7 +104,7 @@ export default function JobCard({
           style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#b0a890" }}>
           Ver oferta
         </a>
-        <Link href={`/app/envios?empresa=${encodeURIComponent(empresa)}`}
+        <Link href={`/app/envios?empresa=${encodeURIComponent(empresa)}${emailEmpresa ? `&email=${encodeURIComponent(emailEmpresa)}` : ""}${titulo ? `&puesto=${encodeURIComponent(titulo)}` : ""}${url ? `&web=${encodeURIComponent(url)}` : ""}`}
           className="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition hover:opacity-90"
           style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
           📧 Enviar CV

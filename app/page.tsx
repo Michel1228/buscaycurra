@@ -5,6 +5,7 @@
 
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
+import LandingFondo from "@/components/LandingFondo";
 
 const pasos = [
   {
@@ -145,56 +146,8 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: "linear-gradient(180deg, #0f1a0a 0%, #1a1a12 15%, #15200e 50%, #1a1a12 85%, #0f1a0a 100%)" }}>
 
-      {/* ══════ FONDO VIVO — Ramas, hojas, partículas ══════ */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Gradientes orgánicos */}
-        <div style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%",
-          background: `
-            radial-gradient(ellipse 800px 600px at 15% 20%, rgba(126,213,111,0.08) 0%, transparent 70%),
-            radial-gradient(ellipse 600px 800px at 85% 70%, rgba(139,111,71,0.06) 0%, transparent 70%),
-            radial-gradient(ellipse 500px 500px at 50% 50%, rgba(240,192,64,0.04) 0%, transparent 60%),
-            radial-gradient(ellipse 300px 300px at 70% 30%, rgba(126,213,111,0.05) 0%, transparent 60%)
-          `
-        }} />
-
-        {/* SVG ramas decorativas */}
-        <svg className="absolute top-0 left-0 w-full h-full opacity-[0.07]" viewBox="0 0 1440 900" preserveAspectRatio="none">
-          {/* Rama superior izquierda */}
-          <path d="M-20 80 Q100 120 200 60 Q300 10 400 50 Q450 70 500 30" stroke="#7ed56f" strokeWidth="2" fill="none" />
-          <path d="M200 60 Q180 20 160 -10" stroke="#7ed56f" strokeWidth="1.5" fill="none" />
-          <path d="M300 10 Q280 -20 310 -40" stroke="#7ed56f" strokeWidth="1" fill="none" />
-          {/* Hojas en la rama */}
-          <ellipse cx="170" cy="10" rx="12" ry="6" fill="#7ed56f" transform="rotate(-30 170 10)" />
-          <ellipse cx="290" cy="-15" rx="10" ry="5" fill="#5cb848" transform="rotate(-45 290 -15)" />
-          <ellipse cx="420" cy="55" rx="11" ry="5" fill="#7ed56f" transform="rotate(15 420 55)" />
-          {/* Rama inferior derecha */}
-          <path d="M1460 750 Q1300 720 1200 780 Q1100 830 1000 800 Q920 780 850 810" stroke="#8b6f47" strokeWidth="2" fill="none" />
-          <path d="M1200 780 Q1230 820 1250 860" stroke="#8b6f47" strokeWidth="1.5" fill="none" />
-          <ellipse cx="1240" cy="840" rx="12" ry="6" fill="#7ed56f" transform="rotate(40 1240 840)" />
-          <ellipse cx="1050" cy="810" rx="10" ry="5" fill="#5cb848" transform="rotate(-20 1050 810)" />
-          {/* Rama media */}
-          <path d="M-30 500 Q80 480 150 520 Q220 550 280 510" stroke="#5cb848" strokeWidth="1.5" fill="none" opacity="0.6" />
-          <ellipse cx="100" cy="490" rx="9" ry="4" fill="#7ed56f" transform="rotate(10 100 490)" opacity="0.5" />
-          {/* Ramas derecha */}
-          <path d="M1460 300 Q1380 320 1320 280 Q1260 250 1200 290" stroke="#8b6f47" strokeWidth="1.5" fill="none" opacity="0.5" />
-          <ellipse cx="1350" cy="300" rx="10" ry="5" fill="#5cb848" transform="rotate(-25 1350 300)" opacity="0.4" />
-        </svg>
-
-        {/* Partículas flotantes (esporas/polen) */}
-        {[...Array(12)].map((_, i) => (
-          <div key={i} className="absolute rounded-full"
-            style={{
-              width: `${3 + Math.random() * 4}px`,
-              height: `${3 + Math.random() * 4}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              background: i % 3 === 0 ? "#7ed56f" : i % 3 === 1 ? "#f0c040" : "#8b6f47",
-              opacity: 0.15 + Math.random() * 0.15,
-              animation: `float-gentle ${4 + Math.random() * 4}s ease-in-out ${Math.random() * 3}s infinite`,
-            }}
-          />
-        ))}
-      </div>
+      {/* ══════ FONDO VIVO — Ramas, hojas, partículas (cliente para evitar hydration mismatch) ══════ */}
+      <LandingFondo />
 
       {/* ══════ HEADER ══════ */}
       <header className="glass-warm sticky top-0 z-50" style={{ borderBottom: "1px solid rgba(126,213,111,0.12)" }}>
@@ -277,6 +230,29 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ══════ NO SOMOS UNA ETT — Banner siempre visible ══════ */}
+        <section className="py-8 px-4" style={{ background: "rgba(126,213,111,0.06)", borderTop: "1px solid rgba(126,213,111,0.12)", borderBottom: "1px solid rgba(126,213,111,0.12)" }}>
+          <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h2 className="text-xl md:text-2xl font-black mb-1" style={{ color: "#7ed56f" }}>
+                🚫 No somos una ETT
+              </h2>
+              <p className="text-sm md:text-base" style={{ color: "#b0a890" }}>
+                No cobramos comisiones. No decidimos por ti. No te colocamos donde nos conviene.
+                <strong style={{ color: "#f0ebe0" }}> Tú buscas, tú envías, tú eliges.</strong>
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3 flex-shrink-0">
+              {["Sin comisiones", "Sin intermediarios", "Tú mandas"].map((tag) => (
+                <span key={tag} className="text-xs px-3 py-1.5 rounded-full font-semibold"
+                  style={{ background: "rgba(126,213,111,0.12)", color: "#7ed56f", border: "1px solid rgba(126,213,111,0.25)" }}>
+                  ✓ {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ══════ PASOS — El camino de la metamorfosis ══════ */}
         <section id="pasos" className="py-20 px-4 relative">
           {/* Línea conectora vertical */}
@@ -327,9 +303,12 @@ export default function LandingPage() {
         {/* ══════ COMPARATIVA ETT vs BuscayCurra ══════ */}
         <section className="py-20 px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-2" style={{ color: "#f0ebe0" }}>
               ¿ETT o BuscayCurra? Haz los números.
             </h2>
+            <p className="text-center text-lg font-semibold mb-2" style={{ color: "#f0c040" }}>
+              Esto es lo que te ahorras
+            </p>
             <p className="text-center mb-12" style={{ color: "#706a58" }}>
               Lo que ganas y pierdes en 12 meses. Los datos no mienten.
             </p>
