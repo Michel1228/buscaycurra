@@ -134,7 +134,13 @@ export async function POST(req: NextRequest) {
     const data = await res.json();
     const reply = data.choices?.[0]?.message?.content || getLocalReply(message, intent);
 
-    return NextResponse.json({ reply, action: intent === "buscar" ? "suggest_search" : undefined });
+    // Detectar fin de entrevista CV para mostrar botón de generar CV visual
+    const cvCompleto = mode === "entrevista" && /cv\s*listo|entrevista.*complet|tengo.*datos|datos.*complet/i.test(reply);
+
+    return NextResponse.json({
+      reply,
+      action: cvCompleto ? "cv_complete" : (intent === "buscar" ? "suggest_search" : undefined),
+    });
   } catch {
     return NextResponse.json({ reply: "¡Ups! Algo falló. Inténtalo de nuevo 🐛" });
   }

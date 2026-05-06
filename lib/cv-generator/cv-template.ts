@@ -98,6 +98,7 @@ export function generarCVHTML(data: CVData): string {
 <title>CV - ${data.nombre}${data.apellidos ? " " + data.apellidos : ""}</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
 <style>
+  @page { size: A4 portrait; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Montserrat', sans-serif; background: #c0c0c0; display: flex; justify-content: center; padding: 20px; }
   .cv-page { width: 794px; min-height: 1123px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; }
@@ -145,8 +146,9 @@ export function generarCVHTML(data: CVData): string {
   .cv-footer p { font-size: 9px; color: #fff; letter-spacing: 0.5px; }
 
   @media print {
-    body { background: none; padding: 0; }
-    .cv-page { box-shadow: none; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    html, body { background: none !important; padding: 0 !important; margin: 0 !important; }
+    .cv-page { box-shadow: none !important; width: 210mm !important; height: 297mm !important; min-height: unset !important; max-height: 297mm !important; overflow: hidden !important; }
   }
 </style>
 </head>

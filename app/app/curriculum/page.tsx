@@ -264,19 +264,32 @@ export default function CurriculumPage() {
     finally { setProcesando(false); }
   }
 
-  function descargar(html: string) {
-    // Abrir ventana nueva con el HTML del CV para imprimir/guardar como PDF
+  async function descargar(html: string) {
+    // Convertir foto a base64 para garantizar que aparezca en el PDF
+    let htmlFinal = html;
+    if (fotoUrl && html.includes(fotoUrl)) {
+      try {
+        const res = await fetch(fotoUrl);
+        const blob = await res.blob();
+        const b64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        htmlFinal = htmlFinal.split(fotoUrl).join(b64);
+      } catch { /* usar URL original si falla */ }
+    }
     const win = window.open("", "_blank");
     if (win) {
-      win.document.write(html);
+      win.document.write(htmlFinal);
       win.document.close();
-      // Esperar a que cargue y lanzar print
       setTimeout(() => {
         try { win.print(); } catch { /* mobile may block */ }
-      }, 500);
+      }, 1500);
     } else {
       // Fallback: descargar como HTML
-      const blob = new Blob([html], { type: "text/html" });
+      const blob = new Blob([htmlFinal], { type: "text/html" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

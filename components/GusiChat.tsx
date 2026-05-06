@@ -273,6 +273,18 @@ export default function GusiChat() {
                     dangerouslySetInnerHTML={{ __html: formatGusiText(m.text) }}
                   />
                 </div>
+                {/* Botón CV visual cuando la entrevista termina */}
+                {m.action === "cv_complete" && (
+                  <div className="ml-7 mt-2">
+                    <button
+                      onClick={() => router.push("/app/curriculum")}
+                      className="w-full py-2.5 rounded-xl text-[12px] font-bold transition hover:opacity-90"
+                      style={{ background: "linear-gradient(135deg, #3B5FE0, #2244CC)", color: "white", boxShadow: "0 2px 10px rgba(59,95,224,0.35)" }}>
+                      📄 Generar mi CV visual ahora →
+                    </button>
+                    <p className="text-[10px] mt-1 text-center" style={{ color: "#706a58" }}>Con plantilla profesional, foto y colores</p>
+                  </div>
+                )}
                 {/* Ofertas con % de match */}
                 {m.jobs && m.jobs.length > 0 && (
                   <div className="ml-7 mt-2 space-y-2">
