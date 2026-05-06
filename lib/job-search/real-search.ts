@@ -1,19 +1,25 @@
 /**
  * lib/job-search/real-search.ts — Búsqueda MASIVA multi-API de ofertas reales
- * 
- * FUENTES:
- * 1. Jooble API — 162.000+ ofertas, agrega InfoJobs + Indeed + locales (500 req/día)
- * 2. Adzuna API — Agregador de múltiples bolsas de empleo (300 req/mes)
- * 3. Careerjet API — Red global de ofertas de empleo
- * 4. LinkedIn Jobs (API guest pública) — Scraping de listados públicos
- * 
- * Estrategia multi-búsqueda:
- * - Busca en paralelo en todas las APIs disponibles
- * - Expansión geográfica: ciudad → cercanas → provincia → comunidad → España
- * - Keywords relacionados para ampliar resultados
- * - Caché en memoria (15min TTL)
- * - Deduplicación por título+empresa
+ *
+ * FUENTES (8 en total):
+ * 0. Supabase DB     — Índice local de 400k+ ofertas pre-indexadas (instant)
+ * 1. Jooble          — 162k+ ofertas, agrega InfoJobs + Indeed + locales
+ * 2. Adzuna          — Agregador multi-bolsa (300 req/mes)
+ * 3. Careerjet       — Red global de empleo
+ * 4. LinkedIn        — Guest API (scraping público)
+ * 5. Arbeitnow       — API gratuita, empleos europeos (sin key)
+ * 6. Remotive        — API gratuita, trabajos remotos (sin key)
+ * 7. Indeed España   — Scraping resultados públicos
+ * 8. Tecnoempleo     — Bolsa española de empleo (scraping)
+ *
+ * Estrategia:
+ *   Fase 0: Busca en Supabase (instant, sin coste API)
+ *   Fase 1: Todas las APIs en paralelo para la ciudad principal
+ *   Fase 2: Keywords relacionados
+ *   Fase 3-7: Expansión geográfica + fallback
  */
+
+import { createClient } from "@supabase/supabase-js";
 
 export interface OfertaReal {
   id: string;
@@ -169,6 +175,56 @@ const POLIGONOS: Record<string, string[]> = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
+// FASE 0: SUPABASE DB — Búsqueda instantánea en el índice local
+// ═══════════════════════════════════════════════════════════════════════════
+async function buscarEnDB(puesto: string, ciudad: string, limit = 100): Promise<OfertaReal[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return [];
+
+  try {
+    const supabase = createClient(url, key);
+    const ciudadNorm = ciudad.toLowerCase().trim();
+
+    // Búsqueda full-text en título + descripción, filtrada por provincia/ubicación
+    const { data, error } = await supabase
+      .from("ofertas")
+      .select("*")
+      .textSearch("titulo", puesto.split(" ").join(" | "), { config: "spanish" })
+      .or(`ubicacion.ilike.%${ciudadNorm}%,provincia.ilike.%${ciudadNorm}%,comunidad.ilike.%${ciudadNorm}%`)
+      .order("fecha", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      // Si la tabla no existe aún, ignorar silenciosamente
+      if ((error as { code?: string }).code !== "42P01") {
+        console.warn("[DB] Error:", error.message);
+      }
+      return [];
+    }
+
+    console.log(`[DB] "${puesto}" en "${ciudad}": ${data?.length ?? 0} ofertas del índice local`);
+
+    return (data ?? []).map((o: Record<string, string>) => ({
+      id: o.id,
+      titulo: o.titulo,
+      empresa: o.empresa || "Ver en oferta",
+      ubicacion: o.ubicacion || ciudad,
+      salario: o.salario || "Ver en oferta",
+      descripcion: (o.descripcion || "").slice(0, 200),
+      fuente: o.fuente || "BuscayCurra",
+      url: o.url || "#",
+      fecha: o.fecha || new Date().toISOString(),
+      emailEmpresa: o.email_empresa || undefined,
+      match: 88,
+    }));
+  } catch (e) {
+    console.warn("[DB] Error inesperado:", (e as Error).message);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // API 1: JOOBLE — 162.000+ ofertas, agrega InfoJobs + Indeed + locales
 // ═══════════════════════════════════════════════════════════════════════════
 async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
@@ -179,18 +235,11 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Prom
     const res = await fetch(`https://jooble.org/api/${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        keywords: puesto,
-        location: ubicacion,
-        page: 1,
-      }),
+      body: JSON.stringify({ keywords: puesto, location: ubicacion, page: 1 }),
       signal: AbortSignal.timeout(12000),
     });
 
-    if (!res.ok) {
-      console.warn(`[Jooble] HTTP ${res.status}`);
-      return [];
-    }
+    if (!res.ok) { console.warn(`[Jooble] HTTP ${res.status}`); return []; }
 
     const data = await res.json();
     const jobs = data.jobs || [];
@@ -215,7 +264,7 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Prom
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// API 2: ADZUNA — Agregador multi-bolsa (300 calls/month)
+// API 2: ADZUNA — Agregador multi-bolsa
 // ═══════════════════════════════════════════════════════════════════════════
 async function buscarAdzuna(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
   const appId = process.env.ADZUNA_APP_ID;
@@ -226,17 +275,13 @@ async function buscarAdzuna(puesto: string, ubicacion: string, limit = 20): Prom
     const where = encodeURIComponent(ubicacion);
     const what = encodeURIComponent(puesto);
     const url = `https://api.adzuna.com/v1/api/jobs/es/search/1?app_id=${appId}&app_key=${apiKey}&results_per_page=${limit}&what=${what}&where=${where}&content-type=application/json`;
-    
-    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
 
-    if (!res.ok) {
-      console.warn(`[Adzuna] HTTP ${res.status}`);
-      return [];
-    }
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+    if (!res.ok) { console.warn(`[Adzuna] HTTP ${res.status}`); return []; }
 
     const data = await res.json();
     const results = data.results || [];
-    console.log(`[Adzuna] "${puesto}" en "${ubicacion}": ${results.length} ofertas (total: ${data.count || 0})`);
+    console.log(`[Adzuna] "${puesto}" en "${ubicacion}": ${results.length} ofertas`);
 
     return results.slice(0, limit).map((j: Record<string, unknown>, i: number) => {
       const company = j.company as Record<string, string> | undefined;
@@ -273,27 +318,21 @@ async function buscarCareerjet(puesto: string, ubicacion: string, limit = 20): P
   if (!apiKey) { console.warn("[Careerjet] No API key"); return []; }
 
   try {
-    // Careerjet API v4 — Basic Auth (key:empty password)
     const auth = Buffer.from(`${apiKey}:`).toString("base64");
     const url = `https://search.api.careerjet.net/v4/query?locale_code=es_ES&keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ubicacion)}&page_size=${limit}&page=1&sort=relevance&user_ip=187.124.37.183&user_agent=BuscayCurra/1.0`;
-    
-    const res = await fetch(url, { 
+
+    const res = await fetch(url, {
       headers: { "Authorization": `Basic ${auth}` },
       signal: AbortSignal.timeout(12000),
     });
 
-    if (!res.ok) {
-      console.warn(`[Careerjet] HTTP ${res.status}`);
-      return [];
-    }
+    if (!res.ok) { console.warn(`[Careerjet] HTTP ${res.status}`); return []; }
 
     const data = await res.json();
-    if (data.type === "ERROR") {
-      console.warn(`[Careerjet] API Error: ${data.error}`);
-      return [];
-    }
+    if (data.type === "ERROR") { console.warn(`[Careerjet] API Error: ${data.error}`); return []; }
+
     const jobs = data.jobs || [];
-    console.log(`[Careerjet] "${puesto}" en "${ubicacion}": ${jobs.length} ofertas (total: ${data.hits || 0})`);
+    console.log(`[Careerjet] "${puesto}" en "${ubicacion}": ${jobs.length} ofertas`);
 
     return jobs.slice(0, limit).map((j: Record<string, string>, i: number) => ({
       id: `cj-${Date.now()}-${i}`,
@@ -320,7 +359,7 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
   const loc = ubicacion.includes("Spain") ? ubicacion : `${ubicacion}, Spain`;
   const kw = encodeURIComponent(puesto);
   const locEnc = encodeURIComponent(loc);
-  
+
   const urls = [
     `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${kw}&location=${locEnc}&start=0&f_TPR=r2592000`,
     `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${kw}&location=${locEnc}&start=25&f_TPR=r2592000`,
@@ -338,9 +377,7 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
 
   let html = "";
   for (const r of responses) {
-    if (r.status === "fulfilled" && r.value.ok) {
-      html += await r.value.text();
-    }
+    if (r.status === "fulfilled" && r.value.ok) html += await r.value.text();
   }
   if (!html) return [];
 
@@ -380,12 +417,223 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// BÚSQUEDA PRINCIPAL — Combina todas las APIs en paralelo
+// API 5: ARBEITNOW — API gratuita sin key, empleos europeos
+// ═══════════════════════════════════════════════════════════════════════════
+async function buscarArbeitnow(puesto: string, limit = 20): Promise<OfertaReal[]> {
+  try {
+    const url = `https://www.arbeitnow.com/api/job-board-api?search=${encodeURIComponent(puesto)}&location=Spain&page=1`;
+    const res = await fetch(url, {
+      headers: { "Accept": "application/json" },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!res.ok) { console.warn(`[Arbeitnow] HTTP ${res.status}`); return []; }
+
+    const data = await res.json();
+    const jobs: Record<string, unknown>[] = data.data || [];
+    console.log(`[Arbeitnow] "${puesto}": ${jobs.length} ofertas`);
+
+    return jobs.slice(0, limit).map((j, i) => ({
+      id: `arb-${Date.now()}-${i}`,
+      titulo: (j.title as string) || puesto,
+      empresa: (j.company_name as string) || "Ver en oferta",
+      ubicacion: (j.location as string) || "España",
+      salario: "Ver en oferta",
+      descripcion: ((j.description as string) || "").replace(/<[^>]+>/g, "").slice(0, 200),
+      fuente: "Arbeitnow",
+      url: (j.url as string) || "https://www.arbeitnow.com",
+      fecha: (j.created_at as string) || new Date().toISOString(),
+      match: Math.max(75 - i * 2, 35),
+    }));
+  } catch (e) {
+    console.warn("[Arbeitnow] Error:", (e as Error).message);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API 6: REMOTIVE — API gratuita, trabajos remotos
+// ═══════════════════════════════════════════════════════════════════════════
+async function buscarRemotive(puesto: string, limit = 15): Promise<OfertaReal[]> {
+  try {
+    const url = `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(puesto)}&limit=${limit}`;
+    const res = await fetch(url, {
+      headers: { "Accept": "application/json" },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!res.ok) { console.warn(`[Remotive] HTTP ${res.status}`); return []; }
+
+    const data = await res.json();
+    const jobs: Record<string, unknown>[] = data.jobs || [];
+    console.log(`[Remotive] "${puesto}": ${jobs.length} ofertas remotas`);
+
+    return jobs.slice(0, limit).map((j, i) => ({
+      id: `rem-${Date.now()}-${i}`,
+      titulo: (j.title as string) || puesto,
+      empresa: (j.company_name as string) || "Ver en oferta",
+      ubicacion: "🌍 Remoto",
+      salario: (j.salary as string) || "Ver en oferta",
+      descripcion: ((j.description as string) || "").replace(/<[^>]+>/g, "").slice(0, 200),
+      fuente: "Remotive",
+      url: (j.url as string) || "https://remotive.com",
+      fecha: (j.publication_date as string) || new Date().toISOString(),
+      match: Math.max(72 - i * 2, 30),
+    }));
+  } catch (e) {
+    console.warn("[Remotive] Error:", (e as Error).message);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API 7: INDEED ESPAÑA — Scraping resultados públicos
+// ═══════════════════════════════════════════════════════════════════════════
+async function buscarIndeed(puesto: string, ubicacion: string): Promise<OfertaReal[]> {
+  try {
+    const q = encodeURIComponent(puesto);
+    const l = encodeURIComponent(ubicacion);
+    const url = `https://es.indeed.com/jobs?q=${q}&l=${l}&fromage=30&sort=date`;
+
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "es-ES,es;q=0.9",
+        "Referer": "https://es.indeed.com/",
+      },
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (!res.ok) { console.warn(`[Indeed] HTTP ${res.status}`); return []; }
+
+    const html = await res.text();
+
+    // Extraer datos del JSON embebido en el HTML de Indeed
+    const jsonMatch = html.match(/window\.mosaic\.providerData\["mosaic-provider-jobcards"\]=([\s\S]*?\});/);
+    if (jsonMatch) {
+      try {
+        const mosaic = JSON.parse(jsonMatch[1]);
+        const results = mosaic?.metaData?.mosaicProviderJobCardsModel?.results || [];
+
+        return results.slice(0, 20).map((j: Record<string, unknown>, i: number) => ({
+          id: `indeed-${j.jobkey || Date.now()}-${i}`,
+          titulo: (j.displayTitle as string) || puesto,
+          empresa: (j.company as string) || "Ver en Indeed",
+          ubicacion: (j.formattedLocation as string) || ubicacion,
+          salario: (j.salarySnippet as Record<string, string>)?.text || "Ver en oferta",
+          descripcion: ((j.snippet as string) || "").replace(/<[^>]+>/g, "").slice(0, 200),
+          fuente: "Indeed",
+          url: `https://es.indeed.com/viewjob?jk=${j.jobkey as string}`,
+          fecha: new Date().toISOString(),
+          match: Math.max(83 - i * 3, 35),
+        }));
+      } catch { /* JSON parse failed, try regex */ }
+    }
+
+    // Fallback: regex sobre el HTML
+    const titles: string[] = [];
+    const companies: string[] = [];
+    const locs: string[] = [];
+    const links: string[] = [];
+
+    const titleRx = /class="[^"]*jobTitle[^"]*"[^>]*><[^>]+>([^<]+)/g;
+    const compRx = /class="[^"]*companyName[^"]*"[^>]*>([^<]+)/g;
+    const locRx = /class="[^"]*companyLocation[^"]*"[^>]*>([^<]+)/g;
+    const linkRx = /href="(\/rc\/clk\?[^"]+)"/g;
+
+    let m;
+    while ((m = titleRx.exec(html)) !== null) titles.push(m[1].trim());
+    while ((m = compRx.exec(html)) !== null) companies.push(m[1].trim());
+    while ((m = locRx.exec(html)) !== null) locs.push(m[1].trim());
+    while ((m = linkRx.exec(html)) !== null) links.push(`https://es.indeed.com${m[1]}`);
+
+    console.log(`[Indeed] "${puesto}" en "${ubicacion}": ${titles.length} ofertas (regex)`);
+
+    return titles.slice(0, 20).map((title, i) => ({
+      id: `indeed-${Date.now()}-${i}`,
+      titulo: title,
+      empresa: companies[i] || "Ver en Indeed",
+      ubicacion: locs[i] || ubicacion,
+      salario: "Ver en oferta",
+      descripcion: `${companies[i] || "Empresa"} busca ${title.toLowerCase()} en ${locs[i] || ubicacion}`,
+      fuente: "Indeed",
+      url: links[i] || `https://es.indeed.com/jobs?q=${q}&l=${l}`,
+      fecha: new Date().toISOString(),
+      match: Math.max(80 - i * 3, 35),
+    }));
+  } catch (e) {
+    console.warn("[Indeed] Error:", (e as Error).message);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API 8: TECNOEMPLEO — Bolsa española de empleo (scraping)
+// ═══════════════════════════════════════════════════════════════════════════
+async function buscarTecnoempleo(puesto: string, ubicacion: string): Promise<OfertaReal[]> {
+  try {
+    const te = encodeURIComponent(puesto);
+    const pr = encodeURIComponent(ubicacion);
+    const url = `https://www.tecnoempleo.com/busqueda-empleo.php?te=${te}&pr=${pr}`;
+
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "text/html",
+        "Accept-Language": "es-ES,es;q=0.9",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!res.ok) { console.warn(`[Tecnoempleo] HTTP ${res.status}`); return []; }
+
+    const html = await res.text();
+
+    const titles: string[] = [];
+    const companies: string[] = [];
+    const locs: string[] = [];
+    const links: string[] = [];
+
+    const titleRx = /class="[^"]*fs[^"]*offer[^"]*"[^>]*href="([^"]+)"[^>]*>([^<]+)/g;
+    const compRx = /class="[^"]*text-primary[^"]*"[^>]*>([^<]+)<\/a>/g;
+    const locRx = /<i class="[^"]*bi-geo[^"]*"[^>]*><\/i>\s*([^<\n]+)/g;
+
+    let m;
+    while ((m = titleRx.exec(html)) !== null) {
+      links.push(m[1].startsWith("http") ? m[1] : `https://www.tecnoempleo.com${m[1]}`);
+      titles.push(m[2].trim());
+    }
+    while ((m = compRx.exec(html)) !== null) companies.push(m[1].trim());
+    while ((m = locRx.exec(html)) !== null) locs.push(m[1].trim());
+
+    console.log(`[Tecnoempleo] "${puesto}" en "${ubicacion}": ${titles.length} ofertas`);
+
+    return titles.slice(0, 20).map((title, i) => ({
+      id: `tec-${Date.now()}-${i}`,
+      titulo: title,
+      empresa: companies[i] || "Ver en Tecnoempleo",
+      ubicacion: locs[i] || ubicacion,
+      salario: "Ver en oferta",
+      descripcion: `${companies[i] || "Empresa"} busca ${title.toLowerCase()}`,
+      fuente: "Tecnoempleo",
+      url: links[i] || `https://www.tecnoempleo.com/busqueda-empleo.php?te=${te}`,
+      fecha: new Date().toISOString(),
+      match: Math.max(78 - i * 3, 30),
+    }));
+  } catch (e) {
+    console.warn("[Tecnoempleo] Error:", (e as Error).message);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BÚSQUEDA PRINCIPAL — Combina todas las fuentes
 // ═══════════════════════════════════════════════════════════════════════════
 export async function buscarOfertasReales(
   puesto: string,
   ciudad: string,
-  limit = 50,
+  limit = 100,
 ): Promise<OfertaReal[]> {
   console.log(`[JobSearch] ═══ Buscando "${puesto}" en "${ciudad}" (limit: ${limit}) ═══`);
 
@@ -404,48 +652,59 @@ export async function buscarOfertasReales(
     }
   }
 
-  // ── FASE 1: Todas las APIs en paralelo para la ciudad principal ──────
+  // ── FASE 0: Supabase DB (instantáneo, cientos de miles de ofertas) ───
+  const dbResultados = await buscarEnDB(puesto, ciudad, 200);
+  addResults(dbResultados, "🏠 Tu ciudad");
+
+  // ── FASE 1: Todas las APIs en paralelo ───────────────────────────────
   const cacheKey = `multi|${puesto}|${ciudad}`.toLowerCase();
   const cached = getCached(cacheKey);
-  
+
   if (cached) {
     console.log(`[JobSearch] Cache hit: ${cached.length} ofertas`);
     addResults(cached, "🏠 Tu ciudad");
   } else {
-    console.log("[JobSearch] Fase 1: Búsqueda paralela en 3 APIs (Adzuna + Careerjet + LinkedIn)...");
-    const [joobleRes, adzunaRes, careerjetRes, linkedinRes] = await Promise.allSettled([
-      Promise.resolve([]), // Jooble: 0 results for Spain from server, client-side only
-      buscarAdzuna(puesto, ciudad, 20),
-      buscarCareerjet(puesto, ciudad, 20),
-      buscarLinkedIn(puesto, ciudad),
-    ]);
+    console.log("[JobSearch] Fase 1: Búsqueda paralela en 8 fuentes...");
+    const [joobleRes, adzunaRes, careerjetRes, linkedinRes, arbeitnowRes, remotiveRes, indeedRes, tecnoRes] =
+      await Promise.allSettled([
+        buscarJooble(puesto, ciudad, 25),
+        buscarAdzuna(puesto, ciudad, 25),
+        buscarCareerjet(puesto, ciudad, 25),
+        buscarLinkedIn(puesto, ciudad),
+        buscarArbeitnow(puesto, 20),
+        buscarRemotive(puesto, 15),
+        buscarIndeed(puesto, ciudad),
+        buscarTecnoempleo(puesto, ciudad),
+      ]);
 
     const allResults: OfertaReal[] = [];
     if (joobleRes.status === "fulfilled") allResults.push(...joobleRes.value);
     if (adzunaRes.status === "fulfilled") allResults.push(...adzunaRes.value);
     if (careerjetRes.status === "fulfilled") allResults.push(...careerjetRes.value);
     if (linkedinRes.status === "fulfilled") allResults.push(...linkedinRes.value);
+    if (arbeitnowRes.status === "fulfilled") allResults.push(...arbeitnowRes.value);
+    if (remotiveRes.status === "fulfilled") allResults.push(...remotiveRes.value);
+    if (indeedRes.status === "fulfilled") allResults.push(...indeedRes.value);
+    if (tecnoRes.status === "fulfilled") allResults.push(...tecnoRes.value);
 
-    console.log(`[JobSearch] Fase 1 total: ${allResults.length} ofertas (Jooble: ${joobleRes.status === "fulfilled" ? joobleRes.value.length : "ERR"}, Adzuna: ${adzunaRes.status === "fulfilled" ? adzunaRes.value.length : "ERR"}, Careerjet: ${careerjetRes.status === "fulfilled" ? careerjetRes.value.length : "ERR"}, LinkedIn: ${linkedinRes.status === "fulfilled" ? linkedinRes.value.length : "ERR"})`);
-
+    console.log(`[JobSearch] Fase 1 total: ${allResults.length} ofertas`);
     setCache(cacheKey, allResults);
     addResults(allResults, "🏠 Tu ciudad");
   }
 
-  // ── FASE 2: Keywords relacionados (solo Jooble + Adzuna — rápidos) ───
+  // ── FASE 2: Keywords relacionados ───────────────────────────────────
   if (resultados.length < limit) {
     const keywords = getKeywordsRelacionados(puesto);
     const extras = keywords.filter(k => k.toLowerCase() !== puesto.toLowerCase()).slice(0, 3);
-    
+
     for (const kw of extras) {
       if (resultados.length >= limit) break;
       const kwCacheKey = `multi|${kw}|${ciudad}`.toLowerCase();
       const kwCached = getCached(kwCacheKey);
-      
+
       if (kwCached) {
         addResults(kwCached, "🏠 Tu ciudad");
       } else {
-        console.log(`[JobSearch] Fase 2: keyword "${kw}" en "${ciudad}"`);
         const [a, li] = await Promise.allSettled([
           buscarAdzuna(kw, ciudad, 10),
           buscarLinkedIn(kw, ciudad),
@@ -466,11 +725,10 @@ export async function buscarOfertasReales(
       if (resultados.length >= limit) break;
       const cCacheKey = `multi|${puesto}|${c.nombre}`.toLowerCase();
       const cCached = getCached(cCacheKey);
-      
+
       if (cCached) {
         addResults(cCached, `📍 ${c.distancia}`);
       } else {
-        console.log(`[JobSearch] Fase 3: "${puesto}" en "${c.nombre}" (${c.distancia})`);
         const r = await buscarAdzuna(puesto, c.nombre, 10);
         setCache(cCacheKey, r);
         addResults(r, `📍 ${c.distancia}`);
@@ -488,11 +746,10 @@ export async function buscarOfertasReales(
     }
   }
 
-  // ── FASE 5: Expandir a comunidad autónoma ───────────────────────────
+  // ── FASE 5: Comunidad autónoma ───────────────────────────────────────
   if (resultados.length < limit) {
     const ca = PROVINCIAS_CA[ciudadLower];
     if (ca && ca.toLowerCase() !== ciudadLower) {
-      console.log(`[JobSearch] Fase 5: "${puesto}" en "${ca}"`);
       const [a, li] = await Promise.allSettled([
         buscarAdzuna(puesto, ca, 15),
         buscarLinkedIn(puesto, ca),
@@ -502,24 +759,25 @@ export async function buscarOfertasReales(
     }
   }
 
-  // ── FASE 6: España entera si pocos resultados ──────────────────────
+  // ── FASE 6: España entera ───────────────────────────────────────────
   if (resultados.length < 15) {
-    console.log(`[JobSearch] Fase 6: "${puesto}" en toda España`);
-    const [a, li] = await Promise.allSettled([
+    const [a, li, arb] = await Promise.allSettled([
       buscarAdzuna(puesto, "España", 15),
       buscarLinkedIn(puesto, "Spain"),
+      buscarArbeitnow(puesto, 10),
     ]);
     if (a.status === "fulfilled") addResults(a.value, "🇪🇸 España");
     if (li.status === "fulfilled") addResults(li.value, "🇪🇸 España");
+    if (arb.status === "fulfilled") addResults(arb.value, "🇪🇸 España");
   }
 
-  // ── FASE 7: Fallback con empresas reales + emails ──────────────────
+  // ── FASE 7: Fallback con empresas reales ─────────────────────────────
   if (resultados.length < 5) {
     const fb = generarOfertasFallback(puesto, ciudad, Math.min(10, limit - resultados.length));
     addResults(fb);
   }
 
-  // ── Scoring final ──────────────────────────────────────────────────
+  // ── Scoring final ────────────────────────────────────────────────────
   for (const o of resultados) {
     if (!o.match) o.match = 50;
     const ubLower = o.ubicacion.toLowerCase();
@@ -539,14 +797,12 @@ export async function buscarOfertasReales(
     .sort((a, b) => (b.match || 0) - (a.match || 0))
     .slice(0, limit);
 
-  console.log(`[JobSearch] ═══ TOTAL: ${final.length} ofertas únicas (de ${resultados.length} antes de dedup) ═══`);
+  console.log(`[JobSearch] ═══ TOTAL: ${final.length} ofertas únicas (de ${resultados.length}) ═══`);
   console.log(`[JobSearch] Fuentes: ${[...new Set(final.map(o => o.fuente))].join(", ")}`);
   return final;
 }
 
-/**
- * Fallback: empresas reales españolas + emails de RRHH
- */
+// ── Fallback con empresas reales ─────────────────────────────────────────
 function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number): OfertaReal[] {
   const empresasPorSector: Record<string, { empresas: string[]; salarioBase: number; emails: string[] }> = {
     hosteleria: {
