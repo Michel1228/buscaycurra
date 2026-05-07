@@ -10,21 +10,21 @@
  *   notifications-queue  → cola de notificaciones al usuario
  */
 
-import { Queue, QueueEvents } from "bullmq";
+import { Queue } from "bullmq";
 import IORedis from "ioredis";
 
 // ─── Conexión a Redis ────────────────────────────────────────────────────────
-// Redis es la base de datos en memoria que almacena todas las colas.
-// Por defecto usa localhost:6379, configurable via variable de entorno REDIS_URL.
 const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
 
-/**
- * Crea una conexión compartida a Redis.
- * maxRetriesPerRequest=null es necesario para BullMQ (evita timeouts en workers).
- */
+// lazyConnect:true evita que IORedis conecte al importar el módulo (falla en CI sin Redis).
+// La conexión se establece en el primer comando real (en producción, donde Redis sí existe).
 export const redisConnection = new IORedis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
+  lazyConnect: true,
+});
+redisConnection.on("error", (err: Error) => {
+  console.error("[BullMQ Redis] connection error:", err.message);
 });
 
 // ─── Opciones por defecto para todos los jobs ────────────────────────────────
@@ -61,26 +61,14 @@ export const cvSenderQueue = new Queue("cv-sender-queue", {
   connection: redisConnection,
   defaultJobOptions,
 });
+cvSenderQueue.on("error", (err: Error) => console.error("[BullMQ] cvSenderQueue error:", err.message));
 
-// ─── Cola de Reintentos: cv-sender-retry ────────────────────────────────────
-/**
- * Cola especial para trabajos que han fallado todas las veces.
- * Un administrador puede revisar y reintentar manualmente los jobs aquí.
- */
 export const cvSenderRetryQueue = new Queue("cv-sender-retry", {
   connection: redisConnection,
-  defaultJobOptions: {
-    ...defaultJobOptions,
-    attempts: 1, // En la cola de reintentos solo se intenta una vez más
-  },
+  defaultJobOptions: { ...defaultJobOptions, attempts: 1 },
 });
+cvSenderRetryQueue.on("error", (err: Error) => console.error("[BullMQ] cvSenderRetryQueue error:", err.message));
 
-// ─── Cola de Notificaciones: notifications-queue ─────────────────────────────
-/**
- * Cola para enviar notificaciones al usuario.
- * Por ejemplo: "Tu CV fue enviado a Empresa X ✅"
- * Separada de la cola principal para no mezclar prioridades.
- */
 export const notificationsQueue = new Queue("notifications-queue", {
   connection: redisConnection,
   defaultJobOptions: {
@@ -90,18 +78,7 @@ export const notificationsQueue = new Queue("notifications-queue", {
     removeOnFail: { count: 100, age: 7 * 24 * 60 * 60 },
   },
 });
-
-// ─── Eventos de la Cola ──────────────────────────────────────────────────────
-/**
- * QueueEvents permite escuchar eventos de la cola en tiempo real.
- * Útil para actualizar el estado en el frontend sin hacer polling.
- */
-export const cvSenderQueueEvents = new QueueEvents("cv-sender-queue", {
-  connection: new IORedis(redisUrl, {
-    maxRetriesPerRequest: null,
-    enableReadyCheck: false,
-  }),
-});
+notificationsQueue.on("error", (err: Error) => console.error("[BullMQ] notificationsQueue error:", err.message));
 
 // ─── Rate Limiting por Usuario ───────────────────────────────────────────────
 /**
