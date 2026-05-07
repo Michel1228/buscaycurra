@@ -19,45 +19,17 @@ jobs:
             set -e
             cd /root/.openclaw/workspace/buscaycurra-unified
 
-            # Asegurar que estamos en la rama correcta
             git fetch origin
             git checkout unified-production
             git pull origin unified-production
 
-            # Build
-            docker build \
-              --build-arg NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co \
-              --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN \
-              --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }} \
-              -t buscaycurra:latest .
+            docker build --build-arg NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN --build-arg "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}" -t buscaycurra:latest .
 
-            # Restart
             docker stop buscaycurra-nextjs || true
             docker rm buscaycurra-nextjs || true
-            docker run -d \
-              --name buscaycurra-nextjs \
-              --network busca-y-curra_default \
-              -p 8892:3000 \
-              -e NODE_ENV=production \
-              -e REDIS_URL=redis://buscaycurra-redis:6379 \
-              -e API_URL=http://buscaycurra-api:3001 \
-              -e SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
-              -e STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} \
-              -e STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }} \
-              -e STRIPE_PRICE_PRO=${{ secrets.STRIPE_PRICE_PRO }} \
-              -e STRIPE_PRICE_EMPRESA=${{ secrets.STRIPE_PRICE_EMPRESA }} \
-              -e STRIPE_PRICE_BASICO=${{ secrets.STRIPE_PRICE_BASICO }} \
-              -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} \
-              -e FROM_EMAIL=noreply@buscaycurra.es \
-              -e JOOBLE_API_KEY=${{ secrets.JOOBLE_API_KEY }} \
-              -e ADZUNA_APP_ID=${{ secrets.ADZUNA_APP_ID }} \
-              -e ADZUNA_APP_KEY=${{ secrets.ADZUNA_APP_KEY }} \
-              -e CAREERJET_API_KEY=${{ secrets.CAREERJET_API_KEY }} \
-              -e ADMIN_SECRET=${{ secrets.ADMIN_SECRET }} \
-              -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
-              buscaycurra:latest
 
-            # Esperar a que arranque
+            docker run -d --name buscaycurra-nextjs --network busca-y-curra_default -p 8892:3000 -e NODE_ENV=production -e "REDIS_URL=redis://buscaycurra-redis:6379" -e "API_URL=http://buscaycurra-api:3001" -e "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" -e "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" -e "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" -e "STRIPE_PRICE_PRO=${{ secrets.STRIPE_PRICE_PRO }}" -e "STRIPE_PRICE_EMPRESA=${{ secrets.STRIPE_PRICE_EMPRESA }}" -e "STRIPE_PRICE_BASICO=${{ secrets.STRIPE_PRICE_BASICO }}" -e "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" -e FROM_EMAIL=noreply@buscaycurra.es -e "JOOBLE_API_KEY=${{ secrets.JOOBLE_API_KEY }}" -e "ADZUNA_APP_ID=${{ secrets.ADZUNA_APP_ID }}" -e "ADZUNA_APP_KEY=${{ secrets.ADZUNA_APP_KEY }}" -e "CAREERJET_API_KEY=${{ secrets.CAREERJET_API_KEY }}" -e "ADMIN_SECRET=${{ secrets.ADMIN_SECRET }}" -e "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" buscaycurra:latest
+
             sleep 8
             curl -sf http://localhost:8892/api/ping || exit 1
             echo "Deploy completado correctamente"
