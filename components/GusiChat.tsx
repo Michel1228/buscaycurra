@@ -73,6 +73,21 @@ function renderMd(text: string): React.ReactNode[] {
   });
 }
 
+// Extrae la info clave del CV para ser proactivo sin preguntar
+function extractCVInfo(cv: Record<string, unknown>): { puesto: string; ciudad: string; nombre: string } {
+  const nombre = String(cv.nombre || cv.full_name || "").trim().split(" ")[0];
+  const ciudad = String(cv.ciudad || cv.location || "").trim();
+  let puesto = "";
+  const exp = cv.experiencia || cv.experience;
+  if (Array.isArray(exp) && exp.length > 0) {
+    puesto = String((exp[0] as { puesto?: string }).puesto || "").trim();
+  } else if (typeof exp === "string" && exp.trim()) {
+    const m = exp.match(/(?:—|–|-)\s*(.+?)\s+en\s+/i);
+    puesto = m?.[1]?.trim() || "";
+  }
+  return { puesto, ciudad, nombre };
+}
+
 export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: boolean }) {
   const [abierto, setAbierto] = useState(modoIncrustado);
   const [logueado, setLogueado] = useState<boolean | null>(null);
@@ -124,16 +139,18 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
           const saludo = nombre ? `¡Hola, ${nombre}!` : "¡Hola!";
 
           if (cvExistente && !esNuevo) {
-            // Usuario con CV guardado: mostrar CV directamente
+            const { puesto, ciudad } = extractCVInfo(cvExistente);
+            const puestoStr = puesto ? `**${puesto}**` : "tu sector";
+            const ciudadStr = ciudad ? ` en **${ciudad}**` : "";
             setMensajes([{
               role: "gusi",
-              text: `${saludo} 🐛 Aquí tienes tu CV actualizado.\n\n¿Qué hacemos hoy?\n\n📧 **Enviar a ofertas** · ✨ **Mejorar con IA** · 📸 **Añadir/cambiar foto**`,
+              text: `${saludo} 🐛 Tengo tu CV listo.\n\nVeo que tienes experiencia como ${puestoStr}${ciudadStr}. ¿Busco ofertas similares ahora y te envío las candidaturas automáticamente?\n\n📧 **Buscar y enviar** · ✨ **Mejorar CV** · 📸 **Cambiar foto**`,
               action: "ver_cv",
             }]);
           } else if (esNuevo) {
-            setMensajes([{ role: "gusi", text: `${saludo} 🐛 Soy Guzzi, tu asistente personal de empleo.\n\nEstoy aquí para que nunca más tengas que buscar trabajo solo. Yo trabajo, tú eliges.\n\n¿Por dónde empezamos?\n\n📄 **Tengo CV** → súbemelo y te busco las mejores ofertas\n📝 **No tengo CV** → te ayudo a crearlo en 5 minutos paso a paso\n📧 Cuando esté listo, **envío tu candidatura automáticamente**\n\n¡Tú relájate, que yo me pongo a trabajar! 🐛` }]);
+            setMensajes([{ role: "gusi", text: `${saludo} 🐛 Soy Guzzi, tu asistente de empleo.\n\nYo busco trabajo por ti. Solo necesito tu CV y listo.\n\n📄 **Tengo CV** → súbemelo y busco ofertas que encajen\n📝 **No tengo CV** → te lo creo en 5 minutos paso a paso\n\n¡Tú relájate, que yo me pongo a buscar! 🐛` }]);
           } else {
-            setMensajes([{ role: "gusi", text: `${saludo} 🐛 ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Añadir foto al CV\n🎯 Preparar entrevistas\n📄 Ver mi CV guardado` }]);
+            setMensajes([{ role: "gusi", text: `${saludo} 🐛 ¿Qué hacemos hoy?\n\n📧 **Enviar CV automático** — busco ofertas y envío por ti\n🔍 **Buscar ofertas** — filtra por sector y ciudad\n✨ **Mejorar CV** — lo optimizo con IA\n🎯 **Preparar entrevista** — simulo las preguntas` }]);
           }
         } else {
           setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Guzzi. Regístrate primero para que pueda ayudarte." }]);
@@ -702,13 +719,53 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         }]);
         return;
       }
+
+      const { puesto: cvPuesto, ciudad: cvCiudad } = extractCVInfo(cvGuardado);
+
+      if (cvPuesto) {
+        // Tenemos puesto del CV → buscar directamente, sin preguntar
+        const puestoBusqueda = cvPuesto;
+        const ciudadBusqueda = cvCiudad || "España";
+        setCargando(true);
+        try {
+          const res = await fetch(`/api/jobs/search?keyword=${encodeURIComponent(puestoBusqueda)}&location=${encodeURIComponent(ciudadBusqueda)}&page=1`);
+          const data = await res.json() as { ofertas?: Oferta[] };
+          const ofertas = (data.ofertas || []).slice(0, 5);
+
+          if (ofertas.length > 0) {
+            let text = `🔍 Basándome en tu CV (**${puestoBusqueda}**${cvCiudad ? ` en **${cvCiudad}**` : ""}), encontré:\n\n`;
+            ofertas.forEach((o: Oferta, i: number) => {
+              const em = ["🥇", "🥈", "🥉", "📌", "📌"][i];
+              text += `${em} **${o.titulo}**\n   📍 ${o.ubicacion} · 💰 ${o.salario || "Ver oferta"}\n\n`;
+            });
+            text += `📧 **¿Envío tu CV a todas?** Di "sí". O usa el botón Enviar CV en cada oferta. 🐛`;
+            setMensajes((prev) => [...prev, { role: "gusi", text, jobs: ofertas }]);
+          } else {
+            // Sin resultados → pedir ciudad alternativa
+            setModoEnvio(true);
+            setPasoEnvio(1);
+            setDatosEnvio({ puesto: puestoBusqueda });
+            setMensajes((prev) => [...prev, {
+              role: "gusi",
+              text: `🔍 No encontré ofertas de **${puestoBusqueda}** en **${ciudadBusqueda}**.\n\n¿Buscamos en otra ciudad?`
+            }]);
+          }
+        } catch {
+          setMensajes((prev) => [...prev, { role: "gusi", text: "❌ Error al buscar ofertas. Inténtalo de nuevo." }]);
+        } finally {
+          setCargando(false);
+        }
+        return;
+      }
+
+      // Sin puesto en CV → preguntar solo qué trabajo busca
       setModoEnvio(true);
       setPasoEnvio(0);
       setDatosEnvio({});
       setCargando(false);
       setMensajes((prev) => [...prev, {
         role: "gusi",
-        text: "📧 ¡Perfecto! Tu CV ya está listo.\n\n**Paso 1/2: ¿Qué trabajo buscas?**\n\n(Ej: camarero, programador, albañil...)"
+        text: "📧 Tu CV está listo.\n\n**¿Qué tipo de trabajo buscas?**\n\n(Ej: camarero, peón, programador, administrativo...)"
       }]);
       return;
     }
