@@ -381,8 +381,27 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   // ============================================
 
   function generarEnlaceCV(datos: Record<string, unknown>): string {
-    // Redirigir a la página de curriculum con la plantilla visual profesional
     return `https://buscaycurra.es/app/curriculum`;
+  }
+
+  async function descargarCVVisual() {
+    if (!cvGuardado) return;
+    try {
+      const res = await fetch("/api/cv/generar-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cvGuardado),
+      });
+      const { html } = await res.json();
+      if (!html) return;
+      const win = window.open("", "_blank");
+      if (!win) return;
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 600);
+    } catch {
+      // silently fail
+    }
   }
 
   function generarCVTexto(datos: Record<string, unknown>): string {
@@ -675,13 +694,21 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
 
     if (texto === "__ENVIO_AUTO__") {
+      if (!cvGuardado || Object.keys(cvGuardado).length === 0) {
+        setCargando(false);
+        setMensajes((prev) => [...prev, {
+          role: "gusi",
+          text: "📧 Para enviar tu CV automáticamente primero necesito tenerlo.\n\n📎 **Súbelo en PDF** (botón clip de abajo)\n📝 O escribe **'crear cv'** para hacerlo paso a paso conmigo."
+        }]);
+        return;
+      }
       setModoEnvio(true);
       setPasoEnvio(0);
       setDatosEnvio({});
       setCargando(false);
-      setMensajes((prev) => [...prev, { 
-        role: "gusi", 
-        text: "📧 ¡Perfecto! Para enviar tu CV automáticamente:\n\n**Paso 1/2: ¿Qué trabajo buscas?**\n\n(Ej: camarero, programador, albañil...)" 
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "📧 ¡Perfecto! Tu CV ya está listo.\n\n**Paso 1/2: ¿Qué trabajo buscas?**\n\n(Ej: camarero, programador, albañil...)"
       }]);
       return;
     }
@@ -759,9 +786,32 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
 
     // ============================================
-    // DETECTAR "MEJORAR CV" CUANDO YA TIENE DATOS
+    // DETECTAR INTENTS DE ENVÍO/MEJORAR CV
     // ============================================
     const textoLower = texto.toLowerCase();
+
+    if (
+      (textoLower.includes("enviar") || textoLower.includes("envio") || textoLower.includes("envío") || textoLower === "enviar cv") &&
+      (textoLower.includes("cv") || textoLower.includes("curriculum") || textoLower.includes("currículum") || textoLower.includes("oferta"))
+    ) {
+      if (!cvGuardado || Object.keys(cvGuardado).length === 0) {
+        setCargando(false);
+        setMensajes((prev) => [...prev, {
+          role: "gusi",
+          text: "📧 Para enviar tu CV automáticamente primero necesito tenerlo.\n\n📎 **Súbelo en PDF** (botón clip de abajo)\n📝 O escribe **'crear cv'** para hacerlo paso a paso conmigo."
+        }]);
+        return;
+      }
+      setModoEnvio(true);
+      setPasoEnvio(0);
+      setDatosEnvio({});
+      setCargando(false);
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "📧 ¡Perfecto! Tu CV ya está listo.\n\n**Paso 1/2: ¿Qué trabajo buscas?**\n\n(Ej: camarero, programador, albañil...)"
+      }]);
+      return;
+    }
     if ((textoLower.includes("mejorar") || textoLower.includes("mejora")) && 
         (textoLower.includes("cv") || textoLower.includes("currículum") || textoLower.includes("curriculum"))) {
       if (cvGuardado && Object.keys(cvGuardado).length > 0) {
@@ -917,16 +967,22 @@ Ya tengo tus datos guardados. Voy a:
                   ) : (
                     <CVVisual data={cvGuardado} />
                   )}
-                  <div className="mt-2 flex gap-2">
-                    <a 
-                      href="/app/curriculum" 
+                  <div className="mt-2 flex gap-2 flex-wrap">
+                    <a
+                      href="/app/curriculum"
                       target="_blank"
+                      className="text-xs bg-[#374151] text-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#4b5563] transition-colors"
+                    >
+                      ✏️ Editar
+                    </a>
+                    <button
+                      onClick={descargarCVVisual}
                       className="text-xs bg-[#22c55e] text-white px-3 py-1.5 rounded-lg hover:bg-[#16a34a] transition-colors"
                     >
-                      ✏️ Editar y descargar
-                    </a>
-                    <button 
-                      onClick={() => enviarMensaje("enviar cv")}
+                      ⬇️ Descargar PDF
+                    </button>
+                    <button
+                      onClick={() => enviarMensaje("__ENVIO_AUTO__")}
                       className="text-xs bg-[#3b82f6] text-white px-3 py-1.5 rounded-lg hover:bg-[#2563eb] transition-colors"
                     >
                       📧 Enviar a ofertas
