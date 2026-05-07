@@ -81,14 +81,14 @@ const superpotencias = [
 ];
 
 const comparativaFilas = [
-  { concepto: "Coste mensual", ett: "~150€/mes en comisiones", byc: "9,99€/mes" },
-  { concepto: "Control sobre tu búsqueda", ett: "La ETT decide por ti", byc: "Tú decides siempre" },
-  { concepto: "Empresas a las que llegas", ett: "Solo las que trabajan con esa ETT", byc: "Cualquier empresa de España" },
-  { concepto: "Adaptación de CV", ett: "CV genérico para todas", byc: "CV adaptado a cada oferta" },
-  { concepto: "Entrevistas", ett: "Sin preparación", byc: "Simulacro con IA por empresa" },
-  { concepto: "Transparencia", ett: "No sabes qué hacen con tu perfil", byc: "Ves cada envío en tiempo real" },
-  { concepto: "Horario de envío", ett: "El que les conviene", byc: "El mejor momento para cada empresa" },
-  { concepto: "Ahorro en 12 meses", ett: "Pagas ~1.800€ en comisiones", byc: "Pagas 119,88€. Ahorras ~1.680€" },
+  { concepto: "Precio por candidato",       rival: "Gratis (pero sin IA)",         byc: "Gratis + IA incluida" },
+  { concepto: "Precio para empresas",       rival: "€369 por UNA oferta",           byc: "€49,99/mes ilimitado" },
+  { concepto: "IA que mejora tu CV",        rival: "No existe",                     byc: "Llama 3.3 + Gemini" },
+  { concepto: "Chatbot guía paso a paso",   rival: "No existe",                     byc: "Gusi — disponible 24/7" },
+  { concepto: "Envío automático a empresas",rival: "Manual, uno a uno",             byc: "50 empresas/día automático" },
+  { concepto: "Carta de presentación IA",   rival: "No existe",                     byc: "Generada al instante" },
+  { concepto: "Ofertas de múltiples fuentes",rival: "Solo su propia base de datos", byc: "100k+ fuentes agregadas" },
+  { concepto: "Valoración de usuarios",     rival: "1.1/5 en Trustpilot",          byc: "Transparencia total" },
 ];
 
 const testimonios = [
@@ -98,7 +98,7 @@ const testimonios = [
     puesto: "Diseñadora gráfica",
     empresa: "Agencia creativa",
     mariposa: "Morpho Azul",
-    texto: "En 3 semanas tenía 4 entrevistas. La ETT con la que estaba tardó 2 meses en conseguirme una sola.",
+    texto: "En 3 semanas tenía 4 entrevistas. Con InfoJobs estuve 2 meses enviando CVs a mano sin respuesta.",
   },
   {
     nombre: "Carlos R.",
@@ -138,7 +138,7 @@ const testimonios = [
     puesto: "Mecánico",
     empresa: "Taller oficial",
     mariposa: "Glasswing",
-    texto: "Ahorré 1.600€ en comisiones de ETT. Y encontré trabajo en menos tiempo. No tiene ningún sentido seguir usando ETTs.",
+    texto: "Antes pagaba por destacar en InfoJobs sin resultado. Con BuscayCurra encontré trabajo en 3 semanas y pagué cero.",
   },
 ];
 
@@ -234,22 +234,22 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ══════ NO SOMOS UNA ETT — Banner siempre visible ══════ */}
-        <section className="py-8 px-4" style={{ background: "rgba(126,213,111,0.06)", borderTop: "1px solid rgba(126,213,111,0.12)", borderBottom: "1px solid rgba(126,213,111,0.12)" }}>
+        {/* ══════ DIFERENCIAL vs InfoJobs — Banner visible ══════ */}
+        <section className="py-8 px-4" style={{ background: "rgba(59,95,224,0.06)", borderTop: "1px solid rgba(59,95,224,0.15)", borderBottom: "1px solid rgba(59,95,224,0.15)" }}>
           <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h2 className="text-xl md:text-2xl font-black mb-1" style={{ color: "#7ed56f" }}>
-                🚫 No somos una ETT
+              <h2 className="text-xl md:text-2xl font-black mb-1" style={{ color: "#7eb8f0" }}>
+                💡 Lo que InfoJobs debería ser (pero no es)
               </h2>
               <p className="text-sm md:text-base" style={{ color: "#b0a890" }}>
-                No cobramos comisiones. No decidimos por ti. No te colocamos donde nos conviene.
-                <strong style={{ color: "#f0ebe0" }}> Tú buscas, tú envías, tú eliges.</strong>
+                InfoJobs cobra €369 por UNA oferta y tiene 1.1/5 en Trustpilot.
+                <strong style={{ color: "#f0ebe0" }}> Nosotros somos gratis para candidatos, con IA y envío automático.</strong>
               </p>
             </div>
             <div className="flex flex-wrap gap-3 flex-shrink-0">
-              {["Sin comisiones", "Sin intermediarios", "Tú mandas"].map((tag) => (
+              {["IA incluida", "Envío automático", "100k+ ofertas"].map((tag) => (
                 <span key={tag} className="text-xs px-3 py-1.5 rounded-full font-semibold"
-                  style={{ background: "rgba(126,213,111,0.12)", color: "#7ed56f", border: "1px solid rgba(126,213,111,0.25)" }}>
+                  style={{ background: "rgba(59,95,224,0.12)", color: "#7eb8f0", border: "1px solid rgba(59,95,224,0.3)" }}>
                   ✓ {tag}
                 </span>
               ))}
@@ -304,24 +304,24 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ══════ COMPARATIVA ETT vs BuscayCurra ══════ */}
+        {/* ══════ COMPARATIVA InfoJobs vs BuscayCurra ══════ */}
         <section className="py-20 px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-2" style={{ color: "#f0ebe0" }}>
-              ¿ETT o BuscayCurra? Haz los números.
+              InfoJobs vs BuscayCurra
             </h2>
             <p className="text-center text-lg font-semibold mb-2" style={{ color: "#f0c040" }}>
-              Esto es lo que te ahorras
+              La alternativa inteligente que InfoJobs nunca será
             </p>
             <p className="text-center mb-12" style={{ color: "#706a58" }}>
-              Lo que ganas y pierdes en 12 meses. Los datos no mienten.
+              Mismo objetivo, experiencia completamente diferente.
             </p>
 
             <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(15,26,10,0.6)", border: "1px solid rgba(126,213,111,0.12)" }}>
               {/* Header */}
               <div className="grid grid-cols-3 text-center text-sm font-bold py-4 px-4" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(126,213,111,0.1)" }}>
-                <div style={{ color: "#706a58" }}>Aspecto</div>
-                <div style={{ color: "#e07850" }}>ETT</div>
+                <div style={{ color: "#706a58" }}>Característica</div>
+                <div style={{ color: "#e07850" }}>InfoJobs</div>
                 <div style={{ color: "#7ed56f" }}>BuscayCurra</div>
               </div>
 
@@ -335,7 +335,7 @@ export default function LandingPage() {
                   <div className="font-medium text-left text-xs md:text-sm" style={{ color: "#b0a890" }}>{fila.concepto}</div>
                   <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#e07850" }}>
                     <span>❌</span>
-                    <span>{fila.ett}</span>
+                    <span>{fila.rival}</span>
                   </div>
                   <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#7ed56f" }}>
                     <span>✅</span>
@@ -347,7 +347,7 @@ export default function LandingPage() {
 
             <div className="text-center mt-10">
               <Link href="/auth/registro" className="btn-game text-base !py-4 !px-10">
-                Empieza gratis — Sin comisiones
+                Empieza gratis — Es mejor que InfoJobs
               </Link>
             </div>
           </div>

@@ -12,10 +12,14 @@ import GusiChat from "@/components/GusiChat";
 import BosqueAmbiente from "@/components/BosqueAmbiente";
 
 export const metadata: Metadata = {
-  title: "BuscayCurra — Encuentra trabajo con IA",
+  title: "BuscayCurra — La alternativa gratuita a InfoJobs con IA",
   description:
-    "Encuentra trabajo más rápido con inteligencia artificial. Mejora tu CV, busca ofertas en toda España y envía tu candidatura automáticamente.",
-  keywords: ["buscar trabajo", "empleo", "CV", "inteligencia artificial", "España"],
+    "Busca trabajo gratis en España con IA. Mejora tu CV automáticamente, envía candidaturas a 50 empresas al día y prepara entrevistas. La alternativa inteligente a InfoJobs.",
+  keywords: [
+    "alternativa infojobs", "buscar trabajo gratis españa", "enviar cv automaticamente",
+    "cv con inteligencia artificial gratis", "buscador empleo españa",
+    "infojobs alternativa", "buscar empleo ia", "mejorar cv con ia",
+  ],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -23,9 +27,9 @@ export const metadata: Metadata = {
     title: "BuscayCurra",
   },
   openGraph: {
-    title: "BuscayCurra — Encuentra trabajo con IA",
+    title: "BuscayCurra — La alternativa gratuita a InfoJobs con IA",
     description:
-      "Encuentra trabajo más rápido con inteligencia artificial. Mejora tu CV y envía candidaturas automáticamente.",
+      "Busca trabajo gratis con IA. 100k+ ofertas en España, envío automático a empresas y CV profesional en minutos. Mejor que InfoJobs.",
     locale: "es_ES",
     type: "website",
   },
