@@ -131,7 +131,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
               action: "ver_cv",
             }]);
           } else if (esNuevo) {
-            setMensajes([{ role: "gusi", text: `${saludo} 🐛 Soy Guzzi, tu asistente personal de empleo.\n\nEstoy aquí para que nunca más tengas que buscar trabajo solo. Yo trabajo, tú eliges.\n\n¿Por dónde empezamos?\n\n📄 **Tengo CV** → súbemelo y te busco las mejores ofertas\n📝 **No tengo CV** → te ayudo a crearlo en 5 minutos paso a paso\n📧 Cuando esté listo, **envío tu candidatura automáticamente**\n\n¡Tú relájate, que yo me pongo a trabajar! 🐛→🦋` }]);
+            setMensajes([{ role: "gusi", text: `${saludo} 🐛 Soy Guzzi, tu asistente personal de empleo.\n\nEstoy aquí para que nunca más tengas que buscar trabajo solo. Yo trabajo, tú eliges.\n\n¿Por dónde empezamos?\n\n📄 **Tengo CV** → súbemelo y te busco las mejores ofertas\n📝 **No tengo CV** → te ayudo a crearlo en 5 minutos paso a paso\n📧 Cuando esté listo, **envío tu candidatura automáticamente**\n\n¡Tú relájate, que yo me pongo a trabajar! 🐛` }]);
           } else {
             setMensajes([{ role: "gusi", text: `${saludo} 🐛 ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Añadir foto al CV\n🎯 Preparar entrevistas\n📄 Ver mi CV guardado` }]);
           }
@@ -606,7 +606,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         setCargando(false);
         setMensajes((prev) => [...prev, {
           role: "gusi",
-          text: `✅ **¡CV completado!** 🦋\n\n**¿Qué quieres hacer ahora?**\n\n1. 📧 **Enviar mi CV** a ofertas de trabajo\n2. ✉️ **Generar carta** de presentación\n3. 📝 **Modificar** algún dato\n4. 💾 **Guardar** para más tarde`,
+          text: `✅ **¡CV completado!** 🐛\n\n**¿Qué quieres hacer ahora?**\n\n1. 📧 **Enviar mi CV** a ofertas de trabajo\n2. ✉️ **Generar carta** de presentación\n3. 📝 **Modificar** algún dato\n4. 💾 **Guardar** para más tarde`,
           action: "ver_cv",
           cvData: cvTexto
         }]);

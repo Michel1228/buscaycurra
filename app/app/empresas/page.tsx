@@ -17,9 +17,9 @@ export const dynamic = "force-dynamic";
  * Colores de marca: azul #2563EB y naranja #F97316.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 
@@ -36,64 +36,52 @@ interface InfoEmpresa {
 
 export default function EmpresasPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // URL de la empresa a analizar
   const [urlEmpresa, setUrlEmpresa] = useState("");
-  // Resultado del análisis
   const [infoEmpresa, setInfoEmpresa] = useState<InfoEmpresa | null>(null);
-  // Estado de carga
   const [analizando, setAnalizando] = useState(false);
-  // Mensaje de error
   const [error, setError] = useState("");
 
-  // Verificar sesión al cargar
-  useEffect(() => {
-    async function verificarSesion() {
-      const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-      if (!user) router.push("/auth/login");
-    }
-    verificarSesion();
-  }, [router]);
-
-  /**
-   * Envía la URL al endpoint de análisis y muestra los datos extraídos.
-   */
-  async function analizarEmpresa(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!urlEmpresa.trim()) {
-      setError("Por favor, introduce la URL de la empresa.");
-      return;
-    }
-
-    // Validar que sea una URL con formato básico
-    try {
-      new URL(urlEmpresa.trim());
-    } catch {
+  const analizar = useCallback(async (url: string) => {
+    if (!url.trim()) return;
+    try { new URL(url); } catch {
       setError("La URL no es válida. Ejemplo: https://www.empresa.com");
       return;
     }
-
     setAnalizando(true);
     setError("");
     setInfoEmpresa(null);
-
     try {
-      const params = new URLSearchParams({ url: urlEmpresa.trim() });
-      const respuesta = await fetch(`/api/empresas/analizar?${params.toString()}`);
-
-      if (!respuesta.ok) {
-        const datos = await respuesta.json();
-        throw new Error(datos.error || "Error al analizar la empresa");
+      const res = await fetch(`/api/empresas/analizar?${new URLSearchParams({ url: url.trim() })}`);
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        throw new Error(d.error || "Error al analizar la empresa");
       }
-
-      const datos = await respuesta.json();
-      setInfoEmpresa(datos);
+      setInfoEmpresa(await res.json() as InfoEmpresa);
     } catch (err) {
       setError((err as Error).message || "Error al analizar la empresa");
     } finally {
       setAnalizando(false);
     }
+  }, []);
+
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await getSupabaseBrowser().auth.getUser();
+      if (!user) { router.push("/auth/login"); return; }
+      const urlParam = searchParams.get("url");
+      if (urlParam) {
+        setUrlEmpresa(urlParam);
+        void analizar(urlParam);
+      }
+    }
+    void init();
+  }, [router, searchParams, analizar]);
+
+  function analizarEmpresa(e: React.FormEvent) {
+    e.preventDefault();
+    void analizar(urlEmpresa);
   }
 
   return (

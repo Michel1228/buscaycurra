@@ -150,7 +150,7 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
         {([
           { id: "buscar-email" as Modo, titulo: "Buscar email", sub: "Pega la web" },
           { id: "tengo-email" as Modo, titulo: "Tengo email", sub: "Contacto directo" },
-          { id: "ya-aplice" as Modo, titulo: "Ya apliqué", sub: "Solo registrar" },
+          { id: "ya-aplique" as Modo, titulo: "Ya apliqué", sub: "Solo registrar" },
         ]).map(m => (
           <button key={m.id} type="button" onClick={() => { setModo(m.id); setError(null); }}
             className="py-2.5 px-2 rounded-lg text-[10px] font-medium transition text-center"

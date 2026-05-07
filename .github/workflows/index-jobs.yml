@@ -1,0 +1,38 @@
+name: Indexar ofertas de empleo
+
+on:
+  schedule:
+    - cron: "0 3 * * *"   # 03:00 UTC cada día
+  workflow_dispatch:        # también se puede lanzar manualmente
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Indexar Arbeitnow + Remotive (gratuitas, sin límite)
+        run: |
+          curl -sf -X POST https://buscaycurra.es/api/jobs/bulk-index \
+            -H "Content-Type: application/json" \
+            -d "{\"secret\":\"${{ secrets.ADMIN_SECRET }}\",\"source\":\"all-free\"}" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Insertadas: {d[\"insertados\"]} | Total BD: {d[\"totalEnBD\"]}')"
+
+      - name: Indexar Jooble — lote 1 (0-200)
+        run: |
+          curl -sf -X POST https://buscaycurra.es/api/jobs/bulk-index \
+            -H "Content-Type: application/json" \
+            -d "{\"secret\":\"${{ secrets.ADMIN_SECRET }}\",\"source\":\"jooble\",\"offset\":0,\"limit\":200}" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Jooble lote 1 — Insertadas: {d[\"insertados\"]} | Total BD: {d[\"totalEnBD\"]}')"
+
+      - name: Indexar Jooble — lote 2 (200-400)
+        run: |
+          curl -sf -X POST https://buscaycurra.es/api/jobs/bulk-index \
+            -H "Content-Type: application/json" \
+            -d "{\"secret\":\"${{ secrets.ADMIN_SECRET }}\",\"source\":\"jooble\",\"offset\":200,\"limit\":200}" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Jooble lote 2 — Insertadas: {d[\"insertados\"]} | Total BD: {d[\"totalEnBD\"]}')"
+
+      - name: Indexar Jooble — lote 3 (400-600)
+        run: |
+          curl -sf -X POST https://buscaycurra.es/api/jobs/bulk-index \
+            -H "Content-Type: application/json" \
+            -d "{\"secret\":\"${{ secrets.ADMIN_SECRET }}\",\"source\":\"jooble\",\"offset\":400,\"limit\":200}" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Jooble lote 3 — Insertadas: {d[\"insertados\"]} | Total BD: {d[\"totalEnBD\"]}')"

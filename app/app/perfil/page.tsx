@@ -32,6 +32,10 @@ export default function PerfilPage() {
   const [tab, setTab] = useState<"perfil" | "seguridad" | "plan">("perfil");
   const [planActual, setPlanActual] = useState<"free" | "basico" | "pro" | "empresa">("free");
   const [cargandoPlan, setCargandoPlan] = useState(false);
+  const [nuevaPassword, setNuevaPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const [msgSeguridad, setMsgSeguridad] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
+  const [cargandoPassword, setCargandoPassword] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -88,6 +92,38 @@ export default function PerfilPage() {
 
   function updateField(field: keyof PerfilData, value: string) {
     setPerfil(prev => ({ ...prev, [field]: value }));
+  }
+
+  async function cambiarPassword() {
+    if (nuevaPassword.length < 8) {
+      setMsgSeguridad({ tipo: "error", texto: "La contraseña debe tener al menos 8 caracteres." });
+      return;
+    }
+    if (nuevaPassword !== confirmarPassword) {
+      setMsgSeguridad({ tipo: "error", texto: "Las contraseñas no coinciden." });
+      return;
+    }
+    setCargandoPassword(true);
+    setMsgSeguridad(null);
+    try {
+      const { error } = await getSupabaseBrowser().auth.updateUser({ password: nuevaPassword });
+      if (error) {
+        setMsgSeguridad({ tipo: "error", texto: error.message });
+      } else {
+        setMsgSeguridad({ tipo: "ok", texto: "Contraseña actualizada correctamente." });
+        setNuevaPassword("");
+        setConfirmarPassword("");
+      }
+    } catch {
+      setMsgSeguridad({ tipo: "error", texto: "Error al cambiar la contraseña. Inténtalo de nuevo." });
+    } finally {
+      setCargandoPassword(false);
+    }
+  }
+
+  async function cerrarTodasLasSesiones() {
+    await getSupabaseBrowser().auth.signOut({ scope: "global" });
+    router.push("/auth/login");
   }
 
   async function irACheckout(plan: "basico" | "pro" | "empresa") {
@@ -220,7 +256,7 @@ export default function PerfilPage() {
             free:    { emoji: "🥚", nombre: "Gratis",  color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
             basico:  { emoji: "🐣", nombre: "Básico",  color: "#22c55e", desc: "5 CVs/día · IA básica" },
             pro:     { emoji: "🐛", nombre: "Pro",     color: "#a855f7", desc: "10 CVs/día · IA avanzada · Estadísticas" },
-            empresa: { emoji: "🦋", nombre: "Empresa", color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
+            empresa: { emoji: "🏢", nombre: "Empresa", color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
           };
           const info = PLANES_INFO[planActual];
           return (
@@ -261,7 +297,7 @@ export default function PerfilPage() {
                   <div className="rounded-xl p-4 flex items-center justify-between"
                     style={{ background: "#161922", border: "1px solid #252836" }}>
                     <div>
-                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🦋 Plan Empresa — 49,99€/mes</p>
+                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🏢 Plan Empresa — 49,99€/mes</p>
                       <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
                     </div>
                     <button onClick={() => void irACheckout("empresa")} disabled={cargandoPlan}
@@ -283,9 +319,61 @@ export default function PerfilPage() {
         })()}
 
         {tab === "seguridad" && (
-          <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
-            <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>🔒 Seguridad</h2>
-            <p className="text-xs" style={{ color: "#64748b" }}>Funcionalidad en desarrollo</p>
+          <div className="space-y-5">
+            {/* Cambiar contraseña */}
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🔑 Cambiar contraseña</h2>
+              <p className="text-xs mb-4" style={{ color: "#64748b" }}>Mínimo 8 caracteres.</p>
+              <div className="space-y-3">
+                <input
+                  type="password"
+                  placeholder="Nueva contraseña"
+                  value={nuevaPassword}
+                  onChange={e => setNuevaPassword(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+                />
+                <input
+                  type="password"
+                  placeholder="Confirmar nueva contraseña"
+                  value={confirmarPassword}
+                  onChange={e => setConfirmarPassword(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+                />
+                {msgSeguridad && (
+                  <p className="text-xs px-3 py-2 rounded-lg"
+                    style={{
+                      background: msgSeguridad.tipo === "ok" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                      color: msgSeguridad.tipo === "ok" ? "#22c55e" : "#ef4444",
+                      border: `1px solid ${msgSeguridad.tipo === "ok" ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                    }}>
+                    {msgSeguridad.tipo === "ok" ? "✅ " : "❌ "}{msgSeguridad.texto}
+                  </p>
+                )}
+                <button
+                  onClick={cambiarPassword}
+                  disabled={cargandoPassword || !nuevaPassword}
+                  className="w-full py-2.5 text-sm font-semibold rounded-lg transition disabled:opacity-50"
+                  style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+                >
+                  {cargandoPassword ? "Guardando..." : "Actualizar contraseña"}
+                </button>
+              </div>
+            </div>
+
+            {/* Sesiones */}
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🚪 Cerrar sesión en todos los dispositivos</h2>
+              <p className="text-xs mb-4" style={{ color: "#64748b" }}>Cierra sesión en todos los dispositivos donde hayas iniciado sesión.</p>
+              <button
+                onClick={cerrarTodasLasSesiones}
+                className="px-5 py-2.5 text-sm font-semibold rounded-lg transition"
+                style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}
+              >
+                Cerrar todas las sesiones
+              </button>
+            </div>
           </div>
         )}
       </main>
