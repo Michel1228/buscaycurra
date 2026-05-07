@@ -1,28 +1,55 @@
-name: Deploy to VPS via Easypanel
+name: Build & Deploy to VPS
 
 on:
   push:
     branches: [main]
 
+env:
+  REGISTRY: ghcr.io/michel1228/buscaycurra
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-      - name: Trigger Easypanel build from GitHub source
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}:latest
+            ${{ env.REGISTRY }}:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+
+      - name: Deploy to Easypanel with SHA tag
         run: |
           TOKEN=$(curl -sf -X POST "http://187.124.37.183:3000/api/trpc/auth.login" \
             -H "Content-Type: application/json" \
             -d '{"json":{"email":"michelbatistagonzalez1992@gmail.com","password":"iBihfBfw3xdNAdD"}}' \
             | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['data']['json']['token'])")
 
-          # Ensure build is configured as Dockerfile
-          curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.updateBuild" \
+          curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.updateSourceImage" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $TOKEN" \
-            -d '{"json":{"projectName":"buscaycurra","serviceName":"nextjs","build":{"type":"dockerfile","file":"Dockerfile"}}}'
+            -d "{\"json\":{\"projectName\":\"buscaycurra\",\"serviceName\":\"nextjs\",\"image\":\"${{ env.REGISTRY }}:${{ github.sha }}\",\"username\":\"${{ github.actor }}\",\"password\":\"${{ secrets.GITHUB_TOKEN }}\"}}"
 
-          # Trigger the build and deploy
           curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.deployService" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $TOKEN" \
