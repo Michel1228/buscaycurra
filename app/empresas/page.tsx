@@ -1,6 +1,8 @@
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 
+export const dynamic = "force-dynamic";
+
 const VENTAJAS = [
   {
     icon: "🎯",
