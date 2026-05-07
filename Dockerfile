@@ -7,6 +7,7 @@ RUN apk add --no-cache python3 make g++
 
 # Copiar package files e instalar dependencias
 COPY package.json package-lock.json* ./
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN npm ci
 
 # Build args para las variables públicas de Next.js (se basan en build time)
