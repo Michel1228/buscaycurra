@@ -9,12 +9,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+export const dynamic = "force-dynamic";
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 export async function GET(request: NextRequest) {
+  const supabase = getSupabase();
   const userId = request.headers.get("x-user-id") ||
     new URL(request.url).searchParams.get("userId");
 
@@ -43,6 +48,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
   try {
     const body = await request.json();
     const { userId, tipo, titulo, mensaje, datos } = body;
@@ -74,6 +80,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const supabase = getSupabase();
   try {
     const body = await request.json();
     const { notifId, userId, marcarTodas } = body;

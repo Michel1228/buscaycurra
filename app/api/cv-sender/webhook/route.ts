@@ -12,12 +12,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+export const dynamic = "force-dynamic";
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
   try {
     const body = await request.json();
     const { tipo, envioId, userId, empresa, detalles } = body;
@@ -76,6 +81,7 @@ export async function POST(request: NextRequest) {
  * Usage: <img src="https://buscaycurra.es/api/cv-sender/webhook?track=ENVIO_ID&uid=USER_ID" />
  */
 export async function GET(request: NextRequest) {
+  const supabase = getSupabase();
   const { searchParams } = new URL(request.url);
   const trackId = searchParams.get("track");
   const uid = searchParams.get("uid");
