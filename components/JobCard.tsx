@@ -47,6 +47,7 @@ export default function JobCard({
   const [expandida, setExpandida] = useState(false);
   const [descripcionFull, setDescripcionFull] = useState<string | null>(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [estadoEnvio, setEstadoEnvio] = useState<"idle" | "verificando" | "buscando" | "enviando" | "enviado" | "sin_cv" | "error">("idle");
 
   useEffect(() => {
     async function checkSaved() {
@@ -80,6 +81,52 @@ export default function JobCard({
       finally { setCargandoDetalle(false); }
     } else {
       setDescripcionFull(descripcion || "");
+    }
+  }
+
+  async function enviarCVAuto() {
+    setEstadoEnvio("verificando");
+    try {
+      const session = (await getSupabaseBrowser().auth.getSession()).data.session;
+      if (!session) { alert("Inicia sesión para enviar tu CV"); setEstadoEnvio("idle"); return; }
+
+      const cvRes = await fetch(`/api/gusi/cv?userId=${session.user.id}`);
+      const cvData = await cvRes.json() as { cv?: Record<string, unknown> };
+      if (!cvData.cv || Object.keys(cvData.cv).length === 0) {
+        setEstadoEnvio("sin_cv");
+        setTimeout(() => setEstadoEnvio("idle"), 4000);
+        return;
+      }
+
+      setEstadoEnvio("buscando");
+      let email = emailEmpresa || "";
+      if (!email && url) {
+        try {
+          const r = await fetch(`/api/empresas/analizar?url=${encodeURIComponent(url)}`);
+          const d = await r.json() as { emailRrhh?: string };
+          email = d.emailRrhh || "";
+        } catch { /* continuar sin email */ }
+      }
+
+      setEstadoEnvio("enviando");
+      if (email) {
+        const res = await fetch("/api/cv-sender/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: session.user.id, companyName: empresa, companyEmail: email, companyUrl: url || undefined, jobTitle: titulo, useAIPersonalization: true }),
+        });
+        if (!res.ok) throw new Error("send_failed");
+      } else {
+        await fetch("/api/cv-sender/registrar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: session.user.id, companyName: empresa, jobTitle: titulo, companyUrl: url || undefined }),
+        });
+      }
+      setEstadoEnvio("enviado");
+    } catch {
+      setEstadoEnvio("error");
+      setTimeout(() => setEstadoEnvio("idle"), 3000);
     }
   }
 
@@ -196,12 +243,22 @@ export default function JobCard({
             🏢
           </a>
         )}
-        <a
-          href={`/app/envios?empresa=${encodeURIComponent(empresa)}&puesto=${encodeURIComponent(titulo)}&url=${encodeURIComponent(url || "")}`}
-          target="_blank" rel="noopener noreferrer"
-          className="flex-1 text-center py-2 text-[11px] font-semibold rounded-lg transition hover:opacity-90 btn-game">
-          Enviar CV
-        </a>
+        <button
+          onClick={() => void enviarCVAuto()}
+          disabled={estadoEnvio !== "idle" && estadoEnvio !== "sin_cv" && estadoEnvio !== "error"}
+          title={estadoEnvio === "sin_cv" ? "Sube tu CV primero en Guzzi" : undefined}
+          className="flex-1 text-center py-2 text-[11px] font-semibold rounded-lg transition hover:opacity-90 btn-game"
+          style={estadoEnvio === "enviado" ? { background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" } :
+                 estadoEnvio === "sin_cv" ? { background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)", color: "#f59e0b" } :
+                 estadoEnvio === "error" ? { background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#ef4444" } : {}}>
+          {estadoEnvio === "idle" ? "Enviar CV" :
+           estadoEnvio === "verificando" ? "⏳ Verificando..." :
+           estadoEnvio === "buscando" ? "🔍 Buscando email..." :
+           estadoEnvio === "enviando" ? "📤 Enviando..." :
+           estadoEnvio === "enviado" ? "✅ CV enviado" :
+           estadoEnvio === "sin_cv" ? "⚠️ Sube tu CV primero" :
+           "❌ Error, reintentar"}
+        </button>
       </div>
     </div>
   );

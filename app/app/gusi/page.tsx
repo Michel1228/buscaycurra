@@ -4,7 +4,7 @@ import GusiChat from "@/components/GusiChat";
 
 export default function GusiPage() {
   return (
-    <div className="flex flex-col pt-14" style={{ background: "#1a1a12", minHeight: "100vh" }}>
+    <div className="flex flex-col pt-14" style={{ background: "#0f1117", minHeight: "100vh" }}>
 
       {/* Hero Guzzi */}
       <div className="text-center px-4 pt-6 pb-3 shrink-0">

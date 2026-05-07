@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 const NAV_ITEMS = [
   { href: "/app/gusi",      label: "Guzzi",     icon: "🐛", title: "Guzzi - Asistente IA" },
   { href: "/app/buscar",    label: "Buscar",    icon: "🔍", title: "Buscar ofertas" },
+  { href: "/precios",       label: "Planes",    icon: "💎", title: "Planes y precios" },
   { href: "/app/guardados", label: "Guardados", icon: "❤️", title: "Ofertas guardadas" },
   { href: "/app/pipeline",  label: "Pipeline",  icon: "📊", title: "Pipeline de candidaturas" },
   { href: "/app/salarios",  label: "Salarios",  icon: "💰", title: "Comparador de salarios" },

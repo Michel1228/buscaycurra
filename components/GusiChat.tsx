@@ -843,9 +843,50 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
 
     // ============================================
-    // DETECTAR INTENTS DE ENVÍO/MEJORAR CV
+    // AUTO-ENVÍO CUANDO EL USUARIO DICE "SÍ" A OFERTAS MOSTRADAS
     // ============================================
     const textoLower = texto.toLowerCase();
+    const lastGusiConJobs = [...mensajes].reverse().find(m => m.role === "gusi" && m.jobs && m.jobs.length > 0);
+    if (lastGusiConJobs?.jobs && (textoLower === "si" || textoLower === "sí" || textoLower === "envia" || textoLower === "envía" || textoLower === "enviar todo" || textoLower === "dale" || textoLower.startsWith("sí") || textoLower.startsWith("si,"))) {
+      const jobs = lastGusiConJobs.jobs;
+      setMensajes(prev => [...prev, { role: "gusi", text: `📧 Enviando tu CV a **${jobs.length} empresa${jobs.length > 1 ? "s" : ""}**...\n\nBuscando emails de RRHH...` }]);
+      let enviados = 0, sinEmail = 0;
+      for (const job of jobs) {
+        try {
+          let email = "";
+          if (job.url) {
+            const r = await fetch(`/api/empresas/analizar?url=${encodeURIComponent(job.url)}`);
+            const d = await r.json() as { emailRrhh?: string };
+            email = d.emailRrhh || "";
+          }
+          if (email) {
+            await fetch("/api/cv-sender/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId, companyName: job.empresa, companyEmail: email, companyUrl: job.url, jobTitle: job.titulo, useAIPersonalization: true }),
+            });
+            enviados++;
+          } else {
+            await fetch("/api/cv-sender/registrar", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId, companyName: job.empresa, jobTitle: job.titulo, companyUrl: job.url }),
+            });
+            sinEmail++;
+          }
+        } catch { /* continuar con la siguiente */ }
+      }
+      const msgFinal = enviados > 0
+        ? `✅ **¡Listo!** ${enviados} candidatura${enviados > 1 ? "s" : ""} enviada${enviados > 1 ? "s" : ""} con carta personalizada por IA.${sinEmail > 0 ? `\n📝 ${sinEmail} registrada${sinEmail > 1 ? "s" : ""} para seguimiento (sin email directo).` : ""}\n\nVe a **Envíos** para ver el estado. 📊`
+        : `📝 **${sinEmail} candidatura${sinEmail > 1 ? "s" : ""} registrada${sinEmail > 1 ? "s" : ""} para seguimiento.**\nNo encontré emails directos — algunas empresas no los publican. Las tienes en tu historial.`;
+      setMensajes(prev => [...prev, { role: "gusi", text: msgFinal }]);
+      setCargando(false);
+      return;
+    }
+
+    // ============================================
+    // DETECTAR INTENTS DE ENVÍO/MEJORAR CV
+    // ============================================
 
     if (
       (textoLower.includes("enviar") || textoLower.includes("envio") || textoLower.includes("envío") || textoLower === "enviar cv") &&
