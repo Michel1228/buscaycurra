@@ -44,15 +44,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as { plan?: string };
     const plan = body.plan;
 
-    if (plan !== "basico" && plan !== "pro" && plan !== "empresa") {
+    if (plan !== "esencial" && plan !== "basico" && plan !== "pro" && plan !== "empresa") {
       return NextResponse.json(
-        { error: "Plan no válido. Elige 'basico', 'pro' o 'empresa'." },
+        { error: "Plan no válido. Elige 'esencial', 'basico', 'pro' o 'empresa'." },
         { status: 400 }
       );
     }
 
     // ── Seleccionar el price ID según el plan ───────────────────────────────
-    const priceId = plan === "basico" ? PLANES.BASICO : plan === "pro" ? PLANES.PRO : PLANES.EMPRESA;
+    const priceId =
+      plan === "esencial" ? PLANES.ESENCIAL :
+      plan === "basico" ? PLANES.BASICO :
+      plan === "pro" ? PLANES.PRO :
+      PLANES.EMPRESA;
 
     // ── Construir las URLs de retorno ───────────────────────────────────────
     // Usamos NEXT_PUBLIC_SITE_URL si está definida, si no usamos la URL del request
