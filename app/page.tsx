@@ -14,6 +14,16 @@ const planes = [
     cta: "Empezar gratis",
   },
   {
+    nombre: "Esencial",
+    precio: "2,99",
+    periodo: "/mes",
+    desc: "Menos que un café al mes",
+    items: ["30 candidaturas al mes", "Carta personalizada por IA", "Búsqueda avanzada", "Historial de envíos"],
+    nota: null,
+    destacado: false,
+    cta: "Empezar",
+  },
+  {
     nombre: "Básico",
     precio: "4,99",
     periodo: "/mes",
@@ -119,7 +129,7 @@ const faq = [
   },
   {
     q: "¿Qué diferencia hay con InfoJobs, LinkedIn o Indeed?",
-    a: "En esas plataformas tú buscas, filtras y envías. Aquí BuscayCurra hace todo eso por ti y encima mejora tu CV con IA. Además agregamos ofertas de más de 4 fuentes distintas incluyendo empresas que no publican en InfoJobs.",
+    a: "InfoJobs, LinkedIn e Indeed son tablones de anuncios: tú buscas, tú filtras, tú envías. El 95% de esos CVs no llegan a ningún humano. BuscayCurra es activo: Guzzi trabaja por ti 24/7, adapta tu CV a cada oferta y envía candidaturas automáticamente. Además agregamos ofertas de más de 4 fuentes, incluyendo empresas que no publican en InfoJobs.",
   },
   {
     q: "¿Puedo ver las ofertas sin registrarme?",
@@ -176,9 +186,8 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-base md:text-lg mb-8 leading-relaxed max-w-xl mx-auto" style={{ color: "#94a3b8" }}>
-              IA que mejora tu CV, encuentra las mejores ofertas y envía{" "}
-              <strong style={{ color: "#cbd5e1" }}>200 candidaturas personalizadas</strong> al mes.
-              Sin ETTs, sin comisiones, sin perder el tiempo.
+              En InfoJobs y LinkedIn tú mandas CVs al vacío.{" "}
+              <strong style={{ color: "#cbd5e1" }}>Aquí Guzzi envía 200 candidaturas personalizadas</strong> al mes mientras tú haces otra cosa.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
@@ -206,8 +215,8 @@ export default function LandingPage() {
               </div>
               <div className="hidden sm:block w-px h-8" style={{ background: "#2d3142" }} />
               <div className="text-center">
-                <div className="text-2xl font-extrabold" style={{ color: "#f59e0b" }}>~3.200€</div>
-                <div className="text-[11px]" style={{ color: "#64748b" }}>que te ahorra vs ETT/año</div>
+                <div className="text-2xl font-extrabold" style={{ color: "#f59e0b" }}>95%</div>
+                <div className="text-[11px]" style={{ color: "#64748b" }}>de CVs ignorados en portales</div>
               </div>
             </div>
           </div>
@@ -291,22 +300,22 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Comparativa vs InfoJobs */}
-        <section className="py-8 px-6" style={{ background: "rgba(59,95,224,0.05)", borderTop: "1px solid rgba(59,95,224,0.15)", borderBottom: "1px solid rgba(59,95,224,0.15)" }}>
+        {/* Comparativa vs portales */}
+        <section className="py-8 px-6" style={{ background: "rgba(239,68,68,0.04)", borderTop: "1px solid rgba(239,68,68,0.12)", borderBottom: "1px solid rgba(239,68,68,0.12)" }}>
           <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h2 className="text-lg md:text-xl font-black mb-1" style={{ color: "#7eb8f0" }}>
-                💡 Lo que InfoJobs debería ser (pero no es)
+              <h2 className="text-lg md:text-xl font-black mb-1" style={{ color: "#f1f5f9" }}>
+                ⚡ Los portales te ignoran. Guzzi trabaja para ti.
               </h2>
               <p className="text-sm" style={{ color: "#94a3b8" }}>
-                InfoJobs cobra €369 por UNA oferta y tiene 1.1/5 en Trustpilot.
-                <strong style={{ color: "#f1f5f9" }}> Nosotros somos gratis para candidatos, con IA y envío automático.</strong>
+                InfoJobs, LinkedIn e Indeed son tablones de anuncios pasivos.
+                <strong style={{ color: "#f1f5f9" }}> BuscayCurra es la única plataforma en España donde el trabajo viene a ti, no al revés.</strong>
               </p>
             </div>
             <div className="flex flex-wrap gap-2 flex-shrink-0">
-              {["IA incluida", "Envío automático", "213k+ ofertas"].map((tag) => (
+              {["Activo 24/7", "Gratis para candidatos", "Sin ofertas fantasma"].map((tag) => (
                 <span key={tag} className="text-xs px-3 py-1.5 rounded-full font-semibold"
-                  style={{ background: "rgba(59,95,224,0.12)", color: "#7eb8f0", border: "1px solid rgba(59,95,224,0.3)" }}>
+                  style={{ background: "rgba(34,197,94,0.10)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.25)" }}>
                   ✓ {tag}
                 </span>
               ))}
@@ -314,26 +323,34 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ETT vs BuscayCurra */}
+        {/* Portales tradicionales vs BuscayCurra */}
         <section className="py-16 px-6" style={{ background: "rgba(15,17,23,0.5)" }}>
           <div className="max-w-2xl mx-auto">
             <div className="p-6 rounded-2xl" style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.12)" }}>
-              <h2 className="text-lg font-bold mb-4 text-center" style={{ color: "#f1f5f9" }}>¿Por qué no una ETT?</h2>
-              <div className="grid grid-cols-2 gap-4 text-center mb-4">
-                <div className="p-4 rounded-xl" style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.1)" }}>
-                  <p className="text-xs font-semibold mb-1" style={{ color: "#ef4444" }}>ETT</p>
-                  <p className="text-2xl font-extrabold" style={{ color: "#ef4444" }}>~3.200€</p>
-                  <p className="text-[10px] mt-1" style={{ color: "#64748b" }}>que se quedan de tu salario/año</p>
-                </div>
-                <div className="p-4 rounded-xl" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
-                  <p className="text-xs font-semibold mb-1" style={{ color: "#22c55e" }}>BuscayCurra</p>
-                  <p className="text-2xl font-extrabold" style={{ color: "#22c55e" }}>119,88€</p>
-                  <p className="text-[10px] mt-1" style={{ color: "#64748b" }}>al año. Tu salario es 100% tuyo.</p>
-                </div>
+              <h2 className="text-lg font-bold mb-2 text-center" style={{ color: "#f1f5f9" }}>InfoJobs y LinkedIn son del pasado</h2>
+              <p className="text-center text-xs mb-5" style={{ color: "#64748b" }}>Llevan 20 años haciendo lo mismo. Nosotros lo hacemos diferente.</p>
+              <div className="grid grid-cols-2 gap-1.5 mb-4">
+                <div className="text-center py-1.5 text-[10px] font-semibold rounded-lg" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>InfoJobs / LinkedIn</div>
+                <div className="text-center py-1.5 text-[10px] font-semibold rounded-lg" style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e" }}>BuscayCurra con Guzzi</div>
               </div>
-              <p className="text-center text-xs" style={{ color: "#64748b" }}>
-                Contrato directo con la empresa. Sin intermediarios. Tú negocias tu salario.
-              </p>
+              <div className="space-y-2">
+                {[
+                  { ellos: "Tú buscas, filtras y envías a mano", nosotros: "Guzzi busca, filtra y envía por ti" },
+                  { ellos: "300 CVs enviados. 3 respuestas.", nosotros: "CV adaptado a cada empresa" },
+                  { ellos: "Ofertas caducadas y empresas fantasma", nosotros: "213.000+ ofertas actualizadas a diario" },
+                  { ellos: "Pagan 29€/mes para saber que te ignoraron", nosotros: "Gratis para candidatos" },
+                  { ellos: "ATS descarta tu CV sin leerlo", nosotros: "IA que supera los filtros ATS" },
+                ].map((row, i) => (
+                  <div key={i} className="grid grid-cols-2 gap-1.5 text-[11px]">
+                    <div className="p-2.5 rounded-lg leading-snug" style={{ background: "rgba(239,68,68,0.04)", color: "#94a3b8", border: "1px solid rgba(239,68,68,0.08)" }}>
+                      <span style={{ color: "#ef4444" }}>✕ </span>{row.ellos}
+                    </div>
+                    <div className="p-2.5 rounded-lg leading-snug" style={{ background: "rgba(34,197,94,0.04)", color: "#94a3b8", border: "1px solid rgba(34,197,94,0.10)" }}>
+                      <span style={{ color: "#22c55e" }}>✓ </span>{row.nosotros}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -385,7 +402,7 @@ export default function LandingPage() {
               <p className="text-sm" style={{ color: "#64748b" }}>Empieza gratis. Paga solo si quieres más candidaturas.</p>
             </div>
 
-            <div className="grid md:grid-cols-4 gap-4 items-start">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
               {planes.map((plan) => (
                 <div key={plan.nombre} className="rounded-xl p-5 flex flex-col relative h-full"
                   style={{
@@ -439,7 +456,7 @@ export default function LandingPage() {
             </div>
             <h2 className="text-2xl md:text-3xl font-extrabold mb-3" style={{ color: "#f1f5f9" }}>Tu próximo trabajo ya existe</h2>
             <p className="text-sm mb-2" style={{ color: "#22c55e" }}>Guzzi lo encuentra mientras tú descansas</p>
-            <p className="text-xs mb-8" style={{ color: "#64748b" }}>200 candidaturas personalizadas. Empleo directo. Sin intermediarios.</p>
+            <p className="text-xs mb-8" style={{ color: "#64748b" }}>200 candidaturas personalizadas. El trabajo viene a ti, no al revés.</p>
             <Link href="/auth/registro"
               className="inline-block text-sm font-semibold py-3.5 px-12 rounded-xl transition hover:opacity-90"
               style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
@@ -461,7 +478,7 @@ export default function LandingPage() {
                 <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
               </div>
               <p className="text-[11px] leading-relaxed max-w-xs" style={{ color: "#475569" }}>
-                El primer asistente de empleo con IA que envía candidaturas por ti. Empleo directo, sin ETTs.
+                El primer asistente de empleo con IA que trabaja por ti. La alternativa real a InfoJobs, LinkedIn e Indeed.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-8">

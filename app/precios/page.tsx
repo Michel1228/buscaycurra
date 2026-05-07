@@ -22,6 +22,20 @@ const PLANES = [
     dest: false, btn: "Empezar gratis", accion: "registro" as const,
   },
   {
+    id: "esencial", nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱",
+    desc: "Menos que un café al mes",
+    items: [
+      { t: "30 candidaturas al mes", ok: true },
+      { t: "Buscador avanzado", ok: true },
+      { t: "Mejora CV con IA", ok: true },
+      { t: "Historial de envíos", ok: true },
+      { t: "Estadísticas básicas", ok: true },
+      { t: "IA avanzada", ok: false },
+      { t: "Soporte prioritario", ok: false },
+    ],
+    dest: false, btn: "Elegir Esencial", accion: "esencial" as const,
+  },
+  {
     id: "basico", nombre: "Básico", precio: "4,99€", periodo: "/mes", emoji: "🐣",
     desc: "Para empezar en serio",
     items: [
@@ -50,7 +64,7 @@ const PLANES = [
     dest: true, btn: "Elegir Pro", accion: "pro" as const,
   },
   {
-    id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🦋",
+    id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🏢",
     desc: "Sin límites para equipos",
     items: [
       { t: "Envíos ilimitados", ok: true },
@@ -124,7 +138,7 @@ export default function PreciosPage() {
         )}
 
         {/* Grid de planes */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 items-start">
           {PLANES.map((plan) => (
             <div key={plan.id}
               className={`card-game p-7 text-center relative flex flex-col ${plan.dest ? "scale-[1.03]" : ""}`}
