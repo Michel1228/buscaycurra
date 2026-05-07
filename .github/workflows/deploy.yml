@@ -1,20 +1,45 @@
-name: Deploy to VPS
+name: Build & Deploy to VPS
 
 on:
   push:
     branches: [main]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: michel1228/buscaycurra
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/michel1228/buscaycurra:latest
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+
       - name: Trigger Easypanel deploy
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST "http://187.124.37.183:3000/api/deploy/c7c99010e8adb8f3e060fded0b83e8392519d1f5c5ec0931")
-          echo "Deploy webhook status: $STATUS"
-          if [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ] || [ "$STATUS" = "204" ]; then
-            echo "Deploy triggered successfully"
-          else
-            echo "Warning: unexpected status $STATUS"
-          fi
+          curl -s -X POST \
+            "http://187.124.37.183:3000/api/deploy/c7c99010e8adb8f3e060fded0b83e8392519d1f5c5ec0931" \
+            || true
+          echo "Deploy triggered"
