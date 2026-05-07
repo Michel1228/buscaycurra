@@ -31,7 +31,7 @@ import {
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const revalidate = 0;
 
 export async function POST(req: NextRequest) {
   try {
