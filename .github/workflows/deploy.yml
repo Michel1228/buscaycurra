@@ -1,0 +1,53 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 187.124.37.183
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 300s
+          script: |
+            set -e
+            echo "=== Deploy BuscayCurra $(date) ==="
+
+            # Easypanel guarda los proyectos aquí
+            for DIR in /etc/easypanel/projects/buscaycurra /etc/easypanel/services/buscaycurra /root/buscaycurra; do
+              if [ -d "$DIR" ]; then
+                echo "Proyecto en: $DIR"
+                cd "$DIR"
+                break
+              fi
+            done
+
+            # Sincronizar código con GitHub
+            if [ -d ".git" ]; then
+              git fetch origin main
+              git reset --hard origin/main
+              echo "Código actualizado"
+            fi
+
+            # Rebuild del contenedor nextjs
+            NEXTJS=$(docker ps -a --format '{{.Names}}' | grep -i nextjs | head -1)
+            if [ -n "$NEXTJS" ]; then
+              echo "Rebuilding $NEXTJS..."
+              docker stop "$NEXTJS" || true
+              docker rm "$NEXTJS" || true
+            fi
+
+            # Easypanel CLI
+            if command -v easypanel &>/dev/null; then
+              easypanel deploy --project buscaycurra --service nextjs 2>/dev/null || \
+              easypanel redeploy buscaycurra nextjs 2>/dev/null || true
+            fi
+
+            echo "=== Deploy completado ==="
+            docker ps --format 'table {{.Names}}\t{{.Status}}' | grep -i busca || docker ps
