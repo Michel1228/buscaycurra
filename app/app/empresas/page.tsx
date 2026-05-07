@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
  * Colores de marca: azul #2563EB y naranja #F97316.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -34,7 +34,7 @@ interface InfoEmpresa {
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
-export default function EmpresasPage() {
+function EmpresasPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -300,5 +300,13 @@ export default function EmpresasPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function EmpresasPage() {
+  return (
+    <Suspense>
+      <EmpresasPageInner />
+    </Suspense>
   );
 }
