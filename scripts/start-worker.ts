@@ -19,7 +19,7 @@
 import "dotenv/config";
 
 import { cvWorker } from "../lib/cv-sender/worker";
-import { redisConnection, getQueueStats } from "../lib/cv-sender/queue";
+import { getRedisConnection, getQueueStats } from "../lib/cv-sender/queue";
 
 // ─── Información del sistema al arrancar ─────────────────────────────────────
 
@@ -47,7 +47,7 @@ async function checkRedisConnection(): Promise<void> {
   console.log("[Worker] Verificando conexión a Redis...");
 
   try {
-    await redisConnection.ping();
+    await getRedisConnection().ping();
     console.log("[Worker] ✅ Conexión a Redis establecida correctamente");
   } catch (error) {
     console.error("[Worker] ❌ No se pudo conectar a Redis:", (error as Error).message);
@@ -107,7 +107,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
     console.log("[Worker] ✅ Worker cerrado correctamente");
 
     // Cerrar la conexión a Redis
-    await redisConnection.quit();
+    await getRedisConnection().quit();
     console.log("[Worker] ✅ Conexión a Redis cerrada");
 
     console.log("[Worker] 👋 Hasta luego!");

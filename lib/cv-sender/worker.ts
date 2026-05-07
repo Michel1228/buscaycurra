@@ -19,7 +19,7 @@
 
 import { Worker, Job } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
-import { redisConnection, CVJobData, addNotificationJob, NotificationJobData } from "./queue";
+import { getRedisConnection, CVJobData, addNotificationJob, NotificationJobData } from "./queue";
 import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
 import { recordSent, updateSendStatus } from "./tracker";
@@ -228,7 +228,7 @@ export const cvWorker = new Worker(
   "cv-sender-queue",
   processCVJob,
   {
-    connection: redisConnection,
+    connection: getRedisConnection(),
     concurrency: CONCURRENCY,
     // Limitar la frecuencia de sondeo para no sobrecargar Redis
     stalledInterval: 30_000, // Cada 30s revisa si hay jobs bloqueados

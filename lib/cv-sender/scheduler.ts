@@ -12,7 +12,7 @@
  *   scheduleBulkCV → programa múltiples envíos distribuyéndolos en el tiempo
  */
 
-import { addCVJob, cvSenderQueue, CVJobData } from "./queue";
+import { addCVJob, getCvSenderQueue, CVJobData } from "./queue";
 import { checkRateLimit, getUserPlan } from "./rate-limiter";
 import { canSendToCompany } from "./tracker";
 
@@ -220,8 +220,8 @@ export async function scheduleCV(
   const jobId = await addCVJob(jobData, delayMs, queuePriority);
 
   // ── 6. Calcular posición en la cola ──────────────────────────────────────
-  const waitingCount = await cvSenderQueue.getWaitingCount();
-  const delayedCount = await cvSenderQueue.getDelayedCount();
+  const waitingCount = await getCvSenderQueue().getWaitingCount();
+  const delayedCount = await getCvSenderQueue().getDelayedCount();
   const posicion = waitingCount + delayedCount;
 
   console.log(
@@ -306,7 +306,7 @@ export async function scheduleBulkCV(
       }
 
       const jobId = await addCVJob(jobData, delayMs, preferences.priority === "prioritario" ? 1 : 10);
-      const waitingCount = await cvSenderQueue.getWaitingCount();
+      const waitingCount = await getCvSenderQueue().getWaitingCount();
 
       resultados.push({
         company: company.name,
@@ -342,8 +342,8 @@ export async function scheduleBulkCV(
 export async function getUserPendingJobs(userId: string) {
   // Obtenemos los jobs en espera y los retrasados
   const [waiting, delayed] = await Promise.all([
-    cvSenderQueue.getWaiting(),
-    cvSenderQueue.getDelayed(),
+    getCvSenderQueue().getWaiting(),
+    getCvSenderQueue().getDelayed(),
   ]);
 
   const todosLosPendientes = [...waiting, ...delayed];
@@ -372,7 +372,7 @@ export async function getUserPendingJobs(userId: string) {
  */
 export async function cancelJob(jobId: string, userId: string): Promise<boolean> {
   try {
-    const job = await cvSenderQueue.getJob(jobId);
+    const job = await getCvSenderQueue().getJob(jobId);
 
     if (!job) {
       console.warn(`[Scheduler] Job ${jobId} no encontrado`);
