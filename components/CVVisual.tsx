@@ -93,14 +93,16 @@ function parseFormacion(val: CVData["formacion"]): { titulo: string; centro: str
 }
 
 // ─── Estilos internos como constantes para no repetir ─────────────────────────
-const ACCENT = "#1e3a6e";
+const ACCENT = "#3B5FE0";
+const SIDEBAR_BG = "#1a2744";
+const SIDEBAR_TEXT = "#c8d6f0";
 const HEADING_STYLE: React.CSSProperties = {
-  fontSize: "10px", fontWeight: 700, color: ACCENT,
-  textTransform: "uppercase", letterSpacing: "2px",
-  margin: "0 0 8px", fontFamily: "Arial, sans-serif",
+  fontSize: "9.5px", fontWeight: 700, color: ACCENT,
+  textTransform: "uppercase", letterSpacing: "1.5px",
+  margin: "0 0 4px", fontFamily: "Arial, sans-serif",
 };
 const SECTION_DIVIDER: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px",
+  display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px",
 };
 const DIVIDER_LINE: React.CSSProperties = {
   flex: 1, height: "1.5px", background: ACCENT,
@@ -143,53 +145,52 @@ export default function CVVisual({ data }: CVVisualProps) {
       {/* ── CUERPO (2 columnas) ── */}
       <div style={{ display: "flex", flex: 1 }}>
 
-        {/* ── COLUMNA IZQUIERDA ── */}
+        {/* ── COLUMNA IZQUIERDA (sidebar oscuro) ── */}
         <div style={{
-          width: "30%", background: "#ffffff", padding: "20px 16px",
-          borderRight: "1px solid #e8ecf0", display: "flex",
-          flexDirection: "column", alignItems: "center",
+          width: "30%", background: SIDEBAR_BG, padding: "18px 13px 14px",
+          display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0,
         }}>
           {/* Foto circular */}
           <div style={{
             width: "90px", height: "90px", borderRadius: "50%",
             border: `3px solid ${ACCENT}`, overflow: "hidden",
             marginBottom: "10px", flexShrink: 0,
-            background: "#f0f4f8", display: "flex",
+            background: "rgba(255,255,255,0.08)", display: "flex",
             alignItems: "center", justifyContent: "center",
           }}>
             {fotoUrl
               ? <img src={fotoUrl} alt="Foto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <span style={{ fontSize: "28px", opacity: 0.4 }}>👤</span>
+              : <span style={{ fontSize: "28px", opacity: 0.3 }}>👤</span>
             }
           </div>
 
           {/* Nombre */}
-          <div style={{ textAlign: "center", marginBottom: "14px" }}>
-            <div style={{ fontSize: "13px", fontStyle: "italic", color: "#555", lineHeight: 1.2 }}>{primerNombre}</div>
-            <div style={{ fontSize: "13px", fontWeight: 700, color: ACCENT, lineHeight: 1.3 }}>{apellidos}</div>
+          <div style={{ textAlign: "center", marginBottom: "12px" }}>
+            <div style={{ fontSize: "13px", fontStyle: "italic", fontWeight: 400, color: SIDEBAR_TEXT, lineHeight: 1.2 }}>{primerNombre}</div>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: SIDEBAR_TEXT, lineHeight: 1.3 }}>{apellidos}</div>
           </div>
 
           {/* CONTACTO */}
           {(telefono || email || ciudad) && (
-            <div style={{ alignSelf: "flex-start", width: "100%", marginBottom: "14px" }}>
+            <div style={{ alignSelf: "flex-start", width: "100%", marginBottom: "12px" }}>
               <div style={HEADING_STYLE}>Contacto</div>
-              <div style={{ height: "1.5px", background: ACCENT, marginBottom: "8px" }} />
+              <div style={{ height: "1.5px", background: ACCENT, marginBottom: "7px" }} />
               {telefono && (
-                <div style={{ display: "flex", gap: "6px", marginBottom: "5px", alignItems: "flex-start" }}>
-                  <span style={{ color: ACCENT, fontSize: "9px", marginTop: "1px" }}>■</span>
-                  <span style={{ fontSize: "9px", color: "#444", lineHeight: 1.4 }}>{telefono}</span>
+                <div style={{ display: "flex", gap: "6px", marginBottom: "4px", alignItems: "flex-start" }}>
+                  <span style={{ color: ACCENT, fontSize: "8px", marginTop: "1px" }}>■</span>
+                  <span style={{ fontSize: "8.5px", color: SIDEBAR_TEXT, lineHeight: 1.4 }}>{telefono}</span>
                 </div>
               )}
               {email && (
-                <div style={{ display: "flex", gap: "6px", marginBottom: "5px", alignItems: "flex-start" }}>
-                  <span style={{ color: ACCENT, fontSize: "9px", marginTop: "1px" }}>✉</span>
-                  <span style={{ fontSize: "9px", color: "#444", lineHeight: 1.4, wordBreak: "break-all" }}>{email}</span>
+                <div style={{ display: "flex", gap: "6px", marginBottom: "4px", alignItems: "flex-start" }}>
+                  <span style={{ color: ACCENT, fontSize: "8px", marginTop: "1px" }}>✉</span>
+                  <span style={{ fontSize: "8.5px", color: SIDEBAR_TEXT, lineHeight: 1.4, wordBreak: "break-all" }}>{email}</span>
                 </div>
               )}
               {ciudad && (
-                <div style={{ display: "flex", gap: "6px", marginBottom: "5px", alignItems: "flex-start" }}>
-                  <span style={{ color: ACCENT, fontSize: "9px", marginTop: "1px" }}>■</span>
-                  <span style={{ fontSize: "9px", color: "#444", lineHeight: 1.4 }}>{ciudad}</span>
+                <div style={{ display: "flex", gap: "6px", marginBottom: "4px", alignItems: "flex-start" }}>
+                  <span style={{ color: ACCENT, fontSize: "8px", marginTop: "1px" }}>■</span>
+                  <span style={{ fontSize: "8.5px", color: SIDEBAR_TEXT, lineHeight: 1.4 }}>{ciudad}</span>
                 </div>
               )}
             </div>
@@ -197,24 +198,36 @@ export default function CVVisual({ data }: CVVisualProps) {
 
           {/* APTITUDES */}
           {aptitudes.length > 0 && (
-            <div style={{ alignSelf: "flex-start", width: "100%", marginBottom: "14px" }}>
+            <div style={{ alignSelf: "flex-start", width: "100%", marginBottom: "12px" }}>
               <div style={HEADING_STYLE}>Aptitudes</div>
-              <div style={{ height: "1.5px", background: ACCENT, marginBottom: "8px" }} />
-              {aptitudes.map((apt, i) => (
-                <div key={i} style={{ fontSize: "9px", color: "#555", marginBottom: "5px", lineHeight: 1.4 }}>
-                  {apt}
-                </div>
-              ))}
+              <div style={{ height: "1.5px", background: ACCENT, marginBottom: "7px" }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {aptitudes.map((apt, i) => (
+                  <div key={i} style={{
+                    fontSize: "8px", color: SIDEBAR_TEXT, lineHeight: 1.4,
+                    background: "rgba(255,255,255,0.10)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: "20px", padding: "3px 10px", width: "fit-content",
+                  }}>
+                    {apt}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {/* IDIOMAS */}
           {idiomas.length > 0 && (
-            <div style={{ alignSelf: "flex-start", width: "100%", marginBottom: "14px" }}>
+            <div style={{ alignSelf: "flex-start", width: "100%", marginBottom: "12px" }}>
               <div style={HEADING_STYLE}>Idiomas</div>
-              <div style={{ height: "1.5px", background: ACCENT, marginBottom: "8px" }} />
+              <div style={{ height: "1.5px", background: ACCENT, marginBottom: "7px" }} />
               {idiomas.map((lang, i) => (
-                <div key={i} style={{ fontSize: "9px", color: "#555", marginBottom: "4px" }}>{lang}</div>
+                <div key={i} style={{ marginBottom: "7px" }}>
+                  <div style={{ fontSize: "8.5px", color: SIDEBAR_TEXT, marginBottom: "3px" }}>{lang}</div>
+                  <div style={{ width: "100%", height: "3px", background: "rgba(255,255,255,0.15)", borderRadius: "2px" }}>
+                    <div style={{ width: "80%", height: "100%", background: ACCENT, borderRadius: "2px" }} />
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -281,13 +294,13 @@ export default function CVVisual({ data }: CVVisualProps) {
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
+      {/* ── FOOTER oscuro ── */}
       {(primerNombre || telefono || email || ciudad) && (
         <div style={{
-          padding: "6px 20px", background: "#f5f7fa",
-          borderTop: "1px solid #e0e4ea", textAlign: "center",
+          padding: "6px 20px", background: SIDEBAR_BG,
+          textAlign: "center", flexShrink: 0,
         }}>
-          <p style={{ fontSize: "8px", color: "#888", letterSpacing: "0.3px", margin: 0 }}>
+          <p style={{ fontSize: "7.5px", color: "rgba(200,214,240,0.7)", letterSpacing: "0.3px", margin: 0 }}>
             {[primerNombre, apellidos, telefono, email, ciudad].filter(Boolean).join(" · ")}
           </p>
         </div>
