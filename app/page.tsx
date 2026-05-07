@@ -149,6 +149,7 @@ export default function LandingPage() {
             <span className="font-bold text-sm tracking-tight" style={{ color: "#22c55e" }}>BuscayCurra</span>
           </div>
           <div className="flex items-center gap-4">
+            <Link href="/empresas" className="text-sm font-medium transition hover:opacity-80 hidden sm:block" style={{ color: "#64748b" }}>Para empresas</Link>
             <Link href="/auth/login" className="text-sm font-medium transition hover:opacity-80 hidden sm:block" style={{ color: "#94a3b8" }}>Entrar</Link>
             <Link href="/auth/registro" className="text-sm font-semibold px-4 py-2 rounded-lg transition hover:opacity-90" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
               Empezar gratis
