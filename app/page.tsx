@@ -80,6 +80,33 @@ const superpotencias = [
   },
 ];
 
+const faq = [
+  {
+    q: "¿Es realmente gratis para los candidatos?",
+    a: "Sí, completamente. El plan gratuito permite enviar hasta 3 CVs al día con mejora por IA. No pedimos tarjeta de crédito para registrarte. Las funciones avanzadas (50 envíos/día, estadísticas, ATS Score) están en los planes de pago.",
+  },
+  {
+    q: "¿Cómo funciona el envío automático de CVs?",
+    a: "Nuestra IA adapta tu CV a cada oferta antes de enviarlo. No es spam — cada candidatura se personaliza con el perfil de la empresa. Tú marcas tu sector, ciudad y tipo de contrato, y el sistema trabaja por ti.",
+  },
+  {
+    q: "¿Es legal enviar CVs automáticamente a empresas?",
+    a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente que te representa, igual que una ETT o headhunter, pero sin cobrarte.",
+  },
+  {
+    q: "¿En cuánto tiempo puedo encontrar trabajo?",
+    a: "La media de nuestros usuarios activos es de 3 semanas. Depende del sector y la zona, pero el envío masivo multiplica exponencialmente tus probabilidades. Con CV bien optimizado, los usuarios suelen recibir respuesta en 1-2 semanas.",
+  },
+  {
+    q: "¿Qué diferencia hay con InfoJobs, LinkedIn o Indeed?",
+    a: "En esas plataformas tú buscas, filtras y envías. Aquí BuscayCurra hace todo eso por ti y encima mejora tu CV con IA. Además agregamos ofertas de más de 100k fuentes, incluyendo empresas que no publican en InfoJobs.",
+  },
+  {
+    q: "¿Qué es la mariposa de mi perfil?",
+    a: "Tu avatar de metamorfosis — una de las 50 especies únicas que desbloqueas completando pasos en tu búsqueda: subir CV, practicar entrevistas, conseguir entrevistas reales. Nuestra forma de hacer el proceso menos estresante.",
+  },
+];
+
 const comparativaFilas = [
   { concepto: "Precio por candidato",       rival: "Gratis (pero sin IA)",         byc: "Gratis + IA incluida" },
   { concepto: "Precio para empresas",       rival: "€369 por UNA oferta",           byc: "€49,99/mes ilimitado" },
@@ -231,6 +258,26 @@ export default function LandingPage() {
             </div>
 
             <p className="text-xs" style={{ color: "#706a58" }}>Gratis para siempre. Sin tarjeta de crédito.</p>
+          </div>
+        </section>
+
+        {/* ══════ STATS — Números de credibilidad ══════ */}
+        <section className="py-10 px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { num: "17.000+", label: "Ofertas activas", icon: "💼", color: "#7ed56f" },
+                { num: "2.400+", label: "Candidatos activos", icon: "🦋", color: "#f0c040" },
+                { num: "3 semanas", label: "Media hasta empleo", icon: "⚡", color: "#e07850" },
+                { num: "100k+", label: "Fuentes de empleo", icon: "🌐", color: "#a070d0" },
+              ].map((stat) => (
+                <div key={stat.label} className="card-game p-6 text-center">
+                  <div className="text-3xl mb-2">{stat.icon}</div>
+                  <div className="text-2xl md:text-3xl font-black mb-1" style={{ color: stat.color }}>{stat.num}</div>
+                  <div className="text-xs" style={{ color: "#706a58" }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -509,6 +556,34 @@ export default function LandingPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ══════ FAQ ══════ */}
+        <section className="py-20 px-4" style={{ background: "rgba(15,26,10,0.4)" }}>
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-4" style={{ color: "#f0ebe0" }}>
+              Preguntas frecuentes
+            </h2>
+            <p className="text-center mb-14" style={{ color: "#706a58" }}>
+              Todo lo que necesitas saber antes de empezar.
+            </p>
+            <div className="space-y-4">
+              {faq.map((item) => (
+                <div key={item.q} className="card-game p-6">
+                  <h3 className="font-bold mb-3 text-base" style={{ color: "#f0ebe0" }}>
+                    <span style={{ color: "#7ed56f" }}>✦</span> {item.q}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "#b0a890" }}>{item.a}</p>
+                </div>
+              ))}
+            </div>
+            <div className="text-center mt-10">
+              <p className="text-sm" style={{ color: "#706a58" }}>
+                ¿Tienes otra pregunta?{" "}
+                <a href="mailto:hola@buscaycurra.es" style={{ color: "#7ed56f" }}>Escríbenos</a>
+              </p>
             </div>
           </div>
         </section>
