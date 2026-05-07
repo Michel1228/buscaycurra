@@ -2,14 +2,14 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copiar package files
+# Herramientas necesarias para módulos nativos (ioredis, ws, etc.)
+RUN apk add --no-cache python3 make g++
+
+# Copiar package files e instalar dependencias
 COPY package.json package-lock.json* ./
-RUN npm ci --ignore-scripts
+RUN npm ci
 
-# Copiar código fuente
-COPY . .
-
-# Build args para las variables públicas de Next.js
+# Build args para las variables públicas de Next.js (se basan en build time)
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -18,7 +18,8 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
-# Build Next.js
+# Copiar código fuente y compilar
+COPY . .
 RUN npm run build
 
 # ── Production stage ─────────────────────────────────────────
@@ -27,10 +28,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Instalar poppler-utils para pdftotext (extracción de CV)
-RUN apk add --no-cache poppler-utils
-
-# Copiar archivos necesarios
+# Copiar archivos del build standalone
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
