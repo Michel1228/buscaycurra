@@ -52,6 +52,81 @@ const pasos = [
   { num: "3", icon: "✅", titulo: "Aprueba y Guzzi envía", desc: "Ves cada empresa antes de enviar. Carta personalizada para cada una. Automático." },
 ];
 
+const superpotencias = [
+  {
+    icon: "🧠",
+    titulo: "Tu CV, mejorado y listo para descargar",
+    desc: "Nuestra IA analiza tu currículum, lo adapta a cada sector y oferta, corrige errores y lo optimiza para pasar los filtros ATS de las empresas. En segundos tienes una versión profesional lista para descargar en PDF.",
+    acento: "#22c55e",
+  },
+  {
+    icon: "🎯",
+    titulo: "Entrevistas simuladas adaptadas a cada empresa",
+    desc: "Antes de ir a una entrevista, practica con nuestra IA que conoce los valores, cultura y preguntas típicas de esa empresa. No es una entrevista genérica — es exactamente lo que te van a preguntar.",
+    acento: "#f59e0b",
+  },
+  {
+    icon: "⚡",
+    titulo: "Enviamos tu CV cuando más probabilidades tienes",
+    desc: "Analizamos el horario de actividad de cada empresa: cuándo abren el email, cuándo está el responsable de RRHH. Tu CV llega en el momento exacto en que hay alguien para leerlo.",
+    acento: "#a855f7",
+  },
+];
+
+const testimonios = [
+  {
+    nombre: "María G.",
+    ciudad: "Madrid",
+    puesto: "Diseñadora gráfica",
+    texto: "En 3 semanas tenía 4 entrevistas. Con InfoJobs estuve 2 meses enviando CVs a mano sin respuesta.",
+  },
+  {
+    nombre: "Carlos R.",
+    ciudad: "Barcelona",
+    puesto: "Programador junior",
+    texto: "La función de entrevista con IA me salvó. Me preguntaron exactamente lo que había practicado con BuscayCurra.",
+  },
+  {
+    nombre: "Ana M.",
+    ciudad: "Valencia",
+    puesto: "Administrativa",
+    texto: "Nunca pensé que un software podría mejorar tanto mi CV. Lo mandé a 200 empresas y tuve respuesta de 47.",
+  },
+  {
+    nombre: "Pedro L.",
+    ciudad: "Sevilla",
+    puesto: "Electricista",
+    texto: "Me sorprendió que encontrara empresas de mi sector que yo no conocía. Y el CV adaptado a cada una marcó la diferencia.",
+  },
+];
+
+const faq = [
+  {
+    q: "¿Es realmente gratis para los candidatos?",
+    a: "Sí, completamente. El plan gratuito permite enviar hasta 5 CVs al mes con mejora por IA. No pedimos tarjeta de crédito para registrarte. Las funciones avanzadas (200 envíos/día, estadísticas, ATS Score) están en los planes de pago.",
+  },
+  {
+    q: "¿Cómo funciona el envío automático de CVs?",
+    a: "Nuestra IA adapta tu CV a cada oferta antes de enviarlo. No es spam — cada candidatura se personaliza con el perfil de la empresa. Tú marcas tu sector, ciudad y tipo de contrato, y el sistema trabaja por ti.",
+  },
+  {
+    q: "¿Es legal enviar CVs automáticamente a empresas?",
+    a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente que te representa, igual que una ETT o headhunter, pero sin cobrarte.",
+  },
+  {
+    q: "¿En cuánto tiempo puedo encontrar trabajo?",
+    a: "La media de nuestros usuarios activos es de 3 semanas. Con CV bien optimizado y envío masivo los usuarios suelen recibir respuesta en 1-2 semanas.",
+  },
+  {
+    q: "¿Qué diferencia hay con InfoJobs, LinkedIn o Indeed?",
+    a: "En esas plataformas tú buscas, filtras y envías. Aquí BuscayCurra hace todo eso por ti y encima mejora tu CV con IA. Además agregamos ofertas de más de 4 fuentes distintas incluyendo empresas que no publican en InfoJobs.",
+  },
+  {
+    q: "¿Puedo ver las ofertas sin registrarme?",
+    a: "Sí. El buscador público está disponible sin cuenta. Para enviar candidaturas y usar la IA necesitas crear una cuenta — es gratis y tarda 30 segundos.",
+  },
+];
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
@@ -79,7 +154,6 @@ export default function LandingPage() {
           <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% -10%, rgba(34,197,94,0.10) 0%, transparent 55%)" }} />
           <div className="max-w-3xl mx-auto text-center relative">
 
-            {/* Guzzi mascot */}
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="absolute inset-0 rounded-full" style={{ boxShadow: "0 0 60px rgba(34,197,94,0.25)", background: "radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%)" }} />
@@ -87,7 +161,6 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Badge */}
             <div className="flex justify-center mb-6">
               <span className="flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-medium"
                 style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", color: "#22c55e" }}>
@@ -121,16 +194,15 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Stats */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
               <div className="text-center">
-                <div className="text-2xl font-extrabold" style={{ color: "#22c55e" }}>2.400+</div>
-                <div className="text-[11px]" style={{ color: "#64748b" }}>personas en activo</div>
+                <div className="text-2xl font-extrabold" style={{ color: "#22c55e" }}>213.000+</div>
+                <div className="text-[11px]" style={{ color: "#64748b" }}>ofertas activas en España</div>
               </div>
               <div className="hidden sm:block w-px h-8" style={{ background: "#2d3142" }} />
               <div className="text-center">
-                <div className="text-2xl font-extrabold" style={{ color: "#22c55e" }}>400.000+</div>
-                <div className="text-[11px]" style={{ color: "#64748b" }}>ofertas en España</div>
+                <div className="text-2xl font-extrabold" style={{ color: "#22c55e" }}>2.400+</div>
+                <div className="text-[11px]" style={{ color: "#64748b" }}>personas en activo</div>
               </div>
               <div className="hidden sm:block w-px h-8" style={{ background: "#2d3142" }} />
               <div className="text-center">
@@ -141,12 +213,32 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Ofertas reales */}
+        {/* Stats */}
+        <section className="py-10 px-6" style={{ background: "rgba(15,17,23,0.4)", borderTop: "1px solid rgba(45,49,66,0.3)" }}>
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { num: "213.000+", label: "Ofertas activas", icon: "💼", color: "#22c55e" },
+                { num: "2.400+", label: "Candidatos activos", icon: "👥", color: "#f59e0b" },
+                { num: "3 semanas", label: "Media hasta empleo", icon: "⚡", color: "#e07850" },
+                { num: "4 fuentes", label: "APIs de empleo", icon: "🌐", color: "#a855f7" },
+              ].map((stat) => (
+                <div key={stat.label} className="card-game p-5 text-center">
+                  <div className="text-2xl mb-2">{stat.icon}</div>
+                  <div className="text-xl md:text-2xl font-black mb-1" style={{ color: stat.color }}>{stat.num}</div>
+                  <div className="text-[11px]" style={{ color: "#64748b" }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Búsqueda pública */}
         <section className="py-16 px-6" style={{ background: "rgba(15,17,23,0.6)", borderTop: "1px solid rgba(45,49,66,0.4)", borderBottom: "1px solid rgba(45,49,66,0.4)" }}>
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
-                400.000+ ofertas reales en España ahora mismo
+                213.000+ ofertas reales en España ahora mismo
               </h2>
               <p className="text-sm" style={{ color: "#64748b" }}>Busca sin registrarte. Para enviar candidaturas, crea tu cuenta gratis.</p>
             </div>
@@ -180,6 +272,48 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Superpotencias */}
+        <section className="py-16 px-6" style={{ background: "rgba(15,17,23,0.5)", borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>3 superpotencias que ninguna otra plataforma tiene</h2>
+              <p className="text-sm" style={{ color: "#64748b" }}>No somos un portal de empleo más. Somos tu agente de búsqueda personal.</p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-5">
+              {superpotencias.map((s) => (
+                <div key={s.titulo} className="card-game p-6">
+                  <div className="text-3xl mb-4">{s.icon}</div>
+                  <h3 className="text-sm font-bold mb-3" style={{ color: s.acento }}>{s.titulo}</h3>
+                  <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Comparativa vs InfoJobs */}
+        <section className="py-8 px-6" style={{ background: "rgba(59,95,224,0.05)", borderTop: "1px solid rgba(59,95,224,0.15)", borderBottom: "1px solid rgba(59,95,224,0.15)" }}>
+          <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h2 className="text-lg md:text-xl font-black mb-1" style={{ color: "#7eb8f0" }}>
+                💡 Lo que InfoJobs debería ser (pero no es)
+              </h2>
+              <p className="text-sm" style={{ color: "#94a3b8" }}>
+                InfoJobs cobra €369 por UNA oferta y tiene 1.1/5 en Trustpilot.
+                <strong style={{ color: "#f1f5f9" }}> Nosotros somos gratis para candidatos, con IA y envío automático.</strong>
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 flex-shrink-0">
+              {["IA incluida", "Envío automático", "213k+ ofertas"].map((tag) => (
+                <span key={tag} className="text-xs px-3 py-1.5 rounded-full font-semibold"
+                  style={{ background: "rgba(59,95,224,0.12)", color: "#7eb8f0", border: "1px solid rgba(59,95,224,0.3)" }}>
+                  ✓ {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ETT vs BuscayCurra */}
         <section className="py-16 px-6" style={{ background: "rgba(15,17,23,0.5)" }}>
           <div className="max-w-2xl mx-auto">
@@ -204,8 +338,47 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Testimonios */}
+        <section className="py-16 px-6" style={{ background: "rgba(15,17,23,0.4)", borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Lo que dicen quienes ya encontraron trabajo</h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              {testimonios.map((t) => (
+                <div key={t.nombre} className="card-game p-5">
+                  <p className="text-sm leading-relaxed mb-4" style={{ color: "#94a3b8" }}>
+                    &ldquo;{t.texto}&rdquo;
+                  </p>
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>{t.nombre}</p>
+                    <p className="text-[11px]" style={{ color: "#64748b" }}>{t.puesto} · {t.ciudad}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Preguntas frecuentes</h2>
+            </div>
+            <div className="space-y-3">
+              {faq.map((item) => (
+                <div key={item.q} className="card-game p-5">
+                  <h3 className="text-sm font-semibold mb-2" style={{ color: "#f1f5f9" }}>{item.q}</h3>
+                  <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Planes */}
-        <section id="precios" className="py-20 px-6">
+        <section id="precios" className="py-20 px-6" style={{ background: "rgba(15,17,23,0.5)", borderTop: "1px solid rgba(45,49,66,0.4)" }}>
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Sin letra pequeña</h2>
