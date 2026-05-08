@@ -1,0 +1,1 @@
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS visible_empresas BOOLEAN DEFAULT false;

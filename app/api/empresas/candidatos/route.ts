@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
 
@@ -21,15 +22,33 @@ export async function GET(req: NextRequest) {
     } catch { /* tratar como free */ }
   }
 
+  // Solo mostrar candidatos que han activado la visibilidad
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const { data: visibleProfiles } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("visible_empresas", true);
+
+  const visibleIds = (visibleProfiles ?? []).map((p: { id: string }) => p.id);
+  if (visibleIds.length === 0) {
+    return NextResponse.json({ candidatos: [], esEmpresa, pagina: page });
+  }
+
   try {
     const pool = getPool();
-    const params: (string | number)[] = [];
+    const params: (string | number | string[])[] = [];
     let idx = 1;
     const conds: string[] = [
       "uc.form_data IS NOT NULL",
       "uc.form_data::text != '{}'",
       "uc.form_data::text != 'null'",
+      `uc.user_id = ANY($${idx}::uuid[])`,
     ];
+    params.push(visibleIds);
+    idx++;
 
     if (ciudad.trim()) {
       conds.push(`LOWER(uc.form_data->>'ciudad') LIKE LOWER($${idx})`);

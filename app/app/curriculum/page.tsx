@@ -68,6 +68,7 @@ export default function CurriculumPage() {
   const [error, setError] = useState("");
   const [guardado, setGuardado] = useState(false);
   const [cargando, setCargando] = useState(true);
+  const [visibleEmpresas, setVisibleEmpresas] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -147,7 +148,7 @@ export default function CurriculumPage() {
 
       // Cargar perfil (solo para rellenar huecos que no estén en el CV)
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, ciudad, sector")
+        .select("full_name, phone, ciudad, sector, visible_empresas")
         .eq("id", session.user.id).single();
 
       if (p) {
@@ -160,6 +161,7 @@ export default function CurriculumPage() {
           email: prev.email || session.user.email || "",
           ciudad: prev.ciudad || p.ciudad || "",
         }));
+        setVisibleEmpresas(p.visible_empresas === true);
       }
 
       setCargando(false);
@@ -175,6 +177,15 @@ export default function CurriculumPage() {
     }, 3000);
     return () => clearTimeout(timeout);
   }, [form, userId]);
+
+  async function toggleVisibilidad(value: boolean) {
+    setVisibleEmpresas(value);
+    if (!userId) return;
+    await getSupabaseBrowser()
+      .from("profiles")
+      .update({ visible_empresas: value })
+      .eq("id", userId);
+  }
 
   async function guardarCV() {
     if (!userId) return;
@@ -418,6 +429,46 @@ export default function CurriculumPage() {
 
         {!mejoradoHTML ? (
           <div className="space-y-6">
+            {/* Visibilidad para empresas */}
+            <div className="rounded-xl p-5" style={{
+              background: visibleEmpresas ? "rgba(34,197,94,0.07)" : "#161922",
+              border: `1px solid ${visibleEmpresas ? "rgba(34,197,94,0.3)" : "#252836"}`,
+              transition: "all 0.2s",
+            }}>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                    style={{ background: visibleEmpresas ? "rgba(34,197,94,0.15)" : "rgba(100,116,139,0.15)" }}>
+                    {visibleEmpresas ? "👁️" : "🔒"}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
+                      Visible para empresas
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                      {visibleEmpresas
+                        ? "Tu perfil aparece en el portal de empresas"
+                        : "Activa esto para que empresas y ETTs puedan encontrarte"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => void toggleVisibilidad(!visibleEmpresas)}
+                  className="relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200"
+                  style={{ background: visibleEmpresas ? "#22c55e" : "#374151" }}
+                  aria-label="Activar visibilidad para empresas"
+                >
+                  <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+                    style={{ transform: visibleEmpresas ? "translateX(24px)" : "translateX(0)" }} />
+                </button>
+              </div>
+              {visibleEmpresas && (
+                <p className="text-[11px] mt-3 pt-3" style={{ color: "#22c55e", borderTop: "1px solid rgba(34,197,94,0.15)" }}>
+                  ✓ Activo — empresas y ETTs pueden ver tu perfil y contactarte
+                </p>
+              )}
+            </div>
+
             {/* Subir PDF */}
             <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #252836" }}>
               <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
