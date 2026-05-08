@@ -24,16 +24,6 @@ const planes = [
     cta: "Empezar",
   },
   {
-    nombre: "Básico",
-    precio: "4,99",
-    periodo: "/mes",
-    desc: "Para buscadores ocasionales",
-    items: ["60 candidaturas al mes", "Carta personalizada por IA", "Búsqueda avanzada", "Seguimiento de candidaturas"],
-    nota: null,
-    destacado: false,
-    cta: "Empezar",
-  },
-  {
     nombre: "Pro",
     precio: "9,99",
     periodo: "/mes",
@@ -403,7 +393,7 @@ export default function LandingPage() {
               <p className="text-sm" style={{ color: "#64748b" }}>Empieza gratis. Paga solo si quieres más candidaturas.</p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
               {planes.map((plan) => (
                 <div key={plan.nombre} className="rounded-xl p-5 flex flex-col relative h-full"
                   style={{

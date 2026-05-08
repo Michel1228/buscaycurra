@@ -36,20 +36,6 @@ const PLANES = [
     dest: false, btn: "Elegir Esencial", accion: "esencial" as const,
   },
   {
-    id: "basico", nombre: "Básico", precio: "4,99€", periodo: "/mes", emoji: "🐣",
-    desc: "Para empezar en serio",
-    items: [
-      { t: "5 CVs enviados por día", ok: true },
-      { t: "Buscador avanzado", ok: true },
-      { t: "Mejora CV con IA", ok: true },
-      { t: "Historial de envíos", ok: true },
-      { t: "Estadísticas básicas", ok: true },
-      { t: "IA avanzada", ok: false },
-      { t: "Soporte prioritario", ok: false },
-    ],
-    dest: false, btn: "Elegir Básico", accion: "basico" as const,
-  },
-  {
     id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛",
     desc: "Para profesionales serios",
     items: [
@@ -138,7 +124,7 @@ export default function PreciosPage() {
         )}
 
         {/* Grid de planes */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 items-start">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
           {PLANES.map((plan) => (
             <div key={plan.id}
               className={`card-game p-7 text-center relative flex flex-col ${plan.dest ? "scale-[1.03]" : ""}`}

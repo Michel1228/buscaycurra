@@ -30,7 +30,7 @@ export default function PerfilPage() {
   const [guardado, setGuardado] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [tab, setTab] = useState<"perfil" | "seguridad" | "plan">("perfil");
-  const [planActual, setPlanActual] = useState<"free" | "basico" | "pro" | "empresa">("free");
+  const [planActual, setPlanActual] = useState<"free" | "esencial" | "basico" | "pro" | "empresa">("free");
   const [cargandoPlan, setCargandoPlan] = useState(false);
   const [nuevaPassword, setNuevaPassword] = useState("");
   const [confirmarPassword, setConfirmarPassword] = useState("");
@@ -60,8 +60,8 @@ export default function PerfilPage() {
         ciudad: p?.ciudad || "",
         sector: p?.sector || "",
       });
-      if (p?.plan && ["basico", "pro", "empresa"].includes(p.plan)) {
-        setPlanActual(p.plan as "basico" | "pro" | "empresa");
+      if (p?.plan && ["esencial", "basico", "pro", "empresa"].includes(p.plan)) {
+        setPlanActual(p.plan as "esencial" | "basico" | "pro" | "empresa");
       }
       setCargando(false);
     }
@@ -126,7 +126,7 @@ export default function PerfilPage() {
     router.push("/auth/login");
   }
 
-  async function irACheckout(plan: "basico" | "pro" | "empresa") {
+  async function irACheckout(plan: "esencial" | "basico" | "pro" | "empresa") {
     setCargandoPlan(true);
     try {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
@@ -184,9 +184,9 @@ export default function PerfilPage() {
       <div className="sticky top-14 z-10" style={{ background: "#0f1117", borderBottom: "1px solid #2d3142" }}>
         <div className="max-w-2xl mx-auto px-4 flex">
           {[
-            { id: "perfil" as const, label: "👤 Mi Perfil", icon: "👤" },
-            { id: "plan" as const, label: "⚡ Mi Plan", icon: "⚡" },
-            { id: "seguridad" as const, label: "🔒 Seguridad", icon: "🔒" },
+            { id: "perfil" as const, label: "Mi Perfil", icon: "👤" },
+            { id: "plan" as const, label: "Mi Plan", icon: "⚡" },
+            { id: "seguridad" as const, label: "Seguridad", icon: "🔒" },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className="flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition"
@@ -253,10 +253,11 @@ export default function PerfilPage() {
 
         {tab === "plan" && (() => {
           const PLANES_INFO = {
-            free:    { emoji: "🥚", nombre: "Gratis",  color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
-            basico:  { emoji: "🐣", nombre: "Básico",  color: "#22c55e", desc: "5 CVs/día · IA básica" },
-            pro:     { emoji: "🐛", nombre: "Pro",     color: "#a855f7", desc: "10 CVs/día · IA avanzada · Estadísticas" },
-            empresa: { emoji: "🏢", nombre: "Empresa", color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
+            free:     { emoji: "🥚", nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
+            esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "30 candidaturas/mes · Buscador avanzado" },
+            basico:   { emoji: "🐣", nombre: "Básico",   color: "#22c55e", desc: "5 CVs/día · IA básica" },
+            pro:      { emoji: "🐛", nombre: "Pro",      color: "#a855f7", desc: "10 CVs/día · IA avanzada · Estadísticas" },
+            empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
           };
           const info = PLANES_INFO[planActual];
           return (
@@ -282,6 +283,19 @@ export default function PerfilPage() {
                 <div className="space-y-3">
                   <p className="text-xs font-semibold" style={{ color: "#64748b" }}>Mejorar plan</p>
                   {planActual === "free" && (
+                    <div className="rounded-xl p-4 flex items-center justify-between"
+                      style={{ background: "#161922", border: "1px solid #252836" }}>
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🌱 Plan Esencial — 2,99€/mes</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>30 candidaturas/mes · Buscador avanzado</p>
+                      </div>
+                      <button onClick={() => void irACheckout("esencial")} disabled={cargandoPlan}
+                        className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
+                        {cargandoPlan ? "..." : "Contratar"}
+                      </button>
+                    </div>
+                  )}
+                  {(planActual === "free" || planActual === "esencial") && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>

@@ -17,6 +17,8 @@ function PagoExitosoContenido() {
         const { data: perfil } = await getSupabaseBrowser()
           .from("profiles").select("plan").eq("id", session.user.id).single();
         if (perfil?.plan === "empresa") setPlanActivo("Empresa");
+        else if (perfil?.plan === "pro") setPlanActivo("Pro");
+        else if (perfil?.plan === "esencial") setPlanActivo("Esencial");
         else if (perfil?.plan === "basico") setPlanActivo("Básico");
         else setPlanActivo("Pro");
       } catch { /* default Pro */ }
@@ -27,8 +29,10 @@ function PagoExitosoContenido() {
   const caracteristicas =
     planActivo === "Empresa"
       ? ["Envíos ilimitados de CV", "IA avanzada activada", "Acceso a API", "Soporte dedicado 24/7"]
+      : planActivo === "Esencial"
+      ? ["30 candidaturas al mes", "Buscador avanzado", "Mejora CV con IA", "Estadísticas básicas"]
       : planActivo === "Básico"
-      ? ["5 CVs enviados por día", "Buscador básico", "Mejora CV con IA"]
+      ? ["5 CVs enviados por día", "Buscador avanzado", "Mejora CV con IA"]
       : ["10 CVs enviados por día", "IA avanzada activada", "Estadísticas detalladas", "Soporte prioritario"];
 
   return (
