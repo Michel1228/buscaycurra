@@ -3,6 +3,7 @@ name: Deploy a producción
 on:
   push:
     branches: [main, unified-production]
+  workflow_dispatch:
 
 jobs:
   deploy:
