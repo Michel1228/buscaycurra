@@ -56,45 +56,61 @@ export async function POST(request: NextRequest) {
 
     // ── Procesar eventos de Stripe ───────────────────────────────────────────
 
+    const PLANES_VALIDOS = ["esencial", "basico", "pro", "empresa"] as const;
+    type PlanPago = typeof PLANES_VALIDOS[number];
+
+    // Obtiene el plan desde un price ID o metadata, garantizando que sea válido
+    async function resolverPlan(
+      planMetadata: string | undefined,
+      subscriptionId: string | null | undefined
+    ): Promise<PlanPago | null> {
+      // Intentar obtener desde el price ID real de Stripe (más fiable)
+      if (subscriptionId) {
+        try {
+          const sub = await getStripe().subscriptions.retrieve(subscriptionId as string);
+          const priceId = sub.items.data[0]?.price.id;
+          const planDesdePrice = priceId ? getPlanFromPriceId(priceId) : "free";
+          if ((PLANES_VALIDOS as readonly string[]).includes(planDesdePrice)) {
+            return planDesdePrice as PlanPago;
+          }
+        } catch { /* fallback a metadata */ }
+      }
+      if (planMetadata && (PLANES_VALIDOS as readonly string[]).includes(planMetadata)) {
+        return planMetadata as PlanPago;
+      }
+      return null;
+    }
+
+    // Actualiza el plan de un usuario por customerId
+    async function actualizarPlanPorCustomer(customerId: string, nuevoPlan: string) {
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({ plan: nuevoPlan, updated_at: new Date().toISOString() })
+        .eq("stripe_customer_id", customerId);
+      if (error) {
+        console.error(`[stripe/webhook] Error actualizando plan a '${nuevoPlan}' para customer ${customerId}:`, error.message);
+      } else {
+        console.log(`[stripe/webhook] Plan '${nuevoPlan}' aplicado a customer ${customerId}`);
+      }
+    }
+
     switch (event.type) {
       // ── Pago completado: activar el plan del usuario ──────────────────────
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
-        const plan = session.metadata?.plan;
 
         if (!userId) {
           console.error("[stripe/webhook] checkout.session.completed sin userId en metadata");
           break;
         }
 
-        if (!plan || (plan !== "basico" && plan !== "pro" && plan !== "empresa")) {
-          console.error("[stripe/webhook] checkout.session.completed con plan inválido en metadata:", plan);
+        const planFinal = await resolverPlan(session.metadata?.plan, session.subscription as string | null);
+        if (!planFinal) {
+          console.error("[stripe/webhook] Plan no reconocido en metadata:", session.metadata?.plan);
           break;
         }
 
-        // Obtener el plan real desde el precio de la suscripción (si hay line items)
-        let planFinal = plan as "basico" | "pro" | "empresa";
-
-        // Si hay suscripción, obtener el price ID para determinar el plan exacto
-        if (session.subscription) {
-          try {
-            const suscripcion = await getStripe().subscriptions.retrieve(
-              session.subscription as string
-            );
-            const priceId = suscripcion.items.data[0]?.price.id;
-            if (priceId) {
-              const planDesdePrice = getPlanFromPriceId(priceId);
-              if (planDesdePrice !== "free" && (planDesdePrice === "basico" || planDesdePrice === "pro" || planDesdePrice === "empresa")) {
-                planFinal = planDesdePrice;
-              }
-            }
-          } catch {
-            // Si no podemos obtener el price, usamos el plan de metadata
-          }
-        }
-
-        // Actualizar el plan en el perfil del usuario
         const { error } = await supabaseAdmin
           .from("profiles")
           .upsert({
@@ -105,19 +121,33 @@ export async function POST(request: NextRequest) {
           });
 
         if (error) {
-          console.error("[stripe/webhook] Error al actualizar plan:", error.message);
+          console.error("[stripe/webhook] Error al activar plan:", error.message);
         } else {
           console.log(`[stripe/webhook] Plan '${planFinal}' activado para usuario ${userId}`);
         }
         break;
       }
 
+      // ── Suscripción actualizada: el usuario cambió de plan ────────────────
+      case "customer.subscription.updated": {
+        const sub = event.data.object as Stripe.Subscription;
+        const customerId = sub.customer as string;
+        const priceId = sub.items.data[0]?.price.id;
+
+        if (!priceId) break;
+
+        const planActualizado = getPlanFromPriceId(priceId);
+        if (!(PLANES_VALIDOS as readonly string[]).includes(planActualizado)) break;
+
+        await actualizarPlanPorCustomer(customerId, planActualizado);
+        break;
+      }
+
       // ── Suscripción cancelada: resetear el plan a 'free' ─────────────────
       case "customer.subscription.deleted": {
-        const suscripcion = event.data.object as Stripe.Subscription;
-        const customerId = suscripcion.customer as string;
+        const sub = event.data.object as Stripe.Subscription;
+        const customerId = sub.customer as string;
 
-        // Buscar el usuario por su stripe_customer_id
         const { data: perfiles, error: errorBusqueda } = await supabaseAdmin
           .from("profiles")
           .select("id")
@@ -129,20 +159,7 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Resetear el plan a 'free'
-        const { error: errorUpdate } = await supabaseAdmin
-          .from("profiles")
-          .update({
-            plan: "free",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("stripe_customer_id", customerId);
-
-        if (errorUpdate) {
-          console.error("[stripe/webhook] Error al resetear plan:", errorUpdate.message);
-        } else {
-          console.log(`[stripe/webhook] Plan reseteado a 'free' para customer ${customerId}`);
-        }
+        await actualizarPlanPorCustomer(customerId, "free");
         break;
       }
 

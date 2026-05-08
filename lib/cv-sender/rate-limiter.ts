@@ -30,7 +30,7 @@ function getSupabase(): any {
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 /** Planes de usuario disponibles */
-export type UserPlan = "free" | "basico" | "pro" | "empresa";
+export type UserPlan = "free" | "esencial" | "basico" | "pro" | "empresa";
 
 /** Resultado de la verificación de límites */
 export interface RateLimitResult {
@@ -63,29 +63,7 @@ export async function checkRateLimit(
   plan: UserPlan,
   companyEmail?: string
 ): Promise<RateLimitResult> {
-  // Usamos las variables de entorno si están definidas, o los valores por defecto del plan
-  const limites = {
-    free: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_FREE ?? "1"),
-      perMonth: 5,
-    },
-    basico: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_BASICO ?? "5"),
-      perMonth: 60,
-    },
-    pro: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_PRO ?? "10"),
-      perMonth: 200,
-    },
-    empresa: {
-      perDay: Infinity,
-      perMonth: Infinity,
-    },
-  };
-
-  const limite = limites[plan] ?? limites.free;
-
-  // Si el plan es "empresa", siempre puede enviar
+  // Si el plan es "empresa", siempre puede enviar sin consultar nada
   if (plan === "empresa") {
     return {
       allowed: true,
@@ -96,6 +74,36 @@ export async function checkRateLimit(
       cvsRestantesHoy: Infinity,
     } satisfies RateLimitResult;
   }
+
+  // Obtener créditos extra por referidos del perfil del usuario
+  const { data: perfil } = await getSupabase()
+    .from("profiles")
+    .select("referral_credits")
+    .eq("id", userId)
+    .single();
+  const creditosReferido = (perfil?.referral_credits as number) || 0;
+
+  // Límites base por plan + créditos de referido sumados al mensual
+  const limites = {
+    free: {
+      perDay: parseInt(process.env.MAX_CVS_PER_DAY_FREE ?? "1"),
+      perMonth: 5 + creditosReferido,
+    },
+    esencial: {
+      perDay: parseInt(process.env.MAX_CVS_PER_DAY_ESENCIAL ?? "5"),
+      perMonth: 60 + creditosReferido,
+    },
+    basico: {
+      perDay: parseInt(process.env.MAX_CVS_PER_DAY_BASICO ?? "5"),
+      perMonth: 60 + creditosReferido,
+    },
+    pro: {
+      perDay: parseInt(process.env.MAX_CVS_PER_DAY_PRO ?? "10"),
+      perMonth: 200 + creditosReferido,
+    },
+  };
+
+  const limite = limites[plan as keyof typeof limites] ?? limites.free;
 
   // ── Verificar blacklist ──────────────────────────────────────────────────
   if (companyEmail) {
@@ -277,5 +285,5 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
   }
 
   const plan = data.plan as UserPlan;
-  return (["free", "basico", "pro", "empresa"] as UserPlan[]).includes(plan) ? plan : "free";
+  return (["free", "esencial", "basico", "pro", "empresa"] as UserPlan[]).includes(plan) ? plan : "free";
 }

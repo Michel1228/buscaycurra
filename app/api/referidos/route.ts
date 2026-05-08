@@ -36,10 +36,27 @@ export async function GET(request: NextRequest) {
 
     let codigo = perfil?.referral_code;
     if (!codigo) {
-      // Generar código único: primeras 3 letras del email + 4 números aleatorios
+      // Generar código único con retry: prefijo del email + 4 dígitos aleatorios
       const prefix = (user.email || "usr").split("@")[0].slice(0, 3).toUpperCase();
-      codigo = `${prefix}${Math.floor(1000 + Math.random() * 9000)}`;
-      await supabaseAdmin.from("profiles").update({ referral_code: codigo }).eq("id", user.id);
+      for (let intento = 0; intento < 10; intento++) {
+        const candidato = `${prefix}${Math.floor(1000 + Math.random() * 9000)}`;
+        // Verificar que no existe ya ese código
+        const { data: existente } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("referral_code", candidato)
+          .maybeSingle();
+        if (!existente) {
+          const { error: errUpdate } = await supabaseAdmin
+            .from("profiles")
+            .update({ referral_code: candidato })
+            .eq("id", user.id);
+          if (!errUpdate) { codigo = candidato; break; }
+        }
+      }
+      if (!codigo) {
+        return NextResponse.json({ error: "No se pudo generar código único" }, { status: 500 });
+      }
     }
 
     return NextResponse.json({
@@ -120,10 +137,12 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
     });
 
-    // Actualizar contador del referente (+10 créditos = +10 CVs extra)
+    // Actualizar contador del referente (+10 créditos = +10 CVs extra en el mes)
+    const nuevoCount = Math.max(0, referente.referral_count || 0) + 1;
+    const nuevoCreditos = Math.max(0, referente.referral_credits || 0) + 10;
     await supabaseAdmin.from("profiles").update({
-      referral_count: (referente.referral_count || 0) + 1,
-      referral_credits: (referente.referral_credits || 0) + 10,
+      referral_count: nuevoCount,
+      referral_credits: nuevoCreditos,
     }).eq("id", referente.id);
 
     // Actualizar el perfil del nuevo usuario con el referente
