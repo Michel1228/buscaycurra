@@ -123,6 +123,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   // Estado para esperando confirmación de CV
   const [esperandoConfirmacionCV, setEsperandoConfirmacionCV] = useState(false);
   const [cvHtml, setCvHtml] = useState(null);
+  const [cvColapsado, setCvColapsado] = useState<Set<number>>(new Set());
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -412,6 +413,10 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
 
   async function descargarCVVisual() {
     if (!cvGuardado) return;
+    // Abrir la ventana ANTES del await para que el popup blocker lo permita
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write("<html><body style='background:#0f1117;color:#94a3b8;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0'><p>Generando PDF...</p></body></html>");
     try {
       const res = await fetch("/api/cv/generar-pdf", {
         method: "POST",
@@ -419,14 +424,13 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         body: JSON.stringify(cvGuardado),
       });
       const { html } = await res.json();
-      if (!html) return;
-      const win = window.open("", "_blank");
-      if (!win) return;
+      if (!html) { win.close(); return; }
+      win.document.open();
       win.document.write(html);
       win.document.close();
       setTimeout(() => win.print(), 600);
     } catch {
-      // silently fail
+      win.close();
     }
   }
 
@@ -1096,32 +1100,47 @@ Ya tengo tus datos guardados. Voy a:
               {/* CV Visual cuando Guzzi muestra el CV */}
               {(msg.action === "ver_cv" || msg.action === "cv_mejorado") && cvGuardado && (
                 <div className="mt-3">
-                  {cvHtml ? (
-                    <iframe srcDoc={cvHtml} className='w-full rounded-lg border border-gray-600' style={{height:'520px',background:'white'}} title='CV Profesional' />
-                  ) : (
-                    <CVVisual data={cvGuardado} />
+                  <button
+                    onClick={() => setCvColapsado(prev => {
+                      const next = new Set(prev);
+                      if (next.has(i)) next.delete(i); else next.add(i);
+                      return next;
+                    })}
+                    className="text-xs px-3 py-1.5 rounded-lg transition-colors mb-2"
+                    style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e" }}
+                  >
+                    {cvColapsado.has(i) ? "👁 Ver CV" : "🙈 Ocultar CV"}
+                  </button>
+                  {!cvColapsado.has(i) && (
+                    <>
+                      {cvHtml ? (
+                        <iframe srcDoc={cvHtml} className='w-full rounded-lg border border-gray-600' style={{height:'520px',background:'white'}} title='CV Profesional' />
+                      ) : (
+                        <CVVisual data={cvGuardado} />
+                      )}
+                      <div className="mt-2 flex gap-2 flex-wrap">
+                        <a
+                          href="/app/curriculum"
+                          target="_blank"
+                          className="text-xs bg-[#374151] text-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#4b5563] transition-colors"
+                        >
+                          ✏️ Editar
+                        </a>
+                        <button
+                          onClick={descargarCVVisual}
+                          className="text-xs bg-[#22c55e] text-white px-3 py-1.5 rounded-lg hover:bg-[#16a34a] transition-colors"
+                        >
+                          ⬇️ Descargar PDF
+                        </button>
+                        <button
+                          onClick={() => enviarMensaje("__ENVIO_AUTO__")}
+                          className="text-xs bg-[#3b82f6] text-white px-3 py-1.5 rounded-lg hover:bg-[#2563eb] transition-colors"
+                        >
+                          📧 Enviar a ofertas
+                        </button>
+                      </div>
+                    </>
                   )}
-                  <div className="mt-2 flex gap-2 flex-wrap">
-                    <a
-                      href="/app/curriculum"
-                      target="_blank"
-                      className="text-xs bg-[#374151] text-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#4b5563] transition-colors"
-                    >
-                      ✏️ Editar
-                    </a>
-                    <button
-                      onClick={descargarCVVisual}
-                      className="text-xs bg-[#22c55e] text-white px-3 py-1.5 rounded-lg hover:bg-[#16a34a] transition-colors"
-                    >
-                      ⬇️ Descargar PDF
-                    </button>
-                    <button
-                      onClick={() => enviarMensaje("__ENVIO_AUTO__")}
-                      className="text-xs bg-[#3b82f6] text-white px-3 py-1.5 rounded-lg hover:bg-[#2563eb] transition-colors"
-                    >
-                      📧 Enviar a ofertas
-                    </button>
-                  </div>
                 </div>
               )}
               
