@@ -1,8 +1,5 @@
 "use client";
 
-// Deshabilitar prerenderizado estático — la página requiere autenticación dinámica
-export const dynamic = "force-dynamic";
-
 /**
  * app/app/empresas/page.tsx — Extractor de información de empresas
  *
