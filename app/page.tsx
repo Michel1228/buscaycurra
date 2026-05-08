@@ -1,6 +1,20 @@
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import BuscadorPublico from "@/components/BuscadorPublico";
+import { getJobStats } from "@/lib/job-search/sync-worker";
+
+export const dynamic = "force-dynamic";
+
+async function getOfertasCount(): Promise<string> {
+  try {
+    const stats = await getJobStats();
+    const n = stats.total || 213000;
+    const miles = Math.floor(n / 1000);
+    return `${miles}.000+`;
+  } catch {
+    return "213.000+";
+  }
+}
 
 const planes = [
   {
@@ -127,7 +141,8 @@ const faq = [
   },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const ofertas = await getOfertasCount();
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
 
@@ -196,7 +211,7 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
               <div className="text-center">
-                <div className="text-2xl font-extrabold" style={{ color: "#22c55e" }}>213.000+</div>
+                <div className="text-2xl font-extrabold" style={{ color: "#22c55e" }}>{ofertas}</div>
                 <div className="text-[11px]" style={{ color: "#64748b" }}>ofertas activas en España</div>
               </div>
               <div className="hidden sm:block w-px h-8" style={{ background: "#2d3142" }} />
@@ -218,7 +233,7 @@ export default function LandingPage() {
           <div className="max-w-5xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { num: "213.000+", label: "Ofertas activas", icon: "💼", color: "#22c55e" },
+                { num: ofertas, label: "Ofertas activas", icon: "💼", color: "#22c55e" },
                 { num: "2.400+", label: "Candidatos activos", icon: "👥", color: "#f59e0b" },
                 { num: "3 semanas", label: "Media hasta empleo", icon: "⚡", color: "#e07850" },
                 { num: "4 fuentes", label: "APIs de empleo", icon: "🌐", color: "#a855f7" },
@@ -238,7 +253,7 @@ export default function LandingPage() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
-                213.000+ ofertas reales en España ahora mismo
+                {ofertas} ofertas reales en España ahora mismo
               </h2>
               <p className="text-sm" style={{ color: "#64748b" }}>Busca sin registrarte. Para enviar candidaturas, crea tu cuenta gratis.</p>
             </div>
@@ -328,7 +343,7 @@ export default function LandingPage() {
                 {[
                   { ellos: "Tú buscas, filtras y envías a mano", nosotros: "Guzzi busca, filtra y envía por ti" },
                   { ellos: "300 CVs enviados. 3 respuestas.", nosotros: "CV adaptado a cada empresa" },
-                  { ellos: "Ofertas caducadas y empresas fantasma", nosotros: "213.000+ ofertas actualizadas a diario" },
+                  { ellos: "Ofertas caducadas y empresas fantasma", nosotros: `${ofertas} ofertas actualizadas a diario` },
                   { ellos: "Pagan 29€/mes para saber que te ignoraron", nosotros: "Gratis para candidatos" },
                   { ellos: "ATS descarta tu CV sin leerlo", nosotros: "IA que supera los filtros ATS" },
                 ].map((row, i) => (
