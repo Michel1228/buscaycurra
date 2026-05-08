@@ -133,7 +133,7 @@ export interface CVJobData {
   priority: "normal" | "prioritario"; // Urgencia del envío
   useAIPersonalization: boolean; // Si debe personalizar la carta con IA
   scheduledFor: number; // Timestamp Unix (cuándo enviar)
-  userPlan: "free" | "basico" | "pro" | "empresa"; // Plan del usuario
+  userPlan: "free" | "esencial" | "basico" | "pro" | "empresa"; // Plan del usuario
 }
 
 /**
