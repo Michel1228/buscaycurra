@@ -25,7 +25,7 @@ const PLANES = [
     id: "esencial", nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱",
     desc: "Menos que un café al mes",
     items: [
-      { t: "30 candidaturas al mes", ok: true },
+      { t: "60 candidaturas al mes", ok: true },
       { t: "Buscador avanzado", ok: true },
       { t: "Mejora CV con IA", ok: true },
       { t: "Historial de envíos", ok: true },

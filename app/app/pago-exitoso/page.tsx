@@ -30,7 +30,7 @@ function PagoExitosoContenido() {
     planActivo === "Empresa"
       ? ["Envíos ilimitados de CV", "IA avanzada activada", "Acceso a API", "Soporte dedicado 24/7"]
       : planActivo === "Esencial"
-      ? ["30 candidaturas al mes", "Buscador avanzado", "Mejora CV con IA", "Estadísticas básicas"]
+      ? ["60 candidaturas al mes", "5 CVs por día", "Mejora CV con IA", "Estadísticas básicas"]
       : planActivo === "Básico"
       ? ["5 CVs enviados por día", "Buscador avanzado", "Mejora CV con IA"]
       : ["10 CVs enviados por día", "IA avanzada activada", "Estadísticas detalladas", "Soporte prioritario"];

@@ -86,7 +86,7 @@ export async function checkRateLimit(
   // Límites base por plan + créditos de referido sumados al mensual
   const limites = {
     free: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_FREE ?? "1"),
+      perDay: parseInt(process.env.MAX_CVS_PER_DAY_FREE ?? "2"),
       perMonth: 5 + creditosReferido,
     },
     esencial: {
