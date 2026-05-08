@@ -51,16 +51,27 @@ const PASOS_ENTREVISTA = [
   { campo: "aptitudes", pregunta: "🎯 **Paso 8/8: Tus 3-5 aptitudes principales**\n\n(Ej: Rápido aprendizaje, trabajo en equipo, fuerza física...)" },
 ];
 
-const SUGERENCIAS = [
-  { icon: "📧", label: "Enviar CV automático", msg: "__ENVIO_AUTO__", destacado: true },
-  { icon: "📎", label: "Subir mi CV", msg: "__SUBIR_CV__", destacado: true },
-  { icon: "📝", label: "Crear mi CV", msg: "__ENTREVISTA__" },
+const ACCIONES = [
+  { icon: "📧", label: "Enviar CV", msg: "__ENVIO_AUTO__" },
+  { icon: "📎", label: "Subir CV", msg: "__SUBIR_CV__" },
+  { icon: "📝", label: "Crear CV", msg: "__ENTREVISTA__" },
   { icon: "🔍", label: "Buscar trabajo", msg: "Quiero buscar trabajo" },
-  { icon: "📸", label: "Mejorar mi foto", msg: "__FOTO_CV__" },
   { icon: "🎯", label: "Preparar entrevista", msg: "__PREP_ENTREVISTA__" },
-  { icon: "📄", label: "Ver mi CV", msg: "__VER_CV__" },
-  { icon: "✉️", label: "Carta recomendación", msg: "__CARTA_RECOMENDACION__" },
+  { icon: "📄", label: "Ver CV", msg: "__VER_CV__" },
+  { icon: "📸", label: "Foto perfil", msg: "__FOTO_CV__" },
+  { icon: "✉️", label: "Carta", msg: "__CARTA_RECOMENDACION__" },
 ];
+
+// Etiquetas legibles para los comandos internos (no mostrar el __ en el bubble)
+const LABELS_COMANDO: Record<string, string> = {
+  "__ENVIO_AUTO__": "📧 Enviar CV automático",
+  "__SUBIR_CV__": "📎 Subir mi CV",
+  "__ENTREVISTA__": "📝 Crear mi CV",
+  "__FOTO_CV__": "📸 Mejorar mi foto",
+  "__PREP_ENTREVISTA__": "🎯 Preparar entrevista",
+  "__VER_CV__": "📄 Ver mi CV",
+  "__CARTA_RECOMENDACION__": "✉️ Carta de recomendación",
+};
 
 function renderMd(text: string): React.ReactNode[] {
   // Split on **bold** and render React nodes
@@ -99,7 +110,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   const [cvGuardado, setCvGuardado] = useState<Record<string, unknown> | null>(null);
   const [input, setInput] = useState("");
   const [cargando, setCargando] = useState(false);
-  const [mostrarSugerencias, setMostrarSugerencias] = useState(true);
   
   // Estados de modos
   const [modoEntrevista, setModoEntrevista] = useState(false);
@@ -128,29 +138,29 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
       try {
         const { data: { user } } = await getSupabaseBrowser().auth.getUser();
         setLogueado(!!user);
-        
+
         if (user) {
           setUserId(user.id);
-          await cargarConversaciones(user.id);
+          cargarConversaciones(user.id); // carga el historial en sidebar, sin bloquear
           const cvExistente = await cargarCV(user.id);
 
-          const esNuevo = user.created_at && (Date.now() - new Date(user.created_at).getTime()) < 30 * 60 * 1000;
           const nombre = (user.user_metadata?.full_name || "").split(" ")[0];
           const saludo = nombre ? `¡Hola, ${nombre}!` : "¡Hola!";
 
-          if (cvExistente && !esNuevo) {
+          // Siempre arranca con mensaje fresco — el historial está en el sidebar
+          if (cvExistente) {
             const { puesto, ciudad } = extractCVInfo(cvExistente);
             const puestoStr = puesto ? `**${puesto}**` : "tu sector";
             const ciudadStr = ciudad ? ` en **${ciudad}**` : "";
             setMensajes([{
               role: "gusi",
-              text: `${saludo} 🐛 Tengo tu CV listo.\n\nVeo que tienes experiencia como ${puestoStr}${ciudadStr}. ¿Busco ofertas similares ahora y te envío las candidaturas automáticamente?\n\n📧 **Buscar y enviar** · ✨ **Mejorar CV** · 📸 **Cambiar foto**`,
-              action: "ver_cv",
+              text: `${saludo} 🐛 Tengo tu CV listo.\n\nVeo que tienes experiencia como ${puestoStr}${ciudadStr}. ¿Busco ofertas y envío candidaturas automáticamente?`,
             }]);
-          } else if (esNuevo) {
-            setMensajes([{ role: "gusi", text: `${saludo} 🐛 Soy Guzzi, tu asistente de empleo.\n\nYo busco trabajo por ti. Solo necesito tu CV y listo.\n\n📄 **Tengo CV** → súbemelo y busco ofertas que encajen\n📝 **No tengo CV** → te lo creo en 5 minutos paso a paso\n\n¡Tú relájate, que yo me pongo a buscar! 🐛` }]);
           } else {
-            setMensajes([{ role: "gusi", text: `${saludo} 🐛 ¿Qué hacemos hoy?\n\n📧 **Enviar CV automático** — busco ofertas y envío por ti\n🔍 **Buscar ofertas** — filtra por sector y ciudad\n✨ **Mejorar CV** — lo optimizo con IA\n🎯 **Preparar entrevista** — simulo las preguntas` }]);
+            setMensajes([{
+              role: "gusi",
+              text: `${saludo} 🐛 Soy Guzzi. Dime qué necesitas o usa los botones de abajo.`,
+            }]);
           }
         } else {
           setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Guzzi. Regístrate primero para que pueda ayudarte." }]);
@@ -248,7 +258,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
       role: "gusi", 
       text: "¡Nueva conversación! 🐛 ¿Qué necesitas?\n\n📧 Enviar CV automático\n📝 Crear mi CV\n🔍 Buscar trabajo\n📸 Mejorar foto\n🎯 Preparar entrevista" 
     }]);
-    setMostrarSugerencias(true);
     setModoEntrevista(false);
     setPasoEntrevista(0);
     setDatosCV({});
@@ -523,7 +532,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     setMensajes((prev) => [...prev, nuevoMensaje]);
     setInput("");
     setCargando(true);
-    setMostrarSugerencias(false);
 
     // ============================================
     // ESPERANDO CONFIRMACIÓN DE CV (después de subir PDF)
@@ -877,8 +885,8 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         } catch { /* continuar con la siguiente */ }
       }
       const msgFinal = enviados > 0
-        ? `✅ **¡Listo!** ${enviados} candidatura${enviados > 1 ? "s" : ""} enviada${enviados > 1 ? "s" : ""} con carta personalizada por IA.${sinEmail > 0 ? `\n📝 ${sinEmail} registrada${sinEmail > 1 ? "s" : ""} para seguimiento (sin email directo).` : ""}\n\nVe a **Envíos** para ver el estado. 📊`
-        : `📝 **${sinEmail} candidatura${sinEmail > 1 ? "s" : ""} registrada${sinEmail > 1 ? "s" : ""} para seguimiento.**\nNo encontré emails directos — algunas empresas no los publican. Las tienes en tu historial.`;
+        ? `✅ **¡Listo!** ${enviados} candidatura${enviados > 1 ? "s" : ""} enviada${enviados > 1 ? "s" : ""} con carta personalizada por IA.${sinEmail > 0 ? `\n📝 ${sinEmail} registrada${sinEmail > 1 ? "s" : ""} para seguimiento (sin email directo).` : ""}\n\n📬 Recibirás confirmación por email. Ve a **Mis envíos** para el estado. 📊`
+        : `📝 **${sinEmail} empresa${sinEmail > 1 ? "s" : ""} encontrada${sinEmail > 1 ? "s" : ""} pero sin email de RRHH público.**\n\nEsto pasa con portales como Domestiko o Infojobs — publican las ofertas pero no el email directo. La candidatura quedó registrada en tu historial.\n\n💡 Para que Guzzi pueda enviar el email, busca empresas con web propia (no portales de intermediario).`;
       setMensajes(prev => [...prev, { role: "gusi", text: msgFinal }]);
       setCargando(false);
       return;
@@ -1072,14 +1080,18 @@ Ya tengo tus datos guardados. Voy a:
 
       {/* Mensajes */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-        {mensajes.map((msg, i) => (
+        {mensajes.map((msg, i) => {
+          // Ocultar mensajes de usuario que son comandos internos
+          const esComando = msg.role === "user" && msg.text.startsWith("__") && msg.text.endsWith("__");
+          const textoMostrar = esComando ? (LABELS_COMANDO[msg.text] ?? msg.text) : msg.text;
+          return (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[95%] rounded-2xl px-4 py-2.5 text-sm ${
-              msg.role === "user" 
-                ? "bg-[#22c55e] text-white rounded-br-md" 
+              msg.role === "user"
+                ? "bg-[#22c55e] text-white rounded-br-md"
                 : "bg-[#2a2d35] text-gray-200 rounded-bl-md"
             }`}>
-              <div className="whitespace-pre-wrap">{renderMd(msg.text)}</div>
+              <div className="whitespace-pre-wrap">{renderMd(textoMostrar)}</div>
               
               {/* CV Visual cuando Guzzi muestra el CV */}
               {(msg.action === "ver_cv" || msg.action === "cv_mejorado") && cvGuardado && (
@@ -1133,8 +1145,9 @@ Ya tengo tus datos guardados. Voy a:
               )}
             </div>
           </div>
-        ))}
-        
+          );
+        })}
+
         {cargando && (
           <div className="flex justify-start">
             <div className="bg-[#2a2d35] rounded-2xl rounded-bl-md px-4 py-3">
@@ -1148,26 +1161,23 @@ Ya tengo tus datos guardados. Voy a:
         )}
       </div>
 
-      {/* Sugerencias */}
-      {mostrarSugerencias && mensajes.length <= 2 && (
-        <div className="px-4 pb-2">
-          <div className="flex flex-wrap gap-2">
-            {SUGERENCIAS.map((s, i) => (
-              <button
-                key={i}
-                onClick={() => enviarMensaje(s.msg)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  s.destacado 
-                    ? "bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/30 hover:bg-[#22c55e]/30" 
-                    : "bg-[#2a2d35] text-gray-300 hover:bg-[#3a3d45]"
-                }`}
-              >
-                {s.icon} {s.label}
-              </button>
-            ))}
-          </div>
+      {/* Acciones rápidas — SIEMPRE visibles */}
+      <div className="px-3 pt-2 pb-1 border-t border-[#1e212b]">
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+          {ACCIONES.map((a) => (
+            <button
+              key={a.msg}
+              onClick={() => enviarMensaje(a.msg)}
+              disabled={cargando}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors hover:opacity-80 shrink-0 disabled:opacity-40"
+              style={{ background: "#1a1d24", border: "1px solid #252836", color: "#94a3b8" }}
+            >
+              <span>{a.icon}</span>
+              <span>{a.label}</span>
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Input */}
       <div className="p-3 border-t border-[#2a2d35]">
