@@ -94,19 +94,21 @@ export default function AppNavWrapper() {
                 <span>📊</span>
               </Link>
             )}
-            <button
-              onClick={cerrarSesion}
-              title="Cerrar sesión"
-              className="flex items-center justify-center w-10 h-10 rounded-lg text-base transition ml-1"
-              style={{ color: "#64748b" }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-            </button>
           </div>
+
+          {/* Logout — siempre visible */}
+          <button
+            onClick={cerrarSesion}
+            title="Cerrar sesión"
+            className="flex items-center justify-center w-9 h-9 rounded-lg transition hover:bg-red-500/10"
+            style={{ color: "#ef4444" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
 
           {/* Mobile menu button */}
           <button
