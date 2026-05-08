@@ -55,42 +55,59 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10">
-          <Link href="/" className="flex items-center gap-2 mb-16">
+          <Link href="/" className="flex items-center gap-2 mb-10">
             <span className="text-2xl">🐛</span>
             <span className="font-bold text-lg" style={{ color: "#22c55e" }}>BuscayCurra</span>
           </Link>
 
-          <h2 className="text-3xl font-bold leading-tight mb-4" style={{ color: "#f1f5f9" }}>
-            Tu próximo trabajo<br />
-            <span style={{ color: "#22c55e" }}>te está esperando</span>
+          <p className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: "#22c55e" }}>
+            Por qué no InfoJobs
+          </p>
+          <h2 className="text-3xl font-bold leading-tight mb-3" style={{ color: "#f1f5f9" }}>
+            Los portales te dejan<br />
+            <span style={{ color: "#22c55e" }}>entre miles de CVs.</span><br />
+            <span style={{ color: "#f1f5f9" }}>Guzzi trabaja para ti.</span>
           </h2>
-          <p className="text-sm mb-10" style={{ color: "#64748b" }}>
-            Guzzi busca por ti en más de 400.000 ofertas reales de España.
+          <p className="text-sm mb-8" style={{ color: "#64748b" }}>
+            Mientras los demás esperan a que las empresas los llamen, Guzzi aplica por ellos cada día.
           </p>
 
-          <div className="space-y-5">
+          {/* Comparativa */}
+          <div className="rounded-xl overflow-hidden mb-8" style={{ border: "1px solid #252836" }}>
+            <div className="px-4 py-2 text-[10px] font-bold grid grid-cols-3 gap-2"
+              style={{ background: "#161922", color: "#475569" }}>
+              <span></span>
+              <span className="text-center">InfoJobs / LinkedIn</span>
+              <span className="text-center" style={{ color: "#22c55e" }}>BuscayCurra</span>
+            </div>
             {[
-              { icon: "🔍", title: "Búsqueda inteligente", desc: "Filtra por ciudad, sector y salario en segundos" },
-              { icon: "📄", title: "CV optimizado con IA", desc: "Guzzi mejora tu CV para cada oferta automáticamente" },
-              { icon: "📬", title: "Envíos masivos", desc: "Aplica a 10 empresas a la vez, sin esfuerzo" },
-            ].map((f) => (
-              <div key={f.icon} className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-                  style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                  {f.icon}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{f.title}</p>
-                  <p className="text-xs" style={{ color: "#64748b" }}>{f.desc}</p>
-                </div>
+              { label: "Aplicaciones", ellos: "Tú lo haces todo", nosotros: "Guzzi aplica por ti" },
+              { label: "CV personalizado", ellos: "El mismo para todos", nosotros: "Carta IA por empresa" },
+              { label: "Seguimiento", ellos: "Sin respuesta 🤷", nosotros: "Historial completo" },
+              { label: "Precio", ellos: "Gratis pero inútil", nosotros: "Desde 0€" },
+            ].map((row, i) => (
+              <div key={row.label}
+                className="px-4 py-2.5 grid grid-cols-3 gap-2 text-xs items-center"
+                style={{ background: i % 2 === 0 ? "#0f1117" : "#0a0c10", borderTop: "1px solid #1a1d27" }}>
+                <span style={{ color: "#94a3b8" }}>{row.label}</span>
+                <span className="text-center" style={{ color: "#475569" }}>✕ {row.ellos}</span>
+                <span className="text-center font-semibold" style={{ color: "#22c55e" }}>✓ {row.nosotros}</span>
               </div>
             ))}
           </div>
+
+          <div className="flex items-center gap-2 text-xs" style={{ color: "#475569" }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+            +400.000 ofertas activas en España ahora mismo
+          </div>
         </div>
 
-        <p className="relative z-10 text-xs" style={{ color: "#374151" }}>
-          © 2025 BuscayCurra · Sin permanencia · Cancela cuando quieras
-        </p>
+        <div className="relative z-10 flex items-center justify-between">
+          <p className="text-xs" style={{ color: "#374151" }}>© 2025 BuscayCurra · Sin permanencia</p>
+          <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#475569" }}>
+            ¿Eres empresa o ETT? →
+          </Link>
+        </div>
       </div>
 
       {/* Panel derecho — formulario */}

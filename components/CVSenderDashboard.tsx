@@ -20,6 +20,7 @@ interface HistoryRecord {
   jobTitle?: string;
   status: string;
   sentAt?: string;
+  respuesta?: "positiva" | "negativa" | "entrevista";
 }
 interface UserStats {
   totalEnviados: number;
@@ -60,6 +61,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [respuestaId, setRespuestaId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -84,6 +86,11 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
     const iv = setInterval(() => void loadData(), 30_000);
     return () => clearInterval(iv);
   }, [loadData]);
+
+  const registrarRespuesta = (id: string, tipo: "positiva" | "negativa" | "entrevista") => {
+    setHistory(prev => prev.map(r => r.id === id ? { ...r, respuesta: tipo } : r));
+    setRespuestaId(null);
+  };
 
   const cancelJob = async (jobId: string) => {
     if (!confirm("¿Cancelar este envío?")) return;
@@ -229,25 +236,62 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
           <ul>
             {history.map((rec, i) => {
               const st = statusStyle(rec.status);
+              const respuestaColor = rec.respuesta === "entrevista" ? "#f0c040"
+                : rec.respuesta === "positiva" ? "#7ed56f"
+                : rec.respuesta === "negativa" ? "#f87171" : undefined;
+              const respuestaLabel = rec.respuesta === "entrevista" ? "🎯 Entrevista"
+                : rec.respuesta === "positiva" ? "✅ Respuesta positiva"
+                : rec.respuesta === "negativa" ? "❌ Sin interés" : undefined;
               return (
-                <li key={rec.id} className="px-5 py-3.5 flex items-center gap-3 transition"
-                  style={{ borderBottom: i < history.length - 1 ? "1px solid rgba(61,60,48,0.3)" : "none" }}>
-                  <span className="text-lg">{statusEmoji(rec.status)}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate" style={{ color: "#f0ebe0" }}>{rec.companyName}</p>
-                    {rec.jobTitle && <p className="text-[10px] truncate" style={{ color: "#706a58" }}>💼 {rec.jobTitle}</p>}
-                    {rec.sentAt && (
-                      <p className="text-[10px]" style={{ color: "#504a3a" }}>
-                        {new Date(rec.sentAt).toLocaleDateString("es-ES", {
-                          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-                        })}
-                      </p>
-                    )}
+                <li key={rec.id} style={{ borderBottom: i < history.length - 1 ? "1px solid rgba(61,60,48,0.3)" : "none" }}>
+                  <div className="px-5 py-3.5 flex items-center gap-3">
+                    <span className="text-lg">{statusEmoji(rec.status)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate" style={{ color: "#f0ebe0" }}>{rec.companyName}</p>
+                      {rec.jobTitle && <p className="text-[10px] truncate" style={{ color: "#706a58" }}>💼 {rec.jobTitle}</p>}
+                      {rec.sentAt && (
+                        <p className="text-[10px]" style={{ color: "#504a3a" }}>
+                          {new Date(rec.sentAt).toLocaleDateString("es-ES", {
+                            day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                          })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                        style={{ background: st.bg, color: st.color }}>
+                        {rec.status.charAt(0).toUpperCase() + rec.status.slice(1)}
+                      </span>
+                      {rec.status === "enviado" && !rec.respuesta && (
+                        <button onClick={() => setRespuestaId(respuestaId === rec.id ? null : rec.id)}
+                          className="text-[9px] px-2 py-0.5 rounded-full"
+                          style={{ border: "1px solid rgba(61,60,48,0.5)", color: "#706a58" }}>
+                          ¿Contestaron?
+                        </button>
+                      )}
+                      {rec.respuesta && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                          style={{ background: "rgba(0,0,0,0.2)", color: respuestaColor }}>
+                          {respuestaLabel}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                    style={{ background: st.bg, color: st.color }}>
-                    {rec.status.charAt(0).toUpperCase() + rec.status.slice(1)}
-                  </span>
+                  {respuestaId === rec.id && (
+                    <div className="px-5 pb-3 flex gap-2">
+                      {([
+                        { tipo: "entrevista" as const, label: "🎯 Me llamaron", color: "#f0c040" },
+                        { tipo: "positiva" as const, label: "✅ Respuesta positiva", color: "#7ed56f" },
+                        { tipo: "negativa" as const, label: "❌ Sin interés", color: "#f87171" },
+                      ]).map(o => (
+                        <button key={o.tipo} onClick={() => registrarRespuesta(rec.id, o.tipo)}
+                          className="text-[10px] px-2.5 py-1 rounded-lg font-medium"
+                          style={{ border: `1px solid ${o.color}30`, color: o.color, background: `${o.color}10` }}>
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </li>
               );
             })}
