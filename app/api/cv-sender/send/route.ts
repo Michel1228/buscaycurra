@@ -82,7 +82,15 @@ export async function POST(request: NextRequest) {
       const { data: profile } = await sb.from("profiles").select("email, nombre").eq("id", userId).single();
       if (profile?.email) {
         const { sendConfirmationEmail } = await import("@/lib/email/smtp-sender");
-        await sendConfirmationEmail(profile.email, profile.nombre || "Usuario", companyName);
+        await sendConfirmationEmail({
+          userEmail: profile.email,
+          userName: profile.nombre || "Usuario",
+          companyName,
+          companyEmail,
+          jobTitle,
+          companyUrl,
+          sentAt: new Date(),
+        });
       }
     } catch { /* silencioso si no hay SMTP configurado */ }
 

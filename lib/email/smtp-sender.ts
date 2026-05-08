@@ -32,31 +32,93 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
   }
 }
 
-/** Email de confirmacion al usuario cuando se registra o envia un CV */
+export interface ConfirmacionEnvioParams {
+  userEmail: string;
+  userName: string;
+  companyName: string;
+  companyEmail?: string;
+  jobTitle?: string;
+  companyUrl?: string;
+  sentAt?: Date;
+}
+
+/** Email de confirmacion detallado al usuario cuando Guzzi envia su CV */
 export async function sendConfirmationEmail(
-  userEmail: string,
-  userName: string,
-  companyName: string,
+  userEmailOrParams: string | ConfirmacionEnvioParams,
+  userName?: string,
+  companyName?: string,
 ): Promise<void> {
+  const p: ConfirmacionEnvioParams =
+    typeof userEmailOrParams === "string"
+      ? { userEmail: userEmailOrParams, userName: userName ?? "Usuario", companyName: companyName ?? "la empresa" }
+      : userEmailOrParams;
+
+  const fecha = (p.sentAt ?? new Date()).toLocaleDateString("es-ES", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+    hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid",
+  });
+
+  const rowStyle = "padding:14px 20px;border-bottom:1px solid rgba(126,213,111,0.08);";
+  const labelStyle = "color:#706a58;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px;";
+  const valueStyle = "color:#f0ebe0;font-size:14px;font-weight:600;";
+
+  const detailRows = [
+    `<tr><td style="${rowStyle}"><span style="${labelStyle}">Empresa</span><span style="${valueStyle}">${p.companyName}</span></td></tr>`,
+    p.jobTitle ? `<tr><td style="${rowStyle}"><span style="${labelStyle}">Puesto</span><span style="${valueStyle}">${p.jobTitle}</span></td></tr>` : "",
+    p.companyEmail ? `<tr><td style="${rowStyle}"><span style="${labelStyle}">Enviado a</span><span style="color:#a8d8ff;font-size:14px;">${p.companyEmail}</span></td></tr>` : "",
+    `<tr><td style="padding:14px 20px;"><span style="${labelStyle}">Fecha</span><span style="color:#b0a890;font-size:13px;">${fecha}</span></td></tr>`,
+  ].join("");
+
+  const ctaSecundario = p.companyUrl
+    ? `<br><a href="${p.companyUrl}" style="display:inline-block;margin-top:10px;color:#706a58;font-size:12px;text-decoration:none;">Ver oferta original →</a>`
+    : "";
+
   try {
     await sendEmail(
-      userEmail,
-      `Tu CV fue enviado a ${companyName}`,
-      `
-      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #1a1a12; color: #f0ebe0; border-radius: 16px; padding: 32px;">
-        <h2 style="color: #7ed56f; margin: 0 0 20px;">CV enviado correctamente</h2>
-        <p style="margin: 0 0 12px;">Hola <strong>${userName}</strong>,</p>
-        <p style="margin: 0 0 12px;">Tu CV ha sido enviado a <strong style="color: #f0c040;">${companyName}</strong>. La carta de presentacion fue personalizada por nuestra IA para aumentar tus posibilidades.</p>
-        <div style="background: rgba(126,213,111,0.08); border: 1px solid rgba(126,213,111,0.2); border-radius: 12px; padding: 16px; margin: 20px 0;">
-          <p style="margin: 0; font-size: 14px; color: #a8e6a1;">Puedes seguir el estado de todos tus envios desde la seccion <strong>Envios</strong> de la app.</p>
-        </div>
-        <hr style="border: none; border-top: 1px solid #3d3c30; margin: 24px 0;" />
-        <p style="font-size: 12px; color: #706a58; margin: 0;">
-          BuscayCurra — Tu empleo, nuestra mision<br>
-          Si no reconoces este envio, ignora este mensaje.
-        </p>
-      </div>
-      `,
+      p.userEmail,
+      `✅ CV enviado a ${p.companyName}`,
+      `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d0d0a;font-family:'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0a;padding:32px 16px;">
+<tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="background:#1a1a12;border-radius:20px;overflow:hidden;border:1px solid rgba(126,213,111,0.15);">
+  <tr><td style="background:linear-gradient(135deg,#1f2e12,#2a3d18);padding:32px;text-align:center;">
+    <div style="font-size:40px;margin-bottom:8px;">🐛</div>
+    <h1 style="color:#7ed56f;margin:0;font-size:22px;font-weight:700;">CV enviado con éxito</h1>
+    <p style="color:rgba(176,168,144,0.8);margin:8px 0 0;font-size:13px;">Guzzi ha trabajado por ti</p>
+  </td></tr>
+  <tr><td style="padding:32px 32px 0;">
+    <p style="color:#f0ebe0;font-size:15px;margin:0 0 8px;">Hola <strong>${p.userName}</strong>,</p>
+    <p style="color:#b0a890;font-size:14px;line-height:1.6;margin:0;">Tu candidatura ha llegado a <strong style="color:#f0c040;">${p.companyName}</strong>. Guzzi generó una carta de presentación personalizada y la envió en el momento óptimo para que sea leída.</p>
+  </td></tr>
+  <tr><td style="padding:24px 32px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(126,213,111,0.04);border:1px solid rgba(126,213,111,0.12);border-radius:12px;overflow:hidden;">
+      ${detailRows}
+    </table>
+  </td></tr>
+  <tr><td style="padding:0 32px 24px;">
+    <p style="color:#706a58;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px;">Qué incluyó Guzzi</p>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="background:rgba(126,213,111,0.06);border-radius:8px;padding:10px 14px;color:#a8e6a1;font-size:13px;margin-bottom:6px;">✅ &nbsp;CV en PDF adjunto</td></tr>
+      <tr><td style="height:6px;"></td></tr>
+      <tr><td style="background:rgba(240,192,64,0.06);border-radius:8px;padding:10px 14px;color:#f0c040;font-size:13px;margin-bottom:6px;">✅ &nbsp;Carta de presentación IA adaptada a esta empresa</td></tr>
+      <tr><td style="height:6px;"></td></tr>
+      <tr><td style="background:rgba(160,112,208,0.06);border-radius:8px;padding:10px 14px;color:#c084fc;font-size:13px;">✅ &nbsp;Enviado en el momento óptimo del horario RRHH</td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding:0 32px 32px;text-align:center;">
+    <a href="https://buscaycurra.es/app/envios" style="display:inline-block;background:linear-gradient(135deg,#7ed56f,#5cb848);color:#1a1a12;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:700;font-size:14px;">Ver todos mis envíos →</a>
+    ${ctaSecundario}
+  </td></tr>
+  <tr><td style="padding:20px 32px;border-top:1px solid rgba(61,60,48,0.4);text-align:center;">
+    <p style="color:#504a3a;font-size:11px;margin:0;line-height:1.8;">
+      BuscayCurra · Tu empleo, nuestra misión<br>
+      <a href="https://buscaycurra.es/app/envios" style="color:#706a58;text-decoration:none;">Mis envíos</a>
+      &nbsp;·&nbsp;
+      <a href="https://buscaycurra.es/app/perfil" style="color:#706a58;text-decoration:none;">Mi cuenta</a>
+    </p>
+  </td></tr>
+</table></td></tr></table>
+</body></html>`,
     );
   } catch (err) {
     console.error("[Resend] Error en confirmacion:", (err as Error).message);
