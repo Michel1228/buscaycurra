@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -6,7 +6,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function usePWAInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
@@ -16,30 +16,29 @@ export function usePWAInstall() {
       return;
     }
 
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as unknown as { MSStream: unknown }).MSStream;
-    setIsIOS(ios);
+    setIsIOS(/iphone|ipad|ipod/i.test(navigator.userAgent));
 
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
+    function onBeforeInstall(evt: Event) {
+      evt.preventDefault();
+      setPrompt(evt as BeforeInstallPromptEvent);
+    }
 
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
   }, []);
 
-  const install = async () => {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+  const install = useCallback(async () => {
+    if (!prompt) return;
+    await prompt.prompt();
+    const { outcome } = await prompt.userChoice;
     if (outcome === "accepted") setIsInstalled(true);
-    setDeferredPrompt(null);
-  };
+    setPrompt(null);
+  }, [prompt]);
 
   return {
     install,
     isIOS,
     isInstalled,
-    canInstall: !!deferredPrompt,
+    canInstall: !!prompt,
   };
 }
