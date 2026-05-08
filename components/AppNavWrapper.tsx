@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
+
+const ADMIN_EMAIL = "michelbatistagonzalez1992@gmail.com";
 
 const NAV_ITEMS = [
   { href: "/app/gusi",      label: "Guzzi",     icon: "🐛", title: "Guzzi - Asistente IA" },
@@ -21,11 +24,18 @@ export default function AppNavWrapper() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [esAdmin, setEsAdmin] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    getSupabaseBrowser().auth.getUser().then(({ data: { user } }) => {
+      setEsAdmin(user?.email === ADMIN_EMAIL);
+    });
   }, []);
 
   // Solo mostrar nav en rutas /app/*
@@ -72,6 +82,12 @@ export default function AppNavWrapper() {
                 </Link>
               );
             })}
+            {esAdmin && (
+              <Link href="/app/admin" title="Panel de control" className="flex items-center justify-center w-10 h-10 rounded-lg text-base transition"
+                style={{ background: pathname === "/app/admin" ? "rgba(245,158,11,0.15)" : "transparent", color: pathname === "/app/admin" ? "#f59e0b" : "#64748b" }}>
+                <span>📊</span>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -122,6 +138,14 @@ export default function AppNavWrapper() {
                 </Link>
               );
             })}
+            {esAdmin && (
+              <Link href="/app/admin" onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition"
+                style={{ background: pathname === "/app/admin" ? "rgba(245,158,11,0.08)" : "transparent", color: "#f59e0b" }}>
+                <span className="text-lg">📊</span>
+                <span>Admin</span>
+              </Link>
+            )}
           </div>
         </div>
       )}
