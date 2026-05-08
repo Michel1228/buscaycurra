@@ -40,7 +40,7 @@ jobs:
             -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
             -H "Content-Type: application/json" \
             -d "{\"source\":\"jooble\",\"batchSize\":40,\"offset\":${{ matrix.offset }},\"page\":${{ matrix.page }}}" \
-            --max-time 65)
+            --max-time 90)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
           echo "HTTP $HTTP_CODE: $BODY"
@@ -62,7 +62,7 @@ jobs:
             -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
             -H "Content-Type: application/json" \
             -d "{\"source\":\"careerjet\",\"batchSize\":40,\"offset\":${{ matrix.offset }},\"page\":1}" \
-            --max-time 65)
+            --max-time 90)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
           echo "HTTP $HTTP_CODE: $BODY"
