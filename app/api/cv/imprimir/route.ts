@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getPool } from "@/lib/db";
 import { generarCVHTML } from "@/lib/cv-generator/cv-template";
 
 export async function GET(request: NextRequest) {
@@ -10,31 +10,36 @@ export async function GET(request: NextRequest) {
     return new NextResponse("Falta userId", { status: 400 });
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  try {
+    const pool = getPool();
+    const result = await pool.query(
+      `SELECT form_data FROM user_cvs WHERE user_id = $1`,
+      [userId]
+    );
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("cv_data")
-    .eq("id", userId)
-    .single();
+    if (result.rows.length === 0 || !result.rows[0].form_data) {
+      return new NextResponse("No hay CV guardado", { status: 404 });
+    }
 
-  const cvData = data?.cv_data;
-  if (!cvData || !cvData.nombre) {
-    return new NextResponse("No hay CV guardado", { status: 404 });
+    const cvData = typeof result.rows[0].form_data === "string"
+      ? JSON.parse(result.rows[0].form_data)
+      : result.rows[0].form_data;
+
+    if (!cvData.nombre) {
+      return new NextResponse("CV sin datos suficientes", { status: 404 });
+    }
+
+    const html = generarCVHTML(cvData);
+    const htmlConPrint = html.replace(
+      "</head>",
+      `<script>window.onload = function() { setTimeout(function() { window.print(); }, 700); }</script></head>`
+    );
+
+    return new NextResponse(htmlConPrint, {
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  } catch (err) {
+    console.error("[cv/imprimir]", err);
+    return new NextResponse("Error interno", { status: 500 });
   }
-
-  const html = generarCVHTML(cvData);
-
-  // Inyectamos el auto-print dentro del <head> del HTML generado
-  const htmlConPrint = html.replace(
-    "</head>",
-    `<script>window.onload = function() { setTimeout(function() { window.print(); }, 700); }</script></head>`
-  );
-
-  return new NextResponse(htmlConPrint, {
-    headers: { "Content-Type": "text/html; charset=utf-8" },
-  });
 }
