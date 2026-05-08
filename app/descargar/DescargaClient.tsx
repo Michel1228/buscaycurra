@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import LogoGusano from "@/components/LogoGusano";
 
 const FEATURES = [
   {
@@ -31,6 +32,7 @@ const IOS_STEPS = [
 export default function DescargaClient() {
   const { install, isIOS, isInstalled, canInstall } = usePWAInstall();
   const [iosModalAbierto, setIosModalAbierto] = useState(false);
+  const [androidModalAbierto, setAndroidModalAbierto] = useState(false);
 
   return (
     <div style={{ background: "#0a0c10", minHeight: "100vh", color: "#f1f5f9", fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
@@ -44,12 +46,19 @@ export default function DescargaClient() {
 
         {/* Logo */}
         <div style={{ position: "absolute", top: "28px", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "22px" }}>🐛</span>
+          <LogoGusano size={28} animated />
           <span style={{ fontSize: "16px", fontWeight: 700, color: "#22c55e", letterSpacing: "-0.02em" }}>BuscayCurra</span>
         </div>
 
         {/* Contenido central */}
         <div style={{ maxWidth: "640px", width: "100%", textAlign: "center", position: "relative", zIndex: 1 }}>
+
+          {/* Guzzi hero */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "28px" }}>
+            <div style={{ filter: "drop-shadow(0 12px 40px rgba(34,197,94,0.35))", animation: "float-gentle 3s ease-in-out infinite" }}>
+              <LogoGusano size={96} animated />
+            </div>
+          </div>
 
           {/* Badge precio */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "100px", padding: "6px 14px", marginBottom: "28px" }}>
@@ -84,9 +93,10 @@ export default function DescargaClient() {
                 Instalar en iPhone
               </button>
             ) : (
-              <Link href="/auth/registro" style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", textDecoration: "none", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
-                Empezar gratis →
-              </Link>
+              <button onClick={() => setAndroidModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
+                <span style={{ fontSize: "20px" }}>📲</span>
+                Instalar gratis
+              </button>
             )}
             <p style={{ fontSize: "13px", color: "#475569", margin: 0 }}>Sin tarjeta. Sin compromisos. Solo resultados.</p>
           </div>
@@ -203,13 +213,50 @@ export default function DescargaClient() {
       {/* ── Footer ── */}
       <footer style={{ borderTop: "1px solid #1e2334", padding: "28px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "8px" }}>
-          <span style={{ fontSize: "18px" }}>🐛</span>
+          <LogoGusano size={20} />
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#22c55e" }}>BuscayCurra</span>
         </div>
         <p style={{ fontSize: "12px", color: "#334155", margin: 0 }}>
           © 2025 BuscayCurra · <Link href="/precios" style={{ color: "#475569", textDecoration: "none" }}>Precios</Link> · <Link href="/auth/login" style={{ color: "#475569", textDecoration: "none" }}>Acceder</Link>
         </p>
       </footer>
+
+      {/* ── Modal Android ── */}
+      {androidModalAbierto && (
+        <div
+          onClick={() => setAndroidModalAbierto(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 100, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "0 16px 16px", backdropFilter: "blur(8px)" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#161a28", border: "1px solid #2d3142", borderRadius: "24px", padding: "32px 28px", width: "100%", maxWidth: "440px" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#f1f5f9", margin: 0 }}>Instalar en Android</h3>
+              <button onClick={() => setAndroidModalAbierto(false)} style={{ background: "none", border: "none", color: "#64748b", fontSize: "22px", cursor: "pointer", lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {[
+                { num: "1", icon: "🌐", texto: "Abre esta página en Chrome (no Firefox ni otro)" },
+                { num: "2", icon: "⋮", texto: "Toca el menú ⋮ (tres puntos) arriba a la derecha" },
+                { num: "3", icon: "➕", texto: 'Selecciona "Añadir a pantalla de inicio" o "Instalar app"' },
+                { num: "4", icon: "✅", texto: 'Toca "Instalar". ¡Aparecerá como una app normal!' },
+              ].map((paso) => (
+                <div key={paso.num} style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                  <span style={{ minWidth: "32px", height: "32px", borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: "#22c55e" }}>{paso.num}</span>
+                  <span style={{ fontSize: "15px", color: "#e2e8f0", lineHeight: 1.55, paddingTop: "4px" }}>{paso.texto}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setAndroidModalAbierto(false)}
+              style={{ marginTop: "28px", width: "100%", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "15px", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer" }}
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal iOS ── */}
       {iosModalAbierto && (
