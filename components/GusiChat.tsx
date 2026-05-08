@@ -1016,7 +1016,7 @@ Ya tengo tus datos guardados. Voy a:
       {mostrarSidebar && (
         <div className="absolute left-0 top-[52px] bottom-0 w-64 bg-[#1a1d24] border-r border-[#2a2d35] z-10 flex flex-col">
           <div className="p-3 border-b border-[#2a2d35]">
-            <button 
+            <button
               onClick={nuevaConversacion}
               className="w-full py-2 px-3 bg-[#22c55e] text-white rounded-lg text-sm font-medium hover:bg-[#16a34a] transition-colors flex items-center justify-center gap-2"
             >
@@ -1024,7 +1024,31 @@ Ya tengo tus datos guardados. Voy a:
               Nueva conversación
             </button>
           </div>
+
+          {/* Tu espacio — accesos rápidos */}
+          <div className="p-3 border-b border-[#2a2d35]">
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "#374151" }}>Tu espacio</p>
+            {[
+              { href: "/app/curriculum", icon: "📄", label: "Mi CV" },
+              { href: "/app/buscar",     icon: "🔍", label: "Buscar trabajo" },
+              { href: "/app/envios",     icon: "📬", label: "Mis envíos" },
+              { href: "/app/pipeline",   icon: "📊", label: "Pipeline" },
+              { href: "/app/guardados",  icon: "❤️", label: "Guardadas" },
+            ].map(item => (
+              <a key={item.href} href={item.href}
+                className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-sm transition-colors hover:bg-[#2a2d35]"
+                style={{ color: "#94a3b8" }}>
+                <span className="text-base leading-none">{item.icon}</span>
+                <span>{item.label}</span>
+              </a>
+            ))}
+          </div>
+
+          {/* Historial de conversaciones */}
           <div className="flex-1 overflow-y-auto">
+            {conversaciones.length > 0 && (
+              <p className="text-[10px] font-semibold uppercase tracking-wider px-3 pt-3 pb-1" style={{ color: "#374151" }}>Conversaciones</p>
+            )}
             {conversaciones.length === 0 ? (
               <p className="text-xs text-gray-500 text-center py-4">No hay conversaciones previas</p>
             ) : (

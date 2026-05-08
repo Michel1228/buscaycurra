@@ -190,7 +190,15 @@ export default function JobCard({
 
       <div>
         <h3 className="font-semibold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{titulo}</h3>
-        <p className="text-[11px] mt-0.5" style={{ color: "#94a3b8" }}>{empresa}</p>
+
+        {/* Nombre de empresa — prominente */}
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="text-xs" style={{ color: "#475569" }}>🏢</span>
+          <span className="text-xs font-semibold" style={{ color: empresa && empresa !== "Ver en oferta" ? "#e2e8f0" : "#475569" }}>
+            {empresa && empresa !== "Ver en oferta" ? empresa : "Empresa confidencial"}
+          </span>
+        </div>
+
         <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#64748b" }}>
           <span>📍</span><span>{ubicacion}</span>
         </div>
@@ -207,12 +215,22 @@ export default function JobCard({
             <span>✉️</span><span>{emailEmpresa}</span>
           </div>
         )}
+
+        {/* Descripción — contraste corregido */}
         {descripcion && (
-          <div className="mt-1.5">
-            <p className="text-[10px] leading-relaxed" style={{ color: "#64748b", display: "-webkit-box", WebkitLineClamp: expandida ? "unset" : 2, WebkitBoxOrient: "vertical", overflow: expandida ? "visible" : "hidden" } as React.CSSProperties}>
-              {cargandoDetalle ? "Cargando..." : (expandida && descripcionFull !== null ? descripcionFull : descripcion)}
-            </p>
-            <button onClick={toggleExpand} className="text-[10px] mt-0.5 transition hover:opacity-80" style={{ color: "#22c55e" }}>
+          <div className="mt-2">
+            {!expandida ? (
+              <p className="text-[11px] leading-relaxed" style={{ color: "#64748b", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as React.CSSProperties}>
+                {descripcion}
+              </p>
+            ) : (
+              <div className="rounded-lg p-3 mt-1" style={{ background: "rgba(15,17,23,0.8)", border: "1px solid #2d3142" }}>
+                <p className="text-xs leading-relaxed whitespace-pre-line" style={{ color: "#cbd5e1" }}>
+                  {cargandoDetalle ? "Cargando descripción completa..." : (descripcionFull ?? descripcion)}
+                </p>
+              </div>
+            )}
+            <button onClick={toggleExpand} className="text-[11px] mt-1.5 font-medium transition hover:opacity-80" style={{ color: "#22c55e" }}>
               {expandida ? "Ver menos ▲" : "Ver más ▼"}
             </button>
           </div>
