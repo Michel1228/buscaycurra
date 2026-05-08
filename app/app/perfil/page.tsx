@@ -5,7 +5,7 @@
  * Foto de perfil genérica (avatar), no la foto profesional del CV
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 
@@ -36,6 +36,11 @@ export default function PerfilPage() {
   const [confirmarPassword, setConfirmarPassword] = useState("");
   const [msgSeguridad, setMsgSeguridad] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [cargandoPassword, setCargandoPassword] = useState(false);
+  const [modalEliminar, setModalEliminar] = useState(false);
+  const [textoConfirmar, setTextoConfirmar] = useState("");
+  const [eliminando, setEliminando] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState("");
+  const inputConfirmarRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function init() {
@@ -140,6 +145,31 @@ export default function PerfilPage() {
       if (data.url) window.location.href = data.url;
     } catch { /* ignore */ }
     finally { setCargandoPlan(false); }
+  }
+
+  async function eliminarCuenta() {
+    if (textoConfirmar !== "ELIMINAR") return;
+    setEliminando(true);
+    setErrorEliminar("");
+    try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) { router.push("/auth/login"); return; }
+      const res = await fetch("/api/user/delete-account", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        setErrorEliminar(d.error ?? "Error al eliminar la cuenta.");
+        return;
+      }
+      await getSupabaseBrowser().auth.signOut();
+      router.push("/?cuenta=eliminada");
+    } catch {
+      setErrorEliminar("Error de conexión. Inténtalo de nuevo.");
+    } finally {
+      setEliminando(false);
+    }
   }
 
   if (cargando) {
@@ -388,9 +418,117 @@ export default function PerfilPage() {
                 Cerrar todas las sesiones
               </button>
             </div>
+
+            {/* Zona de peligro */}
+            <div className="rounded-xl p-5" style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)" }}>
+              <h2 className="font-semibold text-sm mb-1" style={{ color: "#ef4444" }}>⚠️ Zona de peligro</h2>
+              <p className="text-xs mb-4" style={{ color: "#94a3b8" }}>
+                Elimina tu cuenta y todos tus datos de forma permanente. Si tienes un plan activo, se cancelará automáticamente. Esta acción no se puede deshacer.
+              </p>
+              <button
+                onClick={() => { setModalEliminar(true); setTextoConfirmar(""); setErrorEliminar(""); setTimeout(() => inputConfirmarRef.current?.focus(), 100); }}
+                className="px-5 py-2.5 text-sm font-semibold rounded-lg transition hover:opacity-90"
+                style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.25)" }}
+              >
+                Eliminar mi cuenta y datos
+              </button>
+            </div>
           </div>
         )}
       </main>
+
+      {/* Modal de confirmación de eliminación */}
+      {modalEliminar && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setModalEliminar(false); }}
+        >
+          <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "#161922", border: "1px solid rgba(239,68,68,0.2)" }}>
+
+            {/* Cabecera */}
+            <div className="flex items-start gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                style={{ background: "rgba(239,68,68,0.1)" }}>
+                🗑️
+              </div>
+              <div>
+                <h2 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Eliminar cuenta y datos</h2>
+                <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Esta acción es permanente e irreversible.</p>
+              </div>
+            </div>
+
+            {/* Lo que se borrará */}
+            <div className="rounded-xl p-4 mb-5 space-y-1.5" style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.1)" }}>
+              <p className="text-xs font-semibold mb-2" style={{ color: "#ef4444" }}>Se eliminará permanentemente:</p>
+              {[
+                "Tu perfil y datos personales",
+                "Tu CV y toda la información subida",
+                "Historial de candidaturas y envíos",
+                "Ofertas guardadas y alertas de empleo",
+                "Conversaciones con Guzzi",
+                "Reviews de empresas publicadas",
+                "Suscripción activa de Stripe (sin reembolso)",
+              ].map(item => (
+                <div key={item} className="flex items-center gap-2">
+                  <span className="text-[10px]" style={{ color: "#ef4444" }}>✕</span>
+                  <span className="text-xs" style={{ color: "#94a3b8" }}>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Input de confirmación */}
+            <div className="mb-4">
+              <p className="text-xs mb-2" style={{ color: "#64748b" }}>
+                Escribe <strong style={{ color: "#f1f5f9" }}>ELIMINAR</strong> para confirmar:
+              </p>
+              <input
+                ref={inputConfirmarRef}
+                type="text"
+                value={textoConfirmar}
+                onChange={e => setTextoConfirmar(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && textoConfirmar === "ELIMINAR" && void eliminarCuenta()}
+                placeholder="ELIMINAR"
+                className="w-full px-4 py-2.5 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 transition"
+                style={{
+                  background: "#0f1117",
+                  border: `1px solid ${textoConfirmar === "ELIMINAR" ? "rgba(239,68,68,0.4)" : "#2d3142"}`,
+                  color: textoConfirmar === "ELIMINAR" ? "#ef4444" : "#f1f5f9",
+                }}
+              />
+            </div>
+
+            {errorEliminar && (
+              <p className="text-xs mb-4 px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+                ❌ {errorEliminar}
+              </p>
+            )}
+
+            {/* Botones */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalEliminar(false)}
+                disabled={eliminando}
+                className="flex-1 py-2.5 text-sm font-medium rounded-lg transition hover:opacity-80 disabled:opacity-50"
+                style={{ background: "#252836", color: "#94a3b8" }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => void eliminarCuenta()}
+                disabled={textoConfirmar !== "ELIMINAR" || eliminando}
+                className="flex-1 py-2.5 text-sm font-bold rounded-lg transition disabled:opacity-40"
+                style={{
+                  background: textoConfirmar === "ELIMINAR" ? "rgba(239,68,68,0.9)" : "rgba(239,68,68,0.2)",
+                  color: "#fff",
+                }}
+              >
+                {eliminando ? "Eliminando..." : "Eliminar para siempre"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
