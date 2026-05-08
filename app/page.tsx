@@ -34,8 +34,9 @@ const planes = [
     desc: "Menos que un café al mes",
     items: ["30 candidaturas al mes", "Carta personalizada por IA", "Búsqueda avanzada", "Historial de envíos"],
     nota: null,
-    destacado: false,
+    destacado: true,
     cta: "Empezar",
+    tag: "🔥 Más elegido",
   },
   {
     nombre: "Pro",
@@ -44,9 +45,8 @@ const planes = [
     desc: "Para encontrar trabajo de verdad",
     items: ["200 candidaturas al mes", "Carta avanzada por IA", "Estadísticas de apertura", "Email diario con ofertas", "Soporte prioritario"],
     nota: null,
-    destacado: true,
+    destacado: false,
     cta: "Empezar",
-    tag: "Más popular",
   },
   {
     nombre: "Empresa",

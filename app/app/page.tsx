@@ -146,8 +146,8 @@ export default function HomePage() {
               {[
                 { num: "2.400+", label: "personas en activo" },
                 { num: "400K+", label: "ofertas en España" },
-                { num: "9,99€", label: "al mes, todo incluido" },
-                { num: "9,99€", label: "vs 39€/mes de InfoJobs Premium" },
+                { num: "2,99€", label: "al mes para empezar" },
+                { num: "2,99€", label: "vs 39€/mes de InfoJobs Premium" },
               ].map((s) => (
                 <div key={s.label} className="card-game p-4 text-center">
                   <p className="text-2xl font-black" style={{ color: "#7ed56f" }}>{s.num}</p>
@@ -259,8 +259,8 @@ export default function HomePage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
                 { nombre: "Gratis", precio: "0€", periodo: "", emoji: "🥚", desc: "Para probar", items: ["2 CVs/día", "Buscador básico", "Sin tarjeta"], dest: false, badge: null },
-                { nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱", desc: "Menos que un café", items: ["5 CVs/día", "IA básica", "Historial completo"], dest: false, badge: "🔥 Más barato" },
-                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛", desc: "Para encontrar trabajo", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: true, badge: "⭐ Popular" },
+                { nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱", desc: "Menos que un café", items: ["5 CVs/día", "IA básica", "Historial completo"], dest: true, badge: "🔥 Más elegido" },
+                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛", desc: "Para encontrar trabajo", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: false, badge: "⭐ Popular" },
                 { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🚀", desc: "Sin límites", items: ["Envíos ilimitados", "Todo incluido", "Multi-usuarios", "API"], dest: false, badge: null },
               ].map((plan) => (
                 <div key={plan.nombre} className={`card-game p-6 text-center relative ${plan.dest ? "scale-[1.03]" : ""}`}
