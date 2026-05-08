@@ -107,7 +107,7 @@ export default function DescargaClient() {
         </div>
 
         {/* Flecha scroll */}
-        <div style={{ position: "absolute", bottom: "32px", left: "50%", transform: "translateX(-50%)", animation: "bounce 2s infinite", opacity: 0.4 }}>
+        <div style={{ position: "absolute", bottom: "32px", left: "50%", transform: "translateX(-50%)", animation: "bounce-arrow 2s infinite", opacity: 0.4 }}>
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round">
             <path d="M5 8l5 5 5-5" />
           </svg>
@@ -250,12 +250,6 @@ export default function DescargaClient() {
         </div>
       )}
 
-      <style>{`
-        @keyframes bounce {
-          0%, 100% { transform: translateX(-50%) translateY(0); }
-          50% { transform: translateX(-50%) translateY(6px); }
-        }
-      `}</style>
     </div>
   );
 }
