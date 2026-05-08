@@ -128,6 +128,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
+  const pdfIframeRef = useRef<HTMLIFrameElement>(null);
   const router = useRouter();
 
   // ============================================
@@ -412,11 +413,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   }
 
   async function descargarCVVisual() {
-    if (!cvGuardado) return;
-    // Abrir la ventana ANTES del await para que el popup blocker lo permita
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write("<html><body style='background:#0f1117;color:#94a3b8;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0'><p>Generando PDF...</p></body></html>");
+    if (!cvGuardado || !pdfIframeRef.current) return;
     try {
       const res = await fetch("/api/cv/generar-pdf", {
         method: "POST",
@@ -424,13 +421,20 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         body: JSON.stringify(cvGuardado),
       });
       const { html } = await res.json();
-      if (!html) { win.close(); return; }
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
-      setTimeout(() => win.print(), 600);
+      if (!html) return;
+      const iframe = pdfIframeRef.current;
+      // Dimensionar antes de cargar para que el layout del CV sea correcto
+      iframe.style.width = "21cm";
+      iframe.style.height = "29.7cm";
+      iframe.srcdoc = html;
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        }, 400);
+      };
     } catch {
-      win.close();
+      // silencioso
     }
   }
 
@@ -1200,6 +1204,11 @@ Ya tengo tus datos guardados. Voy a:
 
       {/* Input */}
       <div className="p-3 border-t border-[#2a2d35]">
+        <iframe
+          ref={pdfIframeRef}
+          title="cv-pdf"
+          style={{ position: "fixed", top: "-9999px", left: "-9999px", border: "none" }}
+        />
         <input
           type="file"
           ref={fileRef}
