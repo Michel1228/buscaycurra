@@ -4,6 +4,10 @@
 -- Ejecutar en: https://supabase.com/dashboard/project/ojesordjedovnpyxspxi/sql
 -- ═══════════════════════════════════════════════════════════════════════════
 
+-- ─── Columnas base de profiles (por si la migración 001 no se ejecutó) ──────
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS cv_url             TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+
 -- ─── Columnas de referidos en profiles ───────────────────────────────────────
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS referral_code    VARCHAR(12)  UNIQUE;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS referral_count   INTEGER      NOT NULL DEFAULT 0;

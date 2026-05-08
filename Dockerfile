@@ -2,14 +2,11 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copiar package files
 COPY package.json package-lock.json* ./
 RUN npm ci --ignore-scripts
 
-# Copiar código fuente
 COPY . .
 
-# Build args para las variables públicas de Next.js
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -27,14 +24,22 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Instalar poppler-utils para pdftotext (extracción de CV)
 RUN apk add --no-cache poppler-utils
 
-# Copiar archivos necesarios
+# Next.js standalone
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
+# Worker: fuentes + dependencias (tsx disponible en node_modules/.bin/tsx)
+COPY --from=builder /app/scripts/ ./scripts/
+COPY --from=builder /app/lib/ ./lib/
+COPY --from=builder /app/node_modules/ ./node_modules/
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+
+RUN chmod +x ./scripts/docker-start.sh
+
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["./scripts/docker-start.sh"]

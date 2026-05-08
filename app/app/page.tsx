@@ -235,7 +235,7 @@ export default function HomePage() {
                 { concepto: "Seguimiento", ellos: "No sabes si lo leyeron", byc: "Ves cada envío en tiempo real" },
                 { concepto: "Prep. entrevista", ellos: "Ninguna ayuda", byc: "Simulacro con IA por empresa" },
                 { concepto: "Fuentes de ofertas", ellos: "Solo las de ese portal", byc: "+400.000 de Jooble, Careerjet…" },
-                { concepto: "Precio real", ellos: "Gratis (inútil) o 39€/mes", byc: "9,99€/mes — todo incluido" },
+                { concepto: "Precio real", ellos: "Gratis (inútil) o 39€/mes", byc: "Desde 2,99€/mes" },
               ].map((fila, i) => (
                 <div key={fila.concepto} className="grid grid-cols-3 text-center text-sm py-4 px-4 items-center gap-2"
                   style={{ background: i % 2 === 0 ? "rgba(126,213,111,0.02)" : "transparent", borderBottom: "1px solid rgba(126,213,111,0.05)" }}>
@@ -257,29 +257,30 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>Planes simples</h2>
             <p className="text-center mb-14" style={{ color: "#706a58" }}>Empieza gratis. Evoluciona cuando quieras.</p>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { nombre: "Gratis", precio: "0€", periodo: "", emoji: "🥚", desc: "Para empezar", items: ["2 CVs/día", "Buscador básico", "Evolución oruga"], dest: false },
-                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛", desc: "Para profesionales", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: true },
-                { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🚀", desc: "Sin límites", items: ["Envíos ilimitados", "Todo incluido", "Multi-usuarios", "API"], dest: false },
+                { nombre: "Gratis", precio: "0€", periodo: "", emoji: "🥚", desc: "Para probar", items: ["2 CVs/día", "Buscador básico", "Sin tarjeta"], dest: false, badge: null },
+                { nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱", desc: "Menos que un café", items: ["5 CVs/día", "IA básica", "Historial completo"], dest: false, badge: "🔥 Más barato" },
+                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛", desc: "Para encontrar trabajo", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: true, badge: "⭐ Popular" },
+                { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🚀", desc: "Sin límites", items: ["Envíos ilimitados", "Todo incluido", "Multi-usuarios", "API"], dest: false, badge: null },
               ].map((plan) => (
-                <div key={plan.nombre} className={`card-game p-7 text-center relative ${plan.dest ? "scale-[1.03]" : ""}`}
+                <div key={plan.nombre} className={`card-game p-6 text-center relative ${plan.dest ? "scale-[1.03]" : ""}`}
                   style={plan.dest ? { borderColor: "#7ed56f", boxShadow: "0 0 40px rgba(126,213,111,0.12)" } : {}}>
-                  {plan.dest && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="badge-game badge-dorado text-[10px]">⭐ Popular</span>
+                  {plan.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                      <span className="badge-game badge-dorado text-[10px]">{plan.badge}</span>
                     </div>
                   )}
-                  <div className="text-4xl mb-3">{plan.emoji}</div>
-                  <h3 className="text-lg font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h3>
-                  <p className="text-xs mb-4" style={{ color: "#706a58" }}>{plan.desc}</p>
-                  <div className="mb-5">
-                    <span className="text-3xl font-black" style={{ color: plan.dest ? "#7ed56f" : "#f0ebe0" }}>{plan.precio}</span>
+                  <div className="text-3xl mb-2">{plan.emoji}</div>
+                  <h3 className="text-base font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h3>
+                  <p className="text-[11px] mb-3" style={{ color: "#706a58" }}>{plan.desc}</p>
+                  <div className="mb-4">
+                    <span className="text-2xl font-black" style={{ color: plan.dest ? "#7ed56f" : "#f0ebe0" }}>{plan.precio}</span>
                     <span className="text-xs" style={{ color: "#706a58" }}>{plan.periodo}</span>
                   </div>
-                  <ul className="space-y-2 mb-6 text-left">
+                  <ul className="space-y-1.5 mb-5 text-left">
                     {plan.items.map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-sm" style={{ color: "#b0a890" }}>
+                      <li key={item} className="flex items-center gap-2 text-xs" style={{ color: "#b0a890" }}>
                         <span style={{ color: "#7ed56f" }}>✓</span>{item}
                       </li>
                     ))}

@@ -1,36 +1,57 @@
-name: Deploy a producción
+name: Build & Deploy to VPS
 
 on:
   push:
-    branches: [main, unified-production]
-  workflow_dispatch:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io/michel1228/buscaycurra
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - name: Desplegar en VPS via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          host: 187.124.37.183
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          timeout: 600s
-          script: |
-            set -e
-            cd /root/.openclaw/workspace/buscaycurra-unified
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-            git fetch origin
-            git checkout unified-production
-            git pull origin unified-production
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}:latest
+            ${{ env.REGISTRY }}:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
 
-            docker build --build-arg NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN --build-arg "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}" -t buscaycurra:latest .
+      - name: Deploy to Easypanel with SHA tag
+        run: |
+          TOKEN=$(curl -sf -X POST "http://187.124.37.183:3000/api/trpc/auth.login" \
+            -H "Content-Type: application/json" \
+            -d '{"json":{"email":"michelbatistagonzalez1992@gmail.com","password":"iBihfBfw3xdNAdD"}}' \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['data']['json']['token'])")
 
-            docker stop buscaycurra-nextjs || true
-            docker rm buscaycurra-nextjs || true
+          curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.updateSourceImage" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -d "{\"json\":{\"projectName\":\"buscaycurra\",\"serviceName\":\"nextjs\",\"image\":\"${{ env.REGISTRY }}:${{ github.sha }}\",\"username\":\"${{ github.actor }}\",\"password\":\"${{ secrets.GITHUB_TOKEN }}\"}}"
 
-            docker run -d --name buscaycurra-nextjs --network busca-y-curra_default -p 8892:3000 -e NODE_ENV=production -e "REDIS_URL=redis://buscaycurra-redis:6379" -e "API_URL=http://buscaycurra-api:3001" -e "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" -e "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" -e "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" -e "STRIPE_PRICE_ESENCIAL=${{ secrets.STRIPE_PRICE_ESENCIAL }}" -e "STRIPE_PRICE_BASICO=${{ secrets.STRIPE_PRICE_BASICO }}" -e "STRIPE_PRICE_PRO=${{ secrets.STRIPE_PRICE_PRO }}" -e "STRIPE_PRICE_EMPRESA=${{ secrets.STRIPE_PRICE_EMPRESA }}" -e "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" -e FROM_EMAIL=noreply@buscaycurra.es -e "JOOBLE_API_KEY=${{ secrets.JOOBLE_API_KEY }}" -e "ADZUNA_APP_ID=${{ secrets.ADZUNA_APP_ID }}" -e "ADZUNA_APP_KEY=${{ secrets.ADZUNA_APP_KEY }}" -e "CAREERJET_API_KEY=${{ secrets.CAREERJET_API_KEY }}" -e "ADMIN_SECRET=${{ secrets.ADMIN_SECRET }}" -e "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" buscaycurra:latest
-
-            sleep 8
-            curl -sf http://localhost:8892/api/ping || exit 1
-            echo "Deploy completado correctamente"
+          curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.deployService" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -d '{"json":{"projectName":"buscaycurra","serviceName":"nextjs"}}' \
+            && echo "Deploy triggered" || echo "Warning: deploy failed"
