@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
@@ -22,9 +22,15 @@ const NAV_ITEMS = [
 
 export default function AppNavWrapper() {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [esAdmin, setEsAdmin] = useState(false);
+
+  async function cerrarSesion() {
+    await getSupabaseBrowser().auth.signOut();
+    router.push("/auth/login");
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -88,6 +94,18 @@ export default function AppNavWrapper() {
                 <span>📊</span>
               </Link>
             )}
+            <button
+              onClick={cerrarSesion}
+              title="Cerrar sesión"
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-base transition ml-1"
+              style={{ color: "#64748b" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </button>
           </div>
 
           {/* Mobile menu button */}
@@ -146,6 +164,19 @@ export default function AppNavWrapper() {
                 <span>Admin</span>
               </Link>
             )}
+            <div style={{ height: "1px", background: "#2d3142", margin: "4px 0" }} />
+            <button
+              onClick={() => { setMobileOpen(false); cerrarSesion(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition"
+              style={{ color: "#ef4444" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              <span>Cerrar sesión</span>
+            </button>
           </div>
         </div>
       )}
