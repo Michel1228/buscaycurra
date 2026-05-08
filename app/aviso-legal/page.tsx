@@ -64,7 +64,27 @@ export default function AvisoLegalPage() {
                 <tbody>
                   <tr className="border-b border-gray-200">
                     <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100 w-40">
-                      Nombre
+                      Titular
+                    </td>
+                    <td className="px-5 py-3 text-gray-800">Michel Batista González</td>
+                  </tr>
+                  <tr className="border-b border-gray-200">
+                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                      NIF
+                    </td>
+                    <td className="px-5 py-3 text-gray-800">X9784910-C</td>
+                  </tr>
+                  <tr className="border-b border-gray-200">
+                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                      Domicilio
+                    </td>
+                    <td className="px-5 py-3 text-gray-800">
+                      Calle Melchor Enríco Camediografo, 9, 2.º A<br />31500 Tudela (Navarra), España
+                    </td>
+                  </tr>
+                  <tr className="border-b border-gray-200">
+                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                      Nombre comercial
                     </td>
                     <td className="px-5 py-3 text-gray-800">BuscayCurra</td>
                   </tr>
