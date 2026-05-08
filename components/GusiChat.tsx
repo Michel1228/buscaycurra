@@ -128,7 +128,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
-  const pdfIframeRef = useRef<HTMLIFrameElement>(null);
   const router = useRouter();
 
   // ============================================
@@ -410,32 +409,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
 
   function generarEnlaceCV(datos: Record<string, unknown>): string {
     return `https://buscaycurra.es/app/curriculum`;
-  }
-
-  async function descargarCVVisual() {
-    if (!cvGuardado || !pdfIframeRef.current) return;
-    try {
-      const res = await fetch("/api/cv/generar-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cvGuardado),
-      });
-      const { html } = await res.json();
-      if (!html) return;
-      const iframe = pdfIframeRef.current;
-      // Dimensionar antes de cargar para que el layout del CV sea correcto
-      iframe.style.width = "21cm";
-      iframe.style.height = "29.7cm";
-      iframe.srcdoc = html;
-      iframe.onload = () => {
-        setTimeout(() => {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-        }, 400);
-      };
-    } catch {
-      // silencioso
-    }
   }
 
   function generarCVTexto(datos: Record<string, unknown>): string {
@@ -1130,12 +1103,14 @@ Ya tengo tus datos guardados. Voy a:
                         >
                           ✏️ Editar
                         </a>
-                        <button
-                          onClick={descargarCVVisual}
+                        <a
+                          href={userId ? `/api/cv/imprimir?userId=${userId}` : "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-xs bg-[#22c55e] text-white px-3 py-1.5 rounded-lg hover:bg-[#16a34a] transition-colors"
                         >
                           ⬇️ Descargar PDF
-                        </button>
+                        </a>
                         <button
                           onClick={() => enviarMensaje("__ENVIO_AUTO__")}
                           className="text-xs bg-[#3b82f6] text-white px-3 py-1.5 rounded-lg hover:bg-[#2563eb] transition-colors"
@@ -1204,11 +1179,6 @@ Ya tengo tus datos guardados. Voy a:
 
       {/* Input */}
       <div className="p-3 border-t border-[#2a2d35]">
-        <iframe
-          ref={pdfIframeRef}
-          title="cv-pdf"
-          style={{ position: "fixed", top: "-9999px", left: "-9999px", border: "none" }}
-        />
         <input
           type="file"
           ref={fileRef}
