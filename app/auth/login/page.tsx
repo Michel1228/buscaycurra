@@ -61,19 +61,19 @@ export default function LoginPage() {
           </Link>
 
           <p className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: "#22c55e" }}>
-            Por qué no InfoJobs
+            InfoJobs · LinkedIn · Indeed · Tecnoempleo
           </p>
           <h2 className="text-3xl font-bold leading-tight mb-3" style={{ color: "#f1f5f9" }}>
-            Los portales te dejan<br />
-            <span style={{ color: "#22c55e" }}>entre miles de CVs.</span><br />
-            <span style={{ color: "#f1f5f9" }}>Guzzi trabaja para ti.</span>
+            En los portales eres<br />
+            <span style={{ color: "#ef4444" }}>uno más entre miles.</span><br />
+            <span style={{ color: "#22c55e" }}>Aquí, Guzzi lucha por ti.</span>
           </h2>
-          <p className="text-sm mb-8" style={{ color: "#64748b" }}>
-            Mientras los demás esperan a que las empresas los llamen, Guzzi aplica por ellos cada día.
+          <p className="text-sm mb-6" style={{ color: "#64748b" }}>
+            Cada oferta en InfoJobs recibe <strong style={{ color: "#94a3b8" }}>300 CVs iguales</strong>. El tuyo nunca se lee. Nosotros lo cambiamos.
           </p>
 
           {/* Comparativa */}
-          <div className="rounded-xl overflow-hidden mb-8" style={{ border: "1px solid #252836" }}>
+          <div className="rounded-xl overflow-hidden mb-6" style={{ border: "1px solid #252836" }}>
             <div className="px-4 py-2 text-[10px] font-bold grid grid-cols-3 gap-2"
               style={{ background: "#161922", color: "#475569" }}>
               <span></span>
@@ -81,16 +81,17 @@ export default function LoginPage() {
               <span className="text-center" style={{ color: "#22c55e" }}>BuscayCurra</span>
             </div>
             {[
-              { label: "Aplicaciones", ellos: "Tú lo haces todo", nosotros: "Guzzi aplica por ti" },
-              { label: "CV personalizado", ellos: "El mismo para todos", nosotros: "Carta IA por empresa" },
-              { label: "Seguimiento", ellos: "Sin respuesta 🤷", nosotros: "Historial completo" },
-              { label: "Precio", ellos: "Gratis pero inútil", nosotros: "Desde 0€" },
+              { label: "Tu CV llega", ellos: "Entre 300–2.000 iguales", nosotros: "Primero en la bandeja del RRHH" },
+              { label: "Quién aplica", ellos: "Tú, a mano, uno a uno", nosotros: "Guzzi, cada día, automático" },
+              { label: "CV adaptado", ellos: "El mismo para todas", nosotros: "Personalizado por IA por empresa" },
+              { label: "Seguimiento", ellos: "Nunca sabes nada", nosotros: "Ves cada lectura en tiempo real" },
+              { label: "Precio real", ellos: "0€ (inútil) o 39€/mes", nosotros: "9,99€/mes — todo incluido" },
             ].map((row, i) => (
               <div key={row.label}
                 className="px-4 py-2.5 grid grid-cols-3 gap-2 text-xs items-center"
                 style={{ background: i % 2 === 0 ? "#0f1117" : "#0a0c10", borderTop: "1px solid #1a1d27" }}>
                 <span style={{ color: "#94a3b8" }}>{row.label}</span>
-                <span className="text-center" style={{ color: "#475569" }}>✕ {row.ellos}</span>
+                <span className="text-center" style={{ color: "#ef4444" }}>✕ {row.ellos}</span>
                 <span className="text-center font-semibold" style={{ color: "#22c55e" }}>✓ {row.nosotros}</span>
               </div>
             ))}
@@ -98,14 +99,14 @@ export default function LoginPage() {
 
           <div className="flex items-center gap-2 text-xs" style={{ color: "#475569" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-            +400.000 ofertas activas en España ahora mismo
+            +400.000 ofertas activas · Jooble · Careerjet · Adzuna · y más
           </div>
         </div>
 
         <div className="relative z-10 flex items-center justify-between">
           <p className="text-xs" style={{ color: "#374151" }}>© 2025 BuscayCurra · Sin permanencia</p>
           <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#475569" }}>
-            ¿Eres empresa o ETT? →
+            ¿Eres empresa o recruiter? →
           </Link>
         </div>
       </div>

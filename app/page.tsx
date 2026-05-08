@@ -125,7 +125,7 @@ const faq = [
   },
   {
     q: "¿Es legal enviar CVs automáticamente a empresas?",
-    a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente que te representa, igual que una ETT o headhunter, pero sin cobrarte.",
+    a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente inteligente que te representa — sin cobrarte comisiones ni quedarse con parte de tu salario.",
   },
   {
     q: "¿En cuánto tiempo puedo encontrar trabajo?",

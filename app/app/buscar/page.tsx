@@ -254,15 +254,15 @@ function BuscarPageInner() {
           <div className="flex items-center gap-2.5">
             <span className="text-lg">💸</span>
             <div>
-              <p className="text-xs font-bold" style={{ color: "#22c55e" }}>Ahorra hasta 3.600 €/año</p>
-              <p className="text-[10px]" style={{ color: "#64748b" }}>vs usar una ETT — tu salario es 100% tuyo</p>
+              <p className="text-xs font-bold" style={{ color: "#22c55e" }}>CV propio, no uno entre 2.000</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>InfoJobs te mete en una cola — aquí Guzzi te pone delante</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">
             <span className="text-lg">🎯</span>
             <div>
               <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>Contrato directo con la empresa</p>
-              <p className="text-[10px]" style={{ color: "#64748b" }}>sin intermediarios, sin comisiones ocultas</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>sin esperar a que alguien en un portal te encuentre</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 ml-auto">

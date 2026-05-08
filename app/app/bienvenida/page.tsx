@@ -29,12 +29,13 @@ export default function BienvenidaPage() {
           </p>
         </div>
 
-        {/* Comparativa rápida ETT */}
+        {/* Comparativa rápida vs portales */}
         <div className="mb-8 p-4 rounded-xl text-center" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
           <p className="text-xs" style={{ color: "#94a3b8" }}>
-            <span style={{ color: "#22c55e" }}>💡 Recuerda:</span>{" "}
-            Una ETT se queda <span style={{ color: "#f59e0b" }}>~3.320€/año</span> de tu salario en comisiones.
-            Con BuscayCurra pagas <span style={{ color: "#22c55e" }}>119,88€/año</span> y el salario es 100% tuyo.
+            <span style={{ color: "#22c55e" }}>💡 Dato:</span>{" "}
+            En InfoJobs tu CV compite con{" "}<span style={{ color: "#f59e0b" }}>hasta 2.000 candidatos</span> por oferta.
+            Con Guzzi llega personalizado y en el momento exacto.{" "}
+            <span style={{ color: "#22c55e" }}>La diferencia se nota.</span>
           </p>
         </div>
 

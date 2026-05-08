@@ -24,12 +24,12 @@ const superpotencias = [
 ];
 
 const testimonios = [
-  { nombre: "María G.", ciudad: "Madrid", puesto: "Diseñadora gráfica", empresa: "Agencia creativa", texto: "En 3 semanas tenía 4 entrevistas. Nunca pensé que la IA pudiera adaptar mi CV tan bien a cada empresa." },
-  { nombre: "Carlos R.", ciudad: "Barcelona", puesto: "Programador junior", empresa: "Startup tech", texto: "La función de entrevista con IA me salvó. Me preguntaron exactamente lo que había practicado con BuscayCurra." },
-  { nombre: "Ana M.", ciudad: "Valencia", puesto: "Administrativa", empresa: "Empresa logística", texto: "Nunca pensé que un software podría mejorar tanto mi CV. Lo mandé a 200 empresas y tuve respuesta de 47." },
-  { nombre: "Pedro L.", ciudad: "Sevilla", puesto: "Electricista", empresa: "Instalaciones industriales", texto: "Me sorprendió que encontrara empresas de mi sector que yo no conocía. Y el CV adaptado a cada una marcó la diferencia." },
-  { nombre: "Laura T.", ciudad: "Bilbao", puesto: "Enfermera", empresa: "Clínica privada", texto: "El envío inteligente es real. Me llamaron a las 9:01 de la mañana, justo cuando el jefe de personal llegaba a la clínica." },
-  { nombre: "Javi S.", ciudad: "Zaragoza", puesto: "Mecánico", empresa: "Taller oficial", texto: "Encontré trabajo en 3 semanas. La combinación de búsqueda automática y CV adaptado marca la diferencia." },
+  { nombre: "María G.", ciudad: "Madrid", puesto: "Diseñadora gráfica", empresa: "Agencia creativa", texto: "Llevaba 4 meses en InfoJobs sin respuesta. Con BuscayCurra en 3 semanas tenía 4 entrevistas. La diferencia es que aquí mi CV llegaba personalizado, no era uno más." },
+  { nombre: "Carlos R.", ciudad: "Barcelona", puesto: "Programador junior", empresa: "Startup tech", texto: "La función de entrevista con IA me salvó. Me preguntaron exactamente lo que había practicado con BuscayCurra. En LinkedIn no tenía ni idea de cómo prepararme." },
+  { nombre: "Ana M.", ciudad: "Valencia", puesto: "Administrativa", empresa: "Empresa logística", texto: "En Indeed mandé el mismo CV 60 veces y nadie me llamó. Aquí mandé a 200 empresas con CV adaptado y tuve respuesta de 47. No es magia, es personalización." },
+  { nombre: "Pedro L.", ciudad: "Sevilla", puesto: "Electricista", empresa: "Instalaciones industriales", texto: "Me sorprendió que encontrara empresas de mi sector que yo ni conocía. Y el CV adaptado a cada una marcó la diferencia. En Tecnoempleo no tenía ni esa opción." },
+  { nombre: "Laura T.", ciudad: "Bilbao", puesto: "Enfermera", empresa: "Clínica privada", texto: "El envío inteligente es real. Me llamaron a las 9:01 de la mañana, justo cuando el jefe de personal llegaba. InfoJobs no sabe ni qué hora es en esa empresa." },
+  { nombre: "Javi S.", ciudad: "Zaragoza", puesto: "Mecánico", empresa: "Taller oficial", texto: "En LinkedIn Premium pagaba 39€ al mes y nadie me veía. Con 9,99€ aquí, Guzzi mandaba mi CV cada día. Encontré trabajo en 3 semanas." },
 ];
 
 
@@ -148,7 +148,7 @@ export default function HomePage() {
                 { num: "2.400+", label: "personas en activo" },
                 { num: "400K+", label: "ofertas en España" },
                 { num: "9,99€", label: "al mes, todo incluido" },
-                { num: "3.200€", label: "salario ahorrado al año" },
+                { num: "9,99€", label: "vs 39€/mes de InfoJobs Premium" },
               ].map((s) => (
                 <div key={s.label} className="card-game p-4 text-center">
                   <p className="text-2xl font-black" style={{ color: "#7ed56f" }}>{s.num}</p>
@@ -214,38 +214,39 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── PORTAL B2B ── */}
+        {/* ── COMPARATIVA vs portales ── */}
         <section className="py-20 px-4">
           <div className="max-w-4xl mx-auto">
-            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(15,26,10,0.7)", border: "1px solid rgba(126,213,111,0.15)" }}>
-              <div className="px-8 pt-10 pb-4 text-center">
-                <span className="text-3xl mb-4 block">🏢</span>
-                <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: "#f0ebe0" }}>
-                  ¿Eres empresa, ETT o agencia de RRHH?
-                </h2>
-                <p className="text-base max-w-xl mx-auto" style={{ color: "#b0a890" }}>
-                  Accede a nuestra base de candidatos activos, filtrados por sector, zona y disponibilidad. Sin suscripciones caras, sin listados masivos.
-                </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
+              InfoJobs, LinkedIn, Indeed… te tienen en una fila.
+            </h2>
+            <p className="text-center mb-12" style={{ color: "#706a58" }}>Tú aplicas. Ellos esperan. Guzzi trabaja por ti cada día.</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(15,26,10,0.6)", border: "1px solid rgba(126,213,111,0.12)" }}>
+              <div className="grid grid-cols-3 text-center text-sm font-bold py-4 px-4"
+                style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(126,213,111,0.1)" }}>
+                <div style={{ color: "#706a58" }}>Aspecto</div>
+                <div style={{ color: "#e07850" }}>InfoJobs / LinkedIn</div>
+                <div style={{ color: "#7ed56f" }}>BuscayCurra</div>
               </div>
-              <div className="grid md:grid-cols-3 gap-0 mt-8" style={{ borderTop: "1px solid rgba(126,213,111,0.08)" }}>
-                {[
-                  { icon: "🎯", titulo: "Candidatos activos", desc: "Solo perfiles que están buscando trabajo ahora mismo, con CV actualizado." },
-                  { icon: "⚡", titulo: "Filtros avanzados", desc: "Por sector, ciudad, experiencia, disponibilidad inmediata y más." },
-                  { icon: "💬", titulo: "Contacto directo", desc: "Sin intermediarios. Hablas directamente con el candidato." },
-                ].map((item, i) => (
-                  <div key={i} className="p-6 text-center" style={{ borderRight: i < 2 ? "1px solid rgba(126,213,111,0.06)" : "none" }}>
-                    <div className="text-2xl mb-3">{item.icon}</div>
-                    <h3 className="font-bold text-sm mb-2" style={{ color: "#f0ebe0" }}>{item.titulo}</h3>
-                    <p className="text-xs leading-relaxed" style={{ color: "#706a58" }}>{item.desc}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="px-8 pb-10 pt-6 text-center">
-                <Link href="/empresas" className="btn-game text-base !py-3.5 !px-10">
-                  Ver portal de empresas →
-                </Link>
-                <p className="text-xs mt-3" style={{ color: "#504a3a" }}>Primeros 10 contactos gratis · Sin tarjeta</p>
-              </div>
+              {[
+                { concepto: "Quién aplica por ti", ellos: "Tú, a mano, oferta por oferta", byc: "Guzzi aplica por ti solo" },
+                { concepto: "CV personalizado", ellos: "El mismo para todas", byc: "Adaptado por IA a cada oferta" },
+                { concepto: "Tu CV entre otros", ellos: "Entre 200-2.000 candidatos", byc: "Llega en el momento exacto" },
+                { concepto: "Seguimiento", ellos: "No sabes si lo leyeron", byc: "Ves cada envío en tiempo real" },
+                { concepto: "Prep. entrevista", ellos: "Ninguna ayuda", byc: "Simulacro con IA por empresa" },
+                { concepto: "Fuentes de ofertas", ellos: "Solo las de ese portal", byc: "+400.000 de Jooble, Careerjet…" },
+                { concepto: "Precio real", ellos: "Gratis (inútil) o 39€/mes", byc: "9,99€/mes — todo incluido" },
+              ].map((fila, i) => (
+                <div key={fila.concepto} className="grid grid-cols-3 text-center text-sm py-4 px-4 items-center gap-2"
+                  style={{ background: i % 2 === 0 ? "rgba(126,213,111,0.02)" : "transparent", borderBottom: "1px solid rgba(126,213,111,0.05)" }}>
+                  <div className="font-medium text-left text-xs md:text-sm" style={{ color: "#b0a890" }}>{fila.concepto}</div>
+                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#e07850" }}>❌ {fila.ellos}</div>
+                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#7ed56f" }}>✅ {fila.byc}</div>
+                </div>
+              ))}
+            </div>
+            <div className="text-center mt-10">
+              <Link href="/auth/registro" className="btn-game text-base !py-4 !px-10">Empieza gratis — Guzzi trabaja por ti</Link>
             </div>
           </div>
         </section>
