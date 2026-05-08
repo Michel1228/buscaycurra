@@ -23,24 +23,13 @@ const superpotencias = [
   { icon: "⚡", titulo: "Enviamos tu CV cuando más probabilidades tienes", desc: "Analizamos el horario de actividad de cada empresa: cuándo abren el email, cuándo está el responsable de RRHH, si trabajan en turno de noche. Tu CV llega en el momento exacto en que hay alguien para leerlo.", acento: "#a070d0" },
 ];
 
-const comparativaFilas = [
-  { concepto: "Coste mensual", ett: "~150€/mes en comisiones", byc: "9,99€/mes" },
-  { concepto: "Control sobre tu búsqueda", ett: "La ETT decide por ti", byc: "Tú decides siempre" },
-  { concepto: "Empresas a las que llegas", ett: "Solo las que trabajan con esa ETT", byc: "Cualquier empresa de España" },
-  { concepto: "Adaptación de CV", ett: "CV genérico para todas", byc: "CV adaptado a cada oferta" },
-  { concepto: "Entrevistas", ett: "Sin preparación", byc: "Simulacro con IA por empresa" },
-  { concepto: "Transparencia", ett: "No sabes qué hacen con tu perfil", byc: "Ves cada envío en tiempo real" },
-  { concepto: "Horario de envío", ett: "El que les conviene", byc: "El mejor momento para cada empresa" },
-  { concepto: "Ahorro en 12 meses", ett: "Pagas ~3.320€ en comisiones", byc: "Pagas 119,88€. Ahorras ~3.200€" },
-];
-
 const testimonios = [
-  { nombre: "María G.", ciudad: "Madrid", puesto: "Diseñadora gráfica", empresa: "Agencia creativa", texto: "En 3 semanas tenía 4 entrevistas. La ETT con la que estaba tardó 2 meses en conseguirme una sola." },
+  { nombre: "María G.", ciudad: "Madrid", puesto: "Diseñadora gráfica", empresa: "Agencia creativa", texto: "En 3 semanas tenía 4 entrevistas. Nunca pensé que la IA pudiera adaptar mi CV tan bien a cada empresa." },
   { nombre: "Carlos R.", ciudad: "Barcelona", puesto: "Programador junior", empresa: "Startup tech", texto: "La función de entrevista con IA me salvó. Me preguntaron exactamente lo que había practicado con BuscayCurra." },
   { nombre: "Ana M.", ciudad: "Valencia", puesto: "Administrativa", empresa: "Empresa logística", texto: "Nunca pensé que un software podría mejorar tanto mi CV. Lo mandé a 200 empresas y tuve respuesta de 47." },
   { nombre: "Pedro L.", ciudad: "Sevilla", puesto: "Electricista", empresa: "Instalaciones industriales", texto: "Me sorprendió que encontrara empresas de mi sector que yo no conocía. Y el CV adaptado a cada una marcó la diferencia." },
   { nombre: "Laura T.", ciudad: "Bilbao", puesto: "Enfermera", empresa: "Clínica privada", texto: "El envío inteligente es real. Me llamaron a las 9:01 de la mañana, justo cuando el jefe de personal llegaba a la clínica." },
-  { nombre: "Javi S.", ciudad: "Zaragoza", puesto: "Mecánico", empresa: "Taller oficial", texto: "Ahorré 3.200€ en comisiones de ETT. Y encontré trabajo en menos tiempo. No tiene ningún sentido seguir usando ETTs." },
+  { nombre: "Javi S.", ciudad: "Zaragoza", puesto: "Mecánico", empresa: "Taller oficial", texto: "Encontré trabajo en 3 semanas. La combinación de búsqueda automática y CV adaptado marca la diferencia." },
 ];
 
 
@@ -159,7 +148,7 @@ export default function HomePage() {
                 { num: "2.400+", label: "personas en activo" },
                 { num: "400K+", label: "ofertas en España" },
                 { num: "9,99€", label: "al mes, todo incluido" },
-                { num: "3.200€", label: "ahorro vs ETT / año" },
+                { num: "3.200€", label: "salario ahorrado al año" },
               ].map((s) => (
                 <div key={s.label} className="card-game p-4 text-center">
                   <p className="text-2xl font-black" style={{ color: "#7ed56f" }}>{s.num}</p>
@@ -225,30 +214,38 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── COMPARATIVA ETT vs BuscayCurra ── */}
+        {/* ── PORTAL B2B ── */}
         <section className="py-20 px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
-              ¿ETT o BuscayCurra? Haz los números.
-            </h2>
-            <p className="text-center mb-12" style={{ color: "#706a58" }}>Lo que ganas y pierdes en 12 meses. Los datos no mienten.</p>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(15,26,10,0.6)", border: "1px solid rgba(126,213,111,0.12)" }}>
-              <div className="grid grid-cols-3 text-center text-sm font-bold py-4 px-4" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(126,213,111,0.1)" }}>
-                <div style={{ color: "#706a58" }}>Aspecto</div>
-                <div style={{ color: "#e07850" }}>ETT</div>
-                <div style={{ color: "#7ed56f" }}>BuscayCurra</div>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(15,26,10,0.7)", border: "1px solid rgba(126,213,111,0.15)" }}>
+              <div className="px-8 pt-10 pb-4 text-center">
+                <span className="text-3xl mb-4 block">🏢</span>
+                <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: "#f0ebe0" }}>
+                  ¿Eres empresa, ETT o agencia de RRHH?
+                </h2>
+                <p className="text-base max-w-xl mx-auto" style={{ color: "#b0a890" }}>
+                  Accede a nuestra base de candidatos activos, filtrados por sector, zona y disponibilidad. Sin suscripciones caras, sin listados masivos.
+                </p>
               </div>
-              {comparativaFilas.map((fila, i) => (
-                <div key={fila.concepto} className="grid grid-cols-3 text-center text-sm py-4 px-4 items-center gap-2"
-                  style={{ background: i % 2 === 0 ? "rgba(126,213,111,0.02)" : "transparent", borderBottom: "1px solid rgba(126,213,111,0.05)" }}>
-                  <div className="font-medium text-left text-xs md:text-sm" style={{ color: "#b0a890" }}>{fila.concepto}</div>
-                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#e07850" }}>❌ {fila.ett}</div>
-                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#7ed56f" }}>✅ {fila.byc}</div>
-                </div>
-              ))}
-            </div>
-            <div className="text-center mt-10">
-              <Link href="/auth/registro" className="btn-game text-base !py-4 !px-10">Empieza gratis — Sin comisiones</Link>
+              <div className="grid md:grid-cols-3 gap-0 mt-8" style={{ borderTop: "1px solid rgba(126,213,111,0.08)" }}>
+                {[
+                  { icon: "🎯", titulo: "Candidatos activos", desc: "Solo perfiles que están buscando trabajo ahora mismo, con CV actualizado." },
+                  { icon: "⚡", titulo: "Filtros avanzados", desc: "Por sector, ciudad, experiencia, disponibilidad inmediata y más." },
+                  { icon: "💬", titulo: "Contacto directo", desc: "Sin intermediarios. Hablas directamente con el candidato." },
+                ].map((item, i) => (
+                  <div key={i} className="p-6 text-center" style={{ borderRight: i < 2 ? "1px solid rgba(126,213,111,0.06)" : "none" }}>
+                    <div className="text-2xl mb-3">{item.icon}</div>
+                    <h3 className="font-bold text-sm mb-2" style={{ color: "#f0ebe0" }}>{item.titulo}</h3>
+                    <p className="text-xs leading-relaxed" style={{ color: "#706a58" }}>{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="px-8 pb-10 pt-6 text-center">
+                <Link href="/empresas" className="btn-game text-base !py-3.5 !px-10">
+                  Ver portal de empresas →
+                </Link>
+                <p className="text-xs mt-3" style={{ color: "#504a3a" }}>Primeros 10 contactos gratis · Sin tarjeta</p>
+              </div>
             </div>
           </div>
         </section>
