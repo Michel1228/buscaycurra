@@ -78,6 +78,7 @@ export default function CurriculumPage() {
       setToken(session.access_token);
 
       // Cargar CV guardado
+      let fotoUrlCargada = "";
       try {
         const res = await fetch(`/api/gusi/cv?userId=${session.user.id}`);
         if (res.ok) {
@@ -125,6 +126,7 @@ export default function CurriculumPage() {
 
             // Foto desde CV guardado
             if (cv.fotoUrl && typeof cv.fotoUrl === "string") {
+              fotoUrlCargada = cv.fotoUrl;
               setFotoUrl(cv.fotoUrl);
             }
 
@@ -148,7 +150,7 @@ export default function CurriculumPage() {
 
       // Cargar perfil (solo para rellenar huecos que no estén en el CV)
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, ciudad, sector, visible_empresas")
+        .select("full_name, phone, ciudad, sector, visible_empresas, avatar_url")
         .eq("id", session.user.id).single();
 
       if (p) {
@@ -162,6 +164,10 @@ export default function CurriculumPage() {
           ciudad: prev.ciudad || p.ciudad || "",
         }));
         setVisibleEmpresas(p.visible_empresas === true);
+        // Fallback: usar avatar_url del perfil si no hay foto en el CV guardado
+        if (!fotoUrlCargada && p.avatar_url) {
+          setFotoUrl(p.avatar_url as string);
+        }
       }
 
       setCargando(false);
@@ -176,7 +182,7 @@ export default function CurriculumPage() {
       guardarCV();
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [form, userId]);
+  }, [form, fotoUrl, userId]);
 
   async function toggleVisibilidad(value: boolean) {
     setVisibleEmpresas(value);
@@ -190,10 +196,11 @@ export default function CurriculumPage() {
   async function guardarCV() {
     if (!userId) return;
     try {
+      const cvData = { ...form, fotoUrl: fotoUrl || undefined };
       await fetch("/api/gusi/cv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, cvData: form, cvText: JSON.stringify(form) }),
+        body: JSON.stringify({ userId, cvData, cvText: JSON.stringify(cvData) }),
       });
       setGuardado(true);
       setTimeout(() => setGuardado(false), 2000);
