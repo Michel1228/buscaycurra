@@ -15,18 +15,17 @@ export async function POST(request: NextRequest) {
       jobTitle?: string;
       priority?: "normal" | "prioritario";
       useAIPersonalization?: boolean;
+      scheduledFor?: string; // ISO string elegido por el usuario
     };
 
-    const { userId, companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization } = body;
+    const { userId, companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization, scheduledFor } = body;
 
     if (!userId) {
       return NextResponse.json({ error: "El campo userId es obligatorio" }, { status: 400 });
     }
-
     if (!companyEmail) {
       return NextResponse.json({ error: "El campo companyEmail es obligatorio" }, { status: 400 });
     }
-
     if (!companyName) {
       return NextResponse.json({ error: "El campo companyName es obligatorio" }, { status: 400 });
     }
@@ -55,6 +54,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const fechaElegida = scheduledFor ? new Date(scheduledFor) : undefined;
+
     const resultado = await scheduleCV(
       userId,
       {
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
       {
         priority: priority ?? "normal",
         useAIPersonalization: useAIPersonalization ?? true,
+        scheduledFor: fechaElegida,
       }
     );
 
@@ -73,26 +75,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: resultado.error }, { status: 400 });
     }
 
-    // Enviar email de confirmacion al usuario (silencioso si falla)
+    // Email de confirmación inmediata al usuario usando Supabase Auth (tiene el email real)
     try {
       const sb = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || "http://placeholder",
-        process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
-      const { data: profile } = await sb.from("profiles").select("email, nombre").eq("id", userId).single();
-      if (profile?.email) {
+      const { data: { user: authUser } } = await sb.auth.admin.getUserById(userId);
+      const { data: perfil } = await sb.from("profiles").select("full_name").eq("id", userId).single();
+
+      if (authUser?.email) {
         const { sendConfirmationEmail } = await import("@/lib/email/smtp-sender");
         await sendConfirmationEmail({
-          userEmail: profile.email,
-          userName: profile.nombre || "Usuario",
+          userEmail: authUser.email,
+          userName: perfil?.full_name || authUser.email.split("@")[0],
           companyName,
           companyEmail,
           jobTitle,
           companyUrl,
-          sentAt: new Date(),
+          sentAt: resultado.scheduledFor,
         });
       }
-    } catch { /* silencioso si no hay SMTP configurado */ }
+    } catch (err) {
+      console.error("[API send] Error enviando confirmación:", (err as Error).message);
+    }
 
     return NextResponse.json(
       {

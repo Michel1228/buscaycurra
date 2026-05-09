@@ -80,7 +80,8 @@ const ZONA_HORARIA = "Europe/Madrid";
 export interface SendPreferences {
   priority?: "normal" | "prioritario";
   useAIPersonalization?: boolean;
-  preferredHour?: number; // Hora preferida (9-18)
+  preferredHour?: number;
+  scheduledFor?: Date; // Fecha/hora elegida por el usuario
 }
 
 /** Información de la empresa destino */
@@ -205,8 +206,8 @@ export async function scheduleCV(
     };
   }
 
-  // ── 3. Calcular cuándo enviar ────────────────────────────────────────────
-  const fechaEnvio = getNextBusinessHour();
+  // ── 3. Calcular cuándo enviar (hora elegida por usuario o próxima laboral) ─
+  const fechaEnvio = preferences.scheduledFor ?? getNextBusinessHour();
   const ahora = Date.now();
   const delayMs = Math.max(0, fechaEnvio.getTime() - ahora);
 
