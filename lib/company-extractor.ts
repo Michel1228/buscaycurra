@@ -36,6 +36,24 @@ const PATRONES_EMAIL_RRHH = [
   /info@[\w.-]+\.\w+/i,
 ];
 
+// Emails placeholder/fake que el scraper no debe coger nunca
+const EMAILS_FALSOS = new Set([
+  "tu@email.com", "email@email.com", "ejemplo@ejemplo.com", "test@test.com",
+  "user@example.com", "name@email.com", "correo@correo.com", "mail@mail.com",
+  "your@email.com", "sample@sample.com", "demo@demo.com", "info@example.com",
+]);
+const DOMINIOS_FALSOS = ["example.com", "ejemplo.com", "test.com", "sample.com", "domain.com", "email.com"];
+
+function esEmailFalso(email: string): boolean {
+  const lower = email.toLowerCase();
+  if (EMAILS_FALSOS.has(lower)) return true;
+  const dominio = lower.split("@")[1] ?? "";
+  if (DOMINIOS_FALSOS.some(d => dominio === d)) return true;
+  // Emails que contienen palabras de placeholder
+  if (/^(tu|your|name|usuario|user|correo|mail|email|test|demo|ejemplo|sample)@/.test(lower)) return true;
+  return false;
+}
+
 // Patrones de teléfono español
 const PATRONES_TELEFONO = [
   /(?:\+34\s?)?[6789]\d{2}[\s.-]?\d{3}[\s.-]?\d{3}/g,
@@ -69,21 +87,25 @@ export async function extraerInfoEmpresa(url: string): Promise<DatosEmpresa> {
   try {
     const html = await fetchPagina(url, 8000);
     if (html) {
-      // Buscar emails en el HTML
+      // Buscar emails en el HTML — primero patrones RRHH específicos
       for (const patron of PATRONES_EMAIL_RRHH) {
         const match = html.match(patron);
         if (match) {
-          emailRrhh = match[0].toLowerCase();
-          console.log(`📧 Email encontrado en web: ${emailRrhh}`);
-          break;
+          const candidato = match[0].toLowerCase();
+          if (!esEmailFalso(candidato)) {
+            emailRrhh = candidato;
+            console.log(`📧 Email encontrado en web: ${emailRrhh}`);
+            break;
+          }
         }
       }
 
-      // Si no hay email RRHH, buscar cualquier email
+      // Si no hay email RRHH, buscar cualquier email (filtrando placeholders)
       if (!emailRrhh) {
-        const anyEmail = html.match(/[\w.-]+@[\w.-]+\.\w{2,}/);
-        if (anyEmail) {
-          emailRrhh = anyEmail[0].toLowerCase();
+        const todos = html.match(/[\w.-]+@[\w.-]+\.\w{2,}/g) ?? [];
+        const valido = todos.find(e => !esEmailFalso(e.toLowerCase()));
+        if (valido) {
+          emailRrhh = valido.toLowerCase();
           console.log(`📧 Email genérico encontrado: ${emailRrhh}`);
         }
       }
