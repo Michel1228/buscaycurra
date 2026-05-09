@@ -186,11 +186,17 @@ export default function CurriculumPage() {
 
   async function toggleVisibilidad(value: boolean) {
     setVisibleEmpresas(value);
-    if (!userId) return;
-    await getSupabaseBrowser()
-      .from("profiles")
-      .update({ visible_empresas: value })
-      .eq("id", userId);
+    if (!token) return;
+    const res = await fetch("/api/perfil/visibilidad", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ visible: value }),
+    });
+    if (!res.ok) {
+      // Revertir si falla
+      setVisibleEmpresas(!value);
+      setError("No se pudo guardar la visibilidad. Inténtalo de nuevo.");
+    }
   }
 
   async function guardarCV() {
