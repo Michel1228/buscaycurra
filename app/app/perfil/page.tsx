@@ -32,6 +32,7 @@ export default function PerfilPage() {
   const [tab, setTab] = useState<"perfil" | "seguridad" | "plan">("perfil");
   const [planActual, setPlanActual] = useState<"free" | "esencial" | "basico" | "pro" | "empresa">("free");
   const [cargandoPlan, setCargandoPlan] = useState(false);
+  const [errorPlan, setErrorPlan] = useState<string | null>(null);
   const [nuevaPassword, setNuevaPassword] = useState("");
   const [confirmarPassword, setConfirmarPassword] = useState("");
   const [msgSeguridad, setMsgSeguridad] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
@@ -133,6 +134,7 @@ export default function PerfilPage() {
 
   async function irACheckout(plan: "esencial" | "basico" | "pro" | "empresa") {
     setCargandoPlan(true);
+    setErrorPlan(null);
     try {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       if (!session) { router.push("/auth/login"); return; }
@@ -142,8 +144,9 @@ export default function PerfilPage() {
         body: JSON.stringify({ plan }),
       });
       const data = await res.json() as { url?: string; error?: string };
-      if (data.url) window.location.href = data.url;
-    } catch { /* ignore */ }
+      if (data.url) { window.location.href = data.url; return; }
+      if (data.error) setErrorPlan(data.error);
+    } catch { setErrorPlan("Error de conexión. Inténtalo de nuevo."); }
     finally { setCargandoPlan(false); }
   }
 
@@ -307,6 +310,12 @@ export default function PerfilPage() {
                 </div>
                 <p className="text-xs" style={{ color: "#94a3b8" }}>{info.desc}</p>
               </div>
+
+              {errorPlan && (
+                <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  ❌ {errorPlan}
+                </div>
+              )}
 
               {/* Opciones de upgrade */}
               {planActual !== "empresa" && (
