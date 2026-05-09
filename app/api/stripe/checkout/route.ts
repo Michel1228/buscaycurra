@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SITE_URL ??
       `${request.nextUrl.protocol}//${request.nextUrl.host}`;
 
-    const sessionParams: Parameters<typeof getStripe().checkout.sessions.create>[0] = {
+    const sessionParams: Record<string, unknown> = {
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
@@ -77,11 +77,12 @@ export async function POST(request: NextRequest) {
 
     // Si ya tiene customer_id en Stripe, reutilizarlo para no duplicar clientes
     if (perfil?.stripe_customer_id) {
-      (sessionParams as Record<string, unknown>).customer = perfil.stripe_customer_id;
-      delete (sessionParams as Record<string, unknown>).customer_email;
+      sessionParams.customer = perfil.stripe_customer_id;
+      delete sessionParams.customer_email;
     }
 
-    const session = await getStripe().checkout.sessions.create(sessionParams);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const session = await getStripe().checkout.sessions.create(sessionParams as any);
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
