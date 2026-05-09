@@ -2,7 +2,7 @@ name: Build & Deploy to VPS
 
 on:
   push:
-    branches: [main]
+    branches: [unified-production, main]
 
 env:
   REGISTRY: ghcr.io/michel1228/buscaycurra
