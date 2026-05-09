@@ -225,7 +225,7 @@ export async function getJobStats(): Promise<Record<string, number>> {
     `SELECT "sourceName", COUNT(*) as count FROM "JobListing" WHERE "isActive" = true GROUP BY "sourceName" ORDER BY count DESC`
   );
   const stats: Record<string, number> = {};
-  for (const row of res.rows) stats[row.sourcename] = parseInt(row.count);
+  for (const row of res.rows) stats[row["sourceName"] as string] = parseInt(row.count as string);
   stats.total = Object.values(stats).reduce((a, b) => a + b, 0);
   return stats;
 }
