@@ -12,10 +12,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getStripe, getPlanFromPriceId } from "@/lib/stripe";
 import Stripe from "stripe";
-import { Resend } from "resend";
+import { sendPaymentConfirmationEmail } from "@/lib/email/smtp-sender";
 
-// ─── Necesario: deshabilitar el body parser de Next.js para webhooks ──────────
-// Stripe necesita el body en bruto para verificar la firma
 export const runtime = "nodejs";
 
 const NOMBRES_PLAN: Record<string, string> = {
@@ -24,42 +22,6 @@ const NOMBRES_PLAN: Record<string, string> = {
   pro:      "Pro — 9,99€/mes",
   empresa:  "Empresa — 49,99€/mes",
 };
-
-async function enviarEmailConfirmacion(emailDestino: string, plan: string) {
-  if (!process.env.RESEND_API_KEY) return;
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const nombrePlan = NOMBRES_PLAN[plan] ?? plan;
-  await resend.emails.send({
-    from: process.env.FROM_EMAIL ?? "noreply@buscaycurra.es",
-    to: emailDestino,
-    subject: `✅ Tu plan ${plan.charAt(0).toUpperCase() + plan.slice(1)} ya está activo — BuscayCurra`,
-    html: `
-      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0f1117;color:#f1f5f9;padding:32px;border-radius:12px">
-        <div style="text-align:center;margin-bottom:24px">
-          <span style="font-size:32px">🐛</span>
-          <h1 style="color:#22c55e;margin:8px 0 4px">¡Pago confirmado!</h1>
-          <p style="color:#94a3b8;margin:0">BuscayCurra</p>
-        </div>
-        <div style="background:#161922;border:1px solid #2d3142;border-radius:8px;padding:20px;margin-bottom:20px">
-          <p style="margin:0 0 8px;color:#64748b;font-size:13px">Plan activado</p>
-          <p style="margin:0;font-size:18px;font-weight:700;color:#22c55e">${nombrePlan}</p>
-        </div>
-        <p style="color:#94a3b8;font-size:14px;line-height:1.6">
-          Tu suscripción está activa. Puedes acceder a todas las funciones de tu plan desde la aplicación.
-        </p>
-        <div style="text-align:center;margin-top:24px">
-          <a href="https://buscaycurra.es/app/gusi"
-             style="background:#22c55e;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">
-            Ir a BuscayCurra →
-          </a>
-        </div>
-        <p style="color:#475569;font-size:12px;margin-top:24px;text-align:center">
-          Puedes gestionar tu suscripción en cualquier momento desde <a href="https://buscaycurra.es/app/perfil" style="color:#22c55e">Mi cuenta</a>.
-        </p>
-      </div>
-    `,
-  }).catch(err => console.error("[stripe/webhook] Error enviando email:", err));
-}
 
 // ─── POST /api/stripe/webhook ─────────────────────────────────────────────────
 
@@ -171,7 +133,10 @@ export async function POST(request: NextRequest) {
           // Enviar email de confirmación
           const emailCliente = session.customer_details?.email ?? (session.customer_email as string | null);
           if (emailCliente) {
-            await enviarEmailConfirmacion(emailCliente, planFinal);
+            const nombrePlan = NOMBRES_PLAN[planFinal] ?? planFinal;
+            await sendPaymentConfirmationEmail(emailCliente, planFinal, nombrePlan).catch(
+              err => console.error("[stripe/webhook] Error enviando email:", err)
+            );
           }
         }
         break;
