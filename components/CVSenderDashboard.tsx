@@ -63,9 +63,9 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [respuestaId, setRespuestaId] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (silencioso = false) => {
     try {
-      setLoading(true); setError(null);
+      if (!silencioso) { setLoading(true); setError(null); }
       const res = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`);
       const data = await res.json() as {
         success?: boolean; error?: string;
@@ -77,13 +77,13 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       setHistory(data.history ?? []);
       setStats(data.stats ?? null);
       setRateLimit(data.rateLimitInfo ?? null);
-    } catch (err) { setError((err as Error).message); }
-    finally { setLoading(false); }
+    } catch (err) { if (!silencioso) setError((err as Error).message); }
+    finally { if (!silencioso) setLoading(false); }
   }, [userId]);
 
   useEffect(() => {
     void loadData();
-    const iv = setInterval(() => void loadData(), 30_000);
+    const iv = setInterval(() => void loadData(true), 30_000);
     return () => clearInterval(iv);
   }, [loadData]);
 
