@@ -38,20 +38,54 @@ jobs:
             NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN
             NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
 
-      - name: Deploy to Easypanel with SHA tag
-        run: |
-          TOKEN=$(curl -sf -X POST "http://187.124.37.183:3000/api/trpc/auth.login" \
-            -H "Content-Type: application/json" \
-            -d '{"json":{"email":"michelbatistagonzalez1992@gmail.com","password":"iBihfBfw3xdNAdD"}}' \
-            | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['data']['json']['token'])")
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 187.124.37.183
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 120s
+          script: |
+            # Pull latest image from GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-          curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.updateSourceImage" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $TOKEN" \
-            -d "{\"json\":{\"projectName\":\"buscaycurra\",\"serviceName\":\"nextjs\",\"image\":\"${{ env.REGISTRY }}:${{ github.sha }}\",\"username\":\"${{ github.actor }}\",\"password\":\"${{ secrets.GITHUB_TOKEN }}\"}}"
+            docker pull ${{ env.REGISTRY }}:latest
 
-          curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.deployService" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $TOKEN" \
-            -d '{"json":{"projectName":"buscaycurra","serviceName":"nextjs"}}' \
-            && echo "Deploy triggered" || echo "Warning: deploy failed"
+            # Stop and remove old container
+            docker stop buscaycurra-nextjs 2>/dev/null || true
+            docker rm   buscaycurra-nextjs 2>/dev/null || true
+
+            # Start new container with all env vars
+            docker run -d \
+              --name buscaycurra-nextjs \
+              --network busca-y-curra_default \
+              -p 8892:3000 \
+              --restart unless-stopped \
+              -e NODE_ENV=production \
+              -e REDIS_URL=redis://buscaycurra-redis:6379 \
+              -e ADMIN_SECRET=${{ secrets.ADMIN_SECRET }} \
+              -e SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} \
+              -e STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} \
+              -e STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }} \
+              -e STRIPE_PRICE_ESENCIAL=${{ secrets.STRIPE_PRICE_ESENCIAL }} \
+              -e STRIPE_PRICE_BASICO=${{ secrets.STRIPE_PRICE_BASICO }} \
+              -e STRIPE_PRICE_PRO=${{ secrets.STRIPE_PRICE_PRO }} \
+              -e STRIPE_PRICE_EMPRESA=${{ secrets.STRIPE_PRICE_EMPRESA }} \
+              -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} \
+              -e JOOBLE_API_KEY=${{ secrets.JOOBLE_API_KEY }} \
+              -e CAREERJET_API_KEY=${{ secrets.CAREERJET_API_KEY }} \
+              -e ADZUNA_APP_ID=${{ secrets.ADZUNA_APP_ID }} \
+              -e ADZUNA_APP_KEY=${{ secrets.ADZUNA_APP_KEY }} \
+              -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
+              -e FROM_EMAIL=noreply@buscaycurra.es \
+              ${{ env.REGISTRY }}:latest
+
+            # Wait and verify
+            sleep 8
+            STATUS=$(docker inspect buscaycurra-nextjs --format='{{.State.Status}}' 2>/dev/null)
+            if [ "$STATUS" != "running" ]; then
+              echo "ERROR: Container not running after deploy"
+              docker logs buscaycurra-nextjs --tail 20
+              exit 1
+            fi
+            echo "Deploy OK — container status: $STATUS"
