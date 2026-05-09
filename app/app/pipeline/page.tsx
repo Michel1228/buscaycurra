@@ -123,6 +123,9 @@ export default function PipelinePage() {
       pendiente: "aplicado",
       visto: "en_revision",
       respuesta: "entrevista",
+      oferta: "oferta",
+      rechazado: "rechazado",
+      contratado: "contratado",
     };
     return map[estado] || "aplicado";
   }
@@ -132,10 +135,15 @@ export default function PipelinePage() {
     try {
       const session = (await getSupabaseBrowser().auth.getSession()).data.session;
       if (!session) return;
-      const estadoDb = nuevoEstado === "aplicado" ? "enviado" :
-        nuevoEstado === "en_revision" ? "visto" :
-        nuevoEstado === "entrevista" ? "respuesta" : "enviado";
-      await getSupabaseBrowser().from("cv_sends").update({ estado: estadoDb }).eq("id", id);
+      const estadoDb: Record<EstadoCandidatura, string> = {
+        aplicado: "enviado",
+        en_revision: "visto",
+        entrevista: "respuesta",
+        oferta: "oferta",
+        rechazado: "rechazado",
+        contratado: "contratado",
+      };
+      await getSupabaseBrowser().from("cv_sends").update({ estado: estadoDb[nuevoEstado] }).eq("id", id);
     } catch (e) {
       console.error("Error actualizando estado:", e);
     }

@@ -43,7 +43,8 @@ function ReferidosPageInner() {
       }
     }
     cargar();
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function copiarLink() {
     const link = `https://buscaycurra.es/auth/registro?ref=${codigo}`;

@@ -45,12 +45,13 @@ export default function SalariosPage() {
   const [data, setData] = useState<SalarioData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function buscar() {
-    if (!puesto.trim()) return;
+  async function buscar(puestoOverride?: string) {
+    const textoBuscar = (puestoOverride ?? puesto).trim();
+    if (!textoBuscar) return;
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set("puesto", puesto.trim());
+      params.set("puesto", textoBuscar);
       if (provincia) params.set("provincia", provincia);
       const res = await fetch(`/api/salarios?${params.toString()}`);
       if (res.ok) {
@@ -97,7 +98,7 @@ export default function SalariosPage() {
               </select>
             </div>
             <div className="flex items-end">
-              <button onClick={buscar} disabled={loading} className="btn-game w-full sm:w-auto px-5 py-2 text-xs disabled:opacity-50">
+              <button onClick={() => void buscar()} disabled={loading} className="btn-game w-full sm:w-auto px-5 py-2 text-xs disabled:opacity-50">
                 {loading ? "Buscando..." : "Comparar"}
               </button>
             </div>
@@ -105,7 +106,7 @@ export default function SalariosPage() {
 
           <div className="flex flex-wrap gap-1.5 mt-3">
             {PUESTOS_POPULARES.slice(0, 8).map(p => (
-              <button key={p} onClick={() => { setPuesto(p); }}
+              <button key={p} onClick={() => { setPuesto(p); void buscar(p); }}
                 className="px-2 py-0.5 rounded-md text-[10px] transition hover:opacity-80"
                 style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", color: "#22c55e" }}>
                 {p}

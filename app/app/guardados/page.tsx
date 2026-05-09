@@ -71,7 +71,8 @@ export default function GuardadosPage() {
       }
     }
     cargar();
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (cargando) {
     return (

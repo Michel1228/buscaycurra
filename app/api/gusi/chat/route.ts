@@ -372,10 +372,12 @@ export async function POST(req: NextRequest) {
     const systemPrompt = buildSystemPrompt(cvData);
     const messages = [
       { role: "system" as const, content: systemPrompt },
-      ...history.slice(-8).map((m: { role: string; text: string }) => ({
-        role: (m.role === "gusi" ? "assistant" : "user") as "assistant" | "user",
-        content: m.text,
-      })),
+      ...history.slice(-8)
+        .filter((m: { role: string; text: string }) => m.text)
+        .map((m: { role: string; text: string }) => ({
+          role: (m.role === "gusi" ? "assistant" : "user") as "assistant" | "user",
+          content: m.text,
+        })),
       { role: "user" as const, content: message },
     ];
 
