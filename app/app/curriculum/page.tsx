@@ -203,14 +203,20 @@ export default function CurriculumPage() {
     if (!userId) return;
     try {
       const cvData = { ...form, fotoUrl: fotoUrl || undefined };
-      await fetch("/api/gusi/cv", {
+      const res = await fetch("/api/gusi/cv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, cvData, cvText: JSON.stringify(cvData) }),
       });
+      if (!res.ok) {
+        setError("No se pudo guardar el CV. Inténtalo de nuevo.");
+        return;
+      }
       setGuardado(true);
       setTimeout(() => setGuardado(false), 2000);
-    } catch { /* ignore */ }
+    } catch {
+      setError("Error de conexión al guardar el CV.");
+    }
   }
 
   async function subirPDF(file: File) {
