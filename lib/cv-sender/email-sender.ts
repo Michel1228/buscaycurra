@@ -140,79 +140,97 @@ function buildCVEmailHTML(
   coverLetter: string,
   companyName: string
 ): string {
+  const today = new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+
   const coverLetterHtml = coverLetter
     .split("\n")
     .filter((line) => line.trim())
-    .map((line) => `<p style="margin:0 0 12px 0;line-height:1.6;">${line}</p>`)
+    .map((line) => `<p style="margin:0 0 14px 0;line-height:1.7;color:#1e293b;font-size:15px;">${line}</p>`)
     .join("");
 
-  return `
-<!DOCTYPE html>
+  const hasPdf = !!cvData.cvPdfBuffer;
+
+  return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Candidatura de ${cvData.userName}</title>
 </head>
-<body style="margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif;background:#f4f4f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 0;">
+<body style="margin:0;padding:0;font-family:Georgia,'Times New Roman',serif;background:#f0f0f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f0;padding:32px 0;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <table width="620" cellpadding="0" cellspacing="0" style="background:#ffffff;box-shadow:0 2px 12px rgba(0,0,0,0.1);">
 
+          <!-- Cabecera del candidato -->
           <tr>
-            <td style="background:linear-gradient(135deg,#166534,#15803d);padding:28px 40px;text-align:center;">
-              <h1 style="color:#ffffff;margin:0;font-size:20px;font-weight:700;">
-                Candidatura — ${companyName}
-              </h1>
-              <p style="color:rgba(255,255,255,0.75);margin:6px 0 0;font-size:13px;">
-                Enviado a través de BuscayCurra
+            <td style="background:#1a2744;padding:28px 48px;">
+              <p style="color:#a3b4d0;font-size:11px;margin:0 0 4px;letter-spacing:1px;font-family:Arial,sans-serif;text-transform:uppercase;">Carta de presentación</p>
+              <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:normal;font-family:Georgia,serif;">${cvData.userName}</h1>
+              <p style="color:#7a9abf;margin:6px 0 0;font-size:13px;font-family:Arial,sans-serif;">
+                <a href="mailto:${cvData.userEmail}" style="color:#7a9abf;text-decoration:none;">${cvData.userEmail}</a>
+                ${cvData.userPhone ? ` &nbsp;·&nbsp; ${cvData.userPhone}` : ""}
               </p>
             </td>
           </tr>
 
+          <!-- Fecha y destinatario -->
           <tr>
-            <td style="padding:40px;">
-              <div style="color:#374151;font-size:15px;">
-                ${coverLetterHtml}
+            <td style="padding:36px 48px 0;">
+              <p style="color:#64748b;font-size:13px;margin:0 0 24px;font-family:Arial,sans-serif;">${today}</p>
+              <p style="color:#374151;font-size:14px;margin:0 0 24px;font-family:Arial,sans-serif;">
+                <strong>A/A: Departamento de RRHH</strong><br>
+                ${companyName}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Cuerpo de la carta -->
+          <tr>
+            <td style="padding:0 48px 32px;">
+              ${coverLetterHtml}
+            </td>
+          </tr>
+
+          <!-- Datos de contacto -->
+          <tr>
+            <td style="padding:0 48px 32px;">
+              <div style="border-top:2px solid #1a2744;padding-top:20px;">
+                <p style="margin:0 0 4px;font-weight:bold;color:#1a2744;font-size:13px;font-family:Arial,sans-serif;letter-spacing:0.5px;">DATOS DE CONTACTO</p>
+                <table cellpadding="0" cellspacing="0" style="margin-top:8px;">
+                  <tr><td style="font-family:Arial,sans-serif;font-size:13px;color:#374151;padding:2px 0;">📧</td><td style="padding:2px 0 2px 8px;"><a href="mailto:${cvData.userEmail}" style="color:#1a2744;font-family:Arial,sans-serif;font-size:13px;">${cvData.userEmail}</a></td></tr>
+                  ${cvData.userPhone ? `<tr><td style="font-family:Arial,sans-serif;font-size:13px;color:#374151;padding:2px 0;">📞</td><td style="padding:2px 0 2px 8px;font-family:Arial,sans-serif;font-size:13px;color:#374151;">${cvData.userPhone}</td></tr>` : ""}
+                  ${cvData.userLinkedIn ? `<tr><td style="font-family:Arial,sans-serif;font-size:13px;color:#374151;padding:2px 0;">🔗</td><td style="padding:2px 0 2px 8px;"><a href="${cvData.userLinkedIn}" style="color:#1a2744;font-family:Arial,sans-serif;font-size:13px;">LinkedIn</a></td></tr>` : ""}
+                </table>
               </div>
             </td>
           </tr>
 
+          ${hasPdf ? `
+          <!-- Aviso de adjunto PDF -->
           <tr>
-            <td style="padding:0 40px 32px;">
-              <div style="background:#f8fafc;border-left:4px solid #22c55e;border-radius:4px;padding:20px 24px;">
-                <p style="margin:0 0 4px;font-weight:700;color:#1e293b;font-size:14px;">DATOS DE CONTACTO</p>
-                <p style="margin:0;color:#64748b;font-size:14px;">${cvData.userName}</p>
-                <p style="margin:4px 0 0;color:#16a34a;font-size:14px;">
-                  <a href="mailto:${cvData.userEmail}" style="color:#16a34a;text-decoration:none;">${cvData.userEmail}</a>
-                </p>
-                ${cvData.userPhone ? `<p style="margin:4px 0 0;color:#64748b;font-size:14px;">📞 ${cvData.userPhone}</p>` : ""}
-                ${cvData.userLinkedIn ? `<p style="margin:4px 0 0;font-size:14px;"><a href="${cvData.userLinkedIn}" style="color:#16a34a;text-decoration:none;">🔗 LinkedIn</a></p>` : ""}
+            <td style="padding:0 48px 32px;">
+              <div style="background:#f0f9f4;border:1px solid #bbf7d0;border-radius:6px;padding:14px 18px;">
+                <p style="margin:0;font-family:Arial,sans-serif;font-size:13px;color:#166534;">📎 <strong>Curriculum Vitae adjunto</strong> — CV_${cvData.userName.replace(/\s+/g, "_")}.pdf</p>
               </div>
             </td>
-          </tr>
-
-          ${cvData.cvHtmlSection ? `
+          </tr>` : cvData.cvHtmlSection ? `
+          <!-- CV inline si no hay PDF -->
           <tr>
-            <td style="padding:0 40px 24px;">
-              <div style="border:1px solid #e5e7eb;border-radius:8px;padding:24px;background:#fafafa;">
-                <p style="margin:0 0 12px;font-weight:700;color:#1e293b;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">CURRÍCULUM VITAE</p>
+            <td style="padding:0 48px 32px;">
+              <div style="border:1px solid #e5e7eb;border-radius:6px;padding:24px;background:#fafafa;">
+                <p style="margin:0 0 12px;font-weight:bold;color:#1a2744;font-size:12px;font-family:Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">Currículum Vitae</p>
                 ${cvData.cvHtmlSection}
               </div>
             </td>
-          </tr>` : `
-          <tr>
-            <td style="padding:0 40px 24px;text-align:center;">
-              <p style="color:#6b7280;font-size:13px;margin:0;">📎 CV adjunto en formato PDF</p>
-            </td>
-          </tr>`}
+          </tr>` : ""}
 
+          <!-- Footer -->
           <tr>
-            <td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
-              <p style="color:#9ca3af;font-size:12px;margin:0;">
-                Enviado con <a href="https://buscaycurra.es" style="color:#22c55e;text-decoration:none;font-weight:600;">BuscayCurra</a>
-                — Plataforma de búsqueda de empleo con IA
+            <td style="background:#f8fafc;padding:16px 48px;border-top:1px solid #e5e7eb;">
+              <p style="color:#9ca3af;font-size:11px;margin:0;font-family:Arial,sans-serif;">
+                Enviado automáticamente con <a href="https://buscaycurra.es" style="color:#22c55e;text-decoration:none;">BuscayCurra</a> — Plataforma de búsqueda de empleo con IA
               </p>
             </td>
           </tr>
@@ -222,8 +240,7 @@ function buildCVEmailHTML(
     </tr>
   </table>
 </body>
-</html>
-`.trim();
+</html>`;
 }
 
 /**

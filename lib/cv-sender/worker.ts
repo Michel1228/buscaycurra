@@ -24,6 +24,9 @@ import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
 import { recordSent, updateSendStatus } from "./tracker";
 import { getPool } from "@/lib/db";
+import { generarCVHTML } from "@/lib/cv-generator/cv-template";
+import { normalizar } from "@/lib/cv-generator/normalizar";
+import { generateCVPdf } from "@/lib/cv-generator/generate-pdf";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,8 +119,20 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   await job.updateProgress(25);
 
-  // Paso 2: Generar contenido del CV para el email
-  console.log(`[Worker] Paso 2/6: Generando contenido del CV...`);
+  // Paso 2: Generar PDF del CV desde form_data
+  console.log(`[Worker] Paso 2/6: Generando PDF del CV...`);
+  let cvPdfBuffer: Buffer | undefined;
+  let cvPdfFileName: string | undefined;
+
+  try {
+    const cvData = normalizar(cvDocument.form_data);
+    const cvHtml = generarCVHTML(cvData);
+    cvPdfBuffer = await generateCVPdf(cvHtml);
+    cvPdfFileName = `CV_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`;
+    console.log(`[Worker] PDF generado: ${cvPdfBuffer.length} bytes`);
+  } catch (pdfErr) {
+    console.warn(`[Worker] No se pudo generar PDF, se usará carta sin adjunto:`, (pdfErr as Error).message);
+  }
 
   await job.updateProgress(40);
 
@@ -180,7 +195,9 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       userEmail: userProfile.email,
       userPhone: userProfile.phone,
       userLinkedIn: userProfile.linkedin_url,
-      cvHtmlSection: buildCVHtmlSection(cvDocument.form_data),
+      cvPdfBuffer,
+      cvFileName: cvPdfFileName,
+      cvHtmlSection: cvPdfBuffer ? undefined : buildCVHtmlSection(cvDocument.form_data),
     },
     coverLetter,
     subjectLine,

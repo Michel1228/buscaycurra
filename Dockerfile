@@ -24,7 +24,10 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN apk add --no-cache poppler-utils
+RUN apk add --no-cache poppler-utils chromium nss freetype harfbuzz ca-certificates ttf-freefont
+
+ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 # Next.js standalone
 COPY --from=builder /app/.next/standalone ./
