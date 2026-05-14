@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     );
 
     if (result.rows.length === 0) {
-      return NextResponse.json({ cv: null });
+      return NextResponse.json({ cv: null, visibleEmpresas: false });
     }
 
     return NextResponse.json({
