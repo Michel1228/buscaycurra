@@ -284,7 +284,7 @@ function BuscarPageInner() {
             <div className="card-game p-4 sticky top-20">
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Filtros</h2>
-                <InfoTooltip tip="Refina tu búsqueda por tipo de jornada, experiencia y salario mínimo. Los filtros se aplican sobre los resultados actuales." position="right" />
+                <InfoTooltip text="Refina tu búsqueda por tipo de jornada, experiencia y salario mínimo. Los filtros se aplican sobre los resultados actuales." position="right" />
               </div>
               <div className="mb-4">
                 <label className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Tipo de jornada</label>
@@ -364,7 +364,7 @@ function BuscarPageInner() {
                         style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
                         🔔 Alerta
                       </button>
-                      <InfoTooltip tip="Te avisamos por email cuando salgan nuevas ofertas que coincidan con esta búsqueda. Puedes elegir frecuencia diaria o semanal." position="bottom" />
+                      <InfoTooltip text="Te avisamos por email cuando salgan nuevas ofertas que coincidan con esta búsqueda. Puedes elegir frecuencia diaria o semanal." position="bottom" />
                     </div>
                     <a href="/app/guardados"
                       className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"

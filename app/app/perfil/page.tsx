@@ -323,7 +323,7 @@ export default function PerfilPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="text-xs font-semibold" style={{ color: "#64748b" }}>Mejorar plan</p>
-                    <InfoTooltip tip="El pago se procesa con Stripe (seguro). Puedes cancelar en cualquier momento desde el portal de facturación. El cambio es inmediato." position="right" />
+                    <InfoTooltip text="El pago se procesa con Stripe (seguro). Puedes cancelar en cualquier momento desde el portal de facturación. El cambio es inmediato." position="right" />
                   </div>
                   {planActual === "free" && (
                     <div className="rounded-xl p-4 flex items-center justify-between"

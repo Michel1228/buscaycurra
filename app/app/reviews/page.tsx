@@ -133,7 +133,7 @@ function ReviewsPageInner() {
         <div className="card-game p-4 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <p className="text-xs font-medium" style={{ color: "#94a3b8" }}>Buscar empresa</p>
-            <InfoTooltip tip="Las reviews las escriben usuarios reales que han trabajado o aplicado en esa empresa. Puedes añadir tu propia opinión tras buscarla." position="right" />
+            <InfoTooltip text="Las reviews las escriben usuarios reales que han trabajado o aplicado en esa empresa. Puedes añadir tu propia opinión tras buscarla." position="right" />
           </div>
           <div className="flex gap-2">
             <input type="text" value={company} onChange={e => setCompany(e.target.value)}
