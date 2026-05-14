@@ -30,7 +30,10 @@ export default function RegistroPage() {
       const { error: sErr } = await getSupabaseBrowser().auth.signUp({
         email: email.trim(),
         password: contrasena,
-        options: { data: { full_name: nombre.trim() } },
+        options: {
+          data: { full_name: nombre.trim() },
+          emailRedirectTo: "https://buscaycurra.es/auth/callback",
+        },
       });
       if (sErr) {
         if (sErr.message.includes("already registered")) setError("Este email ya está registrado.");
