@@ -173,6 +173,9 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
           <p className="text-xs" style={{ color: "#4ade80" }}>Se enviará el {scheduled.fecha}</p>
         )}
         <p className="text-[11px]" style={{ color: "#64748b" }}>Recibirás un email de confirmación cuando se procese.</p>
+        <p className="text-[10px] mt-1 px-2" style={{ color: "#475569" }}>
+          Algunas empresas prefieren el anonimato y no muestran su nombre público, pero tu candidatura ha sido enviada con éxito.
+        </p>
         <div className="flex gap-2 justify-center mt-3">
           <button onClick={() => { setSuccess(false); setScheduled(null); }}
             className="px-4 py-2 rounded-lg text-xs font-medium"

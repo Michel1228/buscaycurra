@@ -25,12 +25,13 @@ const FROM_EMAIL = process.env.FROM_EMAIL ?? "noreply@buscaycurra.es";
 
 /** Datos del CV a enviar */
 export interface CVEmailData {
-  userName: string; // Nombre completo del usuario
-  userEmail: string; // Email del usuario (para que RRHH pueda responder)
-  userPhone?: string; // Teléfono del usuario (opcional)
-  userLinkedIn?: string; // LinkedIn del usuario (opcional)
-  cvPdfBuffer: Buffer; // PDF del CV en binario
-  cvFileName?: string; // Nombre del archivo PDF (ej: "CV_Juan_Garcia.pdf")
+  userName: string;
+  userEmail: string;
+  userPhone?: string;
+  userLinkedIn?: string;
+  cvPdfBuffer?: Buffer; // Opcional — si no hay PDF, el CV va en el cuerpo del email
+  cvFileName?: string;
+  cvHtmlSection?: string; // HTML del CV para incluir en el cuerpo del email
 }
 
 /** Resultado del envío de email */
@@ -63,19 +64,22 @@ export async function sendCVEmail(
   console.log(`[EmailSender] Enviando CV de ${cvData.userName} a ${to} (${companyName})...`);
 
   try {
-    const { data, error } = await resend.emails.send({
+    const sendPayload: Parameters<typeof resend.emails.send>[0] = {
       from: `${cvData.userName} via BuscayCurra <${FROM_EMAIL}>`,
       to: [to],
-      reply_to: cvData.userEmail, // Las respuestas van directamente al candidato
+      reply_to: cvData.userEmail,
       subject,
       html: buildCVEmailHTML(cvData, coverLetter, companyName),
-      attachments: [
-        {
-          filename: cvData.cvFileName ?? `CV_${cvData.userName.replace(/\s+/g, "_")}.pdf`,
-          content: cvData.cvPdfBuffer,
-        },
-      ],
-    });
+    };
+
+    if (cvData.cvPdfBuffer) {
+      sendPayload.attachments = [{
+        filename: cvData.cvFileName ?? `CV_${cvData.userName.replace(/\s+/g, "_")}.pdf`,
+        content: cvData.cvPdfBuffer,
+      }];
+    }
+
+    const { data, error } = await resend.emails.send(sendPayload);
 
     if (error) {
       console.error(`[EmailSender] Error de Resend al enviar a ${to}:`, error.message);
@@ -189,11 +193,20 @@ function buildCVEmailHTML(
             </td>
           </tr>
 
+          ${cvData.cvHtmlSection ? `
+          <tr>
+            <td style="padding:0 40px 24px;">
+              <div style="border:1px solid #e5e7eb;border-radius:8px;padding:24px;background:#fafafa;">
+                <p style="margin:0 0 12px;font-weight:700;color:#1e293b;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">CURRÍCULUM VITAE</p>
+                ${cvData.cvHtmlSection}
+              </div>
+            </td>
+          </tr>` : `
           <tr>
             <td style="padding:0 40px 24px;text-align:center;">
               <p style="color:#6b7280;font-size:13px;margin:0;">📎 CV adjunto en formato PDF</p>
             </td>
-          </tr>
+          </tr>`}
 
           <tr>
             <td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">

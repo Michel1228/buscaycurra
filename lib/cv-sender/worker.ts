@@ -23,6 +23,7 @@ import { redisConnection, CVJobData, addNotificationJob, NotificationJobData } f
 import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
 import { recordSent, updateSendStatus } from "./tracker";
+import { getPool } from "@/lib/db";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,13 +50,10 @@ interface UserProfile {
   linkedin_url?: string;
 }
 
-/** Datos del CV almacenado en Supabase */
+/** Datos del CV almacenado en user_cvs (VPS PostgreSQL) */
 interface CVDocument {
-  id: string;
-  user_id: string;
-  file_url: string; // URL del PDF en Supabase Storage
-  text_content?: string; // Texto extraído del CV (para personalización con IA)
-  file_name?: string;
+  form_data: Record<string, unknown>;
+  html: string;
 }
 
 // ─── Función Principal: processCVJob ─────────────────────────────────────────
@@ -77,32 +75,49 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   // ── Paso 1: Obtener perfil y CV del usuario ──────────────────────────────
   console.log(`[Worker] Paso 1/6: Obteniendo datos del usuario ${userId}...`);
 
-  const [profileResult, cvResult] = await Promise.all([
-    getSupabase().from("profiles").select("id, full_name, email, phone, linkedin_url").eq("id", userId).single(),
-    getSupabase().from("cvs").select("id, user_id, file_url, text_content, file_name").eq("user_id", userId).eq("is_primary", true).single(),
-  ]);
+  const profileResult = await getSupabase()
+    .from("profiles")
+    .select("id, full_name, phone, linkedin_url")
+    .eq("id", userId)
+    .single();
 
   if (profileResult.error || !profileResult.data) {
     throw new Error(`No se encontró el perfil del usuario ${userId}: ${profileResult.error?.message}`);
   }
 
-  if (cvResult.error || !cvResult.data) {
-    throw new Error(`No se encontró el CV del usuario ${userId}: ${cvResult.error?.message}`);
+  // Obtener email real desde Supabase Auth (profiles.email puede ser null)
+  const { data: authData } = await getSupabase().auth.admin.getUserById(userId);
+  const userEmail = authData?.user?.email ?? "";
+  if (!userEmail) {
+    throw new Error(`No se encontró email para el usuario ${userId}`);
   }
 
-  const userProfile = profileResult.data as UserProfile;
-  const cvDocument = cvResult.data as CVDocument;
+  const userProfile: UserProfile = {
+    ...profileResult.data,
+    email: userEmail,
+  };
+
+  // Obtener CV desde la tabla user_cvs del VPS PostgreSQL
+  console.log(`[Worker] Paso 1b/6: Obteniendo CV de user_cvs para ${userId}...`);
+  const pool = getPool();
+  const cvRow = await pool.query(
+    "SELECT form_data, html FROM user_cvs WHERE user_id = $1",
+    [userId]
+  );
+
+  if (!cvRow.rows[0]) {
+    throw new Error(`No se encontró CV para el usuario ${userId}. El usuario debe crear su CV primero.`);
+  }
+
+  const cvDocument: CVDocument = {
+    form_data: (cvRow.rows[0].form_data as Record<string, unknown>) ?? {},
+    html: cvRow.rows[0].html ?? "",
+  };
 
   await job.updateProgress(25);
 
-  // ── Paso 2: Descargar el PDF del CV ─────────────────────────────────────
-  console.log(`[Worker] Paso 2/6: Descargando CV de ${cvDocument.file_url}...`);
-
-  const cvResponse = await fetch(cvDocument.file_url);
-  if (!cvResponse.ok) {
-    throw new Error(`No se pudo descargar el CV de ${cvDocument.file_url}: ${cvResponse.statusText}`);
-  }
-  const cvBuffer = Buffer.from(await cvResponse.arrayBuffer());
+  // Paso 2: Generar contenido del CV para el email
+  console.log(`[Worker] Paso 2/6: Generando contenido del CV...`);
 
   await job.updateProgress(40);
 
@@ -110,12 +125,15 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   let coverLetter: string;
   let subjectLine: string;
 
-  if (useAIPersonalization && cvDocument.text_content) {
+  // Resumen de texto del CV para personalización con IA
+  const cvTextSummary = buildCVTextSummary(cvDocument.form_data);
+
+  if (useAIPersonalization && cvTextSummary) {
     console.log(`[Worker] Paso 3/6: Personalizando carta con OpenClaw IA para ${companyName}...`);
 
     try {
       const personalizacion = await personalizeForCompany(
-        cvDocument.text_content,
+        cvTextSummary,
         { name: companyName, url: companyUrl },
         jobTitle
       );
@@ -162,8 +180,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       userEmail: userProfile.email,
       userPhone: userProfile.phone,
       userLinkedIn: userProfile.linkedin_url,
-      cvPdfBuffer: cvBuffer,
-      cvFileName: cvDocument.file_name ?? `CV_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`,
+      cvHtmlSection: buildCVHtmlSection(cvDocument.form_data),
     },
     coverLetter,
     subjectLine,
@@ -209,6 +226,62 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   await job.updateProgress(100);
 
   console.log(`[Worker] ✅ Job ${job.id} completado: CV de ${userProfile.full_name} enviado a ${companyName}`);
+}
+
+// ─── Helpers: generar contenido del CV ───────────────────────────────────────
+
+function buildCVTextSummary(form: Record<string, unknown>): string {
+  const lines: string[] = [];
+  const nombre = `${form.nombre || ""} ${form.apellidos || ""}`.trim();
+  if (nombre) lines.push(`Candidato: ${nombre}`);
+  if (form.ciudad) lines.push(`Ciudad: ${form.ciudad}`);
+  if (form.subtitulo) lines.push(`Perfil: ${form.subtitulo}`);
+  if (form.perfilProfesional) lines.push(`Resumen: ${form.perfilProfesional}`);
+  if (form.aptitudes) lines.push(`Habilidades: ${form.aptitudes}`);
+  if (Array.isArray(form.experiencia)) {
+    const exp = form.experiencia as Array<Record<string, unknown>>;
+    exp.slice(0, 3).forEach(e => {
+      lines.push(`Exp: ${e.puesto || ""} en ${e.empresa || ""} (${e.fechas || ""})`);
+    });
+  }
+  return lines.join("\n");
+}
+
+function buildCVHtmlSection(form: Record<string, unknown>): string {
+  const nombre = `${form.nombre || ""} ${form.apellidos || ""}`.trim();
+  const rows: string[] = [];
+
+  const addRow = (label: string, value: unknown) => {
+    if (value && String(value).trim()) {
+      rows.push(`<tr><td style="color:#64748b;font-size:12px;padding:3px 8px 3px 0;width:100px;vertical-align:top;">${label}</td><td style="color:#1e293b;font-size:13px;padding:3px 0;">${String(value)}</td></tr>`);
+    }
+  };
+
+  if (nombre) rows.push(`<tr><td colspan="2" style="padding:0 0 8px;"><strong style="font-size:15px;color:#1e293b;">${nombre}</strong></td></tr>`);
+  addRow("Subtítulo", form.subtitulo);
+  addRow("Ciudad", form.ciudad);
+  addRow("Teléfono", form.telefono);
+  addRow("Email", form.email);
+
+  if (form.perfilProfesional) {
+    rows.push(`<tr><td colspan="2" style="padding:10px 0 4px;"><strong style="color:#1e293b;font-size:12px;">PERFIL</strong></td></tr>`);
+    rows.push(`<tr><td colspan="2" style="color:#374151;font-size:13px;padding-bottom:8px;">${form.perfilProfesional}</td></tr>`);
+  }
+
+  if (Array.isArray(form.experiencia) && form.experiencia.length > 0) {
+    rows.push(`<tr><td colspan="2" style="padding:8px 0 4px;"><strong style="color:#1e293b;font-size:12px;">EXPERIENCIA</strong></td></tr>`);
+    (form.experiencia as Array<Record<string, unknown>>).forEach(e => {
+      rows.push(`<tr><td colspan="2" style="padding:2px 0;color:#374151;font-size:13px;"><strong>${e.puesto || ""}</strong> — ${e.empresa || ""}<span style="color:#64748b;"> (${e.fechas || ""})</span></td></tr>`);
+      if (e.descripcion) rows.push(`<tr><td colspan="2" style="color:#64748b;font-size:12px;padding:0 0 6px 0;">${e.descripcion}</td></tr>`);
+    });
+  }
+
+  if (form.aptitudes) {
+    rows.push(`<tr><td colspan="2" style="padding:8px 0 4px;"><strong style="color:#1e293b;font-size:12px;">HABILIDADES</strong></td></tr>`);
+    rows.push(`<tr><td colspan="2" style="color:#374151;font-size:13px;">${form.aptitudes}</td></tr>`);
+  }
+
+  return `<table style="width:100%;border-collapse:collapse;">${rows.join("")}</table>`;
 }
 
 // ─── Creación del Worker ─────────────────────────────────────────────────────
