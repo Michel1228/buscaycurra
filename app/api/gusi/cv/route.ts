@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     const pool = getPool();
     const result = await pool.query(
-      `SELECT form_data, html, created_at, updated_at
+      `SELECT form_data, html, visible_empresas, created_at, updated_at
        FROM user_cvs
        WHERE user_id = $1`,
       [userId]
@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       cv: result.rows[0].form_data,
       cvText: result.rows[0].html,
+      visibleEmpresas: result.rows[0].visible_empresas ?? false,
       updatedAt: result.rows[0].updated_at
     });
   } catch (error) {

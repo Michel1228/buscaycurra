@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getPool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -21,15 +22,14 @@ export async function POST(request: NextRequest) {
 
   const { visible } = await request.json() as { visible: boolean };
 
-  const { error } = await supabaseAdmin
-    .from("profiles")
-    .update({ visible_empresas: visible, updated_at: new Date().toISOString() })
-    .eq("id", user.id);
-
-  if (error) {
-    console.error("[perfil/visibilidad] Error:", error.message);
-    return NextResponse.json({ error: "No se pudo guardar" }, { status: 500 });
-  }
+  const pool = getPool();
+  await pool.query(
+    `INSERT INTO user_cvs (user_id, nombre, html, form_data, visible_empresas, updated_at)
+     VALUES ($1, 'Mi CV', '', '{}', $2, NOW())
+     ON CONFLICT (user_id)
+     DO UPDATE SET visible_empresas = $2, updated_at = NOW()`,
+    [user.id, visible]
+  );
 
   return NextResponse.json({ ok: true, visible });
 }

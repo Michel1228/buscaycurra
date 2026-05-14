@@ -83,6 +83,9 @@ export default function CurriculumPage() {
         const res = await fetch(`/api/gusi/cv?userId=${session.user.id}`);
         if (res.ok) {
           const data = await res.json();
+          if (data.visibleEmpresas !== undefined) {
+            setVisibleEmpresas(data.visibleEmpresas === true);
+          }
           if (data.cv) {
             const cv = data.cv as Record<string, unknown>;
 
@@ -150,7 +153,7 @@ export default function CurriculumPage() {
 
       // Cargar perfil (solo para rellenar huecos que no estén en el CV)
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, ciudad, sector, visible_empresas, avatar_url")
+        .select("full_name, phone, ciudad, sector")
         .eq("id", session.user.id).single();
 
       if (p) {
@@ -163,11 +166,6 @@ export default function CurriculumPage() {
           email: prev.email || session.user.email || "",
           ciudad: prev.ciudad || p.ciudad || "",
         }));
-        setVisibleEmpresas(p.visible_empresas === true);
-        // Fallback: usar avatar_url del perfil si no hay foto en el CV guardado
-        if (!fotoUrlCargada && p.avatar_url) {
-          setFotoUrl(p.avatar_url as string);
-        }
       }
 
       setCargando(false);
