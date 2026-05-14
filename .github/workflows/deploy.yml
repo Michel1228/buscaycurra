@@ -76,6 +76,7 @@ jobs:
             printf '%s\n' "NODE_ENV=production"                                    > "$ENV_FILE"
             printf '%s\n' "REDIS_URL=redis://buscaycurra-redis:6379"               >> "$ENV_FILE"
             printf '%s\n' "FROM_EMAIL=noreply@buscaycurra.es"                      >> "$ENV_FILE"
+            printf '%s\n' "NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co" >> "$ENV_FILE"
             printf 'ADMIN_SECRET=%s\n'              "$E_ADMIN_SECRET"              >> "$ENV_FILE"
             printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n' "$E_SUPABASE_SERVICE_ROLE_KEY" >> "$ENV_FILE"
             printf 'STRIPE_SECRET_KEY=%s\n'         "$E_STRIPE_SECRET_KEY"         >> "$ENV_FILE"
