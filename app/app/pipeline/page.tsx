@@ -50,18 +50,31 @@ export default function PipelinePage() {
 
         const { data: envios } = await getSupabaseBrowser()
           .from("cv_sends")
-          .select("id, empresa, puesto, estado, creado_en, notas")
+          .select("id, company_name, job_title, status, created_at, error_message")
           .eq("user_id", session.user.id)
-          .order("creado_en", { ascending: false });
+          .order("created_at", { ascending: false });
 
-        const mapped: Candidatura[] = (envios || []).map((e: Record<string, string>) => ({
-          id: e.id,
-          empresa: e.empresa,
-          puesto: e.puesto || "Candidatura espontánea",
-          estado: mapEstado(e.estado),
-          fecha: e.creado_en,
-          notas: e.notas,
-        }));
+        const mapped: Candidatura[] = (envios || []).map((e: Record<string, string>) => {
+          let pipelineEstado: EstadoCandidatura = mapEstado(e.status);
+          let notas = "";
+          if (e.error_message) {
+            try {
+              const parsed = JSON.parse(e.error_message);
+              if (parsed.pipeline_estado) pipelineEstado = parsed.pipeline_estado as EstadoCandidatura;
+              notas = parsed.notas || "";
+            } catch {
+              notas = e.error_message;
+            }
+          }
+          return {
+            id: e.id,
+            empresa: e.company_name || "Empresa desconocida",
+            puesto: e.job_title || "Candidatura espontánea",
+            estado: pipelineEstado,
+            fecha: e.created_at,
+            notas,
+          };
+        });
 
         setCandidaturas(mapped);
       } catch (error) {
@@ -79,7 +92,10 @@ export default function PipelinePage() {
     try {
       const session = (await getSupabaseBrowser().auth.getSession()).data.session;
       if (!session) return;
-      await getSupabaseBrowser().from("cv_sends").update({ notas: notasEdit }).eq("id", candidaturaEdit.id);
+      const currentEstado = candidaturaEdit.estado;
+      await getSupabaseBrowser().from("cv_sends").update({
+        error_message: JSON.stringify({ pipeline_estado: currentEstado, notas: notasEdit })
+      }).eq("id", candidaturaEdit.id);
       setCandidaturas(prev => prev.map(c => c.id === candidaturaEdit.id ? { ...c, notas: notasEdit } : c));
       setModalAbierto(false);
     } catch (e) {
@@ -97,15 +113,22 @@ export default function PipelinePage() {
       if (!session) return;
       const { data } = await getSupabaseBrowser().from("cv_sends").insert({
         user_id: session.user.id,
-        empresa: nueva.empresa.trim(),
-        puesto: nueva.puesto.trim() || "Candidatura espontánea",
-        estado: "enviado",
-        notas: nueva.notas.trim() || null,
+        company_name: nueva.empresa.trim(),
+        company_email: "manual@buscaycurra.es",
+        job_title: nueva.puesto.trim() || null,
+        status: "enviado",
+        error_message: nueva.notas.trim()
+          ? JSON.stringify({ pipeline_estado: "aplicado", notas: nueva.notas.trim() })
+          : null,
       }).select().single();
       if (data) {
         setCandidaturas(prev => [{
-          id: data.id, empresa: data.empresa, puesto: data.puesto,
-          estado: "aplicado", fecha: data.creado_en, notas: data.notas,
+          id: data.id,
+          empresa: data.company_name,
+          puesto: data.job_title || "Candidatura espontánea",
+          estado: "aplicado",
+          fecha: data.created_at,
+          notas: nueva.notas.trim() || undefined,
         }, ...prev]);
       }
       setNueva({ empresa: "", puesto: "", notas: "" });
@@ -135,15 +158,10 @@ export default function PipelinePage() {
     try {
       const session = (await getSupabaseBrowser().auth.getSession()).data.session;
       if (!session) return;
-      const estadoDb: Record<EstadoCandidatura, string> = {
-        aplicado: "enviado",
-        en_revision: "visto",
-        entrevista: "respuesta",
-        oferta: "oferta",
-        rechazado: "rechazado",
-        contratado: "contratado",
-      };
-      await getSupabaseBrowser().from("cv_sends").update({ estado: estadoDb[nuevoEstado] }).eq("id", id);
+      const cand = candidaturas.find(c => c.id === id);
+      await getSupabaseBrowser().from("cv_sends").update({
+        error_message: JSON.stringify({ pipeline_estado: nuevoEstado, notas: cand?.notas || "" })
+      }).eq("id", id);
     } catch (e) {
       console.error("Error actualizando estado:", e);
     }
