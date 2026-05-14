@@ -531,21 +531,38 @@ export default function CurriculumPage() {
               {/* Tips de foto */}
               <div className="p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}>
                 <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>💡 Truco: Foto profesional gratis con IA</p>
-                <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie y usa este prompt en ChatGPT:</p>
+                <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia el prompt y pégalo en ChatGPT con tu foto:</p>
                 <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
-                  Retoca esta foto para un currículum profesional: pon fondo blanco liso, iluminación frontal suave, aspecto limpio y formal tipo foto carnet. No cambies mi cara ni mis rasgos, solo mejora la luz, limpia el fondo y haz que parezca una foto de estudio profesional.
+                  Utiliza esta foto y crea una foto de currículum profesional: 1. Elimina el fondo y ponlo blanco liso. 2. Cámbiame la ropa por una camisa blanca formal. 3. Ajusta iluminación de estudio frontal suave. 4. Recorta en formato carnet (desde hombros hasta cabeza). Mantén mi cara, rasgos y expresión exactamente igual. El resultado tiene que parecer una foto profesional de estudio para CV.
                 </div>
                 <div className="mt-2 flex gap-2">
                   <button
-                    onClick={() => navigator.clipboard.writeText("Retoca esta foto para un currículum profesional: pon fondo blanco liso, iluminación frontal suave, aspecto limpio y formal tipo foto carnet. No cambies mi cara ni mis rasgos, solo mejora la luz, limpia el fondo y haz que parezca una foto de estudio profesional.")}
+                    onClick={() => {
+                      navigator.clipboard.writeText("Utiliza esta foto y crea una foto de currículum profesional: 1. Elimina el fondo y ponlo blanco liso. 2. Cámbiame la ropa por una camisa blanca formal. 3. Ajusta iluminación de estudio frontal suave. 4. Recorta en formato carnet (desde hombros hasta cabeza). Mantén mi cara, rasgos y expresión exactamente igual. El resultado tiene que parecer una foto profesional de estudio para CV.");
+                    }}
                     className="px-3 py-1 text-[10px] font-semibold rounded-md" style={{ background: "#22c55e", color: "#fff" }}>
-                    Copiar prompt
+                    1. Copiar prompt
                   </button>
-                  <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer"
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("Utiliza esta foto y crea una foto de currículum profesional: 1. Elimina el fondo y ponlo blanco liso. 2. Cámbiame la ropa por una camisa blanca formal. 3. Ajusta iluminación de estudio frontal suave. 4. Recorta en formato carnet (desde hombros hasta cabeza). Mantén mi cara, rasgos y expresión exactamente igual. El resultado tiene que parecer una foto profesional de estudio para CV.");
+                      const ua = navigator.userAgent.toLowerCase();
+                      const isIOS = /iphone|ipad|ipod/.test(ua);
+                      const isAndroid = /android/.test(ua);
+                      if (isIOS) {
+                        window.location.href = "chatgpt://";
+                        setTimeout(() => { window.open("https://chatgpt.com", "_blank"); }, 1200);
+                      } else if (isAndroid) {
+                        window.location.href = "intent://chatgpt.com#Intent;scheme=https;package=com.openai.chatgpt;end";
+                        setTimeout(() => { window.open("https://chatgpt.com", "_blank"); }, 1200);
+                      } else {
+                        window.open("https://chatgpt.com", "_blank");
+                      }
+                    }}
                     className="px-3 py-1 text-[10px] font-semibold rounded-md"
                     style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
-                    Abrir ChatGPT →
-                  </a>
+                    2. Abrir ChatGPT →
+                  </button>
                 </div>
               </div>
             </div>

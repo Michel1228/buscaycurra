@@ -689,9 +689,9 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
       setCargando(false);
       setMensajes((prev) => [...prev, {
         role: "gusi",
-        text: "📸 **Sube tu foto de perfil** y la añado directamente a tu CV.\n\nConsejos para una buena foto:\n• Fondo liso (blanco o gris)\n• Ropa formal, pecho arriba\n• Buena iluminación (luz de ventana)\n• Expresión natural y sonrisa\n\n**Una buena foto = +40% de respuestas.** 🐛📸",
+        text: "📸 **Foto de perfil para tu CV**\n\n¿Ya tienes una foto profesional? Súbela directamente.\n\n¿Tienes un selfie normal? Usa ChatGPT para transformarla: fondo blanco, camisa formal, formato carnet — gratis en 30 segundos. 🐛",
+        action: "foto_cv",
       }]);
-      photoRef.current?.click();
       return;
     }
 
@@ -1209,6 +1209,41 @@ Ya tengo tus datos guardados. Voy a:
                 </div>
               )}
               
+              {/* Shortcuts foto CV */}
+              {msg.action === "foto_cv" && (
+                <div className="mt-3 space-y-2">
+                  <button
+                    onClick={() => photoRef.current?.click()}
+                    className="w-full py-2 text-xs font-semibold rounded-lg transition-colors"
+                    style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e" }}
+                  >
+                    📁 Ya tengo foto — subir ahora
+                  </button>
+                  <button
+                    onClick={() => {
+                      const prompt = "Utiliza esta foto y crea una foto de currículum profesional: 1. Elimina el fondo y ponlo blanco liso. 2. Cámbiame la ropa por una camisa blanca formal. 3. Ajusta iluminación de estudio frontal suave. 4. Recorta en formato carnet (desde hombros hasta cabeza). Mantén mi cara, rasgos y expresión exactamente igual. El resultado tiene que parecer una foto profesional de estudio para CV.";
+                      navigator.clipboard.writeText(prompt).catch(() => {});
+                      const ua = navigator.userAgent.toLowerCase();
+                      const isIOS = /iphone|ipad|ipod/.test(ua);
+                      const isAndroid = /android/.test(ua);
+                      if (isIOS) {
+                        window.location.href = "chatgpt://";
+                        setTimeout(() => { window.open("https://chatgpt.com", "_blank"); }, 1200);
+                      } else if (isAndroid) {
+                        window.location.href = "intent://chatgpt.com#Intent;scheme=https;package=com.openai.chatgpt;end";
+                        setTimeout(() => { window.open("https://chatgpt.com", "_blank"); }, 1200);
+                      } else {
+                        window.open("https://chatgpt.com", "_blank");
+                      }
+                    }}
+                    className="w-full py-2 text-xs font-semibold rounded-lg transition-colors"
+                    style={{ background: "#161922", border: "1px solid #252836", color: "#94a3b8" }}
+                  >
+                    ✨ Mejorar selfie con ChatGPT (prompt copiado)
+                  </button>
+                </div>
+              )}
+
               {/* Botones de acción para ofertas */}
               {msg.jobs && msg.jobs.length > 0 && (
                 <div className="mt-3 space-y-2">
