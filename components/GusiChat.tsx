@@ -119,6 +119,10 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
   const [modoEnvio, setModoEnvio] = useState(false);
   const [pasoEnvio, setPasoEnvio] = useState(0);
   const [datosEnvio, setDatosEnvio] = useState<Record<string, string>>({});
+
+  const [modoCarta, setModoCarta] = useState(false);
+  const [pasoCarta, setPasoCarta] = useState(0); // 0=pedir empresa, 1=pedir puesto
+  const [datosCarta, setDatosCarta] = useState<{ empresa?: string; puesto?: string }>({});
   
   // Estado para esperando confirmación de CV
   const [esperandoConfirmacionCV, setEsperandoConfirmacionCV] = useState(false);
@@ -760,12 +764,94 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
 
     if (texto === "__CARTA_RECOMENDACION__") {
+      setModoCarta(true);
+      setPasoCarta(0);
+      setDatosCarta({});
       setCargando(false);
-      setMensajes((prev) => [...prev, { 
-        role: "gusi", 
-        text: "✉️ Para generar una carta de recomendación personalizada, necesito:\n\n1. 🏢 Nombre de la empresa\n2. 🎯 Puesto al que aplicas\n\nDime estos datos y te hago una carta que destaque. 🐛" 
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "✉️ **Vamos a crear tu carta de presentación personalizada.**\n\n**¿Para qué empresa es?** (escribe el nombre exacto)"
       }]);
       return;
+    }
+
+    // ============================================
+    // MODO CARTA (paso a paso)
+    // ============================================
+    if (modoCarta) {
+      if (pasoCarta === 0) {
+        // Recibimos la empresa
+        setDatosCarta({ empresa: texto });
+        setPasoCarta(1);
+        setCargando(false);
+        setMensajes((prev) => [...prev, {
+          role: "gusi",
+          text: `✅ Empresa: **${texto}**\n\n**¿Para qué puesto aplicas?** (ej: Camarero, Programador, Administrativo...)`
+        }]);
+        return;
+      }
+      if (pasoCarta === 1) {
+        // Recibimos el puesto → generamos la carta
+        const empresa = datosCarta.empresa || "";
+        const puesto = texto;
+        setModoCarta(false);
+        setPasoCarta(0);
+        setDatosCarta({});
+        setCargando(true);
+        setMensajes((prev) => [...prev, {
+          role: "gusi",
+          text: `✅ Generando carta para **${puesto}** en **${empresa}**... ✍️`
+        }]);
+        try {
+          const res = await fetch("/api/gusi/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: `Genera una carta de presentación para ${puesto} en ${empresa}`,
+              mode: "carta_recomendacion",
+              empresa,
+              puesto,
+              cvData: cvGuardado ? JSON.stringify(cvGuardado) : undefined,
+            }),
+          });
+          const data = await res.json() as { reply?: string };
+          const cartaTexto = data.reply || "No se pudo generar la carta.";
+          setMensajes((prev) => [...prev, {
+            role: "gusi",
+            text: `✉️ **Aquí tienes tu carta de presentación:**\n\n---\n\n${cartaTexto}\n\n---\n\n📄 **¿Quieres descargarla en PDF?** Escribe **"descargar carta"** y te la preparo.`,
+            action: "carta_generada",
+          }]);
+        } catch {
+          setMensajes((prev) => [...prev, {
+            role: "gusi",
+            text: "❌ Error generando la carta. Inténtalo de nuevo. 🐛"
+          }]);
+        } finally {
+          setCargando(false);
+        }
+        return;
+      }
+    }
+
+    // Descargar carta como PDF (impresión del navegador)
+    if (textoLower.includes("descargar carta") || textoLower.includes("pdf carta") || textoLower === "descargar") {
+      const lastCarta = [...mensajes].reverse().find(m => m.role === "gusi" && m.action === "carta_generada");
+      if (lastCarta) {
+        setCargando(false);
+        const cartaTexto = lastCarta.text.split("---\n\n")[1]?.split("\n\n---")[0] || "";
+        const cartaHtml = cartaTexto
+          .split("\n")
+          .filter(l => l.trim())
+          .map(l => `<p style="margin:0 0 14px;">${l}</p>`)
+          .join("");
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Carta de presentación</title><style>body{font-family:Georgia,serif;padding:60px;max-width:680px;margin:auto;line-height:1.8;color:#1e293b;font-size:14px;}@media print{body{padding:20mm;}}</style></head><body>${cartaHtml}<script>setTimeout(function(){window.print();},400);</script></body></html>`);
+          printWindow.document.close();
+        }
+        setMensajes((prev) => [...prev, { role: "gusi", text: "📄 **Ventana de impresión abierta.** Usa 'Guardar como PDF' en el diálogo de impresión. ¡Mucha suerte! 🐛" }]);
+        return;
+      }
     }
 
     if (texto === "__SUBIR_CV__") {
@@ -799,7 +885,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         
         // Buscar ofertas
         try {
-          const res = await fetch(`/api/jobs/search?q=${encodeURIComponent(puesto)}&city=${encodeURIComponent(ciudad)}&limit=5`);
+          const res = await fetch(`/api/jobs/search?keyword=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ciudad)}&limit=5`);
           const data = await res.json();
           const ofertas = data.ofertas || [];
           

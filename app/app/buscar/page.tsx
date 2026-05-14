@@ -6,6 +6,7 @@ import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
+import InfoTooltip from "@/components/InfoTooltip";
 
 const opcionesJornada = [
   { valor: "", etiqueta: "Todas" },
@@ -281,7 +282,10 @@ function BuscarPageInner() {
           {/* Filtros */}
           <aside className="hidden md:block w-52 shrink-0">
             <div className="card-game p-4 sticky top-20">
-              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>Filtros</h2>
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Filtros</h2>
+                <InfoTooltip tip="Refina tu búsqueda por tipo de jornada, experiencia y salario mínimo. Los filtros se aplican sobre los resultados actuales." position="right" />
+              </div>
               <div className="mb-4">
                 <label className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Tipo de jornada</label>
                 <select value={jornada} onChange={(e) => setJornada(e.target.value)} className="w-full text-sm">
@@ -354,11 +358,14 @@ function BuscarPageInner() {
                     {esEnTiempoReal && <p className="text-[10px]" style={{ color: "#475569" }}>Resultados en tiempo real</p>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setMostrarAlertaModal(true)}
-                      className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
-                      style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
-                      🔔 Alerta
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setMostrarAlertaModal(true)}
+                        className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
+                        style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
+                        🔔 Alerta
+                      </button>
+                      <InfoTooltip tip="Te avisamos por email cuando salgan nuevas ofertas que coincidan con esta búsqueda. Puedes elegir frecuencia diaria o semanal." position="bottom" />
+                    </div>
                     <a href="/app/guardados"
                       className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
                       style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>

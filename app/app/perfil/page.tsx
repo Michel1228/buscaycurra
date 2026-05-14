@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import InfoTooltip from "@/components/InfoTooltip";
 
 interface PerfilData {
   nombre: string;
@@ -320,7 +321,10 @@ export default function PerfilPage() {
               {/* Opciones de upgrade */}
               {planActual !== "empresa" && (
                 <div className="space-y-3">
-                  <p className="text-xs font-semibold" style={{ color: "#64748b" }}>Mejorar plan</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold" style={{ color: "#64748b" }}>Mejorar plan</p>
+                    <InfoTooltip tip="El pago se procesa con Stripe (seguro). Puedes cancelar en cualquier momento desde el portal de facturación. El cambio es inmediato." position="right" />
+                  </div>
                   {planActual === "free" && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>

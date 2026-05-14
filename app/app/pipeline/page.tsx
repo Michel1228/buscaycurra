@@ -163,6 +163,10 @@ export default function PipelinePage() {
       await getSupabaseBrowser().from("cv_sends").update({
         error_message: JSON.stringify({ pipeline_estado: nuevoEstado, notas: cand?.notas || "" })
       }).eq("id", id);
+      // Celebración cuando se marca como Contratado
+      if (nuevoEstado === "contratado") {
+        setTimeout(() => router.push("/app/mariposa"), 600);
+      }
     } catch (e) {
       console.error("Error actualizando estado:", e);
     }

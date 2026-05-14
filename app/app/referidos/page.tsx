@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
+import InfoTooltip from "@/components/InfoTooltip";
 
 function ReferidosPageInner() {
   const router = useRouter();
@@ -100,7 +101,10 @@ function ReferidosPageInner() {
             <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>Amigos invitados</p>
           </div>
           <div className="card-game p-4 text-center">
-            <p className="text-2xl font-bold" style={{ color: "#f59e0b" }}>{stats.creditos}</p>
+            <div className="flex items-center justify-center gap-1.5">
+              <p className="text-2xl font-bold" style={{ color: "#f59e0b" }}>{stats.creditos}</p>
+              <InfoTooltip tip="Cada amigo que se registra con tu código te da +10 CVs extra al mes. Los créditos se añaden automáticamente a tu cuota mensual." position="top" />
+            </div>
             <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>CVs extra ganados</p>
           </div>
         </div>

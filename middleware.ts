@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   // Usuario autenticado en la raíz → ir directamente al app
   if (pathname === "/") {
     if (hasSession) {
-      return NextResponse.redirect(new URL("/app/bienvenida", request.url));
+      return NextResponse.redirect(new URL("/app/gusi", request.url));
     }
     return NextResponse.next();
   }

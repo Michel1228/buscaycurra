@@ -8,16 +8,16 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 const ADMIN_EMAIL = "michelbatistagonzalez1992@gmail.com";
 
 const NAV_ITEMS = [
-  { href: "/app/gusi",      label: "Guzzi",     icon: "🐛", title: "Guzzi - Asistente IA" },
-  { href: "/app/buscar",    label: "Buscar",    icon: "🔍", title: "Buscar ofertas" },
-  { href: "/precios",       label: "Planes",    icon: "💎", title: "Planes y precios" },
-  { href: "/app/guardados", label: "Guardados", icon: "❤️", title: "Ofertas guardadas" },
-  { href: "/app/pipeline",  label: "Pipeline",  icon: "📊", title: "Pipeline de candidaturas" },
-  { href: "/app/salarios",  label: "Salarios",  icon: "💰", title: "Comparador de salarios" },
-  { href: "/app/reviews",   label: "Reviews",   icon: "⭐", title: "Reviews de empresas" },
-  { href: "/app/envios",    label: "Envíos",    icon: "📧", title: "Envíos de CV" },
-  { href: "/app/referidos", label: "Invitar",   icon: "🎁", title: "Invitar amigos" },
-  { href: "/app/perfil",    label: "Cuenta",    icon: "👤", title: "Mi cuenta" },
+  { href: "/app/gusi",       label: "Guzzi",      icon: "🐛", title: "Guzzi - Asistente IA" },
+  { href: "/app/buscar",     label: "Buscar",     icon: "🔍", title: "Buscar ofertas" },
+  { href: "/app/curriculum", label: "Mi CV",      icon: "📄", title: "Mi currículum" },
+  { href: "/app/guardados",  label: "Guardados",  icon: "❤️", title: "Ofertas guardadas" },
+  { href: "/app/pipeline",   label: "Pipeline",   icon: "📊", title: "Pipeline de candidaturas" },
+  { href: "/app/salarios",   label: "Salarios",   icon: "💰", title: "Comparador de salarios" },
+  { href: "/app/reviews",    label: "Reviews",    icon: "⭐", title: "Reviews de empresas" },
+  { href: "/app/envios",     label: "Envíos",     icon: "📧", title: "Envíos de CV" },
+  { href: "/app/referidos",  label: "Invitar",    icon: "🎁", title: "Invitar amigos" },
+  { href: "/app/perfil",     label: "Cuenta",     icon: "👤", title: "Mi cuenta y planes" },
 ];
 
 export default function AppNavWrapper() {

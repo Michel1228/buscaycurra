@@ -5,6 +5,13 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
+import InfoTooltip from "@/components/InfoTooltip";
+
+const EMPRESAS_POPULARES = [
+  "Mercadona", "Inditex", "El Corte Inglés", "Repsol", "Telefónica",
+  "BBVA", "Santander", "Iberdrola", "Amazon", "Lidl",
+  "McDonald's", "Burger King", "Mango", "Zara", "DHL",
+];
 
 interface Review {
   id: number;
@@ -124,6 +131,10 @@ function ReviewsPageInner() {
 
       <main className="max-w-3xl mx-auto px-4 py-6">
         <div className="card-game p-4 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <p className="text-xs font-medium" style={{ color: "#94a3b8" }}>Buscar empresa</p>
+            <InfoTooltip tip="Las reviews las escriben usuarios reales que han trabajado o aplicado en esa empresa. Puedes añadir tu propia opinión tras buscarla." position="right" />
+          </div>
           <div className="flex gap-2">
             <input type="text" value={company} onChange={e => setCompany(e.target.value)}
               placeholder="Nombre de la empresa..." className="flex-1 text-sm"
@@ -132,6 +143,20 @@ function ReviewsPageInner() {
               {loading ? "..." : "Buscar"}
             </button>
           </div>
+          {!company && (
+            <div className="mt-3">
+              <p className="text-[10px] mb-2" style={{ color: "#475569" }}>Empresas más buscadas:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {EMPRESAS_POPULARES.map(emp => (
+                  <button key={emp} onClick={() => setCompany(emp)}
+                    className="text-[11px] px-2.5 py-1 rounded-md transition hover:opacity-80"
+                    style={{ background: "#161922", border: "1px solid #2d3142", color: "#94a3b8" }}>
+                    {emp}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {stats && stats.total > 0 && (
