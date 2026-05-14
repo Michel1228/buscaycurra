@@ -112,6 +112,37 @@ cercano para startups), NO inventes datos.`;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function analyzeCVDensity(cvData: string): { isSparse: boolean; isRich: boolean } {
+  try {
+    const cv = JSON.parse(cvData);
+    let wordCount = 0;
+    let sectionsFilled = 0;
+
+    const textFields = ["perfilProfesional", "aptitudes", "subtitulo", "habilidades", "idiomas", "formacion"];
+    textFields.forEach(f => {
+      const val = cv[f];
+      if (val && String(val).trim().length > 5) {
+        wordCount += String(val).split(/\s+/).length;
+        sectionsFilled++;
+      }
+    });
+
+    if (Array.isArray(cv.experiencia)) {
+      cv.experiencia.forEach((e: Record<string, unknown>) => {
+        sectionsFilled++;
+        if (e.descripcion) wordCount += String(e.descripcion).split(/\s+/).length;
+      });
+    }
+
+    return {
+      isSparse: wordCount < 80 || sectionsFilled < 3,
+      isRich: wordCount > 300 && sectionsFilled >= 5,
+    };
+  } catch {
+    return { isSparse: true, isRich: false };
+  }
+}
+
 function parseStringList(val: unknown): string[] {
   if (!val) return [];
   if (Array.isArray(val)) return (val as unknown[]).map(v => typeof v === "object" ? (v as { nombre?: string }).nombre || "" : String(v)).filter(Boolean);
@@ -309,8 +340,36 @@ export async function POST(req: NextRequest) {
           action: "need_cv_data",
         });
       }
+
+      const density = analyzeCVDensity(cvData);
+      let densityNote = "";
+      let maxTokens = 1200;
+
+      if (density.isSparse) {
+        densityNote = `
+
+INSTRUCCIÓN CRÍTICA — CV CON POCA INFORMACIÓN:
+El candidato tiene poca experiencia o datos. NUNCA INVENTES información, pero SÍ:
+- Elabora cada experiencia con 3-4 responsabilidades típicas del puesto (ej: "Camarero" → atención al cliente, gestión de pedidos, preparación de bebidas, trabajo en equipo bajo presión)
+- Escribe el perfil profesional con 4-5 frases descriptivas, no solo 2
+- Añade habilidades implícitas del sector aunque no las hayan mencionado (las que cualquiera con ese puesto tendría)
+- Expande la sección de formación si hay datos
+- Objetivo: que el CV parezca sólido y completo aunque la base sea escasa`;
+        maxTokens = 1500;
+      } else if (density.isRich) {
+        densityNote = `
+
+INSTRUCCIÓN CRÍTICA — CV CON MUCHA INFORMACIÓN:
+El candidato tiene mucha experiencia.
+- Selecciona y resume los 2-3 logros más relevantes por empresa
+- Perfil profesional: máx 3 frases impactantes
+- Prioriza lo más reciente y elimina redundancias`;
+        maxTokens = 1000;
+      }
+
+      const promptConDensidad = PROMPT_CV_MEJORADO + densityNote;
       const content = `Mejora este CV con los datos reales que te doy:\n\n${cvData}`;
-      const reply = await callGroq(PROMPT_CV_MEJORADO, content, 1200) || localReply("cv_mejorado");
+      const reply = await callGroq(promptConDensidad, content, maxTokens) || localReply("cv_mejorado");
       return NextResponse.json({ reply, action: "cv_mejorado" });
     }
 
