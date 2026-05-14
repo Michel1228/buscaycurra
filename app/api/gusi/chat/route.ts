@@ -379,7 +379,7 @@ export async function POST(req: NextRequest) {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages, max_tokens: 500, temperature: 0.7 }),
+      body: JSON.stringify({ model: "qwen/qwen3-32b", messages, max_tokens: 500, temperature: 0.7 }),
     });
 
     if (!res.ok) return NextResponse.json({ reply: localReply(intent, cvParsed) });

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import InfoTooltip from "@/components/InfoTooltip";
 
 type EstadoCandidatura = "aplicado" | "en_revision" | "entrevista" | "oferta" | "rechazado" | "contratado";
 
@@ -20,13 +21,13 @@ interface Candidatura {
   contacto?: string;
 }
 
-const COLUMNAS: { id: EstadoCandidatura; label: string; color: string }[] = [
-  { id: "aplicado", label: "Aplicado", color: "#22c55e" },
-  { id: "en_revision", label: "En revisión", color: "#f59e0b" },
-  { id: "entrevista", label: "Entrevista", color: "#a855f7" },
-  { id: "oferta", label: "Oferta", color: "#3b82f6" },
-  { id: "contratado", label: "Contratado", color: "#ec4899" },
-  { id: "rechazado", label: "Rechazado", color: "#64748b" },
+const COLUMNAS: { id: EstadoCandidatura; label: string; color: string; tip: string }[] = [
+  { id: "aplicado", label: "Aplicado", color: "#22c55e", tip: "CV enviado. Acabas de aplicar a esta oferta y estás esperando respuesta." },
+  { id: "en_revision", label: "En revisión", color: "#f59e0b", tip: "La empresa está revisando tu candidatura. Suele tardar 1-2 semanas." },
+  { id: "entrevista", label: "Entrevista", color: "#a855f7", tip: "Te han contactado para una entrevista. ¡Buen momento para prepararte con Guzzi!" },
+  { id: "oferta", label: "Oferta", color: "#3b82f6", tip: "La empresa te ha hecho una oferta económica. Negocia con datos reales." },
+  { id: "contratado", label: "Contratado", color: "#ec4899", tip: "¡Enhorabuena! Aceptaste la oferta y ya tienes trabajo." },
+  { id: "rechazado", label: "Rechazado", color: "#64748b", tip: "No avanzaste en este proceso. No te desanimes, es normal recibir varios rechazos antes de encontrar trabajo." },
 ];
 
 export default function PipelinePage() {
@@ -237,6 +238,7 @@ export default function PipelinePage() {
                   <div className="flex items-center gap-2 mb-3 px-1">
                     <div className="w-2 h-2 rounded-full" style={{ background: col.color }} />
                     <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: col.color }}>{col.label}</span>
+                    <InfoTooltip text={col.tip} position="bottom" />
                     <span className="text-[10px] ml-auto" style={{ color: "#475569" }}>{items.length}</span>
                   </div>
                   <div className="space-y-2 min-h-[80px]">

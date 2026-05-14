@@ -5,10 +5,11 @@ import { getPool } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const { userId, companyName, jobTitle } = await req.json() as {
+  const { userId, companyName, jobTitle, companyUrl } = await req.json() as {
     userId?: string;
     companyName?: string;
     jobTitle?: string;
+    companyUrl?: string;
   };
 
   if (!userId || !companyName) {
@@ -17,10 +18,10 @@ export async function POST(req: NextRequest) {
 
   const pool = getPool();
   await pool.query(
-    `INSERT INTO cv_sends (user_id, company_name, company_email, job_title, estado, sent_at, created_at)
-     VALUES ($1, $2, '', $3, 'manual', NOW(), NOW())
+    `INSERT INTO cv_sends (user_id, company_name, company_email, company_url, job_title, status, sent_at, created_at)
+     VALUES ($1, $2, '', $3, $4, 'manual', NOW(), NOW())
      ON CONFLICT DO NOTHING`,
-    [userId, companyName.slice(0, 200), (jobTitle || "").slice(0, 200)]
+    [userId, companyName.slice(0, 200), (companyUrl || "").slice(0, 500), (jobTitle || "").slice(0, 200)]
   );
 
   try {

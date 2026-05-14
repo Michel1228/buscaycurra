@@ -8,11 +8,13 @@ import { useRouter } from "next/navigation";
 interface SalarioData {
   puesto: string;
   provincia: string | null;
+  fuente?: "ofertas" | "referencia";
   rangoGeneral: {
     min_salary: number;
     max_salary: number;
     avg_salary: number;
     total: number;
+    fuente?: string;
   };
   porProvincia: Array<{
     province: string;
@@ -22,7 +24,7 @@ interface SalarioData {
   provinciaDetalle?: {
     count: number;
     avg_salary: number;
-  };
+  } | null;
 }
 
 const PUESTOS_POPULARES = [
@@ -117,9 +119,16 @@ export default function SalariosPage() {
 
         {data && (
           <div className="space-y-4">
+            {data.fuente === "referencia" && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-[11px]"
+                style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", color: "#f59e0b" }}>
+                <span>ℹ️</span>
+                <span>Datos de referencia del mercado laboral español 2026. Se actualizarán cuando haya más ofertas activas con salario visible.</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[
-                { label: "Ofertas", valor: data.rangoGeneral?.total || 0, color: "#22c55e" },
+                { label: data.fuente === "ofertas" ? "Ofertas" : "Fuente", valor: data.fuente === "ofertas" ? (data.rangoGeneral?.total || 0) : "Referencia", color: "#22c55e" },
                 { label: "Medio", valor: formatMoney(data.rangoGeneral?.avg_salary), color: "#f59e0b" },
                 { label: "Mínimo", valor: formatMoney(data.rangoGeneral?.min_salary), color: "#ef4444" },
                 { label: "Máximo", valor: formatMoney(data.rangoGeneral?.max_salary), color: "#3b82f6" },

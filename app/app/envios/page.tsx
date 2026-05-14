@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import AutoSendSetup from "@/components/AutoSendSetup";
 import CVSenderDashboard from "@/components/CVSenderDashboard";
+import InfoTooltip from "@/components/InfoTooltip";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 type TabId = "nuevo" | "envios" | "estadisticas";
@@ -123,13 +124,16 @@ function StatsTab({ userId }: { userId: string }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          { val: stats.totalEnviados, label: "CVs enviados", color: "#22c55e" },
-          { val: stats.empresasContactadas, label: "Empresas", color: "#f59e0b" },
-          { val: stats.enviadosEsteMes, label: "Este mes", color: "#3b82f6" },
+          { val: stats.totalEnviados, label: "CVs enviados", color: "#22c55e", tip: "Total de CVs que Guzzi ha enviado a empresas desde que activaste los envíos automáticos." },
+          { val: stats.empresasContactadas, label: "Empresas", color: "#f59e0b", tip: "Número de empresas distintas a las que se ha enviado tu CV. No se repite empresa antes de 90 días." },
+          { val: stats.enviadosEsteMes, label: "Este mes", color: "#3b82f6", tip: "CVs enviados en el mes actual. El límite mensual depende de tu plan (60 en Esencial, 200 en Pro)." },
         ].map((s, i) => (
           <div key={i} className="card-game p-5 text-center">
             <p className="text-3xl font-bold" style={{ color: s.color }}>{s.val}</p>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>{s.label}</p>
+            <div className="flex items-center justify-center gap-1 mt-1">
+              <p className="text-xs" style={{ color: "#64748b" }}>{s.label}</p>
+              <InfoTooltip text={s.tip} position="top" />
+            </div>
           </div>
         ))}
       </div>
@@ -138,14 +142,17 @@ function StatsTab({ userId }: { userId: string }) {
         <h3 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>Desglose</h3>
         <div className="space-y-3">
           {[
-            { label: "Hoy", value: stats.enviadosHoy, max: 10 },
-            { label: "Esta semana", value: stats.enviadosEstaSemana, max: 50 },
-            { label: "Este mes", value: stats.enviadosEsteMes, max: 200 },
-            { label: "Total", value: stats.totalEnviados, max: stats.totalEnviados || 1 },
-          ].map(({ label, value, max }) => (
+            { label: "Hoy", value: stats.enviadosHoy, max: 10, tip: "CVs enviados hoy. Límite diario: 5 en Esencial, 10 en Pro." },
+            { label: "Esta semana", value: stats.enviadosEstaSemana, max: 50, tip: "CVs enviados en los últimos 7 días." },
+            { label: "Este mes", value: stats.enviadosEsteMes, max: 200, tip: "CVs enviados en el mes actual." },
+            { label: "Total histórico", value: stats.totalEnviados, max: stats.totalEnviados || 1, tip: "Total acumulado de todas las candidaturas enviadas." },
+          ].map(({ label, value, max, tip }) => (
             <div key={label}>
               <div className="flex justify-between text-xs mb-1">
-                <span style={{ color: "#94a3b8" }}>{label}</span>
+                <div className="flex items-center gap-1">
+                  <span style={{ color: "#94a3b8" }}>{label}</span>
+                  <InfoTooltip text={tip} position="right" />
+                </div>
                 <span className="font-semibold" style={{ color: "#f1f5f9" }}>{value}</span>
               </div>
               <div className="h-1.5 rounded-full" style={{ background: "#252836" }}>
