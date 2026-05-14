@@ -1,25 +1,10 @@
 /**
- * cv-personalizer.ts — Personalización del CV y carta de presentación con OpenClaw IA
- *
- * Se conecta a OpenClaw IA a través de WebSocket para:
- *   1. Analizar la empresa (sector, tamaño, cultura)
- *   2. Adaptar el CV destacando las skills más relevantes para esa empresa
- *   3. Generar una carta de presentación personalizada
- *   4. Crear el asunto del email
- *
- * OpenClaw WebSocket: wss://openclaw.zkjzrt.easypanel.host
+ * cv-personalizer.ts — Personalización del CV y carta de presentación
+ * Usa Groq API (mismo proveedor que Guzzi) para generar cartas personalizadas.
  */
 
-import WebSocket from "ws";
-
-// ─── Constantes ──────────────────────────────────────────────────────────────
-
-/** URL del servidor WebSocket de OpenClaw IA */
-const OPENCLAW_WS_URL =
-  process.env.OPENCLAW_WS_URL ?? "wss://openclaw.zkjzrt.easypanel.host";
-
-/** Tiempo máximo de espera para respuesta de OpenClaw (30 segundos) */
-const OPENCLAW_TIMEOUT_MS = 30_000;
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL = "qwen/qwen3-32b";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -39,63 +24,34 @@ export interface PersonalizationResult {
   cvHighlights?: string[]; // Skills del CV más relevantes para esta empresa
 }
 
-// ─── Funciones de Comunicación con OpenClaw ──────────────────────────────────
+// ─── Llamada a Groq API ───────────────────────────────────────────────────────
 
-/**
- * Envía una solicitud a OpenClaw IA a través de WebSocket y espera la respuesta.
- * Usa una Promise para convertir el flujo de eventos WebSocket en async/await.
- *
- * @param payload - Datos a enviar a OpenClaw
- * @returns Respuesta de la IA como string
- */
-async function askOpenClaw(payload: Record<string, unknown>): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(OPENCLAW_WS_URL);
-    let responseText = "";
+async function askGroq(prompt: string): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error("GROQ_API_KEY no configurada");
 
-    // Timeout de seguridad: si OpenClaw no responde en 30s, rechazamos
-    const timeout = setTimeout(() => {
-      ws.close();
-      reject(new Error("OpenClaw IA no respondió en 30 segundos. Usando carta genérica."));
-    }, OPENCLAW_TIMEOUT_MS);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25_000);
 
-    ws.on("open", () => {
-      // Conexión establecida, enviamos la solicitud
-      ws.send(JSON.stringify(payload));
+  try {
+    const res = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
+      signal: controller.signal,
     });
 
-    ws.on("message", (data: WebSocket.RawData) => {
-      // Acumulamos el texto de la respuesta (puede llegar en chunks)
-      const chunk = data.toString();
-
-      try {
-        // OpenClaw puede enviar JSON con el texto o el texto directamente
-        const parsed = JSON.parse(chunk) as { text?: string; done?: boolean; content?: string };
-        if (parsed.text) responseText += parsed.text;
-        else if (parsed.content) responseText += parsed.content;
-
-        // Si la IA indica que terminó, resolvemos la Promise
-        if (parsed.done) {
-          clearTimeout(timeout);
-          ws.close();
-          resolve(responseText);
-        }
-      } catch {
-        // Si no es JSON, es texto plano
-        responseText += chunk;
-      }
-    });
-
-    ws.on("close", () => {
-      clearTimeout(timeout);
-      if (responseText) resolve(responseText);
-    });
-
-    ws.on("error", (err: Error) => {
-      clearTimeout(timeout);
-      reject(new Error(`Error conectando con OpenClaw: ${err.message}`));
-    });
-  });
+    if (!res.ok) throw new Error(`Groq error ${res.status}`);
+    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+    return data.choices?.[0]?.message?.content ?? "";
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // ─── Funciones Principales ───────────────────────────────────────────────────
@@ -157,21 +113,10 @@ SKILLS_DESTACADAS:
 `.trim();
 
   try {
-    const respuesta = await askOpenClaw({
-      type: "personalize_cv",
-      prompt,
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    // Parseamos la respuesta estructurada de OpenClaw
+    const respuesta = await askGroq(prompt);
     return parseOpenClawResponse(respuesta, companyInfo, jobTitle);
   } catch (error) {
-    console.warn(
-      `[Personalizador] OpenClaw no disponible, usando carta genérica:`,
-      (error as Error).message
-    );
-    // Si OpenClaw falla, generamos una carta genérica decente
+    console.warn(`[Personalizador] Groq no disponible, usando carta genérica:`, (error as Error).message);
     return generateGenericLetter(companyInfo, jobTitle);
   }
 }
