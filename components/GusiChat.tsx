@@ -512,7 +512,8 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
 
   async function enviarMensaje(texto: string) {
     if (!texto.trim() || cargando) return;
-    
+
+    const textoLower = texto.toLowerCase();
     const nuevoMensaje: Mensaje = { role: "user", text: texto };
     setMensajes((prev) => [...prev, nuevoMensaje]);
     setInput("");
@@ -920,7 +921,6 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     // ============================================
     // AUTO-ENVÍO CUANDO EL USUARIO DICE "SÍ" A OFERTAS MOSTRADAS
     // ============================================
-    const textoLower = texto.toLowerCase();
     const lastGusiConJobs = [...mensajes].reverse().find(m => m.role === "gusi" && m.jobs && m.jobs.length > 0);
     if (lastGusiConJobs?.jobs && (textoLower === "si" || textoLower === "sí" || textoLower === "envia" || textoLower === "envía" || textoLower === "enviar todo" || textoLower === "dale" || textoLower.startsWith("sí") || textoLower.startsWith("si,"))) {
       const jobs = lastGusiConJobs.jobs;
