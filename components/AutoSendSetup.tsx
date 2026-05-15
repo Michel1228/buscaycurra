@@ -3,14 +3,22 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+interface RateLimitInfo {
+  enviadosHoy: number;
+  limiteHoy: number;
+  cvsRestantesHoy: number;
+  userPlan?: string;
+}
+
 interface AutoSendSetupProps {
   userId: string;
   onJobScheduled?: () => void;
+  onRateLimitUpdate?: (info: RateLimitInfo) => void;
 }
 
 type Modo = "tengo-email" | "buscar-email" | "ya-aplique";
 
-export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupProps) {
+export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdate }: AutoSendSetupProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -148,9 +156,13 @@ export default function AutoSendSetup({ userId, onJobScheduled }: AutoSendSetupP
             scheduledFor: calcularFechaEnvio(),
           }),
         });
-        const data = await res.json() as { error?: string; estimatedTimeFormatted?: string };
-        if (!res.ok) throw new Error(data.error ?? "Error al programar");
+        const data = await res.json() as { error?: string; estimatedTimeFormatted?: string; rateLimitInfo?: RateLimitInfo };
+        if (!res.ok) {
+          if (data.rateLimitInfo) onRateLimitUpdate?.(data.rateLimitInfo);
+          throw new Error(data.error ?? "Error al programar");
+        }
         setScheduled({ fecha: data.estimatedTimeFormatted ?? "" });
+        if (data.rateLimitInfo) onRateLimitUpdate?.(data.rateLimitInfo);
       }
       setSuccess(true);
       onJobScheduled?.();

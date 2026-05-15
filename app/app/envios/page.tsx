@@ -17,16 +17,32 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: "estadisticas", label: "Estadísticas", icon: "📊" },
 ];
 
+interface RateLimitInfo {
+  enviadosHoy: number;
+  limiteHoy: number;
+  cvsRestantesHoy: number;
+  userPlan?: string;
+}
+
 export default function EnviosPage() {
   const [userId, setUserId] = useState<string>("");
   const [activeTab, setActiveTab] = useState<TabId>("nuevo");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null);
 
   useEffect(() => {
     async function loadUser() {
       try {
         const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-        if (user) setUserId(user.id);
+        if (user) {
+          setUserId(user.id);
+          // Cargar contador inicial
+          const res = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(user.id)}`);
+          if (res.ok) {
+            const data = await res.json() as { rateLimitInfo?: RateLimitInfo };
+            if (data.rateLimitInfo) setRateLimit(data.rateLimitInfo);
+          }
+        }
       } catch {}
     }
     loadUser();
@@ -37,6 +53,10 @@ export default function EnviosPage() {
       setActiveTab("envios");
       setRefreshKey(prev => prev + 1);
     }, 2000);
+  };
+
+  const handleRateLimitUpdate = (info: RateLimitInfo) => {
+    setRateLimit(info);
   };
 
   return (
@@ -56,6 +76,44 @@ export default function EnviosPage() {
               </span>
             ))}
           </div>
+
+          {rateLimit && (
+            <div className="mt-4 flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 rounded-lg px-3 py-2"
+                style={{ background: "rgba(0,0,0,0.3)", border: "1px solid #2d3142", minWidth: 200 }}>
+                <span className="text-[11px] font-semibold" style={{ color: "#94a3b8", whiteSpace: "nowrap" }}>
+                  Enviados hoy:
+                </span>
+                <div className="flex items-center gap-1.5 flex-1">
+                  <div className="flex-1 h-1.5 rounded-full" style={{ background: "#252836" }}>
+                    <div className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: rateLimit.limiteHoy > 0 ? `${Math.min(100, (rateLimit.enviadosHoy / rateLimit.limiteHoy) * 100)}%` : "0%",
+                        background: rateLimit.cvsRestantesHoy <= 1 ? "#ef4444" : rateLimit.cvsRestantesHoy <= 2 ? "#f59e0b" : "#22c55e",
+                      }} />
+                  </div>
+                  <span className="text-[11px] font-bold tabular-nums" style={{
+                    color: rateLimit.cvsRestantesHoy <= 1 ? "#ef4444" : rateLimit.cvsRestantesHoy <= 2 ? "#f59e0b" : "#22c55e",
+                    whiteSpace: "nowrap",
+                  }}>
+                    {rateLimit.enviadosHoy} / {rateLimit.limiteHoy}
+                  </span>
+                </div>
+              </div>
+              {rateLimit.cvsRestantesHoy <= 0 && (
+                <span className="text-[10px] font-medium px-2 py-1 rounded-md"
+                  style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  Limite diario alcanzado
+                </span>
+              )}
+              {rateLimit.cvsRestantesHoy > 0 && rateLimit.cvsRestantesHoy <= 2 && (
+                <span className="text-[10px] font-medium px-2 py-1 rounded-md"
+                  style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
+                  {rateLimit.cvsRestantesHoy} restante{rateLimit.cvsRestantesHoy !== 1 ? "s" : ""} hoy
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -78,7 +136,7 @@ export default function EnviosPage() {
       </div>
 
       <main className="max-w-3xl mx-auto px-4 py-6">
-        {activeTab === "nuevo" && <Suspense fallback={null}><AutoSendSetup userId={userId} onJobScheduled={handleJobScheduled} /></Suspense>}
+        {activeTab === "nuevo" && <Suspense fallback={null}><AutoSendSetup userId={userId} onJobScheduled={handleJobScheduled} onRateLimitUpdate={handleRateLimitUpdate} /></Suspense>}
         {activeTab === "envios" && <CVSenderDashboard key={refreshKey} userId={userId} />}
         {activeTab === "estadisticas" && <StatsTab userId={userId} />}
       </main>
