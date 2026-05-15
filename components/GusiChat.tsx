@@ -91,7 +91,8 @@ function extractCVInfo(cv: Record<string, unknown>): { puesto: string; ciudad: s
   let puesto = "";
   const exp = cv.experiencia || cv.experience;
   if (Array.isArray(exp) && exp.length > 0) {
-    puesto = String((exp[0] as { puesto?: string }).puesto || "").trim();
+    // Usar la experiencia más reciente (última del array) para el saludo
+    puesto = String((exp[exp.length - 1] as { puesto?: string }).puesto || "").trim();
   } else if (typeof exp === "string" && exp.trim()) {
     const m = exp.match(/(?:—|–|-)\s*(.+?)\s+en\s+/i);
     puesto = m?.[1]?.trim() || "";
