@@ -26,7 +26,7 @@ import { recordSent, updateSendStatus } from "./tracker";
 import { getPool } from "@/lib/db";
 import { generarCVHTML } from "@/lib/cv-generator/cv-template";
 import { normalizar } from "@/lib/cv-generator/normalizar";
-import { generateCVPdf } from "@/lib/cv-generator/generate-pdf";
+import { generateCombinedPdf } from "@/lib/cv-generator/generate-pdf";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,20 +119,12 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   await job.updateProgress(25);
 
-  // Paso 2: Generar PDF del CV desde form_data
-  console.log(`[Worker] Paso 2/6: Generando PDF del CV...`);
+  // Paso 2: Generar HTML del CV (el PDF combinado se genera en paso 4 cuando ya tenemos la carta)
+  console.log(`[Worker] Paso 2/6: Preparando datos del CV...`);
+  const cvData = normalizar(cvDocument.form_data);
+  const cvHtml = generarCVHTML(cvData);
   let cvPdfBuffer: Buffer | undefined;
   let cvPdfFileName: string | undefined;
-
-  try {
-    const cvData = normalizar(cvDocument.form_data);
-    const cvHtml = generarCVHTML(cvData);
-    cvPdfBuffer = await generateCVPdf(cvHtml);
-    cvPdfFileName = `CV_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`;
-    console.log(`[Worker] PDF generado: ${cvPdfBuffer.length} bytes`);
-  } catch (pdfErr) {
-    console.warn(`[Worker] No se pudo generar PDF, se usará carta sin adjunto:`, (pdfErr as Error).message);
-  }
 
   await job.updateProgress(40);
 
@@ -144,7 +136,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   const cvTextSummary = buildCVTextSummary(cvDocument.form_data);
 
   if (useAIPersonalization && cvTextSummary) {
-    console.log(`[Worker] Paso 3/6: Personalizando carta con OpenClaw IA para ${companyName}...`);
+    console.log(`[Worker] Paso 3/6: Personalizando carta con Groq IA para ${companyName}...`);
 
     try {
       const personalizacion = await personalizeForCompany(
@@ -155,20 +147,37 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       coverLetter = personalizacion.coverLetter;
       subjectLine = personalizacion.subjectLine;
     } catch (aiError) {
-      console.warn(`[Worker] OpenClaw IA no disponible, usando carta genérica:`, (aiError as Error).message);
-      // Fallback: carta genérica si la IA no está disponible
+      console.warn(`[Worker] Groq IA no disponible, usando carta genérica:`, (aiError as Error).message);
       coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nQuedo a su disposición para cualquier consulta.\n\nUn cordial saludo,\n${userProfile.full_name}`;
       subjectLine = jobTitle
         ? `Candidatura para ${jobTitle} — ${userProfile.full_name}`
         : `Candidatura espontánea — ${userProfile.full_name}`;
     }
   } else {
-    // Sin personalización IA
     console.log(`[Worker] Paso 3/6: Usando carta genérica (sin IA)...`);
     coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nAdjunto mi CV para su consideración.\n\nUn cordial saludo,\n${userProfile.full_name}`;
     subjectLine = jobTitle
       ? `Candidatura para ${jobTitle} — ${userProfile.full_name}`
       : `Candidatura espontánea — ${userProfile.full_name}`;
+  }
+
+  // Generar PDF combinado: carta (página 1) + CV (página 2)
+  console.log(`[Worker] Paso 3b/6: Generando PDF combinado (carta + CV)...`);
+  try {
+    cvPdfBuffer = await generateCombinedPdf(
+      {
+        userName:    userProfile.full_name,
+        userEmail:   userProfile.email,
+        userPhone:   userProfile.phone,
+        companyName,
+        coverLetter,
+      },
+      cvHtml
+    );
+    cvPdfFileName = `Candidatura_${companyName.replace(/\s+/g, "_")}_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`;
+    console.log(`[Worker] PDF combinado generado: ${cvPdfBuffer.length} bytes`);
+  } catch (pdfErr) {
+    console.warn(`[Worker] No se pudo generar PDF combinado:`, (pdfErr as Error).message);
   }
 
   await job.updateProgress(60);

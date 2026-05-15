@@ -81,7 +81,8 @@ export async function recordSent(
     company_name: extras?.company_name ?? "Empresa desconocida",
     status,
     sent_at: status === "enviado" ? new Date().toISOString() : undefined,
-    ...extras,
+    ...(extras?.job_title   && { job_title:   extras.job_title }),
+    ...(extras?.job_id      && { job_id:      extras.job_id }),
   };
 
   const { data, error } = await getSupabase()

@@ -41,14 +41,15 @@ async function askGroq(prompt: string): Promise<string> {
         model: GROQ_MODEL,
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 800,
+        max_tokens: 1200,
       }),
       signal: controller.signal,
     });
 
     if (!res.ok) throw new Error(`Groq error ${res.status}`);
     const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-    return data.choices?.[0]?.message?.content ?? "";
+    const raw = data.choices?.[0]?.message?.content ?? "";
+    return raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
   } finally {
     clearTimeout(timeout);
   }

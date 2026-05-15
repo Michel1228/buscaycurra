@@ -321,7 +321,9 @@ export async function POST(req: NextRequest) {
       });
       if (!res.ok) return null;
       const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-      return data.choices?.[0]?.message?.content || null;
+      const raw = data.choices?.[0]?.message?.content || null;
+      // Qwen3-32b incluye bloques <think>...</think> en inglés — los eliminamos
+      return raw ? raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() : null;
     }
 
     // ── Modo preparación de entrevista ───────────────────────────────────────
