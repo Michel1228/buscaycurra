@@ -58,7 +58,7 @@ export default function HomePage() {
       if (user) {
         router.replace("/app/bienvenida");
       } else {
-        setVerificando(false);
+        router.replace("/auth/login");
       }
     });
   }, [router]);
