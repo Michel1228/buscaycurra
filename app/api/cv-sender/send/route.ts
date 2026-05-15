@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { scheduleCV } from "@/lib/cv-sender/scheduler";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
+import { recordSent } from "@/lib/cv-sender/tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,14 @@ export async function POST(request: NextRequest) {
     if ("error" in resultado) {
       return NextResponse.json({ error: resultado.error }, { status: 400 });
     }
+
+    // Registrar envío como "pendiente" INMEDIATAMENTE para que el rate limiter lo cuente
+    // en solicitudes simultáneas (evita la condición de carrera con el worker)
+    await recordSent(userId, companyEmail, "pendiente", {
+      company_name: companyName,
+      job_title: jobTitle,
+      job_id: resultado.jobId,
+    });
 
     // Email de confirmación inmediata al usuario usando Supabase Auth (tiene el email real)
     try {

@@ -22,7 +22,7 @@ import { createClient } from "@supabase/supabase-js";
 import { redisConnection, CVJobData, addNotificationJob, NotificationJobData } from "./queue";
 import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
-import { recordSent, updateSendStatus } from "./tracker";
+import { updateSendStatus } from "./tracker";
 import { getPool } from "@/lib/db";
 import { generarCVHTML } from "@/lib/cv-generator/cv-template";
 import { normalizar } from "@/lib/cv-generator/normalizar";
@@ -182,15 +182,9 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   await job.updateProgress(60);
 
-  // ── Paso 4: Registrar envío como pendiente en Supabase ──────────────────
-  console.log(`[Worker] Paso 4/6: Registrando envío en la base de datos...`);
-
-  const recordId = await recordSent(userId, companyEmail, "pendiente", {
-    company_name: companyName,
-    company_url: companyUrl,
-    job_title: jobTitle,
-    job_id: job.id,
-  });
+  // ── Paso 4: El registro "pendiente" ya fue creado en la API route ────────
+  // No hace falta insertar de nuevo; solo actualizamos cuando cambie el estado.
+  console.log(`[Worker] Paso 4/6: Registro previo en Supabase (creado por API route).`);
 
   await job.updateProgress(70);
 
@@ -214,10 +208,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   );
 
   if (!emailResult.success) {
-    // Actualizamos el estado a fallido en Supabase
-    if (recordId) {
-      await updateSendStatus(job.id!, "fallido", emailResult.error);
-    }
+    await updateSendStatus(job.id!, "fallido", emailResult.error);
     throw new Error(`Error enviando email a ${companyEmail}: ${emailResult.error}`);
   }
 
@@ -226,10 +217,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   // ── Paso 6: Actualizar estado y notificar al usuario ─────────────────────
   console.log(`[Worker] Paso 6/6: Actualizando estado y notificando al usuario...`);
 
-  // Actualizar estado en Supabase a "enviado"
-  if (recordId) {
-    await updateSendStatus(job.id!, "enviado");
-  }
+  await updateSendStatus(job.id!, "enviado");
 
   // Enviar confirmación al usuario
   await sendConfirmationToUser(

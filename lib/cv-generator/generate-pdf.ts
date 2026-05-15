@@ -61,11 +61,13 @@ export async function generateCombinedPdf(
 ${cvFontLink}
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  body { font-family:'Montserrat',sans-serif; background:#fff; }
 
 ${getCoverLetterCSS(coverData.accent ?? "#3B5FE0")}
 
 ${cvStyle}
+
+  /* Override: cv-template pone body {display:flex} que rompe los saltos de página */
+  body { display:block !important; padding:0 !important; background:#fff !important; font-family:'Montserrat',sans-serif; }
 
   /* Salto de página entre carta y CV */
   .page-break { page-break-after:always; break-after:page; }
