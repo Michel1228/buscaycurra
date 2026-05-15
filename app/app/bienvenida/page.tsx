@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import OnboardingChecklist from "@/components/OnboardingChecklist";
 
 export default function BienvenidaPage() {
   const router = useRouter();
@@ -9,6 +10,8 @@ export default function BienvenidaPage() {
   return (
     <div className="min-h-screen px-4 pt-20 pb-12" style={{ background: "#0f1117" }}>
       <div className="max-w-2xl mx-auto">
+
+        <OnboardingChecklist />
 
         {/* Cabecera */}
         <div className="text-center mb-10">

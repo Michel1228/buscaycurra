@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import NotificationBell from "@/components/NotificationBell";
 
 const ADMIN_EMAIL = "michelbatistagonzalez1992@gmail.com";
 
@@ -26,6 +27,7 @@ export default function AppNavWrapper() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [esAdmin, setEsAdmin] = useState(false);
+  const [userId, setUserId] = useState("");
 
   async function cerrarSesion() {
     await getSupabaseBrowser().auth.signOut();
@@ -41,6 +43,7 @@ export default function AppNavWrapper() {
   useEffect(() => {
     getSupabaseBrowser().auth.getUser().then(({ data: { user } }) => {
       setEsAdmin(user?.email === ADMIN_EMAIL);
+      if (user?.id) setUserId(user.id);
     });
   }, []);
 
@@ -95,6 +98,9 @@ export default function AppNavWrapper() {
               </Link>
             )}
           </div>
+
+          {/* Campana de notificaciones */}
+          {userId && <NotificationBell userId={userId} />}
 
           {/* Logout — siempre visible */}
           <button

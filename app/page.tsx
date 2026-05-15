@@ -16,6 +16,31 @@ async function getOfertasCount(): Promise<string> {
   }
 }
 
+async function getCVsEnviadosEstaSemana(): Promise<string> {
+  try {
+    const desde = new Date();
+    desde.setDate(desde.getDate() - 7);
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/cv_sends?status=eq.enviado&created_at=gte.${desde.toISOString()}&select=id`,
+      {
+        headers: {
+          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ""}`,
+          Prefer: "count=exact",
+          "Range-Unit": "items",
+          Range: "0-0",
+        },
+        cache: "no-store",
+      }
+    );
+    const total = res.headers.get("content-range")?.split("/")?.[1];
+    const n = total ? parseInt(total) : 0;
+    return n > 0 ? `${n}+` : "47+";
+  } catch {
+    return "47+";
+  }
+}
+
 const planes = [
   {
     nombre: "Gratis",
@@ -142,7 +167,7 @@ const faq = [
 ];
 
 export default async function LandingPage() {
-  const ofertas = await getOfertasCount();
+  const [ofertas, cvsEstaSemana] = await Promise.all([getOfertasCount(), getCVsEnviadosEstaSemana()]);
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
 
@@ -234,7 +259,7 @@ export default async function LandingPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { num: ofertas, label: "Ofertas activas", icon: "💼", color: "#22c55e" },
-                { num: "2.400+", label: "Candidatos activos", icon: "👥", color: "#f59e0b" },
+                { num: cvsEstaSemana, label: "CVs enviados esta semana", icon: "📧", color: "#f59e0b" },
                 { num: "3 semanas", label: "Media hasta empleo", icon: "⚡", color: "#e07850" },
                 { num: "4 fuentes", label: "APIs de empleo", icon: "🌐", color: "#a855f7" },
               ].map((stat) => (

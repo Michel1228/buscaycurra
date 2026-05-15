@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import InfoTooltip from "@/components/InfoTooltip";
+import PushSubscribeButton from "@/components/PushSubscribeButton";
 
 interface PerfilData {
   nombre: string;
@@ -265,6 +266,9 @@ export default function PerfilPage() {
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               </div>
             </div>
+
+            {/* Notificaciones push */}
+            <PushSubscribeButton />
 
             {/* Link al CV */}
             <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #252836" }}>
