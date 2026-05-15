@@ -289,7 +289,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       message, history = [], mode = "chat",
-      cvData, empresa, puesto,
+      cvData: cvDataFromClient, empresa, puesto, userId,
     } = body as {
       message: string;
       history?: Array<{ role: string; text: string }>;
@@ -297,9 +297,28 @@ export async function POST(req: NextRequest) {
       cvData?: string;
       empresa?: string;
       puesto?: string;
+      userId?: string;
     };
 
     if (!message) return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
+
+    // Si hay userId, leer el CV fresco desde la BD (ignora el cvData del cliente)
+    let cvData = cvDataFromClient;
+    if (userId) {
+      try {
+        const { getPool } = await import("@/lib/db");
+        const pool = getPool();
+        const row = await pool.query(
+          "SELECT form_data FROM user_cvs WHERE user_id = $1",
+          [userId]
+        );
+        if (row.rows[0]?.form_data) {
+          cvData = JSON.stringify(row.rows[0].form_data);
+        }
+      } catch {
+        // Si falla la BD, usar el cvData del cliente como fallback
+      }
+    }
 
     const cvParsed = cvData ? parseCVData(cvData) : null;
     const groqKey = process.env.GROQ_API_KEY;

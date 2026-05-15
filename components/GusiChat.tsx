@@ -543,6 +543,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
             body: JSON.stringify({
               message: "Mejora mi CV profesionalmente",
               mode: "cv_mejorado",
+              userId: userId ?? undefined,
               cvData: cvGuardado ? JSON.stringify(cvGuardado) : undefined,
             }),
           });
@@ -812,6 +813,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
               mode: "carta_recomendacion",
               empresa,
               puesto,
+              userId: userId ?? undefined,
               cvData: cvGuardado ? JSON.stringify(cvGuardado) : undefined,
             }),
           });
@@ -1017,6 +1019,7 @@ Ya tengo tus datos guardados. Voy a:
           message: texto,
           history: mensajes.slice(-10),
           mode: "chat",
+          userId: userId ?? undefined,
           cvData: cvGuardado ? JSON.stringify(cvGuardado) : undefined,
         }),
       });

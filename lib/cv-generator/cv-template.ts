@@ -34,11 +34,10 @@ export function generarCVHTML(data: CVData): string {
   const accent = data.accentColor || "#3B5FE0";
   const sidebarBg = "#1a2744";
 
-  // Límites para caber en una página
   const aptitudes = (data.aptitudes || []).slice(0, 6);
   const idiomas = (data.idiomas || []).slice(0, 4);
-  const experiencias = (data.experiencia || []).slice(0, 4);
-  const formaciones = (data.formacion || []).slice(0, 3);
+  const experiencias = data.experiencia || [];
+  const formaciones = data.formacion || [];
   const perfilTexto = (data.perfilProfesional || "").slice(0, 280);
 
   const aptitudesHTML = aptitudes
@@ -98,21 +97,20 @@ export function generarCVHTML(data: CVData): string {
   body { font-family:'Montserrat',sans-serif; background:#888; display:flex; justify-content:center; padding:20px; }
 
   .cv-page {
-    width: 794px; height: 1123px; max-height: 1123px;
+    width: 794px; min-height: 1123px;
     background: #fff;
     display: flex; flex-direction: column;
     box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-    overflow: hidden;
   }
 
-  .cv-body { display:flex; flex:1; min-height:0; overflow:hidden; }
+  .cv-body { display:flex; flex:1; }
 
   /* ── SIDEBAR OSCURO ─────────────────────────── */
   .left-col {
     width: 30%; background: ${sidebarBg};
     padding: 20px 14px 16px;
     display: flex; flex-direction: column; align-items: center;
-    overflow: hidden; flex-shrink: 0;
+    flex-shrink: 0;
   }
 
   .photo-wrap {
@@ -153,7 +151,7 @@ export function generarCVHTML(data: CVData): string {
   .idioma-bar-fill { height:100%; background:${accent}; border-radius:2px; }
 
   /* ── COLUMNA DERECHA ───────────────────────── */
-  .right-col { flex:1; padding:22px 22px 14px 22px; overflow:hidden; }
+  .right-col { flex:1; padding:22px 22px 14px 22px; }
 
   .sec-title {
     font-size:11px; font-weight:700; color:${accent};
@@ -198,9 +196,8 @@ export function generarCVHTML(data: CVData): string {
     * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
     html, body { width:210mm; height:297mm; margin:0; padding:0; background:none; }
     .cv-page {
-      width:210mm !important; height:297mm !important; max-height:297mm !important;
-      overflow:hidden !important; box-shadow:none !important;
-      page-break-after:avoid !important; break-after:avoid !important;
+      width:210mm !important; min-height:297mm !important;
+      box-shadow:none !important;
     }
     .left-col   { background:${sidebarBg} !important; }
     .cv-footer  { background:${sidebarBg} !important; }
