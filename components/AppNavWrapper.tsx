@@ -28,6 +28,7 @@ export default function AppNavWrapper() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [esAdmin, setEsAdmin] = useState(false);
   const [userId, setUserId] = useState("");
+  const [userInicial, setUserInicial] = useState("");
 
   async function cerrarSesion() {
     await getSupabaseBrowser().auth.signOut();
@@ -44,6 +45,7 @@ export default function AppNavWrapper() {
     getSupabaseBrowser().auth.getUser().then(({ data: { user } }) => {
       setEsAdmin(user?.email === ADMIN_EMAIL);
       if (user?.id) setUserId(user.id);
+      if (user?.email) setUserInicial(user.email[0].toUpperCase());
     });
   }, []);
 
@@ -71,7 +73,17 @@ export default function AppNavWrapper() {
           </Link>
 
           {/* Campana de notificaciones */}
-          {userId && <NotificationBell userId={userId} />}
+          <NotificationBell userId={userId} />
+
+          {/* Avatar de perfil */}
+          <Link
+            href="/app/perfil"
+            className="flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-opacity hover:opacity-80"
+            style={{ background: "rgba(34,197,94,0.15)", border: "1.5px solid rgba(34,197,94,0.4)", color: "#22c55e" }}
+            title="Mi perfil"
+          >
+            {userInicial || "?"}
+          </Link>
 
           {/* Botón de menú — visible en todos los tamaños */}
           <button
