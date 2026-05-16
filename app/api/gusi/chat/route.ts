@@ -291,7 +291,7 @@ function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[]): stri
 function localReply(intent: string, cv?: CVParsed | null): string {
   switch (intent) {
     case "foto":
-      return "📸 Para mejorar tu foto de CV:\n\n**ChatGPT:** \"Limpia esta foto de perfil, mejora la iluminación, fondo gris claro degradado, expresión profesional natural.\"\n\n**Gratis:** Remove.bg → quita fondo · Canva → añade fondo profesional\n\n**Tips:** Luz de ventana, ropa formal, pecho arriba. Una buena foto = +40% respuestas. 🐛";
+      return "📸 **Cómo mejorar tu foto de CV con IA:**\n\nSube tu foto a ChatGPT (o cualquier IA con imagen) y usa este prompt:\n\n---\n*Utiliza esta foto para realizar los siguientes cambios:\n\n1. Crear un fondo blanco y cambiar todo el fondo actual.\n2. Cambiar la camiseta por una camisa blanca.\n3. Poner la figura en posición sentada.\n\nFotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.*\n\n---\n\n**Resultado:** foto profesional lista para el CV. Una buena foto = +40% más respuestas. 🐛";
     case "buscar":
       return cv?.ultimoPuesto
         ? `🔍 Veo que tienes experiencia como **${cv.ultimoPuesto}**${cv.ciudad ? ` en **${cv.ciudad}**` : ""}. Usa el botón 📧 Enviar a ofertas para que busque automáticamente.`
