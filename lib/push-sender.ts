@@ -1,10 +1,16 @@
-import webpush from "web-push";
-
-const VAPID_PUBLIC = "BEAUFUsgnk4QCgX9zA5tvPRykEZYA2b1jZOf_9e-PxyPj-8pIcxW7rwqLAo022ryxQmfjKcHlTvGboF17MdEk0s";
+/* eslint-disable @typescript-eslint/no-require-imports */
+// web-push no tiene tipos oficiales en este proyecto
+const webpush = require("web-push") as {
+  setVapidDetails: (subject: string, pub: string, priv: string) => void;
+  sendNotification: (
+    sub: { endpoint: string; keys: { p256dh: string; auth: string } },
+    payload: string
+  ) => Promise<void>;
+};
 
 webpush.setVapidDetails(
   "mailto:noreply@buscaycurra.es",
-  VAPID_PUBLIC,
+  "BEAUFUsgnk4QCgX9zA5tvPRykEZYA2b1jZOf_9e-PxyPj-8pIcxW7rwqLAo022ryxQmfjKcHlTvGboF17MdEk0s",
   process.env.VAPID_PRIVATE_KEY || ""
 );
 
