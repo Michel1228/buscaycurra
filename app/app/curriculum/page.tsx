@@ -321,8 +321,9 @@ export default function CurriculumPage() {
     finally { setSubiendoFoto(false); }
   }
 
-  function formToCVData(perfilMejorado?: string): CVData {
-    const expOrdenada = [...form.experiencia]
+  function formToCVData(perfilMejorado?: string, experienciaOverride?: Exp[]): CVData {
+    const expBase = experienciaOverride ?? form.experiencia;
+    const expOrdenada = [...expBase]
       .filter(e => e.puesto)
       .sort((a, b) => {
         const getYear = (f: string) => { const m = f.match(/(\d{4})/g); return m ? parseInt(m[m.length - 1]) : 0; };
@@ -367,8 +368,8 @@ export default function CurriculumPage() {
     setProcesando(true);
     setError("");
     try {
+      // 1. Mejorar perfil profesional
       const cvText = form.perfilProfesional || "Profesional con experiencia en diversos sectores. Actitud dinámica y proactiva.";
-
       let perfilMejorado: string | undefined;
       try {
         const mejorarRes = await fetch("/api/cv/mejorar", {
@@ -382,7 +383,33 @@ export default function CurriculumPage() {
         }
       } catch { /* usa el perfil original si la IA falla */ }
 
-      const html = generarCVHTML(formToCVData(perfilMejorado));
+      // 2. Mejorar descripción de cada experiencia laboral con IA
+      const experienciaMejorada = [...form.experiencia];
+      for (let i = 0; i < Math.min(form.experiencia.length, 3); i++) {
+        const exp = form.experiencia[i];
+        if (!exp.descripcion.trim() || !exp.puesto.trim()) continue;
+        try {
+          const expRes = await fetch("/api/cv/mejorar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              cvText: `Puesto: ${exp.puesto}${exp.empresa ? ` en ${exp.empresa}` : ""}.\nFunciones realizadas:\n${exp.descripcion}`,
+              jobTitle: exp.puesto,
+            }),
+          });
+          if (expRes.ok) {
+            const expData = await expRes.json();
+            if (expData.cvMejorado) {
+              experienciaMejorada[i] = { ...exp, descripcion: expData.cvMejorado };
+            }
+          }
+        } catch { /* mantiene descripción original si la IA falla */ }
+      }
+
+      // 3. Actualizar el formulario con las mejoras (se verán al volver a editar)
+      setForm(prev => ({ ...prev, experiencia: experienciaMejorada }));
+
+      const html = generarCVHTML(formToCVData(perfilMejorado, experienciaMejorada));
       setMejoradoHTML(html);
     } catch { setError("Error al generar el CV"); }
     finally { setProcesando(false); }

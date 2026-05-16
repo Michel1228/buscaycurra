@@ -22,6 +22,13 @@ interface HistoryRecord {
   sentAt?: string;
   respuesta?: "positiva" | "negativa" | "entrevista";
 }
+interface CartaArchivada {
+  id: number;
+  company_name: string;
+  company_email: string;
+  carta_texto: string;
+  created_at: string;
+}
 interface UserStats {
   totalEnviados: number;
   enviadosEstaSemana: number;
@@ -62,6 +69,8 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [respuestaId, setRespuestaId] = useState<string | null>(null);
+  const [cartas, setCartas] = useState<CartaArchivada[]>([]);
+  const [cartaExpandida, setCartaExpandida] = useState<string | null>(null);
 
   const loadData = useCallback(async (silencioso = false) => {
     try {
@@ -86,6 +95,14 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
     const iv = setInterval(() => void loadData(true), 30_000);
     return () => clearInterval(iv);
   }, [loadData]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`/api/cv-cartas?userId=${encodeURIComponent(userId)}`)
+      .then(r => r.json())
+      .then((data: { cartas?: CartaArchivada[] }) => { if (data.cartas) setCartas(data.cartas); })
+      .catch(() => {});
+  }, [userId]);
 
   const registrarRespuesta = (id: string, tipo: "positiva" | "negativa" | "entrevista") => {
     setHistory(prev => prev.map(r => r.id === id ? { ...r, respuesta: tipo } : r));
@@ -242,6 +259,9 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
               const respuestaLabel = rec.respuesta === "entrevista" ? "🎯 Entrevista"
                 : rec.respuesta === "positiva" ? "✅ Respuesta positiva"
                 : rec.respuesta === "negativa" ? "❌ Sin interés" : undefined;
+              // Buscar carta archivada para esta empresa
+              const cartaArchivada = cartas.find(c => c.company_email === rec.companyEmail || c.company_name === rec.companyName);
+              const cartaKey = `${rec.id}`;
               return (
                 <li key={rec.id} style={{ borderBottom: i < history.length - 1 ? "1px solid rgba(61,60,48,0.3)" : "none" }}>
                   <div className="px-5 py-3.5 flex items-center gap-3">
@@ -255,6 +275,13 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
                             day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
                           })}
                         </p>
+                      )}
+                      {cartaArchivada && (
+                        <button onClick={() => setCartaExpandida(cartaExpandida === cartaKey ? null : cartaKey)}
+                          className="text-[10px] mt-1 px-2 py-0.5 rounded-md"
+                          style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.15)" }}>
+                          {cartaExpandida === cartaKey ? "▲ Ocultar carta" : "📄 Ver carta enviada"}
+                        </button>
                       )}
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
@@ -277,6 +304,14 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
                       )}
                     </div>
                   </div>
+                  {cartaExpandida === cartaKey && cartaArchivada && (
+                    <div className="px-5 pb-4">
+                      <div className="rounded-xl p-4 text-xs leading-relaxed whitespace-pre-wrap"
+                        style={{ background: "#0f1117", border: "1px solid #252836", color: "#94a3b8" }}>
+                        {cartaArchivada.carta_texto}
+                      </div>
+                    </div>
+                  )}
                   {respuestaId === rec.id && (
                     <div className="px-5 pb-3 flex gap-2">
                       {([

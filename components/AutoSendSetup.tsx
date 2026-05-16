@@ -42,6 +42,12 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
   const [slotElegido, setSlotElegido] = useState<"auto" | "ahora" | "manana" | "custom">("auto");
   const [fechaCustom, setFechaCustom] = useState("");
 
+  // Preview de carta
+  const [showPreview, setShowPreview] = useState(false);
+  const [cartaPreview, setCartaPreview] = useState("");
+  const [cartaEditada, setCartaEditada] = useState("");
+  const [generandoPreview, setGenerandoPreview] = useState(false);
+
   useEffect(() => {
     const empresa = searchParams.get("empresa");
     const url = searchParams.get("url");
@@ -95,6 +101,53 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
     return `${sig.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })} 9:00h`;
   }
 
+  const generarVistaPreviaCarta = async (): Promise<boolean> => {
+    setGenerandoPreview(true);
+    try {
+      // Obtener CV del usuario
+      let cvTexto = "";
+      if (userId) {
+        try {
+          const cvRes = await fetch(`/api/gusi/cv?userId=${encodeURIComponent(userId)}`);
+          if (cvRes.ok) {
+            const cvData = await cvRes.json() as { cv?: Record<string, unknown> };
+            if (cvData.cv) {
+              const cv = cvData.cv;
+              const nombre = String(cv.nombre || cv.full_name || "");
+              const exp = Array.isArray(cv.experiencia)
+                ? (cv.experiencia as Record<string, unknown>[]).map(e => `${e.puesto} en ${e.empresa}: ${e.descripcion}`).join("\n")
+                : "";
+              cvTexto = `Nombre: ${nombre}\nExperiencia:\n${exp}\nHabilidades: ${String(cv.aptitudes || "")}`;
+            }
+          }
+        } catch { /* usa texto genérico */ }
+      }
+
+      const res = await fetch("/api/cv/mejorar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cvText: cvTexto || "Candidato con experiencia profesional buscando nuevas oportunidades.",
+          jobTitle: jobTitle || companyName,
+          tipo: "carta",
+          empresa: companyName,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json() as { cvMejorado?: string };
+        const carta = data.cvMejorado || "";
+        setCartaPreview(carta);
+        setCartaEditada(carta);
+        setShowPreview(true);
+        return true;
+      }
+    } catch { /* silencioso */ }
+    finally { setGenerandoPreview(false); }
+    // Si falla la preview, dejar enviar directamente
+    return false;
+  };
+
   const buscarEmail = async () => {
     if (!urlBusqueda.trim()) return;
     setBuscandoEmail(true);
@@ -113,7 +166,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
     setBuscandoEmail(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, cartaAprobada?: string) => {
     e.preventDefault();
     setError(null);
 
@@ -129,6 +182,13 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
     if (modo === "buscar-email" && !companyEmail.trim()) {
       setError("Necesitas el email para enviar automáticamente. Si no lo encuentras, usa 'Ya apliqué yo'.");
       return;
+    }
+
+    // Si usa IA y no se ha generado preview aún, generar primero
+    if (useAI && modo !== "ya-aplique" && !cartaAprobada) {
+      const generado = await generarVistaPreviaCarta();
+      if (generado) return; // Esperamos a que el usuario confirme en el modal
+      // Si falla la preview, continuar sin carta personalizada
     }
 
     setLoading(true);
@@ -154,6 +214,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
             priority: "normal",
             useAIPersonalization: useAI,
             scheduledFor: calcularFechaEnvio(),
+            cartaPersonalizada: cartaAprobada || undefined,
           }),
         });
         const data = await res.json() as { error?: string; estimatedTimeFormatted?: string; rateLimitInfo?: RateLimitInfo };
@@ -428,19 +489,79 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
           </div>
         )}
 
-        <button type="submit" disabled={loading}
+        <button type="submit" disabled={loading || generandoPreview}
           className="w-full py-2.5 font-semibold rounded-lg transition text-xs"
           style={{
-            background: loading ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
-            color: loading ? "#64748b" : "#fff",
+            background: (loading || generandoPreview) ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+            color: (loading || generandoPreview) ? "#64748b" : "#fff",
           }}>
-          {loading
-            ? "Procesando..."
-            : modo === "ya-aplique"
-              ? "Registrar candidatura"
-              : "Enviar CV automáticamente"}
+          {generandoPreview
+            ? "Generando carta con IA..."
+            : loading
+              ? "Procesando..."
+              : modo === "ya-aplique"
+                ? "Registrar candidatura"
+                : useAI
+                  ? "Ver carta y enviar →"
+                  : "Enviar CV automáticamente"}
         </button>
       </form>
+
+      {/* Modal de vista previa de carta */}
+      {showPreview && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto"
+          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowPreview(false); }}>
+          <div className="w-full max-w-xl rounded-2xl my-8" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #2d3142" }}>
+              <div>
+                <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Vista previa de la carta</h3>
+                <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Para <strong style={{ color: "#94a3b8" }}>{companyName}</strong> — puedes editarla antes de enviar</p>
+              </div>
+              <button onClick={() => setShowPreview(false)} style={{ color: "#64748b" }} className="text-xl">✕</button>
+            </div>
+
+            <div className="p-5">
+              <textarea
+                value={cartaEditada}
+                onChange={e => setCartaEditada(e.target.value)}
+                rows={14}
+                className="w-full px-4 py-3 rounded-xl text-sm resize-none focus:outline-none"
+                style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9", lineHeight: 1.7 }}
+              />
+              <p className="text-[10px] mt-2" style={{ color: "#475569" }}>
+                Puedes editar libremente el texto. Esta es la carta que se enviará junto a tu CV.
+              </p>
+            </div>
+
+            <div className="flex gap-3 px-5 pb-5">
+              <button onClick={() => setShowPreview(false)}
+                className="flex-1 py-2.5 text-xs font-medium rounded-lg transition"
+                style={{ background: "#252836", color: "#94a3b8" }}>
+                Cancelar
+              </button>
+              <button
+                onClick={async (e) => {
+                  setShowPreview(false);
+                  // Archivar la carta antes de enviar
+                  if (userId && cartaEditada) {
+                    void fetch("/api/cv-cartas", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ userId, companyName: companyName.trim(), companyEmail: companyEmail.trim().toLowerCase(), cartaTexto: cartaEditada }),
+                    });
+                  }
+                  await handleSubmit(e as unknown as React.FormEvent, cartaEditada);
+                }}
+                disabled={loading}
+                className="flex-1 py-2.5 text-xs font-semibold rounded-lg transition disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                {loading ? "Enviando..." : "Confirmar y enviar →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

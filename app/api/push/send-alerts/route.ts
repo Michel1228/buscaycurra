@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { sendPush, type PushSub } from "@/lib/push-sender";
+import { sendJobAlertEmail } from "@/lib/email/smtp-sender";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +103,24 @@ export async function GET(request: NextRequest) {
         datos: { keyword: alerta.keyword, location: alerta.location, total },
         leida: false,
       });
+
+      // 4b. Email de alerta
+      try {
+        const { data: { user: authUser } } = await supabase.auth.admin.getUserById(alerta.user_id);
+        if (authUser?.email) {
+          await sendJobAlertEmail({
+            userEmail: authUser.email,
+            keyword: alerta.keyword,
+            location: alerta.location || undefined,
+            total,
+            ejemploTitle: ejemplo.title,
+            ejemploCompany: ejemplo.company,
+            ejemploCity: ejemplo.city || undefined,
+          });
+        }
+      } catch (emailErr) {
+        console.error("[send-alerts] Error enviando email:", (emailErr as Error).message);
+      }
 
       // 5. Actualizar last_sent_at
       await pool.query(`UPDATE job_alerts SET last_sent_at = NOW() WHERE id = $1`, [alerta.id]);

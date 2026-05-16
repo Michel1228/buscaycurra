@@ -347,6 +347,58 @@ export async function sendCVEmailSMTP(payload: CVEmailPayload): Promise<SendResu
   }
 }
 
+// ─── Email de alerta de empleo ────────────────────────────────────────────────
+
+export async function sendJobAlertEmail(params: {
+  userEmail: string;
+  keyword: string;
+  location?: string;
+  total: number;
+  ejemploTitle: string;
+  ejemploCompany: string;
+  ejemploCity?: string;
+}): Promise<void> {
+  const { userEmail, keyword, location, total, ejemploTitle, ejemploCompany, ejemploCity } = params;
+  const searchUrl = `https://buscaycurra.es/app/buscar?q=${encodeURIComponent(keyword)}${location ? `&loc=${encodeURIComponent(location)}` : ""}`;
+
+  const header = headerGradient(
+    "🔔",
+    `${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""} para ti`,
+    `Alerta: ${keyword}${location ? ` · ${location}` : ""}`
+  );
+
+  const body = `
+    <p style="margin:0 0 20px;color:#94a3b8;font-size:15px;line-height:1.7;">
+      Guzzi ha encontrado <strong style="color:#22c55e;">${total} oferta${total > 1 ? "s" : ""}</strong>
+      que coinciden con tu alerta <strong style="color:#f1f5f9;">"${keyword}"</strong>${location ? ` en <strong style="color:#f1f5f9;">${location}</strong>` : ""}.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1520;border:1px solid rgba(34,197,94,0.15);border-radius:14px;margin-bottom:24px;">
+      <tr><td style="padding:20px 24px;">
+        <p style="margin:0 0 4px;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">Ejemplo</p>
+        <p style="margin:0 0 4px;color:#f1f5f9;font-size:16px;font-weight:700;">${ejemploTitle}</p>
+        <p style="margin:0;color:#64748b;font-size:13px;">${ejemploCompany}${ejemploCity ? ` · ${ejemploCity}` : ""}</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 20px;color:#64748b;font-size:13px;line-height:1.7;">
+      Y ${total > 1 ? `otras ${total - 1} ofertas esperando` : "esta oferta te espera"}. Actúa rápido — los mejores puestos se cubren en horas.
+    </p>
+
+    ${ctaButton("Ver todas las ofertas →", searchUrl)}
+
+    <p style="margin:20px 0 0;text-align:center;color:#374151;font-size:11px;">
+      Gestiona tus alertas en <a href="https://buscaycurra.es/app/gusi" style="color:#22c55e;text-decoration:none;">Guzzi</a>
+    </p>
+  `;
+
+  try {
+    await sendEmail(userEmail, `🔔 ${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""}: "${keyword}" — BuscayCurra`, baseTemplate(header, body));
+  } catch (err) {
+    console.error("[Resend] Error en alerta empleo:", (err as Error).message);
+  }
+}
+
 export function generarCartaHTML(
   candidato: string,
   empresa: string,

@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import InfoTooltip from "@/components/InfoTooltip";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
 
@@ -26,12 +26,14 @@ const emptyPerfil: PerfilData = {
 
 export default function PerfilPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [perfil, setPerfil] = useState<PerfilData>(emptyPerfil);
   const [guardado, setGuardado] = useState(false);
   const [cargando, setCargando] = useState(true);
-  const [tab, setTab] = useState<"perfil" | "seguridad" | "plan">("perfil");
+  const initialTab = searchParams.get("tab") === "plan" ? "plan" : searchParams.get("tab") === "seguridad" ? "seguridad" : "perfil";
+  const [tab, setTab] = useState<"perfil" | "seguridad" | "plan">(initialTab as "perfil" | "seguridad" | "plan");
   const [planActual, setPlanActual] = useState<"free" | "esencial" | "basico" | "pro" | "empresa">("free");
   const [cargandoPlan, setCargandoPlan] = useState(false);
   const [errorPlan, setErrorPlan] = useState<string | null>(null);
@@ -269,6 +271,26 @@ export default function PerfilPage() {
 
             {/* Notificaciones push */}
             <PushSubscribeButton />
+
+            {/* Mi Plan — acceso rápido destacado */}
+            <div className="rounded-xl p-5 flex items-center gap-4 cursor-pointer hover:opacity-90 transition"
+              onClick={() => setTab("plan")}
+              style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.12), rgba(34,197,94,0.06))", border: "1px solid rgba(168,85,247,0.25)" }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                style={{ background: "rgba(168,85,247,0.15)" }}>
+                💎
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Mi Plan</h3>
+                <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
+                  {planActual === "free" ? "Plan gratuito — mejora desde 2,99 €/mes" : `Plan ${planActual.charAt(0).toUpperCase() + planActual.slice(1)} activo`}
+                </p>
+              </div>
+              <span className="px-3 py-1.5 text-xs font-semibold rounded-lg flex-shrink-0"
+                style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7", border: "1px solid rgba(168,85,247,0.25)" }}>
+                Ver plan →
+              </span>
+            </div>
 
             {/* Link al CV */}
             <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #252836" }}>
