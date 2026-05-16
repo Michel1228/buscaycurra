@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface Notificacion {
@@ -47,6 +48,21 @@ export default function NotificacionesBell() {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  function getNotifUrl(n: Notificacion): string | null {
+    const datos = n.datos || {};
+    if (n.tipo === "nuevas_ofertas" || n.tipo === "nuevo_empleo" || n.tipo === "alerta_empleo") {
+      const kw = datos.keyword ? `keyword=${encodeURIComponent(datos.keyword)}` : "";
+      const loc = datos.location ? `&location=${encodeURIComponent(datos.location)}` : "";
+      if (kw) return `/app/buscar?${kw}${loc}`;
+      return "/app/buscar";
+    }
+    if (n.tipo === "cv_enviado") return "/app/envios";
+    if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
+    if (n.tipo === "recordatorio") return "/app/gusi";
+    return null;
+  }
 
   // Load user + notifications
   useEffect(() => {
@@ -175,7 +191,11 @@ export default function NotificacionesBell() {
           ) : (
             <div>
               {notifs.map((n) => (
-                <button key={n.id} onClick={() => !n.leida && marcarLeida(n.id)}
+                <button key={n.id} onClick={() => {
+                  if (!n.leida) marcarLeida(n.id);
+                  const url = getNotifUrl(n);
+                  if (url) { setOpen(false); router.push(url); }
+                }}
                   className="w-full px-4 py-3 text-left flex items-start gap-3 transition hover:opacity-80"
                   style={{
                     background: n.leida ? "transparent" : "rgba(126,213,111,0.04)",

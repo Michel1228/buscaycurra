@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Notif {
   id: string;
@@ -27,6 +28,21 @@ export default function NotificationBell({ userId }: { userId: string }) {
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [sinLeer, setSinLeer] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  function getNotifUrl(n: Notif): string | null {
+    const datos = n.datos || {};
+    if (n.tipo === "nuevas_ofertas" || n.tipo === "alerta_empleo") {
+      const kw = datos.keyword ? `keyword=${encodeURIComponent(datos.keyword)}` : "";
+      const loc = datos.location ? `&location=${encodeURIComponent(datos.location)}` : "";
+      if (kw) return `/app/buscar?${kw}${loc}`;
+      return "/app/buscar";
+    }
+    if (n.tipo === "cv_enviado") return "/app/envios";
+    if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
+    if (n.tipo === "recordatorio") return "/app/gusi";
+    return null;
+  }
 
   useEffect(() => {
     if (!userId) return;
@@ -138,7 +154,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
             ) : (
               notifs.map((n) => (
                 <div key={n.id}
-                  onClick={() => { if (!n.leida) marcarLeida(n.id); }}
+                  onClick={() => {
+                    if (!n.leida) marcarLeida(n.id);
+                    const url = getNotifUrl(n);
+                    if (url) { setOpen(false); router.push(url); }
+                  }}
                   className="flex gap-3 px-4 py-3 cursor-pointer transition hover:bg-[#252836]"
                   style={{ borderBottom: "1px solid rgba(45,49,66,0.5)", opacity: n.leida ? 0.6 : 1 }}>
                   <span className="text-base flex-shrink-0 mt-0.5">

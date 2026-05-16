@@ -93,6 +93,8 @@ function extractCVInfo(cv: Record<string, unknown>): { puesto: string; ciudad: s
   if (Array.isArray(exp) && exp.length > 0) {
     // Usar la experiencia más reciente (última del array) para el saludo
     puesto = String((exp[exp.length - 1] as { puesto?: string }).puesto || "").trim();
+    // Si el puesto es una lista separada por comas ("Reponedor, repartidor, ..."), usar solo el primero
+    if (puesto.includes(",")) puesto = puesto.split(",")[0].trim();
   } else if (typeof exp === "string" && exp.trim()) {
     const m = exp.match(/(?:—|–|-)\s*(.+?)\s+en\s+/i);
     puesto = m?.[1]?.trim() || "";
@@ -1255,7 +1257,9 @@ Ya tengo tus datos guardados. Voy a:
                     <div key={job.id} className="bg-[#1a1d24] rounded-lg p-2 text-xs">
                       <p className="font-medium text-white">{job.titulo}</p>
                       <p className="text-gray-400">{job.empresa} · {job.ubicacion}</p>
-                      <p className="text-[#22c55e]">{job.match}% compatible</p>
+                      {job.salario && job.salario !== "Ver en oferta" && (
+                        <p className="text-[#22c55e]">{job.salario}</p>
+                      )}
                     </div>
                   ))}
                   <button 

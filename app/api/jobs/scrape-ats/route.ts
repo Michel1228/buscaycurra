@@ -93,13 +93,15 @@ export async function GET(request: NextRequest) {
     sourceUrl: string; sourceName: string;
   }) => {
     try {
+      // xmax=0 → INSERT real; xmax>0 → UPDATE de fila existente
       const res = await pool.query(
         `INSERT INTO "JobListing" (id, title, company, description, sector, city, province, "sourceUrl", "sourceName", "isActive", "scrapedAt", "createdAt")
          VALUES ($1,$2,$3,$4,$5::\"JobSector\",$6,$7,$8,$9,true,NOW(),NOW())
-         ON CONFLICT (id) DO UPDATE SET "scrapedAt"=NOW(), "isActive"=true`,
+         ON CONFLICT (id) DO UPDATE SET "scrapedAt"=NOW(), "isActive"=true
+         RETURNING (xmax = 0) AS inserted`,
         [row.id, row.title.slice(0, 200), row.company.slice(0, 200), row.description.slice(0, 4000), row.sector, row.city.slice(0, 100), row.province.slice(0, 100), row.sourceUrl.slice(0, 500), row.sourceName]
       );
-      if (res.rowCount && res.rowCount > 0) {
+      if (res.rows[0]?.inserted === true) {
         nuevas++;
         if (row.city) ciudadesNuevas.add(row.city.toLowerCase());
         if (row.province) ciudadesNuevas.add(row.province.toLowerCase());

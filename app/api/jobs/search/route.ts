@@ -20,7 +20,7 @@ function cityLike(col: string, idx: number): string {
   return `translate(${col}, '${ACCENT_FROM}', '${ACCENT_TO}') ILIKE $${idx}`;
 }
 
-function rowToOferta(j: Record<string, unknown>, i: number, offset: number, location: string) {
+function rowToOferta(j: Record<string, unknown>, location: string) {
   return {
     id: j.id,
     titulo: j.title,
@@ -31,8 +31,6 @@ function rowToOferta(j: Record<string, unknown>, i: number, offset: number, loca
     fuente: j.sourcename,
     url: j.sourceurl,
     fecha: j.scrapedat,
-    match: Math.max(98 - offset * 0.05 - i * 0.5, 40),
-    distancia: "Tu ciudad",
   };
 }
 
@@ -112,8 +110,20 @@ export async function GET(request: NextRequest) {
     params.push(limit, offset);
     const dbResult = await pool.query(sql, params);
 
+    // Deduplicar por sourceUrl (misma oferta de distintas fuentes)
+    function deduplicar(rows: Record<string, unknown>[]) {
+      const seen = new Set<string>();
+      return rows.filter(j => {
+        const key = String(j.sourceurl || j.id);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
     if (dbResult.rows.length >= 1 || page > 1) {
-      let ofertas = dbResult.rows.map((j, i) => rowToOferta(j, i, offset, location));
+      const deduped = deduplicar(dbResult.rows);
+      let ofertas = deduped.map(j => rowToOferta(j, location));
       if (jornada === "remoto") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("remoto") || (o.titulo as string).toLowerCase().includes("teletrabajo"));
       else if (jornada === "parcial") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("parcial"));
       return NextResponse.json({ ofertas, total: totalDB, page, hasMore: offset + dbResult.rows.length < totalDB, keyword, location, source: "database" });
@@ -139,7 +149,7 @@ export async function GET(request: NextRequest) {
            LIMIT $2 OFFSET $3`,
           [`%${cityParts}%`, limit, locOffset]
         );
-        const locOfertas = locResult.rows.map((j, i) => rowToOferta(j, i, locOffset, location));
+        const locOfertas = deduplicar(locResult.rows).map(j => rowToOferta(j, location));
         return NextResponse.json({ ofertas: locOfertas, total: locTotal, page, hasMore: locOffset + locResult.rows.length < locTotal, keyword, location, source: "database-city" });
       }
     }
