@@ -208,7 +208,6 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 50): Prom
       fuente: "Jooble",
       url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ubicacion)}`,
       fecha: j.updated || new Date().toISOString(),
-      match: Math.max(85 - i * 3, 40),
     }));
   } catch (e) {
     console.warn("[Jooble] Error:", (e as Error).message);
@@ -258,7 +257,6 @@ async function buscarAdzuna(puesto: string, ubicacion: string, limit = 50): Prom
         fuente: "Adzuna",
         url: (j.redirect_url as string) || `https://www.adzuna.es/search?q=${what}&loc=${where}`,
         fecha: (j.created as string) || new Date().toISOString(),
-        match: Math.max(82 - i * 3, 35),
       };
     });
   } catch (e) {
@@ -305,7 +303,6 @@ async function buscarCareerjet(puesto: string, ubicacion: string, limit = 50): P
       fuente: "Careerjet",
       url: j.url || `https://www.careerjet.es/${encodeURIComponent(puesto)}-empleo.html`,
       fecha: j.date || new Date().toISOString(),
-      match: Math.max(80 - i * 3, 35),
     }));
   } catch (e) {
     console.warn("[Careerjet] Error:", (e as Error).message);
@@ -374,7 +371,7 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
       fuente: "LinkedIn",
       url: links[i] || `https://www.linkedin.com/jobs/search?keywords=${kw}&location=${locEnc}`,
       fecha: dates[i] || new Date().toISOString(),
-      match: Math.max(Math.min(baseMatch + 10, 99), 30),
+      match: Math.max(Math.min(baseMatch, 95), 30),
     };
   });
 }
