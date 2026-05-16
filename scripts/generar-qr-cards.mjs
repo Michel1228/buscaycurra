@@ -41,6 +41,12 @@ const TARJETAS = [
     cta: "BuscayCurra encuentra empleo por ti",
     imagen: "esta nose que peli es.jpeg",
   },
+  {
+    titulo: "Hakuna Matata",
+    subtitulo: "No hay de qué preocuparse",
+    cta: "Deja que Guzzi busque el trabajo por ti",
+    imagen: "rey leon.jpeg",
+  },
 ];
 
 async function generarQRsvg(url) {
@@ -109,9 +115,9 @@ async function main() {
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 24px;
-    max-width: 860px;
+    max-width: 1100px;
     margin: 0 auto;
   }
 
@@ -246,7 +252,7 @@ async function main() {
   @media print {
     body { background: white; padding: 10mm; }
     h1 { color: #6b7280; margin-bottom: 6mm; }
-    .grid { grid-template-columns: repeat(2, 1fr); gap: 6mm; max-width: 100%; }
+    .grid { grid-template-columns: repeat(3, 1fr); gap: 6mm; max-width: 100%; }
     .card { border: 1pt solid #22c55e; box-shadow: none; }
     .card-overlay {
       background: linear-gradient(
