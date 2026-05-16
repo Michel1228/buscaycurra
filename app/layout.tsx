@@ -8,7 +8,6 @@ import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 import AppNavWrapper from "@/components/AppNavWrapper";
 import SplashWrapper from "@/components/SplashWrapper";
-import BosqueAmbiente from "@/components/BosqueAmbiente";
 
 export const metadata: Metadata = {
   title: "BuscayCurra — Encuentra trabajo con IA",
@@ -51,7 +50,6 @@ export default function RootLayout({
         <AppNavWrapper />
         {children}
         <CookieBanner />
-        <BosqueAmbiente />
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {

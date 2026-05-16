@@ -42,6 +42,7 @@ export default function PipelinePage() {
   const [modalNueva, setModalNueva] = useState(false);
   const [nueva, setNueva] = useState({ empresa: "", puesto: "", notas: "" });
   const [guardandoNueva, setGuardandoNueva] = useState(false);
+  const [celebracion, setCelebracion] = useState(false);
 
   useEffect(() => {
     async function cargar() {
@@ -163,9 +164,9 @@ export default function PipelinePage() {
       await getSupabaseBrowser().from("cv_sends").update({
         error_message: JSON.stringify({ pipeline_estado: nuevoEstado, notas: cand?.notas || "" })
       }).eq("id", id);
-      // Celebración cuando se marca como Contratado
       if (nuevoEstado === "contratado") {
-        setTimeout(() => router.push("/app/mariposa"), 600);
+        setCelebracion(true);
+        setTimeout(() => setCelebracion(false), 4000);
       }
     } catch (e) {
       console.error("Error actualizando estado:", e);
@@ -196,6 +197,12 @@ export default function PipelinePage() {
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
+      {celebracion && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl text-sm font-bold shadow-2xl"
+          style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", animation: "fade-in 0.3s ease" }}>
+          🎉 ¡Enhorabuena! Marcado como contratado.
+        </div>
+      )}
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.05))" }}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between">
