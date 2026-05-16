@@ -1054,7 +1054,7 @@ Ya tengo tus datos guardados. Voy a:
       <button
         onClick={() => setAbierto(true)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#22c55e] text-white shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-2xl"
-        title="Hablar con Gusi"
+        title="Hablar con Guzzi"
       >
         🐛
       </button>

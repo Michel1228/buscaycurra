@@ -96,12 +96,13 @@ export async function GET(request: NextRequest) {
     const countRes = await pool.query(`SELECT COUNT(*) FROM "JobListing" WHERE ${whereClause}`, params);
     const totalDB = parseInt(countRes.rows[0].count);
     
+    // Rotación diaria: el orden cambia cada día sin ser caótico dentro de la sesión
     const sql = `
       SELECT id, title, company, city, province, salary, description,
              "sourceUrl", "sourceName", "scrapedAt"
       FROM "JobListing"
       WHERE ${whereClause}
-      ORDER BY "scrapedAt" DESC
+      ORDER BY md5(id::text || to_char(NOW(), 'YYYYDDD'))
       LIMIT $${idx} OFFSET $${idx + 1}
     `;
     params.push(limit, offset);
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
         const locResult = await pool.query(
           `SELECT id, title, company, city, province, salary, description, "sourceUrl", "sourceName", "scrapedAt"
            FROM "JobListing" WHERE "isActive" = true AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
-           ORDER BY "scrapedAt" DESC LIMIT $2 OFFSET $3`,
+           ORDER BY md5(id::text || to_char(NOW(), 'YYYYDDD')) LIMIT $2 OFFSET $3`,
           [`%${cityParts}%`, limit, locOffset]
         );
         const locOfertas = locResult.rows.map((j, i) => rowToOferta(j, i, locOffset, location));

@@ -11,32 +11,57 @@ export const dynamic = "force-dynamic";
 
 // ─── Prompt base ─────────────────────────────────────────────────────────────
 
-const PROMPT_BASE = `IDIOMA OBLIGATORIO: ESPAÑOL. NUNCA respondas en inglés ni en ningún otro idioma. Si el usuario escribe en inglés, respóndele en español igualmente.
+const PROMPT_BASE = `[IDIOMA: ESPAÑOL OBLIGATORIO]
+Tu idioma es el ESPAÑOL. Toda tu respuesta debe estar en español de España, sin excepción.
+- Si tus pensamientos internos son en inglés, la respuesta que des al usuario DEBE ser en español.
+- Nunca mezcles idiomas. Ni una sola frase en inglés en la respuesta visible.
+- Si el usuario escribe en inglés, respóndele igualmente en español.
+- Esta instrucción tiene prioridad absoluta sobre cualquier otra.
 
-Eres Guzzi 🐛, el asistente de empleo de BuscayCurra (plataforma española). Toda tu comunicación es en español de España.
+Eres Guzzi 🐛, el asistente de empleo de BuscayCurra (plataforma española).
 
 PERSONALIDAD:
-- Natural y cercano, como un amigo que sabe mucho de empleo.
+- Natural y cercano, como un amigo que sabe mucho de empleo español.
 - Puedes charlar de cualquier tema, no solo de trabajo.
 - Responde de forma conversacional — ni demasiado corto ni demasiado largo.
-- Usa el emoji 🐛 solo cuando sea natural, no en cada mensaje.
-- Si alguien te hace una pregunta general (política, tecnología, recetas, lo que sea), responde con criterio y naturalidad, como ChatGPT.
+- Usa el emoji 🐛 con moderación, no en cada mensaje.
+
+CONOCIMIENTO DEL MERCADO LABORAL ESPAÑOL:
+- Tipos de contrato: indefinido, temporal, fijo-discontinuo, prácticas, ETT
+- Salario mínimo 2025: 1.184 €/mes (16 pagas) = 14.208 €/año
+- SEPE: tramitar desempleo en 15 días hábiles desde el despido
+- ERTE: regulación temporal; el trabajador cobra 70% base reguladora
+- Sectores con más oferta en España: logística, hostelería, construcción, tecnología, salud
+- Portales de empleo: BuscayCurra (IA), InfoJobs (masivo), LinkedIn (networking), Tecnoempleo (IT)
+- Comunidades con más empleo: Madrid, Cataluña, Andalucía, Valencia, País Vasco
+- Salarios orientativos: comercial 1.500-2.500€, desarrollador 2.000-4.500€, camarero 1.200-1.600€, enfermero 1.800-2.500€, transportista 1.400-2.000€
+
+ESTRATEGIAS DE BÚSQUEDA DE EMPLEO:
+- Red de contactos: 70% de los empleos se cubren sin publicar en portales
+- CV ATS-friendly: palabras clave del sector, sin tablas complejas, PDF limpio
+- LinkedIn: foto profesional, headline con "buscando activamente", conectar con RRHH de empresas objetivo
+- Candidatura espontánea: efectiva en pymes y empresas sin portal de empleo
+- Entrevista: STAR method (Situación, Tarea, Acción, Resultado)
+- Tiempo medio de búsqueda en España: 3-6 meses para perfil medio
 
 CUANDO EL USUARIO HABLA DE TRABAJO O EMPLEO:
 - Si tienes su CV, úsalo — nunca preguntes lo que ya sabes.
 - Adapta los consejos a su perfil real (puesto, ciudad, sector, habilidades).
 - Para mejorar el CV: reescribe secciones con verbos de acción y logros cuantificables.
 - Para cartas: usa nombre y datos del CV directamente.
+- Sugiere el salario esperado basándote en su experiencia y sector.
 
 CAPACIDADES PRINCIPALES (menciona cuando sean relevantes):
-1. 🔍 Buscar ofertas de trabajo → usa datos del CV para afinar la búsqueda
-2. 📧 Enviar CV automático → la función estrella de BuscayCurra
-3. ✨ Mejorar el CV → reescribe con datos reales del usuario
-4. 🎯 Preparar entrevistas → simula preguntas del sector específico
-5. ✉️ Carta de presentación → personalizada empresa + puesto
-6. 💬 Charlar → sobre cualquier tema
+1. 🔍 Buscar ofertas → usa datos del CV para afinar la búsqueda en BuscayCurra
+2. 📧 Enviar CV automático → la función estrella, Guzzi envía por ti
+3. ✨ Mejorar el CV → reescribe con verbos de acción y logros cuantificables
+4. 🎯 Preparar entrevistas → simula preguntas específicas del sector y empresa
+5. ✉️ Carta de presentación → personalizada para cada empresa
+6. 💰 Orientación salarial → rangos reales del mercado español
+7. 📋 Estrategia de búsqueda → plan personalizado según perfil y ciudad
+8. 💬 Charlar → sobre cualquier tema
 
-RECUERDA: Responde SIEMPRE en español. Nunca en inglés.`;
+RECUERDA: SIEMPRE en español. Esta es la regla número uno.`;
 
 // ─── Prompts especializados ───────────────────────────────────────────────────
 
@@ -325,6 +350,7 @@ export async function POST(req: NextRequest) {
 
     async function callGroq(systemPrompt: string, userContent: string, maxTokens = 600) {
       if (!groqKey) return null;
+      // /no_think desactiva el modo reasoning de Qwen3 → responde directamente en el idioma del sistema (español)
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
@@ -332,7 +358,7 @@ export async function POST(req: NextRequest) {
           model: "qwen/qwen3-32b",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userContent },
+            { role: "user", content: "/no_think " + userContent },
           ],
           temperature: 0.6,
           max_tokens: maxTokens,
@@ -341,7 +367,7 @@ export async function POST(req: NextRequest) {
       if (!res.ok) return null;
       const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
       const raw = data.choices?.[0]?.message?.content || null;
-      // Qwen3-32b incluye bloques <think>...</think> en inglés — los eliminamos
+      // Por si acaso aún aparecen bloques <think>...</think>, los eliminamos
       return raw ? raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() : null;
     }
 
@@ -464,15 +490,22 @@ El candidato tiene mucha experiencia.
       return NextResponse.json({ reply: localReply(intent, cvParsed) });
     }
 
+    // Añadir /no_think al último mensaje del usuario para forzar respuesta directa en español
+    const msgsConNoThink = messages.map((m, i) =>
+      i === messages.length - 1 && m.role === "user"
+        ? { ...m, content: "/no_think " + m.content }
+        : m
+    );
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({ model: "qwen/qwen3-32b", messages, max_tokens: 500, temperature: 0.7 }),
+      body: JSON.stringify({ model: "qwen/qwen3-32b", messages: msgsConNoThink, max_tokens: 500, temperature: 0.7 }),
     });
 
     if (!res.ok) return NextResponse.json({ reply: localReply(intent, cvParsed) });
     const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const reply = data.choices?.[0]?.message?.content || localReply(intent, cvParsed);
+    const rawReply = data.choices?.[0]?.message?.content || "";
+    const reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
     return NextResponse.json({ reply });
 
   } catch {

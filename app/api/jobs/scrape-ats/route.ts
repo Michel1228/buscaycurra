@@ -7,6 +7,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { sendPush, type PushSub } from "@/lib/push-sender";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "http://placeholder",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
+);
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -78,6 +85,7 @@ export async function GET(request: NextRequest) {
   const pool = getPool();
   let nuevas = 0;
   let errores = 0;
+  const ciudadesNuevas = new Set<string>(); // ciudades con ofertas nuevas en este ciclo
 
   const upsert = async (row: {
     id: string; title: string; company: string; description: string;
@@ -91,7 +99,11 @@ export async function GET(request: NextRequest) {
          ON CONFLICT (id) DO UPDATE SET "scrapedAt"=NOW(), "isActive"=true`,
         [row.id, row.title.slice(0, 200), row.company.slice(0, 200), row.description.slice(0, 4000), row.sector, row.city.slice(0, 100), row.province.slice(0, 100), row.sourceUrl.slice(0, 500), row.sourceName]
       );
-      if (res.rowCount && res.rowCount > 0) nuevas++;
+      if (res.rowCount && res.rowCount > 0) {
+        nuevas++;
+        if (row.city) ciudadesNuevas.add(row.city.toLowerCase());
+        if (row.province) ciudadesNuevas.add(row.province.toLowerCase());
+      }
     } catch { errores++; }
   };
 
@@ -156,5 +168,78 @@ export async function GET(request: NextRequest) {
   }
 
   console.log(`[scrape-ats] Nuevas: ${nuevas}, Errores: ${errores}`);
-  return NextResponse.json({ ok: true, nuevas, errores, fuentes: GREENHOUSE.length + LEVER.length + TEAMTAILOR.length });
+
+  // Notificar a usuarios con alertas activas cuya ciudad coincida con ofertas nuevas
+  let notificados = 0;
+  if (nuevas > 0 && ciudadesNuevas.size > 0) {
+    try {
+      // Alertas activas no notificadas en las últimas 3h
+      const alertasRes = await pool.query<{ id: number; user_id: string; keyword: string; location: string }>(
+        `SELECT id, user_id, keyword, location FROM job_alerts
+         WHERE active = true
+           AND (last_sent_at IS NULL OR last_sent_at < NOW() - INTERVAL '3 hours')
+         LIMIT 200`
+      );
+
+      for (const alerta of alertasRes.rows) {
+        const loc = (alerta.location || "").toLowerCase();
+        // Verificar si alguna de las ciudades nuevas coincide con la ubicación de la alerta
+        const ciudadMatch = loc === "" || Array.from(ciudadesNuevas).some(c =>
+          c.includes(loc) || loc.includes(c) || loc.split(/[\s,]+/).some(part => c.includes(part) && part.length > 3)
+        );
+        if (!ciudadMatch) continue;
+
+        // Contar cuántas ofertas nuevas coinciden con esta alerta
+        const kw = `%${alerta.keyword.toLowerCase()}%`;
+        const countRes = await pool.query<{ count: string }>(
+          `SELECT COUNT(*) as count FROM "JobListing"
+           WHERE "isActive" = true AND "createdAt" > NOW() - INTERVAL '7 hours'
+             AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)`,
+          [kw]
+        );
+        const totalNuevas = parseInt(countRes.rows[0]?.count || "0");
+        if (totalNuevas === 0) continue;
+
+        // Obtener suscripciones push del usuario
+        const subsRes = await pool.query<PushSub>(
+          `SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = $1`,
+          [alerta.user_id]
+        );
+
+        for (const sub of subsRes.rows) {
+          try {
+            await sendPush(sub, {
+              title: `🐛 ${totalNuevas} nueva${totalNuevas > 1 ? "s" : ""} oferta${totalNuevas > 1 ? "s" : ""} de "${alerta.keyword}"`,
+              body: alerta.location ? `Acabamos de encontrarlas en ${alerta.location}` : "Revísalas ahora en BuscayCurra",
+              url: `/app/buscar?keyword=${encodeURIComponent(alerta.keyword)}${alerta.location ? `&location=${encodeURIComponent(alerta.location)}` : ""}`,
+            });
+            notificados++;
+          } catch (pushErr) {
+            const code = (pushErr as { statusCode?: number }).statusCode;
+            if (code === 410 || code === 404) {
+              await pool.query(`DELETE FROM push_subscriptions WHERE endpoint = $1`, [sub.endpoint]);
+            }
+          }
+        }
+
+        // Notificación en Supabase (campana)
+        await supabase.from("notificaciones").insert({
+          user_id: alerta.user_id,
+          tipo: "nuevas_ofertas",
+          titulo: `${totalNuevas} nueva${totalNuevas > 1 ? "s" : ""} oferta${totalNuevas > 1 ? "s" : ""} de "${alerta.keyword}"`,
+          mensaje: alerta.location ? `Acabamos de encontrarlas en ${alerta.location}` : "Revísalas ahora en BuscayCurra",
+          datos: { keyword: alerta.keyword, location: alerta.location, total: totalNuevas },
+          leida: false,
+        });
+
+        // Marcar como notificado para evitar spam
+        await pool.query(`UPDATE job_alerts SET last_sent_at = NOW() WHERE id = $1`, [alerta.id]);
+      }
+    } catch (notifErr) {
+      console.error("[scrape-ats] Error en notificaciones:", (notifErr as Error).message);
+    }
+  }
+
+  console.log(`[scrape-ats] Notificados: ${notificados} usuarios`);
+  return NextResponse.json({ ok: true, nuevas, errores, notificados, fuentes: GREENHOUSE.length + LEVER.length + TEAMTAILOR.length });
 }
