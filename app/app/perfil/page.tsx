@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import InfoTooltip from "@/components/InfoTooltip";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
 
@@ -26,14 +26,19 @@ const emptyPerfil: PerfilData = {
 
 export default function PerfilPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [perfil, setPerfil] = useState<PerfilData>(emptyPerfil);
   const [guardado, setGuardado] = useState(false);
   const [cargando, setCargando] = useState(true);
-  const initialTab = searchParams.get("tab") === "plan" ? "plan" : searchParams.get("tab") === "seguridad" ? "seguridad" : "perfil";
-  const [tab, setTab] = useState<"perfil" | "seguridad" | "plan">(initialTab as "perfil" | "seguridad" | "plan");
+  const [tab, setTab] = useState<"perfil" | "seguridad" | "plan">("perfil");
+
+  // Leer ?tab= de la URL solo en cliente (evita Suspense requirement en build)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tab");
+    if (t === "plan" || t === "seguridad") setTab(t);
+  }, []);
   const [planActual, setPlanActual] = useState<"free" | "esencial" | "basico" | "pro" | "empresa">("free");
   const [cargandoPlan, setCargandoPlan] = useState(false);
   const [errorPlan, setErrorPlan] = useState<string | null>(null);
