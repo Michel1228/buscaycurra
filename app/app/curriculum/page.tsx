@@ -560,19 +560,19 @@ export default function CurriculumPage() {
                 <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>💡 Truco: Foto profesional gratis con IA</p>
                 <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia el prompt y pégalo en ChatGPT con tu foto:</p>
                 <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
-                  Utiliza esta foto y crea una foto de currículum profesional: 1. Elimina el fondo y ponlo blanco liso. 2. Cámbiame la ropa por una camisa blanca formal. 3. Ajusta iluminación de estudio frontal suave. 4. Recorta en formato carnet (desde hombros hasta cabeza). Mantén mi cara, rasgos y expresión exactamente igual. El resultado tiene que parecer una foto profesional de estudio para CV.
+                  Utiliza esta foto para realizar los siguientes cambios: 1. Crear un fondo blanco y cambiar todo el fondo actual. 2. Cambiar la camiseta por una camisa blanca. 3. Poner la figura en posición sentada. Fotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.
                 </div>
                 <div className="mt-2 flex gap-2">
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("Utiliza esta foto y crea una foto de currículum profesional: 1. Elimina el fondo y ponlo blanco liso. 2. Cámbiame la ropa por una camisa blanca formal. 3. Ajusta iluminación de estudio frontal suave. 4. Recorta en formato carnet (desde hombros hasta cabeza). Mantén mi cara, rasgos y expresión exactamente igual. El resultado tiene que parecer una foto profesional de estudio para CV.");
+                      navigator.clipboard.writeText("Utiliza esta foto para realizar los siguientes cambios: 1. Crear un fondo blanco y cambiar todo el fondo actual. 2. Cambiar la camiseta por una camisa blanca. 3. Poner la figura en posición sentada. Fotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.");
                     }}
                     className="px-3 py-1 text-[10px] font-semibold rounded-md" style={{ background: "#22c55e", color: "#fff" }}>
                     1. Copiar prompt
                   </button>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("Utiliza esta foto y crea una foto de currículum profesional: 1. Elimina el fondo y ponlo blanco liso. 2. Cámbiame la ropa por una camisa blanca formal. 3. Ajusta iluminación de estudio frontal suave. 4. Recorta en formato carnet (desde hombros hasta cabeza). Mantén mi cara, rasgos y expresión exactamente igual. El resultado tiene que parecer una foto profesional de estudio para CV.");
+                      navigator.clipboard.writeText("Utiliza esta foto para realizar los siguientes cambios: 1. Crear un fondo blanco y cambiar todo el fondo actual. 2. Cambiar la camiseta por una camisa blanca. 3. Poner la figura en posición sentada. Fotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.");
                       const ua = navigator.userAgent.toLowerCase();
                       const isIOS = /iphone|ipad|ipod/.test(ua);
                       const isAndroid = /android/.test(ua);

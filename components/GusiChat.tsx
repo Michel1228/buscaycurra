@@ -1225,7 +1225,7 @@ Ya tengo tus datos guardados. Voy a:
                   </button>
                   <button
                     onClick={() => {
-                      const prompt = "Utiliza esta foto y crea una foto de currículum profesional: 1. Elimina el fondo y ponlo blanco liso. 2. Cámbiame la ropa por una camisa blanca formal. 3. Ajusta iluminación de estudio frontal suave. 4. Recorta en formato carnet (desde hombros hasta cabeza). Mantén mi cara, rasgos y expresión exactamente igual. El resultado tiene que parecer una foto profesional de estudio para CV.";
+                      const prompt = "Utiliza esta foto para realizar los siguientes cambios: 1. Crear un fondo blanco y cambiar todo el fondo actual. 2. Cambiar la camiseta por una camisa blanca. 3. Poner la figura en posición sentada. Fotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.";
                       navigator.clipboard.writeText(prompt).catch(() => {});
                       const ua = navigator.userAgent.toLowerCase();
                       const isIOS = /iphone|ipad|ipod/.test(ua);
