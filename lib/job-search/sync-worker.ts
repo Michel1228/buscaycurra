@@ -5,6 +5,7 @@
  */
 import { createHash } from "crypto";
 import { getPool } from "@/lib/db";
+import { getAdzunaKey, getJoobleKey, getCareerjetKey, reportFailure } from "./api-pool";
 
 export const SECTORES = [
   { sector: "HOSTELERIA", keywords: ["camarero", "cocinero", "chef", "hosteleria", "barman", "recepcionista hotel", "ayudante cocina", "pizzero", "panadero", "jefe cocina", "maitre", "sommelier", "pastelero", "cocinero colectividades", "encargado bar", "animador turistico", "guia turismo", "fregaplatos", "limpieza cocina", "mozo almacen hosteleria"] },
@@ -108,16 +109,16 @@ interface RawJob {
 }
 
 async function fetchJooble(keyword: string, city: string, page = 1): Promise<RawJob[]> {
-  const apiKey = process.env.JOOBLE_API_KEY;
-  if (!apiKey) return [];
+  const keyInfo = await getJoobleKey();
+  if (!keyInfo) return [];
   try {
-    const res = await fetch(`https://jooble.org/api/${apiKey}`, {
+    const res = await fetch(`https://jooble.org/api/${keyInfo.key}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ keywords: keyword, location: city + ", Spain", page, resultonpage: 20 }),
       signal: AbortSignal.timeout(15000),
     });
-    if (!res.ok) return [];
+    if (!res.ok) { await reportFailure("jooble", keyInfo.idx, res.status); return []; }
     const data = await res.json();
     return (data.jobs || []).map((j: Record<string, string>) => ({
       source: "Jooble",
@@ -132,13 +133,12 @@ async function fetchJooble(keyword: string, city: string, page = 1): Promise<Raw
 }
 
 async function fetchAdzuna(keyword: string, city: string, page = 1): Promise<RawJob[]> {
-  const appId = process.env.ADZUNA_APP_ID;
-  const apiKey = process.env.ADZUNA_APP_KEY;
-  if (!appId || !apiKey) return [];
+  const keyInfo = await getAdzunaKey();
+  if (!keyInfo) return [];
   try {
-    const url = `https://api.adzuna.com/v1/api/jobs/es/search/${page}?app_id=${appId}&app_key=${apiKey}&results_per_page=50&what=${encodeURIComponent(keyword)}&where=${encodeURIComponent(city)}&content-type=application/json`;
+    const url = `https://api.adzuna.com/v1/api/jobs/es/search/${page}?app_id=${keyInfo.id}&app_key=${keyInfo.key}&results_per_page=50&what=${encodeURIComponent(keyword)}&where=${encodeURIComponent(city)}&content-type=application/json`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!res.ok) return [];
+    if (!res.ok) { await reportFailure("adzuna", keyInfo.idx, res.status); return []; }
     const data = await res.json();
     return (data.results || []).map((j: Record<string, unknown>) => {
       const company = j.company as Record<string, string> | undefined;
@@ -159,15 +159,15 @@ async function fetchAdzuna(keyword: string, city: string, page = 1): Promise<Raw
 }
 
 async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<RawJob[]> {
-  const apiKey = process.env.CAREERJET_API_KEY;
-  if (!apiKey) return [];
+  const keyInfo = await getCareerjetKey();
+  if (!keyInfo) return [];
   try {
-    const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(city + " Espana")}&affid=${apiKey}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F1.0&pagesize=20&page=${page}&sort=relevance`;
+    const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(city + " Espana")}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F1.0&pagesize=20&page=${page}&sort=relevance`;
     const res = await fetch(url, {
       headers: { "Referer": "https://buscaycurra.es" },
       signal: AbortSignal.timeout(15000),
     });
-    if (!res.ok) return [];
+    if (!res.ok) { await reportFailure("careerjet", keyInfo.idx, res.status); return []; }
     const data = await res.json();
     if (data.type === "ERROR") return [];
     return (data.jobs || []).map((j: Record<string, string>) => ({

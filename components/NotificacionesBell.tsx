@@ -137,7 +137,7 @@ export default function NotificacionesBell() {
         {sinLeer > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold animate-pulse"
             style={{ background: "#ef4444", color: "#fff" }}>
-            {sinLeer > 9 ? "9+" : sinLeer}
+            {sinLeer > 99 ? "99+" : sinLeer}
           </span>
         )}
       </button>

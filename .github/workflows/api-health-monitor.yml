@@ -1,0 +1,99 @@
+name: API Health Monitor
+
+on:
+  schedule:
+    # Cada 2 horas (minuto 0 de los pares)
+    - cron: "0 */2 * * *"
+  workflow_dispatch: # Permite lanzarlo manualmente desde GitHub
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check API health endpoint
+        id: health
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            "https://buscaycurra.es/api/admin/health?secret=${{ secrets.ADMIN_SECRET }}")
+          echo "status=$HTTP_STATUS" >> $GITHUB_OUTPUT
+          cat /tmp/response.json
+
+      - name: Parse health response
+        id: parse
+        run: |
+          OK=$(cat /tmp/response.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(str(d.get('ok','false')).lower())")
+          TOTAL_JOBS=$(cat /tmp/response.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('db',{}).get('totalJobs','?'))")
+          echo "ok=$OK" >> $GITHUB_OUTPUT
+          echo "totalJobs=$TOTAL_JOBS" >> $GITHUB_OUTPUT
+
+      - name: Open GitHub issue if system is down
+        if: steps.health.outputs.status != '200' || steps.parse.outputs.ok != 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const response = require('fs').readFileSync('/tmp/response.json', 'utf8');
+            const now = new Date().toISOString();
+
+            // Check if there's already an open issue about this
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'api-down',
+            });
+
+            if (issues.data.length > 0) {
+              // Add comment to existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `**Seguimiento** — ${now}\n\`\`\`json\n${response}\n\`\`\``,
+              });
+            } else {
+              // Open new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `ALERTA: Sistema de APIs degradado — ${now}`,
+                body: `## Sistema detectado como degradado\n\n**Timestamp:** ${now}\n**HTTP Status:** ${{ steps.health.outputs.status }}\n\n### Respuesta del health endpoint:\n\`\`\`json\n${response}\n\`\`\`\n\n### Acciones recomendadas:\n1. Verificar si el contenedor Docker está corriendo: \`docker ps\`\n2. Ver logs: \`docker logs buscaycurra-nextjs --tail 50\`\n3. Si Adzuna está agotada: registrar nueva app en https://developer.adzuna.com y añadir \`ADZUNA_APP_ID_2\` + \`ADZUNA_APP_KEY_2\` al VPS\n4. Reiniciar el contenedor si es necesario\n\n*Issue creado automáticamente por el API Health Monitor*`,
+                labels: ['api-down'],
+              });
+            }
+
+      - name: Close issue if system recovered
+        if: steps.health.outputs.status == '200' && steps.parse.outputs.ok == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'api-down',
+            });
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `Sistema recuperado ✅ — ${new Date().toISOString()}\nTotal ofertas activas: ${{ steps.parse.outputs.totalJobs }}`,
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+              });
+            }
+
+      - name: Report status
+        run: |
+          echo "Health check completado"
+          echo "HTTP Status: ${{ steps.health.outputs.status }}"
+          echo "OK: ${{ steps.parse.outputs.ok }}"
+          echo "Total jobs: ${{ steps.parse.outputs.totalJobs }}"

@@ -105,7 +105,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
         {sinLeer > 0 && (
           <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
             style={{ background: "#f59e0b", color: "#0f1117" }}>
-            {sinLeer > 9 ? "9+" : sinLeer}
+            {sinLeer > 99 ? "99+" : sinLeer}
           </span>
         )}
       </button>
