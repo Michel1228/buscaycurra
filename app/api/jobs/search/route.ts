@@ -110,11 +110,12 @@ export async function GET(request: NextRequest) {
     params.push(limit, offset);
     const dbResult = await pool.query(sql, params);
 
-    // Deduplicar por sourceUrl (misma oferta de distintas fuentes)
+    // Deduplicar: primero por sourceUrl, si no por título+empresa (misma oferta de distintas fuentes)
     function deduplicar(rows: Record<string, unknown>[]) {
       const seen = new Set<string>();
       return rows.filter(j => {
-        const key = String(j.sourceurl || j.id);
+        const url = String(j.sourceurl || "").trim();
+        const key = url || `${String(j.title || "").toLowerCase()}|${String(j.company || "").toLowerCase()}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
