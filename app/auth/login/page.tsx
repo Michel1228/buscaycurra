@@ -42,10 +42,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#0f1117" }}>
-      {/* Panel izquierdo — marketing */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden"
+    <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#0f1117" }}>
+
+      {/* Panel marketing — arriba en móvil, izquierda en desktop */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden"
         style={{ background: "linear-gradient(135deg, #0a1f0e 0%, #0f1117 60%, #111827 100%)" }}>
+
         {/* Glow de fondo */}
         <div className="absolute inset-0 pointer-events-none">
           <div style={{
@@ -55,25 +57,40 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10">
-          <Link href="/" className="flex items-center gap-2 mb-10">
+          <Link href="/" className="flex items-center gap-2 mb-6 lg:mb-10">
             <span className="text-2xl">🐛</span>
             <span className="font-bold text-lg" style={{ color: "#22c55e" }}>BuscayCurra</span>
           </Link>
 
-          <p className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: "#22c55e" }}>
-            InfoJobs · LinkedIn · Indeed · Tecnoempleo
-          </p>
-          <h2 className="text-3xl font-bold leading-tight mb-3" style={{ color: "#f1f5f9" }}>
-            En los portales eres<br />
-            <span style={{ color: "#ef4444" }}>uno más entre miles.</span><br />
-            <span style={{ color: "#22c55e" }}>Aquí, Guzzi lucha por ti.</span>
+          {/* Hero — siempre visible */}
+          <h2 className="text-2xl lg:text-3xl font-bold leading-tight mb-2" style={{ color: "#f1f5f9" }}>
+            Tu trabajo te está<br />
+            <span style={{ color: "#22c55e" }}>esperando.</span>
           </h2>
           <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            Cada oferta en InfoJobs recibe <strong style={{ color: "#94a3b8" }}>300 CVs iguales</strong>. El tuyo nunca se lee. Nosotros lo cambiamos.
+            Guzzi busca, aplica y hace seguimiento por ti. Tú solo tienes que aparecer a la entrevista.
           </p>
 
-          {/* Comparativa */}
-          <div className="rounded-xl overflow-hidden mb-6" style={{ border: "1px solid #252836" }}>
+          {/* 3 puntos fuertes — siempre visibles */}
+          <div className="space-y-3 mb-6">
+            {[
+              { icon: "🐛", titulo: "Guzzi aplica por ti", desc: "Envía tu CV a cientos de empresas cada día, sin que tengas que hacer nada." },
+              { icon: "🎯", titulo: "CV personalizado por IA", desc: "Cada candidatura se adapta a la oferta. No compites con 2.000 CVs iguales." },
+              { icon: "📊", titulo: "Seguimiento en tiempo real", desc: "Ves cuándo leen tu CV y el estado de cada candidatura en tu pipeline." },
+            ].map(p => (
+              <div key={p.titulo} className="flex items-start gap-3 p-3 rounded-xl"
+                style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
+                <span className="text-xl shrink-0 mt-0.5">{p.icon}</span>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.titulo}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{p.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Comparativa — solo en desktop */}
+          <div className="hidden lg:block rounded-xl overflow-hidden mb-6" style={{ border: "1px solid #252836" }}>
             <div className="px-4 py-2 text-[10px] font-bold grid grid-cols-3 gap-2"
               style={{ background: "#161922", color: "#475569" }}>
               <span></span>
@@ -81,14 +98,13 @@ export default function LoginPage() {
               <span className="text-center" style={{ color: "#22c55e" }}>BuscayCurra</span>
             </div>
             {[
-              { label: "Tu CV llega", ellos: "Entre 300–2.000 iguales", nosotros: "Primero en la bandeja del RRHH" },
-              { label: "Quién aplica", ellos: "Tú, a mano, uno a uno", nosotros: "Guzzi, cada día, automático" },
-              { label: "CV adaptado", ellos: "El mismo para todas", nosotros: "Personalizado por IA por empresa" },
-              { label: "Seguimiento", ellos: "Nunca sabes nada", nosotros: "Ves cada lectura en tiempo real" },
-              { label: "Precio real", ellos: "0€ (inútil) o 39€/mes", nosotros: "9,99€/mes — todo incluido" },
+              { label: "Tu CV llega", ellos: "Entre 300–2.000 iguales", nosotros: "Primero en la bandeja" },
+              { label: "Quién aplica", ellos: "Tú, a mano, uno a uno", nosotros: "Guzzi, automático" },
+              { label: "CV adaptado", ellos: "El mismo para todas", nosotros: "IA lo personaliza" },
+              { label: "Precio real", ellos: "Gratis (inútil) o 39€/mes", nosotros: "Desde 2,99€/mes" },
             ].map((row, i) => (
               <div key={row.label}
-                className="px-4 py-2.5 grid grid-cols-3 gap-2 text-xs items-center"
+                className="px-4 py-2 grid grid-cols-3 gap-2 text-[11px] items-center"
                 style={{ background: i % 2 === 0 ? "#0f1117" : "#0a0c10", borderTop: "1px solid #1a1d27" }}>
                 <span style={{ color: "#94a3b8" }}>{row.label}</span>
                 <span className="text-center" style={{ color: "#ef4444" }}>✕ {row.ellos}</span>
@@ -103,7 +119,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="relative z-10 flex items-center justify-between">
+        <div className="relative z-10 hidden lg:flex items-center justify-between mt-8">
           <p className="text-xs" style={{ color: "#374151" }}>© 2025 BuscayCurra · Sin permanencia</p>
           <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#475569" }}>
             ¿Eres empresa o recruiter? →
@@ -112,15 +128,10 @@ export default function LoginPage() {
       </div>
 
       {/* Panel derecho — formulario */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12"
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10"
         style={{ background: "#0f1117" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            {/* Logo visible solo en móvil */}
-            <div className="lg:hidden w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4"
-              style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08))", border: "2px solid rgba(34,197,94,0.25)" }}>
-              🐛
-            </div>
             <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Bienvenido de vuelta</h1>
             <p className="text-xs mt-1" style={{ color: "#64748b" }}>Sigue tu búsqueda donde la dejaste</p>
           </div>

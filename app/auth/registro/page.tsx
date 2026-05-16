@@ -61,9 +61,9 @@ export default function RegistroPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#0f1117" }}>
-      {/* Panel izquierdo — marketing */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden"
+    <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#0f1117" }}>
+      {/* Panel marketing — arriba en móvil, izquierda en desktop */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden"
         style={{ background: "linear-gradient(135deg, #0a1f0e 0%, #0f1117 60%, #111827 100%)" }}>
         <div className="absolute inset-0 pointer-events-none">
           <div style={{
@@ -73,53 +73,48 @@ export default function RegistroPage() {
         </div>
 
         <div className="relative z-10">
-          <Link href="/" className="flex items-center gap-2 mb-16">
+          <Link href="/" className="flex items-center gap-2 mb-6 lg:mb-10">
             <span className="text-2xl">🐛</span>
             <span className="font-bold text-lg" style={{ color: "#22c55e" }}>BuscayCurra</span>
           </Link>
 
-          <h2 className="text-3xl font-bold leading-tight mb-4" style={{ color: "#f1f5f9" }}>
-            Empieza gratis.<br />
-            <span style={{ color: "#22c55e" }}>Sin tarjeta.</span>
+          <h2 className="text-2xl lg:text-3xl font-bold leading-tight mb-2" style={{ color: "#f1f5f9" }}>
+            Tu trabajo te está<br />
+            <span style={{ color: "#22c55e" }}>esperando.</span>
           </h2>
-          <p className="text-sm mb-10" style={{ color: "#64748b" }}>
+          <p className="text-sm mb-6" style={{ color: "#64748b" }}>
             En 30 segundos tienes cuenta. Guzzi empieza a buscar trabajo por ti al instante.
           </p>
 
-          <div className="space-y-5">
+          {/* 3 puntos fuertes */}
+          <div className="space-y-3">
             {[
-              { icon: "🚀", title: "Activa en 30 segundos", desc: "Solo necesitas email y contraseña para empezar" },
-              { icon: "🤖", title: "Guzzi trabaja por ti", desc: "IA que lee ofertas y adapta tu CV automáticamente" },
-              { icon: "📊", title: "Pipeline visual", desc: "Controla cada candidatura como un profesional" },
-            ].map((f) => (
-              <div key={f.icon} className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-                  style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                  {f.icon}
-                </div>
+              { icon: "🐛", title: "Guzzi aplica por ti", desc: "Envía tu CV a cientos de empresas cada día, automáticamente." },
+              { icon: "🎯", title: "CV personalizado por IA", desc: "Cada candidatura adaptada a la oferta. No compites con 2.000 iguales." },
+              { icon: "📊", title: "Seguimiento en tiempo real", desc: "Pipeline visual con el estado de cada candidatura." },
+            ].map(p => (
+              <div key={p.title} className="flex items-start gap-3 p-3 rounded-xl"
+                style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
+                <span className="text-xl shrink-0 mt-0.5">{p.icon}</span>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{f.title}</p>
-                  <p className="text-xs" style={{ color: "#64748b" }}>{f.desc}</p>
+                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{p.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="relative z-10 text-xs" style={{ color: "#374151" }}>
+        <p className="relative z-10 hidden lg:block text-xs mt-8" style={{ color: "#374151" }}>
           © 2025 BuscayCurra · Sin permanencia · Cancela cuando quieras
         </p>
       </div>
 
       {/* Panel derecho — formulario */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12"
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10"
         style={{ background: "#0f1117" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="lg:hidden w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4"
-              style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(22,163,74,0.08))", border: "2px solid rgba(34,197,94,0.25)" }}>
-              🐛
-            </div>
             <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Crea tu cuenta</h1>
             <p className="text-xs mt-1" style={{ color: "#64748b" }}>Empieza a buscar trabajo con Guzzi</p>
           </div>
