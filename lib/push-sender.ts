@@ -7,7 +7,7 @@ const webpush = require("web-push") as {
   ) => Promise<void>;
 };
 
-const VAPID_PUBLIC = "BEAUFUsgnk4QCgX9zA5tvPRykEZYA2b1jZOf_9e-PxyPj-8pIcxW7rwqLAo022ryxQmfjKcHlTvGboF17MdEk0s";
+const VAPID_PUBLIC = "BDy57EXay3f97rznP-2QOJOrs2KWYqgWAK-PtQ9oF8W9Yxpu9ri_kqbYKKVgHByP5wOnoEfyTLigsaLRuawblZo";
 
 let initialized = false;
 function initVapid() {

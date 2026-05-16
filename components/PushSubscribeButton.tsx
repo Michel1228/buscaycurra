@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
-const VAPID_PUBLIC_KEY = "BEAUFUsgnk4QCgX9zA5tvPRykEZYA2b1jZOf_9e-PxyPj-8pIcxW7rwqLAo022ryxQmfjKcHlTvGboF17MdEk0s";
+const VAPID_PUBLIC_KEY = "BDy57EXay3f97rznP-2QOJOrs2KWYqgWAK-PtQ9oF8W9Yxpu9ri_kqbYKKVgHByP5wOnoEfyTLigsaLRuawblZo";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
