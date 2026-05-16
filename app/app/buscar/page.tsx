@@ -115,7 +115,6 @@ function BuscarPageInner() {
         fuente: "Jooble",
         url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(kw)}&loc=${encodeURIComponent(loc)}`,
         fecha: j.updated || new Date().toISOString(),
-        match: Math.max(88 - i * 3, 40),
         distancia: "🏠 Tu ciudad",
       }));
     } catch {
@@ -175,7 +174,6 @@ function BuscarPageInner() {
         }
       }
 
-      todas.sort((a, b) => (b.match || 0) - (a.match || 0));
       setOfertas(todas);
       setCurrentPage(1);
       const source = serverRes.status === "fulfilled" ? (serverRes.value.source || "") : "";
