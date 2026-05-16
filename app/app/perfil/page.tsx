@@ -220,17 +220,17 @@ export default function PerfilPage() {
         <div className="max-w-2xl mx-auto px-4 flex">
           {[
             { id: "perfil" as const, label: "Mi Perfil", icon: "👤" },
-            { id: "plan" as const, label: "Mi Plan", icon: "⚡" },
+            { id: "plan" as const, label: "Mi Plan", icon: "💎" },
             { id: "seguridad" as const, label: "Seguridad", icon: "🔒" },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className="flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition"
+              className="flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition"
               style={{
                 borderColor: tab === t.id ? "#22c55e" : "transparent",
                 color: tab === t.id ? "#22c55e" : "#64748b",
               }}>
               <span>{t.icon}</span>
-              <span className="hidden sm:inline">{t.label}</span>
+              <span>{t.label}</span>
             </button>
           ))}
         </div>

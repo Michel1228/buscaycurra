@@ -102,24 +102,10 @@ export default function AppNavWrapper() {
           {/* Campana de notificaciones */}
           {userId && <NotificationBell userId={userId} />}
 
-          {/* Logout — siempre visible */}
-          <button
-            onClick={cerrarSesion}
-            title="Cerrar sesión"
-            className="flex items-center justify-center w-9 h-9 rounded-lg transition hover:bg-red-500/10"
-            style={{ color: "#ef4444" }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
-
-          {/* Mobile menu button */}
+          {/* Botón de menú — visible en todos los tamaños */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg"
+            className="flex items-center justify-center w-10 h-10 rounded-lg"
             style={{ color: "#64748b" }}
             aria-label="Menú"
           >
@@ -132,10 +118,10 @@ export default function AppNavWrapper() {
         </div>
       </nav>
 
-      {/* Mobile menu overlay */}
+      {/* Menu overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 md:hidden"
+          className="fixed inset-0 z-40"
           style={{ background: "rgba(0,0,0,0.5)" }}
           onClick={() => setMobileOpen(false)}
         >
