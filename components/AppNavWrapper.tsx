@@ -70,35 +70,6 @@ export default function AppNavWrapper() {
             </span>
           </Link>
 
-          {/* Desktop nav items */}
-          <div className="hidden md:flex items-center gap-0.5">
-            {NAV_ITEMS.map((item) => {
-              const activo =
-                pathname === item.href ||
-                (item.href !== "/app" && pathname.startsWith(item.href + "/"));
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  title={item.title}
-                  className="flex items-center justify-center w-10 h-10 rounded-lg text-base transition"
-                  style={{
-                    background: activo ? "rgba(34,197,94,0.12)" : "transparent",
-                    color: activo ? "#22c55e" : "#64748b",
-                  }}
-                >
-                  <span>{item.icon}</span>
-                </Link>
-              );
-            })}
-            {esAdmin && (
-              <Link href="/app/admin" title="Panel de control" className="flex items-center justify-center w-10 h-10 rounded-lg text-base transition"
-                style={{ background: pathname === "/app/admin" ? "rgba(245,158,11,0.15)" : "transparent", color: pathname === "/app/admin" ? "#f59e0b" : "#64748b" }}>
-                <span>📊</span>
-              </Link>
-            )}
-          </div>
-
           {/* Campana de notificaciones */}
           {userId && <NotificationBell userId={userId} />}
 
