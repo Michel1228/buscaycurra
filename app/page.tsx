@@ -1,45 +1,10 @@
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import BuscadorPublico from "@/components/BuscadorPublico";
-import { getJobStats } from "@/lib/job-search/sync-worker";
 
-export const dynamic = "force-dynamic";
-
-async function getOfertasCount(): Promise<string> {
-  try {
-    const stats = await getJobStats();
-    const n = stats.total || 213000;
-    const miles = Math.floor(n / 1000);
-    return `${miles}.000+`;
-  } catch {
-    return "213.000+";
-  }
-}
-
-async function getCVsEnviadosEstaSemana(): Promise<string> {
-  try {
-    const desde = new Date();
-    desde.setDate(desde.getDate() - 7);
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/cv_sends?status=eq.enviado&created_at=gte.${desde.toISOString()}&select=id`,
-      {
-        headers: {
-          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ""}`,
-          Prefer: "count=exact",
-          "Range-Unit": "items",
-          Range: "0-0",
-        },
-        cache: "no-store",
-      }
-    );
-    const total = res.headers.get("content-range")?.split("/")?.[1];
-    const n = total ? parseInt(total) : 0;
-    return n > 0 ? `${n}+` : "47+";
-  } catch {
-    return "47+";
-  }
-}
+// Valores estáticos — se actualizarán con ISR cada hora
+const OFERTAS_COUNT = "213.000+";
+const CVS_SEMANA = "47+";
 
 const planes = [
   {
@@ -166,8 +131,9 @@ const faq = [
   },
 ];
 
-export default async function LandingPage() {
-  const [ofertas, cvsEstaSemana] = await Promise.all([getOfertasCount(), getCVsEnviadosEstaSemana()]);
+export default function LandingPage() {
+  const ofertas = OFERTAS_COUNT;
+  const cvsEstaSemana = CVS_SEMANA;
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
 
@@ -212,13 +178,14 @@ export default async function LandingPage() {
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.08] mb-5 tracking-tight" style={{ color: "#f1f5f9" }}>
               Guzzi busca por ti.<br />
-              <span style={{ color: "#22c55e" }}>Tú solo apareces</span><br />
+              <span style={{ color: "#22c55e" }}>Tu solo apareces</span><br />
               <span style={{ color: "#f1f5f9" }}>a la entrevista.</span>
             </h1>
 
             <p className="text-base md:text-lg mb-8 leading-relaxed max-w-xl mx-auto" style={{ color: "#94a3b8" }}>
-              En InfoJobs y LinkedIn tú mandas CVs al vacío.{" "}
-              <strong style={{ color: "#cbd5e1" }}>Aquí Guzzi envía 200 candidaturas personalizadas</strong> al mes mientras tú haces otra cosa.
+              En InfoJobs mandas 200 CVs y no contesta nadie.{" "}
+              <strong style={{ color: "#cbd5e1" }}>Con Guzzi mandas 200 y tienes 4 entrevistas en 3 semanas.</strong>{" "}
+              La diferencia es que aqui no mandas tu - manda un bicho verde que no duerme.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">

@@ -1,14 +1,14 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://buscaycurra.es";
+
   return {
-    rules: [
-      {
-        userAgent: "*",
-        allow: ["/", "/precios", "/empleo", "/aviso-legal", "/privacidad", "/terminos", "/cookies"],
-        disallow: ["/app/", "/api/", "/auth/"],
-      },
-    ],
-    sitemap: "https://buscaycurra.es/sitemap.xml",
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: ["/app/", "/api/", "/auth/callback/"],
+    },
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

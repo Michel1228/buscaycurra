@@ -262,7 +262,16 @@ export default function JobCard({
           </a>
         )}
         <button
-          onClick={() => void enviarCVAuto()}
+          ref={(el) => {
+            if (el && !(el as HTMLButtonElement & { _bcvListener?: boolean })._bcvListener) {
+              (el as HTMLButtonElement & { _bcvListener?: boolean })._bcvListener = true;
+              el.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void enviarCVAuto();
+              });
+            }
+          }}
           disabled={estadoEnvio !== "idle" && estadoEnvio !== "sin_cv" && estadoEnvio !== "error"}
           title={estadoEnvio === "sin_cv" ? "Sube tu CV primero en Guzzi" : undefined}
           className="flex-1 text-center py-2 text-[11px] font-semibold rounded-lg transition hover:opacity-90 btn-game"

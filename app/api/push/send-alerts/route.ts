@@ -108,8 +108,8 @@ export async function GET(request: NextRequest) {
       const provincia = alerta.location ? getProvinciaExpansion(alerta.location) : null;
       const provLoc = provincia ? `%${provincia}%` : null;
 
-      const jobsResult = await pool.query<{ title: string; company: string; city: string; count: string }>(
-        `SELECT title, company, city, COUNT(*) OVER() AS count
+      const jobsResult = await pool.query<{ id: string; title: string; company: string; city: string; count: string; sourceUrl: string }>(
+        `SELECT id, title, company, city, COUNT(*) OVER() AS count, "sourceUrl"
          FROM "JobListing"
          WHERE "isActive" = true
            AND "createdAt" > $1
@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
         tipo: "alerta_empleo",
         titulo,
         mensaje: cuerpo,
-        datos: { keyword: alerta.keyword, location: alerta.location, total },
+        datos: { keyword: alerta.keyword, location: alerta.location, total, job_id: ejemplo.id, job_url: ejemplo.sourceUrl || "" },
         leida: false,
       });
 

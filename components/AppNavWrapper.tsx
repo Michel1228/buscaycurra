@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   { href: "/app/reviews",    label: "Reviews",    icon: "⭐", title: "Reviews de empresas" },
   { href: "/app/envios",     label: "Envíos",     icon: "📧", title: "Envíos de CV" },
   { href: "/app/referidos",  label: "Invitar",    icon: "🎁", title: "Invitar amigos" },
-  { href: "/app/perfil",     label: "Mi Plan",    icon: "💎", title: "Mi plan y cuenta" },
+  { href: "/app/perfil?tab=plan",     label: "Mi Plan",    icon: "💎", title: "Mi plan y cuenta" },
 ];
 
 export default function AppNavWrapper() {
