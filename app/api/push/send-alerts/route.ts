@@ -16,6 +16,59 @@ export const dynamic = "force-dynamic";
 
 const ALERTS_SECRET = process.env.ALERTS_SECRET || "bcv-alerts-2026";
 
+// Ciudad → provincia para búsqueda regional ampliada
+const CIUDAD_PROVINCIA: Record<string, string> = {
+  // Navarra
+  "tudela": "navarra", "pamplona": "navarra", "calahorra": "la rioja",
+  // La Rioja
+  "logrono": "la rioja", "logroño": "la rioja",
+  // Aragón
+  "zaragoza": "zaragoza", "huesca": "huesca", "teruel": "teruel",
+  // Pais Vasco
+  "bilbao": "vizcaya", "san sebastian": "guipuzcoa", "donostia": "guipuzcoa", "vitoria": "alava",
+  // Galicia
+  "vigo": "pontevedra", "la coruna": "coruña", "santiago de compostela": "coruña", "ferrol": "coruña", "lugo": "lugo", "ourense": "ourense",
+  // Andalucia
+  "sevilla": "sevilla", "malaga": "malaga", "granada": "granada", "cordoba": "cordoba",
+  "almeria": "almeria", "huelva": "huelva", "jaen": "jaen", "cadiz": "cadiz",
+  // Castilla y Leon
+  "valladolid": "valladolid", "salamanca": "salamanca", "burgos": "burgos",
+  "leon": "leon", "zamora": "zamora", "palencia": "palencia", "segovia": "segovia",
+  // Castilla La Mancha
+  "toledo": "toledo", "albacete": "albacete", "ciudad real": "ciudad real", "guadalajara": "guadalajara", "cuenca": "cuenca",
+  // Madrid (ciudades de la periferia)
+  "getafe": "madrid", "mostoles": "madrid", "alcala de henares": "madrid",
+  "leganes": "madrid", "fuenlabrada": "madrid", "alcorcon": "madrid", "coslada": "madrid",
+  "parla": "madrid", "torrejon": "madrid", "aranjuez": "madrid",
+  // Cataluña
+  "barcelona": "cataluña", "hospitalet": "cataluña", "badalona": "cataluña",
+  "terrassa": "cataluña", "sabadell": "cataluña", "tarragona": "tarragona",
+  "lleida": "lleida", "girona": "girona",
+  // Valencia
+  "valencia": "valencia", "alicante": "alicante", "elche": "alicante",
+  "castellon": "castellon", "castellón": "castellon",
+  // Murcia
+  "murcia": "murcia", "cartagena": "murcia", "lorca": "murcia",
+  // Extremadura
+  "badajoz": "badajoz", "caceres": "caceres", "merida": "badajoz",
+  // Canarias
+  "las palmas": "canarias", "santa cruz de tenerife": "canarias",
+  // Baleares
+  "palma": "baleares",
+  // Asturias / Cantabria
+  "gijon": "asturias", "oviedo": "asturias", "santander": "cantabria",
+};
+
+function getProvinciaExpansion(location: string): string | null {
+  const norm = location.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  for (const [ciudad, provincia] of Object.entries(CIUDAD_PROVINCIA)) {
+    if (norm === ciudad || norm.startsWith(ciudad + ",") || norm.startsWith(ciudad + " ")) {
+      return provincia;
+    }
+  }
+  return null;
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "http://placeholder",
   process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
@@ -49,9 +102,11 @@ export async function GET(request: NextRequest) {
       procesadas++;
       const desde = alerta.last_sent_at ?? new Date(Date.now() - 3 * 3600 * 1000);
 
-      // 2. Buscar nuevas ofertas que coincidan
+      // 2. Buscar nuevas ofertas que coincidan (con expansión geográfica provincial)
       const kw = `%${alerta.keyword.toLowerCase()}%`;
       const loc = alerta.location ? `%${alerta.location.toLowerCase()}%` : null;
+      const provincia = alerta.location ? getProvinciaExpansion(alerta.location) : null;
+      const provLoc = provincia ? `%${provincia}%` : null;
 
       const jobsResult = await pool.query<{ title: string; company: string; city: string; count: string }>(
         `SELECT title, company, city, COUNT(*) OVER() AS count
@@ -59,9 +114,11 @@ export async function GET(request: NextRequest) {
          WHERE "isActive" = true
            AND "createdAt" > $1
            AND (LOWER(title) LIKE $2 OR LOWER(company) LIKE $2 OR LOWER(description) LIKE $2)
-           ${loc ? `AND (LOWER(city) LIKE $3 OR LOWER(province) LIKE $3)` : ""}
+           ${loc ? `AND (LOWER(city) LIKE $3 OR LOWER(province) LIKE $3${provLoc ? " OR LOWER(city) LIKE $4 OR LOWER(province) LIKE $4" : ""})` : ""}
          LIMIT 3`,
-        loc ? [desde, kw, loc] : [desde, kw]
+        loc
+          ? (provLoc ? [desde, kw, loc, provLoc] : [desde, kw, loc])
+          : [desde, kw]
       );
 
       if (jobsResult.rows.length === 0) {
