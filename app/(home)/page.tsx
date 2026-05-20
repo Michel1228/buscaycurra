@@ -1,4 +1,3 @@
-"use client";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import BuscadorPublico from "@/components/BuscadorPublico";
