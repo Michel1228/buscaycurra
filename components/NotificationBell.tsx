@@ -32,13 +32,13 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   function getNotifUrl(n: Notif): string | null {
     const datos = n.datos || {};
-    // Si hay URL directa de la oferta, navegar a ella
-    if (datos.job_url) return datos.job_url;
+    // Prioridad 1: Si hay job_id, navegar al detalle interno de la oferta
+    if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
+    // Prioridad 2: Tipos de notificación que redirigen a secciones
     if (n.tipo === "nuevas_ofertas" || n.tipo === "alerta_empleo") {
       const kw = datos.keyword ? `keyword=${encodeURIComponent(datos.keyword)}` : "";
       const loc = datos.location ? `&location=${encodeURIComponent(datos.location)}` : "";
-      const jid = datos.job_id ? `&jobId=${encodeURIComponent(datos.job_id)}` : "";
-      if (kw || jid) return `/app/buscar?${kw}${loc}${jid}`;
+      if (kw || loc) return `/app/buscar?${kw}${loc}`;
       return "/app/buscar";
     }
     if (n.tipo === "cv_enviado") return "/app/envios";
@@ -162,8 +162,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
                     const url = getNotifUrl(n);
                     if (!url) return;
                     setOpen(false);
-                    if (url.startsWith("http")) window.open(url, "_blank");
-                    else router.push(url);
+                    router.push(url);
                   }}
                   className="flex gap-3 px-4 py-3 cursor-pointer transition hover:bg-[#252836]"
                   style={{ borderBottom: "1px solid rgba(45,49,66,0.5)", opacity: n.leida ? 0.6 : 1 }}>

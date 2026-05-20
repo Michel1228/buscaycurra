@@ -145,8 +145,9 @@ export default function SalariosPage() {
                 <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>Por provincia</h2>
                 <div className="space-y-2">
                   {data.porProvincia.slice(0, 10).map(p => {
-                    const maxAvg = Math.max(...data.porProvincia.map(x => x.avg_salary || 0));
-                    const pct = maxAvg > 0 ? ((p.avg_salary || 0) / maxAvg) * 100 : 0;
+                    const valores = data.porProvincia.map(x => x.avg_salary || 0);
+                    const maxAvg = valores.length > 0 ? Math.max(...valores) : 1;
+                    const pct = ((p.avg_salary || 0) / maxAvg) * 100;
                     return (
                       <div key={p.province} className="flex items-center gap-2">
                         <span className="text-[11px] w-24 truncate" style={{ color: "#94a3b8" }}>{p.province}</span>

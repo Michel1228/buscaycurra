@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
@@ -9,31 +9,34 @@ export default function AuthCallbackPage() {
   const router = useRouter();
   const [estado, setEstado] = useState<"cargando" | "ok" | "error">("cargando");
   const [mensaje, setMensaje] = useState("");
+  const mountedRef = useRef(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
+    mountedRef.current = true;
     async function handleCallback() {
       try {
         const supabase = getSupabaseBrowser();
 
-        // Supabase PKCE: intercambiar el code por sesión
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
 
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
+            if (!mountedRef.current) return;
             setEstado("error");
             setMensaje("El enlace de confirmación no es válido o ha expirado.");
             return;
           }
         } else {
-          // Flujo implícito (hash) — leer sesión del hash de la URL
           const { data: { session }, error } = await supabase.auth.getSession();
           if (error || !session) {
-            // Puede que no haya sesión todavía — el cliente Supabase la procesa solo
             await new Promise(r => setTimeout(r, 1500));
+            if (!mountedRef.current) return;
             const { data: { session: session2 } } = await supabase.auth.getSession();
             if (!session2) {
+              if (!mountedRef.current) return;
               setEstado("error");
               setMensaje("No se pudo confirmar la cuenta. Intenta iniciar sesión directamente.");
               return;
@@ -41,20 +44,27 @@ export default function AuthCallbackPage() {
           }
         }
 
+        if (!mountedRef.current) return;
         setEstado("ok");
         setMensaje("¡Cuenta confirmada! Redirigiendo...");
 
-        setTimeout(() => {
-          router.push("/app/bienvenida");
+        timerRef.current = setTimeout(() => {
+          if (mountedRef.current) router.push("/app/bienvenida");
         }, 2000);
 
       } catch {
-        setEstado("error");
-        setMensaje("Error al confirmar la cuenta. Por favor, intenta de nuevo.");
+        if (mountedRef.current) {
+          setEstado("error");
+          setMensaje("Error al confirmar la cuenta. Por favor, intenta de nuevo.");
+        }
       }
     }
 
     handleCallback();
+    return () => {
+      mountedRef.current = false;
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [router]);
 
   return (

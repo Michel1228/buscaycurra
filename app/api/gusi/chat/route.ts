@@ -254,27 +254,26 @@ function detectIntent(text: string): string {
 
 async function searchJobsReal(query: string, city: string, limit = 5) {
   try {
-    const params = new URLSearchParams({ keyword: query, location: city || "España", page: "1" });
-    const res = await fetch(`${process.env.API_URL || "http://localhost:3000"}/api/jobs/search?${params}`);
-    if (!res.ok) return null;
-    const data = await res.json() as { ofertas?: unknown[] };
-    return (data.ofertas || []).slice(0, limit);
+    const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
+    const ofertas = await buscarOfertasReales(query, city, Math.min(limit * 2, 20));
+    // Mapear OfertaReal a formato simplificado para el chat
+    return ofertas.slice(0, limit).map(o => ({
+      id: o.id,
+      titulo: o.titulo,
+      empresa: o.empresa,
+      ubicacion: o.ubicacion,
+      salario: o.salario,
+      fuente: o.fuente,
+      match: o.match,
+      url: o.url,
+    }));
   } catch {
     return null;
   }
 }
 
-function fallbackJobs(puesto: string, ciudad: string) {
-  return Array.from({ length: 4 }, (_, i) => ({
-    id: `gusi-${Date.now()}-${i}`,
-    titulo: `${puesto}${[" (jornada completa)", " (media jornada)", " con experiencia", ""][i]}`,
-    empresa: ["Empresa local", "Grupo empresarial", "PYME del sector", "Empresa nacional"][i],
-    ubicacion: ciudad || "España",
-    salario: `${1200 + i * 150}€ - ${1800 + i * 200}€/mes`,
-    fuente: "BuscayCurra",
-    match: Math.max(95 - i * 7, 55),
-    url: `/app/buscar?keyword=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ciudad)}`,
-  }));
+function fallbackMessage(puesto: string, ciudad: string): string {
+  return `🔍 No encontré ofertas activas ahora mismo para **${puesto}**${ciudad ? ` en **${ciudad}**` : ""}.\n\nPuedes:\n• 🔄 Pedirme que busque con otras palabras\n• 📍 Probar otra ciudad\n• 📧 Usar el botón de abajo para búsqueda automática\n\n🐛 ¡No te desanimes! El mercado se mueve a diario.`;
 }
 
 function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[]): string {
@@ -443,7 +442,15 @@ El candidato tiene mucha experiencia.
       const ciudadBusqueda = cvParsed?.ciudad || extractCity(message) || "";
 
       if (puestoBusqueda) {
-        const ofertas = await searchJobsReal(puestoBusqueda, ciudadBusqueda) || fallbackJobs(puestoBusqueda, ciudadBusqueda);
+        const ofertas = await searchJobsReal(puestoBusqueda, ciudadBusqueda);
+        if (!ofertas || ofertas.length === 0) {
+          return NextResponse.json({
+            reply: (cvParsed?.ultimoPuesto
+              ? `Basándome en tu CV (último puesto: **${cvParsed.ultimoPuesto}**), ` : "") +
+              fallbackMessage(puestoBusqueda, ciudadBusqueda),
+            action: "search_results",
+          });
+        }
         const prefix = cvParsed?.ultimoPuesto
           ? `Basándome en tu CV (último puesto: **${cvParsed.ultimoPuesto}**), aquí tienes lo mejor que encontré:\n\n`
           : "";
@@ -458,7 +465,13 @@ El candidato tiene mucha experiencia.
     // ── Intent: enviar CV ────────────────────────────────────────────────────
     if (intent === "enviar") {
       if (cvParsed?.ultimoPuesto) {
-        const ofertas = await searchJobsReal(cvParsed.ultimoPuesto, cvParsed.ciudad) || fallbackJobs(cvParsed.ultimoPuesto, cvParsed.ciudad);
+        const ofertas = await searchJobsReal(cvParsed.ultimoPuesto, cvParsed.ciudad);
+        if (!ofertas || ofertas.length === 0) {
+          return NextResponse.json({
+            reply: fallbackMessage(cvParsed.ultimoPuesto, cvParsed.ciudad),
+            action: "search_results",
+          });
+        }
         return NextResponse.json({
           reply: `🔍 Encontré estas ofertas para **${cvParsed.ultimoPuesto}**${cvParsed.ciudad ? ` en **${cvParsed.ciudad}**` : ""}:\n\n${buildJobsText(cvParsed.ultimoPuesto, cvParsed.ciudad, ofertas as unknown[]).split("\n\n").slice(1).join("\n\n")}`,
           jobs: ofertas,

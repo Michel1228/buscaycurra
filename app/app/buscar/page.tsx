@@ -50,19 +50,21 @@ function BuscarPageInner() {
 
   // Ref para que el auto-fill de ciudad solo ocurra una vez (evita que el campo se reponga al borrarlo)
   const locationFetched = useRef(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     async function init() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
-      // No auto-rellenar si ya hay valor en URL, o si ya lo hicimos antes
       if (locationFetched.current || searchParams.get("location")) return;
       locationFetched.current = true;
 
       const { data: perfil } = await getSupabaseBrowser().from("profiles")
         .select("ciudad").eq("id", user.id).single();
       if (perfil?.ciudad) {
+        if (!mountedRef.current) return;
         setUbicacion(perfil.ciudad);
         setGeoDetected(true);
         return;
@@ -71,13 +73,14 @@ function BuscarPageInner() {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
+            if (!mountedRef.current) return;
             try {
               const res = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`
               );
               const data = await res.json();
               const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
-              if (city) {
+              if (city && mountedRef.current) {
                 setUbicacion(city);
                 setGeoDetected(true);
                 await getSupabaseBrowser().from("profiles").update({ ciudad: city }).eq("id", user.id);
@@ -90,6 +93,7 @@ function BuscarPageInner() {
       }
     }
     init();
+    return () => { mountedRef.current = false; };
   }, [router, searchParams]);
 
   async function buscarJoobleCliente(kw: string, loc: string): Promise<PropiedadesJobCard[]> {

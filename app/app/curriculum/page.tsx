@@ -186,13 +186,14 @@ export default function CurriculumPage() {
   async function toggleVisibilidad(value: boolean) {
     setVisibleEmpresas(value);
     if (!token) return;
-    const res = await fetch("/api/perfil/visibilidad", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ visible: value }),
-    });
-    if (!res.ok) {
-      // Revertir si falla
+    try {
+      const res = await fetch("/api/perfil/visibilidad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ visible: value }),
+      });
+      if (!res.ok) throw new Error("Error del servidor");
+    } catch {
       setVisibleEmpresas(!value);
       setError("No se pudo guardar la visibilidad. Inténtalo de nuevo.");
     }
