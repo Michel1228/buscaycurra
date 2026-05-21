@@ -211,7 +211,7 @@ function mapRemotive(job: Record<string, unknown>): OfertaReal {
 async function fetchJooble(puesto: string, ciudad: string): Promise<OfertaReal[]> {
   if (!JOOBLE_KEY) return [];
   try {
-    const resp = await fetch(`https://es.jooble.org/api/${JOOBLE_KEY}`, {
+    const resp = await fetch(`https://jooble.org/api/${JOOBLE_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ keywords: puesto, location: ciudad, page: 1, resultsOnPage: JOOBLE_RESULTS }),

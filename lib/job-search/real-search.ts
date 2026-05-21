@@ -206,7 +206,7 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 50): Prom
       salario: j.salary || "Ver en oferta",
       descripcion: (j.snippet || j.title || "").replace(/<[^>]+>/g, "").slice(0, 200),
       fuente: "Jooble",
-      url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ubicacion)}`,
+      url: j.link || `https://jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ubicacion)}`,
       fecha: j.updated || new Date().toISOString(),
     }));
   } catch (e) {
@@ -607,7 +607,7 @@ function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number
     salario: `${salarioBase + (4 - i) * 150}€ - ${salarioBase + 600 + (4 - i) * 200}€/mes`,
     descripcion: `${empresas[i]} busca ${puesto} en ${ciudad}. Envía tu CV directamente.`,
     fuente: "BuscayCurra",
-    url: `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ciudad)}`,
+    url: `https://jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ciudad)}`,
     fecha: new Date().toISOString(),
     match: Math.max(65 - i * 7, 30),
     emailEmpresa: emails[i] || undefined,
