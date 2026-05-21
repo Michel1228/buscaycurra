@@ -38,11 +38,10 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
   const [emailEncontrado, setEmailEncontrado] = useState<string | null>(null);
   const [busquedaRealizada, setBusquedaRealizada] = useState(false);
 
-  // Selector de hora
-  const [slotElegido, setSlotElegido] = useState<"auto" | "ahora" | "manana" | "custom">("auto");
-  const [fechaCustom, setFechaCustom] = useState("");
+  // Estrategia de envío: "ahora" (inmediato) o "optimo" (ventana óptima empresa)
+  const [estrategia, setEstrategia] = useState<"ahora" | "optimo">("optimo");
 
-  // Preview de carta
+  // ── Preview de carta ────────────────────────────────────────────────
   const [showPreview, setShowPreview] = useState(false);
   const [cartaPreview, setCartaPreview] = useState("");
   const [cartaEditada, setCartaEditada] = useState("");
@@ -58,47 +57,16 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
   }, [searchParams]);
 
   function calcularFechaEnvio(): string | undefined {
-    const ahora = new Date();
-    const h = ahora.getHours();
-    const esDiaLaboral = ahora.getDay() >= 1 && ahora.getDay() <= 5;
-    const esHoraLaboral = h >= 9 && h < 18;
-
-    if (slotElegido === "ahora") {
-      // Próximo minuto disponible (mínimo 1 min)
-      const fecha = new Date(ahora.getTime() + 60_000);
-      return fecha.toISOString();
+    // "ahora" → 1 min desde ahora, "optimo" → el scheduler decide (undefined)
+    if (estrategia === "ahora") {
+      return new Date(Date.now() + 60_000).toISOString();
     }
-    if (slotElegido === "auto") {
-      return undefined; // El servidor calcula la próxima hora laboral
-    }
-    if (slotElegido === "manana") {
-      const manana = new Date(ahora);
-      manana.setDate(manana.getDate() + 1);
-      // Si mañana es sábado→ lunes, domingo→ lunes
-      if (manana.getDay() === 6) manana.setDate(manana.getDate() + 2);
-      if (manana.getDay() === 0) manana.setDate(manana.getDate() + 1);
-      manana.setHours(9, 0, 0, 0);
-      return manana.toISOString();
-    }
-    if (slotElegido === "custom" && fechaCustom) {
-      return new Date(fechaCustom).toISOString();
-    }
-    return undefined;
+    return undefined; // "optimo": el servidor calcula ventana óptima
   }
 
   function getSlotLabel(): string {
-    const ahora = new Date();
-    const h = ahora.getHours();
-    const esDiaLaboral = ahora.getDay() >= 1 && ahora.getDay() <= 5;
-    const esHoraLaboral = h >= 9 && h < 18;
-    if (esDiaLaboral && esHoraLaboral) return "Ahora mismo";
-    // Fuera de horario
-    const sig = new Date(ahora);
-    if (h >= 18) sig.setDate(sig.getDate() + 1);
-    if (sig.getDay() === 6) sig.setDate(sig.getDate() + 2);
-    if (sig.getDay() === 0) sig.setDate(sig.getDate() + 1);
-    sig.setHours(9, 0, 0, 0);
-    return `${sig.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })} 9:00h`;
+    if (estrategia === "ahora") return "Enviar ya";
+    return "Enviar en horario óptimo";
   }
 
   const generarVistaPreviaCarta = async (): Promise<boolean> => {
@@ -213,11 +181,18 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
             jobTitle: jobTitle.trim() || undefined,
             priority: "normal",
             useAIPersonalization: useAI,
-            scheduledFor: calcularFechaEnvio(),
+            strategy: estrategia,
             cartaPersonalizada: cartaAprobada || undefined,
           }),
         });
-        const data = await res.json() as { error?: string; estimatedTimeFormatted?: string; rateLimitInfo?: RateLimitInfo };
+        const data = await res.json() as {
+          error?: string;
+          estimatedTimeFormatted?: string;
+          rateLimitInfo?: RateLimitInfo;
+          companyIntel?: { country: string; sector: string | null; horaLocalEmpresa: string; diffConEspana: string; infoTurnos: string | null };
+          horaLocalEmpresa?: string;
+          strategy?: string;
+        };
         if (!res.ok) {
           if (data.rateLimitInfo) onRateLimitUpdate?.(data.rateLimitInfo);
           throw new Error(data.error ?? "Error al programar");
@@ -432,45 +407,41 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
           </>
         )}
 
-        {/* Selector de hora */}
+        {/* Selector de estrategia de envío */}
         {modo !== "ya-aplique" && (
           <div>
             <label className="block text-xs font-medium mb-2" style={{ color: "#94a3b8" }}>
-              ¿Cuándo enviarlo?
+              Estrategia de envío
             </label>
             <div className="grid grid-cols-2 gap-2 mb-2">
               {([
-                { id: "ahora" as const,  label: getSlotLabel(),        sub: "Lo antes posible" },
-                { id: "manana" as const, label: "Mañana a las 9:00h",  sub: "Primer email del día" },
-                { id: "auto" as const,   label: "Automático",           sub: "El sistema elige ⭐" },
-                { id: "custom" as const, label: "Elegir fecha y hora",  sub: "Control total" },
-              ] as { id: "ahora" | "manana" | "auto" | "custom"; label: string; sub: string }[]).map(s => (
-                <button key={s.id} type="button" onClick={() => setSlotElegido(s.id)}
-                  className="py-2 px-3 rounded-lg text-left transition"
+                { id: "optimo" as const, label: "🎯 En horario óptimo", sub: "El CV llega cuando lo van a leer" },
+                { id: "ahora" as const,  label: "⚡ Enviar ya",         sub: "Inmediato, sin esperas" },
+              ]).map(s => (
+                <button key={s.id} type="button" onClick={() => setEstrategia(s.id)}
+                  className="py-2.5 px-3 rounded-lg text-left transition"
                   style={{
-                    background: slotElegido === s.id ? "rgba(34,197,94,0.1)" : "#161922",
-                    border: slotElegido === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+                    background: estrategia === s.id ? "rgba(34,197,94,0.1)" : "#161922",
+                    border: estrategia === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
                   }}>
-                  <div className="text-[11px] font-semibold" style={{ color: slotElegido === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
+                  <div className="text-[11px] font-semibold" style={{ color: estrategia === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
                   <div className="text-[9px] mt-0.5" style={{ color: "#475569" }}>{s.sub}</div>
                 </button>
               ))}
             </div>
-            {slotElegido === "custom" && (
-              <input
-                type="datetime-local"
-                value={fechaCustom}
-                onChange={e => setFechaCustom(e.target.value)}
-                min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
-                className="w-full px-3 py-2 rounded-lg text-sm"
-                style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
-              />
+            {estrategia === "optimo" && (
+              <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>
+                🎯 BuscayCurra analiza la zona horaria de la empresa y envía tu CV en su ventana de máxima apertura (9-10:30am hora local). Detectamos el sector y ajustamos el momento ideal.
+              </p>
             )}
-            <p className="text-[10px] mt-1.5" style={{ color: "#475569" }}>
-              💡 Martes y miércoles entre 9-11h o 14-16h tienen la mayor tasa de apertura.
-            </p>
+            {estrategia === "ahora" && (
+              <p className="text-[10px] mt-1.5" style={{ color: "#f59e0b" }}>
+                ⚠️ Se enviará de inmediato, aunque en la empresa puedan ser las 3am. Si la empresa está en otra zona horaria, mejor usar "horario óptimo".
+              </p>
+            )}
           </div>
         )}
+
 
         {/* Personalización IA */}
         {modo !== "ya-aplique" && (

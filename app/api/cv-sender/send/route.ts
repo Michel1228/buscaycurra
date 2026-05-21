@@ -17,9 +17,10 @@ export async function POST(request: NextRequest) {
       priority?: "normal" | "prioritario";
       useAIPersonalization?: boolean;
       scheduledFor?: string; // ISO string elegido por el usuario
+      strategy?: "ahora" | "optimo"; // Estrategia: inmediato o ventana óptima
     };
 
-    const { userId, companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization, scheduledFor } = body;
+    const { userId, companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization, scheduledFor, strategy } = body;
 
     if (!userId) {
       return NextResponse.json({ error: "El campo userId es obligatorio" }, { status: 400 });
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
         priority: priority ?? "normal",
         useAIPersonalization: useAIPersonalization ?? true,
         scheduledFor: fechaElegida,
+        strategy: strategy ?? "optimo",
       }
     );
 
@@ -123,6 +125,9 @@ export async function POST(request: NextRequest) {
           minute: "2-digit",
           timeZone: "Europe/Madrid",
         }),
+        strategy: resultado.strategy,
+        companyIntel: resultado.companyIntel ?? null,
+        horaLocalEmpresa: resultado.horaLocalEmpresa ?? null,
         positionInQueue: resultado.positionInQueue,
         estimatedWaitMinutes: resultado.estimatedWaitMinutes,
         rateLimitInfo: {
