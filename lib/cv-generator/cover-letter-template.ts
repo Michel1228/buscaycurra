@@ -104,11 +104,12 @@ export function getCoverLetterPageHTML(data: CoverLetterData): string {
     .map(l => `<p class="cl-p">${l}</p>`)
     .join("");
 
-  const words = data.userName.trim().split(/\s+/);
+  const safeName = data.userName?.trim() || "Candidato";
+  const words = safeName.split(/\s+/);
   const initials = words.length >= 2
     ? words[0][0].toUpperCase() + words[words.length - 1][0].toUpperCase()
     : words[0][0].toUpperCase();
-  const firstName = words.slice(0, -1).join(" ") || data.userName;
+  const firstName = words.slice(0, -1).join(" ") || safeName;
   const lastName  = words.length > 1 ? words[words.length - 1] : "";
 
   return `

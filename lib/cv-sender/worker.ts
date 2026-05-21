@@ -96,7 +96,10 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   }
 
   const userProfile: UserProfile = {
-    ...profileResult.data,
+    id: profileResult.data.id,
+    full_name: profileResult.data.full_name || "Candidato",
+    phone: profileResult.data.phone,
+    linkedin_url: profileResult.data.linkedin_url,
     email: userEmail,
   };
 
