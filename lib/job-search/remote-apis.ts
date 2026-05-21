@@ -32,10 +32,10 @@ async function guardarOfertas(ofertas: RawJob[]): Promise<number> {
     try {
       const id = slugId(o.titulo, o.empresa);
       await pool.query(
-        `INSERT INTO "JobListing" (id, title, company, city, salary, description, "sourceUrl", "scrapedAt", "isActive", source)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), true, $8)
+        `INSERT INTO "JobListing" (id, title, company, city, salary, description, "sourceUrl", "scrapedAt", "isActive", "sourceName", "sector")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), true, $8, $9)
          ON CONFLICT (id) DO NOTHING`,
-        [id, o.titulo, o.empresa, o.ubicacion, o.salario, o.descripcion?.slice(0, 5000) || "", o.url, o.fuente]
+        [id, o.titulo, o.empresa, o.ubicacion, o.salario, o.descripcion?.slice(0, 5000) || "", o.url, o.fuente, "OTRO"]
       );
       guardadas++;
     } catch {

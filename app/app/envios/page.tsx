@@ -1,7 +1,4 @@
 "use client";
-import { Suspense } from "react";
-
-export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import AutoSendSetup from "@/components/AutoSendSetup";
