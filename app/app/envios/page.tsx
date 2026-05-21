@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import AutoSendSetup from "@/components/AutoSendSetup";
 import CVSenderDashboard from "@/components/CVSenderDashboard";
 import InfoTooltip from "@/components/InfoTooltip";
