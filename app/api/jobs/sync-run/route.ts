@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { syncBatch, SECTORES } from "@/lib/job-search/sync-worker";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300; // Docker, no Vercel — 5 min seguro
 
 // 40 ciudades principales de España para máxima cobertura por llamada
 const CIUDADES_SYNC = [
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch { /* use defaults */ }
 
   const source = (body.source ?? "jooble") as "jooble" | "adzuna" | "careerjet";
-  const batchSize = Math.min(body.batchSize ?? 40, 60);
+  const batchSize = Math.min(body.batchSize ?? 80, 200);
   const offset = body.offset ?? 0;
   const page = body.page ?? 1;
 
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ inserted: 0, fetched: 0, nextOffset: 0, done: true, total: combos.length });
   }
 
-  const CONCURRENCY = 10;
+  const CONCURRENCY = 15;
   let totalInserted = 0;
   let totalFetched = 0;
   const start = Date.now();
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       }
     }
     // Parar si llevamos >50s para no exceder maxDuration=60
-    if (Date.now() - start > 50_000) break;
+    if (Date.now() - start > 280_000) break; // 4.6 min, margen para maxDuration=300
   }
 
   return NextResponse.json({
