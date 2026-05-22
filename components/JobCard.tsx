@@ -254,9 +254,8 @@ export default function JobCard({
                 </button>
                 <button
                   onClick={() => void confirmarEnvio()}
-                  disabled={estadoEnvio === "enviando"}
-                  className="flex-1 py-2.5 text-[12px] font-semibold rounded-lg transition btn-game">
-                  {estadoEnvio === "enviando" ? "📤 Enviando..." : "✅ Enviar CV con esta carta"}
+                  disabled={false}
+                  className="flex-1 py-2.5 text-[12px] font-semibold rounded-lg transition btn-game">✅ Enviar CV con esta carta
                 </button>
               </div>
             </div>
