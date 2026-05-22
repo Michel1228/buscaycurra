@@ -193,13 +193,13 @@ function mapRemotive(job: Record<string, unknown>): OfertaReal {
 
 // ─── Fetchers de fuentes ──────────────────────────────────────────────────────
 
-async function fetchJooble(puesto: string, ciudad: string): Promise<OfertaReal[]> {
+async function fetchJooble(puesto: string, ciudad: string, page = 1): Promise<OfertaReal[]> {
   if (!JOOBLE_KEY) return [];
   try {
     const resp = await fetch(`https://es.jooble.org/api/${JOOBLE_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keywords: puesto, location: ciudad, page: 1, resultsOnPage: JOOBLE_RESULTS }),
+      body: JSON.stringify({ keywords: puesto, location: ciudad, page, resultsOnPage: JOOBLE_RESULTS }),
       signal: AbortSignal.timeout(12000),
     });
     if (!resp.ok) return [];
@@ -295,6 +295,7 @@ export async function indexarBulkJooble(
   offset = 0,
   maxCombinaciones = 200,
   onProgress?: (p: BulkProgress) => void,
+  page = 1,
 ): Promise<BulkProgress> {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -324,7 +325,7 @@ export async function indexarBulkJooble(
     const chunk = lote.slice(i, i + PARALLEL_BATCH);
 
     const results = await Promise.allSettled(
-      chunk.map(([puesto, ciudad]) => fetchJooble(puesto, ciudad))
+      chunk.map(([puesto, ciudad]) => fetchJooble(puesto, ciudad, page))
     );
 
     const toInsert: ReturnType<typeof ofertaToDB>[] = [];
@@ -421,6 +422,104 @@ export async function indexarBulkRemotive(): Promise<BulkProgress> {
     progress.errores = 1;
   }
   progress.procesados = filas.length;
+
+  return progress;
+}
+
+// ─── Indexador de Careerjet en lotes paralelos ────────────────────────────────
+
+async function fetchCareerjetBulk(puesto: string, ciudad: string): Promise<OfertaReal[]> {
+  const apiKey = process.env.CAREERJET_API_KEY;
+  if (!apiKey) return [];
+  try {
+    const auth = Buffer.from(`${apiKey}:`).toString("base64");
+    const url = `https://search.api.careerjet.net/v4/query?locale_code=es_ES&keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ciudad)}&page_size=40&page=1&sort=relevance&user_ip=127.0.0.1&user_agent=BuscayCurra/1.0`;
+    const res = await fetch(url, {
+      headers: { "Authorization": `Basic ${auth}` },
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json() as { type?: string; jobs?: Record<string, string>[] };
+    if (data.type === "ERROR") return [];
+    return (data.jobs ?? []).map((j, i) => ({
+      id: `cj-bulk-${slugify(puesto)}-${slugify(ciudad)}-${i}`,
+      titulo: (j.title ?? puesto).slice(0, 255),
+      empresa: (j.company ?? "").slice(0, 255),
+      ubicacion: (j.locations ?? ciudad).slice(0, 255),
+      salario: (j.salary ?? "").slice(0, 100),
+      descripcion: (j.description ?? "").replace(/<[^>]+>/g, "").slice(0, 1000),
+      fuente: "Careerjet",
+      url: (j.url ?? `https://www.careerjet.es/${encodeURIComponent(puesto)}-empleo.html`).slice(0, 500),
+      fecha: j.date ?? new Date().toISOString(),
+      emailEmpresa: "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function indexarBulkCareerjet(
+  offset = 0,
+  maxCombinaciones = 40,
+  onProgress?: (p: BulkProgress) => void,
+): Promise<BulkProgress> {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+
+  const combinaciones: Array<[string, string]> = [];
+  for (const puesto of PUESTOS_BULK) {
+    for (const ciudad of CIUDADES_BULK) {
+      combinaciones.push([puesto, ciudad]);
+    }
+  }
+
+  const lote = combinaciones.slice(offset, offset + maxCombinaciones);
+
+  const progress: BulkProgress = {
+    total: lote.length,
+    procesados: 0,
+    insertados: 0,
+    errores: 0,
+    fuentes: {},
+  };
+
+  for (let i = 0; i < lote.length; i += PARALLEL_BATCH) {
+    const chunk = lote.slice(i, i + PARALLEL_BATCH);
+
+    const results = await Promise.allSettled(
+      chunk.map(([puesto, ciudad]) => fetchCareerjetBulk(puesto, ciudad))
+    );
+
+    const toInsert: ReturnType<typeof ofertaToDB>[] = [];
+    for (let k = 0; k < results.length; k++) {
+      const ciudad = chunk[k][1];
+      const result = results[k];
+      if (result.status === "fulfilled") {
+        for (const o of result.value) {
+          toInsert.push(ofertaToDB(o, ciudad));
+        }
+      }
+      progress.procesados++;
+    }
+
+    if (toInsert.length > 0) {
+      const { error } = await supabase
+        .from("ofertas")
+        .upsert(toInsert, { onConflict: "id", ignoreDuplicates: true });
+
+      if (!error) {
+        progress.insertados += toInsert.length;
+        progress.fuentes["Careerjet"] = (progress.fuentes["Careerjet"] ?? 0) + toInsert.length;
+      } else {
+        progress.errores++;
+        console.warn("[BulkIndexer/Careerjet] upsert error:", error.message);
+      }
+    }
+
+    onProgress?.(progress);
+  }
 
   return progress;
 }
