@@ -1,16 +1,14 @@
 /**
- * /api/cv-sender/webhook — Webhook para rastrear respuestas de empresas
- * 
- * Se activa cuando:
- * 1. Un email de respuesta llega (via SMTP inbox)
- * 2. Un tracking pixel se carga (el email fue abierto/visto)
- * 3. Manualmente desde el dashboard (el usuario marca respuesta)
- * 
- * Crea notificaciones automáticas para el usuario
+ * /api/cv-sender/webhook — Rastrear respuestas y aperturas de emails
+ *
+ * POST: empresa responde o CV es visto → actualiza estado + notifica usuario
+ * GET:  tracking pixel 1x1 para detectar apertura
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { sendPushNotification } from "@/lib/web-push";
+import type webpush from "web-push";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +17,31 @@ function getSupabase() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
+}
+
+async function enviarPushAlUsuario(
+  supabase: ReturnType<typeof getSupabase>,
+  userId: string,
+  payload: { title: string; body: string; url: string; tag: string }
+) {
+  try {
+    const { data } = await supabase
+      .from("push_subscriptions")
+      .select("subscription")
+      .eq("user_id", userId)
+      .single();
+
+    if (!data?.subscription) return;
+
+    const sub = JSON.parse(data.subscription) as webpush.PushSubscription;
+    await sendPushNotification(sub, payload);
+  } catch (err) {
+    // Si la suscripción expiró, la borramos
+    if ((err as Error).message === "SUBSCRIPTION_EXPIRED") {
+      await supabase.from("push_subscriptions").delete().eq("user_id", userId);
+    }
+    // Silencioso — push es opcional
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -31,21 +54,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "tipo y userId requeridos" }, { status: 400 });
     }
 
-    // Update cv_sends record if envioId provided
+    // Actualizar estado del envío si se proporciona ID
     if (envioId) {
       const nuevoEstado = tipo === "respuesta" ? "respuesta" : tipo === "visto" ? "visto" : "enviado";
-      await supabase
-        .from("cv_sends")
-        .update({ estado: nuevoEstado })
-        .eq("id", envioId);
+      await supabase.from("cv_sends").update({ estado: nuevoEstado }).eq("id", envioId);
     }
 
-    // Create notification
     const titulos: Record<string, string> = {
       respuesta: `💬 ${empresa || "Una empresa"} ha respondido`,
       visto: `👀 ${empresa || "Una empresa"} ha visto tu CV`,
       enviado: `📧 CV enviado a ${empresa || "nueva empresa"}`,
-      recordatorio: `⏰ Recuerda revisar tus candidaturas`,
+      recordatorio: "⏰ Recuerda revisar tus candidaturas",
     };
 
     const mensajes: Record<string, string> = {
@@ -55,18 +74,33 @@ export async function POST(request: NextRequest) {
       recordatorio: detalles || "Tienes candidaturas pendientes de revisión.",
     };
 
+    const tipoNotif =
+      tipo === "respuesta" ? "respuesta_empresa" :
+      tipo === "visto" ? "cv_visto" :
+      tipo === "enviado" ? "cv_enviado" : "recordatorio";
+
+    const titulo = titulos[tipo] || "Actualización";
+    const mensaje = mensajes[tipo] || detalles || "";
+
     try {
       await supabase.from("notificaciones").insert({
         user_id: userId,
-        tipo: tipo === "respuesta" ? "respuesta_empresa" : tipo === "visto" ? "cv_visto" : tipo === "enviado" ? "cv_enviado" : "recordatorio",
-        titulo: titulos[tipo] || "Actualización",
-        mensaje: mensajes[tipo] || detalles || "",
+        tipo: tipoNotif,
+        titulo,
+        mensaje,
         datos: { envioId, empresa, detalles },
         leida: false,
       });
+
+      // Enviar push al teléfono
+      await enviarPushAlUsuario(supabase, userId, {
+        title: titulo,
+        body: mensaje,
+        url: "/app/envios?tab=envios",
+        tag: tipoNotif,
+      });
     } catch {
-      // Table might not exist yet — that's OK
-      console.warn("[Webhook] Could not create notification (table may not exist)");
+      console.warn("[Webhook] No se pudo crear notificación (tabla puede no existir)");
     }
 
     return NextResponse.json({ ok: true });
@@ -76,10 +110,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET — Tracking pixel para detectar apertura de emails
- * Usage: <img src="https://buscaycurra.es/api/cv-sender/webhook?track=ENVIO_ID&uid=USER_ID" />
- */
+// GET — Pixel de tracking para detectar apertura de emails
 export async function GET(request: NextRequest) {
   const supabase = getSupabase();
   const { searchParams } = new URL(request.url);
@@ -87,27 +118,30 @@ export async function GET(request: NextRequest) {
   const uid = searchParams.get("uid");
 
   if (trackId && uid) {
-    // Mark as "visto"
     try {
-      await supabase
-        .from("cv_sends")
-        .update({ estado: "visto" })
-        .eq("id", trackId);
+      await supabase.from("cv_sends").update({ estado: "visto" }).eq("id", trackId);
+
+      const titulo = "👀 Tu CV fue abierto";
+      const mensaje = "Una empresa ha abierto el email con tu CV. ¡Buena señal!";
 
       await supabase.from("notificaciones").insert({
         user_id: uid,
         tipo: "cv_visto",
-        titulo: "👀 Tu CV fue abierto",
-        mensaje: "Una empresa ha abierto el email con tu CV. ¡Buena señal!",
+        titulo,
+        mensaje,
         datos: { envioId: trackId },
         leida: false,
       });
-    } catch {
-      // notification insert optional
-    }
+
+      await enviarPushAlUsuario(supabase, uid, {
+        title: titulo,
+        body: mensaje,
+        url: "/app/envios?tab=envios",
+        tag: "cv_visto",
+      });
+    } catch { /* opcional */ }
   }
 
-  // Return 1x1 transparent pixel
   const pixel = Buffer.from(
     "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
     "base64"

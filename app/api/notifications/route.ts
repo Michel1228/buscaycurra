@@ -20,8 +20,7 @@ function getSupabase() {
 
 export async function GET(request: NextRequest) {
   const supabase = getSupabase();
-  const userId = request.headers.get("x-user-id") ||
-    new URL(request.url).searchParams.get("userId");
+  const userId = request.headers.get("x-user-id");
 
   if (!userId) return NextResponse.json({ error: "userId requerido" }, { status: 400 });
 

@@ -23,8 +23,11 @@ function EnviosPageInner() {
   const puestoParam = searchParams.get("puesto") ?? "";
   const webParam = searchParams.get("web") ?? "";
 
+  // Permite navegar directamente a una pestaña desde notificaciones (?tab=envios)
+  const tabParam = (searchParams.get("tab") as TabId) ?? "nuevo";
+
   const [userId, setUserId] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<TabId>("nuevo");
+  const [activeTab, setActiveTab] = useState<TabId>(tabParam);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {

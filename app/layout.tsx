@@ -10,6 +10,7 @@ import AppNavWrapper from "@/components/AppNavWrapper";
 import SplashWrapper from "@/components/SplashWrapper";
 import GusiChat from "@/components/GusiChat";
 import BosqueAmbiente from "@/components/BosqueAmbiente";
+import PushRegister from "@/components/PushRegister";
 
 export const metadata: Metadata = {
   title: "BuscayCurra — La alternativa gratuita a InfoJobs con IA",
@@ -57,6 +58,7 @@ export default function RootLayout({
         <CookieBanner />
         <BosqueAmbiente />
         <GusiChat />
+        <PushRegister />
       </body>
     </html>
   );
