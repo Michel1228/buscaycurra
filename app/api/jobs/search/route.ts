@@ -122,37 +122,40 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Si keyword+ciudad da pocos resultados (<10) y la ciudad tiene mas ofertas,
+    // mostrar todas las de la ciudad (fallback inteligente). Si hay >=10, mostramos los matches exactos.
+    if (keyword && cityParts && dbResult.rows.length < 10) {
+      const locCount = await pool.query(
+        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})`,
+        [`%${cityParts}%`]
+      );
+      const locTotal = parseInt(locCount.rows[0].count);
+      // Si la ciudad tiene significativamente mas ofertas que el keyword match, mostrar todas
+      if (locTotal > dbResult.rows.length + 5) {
+        const locOffset = (page - 1) * limit;
+        const locResult = await pool.query(
+          `SELECT id, title, company, city, province, salary, description, "sourceUrl", "sourceName", "scrapedAt"
+           FROM "JobListing" WHERE "isActive" = true AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
+           ORDER BY
+             CASE WHEN title ILIKE $2 THEN 0 ELSE 1 END,
+             CASE WHEN "scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
+                  WHEN "scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
+                  ELSE 2 END,
+             md5(id::text || to_char(NOW(), 'YYYYDDD'))
+           LIMIT $3 OFFSET $4`,
+          [`%${cityParts}%`, `%${keyword}%`, limit, locOffset]
+        );
+        const locOfertas = deduplicar(locResult.rows).map(j => rowToOferta(j, location));
+        return NextResponse.json({ ofertas: locOfertas, total: locTotal, page, hasMore: locOffset + locResult.rows.length < locTotal, keyword, location, source: "database-city-fallback" });
+      }
+    }
+
     if (dbResult.rows.length >= 1 || page > 1) {
       const deduped = deduplicar(dbResult.rows);
       let ofertas = deduped.map(j => rowToOferta(j, location));
       if (jornada === "remoto") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("remoto") || (o.titulo as string).toLowerCase().includes("teletrabajo"));
       else if (jornada === "parcial") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("parcial"));
       return NextResponse.json({ ofertas, total: totalDB, page, hasMore: offset + dbResult.rows.length < totalDB, keyword, location, source: "database" });
-    }
-
-    // Si keyword+ciudad = 0, mostrar todas las ofertas de esa ciudad (total real)
-    if (keyword && cityParts) {
-      const locCount = await pool.query(
-        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})`,
-        [`%${cityParts}%`]
-      );
-      const locTotal = parseInt(locCount.rows[0].count);
-      if (locTotal > 0) {
-        const locOffset = (page - 1) * limit;
-        const locResult = await pool.query(
-          `SELECT id, title, company, city, province, salary, description, "sourceUrl", "sourceName", "scrapedAt"
-           FROM "JobListing" WHERE "isActive" = true AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
-           ORDER BY
-             CASE WHEN "scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
-                  WHEN "scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
-                  ELSE 2 END,
-             md5(id::text || to_char(NOW(), 'YYYYDDD'))
-           LIMIT $2 OFFSET $3`,
-          [`%${cityParts}%`, limit, locOffset]
-        );
-        const locOfertas = deduplicar(locResult.rows).map(j => rowToOferta(j, location));
-        return NextResponse.json({ ofertas: locOfertas, total: locTotal, page, hasMore: locOffset + locResult.rows.length < locTotal, keyword, location, source: "database-city" });
-      }
     }
 
     // Fallback final a APIs en tiempo real

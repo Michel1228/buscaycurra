@@ -1,11 +1,29 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 
 export default function BienvenidaPage() {
   const router = useRouter();
+  const [cvReady, setCvReady] = useState(true);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    async function checkCV() {
+      try {
+        const session = (await getSupabaseBrowser().auth.getSession()).data.session;
+        if (!session) { router.push("/auth/login"); return; }
+        const res = await fetch(`/api/gusi/cv?userId=${session.user.id}`);
+        const data = await res.json() as { cv?: Record<string, unknown> };
+        setCvReady(!!(data.cv && Object.keys(data.cv).length > 0));
+      } catch { /* asumir que no */ }
+      finally { setChecking(false); }
+    }
+    checkCV();
+  }, [router]);
 
   return (
     <div className="min-h-screen px-4 pt-20 pb-12" style={{ background: "#0f1117" }}>
@@ -31,6 +49,28 @@ export default function BienvenidaPage() {
             Elige cómo quieres buscar trabajo. Puedes cambiar de modo en cualquier momento.
           </p>
         </div>
+
+        {/* Aviso si no hay CV */}
+        {!checking && !cvReady && (
+          <div className="mb-8 p-4 rounded-xl" style={{ background: "rgba(245,158,11,0.08)", border: "2px solid rgba(245,158,11,0.25)" }}>
+            <div className="flex items-start gap-3">
+              <span className="text-xl">⚠️</span>
+              <div className="flex-1">
+                <p className="text-xs font-semibold" style={{ color: "#f59e0b" }}>
+                  No tienes tu CV creado todavía
+                </p>
+                <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>
+                  Para enviar candidaturas necesitas un CV. Guzzi puede ayudarte a crear uno profesional en 2 minutos.
+                </p>
+                <Link href="/app/curriculum"
+                  className="inline-block mt-2 text-[11px] font-semibold px-4 py-2 rounded-lg transition"
+                  style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", color: "#f59e0b" }}>
+                  Crear mi CV ahora →
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Comparativa rápida vs portales */}
         <div className="mb-8 p-4 rounded-xl text-center" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>

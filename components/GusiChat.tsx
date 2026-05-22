@@ -74,8 +74,13 @@ const LABELS_COMANDO: Record<string, string> = {
 };
 
 function renderMd(text: string): React.ReactNode[] {
+  // Limpiar saltos de línea escapados y normalizar markdown
+  const clean = text
+    .replace(/\\n/g, "\n")
+    .replace(/\\t/g, "\t")
+    .replace(/\n{3,}/g, "\n\n");
   // Split on **bold** and render React nodes
-  const segments = text.split(/(\*\*[^*]+\*\*)/g);
+  const segments = clean.split(/(\*\*[^*]+\*\*)/g);
   return segments.map((seg, i) => {
     if (seg.startsWith("**") && seg.endsWith("**")) {
       return <strong key={i} style={{ fontWeight: 700, color: "#f1f5f9" }}>{seg.slice(2, -2)}</strong>;
