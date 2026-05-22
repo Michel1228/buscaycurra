@@ -41,7 +41,9 @@ interface WhatsAppTemplateMessage {
     language: { code: string };
     components: Array<{
       type: "header" | "body" | "button";
-      parameters: Array<{ type: "text"; text: string }>;
+      parameters?: Array<{ type: "text"; text: string }>;
+      sub_type?: string;
+      index?: number;
     }>;
   };
 }
@@ -82,7 +84,7 @@ export async function sendWhatsAppTemplate(msg: WhatsAppMessage): Promise<{
     template: {
       name: msg.templateName,
       language: { code: msg.language || "es" },
-      components: msg.components || [],
+      components: (msg.components || []) as any,
     },
   };
 

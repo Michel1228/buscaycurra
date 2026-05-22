@@ -99,13 +99,13 @@ async function manejarMensajeEntrante(phoneNumberId: string, msg: any) {
     
     try {
       const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
-      const ofertas = await buscarOfertasReales({ keyword: puesto, ciudad: "", page: 0, limit: 3 });
+      const ofertas = await buscarOfertasReales(puesto, "", 3);
       
       if (!ofertas || ofertas.length === 0) {
         await sendWhatsAppText(from, `🔍 No encontré ofertas para "${puesto}" ahora mismo.\nPrueba con otra palabra o busca en la app: https://buscaycurra.es/app/buscar`);
       } else {
         const lista = ofertas.map((o: any, i: number) =>
-          `${i + 1}. *${o.title}* en ${o.company}\n   📍 ${o.city || "Varias"} ${o.salary ? "💰 " + o.salary : ""}\n   🔗 ${o.url || "https://buscaycurra.es/app/buscar"}`
+          `${i + 1}. *${o.titulo}* en ${o.empresa}\n   📍 ${o.ubicacion || "Varias"} ${o.salario ? "💰 " + o.salario : ""}\n   🔗 ${o.url || "https://buscaycurra.es/app/buscar"}`
         ).join("\n\n");
         await sendWhatsAppText(from, `🔍 *Ofertas de "${puesto}":*\n\n${lista}\n\n📱 Más en: https://buscaycurra.es/app/buscar`);
       }

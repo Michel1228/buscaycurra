@@ -192,7 +192,7 @@ async function fetchEures(keyword: string, city: string, _page = 1): Promise<Raw
       title: j.title.slice(0, 200),
       company: j.company.slice(0, 200),
       city: j.city || city,
-      description: \`Oferta de EURES en \${j.country}. \${j.contractType || ""}\`,
+      description: "Oferta de EURES en " + j.country + ". " + (j.contractType || ""),
       salary: j.salary || "Ver en oferta",
     }));
   } catch { return []; }
