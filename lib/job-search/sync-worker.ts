@@ -182,18 +182,27 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
   } catch { return []; }
 }
 
-async function fetchEures(keyword: string, city: string, _page = 1): Promise<RawJob[]> {
+async function fetchEures(keyword: string, countryLocation: string, _page = 1): Promise<RawJob[]> {
+  // Usa Careerjet con ubicaciones europeas (más fiable que la API EURES que requiere OAuth2)
+  const keyInfo = await getCareerjetKey();
+  if (!keyInfo) return [];
   try {
-    const { searchEures } = await import("./eures-api");
-    const result = await searchEures({ keyword, country: "ES", limit: 20 });
-    return result.jobs.map(j => ({
-      source: "EURES_ES",
+    const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F2.0&pagesize=20&page=1&sort=relevance`;
+    const res = await fetch(url, {
+      headers: { "Referer": "https://buscaycurra.es" },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) { await reportFailure("careerjet", keyInfo.idx, res.status); return []; }
+    const data = await res.json();
+    if (data.type === "ERROR") return [];
+    return (data.jobs || []).map((j: Record<string, string>) => ({
+      source: `EURES_${countryLocation.slice(0, 3).toUpperCase()}`,
       url: j.url || "",
-      title: j.title.slice(0, 200),
-      company: j.company.slice(0, 200),
-      city: j.city || city,
-      description: "Oferta de EURES en " + j.country + ". " + (j.contractType || ""),
-      salary: j.salary || "Ver en oferta",
+      title: (j.title || keyword).replace(/<[^>]+>/g, "").slice(0, 200),
+      company: (j.company || "Empresa europea").slice(0, 200),
+      city: (j.locations || countryLocation).slice(0, 100),
+      description: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 1000),
+      salary: (j.salary || "Ver en oferta").slice(0, 100),
     }));
   } catch { return []; }
 }

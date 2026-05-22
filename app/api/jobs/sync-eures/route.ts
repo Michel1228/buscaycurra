@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         source: "eures",
         sector: "HOSTELERIA", // Temporal, EURES no mapea a sectores aún
         keyword: c.keyword,
-        city: c.country, // Usamos el país como "ciudad"
+        city: c.location, // "Deutschland", "France", etc.
       }))
     );
     for (const r of results) {

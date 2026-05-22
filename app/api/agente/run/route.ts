@@ -12,7 +12,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { buscarOfertasReales, OfertaReal } from "@/lib/job-search/real-search";
+import { buscarOfertasReales } from "@/lib/job-search/real-search";
+import type { OfertaReal } from "@/lib/job-search/real-search";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;

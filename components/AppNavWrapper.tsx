@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import NotificationBell from "@/components/NotificationBell";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const ADMIN_EMAIL = "michelbatistagonzalez1992@gmail.com";
 
@@ -74,6 +75,9 @@ export default function AppNavWrapper() {
 
           {/* Campana de notificaciones */}
           <NotificationBell userId={userId} />
+
+          {/* Selector de idioma */}
+          <LanguageSelector />
 
           {/* Avatar de perfil */}
           <Link

@@ -9,19 +9,6 @@ import Groq from "groq-sdk";
 
 export const dynamic = "force-dynamic";
 
-// Cosine similarity entre dos vectores
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) return 0;
-  let dot = 0, magA = 0, magB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    magA += a[i] * a[i];
-    magB += b[i] * b[i];
-  }
-  const denom = Math.sqrt(magA) * Math.sqrt(magB);
-  return denom === 0 ? 0 : dot / denom;
-}
-
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get("q");
@@ -35,62 +22,83 @@ export async function GET(req: NextRequest) {
   try {
     const pool = getPool();
 
-    // 1. Obtener embedding de la query
+    // 1. Usar Groq para extraer keywords de la query en lenguaje natural
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
-    const embeddingRes = await groq.embeddings.create({
-      model: "nomic-embed-text-v1",
-      input: query,
-    });
-    const queryEmbedding = embeddingRes.data[0]?.embedding;
-    if (!queryEmbedding) {
-      return NextResponse.json({ error: "No se pudo generar embedding" }, { status: 500 });
-    }
 
-    // 2. Obtener ofertas candidatas (filtradas por ciudad si se especifica)
-    let ofertas: any[];
-    if (ciudad) {
-      const loc = `%${ciudad.toLowerCase().trim()}%`;
-      const res = await pool.query(
-        `SELECT id, title, company, city, description, salary, "sourceUrl"
-         FROM "JobListing"
-         WHERE "isActive" = true AND (city ILIKE $1 OR province ILIKE $1)
-         ORDER BY "scrapedAt" DESC LIMIT 200`,
-        [loc]
-      );
-      ofertas = res.rows;
-    } else {
-      const res = await pool.query(
-        `SELECT id, title, company, city, description, salary, "sourceUrl"
-         FROM "JobListing"
-         WHERE "isActive" = true
-         ORDER BY "scrapedAt" DESC LIMIT 200`
-      );
-      ofertas = res.rows;
-    }
-
-    if (!ofertas.length) {
-      return NextResponse.json({ results: [], query, message: "No se encontraron ofertas para comparar" });
-    }
-
-    // 3. Generar embeddings para las ofertas (en batch)
-    const ofertasTextos = ofertas.map((o: any) =>
-      `${o.title}. ${o.company}. ${(o.description || "").slice(0, 300)}`
-    );
-
-    const batchRes = await groq.embeddings.create({
-      model: "nomic-embed-text-v1",
-      input: ofertasTextos,
+    const kwCompletion = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [{
+        role: "user",
+        content: `Extrae 3-5 palabras clave de búsqueda de empleo de esta frase: "${query}". Responde SOLO las keywords separadas por coma, sin texto adicional. Ejemplo: "Python, backend, desarrollo software, Django"`,
+      }],
+      temperature: 0.1,
+      max_tokens: 60,
     });
 
-    // 4. Calcular cosine similarity
-    const scored = ofertas.map((oferta: any, i: number) => ({
-      ...oferta,
-      score: cosineSimilarity(queryEmbedding, batchRes.data[i]?.embedding || []),
-    }));
+    const keywords = kwCompletion.choices[0]?.message?.content?.trim() || query;
+    const keywordList = keywords.split(/,\s*/).filter(k => k.length > 0);
+    
+    // También incluir la query original
+    const allKeywords = [...new Set([query, ...keywordList])];
 
-    // 5. Ordenar por score y devolver top
+    // 2. Buscar con ILIKE para cada keyword
+    let allRows: any[] = [];
+    const seen = new Set<string>();
+
+    for (const kw of allKeywords.slice(0, 6)) {
+      const pattern = `%${kw}%`;
+      let res;
+      if (ciudad) {
+        const loc = `%${ciudad.toLowerCase().trim()}%`;
+        res = await pool.query(
+          `SELECT id, title, company, city, description, salary, "sourceUrl"
+           FROM "JobListing"
+           WHERE "isActive" = true AND (city ILIKE $1 OR province ILIKE $1)
+             AND (title ILIKE $2 OR description ILIKE $2)
+           ORDER BY "scrapedAt" DESC LIMIT 30`,
+          [loc, pattern]
+        );
+      } else {
+        res = await pool.query(
+          `SELECT id, title, company, city, description, salary, "sourceUrl"
+           FROM "JobListing"
+           WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1)
+           ORDER BY "scrapedAt" DESC LIMIT 30`,
+          [pattern]
+        );
+      }
+      for (const row of res.rows) {
+        if (!seen.has(row.id)) {
+          seen.add(row.id);
+          allRows.push(row);
+        }
+      }
+    }
+
+    if (!allRows.length) {
+      return NextResponse.json({ 
+        query, 
+        keywords: allKeywords,
+        totalEncontrados: 0,
+        results: [],
+        message: "No se encontraron ofertas. Prueba con otras palabras." 
+      });
+    }
+
+    // 3. Calcular score simple basado en cuántas keywords matchean
+    const scored = allRows.map((row: any) => {
+      const text = `${row.title} ${row.description || ""}`.toLowerCase();
+      let score = 0;
+      for (const kw of allKeywords) {
+        if (text.includes(kw.toLowerCase())) score += 1;
+      }
+      // Bonus para match exacto en título
+      if (row.title.toLowerCase().includes(query.toLowerCase())) score += 3;
+      return { ...row, score };
+    });
+
     scored.sort((a: any, b: any) => b.score - a.score);
-    const top = scored.slice(0, limit).filter((s: any) => s.score > 0.2);
+    const top = scored.slice(0, limit).filter((s: any) => s.score > 0);
 
     return NextResponse.json({
       query,

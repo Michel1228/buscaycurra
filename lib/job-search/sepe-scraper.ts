@@ -47,9 +47,9 @@ export async function searchSepe(keyword: string): Promise<SepeOffer[]> {
 
     // Empléate guarda datos en window.__INITIAL_STATE__ o en un <script type="application/json">
     // Buscar el blob JSON en el HTML
-    const jsonMatch = html.match(/window\.__INITIAL_STATE__\s*=\s*({.*?});/s) ||
-                      html.match(/<script[^>]*type="application\/json"[^>]*>({.*?})<\/script>/s) ||
-                      html.match(/"ofertas"\s*:\s*(\[.*?\])/s);
+    const jsonMatch = html.match(/window\.__INITIAL_STATE__\s*=\s*(\{[^}]*\})/) ||
+                      html.match(/<script[^>]*type="application\/json"[^>]*>([^<]+)<\/script>/) ||
+                      html.match(/"ofertas"\s*:\s*(\[[^\]]*\])/);
 
     if (!jsonMatch) return [];
 
