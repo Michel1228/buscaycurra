@@ -183,28 +183,34 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
 }
 
 async function fetchEures(keyword: string, countryLocation: string, _page = 1): Promise<RawJob[]> {
-  // Usa Careerjet con ubicaciones europeas (más fiable que la API EURES que requiere OAuth2)
+  // Usa Careerjet con ubicaciones europeas — 2 páginas para máximo volumen
   const keyInfo = await getCareerjetKey();
   if (!keyInfo) return [];
-  try {
-    const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F2.0&pagesize=20&page=1&sort=relevance`;
-    const res = await fetch(url, {
-      headers: { "Referer": "https://buscaycurra.es" },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) { await reportFailure("careerjet", keyInfo.idx, res.status); return []; }
-    const data = await res.json();
-    if (data.type === "ERROR") return [];
-    return (data.jobs || []).map((j: Record<string, string>) => ({
-      source: `EURES_${countryLocation.slice(0, 3).toUpperCase()}`,
-      url: j.url || "",
-      title: (j.title || keyword).replace(/<[^>]+>/g, "").slice(0, 200),
-      company: (j.company || "Empresa europea").slice(0, 200),
-      city: (j.locations || countryLocation).slice(0, 100),
-      description: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 1000),
-      salary: (j.salary || "Ver en oferta").slice(0, 100),
-    }));
-  } catch { return []; }
+  const allJobs: RawJob[] = [];
+  
+  for (const page of [1, 2]) {
+    try {
+      const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F3.0&pagesize=20&page=${page}&sort=relevance`;
+      const res = await fetch(url, {
+        headers: { "Referer": "https://buscaycurra.es" },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) { await reportFailure("careerjet", keyInfo.idx, res.status); continue; }
+      const data = await res.json();
+      if (data.type === "ERROR") continue;
+      const jobs = (data.jobs || []).map((j: Record<string, string>) => ({
+        source: `EURES_${countryLocation.slice(0, 3).toUpperCase()}`,
+        url: j.url || "",
+        title: (j.title || keyword).replace(/<[^>]+>/g, "").slice(0, 200),
+        company: (j.company || "Empresa europea").slice(0, 200),
+        city: (j.locations || countryLocation).slice(0, 100),
+        description: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 1000),
+        salary: (j.salary || "Ver en oferta").slice(0, 100),
+      }));
+      allJobs.push(...jobs);
+    } catch { continue; }
+  }
+  return allJobs;
 }
 
 async function upsertJobs(jobs: RawJob[], sector: JobSector): Promise<number> {

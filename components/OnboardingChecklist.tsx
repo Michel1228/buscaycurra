@@ -37,15 +37,25 @@ export default function OnboardingChecklist() {
       const token = session.access_token;
       const userId = session.user.id;
 
-      const [cvRes, statusRes, alertasRes] = await Promise.all([
+      const [cvRes, statusRes, alertasRes] = await Promise.allSettled([
         fetch("/api/gusi/cv", { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`),
         fetch("/api/jobs/alertas", { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
-      const cvData = cvRes.ok ? await cvRes.json() as { cvData?: { nombre?: string } } : null;
-      const statusData = statusRes.ok ? await statusRes.json() as { stats?: { totalEnviados: number } } : null;
-      const alertasData = alertasRes.ok ? await alertasRes.json() as { alertas?: unknown[] } : null;
+      let cvData: any = null;
+      let statusData: any = null;
+      let alertasData: any = null;
+
+      if (cvRes.status === "fulfilled" && cvRes.value.ok) {
+        try { cvData = await cvRes.value.json(); } catch {}
+      }
+      if (statusRes.status === "fulfilled" && statusRes.value.ok) {
+        try { statusData = await statusRes.value.json(); } catch {}
+      }
+      if (alertasRes.status === "fulfilled" && alertasRes.value.ok) {
+        try { alertasData = await alertasRes.value.json(); } catch {}
+      }
 
       const cvDone = !!(cvData?.cvData?.nombre?.trim());
       const enviosDone = !!(statusData?.stats && statusData.stats.totalEnviados > 0);
