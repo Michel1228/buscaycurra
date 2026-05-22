@@ -189,7 +189,13 @@ export default function JobCard({
       </div>
 
       <div>
-        <h3 className="font-semibold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{titulo}</h3>
+        {url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+            <h3 className="font-semibold text-sm leading-snug transition hover:underline" style={{ color: "#f1f5f9" }}>{titulo}</h3>
+          </a>
+        ) : (
+          <h3 className="font-semibold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{titulo}</h3>
+        )}
 
         {/* Nombre de empresa — prominente */}
         <div className="flex items-center gap-1.5 mt-1">
