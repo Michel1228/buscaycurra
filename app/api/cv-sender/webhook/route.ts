@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendPushNotification } from "@/lib/web-push";
+import { enviarWhatsApp } from "@/lib/whatsapp";
 import type webpush from "web-push";
 
 export const dynamic = "force-dynamic";
@@ -99,6 +100,23 @@ export async function POST(request: NextRequest) {
         url: "/app/envios?tab=envios",
         tag: tipoNotif,
       });
+
+      // Enviar WhatsApp si el usuario tiene número registrado
+      const { data: perfil } = await supabase
+        .from("profiles")
+        .select("whatsapp_phone")
+        .eq("id", userId)
+        .single();
+
+      if (perfil?.whatsapp_phone) {
+        if (tipo === "enviado") {
+          await enviarWhatsApp({ tipo: "cv_enviado", to: perfil.whatsapp_phone, empresa: empresa ?? "", puesto: detalles ?? "" });
+        } else if (tipo === "visto") {
+          await enviarWhatsApp({ tipo: "cv_visto", to: perfil.whatsapp_phone, empresa: empresa ?? "", puesto: detalles ?? "" });
+        } else if (tipo === "respuesta") {
+          await enviarWhatsApp({ tipo: "respuesta", to: perfil.whatsapp_phone, empresa: empresa ?? "", mensaje: detalles ?? "" });
+        }
+      }
     } catch {
       console.warn("[Webhook] No se pudo crear notificación (tabla puede no existir)");
     }
@@ -139,6 +157,16 @@ export async function GET(request: NextRequest) {
         url: "/app/envios?tab=envios",
         tag: "cv_visto",
       });
+
+      // WhatsApp tracking pixel
+      const { data: perfil } = await supabase
+        .from("profiles")
+        .select("whatsapp_phone")
+        .eq("id", uid)
+        .single();
+      if (perfil?.whatsapp_phone) {
+        await enviarWhatsApp({ tipo: "cv_visto", to: perfil.whatsapp_phone, empresa: "una empresa", puesto: "" });
+      }
     } catch { /* opcional */ }
   }
 

@@ -17,6 +17,7 @@ const navItems = [
   { href: "/app/curriculum", label: "CV", icon: "📄" },
   { href: "/app/buscar", label: "Buscar", icon: "🔍" },
   { href: "/app/envios", label: "Envíos", icon: "📧" },
+  { href: "/app/entrevistas", label: "Entrevistas", icon: "🎙️" },
   { href: "/app/perfil", label: "Perfil", icon: "👤" },
   { href: "/precios", label: "Pro", icon: "⭐" },
   { href: "/empresas/publicar", label: "Empresas", icon: "🏢" },
