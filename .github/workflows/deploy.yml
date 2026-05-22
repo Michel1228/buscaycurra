@@ -37,13 +37,14 @@ jobs:
             NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co
             NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN
             NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+            NEXT_PUBLIC_VAPID_PUBLIC_KEY=BMwO_UwxsPVgcPaWvF8sqGJS9I7i5OK-TUizvV0didBz5oNLLtScZhwC2aEwPSjqLVXChI8ISuIcufzA9yF4QCA
 
       - name: Deploy to Easypanel with SHA tag
         run: |
           TOKEN=$(curl -sf -X POST "http://187.124.37.183:3000/api/trpc/auth.login" \
             -H "Content-Type: application/json" \
             -d '{"json":{"email":"michelbatistagonzalez1992@gmail.com","password":"iBihfBfw3xdNAdD"}}' \
-            | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['data']['json']['token'])")
+            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{console.log(JSON.parse(d).result.data.json.token)})")
 
           curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.updateSourceImage" \
             -H "Content-Type: application/json" \
