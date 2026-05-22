@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   let body: { source?: string; batchSize?: number; offset?: number; page?: number } = {};
   try { body = await req.json(); } catch { /* use defaults */ }
 
-  const source = (body.source ?? "jooble") as "jooble" | "adzuna" | "careerjet";
+  const source = (body.source ?? "jooble") as "jooble" | "adzuna" | "careerjet" | "eures";
   const batchSize = Math.min(body.batchSize ?? 80, 200);
   const offset = body.offset ?? 0;
   const page = body.page ?? 1;

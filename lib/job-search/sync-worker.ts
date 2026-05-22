@@ -182,6 +182,22 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
   } catch { return []; }
 }
 
+async function fetchEures(keyword: string, city: string, _page = 1): Promise<RawJob[]> {
+  try {
+    const { searchEures } = await import("./eures-api");
+    const result = await searchEures({ keyword, country: "ES", limit: 20 });
+    return result.jobs.map(j => ({
+      source: "EURES_ES",
+      url: j.url || "",
+      title: j.title.slice(0, 200),
+      company: j.company.slice(0, 200),
+      city: j.city || city,
+      description: \`Oferta de EURES en \${j.country}. \${j.contractType || ""}\`,
+      salary: j.salary || "Ver en oferta",
+    }));
+  } catch { return []; }
+}
+
 async function upsertJobs(jobs: RawJob[], sector: JobSector): Promise<number> {
   if (!jobs.length) return 0;
   const pool = getPool();
@@ -204,7 +220,7 @@ async function upsertJobs(jobs: RawJob[], sector: JobSector): Promise<number> {
 }
 
 export async function syncBatch(params: {
-  source: "jooble" | "adzuna" | "careerjet";
+  source: "jooble" | "adzuna" | "careerjet" | "eures";
   sector: JobSector;
   keyword: string;
   city: string;
@@ -215,6 +231,7 @@ export async function syncBatch(params: {
   if (source === "jooble") raw = await fetchJooble(keyword, city, page);
   if (source === "adzuna") raw = await fetchAdzuna(keyword, city, page);
   if (source === "careerjet") raw = await fetchCareerjet(keyword, city, page);
+  if (source === "eures") raw = await fetchEures(keyword, city, page);
   const inserted = await upsertJobs(raw, sector);
   return { inserted, fetched: raw.length };
 }

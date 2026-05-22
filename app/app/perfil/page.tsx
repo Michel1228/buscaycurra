@@ -10,6 +10,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import InfoTooltip from "@/components/InfoTooltip";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
+import WhatsAppSubscribeButton from "@/components/WhatsAppSubscribeButton";
 
 interface PerfilData {
   nombre: string;
@@ -276,6 +277,9 @@ export default function PerfilPage() {
 
             {/* Notificaciones push */}
             <PushSubscribeButton />
+
+            {/* WhatsApp */}
+            <WhatsAppSubscribeButton />
 
             {/* Mi Plan — acceso rápido destacado */}
             <div className="rounded-xl p-5 flex items-center gap-4 cursor-pointer hover:opacity-90 transition"
