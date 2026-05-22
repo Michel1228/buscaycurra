@@ -110,20 +110,20 @@ function BuscarPageInner() {
   }, [router, ubicacion]);
 
   /**
-   * Búsqueda CLIENT-SIDE a Jooble (bypass Cloudflare) — el navegador del usuario SÍ pasa
+   * Búsqueda a Jooble vía proxy server-side — la API key nunca sale al cliente
    */
   async function buscarJoobleCliente(kw: string, loc: string): Promise<PropiedadesJobCard[]> {
     try {
-      const res = await fetch("https://jooble.org/api/74a369ac-3511-4f74-ad51-88d5e3c69652", {
+      const res = await fetch("/api/jobs/jooble", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keywords: kw, location: loc }),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(12000),
       });
       if (!res.ok) return [];
       const data = await res.json();
-      const jobs = data.jobs || [];
-      return jobs.slice(0, 20).map((j: Record<string, string>, i: number) => ({
+      const jobs: Record<string, string>[] = data.jobs || [];
+      return jobs.slice(0, 20).map((j, i) => ({
         id: `jooble-${Date.now()}-${i}`,
         titulo: j.title || kw,
         empresa: j.company || "Ver en oferta",

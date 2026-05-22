@@ -4,19 +4,16 @@
 #
 # Uso desde el VPS:
 #   chmod +x scripts/run-bulk-index.sh
-#   ADMIN_SECRET=ByCurra2026Secure! BASE_URL=https://buscaycurra.es ./scripts/run-bulk-index.sh
-#
-# O directamente:
-#   bash scripts/run-bulk-index.sh
+#   ADMIN_SECRET=<tu_secreto> BASE_URL=https://buscaycurra.es ./scripts/run-bulk-index.sh
 #
 # Parámetros (variables de entorno):
 #   BASE_URL        URL base de la app (default: https://buscaycurra.es)
-#   ADMIN_SECRET    Secret de admin (default: ByCurra2026Secure!)
+#   ADMIN_SECRET    Secret de admin (REQUERIDO — ver .env.local)
 #   LIMIT           Combinaciones por batch (default: 200)
 #   START_OFFSET    Offset inicial (default: 0, para continuar desde donde se dejó)
 
 BASE_URL="${BASE_URL:-https://buscaycurra.es}"
-SECRET="${ADMIN_SECRET:-ByCurra2026Secure!}"
+SECRET="${ADMIN_SECRET:?ERROR: debes pasar ADMIN_SECRET=tu_secreto antes del script}"
 LIMIT="${LIMIT:-200}"
 OFFSET="${START_OFFSET:-0}"
 TOTAL_COMBINACIONES=24360  # 203 puestos × 120 ciudades
