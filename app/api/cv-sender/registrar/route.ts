@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
+import { canSendToCompany } from "@/lib/cv-sender/tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -21,13 +23,37 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Insertar en Supabase cv_sends (misma tabla que usan pipeline, envios y rate-limiter)
+    // Derivar email único por empresa para que el 90-day check funcione
+    const empresaSlug = companyName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30);
+    const companyEmail = `${empresaSlug}@manual.buscaycurra.es`;
+
+    // ── Rate limit ──
+    const userPlan = await getUserPlan(userId);
+    const rateLimitCheck = await checkRateLimit(userId, userPlan, companyEmail);
+
+    if (!rateLimitCheck.allowed) {
+      return NextResponse.json(
+        { error: rateLimitCheck.reason || "Límite de envíos alcanzado" },
+        { status: 429 }
+      );
+    }
+
+    // ── 90-day check ──
+    const puedeEnviar = await canSendToCompany(userId, companyEmail);
+    if (!puedeEnviar) {
+      return NextResponse.json(
+        { error: `Ya enviaste tu CV a ${companyName} hace menos de 90 días.` },
+        { status: 429 }
+      );
+    }
+
+    // ── Insertar en Supabase ──
     const { error: insertError } = await sb
       .from("cv_sends")
       .insert({
         user_id: userId,
         company_name: companyName.slice(0, 200),
-        company_email: "manual@buscaycurra.es",
+        company_email: companyEmail,
         company_url: (companyUrl || "").slice(0, 500),
         job_title: (jobTitle || "").slice(0, 200),
         status: "enviado",
@@ -48,7 +74,7 @@ export async function POST(req: NextRequest) {
           userEmail: profile.email,
           userName: profile.full_name || profile.email.split("@")[0],
           companyName,
-          companyEmail: "",
+          companyEmail,
           jobTitle,
           companyUrl,
           sentAt: new Date(),
