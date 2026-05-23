@@ -18,10 +18,10 @@ Tu idioma es el ESPAÑOL. Toda tu respuesta debe estar en español de España, s
 - Si el usuario escribe en inglés, respóndele igualmente en español.
 - Esta instrucción tiene prioridad absoluta sobre cualquier otra.
 
-Eres Guzzi 🐛, el asistente de empleo de BuscayCurra (plataforma española).
+Eres Guzzi 🐛, el asistente de empleo de BuscayCurra (plataforma europea de empleo con IA).
 
 PERSONALIDAD:
-- Natural y cercano, como un amigo que sabe mucho de empleo español.
+- Natural y cercano, como un amigo que sabe mucho de empleo en Europa.
 - Puedes charlar de cualquier tema, no solo de trabajo.
 - Responde de forma conversacional — ni demasiado corto ni demasiado largo.
 - Usa el emoji 🐛 con moderación, no en cada mensaje.
@@ -35,6 +35,21 @@ CONOCIMIENTO DEL MERCADO LABORAL ESPAÑOL:
 - Portales de empleo: BuscayCurra (IA), InfoJobs (masivo), LinkedIn (networking), Tecnoempleo (IT)
 - Comunidades con más empleo: Madrid, Cataluña, Andalucía, Valencia, País Vasco
 - Salarios orientativos: comercial 1.500-2.500€, desarrollador 2.000-4.500€, camarero 1.200-1.600€, enfermero 1.800-2.500€, transportista 1.400-2.000€
+
+CONOCIMIENTO DEL MERCADO LABORAL EUROPEO:
+- Alemania 🇩🇪: salario mínimo 2.151 €/mes. Sectores fuertes: ingeniería, IT, salud, logística. Ciudades: Berlin, München, Frankfurt.
+- Francia 🇫🇷: salario mínimo 1.802 €/mes. Sectores: hostelería, construcción, sanidad, aeronáutica. Ciudades: Paris, Lyon, Marseille.
+- Italia 🇮🇹: salario mínimo ~1.200 €/mes (varía por sector). Sectores: moda, turismo, automoción, alimentación.
+- Portugal 🇵🇹: salario mínimo 870 €/mes. Sectores: turismo, call centers, construcción, agricultura.
+- Países Bajos 🇳🇱: salario mínimo 2.070 €/mes. Mucho trabajo en logística, agricultura, IT, hostelería.
+- Polonia 🇵🇱: salario mínimo 4.300 zł/mes (~1.000 €). Sectores: IT, manufactura, logística, servicios.
+- Suecia 🇸🇪, Dinamarca 🇩🇰, Noruega 🇳🇴: salarios altos (2.500-4.000 €/mes). Construcción, IT, salud, oil & gas.
+- Irlanda 🇮🇪: salario mínimo 2.200 €/mes. IT, farmacéutica, finanzas, hostelería.
+- Suiza 🇨🇭: salario mínimo ~4.000 CHF/mes. Banca, farmacéutica, IT, hostelería de lujo.
+- Para trabajar en otro país de la UE: los españoles NO necesitan visado. Sí necesitan NIE equivalente (NIF en Portugal, Codice Fiscale en Italia, etc.).
+- El traslado: buscar alojamiento ANTES de llegar, calcular 2-3 meses de ahorros para el aterrizaje.
+- Los idiomas: en hostelería/turismo el español basta a veces. En IT el inglés suele ser suficiente. En oficios (construcción, limpieza), el idioma local es muy valorado.
+- Salarios en países no-euro: convertir siempre mentalmente. 1 EUR ≈ 4,3 PLN / 11,3 SEK / 7,5 DKK / 11,8 NOK / 0,96 CHF.
 
 ESTRATEGIAS DE BÚSQUEDA DE EMPLEO:
 - Red de contactos: 70% de los empleos se cubren sin publicar en portales
@@ -52,16 +67,17 @@ CUANDO EL USUARIO HABLA DE TRABAJO O EMPLEO:
 - Sugiere el salario esperado basándote en su experiencia y sector.
 
 CAPACIDADES PRINCIPALES (menciona cuando sean relevantes):
-1. 🔍 Buscar ofertas → usa datos del CV para afinar la búsqueda en BuscayCurra
+1. 🔍 Buscar ofertas → usa datos del CV para afinar la búsqueda. ¡También busca en otros países europeos!
 2. 📧 Enviar CV automático → la función estrella, Guzzi envía por ti
 3. ✨ Mejorar el CV → reescribe con verbos de acción y logros cuantificables
 4. 🎯 Preparar entrevistas → simula preguntas específicas del sector y empresa
 5. ✉️ Carta de presentación → personalizada para cada empresa
-6. 💰 Orientación salarial → rangos reales del mercado español
-7. 📋 Estrategia de búsqueda → plan personalizado según perfil y ciudad
+6. 💰 Orientación salarial → rangos reales del mercado español y europeo
+7. 📋 Estrategia de búsqueda → plan personalizado según perfil y país
 8. 💬 Charlar → sobre cualquier tema
 9. 📊 Skill Gap → compara tu CV con una oferta y te dice qué te falta (di "analiza esta oferta para mí")
 10. 💰 Negociación Salarial → guión personalizado con datos reales del mercado (di "prepárame para negociar")
+11. 🌍 Trabajar en Europa → infórmate sobre salarios, requisitos y ofertas en 15 países (di "quiero trabajar en Alemania")
 
 RECUERDA: SIEMPRE en español. Esta es la regla número uno.`;
 
@@ -225,13 +241,17 @@ function parseCVData(raw: string): CVParsed | null {
   }
 }
 
-function buildSystemPrompt(cvData?: string): string {
-  if (!cvData) return PROMPT_BASE;
+function buildSystemPrompt(cvData?: string, pais?: string): string {
+  const paisInfo = pais && pais !== "ES"
+    ? `\nEl usuario está buscando trabajo en ${pais}. Adapta tus consejos al mercado laboral de ese país (salarios, requisitos, idioma).\n`
+    : "";
+
+  if (!cvData) return PROMPT_BASE + paisInfo;
 
   const cv = parseCVData(cvData);
-  if (!cv || !cv.resumenTexto) return PROMPT_BASE;
+  if (!cv || !cv.resumenTexto) return PROMPT_BASE + paisInfo;
 
-  return `${PROMPT_BASE}
+  return `${PROMPT_BASE}${paisInfo}
 
 ━━━ DATOS REALES DEL CV DEL USUARIO (usa esto en TODAS tus respuestas) ━━━
 ${cv.resumenTexto}
@@ -296,7 +316,7 @@ function localReply(intent: string, cv?: CVParsed | null): string {
     case "buscar":
       return cv?.ultimoPuesto
         ? `🔍 Veo que tienes experiencia como **${cv.ultimoPuesto}**${cv.ciudad ? ` en **${cv.ciudad}**` : ""}. Usa el botón 📧 Enviar a ofertas para que busque automáticamente.`
-        : "🔍 Dime qué trabajo buscas y en qué ciudad, y te busco las mejores ofertas. 🐛";
+        : "🔍 Dime qué trabajo buscas y en qué ciudad o país, y te busco las mejores ofertas en toda Europa. 🐛";
     case "enviar":
       return cv?.ultimoPuesto
         ? `📧 Basándome en tu CV (${cv.ultimoPuesto}), busca en 🔍 Buscar y usa el botón "Enviar CV" en cada oferta.`
@@ -304,7 +324,7 @@ function localReply(intent: string, cv?: CVParsed | null): string {
     case "crear_cv":
       return "📝 ¡Vamos! ¿Cuál es tu nombre completo? (Te pregunto de uno en uno, facilísimo) 🐛";
     default:
-      return "🐛 Puedo ayudarte a buscar trabajo, mejorar tu CV, preparar entrevistas o generar una carta de presentación. ¿Qué necesitas?";
+      return "🐛 Puedo ayudarte a buscar trabajo en España y Europa, mejorar tu CV, preparar entrevistas o generar una carta de presentación. ¿Qué necesitas?";
   }
 }
 
@@ -315,7 +335,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       message, history = [], mode = "chat",
-      cvData: cvDataFromClient, empresa, puesto, userId,
+      cvData: cvDataFromClient, empresa, puesto, userId, pais,
     } = body as {
       message: string;
       history?: Array<{ role: string; text: string }>;
@@ -324,6 +344,7 @@ export async function POST(req: NextRequest) {
       empresa?: string;
       puesto?: string;
       userId?: string;
+      pais?: string;
     };
 
     if (!message) return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
@@ -489,7 +510,7 @@ El candidato tiene mucha experiencia.
     }
 
     // ── Chat normal con IA ───────────────────────────────────────────────────
-    const systemPrompt = buildSystemPrompt(cvData);
+    const systemPrompt = buildSystemPrompt(cvData, pais);
     const messages = [
       { role: "system" as const, content: systemPrompt },
       ...history.slice(-8)
@@ -534,9 +555,27 @@ function extractJobTerm(text: string): string {
 }
 
 function extractCity(text: string): string {
-  const cities = ["madrid", "barcelona", "valencia", "sevilla", "málaga", "bilbao", "zaragoza",
+  const cities = [
+    // España
+    "madrid", "barcelona", "valencia", "sevilla", "málaga", "bilbao", "zaragoza",
     "murcia", "pamplona", "tudela", "navarra", "alicante", "córdoba", "granada",
-    "vitoria", "san sebastián", "santander", "toledo", "cádiz", "palma"];
+    "vitoria", "san sebastián", "santander", "toledo", "cádiz", "palma",
+    // Europa
+    "berlin", "münchen", "munich", "hamburg", "frankfurt", "köln", "stuttgart",
+    "paris", "lyon", "marseille", "toulouse", "bordeaux", "lille",
+    "roma", "milano", "napoli", "torino", "firenze",
+    "lisboa", "porto", "braga", "faro",
+    "amsterdam", "rotterdam", "la haya", "utrecht",
+    "warszawa", "kraków", "wroclaw", "gdansk",
+    "stockholm", "göteborg", "malmö",
+    "københavn", "copenhagen", "aarhus",
+    "oslo", "bergen", "trondheim",
+    "helsinki", "tampere", "turku",
+    "dublin", "cork", "galway",
+    "zürich", "zurich", "ginebra", "basel", "bern",
+    "bruselas", "amberes", "brujas",
+    "wien", "vienna", "salzburg",
+  ];
   const t = text.toLowerCase();
   for (const c of cities) {
     if (t.includes(c)) return c.charAt(0).toUpperCase() + c.slice(1);

@@ -1,0 +1,194 @@
+import { Metadata } from "next";
+import { PAISES, LISTA_PAISES, formatearSalario, convertirSalario } from "@/lib/paises";
+import Link from "next/link";
+
+// Países con hreflang para inyectar en <head>
+function HreflangTags({ currentCode, path }: { currentCode: string; path: string }) {
+  return (
+    <>
+      {LISTA_PAISES.map((p) => (
+        <link
+          key={p.codigo}
+          rel="alternate"
+          hrefLang={p.idioma}
+          href={`https://buscaycurra.es/${path}${p.codigo.toLowerCase()}`}
+        />
+      ))}
+      <link rel="alternate" hrefLang="x-default" href={`https://buscaycurra.es/${path}`} />
+    </>
+  );
+}
+
+interface Props {
+  params: Promise<{ pais: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { pais: paisParam } = await params;
+  const codigo = paisParam.toUpperCase();
+  const pais = PAISES[codigo];
+  if (!pais) return { title: "País no encontrado — BuscayCurra" };
+
+  return {
+    title: `Trabajar en ${pais.nombre} — Ofertas de empleo para españoles ${pais.bandera}`,
+    description: `Encuentra trabajo en ${pais.nombre}. ${pais.salarioMedio.toLocaleString()} ${pais.simboloMoneda}/mes de media. Ofertas en ${pais.ciudades.slice(0, 3).join(", ")}. BuscayCurra te ayuda a encontrar empleo en ${pais.nombreLocal}.`,
+    openGraph: {
+      title: `Trabajar en ${pais.nombre} 🇪🇺 — BuscayCurra`,
+      description: `Salario medio: ${formatearSalario(pais.salarioMedio, codigo)}/mes. Ofertas en ${pais.ciudades.slice(0, 4).join(", ")}.`,
+    },
+  };
+}
+
+export async function generateStaticParams() {
+  return LISTA_PAISES.map((p) => ({ pais: p.codigo.toLowerCase() }));
+}
+
+export default async function TrabajarEnPaisPage({ params }: Props) {
+  const { pais: paisParam } = await params;
+  const codigo = paisParam.toUpperCase();
+  const pais = PAISES[codigo];
+
+  if (!pais) {
+    return (
+      <main className="min-h-screen bg-[#0f1117] flex items-center justify-center">
+        <p className="text-white text-lg">País no encontrado</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
+      <HreflangTags currentCode={codigo} path="trabajar-en/" />
+      {/* Hero */}
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+        <span className="text-5xl mb-4 block">{pais.bandera}</span>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-3">
+          Trabajar en {pais.nombre}
+        </h1>
+        <p className="text-lg text-[#94a3b8] max-w-2xl mx-auto">
+          Encuentra ofertas de empleo en {pais.nombreLocal} con BuscayCurra.
+          Miles de ofertas actualizadas para hispanohablantes que quieren trabajar en Europa.
+        </p>
+        <Link
+          href={`/app/buscar?pais=${codigo}`}
+          className="inline-block mt-6 px-6 py-3 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl transition-colors"
+        >
+          🔍 Buscar ofertas en {pais.nombre}
+        </Link>
+      </section>
+
+      {/* Stats */}
+      <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5 text-center">
+            <p className="text-2xl font-bold text-[#22c55e]">{formatearSalario(pais.salarioMinimo, codigo)}</p>
+            <p className="text-xs text-[#64748b] mt-1">Salario mínimo/mes</p>
+          </div>
+          <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5 text-center">
+            <p className="text-2xl font-bold text-[#22c55e]">{formatearSalario(pais.salarioMedio, codigo)}</p>
+            <p className="text-xs text-[#64748b] mt-1">Salario medio/mes</p>
+          </div>
+          <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5 text-center">
+            <p className="text-2xl font-bold text-[#22c55e]">{pais.moneda}</p>
+            <p className="text-xs text-[#64748b] mt-1">Moneda local</p>
+          </div>
+          <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5 text-center">
+            <p className="text-2xl font-bold text-[#22c55e]">{pais.ciudades.length}</p>
+            <p className="text-xs text-[#64748b] mt-1">Ciudades principales</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Ciudades */}
+      <section className="py-10 px-4 sm:px-6 max-w-5xl mx-auto">
+        <h2 className="text-xl font-bold mb-4">Principales ciudades</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {pais.ciudades.map((ciudad) => (
+            <Link
+              key={ciudad}
+              href={`/app/buscar?ubicacion=${encodeURIComponent(ciudad)}&pais=${codigo}`}
+              className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg px-4 py-3 text-sm text-[#e2e8f0] transition-colors"
+            >
+              📍 {ciudad}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Keywords laborales */}
+      <section className="py-10 px-4 sm:px-6 max-w-5xl mx-auto">
+        <h2 className="text-xl font-bold mb-4">Búsquedas más demandadas</h2>
+        <div className="flex flex-wrap gap-2">
+          {pais.keywordsLaborales.map((kw) => (
+            <Link
+              key={kw}
+              href={`/app/buscar?keyword=${encodeURIComponent(kw)}&pais=${codigo}`}
+              className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-full px-4 py-1.5 text-sm text-[#94a3b8] transition-colors"
+            >
+              {kw}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Ventajas de BuscayCurra para trabajar en Europa */}
+      <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto">
+        <h2 className="text-xl font-bold mb-6">Por qué usar BuscayCurra para trabajar en Europa</h2>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {[
+            { icon: "🤖", title: "Agente 24/7", desc: "Guzzi busca y envía tus CVs automáticamente a ofertas en toda Europa mientras duermes." },
+            { icon: "📧", title: "Envío masivo", desc: "Envía tu CV a decenas de ofertas en un solo click. Sin formularios repetitivos." },
+            { icon: "🌍", title: "15 países europeos", desc: "Ofertas en España, Alemania, Francia, Italia, Portugal y +10 países más." },
+            { icon: "💬", title: "Guzzi multilingüe", desc: "Tu asistente habla español y te ayuda con ofertas en cualquier idioma europeo." },
+            { icon: "💰", title: "Comparador de salarios", desc: `Calcula tu sueldo neto en cada país con la calculadora de impuestos.` },
+            { icon: "📊", title: "Skill Gap Analysis", desc: "Compara tu CV con los requisitos de la oferta y recibe recomendaciones." },
+          ].map((item) => (
+            <div key={item.title} className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5 flex gap-4">
+              <span className="text-2xl flex-shrink-0">{item.icon}</span>
+              <div>
+                <h3 className="font-semibold text-[#e2e8f0]">{item.title}</h3>
+                <p className="text-sm text-[#94a3b8] mt-1">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Otros países */}
+      <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#2d3142]">
+        <h2 className="text-xl font-bold mb-4">También puedes trabajar en...</h2>
+        <div className="flex flex-wrap gap-3">
+          {LISTA_PAISES.filter((p) => p.codigo !== codigo).map((p) => (
+            <Link
+              key={p.codigo}
+              href={`/trabajar-en/${p.codigo.toLowerCase()}`}
+              className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg px-4 py-2.5 text-sm transition-colors flex items-center gap-2"
+            >
+              <span>{p.bandera}</span>
+              <span className="text-[#e2e8f0]">{p.nombre}</span>
+              <span className="text-[#64748b] text-xs">{p.simboloMoneda}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA final */}
+      <section className="py-12 px-4 sm:px-6 max-w-3xl mx-auto text-center">
+        <div className="bg-gradient-to-r from-[#22c55e]/10 to-[#0ea5e9]/10 border border-[#22c55e]/20 rounded-2xl p-8">
+          <h2 className="text-2xl font-bold mb-3">
+            ¿Listo para trabajar en {pais.nombre}? {pais.bandera}
+          </h2>
+          <p className="text-[#94a3b8] mb-6">
+            Regístrate gratis en BuscayCurra, sube tu CV y deja que Guzzi 🐛 encuentre las mejores ofertas para ti en {pais.nombreLocal}.
+          </p>
+          <Link
+            href="/auth/registro"
+            className="inline-block px-8 py-3 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-bold rounded-xl transition-colors"
+          >
+            🚀 Crear cuenta gratis
+          </Link>
+        </div>
+      </section>
+    </main>
+  );
+}

@@ -7,6 +7,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
 import InfoTooltip from "@/components/InfoTooltip";
+import CountrySelector from "@/components/CountrySelector";
 
 const opcionesJornada = [
   { valor: "", etiqueta: "Todas" },
@@ -47,6 +48,18 @@ function BuscarPageInner() {
   const [mostrarAlertaModal, setMostrarAlertaModal] = useState(false);
   const [alertaCreada, setAlertaCreada] = useState(false);
   const [creandoAlerta, setCreandoAlerta] = useState(false);
+
+  const [paisSeleccionado, setPaisSeleccionado] = useState("ES");
+  useEffect(() => {
+    const saved = localStorage.getItem("bc_pais");
+    if (saved) setPaisSeleccionado(saved);
+  }, []);
+  function cambiarPais(codigo: string) {
+    setPaisSeleccionado(codigo);
+    localStorage.setItem("bc_pais", codigo);
+    // Disparar evento para que otros componentes reaccionen
+    window.dispatchEvent(new CustomEvent("bc-pais-change", { detail: codigo }));
+  }
 
   // Ref para que el auto-fill de ciudad solo ocurra una vez (evita que el campo se reponga al borrarlo)
   const locationFetched = useRef(false);
@@ -246,6 +259,9 @@ function BuscarPageInner() {
               {cargando ? "Buscando..." : "Buscar"}
             </button>
           </form>
+          <div className="mt-2 flex justify-end">
+            <CountrySelector paisActual={paisSeleccionado} onCambiarPais={cambiarPais} variant="buscar" />
+          </div>
         </div>
       </div>
 

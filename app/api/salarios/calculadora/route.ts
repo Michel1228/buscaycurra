@@ -18,20 +18,21 @@ const TRAMOS_ES = [
 
 // Tablas simplificadas para otros países (tramo único medio)
 const TAX_RATES: Record<string, { rate: number; socialSecurity: number; currency: string; name: string }> = {
+  // Tasas efectivas medias (2025-2026). IRPF + Seguridad Social del TRABAJADOR.
   ES: { rate: 0.24, socialSecurity: 0.0635, currency: "€", name: "España" },
-  DE: { rate: 0.30, socialSecurity: 0.20, currency: "€", name: "Alemania" },
-  FR: { rate: 0.25, socialSecurity: 0.22, currency: "€", name: "Francia" },
-  IT: { rate: 0.30, socialSecurity: 0.10, currency: "€", name: "Italia" },
-  PT: { rate: 0.25, socialSecurity: 0.11, currency: "€", name: "Portugal" },
-  NL: { rate: 0.28, socialSecurity: 0.15, currency: "€", name: "Países Bajos" },
-  IE: { rate: 0.25, socialSecurity: 0.04, currency: "€", name: "Irlanda" },
-  BE: { rate: 0.35, socialSecurity: 0.13, currency: "€", name: "Bélgica" },
-  AT: { rate: 0.30, socialSecurity: 0.18, currency: "€", name: "Austria" },
-  PL: { rate: 0.17, socialSecurity: 0.23, currency: "zł", name: "Polonia" },
-  SE: { rate: 0.30, socialSecurity: 0.07, currency: "kr", name: "Suecia" },
+  DE: { rate: 0.22, socialSecurity: 0.20, currency: "€", name: "Alemania" },
+  FR: { rate: 0.22, socialSecurity: 0.20, currency: "€", name: "Francia" },
+  IT: { rate: 0.25, socialSecurity: 0.10, currency: "€", name: "Italia" },
+  PT: { rate: 0.20, socialSecurity: 0.11, currency: "€", name: "Portugal" },
+  NL: { rate: 0.26, socialSecurity: 0.15, currency: "€", name: "Países Bajos" },
+  IE: { rate: 0.23, socialSecurity: 0.04, currency: "€", name: "Irlanda" },
+  BE: { rate: 0.30, socialSecurity: 0.13, currency: "€", name: "Bélgica" },
+  AT: { rate: 0.26, socialSecurity: 0.18, currency: "€", name: "Austria" },
+  PL: { rate: 0.12, socialSecurity: 0.23, currency: "zł", name: "Polonia" },
+  SE: { rate: 0.30, socialSecurity: 0.00, currency: "kr", name: "Suecia" },
   DK: { rate: 0.38, socialSecurity: 0.08, currency: "kr", name: "Dinamarca" },
-  FI: { rate: 0.28, socialSecurity: 0.10, currency: "€", name: "Finlandia" },
-  NO: { rate: 0.25, socialSecurity: 0.08, currency: "kr", name: "Noruega" },
+  FI: { rate: 0.24, socialSecurity: 0.10, currency: "€", name: "Finlandia" },
+  NO: { rate: 0.24, socialSecurity: 0.08, currency: "kr", name: "Noruega" },
   CH: { rate: 0.15, socialSecurity: 0.12, currency: "CHF", name: "Suiza" },
 };
 

@@ -3,7 +3,7 @@ import LogoGusano from "@/components/LogoGusano";
 import BuscadorPublico from "@/components/BuscadorPublico";
 
 // Valores estáticos — se actualizarán con ISR cada hora
-const OFERTAS_COUNT = "213.000+";
+const OFERTAS_COUNT = "2.000.000+";
 const CVS_SEMANA = "47+";
 
 const planes = [
