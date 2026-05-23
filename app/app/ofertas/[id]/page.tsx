@@ -1,8 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
+import { getPool } from "@/lib/db";
 import OfertaDetalleClient, { type OfertaDetalle } from "./OfertaDetalleClient";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 function generarJobPostingSchema(oferta: OfertaDetalle) {
   const schema: Record<string, unknown> = {
@@ -26,7 +23,6 @@ function generarJobPostingSchema(oferta: OfertaDetalle) {
     },
   };
 
-  // Salario si existe
   if (oferta.salario && oferta.salario !== "Ver en oferta") {
     const salarioNum = parseInt(oferta.salario.replace(/[^0-9]/g, ""), 10);
     if (salarioNum > 0) {
@@ -45,9 +41,7 @@ function generarJobPostingSchema(oferta: OfertaDetalle) {
     }
   }
 
-  // Employment type
   schema.employmentType = "FULL_TIME";
-
   return schema;
 }
 
@@ -58,15 +52,19 @@ export default async function DetalleOfertaPage({
 }) {
   const { id } = await params;
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const pool = getPool();
+  
+  // Buscar en la DB local (2M+ ofertas reales), no en Supabase (17K obsoletas)
+  const result = await pool.query(
+    `SELECT "id", "title", "company", "city", "sourceUrl", "sourceName", 
+            "description", "salary", "sector", "createdAt"
+     FROM "JobListing" WHERE "id" = $1`,
+    [id]
+  );
 
-  const { data: oferta } = await supabase
-    .from("ofertas")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const row = result.rows[0];
 
-  if (!oferta) {
+  if (!row) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
         <p className="text-4xl mb-4">🔍</p>
@@ -86,18 +84,18 @@ export default async function DetalleOfertaPage({
   }
 
   const ofertaData: OfertaDetalle = {
-    id: oferta.id,
-    titulo: oferta.titulo,
-    empresa: oferta.empresa,
-    ubicacion: oferta.ubicacion,
-    provincia: oferta.provincia,
-    salario: oferta.salario,
-    descripcion: oferta.descripcion,
-    fuente: oferta.fuente,
-    url: oferta.url,
-    email_empresa: oferta.email_empresa,
-    sector: oferta.sector,
-    fecha: oferta.fecha,
+    id: row.id,
+    titulo: row.title || "Sin título",
+    empresa: row.company || "Empresa",
+    ubicacion: row.city || "España",
+    provincia: undefined,
+    salario: row.salary || "Ver en oferta",
+    descripcion: row.description || "",
+    fuente: row.sourceName || "Desconocida",
+    url: row.sourceUrl || "",
+    email_empresa: undefined,
+    sector: row.sector || "OTRO",
+    fecha: row.createdAt || new Date().toISOString(),
   };
 
   const jobPostingSchema = generarJobPostingSchema(ofertaData);

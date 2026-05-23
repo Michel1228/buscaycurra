@@ -1,9 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
+import { getPool } from "@/lib/db";
 import { Metadata } from "next";
 import Link from "next/link";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function generateMetadata({
   params,
@@ -11,14 +8,18 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  const { data: oferta } = await supabase.from("ofertas").select("titulo, empresa, ubicacion").eq("id", id).single();
+  const pool = getPool();
+  const result = await pool.query(
+    `SELECT "title", "company", "city" FROM "JobListing" WHERE "id" = $1`,
+    [id]
+  );
+  const row = result.rows[0];
   
-  if (!oferta) return { title: "Oferta no encontrada | BuscayCurra" };
+  if (!row) return { title: "Oferta no encontrada | BuscayCurra" };
   
   return {
-    title: `${oferta.titulo} en ${oferta.empresa} - ${oferta.ubicacion} | BuscayCurra`,
-    description: `Trabajo de ${oferta.titulo} en ${oferta.empresa}, ${oferta.ubicacion}. Envía tu CV automáticamente con IA.`,
+    title: `${row.title} en ${row.company} - ${row.city} | BuscayCurra`,
+    description: `Trabajo de ${row.title} en ${row.company}, ${row.city}. Envía tu CV automáticamente con IA.`,
   };
 }
 
@@ -28,15 +29,18 @@ export default async function OfertaPublicaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const pool = getPool();
 
-  const { data: oferta } = await supabase
-    .from("ofertas")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const result = await pool.query(
+    `SELECT "id", "title", "company", "city", "sourceUrl", "sourceName",
+            "description", "salary", "sector", "createdAt"
+     FROM "JobListing" WHERE "id" = $1`,
+    [id]
+  );
 
-  if (!oferta) {
+  const row = result.rows[0];
+
+  if (!row) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1117" }}>
         <div className="text-center">
@@ -51,19 +55,19 @@ export default async function OfertaPublicaPage({
   const jobPostingSchema = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
-    title: oferta.titulo,
-    description: oferta.descripcion?.slice(0, 5000) || oferta.titulo,
-    datePosted: oferta.fecha || oferta.created_at || new Date().toISOString(),
+    title: row.title,
+    description: row.description?.slice(0, 5000) || row.title,
+    datePosted: row.createdAt || new Date().toISOString(),
     hiringOrganization: {
       "@type": "Organization",
-      name: oferta.empresa,
+      name: row.company,
     },
     jobLocation: {
       "@type": "Place",
       address: {
         "@type": "PostalAddress",
-        addressLocality: oferta.ubicacion || "España",
-        addressRegion: oferta.provincia || "",
+        addressLocality: row.city || "España",
+        addressRegion: "",
         addressCountry: "ES",
       },
     },
@@ -83,32 +87,32 @@ export default async function OfertaPublicaPage({
 
         <div className="rounded-xl p-6" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
           <h1 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
-            {oferta.titulo}
+            {row.title}
           </h1>
           <p className="text-base font-medium mb-4" style={{ color: "#22c55e" }}>
-            {oferta.empresa}
+            {row.company}
           </p>
 
           <div className="flex flex-wrap gap-4 mb-5 text-sm" style={{ color: "#94a3b8" }}>
-            <span>📍 {oferta.ubicacion}{oferta.provincia ? `, ${oferta.provincia}` : ""}</span>
-            {oferta.salario && <span>💰 {oferta.salario}</span>}
-            {oferta.fecha && (
-              <span>📅 {new Date(oferta.fecha).toLocaleDateString("es-ES")}</span>
+            <span>📍 {row.city}</span>
+            {row.salary && <span>💰 {row.salary}</span>}
+            {row.createdAt && (
+              <span>📅 {new Date(row.createdAt).toLocaleDateString("es-ES")}</span>
             )}
           </div>
 
-          {oferta.descripcion && (
+          {row.description && (
             <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
               <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>📋 Descripción</h2>
               <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "#94a3b8" }}>
-                {oferta.descripcion}
+                {row.description}
               </div>
             </div>
           )}
 
           <div className="mt-6 pt-4 flex flex-wrap gap-3" style={{ borderTop: "1px solid #2d3142" }}>
             <a
-              href={oferta.url}
+              href={row.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm px-5 py-2.5 rounded-lg font-medium"

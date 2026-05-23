@@ -67,22 +67,48 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
     if (!oferta || enviando) return;
     setEnviando(true);
     try {
+      const supabase = getSupabaseBrowser();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { alert("Inicia sesión para enviar tu CV"); setEnviando(false); return; }
+
+      // Buscar email de la empresa
+      let email = oferta.email_empresa || "";
+      if (!email && oferta.url) {
+        try {
+          const r = await fetch(`/api/empresas/analizar?url=${encodeURIComponent(oferta.url)}`);
+          const d = await r.json() as { emailRrhh?: string };
+          email = d.emailRrhh || "";
+        } catch { /* continuar sin email */ }
+      }
+
+      // Fallback: generar email genérico basado en empresa
+      if (!email) {
+        const empresaSlug = (oferta.empresa || "empresa").toLowerCase().replace(/[^a-z0-9]/g, "");
+        email = `${empresaSlug}@no-reply.buscaycurra.es`;
+      }
+
       const res = await fetch("/api/cv-sender/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          jobId: oferta.id,
+          userId: user.id,
+          companyName: oferta.empresa,
+          companyEmail: email,
+          companyUrl: oferta.url,
           jobTitle: oferta.titulo,
-          company: oferta.empresa,
-          jobUrl: oferta.url,
         }),
       });
       if (res.ok) {
         setEnviado(true);
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => setEnviado(false), 3000);
+      } else {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        alert(err.error || "Error al enviar CV");
       }
-    } catch {} finally {
+    } catch (err) {
+      alert("Error de conexión al enviar CV");
+    } finally {
       setEnviando(false);
     }
   }
