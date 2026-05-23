@@ -12,6 +12,8 @@ interface Props {
   params: Promise<{ pais: string; keyword: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 // ─── Keywords populares por país ───────────────────────────────────────────
 const POPULAR_KEYWORDS: Record<string, string[]> = {
   ES: ["programador", "camarero", "enfermero", "administrativo", "dependiente", "conductor", "electricista", "mecanico"],
@@ -30,18 +32,6 @@ const POPULAR_KEYWORDS: Record<string, string[]> = {
   IE: ["programador", "enfermero", "ingeniero", "camarero", "dependiente", "conductor", "mecanico", "electricista"],
   FI: ["programador", "enfermero", "ingeniero", "camarero", "mecanico", "conductor", "electricista", "dependiente"],
 };
-
-// ─── Static params para pre-renderizar las combinaciones más importantes ──
-export async function generateStaticParams() {
-  const params: Array<{ pais: string; keyword: string }> = [];
-  for (const p of LISTA_PAISES) {
-    const keywords = POPULAR_KEYWORDS[p.codigo] || POPULAR_KEYWORDS["ES"];
-    for (const kw of keywords.slice(0, 5)) {
-      params.push({ pais: p.codigo.toLowerCase(), keyword: kw });
-    }
-  }
-  return params;
-}
 
 // ─── Construir cláusula WHERE por país ─────────────────────────────────────
 function buildCountryFilter(codigo: string): { sourceFilter: string; cityFilter: string; params: string[] } {
