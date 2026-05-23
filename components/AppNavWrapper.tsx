@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import NotificationBell from "@/components/NotificationBell";
-import LanguageSelector from "@/components/LanguageSelector";
+import { PAISES, LISTA_PAISES } from "@/lib/paises";
+import { IDIOMAS, type IdiomaCode } from "@/lib/i18n/translations";
 
 const ADMIN_EMAIL = "michelbatistagonzalez1992@gmail.com";
 
@@ -30,6 +31,21 @@ export default function AppNavWrapper() {
   const [esAdmin, setEsAdmin] = useState(false);
   const [userId, setUserId] = useState("");
   const [userInicial, setUserInicial] = useState("");
+  const [paisSeleccionado, setPaisSeleccionado] = useState("ES");
+  const [lang, setLang] = useState<IdiomaCode>("es");
+
+  // Cargar país e idioma guardados
+  useEffect(() => {
+    const saved = localStorage.getItem("bc_pais");
+    if (saved) setPaisSeleccionado(saved);
+    const savedLang = localStorage.getItem("bc-lang") as IdiomaCode | null;
+    if (savedLang && IDIOMAS.some(i => i.code === savedLang)) setLang(savedLang);
+  }, []);
+
+  function cambiarPais(codigo: string) {
+    setPaisSeleccionado(codigo);
+    localStorage.setItem("bc_pais", codigo);
+  }
 
   async function cerrarSesion() {
     await getSupabaseBrowser().auth.signOut();
@@ -76,9 +92,6 @@ export default function AppNavWrapper() {
           {/* Campana de notificaciones */}
           <NotificationBell userId={userId} />
 
-          {/* Selector de idioma */}
-          <LanguageSelector />
-
           {/* Avatar de perfil */}
           <Link
             href="/app/perfil"
@@ -117,6 +130,58 @@ export default function AppNavWrapper() {
             style={{ background: "#1e212b", border: "1px solid #2d3142" }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* 🌍 Región e idioma */}
+            <div className="mb-2">
+              <p className="text-[10px] uppercase tracking-wider text-[#64748b] px-2 mb-1.5">
+                🌍 Región e idioma
+              </p>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <select
+                    value={paisSeleccionado}
+                    onChange={(e) => cambiarPais(e.target.value)}
+                    className="w-full px-2.5 py-2 rounded-lg text-xs appearance-none cursor-pointer"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      color: "#e2e8f0",
+                    }}
+                  >
+                    {LISTA_PAISES.map((p) => (
+                      <option key={p.codigo} value={p.codigo} style={{ background: "#1e212b" }}>
+                        {p.bandera} {p.nombre} ({p.simboloMoneda})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <select
+                    value={lang}
+                    onChange={(e) => {
+                      const code = e.target.value as IdiomaCode;
+                      setLang(code);
+                      localStorage.setItem("bc-lang", code);
+                      window.dispatchEvent(new CustomEvent("bc-lang-change", { detail: code }));
+                    }}
+                    className="w-full px-2.5 py-2 rounded-lg text-xs appearance-none cursor-pointer"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      color: "#e2e8f0",
+                    }}
+                  >
+                    {IDIOMAS.map((idioma) => (
+                      <option key={idioma.code} value={idioma.code} style={{ background: "#1e212b" }}>
+                        {idioma.flag} {idioma.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ height: "1px", background: "#2d3142", margin: "8px 0" }} />
+
             {NAV_ITEMS.map((item) => {
               const activo =
                 pathname === item.href ||
