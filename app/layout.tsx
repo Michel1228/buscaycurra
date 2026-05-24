@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 import AppNavWrapper from "@/components/AppNavWrapper";
+import { BodyWrapper } from "@/components/BodyWrapper";
 
 export const metadata: Metadata = {
   title: "BuscayCurra — Encuentra trabajo con IA",
@@ -45,9 +46,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body>
-        <AppNavWrapper />
-        {children}
-        <CookieBanner />
+        <BodyWrapper>
+          <AppNavWrapper />
+          {children}
+          <CookieBanner />
+        </BodyWrapper>
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {

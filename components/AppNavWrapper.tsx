@@ -7,6 +7,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import NotificationBell from "@/components/NotificationBell";
 import { PAISES, LISTA_PAISES } from "@/lib/paises";
 import { IDIOMAS, type IdiomaCode } from "@/lib/i18n/translations";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const ADMIN_EMAIL = "michelbatistagonzalez1992@gmail.com";
 
@@ -32,14 +33,13 @@ export default function AppNavWrapper() {
   const [userId, setUserId] = useState("");
   const [userInicial, setUserInicial] = useState("");
   const [paisSeleccionado, setPaisSeleccionado] = useState("ES");
-  const [lang, setLang] = useState<IdiomaCode>("es");
+  const { lang, t, setLang } = useLanguage();
+  const navLabel = (key: string) => t(key);
 
-  // Cargar país e idioma guardados
+  // Cargar país guardado
   useEffect(() => {
     const saved = localStorage.getItem("bc_pais");
     if (saved) setPaisSeleccionado(saved);
-    const savedLang = localStorage.getItem("bc-lang") as IdiomaCode | null;
-    if (savedLang && IDIOMAS.some(i => i.code === savedLang)) setLang(savedLang);
   }, []);
 
   function cambiarPais(codigo: string) {
@@ -160,8 +160,6 @@ export default function AppNavWrapper() {
                     onChange={(e) => {
                       const code = e.target.value as IdiomaCode;
                       setLang(code);
-                      localStorage.setItem("bc-lang", code);
-                      window.dispatchEvent(new CustomEvent("bc-lang-change", { detail: code }));
                     }}
                     className="w-full px-2.5 py-2 rounded-lg text-xs appearance-none cursor-pointer"
                     style={{
@@ -198,7 +196,7 @@ export default function AppNavWrapper() {
                   }}
                 >
                   <span className="text-lg">{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span>{navLabel(item.label)}</span>
                 </Link>
               );
             })}

@@ -1,19 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { IDIOMAS, IdiomaCode } from "@/lib/i18n/translations";
+import { IDIOMAS, type IdiomaCode } from "@/lib/i18n/translations";
+import { useLanguage } from "@/components/LanguageProvider";
 
 export default function LanguageSelector() {
-  const [lang, setLang] = useState<IdiomaCode>("es");
+  const { lang, setLang } = useLanguage();
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("bc-lang") as IdiomaCode | null;
-    if (saved && IDIOMAS.some(i => i.code === saved)) {
-      setLang(saved);
-    }
-  }, []);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -27,10 +21,7 @@ export default function LanguageSelector() {
 
   function seleccionar(code: IdiomaCode) {
     setLang(code);
-    localStorage.setItem("bc-lang", code);
     setAbierto(false);
-    // Disparar evento para que otros componentes reaccionen
-    window.dispatchEvent(new CustomEvent("bc-lang-change", { detail: code }));
   }
 
   const actual = IDIOMAS.find(i => i.code === lang) || IDIOMAS[0];
