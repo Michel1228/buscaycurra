@@ -94,8 +94,13 @@ export const CIUDADES = [
 
 type JobSector = typeof SECTORES[number]["sector"];
 
-function makeId(source: string, url: string): string {
-  return createHash("md5").update(source + "|" + url).digest("hex").slice(0, 24);
+function makeId(title: string, company: string, city: string, source: string): string {
+  // Usar campos estables (NO la URL, que cambia en cada petición a Careerjet)
+  const normalized = `${title}|${company}|${city}|${source}`
+    .toLowerCase()
+    .replace(/[^a-z0-9|ñáéíóúü]/g, "")
+    .trim();
+  return createHash("md5").update(normalized).digest("hex").slice(0, 24);
 }
 
 interface RawJob {
@@ -220,7 +225,7 @@ async function upsertJobs(jobs: RawJob[], sector: JobSector): Promise<number> {
   let inserted = 0;
   for (const j of jobs) {
     if (!j.url || !j.title) continue;
-    const id = makeId(j.source, j.url);
+    const id = makeId(j.title, j.company, j.city, j.source);
     try {
       const result = await pool.query(
         `INSERT INTO "JobListing" (id, title, company, description, sector, city, salary, "sourceUrl", "sourceName", "isActive", "scrapedAt", "createdAt", "expiresAt")

@@ -18,9 +18,14 @@ interface RawJob {
   fuente: string;
 }
 
-function slugId(titulo: string, empresa: string): string {
-  const base = `${titulo}-${empresa}`.toLowerCase().replace(/[^a-z0-9]/g, "-");
-  return `${base}-${Date.now()}`.slice(0, 120);
+function slugId(titulo: string, empresa: string, fuente: string): string {
+  // ID estable: sin timestamp para evitar duplicados en syncs repetidos
+  const base = `${fuente}-${titulo}-${empresa}`
+    .toLowerCase()
+    .replace(/[^a-z0-9ñáéíóúü]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return base.slice(0, 100);
 }
 
 async function guardarOfertas(ofertas: RawJob[]): Promise<number> {
@@ -30,7 +35,7 @@ async function guardarOfertas(ofertas: RawJob[]): Promise<number> {
 
   for (const o of ofertas) {
     try {
-      const id = slugId(o.titulo, o.empresa);
+      const id = slugId(o.titulo, o.empresa, o.fuente);
       await pool.query(
         `INSERT INTO "JobListing" (id, title, company, city, salary, description, "sourceUrl", "scrapedAt", "isActive", "sourceName", "sector")
          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), true, $8, $9)
