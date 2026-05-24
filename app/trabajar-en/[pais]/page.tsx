@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { PAISES, LISTA_PAISES, formatearSalario, convertirSalario } from "@/lib/paises";
 import { getPool } from "@/lib/db";
+import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,8 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
     );
     totalOfertas = parseInt(countRes.rows[0].count);
   } catch (err) { console.error("[trabajar-en] Error DB:", (err as Error).message); }
+
+  const primerosPasos = getPrimerosPasos(codigo);
 
   if (!pais) {
     return (
@@ -167,6 +170,82 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
           ))}
         </div>
       </section>
+
+      {/* Primeros pasos en el país */}
+      {primerosPasos && (
+        <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#2d3142]">
+          <h2 className="text-xl font-bold mb-2">📦 Primeros pasos en {pais.nombre}</h2>
+          <p className="text-sm text-[#94a3b8] mb-8">Todo lo que necesitas saber para aterrizar: au pair, alojamiento y visados.</p>
+
+          <div className="grid sm:grid-cols-2 gap-6">
+            {/* Au Pair */}
+            {primerosPasos.auPair.disponible && (
+              <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+                <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
+                  <span className="text-xl">🧒</span> Programa Au Pair
+                </h3>
+                <p className="text-sm text-[#94a3b8] mb-3">{primerosPasos.auPair.requisitos}</p>
+                <div className="space-y-1.5">
+                  {primerosPasos.auPair.plataformas.map((p) => (
+                    <a key={p.nombre} href={p.url} target="_blank" rel="noopener"
+                      className="block text-sm text-[#22c55e] hover:underline">
+                      {p.nombre} → {p.descripcion}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Alojamiento */}
+            <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+              <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
+                <span className="text-xl">🏠</span> Alojamiento temporal
+              </h3>
+              <div className="space-y-1.5 mb-3">
+                {primerosPasos.alojamiento.plataformas.map((p) => (
+                  <a key={p.nombre} href={p.url} target="_blank" rel="noopener"
+                    className="block text-sm text-[#22c55e] hover:underline">
+                    {p.nombre} → {p.descripcion}
+                  </a>
+                ))}
+              </div>
+              <p className="text-xs text-[#64748b] mt-3 border-t border-[#2d3142] pt-3">💡 {primerosPasos.alojamiento.consejo}</p>
+            </div>
+
+            {/* Visado */}
+            <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
+              <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
+                <span className="text-xl">📋</span> Requisitos legales
+              </h3>
+              <p className="text-sm text-[#94a3b8] mb-3">{primerosPasos.visado.descripcion}</p>
+              {primerosPasos.visado.enlaceOficial && (
+                <a href={primerosPasos.visado.enlaceOficial} target="_blank" rel="noopener"
+                  className="text-sm text-[#22c55e] hover:underline">
+                  → Web oficial de inmigración
+                </a>
+              )}
+            </div>
+
+            {/* Programas extra */}
+            {primerosPasos.programasExtra && primerosPasos.programasExtra.length > 0 && (
+              <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
+                <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
+                  <span className="text-xl">🌟</span> Otros programas
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {primerosPasos.programasExtra.map((p) => (
+                    <a key={p.nombre} href={p.url} target="_blank" rel="noopener"
+                      className="bg-[#252839] rounded-lg p-3 hover:border-[#22c55e]/30 border border-transparent transition-colors">
+                      <span className="text-sm font-medium text-[#e2e8f0] block">{p.nombre}</span>
+                      <span className="text-xs text-[#94a3b8]">{p.descripcion}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Otros países */}
       <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#2d3142]">
