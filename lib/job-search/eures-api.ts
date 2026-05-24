@@ -1,250 +1,251 @@
 /**
- * EURES Job Search — Expansión Europea MASIVA v3
+ * EURES Job Search — Expansión Estratégica v5
  * 
- * 15 países × 50 keywords cada uno = 750 combos
- * Careerjet da ~20 ofertas por keyword. Con page=1+2 = ~40 por keyword.
- * Potencial: 750 × 40 = 30,000 ofertas por ronda completa.
- * A 3 rondas/día = 90,000 ofertas/día. En 33 días = 3M.
+ * 15 países con las mejores condiciones laborales del mundo.
+ * Criterio: salario, emigración española, calidad de vida, idioma accesible.
+ * 100-150 keywords por país cubriendo TODOS los sectores.
+ * ~1,800 combos totales. Potencial: 1,800 × 40 ofertas = 72,000 por ronda.
  */
 
 export const EURES_COUNTRIES = [
-  { code: "ES", name: "España", location: "Espana", keywords: [
-    "camarero", "programador", "enfermero", "administrativo", "conductor", "dependiente", "electricista", "mecanico",
-    "cocinero", "limpieza", "albanil", "soldador", "fontanero", "peluquero", "cuidador", "operario", "repartidor",
-    "cajero", "vendedor", "auxiliar", "mozo", "camarera", "recepcionista", "chofer", "peon", "encargado", "gerente",
-    "diseñador", "analista", "profesor", "medico", "farmaceutico", "psicologo", "abogado", "arquitecto", "contable",
-    "informatico", "tecnico", "ingeniero", "comercial", "marketing", "logistica", "calidad", "prevencion", "rrhh",
-    "atencion cliente", "teleoperador", "vigilante", "jardinero", "pintor"
-  ]},
-  { code: "DE", name: "Alemania", location: "Deutschland", keywords: [
-    "kellner", "entwickler", "krankenpfleger", "burokaufmann", "fahrer", "verkaufer", "elektriker", "mechaniker",
-    "koch", "reinigung", "maurer", "schweisser", "klempner", "friseur", "pfleger", "produktionshelfer", "kurierfahrer",
-    "kassierer", "verkauferin", "hilfsarbeiter", "lagerist", "rezeptionist", "berufskraftfahrer", "bauhelfer",
-    "schichtleiter", "filialleiter", "designer", "analytiker", "lehrer", "arzt", "apotheker", "psychologe",
-    "anwalt", "architekt", "buchhalter", "informatiker", "techniker", "ingenieur", "vertrieb", "marketing",
-    "logistik", "qualitat", "sicherheit", "personal", "kundendienst", "callcenter", "wachmann", "gartner", "maler",
-    "backer", "fleischer", "tischler", "dachdecker", "zimmermann", "altenpfleger", "hebamme", "physiotherapeut",
-    "zahnarzt", "steuerberater", "bankkaufmann", "immobilienmakler", "kfz-mechatroniker", "landwirt", "chemiker",
-    "übersetzer", "journalist", "grafikdesigner", "lagerarbeiter", "staplerfahrer", "disponent", "einkaufer",
-    "sachbearbeiter", "projektmanager", "teamleiter", "auszubildender", "praktikant", "werkstudent", "minijob",
-    "teilzeit", "vollzeit", "homeoffice"
-  ]},
-  { code: "FR", name: "Francia", location: "France", keywords: [
-    "serveur", "developpeur", "infirmier", "administratif", "chauffeur", "vendeur", "electricien", "mecanicien",
-    "cuisinier", "nettoyage", "macon", "soudeur", "plombier", "coiffeur", "soignant", "operateur", "livreur",
-    "caissier", "commercial", "auxiliaire", "magasinier", "receptionniste", "routier", "manoeuvre", "chef equipe",
-    "gerant", "designer", "analyste", "professeur", "medecin", "pharmacien", "psychologue", "avocat", "architecte",
-    "comptable", "informaticien", "technicien", "ingenieur", "vente", "marketing", "logistique", "qualite",
-    "securite", "rh", "service client", "teleconseiller", "vigile", "jardinier", "peintre"
-  ]},
-  { code: "PT", name: "Portugal", location: "Portugal", keywords: [
-    "empregado", "programador", "enfermeiro", "administrativo", "motorista", "vendedor", "eletricista", "mecanico",
-    "cozinheiro", "limpeza", "pedreiro", "soldador", "canalizador", "cabeleireiro", "cuidador", "operario",
-    "entregador", "caixa", "comercial", "auxiliar", "armazem", "rececionista", "camionista", "servente",
-    "encarregado", "gerente", "designer", "analista", "professor", "medico", "farmaceutico", "psicologo",
-    "advogado", "arquiteto", "contabilista", "informatico", "tecnico", "engenheiro", "vendas", "marketing",
-    "logistica", "qualidade", "seguranca", "rh", "atendimento", "operador", "vigilante", "jardineiro", "pintor",
-    "padeiro", "talhante", "carpinteiro", "estucador", "bombeiro", "fisioterapeuta", "dentista", "veterinario",
-    "consultor", "especialista", "diretor", "bancario", "seguros", "imobiliario", "tradutor", "jornalista",
-    "mecanico automovel", "agricultor", "quimico", "biologo", "designer grafico", "pasteleiro", "costureira",
-    "marinheiro", "pescador", "motorista pesados", "empregada limpeza", "ama", "babysitter",
-    "cozinha", "escritorio", "call center", "telemarketing", "formador", "gestor projetos",
-    "auditor", "tesoureiro", "lojista", "repositor", "estafeta", "animador", "socorrista",
-    "canalizador", "serralheiro", "vidraceiro", "bate-chapas", "eletromecanico", "tecnico frio",
-    "jardineiro paisagista", "tratador animais", "inspetor", "chefe cozinha", "subchefe",
-    "bartender", "ajudante", "salao", "hoteleiro", "turismo"
-  ]},
-  { code: "IT", name: "Italia", location: "Italia", keywords: [
-    "cameriere", "sviluppatore", "infermiere", "amministrativo", "autista", "venditore", "elettricista", "meccanico",
-    "cuoco", "pulizie", "muratore", "saldatore", "idraulico", "parrucchiere", "badante", "operaio", "corriere",
-    "cassiere", "commerciale", "ausiliario", "magazziniere", "receptionist", "camionista", "manovale", "caposquadra",
-    "gestore", "designer", "analista", "insegnante", "medico", "farmacista", "psicologo", "avvocato", "architetto",
-    "contabile", "informatico", "tecnico", "ingegnere", "vendite", "marketing", "logistica", "qualita",
-    "sicurezza", "risorse umane", "servizio clienti", "centralinista", "guardia", "giardiniere", "pittore"
-  ]},
-  { code: "NL", name: "Países Bajos", location: "Nederland", keywords: [
-    "ober", "ontwikkelaar", "verpleegkundige", "administratief", "chauffeur", "verkoper", "elektricien", "monteur",
-    "kok", "schoonmaak", "metselaar", "lasser", "loodgieter", "kapper", "verzorger", "productiemedewerker",
-    "bezorger", "kassamedewerker", "verkoper", "hulpkracht", "magazijnmedewerker", "receptionist", "vrachtwagenchauffeur",
-    "bouwvakker", "teamleider", "manager", "ontwerper", "analist", "leraar", "arts", "apotheker", "psycholoog",
-    "advocaat", "architect", "boekhouder", "ict", "technicus", "ingenieur", "verkoop", "marketing",
-    "logistiek", "kwaliteit", "beveiliging", "personeelszaken", "klantenservice", "callcenter", "bewaker", "tuinman", "schilder",
-    "bakker", "slager", "timmerman", "dakdekker", "stukadoor", "tegelzetter", "kraanmachinist", "fysiotherapeut",
-    "tandarts", "dierenarts", "belastingadviseur", "accountant", "bankmedewerker", "makelaar", "automonteur",
-    "chemicus", "vertaler", "journalist", "grafisch ontwerper", "consultant", "adviseur", "specialist", "directeur",
-    "vakkenvuller", "postbode", "callcenter medewerker", "schoonmaker", "keukenhulp", "afwasser",
-    "bezorger fiets", "koerier", "orderpicker", "productiemanager", "kwaliteitscontroleur",
-    "servicemonteur", "onderhoudsmonteur", "calculator", "werkvoorbereider", "uitzendkracht",
-    "zzp", "freelance", "parttime", "fulltime", "bijbaan", "vakantiewerk", "stage", "trainee",
-    "data analist", "business analist", "functioneel beheerder", "applicatiebeheerder"
-  ]},
-  { code: "IE", name: "Irlanda", location: "Ireland", keywords: [
-    "waiter", "developer", "nurse", "administrator", "driver", "sales", "electrician", "mechanic", "chef", "cleaner",
-    "bricklayer", "welder", "plumber", "hairdresser", "carer", "operator", "delivery", "cashier", "assistant",
-    "warehouse", "receptionist", "truck driver", "labourer", "supervisor", "manager", "designer", "analyst",
-    "teacher", "doctor", "pharmacist", "psychologist", "solicitor", "architect", "accountant", "IT technician",
-    "engineer", "sales representative", "marketing", "logistics", "quality", "security", "HR", "customer service",
-    "call centre", "security guard", "gardener", "painter", "butcher", "baker"
-  ]},
-  { code: "BE", name: "Bélgica", location: "Belgique", keywords: [
-    "serveur", "developpeur", "infirmier", "administratif", "chauffeur", "vendeur", "electricien", "mecanicien",
-    "cuisinier", "nettoyage", "macon", "soudeur", "plombier", "coiffeur", "soignant", "operateur", "livreur",
-    "caissier", "commercial", "auxiliaire", "magasinier", "receptionniste", "routier", "manoeuvre", "chef equipe",
-    "gerant", "designer", "analyste", "professeur", "medecin", "pharmacien", "psychologue", "avocat", "architecte",
-    "comptable", "informaticien", "technicien", "ingenieur", "vente", "marketing", "logistique", "qualite",
-    "securite", "rh", "service client", "teleconseiller", "vigile", "jardinier", "peintre",
-    "bakker", "slager", "timmerman", "verzorgende", "tandarts", "boekhouder", "verkoper", "magazijnier",
-    "schilder", "tuinier", "developer", "analist", "technicus", "monteur", "leraar", "verpleegkundige",
-    "arts", "dierenarts", "advocaat", "ingenieur", "directeur", "specialist", "consultant", "kapper",
-    "productieleider", "kwaliteitsingenieur", "biomedicus", "apotheker", "dokter", "chirurg",
-    "hr-manager", "payroll", "recruiter", "facility", "inkoper", "supply chain",
-    "data engineer", "cloud architect", "security officer", "helpdesk", "systeembeheerder",
-    "koerier", "vrachtwagen", "heftruck", "inpakker", "productie", "assemblage"
-  ]},
-  { code: "AT", name: "Austria", location: "Osterreich", keywords: [
-    "kellner", "entwickler", "krankenpfleger", "burokaufmann", "fahrer", "verkaufer", "elektriker", "mechaniker",
-    "koch", "reinigung", "maurer", "schweisser", "klempner", "friseur", "pfleger", "produktionshelfer", "kurierfahrer",
-    "kassierer", "verkauferin", "hilfsarbeiter", "lagerist", "rezeptionist", "berufskraftfahrer", "bauhelfer",
-    "schichtleiter", "filialleiter", "designer", "analytiker", "lehrer", "arzt", "apotheker", "psychologe",
-    "anwalt", "architekt", "buchhalter", "informatiker", "techniker", "ingenieur", "vertrieb", "marketing",
-    "logistik", "qualitat", "sicherheit", "personal", "kundendienst", "callcenter", "wachmann", "gartner", "maler"
-  ]},
-  { code: "PL", name: "Polonia", location: "Polska", keywords: [
-    "kelner", "programista", "pielegniarka", "administracyjny", "kierowca", "sprzedawca", "elektryk", "mechanik",
-    "kucharz", "sprzatanie", "murarz", "spawacz", "hydraulik", "fryzjer", "opiekun", "operator", "dostawca",
-    "kasjer", "handlowiec", "pomocnik", "magazynier", "recepcjonista", "kierowca ciezarowki", "robotnik",
-    "brygadzista", "kierownik", "projektant", "analityk", "nauczyciel", "lekarz", "farmaceuta", "psycholog",
-    "prawnik", "architekt", "ksiegowy", "informatyk", "technik", "inzynier", "sprzedaz", "marketing",
-    "logistyka", "jakosc", "ochrona", "hr", "obsluga klienta", "telemarketer", "straznik", "ogrodnik", "malarz",
-    "piekarz", "rzeznik", "stolarz", "dekarz", "tynkarz", "glazurnik", "fizjoterapeuta",
-    "dentysta", "weterynarz", "ksiegowa", "bankowiec", "posrednik", "mechanik samochodowy",
-    "chemik", "tlumacz", "dziennikarz", "grafik", "konsultant", "specjalista", "dyrektor",
-    "sprzedawca detaliczny", "listonosz", "sprzataczka", "pomoc kuchenna",
-    "dostawca jedzenia", "kurier", "magazynier wysoki", "kierowca autobusu"
-  ]},
-  { code: "SE", name: "Suecia", location: "Sverige", keywords: [
-    "servitor", "utvecklare", "sjukskoterska", "administrator", "forare", "saljare", "elektriker", "mekaniker",
-    "kock", "stadning", "murare", "svetsare", "rormokare", "frisor", "vardare", "operator", "bud",
-    "kassapersonal", "forsaljning", "assistent", "lagerarbetare", "receptionist", "lastbilschauffor", "byggarbetare",
-    "arbetsledare", "chef", "designer", "analytiker", "larare", "lakare", "apotekare", "psykolog",
-    "advokat", "arkitekt", "revisor", "it-tekniker", "tekniker", "ingenjor", "forsaljning", "marknadsforing",
-    "logistik", "kvalitet", "sakerhet", "personal", "kundtjanst", "telefonist", "vakt", "tradgardsmastare", "malare"
-  ]},
-  { code: "DK", name: "Dinamarca", location: "Danmark", keywords: [
-    "tjener", "udvikler", "sygeplejerske", "administrativ", "chauffør", "sælger", "elektriker", "mekaniker",
-    "kok", "rengøring", "murer", "svejser", "blikkenslager", "frisør", "plejer", "operatør", "bud",
-    "kasserer", "salg", "assistent", "lagermedarbejder", "receptionist", "lastbilchauffør", "bygningsarbejder",
-    "formand", "leder", "designer", "analytiker", "lærer", "læge", "farmaceut", "psykolog",
-    "advokat", "arkitekt", "bogholder", "it-supporter", "tekniker", "ingeniør", "salg", "marketing",
-    "logistik", "kvalitet", "sikkerhed", "personale", "kundeservice", "callcenter", "vagt", "gartner", "maler",
-    "bager", "slagter", "snedker", "fysioterapeut", "tandlaege", "dyrlaege",
-    "revisor", "bankmand", "ejendomsmaegler", "automekaniker", "kemiker", "oversaetter",
-    "journalist", "grafiker", "konsulent", "specialist", "direktor", "deltid", "fuldtid",
-    "weekend", "nattevagt", "afloser", "vikar", "studentermedhjaelper", "praktikant"
-  ]},
-  { code: "FI", name: "Finlandia", location: "Suomi", keywords: [
-    "tarjoilija", "kehittaja", "sairaanhoitaja", "hallinnollinen", "kuljettaja", "myyja", "sahkoasentaja", "mekaanikko",
-    "kokki", "siivous", "muurari", "hitsaaja", "putkimies", "kampaaja", "hoitaja", "operaattori", "lahetti",
-    "kassa", "myynti", "avustaja", "varastotyontekija", "vastaanottovirkailija", "kuorma-autonkuljettaja", "rakennustyolainen",
-    "tyonjohtaja", "paallikko", "suunnittelija", "analyytikko", "opettaja", "laakari", "farmaseutti", "psykologi",
-    "asianajaja", "arkkitehti", "kirjanpitaja", "it-tuki", "teknikko", "insinoori", "myynti", "markkinointi",
-    "logistiikka", "laatu", "turvallisuus", "henkilosto", "asiakaspalvelu", "puhelinmyyja", "vartija", "puutarhuri", "maalari"
-  ]},
-  { code: "NO", name: "Noruega", location: "Norge", keywords: [
-    "servitor", "utvikler", "sykepleier", "administrativ", "sjafør", "selger", "elektriker", "mekaniker",
-    "kokk", "rengjøring", "murer", "sveiser", "rørlegger", "frisør", "pleier", "operatør", "bud",
-    "kasserer", "salg", "assistent", "lagermedarbeider", "resepsjonist", "lastebilsjafør", "bygningsarbeider",
-    "formann", "leder", "designer", "analytiker", "lærer", "lege", "farmasøyt", "psykolog",
-    "advokat", "arkitekt", "regnskapsfører", "it-tekniker", "tekniker", "ingeniør", "salg", "markedsføring",
-    "logistikk", "kvalitet", "sikkerhet", "personal", "kundeservice", "callcenter", "vekter", "gartner", "maler",
-    "baker", "slakter", "snekker", "fysioterapeut", "tannlege", "dyrlege",
-    "regnskapsforer", "bankmann", "eiendomsmegler", "automekaniker", "kjemiker", "oversetter",
-    "journalist", "grafiker", "konsulent", "spesialist", "direktor", "deltid", "heltid",
-    "helg", "nattevakt", "tilkallingsvikar", "student", "laerling", "trainee"
-  ]},
-  { code: "CH", name: "Suiza", location: "Schweiz", keywords: [
-    "kellner", "entwickler", "krankenpfleger", "burokaufmann", "fahrer", "verkaufer", "elektriker", "mechaniker",
-    "koch", "reinigung", "maurer", "schweisser", "klempner", "friseur", "pfleger", "produktionshelfer", "kurierfahrer",
-    "kassierer", "verkauferin", "hilfsarbeiter", "lagerist", "rezeptionist", "berufskraftfahrer", "bauhelfer",
-    "schichtleiter", "filialleiter", "designer", "analytiker", "lehrer", "arzt", "apotheker", "psychologe",
-    "anwalt", "architekt", "buchhalter", "informatiker", "techniker", "ingenieur", "vertrieb", "marketing",
-    "logistik", "qualitat", "sicherheit", "personal", "kundendienst", "callcenter", "wachmann", "gartner", "maler",
-    "bäcker", "metzger", "schreiner", "physiotherapeut", "zahnarzt", "tierarzt",
-    "treuhänder", "banker", "immobilien", "automechaniker", "chemiker", "übersetzer",
-    "journalist", "grafiker", "berater", "spezialist", "geschäftsführer", "teilzeit", "vollzeit",
-    "wochenende", "nachtschicht", "aushilfe", "student", "lehrling", "trainee", "grenzgänger"
-  ]},
+  // ===== TIER 1: INGLÉS + MAYOR EMIGRACIÓN + MEJOR SALARIO =====
+  
   { code: "UK", name: "Reino Unido", location: "United Kingdom", keywords: [
-    "waiter", "developer", "nurse", "administrator", "driver", "sales", "electrician", "mechanic",
-    "chef", "cleaner", "bricklayer", "welder", "plumber", "hairdresser", "carer", "operator",
-    "delivery", "cashier", "assistant", "warehouse", "receptionist", "truck driver", "labourer",
-    "supervisor", "manager", "designer", "analyst", "teacher", "doctor", "pharmacist",
-    "psychologist", "solicitor", "architect", "accountant", "IT", "technician", "engineer",
-    "marketing", "logistics", "security", "HR", "customer service", "call centre", "security guard",
-    "gardener", "painter", "butcher", "baker", "carpenter", "train driver", "pilot", "paramedic",
-    "firefighter", "police", "care assistant", "support worker", "retail", "bartender",
-    "barista", "kitchen porter", "dishwasher", "postman", "courier", "forklift", "packer",
-    "stacker", "picker", "packer", "food production", "factory", "machinist", "cnc",
-    "part time", "full time", "temporary", "permanent", "weekend", "night shift"
+    // Hostelería
+    "waiter", "bartender", "barista", "chef", "sous chef", "kitchen porter", "dishwasher", "cook",
+    "restaurant manager", "hotel receptionist", "housekeeping", "room attendant", "concierge",
+    "hospitality", "catering", "hostess", "sommelier", "commis chef", "pastry chef",
+    // IT/Tech
+    "developer", "software engineer", "frontend", "backend", "fullstack", "devops", "cloud engineer",
+    "data scientist", "data analyst", "data engineer", "cyber security", "IT support", "system admin",
+    "network engineer", "QA tester", "product manager", "scrum master", "UX designer", "UI designer",
+    "mobile developer", "Java developer", "Python developer", "JavaScript developer", "React developer",
+    // Sanidad
+    "nurse", "registered nurse", "healthcare assistant", "care assistant", "support worker",
+    "doctor", "GP", "pharmacist", "physiotherapist", "paramedic", "midwife", "dentist",
+    "mental health nurse", "social worker", "occupational therapist", "radiographer",
+    // Oficina/Admin
+    "administrator", "receptionist", "office manager", "personal assistant", "data entry",
+    "customer service", "call centre", "accountant", "bookkeeper", "HR manager", "HR assistant",
+    "recruiter", "payroll", "compliance officer", "project manager", "business analyst",
+    // Comercio/Ventas
+    "sales assistant", "retail", "store manager", "sales representative", "account manager",
+    "business development", "estate agent", "cashier", "merchandiser", "visual merchandiser",
+    // Logística/Transporte
+    "driver", "delivery driver", "HGV driver", "truck driver", "van driver", "courier",
+    "warehouse operative", "forklift driver", "pick packer", "supply chain", "logistics coordinator",
+    "postman", "train driver", "bus driver", "taxi driver",
+    // Construcción/Oficios
+    "electrician", "plumber", "carpenter", "bricklayer", "painter decorator", "welder",
+    "labourer", "construction worker", "site manager", "quantity surveyor", "scaffolder",
+    "roofer", "tiler", "plasterer", "gas engineer", "HVAC technician", "handyman",
+    // Industria
+    "factory worker", "production operative", "machine operator", "CNC machinist", "assembler",
+    "quality control", "packer", "food production", "manufacturing", "maintenance engineer",
+    // Educación
+    "teacher", "teaching assistant", "lecturer", "tutor", "SEN teacher", "nursery worker",
+    // Otros servicios
+    "cleaner", "gardener", "security guard", "caretaker", "lifeguard", "fitness instructor",
+    "hairdresser", "barber", "beautician", "nail technician", "massage therapist",
+    // General
+    "part time", "full time", "temporary", "permanent", "weekend", "night shift",
+    "remote", "hybrid", "graduate", "apprentice", "trainee", "intern"
   ]},
-  { code: "CZ", name: "República Checa", location: "Cesko", keywords: [
-    "cisnik", "vyvojar", "zdravotni sestra", "administrativni", "ridic", "prodejce", "elektrikar",
-    "mechanik", "kuchar", "uklid", "zednik", "svarec", "instalater", "kadernik", "pecovatel",
-    "operator", "dorucovatel", "pokladni", "asistent", "skladnik", "recep\u010dn\u00ed",
-    "ridic kamionu", "stavebni delnik", "mistr", "manazer", "designer", "analytik",
-    "ucitel", "lekar", "farmaceut", "psycholog", "pravnik", "architekt", "ucetni",
-    "it technik", "technik", "inzenyr", "prodej", "marketing", "logistika", "kvalita",
-    "bezpecnost", "personalni", "zakaznicky servis", "call centrum", "stra\u017en\u00fd",
-    "zahradnik", "malir", "pekar", "reznik", "truhlar", "fyzioterapeut", "zubar",
-    "veterinar", "bankovni", "realitni", "automechanik", "chemik", "prekladatel",
-    "novinar", "grafik", "konzultant", "specialista", "reditel", "brigada", "plny uvazek"
+
+  { code: "IE", name: "Irlanda", location: "Ireland", keywords: [
+    // Hostelería
+    "waiter", "bartender", "barista", "chef", "commis chef", "kitchen porter", "accommodation assistant",
+    "hotel receptionist", "housekeeping", "restaurant manager", "host", "hospitality",
+    // IT/Tech (Dublín es hub tech europeo)
+    "developer", "software engineer", "frontend", "backend", "fullstack", "devops", "cloud",
+    "data scientist", "data analyst", "cyber security", "IT support", "system administrator",
+    "network engineer", "QA engineer", "product manager", "scrum master", "UX designer",
+    "Java developer", "Python developer", "JavaScript developer", "React developer", "mobile developer",
+    "machine learning", "AI engineer", "site reliability engineer", "technical writer",
+    // Sanidad (HSE contrata muchísimo)
+    "nurse", "staff nurse", "healthcare assistant", "care assistant", "carer",
+    "doctor", "GP", "pharmacist", "physiotherapist", "dentist", "social care worker",
+    "home carer", "disability support", "midwife", "radiographer", "speech therapist",
+    // Oficina/Finanzas (Dublín = centro financiero)
+    "administrator", "receptionist", "office manager", "personal assistant",
+    "customer service", "call centre", "accountant", "financial analyst", "fund accountant",
+    "compliance", "risk analyst", "HR manager", "recruiter", "payroll specialist",
+    "project manager", "business analyst", "data entry", "legal secretary",
+    // Comercio
+    "sales assistant", "retail", "store manager", "sales executive", "cashier",
+    // Logística
+    "driver", "delivery driver", "truck driver", "warehouse operative", "forklift",
+    "supply chain", "logistics", "van driver",
+    // Construcción/Oficios
+    "electrician", "plumber", "carpenter", "bricklayer", "painter", "welder",
+    "construction worker", "labourer", "site manager", "scaffolder", "roofer",
+    // Industria/Farma
+    "factory worker", "production operative", "machine operator", "process technician",
+    "pharmaceutical operator", "cleanroom operative", "quality control", "manufacturing",
+    // Agricultura/Pesca
+    "farm worker", "mushroom picker", "meat processor", "fisherman", "general operative",
+    // General
+    "part time", "full time", "temporary", "permanent", "remote", "graduate", "trainee"
   ]},
-  { code: "RO", name: "Rumanía", location: "Romania", keywords: [
-    "ospatar", "programator", "asistent medical", "administrativ", "sofer", "vanzator",
-    "electrician", "mecanic", "bucatar", "curatenie", "zidar", "sudor", "instalator",
-    "frizer", "ingrijitor", "operator", "curier", "casier", "asistent", "depozit",
-    "receptionist", "sofer camion", "muncitor", "sef echipa", "manager", "designer",
-    "analist", "profesor", "medic", "farmacist", "psiholog", "avocat", "arhitect",
-    "contabil", "it", "tehnician", "inginer", "vanzari", "marketing", "logistica",
-    "calitate", "securitate", "resurse umane", "serviciu clienti", "call center",
-    "paznic", "gradinar", "zugrav", "brutar", "macelar", "tamplar", "fizioterapeut",
-    "dentist", "veterinar", "bancar", "imobiliar", "mecanic auto", "chimist",
-    "traducator", "jurnalist", "grafician", "consultant", "specialist", "director"
+
+  { code: "NL", name: "Países Bajos", location: "Nederland", keywords: [
+    "ober", "ontwikkelaar", "verpleegkundige", "administratief", "chauffeur", "verkoper",
+    "elektricien", "monteur", "kok", "schoonmaak", "metselaar", "lasser", "loodgieter",
+    "kapper", "verzorger", "productiemedewerker", "bezorger", "kassamedewerker",
+    "magazijnmedewerker", "receptionist", "vrachtwagenchauffeur", "bouwvakker",
+    "teamleider", "manager", "ontwerper", "analist", "leraar", "arts", "apotheker",
+    "psycholoog", "advocaat", "architect", "boekhouder", "ict", "technicus", "ingenieur",
+    "verkoop", "marketing", "logistiek", "kwaliteit", "beveiliging", "personeelszaken",
+    "klantenservice", "callcenter", "bewaker", "tuinman", "schilder", "bakker", "slager",
+    "timmerman", "dakdekker", "stukadoor", "tegelzetter", "kraanmachinist", "fysiotherapeut",
+    "tandarts", "dierenarts", "accountant", "bankmedewerker", "makelaar", "automonteur",
+    "chemicus", "vertaler", "journalist", "grafisch ontwerper", "consultant", "adviseur",
+    "specialist", "directeur", "vakkenvuller", "postbode", "schoonmaker", "keukenhulp",
+    "afwasser", "koerier", "orderpicker", "servicemonteur", "onderhoudsmonteur",
+    "uitzendkracht", "zzp", "freelance", "parttime", "fulltime", "bijbaan",
+    "vakantiewerk", "stage", "trainee", "data analist", "business analist",
+    "functioneel beheerder", "applicatiebeheerder", "devops engineer", "cloud architect",
+    "security officer", "helpdesk", "systeembeheerder", "inpakker", "assemblage",
+    "heftruckchauffeur", "reachtruck", "logistiek medewerker", "transportplanner",
+    "customer service", "English speaking", "expat", "international", "Spanish speaker"
   ]},
-  { code: "HU", name: "Hungría", location: "Magyarorszag", keywords: [
-    "pincer", "fejleszto", "apolo", "adminisztrator", "sofor", "elado", "villanyszerelo",
-    "szerelo", "szakacs", "takaritas", "komuves", "hegeszto", "vizszerelo", "fodrasz",
-    "gondozo", "operator", "futar", "penztaros", "asszisztens", "raktaros", "recepcios",
-    "kamionsofor", "epitomunkas", "muszakvezeto", "menedzser", "designer", "elemzo",
-    "tanar", "orvos", "gyogyszeresz", "pszichologus", "ugyved", "epitesz", "konyvelo",
-    "informatikus", "technikus", "mernok", "ertekesites", "marketing", "logisztika",
-    "minoseg", "biztonsag", "szemelyzet", "ugyfelszolgalat", "call center", "biztonsagi or",
-    "kertesz", "festö", "pek", "hentes", "asztalos", "fizioterapeuta", "fogorvos",
-    "allatorvos", "banki", "ingatlanos", "autoszerelo", "vegyesz", "fordito",
-    "ujsagiro", "grafikus", "tanacsado", "specialista", "igazgato"
+
+  // ===== TIER 2: SALARIOS MUY ALTOS (idioma local pero merece la pena) =====
+
+  { code: "DE", name: "Alemania", location: "Deutschland", keywords: [
+    "kellner", "entwickler", "krankenpfleger", "burokaufmann", "fahrer", "verkaufer",
+    "elektriker", "mechaniker", "koch", "reinigung", "maurer", "schweisser", "klempner",
+    "friseur", "pfleger", "produktionshelfer", "kurierfahrer", "kassierer", "hilfsarbeiter",
+    "lagerist", "rezeptionist", "berufskraftfahrer", "bauhelfer", "schichtleiter",
+    "filialleiter", "designer", "analytiker", "lehrer", "arzt", "apotheker", "psychologe",
+    "anwalt", "architekt", "buchhalter", "informatiker", "techniker", "ingenieur",
+    "vertrieb", "marketing", "logistik", "qualitat", "sicherheit", "personal",
+    "kundendienst", "callcenter", "wachmann", "gartner", "maler", "backer", "fleischer",
+    "tischler", "dachdecker", "zimmermann", "altenpfleger", "hebamme", "physiotherapeut",
+    "zahnarzt", "steuerberater", "bankkaufmann", "immobilienmakler", "kfz-mechatroniker",
+    "landwirt", "chemiker", "übersetzer", "journalist", "grafikdesigner",
+    "lagerarbeiter", "staplerfahrer", "disponent", "einkaufer", "sachbearbeiter",
+    "projektmanager", "teamleiter", "auszubildender", "praktikant", "werkstudent",
+    "minijob", "teilzeit", "vollzeit", "homeoffice", "quereinsteiger",
+    "it-support", "softwareentwickler", "webentwickler", "systemadministrator",
+    "datenbankadministrator", "netzwerktechniker", "devops engineer", "cloud engineer",
+    "data scientist", "KI", "maschinelles lernen", "cyber security",
+    "industriemechaniker", "anlagenmechaniker", "zerspanungsmechaniker",
+    "mechatroniker", "elektroniker", "verfahrensmechaniker", "werkzeugmechaniker",
+    "pflegefachkraft", "gesundheitspfleger", "kinderkrankenpfleger",
+    "erzieher", "sozialpädagoge", "sozialarbeiter", "pflegehilfskraft",
+    "verkauferin", "einzelhandel", "supermarkt", "discounter", "mode", "textil",
+    "hotelfachmann", "restaurantfachmann", "systemgastronomie", "spüler",
+    "fernbusfahrer", "lieferdienst", "paketzusteller", "lagerhelfer", "kommissionierer"
   ]},
-  { code: "GR", name: "Grecia", location: "Ellada", keywords: [
-    "servitoros", "programmatistis", "nosileftis", "dioikitikos", "odigos", "politis",
-    "ilektrologos", "michanikos", "mageiras", "katharismos", "ktistis", "sygkollitis",
-    "ydravlikos", "kommotis", "frontistis", "cheiristis", "dianomeas", "tamias",
-    "voithos", "apothikarios", "ypodochi", "odigos fortigou", "ergatis", "epistatis",
-    "manager", "schediastis", "analytis", "daskalos", "giatros", "farmakopoios",
-    "psychologos", "dikigoros", "architektonas", "logistis", "technikos", "michanikos",
-    "poliseis", "marketing", "logistiki", "poiotita", "asfaleia", "prosopiko",
-    "exypiretisi pelaton", "tilefoniko kentro", "fylakas", "kipouros", "elaiourgos"
+
+  { code: "CH", name: "Suiza", location: "Schweiz", keywords: [
+    "kellner", "entwickler", "krankenpfleger", "burokaufmann", "fahrer", "verkaufer",
+    "elektriker", "mechaniker", "koch", "reinigung", "maurer", "schweisser", "klempner",
+    "friseur", "pfleger", "produktionshelfer", "kurierfahrer", "kassierer",
+    "hilfsarbeiter", "lagerist", "rezeptionist", "berufskraftfahrer", "bauhelfer",
+    "schichtleiter", "filialleiter", "designer", "analytiker", "lehrer", "arzt",
+    "apotheker", "psychologe", "anwalt", "architekt", "buchhalter", "informatiker",
+    "techniker", "ingenieur", "vertrieb", "marketing", "logistik", "qualitat",
+    "sicherheit", "personal", "kundendienst", "callcenter", "wachmann", "gartner",
+    "maler", "bäcker", "metzger", "schreiner", "physiotherapeut", "zahnarzt",
+    "tierarzt", "treuhänder", "banker", "immobilien", "automechaniker", "chemiker",
+    "übersetzer", "journalist", "grafiker", "berater", "spezialist",
+    "geschäftsführer", "teilzeit", "vollzeit", "wochenende", "nachtschicht",
+    "aushilfe", "student", "lehrling", "trainee", "grenzgänger",
+    "software engineer", "data scientist", "cloud architect", "devops",
+    "pharma", "watchmaker", "private banking", "wealth management", "hotel",
+    "tourisme", "serveur", "femme de chambre", "réceptionniste", "concierge",
+    "cuisinier", "nettoyage", "vendeur", "manager", "CEO", "CFO", "CTO"
   ]},
+
+  { code: "NO", name: "Noruega", location: "Norge", keywords: [
+    "servitor", "utvikler", "sykepleier", "administrativ", "sjafør", "selger",
+    "elektriker", "mekaniker", "kokk", "rengjøring", "murer", "sveiser",
+    "rørlegger", "frisør", "pleier", "operatør", "bud", "kasserer", "salg",
+    "assistent", "lagermedarbeider", "resepsjonist", "lastebilsjafør",
+    "bygningsarbeider", "formann", "leder", "designer", "analytiker", "lærer",
+    "lege", "farmasøyt", "psykolog", "advokat", "arkitekt", "regnskapsfører",
+    "it-tekniker", "tekniker", "ingeniør", "markedsføring", "logistikk",
+    "kvalitet", "sikkerhet", "personal", "kundeservice", "callcenter", "vekter",
+    "gartner", "maler", "baker", "slakter", "snekker", "fysioterapeut",
+    "tannlege", "dyrlege", "bankmann", "eiendomsmegler", "automekaniker",
+    "kjemiker", "oversetter", "journalist", "grafiker", "konsulent", "spesialist",
+    "direktor", "deltid", "heltid", "helg", "nattevakt", "tilkallingsvikar",
+    "student", "laerling", "trainee", "olje", "offshore", "fiskeri",
+    "oppdrett", "akvakultur", "maritim", "verft", "skipsbygging",
+    "rennhold", "butikkmedarbeider", "hjemmehjelp", "barnehage", "assistent"
+  ]},
+
+  // ===== TIER 3: MUCHA EMIGRACIÓN ESPAÑOLA =====
+
+  { code: "FR", name: "Francia", location: "France", keywords: [
+    "serveur", "developpeur", "infirmier", "administratif", "chauffeur", "vendeur",
+    "electricien", "mecanicien", "cuisinier", "nettoyage", "macon", "soudeur",
+    "plombier", "coiffeur", "soignant", "operateur", "livreur", "caissier",
+    "commercial", "auxiliaire", "magasinier", "receptionniste", "routier",
+    "manoeuvre", "chef equipe", "gerant", "designer", "analyste", "professeur",
+    "medecin", "pharmacien", "psychologue", "avocat", "architecte", "comptable",
+    "informaticien", "technicien", "ingenieur", "vente", "marketing", "logistique",
+    "qualite", "securite", "rh", "service client", "teleconseiller", "vigile",
+    "jardinier", "peintre", "boulanger", "patissier", "boucher", "charcutier",
+    "menuisier", "couvreur", "plaquiste", "carreleur", "paysagiste", "esthéticienne",
+    "aide-soignant", "auxiliaire vie", "assistante maternelle", "agent entretien",
+    "employe libre-service", "preparateur commandes", "agent logistique",
+    "conducteur bus", "conducteur metro", "deménageur", "manutentionnaire",
+    "data engineer", "devops", "cloud", "cybersecurite", "data scientist",
+    "product owner", "scrum master", "UX designer", "fullstack", "frontend",
+    "CDI", "CDD", "interim", "temps partiel", "alternance", "stage", "saisonnier"
+  ]},
+
+  { code: "BE", name: "Bélgica", location: "Belgique", keywords: [
+    "serveur", "developpeur", "infirmier", "administratif", "chauffeur", "vendeur",
+    "electricien", "mecanicien", "cuisinier", "nettoyage", "macon", "soudeur",
+    "plombier", "coiffeur", "soignant", "operateur", "livreur", "caissier",
+    "commercial", "auxiliaire", "magasinier", "receptionniste", "routier",
+    "manoeuvre", "chef equipe", "gerant", "designer", "analyste", "professeur",
+    "medecin", "pharmacien", "psychologue", "avocat", "architecte", "comptable",
+    "informaticien", "technicien", "ingenieur", "vente", "marketing", "logistique",
+    "qualite", "securite", "rh", "service client", "teleconseiller", "vigile",
+    "jardinier", "peintre", "bakker", "slager", "timmerman", "verzorgende",
+    "tandarts", "boekhouder", "verkoper", "magazijnier", "schilder", "tuinier",
+    "developer", "analist", "technicus", "monteur", "leraar", "verpleegkundige",
+    "arts", "dierenarts", "advocaat", "ingenieur", "directeur", "specialist",
+    "consultant", "kapper", "schoonmaker", "keukenhulp", "vrachtwagenchauffeur",
+    "EU institution", "NATO", "international", "lobbyist", "policy officer",
+    "data engineer", "cloud architect", "security officer", "helpdesk",
+    "systeembeheerder", "koerier", "heftruck", "inpakker", "productie", "assemblage"
+  ]},
+
+  // ===== TIER 4: ANGLOSFERA LEJANA (visas, pero calidad de vida top) =====
+
   { code: "US", name: "Estados Unidos", location: "United States", keywords: [
-    "waiter", "developer", "nurse", "administrative", "driver", "sales", "electrician",
-    "mechanic", "chef", "cleaning", "construction", "welder", "plumber", "hairdresser",
-    "caregiver", "operator", "delivery", "cashier", "assistant", "warehouse", "receptionist",
-    "truck driver", "laborer", "supervisor", "manager", "designer", "analyst", "teacher",
-    "doctor", "pharmacist", "psychologist", "lawyer", "architect", "accountant",
-    "IT", "technician", "engineer", "sales", "marketing", "logistics", "quality",
-    "security", "HR", "customer service", "call center", "security guard", "gardener",
-    "painter", "cook", "dishwasher", "bartender", "barista", "hostess", "server",
-    "retail", "stocker", "merchandiser", "data entry", "reception", "office assistant",
-    "part time", "full time", "remote", "weekend", "overnight", "seasonal"
+    "waiter", "server", "bartender", "barista", "hostess", "busser", "line cook",
+    "chef", "kitchen manager", "dishwasher", "hotel front desk", "housekeeping",
+    "bellman", "concierge", "valet", "restaurant manager", "catering",
+    "developer", "software engineer", "frontend", "backend", "fullstack", "devops",
+    "cloud engineer", "data scientist", "data engineer", "data analyst", "machine learning",
+    "cyber security", "IT support", "system administrator", "network engineer",
+    "product manager", "UX designer", "QA engineer", "mobile developer", "Java", "Python",
+    "nurse", "RN", "LPN", "CNA", "medical assistant", "doctor", "physician",
+    "pharmacist", "pharmacy tech", "physical therapist", "dental hygienist", "dentist",
+    "veterinary technician", "EMT", "paramedic", "caregiver", "home health aide",
+    "receptionist", "administrative assistant", "office manager", "executive assistant",
+    "data entry", "customer service", "call center", "accountant", "bookkeeper",
+    "HR", "recruiter", "payroll", "project manager", "business analyst",
+    "sales associate", "retail", "store manager", "cashier", "stocker", "merchandiser",
+    "delivery driver", "truck driver", "warehouse", "forklift", "logistics",
+    "supply chain", "Amazon", "FedEx", "UPS", "USPS", "mail carrier",
+    "electrician", "plumber", "HVAC", "carpenter", "welder", "construction",
+    "painter", "roofer", "landscaper", "gardener", "handyman", "maintenance",
+    "factory worker", "production", "machine operator", "assembler", "packer",
+    "quality control", "manufacturing", "CNC", "machinist",
+    "cleaner", "janitor", "house cleaner", "security guard", "lifeguard",
+    "fitness instructor", "personal trainer", "cosmetologist", "massage therapist",
+    "teacher", "teaching assistant", "substitute teacher", "tutor", "professor",
+    "part time", "full time", "remote", "hybrid", "weekend", "overnight", "seasonal", "temporary"
   ]},
+
   { code: "CA", name: "Canadá", location: "Canada", keywords: [
     "waiter", "developer", "nurse", "administrative", "driver", "sales", "electrician",
     "mechanic", "chef", "cleaner", "construction", "welder", "plumber", "hairdresser",
@@ -254,9 +255,15 @@ export const EURES_COUNTRIES = [
     "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
     "customer service", "call centre", "security guard", "gardener", "painter",
     "cook", "dishwasher", "bartender", "barista", "server", "retail", "stocker",
-    "data entry", "office assistant", "personal support worker", "PSW", "mining",
-    "oil field", "pipeline", "forestry", "fishing", "farm worker", "fruit picker"
+    "data entry", "office assistant", "PSW", "personal support worker",
+    "mining", "oil field", "pipeline", "forestry", "fishing", "farm worker",
+    "fruit picker", "seasonal", "temporary foreign worker", "work permit",
+    "LMIA", "express entry", "provincial nominee", "francophone", "bilingual",
+    "early childhood educator", "ECA", "dental assistant", "medical office assistant",
+    "insulator", "drywaller", "roofer", "glazier", "ironworker", "sheet metal",
+    "sprinkler fitter", "steamfitter", "millwright", "heavy equipment operator"
   ]},
+
   { code: "AU", name: "Australia", location: "Australia", keywords: [
     "waiter", "developer", "nurse", "admin", "driver", "sales", "electrician", "mechanic",
     "chef", "cleaner", "construction", "welder", "plumber", "hairdresser", "carer",
@@ -266,173 +273,103 @@ export const EURES_COUNTRIES = [
     "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
     "customer service", "call centre", "security", "gardener", "painter", "barista",
     "bartender", "kitchen hand", "dishwasher", "retail", "pick packer", "forklift",
-    "aged care", "disability", "childcare", "fruit picking", "farm hand", "mining",
-    "FIFO", "hospitality", "tourism", "part time", "full time", "casual"
+    "aged care", "disability support", "childcare", "fruit picking", "farm hand",
+    "mining", "FIFO", "hospitality", "tourism", "part time", "full time", "casual",
+    "working holiday", "backpacker", "regional", "outback", "fly in fly out",
+    "NDIS", "home care", "community support", "youth worker", "counsellor",
+    "bricklayer", "carpenter", "joiner", "tiler", "plasterer", "scaffolder",
+    "rigger", "diesel mechanic", "auto electrician", "panel beater", "spray painter",
+    "concreter", "drainer", "landscaper", "arborist", "greenkeeper"
   ]},
-  { code: "BR", name: "Brasil", location: "Brasil", keywords: [
-    "garcom", "programador", "enfermeiro", "administrativo", "motorista", "vendedor",
-    "eletricista", "mecanico", "cozinheiro", "limpeza", "pedreiro", "soldador",
-    "encanador", "cabeleireiro", "cuidador", "operador", "entregador", "caixa",
-    "assistente", "almoxarifado", "recepcionista", "caminhoneiro", "servente",
-    "supervisor", "gerente", "designer", "analista", "professor", "medico",
-    "farmaceutico", "psicologo", "advogado", "arquiteto", "contador", "ti",
-    "tecnico", "engenheiro", "vendas", "marketing", "logistica", "qualidade",
-    "seguranca", "rh", "atendimento", "call center", "vigilante", "jardineiro",
-    "pintor", "padeiro", "acougueiro", "carpinteiro", "fisioterapeuta", "dentista",
-    "veterinario", "bancario", "corretor", "mecanico auto", "quimico", "tradutor",
-    "jornalista", "designer grafico", "consultor", "especialista", "diretor"
+
+  { code: "SE", name: "Suecia", location: "Sverige", keywords: [
+    "servitor", "utvecklare", "sjukskoterska", "administrator", "forare", "saljare",
+    "elektriker", "mekaniker", "kock", "stadning", "murare", "svetsare", "rormokare",
+    "frisor", "vardare", "operator", "bud", "kassapersonal", "forsaljning",
+    "assistent", "lagerarbetare", "receptionist", "lastbilschauffor",
+    "byggarbetare", "arbetsledare", "chef", "designer", "analytiker", "larare",
+    "lakare", "apotekare", "psykolog", "advokat", "arkitekt", "revisor",
+    "it-tekniker", "tekniker", "ingenjor", "marknadsforing", "logistik",
+    "kvalitet", "sakerhet", "personal", "kundtjanst", "telefonist", "vakt",
+    "tradgardsmastare", "malare", "barnskotare", "forskollarare", "elevassistent",
+    "personlig assistent", "lokalvardare", "städare", "fastighetsskotare",
+    "montor", "CNC-operator", "svetsare", "plåtslagare", "lackering",
+    "systemutvecklare", "mjukvaruutvecklare", "webbutvecklare", "frontend",
+    "backend", "fullstack", "devops", "data scientist", "cloud", "AI",
+    "tandlakare", "tandskoterska", "veterinar", "biomedicinsk analytiker",
+    "skotare", "boendestodjare", "behandlingsassistent", "socialsekreterare",
+    "deltid", "heltid", "sommarjobb", "extrajobb", "timanställd", "konsult"
   ]},
-  { code: "MX", name: "México", location: "Mexico", keywords: [
-    "mesero", "programador", "enfermero", "administrativo", "chofer", "vendedor",
-    "electricista", "mecanico", "cocinero", "limpieza", "albañil", "soldador",
-    "plomero", "estilista", "cuidador", "operador", "repartidor", "cajero",
-    "asistente", "almacen", "recepcionista", "trailero", "peon", "supervisor",
-    "gerente", "diseñador", "analista", "profesor", "medico", "farmaceutico",
-    "psicologo", "abogado", "arquitecto", "contador", "informatica", "tecnico",
-    "ingeniero", "ventas", "marketing", "logistica", "calidad", "seguridad",
-    "recursos humanos", "atencion cliente", "call center", "vigilante", "jardinero",
-    "pintor", "panadero", "carnicero", "carpintero", "fisioterapeuta", "dentista",
-    "veterinario", "bancario", "agente seguros", "mecanico automotriz", "quimico",
-    "traductor", "periodista", "diseñador grafico", "consultor", "especialista", "director"
+
+  // ===== BASE: España y vecinos =====
+
+  { code: "ES", name: "España", location: "Espana", keywords: [
+    "camarero", "programador", "enfermero", "administrativo", "conductor", "dependiente",
+    "electricista", "mecanico", "cocinero", "limpieza", "albanil", "soldador",
+    "fontanero", "peluquero", "cuidador", "operario", "repartidor", "cajero",
+    "vendedor", "auxiliar", "mozo", "camarera", "recepcionista", "chofer", "peon",
+    "encargado", "gerente", "diseñador", "analista", "profesor", "medico",
+    "farmaceutico", "psicologo", "abogado", "arquitecto", "contable", "informatico",
+    "tecnico", "ingeniero", "comercial", "marketing", "logistica", "calidad",
+    "prevencion", "rrhh", "atencion cliente", "teleoperador", "vigilante",
+    "jardinero", "pintor", "carpintero", "panadero", "carnicero", "pescadero",
+    "frutero", "reponedor", "azafata", "azafato", "socorrista", "monitor",
+    "entrenador", "fisioterapeuta", "dentista", "veterinario", "opticometrista",
+    "podologo", "nutricionista", "terapeuta ocupacional", "logopeda",
+    "educador social", "trabajador social", "integrador social", "animador",
+    "guia turistico", "recepcionista hotel", "gobernanta", "camarera pisos",
+    "ayudante cocina", "jefe cocina", "pizzero", "kebab", "sushi", "cocina",
+    "montador", "instalador", "mantenimiento", "jefe obra", "aparejador",
+    "delineante", "topografo", "quimico", "biologo", "ambientologo",
+    "desarrollador", "frontend", "backend", "fullstack", "devops", "QA",
+    "data scientist", "cloud", "ciberseguridad", "scrum master", "product owner",
+    "ux", "ui", "community manager", "SEO", "SEM", "traductor", "interprete",
+    "teletrabajo", "remoto", "media jornada", "jornada completa", "finde", "turno"
   ]},
-  { code: "ZA", name: "Sudáfrica", location: "South Africa", keywords: [
-    "waiter", "developer", "nurse", "admin", "driver", "sales", "electrician", "mechanic",
-    "chef", "cleaner", "builder", "welder", "plumber", "hairdresser", "caregiver",
-    "operator", "delivery", "cashier", "assistant", "warehouse", "receptionist",
-    "truck driver", "labourer", "supervisor", "manager", "designer", "analyst", "teacher",
-    "doctor", "pharmacist", "psychologist", "attorney", "architect", "accountant",
-    "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
-    "customer service", "call centre", "security guard", "gardener", "painter",
-    "mining", "farm worker", "domestic worker", "artisan", "fitter", "turner",
-    "boilermaker", "millwright", "rigger", "scaffolder", "safety officer"
+
+  { code: "PT", name: "Portugal", location: "Portugal", keywords: [
+    "empregado", "programador", "enfermeiro", "administrativo", "motorista",
+    "vendedor", "eletricista", "mecanico", "cozinheiro", "limpeza", "pedreiro",
+    "soldador", "canalizador", "cabeleireiro", "cuidador", "operario",
+    "entregador", "caixa", "comercial", "auxiliar", "armazem", "rececionista",
+    "camionista", "servente", "encarregado", "gerente", "designer", "analista",
+    "professor", "medico", "farmaceutico", "psicologo", "advogado", "arquiteto",
+    "contabilista", "informatico", "tecnico", "engenheiro", "vendas", "marketing",
+    "logistica", "qualidade", "seguranca", "rh", "atendimento", "operador",
+    "vigilante", "jardineiro", "pintor", "padeiro", "talhante", "carpinteiro",
+    "estucador", "bombeiro", "fisioterapeuta", "dentista", "veterinario",
+    "consultor", "especialista", "diretor", "bancario", "seguros", "imobiliario",
+    "tradutor", "jornalista", "mecanico automovel", "agricultor", "quimico",
+    "biologo", "designer grafico", "pasteleiro", "costureira", "marinheiro",
+    "pescador", "motorista pesados", "empregada limpeza", "ama", "babysitter",
+    "cozinha", "escritorio", "call center", "telemarketing", "formador",
+    "gestor projetos", "auditor", "tesoureiro", "lojista", "repositor",
+    "estafeta", "animador", "socorrista", "serralheiro", "vidraceiro",
+    "bate-chapas", "eletromecanico", "tecnico frio", "jardineiro paisagista",
+    "tratador animais", "inspetor", "chefe cozinha", "subchefe", "bartender",
+    "ajudante", "salao", "hoteleiro", "turismo", "call center", "outsourcing"
   ]},
-  { code: "AE", name: "Emiratos Árabes", location: "United Arab Emirates", keywords: [
-    "waiter", "developer", "nurse", "administrator", "driver", "sales", "electrician",
-    "mechanic", "chef", "cleaner", "mason", "welder", "plumber", "barber", "caregiver",
-    "operator", "delivery", "cashier", "assistant", "storekeeper", "receptionist",
-    "driver", "labourer", "supervisor", "manager", "designer", "analyst", "teacher",
-    "doctor", "pharmacist", "psychologist", "lawyer", "architect", "accountant",
-    "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
-    "customer service", "call centre", "security guard", "gardener", "painter",
-    "cook", "steward", "housekeeping", "bellboy", "concierge", "lifeguard",
-    "AC technician", "HVAC", "electrician", "pipe fitter", "ductman", "foreman",
-    "safety officer", "HSE", "crane operator", "heavy driver", "light driver"
-  ]},
-  { code: "IN", name: "India", location: "India", keywords: [
-    "developer", "nurse", "administrator", "driver", "sales", "electrician", "mechanic",
-    "chef", "cleaner", "mason", "welder", "plumber", "barber", "caregiver",
-    "operator", "delivery", "cashier", "assistant", "warehouse", "receptionist",
-    "driver", "labourer", "supervisor", "manager", "designer", "analyst", "teacher",
-    "doctor", "pharmacist", "psychologist", "lawyer", "architect", "accountant",
-    "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
-    "customer service", "call centre", "security guard", "gardener", "painter",
-    "cook", "waiter", "housekeeping", "data entry", "BPO", "KPO", "back office",
-    "field executive", "delivery boy", "helper", "office boy", "peon", "attendant"
-  ]},
-  { code: "SG", name: "Singapur", location: "Singapore", keywords: [
-    "waiter", "developer", "nurse", "administrator", "driver", "sales", "electrician",
-    "mechanic", "chef", "cleaner", "construction", "welder", "plumber", "hairdresser",
-    "caregiver", "operator", "delivery", "cashier", "assistant", "warehouse", "receptionist",
-    "driver", "worker", "supervisor", "manager", "designer", "analyst", "teacher",
-    "doctor", "pharmacist", "psychologist", "lawyer", "architect", "accountant",
-    "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
-    "customer service", "call centre", "security officer", "gardener", "painter",
-    "cook", "steward", "housekeeping", "bellman", "concierge", "technician",
-    "barista", "bartender", "captain", "supervisor", "executive", "officer"
-  ]},
-  { code: "JP", name: "Japón", location: "Japan", keywords: [
-    "developer", "nurse", "administrator", "driver", "sales", "electrician", "mechanic",
-    "chef", "cleaner", "construction", "welder", "plumber", "hairdresser", "caregiver",
-    "operator", "delivery", "cashier", "assistant", "warehouse", "receptionist",
-    "teacher", "doctor", "pharmacist", "psychologist", "lawyer", "architect", "accountant",
-    "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
-    "customer service", "call centre", "security guard", "gardener", "painter",
-    "cook", "waiter", "factory", "manufacturing", "technician", "translator",
-    "interpreter", "hotel", "tourism", "agriculture", "fishing", "construction"
-  ]},
-  { code: "KR", name: "Corea del Sur", location: "South Korea", keywords: [
-    "developer", "nurse", "administrator", "driver", "sales", "electrician", "mechanic",
-    "chef", "cleaner", "construction", "welder", "plumber", "hairdresser", "caregiver",
-    "operator", "delivery", "cashier", "assistant", "warehouse", "receptionist",
-    "teacher", "doctor", "pharmacist", "psychologist", "lawyer", "architect", "accountant",
-    "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
-    "customer service", "call centre", "security guard", "gardener", "painter",
-    "cook", "waiter", "factory", "manufacturing", "English teacher", "translator",
-    "hotel", "tourism", "shipbuilding", "semiconductor", "auto parts"
-  ]},
-  { code: "TR", name: "Turquía", location: "Turkiye", keywords: [
-    "garson", "gelistirici", "hemsire", "idari", "sofor", "satici", "elektrikci",
-    "tamirci", "asci", "temizlik", "duvarci", "kaynakci", "tesisatci", "kuafr",
-    "bakici", "operator", "kurye", "kasiyer", "asistan", "depocu", "resepsiyonist",
-    "kamyon sofor", "insaat iscisi", "ustabasi", "yonetici", "tasarimci", "analist",
-    "ogretmen", "doktor", "eczaci", "psikolog", "avukat", "mimar", "muhasebeci",
-    "bilisim", "teknisyen", "muhendis", "satis", "pazarlama", "lojistik", "kalite",
-    "guvenlik", "insan kaynaklari", "musteri hizmetleri", "cagri merkezi",
-    "guvenlik gorevlisi", "bahcivan", "boyaci", "firinci", "kasap", "marangoz"
-  ]},
-  { code: "EG", name: "Egipto", location: "Egypt", keywords: [
-    "developer", "nurse", "administrator", "driver", "sales", "electrician", "mechanic",
-    "chef", "cleaner", "construction", "welder", "plumber", "hairdresser", "caregiver",
-    "operator", "delivery", "cashier", "assistant", "warehouse", "receptionist",
-    "teacher", "doctor", "pharmacist", "psychologist", "lawyer", "architect", "accountant",
-    "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
-    "customer service", "call centre", "security guard", "gardener", "painter",
-    "cook", "waiter", "housekeeping", "tourism", "hospitality", "diving", "marine"
-  ]},
-  { code: "CL", name: "Chile", location: "Chile", keywords: [
-    "garzon", "programador", "enfermero", "administrativo", "conductor", "vendedor",
-    "electricista", "mecanico", "cocinero", "aseo", "albañil", "soldador", "gasfiter",
-    "peluquero", "cuidador", "operador", "repartidor", "cajero", "asistente", "bodega",
-    "recepcionista", "camionero", "jornal", "supervisor", "gerente", "diseñador",
-    "analista", "profesor", "medico", "farmaceutico", "psicologo", "abogado",
-    "arquitecto", "contador", "informatica", "tecnico", "ingeniero", "ventas",
-    "marketing", "logistica", "calidad", "seguridad", "rrhh", "atencion cliente",
-    "call center", "guardia", "jardinero", "pintor", "mineria", "construccion",
-    "agricola", "pesquero", "forestal", "portuario", "bodeguero", "chofer"
-  ]},
-  { code: "CO", name: "Colombia", location: "Colombia", keywords: [
-    "mesero", "programador", "enfermero", "administrativo", "conductor", "vendedor",
-    "electricista", "mecanico", "cocinero", "aseo", "albañil", "soldador", "plomero",
-    "peluquero", "cuidador", "operador", "domiciliario", "cajero", "auxiliar",
-    "bodega", "recepcionista", "camionero", "obrero", "supervisor", "gerente",
-    "diseñador", "analista", "profesor", "medico", "farmaceutico", "psicologo",
-    "abogado", "arquitecto", "contador", "sistemas", "tecnico", "ingeniero",
-    "ventas", "marketing", "logistica", "calidad", "seguridad", "gestion humana",
-    "servicio cliente", "call center", "vigilante", "jardinero", "pintor",
-    "minero", "petrolero", "agro", "cafetero", "florero", "bananero", "palmero"
-  ]},
-  { code: "AR", name: "Argentina", location: "Argentina", keywords: [
-    "mozo", "programador", "enfermero", "administrativo", "chofer", "vendedor",
-    "electricista", "mecanico", "cocinero", "limpieza", "albañil", "soldador",
-    "plomero", "peluquero", "cuidador", "operario", "cadete", "cajero", "asistente",
-    "deposito", "recepcionista", "camionero", "peon", "supervisor", "gerente",
-    "diseñador", "analista", "profesor", "medico", "farmaceutico", "psicologo",
-    "abogado", "arquitecto", "contador", "sistemas", "tecnico", "ingeniero",
-    "ventas", "marketing", "logistica", "calidad", "seguridad", "rrhh",
-    "atencion al cliente", "call center", "vigilador", "jardinero", "pintor",
-    "gastronomico", "hotelero", "turismo", "petrolero", "agropecuario", "pesquero"
-  ]},
-  { code: "PE", name: "Perú", location: "Peru", keywords: [
-    "mozo", "programador", "enfermero", "administrativo", "chofer", "vendedor",
-    "electricista", "mecanico", "cocinero", "limpieza", "albañil", "soldador",
-    "gasfitero", "peluquero", "cuidador", "operario", "repartidor", "cajero",
-    "asistente", "almacen", "recepcionista", "camionero", "obrero", "supervisor",
-    "gerente", "diseñador", "analista", "profesor", "medico", "farmaceutico",
-    "psicologo", "abogado", "arquitecto", "contador", "sistemas", "tecnico",
-    "ingeniero", "ventas", "marketing", "logistica", "calidad", "seguridad",
-    "rrhh", "atencion cliente", "call center", "vigilante", "jardinero", "pintor",
-    "minero", "pesquero", "agroindustrial", "textil", "gastronomico", "hotelero"
-  ]},
-  { code: "EC", name: "Ecuador", location: "Ecuador", keywords: [
-    "mesero", "programador", "enfermero", "administrativo", "chofer", "vendedor",
-    "electricista", "mecanico", "cocinero", "limpieza", "albañil", "soldador",
-    "plomero", "peluquero", "cuidador", "operador", "mensajero", "cajero",
-    "asistente", "bodega", "recepcionista", "camionero", "obrero", "supervisor",
-    "gerente", "diseñador", "analista", "profesor", "medico", "farmaceutico",
-    "psicologo", "abogado", "arquitecto", "contador", "sistemas", "tecnico",
-    "ingeniero", "ventas", "marketing", "logistica", "calidad", "seguridad",
-    "talento humano", "atencion cliente", "call center", "guardia", "jardinero",
-    "pintor", "bananero", "camaronero", "floricola", "petrolero", "turismo"
+
+  { code: "IT", name: "Italia", location: "Italia", keywords: [
+    "cameriere", "sviluppatore", "infermiere", "amministrativo", "autista",
+    "venditore", "elettricista", "meccanico", "cuoco", "pulizie", "muratore",
+    "saldatore", "idraulico", "parrucchiere", "badante", "operaio", "corriere",
+    "cassiere", "commerciale", "ausiliario", "magazziniere", "receptionist",
+    "camionista", "manovale", "caposquadra", "gestore", "designer", "analista",
+    "insegnante", "medico", "farmacista", "psicologo", "avvocato", "architetto",
+    "contabile", "informatico", "tecnico", "ingegnere", "vendite", "marketing",
+    "logistica", "qualita", "sicurezza", "risorse umane", "servizio clienti",
+    "centralinista", "guardia", "giardiniere", "pittore", "panettiere", "macellaio",
+    "falegname", "estetista", "idraulico", "piastrellista", "cartongessista",
+    "ponteggiatore", "gruista", "escavatorista", "autista bus", "tassista",
+    "facchino", "portiere", "custode", "bagnino", "animatore turistico",
+    "guida turistica", "commesso", "banconista", "gelataio", "pizzaiolo",
+    "aiuto cuoco", "lavapiatti", "governante", "cameriera piani",
+    "operaio metalmeccanico", "operaio tessile", "operaio alimentare",
+    "contoterzista", "bracciante", "raccoglitore", "stagionale",
+    "fullstack", "frontend", "backend", "devops", "data scientist", "cyber security",
+    "system integrator", "consulente SAP", "ERP", "software house",
+    "part time", "full time", "contratto indeterminato", "stagista", "apprendista"
   ]},
 ];
 
