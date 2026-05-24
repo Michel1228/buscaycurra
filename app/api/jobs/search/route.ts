@@ -38,13 +38,14 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const keyword  = (searchParams.get("keyword")  || "").trim();
   const location = (searchParams.get("location") || "").trim();
+  const country  = (searchParams.get("country")  || "").trim();
   const page     = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const jornada  = searchParams.get("jornada") || "";
   const limit    = 500;
   const offset   = (page - 1) * limit;
 
-  if (!keyword && !location) {
-    return NextResponse.json({ error: "Debes introducir al menos una palabra clave o ubicacion" }, { status: 400 });
+  if (!keyword && !location && !country) {
+    return NextResponse.json({ error: "Debes introducir al menos una palabra clave, ubicación o país" }, { status: 400 });
   }
 
   try {
@@ -56,6 +57,13 @@ export async function GET(request: NextRequest) {
     if (keyword) {
       conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
       params.push(`%${keyword}%`);
+      idx++;
+    }
+
+    // Filtro por país
+    if (country) {
+      conditions.push(`"country" = $${idx}`);
+      params.push(country);
       idx++;
     }
 

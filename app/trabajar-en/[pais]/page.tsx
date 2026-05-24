@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { PAISES, LISTA_PAISES, formatearSalario, convertirSalario } from "@/lib/paises";
+import { getPool } from "@/lib/db";
 import Link from "next/link";
 
 // Países con hreflang para inyectar en <head>
@@ -48,6 +49,17 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
   const codigo = paisParam.toUpperCase();
   const pais = PAISES[codigo];
 
+  // Obtener ofertas reales de este país de la BD
+  let totalOfertas = 0;
+  try {
+    const pool = getPool();
+    const countRes = await pool.query(
+      `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND "country" = $1`,
+      [codigo]
+    );
+    totalOfertas = parseInt(countRes.rows[0].count);
+  } catch { /* si falla DB, mostramos 0 */ }
+
   if (!pais) {
     return (
       <main className="min-h-screen bg-[#0f1117] flex items-center justify-center">
@@ -81,8 +93,8 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
       <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5 text-center">
-            <p className="text-2xl font-bold text-[#22c55e]">{formatearSalario(pais.salarioMinimo, codigo)}</p>
-            <p className="text-xs text-[#64748b] mt-1">Salario mínimo/mes</p>
+            <p className="text-2xl font-bold text-[#22c55e]">{totalOfertas.toLocaleString()}</p>
+            <p className="text-xs text-[#64748b] mt-1">Ofertas activas</p>
           </div>
           <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5 text-center">
             <p className="text-2xl font-bold text-[#22c55e]">{formatearSalario(pais.salarioMedio, codigo)}</p>
@@ -138,7 +150,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
           {[
             { icon: "🤖", title: "Agente 24/7", desc: "Guzzi busca y envía tus CVs automáticamente a ofertas en toda Europa mientras duermes." },
             { icon: "📧", title: "Envío masivo", desc: "Envía tu CV a decenas de ofertas en un solo click. Sin formularios repetitivos." },
-            { icon: "🌍", title: "15 países europeos", desc: "Ofertas en España, Alemania, Francia, Italia, Portugal y +10 países más." },
+            { icon: "🌍", title: "19 países", desc: "Ofertas en España, EEUU, Canadá, Australia, Reino Unido, Alemania, Suiza y +12 países más." },
             { icon: "💬", title: "Guzzi multilingüe", desc: "Tu asistente habla español y te ayuda con ofertas en cualquier idioma europeo." },
             { icon: "💰", title: "Comparador de salarios", desc: `Calcula tu sueldo neto en cada país con la calculadora de impuestos.` },
             { icon: "📊", title: "Skill Gap Analysis", desc: "Compara tu CV con los requisitos de la oferta y recibe recomendaciones." },

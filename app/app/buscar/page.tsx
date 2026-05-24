@@ -49,11 +49,16 @@ function BuscarPageInner() {
   const [alertaCreada, setAlertaCreada] = useState(false);
   const [creandoAlerta, setCreandoAlerta] = useState(false);
 
-  const [paisSeleccionado, setPaisSeleccionado] = useState("ES");
-  useEffect(() => {
-    const saved = localStorage.getItem("bc_pais");
-    if (saved) setPaisSeleccionado(saved);
-  }, []);
+  const [paisSeleccionado, setPaisSeleccionado] = useState(() => {
+    // Prioridad: URL > localStorage > España
+    const urlPais = searchParams.get("pais");
+    if (urlPais) return urlPais.toUpperCase();
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("bc_pais");
+      if (saved) return saved;
+    }
+    return "ES";
+  });
   function cambiarPais(codigo: string) {
     setPaisSeleccionado(codigo);
     localStorage.setItem("bc_pais", codigo);
@@ -153,6 +158,7 @@ function BuscarPageInner() {
       const params = new URLSearchParams();
       if (keyword.trim()) params.set("keyword", keyword.trim());
       if (ubicacion.trim()) params.set("location", ubicacion.trim());
+      if (paisSeleccionado && paisSeleccionado !== "ES") params.set("country", paisSeleccionado);
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
@@ -214,6 +220,7 @@ function BuscarPageInner() {
       const params = new URLSearchParams();
       if (keyword.trim()) params.set("keyword", keyword.trim());
       if (ubicacion.trim()) params.set("location", ubicacion.trim());
+      if (paisSeleccionado && paisSeleccionado !== "ES") params.set("country", paisSeleccionado);
       if (jornada) params.set("jornada", jornada);
       params.set("page", String(nextPage));
       const res = await fetch(`/api/jobs/search?${params.toString()}`);
