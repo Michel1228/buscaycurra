@@ -3,6 +3,8 @@ import { PAISES, LISTA_PAISES, formatearSalario, convertirSalario } from "@/lib/
 import { getPool } from "@/lib/db";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 // Países con hreflang para inyectar en <head>
 function HreflangTags({ currentCode, path }: { currentCode: string; path: string }) {
   return (
@@ -58,7 +60,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
       [codigo]
     );
     totalOfertas = parseInt(countRes.rows[0].count);
-  } catch { /* si falla DB, mostramos 0 */ }
+  } catch (err) { console.error("[trabajar-en] Error DB:", (err as Error).message); }
 
   if (!pais) {
     return (
