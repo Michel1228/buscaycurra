@@ -48,7 +48,7 @@ function loadSimpleKeys(provider: "jooble" | "careerjet"): { key: string }[] {
 const DAILY_LIMIT: Record<ApiProvider, number> = {
   adzuna: 200,      // Free: 250/día, paramos en 200 para margen de seguridad
   jooble: 500,
-  careerjet: 10000,  // Subido para sync europeo (15 países × 10 keywords × ~20 ofertas = 3000/ronda)
+   careerjet: 20000,  // Subido para extracción masiva global (15 países × 100+ keywords × 5 páginas)
 };
 
 const BREAKER_TTL = 3600; // 1 hora en segundos

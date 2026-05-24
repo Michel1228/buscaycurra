@@ -188,12 +188,13 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
 }
 
 async function fetchEures(keyword: string, countryLocation: string, _page = 1): Promise<RawJob[]> {
-  // Usa Careerjet con ubicaciones europeas — 2 páginas para máximo volumen
+  // 5 páginas para máximo volumen — de 20 resultados/pág = 100 por combo
   const keyInfo = await getCareerjetKey();
   if (!keyInfo) return [];
   const allJobs: RawJob[] = [];
+  const seen = new Set<string>();
   
-  for (const page of [1, 2]) {
+  for (const page of [1, 2, 3, 4, 5]) {
     try {
       const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F3.0&pagesize=20&page=${page}&sort=relevance`;
       const res = await fetch(url, {
@@ -212,7 +213,18 @@ async function fetchEures(keyword: string, countryLocation: string, _page = 1): 
         description: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 1000),
         salary: (j.salary || "Ver en oferta").slice(0, 100),
       }));
-      allJobs.push(...jobs);
+      // Dedup dentro del mismo combo (Careerjet a veces repite entre páginas)
+      let newJobs = 0;
+      for (const j of jobs) {
+        const dedupKey = `${j.title}|${j.company}`.toLowerCase();
+        if (!seen.has(dedupKey)) {
+          seen.add(dedupKey);
+          allJobs.push(j);
+          newJobs++;
+        }
+      }
+      // Si la página vino casi vacía, no seguir
+      if (jobs.length < 10) break;
     } catch { continue; }
   }
   return allJobs;
