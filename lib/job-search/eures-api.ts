@@ -382,3 +382,44 @@ export function generateEuresCombos(): Array<{ keyword: string; country: string;
   }
   return combos;
 }
+
+// Búsquedas por CIUDAD para extraer ofertas que no salen con búsqueda por país
+// Misma oferta en distinta ciudad = ID distinto (el ID incluye city) = NO duplicado
+export const CITY_COMBOS: Array<{ keyword: string; country: string; location: string }> = (() => {
+  const cities: Record<string, string[]> = {
+    DE: ["Berlin", "München", "Hamburg", "Frankfurt", "Köln", "Stuttgart", "Düsseldorf", "Leipzig", "Dortmund", "Nürnberg"],
+    FR: ["Paris", "Lyon", "Marseille", "Toulouse", "Bordeaux", "Lille", "Nantes", "Strasbourg", "Montpellier", "Nice"],
+    UK: ["London", "Manchester", "Birmingham", "Edinburgh", "Glasgow", "Leeds", "Bristol", "Liverpool", "Sheffield", "Cardiff"],
+    US: ["New York", "Los Angeles", "Chicago", "Houston", "Miami", "Seattle", "Boston", "San Francisco", "Atlanta", "Dallas"],
+    NL: ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven", "Groningen", "Maastricht", "Tilburg", "Arnhem", "Nijmegen"],
+    ES: ["Madrid", "Barcelona", "Valencia", "Sevilla", "Bilbao", "Málaga", "Zaragoza", "Murcia", "Palma", "Alicante"],
+    IT: ["Roma", "Milano", "Napoli", "Torino", "Firenze", "Bologna", "Genova", "Venezia", "Verona", "Bari"],
+    CA: ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa", "Edmonton", "Quebec", "Winnipeg", "Halifax", "Victoria"],
+    AU: ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Gold Coast", "Canberra", "Hobart", "Darwin", "Newcastle"],
+    CH: ["Zürich", "Genf", "Basel", "Bern", "Lausanne", "Winterthur", "Luzern", "St. Gallen", "Lugano", "Biel"],
+    SE: ["Stockholm", "Göteborg", "Malmö", "Uppsala", "Linköping", "Örebro", "Västerås", "Helsingborg", "Norrköping", "Umeå"],
+    NO: ["Oslo", "Bergen", "Trondheim", "Stavanger", "Tromsø", "Drammen", "Fredrikstad", "Kristiansand", "Sandnes", "Bodø"],
+    BE: ["Bruxelles", "Antwerpen", "Gent", "Liège", "Charleroi", "Brugge", "Leuven", "Namur", "Mons", "Mechelen"],
+    IE: ["Dublin", "Cork", "Galway", "Limerick", "Waterford", "Drogheda", "Kilkenny", "Sligo", "Athlone", "Dundalk"],
+    PT: ["Lisboa", "Porto", "Braga", "Coimbra", "Faro", "Aveiro", "Setúbal", "Viseu", "Leiria", "Évora"],
+  };
+
+  // Keywords genéricas de alta demanda para búsquedas por ciudad
+  const cityKeywords = [
+    "waiter", "developer", "nurse", "driver", "sales", "electrician", "chef", "cleaner",
+    "welder", "plumber", "caregiver", "operator", "delivery", "cashier", "assistant",
+    "warehouse", "receptionist", "supervisor", "manager", "teacher", "accountant",
+    "IT", "technician", "engineer", "marketing", "logistics", "security", "HR",
+    "customer service", "cook", "bartender", "barista", "retail", "factory", "construction",
+  ];
+
+  const result: Array<{ keyword: string; country: string; location: string }> = [];
+  for (const [code, cityList] of Object.entries(cities)) {
+    for (const city of cityList) {
+      for (const kw of cityKeywords) {
+        result.push({ keyword: kw, country: code, location: city });
+      }
+    }
+  }
+  return result;
+})();

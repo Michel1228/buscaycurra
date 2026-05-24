@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { syncBatch } from "@/lib/job-search/sync-worker";
-import { generateEuresCombos } from "@/lib/job-search/eures-api";
+import { generateEuresCombos, CITY_COMBOS } from "@/lib/job-search/eures-api";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   const batchSize = Math.min(body.batchSize ?? 10, 50);
   const offset = body.offset ?? 0;
 
-  let combos = generateEuresCombos();
+  let combos = [...generateEuresCombos(), ...CITY_COMBOS];
   
   // Filtrar por países si se especifican
   if (body.countries?.length) {
