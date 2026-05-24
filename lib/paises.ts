@@ -277,10 +277,104 @@ export const PAISES: Record<string, PaisConfig> = {
     ciudades: ["Zürich", "Genf", "Basel", "Bern", "Lausanne"],
     keywordsLaborales: ["Kellner", "Programmierer", "Bürokaufmann", "Verkäufer", "Krankenpfleger"],
   },
+
+  // ===== FUERA DE EUROPA — MEJORES SALARIOS =====
+
+  UK: {
+    codigo: "UK",
+    nombre: "Reino Unido",
+    nombreLocal: "United Kingdom",
+    moneda: "GBP",
+    simboloMoneda: "£",
+    posicionSimbolo: "antes",
+    idioma: "en",
+    bandera: "🇬🇧",
+    salarioMinimo: 1930,
+    salarioMedio: 2900,
+    tasaCambioEUR: 0.86,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["London", "Manchester", "Birmingham", "Edinburgh", "Glasgow", "Leeds", "Bristol"],
+    keywordsLaborales: ["waiter", "developer", "administrator", "sales", "nurse"],
+  },
+
+  US: {
+    codigo: "US",
+    nombre: "Estados Unidos",
+    nombreLocal: "United States",
+    moneda: "USD",
+    simboloMoneda: "$",
+    posicionSimbolo: "antes",
+    idioma: "en",
+    bandera: "🇺🇸",
+    salarioMinimo: 1256,
+    salarioMedio: 5000,
+    tasaCambioEUR: 1.08,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["New York", "Los Angeles", "Chicago", "Houston", "Miami", "San Francisco", "Boston"],
+    keywordsLaborales: ["waiter", "developer", "administrative", "sales", "nurse"],
+  },
+
+  CA: {
+    codigo: "CA",
+    nombre: "Canadá",
+    nombreLocal: "Canada",
+    moneda: "CAD",
+    simboloMoneda: "C$",
+    posicionSimbolo: "antes",
+    idioma: "en",
+    bandera: "🇨🇦",
+    salarioMinimo: 2500,
+    salarioMedio: 5000,
+    tasaCambioEUR: 1.48,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa", "Edmonton", "Québec"],
+    keywordsLaborales: ["waiter", "developer", "administrative", "sales", "nurse"],
+  },
+
+  AU: {
+    codigo: "AU",
+    nombre: "Australia",
+    nombreLocal: "Australia",
+    moneda: "AUD",
+    simboloMoneda: "A$",
+    posicionSimbolo: "antes",
+    idioma: "en",
+    bandera: "🇦🇺",
+    salarioMinimo: 3500,
+    salarioMedio: 6500,
+    tasaCambioEUR: 1.65,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Gold Coast", "Canberra"],
+    keywordsLaborales: ["waiter", "developer", "administrator", "sales", "nurse"],
+  },
 };
 
-/** Lista plana de países ordenados por relevancia */
-export const LISTA_PAISES = Object.values(PAISES);
+/** Lista plana de países ordenados por mayor salario medio */
+export const LISTA_PAISES: PaisConfig[] = [
+  PAISES.CH,  // Suiza — 6,500 CHF/mes
+  PAISES.AU,  // Australia — 6,500 AUD/mes
+  PAISES.US,  // EEUU — 5,000 USD/mes
+  PAISES.CA,  // Canadá — 5,000 CAD/mes
+  PAISES.NO,  // Noruega — 48,000 NOK/mes
+  PAISES.DK,  // Dinamarca — 42,000 DKK/mes
+  PAISES.DE,  // Alemania — 4,100 EUR/mes
+  PAISES.IE,  // Irlanda — 3,800 EUR/mes
+  PAISES.SE,  // Suecia — 38,000 SEK/mes
+  PAISES.NL,  // Países Bajos — 3,700 EUR/mes
+  PAISES.AT,  // Austria — 3,600 EUR/mes
+  PAISES.BE,  // Bélgica — 3,600 EUR/mes
+  PAISES.FI,  // Finlandia — 3,500 EUR/mes
+  PAISES.FR,  // Francia — 3,400 EUR/mes
+  PAISES.UK,  // Reino Unido — 2,900 GBP/mes
+  PAISES.IT,  // Italia — 2,500 EUR/mes
+  PAISES.ES,  // España — 2,100 EUR/mes
+  PAISES.PT,  // Portugal — 1,500 EUR/mes
+  PAISES.PL,  // Polonia — 7,500 PLN/mes
+];
 
 /** Formatea un salario según el país */
 export function formatearSalario(cantidad: number, codigoPais: string): string {
