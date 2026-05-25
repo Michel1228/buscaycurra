@@ -2,284 +2,326 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 
-type Mensaje = {
-  rol: "user" | "assistant";
-  texto: string;
+const PREGUNTAS: Record<string, string[]> = {
+  general: [
+    "Háblame de ti y de tu experiencia profesional.",
+    "¿Por qué quieres trabajar con nosotros?",
+    "¿Cuál es tu mayor fortaleza y tu mayor debilidad?",
+    "¿Dónde te ves en 5 años?",
+    "Cuéntame de un conflicto laboral que hayas resuelto.",
+    "¿Por qué dejaste tu último trabajo?",
+    "¿Qué te motiva en tu día a día laboral?",
+  ],
+  hosteleria: [
+    "¿Cómo manejas a un cliente insatisfecho con su plato?",
+    "Cuéntame de una vez que hayas trabajado bajo mucha presión en cocina o sala.",
+    "¿Qué harías si un compañero no aparece y tienes que cubrir su turno?",
+    "¿Cómo gestionas varias mesas ocupadas a la vez?",
+    "Háblame de tu experiencia con alérgenos y seguridad alimentaria.",
+  ],
+  tecnologia: [
+    "¿Cuál ha sido el proyecto más complejo en el que has trabajado?",
+    "¿Cómo te mantienes actualizado con las nuevas tecnologías?",
+    "Cuéntame de una vez que hayas tenido que aprender algo nuevo muy rápido.",
+    "¿Cómo explicas un concepto técnico a alguien no técnico?",
+    "Háblame de un bug difícil que hayas resuelto.",
+  ],
+  comercio: [
+    "¿Cómo convencerías a un cliente indeciso?",
+    "Cuéntame de una venta de la que estés especialmente orgulloso.",
+    "¿Cómo manejas los objetivos mensuales de ventas?",
+    "Un cliente quiere devolver un producto fuera de plazo. ¿Qué haces?",
+    "¿Cómo te organizas cuando tienes varios clientes a la vez?",
+  ],
+  salud: [
+    "¿Cómo manejas el estrés emocional del trabajo con pacientes?",
+    "Cuéntame de una emergencia que hayas gestionado.",
+    "¿Cómo comunicas malas noticias a un paciente o familiar?",
+    "¿Cómo priorizas cuando tienes varios pacientes urgentes?",
+    "Háblame de tu experiencia trabajando en equipo multidisciplinar.",
+  ],
 };
 
-const PUESTOS_SUGERIDOS = [
-  "Desarrollador Frontend",
-  "Comercial",
-  "Administrativo",
-  "Enfermero/a",
-  "Conductor",
-  "Dependiente/a",
-  "Electricista",
-  "Técnico IT",
+const SECTORES = [
+  { id: "general", label: "General" },
+  { id: "hosteleria", label: "Hostelería" },
+  { id: "tecnologia", label: "Tecnología" },
+  { id: "comercio", label: "Comercio" },
+  { id: "salud", label: "Salud" },
 ];
+
+type Respuesta = { pregunta: string; respuesta: string; feedback: string };
 
 export default function EntrevistasPage() {
   const router = useRouter();
-  const [cargando, setCargando] = useState(true);
-  const [puesto, setPuesto] = useState("");
-  const [puestoConfirmado, setPuestoConfirmado] = useState("");
-  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
-  const [input, setInput] = useState("");
-  const [enviando, setEnviando] = useState(false);
-  const [sesionActiva, setSesionActiva] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [token, setToken] = useState("");
+  const [sector, setSector] = useState("general");
+  const [preguntas, setPreguntas] = useState(PREGUNTAS.general);
+  const [idx, setIdx] = useState(0);
+  const [texto, setTexto] = useState("");
+  const [escuchando, setEscuchando] = useState(false);
+  const [soporteVoz, setSoporteVoz] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [analizando, setAnalizando] = useState(false);
+  const [historial, setHistorial] = useState<Respuesta[]>([]);
+  const [finalizado, setFinalizado] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const synthRef = useRef<SpeechSynthesis | null>(null);
 
   useEffect(() => {
-    async function verificar() {
-      try {
-        const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-        if (!session) { router.push("/auth/login"); return; }
-      } catch { router.push("/auth/login"); return; }
-      setCargando(false);
+    async function init() {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) { router.push("/auth/login"); return; }
+      setToken(session.access_token);
+
+      // Autodetectar sector del perfil
+      const { data: p } = await getSupabaseBrowser()
+        .from("profiles")
+        .select("sector")
+        .eq("id", session.user.id)
+        .single();
+      if (p?.sector) {
+        const s = p.sector.toLowerCase();
+        if (PREGUNTAS[s]) { setSector(s); setPreguntas(PREGUNTAS[s]); }
+      }
     }
-    verificar();
+    init();
+
+    if (typeof window !== "undefined") {
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SR) setSoporteVoz(true);
+      synthRef.current = window.speechSynthesis || null;
+    }
   }, [router]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [mensajes]);
+  const cambiarSector = (s: string) => {
+    setSector(s); setPreguntas(PREGUNTAS[s]); setIdx(0);
+    setTexto(""); setFeedback(""); setHistorial([]); setFinalizado(false);
+  };
 
-  async function iniciarEntrevista() {
-    if (!puesto.trim()) return;
-    setPuestoConfirmado(puesto.trim());
-    setSesionActiva(true);
-    setMensajes([]);
-    setEnviando(true);
+  const leerPregunta = () => {
+    if (!synthRef.current) return;
+    synthRef.current.cancel();
+    const u = new SpeechSynthesisUtterance(preguntas[idx]);
+    u.lang = "es-ES"; u.rate = 0.9;
+    synthRef.current.speak(u);
+  };
 
+  const toggleVoz = useCallback(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    if (escuchando) { recognitionRef.current?.stop(); setEscuchando(false); return; }
+
+    const r = new SR();
+    r.lang = "es-ES"; r.interimResults = true; r.continuous = false;
+    r.onresult = (e: any) => {
+      let t = ""; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+      setTexto(t);
+    };
+    r.onerror = () => setEscuchando(false);
+    r.onend = () => setEscuchando(false);
+    recognitionRef.current = r;
+    r.start(); setEscuchando(true); setFeedback("");
+  }, [escuchando]);
+
+  const analizar = async () => {
+    if (!texto.trim()) return;
+    setAnalizando(true);
     try {
-      const res = await fetch("/api/entrevistas/chat", {
+      const res = await fetch("/api/entrevistas/feedback", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ puesto: puesto.trim(), mensajes: [], inicio: true }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ pregunta: preguntas[idx], respuesta: texto, sector }),
       });
       const data = await res.json();
-      if (data.respuesta) {
-        setMensajes([{ rol: "assistant", texto: data.respuesta }]);
-      }
+      const fb = data.feedback || "No se pudo analizar.";
+      setFeedback(fb);
+      setHistorial(h => [...h, { pregunta: preguntas[idx], respuesta: texto, feedback: fb }]);
     } catch {
-      setMensajes([{ rol: "assistant", texto: "No pude conectar con el simulador. Inténtalo de nuevo." }]);
+      setFeedback("Error al analizar. Inténtalo de nuevo.");
     } finally {
-      setEnviando(false);
+      setAnalizando(false);
     }
-  }
+  };
 
-  async function enviarRespuesta() {
-    if (!input.trim() || enviando) return;
-    const texto = input.trim();
-    setInput("");
-    const nuevosMensajes: Mensaje[] = [...mensajes, { rol: "user", texto }];
-    setMensajes(nuevosMensajes);
-    setEnviando(true);
-
-    try {
-      const res = await fetch("/api/entrevistas/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ puesto: puestoConfirmado, mensajes: nuevosMensajes }),
-      });
-      const data = await res.json();
-      if (data.respuesta) {
-        setMensajes([...nuevosMensajes, { rol: "assistant", texto: data.respuesta }]);
-      }
-    } catch {
-      setMensajes([...nuevosMensajes, { rol: "assistant", texto: "Error al procesar tu respuesta." }]);
-    } finally {
-      setEnviando(false);
+  const siguiente = () => {
+    if (idx < preguntas.length - 1) {
+      setIdx(i => i + 1); setTexto(""); setFeedback("");
+    } else {
+      setFinalizado(true);
     }
-  }
+  };
 
-  function reiniciar() {
-    setSesionActiva(false);
-    setPuesto("");
-    setPuestoConfirmado("");
-    setMensajes([]);
-    setInput("");
-  }
+  const reiniciar = () => {
+    setIdx(0); setTexto(""); setFeedback(""); setHistorial([]); setFinalizado(false);
+  };
 
-  if (cargando) {
+  // ─── Resumen final ────────────────────────────────────────────
+  if (finalizado) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen pt-16 pb-8 px-4" style={{ background: "#0f1117" }}>
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-3">🎉</div>
+            <h1 className="text-2xl font-bold text-white mb-1">¡Entrevista completada!</h1>
+            <p className="text-sm" style={{ color: "#6b7280" }}>
+              {historial.length} de {preguntas.length} preguntas respondidas
+            </p>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            {historial.map((r, i) => (
+              <div key={i} className="rounded-2xl p-4" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: "#10b981" }}>P{i + 1}. {r.pregunta}</p>
+                <p className="text-sm mb-3" style={{ color: "#9ca3af" }}>{r.respuesta}</p>
+                <div className="text-xs whitespace-pre-wrap" style={{ color: "#d1d5db" }}>{r.feedback}</div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={reiniciar}
+            className="w-full py-3 rounded-xl font-semibold text-sm"
+            style={{ background: "#10b981", color: "#fff" }}
+          >
+            Volver a empezar
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-8 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen pt-16 pb-8 px-4" style={{ background: "#0f1117" }}>
+      <div className="max-w-2xl mx-auto space-y-5">
         {/* Header */}
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold mb-1" style={{ color: "#7ed56f" }}>
-            🎙️ Simulador de entrevistas
-          </h1>
-          <p className="text-sm" style={{ color: "#706a58" }}>
-            Practica con IA antes de tu próxima entrevista real
+        <div className="text-center pt-2">
+          <div className="text-4xl mb-2">🎙️</div>
+          <h1 className="text-xl font-bold text-white">Simulador de Entrevistas</h1>
+          <p className="text-xs mt-1" style={{ color: "#6b7280" }}>
+            Practica y recibe feedback de IA
           </p>
         </div>
 
-        {!sesionActiva ? (
-          /* Selector de puesto */
-          <div className="glass-warm rounded-2xl p-6">
-            <label className="block text-sm font-medium mb-2" style={{ color: "#e8e0cc" }}>
-              ¿Para qué puesto quieres prepararte?
-            </label>
-            <input
-              type="text"
-              value={puesto}
-              onChange={(e) => setPuesto(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && iniciarEntrevista()}
-              placeholder="Ej: Camarero, Programador, Enfermero..."
-              className="w-full rounded-xl px-4 py-3 text-sm mb-4 outline-none"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(126,213,111,0.2)",
-                color: "#e8e0cc",
-              }}
-            />
-            <div className="flex flex-wrap gap-2 mb-5">
-              {PUESTOS_SUGERIDOS.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPuesto(p)}
-                  className="text-xs px-3 py-1.5 rounded-full transition"
-                  style={{
-                    background: puesto === p ? "rgba(126,213,111,0.2)" : "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(126,213,111,0.2)",
-                    color: puesto === p ? "#7ed56f" : "#706a58",
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+        {/* Sectores */}
+        <div className="flex flex-wrap gap-2 justify-center">
+          {SECTORES.map(s => (
             <button
-              onClick={iniciarEntrevista}
-              disabled={!puesto.trim()}
-              className="w-full py-3 rounded-xl font-semibold text-sm transition"
+              key={s.id}
+              onClick={() => cambiarSector(s.id)}
+              className="px-4 py-1.5 rounded-full text-xs font-medium transition"
               style={{
-                background: puesto.trim() ? "rgba(126,213,111,0.2)" : "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(126,213,111,0.3)",
-                color: puesto.trim() ? "#7ed56f" : "#706a58",
-                cursor: puesto.trim() ? "pointer" : "not-allowed",
+                background: sector === s.id ? "#10b981" : "#1a1f2e",
+                color: sector === s.id ? "#fff" : "#6b7280",
+                border: `1px solid ${sector === s.id ? "#10b981" : "#2d3748"}`,
               }}
             >
-              Empezar entrevista
+              {s.label}
             </button>
-          </div>
-        ) : (
-          /* Chat de entrevista */
-          <div className="flex flex-col gap-3">
-            {/* Info sesión */}
-            <div
-              className="flex items-center justify-between px-4 py-2 rounded-xl text-xs"
-              style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)" }}
-            >
-              <span style={{ color: "#7ed56f" }}>
-                Entrevista para: <strong>{puestoConfirmado}</strong>
-              </span>
-              <button onClick={reiniciar} style={{ color: "#706a58" }} className="hover:text-red-400 transition">
-                Terminar
-              </button>
-            </div>
+          ))}
+        </div>
 
-            {/* Mensajes */}
+        {/* Progreso */}
+        <div>
+          <div className="flex justify-between text-xs mb-1" style={{ color: "#6b7280" }}>
+            <span>Pregunta {idx + 1} de {preguntas.length}</span>
+            <span>{Math.round(((idx) / preguntas.length) * 100)}%</span>
+          </div>
+          <div className="h-1.5 rounded-full" style={{ background: "#1a1f2e" }}>
             <div
-              className="rounded-2xl p-4 flex flex-col gap-3 overflow-y-auto"
+              className="h-1.5 rounded-full transition-all"
+              style={{ background: "#10b981", width: `${(idx / preguntas.length) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Pregunta */}
+        <div className="rounded-2xl p-5" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-base font-medium text-white leading-relaxed flex-1">
+              {preguntas[idx]}
+            </p>
+            {soporteVoz && (
+              <button
+                onClick={leerPregunta}
+                className="p-2 rounded-lg shrink-0"
+                style={{ background: "#0f1117", color: "#10b981" }}
+                title="Escuchar pregunta"
+              >
+                🔊
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Área de respuesta */}
+        <div className="rounded-2xl p-4 space-y-3" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+          <textarea
+            value={texto}
+            onChange={e => setTexto(e.target.value)}
+            placeholder="Escribe tu respuesta aquí..."
+            rows={4}
+            className="w-full text-sm resize-none outline-none"
+            style={{
+              background: "transparent",
+              color: "#e5e7eb",
+              border: "none",
+            }}
+          />
+
+          {/* Botón voz (si disponible) */}
+          {soporteVoz && (
+            <button
+              onClick={toggleVoz}
+              className="w-full py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2"
               style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(126,213,111,0.1)",
-                minHeight: 320,
-                maxHeight: 420,
+                background: escuchando ? "#dc2626" : "#0f1117",
+                color: escuchando ? "#fff" : "#10b981",
+                border: `1px solid ${escuchando ? "#dc2626" : "#10b981"}`,
               }}
             >
-              {mensajes.map((m, i) => (
-                <div
-                  key={i}
-                  className={`flex ${m.rol === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className="max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
-                    style={
-                      m.rol === "user"
-                        ? {
-                            background: "rgba(126,213,111,0.15)",
-                            color: "#e8e0cc",
-                            borderBottomRightRadius: 4,
-                          }
-                        : {
-                            background: "rgba(255,255,255,0.06)",
-                            color: "#c8c0a8",
-                            borderBottomLeftRadius: 4,
-                          }
-                    }
-                  >
-                    {m.rol === "assistant" && (
-                      <span className="text-xs font-semibold block mb-1" style={{ color: "#7ed56f" }}>
-                        Entrevistador
-                      </span>
-                    )}
-                    {m.texto}
-                  </div>
-                </div>
-              ))}
-              {enviando && (
-                <div className="flex justify-start">
-                  <div
-                    className="px-4 py-2.5 rounded-2xl text-sm"
-                    style={{ background: "rgba(255,255,255,0.06)", color: "#706a58" }}
-                  >
-                    <span className="inline-flex gap-1">
-                      <span className="animate-bounce" style={{ animationDelay: "0ms" }}>·</span>
-                      <span className="animate-bounce" style={{ animationDelay: "150ms" }}>·</span>
-                      <span className="animate-bounce" style={{ animationDelay: "300ms" }}>·</span>
-                    </span>
-                  </div>
-                </div>
-              )}
-              <div ref={bottomRef} />
-            </div>
+              {escuchando ? "🔴 Escuchando... (pulsa para parar)" : "🎤 Responder con voz"}
+            </button>
+          )}
+        </div>
 
-            {/* Input */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && enviarRespuesta()}
-                disabled={enviando}
-                placeholder="Escribe tu respuesta..."
-                className="flex-1 rounded-xl px-4 py-3 text-sm outline-none"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(126,213,111,0.2)",
-                  color: "#e8e0cc",
-                }}
-              />
-              <button
-                onClick={enviarRespuesta}
-                disabled={!input.trim() || enviando}
-                className="px-5 py-3 rounded-xl font-medium text-sm transition"
-                style={{
-                  background: input.trim() && !enviando ? "rgba(126,213,111,0.2)" : "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(126,213,111,0.3)",
-                  color: input.trim() && !enviando ? "#7ed56f" : "#706a58",
-                  cursor: input.trim() && !enviando ? "pointer" : "not-allowed",
-                }}
-              >
-                Enviar
-              </button>
-            </div>
+        {/* Feedback */}
+        {feedback && (
+          <div className="rounded-2xl p-4 text-sm whitespace-pre-wrap" style={{ background: "#0d2818", border: "1px solid #065f46", color: "#d1fae5" }}>
+            {feedback}
           </div>
         )}
+
+        {/* Acciones */}
+        <div className="flex gap-3">
+          <button
+            onClick={analizar}
+            disabled={!texto.trim() || analizando}
+            className="flex-1 py-3 rounded-xl font-semibold text-sm transition"
+            style={{
+              background: texto.trim() && !analizando ? "#10b981" : "#1a1f2e",
+              color: texto.trim() && !analizando ? "#fff" : "#6b7280",
+            }}
+          >
+            {analizando ? "Analizando..." : "📊 Analizar respuesta"}
+          </button>
+          <button
+            onClick={siguiente}
+            disabled={!feedback}
+            className="flex-1 py-3 rounded-xl font-semibold text-sm transition"
+            style={{
+              background: feedback ? "#1a1f2e" : "#0f1117",
+              color: feedback ? "#e5e7eb" : "#374151",
+              border: `1px solid ${feedback ? "#2d3748" : "#1a1f2e"}`,
+            }}
+          >
+            {idx < preguntas.length - 1 ? "Siguiente →" : "Finalizar ✓"}
+          </button>
+        </div>
       </div>
     </div>
   );
