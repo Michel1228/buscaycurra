@@ -137,11 +137,52 @@ async function fetchJooble(keyword: string, city: string, page = 1): Promise<Raw
   } catch { return []; }
 }
 
-async function fetchAdzuna(keyword: string, city: string, page = 1): Promise<RawJob[]> {
+// ─── Adzuna multi-país ───────────────────────────────────────────────────────
+
+const ADZUNA_COUNTRIES: Record<string, { code: string; cc: string; name: string }> = {
+  es: { code: "es", cc: "ES", name: "España" },
+  uk: { code: "gb", cc: "UK", name: "Reino Unido" },
+  us: { code: "us", cc: "US", name: "Estados Unidos" },
+  de: { code: "de", cc: "DE", name: "Alemania" },
+  fr: { code: "fr", cc: "FR", name: "Francia" },
+  au: { code: "au", cc: "AU", name: "Australia" },
+};
+
+// Keywords en inglés para países no hispanohablantes
+const GLOBAL_KEYWORDS = [
+  "developer", "nurse", "driver", "cleaner", "teacher", "accountant", "sales",
+  "manager", "engineer", "electrician", "chef", "waiter", "security", "receptionist",
+  "administrator", "labourer", "carpenter", "plumber", "mechanic", "designer",
+  "analyst", "marketing", "hr", "consultant", "technician", "assistant", "supervisor",
+  "operator", "clerk", "cook", "warehouse", "delivery", "retail", "barista",
+  "data scientist", "project manager", "software engineer", "devops", "full stack",
+  "frontend", "backend", "cloud", "cyber security", "machine learning",
+];
+
+// Keywords en francés para FR
+const FR_KEYWORDS = [
+  "developpeur", "infirmier", "chauffeur", "nettoyage", "enseignant", "comptable",
+  "vendeur", "manager", "ingenieur", "electricien", "chef", "serveur", "securite",
+  "receptionniste", "administrateur", "ouvrier", "menuisier", "plombier", "mecanicien",
+  "analyste", "marketing", "rh", "consultant", "technicien", "assistant", "superviseur",
+  "operateur", "commis", "cuisinier", "entrepot", "livraison", "commercial",
+];
+
+// Keywords en alemán para DE
+const DE_KEYWORDS = [
+  "entwickler", "krankenpfleger", "fahrer", "reinigung", "lehrer", "buchhalter",
+  "verkaufer", "manager", "ingenieur", "elektriker", "koch", "kellner", "sicherheit",
+  "rezeptionist", "verwaltung", "arbeiter", "schreiner", "klempner", "mechaniker",
+  "analyst", "marketing", "personal", "berater", "techniker", "assistent",
+  "lager", "lieferung", "einzelhandel", "pflege", "produktion", "logistik",
+];
+
+async function fetchAdzuna(keyword: string, city: string, page = 1, countryCode = "es"): Promise<RawJob[]> {
   const keyInfo = await getAdzunaKey();
   if (!keyInfo) return [];
+  const cc = ADZUNA_COUNTRIES[countryCode]?.code || "es";
   try {
-    const url = `https://api.adzuna.com/v1/api/jobs/es/search/${page}?app_id=${keyInfo.id}&app_key=${keyInfo.key}&results_per_page=50&what=${encodeURIComponent(keyword)}&where=${encodeURIComponent(city)}&content-type=application/json`;
+    const url = `https://api.adzuna.com/v1/api/jobs/${cc}/search/${page}?app_id=${keyInfo.id}&app_key=${keyInfo.key}&results_per_page=50&what=${encodeURIComponent(keyword)}&where=${encodeURIComponent(city)}&content-type=application/json`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) { await reportFailure("adzuna", keyInfo.idx, res.status); return []; }
     const data = await res.json();
@@ -150,17 +191,76 @@ async function fetchAdzuna(keyword: string, city: string, page = 1): Promise<Raw
       const location = j.location as Record<string, unknown> | undefined;
       const salMin = j.salary_min ? Math.round(j.salary_min as number) : 0;
       const salMax = j.salary_max ? Math.round(j.salary_max as number) : 0;
+      const salaryStr = salMin && salMax ? `${salMin} - ${salMax}` : "Ver en oferta";
       return {
-        source: "Adzuna",
+        source: `ADZUNA_${ADZUNA_COUNTRIES[countryCode]?.cc || "ES"}`,
         url: (j.redirect_url as string) || "",
         title: ((j.title as string) || keyword).replace(/<[^>]+>/g, "").slice(0, 200),
         company: (company?.display_name || "Ver en oferta").slice(0, 200),
         city: ((location?.display_name as string) || city).slice(0, 100),
         description: ((j.description as string) || "").replace(/<[^>]+>/g, "").slice(0, 1000),
-        salary: salMin && salMax ? `${salMin}€ - ${salMax}€/año` : "Ver en oferta",
+        salary: salaryStr,
       };
     });
   } catch { return []; }
+}
+
+// ─── Sync masivo Adzuna multi-país ────────────────────────────────────────────
+
+export interface AdzunaCountryConfig {
+  code: string;
+  keywords: string[];
+  cities: string[];
+}
+
+export function getAdzunaCountryConfig(countryCode: string): AdzunaCountryConfig {
+  const configs: Record<string, AdzunaCountryConfig> = {
+    es: { code: "es", keywords: SECTORES.flatMap(s => s.keywords).slice(0, 50), cities: CIUDADES.slice(0, 40) },
+    uk: { code: "uk", keywords: GLOBAL_KEYWORDS, cities: ["London","Manchester","Birmingham","Leeds","Liverpool","Bristol","Edinburgh","Glasgow","Cardiff","Belfast","Sheffield","Nottingham","Newcastle","Brighton","Oxford","Cambridge","Leicester","Coventry","Southampton","Portsmouth","Aberdeen","Dundee","Swansea","Exeter","York","Norwich","Plymouth","Bath","Hull","Stoke"] },
+    us: { code: "us", keywords: GLOBAL_KEYWORDS, cities: ["New York","Los Angeles","Chicago","Houston","Phoenix","Philadelphia","San Antonio","San Diego","Dallas","San Jose","Austin","Jacksonville","Fort Worth","Columbus","Charlotte","Indianapolis","San Francisco","Seattle","Denver","Nashville","Oklahoma City","El Paso","Washington","Boston","Las Vegas","Portland","Memphis","Louisville","Baltimore","Milwaukee"] },
+    de: { code: "de", keywords: [...GLOBAL_KEYWORDS, ...DE_KEYWORDS], cities: ["Berlin","Munich","Hamburg","Frankfurt","Cologne","Stuttgart","Dusseldorf","Leipzig","Dortmund","Essen","Bremen","Dresden","Hannover","Nuremberg","Bonn","Mannheim","Karlsruhe","Augsburg","Wiesbaden","Munster"] },
+    fr: { code: "fr", keywords: [...GLOBAL_KEYWORDS, ...FR_KEYWORDS], cities: ["Paris","Lyon","Marseille","Toulouse","Nice","Nantes","Strasbourg","Montpellier","Bordeaux","Lille","Rennes","Reims","Saint-Etienne","Le Havre","Toulon","Grenoble","Dijon","Angers","Nimes","Villeurbanne"] },
+    au: { code: "au", keywords: GLOBAL_KEYWORDS, cities: ["Sydney","Melbourne","Brisbane","Perth","Adelaide","Gold Coast","Canberra","Newcastle","Hobart","Darwin","Cairns","Townsville","Geelong","Wollongong","Sunshine Coast"] },
+  };
+  return configs[countryCode] || configs.es;
+}
+
+export async function syncAdzunaCountry(
+  countryCode: string,
+  batchSize: number = 30,
+  offset: number = 0
+): Promise<{ inserted: number; fetched: number; nextOffset: number; done: boolean; country: string }> {
+  const config = getAdzunaCountryConfig(countryCode);
+  const combos: Array<{ keyword: string; city: string }> = [];
+  for (const kw of config.keywords) {
+    for (const city of config.cities) {
+      combos.push({ keyword: kw, city });
+    }
+  }
+  
+  const batch = combos.slice(offset, offset + batchSize);
+  let totalInserted = 0;
+  let totalFetched = 0;
+
+  for (const { keyword, city } of batch) {
+    const raw = await fetchAdzuna(keyword, city, 1, countryCode);
+    totalFetched += raw.length;
+    if (raw.length > 0) {
+      const inserted = await upsertJobs(raw, "OTRO");
+      totalInserted += inserted;
+    }
+    // Pequeña pausa para no saturar la API
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  const nextOffset = offset + batchSize;
+  return {
+    inserted: totalInserted,
+    fetched: totalFetched,
+    nextOffset,
+    done: nextOffset >= combos.length,
+    country: ADZUNA_COUNTRIES[countryCode]?.name || countryCode,
+  };
 }
 
 async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<RawJob[]> {
