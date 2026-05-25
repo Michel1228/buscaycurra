@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { PAISES, LISTA_PAISES, formatearSalario, convertirSalario } from "@/lib/paises";
+import { PAISES, LISTA_PAISES, SLUG_A_CODIGO, formatearSalario, convertirSalario } from "@/lib/paises";
 import { getPool } from "@/lib/db";
 import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import Link from "next/link";
@@ -29,7 +29,8 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { pais: paisParam } = await params;
-  const codigo = paisParam.toUpperCase();
+  // Primero buscar por slug (ej: "estados-unidos"), luego por código (ej: "us")
+  const codigo = SLUG_A_CODIGO[paisParam.toLowerCase()] || paisParam.toUpperCase();
   const pais = PAISES[codigo];
   if (!pais) return { title: "País no encontrado — BuscayCurra" };
 
@@ -44,12 +45,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateStaticParams() {
-  return LISTA_PAISES.map((p) => ({ pais: p.codigo.toLowerCase() }));
+  // Generar URLs con slug amigable (ej: /trabajar-en/estados-unidos)
+  // y con código ISO (ej: /trabajar-en/us) para compatibilidad
+  const slugs = LISTA_PAISES.map((p) => ({ pais: p.slug }));
+  const codes = LISTA_PAISES.map((p) => ({ pais: p.codigo.toLowerCase() }));
+  return [...slugs, ...codes];
 }
 
 export default async function TrabajarEnPaisPage({ params }: Props) {
   const { pais: paisParam } = await params;
-  const codigo = paisParam.toUpperCase();
+  // Primero buscar por slug (ej: "estados-unidos"), luego por código (ej: "us")
+  const codigo = SLUG_A_CODIGO[paisParam.toLowerCase()] || paisParam.toUpperCase();
   const pais = PAISES[codigo];
 
   // Obtener ofertas reales de este país de la BD

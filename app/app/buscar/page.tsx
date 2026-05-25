@@ -28,8 +28,10 @@ function BuscarPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
-  const [ubicacion, setUbicacion] = useState(searchParams.get("location") || "");
+  const urlKeyword = searchParams.get("keyword") || "";
+  const urlUbicacion = searchParams.get("location") || searchParams.get("ubicacion") || "";
+  const [keyword, setKeyword] = useState(urlKeyword);
+  const [ubicacion, setUbicacion] = useState(urlUbicacion);
   const [geoDetected, setGeoDetected] = useState(false);
   const [jornada, setJornada] = useState("");
   const [experiencia, setExperiencia] = useState("");
@@ -76,7 +78,7 @@ function BuscarPageInner() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
-      if (locationFetched.current || searchParams.get("location")) return;
+      if (locationFetched.current || searchParams.get("location") || searchParams.get("ubicacion")) return;
       locationFetched.current = true;
 
       const { data: perfil } = await getSupabaseBrowser().from("profiles")
@@ -113,6 +115,24 @@ function BuscarPageInner() {
     init();
     return () => { mountedRef.current = false; };
   }, [router, searchParams]);
+
+  // Auto-disparar búsqueda al entrar desde una página SEO con params pre-rellenados
+  const autoSearched = useRef(false);
+  useEffect(() => {
+    if (autoSearched.current) return;
+    if (urlKeyword || urlUbicacion) {
+      autoSearched.current = true;
+      // Pequeño delay para que el usuario esté autenticado y el DOM listo
+      const t = setTimeout(() => {
+        setKeyword(urlKeyword);
+        setUbicacion(urlUbicacion);
+        // Disparamos submit manualmente
+        const form = document.querySelector('form') as HTMLFormElement;
+        if (form) form.requestSubmit();
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [urlKeyword, urlUbicacion]);
 
   async function buscarJoobleCliente(kw: string, loc: string): Promise<PropiedadesJobCard[]> {
     // Solo buscar en Jooble si hay keyword, no para búsquedas solo por ciudad

@@ -19,6 +19,7 @@ export interface PaisConfig {
   formatoDecimal: string;// Separador decimal
   ciudades: string[];    // Principales ciudades
   keywordsLaborales: string[]; // Keywords de búsqueda en idioma local
+  slug: string;                // URL amigable en español (ej: estados-unidos)
 }
 
 export const PAISES: Record<string, PaisConfig> = {
@@ -38,6 +39,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Madrid", "Barcelona", "Valencia", "Sevilla", "Bilbao", "Málaga", "Zaragoza"],
     keywordsLaborales: ["camarero", "programador", "administrativo", "comercial", "enfermero"],
+    slug: "espana",
   },
   DE: {
     codigo: "DE",
@@ -55,6 +57,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Berlin", "München", "Hamburg", "Frankfurt", "Köln", "Stuttgart", "Düsseldorf"],
     keywordsLaborales: ["Kellner", "Programmierer", "Bürokaufmann", "Vertrieb", "Krankenpfleger"],
+    slug: "alemania",
   },
   FR: {
     codigo: "FR",
@@ -72,6 +75,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Paris", "Lyon", "Marseille", "Toulouse", "Bordeaux", "Lille", "Nantes"],
     keywordsLaborales: ["serveur", "développeur", "administratif", "commercial", "infirmier"],
+    slug: "francia",
   },
   IT: {
     codigo: "IT",
@@ -89,6 +93,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Roma", "Milano", "Napoli", "Torino", "Firenze", "Bologna", "Venezia"],
     keywordsLaborales: ["cameriere", "programmatore", "amministrativo", "commerciale", "infermiere"],
+    slug: "italia",
   },
   PT: {
     codigo: "PT",
@@ -106,6 +111,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Lisboa", "Porto", "Braga", "Coimbra", "Faro", "Aveiro", "Setúbal"],
     keywordsLaborales: ["empregado", "programador", "administrativo", "comercial", "enfermeiro"],
+    slug: "portugal",
   },
   NL: {
     codigo: "NL",
@@ -123,6 +129,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven", "Groningen"],
     keywordsLaborales: ["ober", "programmeur", "administratief", "verkoper", "verpleegkundige"],
+    slug: "paises-bajos",
   },
   PL: {
     codigo: "PL",
@@ -140,6 +147,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Warszawa", "Kraków", "Wrocław", "Gdańsk", "Poznań", "Łódź"],
     keywordsLaborales: ["kelner", "programista", "administracyjny", "sprzedawca", "pielęgniarka"],
+    slug: "polonia",
   },
   SE: {
     codigo: "SE",
@@ -157,6 +165,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Stockholm", "Göteborg", "Malmö", "Uppsala", "Linköping", "Örebro"],
     keywordsLaborales: ["servitör", "programmerare", "administratör", "säljare", "sjuksköterska"],
+    slug: "suecia",
   },
   DK: {
     codigo: "DK",
@@ -174,6 +183,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["København", "Aarhus", "Odense", "Aalborg", "Esbjerg"],
     keywordsLaborales: ["tjener", "programmør", "administrativ", "sælger", "sygeplejerske"],
+    slug: "dinamarca",
   },
   NO: {
     codigo: "NO",
@@ -191,6 +201,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Oslo", "Bergen", "Trondheim", "Stavanger", "Tromsø"],
     keywordsLaborales: ["servitør", "programmerer", "administrativ", "selger", "sykepleier"],
+    slug: "noruega",
   },
   FI: {
     codigo: "FI",
@@ -208,6 +219,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Helsinki", "Espoo", "Tampere", "Turku", "Oulu"],
     keywordsLaborales: ["tarjoilija", "ohjelmoija", "toimistotyöntekijä", "myyjä", "sairaanhoitaja"],
+    slug: "finlandia",
   },
   IE: {
     codigo: "IE",
@@ -225,6 +237,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ".",
     ciudades: ["Dublin", "Cork", "Galway", "Limerick", "Waterford"],
     keywordsLaborales: ["waiter", "developer", "administrator", "sales", "nurse"],
+    slug: "irlanda",
   },
   BE: {
     codigo: "BE",
@@ -242,6 +255,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Brussel", "Antwerpen", "Gent", "Liège", "Brugge"],
     keywordsLaborales: ["ober", "programmeur", "administratief", "verkoper", "verpleegkundige"],
+    slug: "belgica",
   },
   AT: {
     codigo: "AT",
@@ -259,6 +273,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ",",
     ciudades: ["Wien", "Graz", "Linz", "Salzburg", "Innsbruck"],
     keywordsLaborales: ["Kellner", "Programmierer", "Bürokaufmann", "Verkäufer", "Krankenpfleger"],
+    slug: "austria",
   },
   CH: {
     codigo: "CH",
@@ -276,6 +291,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ".",
     ciudades: ["Zürich", "Genf", "Basel", "Bern", "Lausanne"],
     keywordsLaborales: ["Kellner", "Programmierer", "Bürokaufmann", "Verkäufer", "Krankenpfleger"],
+    slug: "suiza",
   },
 
   // ===== FUERA DE EUROPA — MEJORES SALARIOS =====
@@ -296,6 +312,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ".",
     ciudades: ["London", "Manchester", "Birmingham", "Edinburgh", "Glasgow", "Leeds", "Bristol"],
     keywordsLaborales: ["waiter", "developer", "administrator", "sales", "nurse"],
+    slug: "reino-unido",
   },
 
   US: {
@@ -314,6 +331,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ".",
     ciudades: ["New York", "Los Angeles", "Chicago", "Houston", "Miami", "San Francisco", "Boston"],
     keywordsLaborales: ["waiter", "developer", "administrative", "sales", "nurse"],
+    slug: "estados-unidos",
   },
 
   CA: {
@@ -332,6 +350,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ".",
     ciudades: ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa", "Edmonton", "Québec"],
     keywordsLaborales: ["waiter", "developer", "administrative", "sales", "nurse"],
+    slug: "canada",
   },
 
   AU: {
@@ -350,6 +369,7 @@ export const PAISES: Record<string, PaisConfig> = {
     formatoDecimal: ".",
     ciudades: ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Gold Coast", "Canberra"],
     keywordsLaborales: ["waiter", "developer", "administrator", "sales", "nurse"],
+    slug: "australia",
   },
 };
 
@@ -394,4 +414,10 @@ export function formatearSalario(cantidad: number, codigoPais: string): string {
 export function convertirSalario(eurAmount: number, codigoPais: string): number {
   const pais = PAISES[codigoPais] || PAISES.ES;
   return Math.round(eurAmount * pais.tasaCambioEUR);
+}
+
+/** Mapa inverso: slug en español → código ISO. Ej: "estados-unidos" → "US" */
+export const SLUG_A_CODIGO: Record<string, string> = {};
+for (const [codigo, pais] of Object.entries(PAISES)) {
+  SLUG_A_CODIGO[pais.slug] = codigo;
 }

@@ -101,7 +101,7 @@ export default function JobCard({
       if (!cvData.cv || Object.keys(cvData.cv).length === 0) {
         setEstadoEnvio("sin_cv");
         setErrorMsg("No tienes CV. Créalo en Guzzi primero 🐛");
-        setTimeout(() => setEstadoEnvio("idle"), 5000);
+        // No auto-reset: mantener mensaje visible hasta que el usuario actúe
         return;
       }
 

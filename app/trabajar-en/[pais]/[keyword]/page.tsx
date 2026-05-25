@@ -5,7 +5,7 @@
  */
 import { Metadata } from "next";
 import { getPool } from "@/lib/db";
-import { PAISES, LISTA_PAISES, formatearSalario } from "@/lib/paises";
+import { PAISES, LISTA_PAISES, SLUG_A_CODIGO, formatearSalario } from "@/lib/paises";
 import Link from "next/link";
 
 interface Props {
@@ -52,7 +52,7 @@ function buildCountryFilter(codigo: string): { sourceFilter: string; cityFilter:
 // ─── Metadata ──────────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { pais: paisParam, keyword } = await params;
-  const codigo = paisParam.toUpperCase();
+  const codigo = SLUG_A_CODIGO[paisParam.toLowerCase()] || paisParam.toUpperCase();
   const pais = PAISES[codigo];
   const keywordFmt = decodeURIComponent(keyword).replace(/-/g, " ");
   const keywordCapitalized = keywordFmt.charAt(0).toUpperCase() + keywordFmt.slice(1);
@@ -80,7 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // ─── Página ────────────────────────────────────────────────────────────────
 export default async function TrabajarEnKeywordPage({ params }: Props) {
   const { pais: paisParam, keyword } = await params;
-  const codigo = paisParam.toUpperCase();
+  const codigo = SLUG_A_CODIGO[paisParam.toLowerCase()] || paisParam.toUpperCase();
   const pais = PAISES[codigo];
 
   if (!pais) {

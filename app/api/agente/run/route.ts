@@ -37,10 +37,10 @@ export async function POST(req: NextRequest) {
   }[] = [];
 
   try {
-    // 1. Obtener usuarios con CV y alertas activas
+    // 1. Obtener usuarios con CV
     const { data: cvs } = await supabase
       .from("cvs")
-      .select("user_id, titulo, ciudad, sector")
+      .select("user_id, file_name, text_content")
       .not("user_id", "is", null);
 
     if (!cvs?.length) {
@@ -49,9 +49,18 @@ export async function POST(req: NextRequest) {
 
     for (const cv of cvs) {
       try {
-        // 2. Buscar ofertas para este perfil
-        const puesto = cv.titulo || "general";
-        const ciudad = cv.ciudad || "";
+        // 2. Obtener perfil para preferencias
+        const { data: perfil } = await supabase
+          .from("profiles")
+          .select("ciudad, sector, whatsapp_phone, whatsapp_alertas, email")
+          .eq("id", cv.user_id)
+          .single();
+
+        // Extraer puesto del nombre del archivo CV
+        const rawFileName = (cv.file_name || "").replace(/^CV[_]?/i, "").replace(/\.(pdf|docx?)$/i, "");
+        const puesto = rawFileName || "general";
+        const ciudad = perfil?.ciudad || "";
+        const sector = perfil?.sector || "";
         const ofertas = await buscarOfertasReales(puesto, ciudad, 10);
 
         if (!ofertas.length) {
@@ -63,13 +72,6 @@ export async function POST(req: NextRequest) {
           });
           continue;
         }
-
-        // 3. Obtener perfil para preferencias de notificación
-        const { data: perfil } = await supabase
-          .from("profiles")
-          .select("whatsapp_phone, whatsapp_alertas, email")
-          .eq("id", cv.user_id)
-          .single();
 
         let cvsEnviados = 0;
 
