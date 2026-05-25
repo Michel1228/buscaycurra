@@ -25,7 +25,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-sync-secret") ?? req.nextUrl?.searchParams?.get("secret");
+  const secret = req.headers.get("x-sync-secret");
   if (secret !== process.env.ADMIN_SECRET) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
