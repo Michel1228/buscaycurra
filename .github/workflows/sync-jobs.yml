@@ -8,32 +8,40 @@ on:
     - cron: '0 */4 * * 0,6'
   workflow_dispatch:
     inputs:
-      source:
-        description: 'Fuente (careerjet/adzuna)'
-        default: 'careerjet'
+      country:
+        description: 'País (es/uk/us/de/fr/au)'
+        default: 'uk'
         required: false
-      offset:
-        description: 'Offset de inicio'
-        default: '0'
+      batchSize:
+        description: 'Combos por ronda'
+        default: '30'
         required: false
 
 jobs:
-  sync-careerjet:
-    name: "Careerjet — offset ${{ matrix.offset }}"
+  sync-adzuna:
+    name: "Adzuna ${{ inputs.country || 'rotativo' }} — ${{ inputs.batchSize || 30 }} combos"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        offset: [0, 40, 80, 120, 160, 200, 240, 280]
+        include:
+          - { country: 'uk', batchSize: 30 }
+          - { country: 'us', batchSize: 30 }
+          - { country: 'de', batchSize: 30 }
+          - { country: 'fr', batchSize: 30 }
+          - { country: 'es', batchSize: 30 }
+          - { country: 'au', batchSize: 30 }
     steps:
-      - name: Sync batch
+      - name: Sync Adzuna country
         run: |
-          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-run" \
+          COUNTRY="${{ inputs.country || matrix.country }}"
+          BATCH="${{ inputs.batchSize || matrix.batchSize }}"
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-adzuna-global" \
             -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
             -H "Content-Type: application/json" \
-            -d "{\"source\":\"careerjet\",\"batchSize\":40,\"offset\":${{ matrix.offset }},\"page\":1}" \
-            --max-time 90)
+            -d "{\"country\":\"${COUNTRY}\",\"batchSize\":${BATCH}}" \
+            --max-time 120)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
-          echo "HTTP $HTTP_CODE: $BODY"
+          echo "${COUNTRY}: HTTP $HTTP_CODE — $BODY"
           if [ "$HTTP_CODE" != "200" ]; then exit 1; fi
