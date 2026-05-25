@@ -403,6 +403,89 @@ interface SyncResult {
   muse: { total: number; pageCount: number; inserted: number; pages: number };
   jobicy: { inserted: number };
   remotive: { inserted: number };
+  devitjobs: Record<string, number>;
+}
+
+// ─── DEVITJOBS NETWORK (XML feeds, tech jobs con salario) ────────────────────
+
+const DEVITJOBS_FEEDS: Record<string, string> = {
+  "UK": "https://devitjobs.uk/job_feed.xml",
+  "DE": "https://germantechjobs.de/job_feed.xml",
+  "FR": "https://devitjobs.fr/job_feed.xml",
+  "NL": "https://devitjobs.nl/job_feed.xml",
+  "CH": "https://swissdevjobs.ch/job_feed.xml",
+};
+
+function parseXMLJobs(xml: string): RawJob[] {
+  // Simple regex-based XML parser (no native XML parser in Node standard lib)
+  const jobs: RawJob[] = [];
+  const jobBlocks = xml.split(/<job\s/);
+  
+  for (let i = 1; i < jobBlocks.length; i++) {
+    try {
+      const block = jobBlocks[i];
+      const getTag = (tag: string): string => {
+        const m = block.match(new RegExp(`<${tag}[^>]*>\\s*(?:<!\\[CDATA\\[)?([^\\]<>]*?)(?:\\]\\]>)?\\s*</${tag}>`, 'i'));
+        return m ? m[1].trim() : '';
+      };
+      
+      const title = getTag('title') || getTag('name');
+      const company = getTag('company') || getTag('company-name');
+      const country = getTag('country');
+      const city = getTag('city');
+      const location = getTag('location') || city;
+      const salary = getTag('salary');
+      const description = getTag('description');
+      const url = getTag('url') || getTag('link') || getTag('apply_url');
+      const pubdate = getTag('pubdate');
+      const jobtype = getTag('jobtype') || getTag('job-type');
+      
+      if (!title || !company) continue;
+      
+      const countryMap: Record<string, string> = {
+        'united kingdom': 'UK', 'uk': 'UK', 'england': 'UK',
+        'germany': 'DE', 'deutschland': 'DE',
+        'france': 'FR',
+        'netherlands': 'NL', 'the netherlands': 'NL', 'nederland': 'NL',
+        'switzerland': 'CH', 'schweiz': 'CH', 'suisse': 'CH',
+      };
+      
+      let countryCode = countryMap[country?.toLowerCase()] || null;
+      const locationStr = [location, country].filter(Boolean).join(', ');
+      const fullTitle = jobtype ? `${title} (${jobtype})` : title;
+      
+      jobs.push({
+        titulo: fullTitle.slice(0, 255),
+        empresa: company.slice(0, 255),
+        ubicacion: locationStr.slice(0, 255),
+        salario: salary || '',
+        descripcion: description?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 5000) || '',
+        url: url || '',
+        fecha: pubdate || new Date().toISOString(),
+        fuente: `DEVITJOBS`,
+        country: countryCode,
+      });
+    } catch {
+      // skip malformed entries
+    }
+  }
+  return jobs;
+}
+
+async function fetchDevITJobs(countryCode: string, feedUrl: string): Promise<RawJob[]> {
+  try {
+    const res = await fetch(feedUrl, {
+      headers: { "User-Agent": "BuscayCurra/1.0 (job aggregator; contacto@buscaycurra.es)" },
+    });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const jobs = parseXMLJobs(xml);
+    console.log(`[DevITJobs] ${countryCode}: ${jobs.length} jobs from XML feed`);
+    return jobs;
+  } catch (e: any) {
+    console.error(`[DevITJobs] Error ${countryCode}:`, e?.message?.slice(0, 100));
+    return [];
+  }
 }
 
 export async function syncGlobalFreeAPIs(musePages: number = 10): Promise<SyncResult> {
@@ -431,11 +514,19 @@ export async function syncGlobalFreeAPIs(musePages: number = 10): Promise<SyncRe
   const remotiveJobs = await fetchRemotive(100);
   const remotiveInserted = await guardarOfertas(remotiveJobs);
 
-  console.log(`[GlobalAPIs] Sync completado — Muse: ${museInserted}, Jobicy: ${jobicyInserted}, Remotive: ${remotiveInserted}`);
+  // DevITJobs network (UK, DE, FR, NL, CH)
+  const devitjobs: Record<string, number> = {};
+  for (const [cc, feedUrl] of Object.entries(DEVITJOBS_FEEDS)) {
+    const jobs = await fetchDevITJobs(cc, feedUrl);
+    devitjobs[cc] = await guardarOfertas(jobs);
+  }
+
+  console.log(`[GlobalAPIs] Sync completado — Muse: ${museInserted}, Jobicy: ${jobicyInserted}, Remotive: ${remotiveInserted}, DevITJobs: ${Object.values(devitjobs).reduce((a,b) => a+b, 0)}`);
 
   return {
     muse: { total: museTotal, pageCount: musePageCount, inserted: museInserted, pages: musePages },
     jobicy: { inserted: jobicyInserted },
     remotive: { inserted: remotiveInserted },
+    devitjobs,
   };
 }
