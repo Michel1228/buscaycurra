@@ -450,7 +450,7 @@ function parseXMLJobs(xml: string): RawJob[] {
         'switzerland': 'CH', 'schweiz': 'CH', 'suisse': 'CH',
       };
       
-      let countryCode = countryMap[country?.toLowerCase()] || null;
+      let countryCode: string | undefined = countryMap[country?.toLowerCase()] || undefined;
       const locationStr = [location, country].filter(Boolean).join(', ');
       const fullTitle = jobtype ? `${title} (${jobtype})` : title;
       
