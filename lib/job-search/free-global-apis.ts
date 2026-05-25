@@ -46,7 +46,7 @@ const CITY_COUNTRY_MAP: Record<string, string> = {
   "halifax": "CA", "mississauga": "CA", "brampton": "CA", "hamilton": "CA",
   // Australia
   "sydney": "AU", "melbourne": "AU", "brisbane": "AU", "perth": "AU",
-  "adelaide": "AU", "gold coast": "AU", "canberra": "AU", "newcastle": "AU",
+  "adelaide": "AU", "gold coast": "AU", "canberra": "AU",
   // Germany
   "berlin": "DE", "munich": "DE", "hamburg": "DE", "frankfurt": "DE",
   "cologne": "DE", "stuttgart": "DE", "dusseldorf": "DE", "leipzig": "DE",
@@ -92,7 +92,7 @@ const CITY_COUNTRY_MAP: Record<string, string> = {
   // Mexico
   "mexico city": "MX", "guadalajara": "MX", "monterrey": "MX",
   // Argentina
-  "buenos aires": "AR", "cordoba": "AR", "rosario": "AR",
+  "buenos aires": "AR", "rosario": "AR",
   // Chile
   "santiago": "CL",
   // Colombia
