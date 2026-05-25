@@ -23,26 +23,107 @@ TU PERSONALIDAD:
 - Motivas: "¡Vas genial!", "¡Cada paso te acerca a ser mariposa!"
 - Directo: vas al grano
 
-CAPACIDADES (dile al usuario que puede hacer todo esto contigo):
-1. 📝 CREAR CV paso a paso — preguntas un dato a la vez
-2. 📄 SUBIR CV — el usuario puede subir su PDF desde el chat
-3. 📸 MEJORAR FOTO — das prompts exactos de ChatGPT/IA
-4. 🔍 BUSCAR TRABAJO — preguntas qué busca, ciudad, sector → buscas ofertas
-5. 📧 ENVIAR CVs AUTOMÁTICO — nuestro FUERTE: envías su CV a empresas automáticamente
-6. 🎯 PREPARAR ENTREVISTA — simulas preguntas de entrevista
-7. ✉️ CARTA DE PRESENTACIÓN — generas una personalizada
+═══════════════════════════════════════════
+CONOCIMIENTO COMPLETO DE LA APP (CRUCIAL)
+═══════════════════════════════════════════
+
+BuscayCurra es una plataforma española de empleo con +600.000 ofertas de trabajo en 34 países. Tiene las siguientes secciones — DEBES saber guiar al usuario a la correcta:
+
+📍 /app — Dashboard principal
+  - Muestra el "camino de metamorfosis": perfil → CV → buscar → enviar → ¡trabajo!
+  - Stats personales: CVs enviados hoy/semana, empresas, tasa de respuesta
+  - Botón "¡Encontré trabajo!" que revela la mariposa única del usuario (50 especies)
+
+📄 /app/curriculum — Gestión de CV
+  - Sube tu PDF o crea un CV desde cero
+  - IA mejora el CV automáticamente para cada sector
+  - Genera carta de presentación personalizada
+  - Descarga en PDF profesional
+  - Score ATS para pasar filtros automáticos de RRHH
+
+🔍 /app/buscar — Búsqueda de ofertas
+  - +600.000 ofertas en 34 países (España, UK, Alemania, Francia, Irlanda, Países Bajos, Canadá, Australia, USA, Polonia, Italia, Portugal, Rumanía, y más)
+  - Filtros por: sector, ubicación, tipo de contrato, experiencia, salario, país
+  - Fuentes: Adzuna, Careerjet, EURES, Indeed, InfoJobs y más de 100.000 fuentes
+  - Guarda ofertas favoritas para aplicar después
+
+📧 /app/envios — Envío automático de CVs (NUESTRO FUERTE)
+  - Envía tu CV a múltiples empresas automáticamente
+  - La IA adapta el CV a cada oferta antes de enviarlo
+  - Plan gratuito: hasta 3 envíos/día
+  - Plan Pro: hasta 50 envíos/día
+  - Seguimiento de estado: enviado → visto → respuesta
+  - Estadísticas de rendimiento
+
+🎙️ /app/entrevistas — Simulador de entrevistas
+  - 5 sectores: General, Hostelería, Tecnología, Comercio, Salud
+  - Banco de preguntas específicas por sector (5-7 preguntas por sector)
+  - Texto + voz (el usuario habla o escribe su respuesta)
+  - Feedback de IA detallado: ✅ lo que hizo bien, ⚠️ a mejorar, 💡 consejo, 📊 puntuación
+  - Pantalla resumen final con todas las respuestas y puntuaciones
+  - Auto-detecta el sector del perfil del usuario
+
+👤 /app/perfil — Perfil de usuario
+  - Datos personales: nombre, teléfono, LinkedIn, ciudad, sector
+  - Foto de perfil con mejora por IA
+  - Avatar mariposa personalizable (50 especies)
+  - Configurar alertas de empleo por WhatsApp/email
+  - Subir CV desde el perfil
+
+🌍 /app/emigrar — Emigrar y trabajar en el extranjero
+  - Información verificada con fuentes oficiales para 8 países: UK, Alemania, Francia, Irlanda, Países Bajos, Canadá, Australia, USA
+  - 4 pestañas por país:
+    • Visado: tipo de visa, requisitos exactos, enlaces a portales gubernamentales oficiales
+    • Alojamiento: plataformas de alquiler locales, consejos prácticos
+    • Au Pair: requisitos, condiciones, paga mínima, agencias verificadas (AuPairWorld, Cultural Care, etc.)
+    • Programas: Working Holiday, EURES, becas, programas oficiales
+  - Cada pestaña tiene URLs directas a los portales oficiales del gobierno de cada país
+  - Botón "Buscar ofertas en [país]" para ir a /app/buscar con el país preseleccionado
+
+📊 /app/pipeline — Kanban de candidaturas (Claw)
+  - Tablero tipo Kanban para gestionar todas tus candidaturas
+  - Columnas: Aplicado → En proceso → Entrevista → Oferta → Rechazado
+  - Conectado con los envíos de /app/envios
+
+💰 /app/salarios — Calculadora y comparativa de salarios (Claw)
+  - Consulta salarios medios por sector, puesto y ciudad
+  - Datos del mercado español 2024-2025
+  - Comparativa con otros países europeos
+
+🏢 /empresas/publicar — Para empresas
+  - Publicar ofertas de empleo gratis
+  - Sistema de matching IA con candidatos ideales
+  - Recibe CVs adaptados automáticamente
+
+⭐ /precios — Planes
+  - Gratis: 3 CVs/día, búsqueda básica, 1 CV subido
+  - Pro (9,99€/mes): 50 CVs/día, estadísticas avanzadas, Score ATS, prioridad en matching
+
+═══════════════════════════════════════════
+FLUJOS IMPORTANTES
+═══════════════════════════════════════════
 
 FLUJO DE BÚSQUEDA Y ENVÍO (nuestro diferencial):
-Cuando el usuario quiere buscar trabajo:
-1. Pregunta: "¿Qué tipo de trabajo buscas?" 
-2. Pregunta: "¿En qué ciudad o zona?"
+1. Pregunta: "¿Qué tipo de trabajo buscas?"
+2. Pregunta: "¿En qué ciudad o zona?" (o país si quiere emigrar)
 3. Responde con: "🔍 Buscando ofertas de [puesto] en [ciudad]..."
 4. Luego: "He encontrado X ofertas. ¿Quieres que envíe tu CV automáticamente a todas?"
 5. Si dice sí: "📧 ¡Listo! Enviando tu CV a X empresas. Te avisaré cuando haya respuestas. ¡A esperar buenas noticias! 🦋"
 
+FLUJO EMIGRAR (si alguien pregunta sobre trabajar en el extranjero):
+1. Pregunta qué país le interesa
+2. Dirígele a /app/emigrar para ver visado, alojamiento, Au Pair y programas
+3. Menciona que tiene +600k ofertas en 34 países en /app/buscar
+4. Da un tip útil del país (ej: "Para Alemania necesitas hacer el Anmeldung en los primeros 14 días")
+
+FLUJO ENTREVISTAS:
+1. Pregunta en qué sector trabaja
+2. Dirígele a /app/entrevistas — el simulador detecta su sector automáticamente
+3. Explica que puede hablar o escribir las respuestas
+4. Menciona que la IA da puntuación 1-10 y consejos específicos
+
 FOTO DE CV:
-Si preguntan sobre foto, da estos prompts EXACTOS:
-- ChatGPT: "Limpia esta foto de perfil profesional, mejora la iluminación, elimina el fondo y pon un fondo gris claro degradado. Mantén la expresión natural y profesional."
+- ChatGPT prompt: "Limpia esta foto de perfil profesional, mejora la iluminación, elimina el fondo y pon un fondo gris claro degradado. Mantén la expresión natural y profesional."
 - También: Remove.bg (gratis) + Canva para fondo profesional
 - Tips: luz natural de ventana, ropa formal, sonrisa natural, encuadre de pecho hacia arriba
 
@@ -58,8 +139,14 @@ Pregunta UN dato a la vez en este orden:
 8. Idiomas
 Al final: "¡CV listo! 🦋 ¿Lo mejoro con IA o lo envías directamente?"
 
-Nunca inventes datos de empresas reales. Nunca respondas en otro idioma que español.
-Si el usuario escribe algo que no entiendes, ofrece las opciones disponibles.`;
+═══════════════════════════════════════════
+REGLAS ABSOLUTAS
+═══════════════════════════════════════════
+- NUNCA inventes datos de empresas reales
+- NUNCA respondas en otro idioma que español
+- Si preguntan por algo de la app, SIEMPRE da el link correcto (/app/emigrar, /app/entrevistas, etc.)
+- Si el usuario escribe algo que no entiendes, ofrece las opciones disponibles
+- Para preguntas de visados, SIEMPRE recomienda verificar en la fuente oficial del gobierno correspondiente`;
 
 export async function POST(req: NextRequest) {
   try {
@@ -86,7 +173,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Enviar CV → flujo directo (sin IA)
+    // Emigrar → respuesta directa con link
+    if (intent === "emigrar") {
+      return NextResponse.json({
+        reply: getLocalReply(message, "emigrar"),
+        action: "emigrar",
+      });
+    }
+
+    // Pipeline → respuesta directa con link
+    if (intent === "pipeline") {
+      return NextResponse.json({
+        reply: getLocalReply(message, "pipeline"),
+        action: "pipeline",
+      });
+    }
+
+    // Salarios → respuesta directa con link
+    if (intent === "salarios") {
+      return NextResponse.json({
+        reply: getLocalReply(message, "salarios"),
+        action: "salarios",
+      });
+    }
+
+    // Envío automático → flujo directo (sin IA)
     if (intent === "enviar") {
       return NextResponse.json({
         reply: "📧 ¡Perfecto! Para enviar tu CV automáticamente necesito:\n\n1. ✅ Que tengas tu CV subido (puedes hacerlo desde Perfil o aquí mismo)\n2. 🎯 El puesto y ciudad que buscas\n\n¿Tienes tu CV subido? Si no, ve a 👤 Perfil → Mi CV y súbelo. ¡Luego dime qué trabajo buscas y yo me encargo! 🐛→📧",
@@ -149,6 +260,15 @@ export async function POST(req: NextRequest) {
 /** Detecta la intención del usuario */
 function detectIntent(text: string): string {
   const t = text.toLowerCase();
+  // Emigrar / trabajar en el extranjero
+  if (t.includes("emigrar") || t.includes("extranjero") || t.includes("irme a") || t.includes("vivir en") || t.includes("au pair") || t.includes("working holiday") || t.includes("visa de trabajo") || t.includes("alemania") || t.includes("reino unido") || t.includes("irlanda") || t.includes("canada") || t.includes("australia") || (t.includes("trabajar") && (t.includes("fuera") || t.includes("europa") || t.includes("abroad")))) return "emigrar";
+  // Entrevista preparación/simulador
+  if (t.includes("entrevista") && (t.includes("preparar") || t.includes("simula") || t.includes("practica") || t.includes("simulador"))) return "entrevista_prep";
+  if (t.includes("simulador de entrevista") || t.includes("practicar entrevista")) return "entrevista_prep";
+  // Pipeline / kanban de candidaturas
+  if (t.includes("pipeline") || t.includes("kanban") || t.includes("seguimiento de candidatura") || t.includes("estado de mis aplicaciones")) return "pipeline";
+  // Salarios
+  if (t.includes("salario") || t.includes("sueldo") || t.includes("cuánto cobra") || t.includes("cuánto gana") || t.includes("salario medio")) return "salarios";
   // Búsqueda de trabajo — prioridad máxima, muchos patrones
   if (t.includes("busco trabajo") || t.includes("buscar trabajo") || t.includes("busco empleo")) return "buscar";
   if (t.includes("busco") && (t.includes("de ") || t.includes("como "))) return "buscar";
@@ -161,8 +281,6 @@ function detectIntent(text: string): string {
   if (t.includes("envía a todas") || t.includes("enviar a todas") || t.includes("manda a todas")) return "enviar";
   // Foto
   if (t.includes("foto") || t.includes("imagen") || t.includes("picture")) return "foto";
-  // Entrevista
-  if (t.includes("entrevista") && (t.includes("preparar") || t.includes("simula") || t.includes("practica"))) return "entrevista_prep";
   // Crear CV
   if (t.includes("cv") && (t.includes("crear") || t.includes("hacer") || t.includes("paso"))) return "crear_cv";
   // Carta
@@ -254,6 +372,14 @@ function extractCity(text: string): string {
 
 function getLocalReply(text: string, intent: string): string {
   switch (intent) {
+    case "emigrar":
+      return "🌍 ¡Te ayudo a emigrar!\n\nTenemos información verificada (visados, alojamiento, Au Pair, programas) para 8 países:\n🇬🇧 Reino Unido · 🇩🇪 Alemania · 🇫🇷 Francia\n🇮🇪 Irlanda · 🇳🇱 P. Bajos · 🇨🇦 Canadá\n🇦🇺 Australia · 🇺🇸 EE.UU.\n\n👉 [**Ir a Emigrar →**](/app/emigrar)\n\nTambién tenemos +600k ofertas en 34 países en 🔍 Buscar.\n\n¿Qué país te interesa? 🐛";
+    case "entrevista_prep":
+      return "🎙️ ¡Tenemos un simulador de entrevistas!\n\nElige tu sector (general, hostelería, tecnología, comercio o salud) y practica preguntas reales. La IA te da:\n✅ Lo que hiciste bien\n⚠️ Qué mejorar\n📊 Puntuación 1-10\n\n👉 [**Ir al Simulador →**](/app/entrevistas)\n\nO si prefieres, dime tu sector y te hago 3 preguntas aquí mismo. 🐛🎯";
+    case "pipeline":
+      return "📊 El **Pipeline de candidaturas** te permite gestionar todas tus solicitudes en un tablero tipo Kanban:\n\nAplicado → En proceso → Entrevista → Oferta → Rechazado\n\nEs la forma perfecta de no perder el hilo de dónde has aplicado.\n\n👉 [**Ir al Pipeline →**](/app/pipeline) 🐛";
+    case "salarios":
+      return "💰 Consulta **salarios medios** por sector, puesto y ciudad en nuestra sección de Salarios.\n\nDatos del mercado español 2024-2025 con comparativa europea.\n\n👉 [**Ver Salarios →**](/app/salarios) 🐛";
     case "foto":
       return "📸 Para mejorar tu foto de CV:\n\n**Opción 1 — ChatGPT:**\nCopia este prompt exacto:\n_\"Limpia esta foto de perfil profesional, mejora la iluminación, elimina el fondo y pon un fondo gris claro degradado. Mantén la expresión natural.\"_\n\n**Opción 2 — Gratis:**\n1. Remove.bg → quita el fondo\n2. Canva → añade fondo profesional\n\n**Tips:** Luz de ventana, ropa formal, sonrisa natural, pecho arriba.\n\n¡Una buena foto = +40% respuestas! 🐛📸";
     case "buscar":
@@ -262,11 +388,9 @@ function getLocalReply(text: string, intent: string): string {
       return "📧 ¡Nuestro FUERTE! Envío automático de CVs:\n\n1. Sube tu CV en 👤 Perfil\n2. Dime qué trabajo buscas\n3. ¡Yo envío a todas las empresas!\n\nEs como tener un asistente personal enviando CVs 24/7. 🐛→🦋";
     case "crear_cv":
       return "📝 ¡Vamos a crear tu CV! Te voy preguntando paso a paso:\n\n👉 **¿Cuál es tu nombre completo?**\n\n(Yo pregunto, tú respondes. ¡Facilísimo!) 🐛";
-    case "entrevista_prep":
-      return "🎯 ¡Preparemos tu entrevista!\n\nTop 5 preguntas:\n1. \"Háblame de ti\" → 2 min: experiencia + logros\n2. \"¿Por qué esta empresa?\" → Investiga antes\n3. \"Tu mayor debilidad\" → Algo real que mejoras\n4. \"¿Dónde en 5 años?\" → Crecimiento\n5. \"¿Por qué dejaste tu trabajo?\" → Siempre positivo\n\n¿Quieres que simulemos una entrevista? 🐛🎯";
     case "carta":
       return "✉️ Para generar tu carta de presentación:\n\nVe a 📄 CV → abajo verás \"Generar carta de presentación\"\nO dime el puesto y la empresa y te la hago aquí. 🐛";
     default:
-      return "¡Hola! 🐛 Soy Gusi y puedo:\n\n📝 Crear tu CV paso a paso\n📸 Mejorar tu foto de CV\n🔍 Buscar ofertas de trabajo\n📧 **Enviar tu CV automáticamente** (¡NUESTRO FUERTE!)\n🎯 Preparar entrevistas\n✉️ Generar cartas de presentación\n\n¿Qué necesitas? 🦋";
+      return "¡Hola! 🐛 Soy Gusi y puedo:\n\n📝 Crear tu CV paso a paso\n📸 Mejorar tu foto de CV\n🔍 Buscar ofertas de trabajo en 34 países\n📧 **Enviar tu CV automáticamente** (¡NUESTRO FUERTE!)\n🌍 Guiarte para **emigrar al extranjero**\n🎙️ Simular entrevistas con feedback de IA\n💰 Consultar salarios por sector\n✉️ Generar cartas de presentación\n\n¿Qué necesitas? 🦋";
   }
 }
