@@ -1,15 +1,13 @@
-name: Sync Job Listings — Adzuna Multi-País
+name: Sync Job Listings — Adzuna + Careerjet Global
 
 on:
   schedule:
-    # Cada 2 horas, lunes a viernes — Adzuna (250 req/día gratis por país)
     - cron: '0 */2 * * 1-5'
-    # Sábados y domingos cada 4 horas
     - cron: '0 */4 * * 0,6'
   workflow_dispatch:
     inputs:
       country:
-        description: 'País (uk/us/de/fr/au/es)'
+        description: 'País Adzuna'
         required: false
       batchSize:
         description: 'Combos por país'
@@ -18,13 +16,12 @@ on:
 
 jobs:
   sync-adzuna:
-    name: "Adzuna ${{ matrix.country }} × ${{ matrix.batch }} combos"
+    name: "Adzuna ${{ matrix.country }} × ${{ matrix.batch }} c"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          # 3 rondas por país para rotar keywords y no saturar rate-limit
           - { country: uk, batch: 15 }
           - { country: uk, batch: 15 }
           - { country: us, batch: 15 }
@@ -50,16 +47,36 @@ jobs:
           echo "${{ matrix.country }}: HTTP $HTTP_CODE — $BODY"
           [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ] || exit 1
 
-  sync-careerjet-global:
-    name: "Careerjet multi-país"
+  sync-careerjet:
+    name: "Careerjet ${{ matrix.country }} × ${{ matrix.batch }} c"
     runs-on: ubuntu-latest
     needs: sync-adzuna
-    if: github.event_name == 'schedule'
     strategy:
       fail-fast: false
       matrix:
-        country: [us, uk, au, ca]
-        batch: [10]
+        include:
+          # English countries — keywords funcionan bien
+          - { country: us, batch: 10 }
+          - { country: uk, batch: 10 }
+          - { country: au, batch: 10 }
+          - { country: ca, batch: 10 }
+          # European — keywords nativas
+          - { country: de, batch: 10 }
+          - { country: fr, batch: 10 }
+          - { country: nl, batch: 10 }
+          - { country: it, batch: 10 }
+          - { country: es, batch: 10 }
+          - { country: se, batch: 10 }
+          - { country: ch, batch: 10 }
+          - { country: be, batch: 10 }
+          - { country: pt, batch: 10 }
+          - { country: ie, batch: 10 }
+          - { country: no, batch: 10 }
+          - { country: dk, batch: 10 }
+          - { country: at, batch: 10 }
+          - { country: fi, batch: 10 }
+          - { country: nz, batch: 10 }
+          - { country: pl, batch: 10 }
     steps:
       - name: Sync Careerjet ${{ matrix.country }}
         run: |
@@ -70,5 +87,5 @@ jobs:
             --max-time 120)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
-          echo "Careerjet ${{ matrix.country }}: HTTP $HTTP_CODE — $BODY"
+          echo "${{ matrix.country }}: HTTP $HTTP_CODE — $BODY"
           [ "$HTTP_CODE" = "200" ] || exit 1
