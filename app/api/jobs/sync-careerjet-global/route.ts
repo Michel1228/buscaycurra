@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
     try {
       const jobs = await fetchCareerjetGlobal(kw, city);
       if (jobs.length > 0) {
-        const inserted = await upsertJobsForSync(jobs, "OTRO" as any);
+        const inserted = await upsertJobsForSync(jobs, "OTRO" as any, country);
         totalInserted += inserted;
         totalFetched += jobs.length;
       }

@@ -330,7 +330,7 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
   return allJobs;
 }
 
-export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector): Promise<number> {
+export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, country?: string): Promise<number> {
   if (!jobs.length) return 0;
   const pool = getPool();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -340,10 +340,10 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector): Prom
     const id = makeId(j.title, j.company, j.city, j.source);
     try {
       const result = await pool.query(
-        `INSERT INTO "JobListing" (id, title, company, description, sector, city, salary, "sourceUrl", "sourceName", "isActive", "scrapedAt", "createdAt", "expiresAt")
-         VALUES ($1, $2, $3, $4, $5::"JobSector", $6, $7, $8, $9, true, NOW(), NOW(), $10)
-         ON CONFLICT (id) DO NOTHING`,
-        [id, j.title, j.company, j.description, sector, j.city, j.salary, j.url, j.source, expiresAt]
+        `INSERT INTO "JobListing" (id, title, company, description, sector, city, salary, "sourceUrl", "sourceName", "isActive", "scrapedAt", "createdAt", "expiresAt", country)
+         VALUES ($1, $2, $3, $4, $5::"JobSector", $6, $7, $8, $9, true, NOW(), NOW(), $10, $11)
+         ON CONFLICT (id) DO UPDATE SET country = COALESCE("JobListing".country, EXCLUDED.country)`,
+        [id, j.title, j.company, j.description, sector, j.city, j.salary, j.url, j.source, expiresAt, country || null]
       );
       if (result.rowCount && result.rowCount > 0) inserted++;
     } catch { /* skip */ }
