@@ -1,69 +1,74 @@
-name: Sync Job Listings
+name: Sync Job Listings — Adzuna Multi-País
 
 on:
   schedule:
-    # Cada 2 horas, lunes a viernes
+    # Cada 2 horas, lunes a viernes — Adzuna (250 req/día gratis por país)
     - cron: '0 */2 * * 1-5'
-    # Sábados y domingos cada 4 horas (menos actividad laboral)
+    # Sábados y domingos cada 4 horas
     - cron: '0 */4 * * 0,6'
   workflow_dispatch:
     inputs:
-      source:
-        description: 'Fuente (jooble/careerjet)'
-        default: 'jooble'
+      country:
+        description: 'País (uk/us/de/fr/au/es)'
         required: false
-      offset:
-        description: 'Offset de inicio (0 = desde el principio)'
-        default: '0'
+      batchSize:
+        description: 'Combos por país'
+        default: '15'
         required: false
 
 jobs:
-  sync-jooble:
-    name: "Jooble — offset ${{ matrix.offset }}, p${{ matrix.page }}"
+  sync-adzuna:
+    name: "Adzuna ${{ matrix.country }} × ${{ matrix.batch }} combos"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { offset: 0,    page: 1 }
-          - { offset: 40,   page: 1 }
-          - { offset: 80,   page: 1 }
-          - { offset: 120,  page: 1 }
-          - { offset: 160,  page: 1 }
-          - { offset: 200,  page: 1 }
-          - { offset: 0,    page: 2 }
-          - { offset: 80,   page: 2 }
+          # 3 rondas por país para rotar keywords y no saturar rate-limit
+          - { country: uk, batch: 15 }
+          - { country: uk, batch: 15 }
+          - { country: us, batch: 15 }
+          - { country: us, batch: 15 }
+          - { country: de, batch: 15 }
+          - { country: de, batch: 15 }
+          - { country: fr, batch: 15 }
+          - { country: fr, batch: 15 }
+          - { country: au, batch: 15 }
+          - { country: au, batch: 15 }
+          - { country: es, batch: 15 }
+          - { country: es, batch: 15 }
     steps:
-      - name: Sync batch
+      - name: Sync Adzuna ${{ matrix.country }}
         run: |
-          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-run" \
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-adzuna-global" \
             -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
             -H "Content-Type: application/json" \
-            -d "{\"source\":\"jooble\",\"batchSize\":40,\"offset\":${{ matrix.offset }},\"page\":${{ matrix.page }}}" \
-            --max-time 90)
+            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}" \
+            --max-time 120)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
-          echo "HTTP $HTTP_CODE: $BODY"
-          if [ "$HTTP_CODE" != "200" ]; then exit 1; fi
+          echo "${{ matrix.country }}: HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ] || exit 1
 
-  sync-careerjet:
-    name: "Careerjet — offset ${{ matrix.offset }}"
+  sync-careerjet-global:
+    name: "Careerjet multi-país"
     runs-on: ubuntu-latest
-    # Careerjet solo en la mitad de los ciclos para no saturar
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && startsWith(github.event.schedule, '0 */4')) }}
+    needs: sync-adzuna
+    if: github.event_name == 'schedule'
     strategy:
       fail-fast: false
       matrix:
-        offset: [0, 40, 80, 120]
+        country: [us, uk, au, ca]
+        batch: [10]
     steps:
-      - name: Sync batch
+      - name: Sync Careerjet ${{ matrix.country }}
         run: |
-          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-run" \
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-careerjet-global" \
             -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
             -H "Content-Type: application/json" \
-            -d "{\"source\":\"careerjet\",\"batchSize\":40,\"offset\":${{ matrix.offset }},\"page\":1}" \
-            --max-time 90)
+            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}" \
+            --max-time 120)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
-          echo "HTTP $HTTP_CODE: $BODY"
-          if [ "$HTTP_CODE" != "200" ]; then exit 1; fi
+          echo "Careerjet ${{ matrix.country }}: HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" = "200" ] || exit 1
