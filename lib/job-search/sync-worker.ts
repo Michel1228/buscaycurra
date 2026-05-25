@@ -246,7 +246,7 @@ export async function syncAdzunaCountry(
     const raw = await fetchAdzuna(keyword, city, 1, countryCode);
     totalFetched += raw.length;
     if (raw.length > 0) {
-      const inserted = await upsertJobs(raw, "OTRO");
+      const inserted = await upsertJobsForSync(raw, "OTRO");
       totalInserted += inserted;
     }
     // Pequeña pausa para no saturar la API
@@ -287,7 +287,7 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
   } catch { return []; }
 }
 
-async function fetchEures(keyword: string, countryLocation: string, _page = 1): Promise<RawJob[]> {
+export async function fetchCareerjetGlobal(keyword: string, countryLocation: string, _page = 1): Promise<RawJob[]> {
   // 5 páginas para máximo volumen — de 20 resultados/pág = 100 por combo
   const keyInfo = await getCareerjetKey();
   if (!keyInfo) return [];
@@ -330,7 +330,7 @@ async function fetchEures(keyword: string, countryLocation: string, _page = 1): 
   return allJobs;
 }
 
-async function upsertJobs(jobs: RawJob[], sector: JobSector): Promise<number> {
+export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector): Promise<number> {
   if (!jobs.length) return 0;
   const pool = getPool();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -363,8 +363,8 @@ export async function syncBatch(params: {
   if (source === "jooble") raw = await fetchJooble(keyword, city, page);
   if (source === "adzuna") raw = await fetchAdzuna(keyword, city, page);
   if (source === "careerjet") raw = await fetchCareerjet(keyword, city, page);
-  if (source === "eures") raw = await fetchEures(keyword, city, page);
-  const inserted = await upsertJobs(raw, sector);
+  if (source === "eures") raw = await fetchCareerjetGlobal(keyword, city, page);
+  const inserted = await upsertJobsForSync(raw, sector);
   return { inserted, fetched: raw.length };
 }
 
