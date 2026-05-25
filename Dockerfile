@@ -10,10 +10,15 @@ COPY . .
 ARG NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ARG BUILD_ID=dev
 
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+# Inyectar BUILD_ID en sw.js y layout.tsx
+RUN sed -i "s/__BUILD_ID__/${BUILD_ID}/g" public/sw.js
+RUN sed -i "s/__BUILD_ID__/${BUILD_ID}/g" app/layout.tsx
 
 # Redis no está disponible en build time — usar placeholder para que BullMQ no falle
 ENV REDIS_URL=redis://localhost:6379

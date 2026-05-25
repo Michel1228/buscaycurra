@@ -1,19 +1,26 @@
 /**
  * Service Worker para BuscayCurra PWA
- * v5 — Network-first para HTML, cache para assets estáticos
+ * v6 — Network-first para todo, cache solo como fallback offline
+ * BUILD_ID: __BUILD_ID__
  */
-const CACHE_NAME = "buscaycurra-v5";
-const ASSETS_CACHE = "buscaycurra-assets-v5";
+const CACHE_NAME = "buscaycurra-v6";
 
-// Activar inmediatamente, no esperar a que se cierren pestañas viejas
+// Activar inmediatamente
 self.skipWaiting();
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== ASSETS_CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
+});
+
+// Escuchar mensaje SKIP_WAITING del cliente
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -25,21 +32,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Recursos estáticos (JS, CSS, imágenes, fuentes) → cache-first
+  // Recursos estáticos (JS, CSS, imágenes, fuentes) → network-first con fallback cache
   const isStatic = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|webp|mp3|wav)$/.test(url.pathname);
   if (isStatic) {
-    event.respondWith(
-      caches.match(request).then((cached) => cached || fetch(request).then((r) => {
-        const clone = r.clone();
-        caches.open(ASSETS_CACHE).then((c) => c.put(request, clone));
-        return r;
-      }))
-    );
-    return;
-  }
-
-  // Navegación HTML → network-first (siempre pedir versión fresca)
-  if (request.mode === "navigate" || request.destination === "document") {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -47,14 +42,20 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((c) => c.put(request, clone));
           return response;
         })
-        .catch(() => caches.match(request)) // fallback offline
+        .catch(() => caches.match(request)) // offline fallback
     );
     return;
   }
 
-  // Otros (manifest, etc.) → network-first
+  // Navegación HTML y otros → network-first
   event.respondWith(
-    fetch(request).catch(() => caches.match(request))
+    fetch(request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(request, clone));
+        return response;
+      })
+      .catch(() => caches.match(request)) // fallback offline
   );
 });
 
@@ -76,6 +77,6 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || "/app/buscar";
+  const url = event.notification.data?.url || "/app";
   event.waitUntil(self.clients.openWindow(url));
 });
