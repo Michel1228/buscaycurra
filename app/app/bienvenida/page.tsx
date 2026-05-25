@@ -159,10 +159,11 @@ export default function BienvenidaPage() {
         {/* Accesos rápidos al resto de herramientas */}
         <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
           <p className="text-[11px] font-semibold mb-3" style={{ color: "#64748b" }}>ACCESOS RÁPIDOS</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {[
               { icon: "📄", label: "Mi CV", href: "/app/curriculum" },
               { icon: "📊", label: "Pipeline", href: "/app/pipeline" },
+              { icon: "🌍", label: "Emigrar", href: "/app/emigrar" },
               { icon: "💰", label: "Salarios", href: "/app/salarios" },
               { icon: "👤", label: "Mi perfil", href: "/app/perfil" },
             ].map((item) => (
