@@ -42,7 +42,7 @@ BuscayCurra es una plataforma española de empleo con +600.000 ofertas de trabaj
   - Score ATS para pasar filtros automáticos de RRHH
 
 🔍 /app/buscar — Búsqueda de ofertas
-  - +600.000 ofertas en 34 países (España, UK, Alemania, Francia, Irlanda, Países Bajos, Canadá, Australia, USA, Polonia, Italia, Portugal, Rumanía, y más)
+  - +600.000 ofertas en 19 países destino: UK, USA, Alemania, Francia, Australia, Canadá, Países Bajos, Italia, Suecia, Suiza, Bélgica, Portugal, Irlanda, Noruega, Dinamarca, Austria, Finlandia, Nueva Zelanda, Polonia
   - Filtros por: sector, ubicación, tipo de contrato, experiencia, salario, país
   - Fuentes: Adzuna, Careerjet, EURES, Indeed, InfoJobs y más de 100.000 fuentes
   - Guarda ofertas favoritas para aplicar después
@@ -387,10 +387,10 @@ function extractCity(text: string): string {
   return "";
 }
 
-function getLocalReply(text: string, intent: string): string {
+function getLocalReply(_text: string, intent: string): string {
   switch (intent) {
     case "emigrar":
-      return "🌍 ¡Te ayudo a emigrar!\n\nTenemos información verificada para 8 países: 🇬🇧 UK · 🇩🇪 Alemania · 🇫🇷 Francia · 🇮🇪 Irlanda · 🇳🇱 P.Bajos · 🇨🇦 Canadá · 🇦🇺 Australia · 🇺🇸 EE.UU.\n\n👉 [**Emigrar →**](/app/emigrar) — visados, alojamiento, programas\n👶 [**Au Pair completo →**](/app/au-pair) — documentos, paga por país, ventajas para estudiantes\n\nTambién tenemos +600k ofertas en 34 países en 🔍 Buscar.\n\n¿Qué país te interesa? 🐛";
+      return "🌍 ¡Te ayudo a emigrar!\n\nTenemos información verificada para **19 países**: 🇬🇧 UK · 🇩🇪 Alemania · 🇫🇷 Francia · 🇮🇪 Irlanda · 🇳🇱 P.Bajos · 🇮🇹 Italia · 🇸🇪 Suecia · 🇨🇭 Suiza · 🇧🇪 Bélgica · 🇵🇹 Portugal · 🇳🇴 Noruega · 🇩🇰 Dinamarca · 🇦🇹 Austria · 🇫🇮 Finlandia · 🇳🇿 N.Zelanda · 🇵🇱 Polonia · 🇨🇦 Canadá · 🇦🇺 Australia · 🇺🇸 EE.UU.\n\n👉 [**Emigrar →**](/app/emigrar) — visados, alojamiento, programas\n👶 [**Au Pair completo →**](/app/au-pair) — documentos, paga por país, ventajas para estudiantes\n\n¿Qué país te interesa? 🐛";
     case "entrevista_prep":
       return "🎙️ ¡Tenemos un simulador de entrevistas!\n\nElige tu sector (general, hostelería, tecnología, comercio o salud) y practica preguntas reales. La IA te da:\n✅ Lo que hiciste bien\n⚠️ Qué mejorar\n📊 Puntuación 1-10\n\n👉 [**Ir al Simulador →**](/app/entrevistas)\n\nO si prefieres, dime tu sector y te hago 3 preguntas aquí mismo. 🐛🎯";
     case "pipeline":

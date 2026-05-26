@@ -567,6 +567,710 @@ const INFO: Record<string, InfoPais> = {
       { nombre: "SEVIS — Sistema de registro de estudiantes", emoji: "📋", desc: "Para estudiar en USA necesitas estar registrado en SEVIS antes de solicitar la visa F-1.", url: "https://www.ice.gov/sevis" },
     ],
   },
+
+  italia: {
+    visado: {
+      tipoVisado: "Libre circulación UE",
+      resumen:
+        "Como ciudadano español tienes derecho de libre circulación en Italia. Puedes trabajar sin visado. Si te quedas más de 3 meses, debes registrarte en el Comune local y obtener el Codice Fiscale (número de identificación fiscal) en la Agenzia delle Entrate — imprescindible para trabajar y alquilar.",
+      requisitos: [
+        "DNI o pasaporte español válido",
+        "Codice Fiscale — número fiscal italiano, se obtiene gratis en la Agenzia delle Entrate",
+        "Registrazione al Comune (empadronamiento) si resides más de 3 meses",
+        "Cuenta bancaria italiana o europea para cobrar el salario",
+        "Permesso di soggiorno NO requerido para ciudadanos UE",
+      ],
+      enlaces: [
+        { texto: "Trabajar en Italia — Portal oficial del Ministerio de Trabajo", url: "https://www.lavoro.gov.it" },
+        { texto: "Codice Fiscale — Agenzia delle Entrate", url: "https://www.agenziaentrate.gov.it/portale/web/guest/schede/altri-servizi/codice-fiscale-e-tessera-sanitaria/richiesta-del-codice-fiscale" },
+        { texto: "EURES Italia — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "Cliclavoro — Portal empleo italiano", url: "https://www.cliclavoro.gov.it" },
+      ],
+    },
+    alojamiento: {
+      desc: "Milán es la ciudad más cara (habitación media 700-1.200€/mes). Roma, Bolonia y Florencia rondan 500-900€. El sur de Italia (Nápoles, Sicilia) es mucho más económico (300-500€). Los contratos suelen exigir fianza de 2-3 meses.",
+      plataformas: [
+        { nombre: "Idealista.it", url: "https://www.idealista.it", desc: "Portal español con gran presencia en Italia — pisos y habitaciones" },
+        { nombre: "Immobiliare.it", url: "https://www.immobiliare.it", desc: "El mayor portal inmobiliario italiano" },
+        { nombre: "Bakeca.it", url: "https://www.bakeca.it", desc: "Clasificados de habitaciones — muchas ofertas sin agencia" },
+        { nombre: "Spotahome", url: "https://www.spotahome.com/it", desc: "Empresa española con visita virtual — muy usada por expats en Italia" },
+      ],
+      consejos: [
+        "Exige siempre contrato registrado en la Agenzia delle Entrate (evita el 'nero')",
+        "La fianza no puede superar 3 meses de alquiler por ley",
+        "En Milán busca en zonas bien conectadas por metro (MM): Navigli, Lambrate, Nolo",
+        "Los pisos amueblados (ammobiliato) son habituales y más fáciles para recién llegados",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-30 años",
+        "Nivel de italiano A2 recomendado (muchas familias aceptan inglés)",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Experiencia con niños valorada",
+      ],
+      condiciones: [
+        "Regulado en Italia: máximo 25 horas semanales de cuidado",
+        "Paga de bolsillo: 250-350€/mes",
+        "Manutención y alojamiento incluidos",
+        "Contrato oficial recomendado (contratto di lavoro au pair)",
+        "Máximo 24 meses",
+      ],
+      agencias: [
+        { nombre: "PortaleAuPair.it", url: "https://www.portaleaupair.it", desc: "Portal de referencia para au pairs en Italia — familias verificadas" },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "La plataforma más grande del mundo — muchas familias en Italia" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Italia — registro gratuito" },
+      ],
+      enlaceOficial: { texto: "Trabajar en Italia — Ministerio de Trabajo", url: "https://www.lavoro.gov.it" },
+    },
+    programas: [
+      { nombre: "EURES Italia — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial de la UE con ofertas de empleo en Italia filtradas por sector y región.", url: "https://eures.europa.eu" },
+      { nombre: "Cliclavoro — Portal oficial de empleo", emoji: "💼", desc: "Portal del Ministerio de Trabajo italiano con ofertas de empleo en todo el país.", url: "https://www.cliclavoro.gov.it" },
+      { nombre: "Erasmus+ — Prácticas en Italia", emoji: "🎓", desc: "Becas para prácticas remuneradas en empresas italianas para titulados y estudiantes.", url: "https://www.erasmusplus.it" },
+    ],
+  },
+
+  suecia: {
+    visado: {
+      tipoVisado: "Libre circulación UE",
+      resumen:
+        "Como ciudadano español (UE) puedes trabajar en Suecia sin visado. Si resides más de 3 meses, debes registrarte en Skatteverket (Agencia Tributaria sueca) para obtener el Personnummer — número de identidad imprescindible para acceder a servicios, alquilar y cobrar el salario.",
+      requisitos: [
+        "DNI o pasaporte español válido",
+        "Personnummer — número de identidad sueco, se solicita en Skatteverket",
+        "Registro en Skatteverket si resides más de 1 año",
+        "Cuenta bancaria sueca (BankID) para cobros — muy recomendable",
+        "Seguro médico cubierto por la Seguridad Social sueca (Försäkringskassan) una vez registrado",
+      ],
+      enlaces: [
+        { texto: "Trabajar en Suecia — Arbetsförmedlingen (portal oficial)", url: "https://arbetsformedlingen.se" },
+        { texto: "Personnummer — Skatteverket", url: "https://www.skatteverket.se/privat/folkbokforing/omfolkbokforing/personnummer.4.3810a01c150939e893f18c29.html" },
+        { texto: "EURES Suecia — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "Migrationsverket — Inmigración Suecia", url: "https://www.migrationsverket.se/English/Private-individuals/EU-citizens-and-Nordic-citizens.html" },
+      ],
+    },
+    alojamiento: {
+      desc: "Estocolmo tiene una crisis de vivienda importante — las colas para pisos de alquiler público pueden durar años. Gotemburgo y Malmö son alternativas más accesibles. Habitación media en Estocolmo: 600-1.100€/mes.",
+      plataformas: [
+        { nombre: "Blocket.se", url: "https://www.blocket.se/bostad", desc: "El portal de clasificados más popular de Suecia — habitaciones y pisos" },
+        { nombre: "Bostad.se", url: "https://www.bostad.se", desc: "Pisos en alquiler en toda Suecia" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/se", desc: "Contratos medios sin necesidad de fiador local — ideal para recién llegados" },
+        { nombre: "Samtrygg", url: "https://www.samtrygg.se", desc: "Subarriendos verificados — popular entre trabajadores internacionales" },
+      ],
+      consejos: [
+        "Inscríbete en la cola de Stockholms Stads Bostadsförmedling cuanto antes (años de espera)",
+        "Los contratos en segunda mano (andrahandskontrakt) son más rápidos pero más caros",
+        "Comprueba que el casero tiene permiso para subarrendar",
+        "Malmö y Gotemburgo tienen mercados más accesibles que Estocolmo",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-30 años (orientativo)",
+        "Nivel de inglés B1 o sueco básico",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Experiencia demostrable con niños",
+      ],
+      condiciones: [
+        "Máximo 25 horas semanales de cuidado",
+        "Paga de bolsillo: SEK 3.500-5.000/mes (aproximadamente 320-460€)",
+        "Manutención y alojamiento incluidos",
+        "Acceso a clases de sueco recomendado",
+        "Contrato por escrito recomendado",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias suecas verificadas" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Suecia — registro gratuito" },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", desc: "Verificación de familias y contrato modelo" },
+      ],
+      enlaceOficial: { texto: "Vivir y trabajar en Suecia — Migrationsverket", url: "https://www.migrationsverket.se/English/Private-individuals/EU-citizens-and-Nordic-citizens.html" },
+    },
+    programas: [
+      { nombre: "Arbetsförmedlingen — Portal de empleo oficial", emoji: "🇸🇪", desc: "La agencia pública de empleo sueca. Ofertas en todos los sectores, incluidos empleos para no sueco-hablantes.", url: "https://arbetsformedlingen.se" },
+      { nombre: "EURES Suecia — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas filtradas por Suecia y apoyo de consejeros EURES.", url: "https://eures.europa.eu" },
+      { nombre: "SFI — Svenska för invandrare", emoji: "📚", desc: "Aprende sueco gratis con el programa oficial del gobierno sueco para inmigrantes.", url: "https://www.skolverket.se/undervisning/vuxenutbildningen/kommunal-vuxenutbildning-komvux/svenska-for-invandrare-sfi" },
+    ],
+  },
+
+  suiza: {
+    visado: {
+      tipoVisado: "Permiso L o B — Acuerdo Bilateral UE-Suiza",
+      resumen:
+        "Suiza no es UE pero tiene un Acuerdo de Libre Circulación con la UE. Los ciudadanos españoles pueden trabajar en Suiza con un permiso automático: Permiso L (hasta 1 año) o Permiso B (hasta 5 años, renovable). No se necesita visa previa — el permiso se solicita en la oficina cantonal una vez en Suiza con oferta de trabajo.",
+      requisitos: [
+        "Pasaporte o DNI español válido",
+        "Permiso L (corta duración, hasta 1 año) o Permiso B (residencia, hasta 5 años) — se obtiene en la oficina cantonal de migración",
+        "Contrato de trabajo firmado con empresa suiza",
+        "Registro en la comunidad (Einwohnerkontrolle / contrôle des habitants) en los primeros 14 días",
+        "Seguro de salud obligatorio (LaMal) — debes contratar uno dentro de los 3 meses de llegada",
+      ],
+      enlaces: [
+        { texto: "Permiso B para ciudadanos UE/EFTA — SEM Suiza", url: "https://www.sem.admin.ch/sem/es/home/themen/aufenthalt/eu_efta/ausweis_b_eu_efta.html" },
+        { texto: "Trabajar en Suiza — ch.ch (portal oficial)", url: "https://www.ch.ch/es/trabajo/trabajar-en-suiza/" },
+        { texto: "EURES Suiza — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "Jobs.ch — Portal de empleo suizo", url: "https://www.jobs.ch" },
+      ],
+    },
+    alojamiento: {
+      desc: "Suiza es uno de los países más caros del mundo. Zúrich y Ginebra tienen habitaciones desde 1.200-2.000 CHF/mes. Berna, Basilea y Lausana son algo más asequibles. Los salarios suizos compensan el alto coste de vida.",
+      plataformas: [
+        { nombre: "Homegate.ch", url: "https://www.homegate.ch", desc: "El mayor portal inmobiliario suizo — pisos y habitaciones" },
+        { nombre: "Comparis.ch", url: "https://www.comparis.ch/immobilien", desc: "Comparador de pisos con alertas de precio" },
+        { nombre: "ImmoScout24.ch", url: "https://www.immoscout24.ch", desc: "Gran oferta de pisos en alquiler en toda Suiza" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/ch", desc: "Contratos medios para trabajadores internacionales" },
+      ],
+      consejos: [
+        "Registra tu dirección en la oficina cantonal nada más llegar — es obligatorio",
+        "El seguro de salud (Krankenkasse / caisse maladie) es obligatorio y tiene un coste elevado",
+        "Los salarios suizos son muy altos — un salario medio compensa el alto coste de vida",
+        "Busca en ciudades secundarias como Winterthur o Lucerna si Zúrich se excede de presupuesto",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-25 años (límite por regulación suiza)",
+        "Nivel de alemán, francés o italiano A2 según el cantón de la familia",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Permiso L o B requerido",
+      ],
+      condiciones: [
+        "Regulado: máximo 30 horas semanales de cuidado",
+        "Paga de bolsillo: CHF 700-900/mes (aproximadamente 700-900€ — uno de los más altos de Europa)",
+        "Manutención y alojamiento incluidos",
+        "La familia paga el 50% de las clases de idioma (obligatorio por ley)",
+        "Máximo 12 meses (ampliable a 24 en casos especiales)",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias suizas verificadas" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Suiza — muchas familias en Zúrich y Ginebra" },
+        { nombre: "Pro Filia", url: "https://www.profilia.ch", desc: "Agencia suiza de referencia especializada en au pairs" },
+      ],
+      enlaceOficial: { texto: "Au Pair en Suiza — SEM (Secretaría de Estado de Migraciones)", url: "https://www.sem.admin.ch/sem/es/home/themen/aufenthalt/eu_efta/ausweis_b_eu_efta.html" },
+    },
+    programas: [
+      { nombre: "Jobs.ch — Portal de empleo suizo", emoji: "🇨🇭", desc: "El mayor portal de empleo de Suiza. Ofertas en alemán, francés e inglés para todos los sectores.", url: "https://www.jobs.ch" },
+      { nombre: "EURES Suiza — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas en Suiza y apoyo para el proceso de solicitud de permiso.", url: "https://eures.europa.eu" },
+      { nombre: "Swissinfo — Vivir en Suiza", emoji: "📋", desc: "Guía oficial para expatriados: permisos, sanidad, impuestos y trámites prácticos.", url: "https://www.swissinfo.ch/spa/vivir-en-suiza" },
+    ],
+  },
+
+  belgica: {
+    visado: {
+      tipoVisado: "Libre circulación UE",
+      resumen:
+        "Como ciudadano español (UE) puedes vivir y trabajar en Bélgica sin visado. Debes registrarte en la commune (ayuntamiento) local en los primeros 90 días y solicitar la eID card (tarjeta de identidad europea). El número de registro (NISS) es imprescindible para trabajar y acceder a servicios.",
+      requisitos: [
+        "DNI o pasaporte español válido",
+        "Registro en la commune local — te asignan el número NISS",
+        "eID card — tarjeta de identidad electrónica belga",
+        "Cuenta bancaria belga o europea",
+        "Seguro médico — cubierto por la mutualidad (mutualité/ziekenfonds) una vez registrado",
+      ],
+      enlaces: [
+        { texto: "Vivir y trabajar en Bélgica — Belgium.be", url: "https://www.belgium.be/es/trabajo/trabajar_en_belgica" },
+        { texto: "VDAB — Servicio de empleo de Flandes", url: "https://www.vdab.be" },
+        { texto: "Actiris — Servicio de empleo de Bruselas", url: "https://www.actiris.brussels" },
+        { texto: "EURES Bélgica — Empleo en Europa", url: "https://eures.europa.eu" },
+      ],
+    },
+    alojamiento: {
+      desc: "Bruselas es la ciudad más cara (habitación media 600-1.000€/mes). Gante, Amberes, Lieja y Brujas son más asequibles (400-700€). El mercado de alquiler es competitivo pero menos extremo que otras capitales europeas.",
+      plataformas: [
+        { nombre: "Immoweb.be", url: "https://www.immoweb.be", desc: "El mayor portal inmobiliario belga — pisos y habitaciones" },
+        { nombre: "Spotahome", url: "https://www.spotahome.com/be", desc: "Empresa española con visita virtual — muy usada por expats" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/be", desc: "Contratos medios sin fiador local — ideal para recién llegados" },
+        { nombre: "Logic-immo.be", url: "https://www.logic-immo.be", desc: "Portal inmobiliario en francés y neerlandés" },
+      ],
+      consejos: [
+        "Registra tu dirección en la commune antes de buscar trabajo — el NISS es imprescindible",
+        "El estado de vía (état des lieux) al inicio del contrato es obligatorio y te protege",
+        "La garantía máxima legal es de 2 meses de alquiler",
+        "Bruselas tiene excelente transporte público (metro, tram, STIB/MIVB)",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-26 años (orientativo)",
+        "Nivel de francés o neerlandés A2 según la región",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Experiencia con niños recomendada",
+      ],
+      condiciones: [
+        "No hay regulación específica au pair en Bélgica — se rige por acuerdo privado",
+        "Máximo 25 horas semanales de cuidado",
+        "Paga de bolsillo: 350-450€/mes",
+        "Manutención y alojamiento incluidos",
+        "Contrato por escrito muy recomendado",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias belgas verificadas" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Bélgica — muchas familias en Bruselas" },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", desc: "Verificación de familias y referencias incluidas" },
+      ],
+      enlaceOficial: { texto: "Trabajar en Bélgica — Belgium.be", url: "https://www.belgium.be/es/trabajo/trabajar_en_belgica" },
+    },
+    programas: [
+      { nombre: "VDAB — Empleo en Flandes", emoji: "🇧🇪", desc: "La agencia pública de empleo de Flandes. Ofertas en neerlandés, formación y orientación laboral.", url: "https://www.vdab.be" },
+      { nombre: "Actiris — Empleo en Bruselas", emoji: "💼", desc: "Agencia de empleo de la Región de Bruselas-Capital. Muchas multinacionales buscan perfiles bilingües.", url: "https://www.actiris.brussels" },
+      { nombre: "EURES Bélgica — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas en Bélgica para ciudadanos europeos.", url: "https://eures.europa.eu" },
+    ],
+  },
+
+  portugal: {
+    visado: {
+      tipoVisado: "Libre circulación UE",
+      resumen:
+        "Portugal es uno de los destinos más fáciles para españoles: mismo idioma latino, libre circulación UE y trámites sencillos. Debes registrarte en la Junta de Freguesia local y obtener el NIF (Número de Identificação Fiscal) en las Finanças — imprescindible para trabajar, alquilar y abrir cuenta bancaria.",
+      requisitos: [
+        "DNI o pasaporte español válido",
+        "NIF — Número de Identificação Fiscal, se solicita en las Finanças (AT)",
+        "Registro en la Junta de Freguesia local si resides más de 3 meses",
+        "Número de Segurança Social — se obtiene en el Centro Distrital del ISS",
+        "Cuenta bancaria portuguesa o europea",
+      ],
+      enlaces: [
+        { texto: "IEFP — Instituto de Emprego e Formação Profissional", url: "https://www.iefp.pt" },
+        { texto: "NIF — Portal das Finanças Portugal", url: "https://www.portaldasfinancas.gov.pt" },
+        { texto: "EURES Portugal — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "Emprego.gov.pt — Portal oficial de empleo", url: "https://www.emprego.ine.pt" },
+      ],
+    },
+    alojamiento: {
+      desc: "Lisboa y Oporto se han encarecido mucho en los últimos años (habitación media 600-1.000€). Ciudades como Braga, Coimbra, Faro o Setúbal son mucho más asequibles (300-500€). El mercado está tensionado por el turismo y los nómadas digitales.",
+      plataformas: [
+        { nombre: "Idealista.pt", url: "https://www.idealista.pt", desc: "Portal español muy activo en Portugal — pisos y habitaciones" },
+        { nombre: "OLX.pt", url: "https://www.olx.pt", desc: "Clasificados muy populares — habitaciones sin agencia" },
+        { nombre: "Uniplaces", url: "https://www.uniplaces.com/pt", desc: "Enfocado en estudiantes y jóvenes trabajadores — Lisboa y Oporto" },
+        { nombre: "Imovirtual.com", url: "https://www.imovirtual.com", desc: "Gran portal inmobiliario portugués con muchas opciones" },
+      ],
+      consejos: [
+        "El contrato de arrendamiento debe registrarse en las Finanças para ser válido",
+        "La fianza máxima legal en Portugal es de 2 meses",
+        "Busca en grupos de Facebook 'Españoles en Lisboa/Oporto' para ofertas directas",
+        "El Programa de Arrendamento Acessível ofrece pisos a precio reducido para residentes",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-27 años (orientativo)",
+        "Español como lengua materna (ventaja enorme para familias que quieren enseñar español a sus hijos)",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Conocimientos básicos de portugués muy valorados",
+      ],
+      condiciones: [
+        "No hay regulación específica au pair en Portugal — se rige por acuerdo privado",
+        "Máximo 25 horas semanales de cuidado",
+        "Paga de bolsillo: 200-300€/mes",
+        "Manutención y alojamiento incluidos",
+        "Integración muy fácil por la similitud cultural e idiomática",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias portuguesas verificadas" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Portugal — muchas familias en Lisboa" },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", desc: "Verificación de familias y referencias" },
+      ],
+      enlaceOficial: { texto: "IEFP — Emprego e Formação Profissional Portugal", url: "https://www.iefp.pt" },
+    },
+    programas: [
+      { nombre: "IEFP — Bolsa de empleo oficial", emoji: "🇵🇹", desc: "Portal de empleo del gobierno portugués. Ofertas en todos los sectores, incluidos empleos para hispanohablantes.", url: "https://www.iefp.pt" },
+      { nombre: "EURES Portugal — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas en Portugal y apoyo de consejeros EURES en español.", url: "https://eures.europa.eu" },
+      { nombre: "Startup Portugal — Ecosistema emprendedor", emoji: "🚀", desc: "Portugal tiene un ecosistema de startups muy activo (Lisboa Startup Hub). Visa de nómada digital y tech jobs.", url: "https://www.startupportugal.com" },
+    ],
+  },
+
+  noruega: {
+    visado: {
+      tipoVisado: "Libre circulación EEA (Espacio Económico Europeo)",
+      resumen:
+        "Noruega no es UE pero pertenece al EEA, por lo que los ciudadanos españoles tienen libre circulación. Puedes trabajar sin visado. Si resides más de 3 meses, debes registrarte en el Registro Nacional de Residentes (Folkeregisteret) a través de Skatteetaten para obtener el número D/F.",
+      requisitos: [
+        "DNI o pasaporte español válido",
+        "Número de identificación noruego (D-nummer o F-nummer) — se obtiene en Skatteetaten",
+        "Registro en Folkeregisteret si resides más de 6 meses",
+        "Cuenta bancaria noruega (BankID) muy recomendable para cobrar el salario",
+        "Seguro médico cubierto por el NAV una vez registrado",
+      ],
+      enlaces: [
+        { texto: "Registro de residencia — Skatteetaten", url: "https://www.skatteetaten.no/en/" },
+        { texto: "NAV — Empleo y bienestar social Noruega", url: "https://www.nav.no/en/home" },
+        { texto: "EURES Noruega — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "Work in Norway — Portal oficial", url: "https://www.workingnorway.no" },
+      ],
+    },
+    alojamiento: {
+      desc: "Oslo es una de las capitales más caras de Europa (habitación media 900-1.500€/mes). Bergen, Trondheim y Stavanger son algo más asequibles. Los salarios noruegos son muy elevados y compensan el alto coste de vida.",
+      plataformas: [
+        { nombre: "Finn.no", url: "https://www.finn.no/realestate/lettings", desc: "EL portal de referencia en Noruega — habitaciones y pisos" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/no", desc: "Contratos medios para trabajadores internacionales" },
+        { nombre: "Hybel.no", url: "https://www.hybel.no", desc: "Específico para habitaciones en Noruega — muy usado por jóvenes" },
+      ],
+      consejos: [
+        "El mercado de alquiler en Oslo es muy competitivo — actúa rápido",
+        "Los anuncios en Finn.no se publican y cubren en horas en Oslo",
+        "El depósito máximo es de 6 meses de alquiler por ley",
+        "Muchas empresas en Noruega ofrecen ayuda con el alojamiento inicial",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-30 años",
+        "Nivel de inglés B1 o noruego básico",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Experiencia con niños recomendada",
+      ],
+      condiciones: [
+        "Regulado por la UDI (Dirección de Inmigración de Noruega)",
+        "Máximo 30 horas semanales de cuidado",
+        "Paga de bolsillo: NOK 5.000-6.000/mes (aproximadamente 430-520€)",
+        "Manutención y alojamiento incluidos",
+        "Acceso a clases de noruego recomendado",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias noruegas verificadas" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Noruega — registro gratuito" },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", desc: "Verificación y referencias incluidas" },
+      ],
+      enlaceOficial: { texto: "Au Pair en Noruega — UDI (Dirección de Inmigración)", url: "https://www.udi.no/en/want-to-apply/family-immigration/au-pair/" },
+    },
+    programas: [
+      { nombre: "NAV — Empleo en Noruega", emoji: "🇳🇴", desc: "La agencia pública de empleo y bienestar social de Noruega. Ofertas en todos los sectores.", url: "https://www.nav.no/en/home" },
+      { nombre: "EURES Noruega — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas en Noruega y apoyo de consejeros EURES.", url: "https://eures.europa.eu" },
+      { nombre: "Work in Norway — Portal oficial", emoji: "💼", desc: "Portal oficial del gobierno noruego para trabajadores extranjeros: trámites, sectores y salarios.", url: "https://www.workingnorway.no" },
+    ],
+  },
+
+  dinamarca: {
+    visado: {
+      tipoVisado: "Libre circulación UE",
+      resumen:
+        "Como ciudadano español (UE) tienes derecho de libre circulación en Dinamarca. Puedes trabajar sin visado. Si resides más de 3 meses, debes registrarte en la SIRI (Agencia danesa para el Reclutamiento Internacional) y obtener el CPR-nummer (número de registro civil) en el Borgerservice.",
+      requisitos: [
+        "DNI o pasaporte español válido",
+        "Certificado de registro de la UE — se solicita en SIRI si resides más de 3 meses",
+        "CPR-nummer — número de identidad danés, imprescindible para todo",
+        "Cuenta bancaria danesa (NemKonto) para cobrar el salario",
+        "Seguro médico cubierto por el sistema público (sundhedskort) una vez registrado",
+      ],
+      enlaces: [
+        { texto: "SIRI — Agencia danesa de reclutamiento internacional", url: "https://siri.dk" },
+        { texto: "Jobnet.dk — Portal de empleo oficial de Dinamarca", url: "https://www.jobnet.dk" },
+        { texto: "EURES Dinamarca — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "New to Denmark — Portal oficial para inmigrantes", url: "https://www.nyidanmark.dk/en-GB" },
+      ],
+    },
+    alojamiento: {
+      desc: "Copenhague es cara (habitación media 700-1.200€/mes). Aarhus, Odense y Aalborg son más asequibles (450-750€). El mercado de alquiler tiene mucha demanda — se recomienda buscar antes de llegar.",
+      plataformas: [
+        { nombre: "Boligportal.dk", url: "https://www.boligportal.dk", desc: "El portal de alquiler más grande de Dinamarca" },
+        { nombre: "Lejebolig.dk", url: "https://www.lejebolig.dk", desc: "Pisos y habitaciones en toda Dinamarca" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/dk", desc: "Contratos medios para trabajadores internacionales" },
+      ],
+      consejos: [
+        "Inscríbete en Boligportal con suscripción Premium para ver los anuncios al publicarse",
+        "El depósito máximo legal es de 3 meses de alquiler",
+        "Muchas empresas danesas ofrecen relocation allowance",
+        "Copenhague tiene excelente red de bicicletas — factor importante al elegir zona",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-28 años (regulado por SIRI)",
+        "Nivel de inglés B1 o danés básico",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Experiencia con niños recomendada",
+      ],
+      condiciones: [
+        "Regulado por la SIRI (Agencia danesa para el Reclutamiento Internacional)",
+        "Máximo 30 horas semanales de cuidado",
+        "Paga de bolsillo mínima: DKK 3.200/mes (aproximadamente 430€)",
+        "Manutención y alojamiento incluidos",
+        "Acceso a clases de danés obligatorio",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias danesas verificadas" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Dinamarca — registro gratuito" },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", desc: "Verificación y referencias incluidas" },
+      ],
+      enlaceOficial: { texto: "Au Pair en Dinamarca — SIRI", url: "https://siri.dk/en/au-pairs/" },
+    },
+    programas: [
+      { nombre: "Jobnet.dk — Portal de empleo oficial", emoji: "🇩🇰", desc: "Portal de empleo del gobierno danés con ofertas en todos los sectores. Muchas empresas buscan perfiles internacionales.", url: "https://www.jobnet.dk" },
+      { nombre: "SIRI — Reclutamiento internacional", emoji: "💼", desc: "La agencia danesa para el reclutamiento internacional gestiona permisos de trabajo y residencia para ciudadanos UE.", url: "https://siri.dk" },
+      { nombre: "EURES Dinamarca — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas en Dinamarca y apoyo de consejeros EURES.", url: "https://eures.europa.eu" },
+    ],
+  },
+
+  austria: {
+    visado: {
+      tipoVisado: "Libre circulación UE",
+      resumen:
+        "Como ciudadano español (UE) puedes vivir y trabajar en Austria sin visado. Debes registrar tu dirección en el Meldeamt (oficina de empadronamiento) en los primeros 3 días de llegada — es obligatorio por ley. El número de identificación fiscal (Steuer-ID) se asigna automáticamente.",
+      requisitos: [
+        "DNI o pasaporte español válido",
+        "Anmeldung (registro de dirección) en el Meldeamt — obligatorio en los primeros 3 días",
+        "Número de identificación fiscal (Steuer-ID) — se asigna automáticamente tras el registro",
+        "Cuenta bancaria austriaca o europea",
+        "Seguro médico cubierto por la Sozialversicherung una vez empleado",
+      ],
+      enlaces: [
+        { texto: "AMS — Arbeitsmarktservice Austria (empleo oficial)", url: "https://www.ams.at" },
+        { texto: "Anmeldung — Registro de residencia Austria", url: "https://www.oesterreich.gv.at/themen/leben_in_oesterreich/wohnen/3/Seite.3220500.html" },
+        { texto: "EURES Austria — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "WKO — Cámara de Comercio Austria (empleo)", url: "https://www.wko.at" },
+      ],
+    },
+    alojamiento: {
+      desc: "Viena es la capital más asequible de Europa occidental para su tamaño (habitación media 600-1.000€/mes). Graz, Linz y Salzburgo rondan 450-750€. Austria tiene un mercado de alquiler muy regulado.",
+      plataformas: [
+        { nombre: "Willhaben.at", url: "https://www.willhaben.at/iad/immobilien", desc: "El mayor portal de clasificados de Austria — pisos y habitaciones" },
+        { nombre: "Immobilien.net", url: "https://www.immobilien.net", desc: "Portal inmobiliario austriaco con gran oferta de alquiler" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/at", desc: "Contratos medios para trabajadores internacionales" },
+      ],
+      consejos: [
+        "El Anmeldung (empadronamiento) es obligatorio en los 3 primeros días — multas por incumplimiento",
+        "Viena tiene WG (pisos compartidos) muy bien comunicados con el metro (U-Bahn)",
+        "La Wiener Wohnen gestiona pisos sociales para residentes registrados",
+        "Los pisos de la Gemeindebau (vivienda pública) de Viena son excelente opción a largo plazo",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-28 años (obligatorio por ley austriaca)",
+        "Nivel de alemán A2 mínimo",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Experiencia con niños valorada",
+      ],
+      condiciones: [
+        "Regulado por ley en Austria",
+        "Máximo 30 horas semanales de cuidado",
+        "Paga de bolsillo: 500-600€/mes — uno de los más altos de Europa",
+        "Manutención y alojamiento incluidos",
+        "Clases de alemán obligatorias",
+        "Máximo 12 meses",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias austriacas verificadas" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Austria — muchas familias en Viena" },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", desc: "Verificación y referencias incluidas" },
+      ],
+      enlaceOficial: { texto: "AMS Austria — Arbeitsmarktservice", url: "https://www.ams.at" },
+    },
+    programas: [
+      { nombre: "AMS Austria — Portal de empleo oficial", emoji: "🇦🇹", desc: "La agencia pública de empleo austriaca. Ofertas en todos los sectores, cursos de formación y orientación laboral.", url: "https://www.ams.at" },
+      { nombre: "EURES Austria — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas en Austria y apoyo de consejeros EURES.", url: "https://eures.europa.eu" },
+      { nombre: "WKO — Oportunidades en empresas austriacas", emoji: "💼", desc: "La Cámara de Comercio de Austria conecta a empresas con trabajadores internacionales cualificados.", url: "https://www.wko.at" },
+    ],
+  },
+
+  finlandia: {
+    visado: {
+      tipoVisado: "Libre circulación UE",
+      resumen:
+        "Como ciudadano español (UE) puedes trabajar en Finlandia sin visado. Si resides más de 3 meses, debes registrarte en el Maistraatti (registro de población) y obtener el Henkilötunnus (número de identidad finlandés) — imprescindible para trabajar, alquilar y acceder a servicios.",
+      requisitos: [
+        "DNI o pasaporte español válido",
+        "Henkilötunnus — número de identidad finlandés, se obtiene en el DVV (registro de población)",
+        "Registro en el DVV si resides más de 3 meses",
+        "Cuenta bancaria finlandesa o europea",
+        "Seguro médico cubierto por el sistema público (KELA) una vez registrado",
+      ],
+      enlaces: [
+        { texto: "TE-palvelut — Servicio de empleo de Finlandia", url: "https://www.te-palvelut.fi/en" },
+        { texto: "DVV — Registro de población Finlandia", url: "https://dvv.fi/en/individuals" },
+        { texto: "EURES Finlandia — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "Jobs in Finland — Portal oficial", url: "https://www.jobsinfinland.fi" },
+      ],
+    },
+    alojamiento: {
+      desc: "Helsinki es cara para ser una capital nórdica (habitación media 600-1.000€/mes). Tampere, Turku y Oulu son más asequibles (400-700€). El mercado es estable y regulado.",
+      plataformas: [
+        { nombre: "Vuokraovi.com", url: "https://vuokraovi.com", desc: "El mayor portal de alquiler de Finlandia" },
+        { nombre: "Oikotie.fi", url: "https://asunnot.oikotie.fi/vuokra-asunnot", desc: "Portal de pisos muy popular en Finlandia" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/fi", desc: "Contratos medios para trabajadores internacionales" },
+      ],
+      consejos: [
+        "SATO y VVO son las mayores empresas de alquiler público en Finlandia — inscríbete en sus listas",
+        "Muchos pisos se alquilan sin muebles (unfurnished) — prepara presupuesto para equipar",
+        "El depósito máximo es de 3 meses de alquiler",
+        "Tampere y Turku tienen mercado más accesible que Helsinki",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-28 años (orientativo)",
+        "Nivel de inglés B1 o finlandés básico",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Experiencia con niños recomendada",
+      ],
+      condiciones: [
+        "No hay regulación específica au pair en Finlandia — se rige por acuerdo privado",
+        "Máximo 25-30 horas semanales de cuidado",
+        "Paga de bolsillo: 200-300€/mes",
+        "Manutención y alojamiento incluidos",
+        "Acceso a clases de finlandés recomendado",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias finlandesas verificadas" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Finlandia — registro gratuito" },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", desc: "Verificación y referencias incluidas" },
+      ],
+      enlaceOficial: { texto: "TE-palvelut — Empleo en Finlandia", url: "https://www.te-palvelut.fi/en" },
+    },
+    programas: [
+      { nombre: "TE-palvelut — Servicio de empleo oficial", emoji: "🇫🇮", desc: "La agencia pública de empleo de Finlandia. Ofertas en todos los sectores y orientación laboral en inglés.", url: "https://www.te-palvelut.fi/en" },
+      { nombre: "EURES Finlandia — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas en Finlandia y apoyo de consejeros EURES.", url: "https://eures.europa.eu" },
+      { nombre: "Jobs in Finland — Portal oficial", emoji: "💼", desc: "Portal oficial del gobierno finlandés para trabajadores internacionales. Trámites, sectores y oportunidades.", url: "https://www.jobsinfinland.fi" },
+    ],
+  },
+
+  nueva_zelanda: {
+    visado: {
+      tipoVisado: "Working Holiday Visa (18-35 años)",
+      resumen:
+        "Nueva Zelanda ofrece la Working Holiday Visa para ciudadanos españoles de 18 a 35 años. Permite trabajar hasta 12 meses en cualquier empresa. Es una de las experiencias más valoradas por jóvenes españoles: naturaleza, calidad de vida y salarios altos.",
+      requisitos: [
+        "18-35 años (obligatorio)",
+        "Pasaporte español válido con al menos 15 meses de validez",
+        "NZD 4.200 de fondos mínimos (aproximadamente 2.300€)",
+        "Billete de vuelta o fondos para comprarlo",
+        "Sin dependientes que te acompañen",
+        "Sin antecedentes penales (declaración jurada)",
+        "Seguro médico de viaje para toda la estancia",
+      ],
+      enlaces: [
+        { texto: "Working Holiday Visa NZ — Immigration New Zealand", url: "https://www.immigration.govt.nz/new-zealand-visas/apply-for-a-visa/about-visa/working-holiday-visa" },
+        { texto: "Solicitar WHV Nueva Zelanda — Portal online", url: "https://www.immigration.govt.nz/new-zealand-visas/apply-for-a-visa/about-visa/working-holiday-visa" },
+        { texto: "EURES — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "Work and Income NZ — Empleo en Nueva Zelanda", url: "https://www.workandincome.govt.nz" },
+      ],
+    },
+    alojamiento: {
+      desc: "Auckland y Wellington son las ciudades más caras (habitación media NZD 250-400/semana). Christchurch y Queenstown son más asequibles. El coste de vida es alto pero los salarios también lo son.",
+      plataformas: [
+        { nombre: "TradeMe.co.nz", url: "https://www.trademe.co.nz/a/property/residential/rent", desc: "EL portal de referencia en Nueva Zelanda — pisos y habitaciones" },
+        { nombre: "Flatmates.co.nz", url: "https://www.flatmates.co.nz", desc: "Específico para flatmates (pisos compartidos) — el más usado" },
+        { nombre: "Realestate.co.nz", url: "https://www.realestate.co.nz", desc: "Gran portal inmobiliario con pisos en alquiler" },
+      ],
+      consejos: [
+        "Los backpacker hostels (BBH / YHA) son la opción habitual la primera semana",
+        "El Bond (fianza) máximo legal es de 4 semanas de alquiler",
+        "Tenancy Services NZ protege a los inquilinos — conoce tus derechos",
+        "Auckland: zonas bien comunicadas por tren (AT Metro) ofrecen mejor precio",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-35 años (con Working Holiday Visa)",
+        "Inglés nivel B1-B2",
+        "Working Holiday Visa válida",
+        "Certificado de antecedentes penales",
+        "Primeros auxilios recomendado",
+        "Experiencia con niños",
+      ],
+      condiciones: [
+        "Los au pairs en Nueva Zelanda tienen derechos laborales plenos",
+        "Salario mínimo NZ 2024: NZD 23,15/hora (uno de los más altos del mundo)",
+        "Como nanny con WHV: NZD 18-20/hora habitual",
+        "Máximo 40 horas semanales",
+        "Alojamiento con la familia incluido en el acuerdo",
+        "Contrato por escrito obligatorio por ley",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias en Nueva Zelanda verificadas" },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", desc: "Verificación y referencias incluidas" },
+        { nombre: "Nanny.com.au", url: "https://www.nanny.com.au", desc: "Portal de nannies en Australia y Nueva Zelanda" },
+      ],
+      enlaceOficial: { texto: "Working Holiday Visa — Immigration New Zealand", url: "https://www.immigration.govt.nz/new-zealand-visas/apply-for-a-visa/about-visa/working-holiday-visa" },
+    },
+    programas: [
+      { nombre: "Working Holiday Visa NZ", emoji: "🥝", desc: "Para 18-35 años. Trabaja en cualquier empresa neozelandesa hasta 12 meses. La experiencia más popular entre jóvenes españoles.", url: "https://www.immigration.govt.nz/new-zealand-visas/apply-for-a-visa/about-visa/working-holiday-visa" },
+      { nombre: "Work and Income NZ — Empleo oficial", emoji: "💼", desc: "Portal oficial del gobierno de Nueva Zelanda para encontrar trabajo. Incluye orientación para recién llegados.", url: "https://www.workandincome.govt.nz" },
+      { nombre: "EURES — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con información sobre convenios de trabajo y movilidad internacional.", url: "https://eures.europa.eu" },
+    ],
+  },
+
+  polonia: {
+    visado: {
+      tipoVisado: "Libre circulación UE",
+      resumen:
+        "Como ciudadano español (UE) tienes derecho de libre circulación en Polonia. Es uno de los destinos europeos emergentes más interesantes por su bajo coste de vida, economía en crecimiento y calidad de vida. Debes registrar tu residencia en la Urząd Gminy (oficina municipal) y obtener el PESEL (número de identidad polaco).",
+      requisitos: [
+        "DNI o pasaporte español válido",
+        "PESEL — número de identidad polaco, se obtiene en la Urząd Gminy local",
+        "Registro de residencia en la Urząd Gminy si resides más de 3 meses",
+        "Cuenta bancaria polaca o europea",
+        "Seguro médico cubierto por el NFZ (sistema público) una vez registrado y empleado",
+      ],
+      enlaces: [
+        { texto: "Praca.gov.pl — Portal oficial de empleo de Polonia", url: "https://www.praca.gov.pl" },
+        { texto: "Gov.pl — Vivir y trabajar en Polonia", url: "https://www.gov.pl/web/diplomacy" },
+        { texto: "EURES Polonia — Empleo en Europa", url: "https://eures.europa.eu" },
+        { texto: "Pracuj.pl — Portal de empleo privado líder en Polonia", url: "https://www.pracuj.pl" },
+      ],
+    },
+    alojamiento: {
+      desc: "Polonia tiene uno de los costes de vida más bajos de la UE occidental. Varsovia es la ciudad más cara (habitación media 350-600€/mes). Cracovia, Breslavia y Gdansk rondan 250-450€. Excelente calidad de vida por el precio.",
+      plataformas: [
+        { nombre: "OtoDOM.pl", url: "https://www.otodom.pl", desc: "El mayor portal inmobiliario de Polonia — pisos y habitaciones" },
+        { nombre: "OLX.pl", url: "https://www.olx.pl/nieruchomosci", desc: "Clasificados muy populares — habitaciones sin agencia" },
+        { nombre: "Gratka.pl", url: "https://gratka.pl/nieruchomosci/mieszkania/wynajem", desc: "Portal de alquiler con gran oferta en toda Polonia" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/pl", desc: "Contratos medios para trabajadores internacionales" },
+      ],
+      consejos: [
+        "El coste de vida en Polonia es un 40-50% más bajo que en Europa occidental",
+        "Varsovia tiene metro, tranvía y autobús — bien conectada",
+        "Cracovia es muy popular entre expats por su ambiente y bajo coste",
+        "Breslavia (Wroclaw) tiene un ecosistema tech muy activo con muchas startups",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-26 años (orientativo)",
+        "Inglés B1 o polaco básico",
+        "Sin hijos propios",
+        "Certificado de antecedentes penales",
+        "Experiencia con niños recomendada",
+      ],
+      condiciones: [
+        "No hay regulación específica au pair en Polonia — se rige por acuerdo privado",
+        "Máximo 25 horas semanales de cuidado",
+        "Paga de bolsillo: PLN 800-1.200/mes (aproximadamente 180-270€) — bajo pero el coste de vida es muy bajo",
+        "Manutención y alojamiento incluidos",
+        "Contrato por escrito recomendado",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Mayor plataforma — familias polacas verificadas" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Filtra por Polonia — registro gratuito" },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", desc: "Verificación y referencias incluidas" },
+      ],
+      enlaceOficial: { texto: "Praca.gov.pl — Empleo en Polonia", url: "https://www.praca.gov.pl" },
+    },
+    programas: [
+      { nombre: "Praca.gov.pl — Portal de empleo oficial", emoji: "🇵🇱", desc: "Portal de empleo del gobierno polaco con ofertas en todos los sectores. Polonia tiene muy baja tasa de desempleo.", url: "https://www.praca.gov.pl" },
+      { nombre: "EURES Polonia — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas en Polonia y apoyo de consejeros EURES en español.", url: "https://eures.europa.eu" },
+      { nombre: "Pracuj.pl — Mayor portal de empleo privado", emoji: "💼", desc: "El portal de empleo más grande de Polonia. Muchas multinacionales con sedes en Varsovia, Cracovia y Breslavia.", url: "https://www.pracuj.pl" },
+    ],
+  },
 };
 
 // ─── Países disponibles ─────────────────────────────────────
@@ -576,6 +1280,17 @@ const PAISES = [
   { id: "francia", label: "Francia", flag: "🇫🇷" },
   { id: "irlanda", label: "Irlanda", flag: "🇮🇪" },
   { id: "paises_bajos", label: "P. Bajos", flag: "🇳🇱" },
+  { id: "italia", label: "Italia", flag: "🇮🇹" },
+  { id: "suecia", label: "Suecia", flag: "🇸🇪" },
+  { id: "suiza", label: "Suiza", flag: "🇨🇭" },
+  { id: "belgica", label: "Bélgica", flag: "🇧🇪" },
+  { id: "portugal", label: "Portugal", flag: "🇵🇹" },
+  { id: "noruega", label: "Noruega", flag: "🇳🇴" },
+  { id: "dinamarca", label: "Dinamarca", flag: "🇩🇰" },
+  { id: "austria", label: "Austria", flag: "🇦🇹" },
+  { id: "finlandia", label: "Finlandia", flag: "🇫🇮" },
+  { id: "nueva_zelanda", label: "N. Zelanda", flag: "🇳🇿" },
+  { id: "polonia", label: "Polonia", flag: "🇵🇱" },
   { id: "canada", label: "Canadá", flag: "🇨🇦" },
   { id: "australia", label: "Australia", flag: "🇦🇺" },
   { id: "usa", label: "EE.UU.", flag: "🇺🇸" },
