@@ -38,8 +38,10 @@ const SUGERENCIAS = [
   { icon: "📧", label: "Enviar CV automático", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
   { icon: "📝", label: "Crear mi CV", msg: "__ENTREVISTA__" },
   { icon: "🔍", label: "Buscar trabajo", msg: "Quiero buscar trabajo, ¿me ayudas?" },
-  { icon: "📸", label: "Mejorar mi foto", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
+  { icon: "🌍", label: "Emigrar", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
+  { icon: "👶", label: "Au Pair", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
   { icon: "🎯", label: "Preparar entrevista", msg: "Quiero preparar una entrevista de trabajo" },
+  { icon: "📸", label: "Mejorar mi foto", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
   { icon: "📄", label: "Subir mi CV", msg: "__SUBIR_CV__" },
 ];
 

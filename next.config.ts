@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   async headers() {
     return [
+      // HTML pages — never cache; fixes stale UI on mobile/PWA
+      {
+        source: '/((?!_next/static|_next/image|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+        ],
+      },
+      // API routes — extra explicit no-store
       {
         source: '/api/:path*',
         headers: [
