@@ -724,6 +724,19 @@ export default function EmigrarPage() {
           {/* ── AU PAIR ── */}
           {pestaña === "aupair" && (
             <div className="space-y-4">
+              {/* Banner guía completa */}
+              <Link href="/app/au-pair"
+                className="flex items-center justify-between rounded-xl px-4 py-3.5"
+                style={{ background: "linear-gradient(135deg,#0d2818,#0a1a1a)", border: "1px solid #10b981" }}>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: "#10b981" }}>👶 Ver Guía Completa Au Pair</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#6ee7b7" }}>
+                    Documentos, alojamiento, salarios por país, ventajas para estudiantes
+                  </p>
+                </div>
+                <span className="text-xl">→</span>
+              </Link>
+
               {!info.aupair.disponible ? (
                 <p className="text-sm" style={{ color: "#9ca3af" }}>
                   El programa Au Pair no está regulado específicamente en este país.
@@ -732,7 +745,7 @@ export default function EmigrarPage() {
               ) : (
                 <>
                   <div>
-                    <p className="text-xs font-bold mb-2" style={{ color: "#9ca3af" }}>REQUISITOS</p>
+                    <p className="text-xs font-bold mb-2" style={{ color: "#9ca3af" }}>REQUISITOS EN {paisObj.label.toUpperCase()}</p>
                     <ul className="space-y-1.5">
                       {info.aupair.requisitos.map((r, i) => (
                         <li key={i} className="flex gap-2 text-sm" style={{ color: "#d1d5db" }}>

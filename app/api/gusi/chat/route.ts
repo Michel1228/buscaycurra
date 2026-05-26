@@ -75,10 +75,27 @@ BuscayCurra es una plataforma española de empleo con +600.000 ofertas de trabaj
   - 4 pestañas por país:
     • Visado: tipo de visa, requisitos exactos, enlaces a portales gubernamentales oficiales
     • Alojamiento: plataformas de alquiler locales, consejos prácticos
-    • Au Pair: requisitos, condiciones, paga mínima, agencias verificadas (AuPairWorld, Cultural Care, etc.)
+    • Au Pair: resumen del país + enlace a la guía completa
     • Programas: Working Holiday, EURES, becas, programas oficiales
-  - Cada pestaña tiene URLs directas a los portales oficiales del gobierno de cada país
   - Botón "Buscar ofertas en [país]" para ir a /app/buscar con el país preseleccionado
+
+👶 /app/au-pair — Guía Completa Au Pair (SECCIÓN NUEVA MUY IMPORTANTE)
+  - 6 pestañas con toda la información Au Pair:
+    • Qué es: explicación, proceso 10 pasos, señales de alerta (red flags)
+    • Documentos: checklist completa para españoles — antecedentes penales + apostilla + seguro + carnet + referencias
+    • Por país: condiciones legales EXACTAS de 8 países (paga mínima, horas, duración, clases obligatorias, seguro)
+      - Alemania: 280 €/mes + 70 €/mes para clases de alemán (840 €/año) — obligatorio 6h/semana alemán
+      - Francia: 350-400 €/mes — máx. 25h/semana
+      - Irlanda: 100-120 €/semana — inglés total
+      - UK: 100-150 £/semana — sin visa 'au pair' oficial desde 2008
+      - Países Bajos: 340 €/mes — regulado por IND
+      - USA: 195,75 $/semana (ley federal) + 500 $/año para universidad obligatorio + visa J-1
+      - Canadá: salario mínimo provincial (Ontario 17,20 CAD/h)
+      - Australia: 23,23 AUD/h (salario mínimo Fairwork)
+    • Alojamiento: derechos (habitación privada mín. 9m², cerrada con llave, 3 comidas incluidas), qué negociar
+    • Estudiantes: ventajas específicas (ahorro neto 150-400 €/mes, clases pagadas, créditos universitarios, Erasmus+ compatible)
+    • Plataformas: AuPairWorld (gratis), AuPair.com (gratis), Cultural Care, APIA, cómo crear perfil que destaque
+  - Ideal para jóvenes de 18-30 que quieren idioma + experiencia internacional + ahorro simultáneo
 
 📊 /app/pipeline — Kanban de candidaturas (Claw)
   - Tablero tipo Kanban para gestionar todas tus candidaturas
@@ -373,7 +390,7 @@ function extractCity(text: string): string {
 function getLocalReply(text: string, intent: string): string {
   switch (intent) {
     case "emigrar":
-      return "🌍 ¡Te ayudo a emigrar!\n\nTenemos información verificada (visados, alojamiento, Au Pair, programas) para 8 países:\n🇬🇧 Reino Unido · 🇩🇪 Alemania · 🇫🇷 Francia\n🇮🇪 Irlanda · 🇳🇱 P. Bajos · 🇨🇦 Canadá\n🇦🇺 Australia · 🇺🇸 EE.UU.\n\n👉 [**Ir a Emigrar →**](/app/emigrar)\n\nTambién tenemos +600k ofertas en 34 países en 🔍 Buscar.\n\n¿Qué país te interesa? 🐛";
+      return "🌍 ¡Te ayudo a emigrar!\n\nTenemos información verificada para 8 países: 🇬🇧 UK · 🇩🇪 Alemania · 🇫🇷 Francia · 🇮🇪 Irlanda · 🇳🇱 P.Bajos · 🇨🇦 Canadá · 🇦🇺 Australia · 🇺🇸 EE.UU.\n\n👉 [**Emigrar →**](/app/emigrar) — visados, alojamiento, programas\n👶 [**Au Pair completo →**](/app/au-pair) — documentos, paga por país, ventajas para estudiantes\n\nTambién tenemos +600k ofertas en 34 países en 🔍 Buscar.\n\n¿Qué país te interesa? 🐛";
     case "entrevista_prep":
       return "🎙️ ¡Tenemos un simulador de entrevistas!\n\nElige tu sector (general, hostelería, tecnología, comercio o salud) y practica preguntas reales. La IA te da:\n✅ Lo que hiciste bien\n⚠️ Qué mejorar\n📊 Puntuación 1-10\n\n👉 [**Ir al Simulador →**](/app/entrevistas)\n\nO si prefieres, dime tu sector y te hago 3 preguntas aquí mismo. 🐛🎯";
     case "pipeline":
