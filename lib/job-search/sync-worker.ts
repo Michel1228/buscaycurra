@@ -294,9 +294,9 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
   const allJobs: RawJob[] = [];
   const seen = new Set<string>();
   
-  for (const page of [1, 2, 3, 4, 5]) {
+  for (const page of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
     try {
-      const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F3.0&pagesize=20&page=${page}&sort=relevance`;
+      const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F3.0&pagesize=50&page=${page}&sort=relevance`;
       const res = await fetch(url, {
         headers: { "Referer": "https://buscaycurra.es" },
         signal: AbortSignal.timeout(15000),
@@ -323,8 +323,8 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
           newJobs++;
         }
       }
-      // Si la página vino casi vacía, no seguir
-      if (jobs.length < 10) break;
+      // Si la página vino casi vacía, no seguir (con pagesize=50, <20 es final)
+      if (jobs.length < 20) break;
     } catch { continue; }
   }
   return allJobs;

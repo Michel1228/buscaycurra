@@ -488,22 +488,28 @@ async function fetchDevITJobs(countryCode: string, feedUrl: string): Promise<Raw
   }
 }
 
-export async function syncGlobalFreeAPIs(musePages: number = 10): Promise<SyncResult> {
-  console.log(`[GlobalAPIs] Iniciando sync (Muse: ${musePages} pages, Jobicy, Remotive)...`);
+export async function syncGlobalFreeAPIs(musePages: number = 10, museStartPage: number = 1): Promise<SyncResult> {
+  console.log(`[GlobalAPIs] Iniciando sync (Muse: ${musePages} pages desde ${museStartPage}, Jobicy, Remotive)...`);
 
-  // The Muse — paginado
+  // The Muse — paginado con offset persistente
   let museInserted = 0;
   let museTotal = 0;
   let musePageCount = 0;
-  for (let page = 1; page <= musePages; page++) {
+  let lastOkPage = museStartPage - 1;
+  for (let page = museStartPage; page < museStartPage + musePages; page++) {
     const { jobs, total, pageCount } = await fetchMusePage(page);
     museTotal = total;
     musePageCount = pageCount;
-    if (jobs.length === 0) break;
+    if (jobs.length === 0) {
+      // Si la página 25000+ está vacía, reiniciar
+      if (page > total / 20) { lastOkPage = 0; } // wrap around
+      break;
+    }
     const n = await guardarOfertas(jobs);
     museInserted += n;
-    // Rate limit: 500ms entre páginas para ser amables
-    if (page < musePages) await new Promise(r => setTimeout(r, 500));
+    lastOkPage = page;
+    // Rate limit: 200ms entre páginas (más agresivo pero seguro)
+    if (page < museStartPage + musePages - 1) await new Promise(r => setTimeout(r, 200));
   }
 
   // Jobicy

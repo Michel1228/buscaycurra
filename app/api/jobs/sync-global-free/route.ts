@@ -12,11 +12,21 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { syncGlobalFreeAPIs, fetchMusePage, fetchJobicy, fetchRemotive } from "@/lib/job-search/free-global-apis";
+import fs from "fs";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const SYNC_SECRET = process.env.ADMIN_SECRET || "buscaycurra_sync_2024";
+const MUSE_OFFSET_FILE = "/tmp/muse_page_offset.txt";
+
+function getMuseOffset(): number {
+  try { return parseInt(fs.readFileSync(MUSE_OFFSET_FILE, "utf-8").trim()) || 1; } catch { return 1; }
+}
+function saveMuseOffset(page: number) {
+  fs.writeFileSync(MUSE_OFFSET_FILE, String(page));
+}
 
 export async function POST(request: NextRequest) {
   const auth = request.headers.get("x-sync-secret");
@@ -26,15 +36,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const musePages = body.musePages || 25;  // 25 pages = ~500 ofertas por llamada
-    const includeJobicy = body.jobicy !== false;
-    const includeRemotive = body.remotive !== false;
+    const musePages = body.musePages || 50;
+    const museStartPage = body.museStartPage || getMuseOffset();
 
-    const result = await syncGlobalFreeAPIs(musePages);
+    const result = await syncGlobalFreeAPIs(musePages, museStartPage);
+
+    // Guardar offset para siguiente ejecución
+    const nextPage = museStartPage + musePages;
+    saveMuseOffset(nextPage > (result.muse.pageCount || 99999) ? 1 : nextPage);
 
     return NextResponse.json({
       ok: true,
       ...result,
+      museStartPage,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {

@@ -60,6 +60,16 @@ const TRAD: Record<string, Record<string, string>> = {
   // ─── Search ──────────────────────────────────────────────
   "Buscar ofertas": { en: "Search jobs", fr: "Chercher des offres", de: "Jobs suchen", it: "Cerca offerte", pt: "Procurar ofertas", nl: "Vacatures zoeken", pl: "Szukaj ofert", sv: "Sök jobb", da: "Søg job", fi: "Etsi työpaikkoja", no: "Søk jobber" },
   "Ofertas encontradas": { en: "Jobs found", fr: "Offres trouvées", de: "Jobs gefunden", it: "Offerte trovate", pt: "Ofertas encontradas", nl: "Vacatures gevonden", pl: "Znaleziono ofert", sv: "Jobb hittade", da: "Job fundet", fi: "Työpaikkoja löytyi", no: "Jobber funnet" },
+
+  // ─── Nav extra ───────────────────────────────────────────
+  "Guzzi":     { en: "Guzzi", fr: "Guzzi", de: "Guzzi", it: "Guzzi", pt: "Guzzi", nl: "Guzzi", pl: "Guzzi", sv: "Guzzi", da: "Guzzi", fi: "Guzzi", no: "Guzzi" },
+  "Guardados": { en: "Saved", fr: "Sauvegardés", de: "Gespeichert", it: "Salvati", pt: "Guardados", nl: "Opgeslagen", pl: "Zapisane", sv: "Sparade", da: "Gemte", fi: "Tallennetut", no: "Lagrede" },
+  "Pipeline":  { en: "Pipeline", fr: "Pipeline", de: "Pipeline", it: "Pipeline", pt: "Pipeline", nl: "Pipeline", pl: "Pipeline", sv: "Pipeline", da: "Pipeline", fi: "Pipeline", no: "Pipeline" },
+  "Salarios":  { en: "Salaries", fr: "Salaires", de: "Gehälter", it: "Stipendi", pt: "Salários", nl: "Salarissen", pl: "Wynagrodzenia", sv: "Löner", da: "Lønninger", fi: "Palkat", no: "Lønninger" },
+  "Reviews":   { en: "Reviews", fr: "Avis", de: "Bewertungen", it: "Recensioni", pt: "Avaliações", nl: "Beoordelingen", pl: "Opinie", sv: "Recensioner", da: "Anmeldelser", fi: "Arvostelut", no: "Anmeldelser" },
+  "Invitar":   { en: "Invite", fr: "Inviter", de: "Einladen", it: "Invita", pt: "Convidar", nl: "Uitnodigen", pl: "Zaproś", sv: "Bjud in", da: "Inviter", fi: "Kutsu", no: "Inviter" },
+  "Mi Plan":   { en: "My Plan", fr: "Mon Plan", de: "Mein Plan", it: "Il mio piano", pt: "Meu Plano", nl: "Mijn Plan", pl: "Mój Plan", sv: "Min Plan", da: "Min Plan", fi: "Suunnitelmani", no: "Min Plan" },
+  "Emigrar":   { en: "Emigrate", fr: "Émigrer", de: "Auswandern", it: "Emigrare", pt: "Emigrar", nl: "Emigreren", pl: "Emigracja", sv: "Emigrera", da: "Emigrere", fi: "Muuta ulkomaille", no: "Emigrere" },
 };
 
 export function t(key: string, lang: IdiomaCode): string {

@@ -48,6 +48,9 @@ export default function JobCard({
   const [descripcionFull, setDescripcionFull] = useState<string | null>(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const [estadoEnvio, setEstadoEnvio] = useState<"idle" | "verificando" | "buscando" | "generando" | "preview" | "enviando" | "enviado" | "sin_cv" | "error">("idle");
+  const [traduciendo, setTraduciendo] = useState(false);
+  const [descTraducida, setDescTraducida] = useState<string | null>(null);
+  const [idiomaTraducido, setIdiomaTraducido] = useState<string>("es");
   const [cartaPreview, setCartaPreview] = useState<string | null>(null);
   const [cartaSubject, setCartaSubject] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -187,6 +190,40 @@ export default function JobCard({
     setEstadoEnvio("idle");
     setCartaPreview(null);
     setErrorMsg("");
+  }
+
+  async function traducirDescripcion() {
+    const textoATraducir = descripcionFull ?? descripcion;
+    if (!textoATraducir || traduciendo) return;
+
+    // Detectar idioma guardado
+    let targetLang = "es";
+    if (typeof window !== "undefined") {
+      targetLang = localStorage.getItem("bc-lang") || "es";
+    }
+
+    // Si ya está traducido al mismo idioma, volver al original
+    if (descTraducida && idiomaTraducido === targetLang) {
+      setDescTraducida(null);
+      return;
+    }
+
+    setTraduciendo(true);
+    try {
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textoATraducir, to: targetLang }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { translated?: string };
+        if (data.translated) {
+          setDescTraducida(data.translated);
+          setIdiomaTraducido(targetLang);
+        }
+      }
+    } catch { /* ignorar */ }
+    finally { setTraduciendo(false); }
   }
 
   async function toggleGuardar() {
@@ -330,18 +367,30 @@ export default function JobCard({
             <div className="mt-2">
               {!expandida ? (
                 <p className="text-[11px] leading-relaxed" style={{ color: "#64748b", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as React.CSSProperties}>
-                  {descripcion}
+                  {descTraducida && expandida ? descTraducida : descripcion}
                 </p>
               ) : (
                 <div className="rounded-lg p-3 mt-1" style={{ background: "rgba(15,17,23,0.8)", border: "1px solid #2d3142" }}>
                   <p className="text-xs leading-relaxed whitespace-pre-line" style={{ color: "#cbd5e1" }}>
-                    {cargandoDetalle ? "Cargando descripción completa..." : (descripcionFull ?? descripcion)}
+                    {cargandoDetalle ? "Cargando descripción completa..." : (descTraducida ?? descripcionFull ?? descripcion)}
                   </p>
                 </div>
               )}
-              <button onClick={toggleExpand} className="text-[11px] mt-1.5 font-medium transition hover:opacity-80" style={{ color: "#22c55e" }}>
-                {expandida ? "Ver menos ▲" : "Ver más ▼"}
-              </button>
+              <div className="flex items-center gap-3 mt-1.5">
+                <button onClick={toggleExpand} className="text-[11px] font-medium transition hover:opacity-80" style={{ color: "#22c55e" }}>
+                  {expandida ? "Ver menos ▲" : "Ver más ▼"}
+                </button>
+                {expandida && (descripcionFull ?? descripcion) && (
+                  <button
+                    onClick={() => void traducirDescripcion()}
+                    disabled={traduciendo}
+                    className="text-[11px] font-medium transition hover:opacity-80"
+                    style={{ color: traduciendo ? "#64748b" : descTraducida ? "#f59e0b" : "#60a5fa" }}
+                  >
+                    {traduciendo ? "⏳ Traduciendo..." : descTraducida ? "🔄 Ver original" : "🌐 Traducir"}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
