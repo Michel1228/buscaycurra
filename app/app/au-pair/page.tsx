@@ -31,7 +31,7 @@ const PAISES_AUPAIR = [
     edad: "18-30 años",
     horas: "Máx. 25h/semana",
     bolsillo: "~350-400 €/mes (≈85-100 €/semana)",
-    extra: "Tarjeta Navigo (metro París) o equivalente regional a cargo de la familia",
+    extra: "La familia cubre el abono mensual de transporte público (Navigo en París, o equivalente en otras ciudades francesas)",
     idioma: "Francés A2-B1 recomendado (mayoría de familias lo exigen)",
     duracion: "Máx. 18 meses",
     contrato: "Contrat de travail au pair — modelo oficial obligatorio",
@@ -105,7 +105,7 @@ const PAISES_AUPAIR = [
     pais: "Canadá",
     edad: "18-35 años (con IEC Working Holiday)",
     horas: "Máx. 40h/semana",
-    bolsillo: "Salario mínimo provincial — Ontario: 17,20 CAD/hora (~600-700 CAD/semana)",
+    bolsillo: "17,20 CAD/h mín. Ontario 2024",
     extra: "Caregiver Program: derechos laborales plenos como trabajador",
     idioma: "Inglés o francés B2",
     duracion: "1-2 años (IEC Working Holiday renovable)",
@@ -120,7 +120,7 @@ const PAISES_AUPAIR = [
     pais: "Australia",
     edad: "18-35 años (Working Holiday Visa 417)",
     horas: "Máx. 40h/semana",
-    bolsillo: "23,23 AUD/hora (salario mínimo nacional 2024) — ~800-900 AUD/semana con alojamiento",
+    bolsillo: "23,23 AUD/h (mín. Fairwork 2024)",
     extra: "Working With Children Check (WWCC) obligatorio por ley estatal",
     idioma: "Inglés B1-B2",
     duracion: "1 año WHV + renovable hasta 3 años trabajando en zonas rurales",
@@ -270,7 +270,7 @@ const PAISES_AUPAIR = [
     pais: "Nueva Zelanda",
     edad: "18-35 años (Working Holiday Visa)",
     horas: "Máx. 40h/semana",
-    bolsillo: "NZD 23,15/hora (salario mínimo 2024) — ~800-950 NZD/semana + alojamiento",
+    bolsillo: "23,15 NZD/h (mín. NZ 2024)",
     extra: "Working Holiday Visa: solicitud online desde España. No existe visa 'Au Pair' específica — se trabaja como nanny con WHV",
     idioma: "Inglés B2-C1 — inmersión total",
     duracion: "12 meses (WHV no renovable para españoles)",
@@ -373,7 +373,7 @@ const DOCUMENTOS = [
     items: [
       { doc: "Pasaporte en vigor", detalle: "Validez mínima 1 año + 2 páginas en blanco. Para países fuera de UE no basta con el DNI.", obligatorio: true },
       { doc: "Fotografías de pasaporte", detalle: "2-4 fotos tipo pasaporte recientes (fondo blanco, sin gafas oscuras).", obligatorio: true },
-      { doc: "DNI español", detalle: "Copia + original. Suficiente solo para países de la UE (Alemania, Francia, Irlanda, Países Bajos...).", obligatorio: true },
+      { doc: "DNI español", detalle: "Copia + original. Válido solo para países de la UE (Alemania, Francia, Irlanda, Países Bajos...). Para UK, USA, Canadá, Australia y Nueva Zelanda necesitas pasaporte.", obligatorio: true },
     ],
   },
   {
@@ -660,7 +660,7 @@ export default function AuPairPage() {
                   ].map((campo, j) => (
                     <div key={j} className="rounded-xl px-3 py-2.5" style={{ background: "#0f1117", border: "1px solid #1f2937" }}>
                       <p className="text-xs" style={{ color: "#6b7280" }}>{campo.icon} {campo.label}</p>
-                      <p className="text-xs font-semibold mt-0.5" style={{ color: campo.destacado ? "#10b981" : "#e5e7eb" }}>{campo.valor}</p>
+                      <p className="text-xs font-semibold mt-0.5 break-words leading-snug" style={{ color: campo.destacado ? "#10b981" : "#e5e7eb" }}>{campo.valor}</p>
                     </div>
                   ))}
                 </div>
