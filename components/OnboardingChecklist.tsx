@@ -48,13 +48,13 @@ export default function OnboardingChecklist() {
       let alertasData: any = null;
 
       if (cvRes.status === "fulfilled" && cvRes.value.ok) {
-        try { cvData = await cvRes.value.json(); } catch {}
+        try { cvData = await cvRes.value.json(); } catch (err) { console.error('[Onboarding] Error parse cv:', err) }
       }
       if (statusRes.status === "fulfilled" && statusRes.value.ok) {
-        try { statusData = await statusRes.value.json(); } catch {}
+        try { statusData = await statusRes.value.json(); } catch (err) { console.error('[Onboarding] Error parse status:', err) }
       }
       if (alertasRes.status === "fulfilled" && alertasRes.value.ok) {
-        try { alertasData = await alertasRes.value.json(); } catch {}
+        try { alertasData = await alertasRes.value.json(); } catch (err) { console.error('[Onboarding] Error parse alertas:', err) }
       }
 
       const cvDone = !!(cvData?.cvData?.nombre?.trim());

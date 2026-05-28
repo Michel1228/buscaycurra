@@ -1,12 +1,15 @@
 {
-  "name": "BuscayCurra - Encuentra trabajo en España",
+  "name": "BuscayCurra — Agente IA de empleo",
   "short_name": "BuscayCurra",
-  "description": "Guzzi busca ofertas, mejora tu CV y envía candidaturas automáticamente",
-  "start_url": "/app",
+  "description": "Guzzi busca, adapta y envía candidaturas por ti en 20+ países, 24/7. La alternativa real a InfoJobs y LinkedIn.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0f1a0a",
-  "theme_color": "#7ed56f",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "theme_color": "#0f1117",
+  "background_color": "#0f1117",
+  "categories": ["business", "productivity"],
+  "lang": "es",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -20,8 +23,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "categories": ["business", "productivity"],
-  "lang": "es",
-  "dir": "ltr"
+  ]
 }

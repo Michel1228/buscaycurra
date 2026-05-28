@@ -97,9 +97,9 @@ export async function GET(req: NextRequest) {
   const totalEnBD = await contarEnBD();
   return NextResponse.json({
     totalEnBD,
-    objetivo: 400000,
-    progresoPct: Math.round((totalEnBD / 400000) * 100),
+    objetivo: 800000,
+    progresoPct: Math.round((totalEnBD / 800000) * 100),
     totalCombinaciones: TOTAL_COMBINACIONES,
-    mensaje: `${totalEnBD.toLocaleString("es-ES")} / 400.000 ofertas`,
+    mensaje: `${totalEnBD.toLocaleString("es-ES")} / 800.000 ofertas`,
   });
 }

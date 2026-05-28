@@ -101,7 +101,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
     fetch(`/api/cv-cartas?userId=${encodeURIComponent(userId)}`)
       .then(r => r.json())
       .then((data: { cartas?: CartaArchivada[] }) => { if (data.cartas) setCartas(data.cartas); })
-      .catch(() => {});
+      .catch((err) => { console.error('[CVSenderDashboard] Error:', err) });
   }, [userId]);
 
   const registrarRespuesta = (id: string, tipo: "positiva" | "negativa" | "entrevista") => {
@@ -121,7 +121,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       if (data.success) {
         setPendingJobs(prev => prev.filter(j => j.id !== jobId));
       }
-    } catch {} finally { setCancellingId(null); }
+    } catch (err) { console.error('[CVSenderDashboard] Error al cancelar:', err) } finally { setCancellingId(null); }
   };
 
   if (loading) {

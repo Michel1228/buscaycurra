@@ -1,28 +1,33 @@
 /**
  * Service Worker para BuscayCurra PWA
- * v6 — Network-first para todo, cache solo como fallback offline
+ * v7 — Cache versionada por BUILD_ID, network-first estricto
  * BUILD_ID: __BUILD_ID__
  */
-const CACHE_NAME = "buscaycurra-v6";
+const CACHE_NAME = "buscaycurra-__BUILD_ID__";
 
-// Activar inmediatamente
-self.skipWaiting();
+// ── Instalar: skipWaiting inmediato ──
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
+
+// ── Activar: limpiar caches viejas, tomar control ──
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-// Escuchar mensaje SKIP_WAITING del cliente
+// ── Mensaje SKIP_WAITING del banner ──
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });
 
+// ── Fetch: network-first con bypass de HTTP cache ──
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -32,34 +37,48 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Recursos estáticos (JS, CSS, imágenes, fuentes) → network-first con fallback cache
-  const isStatic = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|webp|mp3|wav)$/.test(url.pathname);
-  if (isStatic) {
+  // Navegación HTML → network-first SIN HTTP cache
+  if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: "no-cache" })
         .then((response) => {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((c) => c.put(request, clone));
           return response;
         })
-        .catch(() => caches.match(request)) // offline fallback
+        .catch(() => caches.match(request))
     );
     return;
   }
 
-  // Navegación HTML y otros → network-first
+  // Recursos estáticos (JS, CSS, imágenes, fuentes) → network-first
+  const isStatic = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|webp|mp3|wav)$/.test(url.pathname);
+  if (isStatic) {
+    event.respondWith(
+      fetch(request, { cache: "no-cache" })
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Otros → network-first
   event.respondWith(
-    fetch(request)
+    fetch(request, { cache: "no-cache" })
       .then((response) => {
         const clone = response.clone();
         caches.open(CACHE_NAME).then((c) => c.put(request, clone));
         return response;
       })
-      .catch(() => caches.match(request)) // fallback offline
+      .catch(() => caches.match(request))
   );
 });
 
-// Push notifications
+// ── Push notifications ──
 self.addEventListener("push", (event) => {
   if (!event.data) return;
   const data = event.data.json();

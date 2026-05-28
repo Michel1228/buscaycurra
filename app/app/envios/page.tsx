@@ -40,7 +40,9 @@ export default function EnviosPage() {
             if (data.rateLimitInfo) setRateLimit(data.rateLimitInfo);
           }
         }
-      } catch {}
+      } catch (err) {
+      console.error('[Envios] Error loadUser:', err);
+    }
     }
     loadUser();
   }, []);
@@ -154,7 +156,9 @@ function StatsTab({ userId }: { userId: string }) {
         const res = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`);
         const data = await res.json() as { stats?: typeof stats };
         if (data.stats) setStats(data.stats);
-      } catch {} finally { setLoading(false); }
+      } catch (err) {
+      console.error('[Envios] Error stats:', err);
+    } finally { setLoading(false); }
     })();
   }, [userId]);
 

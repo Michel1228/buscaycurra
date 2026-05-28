@@ -32,15 +32,16 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   function getNotifUrl(n: Notif): string | null {
     const datos = n.datos || {};
-    // Prioridad 1: Si hay job_id, navegar al detalle interno de la oferta
-    if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
-    // Prioridad 2: Tipos de notificación que redirigen a secciones
+    // Alertas de empleo: siempre a búsqueda (pueden ser múltiples ofertas)
     if (n.tipo === "nuevas_ofertas" || n.tipo === "alerta_empleo") {
-      const kw = datos.keyword ? `keyword=${encodeURIComponent(datos.keyword)}` : "";
+      const searchTerm = datos.keyword || datos.location || "";
+      const kw = searchTerm ? `keyword=${encodeURIComponent(searchTerm)}` : "";
       const loc = datos.location ? `&location=${encodeURIComponent(datos.location)}` : "";
       if (kw || loc) return `/app/buscar?${kw}${loc}`;
       return "/app/buscar";
     }
+    // Para otros tipos: si hay job_id, ir al detalle
+    if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
     if (n.tipo === "cv_enviado") return "/app/envios";
     if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
     if (n.tipo === "recordatorio") return "/app/gusi";

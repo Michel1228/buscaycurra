@@ -65,7 +65,7 @@ export default function JobCard({
           const data = await res.json() as { guardados: Array<{ job_id: string }> };
           setGuardado(data.guardados.some(g => g.job_id === id));
         }
-      } catch { /* ignore */ }
+      } catch (err) { console.error('[JobCard] Error al verificar guardados:', err) }
     }
     checkSaved();
   }, [id]);
@@ -82,7 +82,7 @@ export default function JobCard({
           const data = await res.json() as { oferta?: { descripcion?: string } };
           setDescripcionFull(data.oferta?.descripcion || descripcion || "");
         }
-      } catch { }
+      } catch (err) { console.error('[JobCard] Error al cargar detalle:', err) }
       finally { setCargandoDetalle(false); }
     } else {
       setDescripcionFull(descripcion || "");

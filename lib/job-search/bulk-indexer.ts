@@ -1,7 +1,7 @@
 /**
  * lib/job-search/bulk-indexer.ts — Indexador masivo de alta velocidad
  *
- * Diseñado para llenar la BD con 400.000+ ofertas únicas.
+ * Diseñado para llenar la BD con 800.000+ ofertas únicas.
  * Usa SOLO fuentes gratuitas/sin límite de rate para el volumen:
  *   - Jooble (key propia, 100 resultados/query)
  *   - Arbeitnow (API pública, sin key, paginada)

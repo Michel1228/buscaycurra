@@ -46,7 +46,7 @@ export default function RegistroPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), nombre: nombre.trim() }),
-      }).catch(() => {});
+      }).catch((err) => { console.error('[Registro] Error welcome email:', err) });
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
     } finally {
@@ -79,19 +79,19 @@ export default function RegistroPage() {
           </Link>
 
           <h2 className="text-2xl lg:text-3xl font-bold leading-tight mb-2" style={{ color: "#f1f5f9" }}>
-            Tu trabajo te está<br />
-            <span style={{ color: "#22c55e" }}>esperando.</span>
+            Deja de enviar CVs<br />
+            <span style={{ color: "#22c55e" }}>al vacío.</span>
           </h2>
           <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            En 30 segundos tienes cuenta. Guzzi empieza a buscar trabajo por ti al instante.
+            En 30 segundos tienes cuenta. Guzzi empieza a buscar trabajo por ti en 20+ países al instante.
           </p>
 
           {/* 3 puntos fuertes */}
           <div className="space-y-3">
             {[
-              { icon: "🐛", title: "Guzzi aplica por ti", desc: "Envía tu CV a cientos de empresas cada día, automáticamente." },
-              { icon: "🎯", title: "CV personalizado por IA", desc: "Cada candidatura adaptada a la oferta. No compites con 2.000 iguales." },
-              { icon: "📊", title: "Seguimiento en tiempo real", desc: "Pipeline visual con el estado de cada candidatura." },
+              { icon: "🌍", title: "20+ países, un solo agente", desc: "Busca en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
+              { icon: "🎯", title: "CV único para cada oferta", desc: "Tu CV se adapta a cada empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
+              { icon: "⏰", title: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. Timing inteligente." },
             ].map(p => (
               <div key={p.title} className="flex items-start gap-3 p-3 rounded-xl"
                 style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
@@ -106,7 +106,7 @@ export default function RegistroPage() {
         </div>
 
         <p className="relative z-10 hidden lg:block text-xs mt-8" style={{ color: "#374151" }}>
-          © 2025 BuscayCurra · Sin permanencia · Cancela cuando quieras
+          © 2026 BuscayCurra · Sin permanencia · 20+ países · Cancela cuando quieras
         </p>
       </div>
 

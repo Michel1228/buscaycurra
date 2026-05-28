@@ -53,7 +53,9 @@ export default function NotificacionesBell() {
   function getNotifUrl(n: Notificacion): string | null {
     const datos = n.datos || {};
     if (n.tipo === "nuevas_ofertas" || n.tipo === "nuevo_empleo" || n.tipo === "alerta_empleo") {
-      const kw = datos.keyword ? `keyword=${encodeURIComponent(datos.keyword)}` : "";
+      // Usar keyword; si no hay, usar location; si no, buscar vacío
+      const searchTerm = datos.keyword || datos.location || "";
+      const kw = searchTerm ? `keyword=${encodeURIComponent(searchTerm)}` : "";
       const loc = datos.location ? `&location=${encodeURIComponent(datos.location)}` : "";
       if (kw) return `/app/buscar?${kw}${loc}`;
       return "/app/buscar";

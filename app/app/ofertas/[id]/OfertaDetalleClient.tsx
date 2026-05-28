@@ -54,13 +54,12 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
       const supabase = getSupabaseBrowser();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase
-        .from("user_cvs")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      setCvListo(!!data);
-    } catch {}
+
+      // Usar el endpoint unificado que busca en user_cvs + CV (Prisma)
+      const res = await fetch(`/api/gusi/cv?userId=${user.id}`);
+      const json = await res.json() as { cv_exists?: boolean; cv?: unknown };
+      setCvListo(json.cv_exists === true || !!json.cv);
+    } catch (err) { console.error('[OfertaDetalle] Error verificar CV:', err) }
   }
 
   async function enviarCV() {

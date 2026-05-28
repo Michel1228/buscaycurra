@@ -1,5 +1,6 @@
 /**
  * API para guardar y recuperar CVs de usuarios
+ * Compatible con ambas tablas: user_cvs (Guzzi) y CV (Curriculum editor)
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
@@ -17,22 +18,65 @@ export async function GET(req: NextRequest) {
     }
 
     const pool = getPool();
-    const result = await pool.query(
+    
+    // 1. Buscar en user_cvs (Guzzi CV)
+    const userCvResult = await pool.query(
       `SELECT form_data, html, visible_empresas, created_at, updated_at
        FROM user_cvs
        WHERE user_id = $1`,
       [userId]
     );
 
-    if (result.rows.length === 0) {
+    if (userCvResult.rows.length > 0) {
+      return NextResponse.json({
+        cv: userCvResult.rows[0].form_data,
+        cvText: userCvResult.rows[0].html,
+        visibleEmpresas: userCvResult.rows[0].visible_empresas ?? false,
+        updatedAt: userCvResult.rows[0].updated_at
+      });
+    }
+
+    // 2. Buscar en CV (Curriculum editor Prisma)
+    const cvResult = await pool.query(
+      `SELECT "fullName", email, phone, city, "targetSector", "targetPosition",
+              summary, experience, education, skills, languages, "coverLetter",
+              "originalPhoto", "isActive", "updatedAt"
+       FROM "CV"
+       WHERE "userId" = $1 AND "isActive" = true
+       ORDER BY "updatedAt" DESC
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (cvResult.rows.length === 0) {
       return NextResponse.json({ cv: null, visibleEmpresas: false });
     }
 
+    const cvRow = cvResult.rows[0];
+    
+    // Convertir a formato compatible con el frontend
+    const cvData = {
+      nombre: cvRow.fullName,
+      email: cvRow.email,
+      telefono: cvRow.phone,
+      ciudad: cvRow.city,
+      sector: cvRow.targetSector,
+      puesto: cvRow.targetPosition,
+      resumen: cvRow.summary || "",
+      experiencia: cvRow.experience || [],
+      educacion: cvRow.education || [],
+      habilidades: cvRow.skills || [],
+      idiomas: cvRow.languages || [],
+      cartaPresentacion: cvRow.coverLetter || "",
+      foto: cvRow.originalPhoto || "",
+      fuente: "curriculum",
+    };
+
     return NextResponse.json({
-      cv: result.rows[0].form_data,
-      cvText: result.rows[0].html,
-      visibleEmpresas: result.rows[0].visible_empresas ?? false,
-      updatedAt: result.rows[0].updated_at
+      cv: cvData,
+      cvText: null,
+      visibleEmpresas: cvRow.isActive ?? false,
+      updatedAt: cvRow.updatedAt
     });
   } catch (error) {
     console.error("Error GET cv:", error);

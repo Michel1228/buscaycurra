@@ -9,10 +9,26 @@ import AppNavWrapper from "@/components/AppNavWrapper";
 import { BodyWrapper } from "@/components/BodyWrapper";
 
 export const metadata: Metadata = {
-  title: "BuscayCurra — Encuentra trabajo con IA",
+  title: "BuscayCurra — Agente IA que busca trabajo por ti | 20+ países",
   description:
-    "Encuentra trabajo más rápido con inteligencia artificial. Mejora tu CV, busca ofertas en toda España y envía tu candidatura automáticamente.",
-  keywords: ["buscar trabajo", "empleo", "CV", "inteligencia artificial", "España"],
+    "Deja de enviar CVs al vacío. Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en 20+ países, 24/7. La alternativa real a InfoJobs, LinkedIn e Indeed.",
+  keywords: [
+    "buscar trabajo",
+    "empleo",
+    "CV",
+    "inteligencia artificial",
+    "agente IA",
+    "trabajar en el extranjero",
+    "emigrar",
+    "empleo internacional",
+    "ofertas de trabajo",
+    "BuscayCurra",
+    "Guzzi",
+    "España",
+    "Alemania",
+    "Irlanda",
+    "Europa",
+  ],
   manifest: "/manifest.json",
   themeColor: "#7ed56f",
   appleWebApp: {
@@ -20,12 +36,44 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "BuscayCurra",
   },
+  metadataBase: new URL("https://buscaycurra.es"),
   openGraph: {
-    title: "BuscayCurra — Encuentra trabajo con IA",
+    title: "BuscayCurra — El agente IA que busca trabajo por ti",
     description:
-      "Encuentra trabajo más rápido con inteligencia artificial. Mejora tu CV y envía candidaturas automáticamente.",
+      "Guzzi busca, adapta y envía candidaturas por ti en 20+ países, 24/7. Deja de enviar CVs al vacío. La alternativa a InfoJobs y LinkedIn.",
+    url: "https://buscaycurra.es",
     locale: "es_ES",
     type: "website",
+    siteName: "BuscayCurra",
+    alternateLocale: ["en_US"],
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "BuscayCurra — Agente IA que busca trabajo por ti en 20+ países",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BuscayCurra — Agente IA que busca trabajo por ti",
+    description:
+      "Guzzi busca, adapta y envía candidaturas por ti en 20+ países. 24/7. Sin que muevas un dedo.",
+    images: ["/og-image.png"],
+  },
+  alternates: {
+    canonical: "https://buscaycurra.es",
+    languages: {
+      es: "https://buscaycurra.es",
+      en: "https://buscaycurra.es/en",
+    },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
   },
 };
 
@@ -43,8 +91,66 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="BuscayCurra" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="canonical" href="https://buscaycurra.es" />
+        <link rel="alternate" hrefLang="es" href="https://buscaycurra.es" />
+        <link rel="alternate" hrefLang="en" href="https://buscaycurra.es/en" />
+        <link rel="alternate" hrefLang="x-default" href="https://buscaycurra.es" />
       </head>
       <body>
+        {/* Structured data for Google rich results */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              name: "BuscayCurra",
+              url: "https://buscaycurra.es",
+              description:
+                "Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en 20+ países, 24/7. La alternativa real a InfoJobs, LinkedIn e Indeed.",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web, Android, iOS",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "EUR",
+              },
+              author: {
+                "@type": "Organization",
+                name: "BuscayCurra",
+                url: "https://buscaycurra.es",
+                sameAs: [],
+              },
+            }),
+          }}
+        />
+        {/* ⚡ FORCE UPDATE: comparar BUILD_ID con localStorage antes de que el SW intervenga */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            var BUILD_ID = '__BUILD_ID__';
+            var stored = localStorage.getItem('bc_build_id');
+            if (stored && stored !== BUILD_ID) {
+              // Nuevo deploy detectado — limpiar TODO y recargar
+              localStorage.setItem('bc_build_id', BUILD_ID);
+              // Desregistrar todos los service workers
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  regs.forEach(function(r) { r.unregister(); });
+                  // Limpiar todas las caches
+                  if ('caches' in window) {
+                    caches.keys().then(function(keys) {
+                      keys.forEach(function(k) { caches.delete(k); });
+                    });
+                  }
+                  // Recargar sin cache
+                  setTimeout(function() { window.location.reload(true); }, 300);
+                });
+              }
+            } else if (!stored) {
+              localStorage.setItem('bc_build_id', BUILD_ID);
+            }
+          })();
+        `}} />
         <BodyWrapper>
           <AppNavWrapper />
           {children}

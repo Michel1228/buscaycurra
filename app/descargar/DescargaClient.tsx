@@ -217,7 +217,7 @@ export default function DescargaClient() {
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#22c55e" }}>BuscayCurra</span>
         </div>
         <p style={{ fontSize: "12px", color: "#334155", margin: 0 }}>
-          © 2025 BuscayCurra · <Link href="/precios" style={{ color: "#475569", textDecoration: "none" }}>Precios</Link> · <Link href="/auth/login" style={{ color: "#475569", textDecoration: "none" }}>Acceder</Link>
+          © 2026 BuscayCurra · <Link href="/precios" style={{ color: "#475569", textDecoration: "none" }}>Precios</Link> · <Link href="/auth/login" style={{ color: "#475569", textDecoration: "none" }}>Acceder</Link>
         </p>
       </footer>
 

@@ -55,11 +55,14 @@ const ACCIONES = [
   { icon: "📧", label: "Enviar CV", msg: "__ENVIO_AUTO__" },
   { icon: "📎", label: "Subir CV", msg: "__SUBIR_CV__" },
   { icon: "📝", label: "Crear CV", msg: "__ENTREVISTA__" },
-  { icon: "🔍", label: "Buscar trabajo", msg: "Quiero buscar trabajo" },
-  { icon: "🎯", label: "Preparar entrevista", msg: "__PREP_ENTREVISTA__" },
   { icon: "📄", label: "Ver CV", msg: "__VER_CV__" },
-  { icon: "📸", label: "Foto perfil", msg: "__FOTO_CV__" },
-  { icon: "✉️", label: "Carta", msg: "__CARTA_RECOMENDACION__" },
+  { icon: "🌍", label: "Buscar por país", msg: "__BUSCAR_PAIS__" },
+  { icon: "🔍", label: "Buscar trabajo", msg: "Quiero buscar trabajo" },
+  { icon: "⚡", label: "Auto-envío", msg: "__AUTO_FIRE__" },
+  { icon: "🎯", label: "Entrevista", msg: "__PREP_ENTREVISTA__" },
+  { icon: "💰", label: "Comparar salarios", msg: "__COMPARAR_SALARIOS__" },
+  { icon: "✈️", label: "Migrar", msg: "__MIGRAR__" },
+  { icon: "👶", label: "Au Pair", msg: "__AU_PAIR__" },
 ];
 
 // Etiquetas legibles para los comandos internos (no mostrar el __ en el bubble)
@@ -71,6 +74,10 @@ const LABELS_COMANDO: Record<string, string> = {
   "__PREP_ENTREVISTA__": "🎯 Preparar entrevista",
   "__VER_CV__": "📄 Ver mi CV",
   "__CARTA_RECOMENDACION__": "✉️ Carta de recomendación",
+  "__AUTO_FIRE__": "⚡ Auto-envío masivo",
+  "__BUSCAR_PAIS__": "🌍 Buscar por país",
+  "__MIGRAR__": "✈️ Buscar para emigrar",
+  "__AU_PAIR__": "👶 Buscar Au Pair",
 };
 
 function renderMd(text: string): React.ReactNode[] {
@@ -90,21 +97,56 @@ function renderMd(text: string): React.ReactNode[] {
 }
 
 // Extrae la info clave del CV para ser proactivo sin preguntar
-function extractCVInfo(cv: Record<string, unknown>): { puesto: string; ciudad: string; nombre: string } {
+function extractCVInfo(cv: Record<string, unknown>): { 
+  puesto: string; ciudad: string; nombre: string;
+  puestos: string[];      // todos los puestos de la experiencia (más reciente primero)
+  aptitudes: string[];    // habilidades clave
+  perfil: string;         // resumen profesional
+} {
   const nombre = String(cv.nombre || cv.full_name || "").trim().split(" ")[0];
   const ciudad = String(cv.ciudad || cv.location || "").trim();
   let puesto = "";
+  const puestos: string[] = [];
+  const aptitudes: string[] = [];
+  const perfil = String(cv.perfil || cv.summary || "").trim();
+  
+  // Extraer todos los puestos de la experiencia
   const exp = cv.experiencia || cv.experience;
   if (Array.isArray(exp) && exp.length > 0) {
-    // Usar la experiencia más reciente (última del array) para el saludo
-    puesto = String((exp[exp.length - 1] as { puesto?: string }).puesto || "").trim();
-    // Si el puesto es una lista separada por comas ("Reponedor, repartidor, ..."), usar solo el primero
-    if (puesto.includes(",")) puesto = puesto.split(",")[0].trim();
+    // Recorrer de más reciente a más antiguo
+    for (let i = exp.length - 1; i >= 0; i--) {
+      const p = String((exp[i] as { puesto?: string }).puesto || "").trim();
+      if (p && !puestos.includes(p)) puestos.push(p.split(",")[0].trim());
+    }
+    puesto = puestos[0] || "";
   } else if (typeof exp === "string" && exp.trim()) {
-    const m = exp.match(/(?:—|–|-)\s*(.+?)\s+en\s+/i);
-    puesto = m?.[1]?.trim() || "";
+    // Parsear experiencia en texto: "Puesto — Empresa (Ciudad)"
+    const lines = exp.split("\n").filter((l: string) => l.trim());
+    for (const line of lines) {
+      const m = line.match(/^(.+?)\s*(?:—|–|-|en)\s+/i);
+      if (m) {
+        const p = m[1].trim().split(",")[0].trim();
+        if (p && !puestos.includes(p)) puestos.push(p);
+      }
+    }
+    puesto = puestos[0] || "";
   }
-  return { puesto, ciudad, nombre };
+  
+  // Extraer aptitudes
+  const apt = cv.aptitudes || cv.skills || cv.abilities;
+  if (typeof apt === "string" && apt.trim()) {
+    apt.split(/[,;\n]+/).forEach((a: string) => {
+      const t = a.trim();
+      if (t && t.length > 2) aptitudes.push(t);
+    });
+  } else if (Array.isArray(apt)) {
+    apt.forEach((a: unknown) => {
+      const t = String(a).trim();
+      if (t && t.length > 2) aptitudes.push(t);
+    });
+  }
+  
+  return { puesto, ciudad, nombre, puestos, aptitudes, perfil };
 }
 
 export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: boolean }) {
@@ -162,12 +204,18 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
 
           // Siempre arranca con mensaje fresco — el historial está en el sidebar
           if (cvExistente) {
-            const { puesto, ciudad } = extractCVInfo(cvExistente);
+            const { puesto, ciudad, puestos, aptitudes } = extractCVInfo(cvExistente);
             const puestoStr = puesto ? `**${puesto}**` : "tu sector";
             const ciudadStr = ciudad ? ` en **${ciudad}**` : "";
+            const otrosStr = puestos.length > 1 
+              ? `\n📋 También has trabajado de: **${puestos.slice(1, 4).join(" · ")}**${puestos.length > 4 ? " · ..." : ""}`
+              : "";
+            const aptStr = aptitudes.length > 0
+              ? `\n🎯 Habilidades: **${aptitudes.slice(0, 3).join(" · ")}**`
+              : "";
             setMensajes([{
               role: "gusi",
-              text: `${saludo} 🐛 Tengo tu CV listo.\n\nVeo que tienes experiencia como ${puestoStr}${ciudadStr}. ¿Busco ofertas y envío candidaturas automáticamente?`,
+              text: `${saludo} 🐛 Tengo tu CV listo.\n\n🔍 Último puesto: ${puestoStr}${ciudadStr}${otrosStr}${aptStr}\n\n¿Busco ofertas que encajen con todo tu perfil y envío candidaturas?`,
             }]);
           } else {
             setMensajes([{
@@ -713,6 +761,66 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
       return;
     }
 
+    if (texto === "__AUTO_FIRE__") {
+      setCargando(false);
+      if (!cvGuardado || Object.keys(cvGuardado).length === 0) {
+        setMensajes((prev) => [...prev, {
+          role: "gusi",
+          text: "⚡ **Auto-envío masivo**\n\nPara activar el envío automático a todas las ofertas que encajen con tu perfil, primero necesito tu CV.\n\n📎 Súbelo o 📝 créalo conmigo."
+        }]);
+        return;
+      }
+      const { puesto: cvPuesto, ciudad: cvCiudad, puestos: cvPuestos, aptitudes: cvAptitudes } = extractCVInfo(cvGuardado);
+      const puestosStr = cvPuestos.length > 1 
+        ? `\n📋 **También buscaré:** ${cvPuestos.slice(1, 4).join(" · ")}${cvPuestos.length > 4 ? " · ..." : ""}`
+        : "";
+      const aptitudesStr = cvAptitudes.length > 0
+        ? `\n🎯 **Habilidades:** ${cvAptitudes.slice(0, 3).join(" · ")}`
+        : "";
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: `⚡ **Auto-envío masivo activado**\n\n🔍 Principal: **${cvPuesto || "tu perfil"}**${cvCiudad ? ` en **${cvCiudad}**` : ""}${puestosStr}${aptitudesStr}\n\nVoy a buscar ofertas que encajen con TODO tu perfil y enviar tu CV automáticamente.\n\n📧 Usa el botón **Enviar CV** para empezar. O dime: "envía mi CV a ofertas de Alemania" para buscar en otro país. 🌍`,
+        action: "auto_fire",
+      }]);
+      return;
+    }
+
+    if (texto === "__BUSCAR_PAIS__") {
+      setCargando(false);
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "🌍 **Buscar ofertas por país**\n\nActualmente tengo ofertas en **19 países**:\n\n🇩🇪 Alemania (216K) · 🇪🇸 España (124K) · 🇺🇸 EEUU (73K)\n🇬🇧 Reino Unido (48K) · 🇨🇦 Canadá (39K) · 🇫🇷 Francia (35K)\n🇸🇪 Suecia (28K) · 🇦🇺 Australia (26K) · 🇳🇱 Países Bajos (19K)\n🇮🇹 Italia (18K) · 🇨🇭 Suiza (17K) · 🇮🇪 Irlanda (16K)\n🇧🇪 Bélgica (13K) · 🇵🇹 Portugal (11K) · 🇳🇴 Noruega (10K)\n🇵🇱 Polonia (9K) · 🇩🇰 Dinamarca (5K) · 🇦🇹 Austria (5K)\n🇫🇮 Finlandia (3K)\n\n¿En qué país quieres buscar? (Escríbelo)",
+      }]);
+      return;
+    }
+
+    if (texto === "__COMPARAR_SALARIOS__") {
+      setCargando(false);
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "💰 **Comparador de salarios**\n\nDime un puesto de trabajo y te muestro cuánto pagan en diferentes países.\n\nEjemplo: \"¿Cuánto gana un enfermero en España vs Alemania?\"\n\nO dime tu puesto y comparo por ti.",
+      }]);
+      return;
+    }
+
+    if (texto === "__MIGRAR__") {
+      setCargando(false);
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "✈️ **Buscar ofertas para emigrar**\n\nTe ayudo a encontrar trabajo en otro país con relocation o visa sponsorship.\n\n🌍 **Países con más ofertas para emigrar:**\n🇩🇪 Alemania (216K) · 🇨🇦 Canadá (39K) · 🇦🇺 Australia (26K)\n🇨🇭 Suiza (17K) · 🇮🇪 Irlanda (16K) · 🇳🇱 Países Bajos (19K)\n🇧🇪 Bélgica (13K) · 🇳🇴 Noruega (10K) · 🇩🇰 Dinamarca (5K)\n\nDime: \"busca trabajo de [tu puesto] en [país]\" y te muestro las mejores ofertas para emigrar. 🐛",
+      }]);
+      return;
+    }
+
+    if (texto === "__AU_PAIR__") {
+      setCargando(false);
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "👶 **Buscar trabajo de Au Pair**\n\nTe ayudo a encontrar familias que buscan au pair en Europa.\n\n🏠 **Países populares para Au Pair:**\n🇩🇪 Alemania · 🇫🇷 Francia · 🇳🇱 Países Bajos\n🇬🇧 Reino Unido · 🇮🇪 Irlanda · 🇩🇰 Dinamarca\n🇸🇪 Suecia · 🇳🇴 Noruega · 🇧🇪 Bélgica\n\nDime: \"busca au pair en [país]\" y te muestro las ofertas disponibles. 🐛",
+      }]);
+      return;
+    }
+
     if (texto === "__ENVIO_AUTO__") {
       if (!cvGuardado || Object.keys(cvGuardado).length === 0) {
         setCargando(false);
@@ -723,37 +831,67 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
         return;
       }
 
-      const { puesto: cvPuesto, ciudad: cvCiudad } = extractCVInfo(cvGuardado);
+      const { puesto: cvPuesto, ciudad: cvCiudad, puestos: cvPuestos, aptitudes: cvAptitudes } = extractCVInfo(cvGuardado);
 
       if (cvPuesto) {
-        // Tenemos puesto del CV → buscar directamente, sin preguntar
+        // Usar el puesto más reciente como búsqueda principal
         const puestoBusqueda = cvPuesto;
         const ciudadBusqueda = cvCiudad || "España";
+        
+        // Construir keywords enriquecidas: puesto principal + otros puestos + aptitudes (máx 3 keywords extra)
+        const otrasKeys = [...cvPuestos.slice(1, 3), ...cvAptitudes.slice(0, 2)]
+          .filter(k => k && k.length > 2 && k !== puestoBusqueda)
+          .slice(0, 3);
+        const keywordExtendida = [puestoBusqueda, ...otrasKeys].join(" ");
+        
         setCargando(true);
         try {
-          const res = await fetch(`/api/jobs/search?keyword=${encodeURIComponent(puestoBusqueda)}&location=${encodeURIComponent(ciudadBusqueda)}&page=1`);
+          const res = await fetch(`/api/jobs/search?keyword=${encodeURIComponent(keywordExtendida)}&location=${encodeURIComponent(ciudadBusqueda)}&page=1`);
           const data = await res.json() as { ofertas?: Oferta[] };
           const ofertas = (data.ofertas || []).slice(0, 5);
 
           if (ofertas.length > 0) {
-            let text = `🔍 Basándome en tu CV (**${puestoBusqueda}**${cvCiudad ? ` en **${cvCiudad}**` : ""}), encontré:\n\n`;
+            // Mostrar todos los puestos del CV para que el usuario sepa que Guzzi leyó todo
+            const puestosLista = cvPuestos.length > 1 
+              ? `\n📋 **Tu experiencia:** ${cvPuestos.slice(0, 4).join(" · ")}${cvPuestos.length > 4 ? " · ..." : ""}`
+              : "";
+            const aptitudesLista = cvAptitudes.length > 0
+              ? `\n🎯 **Tus habilidades:** ${cvAptitudes.slice(0, 4).join(" · ")}${cvAptitudes.length > 4 ? " · ..." : ""}`
+              : "";
+            let text = `🔍 He leído tu CV completo. Buscando principalmente **${puestoBusqueda}** (tu puesto más reciente${cvCiudad ? ` en **${cvCiudad}**` : ""}):${puestosLista}${aptitudesLista}\n\n**Resultados:**\n`;
             ofertas.forEach((o: Oferta, i: number) => {
               const em = ["🥇", "🥈", "🥉", "📌", "📌"][i];
               text += `${em} **${o.titulo}**\n   📍 ${o.ubicacion} · 💰 ${o.salario || "Ver oferta"}\n\n`;
             });
-            text += `📧 **¿Envío tu CV a todas?** Di "sí". O usa el botón Enviar CV en cada oferta. 🐛`;
+            if (cvPuestos.length > 1 || cvAptitudes.length > 0) {
+              const otrasBusquedas = [...cvPuestos.slice(1, 3), ...cvAptitudes.slice(0, 2)].filter(k => k && k.length > 2);
+              if (otrasBusquedas.length > 0) {
+                text += `💡 También puedo buscar ofertas de: **${otrasBusquedas.join(", ")}**\n\n`;
+              }
+            }
+            text += `📧 **¿Envío tu CV a estas ofertas?** Di "sí". 🐛`;
             setMensajes((prev) => [...prev, { role: "gusi", text, jobs: ofertas }]);
           } else {
-            // Sin resultados → pedir ciudad alternativa
-            setModoEnvio(true);
-            setPasoEnvio(1);
-            setDatosEnvio({ puesto: puestoBusqueda });
-            setMensajes((prev) => [...prev, {
-              role: "gusi",
-              text: `🔍 No encontré ofertas de **${puestoBusqueda}** en **${ciudadBusqueda}**.\n\n¿Buscamos en otra ciudad?`
-            }]);
+            // Sin resultados con el puesto principal → probar con el siguiente puesto
+            const siguientePuesto = cvPuestos[1];
+            if (siguientePuesto && siguientePuesto !== puestoBusqueda) {
+              setCargando(false);
+              setMensajes((prev) => [...prev, {
+                role: "gusi",
+                text: `🔍 No encontré ofertas de **${puestoBusqueda}** en **${ciudadBusqueda}**.\n\nPero veo que también tienes experiencia como **${siguientePuesto}**. ¿Busco ofertas de eso?`
+              }]);
+            } else {
+              setModoEnvio(true);
+              setPasoEnvio(1);
+              setDatosEnvio({ puesto: puestoBusqueda });
+              setMensajes((prev) => [...prev, {
+                role: "gusi",
+                text: `🔍 No encontré ofertas de **${puestoBusqueda}** en **${ciudadBusqueda}**.\n\n¿Buscamos en otra ciudad?`
+              }]);
+            }
           }
-        } catch {
+        } catch (e) {
+          console.error("Error buscando ofertas:", e);
           setMensajes((prev) => [...prev, { role: "gusi", text: "❌ Error al buscar ofertas. Inténtalo de nuevo." }]);
         } finally {
           setCargando(false);
@@ -1171,52 +1309,43 @@ Ya tengo tus datos guardados. Voy a:
             }`}>
               <div className="whitespace-pre-wrap">{renderMd(textoMostrar)}</div>
               
-              {/* CV Visual cuando Guzzi muestra el CV */}
+              {/* CV Visual cuando Guzzi muestra el CV — siempre expandido */}
               {(msg.action === "ver_cv" || msg.action === "cv_mejorado") && cvGuardado && (
                 <div className="mt-3">
-                  <button
-                    onClick={() => setCvColapsado(prev => {
-                      const next = new Set(prev);
-                      if (next.has(i)) next.delete(i); else next.add(i);
-                      return next;
-                    })}
-                    className="text-xs px-3 py-1.5 rounded-lg transition-colors mb-2"
-                    style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e" }}
-                  >
-                    {cvColapsado.has(i) ? "👁 Ver CV" : "🙈 Ocultar CV"}
-                  </button>
-                  {!cvColapsado.has(i) && (
-                    <>
-                      {cvHtml ? (
-                        <iframe srcDoc={cvHtml} className='w-full rounded-lg border border-gray-600' style={{height:'520px',background:'white'}} title='CV Profesional' />
-                      ) : (
-                        <CVVisual data={cvGuardado} />
-                      )}
-                      <div className="mt-2 flex gap-2 flex-wrap">
-                        <a
-                          href="/app/curriculum"
-                          target="_blank"
-                          className="text-xs bg-[#374151] text-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#4b5563] transition-colors"
-                        >
-                          ✏️ Editar
-                        </a>
-                        <a
-                          href={userId ? `/api/cv/imprimir?userId=${userId}` : "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs bg-[#22c55e] text-white px-3 py-1.5 rounded-lg hover:bg-[#16a34a] transition-colors"
-                        >
-                          ⬇️ Descargar PDF
-                        </a>
-                        <button
-                          onClick={() => enviarMensaje("__ENVIO_AUTO__")}
-                          className="text-xs bg-[#3b82f6] text-white px-3 py-1.5 rounded-lg hover:bg-[#2563eb] transition-colors"
-                        >
-                          📧 Enviar a ofertas
-                        </button>
-                      </div>
-                    </>
-                  )}
+                  <div className="rounded-xl overflow-hidden" style={{ border: "2px solid rgba(34,197,94,0.2)" }}>
+                    <div className="px-3 py-2 flex items-center gap-2" style={{ background: "rgba(34,197,94,0.08)" }}>
+                      <span className="text-sm">📄</span>
+                      <span className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tu CV profesional</span>
+                    </div>
+                    {cvHtml ? (
+                      <iframe srcDoc={cvHtml} className='w-full' style={{height:'520px',background:'white',border:'none'}} title='CV Profesional' />
+                    ) : (
+                      <CVVisual data={cvGuardado} />
+                    )}
+                  </div>
+                  <div className="mt-2 flex gap-2 flex-wrap">
+                    <a
+                      href="/app/curriculum"
+                      target="_blank"
+                      className="text-xs bg-[#374151] text-gray-200 px-3 py-1.5 rounded-lg hover:bg-[#4b5563] transition-colors"
+                    >
+                      ✏️ Editar CV
+                    </a>
+                    <a
+                      href={userId ? `/api/cv/imprimir?userId=${userId}` : "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs bg-[#22c55e] text-white px-3 py-1.5 rounded-lg hover:bg-[#16a34a] transition-colors"
+                    >
+                      ⬇️ Descargar PDF
+                    </a>
+                    <button
+                      onClick={() => enviarMensaje("__ENVIO_AUTO__")}
+                      className="text-xs bg-[#3b82f6] text-white px-3 py-1.5 rounded-lg hover:bg-[#2563eb] transition-colors"
+                    >
+                      📧 Enviar a ofertas
+                    </button>
+                  </div>
                 </div>
               )}
               

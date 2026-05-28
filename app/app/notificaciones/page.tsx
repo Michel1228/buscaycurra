@@ -81,12 +81,13 @@ export default function NotificacionesPage() {
 
   function getNotifUrl(n: Notif): string | null {
     const datos = n.datos || {};
-    if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
+    // Si es alerta de empleo con múltiples ofertas, ir a búsqueda, NO a una sola oferta
     if (n.tipo === "nuevas_ofertas" || n.tipo === "alerta_empleo") {
-      const kw = datos.keyword || "";
+      const kw = datos.keyword || datos.location || "";
       const loc = datos.location || "";
       return `/app/buscar?keyword=${encodeURIComponent(kw)}&location=${encodeURIComponent(loc)}`;
     }
+    if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
     if (n.tipo === "cv_enviado") return "/app/envios";
     return null;
   }

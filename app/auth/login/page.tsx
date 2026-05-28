@@ -64,19 +64,19 @@ export default function LoginPage() {
 
           {/* Hero — siempre visible */}
           <h2 className="text-2xl lg:text-3xl font-bold leading-tight mb-2" style={{ color: "#f1f5f9" }}>
-            Tu trabajo te está<br />
-            <span style={{ color: "#22c55e" }}>esperando.</span>
+            Deja de enviar CVs<br />
+            <span style={{ color: "#22c55e" }}>al vacío.</span>
           </h2>
           <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            Guzzi busca, aplica y hace seguimiento por ti. Tú solo tienes que aparecer a la entrevista.
+            Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en 20+ países. 24/7. Tú solo vas a la entrevista.
           </p>
 
           {/* 3 puntos fuertes — siempre visibles */}
           <div className="space-y-3 mb-6">
             {[
-              { icon: "🐛", titulo: "Guzzi aplica por ti", desc: "Envía tu CV a cientos de empresas cada día, sin que tengas que hacer nada." },
-              { icon: "🎯", titulo: "CV personalizado por IA", desc: "Cada candidatura se adapta a la oferta. No compites con 2.000 CVs iguales." },
-              { icon: "📊", titulo: "Seguimiento en tiempo real", desc: "Ves cuándo leen tu CV y el estado de cada candidatura en tu pipeline." },
+              { icon: "🌍", titulo: "20+ países, un solo agente", desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
+              { icon: "🎯", titulo: "CV único para cada oferta", desc: "Cada candidatura se adapta a la empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
+              { icon: "⏰", titulo: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. La diferencia entre que te lean o te ignoren." },
             ].map(p => (
               <div key={p.titulo} className="flex items-start gap-3 p-3 rounded-xl"
                 style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
@@ -115,12 +115,12 @@ export default function LoginPage() {
 
           <div className="flex items-center gap-2 text-xs" style={{ color: "#475569" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-            +400.000 ofertas activas · Jooble · Careerjet · Adzuna · y más
+            800.000+ ofertas · 20+ países · 24/7 trabajando por ti
           </div>
         </div>
 
         <div className="relative z-10 hidden lg:flex items-center justify-between mt-8">
-          <p className="text-xs" style={{ color: "#374151" }}>© 2025 BuscayCurra · Sin permanencia</p>
+          <p className="text-xs" style={{ color: "#374151" }}>© 2026 BuscayCurra · Sin permanencia · 20+ países</p>
           <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#475569" }}>
             ¿Eres empresa o recruiter? →
           </Link>
