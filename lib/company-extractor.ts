@@ -60,6 +60,20 @@ const PATRONES_TELEFONO = [
   /(?:\+34\s?)?9\d{2}[\s.-]?\d{3}[\s.-]?\d{3}/g,
 ];
 
+// Teléfonos falsos/placeholder que el scraper debe ignorar
+const TELEFONOS_FALSOS = new Set([
+  "999999999", "999 999 999", "999-999-999",
+  "666666666", "666 666 666", "666-666-666",
+  "123456789", "123 456 789", "123-456-789",
+  "000000000", "111111111", "222222222", "333333333",
+  "444444444", "555555555", "777777777", "888888888",
+]);
+
+function esTelefonoFalso(tel: string): boolean {
+  const limpio = tel.replace(/[\s.-]/g, "");
+  return TELEFONOS_FALSOS.has(limpio) || /^(\d)\1{8}$/.test(limpio);
+}
+
 // Palabras clave para detectar página de empleo
 const PALABRAS_EMPLEO = [
   "trabaja", "empleo", "carreras", "careers", "jobs", "trabajo",
@@ -112,10 +126,13 @@ export async function extraerInfoEmpresa(url: string): Promise<DatosEmpresa> {
 
       // Buscar teléfono
       for (const patron of PATRONES_TELEFONO) {
-        const match = html.match(patron);
-        if (match) {
-          telefono = match[0];
-          break;
+        const matches = html.match(patron);
+        if (matches) {
+          const valido = matches.find(m => !esTelefonoFalso(m));
+          if (valido) {
+            telefono = valido;
+            break;
+          }
         }
       }
 
