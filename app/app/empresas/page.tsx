@@ -279,6 +279,26 @@ export default function EmpresasPage() {
                   )}
                 </div>
               </div>
+
+              {/* ⚡ BOTÓN ENVIAR CV — visible inmediatamente */}
+              <button
+                onClick={() => handleEnviarCV()}
+                disabled={enviando || enviosHoy >= limiteDiario}
+                className="w-full mt-4 py-3 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2"
+                style={{
+                  background: enviando || enviosHoy >= limiteDiario ? "#1e212b" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                  color: enviando || enviosHoy >= limiteDiario ? "#64748b" : "#fff",
+                  boxShadow: enviando || enviosHoy >= limiteDiario ? "none" : "0 4px 20px rgba(34,197,94,0.3)",
+                }}
+              >
+                {enviando ? (
+                  <>⏳ Enviando CV...</>
+                ) : enviosHoy >= limiteDiario ? (
+                  `🚫 Límite diario (${limiteDiario}/${limiteDiario})`
+                ) : (
+                  <>📤 Enviar mi CV a {empresa.nombre}</>
+                )}
+              </button>
             </div>
 
             {/* Datos de contacto */}
