@@ -32,13 +32,9 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   function getNotifUrl(n: Notif): string | null {
     const datos = n.datos || {};
-    // Alertas de empleo: siempre a búsqueda (pueden ser múltiples ofertas)
+    // Alertas de empleo: NO redirigir, se expanden en la página de notificaciones
     if (n.tipo === "nuevas_ofertas" || n.tipo === "alerta_empleo") {
-      const searchTerm = datos.keyword || datos.location || "";
-      const kw = searchTerm ? `keyword=${encodeURIComponent(searchTerm)}` : "";
-      const loc = datos.location ? `&location=${encodeURIComponent(datos.location)}` : "";
-      if (kw || loc) return `/app/buscar?${kw}${loc}`;
-      return "/app/buscar";
+      return "/app/notificaciones";
     }
     // Para otros tipos: si hay job_id, ir al detalle
     if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
