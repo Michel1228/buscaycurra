@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/app/guardados",  label: "Guardados",  icon: "❤️", title: "Ofertas guardadas" },
   { href: "/app/reviews",    label: "Reviews",    icon: "⭐", title: "Reviews de empresas" },
   { href: "/app/envios",     label: "Envíos",     icon: "📧", title: "Envíos de CV" },
+  { href: "/app/empresas",   label: "Empresas",   icon: "🏢", title: "Enviar CV a empresas" },
   { href: "/app/referidos",  label: "Invitar",    icon: "🎁", title: "Invitar amigos" },
   { href: "/app/perfil?tab=plan",     label: "Mi Plan",    icon: "💎", title: "Mi plan y cuenta" },
 ];

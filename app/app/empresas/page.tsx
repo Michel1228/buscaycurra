@@ -1,309 +1,378 @@
 "use client";
 
-/**
- * app/app/empresas/page.tsx — Extractor de información de empresas
- *
- * Permite al usuario:
- *   - Introducir la URL de una empresa
- *   - Obtener: nombre, email de RRHH, teléfono y página de empleo
- *   - Ver el resultado en una tarjeta limpia
- *   - Ir directamente a enviar el CV a esa empresa
- *
- * Llama a GET /api/empresas/analizar?url=X.
- * Si el usuario no está logado, redirige a /auth/login.
- * Colores de marca: azul #2563EB y naranja #F97316.
- */
-
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
-interface InfoEmpresa {
+interface DatosEmpresa {
   nombre: string;
-  emailRrhh?: string;
-  telefono?: string;
-  paginaEmpleo?: string;
+  emailRrhh: string | null;
+  telefono: string | null;
+  paginaEmpleo: string | null;
+  dominio: string;
 }
 
-// ─── Componente Principal ─────────────────────────────────────────────────────
+interface EnvioRealizado {
+  id: string;
+  company_name: string;
+  company_email: string;
+  sent_at: string;
+}
 
-function EmpresasPageInner() {
+export default function EmpresasPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const [urlEmpresa, setUrlEmpresa] = useState("");
-  const [infoEmpresa, setInfoEmpresa] = useState<InfoEmpresa | null>(null);
-  const [analizando, setAnalizando] = useState(false);
+  const [url, setUrl] = useState("");
+  const [extrayendo, setExtrayendo] = useState(false);
+  const [empresa, setEmpresa] = useState<DatosEmpresa | null>(null);
   const [error, setError] = useState("");
-
-  const analizar = useCallback(async (url: string) => {
-    if (!url.trim()) return;
-    try { new URL(url); } catch {
-      setError("La URL no es válida. Ejemplo: https://www.empresa.com");
-      return;
-    }
-    setAnalizando(true);
-    setError("");
-    setInfoEmpresa(null);
-    try {
-      const res = await fetch(`/api/empresas/analizar?${new URLSearchParams({ url: url.trim() })}`);
-      if (!res.ok) {
-        const d = await res.json() as { error?: string };
-        throw new Error(d.error || "Error al analizar la empresa");
-      }
-      setInfoEmpresa(await res.json() as InfoEmpresa);
-    } catch (err) {
-      setError((err as Error).message || "Error al analizar la empresa");
-    } finally {
-      setAnalizando(false);
-    }
-  }, []);
+  const [enviando, setEnviando] = useState(false);
+  const [exito, setExito] = useState("");
+  const [enviosHoy, setEnviosHoy] = useState(0);
+  const [limiteDiario, setLimiteDiario] = useState(2);
+  const [userId, setUserId] = useState("");
+  const [historial, setHistorial] = useState<EnvioRealizado[]>([]);
 
   useEffect(() => {
-    async function init() {
-      const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-      if (!user) { router.push("/auth/login"); return; }
-      const urlParam = searchParams.get("url");
-      if (urlParam) {
-        setUrlEmpresa(urlParam);
-        void analizar(urlParam);
-      }
-    }
-    void init();
-  }, [router, searchParams, analizar]);
+    init();
+  }, []);
 
-  function analizarEmpresa(e: React.FormEvent) {
-    e.preventDefault();
-    void analizar(urlEmpresa);
+  async function init() {
+    const supabase = getSupabaseBrowser();
+    const session = (await supabase.auth.getSession()).data.session;
+    if (!session) { router.push("/auth/login"); return; }
+    const uid = session.user.id;
+    setUserId(uid);
+
+    // Cargar envíos de hoy
+    try {
+      const res = await fetch(`/api/cv-sender/envios-hoy?userId=${uid}`);
+      if (res.ok) {
+        const data = await res.json();
+        setEnviosHoy(data.enviados || 0);
+        setLimiteDiario(data.limite || 2);
+      }
+    } catch {}
+
+    // Cargar historial
+    try {
+      const { data: sends } = await supabase
+        .from("cv_sends")
+        .select("id, company_name, company_email, sent_at")
+        .eq("user_id", uid)
+        .order("sent_at", { ascending: false })
+        .limit(20);
+      if (sends) setHistorial(sends as EnvioRealizado[]);
+    } catch {}
+  }
+
+  async function handleExtraer() {
+    if (!url.trim()) return;
+    setError("");
+    setEmpresa(null);
+    setExtrayendo(true);
+
+    try {
+      const res = await fetch("/api/company/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error extrayendo");
+
+      setEmpresa(data.empresa);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setExtrayendo(false);
+    }
+  }
+
+  async function handleEnviarCV() {
+    if (!empresa || !userId) return;
+    if (enviosHoy >= limiteDiario) {
+      setError(`Límite diario alcanzado (${limiteDiario} envíos). Mejora tu plan.`);
+      return;
+    }
+
+    setEnviando(true);
+    setError("");
+    setExito("");
+
+    try {
+      const res = await fetch("/api/cv-sender/registrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          companyName: empresa.nombre,
+          companyUrl: url.trim(),
+          jobTitle: "Candidatura espontánea",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al enviar");
+
+      setEnviosHoy((prev) => prev + 1);
+      setExito(`✅ CV enviado a ${empresa.nombre}`);
+
+      // Refrescar historial
+      const supabase = getSupabaseBrowser();
+      const { data: sends } = await supabase
+        .from("cv_sends")
+        .select("id, company_name, company_email, sent_at")
+        .eq("user_id", userId)
+        .order("sent_at", { ascending: false })
+        .limit(20);
+      if (sends) setHistorial(sends as EnvioRealizado[]);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
-    <div className="min-h-screen pt-16">
-
-      {/* ── Cabecera de la página ──────────────────────────────────────── */}
-      <div className="text-white py-10 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+    <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
+      {/* Header */}
+      <div
+        className="py-8 px-4"
+        style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
+      >
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold">🏢 Extractor de empresas</h1>
-          <p className="text-blue-100 mt-1 text-sm">
-            Encuentra el email de RRHH de cualquier empresa automáticamente
+          <h1 className="text-xl font-bold" style={{ color: "#fff" }}>
+            Enviar CV a empresas
+          </h1>
+          <p className="text-xs mt-1 opacity-80" style={{ color: "#fff" }}>
+            Sin esperar a que publiquen una oferta. Tú tomas la iniciativa.
+          </p>
+          <p className="text-[11px] mt-2" style={{ color: "rgba(255,255,255,0.7)" }}>
+            {enviosHoy}/{limiteDiario} envíos hoy
           </p>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-
-        {/* ── Formulario de análisis ─────────────────────────────────────── */}
-        <div className="card-game p-6 mb-6">
-          <form onSubmit={analizarEmpresa} className="flex flex-col sm:flex-row gap-3">
-            {/* Input de URL */}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {/* Input URL */}
+        <div className="card-game p-5">
+          <label className="text-xs font-semibold mb-2 block" style={{ color: "#f1f5f9" }}>
+            URL de la empresa
+          </label>
+          <p className="text-[10px] mb-3" style={{ color: "#64748b" }}>
+            Pega la web de la empresa. Extraemos automáticamente su email de RRHH.
+          </p>
+          <div className="flex gap-2">
             <input
               type="url"
-              value={urlEmpresa}
-              onChange={(e) => setUrlEmpresa(e.target.value)}
-              placeholder="https://www.empresa.com"
-              className="flex-1 text-sm border border-[#3d3c30] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleExtraer()}
+              placeholder="https://www.empresa-ejemplo.com"
+              className="flex-1 px-4 py-2.5 rounded-lg text-sm border outline-none transition"
+              style={{
+                background: "#0f1117",
+                border: "1px solid #2d3142",
+                color: "#f1f5f9",
+              }}
             />
-            {/* Botón analizar */}
             <button
-              type="submit"
-              disabled={analizando || !urlEmpresa.trim()}
-              className="px-6 py-3 text-sm font-semibold text-white rounded-xl transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-              style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
+              onClick={handleExtraer}
+              disabled={extrayendo || !url.trim()}
+              className="px-5 py-2.5 rounded-lg text-sm font-semibold transition"
+              style={{
+                background: extrayendo ? "#1e212b" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                color: extrayendo ? "#64748b" : "#fff",
+                opacity: !url.trim() ? 0.5 : 1,
+              }}
             >
-              {analizando ? (
+              {extrayendo ? (
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Analizando...
+                  <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-t-transparent" style={{ borderColor: "#64748b", borderTopColor: "transparent" }} />
+                  Extrayendo...
                 </span>
               ) : (
-                "🔍 Analizar empresa"
+                "Extraer emails"
               )}
             </button>
-          </form>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div
+              className="mt-3 rounded-lg px-4 py-3 text-xs"
+              style={{
+                background: "rgba(239,68,68,0.1)",
+                border: "1px solid rgba(239,68,68,0.2)",
+                color: "#ef4444",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Éxito */}
+          {exito && (
+            <div
+              className="mt-3 rounded-lg px-4 py-3 text-xs"
+              style={{
+                background: "rgba(34,197,94,0.1)",
+                border: "1px solid rgba(34,197,94,0.2)",
+                color: "#22c55e",
+              }}
+            >
+              {exito}
+            </div>
+          )}
         </div>
 
-        {/* ── Mensaje de error ───────────────────────────────────────────── */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-2xl px-5 py-4 text-sm">
-            ⚠️ {error}
+        {/* Resultado extracción */}
+        {empresa && (
+          <div className="card-game p-5 space-y-3">
+            <h3 className="text-sm font-bold" style={{ color: "#22c55e" }}>
+              {empresa.nombre}
+            </h3>
+
+            {/* Email */}
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] block" style={{ color: "#64748b" }}>
+                  Email RRHH
+                </span>
+                <span className="text-sm font-mono" style={{ color: empresa.emailRrhh ? "#22c55e" : "#f59e0b" }}>
+                  {empresa.emailRrhh || "No encontrado (usaremos email genérico)"}
+                </span>
+              </div>
+              {empresa.emailRrhh && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(empresa.emailRrhh!);
+                  }}
+                  className="text-[10px] px-2 py-1 rounded"
+                  style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}
+                >
+                  Copiar
+                </button>
+              )}
+            </div>
+
+            {/* Teléfono */}
+            {empresa.telefono && (
+              <div>
+                <span className="text-[10px] block" style={{ color: "#64748b" }}>
+                  Teléfono
+                </span>
+                <span className="text-xs" style={{ color: "#94a3b8" }}>
+                  {empresa.telefono}
+                </span>
+              </div>
+            )}
+
+            {/* Página empleo */}
+            {empresa.paginaEmpleo && (
+              <div>
+                <span className="text-[10px] block" style={{ color: "#64748b" }}>
+                  Página de empleo
+                </span>
+                <a
+                  href={empresa.paginaEmpleo}
+                  target="_blank"
+                  rel="noopener"
+                  className="text-xs underline"
+                  style={{ color: "#22c55e" }}
+                >
+                  {empresa.paginaEmpleo}
+                </a>
+              </div>
+            )}
+
+            {/* Botón enviar */}
+            <button
+              onClick={handleEnviarCV}
+              disabled={enviando || enviosHoy >= limiteDiario}
+              className="w-full py-3 rounded-xl text-sm font-bold transition"
+              style={{
+                background:
+                  enviando || enviosHoy >= limiteDiario
+                    ? "#1e212b"
+                    : "linear-gradient(135deg, #22c55e, #16a34a)",
+                color: enviando || enviosHoy >= limiteDiario ? "#64748b" : "#fff",
+                cursor: enviosHoy >= limiteDiario ? "not-allowed" : "pointer",
+              }}
+            >
+              {enviando ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent" style={{ borderColor: "#64748b", borderTopColor: "transparent" }} />
+                  Enviando CV...
+                </span>
+              ) : enviosHoy >= limiteDiario ? (
+                `Límite diario alcanzado (${limiteDiario}/${limiteDiario})`
+              ) : (
+                `📤 Enviar mi CV a ${empresa.nombre}`
+              )}
+            </button>
+            <p className="text-center text-[10px]" style={{ color: "#475569" }}>
+              {empresa.emailRrhh
+                ? "Se enviará al email extraído de su web"
+                : "Se usará un email genérico (rrhh@dominio.com)"}
+            </p>
           </div>
         )}
 
-        {/* ── Skeleton de carga ──────────────────────────────────────────── */}
-        {analizando && (
-          <div className="card-game p-6 animate-pulse">
-            <div className="h-5 bg-gray-200 rounded w-1/2 mb-6" />
-            <div className="space-y-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full" />
-                  <div className="h-4 bg-gray-200 rounded w-2/3" />
+        {/* Historial */}
+        {historial.length > 0 && (
+          <div className="card-game p-5">
+            <h3 className="text-xs font-semibold mb-3" style={{ color: "#f1f5f9" }}>
+              📋 Últimos envíos
+            </h3>
+            <div className="space-y-2">
+              {historial.map((h) => (
+                <div
+                  key={h.id}
+                  className="flex items-center justify-between py-2"
+                  style={{ borderBottom: "1px solid rgba(45,49,66,0.3)" }}
+                >
+                  <div>
+                    <span className="text-[11px] font-medium block" style={{ color: "#f1f5f9" }}>
+                      {h.company_name}
+                    </span>
+                    <span className="text-[9px]" style={{ color: "#475569" }}>
+                      {h.company_email}
+                    </span>
+                  </div>
+                  <span className="text-[10px]" style={{ color: "#64748b" }}>
+                    {new Date(h.sent_at).toLocaleDateString("es-ES", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ── Tarjeta de resultados ──────────────────────────────────────── */}
-        {!analizando && infoEmpresa && (
-          <div className="card-game overflow-hidden">
-
-            {/* Cabecera de la tarjeta */}
-            <div className="px-6 py-5 border-b border-[#3d3c30]">
-              <h2 className="font-bold text-[#f0ebe0] text-lg">{infoEmpresa.nombre}</h2>
-              <p className="text-sm text-[#706a58] mt-0.5">{urlEmpresa}</p>
-            </div>
-
-            {/* Datos extraídos */}
-            <div className="px-6 py-5 space-y-4">
-
-              {/* Email de RRHH */}
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">📧</span>
-                <div>
-                  <p className="text-xs text-[#706a58] uppercase tracking-wide font-medium">
-                    Email de RRHH
-                  </p>
-                  {infoEmpresa.emailRrhh ? (
-                    <a
-                      href={`mailto:${infoEmpresa.emailRrhh}`}
-                      className="text-sm font-medium hover:underline"
-                      style={{ color: "#7ed56f" }}
-                    >
-                      {infoEmpresa.emailRrhh}
-                    </a>
-                  ) : (
-                    <p className="text-sm text-[#504a3a]">No encontrado</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Teléfono */}
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">📞</span>
-                <div>
-                  <p className="text-xs text-[#706a58] uppercase tracking-wide font-medium">
-                    Teléfono
-                  </p>
-                  {infoEmpresa.telefono ? (
-                    <a
-                      href={`tel:${infoEmpresa.telefono}`}
-                      className="text-sm font-medium hover:underline"
-                      style={{ color: "#7ed56f" }}
-                    >
-                      {infoEmpresa.telefono}
-                    </a>
-                  ) : (
-                    <p className="text-sm text-[#504a3a]">No encontrado</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Página de empleo interna */}
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">💼</span>
-                <div>
-                  <p className="text-xs text-[#706a58] uppercase tracking-wide font-medium">
-                    Página de empleo
-                  </p>
-                  {infoEmpresa.paginaEmpleo ? (
-                    <a
-                      href={infoEmpresa.paginaEmpleo}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium hover:underline"
-                      style={{ color: "#7ed56f" }}
-                    >
-                      Ver ofertas internas
-                    </a>
-                  ) : (
-                    <p className="text-sm text-[#504a3a]">No encontrada</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Botón de acción principal */}
-            <div className="px-6 py-5 border-t border-[#3d3c30]">
-              <Link
-                href={`/app/envios?empresa=${encodeURIComponent(infoEmpresa.nombre)}`}
-                className="block w-full text-center py-3 text-sm font-bold rounded-xl transition hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
-              >
-                📧 Enviar CV a esta empresa
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* ── Estado inicial (sin búsqueda) ──────────────────────────────── */}
-        {!analizando && !infoEmpresa && !error && (
-          <div className="card-game p-12 text-center">
-            <p className="text-5xl mb-4">🏢</p>
-            <p className="font-semibold text-[#f0ebe0] mb-2">Analiza cualquier empresa</p>
-            <p className="text-[#706a58] text-sm leading-relaxed">
-              Introduce la URL de la empresa y encontraremos automáticamente
-              su email de RRHH, teléfono y página de empleo.
-            </p>
-          </div>
-        )}
-
-        {/* ── Sección ETTs ──────────────────────────────────────────── */}
-        <div className="mt-8">
-          <h2 className="text-lg font-bold mb-4" style={{ color: "#f0ebe0" }}>🏢 ETTs y Agencias de Empleo</h2>
-          <p className="text-sm mb-4" style={{ color: "#706a58" }}>
-            Las ETTs son una de las mejores vías para encontrar trabajo rápido. Aquí tienes las principales en España:
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              { nombre: "Adecco", url: "https://www.adecco.es", desc: "Líder mundial en RRHH", icon: "🔵" },
-              { nombre: "Randstad", url: "https://www.randstad.es", desc: "Segunda ETT más grande", icon: "🟠" },
-              { nombre: "ManpowerGroup", url: "https://www.manpower.es", desc: "Presente en 80 países", icon: "🔴" },
-              { nombre: "Eurofirms", url: "https://www.eurofirms.es", desc: "ETT española líder", icon: "🟢" },
-              { nombre: "Synergie", url: "https://www.synergie.es", desc: "Especialista en industria", icon: "🟡" },
-              { nombre: "Gi Group", url: "https://www.gigroup.es", desc: "Global, multisector", icon: "🟣" },
-              { nombre: "Page Personnel", url: "https://www.pagepersonnel.es", desc: "Perfiles cualificados", icon: "⚪" },
-              { nombre: "Hays", url: "https://www.hays.es", desc: "Especialista en selección", icon: "🔵" },
-              { nombre: "SEPE", url: "https://www.sepe.es", desc: "Servicio público de empleo", icon: "🏛️" },
-              { nombre: "InfoJobs", url: "https://www.infojobs.net", desc: "Portal #1 en España", icon: "🟦" },
-            ].map((ett) => (
-              <div key={ett.nombre} className="card-game p-4 flex items-center gap-3 group cursor-pointer"
-                onClick={() => { setUrlEmpresa(ett.url); }}>
-                <span className="text-xl">{ett.icon}</span>
-                <div className="flex-1">
-                  <p className="font-bold text-sm" style={{ color: "#f0ebe0" }}>{ett.nombre}</p>
-                  <p className="text-[11px]" style={{ color: "#706a58" }}>{ett.desc}</p>
-                </div>
-                <div className="flex gap-2">
-                  <a href={ett.url} target="_blank" rel="noopener noreferrer"
-                    className="px-2.5 py-1 rounded-lg text-[10px] font-medium transition hover:opacity-80"
-                    style={{ border: "1px solid rgba(126,213,111,0.2)", color: "#b0a890" }}
-                    onClick={(e) => e.stopPropagation()}>Visitar</a>
-                  <button onClick={(e) => { e.stopPropagation(); setUrlEmpresa(ett.url); }}
-                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:opacity-90"
-                    style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>Analizar</button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs mt-4 text-center" style={{ color: "#504a3a" }}>
-            💡 Tip: Inscríbete en al menos 3-4 ETTs para maximizar tus opciones
-          </p>
+        {/* Tips */}
+        <div
+          className="rounded-xl p-4"
+          style={{
+            background: "rgba(34,197,94,0.04)",
+            border: "1px solid rgba(34,197,94,0.1)",
+          }}
+        >
+          <h4 className="text-[11px] font-semibold mb-2" style={{ color: "#22c55e" }}>
+            💡 ¿Cómo funciona?
+          </h4>
+          <ul className="space-y-1.5 text-[10px]" style={{ color: "#64748b" }}>
+            <li>1. Pega la URL de cualquier empresa</li>
+            <li>2. Extraemos emails de RRHH automáticamente</li>
+            <li>3. Si no encontramos email, usamos rrhh@dominio.com</li>
+            <li>4. Tu CV se envía con carta personalizada por IA</li>
+            <li>5. La empresa tendrá tu CV en su base de datos para futuras vacantes</li>
+          </ul>
         </div>
-
       </div>
     </div>
-  );
-}
-
-export default function EmpresasPage() {
-  return (
-    <Suspense>
-      <EmpresasPageInner />
-    </Suspense>
   );
 }
