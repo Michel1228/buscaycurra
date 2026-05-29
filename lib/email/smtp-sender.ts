@@ -265,7 +265,7 @@ export async function sendConfirmationEmail(
       </td></tr>
     </table>
 
-    ${ctaButton("Ver todos mis envíos →", "https://buscaycurra.es/app/envios")}
+    ${ctaButton("Ver todos mis envíos →", "https://buscaycurra.es/app/empresas")}
   `;
 
   try {

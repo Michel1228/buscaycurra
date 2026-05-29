@@ -316,7 +316,7 @@ function buildConfirmationEmailHTML(
                 en tu panel de control.
               </p>
 
-              <a href="https://buscaycurra.es/app/envios"
+              <a href="https://buscaycurra.es/app/empresas"
                 style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;display:inline-block;">
                 Ver mis envíos →
               </a>

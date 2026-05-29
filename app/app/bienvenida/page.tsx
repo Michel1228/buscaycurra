@@ -20,7 +20,7 @@ const PASOS = [
     icon: "🤖",
     titulo: "Activa los envíos automáticos",
     desc: "Guzzi busca ofertas que encajan con tu perfil en 20+ países, adapta tu CV a cada una y lo envía en el momento exacto. Tú solo apruebas.",
-    href: "/app/envios",
+    href: "/app/empresas",
     cta: "Activar envíos →",
   },
   {

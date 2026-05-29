@@ -38,7 +38,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
     }
     // Para otros tipos: si hay job_id, ir al detalle
     if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
-    if (n.tipo === "cv_enviado") return "/app/envios";
+    if (n.tipo === "cv_enviado") return "/app/empresas";
     if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
     if (n.tipo === "recordatorio") return "/app/gusi";
     return null;

@@ -126,7 +126,7 @@ export default function NotificacionesPage() {
       return null; // Se expande, no navega
     }
     if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
-    if (n.tipo === "cv_enviado") return "/app/envios";
+    if (n.tipo === "cv_enviado") return "/app/empresas";
     if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
     if (n.tipo === "recordatorio") return "/app/gusi";
     return null;

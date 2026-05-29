@@ -6,7 +6,7 @@ import GusiChat from "@/components/GusiChat";
 const ACCESOS = [
   { href: "/app/curriculum", icon: "📄", label: "Mi CV" },
   { href: "/app/buscar",     icon: "🔍", label: "Buscar trabajo" },
-  { href: "/app/envios",     icon: "📬", label: "Mis envíos" },
+  { href: "/app/empresas",   icon: "📬", label: "Mis envíos" },
   { href: "/app/pipeline",   icon: "📊", label: "Pipeline" },
   { href: "/app/guardados",  icon: "❤️", label: "Guardadas" },
 ];

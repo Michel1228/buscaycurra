@@ -238,7 +238,7 @@ export default function PipelinePage() {
             <p className="text-4xl mb-3">📭</p>
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Aún no tienes candidaturas</p>
             <p className="text-xs mt-1 mb-4" style={{ color: "#64748b" }}>Empieza enviando tu CV a empresas</p>
-            <Link href="/app/envios" className="btn-game text-xs">Enviar CV</Link>
+            <Link href="/app/empresas" className="btn-game text-xs">Enviar CV</Link>
           </div>
         ) : (
           <div className="flex gap-3 overflow-x-auto pb-4" style={{ scrollbarWidth: "thin" }}>

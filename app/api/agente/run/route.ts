@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
               puesto: ofertas[0].titulo,
               empresa: ofertas[0].empresa,
               ciudad: ofertas[0].ubicacion,
-              url: "https://buscaycurra.es/app/envios",
+              url: "https://buscaycurra.es/app/empresas",
             });
           } catch { /* WhatsApp optional */ }
         }

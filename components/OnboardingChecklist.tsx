@@ -78,7 +78,7 @@ export default function OnboardingChecklist() {
           titulo: "Activa envíos automáticos",
           desc: "Guzzi envía tu CV personalizado a empresas mientras duermes.",
           cta: "Activar envíos →",
-          href: "/app/envios",
+          href: "/app/empresas",
           done: enviosDone,
         },
         {

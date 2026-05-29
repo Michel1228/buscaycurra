@@ -87,7 +87,7 @@ export default function NuevaContrasenaPage() {
 
       // Redirigir al dashboard tras 2 segundos
       setTimeout(() => {
-        router.push("/app/envios");
+        router.push("/app/gusi");
       }, 2000);
     } catch {
       setError("Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.");
