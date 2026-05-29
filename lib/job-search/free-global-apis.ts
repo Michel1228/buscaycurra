@@ -210,7 +210,7 @@ async function guardarOfertas(ofertas: RawJob[]): Promise<number> {
           o.salario || "Ver en oferta",
           o.descripcion?.slice(0, 5000) || "",
           o.url, o.fuente, "OTRO", country,
-          o.fecha ? new Date(o.fecha).toISOString() : new Date().toISOString(),
+          o.fecha ? (() => { try { const d = new Date(o.fecha); if (isNaN(d.getTime())) return new Date().toISOString(); return d.toISOString(); } catch { return new Date().toISOString(); } })() : new Date().toISOString(),
         ]
       );
       guardadas++;
