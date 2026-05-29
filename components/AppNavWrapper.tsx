@@ -103,20 +103,6 @@ export default function AppNavWrapper() {
             {userInicial || "?"}
           </Link>
 
-          {/* Cerrar sesión */}
-          <button
-            onClick={cerrarSesion}
-            className="flex items-center justify-center w-8 h-8 rounded-lg transition hover:opacity-80"
-            style={{ color: "#ef4444" }}
-            title="Cerrar sesión"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
-
           {/* Botón de menú — visible en todos los tamaños */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
