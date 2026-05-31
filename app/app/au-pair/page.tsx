@@ -144,7 +144,7 @@ export default function AuPairProfilePage() {
           edad: age ? parseInt(age) : undefined,
           nacionalidad: nationality,
           idiomas: languages.join(", "),
-          idiomaDestino: PAISES[paisDestino]?.idiomaPrincipal || "English",
+          idiomaDestino: PAISES[paisDestino]?.idioma || "English",
           experiencia: childcareExperience || undefined,
           sector: "",
           hobbies,
