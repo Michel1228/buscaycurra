@@ -35,6 +35,7 @@ export default function AuPairProfilePage() {
   const [paisDestino, setPaisDestino] = useState("UK");
   const [tipoPerfil, setTipoPerfil] = useState<"joven_estudiante" | "con_experiencia" | "profesional_cambio">("joven_estudiante");
   const [generandoIA, setGenerandoIA] = useState(false);
+  const [auPairStats, setAuPairStats] = useState({ hoy: 0, limiteHoy: 2, disponibles: 2, plan: "free" });
 
   // Nuevo: modal de referencia
   const [refNombre, setRefNombre] = useState("");
@@ -77,6 +78,11 @@ export default function AuPairProfilePage() {
       // Cargar país del localStorage
       const saved = localStorage.getItem("bc_pais");
       if (saved) setPaisDestino(saved);
+
+      // Cargar stats de envíos
+      fetch(`/api/user/stats?userId=${user.id}`).then(r => r.json()).then(d => {
+        setAuPairStats({ hoy: d.auPair.hoy, limiteHoy: d.auPair.limiteHoy, disponibles: d.auPair.disponibles, plan: d.plan });
+      }).catch(() => {});
 
       setLoading(false);
     });
@@ -226,6 +232,27 @@ export default function AuPairProfilePage() {
           Las familias no buscan un CV. Buscan conocerte. Crea tu carta de presentación
           y tu perfil para aplicar a ofertas au pair.
         </p>
+        {/* Stats de envíos */}
+        {auPairStats.plan && (
+          <div className="mt-4 max-w-xs mx-auto">
+            <div className="flex items-center justify-between text-[10px] text-[#94a3b8] mb-1">
+              <span>Envíos au pair hoy</span>
+              <span className="tabular-nums">{auPairStats.hoy}/{auPairStats.limiteHoy}</span>
+            </div>
+            <div className="h-1 rounded-full bg-[#1e212b]">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(100, (auPairStats.hoy / auPairStats.limiteHoy) * 100)}%`,
+                  background: auPairStats.disponibles <= 0 ? "#ef4444" : "#22c55e",
+                }}
+              />
+            </div>
+            <p className="text-[9px] text-[#22c55e] mt-1">
+              ✨ {auPairStats.disponibles} disponible{auPairStats.disponibles !== 1 ? "s" : ""} hoy — ¡vuelve mañana!
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Formulario */}
