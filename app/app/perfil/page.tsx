@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import InfoTooltip from "@/components/InfoTooltip";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
 import WhatsAppSubscribeButton from "@/components/WhatsAppSubscribeButton";
+import { isNativeIOS } from "@/lib/utils/platform";
 
 interface PerfilData {
   nombre: string;
@@ -39,7 +40,9 @@ export default function PerfilPage() {
     const params = new URLSearchParams(window.location.search);
     const t = params.get("tab");
     if (t === "plan" || t === "seguridad") setTab(t);
+    setIosNativo(isNativeIOS());
   }, []);
+  const [iosNativo, setIosNativo] = useState(false);
   const [planActual, setPlanActual] = useState<"free" | "esencial" | "basico" | "pro" | "empresa">("free");
   const [cargandoPlan, setCargandoPlan] = useState(false);
   const [errorPlan, setErrorPlan] = useState<string | null>(null);
@@ -358,9 +361,18 @@ export default function PerfilPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <p className="text-xs font-semibold" style={{ color: "#64748b" }}>Mejorar plan</p>
-                    <InfoTooltip text="El pago se procesa con Stripe (seguro). Puedes cancelar en cualquier momento desde el portal de facturación. El cambio es inmediato." position="right" />
+                    {!iosNativo && <InfoTooltip text="El pago se procesa con Stripe (seguro). Puedes cancelar en cualquier momento desde el portal de facturación. El cambio es inmediato." position="right" />}
                   </div>
-                  {planActual === "free" && (
+                  {iosNativo && (
+                    <div className="rounded-xl p-4 text-center" style={{ background: "#161922", border: "1px solid #252836" }}>
+                      <p className="text-xs" style={{ color: "#64748b" }}>
+                        🍎 Para cambiar de plan, visita{" "}
+                        <span style={{ color: "#22c55e" }}>buscaycurra.es</span>
+                        {" "}desde Safari. Tu plan se actualizará en la app automáticamente.
+                      </p>
+                    </div>
+                  )}
+                  {!iosNativo && planActual === "free" && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
@@ -373,7 +385,7 @@ export default function PerfilPage() {
                       </button>
                     </div>
                   )}
-                  {(planActual === "free" || planActual === "esencial") && (
+                  {!iosNativo && (planActual === "free" || planActual === "esencial") && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
@@ -386,17 +398,19 @@ export default function PerfilPage() {
                       </button>
                     </div>
                   )}
-                  <div className="rounded-xl p-4 flex items-center justify-between"
-                    style={{ background: "#161922", border: "1px solid #252836" }}>
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🏢 Plan Empresa — 49,99€/mes</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
+                  {!iosNativo && (
+                    <div className="rounded-xl p-4 flex items-center justify-between"
+                      style={{ background: "#161922", border: "1px solid #252836" }}>
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🏢 Plan Empresa — 49,99€/mes</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
+                      </div>
+                      <button onClick={() => void irACheckout("empresa")} disabled={cargandoPlan}
+                        className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
+                        {cargandoPlan ? "..." : "Contratar"}
+                      </button>
                     </div>
-                    <button onClick={() => void irACheckout("empresa")} disabled={cargandoPlan}
-                      className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
-                      {cargandoPlan ? "..." : "Contratar"}
-                    </button>
-                  </div>
+                  )}
                 </div>
               )}
 
@@ -465,6 +479,19 @@ export default function PerfilPage() {
               >
                 Cerrar todas las sesiones
               </button>
+            </div>
+
+            {/* Legal — Política de privacidad y términos */}
+            <div className="rounded-xl p-4 flex gap-4 text-xs" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <a href="/privacidad" target="_blank" rel="noopener noreferrer"
+                className="hover:underline" style={{ color: "#475569" }}>
+                Política de privacidad
+              </a>
+              <span style={{ color: "#2d3142" }}>·</span>
+              <a href="/terminos" target="_blank" rel="noopener noreferrer"
+                className="hover:underline" style={{ color: "#475569" }}>
+                Términos de uso
+              </a>
             </div>
 
             {/* Zona de peligro */}

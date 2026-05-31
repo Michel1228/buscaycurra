@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
+import { isNativeIOS } from "@/lib/utils/platform";
 
 const PLANES = [
   {
@@ -69,6 +70,9 @@ export default function PreciosPage() {
   const router = useRouter();
   const [cargando, setCargando] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [iosNativo, setIosNativo] = useState(false);
+
+  useEffect(() => { setIosNativo(isNativeIOS()); }, []);
 
   const handlePlan = async (plan: typeof PLANES[0]) => {
     setError("");
@@ -116,6 +120,20 @@ export default function PreciosPage() {
           </p>
         </div>
 
+        {iosNativo && (
+          <div className="max-w-md mx-auto mb-8 rounded-xl p-5 text-center"
+            style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
+            <p className="text-2xl mb-2">🍎</p>
+            <p className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>
+              Suscríbete desde la web
+            </p>
+            <p className="text-xs" style={{ color: "#64748b" }}>
+              Las suscripciones se gestionan en buscaycurra.es desde tu navegador.
+              Tu plan estará disponible en la app inmediatamente.
+            </p>
+          </div>
+        )}
+
         {error && (
           <div className="max-w-md mx-auto mb-6 rounded-xl px-4 py-3 text-sm"
             style={{ background: "#2a1a1a", border: "1px solid #ff606030", color: "#ff8080" }}>
@@ -162,18 +180,26 @@ export default function PreciosPage() {
                 ))}
               </ul>
 
-              <button onClick={() => void handlePlan(plan)} disabled={cargando === plan.id}
-                className={plan.dest ? "btn-game w-full" : "btn-game-outline w-full"}
-                style={{ opacity: cargando === plan.id ? 0.6 : 1 }}>
-                {cargando === plan.id ? "Procesando..." : plan.btn}
-              </button>
+              {iosNativo ? (
+                <p className="text-xs text-center py-2" style={{ color: "#64748b" }}>
+                  Disponible en buscaycurra.es
+                </p>
+              ) : (
+                <button onClick={() => void handlePlan(plan)} disabled={cargando === plan.id}
+                  className={plan.dest ? "btn-game w-full" : "btn-game-outline w-full"}
+                  style={{ opacity: cargando === plan.id ? 0.6 : 1 }}>
+                  {cargando === plan.id ? "Procesando..." : plan.btn}
+                </button>
+              )}
             </div>
           ))}
         </div>
 
-        <p className="text-center text-xs mt-10" style={{ color: "#504a3a" }}>
-          💳 Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
-        </p>
+        {!iosNativo && (
+          <p className="text-center text-xs mt-10" style={{ color: "#504a3a" }}>
+            💳 Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
+          </p>
+        )}
 
         <div className="text-center mt-6">
           <Link href="/" className="text-sm hover:underline" style={{ color: "#706a58" }}>
