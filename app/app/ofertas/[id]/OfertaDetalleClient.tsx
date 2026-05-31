@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { esOfertaAuPair } from "@/lib/au-pair";
 
 export interface OfertaDetalle {
   id: string;
@@ -40,10 +41,14 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [cvListo, setCvListo] = useState(false);
+  const [perfilAuPair, setPerfilAuPair] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const esAuPair = esOfertaAuPair(oferta.titulo);
 
   useEffect(() => {
     checkCV();
+    if (esAuPair) checkAuPairProfile();
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
@@ -55,11 +60,22 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Usar el endpoint unificado que busca en user_cvs + CV (Prisma)
       const res = await fetch(`/api/gusi/cv?userId=${user.id}`);
       const json = await res.json() as { cv_exists?: boolean; cv?: unknown };
       setCvListo(json.cv_exists === true || !!json.cv);
     } catch (err) { console.error('[OfertaDetalle] Error verificar CV:', err) }
+  }
+
+  async function checkAuPairProfile() {
+    try {
+      const supabase = getSupabaseBrowser();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const res = await fetch(`/api/au-pair/profile?userId=${user.id}`);
+      const json = await res.json() as { profile?: unknown };
+      setPerfilAuPair(!!json.profile);
+    } catch { /* ignorar */ }
   }
 
   async function enviarCV() {
@@ -162,29 +178,60 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         </div>
 
         <div className="flex flex-wrap gap-3 mb-5">
-          <button
-            onClick={enviarCV}
-            disabled={enviando || !cvListo}
-            className="btn-game text-sm font-semibold px-5 py-2.5 rounded-lg disabled:opacity-50 flex items-center gap-2"
-            style={enviado ? { background: "#22c55e" } : {}}>
-            {enviando ? (
-              <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white" />
-            ) : enviado ? (
-              "✅ CV Enviado"
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                Enviar mi CV
-              </>
-            )}
-          </button>
-          {!cvListo && (
-            <button
-              onClick={() => router.push("/app/curriculum")}
-              className="text-sm px-4 py-2.5 rounded-lg font-medium transition"
-              style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-              📄 Crear CV primero
-            </button>
+          {esAuPair ? (
+            <>
+              <button
+                onClick={enviarCV}
+                disabled={enviando || !perfilAuPair}
+                className="btn-game text-sm font-semibold px-5 py-2.5 rounded-lg disabled:opacity-50 flex items-center gap-2"
+                style={enviado ? { background: "#22c55e" } : {}}>
+                {enviando ? (
+                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white" />
+                ) : enviado ? (
+                  "✅ Perfil enviado"
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Enviar perfil Au Pair
+                  </>
+                )}
+              </button>
+              {!perfilAuPair && (
+                <button
+                  onClick={() => router.push("/app/au-pair")}
+                  className="text-sm px-4 py-2.5 rounded-lg font-medium transition"
+                  style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                  🧒 Crear perfil Au Pair primero
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <button
+                onClick={enviarCV}
+                disabled={enviando || !cvListo}
+                className="btn-game text-sm font-semibold px-5 py-2.5 rounded-lg disabled:opacity-50 flex items-center gap-2"
+                style={enviado ? { background: "#22c55e" } : {}}>
+                {enviando ? (
+                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white" />
+                ) : enviado ? (
+                  "✅ CV Enviado"
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Enviar mi CV
+                  </>
+                )}
+              </button>
+              {!cvListo && (
+                <button
+                  onClick={() => router.push("/app/curriculum")}
+                  className="text-sm px-4 py-2.5 rounded-lg font-medium transition"
+                  style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                  📄 Crear CV primero
+                </button>
+              )}
+            </>
           )}
           <a
             href={oferta.url}

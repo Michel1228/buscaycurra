@@ -29,6 +29,23 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
   const pais = PAISES[paisCode];
   return (
     <div>
+      {/* 🆕 Perfil Au Pair */}
+      <div className="bg-gradient-to-br from-[#222c1a] to-[#1a2e1a] border border-[#22c55e]/30 rounded-xl p-6 mb-4">
+        <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2 flex items-center gap-2">
+          <span className="text-2xl">💌</span> Tu perfil Au Pair
+        </h3>
+        <p className="text-sm text-[#94a3b8] mb-4">
+          Las familias no buscan un CV. Buscan conocerte. Crea tu carta "Dear Family" 
+          y tu perfil completo para aplicar a ofertas au pair.
+        </p>
+        <Link
+          href="/app/au-pair"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl text-sm transition-colors"
+        >
+          ✏️ Crear/Editar mi perfil Au Pair
+        </Link>
+      </div>
+
       <div className="bg-gradient-to-br from-[#1a1d2e] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
           <span className="text-2xl">🧒</span> Programa Au Pair en {pais?.nombre || paisCode}

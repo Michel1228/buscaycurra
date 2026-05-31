@@ -1,18 +1,18 @@
 /**
- * Sync directo de Careerjet - se ejecuta dentro del contenedor
- * Saltándose el endpoint HTTP que está colgado
- * 
- * Uso: npx tsx scripts/sync-careerjet-direct.ts
+ * Sync Careerjet — 50 combos por país, secuencial
+ * Ejecutar dentro del contenedor Docker
  */
 import { fetchCareerjetGlobal, upsertJobsForSync } from "../lib/job-search/sync-worker";
 import { CAREERJET_COUNTRIES } from "../lib/job-search/careerjet-countries";
 
-const BATCH_SIZE = 50; // Cron: 50 combos por pais, upsert escribe a DB uno a uno, no OOM
+const BATCH_SIZE = 50;
 const COUNTRIES = ["us","uk","au","ca","de","fr","nl","it","es","se","ch","be","pt","ie","no","dk","at","fi","nz","pl"];
 
 async function main() {
-  console.log("=== Careerjet Direct Sync ===");
+  console.log("=== Careerjet Global Sync ===");
   console.log(`Countries: ${COUNTRIES.length}, Batch: ${BATCH_SIZE}`);
+  console.log(`Start: ${new Date().toISOString()}\n`);
+  
   let totalInserted = 0;
   let totalFetched = 0;
 
@@ -22,6 +22,7 @@ async function main() {
 
     let cInserted = 0;
     let cFetched = 0;
+    const startTime = Date.now();
 
     for (let i = 0; i < BATCH_SIZE; i++) {
       const comboIdx = i % (cfg.keywords.length * cfg.cities.length);
@@ -40,12 +41,14 @@ async function main() {
       } catch (e) { /* skip combo */ }
     }
 
-    console.log(`  ${country} (${cfg.name}): ${cInserted} ins / ${cFetched} fet`);
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
+    console.log(`  ${country} (${cfg.name}): ${cInserted} ins / ${cFetched} fet (${elapsed}s)`);
     totalInserted += cInserted;
     totalFetched += cFetched;
   }
 
   console.log(`\n=== DONE: ${totalInserted} inserted / ${totalFetched} fetched ===`);
+  console.log(`End: ${new Date().toISOString()}`);
 }
 
 main().catch(e => {

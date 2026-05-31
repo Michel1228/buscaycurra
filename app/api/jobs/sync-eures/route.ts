@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ inserted: 0, fetched: 0, nextOffset: 0, done: true, total: combos.length });
   }
 
-  const CONCURRENCY = 5; // EURES rate-limit es más bajo, mejor ir despacio
+  const CONCURRENCY = 8; // 3 págs × 8 = 24 requests simultáneos, bien dentro de maxDuration=300
   let totalInserted = 0;
   let totalFetched = 0;
 
