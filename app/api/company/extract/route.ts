@@ -293,23 +293,27 @@ export async function POST(request: NextRequest) {
 
     if (googleResult) {
       // Usar Google Places como fuente principal
-      const emailsExtraidos: string[] = datosWeb?.emailRrhh
-        ? [datosWeb.emailRrhh]
-        : [];
+      // Limpiar dominio para emails
+      const dominioGoogle = googleResult.website
+        ? new URL(googleResult.website).hostname.replace(/^www\\./, "")
+        : parsedUrl.hostname.replace(/^www\\./, "");
 
-      if (!datosWeb?.emailRrhh) {
-        const dominio = parsedUrl.hostname.replace(/^www\\./, "");
-        // SOLO si Google Places no tiene email, generamos patrones
-        const alternativos = [
-          `empleo@${dominio}`,
-          `info@${dominio}`,
-          `talento@${dominio}`,
-          `seleccion@${dominio}`,
-          `jobs@${dominio}`,
-        ];
-        alternativos.forEach(alt => {
-          if (!emailsExtraidos.includes(alt)) emailsExtraidos.push(alt);
-        });
+      const emailsExtraidos: string[] = [];
+
+      // Generar emails basados en el dominio limpio (NO usar scraped si vienen con www)
+      const alternativos = [
+        `empleo@${dominioGoogle}`,
+        `info@${dominioGoogle}`,
+        `talento@${dominioGoogle}`,
+        `seleccion@${dominioGoogle}`,
+        `jobs@${dominioGoogle}`,
+      ];
+      alternativos.forEach(alt => {
+        if (!emailsExtraidos.includes(alt)) emailsExtraidos.push(alt);
+      });
+      // Si el scraping encontró email real (no generico rrhh@www), añadirlo también
+      if (datosWeb?.emailRrhh && !datosWeb.emailRrhh.includes("www.")) {
+        emailsExtraidos.unshift(datosWeb.emailRrhh);
       }
 
       empresa = {
