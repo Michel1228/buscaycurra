@@ -463,6 +463,52 @@ export default function CurriculumPage() {
         </div>
       </div>
 
+      {/* Indicador de completitud */}
+      {(() => {
+        const checks = [
+          { label: "Nombre",         done: !!form.nombre.trim() },
+          { label: "Teléfono",       done: !!form.telefono.trim() },
+          { label: "Ciudad",         done: !!form.ciudad.trim() },
+          { label: "Puesto",         done: !!form.subtitulo.trim() },
+          { label: "Perfil",         done: form.perfilProfesional.trim().length > 30 },
+          { label: "Experiencia",    done: form.experiencia.some(e => e.puesto.trim()) },
+          { label: "Aptitudes",      done: !!form.aptitudes.trim() },
+          { label: "Foto",           done: !!fotoUrl },
+        ];
+        const done = checks.filter(c => c.done).length;
+        const pct = Math.round((done / checks.length) * 100);
+        const color = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
+        return (
+          <div className="px-4 py-3 max-w-4xl mx-auto">
+            <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
+                  Completitud del CV
+                </p>
+                <span className="text-sm font-bold" style={{ color }}>{pct}%</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: "#252836" }}>
+                <div className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}cc)` }} />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {checks.map(c => (
+                  <span key={c.label}
+                    className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                    style={{
+                      background: c.done ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.08)",
+                      color: c.done ? "#22c55e" : "#94a3b8",
+                      border: `1px solid ${c.done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.05)"}`,
+                    }}>
+                    {c.done ? "✓" : "○"} {c.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       <main className="max-w-4xl mx-auto px-4 py-8">
         {error && (
           <div className={`mb-4 p-3 rounded-lg text-xs ${error.startsWith("✅") ? "" : ""}`}

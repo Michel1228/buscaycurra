@@ -36,6 +36,47 @@ const VENTAJAS = [
   },
 ];
 
+const TESTIMONIOS = [
+  {
+    texto: "En una semana encontré al perfil que llevaba 3 meses buscando en InfoJobs. Y sin pagar por publicar oferta.",
+    nombre: "Laura M.",
+    cargo: "Responsable RRHH · Empresa de logística, Madrid",
+  },
+  {
+    texto: "Gestiono 4 empresas clientes y BuscayCurra me ahorra fácil 2.000€/mes en publicaciones. Los candidatos están motivados de verdad.",
+    nombre: "Carlos T.",
+    cargo: "Consultor RRHH · ETT Navarra",
+  },
+  {
+    texto: "Los CVs que llegan ya están bien estructurados gracias a la IA. No tengo que leer PDFs horribles. Eso solo ya vale el precio.",
+    nombre: "Ana R.",
+    cargo: "Directora de selección · Hostelería, Barcelona",
+  },
+];
+
+const FAQ_EMPRESAS = [
+  {
+    q: "¿Necesito publicar una oferta para encontrar candidatos?",
+    a: "No. Con el Plan Empresa accedes directamente al pool completo de candidatos activos. Puedes filtrar por sector, ciudad y perfil sin esperar a que apliquen.",
+  },
+  {
+    q: "¿Qué datos de contacto tengo de cada candidato?",
+    a: "Con Plan Empresa ves nombre completo, email y teléfono de todos los candidatos que han activado 'visible para empresas'. Contacto directo sin intermediarios.",
+  },
+  {
+    q: "¿Puedo publicar ofertas también?",
+    a: "Sí, gratis e ilimitadas. Cuando publicas una oferta, Guzzi la incluye automáticamente en las búsquedas de todos los candidatos relevantes del sistema.",
+  },
+  {
+    q: "¿Con cuánta frecuencia se actualiza la bolsa de candidatos?",
+    a: "Nuevos candidatos cada día. Puedes activar alertas para recibir notificaciones cuando alguien con el perfil exacto que buscas se registre.",
+  },
+  {
+    q: "¿Funcionáis solo en España?",
+    a: "Principalmente España, aunque tenemos candidatos en toda Europa y Latinoamérica. Si buscas perfiles para trabajar en remoto o en el extranjero, también podemos ayudarte.",
+  },
+];
+
 const COMPARATIVA = [
   { aspecto: "Publicar oferta", infojobs: "369€ por oferta", nosotros: "Gratis (incluido)" },
   { aspecto: "Acceso a candidatos", infojobs: "Solo los que aplican", nosotros: "Todo el pool activo" },
@@ -162,6 +203,97 @@ export default function EmpresasLandingPage() {
                   <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{v.desc}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonios */}
+        <section className="py-16 px-6" style={{ background: "rgba(15,17,23,0.6)", borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-xl font-bold text-center mb-2" style={{ color: "#f1f5f9" }}>Lo que dicen las empresas</h2>
+            <p className="text-sm text-center mb-10" style={{ color: "#64748b" }}>Resultados reales de reclutadores que ya usan BuscayCurra</p>
+            <div className="grid md:grid-cols-3 gap-5">
+              {TESTIMONIOS.map(t => (
+                <div key={t.nombre} className="rounded-2xl p-6 flex flex-col gap-4"
+                  style={{ background: "#161922", border: "1px solid #2d3142" }}>
+                  <div className="flex gap-0.5 text-sm" style={{ color: "#f59e0b" }}>{"★★★★★"}</div>
+                  <p className="text-sm leading-relaxed flex-1" style={{ color: "#94a3b8" }}>"{t.texto}"</p>
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>{t.nombre}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>{t.cargo}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Precios para empresas */}
+        <section className="py-16 px-6">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Un precio. Todo incluido.</h2>
+            <p className="text-sm mb-10" style={{ color: "#64748b" }}>Sin sorpresas, sin coste por oferta, sin límite de candidatos</p>
+            <div className="rounded-2xl p-8" style={{ background: "#161922", border: "2px solid rgba(34,197,94,0.3)" }}>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="text-5xl font-black" style={{ color: "#22c55e" }}>49,99€</span>
+                <span className="text-sm" style={{ color: "#64748b" }}>/mes</span>
+              </div>
+              <p className="text-xs mb-6" style={{ color: "#64748b" }}>Sin permanencia · Cancela cuando quieras</p>
+              <div className="grid sm:grid-cols-2 gap-2 text-left mb-8">
+                {[
+                  "Acceso ilimitado a todos los candidatos",
+                  "Contacto directo (email + teléfono)",
+                  "Publicar ofertas ilimitadas gratis",
+                  "Alertas de nuevos candidatos",
+                  "Filtros por sector, ciudad y perfil",
+                  "CVs optimizados con IA",
+                  "API de acceso a la base de datos",
+                  "Soporte prioritario 24/7",
+                ].map(item => (
+                  <div key={item} className="flex items-center gap-2">
+                    <span className="text-xs flex-shrink-0" style={{ color: "#22c55e" }}>✓</span>
+                    <span className="text-xs" style={{ color: "#94a3b8" }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/precios"
+                className="block text-center text-sm font-bold py-3 rounded-xl transition hover:opacity-90"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                Contratar Plan Empresa →
+              </Link>
+              <p className="text-[10px] mt-3" style={{ color: "#475569" }}>
+                Comparado con InfoJobs (mín. 369€/oferta) o LinkedIn (500€+/mes). Sin publicar ninguna oferta.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ empresas */}
+        <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-xl font-bold text-center mb-8" style={{ color: "#f1f5f9" }}>Preguntas frecuentes</h2>
+            <div className="space-y-3">
+              {FAQ_EMPRESAS.map((faq, i) => (
+                <details key={i} className="rounded-xl overflow-hidden group"
+                  style={{ border: "1px solid #2d3142" }}>
+                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none"
+                    style={{ background: "#161922" }}>
+                    <span className="text-sm font-medium" style={{ color: "#f1f5f9" }}>{faq.q}</span>
+                    <span className="text-base ml-3 flex-shrink-0" style={{ color: "#22c55e" }}>+</span>
+                  </summary>
+                  <div className="px-5 py-4" style={{ background: "rgba(34,197,94,0.02)", borderTop: "1px solid #2d3142" }}>
+                    <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>{faq.a}</p>
+                  </div>
+                </details>
+              ))}
+            </div>
+            <div className="text-center mt-8">
+              <p className="text-xs" style={{ color: "#475569" }}>
+                ¿Más preguntas? Escríbenos a{" "}
+                <a href="mailto:empresas@buscaycurra.es" className="underline" style={{ color: "#22c55e" }}>
+                  empresas@buscaycurra.es
+                </a>
+              </p>
             </div>
           </div>
         </section>
