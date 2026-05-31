@@ -17,10 +17,22 @@ export default function AuthCallbackPage() {
     async function handleCallback() {
       try {
         const supabase = getSupabaseBrowser();
-
         const params = new URLSearchParams(window.location.search);
-        const code = params.get("code");
+        const code       = params.get("code");
+        const tokenHash  = params.get("token_hash");
+        const type       = params.get("type");
+        const errorParam = params.get("error");
+        const errorDesc  = params.get("error_description");
 
+        // Supabase puede mandar error explícito en la URL
+        if (errorParam) {
+          if (!mountedRef.current) return;
+          setEstado("error");
+          setMensaje(errorDesc || "El enlace de confirmación no es válido o ha expirado.");
+          return;
+        }
+
+        // Flujo PKCE: ?code=...
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
@@ -29,24 +41,35 @@ export default function AuthCallbackPage() {
             setMensaje("El enlace de confirmación no es válido o ha expirado.");
             return;
           }
-        } else {
-          const { data: { session }, error } = await supabase.auth.getSession();
-          if (error || !session) {
-            await new Promise(r => setTimeout(r, 1500));
+
+        // Flujo token_hash (Supabase moderno): ?token_hash=...&type=email|signup
+        } else if (tokenHash && type) {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: type as "email" | "signup" | "invite" | "magiclink" | "recovery" | "email_change",
+          });
+          if (error) {
             if (!mountedRef.current) return;
-            const { data: { session: session2 } } = await supabase.auth.getSession();
-            if (!session2) {
-              if (!mountedRef.current) return;
-              setEstado("error");
-              setMensaje("No se pudo confirmar la cuenta. Intenta iniciar sesión directamente.");
-              return;
-            }
+            setEstado("error");
+            setMensaje("El enlace de confirmación no es válido o ha expirado.");
+            return;
+          }
+
+        // Flujo implícito (hash fragment): Supabase lo procesa automáticamente
+        } else {
+          // Dar tiempo a que Supabase procese el hash fragment
+          await new Promise(r => setTimeout(r, 1000));
+          if (!mountedRef.current) return;
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            setEstado("error");
+            setMensaje("No se pudo confirmar la cuenta. El enlace puede haber expirado. Intenta iniciar sesión directamente.");
+            return;
           }
         }
 
         if (!mountedRef.current) return;
         setEstado("ok");
-        setMensaje("¡Cuenta confirmada! Redirigiendo...");
 
         timerRef.current = setTimeout(() => {
           if (mountedRef.current) router.push("/app/bienvenida");
@@ -82,11 +105,15 @@ export default function AuthCallbackPage() {
 
           {estado === "ok" && (
             <>
-              <div className="text-5xl mb-4">✅</div>
-              <h2 className="text-lg font-bold mb-2" style={{ color: "#22c55e" }}>¡Registro completado!</h2>
-              <p className="text-sm mb-1" style={{ color: "#f1f5f9" }}>Usuario registrado con éxito.</p>
-              <p className="text-xs" style={{ color: "#64748b" }}>Bienvenido/a a BuscayCurra 🐛</p>
-              <p className="text-xs mt-3" style={{ color: "#64748b" }}>Redirigiendo al panel...</p>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: "rgba(34,197,94,0.15)", border: "2px solid rgba(34,197,94,0.4)" }}>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <path d="M6 16l7 7 13-13" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold mb-2" style={{ color: "#22c55e" }}>¡Cuenta confirmada!</h2>
+              <p className="text-sm mb-1" style={{ color: "#f1f5f9" }}>Ya puedes usar BuscayCurra.</p>
+              <p className="text-xs mt-3 animate-pulse" style={{ color: "#64748b" }}>Entrando a tu panel...</p>
             </>
           )}
 
