@@ -142,7 +142,7 @@ export default function AuPairProfilePage() {
         body: JSON.stringify({
           nombre: "",
           edad: age ? parseInt(age) : undefined,
-          nacionalidad,
+          nacionalidad: nationality,
           idiomas: languages.join(", "),
           idiomaDestino: PAISES[paisDestino]?.idiomaPrincipal || "English",
           experiencia: childcareExperience || undefined,
