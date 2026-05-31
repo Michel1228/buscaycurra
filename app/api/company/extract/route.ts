@@ -320,7 +320,7 @@ export async function POST(request: NextRequest) {
         nombre: googleResult.name || name || parsedUrl.hostname,
         dominio: parsedUrl.hostname,
         urlWeb: googleResult.website || url || parsedUrl.href,
-        emailRrhh: datosWeb?.emailRrhh || emailsExtraidos[0] || null,
+        emailRrhh: (datosWeb?.emailRrhh && !datosWeb.emailRrhh.includes("www.") ? datosWeb.emailRrhh : null) || emailsExtraidos[0] || null,
         emailContacto: emailsExtraidos.find(e => e.includes("info@") || e.includes("contacto@")) || null,
         emailsExtraidos: cleanEmails(emailsExtraidos),
         telefono: googleResult.formatted_phone_number || datosWeb?.telefono || null,
