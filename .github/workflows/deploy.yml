@@ -58,12 +58,13 @@ jobs:
           E_ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           E_ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
           E_GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          E_USAJOBS_KEY: ${{ secrets.USAJOBS_KEY }}
         with:
           host: 187.124.37.183
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
           timeout: 120s
-          envs: REGISTRY_IMAGE,GH_ACTOR,GH_TOKEN,E_ADMIN_SECRET,E_SUPABASE_SERVICE_ROLE_KEY,E_STRIPE_SECRET_KEY,E_STRIPE_WEBHOOK_SECRET,E_STRIPE_PRICE_ESENCIAL,E_STRIPE_PRICE_BASICO,E_STRIPE_PRICE_PRO,E_STRIPE_PRICE_EMPRESA,E_RESEND_API_KEY,E_JOOBLE_API_KEY,E_CAREERJET_API_KEY,E_ADZUNA_APP_ID,E_ADZUNA_APP_KEY,E_GROQ_API_KEY
+          envs: REGISTRY_IMAGE,GH_ACTOR,GH_TOKEN,E_ADMIN_SECRET,E_SUPABASE_SERVICE_ROLE_KEY,E_STRIPE_SECRET_KEY,E_STRIPE_WEBHOOK_SECRET,E_STRIPE_PRICE_ESENCIAL,E_STRIPE_PRICE_BASICO,E_STRIPE_PRICE_PRO,E_STRIPE_PRICE_EMPRESA,E_RESEND_API_KEY,E_JOOBLE_API_KEY,E_CAREERJET_API_KEY,E_ADZUNA_APP_ID,E_ADZUNA_APP_KEY,E_GROQ_API_KEY,E_USAJOBS_KEY
           script: |
             echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
@@ -91,6 +92,7 @@ jobs:
             printf 'ADZUNA_APP_ID=%s\n'             "$E_ADZUNA_APP_ID"             >> "$ENV_FILE"
             printf 'ADZUNA_APP_KEY=%s\n'            "$E_ADZUNA_APP_KEY"            >> "$ENV_FILE"
             printf 'GROQ_API_KEY=%s\n'              "$E_GROQ_API_KEY"              >> "$ENV_FILE"
+            printf 'USAJOBS_KEY=%s\n'              "$E_USAJOBS_KEY"              >> "$ENV_FILE"
 
             docker run -d \
               --name buscaycurra-nextjs \
