@@ -246,9 +246,9 @@ export default function BienvenidaPage() {
           </button>
 
           {/* Opción Manual */}
-          <Link
-            href="/app/buscar"
-            className="group flex flex-col items-start gap-4 p-6 rounded-2xl text-left transition-all hover:scale-[1.02] hover:shadow-lg"
+          <div
+            onClick={() => router.push("/app/buscar")}
+            className="group flex flex-col items-start gap-4 p-6 rounded-2xl text-left transition-all hover:scale-[1.02] hover:shadow-lg cursor-pointer"
             style={{
               background: "#1a1d24",
               border: "1.5px solid #2d3142",
@@ -285,7 +285,7 @@ export default function BienvenidaPage() {
             >
               Ir al buscador →
             </span>
-          </Link>
+          </div>
         </div>
 
         {/* Accesos rápidos */}
