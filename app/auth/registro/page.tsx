@@ -9,6 +9,7 @@ export default function RegistroPage() {
   const [email, setEmail] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [confirmarContrasena, setConfirmarContrasena] = useState("");
+  const [verContrasena, setVerContrasena] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [registrado, setRegistrado] = useState(false);
   const [error, setError] = useState("");
@@ -147,17 +148,37 @@ export default function RegistroPage() {
 
                 <div>
                   <label htmlFor="contrasena" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>Contraseña</label>
-                  <input id="contrasena" type="password" value={contrasena} onChange={(e) => setContrasena(e.target.value)}
-                    placeholder="Mínimo 8 caracteres" required minLength={8} autoComplete="new-password"
-                    className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
+                  <div className="relative">
+                    <input id="contrasena" type={verContrasena ? "text" : "password"} value={contrasena} onChange={(e) => setContrasena(e.target.value)}
+                      placeholder="Mínimo 8 caracteres" required minLength={8} autoComplete="new-password"
+                      className="w-full rounded-lg px-3.5 py-2.5 pr-10 text-sm" style={inputStyle} />
+                    <button type="button" onClick={() => setVerContrasena(v => !v)} tabIndex={-1}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-80 transition"
+                      style={{ color: "#64748b" }} aria-label={verContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}>
+                      {verContrasena ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label htmlFor="confirmar" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>Confirmar contraseña</label>
-                  <input id="confirmar" type="password" value={confirmarContrasena}
-                    onChange={(e) => setConfirmarContrasena(e.target.value)}
-                    placeholder="Repite la contraseña" required autoComplete="new-password"
-                    className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
+                  <div className="relative">
+                    <input id="confirmar" type={verContrasena ? "text" : "password"} value={confirmarContrasena}
+                      onChange={(e) => setConfirmarContrasena(e.target.value)}
+                      placeholder="Repite la contraseña" required autoComplete="new-password"
+                      className="w-full rounded-lg px-3.5 py-2.5 pr-10 text-sm" style={inputStyle} />
+                  </div>
                   {confirmarContrasena.length > 0 && (
                     <p className="text-[11px] mt-1" style={{ color: contrasena === confirmarContrasena ? "#22c55e" : "#ef4444" }}>
                       {contrasena === confirmarContrasena ? "✓ Coinciden" : "✗ No coinciden"}
