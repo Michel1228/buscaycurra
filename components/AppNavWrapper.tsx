@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/app/curriculum", label: "Mi CV",      icon: "📄", title: "Mi currículum" },
   { href: "/app/pipeline",   label: "Pipeline",   icon: "📊", title: "Pipeline de candidaturas" },
   { href: "/app/emigrar",    label: "Emigrar",    icon: "🌍", title: "Guía para emigrar" },
+  { href: "/app/au-pair",    label: "Au Pair",    icon: "🧒", title: "Perfil y ofertas Au Pair" },
   { href: "/app/salarios",   label: "Salarios",   icon: "💰", title: "Comparador de salarios" },
   { href: "/app/guardados",  label: "Guardados",  icon: "❤️", title: "Ofertas guardadas" },
   { href: "/app/reviews",    label: "Reviews",    icon: "⭐", title: "Reviews de empresas" },

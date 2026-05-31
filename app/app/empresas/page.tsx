@@ -187,6 +187,19 @@ export default function EmpresasPage() {
           <p className="text-[11px] mt-2" style={{ color: "rgba(255,255,255,0.7)" }}>
             {enviosHoy}/{limiteDiario} envíos hoy • Sin necesidad de oferta publicada
           </p>
+          {/* Barra de progreso */}
+          <div className="mt-3 flex items-center gap-2 max-w-xs">
+            <div className="flex-1 h-1.5 rounded-full" style={{ background: "rgba(0,0,0,0.3)" }}>
+              <div className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: limiteDiario > 0 ? `${Math.min(100, (enviosHoy / limiteDiario) * 100)}%` : "0%",
+                  background: enviosHoy >= limiteDiario ? "#ef4444" : enviosHoy >= limiteDiario - 1 ? "#f59e0b" : "#fff",
+                }} />
+            </div>
+            <span className="text-[10px] font-bold tabular-nums" style={{ color: "rgba(255,255,255,0.9)" }}>
+              {limiteDiario - enviosHoy} disponible{limiteDiario - enviosHoy !== 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
       </div>
 
