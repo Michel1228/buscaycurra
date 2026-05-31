@@ -33,6 +33,8 @@ export default function AuPairProfilePage() {
   const [hobbies, setHobbies] = useState("");
   const [references, setReferences] = useState<AuPairReference[]>([]);
   const [paisDestino, setPaisDestino] = useState("UK");
+  const [tipoPerfil, setTipoPerfil] = useState<"joven_estudiante" | "con_experiencia" | "profesional_cambio">("joven_estudiante");
+  const [generandoIA, setGenerandoIA] = useState(false);
 
   // Nuevo: modal de referencia
   const [refNombre, setRefNombre] = useState("");
@@ -129,6 +131,40 @@ export default function AuPairProfilePage() {
     setMensaje("✅ Plantilla generada. ¡Personalízala a tu estilo!");
     setTimeout(() => setMensaje(""), 4000);
   }, [age, nationality, languages, childcareExperience, hobbies, paisDestino]);
+
+  const generarConIA = useCallback(async () => {
+    setGenerandoIA(true);
+    setError("");
+    try {
+      const res = await fetch("/api/au-pair/generate-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: "",
+          edad: age ? parseInt(age) : undefined,
+          nacionalidad,
+          idiomas: languages.join(", "),
+          idiomaDestino: PAISES[paisDestino]?.idiomaPrincipal || "English",
+          experiencia: childcareExperience || undefined,
+          sector: "",
+          hobbies,
+          disponibleDesde: availableFrom || undefined,
+          tipoPerfil,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setLetterText(json.letter);
+        setMensaje("✅ ¡Carta generada por IA! Personaliza los detalles a tu gusto.");
+      } else {
+        setError(json.error || "Error al generar");
+      }
+    } catch {
+      setError("Error de conexión al generar con IA");
+    } finally {
+      setGenerandoIA(false);
+    }
+  }, [age, nationality, languages, paisDestino, childcareExperience, hobbies, availableFrom, tipoPerfil]);
 
   const guardar = useCallback(async () => {
     if (!letterText.trim()) {
@@ -441,28 +477,81 @@ export default function AuPairProfilePage() {
 
         {/* Dear Family Letter */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-3">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
               <span>💌</span> Dear Family Letter
             </h3>
-            <button
-              onClick={generarCarta}
-              className="text-xs bg-[#252839] hover:bg-[#2d3142] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors"
-            >
-              ✨ Generar plantilla
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={generarCarta}
+                className="text-[11px] bg-[#252839] hover:bg-[#2d3142] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors"
+              >
+                📝 Plantilla
+              </button>
+              <button
+                onClick={generarConIA}
+                disabled={generandoIA}
+                className="text-[11px] bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea34d] hover:to-[#15803d] text-black font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1"
+              >
+                {generandoIA ? (
+                  <>⏳ Generando...</>
+                ) : (
+                  <>✨ IA</>
+                )}
+              </button>
+            </div>
           </div>
+
+          {/* Selector de tipo de perfil */}
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {[
+              { id: "joven_estudiante", label: "🎓 Joven", desc: "Estudiante, primera vez" },
+              { id: "con_experiencia", label: "👶 Experiencia", desc: "Ya he cuidado niños" },
+              { id: "profesional_cambio", label: "💼 Cambio", desc: "Dejo trabajo por esto" },
+            ].map(tipo => (
+              <button
+                key={tipo.id}
+                onClick={() => { setTipoPerfil(tipo.id as typeof tipoPerfil); }}
+                className="text-[10px] px-2.5 py-1.5 rounded-lg transition-all border"
+                style={{
+                  background: tipoPerfil === tipo.id ? "rgba(34,197,94,0.12)" : "transparent",
+                  borderColor: tipoPerfil === tipo.id ? "rgba(34,197,94,0.3)" : "#2d3142",
+                  color: tipoPerfil === tipo.id ? "#22c55e" : "#94a3b8",
+                }}
+              >
+                {tipo.label}
+                <span className="block text-[8px] opacity-60">{tipo.desc}</span>
+              </button>
+            ))}
+          </div>
+
           <p className="text-xs text-[#64748b] mb-3">
-            Esta carta es LO MÁS IMPORTANTE. Es lo primero que lee la familia. Sé auténtica,
-            cálida y personal. Cuenta quién eres de verdad.
+            ⚡ Elige tu perfil, rellena tus datos arriba, y pulsa <strong>✨ IA</strong> para que Guzzi genere tu carta perfecta. O usa <strong>📝 Plantilla</strong> para empezar con un ejemplo.
           </p>
+
           <textarea
             value={letterText}
             onChange={(e) => setLetterText(e.target.value)}
-            placeholder="Dear Host Family, ..."
-            rows={12}
+            placeholder="Dear Host Family,
+
+My name is... (o pulsa ✨ IA para generarla automáticamente)"
+            rows={14}
             className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none resize-y font-serif leading-relaxed"
           />
+
+          {/* Sugerencias */}
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {[
+              "✏️ Añade anécdotas personales",
+              "📸 Sube fotos con niños",
+              "💬 Sé auténtica, no genérica",
+              "🔍 Menciona por qué ese país",
+            ].map(tip => (
+              <span key={tip} className="text-[9px] px-2 py-1 rounded-full bg-[#252839] text-[#94a3b8] border border-[#2d3142]">
+                {tip}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Guardar */}
