@@ -19,6 +19,10 @@ interface EmpresaCompleta {
   twitter: string | null;
   instagram: string | null;
   fuente: string;
+  googleRating?: number | null;
+  googleReviews?: number | null;
+  googleAddress?: string | null;
+  googleMapsUrl?: string | null;
 }
 
 interface EmpresaGuardada {
@@ -250,9 +254,20 @@ export default function EmpresasPage() {
             <div className="p-5" style={{ borderBottom: "1px solid #2d3142" }}>
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-base font-bold" style={{ color: "#22c55e" }}>
-                    {empresa.nombre}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold" style={{ color: "#22c55e" }}>
+                      {empresa.nombre}
+                    </h3>
+                    {empresa.fuente === "google_places" && (
+                      <span
+                        className="text-[9px] px-1.5 py-0.5 rounded"
+                        style={{ background: "rgba(66,133,244,0.15)", color: "#4285f4" }}
+                        title="Datos verificados por Google Places"
+                      >
+                        ✓ Google
+                      </span>
+                    )}
+                  </div>
                   {empresa.sector && (
                     <span
                       className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full"
@@ -260,6 +275,18 @@ export default function EmpresasPage() {
                     >
                       {empresa.sector}
                     </span>
+                  )}
+                  {/* Google rating */}
+                  {empresa.googleRating && (
+                    <div className="flex items-center gap-1 mt-1.5">
+                      <span className="text-xs" style={{ color: "#f59e0b" }}>
+                        {"★".repeat(Math.round(empresa.googleRating))}
+                        {"☆".repeat(5 - Math.round(empresa.googleRating))}
+                      </span>
+                      <span className="text-[10px]" style={{ color: "#94a3b8" }}>
+                        {empresa.googleRating.toFixed(1)} ({empresa.googleReviews || 0} reseñas)
+                      </span>
+                    </div>
                   )}
                 </div>
                 <div className="text-right">
@@ -303,6 +330,28 @@ export default function EmpresasPage() {
 
             {/* Datos de contacto */}
             <div className="p-5 space-y-3">
+              {/* Dirección Google */}
+              {empresa.googleAddress && (
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📍</span>
+                  <div className="flex-1">
+                    <span className="text-[9px] block" style={{ color: "#475569" }}>Dirección</span>
+                    <span className="text-sm" style={{ color: "#94a3b8" }}>{empresa.googleAddress}</span>
+                  </div>
+                  {empresa.googleMapsUrl && (
+                    <a
+                      href={empresa.googleMapsUrl}
+                      target="_blank"
+                      rel="noopener"
+                      className="text-[10px] px-2 py-1 rounded"
+                      style={{ background: "rgba(66,133,244,0.15)", color: "#4285f4" }}
+                    >
+                      Maps ↗
+                    </a>
+                  )}
+                </div>
+              )}
+
               {/* Email principal */}
               {empresa.emailRrhh && (
                 <div className="flex items-center justify-between">

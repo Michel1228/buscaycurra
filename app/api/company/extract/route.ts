@@ -15,6 +15,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { extraerInfoEmpresa } from "@/lib/company-extractor";
+import { buscarEmpresaGooglePlaces, inferirSector, type GooglePlaceResult } from "@/lib/google-places";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,12 @@ interface EmpresaCompleta {
   linkedin: string | null;
   twitter: string | null;
   instagram: string | null;
-  fuente: string; // cómo se encontró el dominio
+  fuente: string;
+  // Google Places extras
+  googleRating?: number | null;
+  googleReviews?: number | null;
+  googleAddress?: string | null;
+  googleMapsUrl?: string | null;
 }
 
 // ─── Resolvedor de dominio ────────────────────────────────────────────────────
@@ -243,6 +249,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── 0. Google Places (fuente primaria de datos REALES) ──────────────────
+    let googleResult: GooglePlaceResult | null = null;
+    if (name && process.env.GOOGLE_PLACES_API_KEY) {
+      try {
+        console.log(`🗺️ Buscando en Google Places: "${name}"${city ? ` (${city})` : ""}`);
+        const places = await buscarEmpresaGooglePlaces(name, city);
+        if (places.length > 0) {
+          googleResult = places[0]; // Mejor coincidencia
+          console.log(`✅ Google Places encontró: ${googleResult.name}`);
+        } else {
+          console.log(`⚠️ Google Places sin resultados para: "${name}"`);
+        }
+      } catch (err) {
+        console.warn("Google Places falló:", (err as Error).message);
+      }
+    }
+
     // ── 1. Resolver dominio ─────────────────────────────────────────────────
     if (!url && name) {
       const found = await findCompanyWebsite(name);
@@ -265,42 +288,87 @@ export async function POST(request: NextRequest) {
       findSocialMedia(parsedUrl.hostname, name || parsedUrl.hostname),
     ]);
 
-    // ── 3. Componer resultado ───────────────────────────────────────────────
-    const emailsExtraidos: string[] = [];
-    if (datosWeb?.emailRrhh) emailsExtraidos.push(datosWeb.emailRrhh);
+    // ── 3. Componer resultado (Google Places como fuente primaria) ──────────
+    let empresa: EmpresaCompleta;
 
-    // Si el email es genérico (rrhh@), añadir también patrones alternativos
-    if (!datosWeb?.emailRrhh || datosWeb.emailRrhh.startsWith("rrhh@")) {
-      const dominio = parsedUrl.hostname.replace(/^www\./, "");
-      const alternativos = [
-        `empleo@${dominio}`,
-        `info@${dominio}`,
-        `contacto@${dominio}`,
-        `talento@${dominio}`,
-        `seleccion@${dominio}`,
-        `jobs@${dominio}`,
-      ];
-      for (const alt of alternativos) {
-        if (!emailsExtraidos.includes(alt)) emailsExtraidos.push(alt);
+    if (googleResult) {
+      // Usar Google Places como fuente principal
+      const emailsExtraidos: string[] = datosWeb?.emailRrhh
+        ? [datosWeb.emailRrhh]
+        : [];
+
+      if (!datosWeb?.emailRrhh) {
+        const dominio = parsedUrl.hostname.replace(/^www\\./, "");
+        // SOLO si Google Places no tiene email, generamos patrones
+        const alternativos = [
+          `empleo@${dominio}`,
+          `info@${dominio}`,
+          `talento@${dominio}`,
+          `seleccion@${dominio}`,
+          `jobs@${dominio}`,
+        ];
+        alternativos.forEach(alt => {
+          if (!emailsExtraidos.includes(alt)) emailsExtraidos.push(alt);
+        });
       }
-    }
 
-    const empresa: EmpresaCompleta = {
-      nombre: datosWeb?.nombre || name || parsedUrl.hostname,
-      dominio: parsedUrl.hostname,
-      urlWeb: parsedUrl.href,
-      emailRrhh: datosWeb?.emailRrhh || emailsExtraidos[0] || null,
-      emailContacto: emailsExtraidos.find(e => e.includes("info@") || e.includes("contacto@")) || null,
-      emailsExtraidos: cleanEmails(emailsExtraidos),
-      telefono: datosWeb?.telefono || null,
-      paginaEmpleo: datosWeb?.paginaEmpleo || null,
-      descripcion: infoDDG.descripcion || null,
-      sector: infoDDG.sector || null,
-      linkedin: socialMedia.linkedin,
-      twitter: socialMedia.twitter,
-      instagram: socialMedia.instagram,
-      fuente: "extraccion_completa",
-    };
+      empresa = {
+        nombre: googleResult.name || name || parsedUrl.hostname,
+        dominio: parsedUrl.hostname,
+        urlWeb: googleResult.website || url || parsedUrl.href,
+        emailRrhh: datosWeb?.emailRrhh || emailsExtraidos[0] || null,
+        emailContacto: emailsExtraidos.find(e => e.includes("info@") || e.includes("contacto@")) || null,
+        emailsExtraidos: cleanEmails(emailsExtraidos),
+        telefono: googleResult.formatted_phone_number || datosWeb?.telefono || null,
+        paginaEmpleo: datosWeb?.paginaEmpleo || null,
+        descripcion: infoDDG.descripcion || null,
+        sector: inferirSector(googleResult.types || []) || infoDDG.sector || null,
+        linkedin: socialMedia.linkedin,
+        twitter: socialMedia.twitter,
+        instagram: socialMedia.instagram,
+        fuente: "google_places",
+        googleRating: googleResult.rating || null,
+        googleReviews: googleResult.user_ratings_total || null,
+        googleAddress: googleResult.formatted_address || null,
+        googleMapsUrl: googleResult.url || null,
+      };
+    } else {
+      // Fallback: método actual
+      const emailsExtraidos: string[] = [];
+      if (datosWeb?.emailRrhh) emailsExtraidos.push(datosWeb.emailRrhh);
+
+      if (!datosWeb?.emailRrhh || datosWeb.emailRrhh.startsWith("rrhh@")) {
+        const dominio = parsedUrl.hostname.replace(/^www\\./, "");
+        const alternativos = [
+          `empleo@${dominio}`,
+          `info@${dominio}`,
+          `contacto@${dominio}`,
+          `talento@${dominio}`,
+          `seleccion@${dominio}`,
+          `jobs@${dominio}`,
+        ];
+        for (const alt of alternativos) {
+          if (!emailsExtraidos.includes(alt)) emailsExtraidos.push(alt);
+        }
+      }
+
+      empresa = {
+        nombre: datosWeb?.nombre || name || parsedUrl.hostname,
+        dominio: parsedUrl.hostname,
+        urlWeb: parsedUrl.href,
+        emailRrhh: datosWeb?.emailRrhh || emailsExtraidos[0] || null,
+        emailContacto: emailsExtraidos.find(e => e.includes("info@") || e.includes("contacto@")) || null,
+        emailsExtraidos: cleanEmails(emailsExtraidos),
+        telefono: datosWeb?.telefono || null,
+        paginaEmpleo: datosWeb?.paginaEmpleo || null,
+        descripcion: infoDDG.descripcion || null,
+        sector: infoDDG.sector || null,
+        linkedin: socialMedia.linkedin,
+        twitter: socialMedia.twitter,
+        instagram: socialMedia.instagram,
+        fuente: "extraccion_completa",
+      };
+    }
 
     console.log(`✅ Extracción completa para: ${empresa.nombre}`);
 
