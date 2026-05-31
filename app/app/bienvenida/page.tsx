@@ -205,9 +205,9 @@ export default function BienvenidaPage() {
         {/* Tarjetas de elección */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
           {/* Opción Guzzi */}
-          <button
+          <div
             onClick={() => router.push("/app/gusi")}
-            className="group flex flex-col items-start gap-4 p-6 rounded-2xl text-left transition-all hover:scale-[1.02] hover:shadow-lg"
+            className="group flex flex-col items-start gap-4 p-6 rounded-2xl text-left transition-all hover:scale-[1.02] hover:shadow-lg cursor-pointer"
             style={{
               background: "linear-gradient(135deg, rgba(34,197,94,0.10), rgba(22,163,74,0.04))",
               border: "2px solid rgba(34,197,94,0.30)",
@@ -243,7 +243,7 @@ export default function BienvenidaPage() {
             >
               Hablar con Guzzi →
             </span>
-          </button>
+          </div>
 
           {/* Opción Manual */}
           <div
