@@ -161,7 +161,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
           {[
             { icon: "🤖", title: "Agente 24/7", desc: "Guzzi busca y envía tus CVs automáticamente a ofertas en toda Europa mientras duermes." },
             { icon: "📧", title: "Envío masivo", desc: "Envía tu CV a decenas de ofertas en un solo click. Sin formularios repetitivos." },
-            { icon: "🌍", title: "19 países", desc: "Ofertas en España, EEUU, Canadá, Australia, Reino Unido, Alemania, Suiza y +12 países más." },
+            { icon: "🌍", title: "20+ países", desc: "Ofertas en España, EEUU, Canadá, Australia, Reino Unido, Alemania, Suiza y más países." },
             { icon: "💬", title: "Guzzi multilingüe", desc: "Tu asistente habla español y te ayuda con ofertas en cualquier idioma europeo." },
             { icon: "💰", title: "Comparador de salarios", desc: `Calcula tu sueldo neto en cada país con la calculadora de impuestos.` },
             { icon: "📊", title: "Skill Gap Analysis", desc: "Compara tu CV con los requisitos de la oferta y recibe recomendaciones." },

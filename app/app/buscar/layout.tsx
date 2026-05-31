@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Buscar Empleo — BuscayCurra | 800.000+ ofertas en España",
-  description: "Busca entre 800.000+ ofertas de trabajo en España y 20+ países. Filtra por puesto, ciudad y salario. Envía tu CV con un clic.",
+  title: "Buscar Empleo — BuscayCurra | 1.600.000+ ofertas en 20+ países",
+  description: "Busca entre 1.600.000+ ofertas de trabajo en España y 20+ países. Filtra por puesto, ciudad y salario. Envía tu CV con un clic.",
   openGraph: {
-    title: "Buscar Empleo — 800.000+ ofertas en España",
+    title: "Buscar Empleo — 1.600.000+ ofertas en 20+ países",
     description: "Todas las ofertas de trabajo de España en un solo lugar. Guzzi te ayuda a filtrar y aplicar automáticamente.",
     url: "https://buscaycurra.es/app/buscar",
     type: "website",

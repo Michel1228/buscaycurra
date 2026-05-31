@@ -7,30 +7,30 @@ import PublicHeader from "@/components/PublicHeader";
 // Revalidar cada hora para que los cambios se reflejen sin redeploy
 export const revalidate = 3600;
 
-// ── Datos reales de BD (26 mayo 2026) ──
-const OFERTAS = "1.000.000+";
+// ── Datos reales de BD (31 mayo 2026) ──
+const OFERTAS = "1.600.000+";
 const OBJETIVO = "3.000.000";
-const PAISES = "19";
+const PAISES = "20+";
 const PAISES_DATA = [
-  { flag: "🇩🇪", nombre: "Alemania", ofertas: "216K" },
-  { flag: "🇪🇸", nombre: "España", ofertas: "124K" },
-  { flag: "🇺🇸", nombre: "Estados Unidos", ofertas: "73K" },
-  { flag: "🇬🇧", nombre: "Reino Unido", ofertas: "48K" },
-  { flag: "🇨🇦", nombre: "Canadá", ofertas: "39K" },
-  { flag: "🇫🇷", nombre: "Francia", ofertas: "35K" },
-  { flag: "🇸🇪", nombre: "Suecia", ofertas: "28K" },
-  { flag: "🇦🇺", nombre: "Australia", ofertas: "26K" },
-  { flag: "🇳🇱", nombre: "Países Bajos", ofertas: "19K" },
-  { flag: "🇮🇹", nombre: "Italia", ofertas: "18K" },
-  { flag: "🇨🇭", nombre: "Suiza", ofertas: "17K" },
-  { flag: "🇮🇪", nombre: "Irlanda", ofertas: "16K" },
-  { flag: "🇧🇪", nombre: "Bélgica", ofertas: "13K" },
-  { flag: "🇵🇹", nombre: "Portugal", ofertas: "11K" },
-  { flag: "🇳🇴", nombre: "Noruega", ofertas: "10K" },
-  { flag: "🇵🇱", nombre: "Polonia", ofertas: "9K" },
-  { flag: "🇩🇰", nombre: "Dinamarca", ofertas: "5K" },
-  { flag: "🇦🇹", nombre: "Austria", ofertas: "5K" },
-  { flag: "🇫🇮", nombre: "Finlandia", ofertas: "3K" },
+  { flag: "🇩🇪", nombre: "Alemania",       ofertas: "300K" },
+  { flag: "🇺🇸", nombre: "Estados Unidos", ofertas: "285K" },
+  { flag: "🇪🇸", nombre: "España",         ofertas: "156K" },
+  { flag: "🇫🇷", nombre: "Francia",        ofertas: "88K"  },
+  { flag: "🇨🇦", nombre: "Canadá",         ofertas: "82K"  },
+  { flag: "🇬🇧", nombre: "Reino Unido",    ofertas: "70K"  },
+  { flag: "🇦🇺", nombre: "Australia",      ofertas: "58K"  },
+  { flag: "🇸🇪", nombre: "Suecia",         ofertas: "51K"  },
+  { flag: "🇮🇹", nombre: "Italia",         ofertas: "43K"  },
+  { flag: "🇳🇱", nombre: "Países Bajos",   ofertas: "37K"  },
+  { flag: "🇨🇭", nombre: "Suiza",          ofertas: "36K"  },
+  { flag: "🇮🇪", nombre: "Irlanda",        ofertas: "28K"  },
+  { flag: "🇧🇪", nombre: "Bélgica",        ofertas: "26K"  },
+  { flag: "🇵🇹", nombre: "Portugal",       ofertas: "22K"  },
+  { flag: "🇳🇴", nombre: "Noruega",        ofertas: "19K"  },
+  { flag: "🇵🇱", nombre: "Polonia",        ofertas: "11K"  },
+  { flag: "🇩🇰", nombre: "Dinamarca",      ofertas: "9K"   },
+  { flag: "🇦🇹", nombre: "Austria",        ofertas: "8K"   },
+  { flag: "🇫🇮", nombre: "Finlandia",      ofertas: "5K"   },
 ];
 
 // ── Planes ──

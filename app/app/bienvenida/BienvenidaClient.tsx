@@ -35,7 +35,7 @@ const PASOS = [
     num: "4",
     icon: "🌍",
     titulo: "Explora ofertas en 20+ países",
-    desc: "Busca y filtra entre 800.000+ ofertas. Guarda las que te interesen. Compara salarios entre países. Decide dónde quieres trabajar.",
+    desc: "Busca y filtra entre 1.600.000+ ofertas en 20+ países. Guarda las que te interesen. Compara salarios. Decide dónde quieres trabajar.",
     href: "/app/buscar",
     cta: "Explorar ofertas →",
   },
