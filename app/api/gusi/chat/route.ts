@@ -280,14 +280,57 @@ function detectIntent(text: string): string {
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
   if (/(preparar|practicar|simul).*(entrevista)|entrevista.*(preparar|practica)/.test(t)) return "entrevista_prep";
   if (/(crear|hacer|nuevo).*(cv|curriculum)/.test(t)) return "crear_cv";
+  if (/(plan|limite|límite|suscripci|cu.ntos.*env).*/.test(t) && /(tengo|tiene|mi|cu.l)/.test(t)) return "plan";
   return "chat";
 }
 
 async function searchJobsReal(query: string, city: string, limit = 5) {
   try {
+    // ── PRIMERO: consultar la BD local (17k+ ofertas) ──
+    const { getPool } = await import("@/lib/db");
+    const pool = getPool();
+    
+    const cityPattern = city ? `%${city.toLowerCase()}%` : "%";
+    const keywordPattern = `%${query.toLowerCase()}%`;
+    
+    const dbResult = await pool.query(
+      `SELECT id, title, company, city, province, salary, description, sourcename, sourceurl, scrapedat
+       FROM joblistings
+       WHERE LOWER(title) LIKE $1
+         AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2)
+         AND LOWER(country) LIKE $3
+       ORDER BY scrapedat DESC
+       LIMIT $4`,
+      [keywordPattern, cityPattern, city ? "%spain%" : "%", Math.min(limit * 2, 30)]
+    );
+    
+    if (dbResult.rows.length > 0) {
+      console.log(`[Guzzi] BD local: ${dbResult.rows.length} ofertas para "${query}" en "${city}"`);
+      return dbResult.rows.slice(0, limit).map((j: Record<string, unknown>) => ({
+        id: `db-${j.id}`,
+        titulo: j.title as string,
+        empresa: (j.company as string) || "Ver en oferta",
+        ubicacion: (j.city || j.province || city) as string,
+        salario: (j.salary as string) || "Ver en oferta",
+        fuente: (j.sourcename as string) || "BuscayCurra",
+        url: (j.sourceurl as string) || "",
+        match: 65,
+      }));
+    }
+    
+    // ── FALLBACK: APIs externas (Jooble, Adzuna, Careerjet) ──
+    console.log(`[Guzzi] Sin resultados en BD local, buscando en APIs externas...`);
     const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
-    const ofertas = await buscarOfertasReales(query, city, Math.min(limit * 2, 20));
-    // Mapear OfertaReal a formato simplificado para el chat
+    const ofertas = await Promise.race([
+      buscarOfertasReales(query, city, Math.min(limit * 2, 20)),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+    ]);
+    
+    if (!ofertas) {
+      console.log(`[Guzzi] Timeout APIs externas (8s)`);
+      return null;
+    }
+    
     return ofertas.slice(0, limit).map(o => ({
       id: o.id,
       titulo: o.titulo,
@@ -298,7 +341,8 @@ async function searchJobsReal(query: string, city: string, limit = 5) {
       match: o.match,
       url: o.url,
     }));
-  } catch {
+  } catch (e) {
+    console.error("[Guzzi] Error en searchJobsReal:", (e as Error).message);
     return null;
   }
 }
@@ -323,9 +367,10 @@ function localReply(intent: string, cv?: CVParsed | null): string {
     case "foto":
       return "📸 **Cómo mejorar tu foto de CV con IA:**\n\nSube tu foto a ChatGPT (o cualquier IA con imagen) y usa este prompt:\n\n---\n*Utiliza esta foto para realizar los siguientes cambios:\n\n1. Crear un fondo blanco y cambiar todo el fondo actual.\n2. Cambiar la camiseta por una camisa blanca.\n3. Poner la figura en posición sentada.\n\nFotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.*\n\n---\n\n**Resultado:** foto profesional lista para el CV. Una buena foto = +40% más respuestas. 🐛";
     case "buscar":
-      return cv?.ultimoPuesto
-        ? `🔍 Veo que tienes experiencia como **${cv.ultimoPuesto}**${cv.ciudad ? ` en **${cv.ciudad}**` : ""}. Usa el botón 📧 Enviar a ofertas para que busque automáticamente.`
-        : "🔍 Dime qué trabajo buscas y en qué ciudad o país, y te busco las mejores ofertas en toda Europa. 🐛";
+      if (cv?.ultimoPuesto) {
+        return `🔍 Conozco tu perfil (**${cv.ultimoPuesto}**${cv.ciudad ? ` en **${cv.ciudad}**` : ""}). Dime "buscar ofertas" y te muestro las que mejor encajan ahora mismo. También puedes usar el buscador avanzado. 🐛`;
+      }
+      return "🔍 Dime qué trabajo buscas y en qué ciudad o país, y te busco las mejores ofertas en toda Europa. 🐛";
     case "enviar":
       return cv?.ultimoPuesto
         ? `📧 Basándome en tu CV (${cv.ultimoPuesto}), busca en 🔍 Buscar y usa el botón "Enviar CV" en cada oferta.`
@@ -394,6 +439,7 @@ export async function POST(req: NextRequest) {
           temperature: 0.6,
           max_tokens: maxTokens,
         }),
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) return null;
       const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
@@ -473,6 +519,14 @@ El candidato tiene mucha experiencia.
       const puestoBusqueda = cvParsed?.ultimoPuesto || extractJobTerm(message) || "";
       const ciudadBusqueda = cvParsed?.ciudad || extractCity(message) || "";
 
+      // Si no hay puesto ni en CV ni en mensaje, pedir aclaración
+      if (!puestoBusqueda) {
+        return NextResponse.json({
+          reply: "🔍 Claro, ¿qué tipo de trabajo buscas? Dime el puesto y la ciudad (ej: 'camarero en Madrid') y te busco al instante. 🐛",
+          action: "need_keyword",
+        });
+      }
+
       if (puestoBusqueda) {
         const ofertas = await searchJobsReal(puestoBusqueda, ciudadBusqueda);
         if (!ofertas || ofertas.length === 0) {
@@ -545,6 +599,7 @@ El candidato tiene mucha experiencia.
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
       body: JSON.stringify({ model: "qwen/qwen3-32b", messages: msgsConNoThink, max_tokens: 500, temperature: 0.7 }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) return NextResponse.json({ reply: localReply(intent, cvParsed) });
@@ -559,7 +614,7 @@ El candidato tiene mucha experiencia.
 }
 
 function extractJobTerm(text: string): string {
-  const m = text.match(/(?:busco|trabajo|empleo|puesto)\s+(?:de\s+|como\s+)?(.+?)(?:\s+en\s+|$)/i);
+  const m = text.match(/(?:busco|buscar|trabajo|empleo|puesto)\s+(?:de\s+|como\s+)?(.+?)(?:\s+en\s+|$)/i);
   return m?.[1]?.trim() || "";
 }
 

@@ -86,20 +86,23 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { alert("Inicia sesión para enviar tu CV"); setEnviando(false); return; }
 
-      // Buscar email de la empresa
+      // Buscar email de la empresa: primero Google Places, luego scraping
       let email = oferta.email_empresa || "";
-      if (!email && oferta.url) {
+      if (!email && oferta.empresa) {
         try {
-          const r = await fetch(`/api/empresas/analizar?url=${encodeURIComponent(oferta.url)}`);
-          const d = await r.json() as { emailRrhh?: string };
-          email = d.emailRrhh || "";
-        } catch { /* continuar sin email */ }
+          // Usar el extractor con Google Places (más fiable que scraping)
+          const companyDomain = oferta.url ? new URL(oferta.url).hostname.replace("www.", "") : "";
+          const r = await fetch(`/api/company/extract?domain=${encodeURIComponent(companyDomain)}&name=${encodeURIComponent(oferta.empresa)}`);
+          const d = await r.json() as { emails?: string[]; email?: string };
+          email = (d.emails && d.emails[0]) || d.email || "";
+        } catch { /* continuar */ }
       }
 
-      // Fallback: generar email genérico basado en empresa
+      // Si tras todo no hay email, NO enviar a dirección falsa
       if (!email) {
-        const empresaSlug = (oferta.empresa || "empresa").toLowerCase().replace(/[^a-z0-9]/g, "");
-        email = `${empresaSlug}@no-reply.buscaycurra.es`;
+        alert("No se encontró email de contacto para esta empresa. Prueba a buscar la oferta en la web original para enviar tu CV.");
+        setEnviando(false);
+        return;
       }
 
       const res = await fetch("/api/cv-sender/send", {

@@ -56,6 +56,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Registrar envío como "pendiente" ANTES de scheduleCV para evitar
+    // condición de carrera: dos requests simultáneos verían el mismo contador
+    await recordSent(userId, companyEmail, "pendiente", {
+      company_name: companyName,
+      job_title: jobTitle,
+    });
+
     const fechaElegida = scheduledFor ? new Date(scheduledFor) : undefined;
 
     const resultado = await scheduleCV(
@@ -75,16 +82,25 @@ export async function POST(request: NextRequest) {
     );
 
     if ("error" in resultado) {
+      // Si scheduleCV falla, marcar el registro como fallido
+      try {
+        const sb = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        await sb.from("cv_sends").update({ status: "fallido", error_message: resultado.error }).eq("user_id", userId).eq("company_email", companyEmail).eq("status", "pendiente");
+      } catch { /* best-effort cleanup */ }
       return NextResponse.json({ error: resultado.error }, { status: 400 });
     }
 
-    // Registrar envío como "pendiente" INMEDIATAMENTE para que el rate limiter lo cuente
-    // en solicitudes simultáneas (evita la condición de carrera con el worker)
-    await recordSent(userId, companyEmail, "pendiente", {
-      company_name: companyName,
-      job_title: jobTitle,
-      job_id: resultado.jobId,
-    });
+    // Actualizar el registro pendiente con el jobId real
+    try {
+      const sb = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      await sb.from("cv_sends").update({ job_id: resultado.jobId }).eq("user_id", userId).eq("company_email", companyEmail).eq("status", "pendiente");
+    } catch { /* best-effort */ }
 
     // Email de confirmación inmediata al usuario usando Supabase Auth (tiene el email real)
     try {

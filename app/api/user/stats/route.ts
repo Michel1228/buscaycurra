@@ -35,11 +35,15 @@ export async function GET(request: NextRequest) {
     // Plan del usuario
     const { data: profile } = await supabase
       .from("profiles")
-      .select("subscription_tier")
+      .select("plan, subscription_status, stripe_subscription_id")
       .eq("id", userId)
       .single();
 
-    const plan = profile?.subscription_tier || "free";
+    // Si tiene stripe_subscription_id y plan !== free, usar plan. Si no, verificar status
+    const rawPlan = profile?.plan || "free";
+    const plan = (rawPlan !== "free" || profile?.subscription_status === "active")
+      ? rawPlan
+      : "free";
     const limits = LIMITS[plan] || LIMITS.free;
 
     // Rangos de tiempo
