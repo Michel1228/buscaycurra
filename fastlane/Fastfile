@@ -1,0 +1,58 @@
+default_platform(:ios)
+
+platform :ios do
+
+  desc "Build and upload to App Store Connect"
+  lane :deploy do
+    # Autenticación con API key (sin Apple ID ni contraseña)
+    api_key = app_store_connect_api_key(
+      key_id:       ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id:    ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content:  Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_P8"]),
+      in_house:     false,
+    )
+
+    # Crear/descargar certificado de distribución automáticamente
+    cert(
+      api_key:     api_key,
+      output_path: "/tmp/certs",
+    )
+
+    # Crear/descargar provisioning profile automáticamente
+    sigh(
+      api_key:              api_key,
+      bundle_identifier:    "es.buscaycurra.app",
+      app_identifier:       "es.buscaycurra.app",
+      output_path:          "/tmp/profiles",
+      provisioning_name:    "BuscayCurra Distribution",
+      force:                true,
+    )
+
+    # Build del IPA
+    gym(
+      workspace:             "ios/App/App.xcworkspace",
+      scheme:                "App",
+      configuration:         "Release",
+      output_directory:      "/tmp/ipa",
+      output_name:           "BuscayCurra.ipa",
+      export_method:         "app-store",
+      export_options: {
+        teamID:                   "P9L962T32A",
+        signingStyle:             "manual",
+        provisioningProfiles: {
+          "es.buscaycurra.app" => "BuscayCurra Distribution",
+        },
+      },
+    )
+
+    # Subir a App Store Connect (TestFlight)
+    pilot(
+      api_key:            api_key,
+      ipa:                "/tmp/ipa/BuscayCurra.ipa",
+      skip_waiting_for_build_processing: true,
+    )
+
+    UI.success("BuscayCurra subida a TestFlight correctamente")
+  end
+
+end

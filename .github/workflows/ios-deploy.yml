@@ -1,7 +1,7 @@
 name: Build & Deploy iOS to App Store
 
 on:
-  workflow_dispatch:   # Solo manual — no en cada push
+  workflow_dispatch:
 
 jobs:
   build-ios:
@@ -18,88 +18,32 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Install dependencies
+      - name: Install Node dependencies
         run: npm ci
 
-      - name: Install Capacitor iOS platform
-        run: npx cap add ios || echo "iOS already added"
+      - name: Setup Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+
+      - name: Add iOS platform
+        run: npx cap add ios || true
 
       - name: Sync Capacitor
         run: npx cap sync ios
 
-      # Crear icono 1024x1024 para App Store desde icon-512.png
-      - name: Generate App Store icon (1024x1024)
-        run: |
-          sips -z 1024 1024 public/icon-512.png --out ios/App/App/Assets.xcassets/AppIcon.appiconset/Icon-1024.png
+      - name: Generate App Store icon 1024x1024
+        run: sips -z 1024 1024 public/icon-512.png --out ios/App/App/Assets.xcassets/AppIcon.appiconset/Icon-1024.png 2>/dev/null || true
 
-      # Instalar el certificado de distribución de Apple
-      - name: Install Apple Certificate
-        env:
-          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-
-          echo -n "$APPLE_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-          security import $CERTIFICATE_PATH -P "$APPLE_CERTIFICATE_PASSWORD" \
-            -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
-
-      # Instalar provisioning profile
-      - name: Install Provisioning Profile
-        env:
-          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
-        run: |
-          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
-          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/
-
-      # Build del IPA
-      - name: Build iOS IPA
+      - name: Install CocoaPods dependencies
         run: |
           cd ios/App
-          xcodebuild -workspace App.xcworkspace \
-            -scheme App \
-            -sdk iphoneos \
-            -configuration Release \
-            -archivePath $RUNNER_TEMP/App.xcarchive \
-            archive \
-            CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE_SPECIFIER="BuscayCurra Distribution" \
-            CODE_SIGN_IDENTITY="Apple Distribution"
+          pod install --repo-update
 
-          xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/App.xcarchive \
-            -exportPath $RUNNER_TEMP/ipa \
-            -exportOptionsPlist ../../ios-export-options.plist
-
-      # Subir a App Store Connect
-      - name: Upload to App Store Connect
+      - name: Build and upload with Fastlane
         env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
-        run: |
-          KEY_PATH=$RUNNER_TEMP/AuthKey.p8
-          echo -n "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode -o $KEY_PATH
-
-          xcrun altool --upload-app \
-            --type ios \
-            --file $RUNNER_TEMP/ipa/App.ipa \
-            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_API_ISSUER_ID" \
-            --apiPrivateKey $KEY_PATH
-
-      # Limpiar keychain
-      - name: Clean up keychain
-        if: always()
-        run: |
-          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          APP_STORE_CONNECT_KEY_ID:     ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID:  ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+        run: bundle exec fastlane ios deploy
