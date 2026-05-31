@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
 
       empresa = {
         nombre: googleResult.name || name || parsedUrl.hostname,
-        dominio: parsedUrl.hostname,
+        dominio: dominioGoogle,  // Usar dominio limpio de Google
         urlWeb: googleResult.website || url || parsedUrl.href,
         emailRrhh: (datosWeb?.emailRrhh && !datosWeb.emailRrhh.includes("www.") ? datosWeb.emailRrhh : null) || emailsExtraidos[0] || null,
         emailContacto: emailsExtraidos.find(e => e.includes("info@") || e.includes("contacto@")) || null,
