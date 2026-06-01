@@ -7,17 +7,17 @@ import PublicHeader from "@/components/PublicHeader";
 // Revalidar cada hora para que los cambios se reflejen sin redeploy
 export const revalidate = 3600;
 
-// ── Datos reales de BD (31 mayo 2026) ──
-const OFERTAS = "1.600.000+";
-const OBJETIVO = "3.000.000";
+// ── Datos reales de BD (1 junio 2026) ──
+const OFERTAS = "1.650.000+";
+const OBJETIVO = "5.000.000";
 const PAISES = "20+";
 const PAISES_DATA = [
-  { flag: "🇩🇪", nombre: "Alemania",       ofertas: "300K" },
-  { flag: "🇺🇸", nombre: "Estados Unidos", ofertas: "285K" },
-  { flag: "🇪🇸", nombre: "España",         ofertas: "156K" },
-  { flag: "🇫🇷", nombre: "Francia",        ofertas: "88K"  },
-  { flag: "🇨🇦", nombre: "Canadá",         ofertas: "82K"  },
-  { flag: "🇬🇧", nombre: "Reino Unido",    ofertas: "70K"  },
+  { flag: "🇺🇸", nombre: "Estados Unidos", ofertas: "441K" },
+  { flag: "🇩🇪", nombre: "Alemania",       ofertas: "360K" },
+  { flag: "🇪🇸", nombre: "España",         ofertas: "168K" },
+  { flag: "🇫🇷", nombre: "Francia",        ofertas: "119K" },
+  { flag: "🇬🇧", nombre: "Reino Unido",    ofertas: "95K"  },
+  { flag: "🇨🇦", nombre: "Canadá",         ofertas: "84K"  },
   { flag: "🇦🇺", nombre: "Australia",      ofertas: "58K"  },
   { flag: "🇸🇪", nombre: "Suecia",         ofertas: "51K"  },
   { flag: "🇮🇹", nombre: "Italia",         ofertas: "43K"  },
