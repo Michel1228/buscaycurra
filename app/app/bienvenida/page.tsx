@@ -1,3 +1,5 @@
+"use client";
+
 import dynamic from "next/dynamic";
 
 // Sin SSR — evita errores de hidratación por HTML inválido que el navegador reescribe

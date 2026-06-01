@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     "Irlanda",
     "Europa",
   ],
-  manifest: "/manifest.json",
-  themeColor: "#7ed56f",
-  appleWebApp: {
+ manifest: "/manifest.json",
+  themeColor: "#0f1117",
+ appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "BuscayCurra",
@@ -86,7 +86,7 @@ export default function RootLayout({
     <html lang="es">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#7ed56f" />
+        <meta name="theme-color" content="#0f1117" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="BuscayCurra" />

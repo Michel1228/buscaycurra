@@ -12,6 +12,7 @@ const config: CapacitorConfig = {
     contentInset: "always",
     backgroundColor: "#0f1117",
     // Permisos nativos requeridos por App Store Review
+    // @ts-expect-error — infoPlist es válido en runtime, falta en tipos de capacitor
     infoPlist: {
       NSCameraUsageDescription: "BuscayCurra necesita acceso a la cámara para añadir tu foto profesional al CV.",
       NSPhotoLibraryUsageDescription: "BuscayCurra necesita acceso a tus fotos para seleccionar tu foto de perfil para el CV.",
