@@ -187,9 +187,14 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             {/* Au Pair */}
             {primerosPasos.auPair.disponible && (
               <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
-                <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
+                <h3 className="font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
                   <span className="text-xl">🧒</span> Programa Au Pair
                 </h3>
+                {primerosPasos.auPair.sueldoMensual && (
+                  <p className="text-xs font-semibold mb-3" style={{ color: "#22c55e" }}>
+                    💶 {primerosPasos.auPair.sueldoMensual}
+                  </p>
+                )}
                 <p className="text-sm text-[#94a3b8] mb-3">{primerosPasos.auPair.requisitos}</p>
                 <div className="space-y-1.5">
                   {primerosPasos.auPair.plataformas.map((p) => (
@@ -218,10 +223,27 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
               <p className="text-xs text-[#64748b] mt-3 border-t border-[#2d3142] pt-3">💡 {primerosPasos.alojamiento.consejo}</p>
             </div>
 
+            {/* Precios de alojamiento por ciudad */}
+            {primerosPasos.alojamiento.preciosMedios && primerosPasos.alojamiento.preciosMedios.length > 0 && (
+              <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+                <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
+                  <span className="text-xl">💶</span> Precios de alquiler
+                </h3>
+                <div className="space-y-2">
+                  {primerosPasos.alojamiento.preciosMedios.map((pm) => (
+                    <div key={pm.ciudad} className="flex items-center justify-between text-sm">
+                      <span className="text-[#94a3b8]">{pm.ciudad}</span>
+                      <span className="font-semibold text-[#22c55e]">{pm.rango} {pm.moneda}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Visado */}
             <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
               <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
-                <span className="text-xl">📋</span> Requisitos legales
+                <span className="text-xl">📋</span> Requisitos legales y visado
               </h3>
               <p className="text-sm text-[#94a3b8] mb-3">{primerosPasos.visado.descripcion}</p>
               {primerosPasos.visado.enlaceOficial && (
@@ -231,6 +253,45 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
                 </a>
               )}
             </div>
+
+            {/* Papeleo — documentos obligatorios */}
+            {primerosPasos.papeleo && primerosPasos.papeleo.documentos.length > 0 && (
+              <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
+                <h3 className="font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
+                  <span className="text-xl">📄</span> Documentos y trámites al llegar
+                </h3>
+                <p className="text-xs text-[#64748b] mb-4">💡 {primerosPasos.papeleo.consejo}</p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {primerosPasos.papeleo.documentos.map((doc) => (
+                    <div key={doc.nombre}
+                      className="rounded-lg p-4 border"
+                      style={{
+                        background: doc.obligatorio ? "rgba(34,197,94,0.04)" : "rgba(255,255,255,0.02)",
+                        borderColor: doc.obligatorio ? "rgba(34,197,94,0.2)" : "#2d3142",
+                      }}>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <span className="text-sm font-semibold text-[#e2e8f0]">{doc.nombre}</span>
+                        {doc.obligatorio && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(34,197,94,0.15)] text-[#22c55e] whitespace-nowrap flex-shrink-0">
+                            Obligatorio
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[#94a3b8] mb-2">{doc.descripcion}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-[#64748b]">⏱ {doc.tiempoObtener}</span>
+                        {doc.enlaceOficial && (
+                          <a href={doc.enlaceOficial} target="_blank" rel="noopener"
+                            className="text-[11px] text-[#22c55e] hover:underline">
+                            → Trámite oficial
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Programas extra */}
             {primerosPasos.programasExtra && primerosPasos.programasExtra.length > 0 && (
