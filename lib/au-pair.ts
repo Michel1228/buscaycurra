@@ -26,8 +26,10 @@ export interface AuPairProfile {
   id?: string;
   user_id: string;
   letter_text: string;
+  nombre: string;
   age: number | null;
   nationality: string;
+  ciudad: string;
   languages: string[];
   childcare_experience: string;
   has_driving_license: boolean;
@@ -35,6 +37,11 @@ export interface AuPairProfile {
   available_to: string | null;
   dietary_info: string;
   hobbies: string;
+  nivel_educativo: string;
+  fumador: boolean;
+  primeros_auxilios: boolean;
+  sabe_nadar: boolean;
+  duracion_preferida: string;
   photos: string[];
   references_json: AuPairReference[];
   created_at?: string;
@@ -55,27 +62,35 @@ export function generarPlantillaLetter(datos: {
   nombre?: string;
   edad?: number;
   nacionalidad?: string;
+  ciudad?: string;
   idiomas?: string[];
   experiencia?: string;
   hobbies?: string;
   paisDestino?: string;
+  nivelEducativo?: string;
+  duracion?: string;
+  fotos?: string[];
 }): string {
   const nombre = datos.nombre || "[Tu nombre]";
   const edad = datos.edad || "[Tu edad]";
   const nacionalidad = datos.nacionalidad || "[Tu nacionalidad]";
+  const ciudad = datos.ciudad || "[Tu ciudad]";
   const idiomas = datos.idiomas?.join(", ") || "[Idiomas que hablas]";
   const experiencia = datos.experiencia || "[Describe tu experiencia con niños: edades, contexto, duración]";
   const hobbies = datos.hobbies || "[Tus hobbies, intereses, personalidad]";
   const pais = datos.paisDestino || "[País de destino]";
+  const nivelEducativo = datos.nivelEducativo || "";
+  const duracion = datos.duracion || "";
 
   return `Dear Host Family,
 
-My name is ${nombre}, I am ${edad} years old and I am from ${nacionalidad}. 
-I speak ${idiomas}.
+My name is ${nombre}, I am ${edad} years old and I am from ${ciudad}, ${nacionalidad}. 
+${nivelEducativo ? `I have completed ${nivelEducativo}. ` : ""}I speak ${idiomas}.
 
 I am writing to express my sincere interest in becoming your au pair in ${pais}. 
 I have always loved spending time with children and I am excited about the opportunity 
 to become part of your family, help with childcare, and experience your culture.
+${duracion ? `\nI am looking for a stay of ${duracion}.` : ""}
 
 ${experiencia}
 

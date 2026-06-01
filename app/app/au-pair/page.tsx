@@ -11,8 +11,11 @@ import {
 } from "@/lib/au-pair";
 import { PAISES } from "@/lib/paises";
 
+const MAX_FOTOS = 6;
+
 export default function AuPairProfilePage() {
   const router = useRouter();
+  const supabase = getSupabaseBrowser();
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -20,9 +23,11 @@ export default function AuPairProfilePage() {
   const [error, setError] = useState("");
 
   // Form fields
+  const [nombre, setNombre] = useState("");
   const [letterText, setLetterText] = useState("");
   const [age, setAge] = useState("");
   const [nationality, setNationality] = useState("ES");
+  const [ciudad, setCiudad] = useState("");
   const [languages, setLanguages] = useState<string[]>(["Español"]);
   const [langInput, setLangInput] = useState("");
   const [childcareExperience, setChildcareExperience] = useState("");
@@ -31,6 +36,13 @@ export default function AuPairProfilePage() {
   const [availableTo, setAvailableTo] = useState("");
   const [dietaryInfo, setDietaryInfo] = useState("");
   const [hobbies, setHobbies] = useState("");
+  const [nivelEducativo, setNivelEducativo] = useState("");
+  const [duracionPreferida, setDuracionPreferida] = useState("");
+  const [fumador, setFumador] = useState(false);
+  const [primerosAuxilios, setPrimerosAuxilios] = useState(false);
+  const [sabeNadar, setSabeNadar] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [references, setReferences] = useState<AuPairReference[]>([]);
   const [paisDestino, setPaisDestino] = useState("UK");
   const [tipoPerfil, setTipoPerfil] = useState<"joven_estudiante" | "con_experiencia" | "profesional_cambio">("joven_estudiante");
@@ -39,31 +51,33 @@ export default function AuPairProfilePage() {
   const [previewHTML, setPreviewHTML] = useState("");
   const [descargandoCarta, setDescargandoCarta] = useState(false);
   const iframeCartaRef = useRef<HTMLIFrameElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Nuevo: modal de referencia
+  // Modal referencia
   const [refNombre, setRefNombre] = useState("");
   const [refEmail, setRefEmail] = useState("");
   const [refTelefono, setRefTelefono] = useState("");
   const [refRelacion, setRefRelacion] = useState("");
   const [showRefForm, setShowRefForm] = useState(false);
 
-  // Cargar perfil existente
+  // Cargar perfil
   useEffect(() => {
-    getSupabaseBrowser().auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
         router.push("/auth/login");
         return;
       }
       setUserId(user.id);
 
-      // Cargar perfil si existe
       const res = await fetch(`/api/au-pair/profile?userId=${user.id}`);
       const json = await res.json();
       if (json.profile) {
         const p = json.profile as AuPairProfile;
+        setNombre(p.nombre || "");
         setLetterText(p.letter_text || "");
         setAge(p.age?.toString() || "");
         setNationality(p.nationality || "ES");
+        setCiudad(p.ciudad || "");
         setLanguages(p.languages || ["Español"]);
         setChildcareExperience(p.childcare_experience || "");
         setHasDrivingLicense(p.has_driving_license || false);
@@ -71,26 +85,27 @@ export default function AuPairProfilePage() {
         setAvailableTo(p.available_to || "");
         setDietaryInfo(p.dietary_info || "");
         setHobbies(p.hobbies || "");
-        setReferences(
-          Array.isArray(p.references_json)
-            ? p.references_json
-            : []
-        );
+        setNivelEducativo(p.nivel_educativo || "");
+        setDuracionPreferida(p.duracion_preferida || "");
+        setFumador(p.fumador || false);
+        setPrimerosAuxilios(p.primeros_auxilios || false);
+        setSabeNadar(p.sabe_nadar || false);
+        setPhotos(Array.isArray(p.photos) ? p.photos : []);
+        setReferences(Array.isArray(p.references_json) ? p.references_json : []);
       }
 
-      // Cargar país del localStorage
       const saved = localStorage.getItem("bc_pais");
       if (saved) setPaisDestino(saved);
 
-      // Cargar stats de envíos
       fetch(`/api/user/stats?userId=${user.id}`).then(r => r.json()).then(d => {
         setAuPairStats({ hoy: d.auPair.hoy, limiteHoy: d.auPair.limiteHoy, disponibles: d.auPair.disponibles, plan: d.plan });
       }).catch(() => {});
 
       setLoading(false);
     });
-  }, [router]);
+  }, [router, supabase]);
 
+  // ── Idiomas ──
   const addLanguage = useCallback(() => {
     const lang = langInput.trim();
     if (lang && !languages.includes(lang)) {
@@ -99,47 +114,104 @@ export default function AuPairProfilePage() {
     }
   }, [langInput, languages]);
 
-  const removeLanguage = useCallback(
-    (lang: string) => {
-      setLanguages(languages.filter((l) => l !== lang));
-    },
-    [languages]
-  );
+  const removeLanguage = useCallback((lang: string) => {
+    setLanguages(languages.filter((l) => l !== lang));
+  }, [languages]);
 
+  // ── Fotos ──
+  const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (photos.length >= MAX_FOTOS) {
+      setError(`Máximo ${MAX_FOTOS} fotos`);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("La foto no puede superar 5 MB");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Solo JPG, PNG o WebP");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setError("");
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setError("Sesión expirada");
+      setUploadingPhoto(false);
+      return;
+    }
+
+    const form = new FormData();
+    form.append("foto", file);
+
+    const res = await fetch("/api/au-pair/upload-photo", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: form,
+    });
+    const json = await res.json();
+    setUploadingPhoto(false);
+
+    if (json.url) {
+      setPhotos(prev => [...prev, json.url]);
+    } else {
+      setError(json.error || "Error al subir foto");
+    }
+
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, [photos, supabase]);
+
+  const removePhoto = useCallback(async (url: string) => {
+    setPhotos(prev => prev.filter(p => p !== url));
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      fetch("/api/au-pair/upload-photo", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ url }),
+      }).catch(() => {});
+    }
+  }, [supabase]);
+
+  // ── Referencias ──
   const addReference = useCallback(() => {
     if (!refNombre || !refEmail) return;
-    setReferences([
-      ...references,
-      { nombre: refNombre, email: refEmail, telefono: refTelefono, relacion: refRelacion },
-    ]);
-    setRefNombre("");
-    setRefEmail("");
-    setRefTelefono("");
-    setRefRelacion("");
+    setReferences([...references, { nombre: refNombre, email: refEmail, telefono: refTelefono, relacion: refRelacion }]);
+    setRefNombre(""); setRefEmail(""); setRefTelefono(""); setRefRelacion("");
     setShowRefForm(false);
   }, [refNombre, refEmail, refTelefono, refRelacion, references]);
 
-  const removeReference = useCallback(
-    (idx: number) => {
-      setReferences(references.filter((_, i) => i !== idx));
-    },
-    [references]
-  );
+  const removeReference = useCallback((idx: number) => {
+    setReferences(references.filter((_, i) => i !== idx));
+  }, [references]);
 
+  // ── Carta ──
   const generarCarta = useCallback(() => {
     const plantilla = generarPlantillaLetter({
-      nombre: "",
+      nombre: nombre || undefined,
       edad: age ? parseInt(age) : undefined,
       nacionalidad: PAISES[nationality]?.nombre || nationality,
+      ciudad: ciudad || undefined,
       idiomas: languages,
       experiencia: childcareExperience,
       hobbies,
       paisDestino: PAISES[paisDestino]?.nombre || paisDestino,
+      nivelEducativo: nivelEducativo || undefined,
+      duracion: duracionPreferida || undefined,
     });
     setLetterText(plantilla);
     setMensaje("✅ Plantilla generada. ¡Personalízala a tu estilo!");
     setTimeout(() => setMensaje(""), 4000);
-  }, [age, nationality, languages, childcareExperience, hobbies, paisDestino]);
+  }, [nombre, age, nationality, ciudad, languages, childcareExperience, hobbies, paisDestino, nivelEducativo, duracionPreferida]);
 
   const generarConIA = useCallback(async () => {
     setGenerandoIA(true);
@@ -149,9 +221,10 @@ export default function AuPairProfilePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nombre: "",
+          nombre: nombre || undefined,
           edad: age ? parseInt(age) : undefined,
           nacionalidad: nationality,
+          ciudad: ciudad || undefined,
           idiomas: languages.join(", "),
           idiomaDestino: PAISES[paisDestino]?.idioma || "English",
           experiencia: childcareExperience || undefined,
@@ -159,6 +232,8 @@ export default function AuPairProfilePage() {
           hobbies,
           disponibleDesde: availableFrom || undefined,
           tipoPerfil,
+          nivelEducativo: nivelEducativo || undefined,
+          duracion: duracionPreferida || undefined,
         }),
       });
       const json = await res.json();
@@ -173,8 +248,9 @@ export default function AuPairProfilePage() {
     } finally {
       setGenerandoIA(false);
     }
-  }, [age, nationality, languages, paisDestino, childcareExperience, hobbies, availableFrom, tipoPerfil]);
+  }, [nombre, age, nationality, ciudad, languages, paisDestino, childcareExperience, hobbies, availableFrom, tipoPerfil, nivelEducativo, duracionPreferida]);
 
+  // ── Guardar ──
   const guardar = useCallback(async () => {
     if (!letterText.trim()) {
       setError("La carta 'Dear Family' es obligatoria");
@@ -188,9 +264,11 @@ export default function AuPairProfilePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: userId,
+        nombre,
         letter_text: letterText,
         age: age ? parseInt(age) : null,
         nationality,
+        ciudad,
         languages,
         childcare_experience: childcareExperience,
         has_driving_license: hasDrivingLicense,
@@ -198,7 +276,12 @@ export default function AuPairProfilePage() {
         available_to: availableTo || null,
         dietary_info: dietaryInfo,
         hobbies,
-        photos: [],
+        nivel_educativo: nivelEducativo,
+        fumador,
+        primeros_auxilios: primerosAuxilios,
+        sabe_nadar: sabeNadar,
+        duracion_preferida: duracionPreferida,
+        photos,
         references_json: references,
       }),
     });
@@ -213,19 +296,41 @@ export default function AuPairProfilePage() {
       setError(json.error || "Error al guardar");
     }
   }, [
-    userId, letterText, age, nationality, languages, childcareExperience,
-    hasDrivingLicense, availableFrom, availableTo, dietaryInfo, hobbies, references,
+    userId, nombre, letterText, age, nationality, ciudad, languages, childcareExperience,
+    hasDrivingLicense, availableFrom, availableTo, dietaryInfo, hobbies,
+    nivelEducativo, fumador, primerosAuxilios, sabeNadar, duracionPreferida, photos, references,
   ]);
 
+  // ── Preview carta ──
   function verCarta() {
     if (!letterText.trim()) { setError("Escribe o genera tu carta antes de previsualizar."); return; }
     const pais = PAISES[paisDestino];
+
+    // Construir galería de fotos para el preview
+    const fotosHTML = photos.length > 0 ? `
+    <div class="photos-section">
+      <div class="photos-title">📸 Photo Gallery</div>
+      <div class="photos-grid">
+        ${photos.map(url => `
+        <div class="photo-card">
+          <img src="${url}" alt="Au Pair photo" loading="lazy" />
+        </div>`).join("")}
+      </div>
+    </div>` : "";
+
+    // Construir badges de aptitudes
+    const aptitudesBadges: string[] = [];
+    if (hasDrivingLicense) aptitudesBadges.push("🚗 Driving License");
+    if (!fumador) aptitudesBadges.push("🚭 Non-smoker");
+    if (primerosAuxilios) aptitudesBadges.push("⛑️ First Aid Certified");
+    if (sabeNadar) aptitudesBadges.push("🏊 Can Swim");
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Au Pair Letter</title>
+<title>Au Pair Letter — ${nombre || "Profile"}</title>
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -238,6 +343,13 @@ export default function AuPairProfilePage() {
   .meta-item { font-size: 12px; opacity: 0.85; display: flex; align-items: center; gap: 6px; }
   .body { padding: 48px; }
   .date { font-size: 13px; color: #888; margin-bottom: 32px; font-style: italic; }
+  .photos-section { margin-bottom: 32px; }
+  .photos-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #888; font-weight: 700; margin-bottom: 12px; }
+  .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .photo-card { aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: #f0ede6; }
+  .photo-card img { width: 100%; height: 100%; object-fit: cover; }
+  .aptitudes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+  .aptitud-badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; background: #e8f5e9; color: #1a3d34; letter-spacing: 0.3px; }
   .letter-text { font-family: 'Crimson Text', serif; font-size: 16px; line-height: 1.85; color: #2c2c2c; white-space: pre-wrap; word-break: break-word; }
   .divider { width: 48px; height: 3px; background: linear-gradient(90deg, #2d5a4e, #4a9d84); border-radius: 2px; margin: 40px 0 32px; }
   .refs-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #888; font-weight: 700; margin-bottom: 16px; }
@@ -253,17 +365,19 @@ export default function AuPairProfilePage() {
 <body>
 <div class="page">
   <div class="header">
-    <div class="name">${age ? `Au Pair, ${age} años` : "Au Pair Profile"}</div>
+    <div class="name">${nombre || (age ? `Au Pair, ${age} años` : "Au Pair Profile")}</div>
     <div class="tagline">Childcare Professional · Dear Family Letter</div>
     <div class="meta">
-      ${PAISES[nationality] ? `<div class="meta-item">🌍 ${PAISES[nationality].bandera} ${PAISES[nationality].nombre}</div>` : ""}
+      ${PAISES[nationality] ? `<div class="meta-item">🌍 ${PAISES[nationality].bandera} ${PAISES[nationality].nombre}${ciudad ? ` · ${ciudad}` : ""}</div>` : ""}
       ${languages.length > 0 ? `<div class="meta-item">🗣 ${languages.join(" · ")}</div>` : ""}
-      ${hasDrivingLicense ? `<div class="meta-item">🚗 Driving license</div>` : ""}
       ${availableFrom ? `<div class="meta-item">📅 Available from ${availableFrom}</div>` : ""}
     </div>
+    ${nivelEducativo ? `<div style="margin-top:12px;font-size:12px;opacity:0.75">🎓 ${nivelEducativo}</div>` : ""}
   </div>
   <div class="body">
     <div class="date">${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div>
+    ${fotosHTML}
+    ${aptitudesBadges.length > 0 ? `<div class="aptitudes">${aptitudesBadges.map(b => `<span class="aptitud-badge">${b}</span>`).join("")}</div>` : ""}
     <div class="letter-text">${letterText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
     ${references.length > 0 ? `
     <div class="divider"></div>
@@ -298,7 +412,7 @@ export default function AuPairProfilePage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "Carta_AuPair_BuscayCurra.pdf";
+      a.download = `Carta_AuPair_${nombre || "BuscayCurra"}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -327,10 +441,9 @@ export default function AuPairProfilePage() {
         <span className="text-5xl mb-4 block">🧒</span>
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Tu Perfil Au Pair</h1>
         <p className="text-[#94a3b8] max-w-lg mx-auto text-sm">
-          Las familias no buscan un CV. Buscan conocerte. Crea tu carta de presentación
-          y tu perfil para aplicar a ofertas au pair.
+          Las familias no buscan un CV. Buscan conocerte. Crea tu perfil completo con fotos
+          y tu carta de presentación para aplicar a ofertas au pair.
         </p>
-        {/* Stats de envíos */}
         {auPairStats.plan && (
           <div className="mt-4 max-w-xs mx-auto">
             <div className="flex items-center justify-between text-[10px] text-[#94a3b8] mb-1">
@@ -356,22 +469,28 @@ export default function AuPairProfilePage() {
       {/* Formulario */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-16 space-y-6">
         {mensaje && (
-          <div className="bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-xl p-4 text-sm text-[#22c55e]">
-            {mensaje}
-          </div>
+          <div className="bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-xl p-4 text-sm text-[#22c55e]">{mensaje}</div>
         )}
         {error && (
-          <div className="bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-xl p-4 text-sm text-[#ef4444]">
-            {error}
-          </div>
+          <div className="bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-xl p-4 text-sm text-[#ef4444]">{error}</div>
         )}
 
-        {/* Datos personales */}
+        {/* ── Datos personales ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <span>👤</span> Datos personales
           </h3>
           <div className="grid sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="text-xs text-[#64748b] block mb-1">Nombre completo</label>
+              <input
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="María García López"
+                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+              />
+            </div>
             <div>
               <label className="text-xs text-[#64748b] block mb-1">Edad</label>
               <input
@@ -390,11 +509,19 @@ export default function AuPairProfilePage() {
                 className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 {Object.entries(PAISES).map(([code, p]) => (
-                  <option key={code} value={code}>
-                    {p.bandera} {p.nombre}
-                  </option>
+                  <option key={code} value={code}>{p.bandera} {p.nombre}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="text-xs text-[#64748b] block mb-1">Ciudad</label>
+              <input
+                type="text"
+                value={ciudad}
+                onChange={(e) => setCiudad(e.target.value)}
+                placeholder="Madrid"
+                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+              />
             </div>
             <div>
               <label className="text-xs text-[#64748b] block mb-1">País de destino</label>
@@ -404,10 +531,39 @@ export default function AuPairProfilePage() {
                 className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 {PAISES_AU_PAIR.map((code) => (
-                  <option key={code} value={code}>
-                    {PAISES[code]?.bandera || ""} {PAISES[code]?.nombre || code}
-                  </option>
+                  <option key={code} value={code}>{PAISES[code]?.bandera || ""} {PAISES[code]?.nombre || code}</option>
                 ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-[#64748b] block mb-1">Nivel educativo</label>
+              <select
+                value={nivelEducativo}
+                onChange={(e) => setNivelEducativo(e.target.value)}
+                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+              >
+                <option value="">Seleccionar...</option>
+                <option value="ESO / Secundaria">ESO / Secundaria</option>
+                <option value="Bachillerato">Bachillerato</option>
+                <option value="FP / Grado Medio">FP / Grado Medio</option>
+                <option value="FP / Grado Superior">FP / Grado Superior</option>
+                <option value="Universitario en curso">Universitario en curso</option>
+                <option value="Universitario terminado">Universitario terminado</option>
+                <option value="Máster / Postgrado">Máster / Postgrado</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-[#64748b] block mb-1">Duración preferida</label>
+              <select
+                value={duracionPreferida}
+                onChange={(e) => setDuracionPreferida(e.target.value)}
+                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+              >
+                <option value="">Seleccionar...</option>
+                <option value="3-6 meses">3-6 meses (verano)</option>
+                <option value="6-12 meses">6-12 meses</option>
+                <option value="12-24 meses">12-24 meses</option>
+                <option value=">24 meses">&gt;24 meses</option>
               </select>
             </div>
             <div>
@@ -428,22 +584,50 @@ export default function AuPairProfilePage() {
                 className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               />
             </div>
-            <div className="flex items-center gap-3 pt-2">
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={hasDrivingLicense}
-                  onChange={(e) => setHasDrivingLicense(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-9 h-5 bg-[#2d3142] rounded-full peer peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
-              </label>
-              <span className="text-sm text-[#94a3b8]">Carnet de conducir</span>
-            </div>
           </div>
         </div>
 
-        {/* Idiomas */}
+        {/* ── Aptitudes (toggles) ── */}
+        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
+            <span>✅</span> Aptitudes
+          </h3>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              { label: "🚗 Carnet de conducir", state: hasDrivingLicense, set: setHasDrivingLicense },
+              { label: "🚭 No fumador/a", state: !fumador, set: (v: boolean) => setFumador(!v), invert: true },
+              { label: "⛑️ Primeros auxilios", state: primerosAuxilios, set: setPrimerosAuxilios },
+              { label: "🏊 Sabe nadar", state: sabeNadar, set: setSabeNadar },
+            ].map((item, i) => (
+              <label key={i} className="flex items-center gap-3 bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 cursor-pointer hover:border-[#22c55e]/30 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={item.state}
+                  onChange={(e) => item.set(item.invert ? !e.target.checked : e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${item.state ? "bg-[#22c55e] border-[#22c55e]" : "border-[#2d3142]"}`}>
+                  {item.state && <span className="text-black text-xs">✓</span>}
+                </div>
+                <span className="text-sm text-[#94a3b8] peer-checked:text-[#e2e8f0]">{item.label}</span>
+              </label>
+            ))}
+            <label className="flex items-center gap-3 bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 cursor-pointer hover:border-[#ef4444]/30 transition-colors">
+              <input
+                type="checkbox"
+                checked={fumador}
+                onChange={(e) => setFumador(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${fumador ? "bg-[#ef4444] border-[#ef4444]" : "border-[#2d3142]"}`}>
+                {fumador && <span className="text-white text-xs">✓</span>}
+              </div>
+              <span className={`text-sm ${fumador ? "text-[#ef4444]" : "text-[#94a3b8]"}`}>🚬 Fumador/a</span>
+            </label>
+          </div>
+        </div>
+
+        {/* ── Idiomas ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <span>🗣️</span> Idiomas
@@ -466,23 +650,71 @@ export default function AuPairProfilePage() {
           </div>
           <div className="flex flex-wrap gap-2">
             {languages.map((lang) => (
-              <span
-                key={lang}
-                className="inline-flex items-center gap-1.5 bg-[#252839] border border-[#2d3142] rounded-full px-3 py-1 text-xs text-[#e2e8f0]"
-              >
+              <span key={lang} className="inline-flex items-center gap-1.5 bg-[#252839] border border-[#2d3142] rounded-full px-3 py-1 text-xs text-[#e2e8f0]">
                 {lang}
-                <button
-                  onClick={() => removeLanguage(lang)}
-                  className="text-[#64748b] hover:text-[#ef4444] transition-colors"
-                >
-                  ×
-                </button>
+                <button onClick={() => removeLanguage(lang)} className="text-[#64748b] hover:text-[#ef4444] transition-colors">×</button>
               </span>
             ))}
           </div>
         </div>
 
-        {/* Experiencia con niños */}
+        {/* ── Fotos ── */}
+        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
+            <span>📸</span> Fotos <span className="text-[10px] text-[#64748b] font-normal">({photos.length}/{MAX_FOTOS})</span>
+          </h3>
+          <p className="text-xs text-[#64748b] mb-4">
+            Las familias quieren verte. Sube fotos tuyas, con niños, haciendo actividades.
+            La primera foto será tu foto de portada.
+          </p>
+
+          {/* Grid de fotos */}
+          {photos.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+              {photos.map((url, idx) => (
+                <div key={url} className="relative group aspect-[4/3] rounded-lg overflow-hidden bg-[#0f1117] border border-[#2d3142]">
+                  <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                  {idx === 0 && (
+                    <span className="absolute top-1.5 left-1.5 bg-[#22c55e] text-black text-[9px] font-bold px-1.5 py-0.5 rounded">PORTADA</span>
+                  )}
+                  <button
+                    onClick={() => removePhoto(url)}
+                    className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-all"
+                    title="Eliminar foto"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Botón subir */}
+          {photos.length < MAX_FOTOS && (
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handlePhotoUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="flex items-center gap-2 bg-[#0f1117] border-2 border-dashed border-[#2d3142] hover:border-[#22c55e]/40 rounded-xl px-5 py-4 text-sm text-[#94a3b8] hover:text-[#22c55e] transition-all disabled:opacity-50 w-full justify-center"
+              >
+                {uploadingPhoto ? (
+                  <>⏳ Subiendo...</>
+                ) : (
+                  <>📷 Añadir foto {photos.length > 0 ? `(${photos.length}/${MAX_FOTOS})` : ""}</>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Experiencia con niños ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <span>👶</span> Experiencia con niños
@@ -496,7 +728,7 @@ export default function AuPairProfilePage() {
           />
         </div>
 
-        {/* Hobbies y personalidad */}
+        {/* ── Hobbies ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <span>🌟</span> Sobre ti
@@ -517,7 +749,7 @@ export default function AuPairProfilePage() {
           />
         </div>
 
-        {/* Referencias */}
+        {/* ── Referencias ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <span>📋</span> Referencias
@@ -525,94 +757,42 @@ export default function AuPairProfilePage() {
           {references.length > 0 && (
             <div className="space-y-2 mb-4">
               {references.map((ref, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-between items-center bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5"
-                >
+                <div key={idx} className="flex justify-between items-center bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5">
                   <div className="text-sm">
                     <span className="text-[#e2e8f0] font-medium">{ref.nombre}</span>
                     <span className="text-[#64748b] mx-2">—</span>
                     <span className="text-[#94a3b8]">{ref.relacion}</span>
                     <span className="text-[#64748b] text-xs block">{ref.email}</span>
                   </div>
-                  <button
-                    onClick={() => removeReference(idx)}
-                    className="text-[#64748b] hover:text-[#ef4444] transition-colors text-lg"
-                  >
-                    ×
-                  </button>
+                  <button onClick={() => removeReference(idx)} className="text-[#64748b] hover:text-[#ef4444] transition-colors text-lg">×</button>
                 </div>
               ))}
             </div>
           )}
           {showRefForm ? (
             <div className="space-y-3 bg-[#0f1117]/60 rounded-lg p-4 border border-[#2d3142]">
-              <input
-                type="text"
-                value={refNombre}
-                onChange={(e) => setRefNombre(e.target.value)}
-                placeholder="Nombre"
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
-              />
-              <input
-                type="email"
-                value={refEmail}
-                onChange={(e) => setRefEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
-              />
-              <input
-                type="text"
-                value={refTelefono}
-                onChange={(e) => setRefTelefono(e.target.value)}
-                placeholder="Teléfono"
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
-              />
-              <input
-                type="text"
-                value={refRelacion}
-                onChange={(e) => setRefRelacion(e.target.value)}
-                placeholder="Relación (ej: ex-empleadora, madre de niños que cuidé)"
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
-              />
+              <input type="text" value={refNombre} onChange={(e) => setRefNombre(e.target.value)} placeholder="Nombre" className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
+              <input type="email" value={refEmail} onChange={(e) => setRefEmail(e.target.value)} placeholder="Email" className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
+              <input type="text" value={refTelefono} onChange={(e) => setRefTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
+              <input type="text" value={refRelacion} onChange={(e) => setRefRelacion(e.target.value)} placeholder="Relación (ej: ex-empleadora, madre de niños que cuidé)" className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
               <div className="flex gap-2">
-                <button
-                  onClick={addReference}
-                  className="bg-[#22c55e] hover:bg-[#1ea34d] text-black font-medium px-4 py-2 rounded-lg text-sm transition-colors"
-                >
-                  Guardar referencia
-                </button>
-                <button
-                  onClick={() => setShowRefForm(false)}
-                  className="bg-[#2d3142] hover:bg-[#3d4152] text-[#94a3b8] font-medium px-4 py-2 rounded-lg text-sm transition-colors"
-                >
-                  Cancelar
-                </button>
+                <button onClick={addReference} className="bg-[#22c55e] hover:bg-[#1ea34d] text-black font-medium px-4 py-2 rounded-lg text-sm transition-colors">Guardar referencia</button>
+                <button onClick={() => setShowRefForm(false)} className="bg-[#2d3142] hover:bg-[#3d4152] text-[#94a3b8] font-medium px-4 py-2 rounded-lg text-sm transition-colors">Cancelar</button>
               </div>
             </div>
           ) : (
-            <button
-              onClick={() => setShowRefForm(true)}
-              className="text-sm text-[#22c55e] hover:underline"
-            >
-              + Añadir referencia
-            </button>
+            <button onClick={() => setShowRefForm(true)} className="text-sm text-[#22c55e] hover:underline">+ Añadir referencia</button>
           )}
         </div>
 
-        {/* Dear Family Letter */}
+        {/* ── Dear Family Letter ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
               <span>💌</span> Dear Family Letter
             </h3>
             <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={generarCarta}
-                className="text-[11px] bg-[#252839] hover:bg-[#2d3142] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors"
-              >
-                📝 Plantilla
-              </button>
+              <button onClick={generarCarta} className="text-[11px] bg-[#252839] hover:bg-[#2d3142] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors">📝 Plantilla</button>
               <button
                 onClick={generarConIA}
                 disabled={generandoIA}
@@ -620,17 +800,11 @@ export default function AuPairProfilePage() {
               >
                 {generandoIA ? <>⏳ Generando...</> : <>✨ IA</>}
               </button>
-              <button
-                onClick={verCarta}
-                className="text-[11px] border font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                style={{ borderColor: "rgba(34,197,94,0.3)", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}
-              >
-                👁 Ver carta
-              </button>
+              <button onClick={verCarta} className="text-[11px] border font-semibold px-3 py-1.5 rounded-lg transition-colors" style={{ borderColor: "rgba(34,197,94,0.3)", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}>👁 Ver carta</button>
             </div>
           </div>
 
-          {/* Selector de tipo de perfil */}
+          {/* Selector tipo perfil */}
           <div className="mb-3 flex flex-wrap gap-1.5">
             {[
               { id: "joven_estudiante", label: "🎓 Joven", desc: "Estudiante, primera vez" },
@@ -654,53 +828,32 @@ export default function AuPairProfilePage() {
           </div>
 
           <p className="text-xs text-[#64748b] mb-3">
-            ⚡ Elige tu perfil, rellena tus datos arriba, y pulsa <strong>✨ IA</strong> para que Guzzi genere tu carta perfecta. O usa <strong>📝 Plantilla</strong> para empezar con un ejemplo.
+            ⚡ Rellena tus datos y fotos arriba, elige tu perfil, y pulsa <strong>✨ IA</strong> para que Guzzi genere tu carta perfecta.
           </p>
 
           <textarea
             value={letterText}
             onChange={(e) => setLetterText(e.target.value)}
-            placeholder="Dear Host Family,
-
-My name is... (o pulsa ✨ IA para generarla automáticamente)"
+            placeholder={"Dear Host Family,\n\nMy name is... (o pulsa ✨ IA para generarla automáticamente)"}
             rows={14}
             className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none resize-y font-serif leading-relaxed"
           />
 
-          {/* Sugerencias */}
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {[
-              "✏️ Añade anécdotas personales",
-              "📸 Sube fotos con niños",
-              "💬 Sé auténtica, no genérica",
-              "🔍 Menciona por qué ese país",
-            ].map(tip => (
-              <span key={tip} className="text-[9px] px-2 py-1 rounded-full bg-[#252839] text-[#94a3b8] border border-[#2d3142]">
-                {tip}
-              </span>
+            {["✏️ Añade anécdotas personales", "📸 Sube fotos con niños", "💬 Sé auténtica, no genérica", "🔍 Menciona por qué ese país"].map(tip => (
+              <span key={tip} className="text-[9px] px-2 py-1 rounded-full bg-[#252839] text-[#94a3b8] border border-[#2d3142]">{tip}</span>
             ))}
           </div>
         </div>
 
-        {/* Vista previa de la carta */}
+        {/* Vista previa */}
         {previewHTML && (
           <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5">
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h3 className="text-sm font-semibold text-[#e2e8f0]">Vista previa — Plantilla profesional</h3>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setPreviewHTML("")}
-                  className="text-xs px-3 py-1.5 rounded-lg"
-                  style={{ border: "1px solid #2d3142", color: "#94a3b8" }}
-                >
-                  ← Cerrar
-                </button>
-                <button
-                  onClick={descargarCarta}
-                  disabled={descargandoCarta}
-                  className="text-xs font-semibold px-4 py-1.5 rounded-lg disabled:opacity-60"
-                  style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
-                >
+                <button onClick={() => setPreviewHTML("")} className="text-xs px-3 py-1.5 rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>← Cerrar</button>
+                <button onClick={descargarCarta} disabled={descargandoCarta} className="text-xs font-semibold px-4 py-1.5 rounded-lg disabled:opacity-60" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
                   {descargandoCarta ? "Generando PDF..." : "⬇ Descargar carta PDF"}
                 </button>
               </div>
@@ -719,17 +872,8 @@ My name is... (o pulsa ✨ IA para generarla automáticamente)"
 
         {/* Guardar */}
         <div className="flex gap-3 justify-end">
-          <button
-            onClick={() => router.push("/app/emigrar")}
-            className="px-5 py-2.5 rounded-xl text-sm font-medium bg-[#2d3142] text-[#94a3b8] hover:bg-[#3d4152] transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={guardar}
-            disabled={saving}
-            className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#22c55e] hover:bg-[#1ea34d] text-black transition-colors disabled:opacity-50"
-          >
+          <button onClick={() => router.push("/app/emigrar")} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-[#2d3142] text-[#94a3b8] hover:bg-[#3d4152] transition-colors">Cancelar</button>
+          <button onClick={guardar} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#22c55e] hover:bg-[#1ea34d] text-black transition-colors disabled:opacity-50">
             {saving ? "Guardando..." : "💾 Guardar perfil Au Pair"}
           </button>
         </div>
