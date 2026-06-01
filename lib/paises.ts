@@ -50,8 +50,8 @@ export const PAISES: Record<string, PaisConfig> = {
     posicionSimbolo: "despues",
     idioma: "de",
     bandera: "🇩🇪",
-    salarioMinimo: 2151,
-    salarioMedio: 4100,
+    salarioMinimo: 2222,
+    salarioMedio: 4200,
     tasaCambioEUR: 1,
     formatoMiles: ".",
     formatoDecimal: ",",
@@ -69,7 +69,7 @@ export const PAISES: Record<string, PaisConfig> = {
     idioma: "fr",
     bandera: "🇫🇷",
     salarioMinimo: 1802,
-    salarioMedio: 3400,
+    salarioMedio: 3500,
     tasaCambioEUR: 1,
     formatoMiles: " ",
     formatoDecimal: ",",
@@ -104,8 +104,8 @@ export const PAISES: Record<string, PaisConfig> = {
     posicionSimbolo: "despues",
     idioma: "pt",
     bandera: "🇵🇹",
-    salarioMinimo: 870,
-    salarioMedio: 1500,
+    salarioMinimo: 1020,
+    salarioMedio: 1600,
     tasaCambioEUR: 1,
     formatoMiles: ".",
     formatoDecimal: ",",
@@ -122,8 +122,8 @@ export const PAISES: Record<string, PaisConfig> = {
     posicionSimbolo: "despues",
     idioma: "nl",
     bandera: "🇳🇱",
-    salarioMinimo: 2070,
-    salarioMedio: 3700,
+    salarioMinimo: 2191,
+    salarioMedio: 3800,
     tasaCambioEUR: 1,
     formatoMiles: ".",
     formatoDecimal: ",",
@@ -140,8 +140,8 @@ export const PAISES: Record<string, PaisConfig> = {
     posicionSimbolo: "despues",
     idioma: "pl",
     bandera: "🇵🇱",
-    salarioMinimo: 4300,
-    salarioMedio: 7500,
+    salarioMinimo: 4666,
+    salarioMedio: 8000,
     tasaCambioEUR: 4.32,
     formatoMiles: " ",
     formatoDecimal: ",",
@@ -230,8 +230,8 @@ export const PAISES: Record<string, PaisConfig> = {
     posicionSimbolo: "antes",
     idioma: "en",
     bandera: "🇮🇪",
-    salarioMinimo: 2200,
-    salarioMedio: 3800,
+    salarioMinimo: 2340,
+    salarioMedio: 4000,
     tasaCambioEUR: 1,
     formatoMiles: ",",
     formatoDecimal: ".",
@@ -248,8 +248,8 @@ export const PAISES: Record<string, PaisConfig> = {
     posicionSimbolo: "despues",
     idioma: "nl",
     bandera: "🇧🇪",
-    salarioMinimo: 2070,
-    salarioMedio: 3600,
+    salarioMinimo: 2097,
+    salarioMedio: 3700,
     tasaCambioEUR: 1,
     formatoMiles: ".",
     formatoDecimal: ",",
@@ -305,8 +305,8 @@ export const PAISES: Record<string, PaisConfig> = {
     posicionSimbolo: "antes",
     idioma: "en",
     bandera: "🇬🇧",
-    salarioMinimo: 1930,
-    salarioMedio: 2900,
+    salarioMinimo: 2116,
+    salarioMedio: 3100,
     tasaCambioEUR: 0.86,
     formatoMiles: ",",
     formatoDecimal: ".",
@@ -343,8 +343,8 @@ export const PAISES: Record<string, PaisConfig> = {
     posicionSimbolo: "antes",
     idioma: "en",
     bandera: "🇨🇦",
-    salarioMinimo: 2500,
-    salarioMedio: 5000,
+    salarioMinimo: 2752,
+    salarioMedio: 5200,
     tasaCambioEUR: 1.48,
     formatoMiles: ",",
     formatoDecimal: ".",
@@ -362,8 +362,8 @@ export const PAISES: Record<string, PaisConfig> = {
     posicionSimbolo: "antes",
     idioma: "en",
     bandera: "🇦🇺",
-    salarioMinimo: 3500,
-    salarioMedio: 6500,
+    salarioMinimo: 3830,
+    salarioMedio: 6800,
     tasaCambioEUR: 1.65,
     formatoMiles: ",",
     formatoDecimal: ".",
@@ -371,29 +371,68 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["waiter", "developer", "administrator", "sales", "nurse"],
     slug: "australia",
   },
+  NZ: {
+    codigo: "NZ",
+    nombre: "Nueva Zelanda",
+    nombreLocal: "New Zealand",
+    moneda: "NZD",
+    simboloMoneda: "NZ$",
+    posicionSimbolo: "antes",
+    idioma: "en",
+    bandera: "🇳🇿",
+    salarioMinimo: 4019,
+    salarioMedio: 5500,
+    tasaCambioEUR: 1.81,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Auckland", "Wellington", "Christchurch", "Hamilton", "Dunedin", "Tauranga"],
+    keywordsLaborales: ["waiter", "developer", "administrator", "sales", "nurse"],
+    slug: "nueva-zelanda",
+  },
+
+  GR: {
+    codigo: "GR",
+    nombre: "Grecia",
+    nombreLocal: "Ελλάδα",
+    moneda: "EUR",
+    simboloMoneda: "€",
+    posicionSimbolo: "despues",
+    idioma: "el",
+    bandera: "🇬🇷",
+    salarioMinimo: 950,
+    salarioMedio: 1600,
+    tasaCambioEUR: 1,
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    ciudades: ["Atenas", "Tesalónica", "Heraclión", "Patras", "Larisa", "Volos"],
+    keywordsLaborales: ["σερβιτόρος", "προγραμματιστής", "νοσηλευτής", "πωλητής", "διοικητικός"],
+    slug: "grecia",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
 export const LISTA_PAISES: PaisConfig[] = [
-  PAISES.CH,  // Suiza — 6,500 CHF/mes
-  PAISES.AU,  // Australia — 6,500 AUD/mes
-  PAISES.US,  // EEUU — 5,000 USD/mes
-  PAISES.CA,  // Canadá — 5,000 CAD/mes
-  PAISES.NO,  // Noruega — 48,000 NOK/mes
-  PAISES.DK,  // Dinamarca — 42,000 DKK/mes
-  PAISES.DE,  // Alemania — 4,100 EUR/mes
-  PAISES.IE,  // Irlanda — 3,800 EUR/mes
-  PAISES.SE,  // Suecia — 38,000 SEK/mes
-  PAISES.NL,  // Países Bajos — 3,700 EUR/mes
-  PAISES.AT,  // Austria — 3,600 EUR/mes
-  PAISES.BE,  // Bélgica — 3,600 EUR/mes
-  PAISES.FI,  // Finlandia — 3,500 EUR/mes
-  PAISES.FR,  // Francia — 3,400 EUR/mes
-  PAISES.UK,  // Reino Unido — 2,900 GBP/mes
-  PAISES.IT,  // Italia — 2,500 EUR/mes
-  PAISES.ES,  // España — 2,100 EUR/mes
-  PAISES.PT,  // Portugal — 1,500 EUR/mes
-  PAISES.PL,  // Polonia — 7,500 PLN/mes
+  PAISES.CH,  // Suiza — 6.800 CHF/mes
+  PAISES.AU,  // Australia — 6.800 AUD/mes
+  PAISES.US,  // EEUU — 5.000 USD/mes
+  PAISES.CA,  // Canadá — 5.200 CAD/mes
+  PAISES.NO,  // Noruega — 48.000 NOK/mes
+  PAISES.DK,  // Dinamarca — 42.000 DKK/mes
+  PAISES.NZ,  // Nueva Zelanda — 5.500 NZD/mes (~3.040€)
+  PAISES.DE,  // Alemania — 4.200 EUR/mes
+  PAISES.IE,  // Irlanda — 4.000 EUR/mes
+  PAISES.SE,  // Suecia — 38.000 SEK/mes
+  PAISES.NL,  // Países Bajos — 3.800 EUR/mes
+  PAISES.FR,  // Francia — 3.500 EUR/mes
+  PAISES.AT,  // Austria — 3.600 EUR/mes
+  PAISES.BE,  // Bélgica — 3.700 EUR/mes
+  PAISES.FI,  // Finlandia — 3.500 EUR/mes
+  PAISES.UK,  // Reino Unido — 3.100 GBP/mes
+  PAISES.IT,  // Italia — 2.500 EUR/mes
+  PAISES.ES,  // España — 2.100 EUR/mes
+  PAISES.GR,  // Grecia — 1.600 EUR/mes
+  PAISES.PT,  // Portugal — 1.600 EUR/mes
+  PAISES.PL,  // Polonia — 8.000 PLN/mes
 ];
 
 /** Formatea un salario según el país */
