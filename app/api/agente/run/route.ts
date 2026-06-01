@@ -117,7 +117,6 @@ export async function POST(req: NextRequest) {
               nombre: ofertas[0].empresa,
               puesto: ofertas[0].titulo,
               ciudad: ofertas[0].ubicacion,
-              url: "https://buscaycurra.es/app/empresas",
             });
           } catch { /* WhatsApp optional */ }
         }
