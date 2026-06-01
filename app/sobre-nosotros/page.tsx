@@ -1,172 +1,203 @@
+﻿import type { Metadata } from "next";
 import Link from "next/link";
-import type { Metadata } from "next";
+import LogoGusano from "@/components/LogoGusano";
 
 export const metadata: Metadata = {
-  title: "Quiénes somos — BuscayCurra",
-  description: "BuscayCurra es la plataforma de empleo con IA que busca, adapta y envía candidaturas por ti en 20+ países. Conoce nuestra historia y misión.",
+  title: "Sobre nosotros — BuscayCurra | El agente IA que busca trabajo por ti",
+  description: "BuscayCurra es la plataforma de empleo con IA que automatiza tu búsqueda de trabajo en 20+ países. Conoce nuestra historia, misión y el equipo detrás de Guzzi.",
 };
+
+const VALORES = [
+  { icon: "🎯", titulo: "Honestidad radical", desc: "No prometemos lo que no podemos cumplir. Si una oferta no encaja con tu perfil, Guzzi te lo dice." },
+  { icon: "🔒", titulo: "Tu privacidad primero", desc: "Tus datos son tuyos. No los vendemos, no los compartimos. Los borramos cuando nos lo pides." },
+  { icon: "⚡", titulo: "Automatización con criterio", desc: "Automatizamos lo repetitivo — no la decisión. Tú siempre tienes el control de qué se envía y a quién." },
+  { icon: "🌍", titulo: "Empleo sin fronteras", desc: "El mercado laboral es global. BuscayCurra también. Buscamos trabajo donde hay trabajo, no solo donde hay portales." },
+];
+
+const HITOS = [
+  { año: "2024", texto: "Nace BuscayCurra con la idea de que buscar trabajo no debería ser un trabajo en sí mismo." },
+  { año: "2025", texto: "Lanzamos Guzzi, el asistente IA que envía candidaturas personalizadas automáticamente." },
+  { año: "2026", texto: "Superamos 1.600.000 ofertas activas en 20+ países y 2.400 usuarios activos." },
+];
 
 export default function SobreNosotrosPage() {
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
+      {/* Header */}
+      <header
+        className="sticky top-0 z-50"
+        style={{ background: "rgba(15,17,23,0.95)", borderBottom: "1px solid rgba(45,49,66,0.4)", backdropFilter: "blur(10px)" }}
+      >
+        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <LogoGusano size={26} />
+            <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/auth/login" className="text-sm" style={{ color: "#64748b" }}>Entrar</Link>
+            <Link
+              href="/auth/registro"
+              className="text-sm font-semibold px-4 py-2 rounded-lg"
+              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+            >
+              Empezar gratis
+            </Link>
+          </div>
+        </div>
+      </header>
 
-      {/* Nav mínima */}
-      <nav className="fixed top-0 left-0 right-0 z-40 px-4 py-3 flex items-center justify-between"
-        style={{ background: "rgba(15,17,23,0.95)", borderBottom: "1px solid #1a1d27", backdropFilter: "blur(8px)" }}>
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl">🐛</span>
-          <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
-        </Link>
-        <Link href="/auth/registro"
-          className="text-xs font-semibold px-4 py-2 rounded-lg"
-          style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.25)" }}>
-          Empezar gratis →
-        </Link>
-      </nav>
-
-      <div className="max-w-3xl mx-auto px-4 pt-24 pb-20">
+      <main className="max-w-3xl mx-auto px-6 py-16">
 
         {/* Hero */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6"
-            style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
-            🌍 Tudela, Navarra · España
+          <div className="flex justify-center mb-6">
+            <LogoGusano size={72} animated />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#f1f5f9" }}>
-            InfoJobs es 2005.<br />
-            <span style={{ color: "#22c55e" }}>BuscayCurra es 2025.</span>
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ color: "#f1f5f9" }}>
+            Buscar trabajo no debería<br />
+            <span style={{ color: "#22c55e" }}>ser otro trabajo.</span>
           </h1>
-          <p className="text-base max-w-xl mx-auto" style={{ color: "#64748b" }}>
-            Creamos la primera plataforma de empleo con agente IA real para España y el mundo hispano.
-            No un portal. Un agente que trabaja por ti.
+          <p className="text-base leading-relaxed max-w-xl mx-auto" style={{ color: "#94a3b8" }}>
+            BuscayCurra nació de una frustración real: miles de CVs enviados manualmente,
+            semanas sin respuesta, portales desactualizados y procesos que no han cambiado en 20 años.
+            Decidimos que había una forma mejor.
           </p>
         </div>
 
-        {/* Historia */}
-        <div className="rounded-2xl p-8 mb-8" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-          <h2 className="text-lg font-bold mb-4" style={{ color: "#f1f5f9" }}>La historia</h2>
-          <div className="space-y-4 text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
-            <p>
-              BuscayCurra nació de una frustración real. Después de semanas enviando CVs a mano,
-              adaptando cada uno a cada oferta, esperando respuestas que nunca llegaban… me pregunté:
-              ¿por qué nadie ha automatizado esto con IA?
-            </p>
-            <p>
-              Los portales de empleo llevan décadas sin cambiar. InfoJobs, Indeed, LinkedIn siguen
-              funcionando igual que hace 20 años: publicas tu CV, esperas entre miles de candidatos
-              iguales, y rezas para que alguien lo lea.
-            </p>
-            <p>
-              Con los LLMs modernos, era posible hacer algo diferente: un agente que entiende tu perfil,
-              busca ofertas relevantes en cualquier país, adapta tu CV a cada empresa y lo envía
-              en el momento exacto. Que trabaje mientras tú duermes.
-            </p>
-            <p>
-              Eso es <strong style={{ color: "#f1f5f9" }}>BuscayCurra</strong>. Y eso es Guzzi,
-              el primer agente de empleo con IA diseñado para el mercado de habla hispana.
+        {/* Misión */}
+        <section className="mb-16">
+          <div
+            className="rounded-2xl p-8"
+            style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.15)" }}
+          >
+            <h2 className="text-lg font-bold mb-3" style={{ color: "#22c55e" }}>Nuestra misión</h2>
+            <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
+              Democratizar el acceso al empleo de calidad usando inteligencia artificial.
+              Que un trabajador en Sevilla tenga las mismas oportunidades de encontrar trabajo en Berlín
+              o Sydney que alguien que lleva años en esa industria. Que el talento llegue donde más se necesita,
+              sin que el proceso de búsqueda sea el obstáculo.
             </p>
           </div>
-        </div>
+        </section>
 
-        {/* Misión y valores */}
-        <div className="grid sm:grid-cols-3 gap-4 mb-8">
-          {[
-            {
-              icon: "🎯",
-              titulo: "Nuestra misión",
-              desc: "Democratizar el acceso al empleo. Que cualquier persona con talento pueda encontrar trabajo en cualquier país, sin barreras de idioma, tiempo ni conocimientos técnicos.",
-            },
-            {
-              icon: "🤝",
-              titulo: "Nuestros valores",
-              desc: "Transparencia total sobre cómo funciona la IA. Sin trucos, sin spam, sin envíos masivos sin control. Cada candidatura es revisada y aprobada por el usuario.",
-            },
-            {
-              icon: "🌍",
-              titulo: "Nuestra visión",
-              desc: "Un mundo donde el talento no tenga fronteras. Que un programador de Tudela pueda trabajar en Berlín con la misma facilidad que en Madrid.",
-            },
-          ].map(v => (
-            <div key={v.titulo} className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-              <span className="text-2xl block mb-3">{v.icon}</span>
-              <h3 className="font-semibold text-sm mb-2" style={{ color: "#f1f5f9" }}>{v.titulo}</h3>
-              <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{v.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Números */}
-        <div className="rounded-2xl p-8 mb-8"
-          style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.06), rgba(34,197,94,0.02))", border: "1px solid rgba(34,197,94,0.15)" }}>
-          <h2 className="text-lg font-bold mb-6 text-center" style={{ color: "#f1f5f9" }}>BuscayCurra en cifras</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+        {/* Qué es Guzzi */}
+        <section className="mb-16">
+          <h2 className="text-xl font-bold mb-6" style={{ color: "#f1f5f9" }}>Guzzi, tu agente de empleo</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
             {[
-              { num: "1.6M+", label: "Ofertas activas" },
-              { num: "20+", label: "Países" },
-              { num: "2.400+", label: "Personas encontraron trabajo" },
-              { num: "18.000+", label: "CVs enviados este mes" },
-            ].map(stat => (
-              <div key={stat.label} className="text-center">
-                <p className="text-2xl font-black mb-1" style={{ color: "#22c55e" }}>{stat.num}</p>
-                <p className="text-xs" style={{ color: "#64748b" }}>{stat.label}</p>
+              { icon: "🔍", titulo: "Busca por ti", desc: "Escanea más de 1.600.000 ofertas en 20+ países cada 8 horas. Filtra por tu perfil, sector y salario esperado." },
+              { icon: "✨", titulo: "Mejora tu CV", desc: "Analiza tu currículum con IA y lo adapta a cada oferta antes de enviarlo. Supera los filtros ATS que descartan el 75% de candidatos." },
+              { icon: "📧", titulo: "Envía candidaturas", desc: "Envía tu CV automáticamente con carta personalizada para cada empresa. Tú solo vas a la entrevista." },
+              { icon: "📊", titulo: "Seguimiento en tiempo real", desc: "Pipeline visual de todas tus candidaturas: enviada, abierta, en revisión, entrevista. Sin agujeros negros." },
+            ].map((s) => (
+              <div key={s.titulo} className="rounded-xl p-5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+                <span className="text-2xl block mb-3">{s.icon}</span>
+                <h3 className="text-sm font-bold mb-2" style={{ color: "#f1f5f9" }}>{s.titulo}</h3>
+                <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{s.desc}</p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Tecnología */}
-        <div className="rounded-2xl p-8 mb-8" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-          <h2 className="text-lg font-bold mb-4" style={{ color: "#f1f5f9" }}>La tecnología detrás</h2>
-          <p className="text-sm mb-5" style={{ color: "#64748b" }}>
-            BuscayCurra está construido con las mejores herramientas actuales para garantizar velocidad, privacidad y fiabilidad.
+        {/* Hitos */}
+        <section className="mb-16">
+          <h2 className="text-xl font-bold mb-6" style={{ color: "#f1f5f9" }}>Nuestra historia</h2>
+          <div className="space-y-4">
+            {HITOS.map((h) => (
+              <div key={h.año} className="flex items-start gap-4">
+                <span
+                  className="text-sm font-extrabold flex-shrink-0 w-12 text-right"
+                  style={{ color: "#22c55e" }}
+                >
+                  {h.año}
+                </span>
+                <div
+                  className="w-px flex-shrink-0 mt-1.5"
+                  style={{ height: "40px", background: "rgba(34,197,94,0.3)" }}
+                />
+                <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>{h.texto}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Valores */}
+        <section className="mb-16">
+          <h2 className="text-xl font-bold mb-6" style={{ color: "#f1f5f9" }}>Lo que nos guía</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {VALORES.map((v) => (
+              <div key={v.titulo} className="rounded-xl p-5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+                <span className="text-2xl block mb-2">{v.icon}</span>
+                <h3 className="text-sm font-bold mb-1" style={{ color: "#f1f5f9" }}>{v.titulo}</h3>
+                <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{v.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Contacto */}
+        <section className="mb-16 text-center">
+          <h2 className="text-xl font-bold mb-3" style={{ color: "#f1f5f9" }}>¿Hablamos?</h2>
+          <p className="text-sm mb-6" style={{ color: "#64748b" }}>
+            Para prensa, colaboraciones o simplemente para contarnos tu experiencia.
           </p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {[
-              { label: "IA / Agente", valor: "Kimi K2 + modelos propios fine-tuned para empleo" },
-              { label: "Fuentes de empleo", valor: "Adzuna, Careerjet, EURES, Arbeitsagentur, USAJobs, JobTech y más" },
-              { label: "Infraestructura", valor: "Next.js 14, Supabase, Redis, Docker en VPS europeo" },
-              { label: "Pagos", valor: "Stripe — encriptado, conforme PCI DSS" },
-              { label: "Datos", valor: "Almacenados en Europa (RGPD)" },
-              { label: "Disponibilidad", valor: "99.9% uptime · monitorizados 24/7" },
-            ].map(t => (
-              <div key={t.label} className="flex items-start gap-3 p-3 rounded-lg"
-                style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #252836" }}>
-                <span className="text-xs font-bold mt-0.5 flex-shrink-0" style={{ color: "#22c55e" }}>▸</span>
-                <div>
-                  <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>{t.label}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{t.valor}</p>
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href="mailto:hola@buscaycurra.es"
+              className="text-sm font-semibold px-6 py-3 rounded-xl"
+              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+            >
+              hola@buscaycurra.es
+            </a>
+            <Link
+              href="/app/ayuda"
+              className="text-sm font-semibold px-6 py-3 rounded-xl"
+              style={{ border: "1px solid #2d3142", color: "#94a3b8" }}
+            >
+              Centro de ayuda →
+            </Link>
           </div>
-        </div>
-
-        {/* Legal */}
-        <div className="rounded-xl p-5 mb-8" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-          <h2 className="text-sm font-bold mb-3" style={{ color: "#f1f5f9" }}>Datos de la empresa</h2>
-          <div className="grid sm:grid-cols-2 gap-2 text-xs" style={{ color: "#64748b" }}>
-            <p><span style={{ color: "#94a3b8" }}>Titular:</span> Michel Batista González</p>
-            <p><span style={{ color: "#94a3b8" }}>NIF:</span> X9784910-C</p>
-            <p><span style={{ color: "#94a3b8" }}>Domicilio:</span> C. Melchor Enrico Comediografo, 9, piso 2A, Tudela, Navarra 31500</p>
-            <p><span style={{ color: "#94a3b8" }}>Email:</span> hola@buscaycurra.es</p>
-          </div>
-        </div>
+        </section>
 
         {/* CTA */}
-        <div className="text-center">
-          <Link href="/auth/registro"
-            className="inline-block px-8 py-3 rounded-xl text-sm font-bold transition hover:opacity-90"
-            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-            Empieza gratis — sin tarjeta
-          </Link>
-          <p className="text-xs mt-3" style={{ color: "#374155" }}>
-            ¿Tienes preguntas?{" "}
-            <Link href="/app/ayuda" className="underline" style={{ color: "#475569" }}>Centro de ayuda</Link>
-            {" "}·{" "}
-            <a href="mailto:hola@buscaycurra.es" className="underline" style={{ color: "#475569" }}>hola@buscaycurra.es</a>
+        <div
+          className="rounded-2xl p-8 text-center"
+          style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}
+        >
+          <h2 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
+            Tu próximo trabajo ya existe.
+          </h2>
+          <p className="text-sm mb-6" style={{ color: "#64748b" }}>
+            Guzzi lo encuentra mientras tú descansas.
           </p>
+          <Link
+            href="/auth/registro"
+            className="inline-block text-sm font-semibold px-8 py-3 rounded-xl"
+            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+          >
+            Activar Guzzi gratis →
+          </Link>
+          <p className="mt-3 text-xs" style={{ color: "#475569" }}>Sin tarjeta de crédito. En 30 segundos.</p>
         </div>
-      </div>
+      </main>
+
+      <footer className="py-8 px-6 text-center" style={{ borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+        <div className="flex flex-wrap gap-4 justify-center text-xs" style={{ color: "#475569" }}>
+          {[
+            { href: "/", label: "Inicio" },
+            { href: "/precios", label: "Precios" },
+            { href: "/app/ayuda", label: "Ayuda" },
+            { href: "/privacidad", label: "Privacidad" },
+            { href: "/terminos", label: "Términos" },
+            { href: "/aviso-legal", label: "Aviso Legal" },
+          ].map((l) => (
+            <Link key={l.href} href={l.href} className="hover:underline">{l.label}</Link>
+          ))}
+        </div>
+        <p className="mt-4 text-xs" style={{ color: "#334155" }}>
+          © {new Date().getFullYear()} BuscayCurra. Todos los derechos reservados.
+        </p>
+      </footer>
     </div>
   );
 }
