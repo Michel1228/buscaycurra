@@ -407,8 +407,8 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     const keywordPattern = `%${query.toLowerCase()}%`;
     
     const dbResult = await pool.query(
-      `SELECT id, title, company, city, province, salary, description, sourcename, sourceurl, scrapedat
-       FROM joblistings
+      `SELECT id, title, company, city, province, salary, description, \"sourceName\", \"sourceUrl\", \"scrapedAt\"
+       FROM \"JobListing\"
        WHERE LOWER(title) LIKE $1
          AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2)
          AND (LOWER(country) LIKE $3 OR country IS NULL)
@@ -425,8 +425,8 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         empresa: (j.company as string) || "Ver en oferta",
         ubicacion: (j.city || j.province || city) as string,
         salario: (j.salary as string) || "Ver en oferta",
-        fuente: (j.sourcename as string) || "BuscayCurra",
-        url: (j.sourceurl as string) || "",
+        fuente: (j.sourceName as string) || "BuscayCurra",
+        url: (j.sourceUrl as string) || "",
         match: 65,
       }));
     }
