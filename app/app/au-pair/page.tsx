@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import {
@@ -36,6 +36,9 @@ export default function AuPairProfilePage() {
   const [tipoPerfil, setTipoPerfil] = useState<"joven_estudiante" | "con_experiencia" | "profesional_cambio">("joven_estudiante");
   const [generandoIA, setGenerandoIA] = useState(false);
   const [auPairStats, setAuPairStats] = useState({ hoy: 0, limiteHoy: 2, disponibles: 2, plan: "free" });
+  const [previewHTML, setPreviewHTML] = useState("");
+  const [descargandoCarta, setDescargandoCarta] = useState(false);
+  const iframeCartaRef = useRef<HTMLIFrameElement>(null);
 
   // Nuevo: modal de referencia
   const [refNombre, setRefNombre] = useState("");
@@ -213,6 +216,101 @@ export default function AuPairProfilePage() {
     userId, letterText, age, nationality, languages, childcareExperience,
     hasDrivingLicense, availableFrom, availableTo, dietaryInfo, hobbies, references,
   ]);
+
+  function verCarta() {
+    if (!letterText.trim()) { setError("Escribe o genera tu carta antes de previsualizar."); return; }
+    const pais = PAISES[paisDestino];
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Au Pair Letter</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Lato', sans-serif; background: #f8f6f0; color: #2c2c2c; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; }
+  .page { background: #fff; width: 210mm; max-width: 100%; box-shadow: 0 4px 40px rgba(0,0,0,0.12); border-radius: 2px; overflow: hidden; }
+  .header { background: linear-gradient(135deg, #2d5a4e 0%, #1a3d34 100%); color: #fff; padding: 40px 48px 32px; }
+  .name { font-family: 'Crimson Text', serif; font-size: 32px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .tagline { font-size: 13px; opacity: 0.75; letter-spacing: 1.5px; text-transform: uppercase; }
+  .meta { display: flex; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+  .meta-item { font-size: 12px; opacity: 0.85; display: flex; align-items: center; gap: 6px; }
+  .body { padding: 48px; }
+  .date { font-size: 13px; color: #888; margin-bottom: 32px; font-style: italic; }
+  .letter-text { font-family: 'Crimson Text', serif; font-size: 16px; line-height: 1.85; color: #2c2c2c; white-space: pre-wrap; word-break: break-word; }
+  .divider { width: 48px; height: 3px; background: linear-gradient(90deg, #2d5a4e, #4a9d84); border-radius: 2px; margin: 40px 0 32px; }
+  .refs-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #888; font-weight: 700; margin-bottom: 16px; }
+  .ref-card { border-left: 3px solid #2d5a4e; padding: 10px 16px; margin-bottom: 10px; background: #f8faf9; }
+  .ref-name { font-weight: 700; font-size: 14px; color: #1a3d34; }
+  .ref-detail { font-size: 12px; color: #666; margin-top: 2px; }
+  .footer { background: #f8f6f0; padding: 20px 48px; border-top: 1px solid #e8e4d9; display: flex; justify-content: space-between; align-items: center; }
+  .footer-logo { font-size: 11px; color: #aaa; letter-spacing: 1px; text-transform: uppercase; }
+  .destination-badge { background: #2d5a4e; color: #fff; font-size: 11px; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+  @media print { body { background: #fff; padding: 0; } .page { box-shadow: none; width: 100%; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="name">${age ? `Au Pair, ${age} años` : "Au Pair Profile"}</div>
+    <div class="tagline">Childcare Professional · Dear Family Letter</div>
+    <div class="meta">
+      ${PAISES[nationality] ? `<div class="meta-item">🌍 ${PAISES[nationality].bandera} ${PAISES[nationality].nombre}</div>` : ""}
+      ${languages.length > 0 ? `<div class="meta-item">🗣 ${languages.join(" · ")}</div>` : ""}
+      ${hasDrivingLicense ? `<div class="meta-item">🚗 Driving license</div>` : ""}
+      ${availableFrom ? `<div class="meta-item">📅 Available from ${availableFrom}</div>` : ""}
+    </div>
+  </div>
+  <div class="body">
+    <div class="date">${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div>
+    <div class="letter-text">${letterText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+    ${references.length > 0 ? `
+    <div class="divider"></div>
+    <div class="refs-title">References</div>
+    ${references.map(r => `
+    <div class="ref-card">
+      <div class="ref-name">${r.nombre}</div>
+      <div class="ref-detail">${r.relacion} · ${r.email}${r.telefono ? ` · ${r.telefono}` : ""}</div>
+    </div>`).join("")}` : ""}
+  </div>
+  <div class="footer">
+    <div class="footer-logo">BuscayCurra · buscaycurra.es</div>
+    ${pais ? `<div class="destination-badge">${pais.bandera} Destino: ${pais.nombre}</div>` : ""}
+  </div>
+</div>
+</body>
+</html>`;
+    setPreviewHTML(html);
+  }
+
+  async function descargarCarta() {
+    if (!previewHTML || descargandoCarta) return;
+    setDescargandoCarta(true);
+    try {
+      const res = await fetch("/api/cv/pdf-template", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: previewHTML }),
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Carta_AuPair_BuscayCurra.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      if (iframeCartaRef.current?.contentWindow) {
+        iframeCartaRef.current.contentWindow.print();
+      }
+    } finally {
+      setDescargandoCarta(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -504,11 +602,11 @@ export default function AuPairProfilePage() {
 
         {/* Dear Family Letter */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
               <span>💌</span> Dear Family Letter
             </h3>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button
                 onClick={generarCarta}
                 className="text-[11px] bg-[#252839] hover:bg-[#2d3142] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors"
@@ -520,11 +618,14 @@ export default function AuPairProfilePage() {
                 disabled={generandoIA}
                 className="text-[11px] bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea34d] hover:to-[#15803d] text-black font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1"
               >
-                {generandoIA ? (
-                  <>⏳ Generando...</>
-                ) : (
-                  <>✨ IA</>
-                )}
+                {generandoIA ? <>⏳ Generando...</> : <>✨ IA</>}
+              </button>
+              <button
+                onClick={verCarta}
+                className="text-[11px] border font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                style={{ borderColor: "rgba(34,197,94,0.3)", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}
+              >
+                👁 Ver carta
               </button>
             </div>
           </div>
@@ -580,6 +681,41 @@ My name is... (o pulsa ✨ IA para generarla automáticamente)"
             ))}
           </div>
         </div>
+
+        {/* Vista previa de la carta */}
+        {previewHTML && (
+          <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h3 className="text-sm font-semibold text-[#e2e8f0]">Vista previa — Plantilla profesional</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPreviewHTML("")}
+                  className="text-xs px-3 py-1.5 rounded-lg"
+                  style={{ border: "1px solid #2d3142", color: "#94a3b8" }}
+                >
+                  ← Cerrar
+                </button>
+                <button
+                  onClick={descargarCarta}
+                  disabled={descargandoCarta}
+                  className="text-xs font-semibold px-4 py-1.5 rounded-lg disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+                >
+                  {descargandoCarta ? "Generando PDF..." : "⬇ Descargar carta PDF"}
+                </button>
+              </div>
+            </div>
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #252836" }}>
+              <iframe
+                ref={iframeCartaRef}
+                srcDoc={previewHTML}
+                className="w-full bg-white"
+                style={{ height: "700px", border: "none" }}
+                title="Vista previa carta Au Pair"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Guardar */}
         <div className="flex gap-3 justify-end">

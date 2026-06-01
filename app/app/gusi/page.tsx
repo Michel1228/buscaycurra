@@ -11,6 +11,8 @@ const ACCESOS = [
   { href: "/app/empresas",   icon: "📬", label: "Mis envíos" },
   { href: "/app/pipeline",   icon: "📊", label: "Pipeline" },
   { href: "/app/guardados",  icon: "❤️", label: "Guardadas" },
+  { href: "/app/au-pair",    icon: "🧒", label: "Au Pair" },
+  { href: "/app/emigrar",    icon: "🌍", label: "Emigrar" },
 ];
 
 const COMPARATIVA = [

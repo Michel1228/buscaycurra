@@ -10,7 +10,7 @@
  * 6. Auto-guardado
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { generarCVHTML } from "@/lib/cv-generator/cv-template";
@@ -70,6 +70,9 @@ export default function CurriculumPage() {
   const [guardado, setGuardado] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [visibleEmpresas, setVisibleEmpresas] = useState(false);
+  const [descargando, setDescargando] = useState(false);
+  const [esPreviewIA, setEsPreviewIA] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     async function init() {
@@ -412,17 +415,45 @@ export default function CurriculumPage() {
 
       const html = generarCVHTML(formToCVData(perfilMejorado, experienciaMejorada));
       setMejoradoHTML(html);
+      setEsPreviewIA(true);
     } catch { setError("Error al generar el CV"); }
     finally { setProcesando(false); }
   }
 
-  function descargarPDF() {
-    if (!mejoradoHTML) return;
-    const win = window.open("", "_blank");
-    if (win) {
-      win.document.write(mejoradoHTML);
-      win.document.close();
-      win.print();
+  // Previsualizar la plantilla con datos actuales — SIN llamar a la IA
+  function verPlantilla() {
+    const html = generarCVHTML(formToCVData());
+    setMejoradoHTML(html);
+    setEsPreviewIA(false);
+  }
+
+  // Descarga real en PDF usando Playwright/Chromium en el servidor
+  async function descargarPDF() {
+    if (!mejoradoHTML || descargando) return;
+    setDescargando(true);
+    try {
+      const res = await fetch("/api/cv/pdf-template", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: mejoradoHTML }),
+      });
+      if (!res.ok) throw new Error("Error generando PDF");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "CV_BuscayCurra.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // Fallback: imprimir desde el iframe
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.print();
+      }
+    } finally {
+      setDescargando(false);
     }
   }
 
@@ -804,35 +835,68 @@ export default function CurriculumPage() {
             })()}
 
             {/* Generar CV */}
-            <div className="rounded-xl p-6 text-center" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <p className="text-3xl mb-3">✨</p>
-              <h3 className="font-semibold text-sm mb-2" style={{ color: "#f1f5f9" }}>¿Listo para crear tu CV profesional?</h3>
-              <p className="text-xs mb-4" style={{ color: "#64748b" }}>La IA mejorará tu perfil y generará un CV en formato PDF con diseño profesional de dos columnas</p>
-              <button onClick={generarYMejorar} disabled={procesando}
-                className="px-8 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-                {procesando ? "Generando..." : "🚀 Generar mi CV con IA"}
-              </button>
+            <div className="rounded-xl p-6" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {/* Ver plantilla sin IA */}
+                <div className="text-center p-5 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #2d3142" }}>
+                  <p className="text-2xl mb-2">👁</p>
+                  <h3 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>Ver mi plantilla</h3>
+                  <p className="text-xs mb-4" style={{ color: "#64748b" }}>Previsualiza tu CV con los datos actuales. Sin IA, al instante.</p>
+                  <button onClick={verPlantilla}
+                    className="w-full px-5 py-2.5 text-sm font-semibold rounded-xl transition"
+                    style={{ border: "1.5px solid #22c55e", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}>
+                    Ver CV →
+                  </button>
+                </div>
+                {/* Generar con IA */}
+                <div className="text-center p-5 rounded-xl" style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                  <p className="text-2xl mb-2">✨</p>
+                  <h3 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>Mejorar con IA</h3>
+                  <p className="text-xs mb-4" style={{ color: "#64748b" }}>Guzzi reescribe tu perfil con verbos de acción y logros cuantificables.</p>
+                  <button onClick={generarYMejorar} disabled={procesando}
+                    className="w-full px-5 py-2.5 text-sm font-semibold rounded-xl transition disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                    {procesando ? "Mejorando..." : "🚀 Generar con IA"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Tu CV generado</h2>
-              <div className="flex gap-2">
-                <button onClick={() => setMejoradoHTML("")}
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>
+                  {esPreviewIA ? "CV mejorado con IA ✨" : "Vista previa de plantilla"}
+                </h2>
+                {esPreviewIA && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                    style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                    IA activa
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={() => { setMejoradoHTML(""); setEsPreviewIA(false); }}
                   className="px-3 py-1.5 text-xs rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
-                  ← Volver a editar
+                  ← Editar
                 </button>
-                <button onClick={descargarPDF}
-                  className="px-4 py-1.5 text-xs font-semibold rounded-lg"
+                {!esPreviewIA && (
+                  <button onClick={generarYMejorar} disabled={procesando}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-50"
+                    style={{ border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}>
+                    {procesando ? "Mejorando..." : "✨ Mejorar con IA"}
+                  </button>
+                )}
+                <button onClick={descargarPDF} disabled={descargando}
+                  className="px-4 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-70"
                   style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-                  ⬇️ Descargar PDF
+                  {descargando ? "Generando PDF..." : "⬇ Descargar PDF"}
                 </button>
               </div>
             </div>
             <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #252836" }}>
-              <iframe srcDoc={mejoradoHTML} className="w-full bg-white" style={{ height: "1200px", border: "none" }} title="CV Generado" />
+              <iframe ref={iframeRef} srcDoc={mejoradoHTML} className="w-full bg-white" style={{ height: "1200px", border: "none" }} title="CV Generado" />
             </div>
           </div>
         )}
