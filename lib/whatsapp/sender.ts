@@ -155,41 +155,32 @@ export async function sendWhatsAppText(to: string, body: string): Promise<{
 
 /**
  * Envía una alerta de nueva oferta de empleo por WhatsApp.
- * Usa la plantilla "job_alert" (debe estar aprobada en Meta).
- * 
+ * Usa la plantilla "buscaycurra_alerta_empleo" (aprobada en Meta).
+ *
  * Parámetros de la plantilla:
- * {{1}} = título del puesto
- * {{2}} = empresa
+ * {{1}} = nombre del usuario
+ * {{2}} = título del puesto
  * {{3}} = ciudad
- * {{4}} = salario (o "No especificado")
  */
 export async function enviarAlertaWhatsApp(
   telefono: string,
-  datos: { puesto: string; empresa: string; ciudad: string; salario?: string; url: string }
+  datos: { nombre: string; puesto: string; ciudad: string }
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  // Limpiar número: quitar espacios, +, asegurar formato internacional
   const limpio = telefono.replace(/[\s\+\-\(\)]/g, "");
   const to = limpio.startsWith("34") ? limpio : `34${limpio}`;
 
   return sendWhatsAppTemplate({
     to,
-    templateName: "job_alert",
+    templateName: "buscaycurra_alerta_empleo",
     language: "es",
     components: [
       {
         type: "body",
         parameters: [
+          { type: "text", text: datos.nombre },
           { type: "text", text: datos.puesto },
-          { type: "text", text: datos.empresa },
-          { type: "text", text: datos.ciudad },
-          { type: "text", text: datos.salario || "No especificado" },
+          { type: "text", text: datos.ciudad || "España" },
         ],
-      },
-      {
-        type: "button",
-        sub_type: "url",
-        index: 0,
-        parameters: [{ type: "text", text: datos.url }],
       },
     ],
   });

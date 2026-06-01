@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
         leida: false,
       });
 
-      // 4b. Email de alerta
+      // 4b. Email + WhatsApp de alerta
       try {
         const { data: { user: authUser } } = await supabase.auth.admin.getUserById(alerta.user_id);
         if (authUser?.email) {
@@ -175,8 +175,24 @@ export async function GET(request: NextRequest) {
             ejemploCity: ejemplo.city || undefined,
           });
         }
+
+        // WhatsApp: solo si el usuario tiene teléfono guardado
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("phone, full_name")
+          .eq("id", alerta.user_id)
+          .single();
+
+        if (profileData?.phone) {
+          const { enviarAlertaWhatsApp } = await import("@/lib/whatsapp/sender");
+          await enviarAlertaWhatsApp(profileData.phone, {
+            nombre: profileData.full_name?.split(" ")[0] || "Candidato",
+            puesto: ejemplo.title,
+            ciudad: ejemplo.city || alerta.location || "España",
+          });
+        }
       } catch (emailErr) {
-        console.error("[send-alerts] Error enviando email:", (emailErr as Error).message);
+        console.error("[send-alerts] Error enviando email/whatsapp:", (emailErr as Error).message);
       }
 
       // 5. Actualizar last_sent_at
