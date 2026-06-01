@@ -2,29 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { getStripe } from "@/lib/stripe";
+import { getUserFromToken, extractToken } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function DELETE(req: NextRequest) {
-  const authHeader = req.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  const token = extractToken(req.headers.get("Authorization"));
   if (!token) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
+
+  // Verificar token y obtener user
+  const user = await getUserFromToken(token);
+  if (!user) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+  }
+
+  const userId = user.id;
 
   // Cliente con service role para borrar el auth user al final
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-
-  // Verificar token y obtener user
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-  if (authError || !user) {
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
-  }
-
-  const userId = user.id;
 
   try {
     // 1. Obtener stripe_customer_id antes de borrar el perfil

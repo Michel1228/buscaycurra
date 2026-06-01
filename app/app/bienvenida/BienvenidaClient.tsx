@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ const PASOS = [
     num: "2",
     icon: "🤖",
     titulo: "Activa los envíos automáticos",
-    desc: "Guzzi busca ofertas que encajan con tu perfil en 20+ países, adapta tu CV a cada una y lo envía en el momento exacto. Tú solo apruebas.",
+    desc: "Guzzi busca ofertas que encajan con tu perfil en 21 países, adapta tu CV a cada una y lo envía en el momento exacto. Tú solo apruebas.",
     href: "/app/empresas",
     cta: "Activar envíos →",
   },
@@ -34,8 +34,8 @@ const PASOS = [
   {
     num: "4",
     icon: "🌍",
-    titulo: "Explora ofertas en 20+ países",
-    desc: "Busca y filtra entre 1.600.000+ ofertas en 20+ países. Guarda las que te interesen. Compara salarios. Decide dónde quieres trabajar.",
+    titulo: "Explora ofertas en 21 países",
+    desc: "Busca y filtra entre 3.000.000+ ofertas en 21 países. Guarda las que te interesen. Compara salarios. Decide dónde quieres trabajar.",
     href: "/app/buscar",
     cta: "Explorar ofertas →",
   },
@@ -83,7 +83,7 @@ export default function BienvenidaPage() {
           </h1>
           <p className="text-sm max-w-md mx-auto" style={{ color: "#94a3b8" }}>
             Guzzi es tu agente IA personal. Busca, adapta y envía candidaturas por ti en{" "}
-            <strong style={{ color: "#22c55e" }}>20+ países, 24/7</strong>.
+            <strong style={{ color: "#22c55e" }}>21 países, 24/7</strong>.
           </p>
         </div>
 
@@ -229,7 +229,7 @@ export default function BienvenidaPage() {
             </div>
             <ul className="space-y-1.5 text-[11px] w-full" style={{ color: "#94a3b8" }}>
               <li>✅ Mejora tu CV con IA</li>
-              <li>✅ Busca ofertas en 20+ países</li>
+              <li>✅ Busca ofertas en 21 países</li>
               <li>✅ Envía candidaturas automáticamente</li>
               <li>✅ Carta personalizada por empresa</li>
               <li>✅ Prepara entrevistas con IA</li>

@@ -4,7 +4,7 @@ import LogoGusano from "@/components/LogoGusano";
 
 export const metadata: Metadata = {
   title: "Sobre nosotros — BuscayCurra | El agente IA que busca trabajo por ti",
-  description: "BuscayCurra es la plataforma de empleo con IA que automatiza tu búsqueda de trabajo en 20+ países. Conoce nuestra historia, misión y el equipo detrás de Guzzi.",
+  description: "BuscayCurra es la plataforma de empleo con IA que automatiza tu búsqueda de trabajo en 21 países. Conoce nuestra historia, misión y el equipo detrás de Guzzi.",
 };
 
 const VALORES = [
@@ -17,7 +17,7 @@ const VALORES = [
 const HITOS = [
   { año: "2024", texto: "Nace BuscayCurra con la idea de que buscar trabajo no debería ser un trabajo en sí mismo." },
   { año: "2025", texto: "Lanzamos Guzzi, el asistente IA que envía candidaturas personalizadas automáticamente." },
-  { año: "2026", texto: "Superamos 1.600.000 ofertas activas en 20+ países y 2.400 usuarios activos." },
+  { año: "2026", texto: "Superamos 3.000.000 ofertas activas en 21 países y 2.400 usuarios activos." },
 ];
 
 export default function SobreNosotrosPage() {
@@ -85,7 +85,7 @@ export default function SobreNosotrosPage() {
           <h2 className="text-xl font-bold mb-6" style={{ color: "#f1f5f9" }}>Guzzi, tu agente de empleo</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {[
-              { icon: "🔍", titulo: "Busca por ti", desc: "Escanea más de 1.600.000 ofertas en 20+ países cada 8 horas. Filtra por tu perfil, sector y salario esperado." },
+              { icon: "🔍", titulo: "Busca por ti", desc: "Escanea más de 3.000.000 ofertas en 21 países cada 6 horas. Filtra por tu perfil, sector y salario esperado." },
               { icon: "✨", titulo: "Mejora tu CV", desc: "Analiza tu currículum con IA y lo adapta a cada oferta antes de enviarlo. Supera los filtros ATS que descartan el 75% de candidatos." },
               { icon: "📧", titulo: "Envía candidaturas", desc: "Envía tu CV automáticamente con carta personalizada para cada empresa. Tú solo vas a la entrevista." },
               { icon: "📊", titulo: "Seguimiento en tiempo real", desc: "Pipeline visual de todas tus candidaturas: enviada, abierta, en revisión, entrevista. Sin agujeros negros." },

@@ -7,17 +7,17 @@ import PublicHeader from "@/components/PublicHeader";
 // Revalidar cada hora para que los cambios se reflejen sin redeploy
 export const revalidate = 3600;
 
-// ── Datos reales de BD (1 junio 2026) ──
-const OFERTAS = "1.650.000+";
-const OBJETIVO = "5.000.000";
-const PAISES = "20+";
+// ── Meta 2026 ──
+const OFERTAS = "3.000.000+";
+const OBJETIVO = "10.000.000";
+const PAISES = "21";
 const PAISES_DATA = [
-  { flag: "🇺🇸", nombre: "Estados Unidos", ofertas: "441K" },
-  { flag: "🇩🇪", nombre: "Alemania",       ofertas: "360K" },
-  { flag: "🇪🇸", nombre: "España",         ofertas: "168K" },
-  { flag: "🇫🇷", nombre: "Francia",        ofertas: "119K" },
-  { flag: "🇬🇧", nombre: "Reino Unido",    ofertas: "95K"  },
-  { flag: "🇨🇦", nombre: "Canadá",         ofertas: "84K"  },
+  { flag: "🇩🇪", nombre: "Alemania",       ofertas: "300K" },
+  { flag: "🇺🇸", nombre: "Estados Unidos", ofertas: "285K" },
+  { flag: "🇪🇸", nombre: "España",         ofertas: "156K" },
+  { flag: "🇫🇷", nombre: "Francia",        ofertas: "88K"  },
+  { flag: "🇨🇦", nombre: "Canadá",         ofertas: "82K"  },
+  { flag: "🇬🇧", nombre: "Reino Unido",    ofertas: "70K"  },
   { flag: "🇦🇺", nombre: "Australia",      ofertas: "58K"  },
   { flag: "🇸🇪", nombre: "Suecia",         ofertas: "51K"  },
   { flag: "🇮🇹", nombre: "Italia",         ofertas: "43K"  },
@@ -31,6 +31,8 @@ const PAISES_DATA = [
   { flag: "🇩🇰", nombre: "Dinamarca",      ofertas: "9K"   },
   { flag: "🇦🇹", nombre: "Austria",        ofertas: "8K"   },
   { flag: "🇫🇮", nombre: "Finlandia",      ofertas: "5K"   },
+  { flag: "🇳🇿", nombre: "Nueva Zelanda",  ofertas: "4K"   },
+  { flag: "🇬🇷", nombre: "Grecia",         ofertas: "3K"   },
 ];
 
 // ── Planes ──
@@ -81,7 +83,7 @@ const planes = [
 // ── Cómo funciona ──
 const pasos = [
   { num: "1", icon: "📎", titulo: "Sube tu CV o cuéntaselo a Guzzi", desc: "En 2 minutos Guzzi analiza tu experiencia, la mejora con IA y la adapta al formato que esperan las empresas." },
-  { num: "2", icon: "🌍", titulo: "Elige dónde quieres trabajar", desc: "España, Alemania, Irlanda... Guzzi escanea cientos de miles de ofertas en 20+ países. Filtra por salario, sector y tipo de contrato." },
+  { num: "2", icon: "🌍", titulo: "Elige dónde quieres trabajar", desc: `España, Alemania, Irlanda... Guzzi escanea cientos de miles de ofertas en ${PAISES} países. Filtra por salario, sector y tipo de contrato.` },
   { num: "3", icon: "🚀", titulo: "Guzzi envía. Tú solo vas a la entrevista.", desc: "Carta personalizada para cada empresa. Envío en el momento exacto en que el reclutador abre el email. Automático." },
 ];
 
@@ -89,7 +91,7 @@ const pasos = [
 const superpotencias = [
   {
     icon: "🌍",
-    titulo: "20+ países, un solo agente",
+    titulo: `${PAISES} países, un solo agente`,
     desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país. De España a Alemania, de Irlanda a Australia — sin mover un dedo.",
     acento: "#22c55e",
   },
@@ -301,7 +303,7 @@ export default function LandingPage() {
               <span style={{ color: "#2d3142" }}>·</span>
               <span>📧 Envío automático 24/7</span>
               <span style={{ color: "#2d3142" }}>·</span>
-              <span>🌍 20+ países</span>
+              <span>🌍 {PAISES} países</span>
               <span style={{ color: "#2d3142" }}>·</span>
               <span>📊 Pipeline visual</span>
               <span style={{ color: "#2d3142" }}>·</span>

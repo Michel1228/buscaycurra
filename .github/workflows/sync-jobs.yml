@@ -25,12 +25,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { country: 'uk', batchSize: 30 }
-          - { country: 'us', batchSize: 30 }
-          - { country: 'de', batchSize: 30 }
+          # Tier 1 — máximo volumen (mercados top)
+          - { country: 'uk', batchSize: 40 }
+          - { country: 'us', batchSize: 40 }
+          - { country: 'de', batchSize: 40 }
+          - { country: 'au', batchSize: 40 }
+          - { country: 'ca', batchSize: 40 }
+          # Tier 2 — mercados fuertes europeos
           - { country: 'fr', batchSize: 30 }
           - { country: 'es', batchSize: 30 }
-          - { country: 'au', batchSize: 30 }
+          - { country: 'ie', batchSize: 30 }
+          - { country: 'nl', batchSize: 30 }
+          # Tier 3 — mercados secundarios
+          - { country: 'it', batchSize: 25 }
+          - { country: 'se', batchSize: 25 }
+          - { country: 'ch', batchSize: 25 }
     steps:
       - name: Sync Adzuna country
         run: |

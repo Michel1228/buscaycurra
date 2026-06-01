@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
+import { getUserFromToken as getUser, extractToken } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +18,9 @@ const supabaseAdmin = createClient(
 );
 
 async function getUserFromToken(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  const token = authHeader.slice(7);
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !user) return null;
-  return user;
+  const token = extractToken(request.headers.get("Authorization"));
+  if (!token) return null;
+  return await getUser(token);
 }
 
 // ─── POST: crear alerta ───────────────────────────────────────────────────────

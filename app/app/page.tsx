@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -11,7 +11,7 @@ import LogoGusano from "@/components/LogoGusano";
 const pasos = [
   { num: "01", titulo: "Crea tu perfil", desc: "30 segundos. Sin tarjeta. Empieza tu aventura con Guzzi.", icon: "✨", color: "#7ed56f", detalle: "Tu aventura comienza aquí" },
   { num: "02", titulo: "Sube tu CV", desc: "Nuestra IA lo analiza y mejora automáticamente para cada sector", icon: "📄", color: "#f0c040", detalle: "Guzzi perfecciona tu CV 🐛" },
-  { num: "03", titulo: "Busca ofertas", desc: "1.600.000+ ofertas en 20+ países filtradas por zona, sector y salario", icon: "🔍", color: "#e07850", detalle: "Guzzi escanea el mercado 🎯" },
+  { num: "03", titulo: "Busca ofertas", desc: "3.000.000+ ofertas en 21 países filtradas por zona, sector y salario", icon: "🔍", color: "#e07850", detalle: "Guzzi escanea el mercado 🎯" },
   { num: "04", titulo: "Envía candidaturas", desc: "Automáticamente a cientos de empresas. Tú descansas.", icon: "📧", color: "#a070d0", detalle: "Guzzi trabaja por ti 🐛" },
   { num: "05", titulo: "¡Encuentra trabajo!", desc: "Empleo directo. Sin intermediarios. Tu salario completo.", icon: "🎉", color: "#ff6090", detalle: "¡Lo conseguiste! 🎉" },
 ];
@@ -145,7 +145,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 max-w-3xl mx-auto">
               {[
                 { num: "2.400+", label: "personas en activo" },
-                { num: "1.6M+", label: "ofertas en 20+ países" },
+                { num: "3M+", label: "ofertas en 21 países" },
                 { num: "2,99€", label: "al mes para empezar" },
                 { num: "2,99€", label: "vs 39€/mes de InfoJobs Premium" },
               ].map((s) => (
@@ -233,7 +233,7 @@ export default function HomePage() {
                 { concepto: "Tu CV entre otros", ellos: "Entre 200-2.000 candidatos", byc: "Llega en el momento exacto" },
                 { concepto: "Seguimiento", ellos: "No sabes si lo leyeron", byc: "Ves cada envío en tiempo real" },
                 { concepto: "Prep. entrevista", ellos: "Ninguna ayuda", byc: "Simulacro con IA por empresa" },
-                { concepto: "Fuentes de ofertas", ellos: "Solo las de ese portal", byc: "+1.600.000 de Adzuna, Careerjet, EURES…" },
+                { concepto: "Fuentes de ofertas", ellos: "Solo las de ese portal", byc: "+3.000.000 de Adzuna, Careerjet, EURES…" },
                 { concepto: "Precio real", ellos: "Gratis (inútil) o 39€/mes", byc: "Desde 2,99€/mes" },
               ].map((fila, i) => (
                 <div key={fila.concepto} className="grid grid-cols-3 text-center text-sm py-4 px-4 items-center gap-2"

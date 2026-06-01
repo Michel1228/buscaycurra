@@ -2,8 +2,8 @@ name: Sync Global APIs (USAJOBS + EURES + EU + Careerjet + Free)
 
 on:
   schedule:
-    - cron: '0 1,9,17 * * *'   # 01:00 / 09:00 / 17:00 UTC (cada 8h)
-  workflow_dispatch:            # Lanzamiento manual desde GitHub Actions
+    - cron: '0 0,6,12,18 * * *'   # 00:00 / 06:00 / 12:00 / 18:00 UTC (cada 6h — 4x/día)
+  workflow_dispatch:               # Lanzamiento manual desde GitHub Actions
 
 jobs:
   # ── APIs 100% gratuitas, sin rate-limit conocido ────────────────────────────
@@ -82,7 +82,7 @@ jobs:
           if [ "$HTTP" != "200" ]; then exit 1; fi
 
   # ── EURES (portal UE de empleo — usa Careerjet internamente) ─────────────────
-  # ~1800 combos en total; 90 por ejecucion => ciclo completo en ~6 dias
+  # ~1800 combos en total; 300 por ejecucion × 4x/día = 1200/día => ciclo completo en ~1.5 días
 
   sync-eures:
     name: "🇪🇺 EURES — lote ${{ matrix.offset }}"
@@ -91,9 +91,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { offset: 0,  batchSize: 30 }
-          - { offset: 30, batchSize: 30 }
-          - { offset: 60, batchSize: 30 }
+          - { offset: 0,   batchSize: 50 }
+          - { offset: 50,  batchSize: 50 }
+          - { offset: 100, batchSize: 50 }
+          - { offset: 150, batchSize: 50 }
+          - { offset: 200, batchSize: 50 }
+          - { offset: 250, batchSize: 50 }
     steps:
       - name: Sync EURES (offset=${{ matrix.offset }})
         run: |
@@ -107,40 +110,44 @@ jobs:
           echo "EURES offset=${{ matrix.offset }}: HTTP $HTTP — $BODY"
           if [ "$HTTP" != "200" ]; then exit 1; fi
 
-  # ── Careerjet Global — 24 paises en paralelo (max 8 simultneos) ──────────────
+  # ── Careerjet Global — 21 países top en paralelo (max 10 simultáneos) ───────
+  # Tier 1 (batchSize 30): mercados de mayor volumen
+  # Tier 2 (batchSize 25): mercados europeos fuertes
+  # Tier 3 (batchSize 20): mercados secundarios (también top, pero menor volumen)
+  # Eliminados: CZ, HU, RO (poco tráfico desde España)
 
   sync-careerjet-global:
     name: "Careerjet — ${{ matrix.country }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: 10
       matrix:
         include:
-          - { country: us, batchSize: 15 }
-          - { country: uk, batchSize: 15 }
-          - { country: au, batchSize: 15 }
-          - { country: ca, batchSize: 15 }
-          - { country: de, batchSize: 15 }
-          - { country: fr, batchSize: 15 }
-          - { country: nl, batchSize: 15 }
-          - { country: it, batchSize: 15 }
-          - { country: es, batchSize: 15 }
-          - { country: se, batchSize: 15 }
-          - { country: ch, batchSize: 15 }
-          - { country: be, batchSize: 15 }
-          - { country: pt, batchSize: 15 }
-          - { country: ie, batchSize: 15 }
-          - { country: no, batchSize: 15 }
-          - { country: dk, batchSize: 15 }
-          - { country: at, batchSize: 15 }
-          - { country: fi, batchSize: 15 }
-          - { country: nz, batchSize: 15 }
-          - { country: pl, batchSize: 15 }
-          - { country: gr, batchSize: 15 }
-          - { country: cz, batchSize: 15 }
-          - { country: hu, batchSize: 15 }
-          - { country: ro, batchSize: 15 }
+          # Tier 1 — máximo volumen
+          - { country: de, batchSize: 30 }
+          - { country: us, batchSize: 30 }
+          - { country: uk, batchSize: 30 }
+          - { country: au, batchSize: 30 }
+          - { country: ca, batchSize: 30 }
+          - { country: fr, batchSize: 30 }
+          - { country: es, batchSize: 30 }
+          - { country: ie, batchSize: 30 }
+          # Tier 2 — mercados europeos fuertes
+          - { country: nl, batchSize: 25 }
+          - { country: it, batchSize: 25 }
+          - { country: ch, batchSize: 25 }
+          - { country: se, batchSize: 25 }
+          - { country: no, batchSize: 25 }
+          - { country: be, batchSize: 25 }
+          - { country: pt, batchSize: 25 }
+          - { country: pl, batchSize: 25 }
+          # Tier 3 — mercados secundarios top
+          - { country: dk, batchSize: 20 }
+          - { country: at, batchSize: 20 }
+          - { country: fi, batchSize: 20 }
+          - { country: nz, batchSize: 20 }
+          - { country: gr, batchSize: 20 }
     steps:
       - name: Sync Careerjet ${{ matrix.country }}
         run: |
