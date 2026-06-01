@@ -223,7 +223,12 @@ function parseCVData(raw: string): CVParsed | null {
     const exp = cv.experiencia || cv.experience;
 
     if (Array.isArray(exp) && exp.length > 0) {
-      const e0 = exp[0] as { puesto?: string; empresa?: string };
+      // Ordenar por año descendente (más reciente primero) para coger el último puesto real
+      const expOrdenada = [...exp].sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+        const getYear = (f: string) => { const m = String(f || "").match(/(\d{4})/g); return m ? parseInt(m[m.length - 1]) : 0; };
+        return getYear(String(b.fechas || "")) - getYear(String(a.fechas || ""));
+      });
+      const e0 = expOrdenada[0] as { puesto?: string; empresa?: string; descripcion?: string };
       ultimoPuesto = e0.puesto || "";
       ultimaEmpresa = e0.empresa || "";
     } else if (typeof exp === "string" && exp.trim()) {
@@ -280,13 +285,23 @@ function detectIntent(text: string): string {
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
   if (/(preparar|practicar|simul).*(entrevista)|entrevista.*(preparar|practica)/.test(t)) return "entrevista_prep";
   if (/(crear|hacer|nuevo).*(cv|curriculum)/.test(t)) return "crear_cv";
-  if (/(plan|limite|límite|suscripci|cu.ntos.*env).*/.test(t) && /(tengo|tiene|mi|cu.l)/.test(t)) return "plan";
+  if (/(info|informacion|datos|busca|conoce|saber|dime).*(sobre\s+)?(la\s+)?empresa\s+\w|(qué|quien)\s+(es|conoces)\s+\w+\s*(empresa)?/.test(t)) return "info_empresa";
   return "chat";
 }
 
-async function searchJobsReal(query: string, city: string, limit = 5) {
+async function searchJobsReal(query: string, city: string, limit = 5, countryCode = "ES") {
   try {
-    // ── PRIMERO: consultar la BD local (17k+ ofertas) ──
+    // Mapear código de país a nombre para búsqueda
+    const countryMap: Record<string, string> = {
+      ES: "spain", DE: "germany", FR: "france", IT: "italy", PT: "portugal",
+      GB: "united kingdom", UK: "united kingdom", US: "united states", CA: "canada",
+      AU: "australia", NL: "netherlands", SE: "sweden", CH: "switzerland",
+      BE: "belgium", IE: "ireland", NO: "norway", DK: "denmark", AT: "austria",
+      FI: "finland", NZ: "new zealand", PL: "poland",
+    };
+    const countryName = countryMap[countryCode?.toUpperCase()] || "spain";
+
+    // ── PRIMERO: consultar la BD local ──
     const { getPool } = await import("@/lib/db");
     const pool = getPool();
     
@@ -298,10 +313,10 @@ async function searchJobsReal(query: string, city: string, limit = 5) {
        FROM joblistings
        WHERE LOWER(title) LIKE $1
          AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2)
-         AND LOWER(country) LIKE $3
+         AND (LOWER(country) LIKE $3 OR country IS NULL)
        ORDER BY scrapedat DESC
        LIMIT $4`,
-      [keywordPattern, cityPattern, city ? "%spain%" : "%", Math.min(limit * 2, 30)]
+      [keywordPattern, cityPattern, `%${countryName}%`, Math.min(limit * 2, 30)]
     );
     
     if (dbResult.rows.length > 0) {
@@ -360,6 +375,26 @@ function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[]): stri
     });
   text += `📧 **¿Envío tu CV a todas?** Di "sí" y me encargo. O usa el botón en cada oferta del buscador. 🐛`;
   return text;
+}
+
+function extractCompanyName(text: string): string | null {
+  const patterns = [
+    /empresa\s+[""]?(\w[\w\s]{2,40}?)[""]?\s*(?:es|tiene|ofrece|busca|contrata|$)/i,
+    /(?:info|información|datos)\s+(?:sobre\s+)?(?:la\s+)?empresa\s+[""]?([\w\s]{2,40}?)[""]?$/i,
+    /(?:qué|quien|quién)\s+(?:es|conoces)\s+(?:a\s+)?[""]?([\w\s]{2,40}?)[""]?\s*(?:empresa)?/i,
+    /(?:busca|conoce[sr]?|sabes?\s+(?:algo\s+)?(?:de|sobre))\s+(?:la\s+)?(?:empresa\s+)?[""]?([\w\s]{2,40}?)[""]?\s*(?:empresa)?/i,
+    /dime\s+(?:algo\s+)?(?:de|sobre)\s+(?:la\s+)?(?:empresa\s+)?[""]?([\w\s]{2,40}?)[""]?/i,
+  ];
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m?.[1]) return m[1].trim();
+  }
+  // Fallback: si el texto es corto y parece nombre de empresa
+  const clean = text.replace(/^(?:busca|info|información|datos|dime|conoce|saber)\s+(?:sobre\s+)?(?:la\s+)?(?:empresa\s+)?/i, "").trim();
+  if (clean.length >= 3 && clean.length <= 50 && !/(?:trabajo|empleo|cv|curriculum|oferta|buscar)/i.test(clean)) {
+    return clean;
+  }
+  return null;
 }
 
 function localReply(intent: string, cv?: CVParsed | null): string {
@@ -511,6 +546,63 @@ El candidato tiene mucha experiencia.
       return NextResponse.json({ reply, action: "carta_recomendacion", empresa, puesto });
     }
 
+    // ── Intent: info empresa (Google Places) ──────────────────────────────────
+    const preIntent = detectIntent(message);
+    if (preIntent === "info_empresa") {
+      const companyName = extractCompanyName(message);
+      if (!companyName) {
+        return NextResponse.json({
+          reply: "🏢 Dime el nombre de la empresa y te busco toda la información: email, teléfono, web, valoraciones... 🐛",
+          action: "need_company_name",
+        });
+      }
+
+      try {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://buscaycurra.es";
+        const extractRes = await fetch(`${siteUrl}/api/company/extract`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: companyName }),
+          signal: AbortSignal.timeout(15000),
+        });
+
+        if (!extractRes.ok) {
+          return NextResponse.json({
+            reply: `🏢 No encontré información de **${companyName}** en Google Places. ¿Seguro que el nombre es correcto? Prueba con el nombre completo o la ciudad. 🐛`,
+            action: "company_not_found",
+          });
+        }
+
+        const empresa = await extractRes.json() as {
+          nombre?: string; dominio?: string; urlWeb?: string;
+          emailRrhh?: string; emailContacto?: string; telefono?: string;
+          paginaEmpleo?: string; descripcion?: string; sector?: string;
+          linkedin?: string; twitter?: string; instagram?: string;
+          fuente?: string; googleRating?: number; googleReviews?: number;
+          googleAddress?: string; googleMapsUrl?: string;
+        };
+
+        let reply = `🏢 **${empresa.nombre || companyName}**\n\n`;
+        if (empresa.sector) reply += `📂 **Sector:** ${empresa.sector}\n`;
+        if (empresa.descripcion) reply += `📝 ${empresa.descripcion.slice(0, 300)}...\n`;
+        if (empresa.googleRating) reply += `⭐ **Valoración Google:** ${empresa.googleRating}/5 (${empresa.googleReviews || "?"} reseñas)\n`;
+        if (empresa.googleAddress) reply += `📍 ${empresa.googleAddress}\n`;
+        if (empresa.telefono) reply += `📞 ${empresa.telefono}\n`;
+        if (empresa.emailRrhh) reply += `📧 ${empresa.emailRrhh}\n`;
+        if (empresa.urlWeb) reply += `🌐 [Web](${empresa.urlWeb})\n`;
+        if (empresa.paginaEmpleo) reply += `💼 [Ofertas de empleo](${empresa.paginaEmpleo})\n`;
+        if (empresa.linkedin) reply += `🔗 [LinkedIn](${empresa.linkedin})\n`;
+        reply += `\n📧 ¿Quieres que envíe tu CV a esta empresa? Dime \"sí\" y me encargo.`;
+
+        return NextResponse.json({ reply, action: "company_info", company: empresa });
+      } catch {
+        return NextResponse.json({
+          reply: `🏢 **${companyName}** — no pude conectar con Google Places ahora. ¿Quieres que busque ofertas de esta empresa en nuestra base de datos? 🔍`,
+          action: "company_search_fallback",
+        });
+      }
+    }
+
     // ── Intent: buscar trabajo ───────────────────────────────────────────────
     const intent = detectIntent(message);
 
@@ -528,7 +620,7 @@ El candidato tiene mucha experiencia.
       }
 
       if (puestoBusqueda) {
-        const ofertas = await searchJobsReal(puestoBusqueda, ciudadBusqueda);
+        const ofertas = await searchJobsReal(puestoBusqueda, ciudadBusqueda, 5, pais || "ES");
         if (!ofertas || ofertas.length === 0) {
           return NextResponse.json({
             reply: (cvParsed?.ultimoPuesto
@@ -551,7 +643,7 @@ El candidato tiene mucha experiencia.
     // ── Intent: enviar CV ────────────────────────────────────────────────────
     if (intent === "enviar") {
       if (cvParsed?.ultimoPuesto) {
-        const ofertas = await searchJobsReal(cvParsed.ultimoPuesto, cvParsed.ciudad);
+        const ofertas = await searchJobsReal(cvParsed.ultimoPuesto, cvParsed.ciudad, 5, pais || "ES");
         if (!ofertas || ofertas.length === 0) {
           return NextResponse.json({
             reply: fallbackMessage(cvParsed.ultimoPuesto, cvParsed.ciudad),
