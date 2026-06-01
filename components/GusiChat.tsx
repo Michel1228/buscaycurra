@@ -816,7 +816,7 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
       setCargando(false);
       setMensajes((prev) => [...prev, {
         role: "gusi",
-        text: "👶 **Buscar trabajo de Au Pair**\n\nTe ayudo a encontrar familias que buscan au pair en Europa.\n\n💌 **Importante:** Para aplicar a ofertas au pair necesitas tu **perfil Au Pair** (carta \"Dear Family\") en vez de un CV tradicional.\n\n✨ **Puedo generar tu carta con IA:** Dime \"crea mi carta au pair\" y te haré una carta personalizada según tu perfil (joven, con experiencia, o cambio profesional).\n\n🧒 También puedes crear tu perfil completo en la sección **Au Pair** del menú.\n\n🏠 **Países populares:**\n🇩🇪 Alemania · 🇫🇷 Francia · 🇳🇱 Países Bajos\n🇬🇧 Reino Unido · 🇮🇪 Irlanda · 🇩🇰 Dinamarca\n🇸🇪 Suecia · 🇳🇴 Noruega · 🇧🇪 Bélgica\n\nDime: \"busca au pair en [país]\" y te muestro las ofertas. 🐛",
+        text: "👶 **Buscar trabajo de Au Pair**\n\nTe ayudo a encontrar familias que buscan au pair en Europa y otros países.\n\n💌 **Generar carta:** Dime \"crea mi carta au pair\" o \"genera mi dear family\" y usaré los datos de tu perfil.\n\n🔍 **Buscar ofertas:** Dime \"busca au pair en Alemania\" o el país que te interese.\n\n🧒 También puedes completar tu perfil con fotos en la sección **Au Pair** del menú.\n\n🏠 **Países populares para au pair:**\n🇩🇪 Alemania · 🇫🇷 Francia · 🇳🇱 Países Bajos\n🇬🇧 Reino Unido · 🇮🇪 Irlanda · 🇩🇰 Dinamarca\n🇸🇪 Suecia · 🇳🇴 Noruega · 🇦🇺 Australia\n\n¿Qué te interesa? 🐛",
       }]);
       return;
     }

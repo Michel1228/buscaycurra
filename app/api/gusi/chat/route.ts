@@ -353,22 +353,35 @@ function parseCVData(raw: string): CVParsed | null {
   }
 }
 
-function buildSystemPrompt(cvData?: string, pais?: string): string {
+function buildSystemPrompt(cvData?: string, pais?: string, auPairData?: Record<string, unknown> | null): string {
   const paisInfo = pais && pais !== "ES"
     ? `\nEl usuario está buscando trabajo en ${pais}. Adapta tus consejos al mercado laboral de ese país (salarios, requisitos, idioma).\n`
     : "";
 
-  if (!cvData) return PROMPT_BASE + paisInfo;
+  // Construir contexto Au Pair si existe
+  let auPairContext = "";
+  if (auPairData) {
+    const nombre = auPairData.nombre || "";
+    const edad = auPairData.age || "";
+    const ciudad = auPairData.ciudad || "";
+    const idiomas = Array.isArray(auPairData.languages) ? (auPairData.languages as string[]).join(", ") : "";
+    const experiencia = auPairData.childcare_experience || "";
+    const paisDestino = auPairData.nationality || "";
+    const fotos = Array.isArray(auPairData.photos) ? (auPairData.photos as string[]).length : 0;
+
+    auPairContext = `\n━━━ PERFIL AU PAIR DEL USUARIO ━━━\nNombre: ${nombre}\nEdad: ${edad}\nCiudad: ${ciudad}\nIdiomas: ${idiomas}\nExperiencia con niños: ${experiencia}\nPaís preferido: ${paisDestino}\nFotos subidas: ${fotos}\nCarta Dear Family: ${auPairData.letter_text ? "✅ Creada" : "❌ Pendiente"}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCuando el usuario pida "generar carta au pair" o "carta dear family", usa estos datos para personalizarla.\nCuando pida "buscar au pair" o "busco trabajo de au pair", busca ofertas de tipo au pair/nanny/niñera.\n`;
+  }
+
+  if (!cvData) return PROMPT_BASE + paisInfo + auPairContext;
 
   const cv = parseCVData(cvData);
-  if (!cv || !cv.resumenTexto) return PROMPT_BASE + paisInfo;
+  if (!cv || !cv.resumenTexto) return PROMPT_BASE + paisInfo + auPairContext;
 
   return `${PROMPT_BASE}${paisInfo}
-
 ━━━ DATOS REALES DEL CV DEL USUARIO (usa esto en TODAS tus respuestas) ━━━
 ${cv.resumenTexto}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+${auPairContext}
 Cuando el usuario pregunte qué trabajo buscar → sugiérele ofertas de "${cv.ultimoPuesto || cv.sector || "su sector"}" en "${cv.ciudad || "su zona"}".
 Cuando mejores el CV → usa exactamente los datos de arriba, no los inventes.
 Cuando generes una carta → pon el nombre "${cv.nombre}" y la ciudad "${cv.ciudad}" reales.`;
@@ -378,6 +391,8 @@ function detectIntent(text: string): string {
   const t = text.toLowerCase();
   if (/(mejorar|mejora|optimizar|reescrib).*(cv|curriculum)|(cv|curriculum).*(mejorar|mejorado|profesional|limpio)/.test(t)) return "cv_mejorado";
   if (/(carta.*(recomendaci|presentaci|para\s+\w)|presentaci.*carta)/.test(t)) return "carta_recomendacion";
+  if (/(crea|genera|haz|escrib).*(carta|dear family).*(au pair|aupair)/i.test(t) || /carta.*au.?pair/i.test(t) || /dear.?family/i.test(t)) return "carta_au_pair";
+  if (/(busco|buscar|busca|necesito|quiero).*(au pair|aupair|niñera|nanny|canguro|childcare)/i.test(t)) return "buscar_au_pair";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)/.test(t)) return "buscar";
   if (/(envi|manda|submit).*(cv|candidatura)|cv.*(envi|manda|automátic)/.test(t)) return "enviar";
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
@@ -538,6 +553,7 @@ export async function POST(req: NextRequest) {
 
     // Si hay userId, leer el CV fresco desde la BD (ignora el cvData del cliente)
     let cvData = cvDataFromClient;
+    let auPairProfile: Record<string, unknown> | null = null;
     if (userId) {
       try {
         const { getPool } = await import("@/lib/db");
@@ -551,6 +567,23 @@ export async function POST(req: NextRequest) {
         }
       } catch {
         // Si falla la BD, usar el cvData del cliente como fallback
+      }
+
+      // Cargar perfil Au Pair desde Supabase
+      try {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ojesordjedovnpyxspxi.supabase.co",
+          process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+        );
+        const { data } = await supabase
+          .from("au_pair_profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (data) auPairProfile = data as Record<string, unknown>;
+      } catch {
+        // Sin perfil au pair, continuar normalmente
       }
     }
 
@@ -704,6 +737,106 @@ El candidato tiene mucha experiencia.
     // ── Intent: buscar trabajo ───────────────────────────────────────────────
     const intent = detectIntent(message);
 
+    // ── Intent: buscar au pair ──────────────────────────────────────────────
+    if (intent === "buscar_au_pair" || mode === "buscar_au_pair") {
+      const extractedCity = extractCity(message);
+      const extractedCountry = extractCountryCode(message);
+      const cityOrCountry = extractedCountry || extractedCity || (auPairProfile?.nationality as string) || "UK";
+
+      const ofertas = await searchAuPairJobs(cityOrCountry, 5);
+      if (!ofertas || ofertas.length === 0) {
+        return NextResponse.json({
+          reply: `👶 No encontré ofertas au pair para **${cityOrCountry}** ahora mismo.\n\nPero puedo ayudarte:\n• 💌 **Crear tu carta "Dear Family"** — dime "crea mi carta au pair"\n• 🌍 **Buscar en otro país** — dime "busca au pair en Alemania"\n• 📄 **Completar tu perfil** — en la sección Au Pair del menú 🐛`,
+          action: "au_pair_no_results",
+        });
+      }
+      return NextResponse.json({
+        reply: `👶 **${ofertas.length} ofertas Au Pair** en **${cityOrCountry}**:\n\n${ofertas.map((o, i) => {
+          const em = ["🥇", "🥈", "🥉", "📌"][i] || "📌";
+          return `${em} **${(o as { titulo?: string }).titulo}**\n   🏠 ${(o as { empresa?: string }).empresa} · 📍 ${(o as { ubicacion?: string }).ubicacion}\n   💰 ${(o as { salario?: string }).salario}\n`;
+        }).join("\n")}\n📧 **¿Quieres aplicar?** Ve a la sección Au Pair del menú para completar tu perfil con fotos y carta. 🐛`,
+        jobs: ofertas,
+        action: "au_pair_search_results",
+      });
+    }
+
+    // ── Intent: carta au pair ───────────────────────────────────────────────
+    if (intent === "carta_au_pair" || mode === "carta_au_pair") {
+      if (!auPairProfile) {
+        return NextResponse.json({
+          reply: "💌 Para generar tu carta \"Dear Family\" primero necesitas crear tu perfil Au Pair.\n\nVe a la sección **Au Pair** del menú (🧒) y rellena:\n• Tus datos personales\n• Experiencia con niños\n• Fotos\n\nLuego vuelve y dime \"crea mi carta au pair\". 🐛",
+          action: "need_au_pair_profile",
+        });
+      }
+
+      // Usar DeepSeek para generar carta personalizada
+      try {
+        const deepseekKey = process.env.DEEPSEEK_API_KEY;
+        const nombre = auPairProfile.nombre || "el/la candidato/a";
+        const edad = auPairProfile.age || "";
+        const ciudad = auPairProfile.ciudad || "";
+        const idiomas = Array.isArray(auPairProfile.languages) ? (auPairProfile.languages as string[]).join(", ") : "";
+        const experiencia = auPairProfile.childcare_experience || "";
+        const hobbies = auPairProfile.hobbies || "";
+        const paisDestino = auPairProfile.nationality || "";
+
+        if (deepseekKey) {
+          const res = await fetch("https://api.deepseek.com/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "deepseek-chat",
+              messages: [{
+                role: "system",
+                content: `Eres experto en cartas "Dear Family" para au pairs. Escribe en INGLÉS (idioma estándar internacional para au pair). La carta debe ser cálida, personal y profesional. Máximo 300 palabras. NO uses placeholders — usa los datos reales proporcionados.`
+              }, {
+                role: "user",
+                content: `Genera una carta "Dear Family" para una au pair con estos datos:\n\nNombre: ${nombre}\nEdad: ${edad}\nCiudad: ${ciudad}\nIdiomas: ${idiomas}\nExperiencia con niños: ${experiencia}\nHobbies: ${hobbies}\nPaís de destino: ${paisDestino}\n\nLa carta debe incluir: presentación personal, experiencia con niños, por qué quiere ser au pair en ese país, hobbies y personalidad, y despedida cálida.`
+              }],
+              temperature: 0.8,
+              max_tokens: 800,
+            }),
+            signal: AbortSignal.timeout(20000),
+          });
+
+          if (res.ok) {
+            const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+            const letter = data.choices?.[0]?.message?.content || "";
+            if (letter) {
+              return NextResponse.json({
+                reply: `💌 **Aquí tienes tu carta "Dear Family" personalizada:**\n\n${letter}\n\n✅ **¿Te gusta?** Puedes copiarla y pegarla en tu perfil Au Pair, o dime "cambia [lo que quieras modificar]" y la ajusto. 🐛\n\n🧒 También puedes ir a la sección **Au Pair** para guardarla en tu perfil.`,
+                action: "au_pair_letter_generated",
+                auPairLetter: letter,
+              });
+            }
+          }
+        }
+        // Fallback: generar con plantilla si DeepSeek no disponible
+        const { generarPlantillaLetter } = await import("@/lib/au-pair");
+        const letter = generarPlantillaLetter({
+          nombre: nombre as string,
+          edad: edad ? parseInt(edad as string) : undefined,
+          nacionalidad: paisDestino as string,
+          ciudad: ciudad as string,
+          idiomas: Array.isArray(auPairProfile.languages) ? auPairProfile.languages as string[] : [],
+          experiencia: experiencia as string,
+          hobbies: hobbies as string,
+          paisDestino: paisDestino as string,
+        });
+
+        return NextResponse.json({
+          reply: `💌 **Aquí tienes tu carta "Dear Family":**\n\n${letter}\n\n✅ Personalízala a tu gusto en la sección **Au Pair** del menú. 🐛`,
+          action: "au_pair_letter_generated",
+          auPairLetter: letter,
+        });
+      } catch (e) {
+        return NextResponse.json({
+          reply: `❌ Error al generar la carta: ${(e as Error).message}. Inténtalo de nuevo. 🐛`,
+          action: "au_pair_letter_error",
+        });
+      }
+    }
+
     if (intent === "buscar" || mode === "buscar") {
       // Lo que el usuario PIDE explícitamente tiene prioridad sobre el CV
       const extractedJob = extractJobTerm(message);
@@ -765,7 +898,7 @@ El candidato tiene mucha experiencia.
     }
 
     // ── Chat normal con IA ───────────────────────────────────────────────────
-    const systemPrompt = buildSystemPrompt(cvData, pais);
+    const systemPrompt = buildSystemPrompt(cvData, pais, auPairProfile);
     const messages = [
       { role: "system" as const, content: systemPrompt },
       ...history.slice(-8)
@@ -853,4 +986,88 @@ function extractCity(text: string): string {
     if (t.includes(c)) return c.charAt(0).toUpperCase() + c.slice(1);
   }
   return "";
+}
+
+// Detecta código de país en el mensaje (para búsquedas au pair)
+function extractCountryCode(text: string): string {
+  const t = text.toLowerCase();
+  const countryMap: Record<string, string> = {
+    "reino unido": "GB", "uk": "GB", "inglaterra": "GB", "londres": "GB", "united kingdom": "GB",
+    "alemania": "DE", "germany": "DE", "berlin": "DE", "berlín": "DE",
+    "francia": "FR", "france": "FR", "paris": "FR", "parís": "FR",
+    "irlanda": "IE", "ireland": "IE", "dublin": "IE", "dublín": "IE",
+    "holanda": "NL", "netherlands": "NL", "países bajos": "NL", "amsterdam": "NL",
+    "dinamarca": "DK", "denmark": "DK", "copenhagen": "DK", "copenhague": "DK",
+    "suecia": "SE", "sweden": "SE", "stockholm": "SE", "estocolmo": "SE",
+    "noruega": "NO", "norway": "NO", "oslo": "NO",
+    "bélgica": "BE", "belgium": "BE", "bruselas": "BE",
+    "australia": "AU", "sydney": "AU", "melbourne": "AU",
+    "canadá": "CA", "canada": "CA", "toronto": "CA", "vancouver": "CA",
+    "nueva zelanda": "NZ", "new zealand": "NZ",
+    "suiza": "CH", "switzerland": "CH", "zurich": "CH", "zúrich": "CH",
+    "austria": "AT", "vienna": "AT", "viena": "AT",
+    "finlandia": "FI", "finland": "FI", "helsinki": "FI",
+    "italia": "IT", "italy": "IT", "roma": "IT",
+    "portugal": "PT", "lisboa": "PT",
+    "españa": "ES", "spain": "ES", "madrid": "ES",
+    "estados unidos": "US", "usa": "US", "eeuu": "US", "united states": "US",
+  };
+  for (const [name, code] of Object.entries(countryMap)) {
+    if (t.includes(name)) return code;
+  }
+  return "";
+}
+
+// ─── Búsqueda de ofertas Au Pair ──────────────────────────────────────────
+
+async function searchAuPairJobs(country: string, limit = 5) {
+  try {
+    const { getPool } = await import("@/lib/db");
+    const pool = getPool();
+
+    // Palabras clave au pair en varios idiomas
+    const auPairTerms = ["au pair", "aupair", "au-pair", "nanny", "niñera", "childcare", "child care", "babysitter", "canguro", "live-in caregiver"];
+    const conditions = auPairTerms.map((_, i) => `LOWER(title) LIKE $${i + 1}`).join(" OR ");
+    const params = auPairTerms.map(t => `%${t}%`);
+
+    let countryCondition = "";
+    const auPairCountries = "'GB','UK','IE','DE','FR','NL','DK','SE','NO','BE','AU','US','NZ','CA','ES','IT','PT','CH','AT','FI'";
+    
+    if (country && country !== "ES") {
+      // Si el usuario pide un país específico, filtrar SOLO ese país
+      params.push(`%${country.toLowerCase()}%`);
+      countryCondition = `AND LOWER(country) LIKE $${params.length}`;
+    }
+
+    const limitParamIndex = params.length + 1;
+    const query = `
+      SELECT id, title, company, city, province, country, salary, description, "sourceName", "sourceUrl", "scrapedAt"
+      FROM "JobListing"
+      WHERE (${conditions})
+        AND (${country && country !== "ES" ? "1=1" : `country IN (${auPairCountries})`}${countryCondition})
+      ORDER BY "scrapedAt" DESC
+      LIMIT $${limitParamIndex}::int
+    `;
+    params.push(String(limit));
+
+    const result = await pool.query(query, params);
+
+    if (result.rows.length > 0) {
+      console.log(`[Guzzi] Au Pair BD: ${result.rows.length} ofertas`);
+      return result.rows.map((j: Record<string, unknown>) => ({
+        id: `db-${j.id}`,
+        titulo: j.title as string,
+        empresa: (j.company as string) || "Familia anfitriona",
+        ubicacion: (j.city || j.country || "") as string,
+        salario: (j.salary as string) || "Paga de bolsillo + alojamiento",
+        fuente: (j.sourceName as string) || "BuscayCurra",
+        url: (j.sourceUrl as string) || "",
+        match: 65,
+      }));
+    }
+    return null;
+  } catch (e) {
+    console.error("[Guzzi] Error en searchAuPairJobs:", (e as Error).message);
+    return null;
+  }
 }

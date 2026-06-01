@@ -91,10 +91,14 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
       if (!email && oferta.empresa) {
         try {
           // Usar el extractor con Google Places (más fiable que scraping)
-          const companyDomain = oferta.url ? new URL(oferta.url).hostname.replace("www.", "") : "";
-          const r = await fetch(`/api/company/extract?domain=${encodeURIComponent(companyDomain)}&name=${encodeURIComponent(oferta.empresa)}`);
-          const d = await r.json() as { emails?: string[]; email?: string };
-          email = (d.emails && d.emails[0]) || d.email || "";
+          const r = await fetch("/api/company/extract", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: oferta.empresa }),
+            signal: AbortSignal.timeout(8000),
+          });
+          const d = await r.json() as { emails?: string[]; emailRrhh?: string; emailContacto?: string };
+          email = (d.emails && d.emails[0]) || d.emailRrhh || d.emailContacto || "";
         } catch { /* continuar */ }
       }
 
