@@ -129,8 +129,8 @@ export default function AppNavWrapper() {
           onClick={() => setMobileOpen(false)}
         >
           <div
-            className="absolute top-14 left-4 right-4 rounded-xl p-3"
-            style={{ background: "#1e212b", border: "1px solid #2d3142" }}
+            className="absolute top-14 left-4 right-4 rounded-xl p-3 overflow-y-auto"
+            style={{ background: "#1e212b", border: "1px solid #2d3142", maxHeight: "calc(100vh - 80px)" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 🌍 Región e idioma */}
