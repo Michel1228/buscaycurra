@@ -55,26 +55,28 @@ jobs:
             echo "✅ Keystore nuevo generado"
           fi
 
-      - name: Prepare build directory
-        run: |
-          mkdir -p /tmp/twa-build
-          jq \
-            --arg kpath "/tmp/android.keystore" \
-            '.signingKey.path = $kpath | .signingKey.storePassword = "android" | .signingKey.keyPassword = "android"' \
-            twa-manifest.json > /tmp/twa-build/twa-manifest.json
-          echo "Manifest para build:"
-          cat /tmp/twa-build/twa-manifest.json
-
-      - name: Start local manifest server
+      - name: Start local asset server
         run: |
           python3 -m http.server 9090 --directory $GITHUB_WORKSPACE/public &
           sleep 2
-          echo "Manifest disponible en local:"
-          curl -sf http://localhost:9090/manifest.json | python3 -m json.tool | head -8
+          curl -sf http://localhost:9090/manifest.json -o /dev/null && echo "✅ manifest OK" || echo "❌ manifest FALLA"
+          curl -sf http://localhost:9090/icon-512.png -o /dev/null && echo "✅ icon-512 OK" || echo "❌ icon-512 FALLA"
+          curl -sf http://localhost:9090/icon-512-maskable.png -o /dev/null && echo "✅ icon-512-maskable OK" || echo "❌ icon-512-maskable FALLA"
 
-      - name: Generate Android project (init)
-        working-directory: /tmp/twa-build
-        run: bubblewrap init --manifest http://localhost:9090/manifest.json
+      - name: Prepare build directory
+        run: |
+          mkdir -p /tmp/twa-build
+          # Inyectar keystore + redirigir iconos al servidor local (evita conectar al VPS)
+          jq \
+            --arg kpath "/tmp/android.keystore" \
+            '.signingKey.path = $kpath
+             | .signingKey.storePassword = "android"
+             | .signingKey.keyPassword = "android"
+             | .iconUrl = "http://localhost:9090/icon-512.png"
+             | .maskableIconUrl = "http://localhost:9090/icon-512-maskable.png"' \
+            twa-manifest.json > /tmp/twa-build/twa-manifest.json
+          echo "twa-manifest.json listo:"
+          cat /tmp/twa-build/twa-manifest.json
 
       - name: Build AAB
         working-directory: /tmp/twa-build
