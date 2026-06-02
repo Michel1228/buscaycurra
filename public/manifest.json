@@ -1,43 +1,51 @@
 {
+  "id": "es.buscaycurra.app",
   "name": "BuscayCurra — Encuentra trabajo con IA",
   "short_name": "BuscayCurra",
-  "description": "Mejora tu CV con IA, busca ofertas en toda España y envía candidaturas automáticamente.",
-  "start_url": "/",
+  "description": "Mejora tu CV con IA, busca ofertas en toda España y envía candidaturas automáticamente. Trabaja en España o emigra a 19 países.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0f1a0a",
   "theme_color": "#7ed56f",
-  "orientation": "portrait",
-  "categories": ["business", "productivity", "lifestyle"],
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
   "lang": "es",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
-    {
-      "src": "/qr-buscaycurra.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/qr-buscaycurra.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
+    { "src": "/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
+    { "src": "/icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
     {
       "name": "Buscar trabajo",
+      "short_name": "Buscar",
       "url": "/app/buscar",
-      "description": "Buscar ofertas de empleo"
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }],
+      "description": "Buscar ofertas de empleo en España y 19 países"
     },
     {
       "name": "Mi CV",
+      "short_name": "Mi CV",
       "url": "/app/curriculum",
-      "description": "Crear y mejorar mi CV"
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }],
+      "description": "Crear y mejorar mi CV con IA"
     },
     {
-      "name": "Mis envíos",
+      "name": "Enviar CV",
+      "short_name": "Enviar",
       "url": "/app/envios",
-      "description": "Ver estado de mis candidaturas"
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }],
+      "description": "Enviar candidaturas automáticamente"
     }
   ]
 }
