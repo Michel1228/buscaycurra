@@ -20,18 +20,33 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Accept Android SDK licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+      - name: Setup Android SDK
+        run: |
+          # Escribir hashes de licencias directamente (más fiable que sdkmanager interactivo)
+          mkdir -p $ANDROID_HOME/licenses
+          printf "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n" \
+            > $ANDROID_HOME/licenses/android-sdk-license
+          printf "84831b9409646a918e30573bab4c9c91346d8abd\n" \
+            > $ANDROID_HOME/licenses/android-sdk-preview-license
+          printf "33b6937b8ce6b6f5a4a5ad3f1f9a5a7e3a7f8b6\n" \
+            > $ANDROID_HOME/licenses/android-googletv-license
+
+          # Instalar platform-tools (obligatorio para bubblewrap)
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" 2>&1 | tail -3
+
+          # Diagnóstico del SDK
+          echo "=== SDK structure ==="
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          ls $ANDROID_HOME/
+          ls $ANDROID_HOME/build-tools/ 2>/dev/null && echo "✅ build-tools OK" || echo "❌ build-tools MISSING"
+          ls $ANDROID_HOME/platform-tools/ 2>/dev/null && echo "✅ platform-tools OK" || echo "❌ platform-tools MISSING"
+          ls $ANDROID_HOME/licenses/ && echo "✅ licenses OK"
 
       - name: Configure Bubblewrap
         run: |
           mkdir -p ~/.bubblewrap
-          cat > ~/.bubblewrap/config.json << EOF
-          {
-            "jdkPath": "$JAVA_HOME",
-            "androidSdkPath": "$ANDROID_HOME"
-          }
-          EOF
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" \
+            > ~/.bubblewrap/config.json
           echo "Bubblewrap config:"
           cat ~/.bubblewrap/config.json
 
