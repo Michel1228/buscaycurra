@@ -65,9 +65,16 @@ jobs:
           echo "Manifest para build:"
           cat /tmp/twa-build/twa-manifest.json
 
+      - name: Start local manifest server
+        run: |
+          python3 -m http.server 9090 --directory $GITHUB_WORKSPACE/public &
+          sleep 2
+          echo "Manifest disponible en local:"
+          curl -sf http://localhost:9090/manifest.json | python3 -m json.tool | head -8
+
       - name: Generate Android project (init)
         working-directory: /tmp/twa-build
-        run: bubblewrap init --manifest https://buscaycurra.es/manifest.json
+        run: bubblewrap init --manifest http://localhost:9090/manifest.json
 
       - name: Build AAB
         working-directory: /tmp/twa-build
