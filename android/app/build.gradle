@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdk 34
+    compileSdk 35
     namespace 'es.buscaycurra.app'
 
     defaultConfig {
         applicationId 'es.buscaycurra.app'
         minSdk 21
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName '1.0.0'
     }
