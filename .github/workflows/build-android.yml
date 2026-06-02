@@ -17,38 +17,17 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli@1.21.1
+      - name: Setup Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
 
-      - name: Setup Android SDK
+      - name: Accept Android SDK licenses + instalar plataforma
         run: |
-          # Escribir hashes de licencias directamente (más fiable que sdkmanager interactivo)
           mkdir -p $ANDROID_HOME/licenses
-          printf "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n" \
-            > $ANDROID_HOME/licenses/android-sdk-license
-          printf "84831b9409646a918e30573bab4c9c91346d8abd\n" \
-            > $ANDROID_HOME/licenses/android-sdk-preview-license
-          printf "33b6937b8ce6b6f5a4a5ad3f1f9a5a7e3a7f8b6\n" \
-            > $ANDROID_HOME/licenses/android-googletv-license
-
-          # Instalar platform-tools (obligatorio para bubblewrap)
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" 2>&1 | tail -3
-
-          # Diagnóstico del SDK
-          echo "=== SDK structure ==="
-          echo "ANDROID_HOME: $ANDROID_HOME"
-          ls $ANDROID_HOME/
-          ls $ANDROID_HOME/build-tools/ 2>/dev/null && echo "✅ build-tools OK" || echo "❌ build-tools MISSING"
-          ls $ANDROID_HOME/platform-tools/ 2>/dev/null && echo "✅ platform-tools OK" || echo "❌ platform-tools MISSING"
-          ls $ANDROID_HOME/licenses/ && echo "✅ licenses OK"
-
-      - name: Configure Bubblewrap
-        run: |
-          mkdir -p ~/.bubblewrap
-          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" \
-            > ~/.bubblewrap/config.json
-          echo "Bubblewrap config:"
-          cat ~/.bubblewrap/config.json
+          printf "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n" > $ANDROID_HOME/licenses/android-sdk-license
+          printf "84831b9409646a918e30573bab4c9c91346d8abd\n" > $ANDROID_HOME/licenses/android-sdk-preview-license
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" 2>&1 | tail -3
 
       - name: Setup keystore
         id: keystore
@@ -56,7 +35,7 @@ jobs:
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/android.keystore
             echo "source=secret" >> $GITHUB_OUTPUT
-            echo "✅ Keystore restaurado desde secret"
+            echo "Keystore restaurado desde secret"
           else
             keytool -genkeypair -v \
               -keystore /tmp/android.keystore \
@@ -67,110 +46,52 @@ jobs:
               -dname "CN=BuscayCurra,O=BuscayCurra,C=ES" \
               -noprompt
             echo "source=new" >> $GITHUB_OUTPUT
-            echo "✅ Keystore nuevo generado"
+            echo "Keystore nuevo generado"
           fi
 
-      - name: Start local asset server
+      - name: Copy icons to Android project
         run: |
-          python3 -m http.server 9090 --directory $GITHUB_WORKSPACE/public &
-          sleep 2
-          curl -sf http://localhost:9090/manifest.json -o /dev/null && echo "✅ manifest OK" || echo "❌ manifest FALLA"
-          curl -sf http://localhost:9090/icon-512.png -o /dev/null && echo "✅ icon-512 OK" || echo "❌ icon-512 FALLA"
-          curl -sf http://localhost:9090/icon-512-maskable.png -o /dev/null && echo "✅ icon-512-maskable OK" || echo "❌ icon-512-maskable FALLA"
+          for dir in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            mkdir -p android/app/src/main/res/$dir
+            cp public/icon-192.png android/app/src/main/res/$dir/ic_launcher.png
+          done
+          echo "Icons copiados"
 
-      - name: Prepare build directory
-        run: |
-          mkdir -p /tmp/twa-build
-          # Inyectar keystore + redirigir iconos al servidor local (evita conectar al VPS)
-          jq \
-            --arg kpath "/tmp/android.keystore" \
-            '.signingKey.path = $kpath
-             | .signingKey.storePassword = "android"
-             | .signingKey.keyPassword = "android"
-             | .iconUrl = "http://localhost:9090/icon-512.png"
-             | .maskableIconUrl = "http://localhost:9090/icon-512-maskable.png"' \
-            twa-manifest.json > /tmp/twa-build/twa-manifest.json
-          echo "twa-manifest.json listo:"
-          cat /tmp/twa-build/twa-manifest.json
-
-      - name: Debug Bubblewrap SDK validation
-        run: |
-          node -e "
-          const fs = require('fs');
-          const path = require('path');
-          const sdk = process.env.ANDROID_HOME;
-          const jdk = process.env.JAVA_HOME;
-          const cfgPath = require('os').homedir() + '/.bubblewrap/config.json';
-          console.log('HOME:', require('os').homedir());
-          console.log('Config exists:', fs.existsSync(cfgPath));
-          if (fs.existsSync(cfgPath)) console.log('Config:', fs.readFileSync(cfgPath,'utf8'));
-          const checks = [
-            ['sdk exists', fs.existsSync(sdk)],
-            ['build-tools', fs.existsSync(path.join(sdk,'build-tools'))],
-            ['platform-tools', fs.existsSync(path.join(sdk,'platform-tools'))],
-            ['platforms', fs.existsSync(path.join(sdk,'platforms'))],
-            ['cmdline-tools/latest', fs.existsSync(path.join(sdk,'cmdline-tools','latest'))],
-            ['sdkmanager at latest', fs.existsSync(path.join(sdk,'cmdline-tools','latest','bin','sdkmanager'))],
-            ['tools/bin/sdkmanager', fs.existsSync(path.join(sdk,'tools','bin','sdkmanager'))],
-            ['jdk exists', fs.existsSync(jdk)],
-          ];
-          checks.forEach(([n,v]) => console.log(v ? '✅' : '❌', n));
-          "
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
       - name: Build AAB
-        working-directory: /tmp/twa-build
-        run: bubblewrap build --skipPwaValidation
-
-      - name: Locate AAB
-        id: find_aab
-        run: |
-          AAB=$(find /tmp/twa-build -name "*.aab" 2>/dev/null | head -1)
-          echo "path=$AAB" >> $GITHUB_OUTPUT
-          if [ -n "$AAB" ]; then
-            echo "✅ AAB encontrado: $AAB"
-            ls -lh "$AAB"
-          else
-            echo "❌ AAB no encontrado, listando directorio:"
-            find /tmp/twa-build -type f | head -40
-            exit 1
-          fi
+        working-directory: android
+        env:
+          KEYSTORE_PATH: /tmp/android.keystore
+          KEYSTORE_PASSWORD: android
+          KEY_ALIAS: android
+          KEY_PASSWORD: android
+        run: gradle bundleRelease
 
       - name: Get SHA-256 fingerprint
         run: |
-          SHA=$(keytool -list -v \
-            -keystore /tmp/android.keystore \
-            -alias android \
+          SHA=$(keytool -list -v -keystore /tmp/android.keystore -alias android \
             -storepass android 2>/dev/null | grep "SHA256:" | awk '{print $2}')
           echo ""
           echo "========================================================"
-          echo "  SHA-256 FINGERPRINT (para assetlinks.json):"
-          echo "  $SHA"
+          echo "  SHA-256 (para assetlinks.json): $SHA"
           echo "========================================================"
 
-      - name: Show KEYSTORE_BASE64 for secret (primera ejecución)
+      - name: Show KEYSTORE_BASE64 (primera ejecucion)
         if: steps.keystore.outputs.source == 'new'
         run: |
-          echo ""
           echo "========================================================"
-          echo "  PRIMERA EJECUCIÓN — Guarda este keystore como secret"
-          echo "  Nombre del secret: KEYSTORE_BASE64"
-          echo "  Valor (copia todo):"
+          echo "  Guarda esto como secret KEYSTORE_BASE64:"
           base64 -w 0 /tmp/android.keystore
           echo ""
           echo "========================================================"
-
-      - name: Copy artifacts
-        run: |
-          mkdir -p /tmp/artifacts
-          cp /tmp/android.keystore /tmp/artifacts/android.keystore
-          AAB="${{ steps.find_aab.outputs.path }}"
-          cp "$AAB" /tmp/artifacts/buscaycurra-release.aab
-          echo "Artifacts:"
-          ls -lh /tmp/artifacts/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-release-v${{ github.run_number }}
-          path: /tmp/artifacts/
+          path: |
+            android/app/build/outputs/bundle/release/app-release.aab
+            /tmp/android.keystore
           retention-days: 90
