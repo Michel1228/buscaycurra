@@ -18,7 +18,7 @@ jobs:
           java-version: '17'
 
       - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
+        run: npm install -g @bubblewrap/cli@1.21.1
 
       - name: Setup Android SDK
         run: |
@@ -92,6 +92,30 @@ jobs:
             twa-manifest.json > /tmp/twa-build/twa-manifest.json
           echo "twa-manifest.json listo:"
           cat /tmp/twa-build/twa-manifest.json
+
+      - name: Debug Bubblewrap SDK validation
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const sdk = process.env.ANDROID_HOME;
+          const jdk = process.env.JAVA_HOME;
+          const cfgPath = require('os').homedir() + '/.bubblewrap/config.json';
+          console.log('HOME:', require('os').homedir());
+          console.log('Config exists:', fs.existsSync(cfgPath));
+          if (fs.existsSync(cfgPath)) console.log('Config:', fs.readFileSync(cfgPath,'utf8'));
+          const checks = [
+            ['sdk exists', fs.existsSync(sdk)],
+            ['build-tools', fs.existsSync(path.join(sdk,'build-tools'))],
+            ['platform-tools', fs.existsSync(path.join(sdk,'platform-tools'))],
+            ['platforms', fs.existsSync(path.join(sdk,'platforms'))],
+            ['cmdline-tools/latest', fs.existsSync(path.join(sdk,'cmdline-tools','latest'))],
+            ['sdkmanager at latest', fs.existsSync(path.join(sdk,'cmdline-tools','latest','bin','sdkmanager'))],
+            ['tools/bin/sdkmanager', fs.existsSync(path.join(sdk,'tools','bin','sdkmanager'))],
+            ['jdk exists', fs.existsSync(jdk)],
+          ];
+          checks.forEach(([n,v]) => console.log(v ? '✅' : '❌', n));
+          "
 
       - name: Build AAB
         working-directory: /tmp/twa-build
