@@ -1,0 +1,56 @@
+{
+  "packageId": "es.buscaycurra.app",
+  "host": "buscaycurra.es",
+  "name": "BuscayCurra — Encuentra trabajo con IA",
+  "launcherName": "BuscayCurra",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#7ed56f",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#0f1a0a",
+  "enableNotifications": false,
+  "startUrl": "/?source=pwa",
+  "iconUrl": "https://buscaycurra.es/icon-512.png",
+  "maskableIconUrl": "https://buscaycurra.es/icon-512-maskable.png",
+  "shortcuts": [
+    {
+      "name": "Buscar trabajo",
+      "shortName": "Buscar",
+      "url": "/app/buscar",
+      "icons": [{ "src": "https://buscaycurra.es/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Mi CV",
+      "shortName": "Mi CV",
+      "url": "/app/curriculum",
+      "icons": [{ "src": "https://buscaycurra.es/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Enviar CV",
+      "shortName": "Enviar",
+      "url": "/app/envios",
+      "icons": [{ "src": "https://buscaycurra.es/icon-96.png", "sizes": "96x96" }]
+    }
+  ],
+  "webManifestUrl": "https://buscaycurra.es/manifest.json",
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionCode": 1,
+  "appVersionName": "1.0.0",
+  "splashScreenFadeOutDuration": 300,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://buscaycurra.es/",
+  "minSdkVersion": 21,
+  "targetSdkVersion": 34,
+  "alphaDependencies": { "enabled": false },
+  "features": {
+    "locationDelegation": { "enabled": false },
+    "playBilling": { "enabled": false }
+  }
+}

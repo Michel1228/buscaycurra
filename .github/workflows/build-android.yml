@@ -1,0 +1,128 @@
+name: Build Android AAB (TWA)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+
+      - name: Configure Bubblewrap
+        run: |
+          mkdir -p ~/.bubblewrap
+          cat > ~/.bubblewrap/config.json << EOF
+          {
+            "jdkPath": "$JAVA_HOME",
+            "androidSdkPath": "$ANDROID_HOME"
+          }
+          EOF
+          echo "Bubblewrap config:"
+          cat ~/.bubblewrap/config.json
+
+      - name: Setup keystore
+        id: keystore
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/android.keystore
+            echo "source=secret" >> $GITHUB_OUTPUT
+            echo "✅ Keystore restaurado desde secret"
+          else
+            keytool -genkeypair -v \
+              -keystore /tmp/android.keystore \
+              -alias android \
+              -keyalg RSA -keysize 2048 \
+              -validity 10000 \
+              -storepass android -keypass android \
+              -dname "CN=BuscayCurra,O=BuscayCurra,C=ES" \
+              -noprompt
+            echo "source=new" >> $GITHUB_OUTPUT
+            echo "✅ Keystore nuevo generado"
+          fi
+
+      - name: Prepare build directory
+        run: |
+          mkdir -p /tmp/twa-build
+          jq \
+            --arg kpath "/tmp/android.keystore" \
+            '.signingKey.path = $kpath | .signingKey.storePassword = "android" | .signingKey.keyPassword = "android"' \
+            twa-manifest.json > /tmp/twa-build/twa-manifest.json
+          echo "Manifest para build:"
+          cat /tmp/twa-build/twa-manifest.json
+
+      - name: Generate Android project (init)
+        working-directory: /tmp/twa-build
+        run: bubblewrap init --manifest https://buscaycurra.es/manifest.json
+
+      - name: Build AAB
+        working-directory: /tmp/twa-build
+        run: bubblewrap build --skipPwaValidation
+
+      - name: Locate AAB
+        id: find_aab
+        run: |
+          AAB=$(find /tmp/twa-build -name "*.aab" 2>/dev/null | head -1)
+          echo "path=$AAB" >> $GITHUB_OUTPUT
+          if [ -n "$AAB" ]; then
+            echo "✅ AAB encontrado: $AAB"
+            ls -lh "$AAB"
+          else
+            echo "❌ AAB no encontrado, listando directorio:"
+            find /tmp/twa-build -type f | head -40
+            exit 1
+          fi
+
+      - name: Get SHA-256 fingerprint
+        run: |
+          SHA=$(keytool -list -v \
+            -keystore /tmp/android.keystore \
+            -alias android \
+            -storepass android 2>/dev/null | grep "SHA256:" | awk '{print $2}')
+          echo ""
+          echo "========================================================"
+          echo "  SHA-256 FINGERPRINT (para assetlinks.json):"
+          echo "  $SHA"
+          echo "========================================================"
+
+      - name: Show KEYSTORE_BASE64 for secret (primera ejecución)
+        if: steps.keystore.outputs.source == 'new'
+        run: |
+          echo ""
+          echo "========================================================"
+          echo "  PRIMERA EJECUCIÓN — Guarda este keystore como secret"
+          echo "  Nombre del secret: KEYSTORE_BASE64"
+          echo "  Valor (copia todo):"
+          base64 -w 0 /tmp/android.keystore
+          echo ""
+          echo "========================================================"
+
+      - name: Copy artifacts
+        run: |
+          mkdir -p /tmp/artifacts
+          cp /tmp/android.keystore /tmp/artifacts/android.keystore
+          AAB="${{ steps.find_aab.outputs.path }}"
+          cp "$AAB" /tmp/artifacts/buscaycurra-release.aab
+          echo "Artifacts:"
+          ls -lh /tmp/artifacts/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-v${{ github.run_number }}
+          path: /tmp/artifacts/
+          retention-days: 90
