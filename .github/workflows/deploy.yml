@@ -39,31 +39,15 @@ jobs:
             NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
             NEXT_PUBLIC_VAPID_PUBLIC_KEY=BMwO_UwxsPVgcPaWvF8sqGJS9I7i5OK-TUizvV0didBz5oNLLtScZhwC2aEwPSjqLVXChI8ISuIcufzA9yF4QCA
 
-      - name: Deploy to Easypanel with SHA tag
+      - name: Deploy to Easypanel via webhook
         run: |
-          echo "== Login Easypanel =="
-          LOGIN_RESP=$(curl -s --connect-timeout 15 --max-time 30 -X POST "http://187.124.37.183:3000/api/trpc/auth.login" \
-            -H "Content-Type: application/json" \
-            -d '{"json":{"email":"michelbatistagonzalez1992@gmail.com","password":"iBihfBfw3xdNAdD"}}')
-          echo "Login response: $LOGIN_RESP"
-
-          TOKEN=$(echo "$LOGIN_RESP" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).result.data.json.token)}catch(e){console.error('Parse error:',e.message,d);process.exit(1)}})")
-
-          if [ -z "$TOKEN" ]; then
-            echo "ERROR: no se pudo obtener token de Easypanel"
-            exit 1
+          echo "== Triggering Easypanel deploy webhook =="
+          RESP=$(curl -s --connect-timeout 20 --max-time 40 -X POST \
+            "http://187.124.37.183:3000/api/deploy/c7c99010e8adb8f3e060fded0b83e8392519d1f5c5ec0931" \
+            -H "Content-Type: application/json" || echo "curl_failed")
+          echo "Webhook response: $RESP"
+          if [ "$RESP" = "curl_failed" ]; then
+            echo "Warning: Easypanel webhook not reachable — image is in GHCR, deploy manually if needed"
+          else
+            echo "Deploy triggered OK"
           fi
-          echo "Token obtenido OK"
-
-          echo "== Actualizando imagen =="
-          curl -s --connect-timeout 15 --max-time 30 -X POST "http://187.124.37.183:3000/api/trpc/services.app.updateSourceImage" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $TOKEN" \
-            -d "{\"json\":{\"projectName\":\"buscaycurra\",\"serviceName\":\"nextjs\",\"image\":\"${{ env.REGISTRY }}:${{ github.sha }}\",\"username\":\"${{ github.actor }}\",\"password\":\"${{ secrets.GITHUB_TOKEN }}\"}}"
-
-          echo "== Desplegando =="
-          curl -s --connect-timeout 15 --max-time 30 -X POST "http://187.124.37.183:3000/api/trpc/services.app.deployService" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $TOKEN" \
-            -d '{"json":{"projectName":"buscaycurra","serviceName":"nextjs"}}' \
-            && echo "Deploy triggered OK" || echo "Warning: deploy call failed"
