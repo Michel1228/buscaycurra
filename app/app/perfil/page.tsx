@@ -44,9 +44,9 @@ export default function PerfilPage() {
   if (!userId) return null;
 
   const iniciales = () => {
-    const n = datos.nombre ?? email;
-    const p = n.trim().split(" ").filter(Boolean);
-    if (!p.length) return "?";
+    const n = (datos.nombre || email || "").trim();
+    const p = n.split(" ").filter(Boolean);
+    if (!p.length) return "·";
     return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
   };
 
