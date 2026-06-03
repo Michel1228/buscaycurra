@@ -44,7 +44,7 @@ jobs:
           echo "== Triggering Easypanel deploy webhook =="
           RESP=$(curl -s --connect-timeout 20 --max-time 40 -X POST \
             "http://187.124.37.183:3000/api/deploy/c7c99010e8adb8f3e060fded0b83e8392519d1f5c5ec0931" \
-            -H "Content-Type: application/json" || echo "curl_failed")
+            || echo "curl_failed")
           echo "Webhook response: $RESP"
           if [ "$RESP" = "curl_failed" ]; then
             echo "Warning: Easypanel webhook not reachable — image is in GHCR, deploy manually if needed"
