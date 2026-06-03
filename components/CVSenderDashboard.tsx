@@ -29,8 +29,8 @@ interface UserStats {
 }
 interface RateLimitInfo {
   enviadosHoy: number;
-  limiteHoy: number;
-  cvsRestantesHoy: number;
+  limiteHoy: number | null;
+  cvsRestantesHoy: number | null;
   puedeEnviar: boolean;
 }
 interface CVSenderDashboardProps {
@@ -138,17 +138,17 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
             <div className="flex-1 h-2.5 rounded-full" style={{ background: "#2a2a1e" }}>
               <div className="h-full rounded-full transition-all duration-500"
                 style={{
-                  width: `${Math.min(100, (rateLimit.enviadosHoy / (rateLimit.limiteHoy || 1)) * 100)}%`,
-                  background: rateLimit.cvsRestantesHoy === 0 ? "#f87171" : "#7ed56f",
+                  width: rateLimit.limiteHoy === null ? "5%" : `${Math.min(100, (rateLimit.enviadosHoy / (rateLimit.limiteHoy || 1)) * 100)}%`,
+                  background: (rateLimit.cvsRestantesHoy !== null && rateLimit.cvsRestantesHoy === 0) ? "#f87171" : "#7ed56f",
                 }} />
             </div>
             <span className="text-sm font-bold" style={{ color: "#f0ebe0" }}>
-              {rateLimit.enviadosHoy}/{rateLimit.limiteHoy === Infinity ? "∞" : rateLimit.limiteHoy}
+              {rateLimit.enviadosHoy}/{(rateLimit.limiteHoy === null || rateLimit.limiteHoy === Infinity) ? "∞" : rateLimit.limiteHoy}
             </span>
           </div>
           <p className="text-xs mt-2" style={{ color: "#706a58" }}>
-            {rateLimit.cvsRestantesHoy > 0
-              ? `${rateLimit.cvsRestantesHoy} CVs restantes hoy`
+            {(rateLimit.cvsRestantesHoy === null || rateLimit.cvsRestantesHoy > 0)
+              ? (rateLimit.cvsRestantesHoy === null ? "Sin límite — Plan Empresa" : `${rateLimit.cvsRestantesHoy} CVs restantes hoy`)
               : "Límite alcanzado. Se reinicia a las 00:00."}
           </p>
         </div>

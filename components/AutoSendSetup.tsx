@@ -16,8 +16,8 @@ interface ScheduleSuccess {
   estimatedWaitMinutes: number;
   rateLimitInfo: {
     enviadosHoy: number;
-    limiteHoy: number;
-    cvsRestantesHoy: number;
+    limiteHoy: number | null;
+    cvsRestantesHoy: number | null;
     userPlan: string;
   };
 }

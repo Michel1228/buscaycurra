@@ -34,8 +34,8 @@ interface InfoEmpresa {
 
 interface RateLimitInfo {
   enviadosHoy: number;
-  limiteHoy: number;
-  cvsRestantesHoy: number;
+  limiteHoy: number | null;
+  cvsRestantesHoy: number | null;
   puedeEnviar: boolean;
 }
 
@@ -132,14 +132,14 @@ export default function EmpresasPage() {
                   Envíos de hoy
                 </span>
                 <span className="text-xs font-bold" style={{ color: rateLimit.puedeEnviar ? "#7ed56f" : "#f0c040" }}>
-                  {rateLimit.enviadosHoy} / {rateLimit.limiteHoy === Infinity ? "∞" : rateLimit.limiteHoy}
+                  {rateLimit.enviadosHoy} / {(rateLimit.limiteHoy === null || rateLimit.limiteHoy === Infinity) ? "∞" : rateLimit.limiteHoy}
                 </span>
               </div>
               <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "#2a2a1e" }}>
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
-                    width: `${Math.min(100, (rateLimit.enviadosHoy / (rateLimit.limiteHoy || 1)) * 100)}%`,
+                    width: rateLimit.limiteHoy === null ? "5%" : `${Math.min(100, (rateLimit.enviadosHoy / (rateLimit.limiteHoy || 1)) * 100)}%`,
                     background: rateLimit.puedeEnviar
                       ? "linear-gradient(90deg, #7ed56f, #5cb848)"
                       : "linear-gradient(90deg, #f0c040, #e07850)",
@@ -148,7 +148,7 @@ export default function EmpresasPage() {
               </div>
               <p className="text-[10px] mt-1" style={{ color: "#706a58" }}>
                 {rateLimit.puedeEnviar
-                  ? `✓ ${rateLimit.cvsRestantesHoy} CV${rateLimit.cvsRestantesHoy !== 1 ? "s" : ""} restante${rateLimit.cvsRestantesHoy !== 1 ? "s" : ""} hoy`
+                  ? rateLimit.cvsRestantesHoy === null ? "✓ Sin límite — Plan Empresa" : `✓ ${rateLimit.cvsRestantesHoy} CV${rateLimit.cvsRestantesHoy !== 1 ? "s" : ""} restante${rateLimit.cvsRestantesHoy !== 1 ? "s" : ""} hoy`
                   : "⏳ Límite diario alcanzado — se renueva mañana"}
               </p>
             </div>
