@@ -41,18 +41,29 @@ jobs:
 
       - name: Deploy to Easypanel with SHA tag
         run: |
-          TOKEN=$(curl -sf -X POST "http://187.124.37.183:3000/api/trpc/auth.login" \
+          echo "== Login Easypanel =="
+          LOGIN_RESP=$(curl -s --connect-timeout 15 --max-time 30 -X POST "http://187.124.37.183:3000/api/trpc/auth.login" \
             -H "Content-Type: application/json" \
-            -d '{"json":{"email":"michelbatistagonzalez1992@gmail.com","password":"iBihfBfw3xdNAdD"}}' \
-            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{console.log(JSON.parse(d).result.data.json.token)})")
+            -d '{"json":{"email":"michelbatistagonzalez1992@gmail.com","password":"iBihfBfw3xdNAdD"}}')
+          echo "Login response: $LOGIN_RESP"
 
-          curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.updateSourceImage" \
+          TOKEN=$(echo "$LOGIN_RESP" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).result.data.json.token)}catch(e){console.error('Parse error:',e.message,d);process.exit(1)}})")
+
+          if [ -z "$TOKEN" ]; then
+            echo "ERROR: no se pudo obtener token de Easypanel"
+            exit 1
+          fi
+          echo "Token obtenido OK"
+
+          echo "== Actualizando imagen =="
+          curl -s --connect-timeout 15 --max-time 30 -X POST "http://187.124.37.183:3000/api/trpc/services.app.updateSourceImage" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $TOKEN" \
             -d "{\"json\":{\"projectName\":\"buscaycurra\",\"serviceName\":\"nextjs\",\"image\":\"${{ env.REGISTRY }}:${{ github.sha }}\",\"username\":\"${{ github.actor }}\",\"password\":\"${{ secrets.GITHUB_TOKEN }}\"}}"
 
-          curl -sf -X POST "http://187.124.37.183:3000/api/trpc/services.app.deployService" \
+          echo "== Desplegando =="
+          curl -s --connect-timeout 15 --max-time 30 -X POST "http://187.124.37.183:3000/api/trpc/services.app.deployService" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $TOKEN" \
             -d '{"json":{"projectName":"buscaycurra","serviceName":"nextjs"}}' \
-            && echo "Deploy triggered" || echo "Warning: deploy failed"
+            && echo "Deploy triggered OK" || echo "Warning: deploy call failed"
