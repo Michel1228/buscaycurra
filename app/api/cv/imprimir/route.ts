@@ -2,13 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { generarCVHTML } from "@/lib/cv-generator/cv-template";
 import { normalizar } from "@/lib/cv-generator/normalizar";
+import { createServerClient } from "@supabase/ssr";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const userId = searchParams.get("userId");
+  // Obtener userId del token de sesión, no del query param
+  let userId: string | null = null;
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: { getAll: () => request.cookies.getAll().map(c => ({ name: c.name, value: c.value })) } }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    userId = user?.id || null;
+  } catch {
+    // fallback: si falla la autenticación, usar query param (compatibilidad)
+    userId = request.nextUrl.searchParams.get("userId");
+  }
 
   if (!userId) {
-    return new NextResponse("Falta userId", { status: 400 });
+    return new NextResponse("No autorizado", { status: 401 });
   }
 
   try {

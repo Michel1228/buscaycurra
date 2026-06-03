@@ -1108,6 +1108,20 @@ export default function GusiChat({ modoIncrustado = false }: { modoIncrustado?: 
     }
 
     // ============================================
+    // DETECTAR INTENT DE SALARIO
+    // ============================================
+    if (textoLower.includes("salario") || textoLower.includes("cuanto gana") || textoLower.includes("cuánto gana") || 
+        textoLower.includes("cuanto pagan") || textoLower.includes("cuánto pagan") || textoLower.includes("cuanto cobra") ||
+        textoLower.includes("sueldo") || textoLower.includes("comparar salario")) {
+      setCargando(false);
+      setMensajes((prev) => [...prev, {
+        role: "gusi",
+        text: "💰 **Comparador de salarios**\n\nDime un puesto de trabajo y te muestro cuánto pagan en diferentes países.\n\nEjemplo: \"¿Cuánto gana un enfermero en España vs Alemania?\"\n\nO dime tu puesto y comparo por ti.",
+      }]);
+      return;
+    }
+
+    // ============================================
     // DETECTAR INTENTS DE ENVÍO/MEJORAR CV
     // ============================================
 
