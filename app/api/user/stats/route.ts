@@ -1,101 +1,99 @@
 /**
- * GET /api/user/stats?userId=xxx
- * Devuelve estadísticas completas del usuario:
- * - CV enviados (hoy, semana, mes)
- * - Au pair enviados (hoy, semana, mes)
- * - Límites por plan
+ * GET /api/user/stats — Estadísticas de envíos y plan del usuario
  */
+
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "http://placeholder",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
-);
-
-// Límites diarios por plan
-const LIMITS: Record<string, { cv: number; auPair: number }> = {
-  free: { cv: 2, auPair: 2 },
-  esencial: { cv: 5, auPair: 3 },
-  basico: { cv: 5, auPair: 3 },
-  pro: { cv: 10, auPair: 5 },
-  empresa: { cv: 999, auPair: 999 },
+const LIMITES: Record<string, number> = {
+  free: 2,
+  gratuito: 2,
+  basico: 2,
+  esencial: 10,
+  pro: 300,
+  empresa: 9999,
 };
 
 export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
+  let userId = "";
+
+  // Auth por Bearer token
+  if (authHeader?.startsWith("Bearer ")) {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+    const { data: { user } } = await supabase.auth.getUser(authHeader.slice(7));
+    if (user) userId = user.id;
+  }
+
+  // Fallback: query param (legacy, para compatibilidad)
+  if (!userId) {
+    userId = request.nextUrl.searchParams.get("userId") || "";
+  }
+
+  if (!userId) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-    if (!userId) {
-      return NextResponse.json({ error: "userId requerido" }, { status: 400 });
-    }
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
 
     // Plan del usuario
-    const { data: profile } = await supabase
+    const { data: profile } = await adminClient
       .from("profiles")
-      .select("plan, subscription_status, stripe_subscription_id")
+      .select("plan")
       .eq("id", userId)
       .single();
 
-    // Si tiene stripe_subscription_id y plan !== free, usar plan. Si no, verificar status
-    const rawPlan = profile?.plan || "free";
-    const plan = (rawPlan !== "free" || profile?.subscription_status === "active")
-      ? rawPlan
-      : "free";
-    const limits = LIMITS[plan] || LIMITS.free;
+    const plan: string = profile?.plan || "free";
+    const limiteHoy = LIMITES[plan] ?? LIMITES.esencial;
 
-    // Rangos de tiempo
-    const ahora = new Date();
-    const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
-    const inicioSemana = new Date(ahora);
-    inicioSemana.setDate(ahora.getDate() - ahora.getDay() + 1); // Lunes
+    // Conteos de hoy, semana, mes
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const inicioSemana = new Date(hoy);
+    inicioSemana.setDate(hoy.getDate() - hoy.getDay()); // domingo
     inicioSemana.setHours(0, 0, 0, 0);
-    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
 
-    // Count CV sends
-    const [{ count: cvHoy }, { count: cvSemana }, { count: cvMes }] = await Promise.all([
-      supabase.from("cv_sends").select("*", { count: "exact", head: true })
-        .eq("user_id", userId).gte("created_at", inicioHoy.toISOString()),
-      supabase.from("cv_sends").select("*", { count: "exact", head: true })
-        .eq("user_id", userId).gte("created_at", inicioSemana.toISOString()),
-      supabase.from("cv_sends").select("*", { count: "exact", head: true })
-        .eq("user_id", userId).gte("created_at", inicioMes.toISOString()),
+    const [{ count: hoyCount }, { count: semanaCount }, { count: mesCount }, { data: recientes }] = await Promise.all([
+      adminClient.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("sent_at", hoy.toISOString()),
+      adminClient.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("sent_at", inicioSemana.toISOString()),
+      adminClient.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("sent_at", inicioMes.toISOString()),
+      adminClient.from("cv_sends").select("company_name, company_email, job_title, sent_at").eq("user_id", userId).order("sent_at", { ascending: false }).limit(10),
     ]);
 
-    // Count Au Pair sends (separate table or column)
-    const [{ count: apHoy }, { count: apSemana }, { count: apMes }] = await Promise.all([
-      supabase.from("au_pair_sends").select("*", { count: "exact", head: true })
-        .eq("user_id", userId).gte("created_at", inicioHoy.toISOString()),
-      supabase.from("au_pair_sends").select("*", { count: "exact", head: true })
-        .eq("user_id", userId).gte("created_at", inicioSemana.toISOString()),
-      supabase.from("au_pair_sends").select("*", { count: "exact", head: true })
-        .eq("user_id", userId).gte("created_at", inicioMes.toISOString()),
-    ]);
+    const disponibles = Math.max(0, limiteHoy - (hoyCount || 0));
 
     return NextResponse.json({
-      plan,
       cv: {
-        hoy: cvHoy || 0,
-        semana: cvSemana || 0,
-        mes: cvMes || 0,
-        limiteHoy: limits.cv,
-        disponibles: Math.max(0, limits.cv - (cvHoy || 0)),
+        hoy: hoyCount || 0,
+        semana: semanaCount || 0,
+        mes: mesCount || 0,
+        limiteHoy,
+        disponibles,
       },
-      auPair: {
-        hoy: apHoy || 0,
-        semana: apSemana || 0,
-        mes: apMes || 0,
-        limiteHoy: limits.auPair,
-        disponibles: Math.max(0, limits.auPair - (apHoy || 0)),
-      },
+      plan,
+      recientes: (recientes || []).map((r) => ({
+        empresa: r.company_name,
+        email: r.company_email,
+        puesto: r.job_title,
+        fecha: r.sent_at,
+      })),
     });
-  } catch (error) {
-    console.error("[stats] Error:", (error as Error).message);
-    return NextResponse.json(
-      { plan: "free", cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 2, disponibles: 2 }, auPair: { hoy: 0, semana: 0, mes: 0, limiteHoy: 2, disponibles: 2 } },
-      { status: 200 }
-    );
+  } catch (err) {
+    console.error("[User Stats] Error:", (err as Error).message);
+    return NextResponse.json({
+      cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 2, disponibles: 2 },
+      plan: "free",
+      recientes: [],
+    });
   }
 }

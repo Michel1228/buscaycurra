@@ -36,6 +36,7 @@ interface EmpresaGuardada {
 interface UserStats {
   cv: { hoy: number; semana: number; mes: number; limiteHoy: number; disponibles: number };
   plan: string;
+  recientes?: Array<{ empresa: string; email: string; puesto: string; fecha: string }>;
 }
 
 export default function EmpresasPage() {
@@ -50,6 +51,7 @@ export default function EmpresasPage() {
   const [historial, setHistorial] = useState<EmpresaGuardada[]>([]);
   const [mostrarTodosEmails, setMostrarTodosEmails] = useState(false);
   const [stats, setStats] = useState<UserStats>({ cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 2, disponibles: 2 }, plan: "free" });
+  const [showStats, setShowStats] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -187,22 +189,109 @@ export default function EmpresasPage() {
           <p className="text-xs mt-1 opacity-80" style={{ color: "#fff" }}>
             Escribe el nombre de la empresa. Nosotros encontramos su web, email y datos de contacto.
           </p>
-          <p className="text-[11px] mt-2" style={{ color: "rgba(255,255,255,0.7)" }}>
-            {stats.cv.hoy}/{stats.cv.limiteHoy} envíos hoy • Plan {stats.plan}
-          </p>
-          {/* Barra de progreso */}
-          <div className="mt-3 flex items-center gap-2 max-w-xs">
-            <div className="flex-1 h-1.5 rounded-full" style={{ background: "rgba(0,0,0,0.3)" }}>
-              <div className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: stats.cv.limiteHoy > 0 ? `${Math.min(100, (stats.cv.hoy / stats.cv.limiteHoy) * 100)}%` : "0%",
-                  background: stats.cv.disponibles <= 0 ? "#ef4444" : stats.cv.disponibles <= 1 ? "#f59e0b" : "#fff",
-                }} />
+          {/* Contador de envíos interactivo */}
+          <div className="mt-3 flex items-center gap-3">
+            {/* Badge clickable: "5 quedan" */}
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold transition hover:scale-105 cursor-pointer"
+              style={{
+                background: stats.cv.disponibles <= 0 ? "rgba(239,68,68,0.3)" : stats.cv.disponibles <= 2 ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.15)",
+                color: stats.cv.disponibles <= 0 ? "#fca5a5" : stats.cv.disponibles <= 2 ? "#fcd34d" : "#fff",
+                border: `1.5px solid ${stats.cv.disponibles <= 0 ? "rgba(239,68,68,0.5)" : stats.cv.disponibles <= 2 ? "rgba(245,158,11,0.5)" : "rgba(255,255,255,0.25)"}`,
+              }}
+              title="Click para ver detalle de envíos"
+            >
+              <span className="text-lg tabular-nums">{stats.cv.disponibles}</span>
+              <span className="text-[10px] opacity-80">quedan hoy</span>
+              <span className="text-[10px]">{showStats ? "▲" : "▼"}</span>
+            </button>
+
+            {/* Info adicional */}
+            <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.6)" }}>
+              <span>📤 </span>
+              <span className="tabular-nums font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>{stats.cv.semana}</span>
+              <span> esta semana</span>
+              <span className="mx-1">·</span>
+              <span className="tabular-nums font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>{stats.cv.mes}</span>
+              <span> este mes</span>
             </div>
-            <span className="text-[10px] font-bold tabular-nums" style={{ color: "rgba(255,255,255,0.9)" }}>
-              {stats.cv.disponibles} disponible{stats.cv.disponibles !== 1 ? "s" : ""}
+
+            {/* Plan badge */}
+            <span
+              className="px-2 py-0.5 rounded text-[9px] font-bold uppercase"
+              style={{
+                background: stats.plan === "empresa" ? "rgba(34,197,94,0.25)" : stats.plan === "pro" ? "rgba(59,130,246,0.25)" : "rgba(255,255,255,0.1)",
+                color: stats.plan === "empresa" ? "#4ade80" : stats.plan === "pro" ? "#60a5fa" : "rgba(255,255,255,0.7)",
+              }}
+            >
+              {stats.plan}
             </span>
           </div>
+
+          {/* Panel expandible con detalle de envíos recientes */}
+          {showStats && (
+            <div
+              className="mt-3 p-4 rounded-lg max-w-sm transition-all"
+              style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
+                  📋 Tus últimos envíos
+                </span>
+                {/* Barra de progreso compacta */}
+                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  {stats.cv.hoy}/{stats.cv.limiteHoy} hoy
+                </span>
+              </div>
+              <div className="w-full h-1 rounded-full mb-3" style={{ background: "rgba(255,255,255,0.1)" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: stats.cv.limiteHoy > 0 ? `${Math.min(100, (stats.cv.hoy / stats.cv.limiteHoy) * 100)}%` : "0%",
+                    background: stats.cv.disponibles <= 0 ? "#ef4444" : stats.cv.disponibles <= 2 ? "#f59e0b" : "#22c55e",
+                  }}
+                />
+              </div>
+
+              {(!stats.recientes || stats.recientes.length === 0) ? (
+                <p className="text-[11px]" style={{ color: "#64748b" }}>
+                  Aún no has enviado ningún CV esta semana. ¡Busca una empresa y prueba!
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {stats.recientes.slice(0, 5).map((r, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 p-2 rounded text-[11px]"
+                      style={{ background: "rgba(255,255,255,0.03)" }}
+                    >
+                      <span className="text-base">📨</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate" style={{ color: "#f1f5f9" }}>{r.empresa}</p>
+                        <p className="truncate" style={{ color: "#64748b" }}>{r.puesto || r.email}</p>
+                      </div>
+                      <span className="text-[10px] shrink-0" style={{ color: "#64748b" }}>
+                        {r.fecha ? new Date(r.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : ""}
+                      </span>
+                    </div>
+                  ))}
+                  {stats.recientes.length > 5 && (
+                    <p className="text-[10px] text-center" style={{ color: "#64748b" }}>
+                      +{stats.recientes.length - 5} envíos más
+                    </p>
+                  )}
+                </div>
+              )}
+              <button
+                onClick={() => setShowStats(false)}
+                className="mt-2 text-[10px] block w-full text-center"
+                style={{ color: "rgba(255,255,255,0.4)" }}
+              >
+                Cerrar ▲
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
