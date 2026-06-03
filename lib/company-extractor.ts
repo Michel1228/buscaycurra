@@ -39,9 +39,10 @@ export async function extraerInfoEmpresa(url: string): Promise<DatosEmpresa> {
 
   // En producción aquí iría el scraping real con Playwright + Gemini.
   // Por ahora devolvemos datos de ejemplo.
+  const dominioLimpio = new URL(url).hostname.replace(/^www\./, "");
   const datos: DatosEmpresa = {
     nombre: nombreDesdeUrl,
-    emailRrhh: `rrhh@${new URL(url).hostname}`,
+    emailRrhh: `rrhh@${dominioLimpio}`,
     telefono: undefined, // Se obtendría del scraping real
     paginaEmpleo: `${url.replace(/\/$/, "")}/empleos`,
   };

@@ -327,15 +327,19 @@ async function searchJobs(message: string, query?: string, city?: string) {
     if (!searchTerm) return null;
 
     // Buscar ofertas reales via la API interna
-    let ofertas;
+    type OfertaItem = { id: string; titulo: string; empresa: string; ubicacion: string; salario: string; fuente: string; match?: number; url: string; descripcion?: string; fecha?: string; emailEmpresa?: string; distancia?: string };
+    let ofertas: OfertaItem[] = [];
     try {
       const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
       ofertas = await buscarOfertasReales(searchTerm, searchCity || "España", 5);
     } catch {
-      // Fallback a generación local
+      ofertas = [];
+    }
+    // Fallback siempre activo si la API externa no devuelve resultados
+    if (ofertas.length === 0) {
       ofertas = generarOfertas(searchTerm, searchCity || "España");
     }
-    
+
     let text = `🔍 He encontrado **${ofertas.length} ofertas** de **${searchTerm}**${searchCity ? ` en **${searchCity}**` : ""}:\n\n`;
     
     ofertas.forEach((o) => {
