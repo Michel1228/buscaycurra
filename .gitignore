@@ -31,3 +31,9 @@ next-env.d.ts
 
 # Tests
 coverage/
+
+# Archivos temporales de exploración / debugging
+tmp-screenshots/
+scripts/explorar-*.mjs
+scripts/subir-cv-demo.mjs
+*temprun.json
