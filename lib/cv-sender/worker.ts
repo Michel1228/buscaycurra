@@ -77,21 +77,37 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   // ── Paso 1: Obtener perfil y CV del usuario ──────────────────────────────
   console.log(`[Worker] Paso 1/6: Obteniendo datos del usuario ${userId}...`);
 
-  const [profileResult, cvResult] = await Promise.all([
-    getSupabase().from("profiles").select("id, full_name, email, phone, linkedin_url").eq("id", userId).single(),
-    getSupabase().from("cvs").select("id, user_id, file_url, text_content, file_name").eq("user_id", userId).eq("is_primary", true).single(),
-  ]);
+  const profileResult = await getSupabase()
+    .from("profiles")
+    .select("id, full_name, email, phone, linkedin_url")
+    .eq("id", userId)
+    .single();
 
   if (profileResult.error || !profileResult.data) {
     throw new Error(`No se encontró el perfil del usuario ${userId}: ${profileResult.error?.message}`);
   }
 
-  if (cvResult.error || !cvResult.data) {
-    throw new Error(`No se encontró el CV del usuario ${userId}: ${cvResult.error?.message}`);
+  // Obtener CV desde Supabase Storage (convención: {userId}/cv.pdf en bucket 'cvs')
+  const cvPath = `${userId}/cv.pdf`;
+  const { data: cvFiles } = await getSupabase().storage.from("cvs").list(userId, { limit: 1, search: "cv.pdf" });
+
+  if (!cvFiles || cvFiles.length === 0) {
+    throw new Error(`El usuario ${userId} no tiene CV subido. Por favor sube tu CV primero.`);
+  }
+
+  const { data: signedUrlData } = await getSupabase().storage.from("cvs").createSignedUrl(cvPath, 3600);
+  if (!signedUrlData?.signedUrl) {
+    throw new Error(`No se pudo obtener URL firmada del CV del usuario ${userId}`);
   }
 
   const userProfile = profileResult.data as UserProfile;
-  const cvDocument = cvResult.data as CVDocument;
+  const cvDocument: CVDocument = {
+    id: cvPath,
+    user_id: userId,
+    file_url: signedUrlData.signedUrl,
+    text_content: undefined, // El texto extraído no se almacena por separado
+    file_name: "cv.pdf",
+  };
 
   await job.updateProgress(25);
 

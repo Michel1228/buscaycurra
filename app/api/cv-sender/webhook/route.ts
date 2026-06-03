@@ -57,8 +57,10 @@ export async function POST(request: NextRequest) {
 
     // Actualizar estado del envío si se proporciona ID
     if (envioId) {
-      const nuevoEstado = tipo === "respuesta" ? "respuesta" : tipo === "visto" ? "visto" : "enviado";
-      await supabase.from("cv_sends").update({ estado: nuevoEstado }).eq("id", envioId);
+      const nuevoEstado = tipo === "respuesta" ? "enviado" : tipo === "visto" ? "enviado" : "enviado";
+      const updatePayload: Record<string, unknown> = { status: nuevoEstado };
+      if (nuevoEstado === "enviado") updatePayload.sent_at = new Date().toISOString();
+      await supabase.from("cv_sends").update(updatePayload).eq("id", envioId);
     }
 
     const titulos: Record<string, string> = {
@@ -137,7 +139,7 @@ export async function GET(request: NextRequest) {
 
   if (trackId && uid) {
     try {
-      await supabase.from("cv_sends").update({ estado: "visto" }).eq("id", trackId);
+      await supabase.from("cv_sends").update({ status: "enviado" }).eq("id", trackId);
 
       const titulo = "👀 Tu CV fue abierto";
       const mensaje = "Una empresa ha abierto el email con tu CV. ¡Buena señal!";

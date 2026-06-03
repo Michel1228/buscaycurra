@@ -17,6 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { scheduleCV } from "@/lib/cv-sender/scheduler";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 
@@ -65,6 +66,22 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(companyEmail) || !companyEmail.includes(".")) {
       return NextResponse.json(
         { error: "El email de la empresa no tiene un formato válido" },
+        { status: 400 }
+      );
+    }
+
+    // ── Verificar que el usuario tiene CV subido ───────────────────────────
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { data: cvFiles } = await supabaseAdmin.storage
+      .from("cvs")
+      .list(userId, { limit: 1, search: "cv.pdf" });
+
+    if (!cvFiles || cvFiles.length === 0) {
+      return NextResponse.json(
+        { error: "Debes subir tu CV antes de poder enviar candidaturas. Ve a tu perfil para subirlo." },
         { status: 400 }
       );
     }

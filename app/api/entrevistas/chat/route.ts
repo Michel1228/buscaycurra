@@ -2,15 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-type Mensaje = { rol: "user" | "assistant"; texto: string };
+interface Mensaje {
+  rol: "user" | "assistant";
+  texto: string;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const { puesto, mensajes, inicio } = await req.json() as {
+    const body = await req.json() as {
       puesto: string;
       mensajes: Mensaje[];
       inicio?: boolean;
     };
+
+    const { puesto, mensajes, inicio } = body;
 
     if (!puesto) {
       return NextResponse.json({ error: "puesto requerido" }, { status: 400 });
@@ -21,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "GROQ_API_KEY no configurada" }, { status: 500 });
     }
 
-    const systemPrompt = `Eres un entrevistador de recursos humanos profesional en España.
+    const systemPrompt = `[ESPAÑOL OBLIGATORIO] Eres un entrevistador de recursos humanos profesional en España.
 Estás haciendo una entrevista de trabajo para el puesto de: ${puesto}.
 Tu misión:
 - Hacer preguntas realistas de entrevista, una a la vez
@@ -31,12 +36,11 @@ Tu misión:
 - Usar español de España
 - Cubrir: motivación, experiencia, habilidades técnicas, trabajo en equipo, situaciones difíciles
 - Después de 6-8 intercambios, hacer un cierre con evaluación general
-
 ${inicio ? "Empieza con una bienvenida breve y la primera pregunta de presentación." : ""}
 Responde siempre en 3-5 frases máximo. Sé directo.`;
 
     const historial = mensajes.map((m) => ({
-      role: m.rol === "user" ? "user" : "assistant",
+      role: m.rol === "user" ? "user" : ("assistant" as const),
       content: m.texto,
     }));
 
@@ -47,9 +51,9 @@ Responde siempre en 3-5 frases máximo. Sé directo.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system" as const, content: systemPrompt },
           ...historial,
         ],
         max_tokens: 300,
@@ -59,7 +63,7 @@ Responde siempre en 3-5 frases máximo. Sé directo.`;
 
     if (!res.ok) {
       const err = await res.text();
-      console.error("[Entrevistas] Groq error:", err);
+      console.error("[Entrevistas/chat] Groq error:", err);
       return NextResponse.json({ error: "Error en IA" }, { status: 502 });
     }
 
@@ -70,7 +74,7 @@ Responde siempre en 3-5 frases máximo. Sé directo.`;
     const respuesta = data.choices?.[0]?.message?.content ?? "No obtuve respuesta.";
     return NextResponse.json({ respuesta });
   } catch (e) {
-    console.error("[Entrevistas] Error:", (e as Error).message);
+    console.error("[Entrevistas/chat] Error:", (e as Error).message);
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
 }
