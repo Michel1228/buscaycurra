@@ -67,7 +67,7 @@ export default function EmpresasPage() {
 
     try {
       const [statsRes, histRes] = await Promise.all([
-        fetch(`/api/user/stats?userId=${session.user.id}`),
+        fetch(`/api/user/stats`, { headers: { Authorization: `Bearer ${session.access_token}` } }),
         supabase
           .from("cv_sends")
           .select("company_name, company_email, sent_at")
