@@ -203,29 +203,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Emigrar → respuesta directa con link
-    if (intent === "emigrar") {
-      return NextResponse.json({
-        reply: getLocalReply(message, "emigrar"),
-        action: "emigrar",
-      });
-    }
+    // Emigrar/au-pair: pasa a la IA (el system prompt tiene toda la info de países, salarios, etc.)
 
-    // Pipeline → respuesta directa con link
-    if (intent === "pipeline") {
-      return NextResponse.json({
-        reply: getLocalReply(message, "pipeline"),
-        action: "pipeline",
-      });
-    }
-
-    // Salarios → respuesta directa con link
-    if (intent === "salarios") {
-      return NextResponse.json({
-        reply: getLocalReply(message, "salarios"),
-        action: "salarios",
-      });
-    }
+    // Pipeline y Salarios: pasan a la IA (system prompt tiene toda la info)
 
     // Envío automático → flujo directo (sin IA)
     if (intent === "enviar") {
@@ -280,7 +260,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       reply,
-      action: cvCompleto ? "cv_complete" : (intent === "buscar" ? "suggest_search" : undefined),
+      action: cvCompleto ? "cv_complete" : (intent === "buscar" ? "suggest_search" : (["emigrar","pipeline","salarios"].includes(intent) ? intent : undefined)),
     });
   } catch {
     return NextResponse.json({ reply: "¡Ups! Algo falló. Inténtalo de nuevo 🐛" });
