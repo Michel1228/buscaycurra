@@ -12,6 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { cancelJob } from "@/lib/cv-sender/scheduler";
 import { updateSendStatus } from "@/lib/cv-sender/tracker";
 
@@ -19,25 +20,29 @@ import { updateSendStatus } from "@/lib/cv-sender/tracker";
 
 export async function DELETE(request: NextRequest) {
   try {
-    // ── Leer y validar el cuerpo de la petición ────────────────────────────
-    const body = await request.json() as {
-      jobId?: string;
-      userId?: string;
-    };
+    // ── Verificar autenticación ───────────────────────────────────────────
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.slice(7));
+    if (authError || !user) {
+      return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
+    }
 
-    const { jobId, userId } = body;
+    // ── Leer y validar el cuerpo de la petición ────────────────────────────
+    const body = await request.json() as { jobId?: string; };
+    const { jobId } = body;
+    const userId = user.id; // siempre del token
 
     // Validación de campos obligatorios
     if (!jobId) {
       return NextResponse.json(
         { error: "El campo jobId es obligatorio" },
-        { status: 400 }
-      );
-    }
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "El campo userId es obligatorio" },
         { status: 400 }
       );
     }

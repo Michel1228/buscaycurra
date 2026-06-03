@@ -124,7 +124,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
         
         if (err2) {
           console.error("Supabase upsert error:", err2);
-          setError(`No se pudo guardar: ${err2.message}`);
+          setError("No se pudo guardar el perfil. Inténtalo de nuevo.");
           return;
         }
       }

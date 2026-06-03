@@ -13,6 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getUserPendingJobs } from "@/lib/cv-sender/scheduler";
 import { getUserStats, getUserSendHistory } from "@/lib/cv-sender/tracker";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
@@ -21,16 +22,21 @@ import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 
 export async function GET(request: NextRequest) {
   try {
-    // ── Leer y validar el query param ─────────────────────────────────────
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "El parámetro userId es obligatorio" },
-        { status: 400 }
-      );
+    // ── Verificar autenticación ───────────────────────────────────────────
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.slice(7));
+    if (authError || !user) {
+      return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
+    }
+    // userId siempre del token
+    const userId = user.id;
 
     // ── Obtener todos los datos en paralelo (más rápido) ─────────────────
     const [pendingJobs, stats, history, userPlan] = await Promise.all([

@@ -1,8 +1,8 @@
 /**
  * /api/notifications — Sistema de notificaciones del usuario
- * 
+ *
  * GET: Obtener notificaciones del usuario
- * POST: Crear notificación (interno, para cuando una empresa responde)
+ * POST: Crear notificación (interno)
  * PATCH: Marcar como leída
  */
 
@@ -11,33 +11,43 @@ import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://placeholder',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder',
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
+
+async function autenticar(request: NextRequest): Promise<{ userId: string } | NextResponse> {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+  const { data: { user }, error } = await supabase.auth.getUser(authHeader.slice(7));
+  if (error || !user) return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
+  return { userId: user.id };
+}
 
 export async function GET(request: NextRequest) {
-  const userId = request.headers.get("x-user-id") ||
-    new URL(request.url).searchParams.get("userId");
-
-  if (!userId) return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+  const auth = await autenticar(request);
+  if (auth instanceof NextResponse) return auth;
+  const { userId } = auth;
 
   try {
-    const { data: notifs, error } = await supabase
+    const { data: notifs, error } = await getSupabaseAdmin()
       .from("notificaciones")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(50);
 
     if (error) throw error;
-
-    const sinLeer = (notifs || []).filter(n => !n.leida).length;
-
-    return NextResponse.json({
-      notificaciones: notifs || [],
-      sinLeer,
-    });
+    const sinLeer = (notifs || []).filter((n: { leida: boolean }) => !n.leida).length;
+    return NextResponse.json({ notificaciones: notifs || [], sinLeer });
   } catch (err) {
     console.error("[Notifications] Error:", (err as Error).message);
     return NextResponse.json({ notificaciones: [], sinLeer: 0 });
@@ -45,19 +55,23 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await autenticar(request);
+  if (auth instanceof NextResponse) return auth;
+  const { userId } = auth;
+
   try {
     const body = await request.json();
-    const { userId, tipo, titulo, mensaje, datos } = body;
+    const { tipo, titulo, mensaje, datos } = body;
 
-    if (!userId || !tipo || !titulo) {
+    if (!tipo || !titulo) {
       return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseAdmin()
       .from("notificaciones")
       .insert({
-        user_id: userId,
-        tipo,       // "respuesta_empresa" | "cv_enviado" | "cv_visto" | "recordatorio"
+        user_id: userId, // siempre del token
+        tipo,
         titulo,
         mensaje: mensaje || "",
         datos: datos || {},
@@ -67,22 +81,24 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) throw error;
-
     return NextResponse.json({ ok: true, notificacion: data });
   } catch (err) {
     console.error("[Notifications] Error creating:", (err as Error).message);
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
 
 export async function PATCH(request: NextRequest) {
+  const auth = await autenticar(request);
+  if (auth instanceof NextResponse) return auth;
+  const { userId } = auth;
+
   try {
     const body = await request.json();
-    const { notifId, userId, marcarTodas } = body;
+    const { notifId, marcarTodas } = body;
 
-    if (marcarTodas && userId) {
-      // Marcar todas como leídas
-      await supabase
+    if (marcarTodas) {
+      await getSupabaseAdmin()
         .from("notificaciones")
         .update({ leida: true })
         .eq("user_id", userId)
@@ -90,17 +106,17 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    if (!notifId) {
-      return NextResponse.json({ error: "notifId requerido" }, { status: 400 });
-    }
+    if (!notifId) return NextResponse.json({ error: "notifId requerido" }, { status: 400 });
 
-    await supabase
+    // Verificar que la notificación pertenece al usuario (IDOR fix)
+    await getSupabaseAdmin()
       .from("notificaciones")
       .update({ leida: true })
-      .eq("id", notifId);
+      .eq("id", notifId)
+      .eq("user_id", userId);
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

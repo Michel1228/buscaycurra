@@ -1,14 +1,11 @@
 /**
- * lib/company-extractor.ts — Extractor REAL de información de empresas
+ * lib/company-extractor.ts — Extractor real de información de empresas
  *
- * Analiza la web de una empresa para encontrar:
- *   - Nombre de la empresa
- *   - Email de RRHH o contacto (scrapeo real + Hunter.io fallback)
- *   - Teléfono de contacto
- *   - Página de empleo interna
+ * Analiza la web de una empresa con fetch real + regex para encontrar:
+ *   - Nombre de la empresa (og:site_name, title, h1)
+ *   - Email de RRHH o contacto (regex sobre HTML)
+ *   - Página de empleo interna (links con "empleo", "careers", etc.)
  */
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 export interface DatosEmpresa {
   nombre: string;
@@ -17,278 +14,227 @@ export interface DatosEmpresa {
   paginaEmpleo?: string;
 }
 
-// ─── Configuración ────────────────────────────────────────────────────────────
+// Palabras clave para detectar emails de RRHH (mayor prioridad)
+const RRHH_KEYWORDS = ["rrhh", "hr", "empleo", "trabajo", "jobs", "talent", "recruit", "seleccion", "contratacion", "personal", "people"];
 
-const HUNTER_API_KEY = process.env.HUNTER_API_KEY;
-
-// Patrones de email comunes en RRHH español
-const PATRONES_EMAIL_RRHH = [
-  /rrhh@[\w.-]+\.\w+/i,
-  /recursos\.humanos@[\w.-]+\.\w+/i,
-  /empleo@[\w.-]+\.\w+/i,
-  /trabajo@[\w.-]+\.\w+/i,
-  /jobs@[\w.-]+\.\w+/i,
-  /careers@[\w.-]+\.\w+/i,
-  /talento@[\w.-]+\.\w+/i,
-  /seleccion@[\w.-]+\.\w+/i,
-  /personas@[\w.-]+\.\w+/i,
-  /contacto@[\w.-]+\.\w+/i,
-  /info@[\w.-]+\.\w+/i,
+// Palabras clave para páginas de empleo
+const EMPLEO_KEYWORDS = [
+  "empleo", "trabaja", "trabaj", "career", "job", "vacante", "oferta",
+  "incorpora", "únete", "join", "work-with-us", "work_with_us",
 ];
 
-// Emails placeholder/fake que el scraper no debe coger nunca
-const EMAILS_FALSOS = new Set([
-  "tu@email.com", "email@email.com", "ejemplo@ejemplo.com", "test@test.com",
-  "user@example.com", "name@email.com", "correo@correo.com", "mail@mail.com",
-  "your@email.com", "sample@sample.com", "demo@demo.com", "info@example.com",
-]);
-const DOMINIOS_FALSOS = ["example.com", "ejemplo.com", "test.com", "sample.com", "domain.com", "email.com"];
+// User-agent neutral para evitar bloqueos básicos
+const UA = "Mozilla/5.0 (compatible; BuscayCurraBot/1.0; +https://buscaycurra.es)";
 
-function esEmailFalso(email: string): boolean {
-  const lower = email.toLowerCase();
-  if (EMAILS_FALSOS.has(lower)) return true;
-  const dominio = lower.split("@")[1] ?? "";
-  if (DOMINIOS_FALSOS.some(d => dominio === d)) return true;
-  // Emails que contienen palabras de placeholder
-  if (/^(tu|your|name|usuario|user|correo|mail|email|test|demo|ejemplo|sample)@/.test(lower)) return true;
-  return false;
-}
+// Bloquear IPs privadas, loopback, link-local y metadata de cloud (SSRF)
+const PRIVATE_IP_RE = /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$|fc00:|fd)/i;
 
-// Patrones de teléfono español
-const PATRONES_TELEFONO = [
-  /(?:\+34\s?)?[6789]\d{2}[\s.-]?\d{3}[\s.-]?\d{3}/g,
-  /(?:\+34\s?)?9\d{2}[\s.-]?\d{3}[\s.-]?\d{3}/g,
-];
-
-// Teléfonos falsos/placeholder que el scraper debe ignorar
-const TELEFONOS_FALSOS = new Set([
-  "999999999", "999 999 999", "999-999-999",
-  "666666666", "666 666 666", "666-666-666",
-  "123456789", "123 456 789", "123-456-789",
-  "000000000", "111111111", "222222222", "333333333",
-  "444444444", "555555555", "777777777", "888888888",
-]);
-
-function esTelefonoFalso(tel: string): boolean {
-  const limpio = tel.replace(/[\s.-]/g, "");
-  return TELEFONOS_FALSOS.has(limpio) || /^(\d)\1{8}$/.test(limpio);
-}
-
-// Palabras clave para detectar página de empleo
-const PALABRAS_EMPLEO = [
-  "trabaja", "empleo", "carreras", "careers", "jobs", "trabajo",
-  "unete", "join", "vacantes", "ofertas", "opportunities", "talento",
-  "equipo", "team", "people", "rrhh", "humanos", "work",
-];
-
-// ─── Función principal ────────────────────────────────────────────────────────
-
-/**
- * Extrae información de contacto y empleo de la web de una empresa.
- * Usa scraping real + Hunter.io API como fallback.
- */
-export async function extraerInfoEmpresa(url: string): Promise<DatosEmpresa> {
-  console.log(`🏢 Extractor: analizando ${url}`);
-
-  const nombreDesdeUrl = extraerNombreDesdeUrl(url);
-  const dominio = new URL(url).hostname;
-
-  let emailRrhh: string | undefined;
-  let telefono: string | undefined;
-  let paginaEmpleo: string | undefined;
-
-  // ── 1. Intentar scraping de la web ───────────────────────────────────────
+function esUrlSegura(rawUrl: string): boolean {
   try {
-    const html = await fetchPagina(url, 8000);
-    if (html) {
-      // Buscar emails en el HTML — primero patrones RRHH específicos
-      for (const patron of PATRONES_EMAIL_RRHH) {
-        const match = html.match(patron);
-        if (match) {
-          const candidato = match[0].toLowerCase();
-          if (!esEmailFalso(candidato)) {
-            emailRrhh = candidato;
-            console.log(`📧 Email encontrado en web: ${emailRrhh}`);
-            break;
-          }
-        }
-      }
-
-      // Si no hay email RRHH, buscar cualquier email (filtrando placeholders)
-      if (!emailRrhh) {
-        const todos = html.match(/[\w.-]+@[\w.-]+\.\w{2,}/g) ?? [];
-        const valido = todos.find(e => !esEmailFalso(e.toLowerCase()));
-        if (valido) {
-          emailRrhh = valido.toLowerCase();
-          console.log(`📧 Email genérico encontrado: ${emailRrhh}`);
-        }
-      }
-
-      // Buscar teléfono
-      for (const patron of PATRONES_TELEFONO) {
-        const matches = html.match(patron);
-        if (matches) {
-          const valido = matches.find(m => !esTelefonoFalso(m));
-          if (valido) {
-            telefono = valido;
-            break;
-          }
-        }
-      }
-
-      // Buscar página de empleo
-      paginaEmpleo = buscarPaginaEmpleo(html, url);
-    }
-  } catch (e) {
-    console.warn(`[Extractor] Error scrapeando ${url}:`, (e as Error).message);
-  }
-
-  // ── 2. Fallback: Hunter.io API ──────────────────────────────────────────
-  if (!emailRrhh && HUNTER_API_KEY) {
-    try {
-      const hunterEmail = await buscarHunterIo(dominio);
-      if (hunterEmail) {
-        emailRrhh = hunterEmail;
-        console.log(`📧 Email encontrado via Hunter.io: ${emailRrhh}`);
-      }
-    } catch (e) {
-      console.warn(`[Extractor] Hunter.io falló:`, (e as Error).message);
-    }
-  }
-
-  // ── 3. Fallback final: email genérico rrhh@ ─────────────────────────────
-  if (!emailRrhh) {
-    emailRrhh = `rrhh@${dominio}`;
-    console.log(`📧 Email genérico asignado: ${emailRrhh}`);
-  }
-
-  const datos: DatosEmpresa = {
-    nombre: nombreDesdeUrl,
-    emailRrhh,
-    telefono,
-    paginaEmpleo,
-  };
-
-  console.log(`✅ Extractor: datos obtenidos para ${datos.nombre}`);
-  return datos;
-}
-
-// ─── Funciones auxiliares ─────────────────────────────────────────────────────
-
-async function fetchPagina(url: string, timeoutMs: number): Promise<string | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "es-ES,es;q=0.9",
-      },
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) return null;
-
-    const contentType = res.headers.get("content-type") || "";
-    if (!contentType.includes("text/html")) return null;
-
-    return await res.text();
+    const parsed = new URL(rawUrl);
+    if (!["http:", "https:"].includes(parsed.protocol)) return false;
+    const host = parsed.hostname.toLowerCase();
+    if (host === "localhost" || PRIVATE_IP_RE.test(host)) return false;
+    return true;
   } catch {
-    clearTimeout(timeout);
-    return null;
+    return false;
   }
 }
 
-function buscarPaginaEmpleo(html: string, baseUrl: string): string | undefined {
-  // Buscar enlaces que contengan palabras de empleo
-  const linkRegex = /href=["']([^"']+)["']/gi;
-  let match;
-  const candidatos: { url: string; score: number }[] = [];
+export async function extraerInfoEmpresa(url: string): Promise<DatosEmpresa> {
+  if (!esUrlSegura(url)) return { nombre: extraerNombreDesdeUrl(url) };
+  const dominioLimpio = (() => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; } })();
+  const nombreFallback = extraerNombreDesdeUrl(url);
 
-  while ((match = linkRegex.exec(html)) !== null) {
-    const href = match[1];
-    const hrefLower = href.toLowerCase();
+  let html = "";
+  let finalUrl = url;
 
-    let score = 0;
-    for (const palabra of PALABRAS_EMPLEO) {
-      if (hrefLower.includes(palabra)) score += 10;
-    }
-
-    if (score > 0) {
-      // Resolver URL relativa
-      let fullUrl: string;
-      try {
-        fullUrl = new URL(href, baseUrl).href;
-      } catch {
-        continue;
-      }
-      candidatos.push({ url: fullUrl, score });
-    }
+  // 1. Intentar cargar la web de la empresa
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, {
+      headers: { "User-Agent": UA, Accept: "text/html" },
+      signal: controller.signal,
+      redirect: "follow",
+    });
+    clearTimeout(tid);
+    finalUrl = res.url || url;
+    // Leer máximo 300 KB para no saturar memoria
+    const raw = await res.arrayBuffer();
+    html = new TextDecoder("utf-8", { fatal: false }).decode(raw.slice(0, 300_000));
+  } catch {
+    // Si no podemos cargar, devolvemos lo mínimo
+    return { nombre: nombreFallback };
   }
 
-  // Ordenar por score y devolver el mejor
-  candidatos.sort((a, b) => b.score - a.score);
-  return candidatos[0]?.url;
-}
+  // 2. Extraer nombre (og:site_name > og:title > <title>)
+  const nombre =
+    match1(html, /<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']{1,80})["']/i) ||
+    match1(html, /<meta[^>]+name=["']application-name["'][^>]+content=["']([^"']{1,80})["']/i) ||
+    match1(html, /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']{1,80})["']/i) ||
+    (() => {
+      const t = match1(html, /<title[^>]*>([^<]{1,100})<\/title>/i);
+      // Limpiar " | Empresa", " - Empresa", etc.
+      return t ? t.replace(/\s*[\|\-–—]\s*.+$/, "").trim() : null;
+    })() ||
+    nombreFallback;
 
-async function buscarHunterIo(domain: string): Promise<string | null> {
-  const url = `https://api.hunter.io/v2/domain-search?domain=${encodeURIComponent(domain)}&api_key=${HUNTER_API_KEY}`;
+  // 3. Extraer emails del HTML
+  // Regex segura: sin backtracking catastrófico
+  const emailsEncontrados = extractEmails(html, dominioLimpio);
+  const emailRrhh = priorizarEmail(emailsEncontrados, dominioLimpio);
 
-  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-  if (!res.ok) return null;
+  // 4. Buscar página de empleo
+  const paginaEmpleo = encontrarPaginaEmpleo(html, finalUrl);
 
-  const data = await res.json() as {
-    data?: {
-      emails?: Array<{
-        value: string;
-        type?: string;
-        position?: string;
-      }>;
-    };
+  // 5. Si no encontramos email en la home, intentar cargar la página de empleo
+  let emailFinal = emailRrhh;
+  if (!emailFinal && paginaEmpleo) {
+    try {
+      const controller2 = new AbortController();
+      const tid2 = setTimeout(() => controller2.abort(), 6000);
+      const res2 = await fetch(paginaEmpleo, {
+        headers: { "User-Agent": UA, Accept: "text/html" },
+        signal: controller2.signal,
+      });
+      clearTimeout(tid2);
+      const raw2 = await res2.arrayBuffer();
+      const html2 = new TextDecoder("utf-8", { fatal: false }).decode(raw2.slice(0, 150_000));
+      const emails2 = extractEmails(html2, dominioLimpio);
+      emailFinal = priorizarEmail(emails2, dominioLimpio) || emailFinal;
+    } catch { /* ignorar */ }
+  }
+
+  return {
+    nombre: nombre.trim().substring(0, 100),
+    emailRrhh: emailFinal || undefined,
+    telefono: undefined,
+    paginaEmpleo: paginaEmpleo || undefined,
   };
-
-  const emails = data.data?.emails || [];
-
-  // Priorizar emails de RRHH/recursos humanos
-  const rrhhEmails = emails.filter(e => {
-    const val = e.value.toLowerCase();
-    const pos = (e.position || "").toLowerCase();
-    return /rrhh|recursos|humanos|empleo|talento|seleccion|hr|people/i.test(val + " " + pos);
-  });
-
-  if (rrhhEmails.length > 0) return rrhhEmails[0].value;
-
-  // Si no hay RRHH, devolver el primer email genérico
-  const genericEmails = emails.filter(e => {
-    const val = e.value.toLowerCase();
-    return /info|contacto|hola|hello/i.test(val);
-  });
-
-  if (genericEmails.length > 0) return genericEmails[0].value;
-  if (emails.length > 0) return emails[0].value;
-
-  return null;
 }
 
-// ─── Funciones auxiliares ─────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Extrae un nombre legible a partir de la URL de la empresa.
- * Ej: "https://www.acmecorp.com/about" → "Acmecorp"
- */
+function match1(html: string, re: RegExp): string | null {
+  const m = re.exec(html);
+  return m ? m[1].trim() : null;
+}
+
+function extractEmails(html: string, dominio: string): string[] {
+  // Eliminar scripts y estilos para reducir falsos positivos
+  const clean = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ");
+
+  // Decodificar entidades HTML comunes usadas para ofuscar emails
+  const decoded = clean
+    .replace(/&#64;/g, "@")
+    .replace(/&#x40;/g, "@")
+    .replace(/&amp;/g, "&")
+    .replace(/\[at\]/gi, "@")
+    .replace(/\(at\)/gi, "@")
+    .replace(/\[dot\]/gi, ".")
+    .replace(/\(dot\)/gi, ".");
+
+  // Regex de emails (simple y segura)
+  const emailRe = /[a-zA-Z0-9._%+\-]{1,64}@[a-zA-Z0-9.\-]{1,253}\.[a-zA-Z]{2,}/g;
+  const encontrados = new Set<string>();
+  let m: RegExpExecArray | null;
+
+  while ((m = emailRe.exec(decoded)) !== null) {
+    const email = m[0].toLowerCase().replace(/[.,;:]+$/, "");
+    // Filtrar emails de imágenes, fuentes, librerías (contienen rutas)
+    if (email.includes("/")) continue;
+    if (email.endsWith(".png") || email.endsWith(".jpg") || email.endsWith(".svg")) continue;
+    if (email.endsWith(".js") || email.endsWith(".css") || email.endsWith(".min")) continue;
+    // Solo aceptar emails del mismo dominio o dominios conocidos de email
+    const [, emailDomain] = email.split("@");
+    if (!emailDomain) continue;
+    // Filtrar dominios de librerías y CDN
+    if (/\.(woff|ttf|eot|woff2|map)$/.test(emailDomain)) continue;
+    if (/version|example|sentry|google|facebook|twitter|instagram|linkedin/.test(emailDomain)) continue;
+    if (email.length > 100) continue;
+    encontrados.add(email);
+  }
+
+  return [...encontrados];
+}
+
+function priorizarEmail(emails: string[], dominio: string): string | null {
+  if (!emails.length) return null;
+
+  // 1. Prioridad máxima: email del mismo dominio con keyword RRHH
+  for (const keyword of RRHH_KEYWORDS) {
+    const found = emails.find(e => e.includes(keyword) && (dominio ? e.includes(dominio) : true));
+    if (found) return found;
+  }
+
+  // 2. Cualquier email del mismo dominio
+  if (dominio) {
+    const delDominio = emails.filter(e => e.endsWith(`@${dominio}`) || e.endsWith(`.${dominio}`));
+    if (delDominio.length) return delDominio[0];
+  }
+
+  // 3. Email con keyword RRHH de cualquier dominio
+  for (const keyword of RRHH_KEYWORDS) {
+    const found = emails.find(e => e.includes(keyword));
+    if (found) return found;
+  }
+
+  // 4. Primer email encontrado (excluir noreply, info muy genérica)
+  const filtrado = emails.filter(e => !e.startsWith("noreply@") && !e.startsWith("no-reply@"));
+  return filtrado[0] || emails[0];
+}
+
+function encontrarPaginaEmpleo(html: string, finalUrl: string): string | null {
+  // Buscar todos los href
+  const hrefRe = /href=["']([^"']{1,500})["']/gi;
+  const candidatos: { url: string; score: number }[] = [];
+  let m: RegExpExecArray | null;
+
+  while ((m = hrefRe.exec(html)) !== null) {
+    const href = m[1];
+    const lower = href.toLowerCase();
+    // Calcular score por keywords
+    let score = 0;
+    for (const kw of EMPLEO_KEYWORDS) {
+      if (lower.includes(kw)) score += 1;
+    }
+    if (score === 0) continue;
+
+    // Construir URL absoluta
+    let absUrl: string;
+    if (href.startsWith("http")) {
+      absUrl = href;
+    } else if (href.startsWith("/")) {
+      try { absUrl = new URL(href, finalUrl).href; } catch { continue; }
+    } else {
+      continue;
+    }
+
+    // Solo URLs del mismo dominio
+    try {
+      const baseHost = new URL(finalUrl).hostname;
+      const linkHost = new URL(absUrl).hostname;
+      if (!linkHost.includes(baseHost.replace(/^www\./, "").split(".").slice(-2).join("."))) continue;
+    } catch { continue; }
+
+    candidatos.push({ url: absUrl, score });
+  }
+
+  if (!candidatos.length) return null;
+  // Ordenar por score descendente y devolver el mejor
+  candidatos.sort((a, b) => b.score - a.score);
+  return candidatos[0].url;
+}
+
 function extraerNombreDesdeUrl(url: string): string {
   try {
     const hostname = new URL(url).hostname;
-    // Eliminar www. y TLD, capitalizar la primera letra
-    const nombre = hostname
-      .replace(/^www\./, "")
-      .split(".")[0]
-      .replace(/-/g, " ");
+    const nombre = hostname.replace(/^www\./, "").split(".")[0].replace(/-/g, " ");
     return nombre.charAt(0).toUpperCase() + nombre.slice(1);
   } catch {
-    return "Empresa desconocida";
+    return "Empresa";
   }
 }
