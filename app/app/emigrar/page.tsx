@@ -6,7 +6,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 // ─── Tipos ─────────────────────────────────────────────────
-type Pestaña = "visado" | "alojamiento" | "aupair" | "programas";
+type Pestaña = "visado" | "alojamiento" | "aupair" | "programas" | "derechos";
 
 interface Agencia { nombre: string; url: string; desc: string }
 interface Plataforma { nombre: string; url: string; desc: string }
@@ -1271,6 +1271,118 @@ const INFO: Record<string, InfoPais> = {
       { nombre: "Pracuj.pl — Mayor portal de empleo privado", emoji: "💼", desc: "El portal de empleo más grande de Polonia. Muchas multinacionales con sedes en Varsovia, Cracovia y Breslavia.", url: "https://www.pracuj.pl" },
     ],
   },
+  grecia: {
+    visado: {
+      tipoVisado: "Sin visado — Libre circulación UE",
+      resumen: "Como ciudadano español y de la UE, puedes vivir y trabajar en Grecia sin visado ni permiso de trabajo. Solo necesitas tu DNI o pasaporte en vigor. Si te quedas más de 3 meses, conviene registrarse en el Registro de Ciudadanos de la UE (KEP local).",
+      requisitos: [
+        "DNI o pasaporte español en vigor",
+        "Para estancias >3 meses: registro en KEP (Κέντρo Εξυπηρέτησης Πολιτών) local",
+        "Para trabajar: alta en la Seguridad Social griega (EFKA) — lo gestiona tu empleador",
+        "AMKA (número de seguridad social griego) — se obtiene en cualquier KEP o EFKA",
+        "AFM (número fiscal griego, equivalente al NIF español) — en cualquier oficina de Hacienda griega (ΔΟΥ)",
+      ],
+      enlaces: [
+        { texto: "OAED — Servicio de empleo de Grecia (traducción automática)", url: "https://www.dypa.gov.gr" },
+        { texto: "EFKA — Seguridad Social griega", url: "https://www.efka.gov.gr" },
+        { texto: "EURES Grecia — Empleo en Europa", url: "https://eures.europa.eu/living-and-working/countries/greece_es" },
+      ],
+    },
+    alojamiento: {
+      desc: "Atenas y Salónica son las ciudades con más oferta de trabajo. El alquiler en Atenas es asequible para Europa occidental: habitaciones desde 350-500€/mes en zonas céntricas. El turismo y la hostelería generan mucho empleo estacional.",
+      plataformas: [
+        { nombre: "Spitogatos", url: "https://www.spitogatos.gr", desc: "Portal inmobiliario líder en Grecia — pisos y habitaciones" },
+        { nombre: "Xe.gr", url: "https://www.xe.gr", desc: "Anuncios inmobiliarios — amplia oferta en Atenas y alrededores" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com", desc: "Alquiler medio plazo — muy usado por expats y estudiantes" },
+        { nombre: "Airbnb", url: "https://www.airbnb.es", desc: "Para los primeros meses mientras buscas piso fijo" },
+      ],
+      consejos: [
+        "Busca en barrios como Koukaki, Pagrati o Exarchia en Atenas (accesibles y bien conectados)",
+        "El metro de Atenas es barato y eficiente — base ideal para desplazarte",
+        "Exige siempre contrato de alquiler escrito — protección como inquilino en la UE",
+        "El coste de vida en Grecia es 30-40% más bajo que en España occidental",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-30 años",
+        "Sin requisito oficial de idioma (griego básico ayuda mucho)",
+        "Experiencia con niños valorada",
+      ],
+      condiciones: [
+        "Paga de bolsillo: 250-350 €/mes (sin regulación nacional específica — varía por familia)",
+        "Alojamiento y manutención incluidos",
+        "Máx. 30h/semana — sin regulación nacional específica, rige la buena fe del contrato",
+        "Contrato privado escrito — muy recomendado",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Familias griegas verificadas — filtra por Grecia" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Registro gratuito — amplia oferta en Atenas y zonas turísticas" },
+      ],
+    },
+    programas: [
+      { nombre: "DYPA — Servicio de empleo griego", emoji: "🇬🇷", desc: "Portal oficial de empleo de Grecia con ofertas en todos los sectores. Especialmente fuerte en turismo y hostelería.", url: "https://www.dypa.gov.gr" },
+      { nombre: "EURES Grecia — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE para buscar trabajo en Grecia con apoyo de consejeros EURES.", url: "https://eures.europa.eu" },
+      { nombre: "Kariera.gr — Portal privado de empleo", emoji: "💼", desc: "Mayor portal de empleo privado de Grecia. Muchas ofertas en turismo, IT y servicios.", url: "https://www.kariera.gr" },
+    ],
+  },
+  luxemburgo: {
+    visado: {
+      tipoVisado: "Sin visado — Libre circulación UE",
+      resumen: "Luxemburgo es el país con el salario mínimo más alto de la UE (2.637 €/mes brutos en 2025). Como español, tienes libre circulación. Es un hub financiero y europeo con altísima demanda de profesionales cualificados. Muchos trabajadores cruzan la frontera desde Francia, Bélgica o Alemania.",
+      requisitos: [
+        "DNI o pasaporte español en vigor",
+        "Para estancias >3 meses: declaración de residencia en el ayuntamiento (Administration communale)",
+        "Número de matrícula de seguro social (CNSS) — lo gestiona tu empleador",
+        "Sin requisito de idioma oficial para ciudadanos UE, aunque luxemburgués, francés o alemán son ventajosos",
+      ],
+      enlaces: [
+        { texto: "ADEM — Agencia de empleo de Luxemburgo", url: "https://www.adem.lu/es/candidats/trouver-un-emploi" },
+        { texto: "Guichet.lu — Vivir y trabajar en Luxemburgo", url: "https://guichet.public.lu/es.html" },
+        { texto: "EURES Luxemburgo — Empleo europeo", url: "https://eures.europa.eu/living-and-working/countries/luxembourg_es" },
+      ],
+    },
+    alojamiento: {
+      desc: "Luxemburgo es uno de los países más caros de Europa para la vivienda. Ciudad de Luxemburgo: habitaciones desde 900-1.400€/mes. Muchos trabajadores viven en las zonas fronterizas de Francia (Metz, Thionville), Bélgica o Alemania y cruzan cada día — reduce costes a la mitad.",
+      plataformas: [
+        { nombre: "Athome.lu", url: "https://www.athome.lu", desc: "Portal inmobiliario líder en Luxemburgo — compra y alquiler" },
+        { nombre: "Immotop.lu", url: "https://www.immotop.lu", desc: "Amplia oferta de pisos y habitaciones en todo el Gran Ducado" },
+        { nombre: "Expat.com Luxembourg", url: "https://www.expat.com/forum/viewforum.php?id=189", desc: "Foro de expats con consejos de alojamiento y vida en Luxemburgo" },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com", desc: "Alquiler medio plazo — ideal para los primeros meses" },
+      ],
+      consejos: [
+        "Considera vivir en Thionville (Francia) o Trier (Alemania) — 30-40% más barato y bien conectado",
+        "El transporte público en Luxemburgo es completamente gratuito desde 2020",
+        "El salario mínimo luxemburgués (2.637€/mes) compensa el alto coste de vida",
+        "Muchas empresas ofrecen ayuda con el relocation y primeros meses de alojamiento",
+      ],
+    },
+    aupair: {
+      disponible: true,
+      requisitos: [
+        "18-27 años",
+        "Nivel básico de francés (idioma predominante en las familias)",
+        "Experiencia con niños valorada",
+      ],
+      condiciones: [
+        "Paga de bolsillo: 400-500 €/mes (más alto que la media UE, refleja el alto SMI)",
+        "Alojamiento y manutención incluidos",
+        "Máx. 25-30h/semana según contrato",
+        "Contrato de trabajo au pair obligatorio (Code du Travail luxemburgués)",
+      ],
+      agencias: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", desc: "Familias luxemburguesas verificadas — filtra por Luxemburgo" },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", desc: "Registro gratuito — buen catálogo de familias en Luxemburgo" },
+      ],
+      enlaceOficial: { texto: "Guichet.lu — Derechos del au pair en Luxemburgo", url: "https://guichet.public.lu/es.html" },
+    },
+    programas: [
+      { nombre: "ADEM — Agencia de empleo oficial de Luxemburgo", emoji: "🇱🇺", desc: "Portal oficial de empleo del Gran Ducado. Alta demanda en finanzas, IT, logística y sector europeo (UE/instituciones).", url: "https://www.adem.lu" },
+      { nombre: "EURES Luxemburgo — Empleo europeo", emoji: "🇪🇺", desc: "Portal oficial UE. Luxemburgo tiene una de las tasas de desempleo más bajas de Europa (<5%).", url: "https://eures.europa.eu" },
+      { nombre: "Jobs.lu — Mayor portal de empleo", emoji: "💼", desc: "Portal privado líder en Luxemburgo. Muchas ofertas multilingüe en banca, IT y servicios financieros.", url: "https://www.jobs.lu" },
+    ],
+  },
 };
 
 // ─── Países disponibles ─────────────────────────────────────
@@ -1294,6 +1406,8 @@ const PAISES = [
   { id: "canada", label: "Canadá", flag: "🇨🇦" },
   { id: "australia", label: "Australia", flag: "🇦🇺" },
   { id: "usa", label: "EE.UU.", flag: "🇺🇸" },
+  { id: "grecia", label: "Grecia", flag: "🇬🇷" },
+  { id: "luxemburgo", label: "Luxemburgo", flag: "🇱🇺" },
 ];
 
 const PESTAÑAS: { id: Pestaña; label: string; emoji: string }[] = [
@@ -1301,6 +1415,7 @@ const PESTAÑAS: { id: Pestaña; label: string; emoji: string }[] = [
   { id: "alojamiento", label: "Alojamiento", emoji: "🏠" },
   { id: "aupair", label: "Au Pair", emoji: "👶" },
   { id: "programas", label: "Programas", emoji: "✨" },
+  { id: "derechos", label: "Papeles", emoji: "⚖️" },
 ];
 
 // ─── Componente principal ────────────────────────────────────
@@ -1523,6 +1638,141 @@ export default function EmigrarPage() {
                   </div>
                 </a>
               ))}
+            </div>
+          )}
+
+          {/* ── PAPELES Y DERECHOS ── */}
+          {pestaña === "derechos" && (
+            <div className="space-y-4">
+
+              {/* Finiquito y derechos al terminar */}
+              <div className="rounded-2xl p-5" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+                <h2 className="text-base font-bold text-white mb-3">⚖️ Tus derechos al terminar el trabajo</h2>
+                <p className="text-sm leading-relaxed mb-3" style={{ color: "#d1d5db" }}>
+                  Cuando terminas un contrato en el extranjero —sea porque lo finalizas, te despiden o decides irte—
+                  tienes derechos laborales que debes conocer y reclamar antes de volver a España.
+                </p>
+                <div className="space-y-3">
+                  {[
+                    { icon: "💶", titulo: "Finiquito", desc: "Tienes derecho a cobrar los días trabajados del mes en curso, las vacaciones no disfrutadas y cualquier paga extra proporcional. Exige siempre el finiquito por escrito." },
+                    { icon: "📜", titulo: "Certificado de empresa", desc: "Documento que acredita la relación laboral, fechas, categoría y motivo de la baja. Imprescindible para tramitar el paro en España." },
+                    { icon: "🏥", titulo: "Informe de vida laboral extranjero", desc: "En países de la UE puedes solicitar tu historial de cotizaciones para que cuenten en España. En UK post-Brexit hay acuerdos específicos de Seguridad Social." },
+                    { icon: "📋", titulo: "Carta de despido o acuerdo de baja", desc: "Si te despiden, exige siempre la comunicación escrita con el motivo. Esto es fundamental para acceder al desempleo." },
+                    { icon: "🔑", titulo: "Derechos de la vivienda", desc: "Si la empresa te proporcionaba vivienda, tienes derecho a un preaviso razonable antes de tener que abandonarla. Guarda todos los contratos." },
+                  ].map((item, i) => (
+                    <div key={i} className="flex gap-3 rounded-xl p-3" style={{ background: "#0f1117", border: "1px solid #1f2937" }}>
+                      <span className="text-xl shrink-0 mt-0.5">{item.icon}</span>
+                      <div>
+                        <p className="text-sm font-semibold text-white mb-0.5">{item.titulo}</p>
+                        <p className="text-xs leading-relaxed" style={{ color: "#9ca3af" }}>{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* SEPE — Paro al volver a España */}
+              <div className="rounded-2xl p-5" style={{ background: "#0d2818", border: "1px solid #065f46" }}>
+                <h2 className="text-base font-bold mb-3" style={{ color: "#d1fae5" }}>🏛️ SEPE — Cobrar el paro al volver a España</h2>
+                <p className="text-sm leading-relaxed mb-3" style={{ color: "#a7f3d0" }}>
+                  Si has trabajado en un país de la UE/EEE y vuelves a España sin trabajo, puedes transferir
+                  tus cotizaciones extranjeras y solicitar la prestación por desempleo en el SEPE.
+                </p>
+                <div className="space-y-2 mb-4">
+                  {[
+                    "✅ Haber cotizado al menos 360 días (sumando España + UE/EEE con formulario U1/E301)",
+                    "✅ Estar en situación legal de desempleo — no haber dimitido voluntariamente (salvo causas justificadas)",
+                    "✅ Inscribirse como demandante de empleo en el SEPE en los 15 días hábiles tras el despido",
+                    "✅ No tener rentas superiores al 75% del SMI (Salario Mínimo Interprofesional)",
+                    "✅ Residir en España — la prestación no se cobra en el extranjero salvo excepciones",
+                  ].map((req, i) => (
+                    <p key={i} className="text-xs leading-relaxed" style={{ color: "#d1fae5" }}>{req}</p>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-bold mb-2" style={{ color: "#6ee7b7" }}>DOCUMENTOS QUE NECESITAS:</p>
+                  {[
+                    "DNI o NIE + pasaporte",
+                    "Formulario U1 (antiguo E301) — lo pide el SEPE directamente a tu país de trabajo",
+                    "Certificado de empresa del país extranjero (con fecha y motivo de baja)",
+                    "Vida laboral española (gratis en Seguridad Social)",
+                    "Número de cuenta bancaria española",
+                  ].map((doc, i) => (
+                    <p key={i} className="text-xs" style={{ color: "#a7f3d0" }}>📄 {doc}</p>
+                  ))}
+                </div>
+                <div className="mt-4 space-y-2">
+                  <a href="https://www.sepe.es/HomeSepe/Personas/distributiva-prestaciones/solicitar-prestacion.html"
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm rounded-xl px-3 py-2.5"
+                    style={{ background: "#065f46", color: "#d1fae5", border: "1px solid #047857" }}>
+                    🏛️ Solicitar prestación por desempleo — SEPE.es →
+                  </a>
+                  <a href="https://portal.seg-social.gob.es/wps/portal/importass/importass/Sedes/SedeElectronica/tramites-y-gestiones/Cotizacion/INFVidaLaboral"
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm rounded-xl px-3 py-2.5"
+                    style={{ background: "#065f46", color: "#d1fae5", border: "1px solid #047857" }}>
+                    📋 Tu Vida Laboral — Seguridad Social →
+                  </a>
+                  <a href="https://www.sepe.es/HomeSepe/que-es-el-sepe/comunicacion-institucional/publicaciones/publicaciones-oficiales/listado-de-publicaciones.html?folder=/publicaciones/prestaciones/internacionales"
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm rounded-xl px-3 py-2.5"
+                    style={{ background: "#065f46", color: "#d1fae5", border: "1px solid #047857" }}>
+                    🌍 Formulario U1 / Prestaciones internacionales — SEPE →
+                  </a>
+                </div>
+              </div>
+
+              {/* Cuánto cubro cobrar */}
+              <div className="rounded-2xl p-5" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+                <h2 className="text-base font-bold text-white mb-3">💰 ¿Cuánto puedo cobrar?</h2>
+                <div className="space-y-2">
+                  {[
+                    { dias: "De 360 a 539 días cotizados", duracion: "4 meses de prestación" },
+                    { dias: "De 540 a 719 días cotizados", duracion: "6 meses de prestación" },
+                    { dias: "De 720 a 899 días cotizados", duracion: "8 meses de prestación" },
+                    { dias: "De 900 a 1.079 días cotizados", duracion: "10 meses de prestación" },
+                    { dias: "Más de 2.160 días cotizados", duracion: "24 meses (máximo)" },
+                  ].map((row, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 text-xs px-3 py-2 rounded-lg"
+                      style={{ background: "#0f1117", border: "1px solid #1f2937" }}>
+                      <span style={{ color: "#9ca3af" }}>{row.dias}</span>
+                      <span className="font-bold shrink-0" style={{ color: "#10b981" }}>{row.duracion}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs mt-3" style={{ color: "#6b7280" }}>
+                  La cuantía es el 70% de tu base reguladora los primeros 180 días y el 60% el resto.
+                  La base reguladora se calcula con las últimas 180 cotizaciones.
+                </p>
+              </div>
+
+              {/* BAJA VOLUNTARIA — cuándo sí tienes derecho al paro */}
+              <div className="rounded-2xl p-5" style={{ background: "#1a0a0a", border: "1px solid #7f1d1d" }}>
+                <h2 className="text-base font-bold mb-3" style={{ color: "#fca5a5" }}>⚠️ Baja voluntaria y el paro</h2>
+                <p className="text-xs mb-3 leading-relaxed" style={{ color: "#fca5a5" }}>
+                  Normalmente si te vas voluntariamente <strong>NO</strong> tienes derecho al paro.
+                  Pero hay excepciones reconocidas legalmente:
+                </p>
+                <div className="space-y-1.5">
+                  {[
+                    "Impago de salario o retrasos reiterados",
+                    "Acoso laboral o sexual acreditado",
+                    "Modificación sustancial de condiciones de trabajo (horario, salario, puesto)",
+                    "Traslado geográfico a más de 60 km del domicilio habitual",
+                    "Incumplimiento grave del contrato por parte del empleador",
+                    "Violencia de género (víctima reconocida por sentencia o orden de protección)",
+                  ].map((excepcion, i) => (
+                    <p key={i} className="text-xs flex gap-2" style={{ color: "#fca5a5" }}>
+                      <span className="shrink-0">⛔</span>{excepcion}
+                    </p>
+                  ))}
+                </div>
+                <p className="text-xs mt-3 font-semibold" style={{ color: "#f87171" }}>
+                  En estos casos consulta con un abogado laboralista antes de dimitir — necesitas documentar bien la situación.
+                </p>
+              </div>
+
             </div>
           )}
         </div>

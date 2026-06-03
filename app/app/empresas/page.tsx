@@ -32,25 +32,36 @@ interface InfoEmpresa {
   paginaEmpleo?: string;
 }
 
+interface RateLimitInfo {
+  enviadosHoy: number;
+  limiteHoy: number;
+  cvsRestantesHoy: number;
+  puedeEnviar: boolean;
+}
+
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
 export default function EmpresasPage() {
   const router = useRouter();
 
-  // URL de la empresa a analizar
   const [urlEmpresa, setUrlEmpresa] = useState("");
-  // Resultado del análisis
   const [infoEmpresa, setInfoEmpresa] = useState<InfoEmpresa | null>(null);
-  // Estado de carga
   const [analizando, setAnalizando] = useState(false);
-  // Mensaje de error
   const [error, setError] = useState("");
+  const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null);
 
-  // Verificar sesión al cargar
+  // Verificar sesión al cargar + obtener rate limit
   useEffect(() => {
     async function verificarSesion() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-      if (!user) router.push("/auth/login");
+      if (!user) { router.push("/auth/login"); return; }
+      try {
+        const res = await fetch(`/api/cv-sender/status?userId=${user.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.rateLimitInfo) setRateLimit(data.rateLimitInfo);
+        }
+      } catch { /* silencioso */ }
     }
     verificarSesion();
   }, [router]);
@@ -110,6 +121,39 @@ export default function EmpresasPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
+
+        {/* ── Contador de envíos diarios ─────────────────────────────────── */}
+        {rateLimit && (
+          <div className="card-game p-4 mb-5 flex items-center gap-4">
+            <div className="text-2xl shrink-0">📧</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-semibold" style={{ color: "#f0ebe0" }}>
+                  Envíos de hoy
+                </span>
+                <span className="text-xs font-bold" style={{ color: rateLimit.puedeEnviar ? "#7ed56f" : "#f0c040" }}>
+                  {rateLimit.enviadosHoy} / {rateLimit.limiteHoy === Infinity ? "∞" : rateLimit.limiteHoy}
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "#2a2a1e" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (rateLimit.enviadosHoy / (rateLimit.limiteHoy || 1)) * 100)}%`,
+                    background: rateLimit.puedeEnviar
+                      ? "linear-gradient(90deg, #7ed56f, #5cb848)"
+                      : "linear-gradient(90deg, #f0c040, #e07850)",
+                  }}
+                />
+              </div>
+              <p className="text-[10px] mt-1" style={{ color: "#706a58" }}>
+                {rateLimit.puedeEnviar
+                  ? `✓ ${rateLimit.cvsRestantesHoy} CV${rateLimit.cvsRestantesHoy !== 1 ? "s" : ""} restante${rateLimit.cvsRestantesHoy !== 1 ? "s" : ""} hoy`
+                  : "⏳ Límite diario alcanzado — se renueva mañana"}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Formulario de análisis ─────────────────────────────────────── */}
         <div className="card-game p-6 mb-6">

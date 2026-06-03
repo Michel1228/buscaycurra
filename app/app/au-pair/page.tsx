@@ -6,7 +6,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 // ─── Tipos ──────────────────────────────────────────────────
-type Tab = "que-es" | "requisitos" | "por-pais" | "alojamiento" | "estudiantes" | "plataformas";
+type Tab = "que-es" | "requisitos" | "por-pais" | "alojamiento" | "estudiantes" | "plataformas" | "al-terminar";
 
 // ─── Datos: Condiciones por país ─────────────────────────────
 const PAISES_AUPAIR = [
@@ -295,6 +295,36 @@ const PAISES_AUPAIR = [
     ley: "Sin ley específica au pair — Kodeks Pracy (Código Laboral polaco)",
     enlace: { texto: "Praca.gov.pl — Empleo en Polonia", url: "https://www.praca.gov.pl" },
   },
+  {
+    flag: "🇬🇷",
+    pais: "Grecia",
+    edad: "18-30 años",
+    horas: "Máx. 30h/semana",
+    bolsillo: "250-350 €/mes",
+    extra: "Libre circulación UE — destino muy popular en verano. Alta demanda en zonas turísticas (Mykonos, Santorini, Creta, Rodas). Coste de vida de los más bajos de Europa occidental",
+    idioma: "Inglés B1-B2 (griego básico muy valorado, pero no obligatorio en zonas turísticas)",
+    duracion: "Máx. 12 meses (más común: 3-6 meses en temporada de verano)",
+    contrato: "Contrato privado por escrito muy recomendado",
+    seguro: "EFKA (Seguridad Social griega) — alta obligatoria por parte del empleador",
+    clases: "Clases de griego opcionales — centros culturales helénicos en España ofrecen preparación",
+    ley: "Sin ley específica au pair — Código Laboral griego (KEN) aplicable",
+    enlace: { texto: "DYPA — Empleo en Grecia", url: "https://www.dypa.gov.gr" },
+  },
+  {
+    flag: "🇱🇺",
+    pais: "Luxemburgo",
+    edad: "18-27 años",
+    horas: "Máx. 25-30h/semana",
+    bolsillo: "400-500 €/mes (el más alto de Europa — refleja el mayor SMI de la UE)",
+    extra: "Libre circulación UE — país trilingüe (luxemburgués, francés, alemán). Hub financiero europeo. Transport público totalmente gratuito desde 2020",
+    idioma: "Francés B1 mínimo (idioma principal de las familias). Alemán valorado",
+    duracion: "Máx. 12 meses",
+    contrato: "Contrato de trabajo au pair obligatorio (Code du Travail luxemburgués)",
+    seguro: "CNSS (Seguridad Social de Luxemburgo) — incluida en el contrato",
+    clases: "Clases de francés o luxemburgués — IFEN y centros culturales con cursos asequibles",
+    ley: "Regulado por el Code du Travail luxemburgués — protección laboral completa UE",
+    enlace: { texto: "ADEM — Empleo en Luxemburgo", url: "https://www.adem.lu" },
+  },
 ];
 
 // ─── Plataformas de búsqueda ─────────────────────────────────
@@ -481,6 +511,7 @@ const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: "alojamiento", label: "Alojamiento", emoji: "🏠" },
   { id: "estudiantes", label: "Estudiantes", emoji: "🎓" },
   { id: "plataformas", label: "Plataformas", emoji: "🔗" },
+  { id: "al-terminar", label: "Al terminar", emoji: "🏁" },
 ];
 
 export default function AuPairPage() {
@@ -936,6 +967,117 @@ export default function AuPairPage() {
                 ))}
               </ul>
             </div>
+          </div>
+        )}
+
+        {/* ── AL TERMINAR ── */}
+        {tab === "al-terminar" && (
+          <div className="space-y-4">
+
+            {/* Aviso previo */}
+            <div className="rounded-2xl px-4 py-3 text-sm" style={{ background: "#0d2818", border: "1px solid #065f46", color: "#d1fae5" }}>
+              🏁 Esta sección es para cuando tu contrato Au Pair esté a punto de terminar o ya haya terminado.
+              Hay pasos importantes que hacer antes de coger el avión de vuelta.
+            </div>
+
+            {/* Qué hacer ANTES de marcharte */}
+            <div className="rounded-2xl p-5" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+              <h2 className="text-base font-bold text-white mb-3">📋 Qué hacer ANTES de irte</h2>
+              <div className="space-y-3">
+                {[
+                  { icon: "💶", titulo: "Exige tu finiquito", desc: "Tienes derecho a cobrar los días trabajados del mes en curso y las vacaciones no disfrutadas. Pide el documento por escrito con firma de la familia." },
+                  { icon: "📜", titulo: "Pide el certificado de empresa", desc: "Documento que acredita: fechas exactas del contrato, tipo de trabajo, motivo de finalización. Imprescindible para pedir el paro en España." },
+                  { icon: "🏥", titulo: "Solicita tu historial de cotizaciones (formulario U1)", desc: "En países UE/EEE, este formulario (antiguo E301) permite sumar tus cotizaciones extranjeras al cómputo español del SEPE. Pídelo en la Seguridad Social del país donde hayas trabajado." },
+                  { icon: "🏛️", titulo: "Date de baja en el registro de la ciudad", desc: "Si te registraste como residente extranjero, date de baja. Evita problemas fiscales futuros (impuesto de patrimonio, etc.)." },
+                  { icon: "🏦", titulo: "Cierra o mantén la cuenta bancaria", desc: "Si quieres recibir transferencias futuras o reembolsos, mantén la cuenta activa unos meses. Recuerda las comisiones de mantenimiento." },
+                  { icon: "📱", titulo: "Cancela contratos locales", desc: "Seguro de salud privado, SIM local, gimnasio, suscripciones de streaming. Hazlo por escrito y guarda los justificantes." },
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-3 rounded-xl p-3" style={{ background: "#0f1117", border: "1px solid #1f2937" }}>
+                    <span className="text-xl shrink-0 mt-0.5">{item.icon}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-white mb-0.5">{item.titulo}</p>
+                      <p className="text-xs leading-relaxed" style={{ color: "#9ca3af" }}>{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* SEPE al volver */}
+            <div className="rounded-2xl p-5" style={{ background: "#0d2818", border: "1px solid #065f46" }}>
+              <h2 className="text-base font-bold mb-3" style={{ color: "#d1fae5" }}>🏛️ SEPE al volver — ¿Puedo cobrar el paro?</h2>
+              <p className="text-xs mb-3 leading-relaxed" style={{ color: "#a7f3d0" }}>
+                Si has cotizado en un país de la UE/EEE y no dimitiste voluntariamente, puedes pedir
+                la prestación por desempleo en España sumando tus cotizaciones extranjeras.
+              </p>
+              <div className="space-y-1.5 mb-4">
+                {[
+                  "✅ Haber cotizado ≥360 días (España + UE con formulario U1)",
+                  "✅ El contrato ha terminado (fin de plazo o despido) — no dimisión voluntaria",
+                  "✅ Inscribirte como demandante en el SEPE en los 15 días hábiles siguientes",
+                  "✅ No percibir rentas superiores al 75% del SMI",
+                ].map((req, i) => (
+                  <p key={i} className="text-xs leading-relaxed" style={{ color: "#d1fae5" }}>{req}</p>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <a href="https://www.sepe.es/HomeSepe/Personas/distributiva-prestaciones/solicitar-prestacion.html"
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm rounded-xl px-3 py-2.5"
+                  style={{ background: "#065f46", color: "#d1fae5", border: "1px solid #047857" }}>
+                  🏛️ Solicitar paro en el SEPE →
+                </a>
+                <a href="https://www.sepe.es/HomeSepe/que-es-el-sepe/comunicacion-institucional/publicaciones/publicaciones-oficiales/listado-de-publicaciones.html?folder=/publicaciones/prestaciones/internacionales"
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm rounded-xl px-3 py-2.5"
+                  style={{ background: "#065f46", color: "#d1fae5", border: "1px solid #047857" }}>
+                  📋 Formulario U1 — Prestaciones internacionales →
+                </a>
+              </div>
+            </div>
+
+            {/* Si el contrato Au Pair terminó mal */}
+            <div className="rounded-2xl p-5" style={{ background: "#1a0a0a", border: "1px solid #7f1d1d" }}>
+              <h2 className="text-base font-bold mb-3" style={{ color: "#fca5a5" }}>🚨 Si el contrato terminó de forma conflictiva</h2>
+              <p className="text-xs mb-3" style={{ color: "#fca5a5" }}>
+                Si la familia te ha tratado mal, ha incumplido el contrato o te ha despedido de forma injusta, tienes recursos legales.
+              </p>
+              <div className="space-y-2">
+                {[
+                  { titulo: "Contacta con la agencia intermediaria", desc: "Si usaste una agencia (AuPairWorld, Cultural Care, etc.), tienen obligación de mediar en conflictos y ayudarte a encontrar otra familia." },
+                  { titulo: "Embajada o Consulado español", desc: "En casos graves (impago, acoso, condiciones ilegales), acude a la embajada de España en el país. Pueden ayudarte con repatriación de urgencia." },
+                  { titulo: "Sindicatos locales o tribunales laborales", desc: "En países UE tienes los mismos derechos laborales que los nacionales. Los sindicatos locales suelen tener servicios gratuitos de asesoramiento para trabajadores extranjeros." },
+                  { titulo: "SEPE con baja voluntaria justificada", desc: "Si te fuiste por condiciones abusivas (impago, acoso, incumplimiento del contrato), puedes solicitar el paro aunque hayas sido tú quien rescindió. Documenta todo." },
+                ].map((item, i) => (
+                  <div key={i} className="rounded-xl p-3" style={{ background: "#1a0a0a", border: "1px solid #991b1b" }}>
+                    <p className="text-xs font-semibold mb-0.5" style={{ color: "#fca5a5" }}>⛔ {item.titulo}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: "#f87171" }}>{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Siguiente paso */}
+            <div className="rounded-2xl p-5" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+              <h2 className="text-base font-bold text-white mb-3">🦋 ¿Y ahora qué? Tu siguiente paso</h2>
+              <p className="text-xs mb-3 leading-relaxed" style={{ color: "#9ca3af" }}>
+                Volver de un año Au Pair con un idioma C1 y experiencia internacional es un cambio de vida real.
+                Aprovecha ese capital para dar el salto laboral.
+              </p>
+              <div className="space-y-2">
+                {[
+                  "📄 Actualiza tu CV con el idioma, la experiencia y los países — BuscayCurra te ayuda",
+                  "🔍 Busca trabajo con filtro de idioma en BuscayCurra — tus opciones se multiplican",
+                  "🌍 ¿Repetir? Muchos au pairs hacen 2-3 países consecutivos antes de volver al mercado laboral",
+                  "🎓 Comprueba si tu facultad reconoce el año como créditos o prácticas internacionales",
+                ].map((item, i) => (
+                  <p key={i} className="text-xs leading-relaxed" style={{ color: "#d1d5db" }}>
+                    {item}
+                  </p>
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
 

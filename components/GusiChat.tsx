@@ -16,6 +16,46 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
+// Mapa de palabras clave → id de país en /app/emigrar
+const LOCATION_TO_PAIS: Record<string, string> = {
+  "reino unido": "uk", "uk": "uk", "london": "uk", "londres": "uk", "england": "uk", "manchester": "uk",
+  "alemania": "alemania", "germany": "alemania", "berlin": "alemania", "berlín": "alemania", "munich": "alemania", "münchen": "alemania",
+  "francia": "francia", "france": "francia", "paris": "francia", "parís": "francia", "lyon": "francia",
+  "irlanda": "irlanda", "ireland": "irlanda", "dublin": "irlanda", "dublín": "irlanda",
+  "países bajos": "paises_bajos", "paises bajos": "paises_bajos", "netherlands": "paises_bajos", "holanda": "paises_bajos", "amsterdam": "paises_bajos",
+  "italia": "italia", "italy": "italia", "rome": "italia", "roma": "italia", "milan": "italia", "milán": "italia",
+  "suecia": "suecia", "sweden": "suecia", "stockholm": "suecia", "estocolmo": "suecia",
+  "suiza": "suiza", "switzerland": "suiza", "zurich": "suiza", "zúrich": "suiza", "ginebra": "suiza",
+  "bélgica": "belgica", "belgica": "belgica", "belgium": "belgica", "brussels": "belgica", "bruselas": "belgica",
+  "portugal": "portugal", "lisbon": "portugal", "lisboa": "portugal", "porto": "portugal",
+  "noruega": "noruega", "norway": "noruega", "oslo": "noruega",
+  "dinamarca": "dinamarca", "denmark": "dinamarca", "copenhagen": "dinamarca", "copenhague": "dinamarca",
+  "austria": "austria", "vienna": "austria", "viena": "austria",
+  "finlandia": "finlandia", "finland": "finlandia", "helsinki": "finlandia",
+  "nueva zelanda": "nueva_zelanda", "new zealand": "nueva_zelanda",
+  "polonia": "polonia", "poland": "polonia", "warsaw": "polonia", "varsovia": "polonia",
+  "canadá": "canada", "canada": "canada", "toronto": "canada", "vancouver": "canada",
+  "australia": "australia", "sydney": "australia", "melbourne": "australia",
+  "estados unidos": "usa", "usa": "usa", "ee.uu.": "usa", "new york": "usa", "san francisco": "usa",
+  "grecia": "grecia", "greece": "grecia", "athens": "grecia", "atenas": "grecia",
+  "luxemburgo": "luxemburgo", "luxembourg": "luxemburgo",
+};
+
+function getCountryFromLocation(ubicacion: string): string | null {
+  if (!ubicacion) return null;
+  const lower = ubicacion.toLowerCase();
+  for (const [keyword, paisId] of Object.entries(LOCATION_TO_PAIS)) {
+    if (lower.includes(keyword)) return paisId;
+  }
+  return null;
+}
+
+const SPAIN_KEYWORDS = ["madrid", "barcelona", "valencia", "sevilla", "zaragoza", "málaga", "bilbao", "españa", "spain", "remote", "remoto", "teletrabajo"];
+function isSpainOrRemote(ubicacion: string): boolean {
+  const lower = ubicacion.toLowerCase();
+  return SPAIN_KEYWORDS.some(k => lower.includes(k));
+}
+
 interface Oferta {
   id: string;
   titulo: string;
@@ -292,13 +332,42 @@ export default function GusiChat() {
                   <div className="ml-7 mt-2 space-y-2">
                     {m.jobs.map((job) => {
                       const matchColor = job.match >= 80 ? "#7ed56f" : job.match >= 60 ? "#f0c040" : "#e07850";
+                      const paisId = getCountryFromLocation(job.ubicacion);
+                      const enEspana = isSpainOrRemote(job.ubicacion);
+                      const locationHref = paisId
+                        ? `/app/emigrar?pais=${paisId}`
+                        : enEspana
+                          ? `/app/buscar?q=${encodeURIComponent(job.titulo)}`
+                          : null;
                       return (
                         <div key={job.id} className="rounded-xl p-3 transition hover:scale-[1.01]"
                           style={{ background: "rgba(42,42,30,0.5)", border: "1px solid rgba(126,213,111,0.1)" }}>
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0 flex-1">
-                              <p className="text-[12px] font-bold truncate" style={{ color: "#f0ebe0" }}>{job.titulo}</p>
-                              <p className="text-[10px]" style={{ color: "#b0a890" }}>{job.empresa} · {job.ubicacion}</p>
+                              {/* Título → abre oferta en nueva pestaña */}
+                              {job.url ? (
+                                <a href={job.url} target="_blank" rel="noopener noreferrer"
+                                  className="text-[12px] font-bold truncate block hover:underline"
+                                  style={{ color: "#f0ebe0" }}>
+                                  {job.titulo} ↗
+                                </a>
+                              ) : (
+                                <p className="text-[12px] font-bold truncate" style={{ color: "#f0ebe0" }}>{job.titulo}</p>
+                              )}
+                              <p className="text-[10px] mt-0.5" style={{ color: "#b0a890" }}>
+                                {job.empresa}
+                                {" · "}
+                                {/* Ubicación → redirige a país o búsqueda */}
+                                {locationHref ? (
+                                  <button onClick={() => router.push(locationHref)}
+                                    className="hover:underline font-medium"
+                                    style={{ color: "#a0d0f0" }}>
+                                    🌍 {job.ubicacion}
+                                  </button>
+                                ) : (
+                                  <span>📍 {job.ubicacion}</span>
+                                )}
+                              </p>
                               <p className="text-[10px] font-semibold mt-0.5" style={{ color: "#7ed56f" }}>💰 {job.salario}</p>
                             </div>
                             <div className="flex flex-col items-center gap-1 shrink-0">
@@ -309,10 +378,10 @@ export default function GusiChat() {
                                 <span className="text-[11px] font-bold" style={{ color: matchColor }}>{job.match}%</span>
                               </div>
                               <button
-                                onClick={() => router.push(`/app/envios?empresa=${encodeURIComponent(job.empresa)}`)}
+                                onClick={() => router.push(`/app/empresas?empresa=${encodeURIComponent(job.empresa)}`)}
                                 className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:opacity-90"
                                 style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
-                                📧 Enviar CV
+                                ✓ Enviar CV
                               </button>
                             </div>
                           </div>
@@ -322,11 +391,12 @@ export default function GusiChat() {
                     <button
                       onClick={() => {
                         addMsg("user", "Envía mi CV a todas las ofertas");
-                        addMsg("gusi", "📧 **¡Enviando tu CV a todas las ofertas!** 🐛\n\nVe a 📧 **Envíos** para ver el progreso. ¡Un paso más cerca de ser mariposa! 🦋");
+                        addMsg("gusi", "📧 **¡Enviando tu CV a todas las ofertas!** 🐛\n\nVe a 🏢 **Empresa** para ver el progreso y el contador de envíos de hoy. ¡Un paso más cerca de ser mariposa! 🦋");
+                        router.push("/app/empresas");
                       }}
                       className="w-full py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90"
                       style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.15), rgba(92,184,72,0.15))", border: "1.5px solid rgba(126,213,111,0.3)", color: "#7ed56f" }}>
-                      📧 Enviar CV a TODAS ({m.jobs.length} ofertas)
+                      ✓ Enviar CV a TODAS ({m.jobs.length} ofertas)
                     </button>
                   </div>
                 )}

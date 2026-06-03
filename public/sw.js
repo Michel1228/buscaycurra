@@ -10,12 +10,13 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'BuscayCurra';
   const options = {
     body: data.body || '',
-    icon: '/qr-buscaycurra.png',
-    badge: '/qr-buscaycurra.png',
+    icon: '/icon-192.png',
+    badge: '/icon-72.png',
     data: { url: data.url || '/app' },
     vibrate: [100, 50, 100],
     requireInteraction: false,
     tag: data.tag || 'buscaycurra-notif',
+    actions: data.actions || [],
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
@@ -24,17 +25,21 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.url || '/app';
+  const origin = self.location.origin;
+  const targetUrl = url.startsWith('http') ? url : origin + url;
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Si ya hay una ventana de la app abierta, navegar a la URL dentro de ella
       for (const client of clientList) {
-        if ('focus' in client) {
-          client.focus();
-          if ('navigate' in client) client.navigate(url);
-          return;
+        if (client.url.startsWith(origin) && 'focus' in client) {
+          return client.focus().then((c) => {
+            if ('navigate' in c) return c.navigate(targetUrl);
+          }).catch(() => self.clients.openWindow(targetUrl));
         }
       }
-      return self.clients.openWindow(url);
+      // Sin ventana abierta → abrir nueva
+      return self.clients.openWindow(targetUrl);
     })
   );
 });
