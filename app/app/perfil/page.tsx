@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import PerfilForm, { type DatosPerfil } from "@/components/PerfilForm";
@@ -20,6 +20,9 @@ export default function PerfilPage() {
   const [datos, setDatos] = useState<Partial<DatosPerfil>>({});
   const [cargando, setCargando] = useState(true);
   const [tab, setTab] = useState<TabId>("perfil");
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current); }, []);
 
   const cargar = useCallback(async () => {
     try {
@@ -98,8 +101,7 @@ export default function PerfilPage() {
             <div className="card-game p-6">
               <PerfilForm userId={userId} datosIniciales={datos} onGuardado={(d) => {
                 setDatos(d);
-                // Auto-redirect to next step (CV) after saving profile
-                setTimeout(() => router.push("/app/curriculum"), 1200);
+                redirectTimerRef.current = setTimeout(() => router.push("/app/curriculum"), 1200);
               }} />
             </div>
 

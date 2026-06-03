@@ -62,52 +62,51 @@ function BuscarPageInner() {
   const [buscado, setBuscado] = useState(false);
   const [error, setError] = useState("");
 
-  // Verificar sesión + geolocalización automática
+  // Verificar sesión + geolocalización automática — solo al montar
   useEffect(() => {
     async function init() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
-      // Si no hay ubicación, intentar detectarla
-      if (!ubicacion) {
-        // 1. Primero mirar el perfil del usuario
-        const { data: perfil } = await getSupabaseBrowser().from("profiles")
-          .select("ciudad").eq("id", user.id).single();
-        if (perfil?.ciudad) {
-          setUbicacion(perfil.ciudad);
-          setGeoDetected(true);
-          return;
-        }
+      // Solo auto-detectar si el campo está vacío al cargar la página
+      if (searchParams.get("location")) return;
 
-        // 2. Si no hay ciudad en perfil, usar geolocalización del navegador
-        if ("geolocation" in navigator) {
-          navigator.geolocation.getCurrentPosition(
-            async (pos) => {
-              try {
-                // Reverse geocode con API gratuita
-                const res = await fetch(
-                  `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`
-                );
-                const data = await res.json();
-                const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
-                if (city) {
-                  setUbicacion(city);
-                  setGeoDetected(true);
-                  // Guardar en perfil para futuras visitas
-                  await getSupabaseBrowser().from("profiles")
-                    .update({ ciudad: city })
-                    .eq("id", user.id);
-                }
-              } catch { /* ignore geo errors */ }
-            },
-            () => { /* user denied geolocation */ },
-            { timeout: 5000, enableHighAccuracy: false }
-          );
-        }
+      // 1. Primero mirar el perfil del usuario
+      const { data: perfil } = await getSupabaseBrowser().from("profiles")
+        .select("ciudad").eq("id", user.id).single();
+      if (perfil?.ciudad) {
+        setUbicacion(perfil.ciudad);
+        setGeoDetected(true);
+        return;
+      }
+
+      // 2. Si no hay ciudad en perfil, usar geolocalización del navegador
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            try {
+              const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`
+              );
+              const data = await res.json();
+              const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
+              if (city) {
+                setUbicacion(city);
+                setGeoDetected(true);
+                await getSupabaseBrowser().from("profiles")
+                  .update({ ciudad: city })
+                  .eq("id", user.id);
+              }
+            } catch { /* ignore geo errors */ }
+          },
+          () => { /* user denied geolocation */ },
+          { timeout: 5000, enableHighAccuracy: false }
+        );
       }
     }
     init();
-  }, [router, ubicacion]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Búsqueda a Jooble vía proxy server-side — la API key nunca sale al cliente

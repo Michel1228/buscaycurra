@@ -127,6 +127,7 @@ function StatsTab({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!userId) return;
     (async () => {
       try {
         const res = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`);

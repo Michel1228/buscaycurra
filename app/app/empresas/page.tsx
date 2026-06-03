@@ -289,7 +289,7 @@ export default function EmpresasPage() {
             {/* Botón de acción principal */}
             <div className="px-6 py-5 border-t border-[#3d3c30]">
               <Link
-                href={`/app/envios?empresa=${encodeURIComponent(infoEmpresa.nombre)}`}
+                href={`/app/envios?empresa=${encodeURIComponent(infoEmpresa.nombre)}${infoEmpresa.emailRrhh ? `&email=${encodeURIComponent(infoEmpresa.emailRrhh)}` : ""}${infoEmpresa.paginaEmpleo ? `&web=${encodeURIComponent(infoEmpresa.paginaEmpleo)}` : ""}`}
                 className="block w-full text-center py-3 text-sm font-bold rounded-xl transition hover:opacity-90"
                 style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >

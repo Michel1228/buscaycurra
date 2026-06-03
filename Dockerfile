@@ -44,8 +44,8 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Script de inicio: arranca el worker BullMQ + servidor Next.js
-RUN printf '#!/bin/sh\nnode worker.js &\nexec node server.js\n' > /app/start.sh \
+# Script de inicio: worker BullMQ con auto-restart + servidor Next.js
+RUN printf '#!/bin/sh\n(while true; do node worker.js || true; sleep 3; done) &\nexec node server.js\n' > /app/start.sh \
     && chmod +x /app/start.sh
 
 EXPOSE 3000

@@ -118,7 +118,6 @@ function extractEmails(html: string, dominio: string): string[] {
     .replace(/&amp;/g, "&")
     .replace(/\[at\]/gi, "@")
     .replace(/\(at\)/gi, "@")
-    .replace(/\s+at\s+/gi, "@")
     .replace(/\[dot\]/gi, ".")
     .replace(/\(dot\)/gi, ".");
 
