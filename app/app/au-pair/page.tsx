@@ -83,7 +83,7 @@ const PAISES_AUPAIR = [
     seguro: "Obligatorio — a cargo de la familia",
     clases: "Clases de neerlandés muy recomendadas — algunas familias las pagan",
     ley: "Regulado por el IND (Servicio de Inmigración)",
-    enlace: { texto: "Au Pair en P. Bajos — IND oficial", url: "https://ind.nl/en/au-pair" },
+    enlace: { texto: "Au Pair en P. Bajos — IND oficial", url: "https://ind.nl/en" },
   },
   {
     flag: "🇺🇸",
@@ -218,7 +218,7 @@ const PAISES_AUPAIR = [
     seguro: "Seguro de salud y accidentes a cargo de la familia",
     clases: "SFI (Svenska för invandrare): sueco gratis para residentes",
     ley: "Sin ley específica au pair — derechos laborales generales de Suecia (Arbetsrätt)",
-    enlace: { texto: "Trabajar en Suecia — Arbetsförmedlingen", url: "https://arbetsformedlingen.se/for-arbetssokande/other-languages/english" },
+    enlace: { texto: "Trabajar en Suecia — Arbetsförmedlingen", url: "https://arbetsformedlingen.se/other-languages" },
   },
   {
     flag: "🇮🇹",

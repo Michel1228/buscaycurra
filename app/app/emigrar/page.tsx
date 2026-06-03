@@ -101,6 +101,7 @@ const INFO: Record<string, InfoPais> = {
       { nombre: "EURES — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial de la UE para encontrar trabajo en cualquier país europeo. Aunque UK salió de la UE, sigue teniendo portal EURES.", url: "https://eures.europa.eu" },
       { nombre: "British Council — Programa de Asistentes de Idiomas", emoji: "🎓", desc: "Trabaja como asistente de español en colegios del Reino Unido con beca oficial.", url: "https://www.britishcouncil.es/programas/auxiliares-de-conversacion" },
       { nombre: "Teach English in UK (CELTA/TESOL)", emoji: "📚", desc: "Con certificado CELTA puedes enseñar inglés como negocio propio. Reconocido internacionalmente.", url: "https://www.cambridgeenglish.org/teaching-english/teaching-qualifications/celta/" },
+      { nombre: "Workaway UK", emoji: "🌍", desc: "Voluntariado a cambio de alojamiento y comida. Más de 2.000 anfitriones en UK. Regístrate gratis y filtra por 'United Kingdom'.", url: "https://www.workaway.info" },
     ],
   },
 
@@ -236,8 +237,8 @@ const INFO: Record<string, InfoPais> = {
     programas: [
       { nombre: "EURES — Empleo en Francia", emoji: "🇪🇺", desc: "Ofertas de trabajo en Francia con posibilidad de ayuda para el traslado (RED EURES).", url: "https://eures.europa.eu/jobs-and-learning/search-jobs_es" },
       { nombre: "Campus France — Estudios en Francia", emoji: "🎓", desc: "Estudia en Francia con beca — Masters y doctorados en universidades públicas.", url: "https://www.campusfrance.org/es" },
-      { nombre: "Assistants de langue — CIEP", emoji: "📚", desc: "Trabaja como asistente de español en colegios franceses. Beca + alojamiento.", url: "https://www.ciep.fr/assistants-de-langue" },
-      { nombre: "Pôle Emploi International", emoji: "💼", desc: "Versión internacional del SEPE francés — ofertas especiales para extranjeros.", url: "https://www.pole-emploi-international.fr" },
+      { nombre: "Assistants de langue — France Éducation International", emoji: "📚", desc: "Trabaja como asistente de español en colegios franceses. Beca + alojamiento. (CIEP se renombró a France Éducation International en 2020)", url: "https://www.france-education-international.fr" },
+      { nombre: "France Travail — Ofertas internacionales", emoji: "💼", desc: "El nuevo nombre de Pôle Emploi desde 2024. Ofertas de empleo en Francia y asesoramiento para trabajadores extranjeros.", url: "https://www.francetravail.fr" },
     ],
   },
 
@@ -431,7 +432,7 @@ const INFO: Record<string, InfoPais> = {
     programas: [
       { nombre: "Working Holiday Visa 417", emoji: "🏄", desc: "La ruta más popular para españoles de 18-35 años. Trabaja en cualquier sector — se renueva trabajando en zonas rurales.", url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/work-holiday-417" },
       { nombre: "Work & Holiday Visa 462", emoji: "🌿", desc: "Similar al 417 pero para otras nacionalidades. Verifica tu elegibilidad en el portal oficial.", url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/work-holiday-462" },
-      { nombre: "Harvest Trail — Trabajo rural para renovar WHV", emoji: "🌾", desc: "Haz 88 días de trabajo en zona rural y renueva tu WHV un año más. Portal oficial del gobierno australiano.", url: "https://jobsearch.gov.au/harvesttrail" },
+      { nombre: "Harvest Trail — Trabajo rural para renovar WHV", emoji: "🌾", desc: "Haz 88 días de trabajo en zona rural y renueva tu WHV un año más. Portal oficial del gobierno australiano.", url: "https://www.workforceaustralia.gov.au" },
       { nombre: "TAFE — Formación profesional australiana", emoji: "🎓", desc: "Centros de FP reconocidos internacionalmente. Títulos homologables en España.", url: "https://www.tafecourses.com.au" },
     ],
   },
@@ -690,7 +691,7 @@ const INFO: Record<string, InfoPais> = {
       enlaceOficial: { texto: "Vivir y trabajar en Suecia — Migrationsverket", url: "https://www.migrationsverket.se/English/Private-individuals/EU-citizens-and-Nordic-citizens.html" },
     },
     programas: [
-      { nombre: "Arbetsförmedlingen — Portal de empleo oficial", emoji: "🇸🇪", desc: "La agencia pública de empleo sueca. Ofertas en todos los sectores, incluidos empleos para no sueco-hablantes.", url: "https://arbetsformedlingen.se" },
+      { nombre: "Arbetsförmedlingen — Portal de empleo oficial", emoji: "🇸🇪", desc: "La agencia pública de empleo sueca. Ofertas en todos los sectores, incluidos empleos para no sueco-hablantes.", url: "https://arbetsformedlingen.se/other-languages" },
       { nombre: "EURES Suecia — Empleo en Europa", emoji: "🇪🇺", desc: "Portal oficial UE con ofertas filtradas por Suecia y apoyo de consejeros EURES.", url: "https://eures.europa.eu" },
       { nombre: "SFI — Svenska för invandrare", emoji: "📚", desc: "Aprende sueco gratis con el programa oficial del gobierno sueco para inmigrantes.", url: "https://www.skolverket.se/undervisning/vuxenutbildningen/kommunal-vuxenutbildning-komvux/svenska-for-invandrare-sfi" },
     ],
