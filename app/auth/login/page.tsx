@@ -142,7 +142,7 @@ export default function LoginPage() {
           </div>
 
           <div className="card-game p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div>
                 <label htmlFor="email" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>Email</label>
                 <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
