@@ -25,9 +25,22 @@ import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 
 export async function POST(request: NextRequest) {
   try {
+    // ── Verificar autenticación ───────────────────────────────────────────
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+    const supabasePublico = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user }, error: authError } = await supabasePublico.auth.getUser(authHeader.slice(7));
+    if (authError || !user) {
+      return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
+    }
+
     // ── Leer y validar el cuerpo de la petición ────────────────────────────
     const body = await request.json() as {
-      userId?: string;
       companyUrl?: string;
       companyEmail?: string;
       companyName?: string;
@@ -36,15 +49,9 @@ export async function POST(request: NextRequest) {
       useAIPersonalization?: boolean;
     };
 
-    const { userId, companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization } = body;
-
-    // Validación de campos obligatorios
-    if (!userId) {
-      return NextResponse.json(
-        { error: "El campo userId es obligatorio" },
-        { status: 400 }
-      );
-    }
+    // userId siempre del token — nunca del body
+    const userId = user.id;
+    const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization } = body;
 
     if (!companyEmail) {
       return NextResponse.json(

@@ -6,7 +6,8 @@
  * Frecuencia: cada 4-5 días (no diario)
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface ScheduleSuccess {
   jobId: string;
@@ -45,9 +46,11 @@ export default function AutoSendSetup({ userId, onJobScheduled, initialValues }:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<ScheduleSuccess | null>(null);
+  const submittingRef = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return; // double-submit guard
     setError(null);
     setSuccess(null);
 
@@ -59,14 +62,20 @@ export default function AutoSendSetup({ userId, onJobScheduled, initialValues }:
       setError("Introduce el nombre de la empresa");
       return;
     }
+    if (companyUrl.trim() && !/^https?:\/\//i.test(companyUrl.trim())) {
+      setError("La web debe comenzar con https:// (ej: https://empresa.com)");
+      return;
+    }
 
+    submittingRef.current = true;
     setLoading(true);
     try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      const token = session?.access_token ?? "";
       const response = await fetch("/api/cv-sender/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          userId,
           companyUrl: companyUrl.trim() || undefined,
           companyEmail: companyEmail.trim().toLowerCase(),
           companyName: companyName.trim(),
@@ -87,6 +96,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, initialValues }:
     } catch (err) {
       setError((err as Error).message);
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

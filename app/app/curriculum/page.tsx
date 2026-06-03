@@ -222,6 +222,60 @@ export default function CurriculumPage() {
   }
 
   // Un solo botón: genera CV + mejora con IA en un paso
+  async function autoSubirPdfBasico(textoMejorado: string) {
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ format: "a4", unit: "mm" });
+      const nombre = `${form.nombre} ${form.apellidos}`.trim();
+      doc.setFontSize(18);
+      doc.text(nombre || "Curriculum Vitae", 20, 25);
+      if (form.subtitulo) { doc.setFontSize(12); doc.text(form.subtitulo, 20, 34); }
+      doc.setFontSize(10);
+      let y = 45;
+      const addLine = (text: string, indent = 20) => {
+        const lines = doc.splitTextToSize(text, 170 - indent);
+        doc.text(lines, indent, y);
+        y += lines.length * 5 + 2;
+        if (y > 270) { doc.addPage(); y = 20; }
+      };
+      if (form.email || form.telefono || form.ciudad) {
+        addLine([form.email, form.telefono, form.ciudad].filter(Boolean).join(" · "));
+      }
+      // Perfil profesional mejorado
+      if (textoMejorado) {
+        y += 4;
+        doc.setFontSize(11);
+        addLine("Perfil Profesional");
+        doc.setFontSize(9);
+        addLine(textoMejorado.slice(0, 600), 22);
+      }
+      // Experiencia
+      const expFiltrada = form.experiencia.filter(e => e.puesto);
+      if (expFiltrada.length) {
+        y += 4; doc.setFontSize(11); addLine("Experiencia"); doc.setFontSize(9);
+        expFiltrada.forEach(e => {
+          addLine(`${e.puesto}${e.empresa ? " — " + e.empresa : ""}${e.fechas ? " (" + e.fechas + ")" : ""}`, 22);
+        });
+      }
+      // Formación
+      const eduFiltrada = form.formacion.filter(f => f.titulo);
+      if (eduFiltrada.length) {
+        y += 4; doc.setFontSize(11); addLine("Formación"); doc.setFontSize(9);
+        eduFiltrada.forEach(f => addLine(`${f.titulo}${f.centro ? " · " + f.centro : ""}`, 22));
+      }
+      const pdfBlob = doc.output("blob");
+      const pdfFile = new File([pdfBlob], "cv.pdf", { type: "application/pdf" });
+      const fd = new FormData();
+      fd.append("cv", pdfFile);
+      await fetch("/api/cv/subir", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      setPdfSubido(true);
+    } catch { /* no bloquear el flujo si falla */ }
+  }
+
   async function generarYMejorar() {
     if (!form.nombre.trim()) { setError("Escribe tu nombre para continuar"); return; }
     setProcesando(true);
@@ -257,8 +311,14 @@ export default function CurriculumPage() {
           body: JSON.stringify(cvData),
         });
         const genData = await genRes.json();
-        if (genData.html) { setMejoradoHTML(genData.html); setPaso("mejorado"); }
-        else setError("Error generando CV mejorado");
+        if (genData.html) {
+          setMejoradoHTML(genData.html);
+          setPaso("mejorado");
+          // Auto-subir PDF básico a Storage para que los envíos automáticos funcionen
+          void autoSubirPdfBasico(cvMejorado);
+        } else {
+          setError("Error generando CV mejorado");
+        }
       }
     } catch { setError("Error al mejorar con IA"); }
     finally { setProcesando(false); }

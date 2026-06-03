@@ -26,7 +26,23 @@ const EMPLEO_KEYWORDS = [
 // User-agent neutral para evitar bloqueos básicos
 const UA = "Mozilla/5.0 (compatible; BuscayCurraBot/1.0; +https://buscaycurra.es)";
 
+// Bloquear IPs privadas, loopback, link-local y metadata de cloud (SSRF)
+const PRIVATE_IP_RE = /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$|fc00:|fd)/i;
+
+function esUrlSegura(rawUrl: string): boolean {
+  try {
+    const parsed = new URL(rawUrl);
+    if (!["http:", "https:"].includes(parsed.protocol)) return false;
+    const host = parsed.hostname.toLowerCase();
+    if (host === "localhost" || PRIVATE_IP_RE.test(host)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function extraerInfoEmpresa(url: string): Promise<DatosEmpresa> {
+  if (!esUrlSegura(url)) return { nombre: extraerNombreDesdeUrl(url) };
   const dominioLimpio = (() => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; } })();
   const nombreFallback = extraerNombreDesdeUrl(url);
 

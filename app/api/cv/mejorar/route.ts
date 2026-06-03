@@ -22,19 +22,15 @@ export async function POST(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Obtener el token de autorización de la cabecera
+  // Auth obligatoria
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
-
-  if (token) {
-    // Verificar que el token es válido
-    const { error: authError } = await supabase.auth.getUser(token);
-    if (authError) {
-      return NextResponse.json(
-        { error: "No autorizado. Por favor, inicia sesión." },
-        { status: 401 }
-      );
-    }
+  if (!token) {
+    return NextResponse.json({ error: "No autorizado. Por favor, inicia sesión." }, { status: 401 });
+  }
+  const { error: authError } = await supabase.auth.getUser(token);
+  if (authError) {
+    return NextResponse.json({ error: "No autorizado. Por favor, inicia sesión." }, { status: 401 });
   }
 
   // ── Leer y validar el cuerpo de la petición ───────────────────────────────

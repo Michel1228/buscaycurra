@@ -4,12 +4,26 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
+  // ── Auth obligatoria ────────────────────────────────────────────────────
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+  const { data: { user }, error: authError } = await createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  ).auth.getUser(authHeader.slice(7));
+  if (authError || !user) {
+    return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
+  }
+
   const tmpFile = join(tmpdir(), `cv-${Date.now()}.pdf`);
   try {
     const formData = await request.formData();
@@ -18,17 +32,14 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // ── Extraer texto con pdftotext (poppler-utils) ─────────────────────
+    // ── Extraer texto con pdftotext (execFileSync — sin shell, sin injection) ──
     let textoCV = "";
     try {
       writeFileSync(tmpFile, buffer);
-      textoCV = execSync(`pdftotext "${tmpFile}" - 2>/dev/null`, { maxBuffer: 2 * 1024 * 1024 }).toString("utf-8").trim();
-      console.log(`[CV Extract] pdftotext: ${textoCV.length} chars`);
+      textoCV = execFileSync("pdftotext", [tmpFile, "-"], { maxBuffer: 2 * 1024 * 1024 }).toString("utf-8").trim();
     } catch (e) {
       console.warn("[CV Extract] pdftotext failed:", (e as Error).message);
-      // Fallback: raw text extraction
       textoCV = extractRawText(buffer);
-      console.log(`[CV Extract] fallback: ${textoCV.length} chars`);
     } finally {
       try { unlinkSync(tmpFile); } catch { /* ok */ }
     }
@@ -73,12 +84,11 @@ Sin explicaciones. SOLO JSON. Campo vacío si no hay dato.`
       }
     }
 
-    // Fallback: regex
     return NextResponse.json({ ...parsearBasico(textoCV), textoOriginal: textoCV.slice(0, 2000), fuente: "regex" });
   } catch (err) {
     try { unlinkSync(tmpFile); } catch { /* ok */ }
     console.error("[CV Extract]", (err as Error).message);
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    return NextResponse.json({ error: "Error al procesar el archivo" }, { status: 500 });
   }
 }
 
