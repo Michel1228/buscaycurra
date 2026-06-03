@@ -24,6 +24,15 @@ ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
 RUN npm run build
 
+# Compilar el worker de BullMQ como bundle Node.js standalone
+RUN node_modules/.bin/esbuild scripts/start-worker.ts \
+    --bundle \
+    --platform=node \
+    --target=node20 \
+    --packages=external \
+    --tsconfig=tsconfig.json \
+    --outfile=.next/standalone/worker.js
+
 # Production stage — imagen mínima con el standalone output
 FROM node:20.19.0-alpine AS runner
 WORKDIR /app
@@ -35,6 +44,10 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
+# Script de inicio: arranca el worker BullMQ + servidor Next.js
+RUN printf '#!/bin/sh\nnode worker.js &\nexec node server.js\n' > /app/start.sh \
+    && chmod +x /app/start.sh
+
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["/bin/sh", "/app/start.sh"]

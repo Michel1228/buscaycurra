@@ -15,9 +15,6 @@
  *   Ctrl+C (SIGINT) o matar el proceso con SIGTERM
  */
 
-// Cargar variables de entorno desde .env.local
-import "dotenv/config";
-
 import { cvWorker } from "../lib/cv-sender/worker";
 import { getRedisConnection, getQueueStats } from "../lib/cv-sender/queue";
 
