@@ -123,7 +123,7 @@ ${userName}`;
       {
         userName,
         userEmail,
-        userPhone: profile.phone,
+        userPhone: "",
       },
       coverLetter,
       subjectLine,
