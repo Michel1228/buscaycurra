@@ -12,7 +12,6 @@ const supabase = createClient(
 const LIMITS: Record<string, number> = {
   free: 2,
   esencial: 5,
-  basico: 5,
   pro: 10,
   empresa: 999,
 };
@@ -29,11 +28,11 @@ export async function GET(request: NextRequest) {
     // Obtener plan del usuario desde Supabase
     const { data: profile } = await supabase
       .from("profiles")
-      .select("subscription_tier")
+      .select("plan")
       .eq("id", userId)
       .single();
 
-    const plan = profile?.subscription_tier || "free";
+    const plan = profile?.plan || "free";
 
     // Obtener envíos de hoy desde cv_sends en Supabase
     const hoy = new Date();

@@ -10,9 +10,8 @@ export const dynamic = "force-dynamic";
 const LIMITES: Record<string, number> = {
   free: 2,
   gratuito: 2,
-  basico: 2,
-  esencial: 10,
-  pro: 300,
+  esencial: 5,
+  pro: 10,
   empresa: 9999,
 };
 

@@ -30,7 +30,7 @@ function getSupabase(): any {
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 /** Planes de usuario disponibles */
-export type UserPlan = "free" | "esencial" | "basico" | "pro" | "empresa";
+export type UserPlan = "free" | "esencial" | "pro" | "empresa";
 
 /** Resultado de la verificación de límites */
 export interface RateLimitResult {
@@ -91,10 +91,6 @@ export async function checkRateLimit(
     },
     esencial: {
       perDay: parseInt(process.env.MAX_CVS_PER_DAY_ESENCIAL ?? "5"),
-      perMonth: 60 + creditosReferido,
-    },
-    basico: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_BASICO ?? "5"),
       perMonth: 60 + creditosReferido,
     },
     pro: {
@@ -285,5 +281,5 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
   }
 
   const plan = data.plan as UserPlan;
-  return (["free", "esencial", "basico", "pro", "empresa"] as UserPlan[]).includes(plan) ? plan : "free";
+  return (["free", "esencial", "pro", "empresa"] as UserPlan[]).includes(plan) ? plan : "free";
 }
