@@ -18,7 +18,6 @@ export const runtime = "nodejs";
 
 const NOMBRES_PLAN: Record<string, string> = {
   esencial: "Esencial — 2,99€/mes",
-  basico:   "Básico — 4,99€/mes",
   pro:      "Pro — 9,99€/mes",
   empresa:  "Empresa — 49,99€/mes",
 };
@@ -59,6 +58,24 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // ── Idempotencia: verificar si el evento ya fue procesado ──────────────
+    const eventId = event.id;
+    const { data: existente } = await supabaseAdmin
+      .from("stripe_webhook_events")
+      .select("event_id")
+      .eq("event_id", eventId)
+      .single();
+    if (existente) {
+      console.log(`[stripe/webhook] Evento ${eventId} ya procesado, ignorando`);
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
+    // Registrar el evento como procesado
+    await supabaseAdmin.from("stripe_webhook_events").insert({
+      event_id: eventId,
+      event_type: event.type,
+    });
 
     // ── Procesar eventos de Stripe ───────────────────────────────────────────
 

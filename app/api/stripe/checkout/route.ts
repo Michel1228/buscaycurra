@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as { plan?: string };
     const plan = body.plan;
 
-    if (plan !== "esencial" && plan !== "basico" && plan !== "pro" && plan !== "empresa") {
+    if (plan !== "esencial" && plan !== "pro" && plan !== "empresa") {
       return NextResponse.json({ error: "Plan no válido." }, { status: 400 });
     }
 
@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
       .select("plan, stripe_customer_id")
       .eq("id", user.id)
       .single();
+
+type UserPlan = "free" | "esencial" | "pro" | "empresa";
 
 function validatePlan(plan: string): plan is UserPlan {
   return ["free", "esencial", "pro", "empresa"].includes(plan);
