@@ -54,19 +54,20 @@ export async function GET(request: NextRequest) {
     const plan: string = profile?.plan || "free";
     const limiteHoy = LIMITES[plan] ?? LIMITES.esencial;
 
-    // Conteos de hoy, semana, mes
+    // Conteos de hoy, semana, mes — usar created_at (momento en que se programó)
+    // Incluir pendientes (sent_at puede ser null) y enviados
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const inicioSemana = new Date(hoy);
-    inicioSemana.setDate(hoy.getDate() - hoy.getDay()); // domingo
+    inicioSemana.setDate(hoy.getDate() - hoy.getDay());
     inicioSemana.setHours(0, 0, 0, 0);
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
 
     const [{ count: hoyCount }, { count: semanaCount }, { count: mesCount }, { data: recientes }] = await Promise.all([
-      adminClient.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("sent_at", hoy.toISOString()),
-      adminClient.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("sent_at", inicioSemana.toISOString()),
-      adminClient.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("sent_at", inicioMes.toISOString()),
-      adminClient.from("cv_sends").select("company_name, company_email, job_title, sent_at").eq("user_id", userId).order("sent_at", { ascending: false }).limit(10),
+      adminClient.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", userId).in("status", ["enviado", "pendiente"]).gte("created_at", hoy.toISOString()),
+      adminClient.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", userId).in("status", ["enviado", "pendiente"]).gte("created_at", inicioSemana.toISOString()),
+      adminClient.from("cv_sends").select("*", { count: "exact", head: true }).eq("user_id", userId).in("status", ["enviado", "pendiente"]).gte("created_at", inicioMes.toISOString()),
+      adminClient.from("cv_sends").select("company_name, company_email, job_title, sent_at, created_at").eq("user_id", userId).in("status", ["enviado", "pendiente"]).order("created_at", { ascending: false }).limit(10),
     ]);
 
     const disponibles = Math.max(0, limiteHoy - (hoyCount || 0));
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
         empresa: r.company_name,
         email: r.company_email,
         puesto: r.job_title,
-        fecha: r.sent_at,
+        fecha: r.sent_at || r.created_at,
       })),
     });
   } catch (err) {

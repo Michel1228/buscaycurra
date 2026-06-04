@@ -137,6 +137,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: resultado.error }, { status: 400 });
     }
 
+    // ── Insertar registro en cv_sends (estado: pendiente) ──────────────────
+    await supabaseAdmin.from("cv_sends").insert({
+      user_id: userId,
+      company_name: companyName,
+      company_email: companyEmail,
+      company_url: companyUrl ?? null,
+      job_title: jobTitle ?? null,
+      status: "pendiente",
+      sent_at: null,
+    });
+
     // ── Respuesta exitosa ─────────────────────────────────────────────────
     return NextResponse.json(
       {
