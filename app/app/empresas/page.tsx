@@ -77,7 +77,7 @@ export default function EmpresasPage() {
   // ── Shared state ──
   const [userId, setUserId] = useState("");
   const [historial, setHistorial] = useState<EmpresaGuardada[]>([]);
-  const [stats, setStats] = useState<UserStats>({ cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 2, disponibles: 2 }, plan: "free" });
+  const [stats, setStats] = useState<UserStats | null>(null);
   const [showStats, setShowStats] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -202,8 +202,12 @@ export default function EmpresasPage() {
   async function handleEnviarCV(email?: string) {
     const emp = empresaSeleccionada;
     if (!emp || !userId) return;
-    if (stats.cv.disponibles <= 0) {
-      setError(`Límite diario (${stats.cv.limiteHoy} envíos). Mejora tu plan.`);
+    if (!stats || stats.cv.disponibles <= 0) {
+      if (stats && stats.plan !== "empresa") {
+        setError(`Límite diario (${stats.cv.limiteHoy >= 9999 ? "∞" : stats.cv.limiteHoy} envíos). Mejora tu plan.`);
+      } else if (!stats) {
+        setError("Cargando datos...");
+      }
       return;
     }
 
@@ -281,6 +285,7 @@ export default function EmpresasPage() {
           </p>
 
           {/* Contador de envíos interactivo */}
+          {stats && (
           <div className="mt-3 flex items-center gap-3">
             <button
               onClick={() => setShowStats(!showStats)}
@@ -292,8 +297,12 @@ export default function EmpresasPage() {
               }}
               title="Click para ver detalle de envíos"
             >
-              <span className="text-lg tabular-nums">{stats.cv.disponibles}</span>
-              <span className="text-[10px] opacity-80">quedan hoy</span>
+              <span className="text-lg tabular-nums">
+                {stats.cv.disponibles >= 9999 ? "∞" : stats.cv.disponibles}
+              </span>
+              <span className="text-[10px] opacity-80">
+                {stats.cv.disponibles >= 9999 ? "ilimitado" : "quedan hoy"}
+              </span>
               <span className="text-[10px]">{showStats ? "▲" : "▼"}</span>
             </button>
 
@@ -316,8 +325,9 @@ export default function EmpresasPage() {
               {stats.plan}
             </span>
           </div>
+          )}
 
-          {showStats && (
+          {showStats && stats && (
             <div
               className="mt-3 p-4 rounded-lg max-w-sm transition-all"
               style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.1)" }}
