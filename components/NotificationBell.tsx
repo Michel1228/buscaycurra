@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface Notif {
   id: string;
@@ -39,7 +38,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
     }
     // Para otros tipos: si hay job_id, ir al detalle
     if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
-    if (n.tipo === "cv_enviado") return "/app/empresas";
+    if (n.tipo === "cv_enviado") return "/app/envios";
     if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
     if (n.tipo === "recordatorio") return "/app/gusi";
     return null;
@@ -64,11 +63,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   async function fetchNotifs() {
     try {
-      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-      if (!session) return;
-      const res = await fetch("/api/notifications", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      const res = await fetch(`/api/notifications?userId=${encodeURIComponent(userId)}`);
       if (!res.ok) return;
       const data = await res.json() as { notificaciones: Notif[]; sinLeer: number };
       setNotifs(data.notificaciones || []);
@@ -77,16 +72,12 @@ export default function NotificationBell({ userId }: { userId: string }) {
   }
 
   async function marcarTodasLeidas() {
+    if (!userId) return;
     try {
-      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-      if (!session) return;
       await fetch("/api/notifications", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ marcarTodas: true }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, marcarTodas: true }),
       });
       setNotifs((prev) => prev.map((n) => ({ ...n, leida: true })));
       setSinLeer(0);
@@ -95,14 +86,9 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   async function marcarLeida(id: string) {
     try {
-      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-      if (!session) return;
       await fetch("/api/notifications", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notifId: id }),
       });
       setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, leida: true } : n));

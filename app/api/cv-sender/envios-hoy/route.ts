@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       .from("cv_sends")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
-      .gte("sent_at", hoy.toISOString());
+      .gte("created_at", hoy.toISOString());
 
     return NextResponse.json({
       enviados: count || 0,

@@ -68,9 +68,7 @@ export default function NotificacionesPage() {
       setUserId(uid);
 
       // Cargar notificaciones
-      const res = await fetch("/api/notifications", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      const res = await fetch(`/api/notifications?userId=${uid}`);
       if (!res.ok) throw new Error("Error cargando");
       const data = (await res.json()) as { notificaciones: Notif[] };
       setNotifs(data.notificaciones || []);
@@ -95,11 +93,8 @@ export default function NotificacionesPage() {
       if (!session) return;
       await fetch("/api/notifications", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ notifId: id }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: session.user.id, notifId: id }),
       });
       setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
     } catch {
@@ -114,11 +109,8 @@ export default function NotificacionesPage() {
       for (const n of notifs.filter((n) => !n.leida)) {
         await fetch("/api/notifications", {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ notifId: n.id }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: session.user.id, notifId: n.id }),
         });
       }
       setNotifs((prev) => prev.map((n) => ({ ...n, leida: true })));
@@ -134,7 +126,7 @@ export default function NotificacionesPage() {
       return null; // Se expande, no navega
     }
     if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
-    if (n.tipo === "cv_enviado") return "/app/empresas";
+    if (n.tipo === "cv_enviado") return "/app/envios";
     if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
     if (n.tipo === "recordatorio") return "/app/gusi";
     return null;
@@ -368,7 +360,7 @@ export default function NotificacionesPage() {
 
         {/* Filtros */}
         <div className="flex gap-2 mb-4">
-          {(["todas", "no_leidas"] as const).map(
+          {(("todas" as const) || ("no_leidas" as const) ? (["todas", "no_leidas"] as const) : ["todas", "no_leidas"]).map(
             (f) => (
               <button
                 key={f}
