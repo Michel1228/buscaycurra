@@ -40,11 +40,11 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (perfil?.plan === plan) {
-      return NextResponse.json({ error: `Ya tienes el plan ${plan} activo.` }, { status: 400 });
-    }
+function validatePlan(plan: string): plan is UserPlan {
+  return ["free", "esencial", "pro", "empresa"].includes(plan);
+}
 
-    const PLANES_ORDEN = ["free", "esencial", "basico", "pro", "empresa"];
+const PLANES_ORDEN: UserPlan[] = ["free", "esencial", "pro", "empresa"];
     const planActualIdx = PLANES_ORDEN.indexOf(perfil?.plan || "free");
     const planNuevoIdx = PLANES_ORDEN.indexOf(plan);
 

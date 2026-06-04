@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     ).catch(() => ({ rows: [] as { cnt: string; source: string }[] })),
   ]);
 
-  const planCount: Record<string, number> = { free: 0, esencial: 0, basico: 0, pro: 0, empresa: 0 };
+  const planCount: Record<string, number> = { free: 0, esencial: 0,pro: 0, empresa: 0 };
   for (const p of perfiles ?? []) {
     const plan = (p.plan as string) ?? "free";
     planCount[plan] = (planCount[plan] ?? 0) + 1;

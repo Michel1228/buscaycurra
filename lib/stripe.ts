@@ -57,7 +57,7 @@ export function getPlanFromPriceId(
   priceId: string
 ): "free" | "esencial" | "basico" | "pro" | "empresa" {
   if (priceId === PLANES.ESENCIAL) return "esencial";
-  if (priceId === PLANES.BASICO) return "basico";
+
   if (priceId === PLANES.PRO) return "pro";
   if (priceId === PLANES.EMPRESA) return "empresa";
   return "free";

@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     // ── Procesar eventos de Stripe ───────────────────────────────────────────
 
-    const PLANES_VALIDOS = ["esencial", "basico", "pro", "empresa"] as const;
+const PLANES_VALIDOS = ["gratis","free","esencial","pro","empresa"];
     type PlanPago = typeof PLANES_VALIDOS[number];
 
     // Obtiene el plan desde un price ID o metadata, garantizando que sea válido
