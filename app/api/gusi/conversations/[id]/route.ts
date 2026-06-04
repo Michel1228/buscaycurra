@@ -3,6 +3,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -12,11 +13,10 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    
+    const userId = await getUserId(req);
+
     if (!userId) {
-      return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const pool = getPool();

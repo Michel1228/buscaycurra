@@ -4,21 +4,21 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 // GET - Obtener CV del usuario
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    
+    const userId = await getUserId(req);
+
     if (!userId) {
-      return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const pool = getPool();
-    
+
     // 1. Buscar en user_cvs (Guzzi CV)
     const userCvResult = await pool.query(
       `SELECT form_data, html, visible_empresas, created_at, updated_at
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     }
 
     const cvRow = cvResult.rows[0];
-    
+
     // Convertir a formato compatible con el frontend
     const cvData = {
       nombre: cvRow.fullName,
@@ -87,15 +87,21 @@ export async function GET(req: NextRequest) {
 // POST - Guardar CV
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { userId, cvData, cvText } = body;
+    const userId = await getUserId(req);
 
-    if (!userId || !cvData) {
-      return NextResponse.json({ error: "userId y cvData requeridos" }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { cvData, cvText } = body;
+
+    if (!cvData) {
+      return NextResponse.json({ error: "cvData requerido" }, { status: 400 });
     }
 
     const pool = getPool();
-    
+
     // Upsert: insertar o actualizar
     await pool.query(
       `INSERT INTO user_cvs (user_id, nombre, html, form_data, updated_at)
@@ -115,11 +121,10 @@ export async function POST(req: NextRequest) {
 // DELETE - Eliminar CV
 export async function DELETE(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
+    const userId = await getUserId(req);
 
     if (!userId) {
-      return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const pool = getPool();

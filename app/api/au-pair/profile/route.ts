@@ -5,6 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,10 @@ const supabase = createClient(
 );
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
+  const userId = await getUserId(req);
+
   if (!userId) {
-    return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   const { data, error } = await supabase
@@ -26,25 +28,27 @@ export async function GET(req: NextRequest) {
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: 'Error en perfil au pair' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json({ profile: data || null });
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { user_id, ...profile } = body;
+  const userId = await getUserId(req);
 
-  if (!user_id) {
-    return NextResponse.json({ error: "user_id requerido" }, { status: 400 });
+  if (!userId) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
+
+  const body = await req.json();
+  const { ...profile } = body;
 
   // Ver si ya existe
   const { data: existing } = await supabase
     .from("au_pair_profiles")
     .select("id")
-    .eq("user_id", user_id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   let result;
@@ -57,7 +61,7 @@ export async function POST(req: NextRequest) {
         ...profile,
         updated_at: new Date().toISOString(),
       })
-      .eq("user_id", user_id)
+      .eq("user_id", userId)
       .select("*")
       .single();
   } else {
@@ -65,7 +69,7 @@ export async function POST(req: NextRequest) {
     result = await supabase
       .from("au_pair_profiles")
       .insert({
-        user_id,
+        user_id: userId,
         ...profile,
       })
       .select("*")
@@ -73,7 +77,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (result.error) {
-    return NextResponse.json({ error: 'Error en perfil au pair' }, { status: 500 });
+    return NextResponse.json({ error: result.error.message }, { status: 500 });
   }
 
   return NextResponse.json({ profile: result.data, ok: true });

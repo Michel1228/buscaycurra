@@ -2,20 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { canSendToCompany } from "@/lib/cv-sender/tracker";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, companyName, jobTitle, companyUrl } = await req.json() as {
-      userId?: string;
+    // Extraer userId de forma segura desde la sesión/token, no del body
+    const userId = await getUserId(req);
+
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const { companyName, jobTitle, companyUrl } = await req.json() as {
       companyName?: string;
       jobTitle?: string;
       companyUrl?: string;
     };
 
-    if (!userId || !companyName) {
-      return NextResponse.json({ error: "userId y companyName requeridos" }, { status: 400 });
+    if (!companyName) {
+      return NextResponse.json({ error: "companyName requerido" }, { status: 400 });
     }
 
     const sb = createClient(

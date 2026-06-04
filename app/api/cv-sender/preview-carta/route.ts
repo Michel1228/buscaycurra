@@ -1,23 +1,29 @@
 /**
  * /api/cv-sender/preview-carta — Previsualizar carta de presentación antes de enviar
- * POST { userId, companyName, companyEmail?, jobTitle? }
+ * POST { companyName, companyEmail?, jobTitle? }
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, companyName, companyEmail, jobTitle } = await req.json() as {
-      userId?: string;
+    const userId = await getUserId(req);
+
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const { companyName, companyEmail, jobTitle } = await req.json() as {
       companyName?: string;
       companyEmail?: string;
       jobTitle?: string;
     };
 
-    if (!userId || !companyName) {
-      return NextResponse.json({ error: "userId y companyName requeridos" }, { status: 400 });
+    if (!companyName) {
+      return NextResponse.json({ error: "companyName requerido" }, { status: 400 });
     }
 
     // Obtener CV del usuario
@@ -32,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = cvResult.rows[0].form_data as Record<string, unknown> || {};
-    
+
     // Construir texto del CV desde form_data
     const cvParts: string[] = [];
     if (formData.nombre) cvParts.push(`Nombre: ${formData.nombre}`);
@@ -69,7 +75,7 @@ export async function POST(req: NextRequest) {
     if (!GROQ_API_KEY) {
       // Carta genérica si no hay API key
       const cartaGenerica = `Estimado equipo de ${companyName},\n\nMe dirijo a ustedes para presentar mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : ""}. Tras conocer su empresa, considero que mi perfil puede aportar valor a su equipo.\n\nA lo largo de mi trayectoria profesional he desarrollado competencias que se alinean con lo que buscan. Soy una persona proactiva, con capacidad de adaptación y compromiso con los resultados.\n\nQuedo a su disposición para concertar una entrevista y ampliar la información que consideren necesaria.\n\nUn cordial saludo.`;
-      
+
       return NextResponse.json({
         carta: cartaGenerica,
         subject: jobTitle ? `Candidatura para ${jobTitle} — ${companyName}` : `Candidatura — ${companyName}`,

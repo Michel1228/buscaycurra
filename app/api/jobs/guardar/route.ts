@@ -6,21 +6,24 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 // ─── POST: guardar o quitar oferta ────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as { jobId?: string; action?: "save" | "unsave"; userId?: string };
-    const { jobId, action, userId } = body;
+    const userId = await getUserId(request);
+
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const body = await request.json() as { jobId?: string; action?: "save" | "unsave" };
+    const { jobId, action } = body;
 
     if (!jobId) {
       return NextResponse.json({ error: "jobId requerido" }, { status: 400 });
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: "userId requerido" }, { status: 400 });
     }
 
     const pool = getPool();
@@ -40,22 +43,21 @@ export async function POST(request: NextRequest) {
        ON CONFLICT (user_id, job_id) DO UPDATE SET created_at = NOW()`,
       [userId, jobId]
     );
-    
+
     return NextResponse.json({ saved: true });
   } catch (error) {
     console.error("[jobs/guardar] Error:", (error as Error).message);
-    return NextResponse.json({ error: 'Error al guardar ofertas' }, { status: 500 });
+    return NextResponse.json({ error: "Error al guardar oferta: " + (error as Error).message }, { status: 500 });
   }
 }
 
 // ─── GET: listar ofertas guardadas ────────────────────────────────────────────
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userId = await getUserId(request);
 
     if (!userId) {
-      return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const pool = getPool();
@@ -67,6 +69,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ guardados: result.rows || [] });
   } catch (error) {
     console.error("[jobs/guardar] Error GET:", (error as Error).message);
-    return NextResponse.json({ error: 'Error al obtener ofertas' }, { status: 500 });
+    return NextResponse.json({ error: "Error al obtener guardados: " + (error as Error).message }, { status: 500 });
   }
 }

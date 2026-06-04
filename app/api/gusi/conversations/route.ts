@@ -3,17 +3,17 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 // GET - Listar conversaciones del usuario
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    
+    const userId = await getUserId(req);
+
     if (!userId) {
-      return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const pool = getPool();
@@ -36,11 +36,17 @@ export async function GET(req: NextRequest) {
 // POST - Crear o actualizar conversación
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { userId, conversationId, messages, cvData, title } = body;
+    const userId = await getUserId(req);
 
-    if (!userId || !messages) {
-      return NextResponse.json({ error: "userId y messages requeridos" }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { conversationId, messages, cvData, title } = body;
+
+    if (!messages) {
+      return NextResponse.json({ error: "messages requerido" }, { status: 400 });
     }
 
     const pool = getPool();
@@ -48,7 +54,7 @@ export async function POST(req: NextRequest) {
     const conversationTitle = title || lastMessage.slice(0, 50) || "Nueva conversación";
 
     if (conversationId) {
-      // Actualizar conversación existente
+      // Actualizar conversación existente (verificar ownership con user_id)
       await pool.query(
         `UPDATE gusi_conversations 
          SET messages = $1, cv_data = $2, last_message = $3, title = $4, updated_at = NOW()
@@ -75,12 +81,17 @@ export async function POST(req: NextRequest) {
 // DELETE - Eliminar conversación
 export async function DELETE(req: NextRequest) {
   try {
+    const userId = await getUserId(req);
+
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
     const conversationId = searchParams.get("conversationId");
 
-    if (!userId || !conversationId) {
-      return NextResponse.json({ error: "userId y conversationId requeridos" }, { status: 400 });
+    if (!conversationId) {
+      return NextResponse.json({ error: "conversationId requerido" }, { status: 400 });
     }
 
     const pool = getPool();
