@@ -10,7 +10,7 @@ export const revalidate = 3600;
 // ── Meta 2026 ──
 const OFERTAS = "3.000.000+";
 const OBJETIVO = "10.000.000";
-const PAISES = "34";
+const PAISES = "24";
 const PAISES_DATA = [
   { flag: "🇪🇸", nombre: "España",         ofertas: "171K" },
   { flag: "🇺🇸", nombre: "Estados Unidos", ofertas: "477K" },
@@ -36,16 +36,6 @@ const PAISES_DATA = [
   { flag: "🇷🇴", nombre: "Rumanía",        ofertas: "1K"   },
   { flag: "🇭🇺", nombre: "Hungría",        ofertas: "1K"   },
   { flag: "🇨🇿", nombre: "Rep. Checa",     ofertas: "852"  },
-  { flag: "🇮🇳", nombre: "India",          ofertas: "54"   },
-  { flag: "🇧🇷", nombre: "Brasil",         ofertas: "25"   },
-  { flag: "🇲🇽", nombre: "México",         ofertas: "18"   },
-  { flag: "🇸🇬", nombre: "Singapur",       ofertas: "17"   },
-  { flag: "🇯🇵", nombre: "Japón",          ofertas: "16"   },
-  { flag: "🇨🇱", nombre: "Chile",          ofertas: "13"   },
-  { flag: "🇵🇭", nombre: "Filipinas",      ofertas: "8"    },
-  { flag: "🇰🇷", nombre: "Corea del Sur",  ofertas: "8"    },
-  { flag: "🇮🇩", nombre: "Indonesia",      ofertas: "1"    },
-  { flag: "🇨🇴", nombre: "Colombia",       ofertas: "1"    },
 ];
 
 // ── Planes ──
