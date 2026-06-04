@@ -40,7 +40,9 @@ export async function GET(request: NextRequest) {
   const location = (searchParams.get("location") || "").trim();
   const country  = (searchParams.get("country")  || "").trim();
   const page     = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const jornada  = searchParams.get("jornada") || "";
+  const jornada      = searchParams.get("jornada") || "";
+  const experiencia  = searchParams.get("experiencia") || "";
+  const salarioMin   = parseInt(searchParams.get("salarioMin") || "0");
   const limit    = 500;
   const offset   = (page - 1) * limit;
 
@@ -95,6 +97,46 @@ export async function GET(request: NextRequest) {
     if (cityParts) {
       conditions.push(`(${cityLike("city", idx)} OR ${cityLike("province", idx)})`);
       params.push(`%${cityParts}%`);
+      idx++;
+    }
+
+    // Filtro por jornada (remoto, parcial, completa)
+    if (jornada) {
+      if (jornada === "remoto") {
+        conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
+        params.push("%remoto%");
+      } else if (jornada === "parcial") {
+        conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
+        params.push("%parcial%");
+      }
+      idx++;
+    }
+
+    // Filtro por experiencia
+    if (experiencia) {
+      const expMap: Record<string, string[]> = {
+        "sin-experiencia": ["%junior%", "%trainee%", "%becario%", "%prácticas%", "%sin experiencia%", "%entry level%"],
+        "1-3": ["%1 año%", "%2 años%", "%3 años%", "%junior%"],
+        "3-5": ["%3 años%", "%5 años%", "%mid%", "%mid-level%"],
+        "5-10": ["%5 años%", "%10 años%", "%senior%"],
+        "10+": ["%10 años%", "%senior%", "%lead%", "%head of%", "%director%"],
+      };
+      const keywords = expMap[experiencia] || [];
+      if (keywords.length > 0) {
+        const orClauses = keywords.map(() => `(title ILIKE $${idx} OR description ILIKE $${idx})`);
+        conditions.push(`(${orClauses.join(" OR ")})`);
+        keywords.forEach(k => params.push(k));
+        idx += keywords.length;
+      }
+    }
+
+    // Filtro por salario mínimo
+    if (salarioMin > 0) {
+      conditions.push(`(
+        (salary ~ '^[0-9]+$' AND salary::int >= $${idx})
+        OR (regexp_replace(salary, '[^0-9]', '', 'g')::int >= $${idx})
+      )`);
+      params.push(salarioMin);
       idx++;
     }
 

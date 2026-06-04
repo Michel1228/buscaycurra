@@ -242,6 +242,8 @@ function BuscarPageInner() {
       if (ubicacion.trim()) params.set("location", ubicacion.trim());
       if (paisSeleccionado && paisSeleccionado !== "ES") params.set("country", paisSeleccionado);
       if (jornada) params.set("jornada", jornada);
+      if (experiencia) params.set("experiencia", experiencia);
+      if (salarioMin) params.set("salarioMin", salarioMin);
       params.set("page", String(nextPage));
       const res = await fetch(`/api/jobs/search?${params.toString()}`);
       if (res.ok) {
