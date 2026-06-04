@@ -360,7 +360,7 @@ export default function NotificacionesPage() {
 
         {/* Filtros */}
         <div className="flex gap-2 mb-4">
-          {(("todas" as const) || ("no_leidas" as const) ? (["todas", "no_leidas"] as const) : ["todas", "no_leidas"]).map(
+          {(["todas", "no_leidas"] as const).map(
             (f) => (
               <button
                 key={f}
