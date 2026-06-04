@@ -97,8 +97,8 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
             body: JSON.stringify({ name: oferta.empresa }),
             signal: AbortSignal.timeout(8000),
           });
-          const d = await r.json() as { emails?: string[]; emailRrhh?: string; emailContacto?: string };
-          email = (d.emails && d.emails[0]) || d.emailRrhh || d.emailContacto || "";
+          const d = await r.json() as { empresas?: Array<{ emailRrhh?: string; emailsExtraidos?: string[] }>; emailRrhh?: string };
+          email = d.empresas?.[0]?.emailRrhh || d.empresas?.[0]?.emailsExtraidos?.[0] || d.emailRrhh || "";
         } catch { /* continuar */ }
       }
 
