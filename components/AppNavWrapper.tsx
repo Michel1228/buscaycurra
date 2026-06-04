@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import NotificationBell from "@/components/NotificationBell";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { PAISES, LISTA_PAISES } from "@/lib/paises";
 import { IDIOMAS, type IdiomaCode } from "@/lib/i18n/translations";
 import { useLanguage } from "@/components/LanguageProvider";

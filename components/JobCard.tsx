@@ -305,6 +305,9 @@ export default function JobCard({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-medium px-2 py-0.5 rounded-md" style={{ background: fc.bg, color: fc.text }}>{fuente}</span>
+            {match != null && match > 0 && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ background: match >= 70 ? "rgba(34,197,94,0.15)" : match >= 40 ? "rgba(245,158,11,0.15)" : "rgba(100,116,139,0.1)", color: colorMatch(match) }}>{match}% match</span>
+            )}
             {modalidad && (
               <span className="text-[10px] font-medium px-2 py-0.5 rounded-md capitalize" style={{ background: "rgba(100,116,139,0.1)", color: "#94a3b8" }}>{modalidad}</span>
             )}
@@ -349,9 +352,13 @@ export default function JobCard({
           <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#64748b" }}>
             <span>📍</span><span>{ubicacion}</span>
           </div>
-          {salario && (
+          {salario ? (
             <div className="flex items-center gap-1 mt-0.5 text-[11px] font-medium" style={{ color: "#22c55e" }}>
               <span>💰</span><span>{salario}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 mt-0.5 text-[11px]" style={{ color: "#475569" }}>
+              <span>💰</span><span>Salario no publicado</span>
             </div>
           )}
           {distancia && (

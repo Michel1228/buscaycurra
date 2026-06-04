@@ -15,12 +15,43 @@ interface Notif {
 }
 
 const TIPO_ICON: Record<string, string> = {
+  // Pipeline notifications
   cv_enviado: "📧",
-  respuesta_empresa: "💼",
   cv_visto: "👀",
-  recordatorio: "⏰",
+  cv_visto_por_empresa: "👁️",
+  en_revision: "🔍",
+  respuesta_empresa: "💼",
+  movido_a_entrevista: "🎯",
+  oferta_recibida: "🎉",
+  contratado: "🏆",
+  rechazado: "📭",
+  // Ofertas
+  nuevas_ofertas: "🆕",
   alerta_empleo: "🔔",
+  oferta_recomendada: "💡",
+  // Sistema
+  recordatorio: "⏰",
+  bienvenida: "👋",
+  plan: "💎",
   default: "📢",
+};
+
+const TIPO_NAV: Record<string, string> = {
+  cv_enviado: "/app/envios",
+  cv_visto: "/app/pipeline",
+  cv_visto_por_empresa: "/app/pipeline",
+  en_revision: "/app/pipeline",
+  respuesta_empresa: "/app/pipeline",
+  movido_a_entrevista: "/app/pipeline",
+  oferta_recibida: "/app/pipeline",
+  contratado: "/app/pipeline",
+  rechazado: "/app/pipeline",
+  nuevas_ofertas: "/app/notificaciones",
+  alerta_empleo: "/app/notificaciones",
+  oferta_recomendada: "/app/notificaciones",
+  recordatorio: "/app/gusi",
+  bienvenida: "/app/bienvenida",
+  plan: "/app/perfil?tab=plan",
 };
 
 export default function NotificationBell({ userId }: { userId: string }) {
@@ -32,27 +63,27 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   function getNotifUrl(n: Notif): string | null {
     const datos = n.datos || {};
-    // Alertas de empleo: NO redirigir, se expanden en la página de notificaciones
+
+    // Si hay job_id, ir al detalle de oferta
+    if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
+
+    // Usar el mapa de tipos
+    if (TIPO_NAV[n.tipo]) return TIPO_NAV[n.tipo];
+
+    // Fallback
     if (n.tipo === "nuevas_ofertas" || n.tipo === "alerta_empleo") {
       return "/app/notificaciones";
     }
-    // Para otros tipos: si hay job_id, ir al detalle
-    if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
-    if (n.tipo === "cv_enviado") return "/app/envios";
-    if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
-    if (n.tipo === "recordatorio") return "/app/gusi";
     return null;
   }
 
   useEffect(() => {
     if (!userId) return;
     fetchNotifs();
-    // Polling cada 60s
     const interval = setInterval(fetchNotifs, 60000);
     return () => clearInterval(interval);
   }, [userId]);
 
-  // Cerrar al click fuera
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -106,21 +137,31 @@ export default function NotificationBell({ userId }: { userId: string }) {
     return `hace ${Math.floor(hrs / 24)}d`;
   }
 
+  // Calcular el color del badge según el tipo de notificación no leída
+  const badgeColor = (() => {
+    if (sinLeer === 0) return "#64748b";
+    const hasEntrevista = notifs.some(n => !n.leida && (n.tipo === "movido_a_entrevista" || n.tipo === "respuesta_empresa"));
+    if (hasEntrevista) return "#a855f7";
+    const hasOferta = notifs.some(n => !n.leida && n.tipo === "oferta_recibida");
+    if (hasOferta) return "#22c55e";
+    return "#f59e0b";
+  })();
+
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => { setOpen(!open); if (!open && sinLeer > 0) marcarTodasLeidas(); }}
         title="Notificaciones"
         className="relative flex items-center justify-center w-9 h-9 rounded-lg transition"
-        style={{ color: sinLeer > 0 ? "#f59e0b" : "#64748b" }}
+        style={{ color: sinLeer > 0 ? badgeColor : "#64748b" }}
       >
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
         {sinLeer > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
-            style={{ background: "#f59e0b", color: "#0f1117" }}>
+          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full text-[9px] font-bold flex items-center justify-center px-1"
+            style={{ background: badgeColor, color: "#0f1117" }}>
             {sinLeer > 99 ? "99+" : sinLeer}
           </span>
         )}
@@ -182,10 +223,14 @@ export default function NotificationBell({ userId }: { userId: string }) {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-2.5" style={{ borderTop: "1px solid #2d3142" }}>
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderTop: "1px solid #2d3142" }}>
+            <Link href="/app/notificaciones" onClick={() => setOpen(false)}
+              className="text-[10px]" style={{ color: "#475569" }}>
+              Ver todas →
+            </Link>
             <Link href="/app/perfil" onClick={() => setOpen(false)}
               className="text-[10px]" style={{ color: "#475569" }}>
-              Configurar alertas de empleo →
+              ⚙ Configurar
             </Link>
           </div>
         </div>

@@ -1,6 +1,6 @@
 /**
  * /api/reviews — Reviews de empresas
- * GET: ?company=Empresa → listar reviews
+ * GET: ?company=Empresa → listar reviews + datos de Google Places
  * POST: crear review
  */
 
@@ -9,6 +9,30 @@ import { createClient } from "@supabase/supabase-js";
 import { getUserFromToken, extractToken } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
+
+// ─── Helpers Google Places ────────────────────────────────────────────────
+async function getGooglePlaceData(companyName: string): Promise<{
+  rating: number | null; totalRatings: number | null; address: string | null; mapsUrl: string | null
+} | null> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return null;
+  try {
+    // Find Place
+    const findUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(companyName)}&inputtype=textquery&fields=place_id,formatted_address,rating,user_ratings_total&key=${apiKey}`;
+    const findRes = await fetch(findUrl);
+    const findData = await findRes.json() as any;
+    if (findData.status !== "OK" || !findData.candidates?.length) return null;
+    const place = findData.candidates[0];
+    return {
+      rating: place.rating || null,
+      totalRatings: place.user_ratings_total || null,
+      address: place.formatted_address || null,
+      mapsUrl: place.place_id ? `https://www.google.com/maps/place/?q=place_id:${place.place_id}` : null,
+    };
+  } catch {
+    return null;
+  }
+}
 
 // ─── GET: listar reviews de una empresa ─────────────────────────────────────
 export async function GET(request: NextRequest) {
@@ -57,6 +81,8 @@ export async function GET(request: NextRequest) {
           1: allReviews.filter(r => r.rating === 1).length,
         },
       },
+      // Datos de Google Places (rating real, reviews, dirección, maps)
+      google: await getGooglePlaceData(company),
     });
   } catch (error) {
     console.error("[reviews] Error GET:", (error as Error).message);

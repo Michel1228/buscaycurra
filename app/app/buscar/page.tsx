@@ -36,6 +36,7 @@ function BuscarPageInner() {
   const [jornada, setJornada] = useState("");
   const [experiencia, setExperiencia] = useState("");
   const [salarioMin, setSalarioMin] = useState("");
+  const [salarioMax, setSalarioMax] = useState("");
 
   const [ofertas, setOfertas] = useState<PropiedadesJobCard[]>([]);
   const [cargando, setCargando] = useState(false);
@@ -165,6 +166,37 @@ function BuscarPageInner() {
   }
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // ── Infinite Scroll via IntersectionObserver ──
+  useEffect(() => {
+    if (!hayMas || cargando || cargandoMas) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hayMas && !cargandoMas) {
+          cargarMas();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hayMas, cargando, cargandoMas, ofertas.length]);
+
+
+  // Calcula match % entre keyword del usuario y título/descripción de la oferta
+  function calcularMatch(titulo: string, descripcion?: string): number {
+    if (!keyword.trim()) return 0;
+    const kw = keyword.toLowerCase().split(/\s+/);
+    const texto = ((titulo || "") + " " + (descripcion || "")).toLowerCase();
+    let hits = 0;
+    for (const w of kw) {
+      if (w.length > 2 && texto.includes(w)) hits++;
+    }
+    return kw.length > 0 ? Math.min(99, Math.round((hits / kw.length) * 100)) : 0;
+  }
 
   async function buscar(e?: React.FormEvent) {
     if (e) e.preventDefault();
@@ -182,6 +214,7 @@ function BuscarPageInner() {
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
+      if (salarioMax) params.set("salarioMax", salarioMax);
 
       const [serverRes, joobleRes] = await Promise.allSettled([
         fetch(`/api/jobs/search?${params.toString()}`).then(r => r.ok ? r.json() : { ofertas: [] }),
@@ -217,7 +250,8 @@ function BuscarPageInner() {
         }
       }
 
-      setOfertas(todas);
+      const conMatch = todas.map(o => ({ ...o, match: calcularMatch(o.titulo || "", o.descripcion) }));
+      setOfertas(conMatch);
       setCurrentPage(1);
       const source = serverRes.status === "fulfilled" ? (serverRes.value.source || "") : "";
       setFuenteResultados(source);
@@ -244,6 +278,7 @@ function BuscarPageInner() {
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
+      if (salarioMax) params.set("salarioMax", salarioMax);
       params.set("page", String(nextPage));
       const res = await fetch(`/api/jobs/search?${params.toString()}`);
       if (res.ok) {
@@ -251,7 +286,8 @@ function BuscarPageInner() {
         const nuevas = data.ofertas || [];
         const seen = new Set(ofertas.map(o => o.id));
         const sinDuplicados = nuevas.filter((o: {id: string}) => !seen.has(o.id));
-        setOfertas(prev => [...prev, ...sinDuplicados]);
+        const conMatchNuevas = sinDuplicados.map((o: PropiedadesJobCard) => ({ ...o, match: calcularMatch(o.titulo || "", o.descripcion) }));
+        setOfertas(prev => [...prev, ...conMatchNuevas]);
         setCurrentPage(nextPage);
         setHayMas(data.hasMore || false);
         setTotalResultados(data.total || totalResultados);
@@ -338,7 +374,7 @@ function BuscarPageInner() {
             <div className="card-game p-4 sticky top-20">
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Filtros</h2>
-                <InfoTooltip text="Refina tu búsqueda por tipo de jornada, experiencia y salario mínimo. Los filtros se aplican sobre los resultados actuales." position="right" />
+                <InfoTooltip text="Refina tu búsqueda por tipo de jornada, experiencia y rango salarial. Los filtros se aplican sobre los resultados actuales." position="right" />
               </div>
               <div className="mb-4">
                 <label htmlFor="filtro-jornada" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Tipo de jornada</label>
@@ -356,6 +392,11 @@ function BuscarPageInner() {
                 <label htmlFor="filtro-salario" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario mínimo (€/año)</label>
                 <input id="filtro-salario" type="number" value={salarioMin} onChange={(e) => setSalarioMin(e.target.value)}
                   placeholder="Ej: 20000" className="w-full text-sm" />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="filtro-salario-max" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario máximo (€/año)</label>
+                <input id="filtro-salario-max" type="number" value={salarioMax} onChange={(e) => setSalarioMax(e.target.value)}
+                  placeholder="Ej: 50000" className="w-full text-sm" />
               </div>
               <button onClick={() => buscar()} className="btn-game w-full text-xs py-2">Aplicar filtros</button>
             </div>
@@ -433,14 +474,14 @@ function BuscarPageInner() {
                 
                 {hayMas && (
                   <div className="flex flex-col items-center mt-6 gap-2">
-                    <button
-                      onClick={cargarMas}
-                      disabled={cargandoMas}
-                      className="px-8 py-3 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                      style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
-                    >
-                      {cargandoMas ? "⏳ Cargando..." : `📥 Cargar más ofertas (${(totalResultados - ofertas.length).toLocaleString("es-ES")} restantes)`}
-                    </button>
+                    {/* Sentinel para IntersectionObserver — dispara cargarMas() */}
+                    <div ref={sentinelRef} className="w-full h-1" />
+                    {cargandoMas && (
+                      <div className="flex items-center gap-2 py-4">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
+                        <span className="text-xs" style={{ color: "#64748b" }}>Cargando más ofertas...</span>
+                      </div>
+                    )}
                     <p className="text-[10px]" style={{ color: "#475569" }}>
                       Mostrando {ofertas.length.toLocaleString("es-ES")} de {totalResultados.toLocaleString("es-ES")} ofertas
                     </p>

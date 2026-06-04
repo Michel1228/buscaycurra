@@ -1,16 +1,18 @@
 "use client";
 
 /**
- * Curriculum — Generador de CV profesional
+ * Curriculum — Generador de CV profesional con previsualización EN VIVO
+ * Layout de 2 columnas: formulario (izq) + plantilla siempre visible (der)
+ * La plantilla se actualiza en tiempo real al escribir.
  * 1. Subir PDF (extrae datos automáticamente)
  * 2. Foto profesional + tips
  * 3. Formulario completo con plantilla profesional
- * 4. Generar CV con IA
+ * 4. Mejorar CV con IA
  * 5. Descargar PDF
  * 6. Auto-guardado
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { generarCVHTML } from "@/lib/cv-generator/cv-template";
@@ -52,6 +54,13 @@ const emptyForm: CVForm = {
   formacion: [{ titulo: "", centro: "", ubicacion: "" }],
 };
 
+interface CVListItem {
+  id: string;
+  nombre: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function CurriculumPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
@@ -74,6 +83,60 @@ export default function CurriculumPage() {
   const [esPreviewIA, setEsPreviewIA] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // ── Múltiples CVs ──
+  const [listaCVs, setListaCVs] = useState<CVListItem[]>([]);
+  const [cvActivoId, setCvActivoId] = useState<string>("");
+
+  // ── LIVE PREVIEW: genera HTML en tiempo real con cada cambio del formulario ──
+  const livePreviewHTML = useMemo(() => {
+    if (!form.nombre.trim()) return "";
+    return generarCVHTML(formToCVDataRaw());
+  }, [form.nombre, form.apellidos, form.subtitulo, form.telefono, form.email, form.ciudad,
+      form.perfilProfesional, form.aptitudes, form.idiomas,
+      JSON.stringify(form.experiencia), JSON.stringify(form.formacion), fotoUrl]);
+
+  // ⚠️ NO incluye useMemo como dependencia — necesitamos la función pura
+  function formToCVDataRaw(): CVData {
+    const expOrdenada = [...form.experiencia]
+      .filter(e => e.puesto)
+      .sort((a, b) => {
+        const getYear = (f: string) => { const m = f.match(/(\d{4})/g); return m ? parseInt(m[m.length - 1]) : 0; };
+        return getYear(b.fechas) - getYear(a.fechas);
+      });
+
+    return {
+      nombre: form.nombre,
+      apellidos: form.apellidos || undefined,
+      subtitulo: form.subtitulo || undefined,
+      telefono: form.telefono || undefined,
+      email: form.email || undefined,
+      ciudad: form.ciudad || undefined,
+      fotoUrl: fotoUrl || undefined,
+      perfilProfesional: form.perfilProfesional || undefined,
+      aptitudes: form.aptitudes
+        ? form.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
+        : undefined,
+      idiomas: form.idiomas
+        ? form.idiomas.split(",").map(i => {
+            const parts = i.trim().split(":");
+            return { nombre: parts[0].trim(), nivel: parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70 };
+          }).filter(i => i.nombre)
+        : undefined,
+      experiencia: expOrdenada.map(e => ({
+        fechas: e.fechas,
+        puesto: e.puesto,
+        empresa: e.empresa,
+        ubicacion: e.ubicacion || undefined,
+        descripcion: e.descripcion ? e.descripcion.split("\n").filter(d => d.trim()).map(d => d.trim().replace(/^[-•]\s*/, "")) : undefined,
+      })),
+      formacion: form.formacion.filter(f => f.titulo).map(f => ({
+        titulo: f.titulo,
+        centro: f.centro,
+        ubicacion: f.ubicacion || undefined,
+      })),
+    };
+  }
+
   useEffect(() => {
     async function init() {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
@@ -93,7 +156,7 @@ export default function CurriculumPage() {
           if (data.cv) {
             const cv = data.cv as Record<string, unknown>;
 
-            // Normalizar experiencia (puede ser string o array con distinto formato)
+            // Normalizar experiencia
             let experiencia = emptyForm.experiencia;
             if (Array.isArray(cv.experiencia) && (cv.experiencia as unknown[]).length > 0) {
               experiencia = (cv.experiencia as Record<string, unknown>[]).map(e => ({
@@ -107,7 +170,7 @@ export default function CurriculumPage() {
               }));
             }
 
-            // Normalizar formacion (puede ser string o array)
+            // Normalizar formacion
             let formacion = emptyForm.formacion;
             if (Array.isArray(cv.formacion) && (cv.formacion as unknown[]).length > 0) {
               formacion = (cv.formacion as Record<string, unknown>[]).map(f => ({
@@ -117,13 +180,11 @@ export default function CurriculumPage() {
               }));
             }
 
-            // Normalizar aptitudes (puede ser string[] o string)
             const aptRaw = cv.aptitudes || cv.habilidades || cv.skills;
             const aptitudes = Array.isArray(aptRaw)
               ? (aptRaw as string[]).join(", ")
               : String(aptRaw || "");
 
-            // Normalizar idiomas (puede ser array de objetos o string)
             const idiomasRaw = cv.idiomas || cv.languages;
             const idiomas = Array.isArray(idiomasRaw)
               ? (idiomasRaw as Record<string, unknown>[]).map(i =>
@@ -131,7 +192,6 @@ export default function CurriculumPage() {
                 ).join(", ")
               : String(idiomasRaw || "");
 
-            // Foto desde CV guardado
             if (cv.fotoUrl && typeof cv.fotoUrl === "string") {
               fotoUrlCargada = cv.fotoUrl;
               setFotoUrl(cv.fotoUrl);
@@ -155,7 +215,6 @@ export default function CurriculumPage() {
         }
       } catch { /* ignore */ }
 
-      // Cargar perfil (solo para rellenar huecos que no estén en el CV)
       const { data: p } = await getSupabaseBrowser().from("profiles")
         .select("full_name, phone, ciudad, sector")
         .eq("id", session.user.id).single();
@@ -177,6 +236,11 @@ export default function CurriculumPage() {
     init();
   }, [router]);
 
+  // Cargar lista de CVs cuando tengamos token
+  useEffect(() => {
+    if (token) { cargarListaCVs(); }
+  }, [token]);
+
   // Auto-guardar
   useEffect(() => {
     if (!userId) return;
@@ -186,6 +250,7 @@ export default function CurriculumPage() {
     return () => clearTimeout(timeout);
   }, [form, fotoUrl, userId]);
 
+  // ── Funciones auxiliares (sin cambios funcionales) ──
   async function toggleVisibilidad(value: boolean) {
     setVisibleEmpresas(value);
     if (!token) return;
@@ -200,6 +265,102 @@ export default function CurriculumPage() {
       setVisibleEmpresas(!value);
       setError("No se pudo guardar la visibilidad. Inténtalo de nuevo.");
     }
+  }
+
+  async function cargarListaCVs() {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/cv/lista", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json() as { cvs: CVListItem[] };
+        setListaCVs(data.cvs || []);
+        if (!cvActivoId && data.cvs?.length > 0) {
+          setCvActivoId(data.cvs[0].id);
+        }
+      }
+    } catch { /* ignorar */ }
+  }
+
+  async function cargarCVporId(cvId: string) {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/cv/lista", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: cvId }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { form_data?: Record<string, unknown>; nombre?: string; error?: string };
+        if (data.error) { setError(data.error); return; }
+        if (data.form_data) {
+          const fd = data.form_data as Record<string, unknown>;
+          setForm({
+            nombre: String(fd.nombre || ""),
+            apellidos: String(fd.apellidos || ""),
+            subtitulo: String(fd.subtitulo || ""),
+            telefono: String(fd.telefono || ""),
+            email: String(fd.email || ""),
+            ciudad: String(fd.ciudad || ""),
+            perfilProfesional: String(fd.perfilProfesional || ""),
+            aptitudes: String(fd.aptitudes || ""),
+            idiomas: String(fd.idiomas || ""),
+            experiencia: Array.isArray(fd.experiencia) && fd.experiencia.length > 0
+              ? fd.experiencia as Exp[]
+              : [{ fechas: "", puesto: "", empresa: "", ubicacion: "", descripcion: "" }],
+            formacion: Array.isArray(fd.formacion) && fd.formacion.length > 0
+              ? fd.formacion as Edu[]
+              : [{ titulo: "", centro: "", ubicacion: "" }],
+          });
+          if (fd.fotoUrl) setFotoUrl(String(fd.fotoUrl));
+        }
+        setCvActivoId(cvId);
+        setMejoradoHTML("");
+        setEsPreviewIA(false);
+      }
+    } catch { setError("Error cargando CV"); }
+  }
+
+  async function guardarComoNuevo() {
+    if (!token || !userId) return;
+    const nombre = prompt("Nombre para esta versión del CV:", `CV ${new Date().toLocaleDateString("es-ES")}`);
+    if (!nombre) return;
+    setGuardando(true);
+    try {
+      const cvData = { ...form, fotoUrl: fotoUrl || undefined };
+      const html = generarCVHTML(formToCVDataRaw());
+      const res = await fetch("/api/cv/guardar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ nombre, html, formData: cvData }),
+      });
+      if (res.ok) {
+        const nuevo = await res.json() as { id: string };
+        setCvActivoId(nuevo.id);
+        setGuardado(true);
+        setTimeout(() => setGuardado(false), 2000);
+        await cargarListaCVs();
+      } else {
+        setError("No se pudo guardar el CV");
+      }
+    } catch { setError("Error guardando CV"); }
+    finally { setGuardando(false); }
+  }
+
+  async function eliminarCV(cvId: string) {
+    if (!token || !confirm("¿Eliminar esta versión del CV?")) return;
+    try {
+      const res = await fetch(`/api/cv/borrar/${cvId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setListaCVs(prev => prev.filter(c => c.id !== cvId));
+        if (cvActivoId === cvId) {
+          setCvActivoId("");
+          setForm(emptyForm);
+        }
+      }
+    } catch { setError("Error eliminando CV"); }
   }
 
   async function guardarCV() {
@@ -217,6 +378,7 @@ export default function CurriculumPage() {
       }
       setGuardado(true);
       setTimeout(() => setGuardado(false), 2000);
+      await cargarListaCVs();
     } catch {
       setError("Error de conexión al guardar el CV.");
     }
@@ -244,7 +406,6 @@ export default function CurriculumPage() {
         return;
       }
 
-      // Extraer datos del PDF
       const extractData = new FormData();
       extractData.append("file", file);
       const extractRes = await fetch("/api/cv/extraer", { method: "POST", body: extractData });
@@ -372,7 +533,6 @@ export default function CurriculumPage() {
     setProcesando(true);
     setError("");
     try {
-      // 1. Mejorar perfil profesional
       const cvText = form.perfilProfesional || "Profesional con experiencia en diversos sectores. Actitud dinámica y proactiva.";
       let perfilMejorado: string | undefined;
       try {
@@ -387,7 +547,6 @@ export default function CurriculumPage() {
         }
       } catch { /* usa el perfil original si la IA falla */ }
 
-      // 2. Mejorar descripción de cada experiencia laboral con IA
       const experienciaMejorada = [...form.experiencia];
       for (let i = 0; i < Math.min(form.experiencia.length, 3); i++) {
         const exp = form.experiencia[i];
@@ -410,7 +569,6 @@ export default function CurriculumPage() {
         } catch { /* mantiene descripción original si la IA falla */ }
       }
 
-      // 3. Actualizar el formulario con las mejoras (se verán al volver a editar)
       setForm(prev => ({ ...prev, experiencia: experienciaMejorada }));
 
       const html = generarCVHTML(formToCVData(perfilMejorado, experienciaMejorada));
@@ -420,22 +578,15 @@ export default function CurriculumPage() {
     finally { setProcesando(false); }
   }
 
-  // Previsualizar la plantilla con datos actuales — SIN llamar a la IA
-  function verPlantilla() {
-    const html = generarCVHTML(formToCVData());
-    setMejoradoHTML(html);
-    setEsPreviewIA(false);
-  }
-
-  // Descarga real en PDF usando Playwright/Chromium en el servidor
   async function descargarPDF() {
-    if (!mejoradoHTML || descargando) return;
+    const htmlToUse = mejoradoHTML || livePreviewHTML;
+    if (!htmlToUse || descargando) return;
     setDescargando(true);
     try {
       const res = await fetch("/api/cv/pdf-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html: mejoradoHTML }),
+        body: JSON.stringify({ html: htmlToUse }),
       });
       if (!res.ok) throw new Error("Error generando PDF");
       const blob = await res.blob();
@@ -448,7 +599,6 @@ export default function CurriculumPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      // Fallback: imprimir desde el iframe
       if (iframeRef.current?.contentWindow) {
         iframeRef.current.contentWindow.print();
       }
@@ -477,70 +627,126 @@ export default function CurriculumPage() {
     );
   }
 
+  // ── Completitud checks ──
+  const completitudChecks = [
+    { label: "Nombre", done: !!form.nombre.trim() },
+    { label: "Teléfono", done: !!form.telefono.trim() },
+    { label: "Ciudad", done: !!form.ciudad.trim() },
+    { label: "Puesto", done: !!form.subtitulo.trim() },
+    { label: "Perfil", done: form.perfilProfesional.trim().length > 30 },
+    { label: "Experiencia", done: form.experiencia.some(e => e.puesto.trim()) },
+    { label: "Aptitudes", done: !!form.aptitudes.trim() },
+    { label: "Foto", done: !!fotoUrl },
+  ];
+  const doneCount = completitudChecks.filter(c => c.done).length;
+  const pct = Math.round((doneCount / completitudChecks.length) * 100);
+  const completitudColor = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
+
+  // ── HTML para la preview (IA o en vivo) ──
+  const previewHTML = mejoradoHTML || livePreviewHTML;
+
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       {/* Header */}
-      <div className="px-4 py-8" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <div className="px-4 py-6" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>
+        <div className="max-w-[100rem] mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-white">Mi Currículum</h1>
-            <p className="text-xs mt-1 text-white/80">Completa tus datos y genera un CV profesional</p>
+            <p className="text-xs mt-1 text-white/80">Completa tus datos — la plantilla se actualiza en vivo</p>
           </div>
-          {guardado && (
-            <span className="text-xs font-medium px-3 py-1 rounded-full bg-white/20 text-white">
-              ✅ Guardado
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {/* ── Selector de CVs ── */}
+            {listaCVs.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={cvActivoId}
+                  onChange={(e) => { const id = e.target.value; if (id) cargarCVporId(id); }}
+                  className="px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
+                  style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", maxWidth: "180px" }}
+                >
+                  {listaCVs.map(cv => (
+                    <option key={cv.id} value={cv.id} style={{ background: "#1e212b", color: "#f1f5f9" }}>
+                      {cv.nombre || "Sin nombre"}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => cvActivoId && eliminarCV(cvActivoId)}
+                  className="text-[10px] px-1.5 py-1 rounded opacity-50 hover:opacity-100"
+                  style={{ color: "#ef4444" }}
+                  title="Eliminar esta versión"
+                >🗑</button>
+              </div>
+            )}
+            <button
+              onClick={guardarComoNuevo}
+              disabled={guardando}
+              className="text-[10px] px-2 py-1.5 rounded-lg font-medium transition disabled:opacity-50"
+              style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
+            >
+              {guardando ? "..." : "💾 Nueva versión"}
+            </button>
+            {guardado && (
+              <span className="text-xs font-medium px-3 py-1 rounded-full bg-white/20 text-white">
+                ✅ Guardado
+              </span>
+            )}
+            {!mejoradoHTML && (
+              <button onClick={generarYMejorar} disabled={procesando}
+                className="px-4 py-2 text-xs font-semibold rounded-xl transition disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #fff, #e2e8f0)", color: "#16a34a" }}>
+                {procesando ? "Mejorando..." : "✨ Mejorar con IA"}
+              </button>
+            )}
+            {previewHTML && (
+              <button onClick={descargarPDF} disabled={descargando}
+                className="px-4 py-2 text-xs font-semibold rounded-xl disabled:opacity-70"
+                style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}>
+                {descargando ? "Generando..." : "⬇ PDF"}
+              </button>
+            )}
+            {mejoradoHTML && (
+              <button onClick={() => { setMejoradoHTML(""); setEsPreviewIA(false); }}
+                className="px-3 py-2 text-xs rounded-xl"
+                style={{ border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}>
+                ← Volver a vivo
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Indicador de completitud */}
-      {(() => {
-        const checks = [
-          { label: "Nombre",         done: !!form.nombre.trim() },
-          { label: "Teléfono",       done: !!form.telefono.trim() },
-          { label: "Ciudad",         done: !!form.ciudad.trim() },
-          { label: "Puesto",         done: !!form.subtitulo.trim() },
-          { label: "Perfil",         done: form.perfilProfesional.trim().length > 30 },
-          { label: "Experiencia",    done: form.experiencia.some(e => e.puesto.trim()) },
-          { label: "Aptitudes",      done: !!form.aptitudes.trim() },
-          { label: "Foto",           done: !!fotoUrl },
-        ];
-        const done = checks.filter(c => c.done).length;
-        const pct = Math.round((done / checks.length) * 100);
-        const color = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
-        return (
-          <div className="px-4 py-3 max-w-4xl mx-auto">
-            <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
-                  Completitud del CV
-                </p>
-                <span className="text-sm font-bold" style={{ color }}>{pct}%</span>
-              </div>
-              <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: "#252836" }}>
-                <div className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}cc)` }} />
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {checks.map(c => (
-                  <span key={c.label}
-                    className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                    style={{
-                      background: c.done ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.08)",
-                      color: c.done ? "#22c55e" : "#94a3b8",
-                      border: `1px solid ${c.done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.05)"}`,
-                    }}>
-                    {c.done ? "✓" : "○"} {c.label}
-                  </span>
-                ))}
-              </div>
-            </div>
+      {/* Barra de completitud */}
+      <div className="px-4 py-3 max-w-[100rem] mx-auto">
+        <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #252836" }}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
+              Completitud del CV
+            </p>
+            <span className="text-sm font-bold" style={{ color: completitudColor }}>{pct}%</span>
           </div>
-        );
-      })()}
+          <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: "#252836" }}>
+            <div className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${completitudColor}, ${completitudColor}cc)` }} />
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {completitudChecks.map(c => (
+              <span key={c.label}
+                className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                style={{
+                  background: c.done ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.08)",
+                  color: c.done ? "#22c55e" : "#94a3b8",
+                  border: `1px solid ${c.done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.05)"}`,
+                }}>
+                {c.done ? "✓" : "○"} {c.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      {/* ── LAYOUT 2 COLUMNAS: formulario + previsualización EN VIVO ── */}
+      <main className="max-w-[100rem] mx-auto px-4 py-6">
         {error && (
           <div className={`mb-4 p-3 rounded-lg text-xs ${error.startsWith("✅") ? "" : ""}`}
             style={{ background: error.startsWith("✅") ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", 
@@ -550,8 +756,9 @@ export default function CurriculumPage() {
           </div>
         )}
 
-        {!mejoradoHTML ? (
-          <div className="space-y-6">
+        <div className="flex flex-col xl:flex-row gap-6">
+          {/* ── COLUMNA IZQUIERDA: Formulario ── */}
+          <div className="flex-1 min-w-0 xl:max-w-[50%] space-y-5">
             {/* Visibilidad para empresas */}
             <div className="rounded-xl p-5" style={{
               background: visibleEmpresas ? "rgba(34,197,94,0.07)" : "#161922",
@@ -633,7 +840,6 @@ export default function CurriculumPage() {
                 </div>
               </div>
 
-              {/* Tips de foto */}
               <div className="p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}>
                 <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>💡 Truco: Foto profesional gratis con IA</p>
                 <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia el prompt y pégalo en ChatGPT con tu foto:</p>
@@ -815,108 +1021,61 @@ export default function CurriculumPage() {
                 value={form.perfilProfesional} onChange={e => f("perfilProfesional", e.target.value)} rows={3}
                 className="w-full px-4 py-2.5 rounded-lg text-sm resize-none" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
             </div>
-
-            {/* Completitud del CV */}
-            {(() => {
-              const checks = [
-                { ok: !!form.nombre.trim(), label: "Nombre" },
-                { ok: !!form.apellidos.trim(), label: "Apellidos" },
-                { ok: !!form.telefono.trim(), label: "Teléfono" },
-                { ok: !!form.email.trim(), label: "Email" },
-                { ok: !!fotoUrl, label: "Foto" },
-                { ok: form.experiencia.some(e => e.puesto.trim()), label: "Experiencia" },
-                { ok: form.formacion.some(f => f.titulo.trim()), label: "Formación" },
-                { ok: !!form.aptitudes.trim(), label: "Habilidades" },
-                { ok: !!form.idiomas.trim(), label: "Idiomas" },
-                { ok: !!form.perfilProfesional.trim(), label: "Perfil profesional" },
-              ];
-              const pct = Math.round((checks.filter(c => c.ok).length / checks.length) * 100);
-              const color = pct < 50 ? "#ef4444" : pct < 80 ? "#f59e0b" : "#22c55e";
-              const pending = checks.filter(c => !c.ok).map(c => c.label);
-              return (
-                <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #252836" }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>Completitud del CV</span>
-                    <span className="text-sm font-extrabold" style={{ color }}>{pct}%</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full mb-2" style={{ background: "#252836" }}>
-                    <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
-                  </div>
-                  {pending.length > 0 && (
-                    <p className="text-[10px]" style={{ color: "#64748b" }}>
-                      Faltan: {pending.join(", ")}
-                    </p>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* Generar CV */}
-            <div className="rounded-xl p-6" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {/* Ver plantilla sin IA */}
-                <div className="text-center p-5 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #2d3142" }}>
-                  <p className="text-2xl mb-2">👁</p>
-                  <h3 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>Ver mi plantilla</h3>
-                  <p className="text-xs mb-4" style={{ color: "#64748b" }}>Previsualiza tu CV con los datos actuales. Sin IA, al instante.</p>
-                  <button onClick={verPlantilla}
-                    className="w-full px-5 py-2.5 text-sm font-semibold rounded-xl transition"
-                    style={{ border: "1.5px solid #22c55e", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}>
-                    Ver CV →
-                  </button>
-                </div>
-                {/* Generar con IA */}
-                <div className="text-center p-5 rounded-xl" style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                  <p className="text-2xl mb-2">✨</p>
-                  <h3 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>Mejorar con IA</h3>
-                  <p className="text-xs mb-4" style={{ color: "#64748b" }}>Guzzi reescribe tu perfil con verbos de acción y logros cuantificables.</p>
-                  <button onClick={generarYMejorar} disabled={procesando}
-                    className="w-full px-5 py-2.5 text-sm font-semibold rounded-xl transition disabled:opacity-50"
-                    style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-                    {procesando ? "Mejorando..." : "🚀 Generar con IA"}
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>
-                  {esPreviewIA ? "CV mejorado con IA ✨" : "Vista previa de plantilla"}
-                </h2>
-                {esPreviewIA && (
+
+          {/* ── COLUMNA DERECHA: Previsualización EN VIVO ── */}
+          <div className="flex-1 min-w-0 xl:sticky xl:top-20 xl:max-w-[50%]">
+            <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #22c55e40", background: "#fff" }}>
+              {/* Cabecera de la preview */}
+              <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "#161922", borderBottom: "1px solid #252836" }}>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
+                  <span className="text-xs font-semibold" style={{ color: "#22c55e" }}>
+                    {mejoradoHTML ? "CV Mejorado con IA ✨" : "Previsualización en vivo"}
+                  </span>
+                </div>
+                {mejoradoHTML && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
                     style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
                     IA activa
                   </span>
                 )}
               </div>
-              <div className="flex gap-2 flex-wrap">
-                <button onClick={() => { setMejoradoHTML(""); setEsPreviewIA(false); }}
-                  className="px-3 py-1.5 text-xs rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
-                  ← Editar
-                </button>
-                {!esPreviewIA && (
-                  <button onClick={generarYMejorar} disabled={procesando}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-50"
-                    style={{ border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}>
-                    {procesando ? "Mejorando..." : "✨ Mejorar con IA"}
-                  </button>
-                )}
-                <button onClick={descargarPDF} disabled={descargando}
-                  className="px-4 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-70"
-                  style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-                  {descargando ? "Generando PDF..." : "⬇ Descargar PDF"}
-                </button>
-              </div>
+
+              {previewHTML ? (
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={previewHTML}
+                  className="w-full bg-white"
+                  style={{ height: "1100px", border: "none", maxHeight: "calc(100vh - 200px)" }}
+                  title="CV en vivo"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 px-6" style={{ background: "#f8fafc", minHeight: "400px" }}>
+                  <div className="text-5xl mb-4 opacity-30">📄</div>
+                  <p className="text-sm font-medium text-slate-400 mb-1">Tu CV aparecerá aquí</p>
+                  <p className="text-xs text-slate-300 text-center max-w-xs">
+                    Escribe tu nombre y completa los campos de la izquierda para ver la plantilla en tiempo real
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #252836" }}>
-              <iframe ref={iframeRef} srcDoc={mejoradoHTML} className="w-full bg-white" style={{ height: "1200px", border: "none" }} title="CV Generado" />
+
+            {/* Acciones rápidas debajo de la preview */}
+            <div className="mt-4 flex gap-3 flex-wrap">
+              <button onClick={generarYMejorar} disabled={procesando || !form.nombre.trim()}
+                className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                {procesando ? "✨ Mejorando..." : "✨ Mejorar con IA"}
+              </button>
+              <button onClick={descargarPDF} disabled={descargando || !previewHTML}
+                className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
+                style={{ background: "#1e212b", border: "1.5px solid #22c55e", color: "#22c55e" }}>
+                {descargando ? "Generando PDF..." : "⬇ Descargar PDF"}
+              </button>
             </div>
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

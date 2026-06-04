@@ -14,6 +14,7 @@ export default function GuardadosPage() {
   const router = useRouter();
   const [guardados, setGuardados] = useState<Guardado[]>([]);
   const [ofertas, setOfertas] = useState<PropiedadesJobCard[]>([]);
+  const [recomendaciones, setRecomendaciones] = useState<PropiedadesJobCard[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
@@ -39,6 +40,32 @@ export default function GuardadosPage() {
         setGuardados(listaGuardados);
 
         if (listaGuardados.length === 0) {
+          // Cargar recomendaciones basadas en el perfil del usuario
+          try {
+            const { data: profile } = await getSupabaseBrowser()
+              .from("profiles")
+              .select("ciudad, sector")
+              .eq("id", session.user.id)
+              .single();
+
+            const ciudad = profile?.ciudad || "";
+            const sector = profile?.sector || "";
+
+            if (ciudad || sector) {
+              const searchParams = new URLSearchParams();
+              if (sector) searchParams.set("keyword", sector);
+              if (ciudad) searchParams.set("location", ciudad);
+              const searchRes = await fetch(`/api/jobs/search?${searchParams.toString()}`);
+              if (searchRes.ok) {
+                const searchData = await searchRes.json() as {
+                  ofertas?: PropiedadesJobCard[];
+                };
+                setRecomendaciones((searchData.ofertas || []).slice(0, 20));
+              }
+            }
+          } catch {
+            // Si falla la carga de recomendaciones, simplemente mostramos vacío
+          }
           setCargando(false);
           return;
         }
@@ -98,12 +125,35 @@ export default function GuardadosPage() {
           </div>
         )}
         
-        {ofertas.length === 0 ? (
+        {ofertas.length === 0 && recomendaciones.length === 0 ? (
           <div className="card-game p-10 text-center">
             <p className="text-4xl mb-3">🤍</p>
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No tienes ofertas guardadas</p>
             <p className="text-xs mt-1 mb-4" style={{ color: "#64748b" }}>Guarda las ofertas que te interesen desde el buscador</p>
             <button onClick={() => router.push("/app/buscar")} className="btn-game text-xs">Buscar ofertas</button>
+          </div>
+        ) : ofertas.length === 0 && recomendaciones.length > 0 ? (
+          <div className="space-y-6">
+            {/* Mensaje sutil de que no hay guardados */}
+            <div className="card-game p-6 text-center">
+              <p className="text-2xl mb-2">🤍</p>
+              <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No tienes ofertas guardadas aún</p>
+              <p className="text-xs mt-1" style={{ color: "#64748b" }}>Guarda las que te interesen desde el buscador</p>
+              <button onClick={() => router.push("/app/buscar")} className="btn-game text-xs mt-3">Buscar ofertas</button>
+            </div>
+
+            {/* Recomendaciones basadas en tu perfil */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">💡</span>
+                <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Recomendaciones para ti</h2>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {recomendaciones.map((oferta) => (
+                  <JobCard key={oferta.id} {...oferta} />
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">

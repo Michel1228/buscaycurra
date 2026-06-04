@@ -16,22 +16,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { companyName, companyEmail, jobTitle } = await req.json() as {
+    const { companyName, companyEmail, jobTitle, cvId } = await req.json() as {
       companyName?: string;
       companyEmail?: string;
       jobTitle?: string;
+      cvId?: string;
     };
 
     if (!companyName) {
       return NextResponse.json({ error: "companyName requerido" }, { status: 400 });
     }
 
-    // Obtener CV del usuario
+    // Obtener CV del usuario (por ID específico o el más reciente)
     const pool = getPool();
-    const cvResult = await pool.query(
-      `SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1`,
-      [userId]
-    );
+    let cvResult;
+    if (cvId) {
+      cvResult = await pool.query(
+        `SELECT form_data FROM user_cvs WHERE id = $1 AND user_id = $2`,
+        [cvId, userId]
+      );
+    } else {
+      cvResult = await pool.query(
+        `SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1`,
+        [userId]
+      );
+    }
 
     if (cvResult.rows.length === 0) {
       return NextResponse.json({ error: "No tienes CV creado. Créalo primero en Guzzi." }, { status: 404 });

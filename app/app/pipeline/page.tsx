@@ -8,11 +8,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import InfoTooltip from "@/components/InfoTooltip";
 
-type EstadoCandidatura = "aplicado" | "en_revision" | "entrevista" | "oferta" | "rechazado" | "contratado";
+type EstadoCandidatura = "enviado" | "visto_empresa" | "en_revision" | "entrevista" | "oferta" | "descartado";
 
 interface Candidatura {
   id: string;
   empresa: string;
+  email: string;
   puesto: string;
   estado: EstadoCandidatura;
   fecha: string;
@@ -22,13 +23,18 @@ interface Candidatura {
 }
 
 const COLUMNAS: { id: EstadoCandidatura; label: string; color: string; tip: string }[] = [
-  { id: "aplicado", label: "Aplicado", color: "#22c55e", tip: "CV enviado. Acabas de aplicar a esta oferta y estás esperando respuesta." },
-  { id: "en_revision", label: "En revisión", color: "#f59e0b", tip: "La empresa está revisando tu candidatura. Suele tardar 1-2 semanas." },
-  { id: "entrevista", label: "Entrevista", color: "#a855f7", tip: "Te han contactado para una entrevista. ¡Buen momento para prepararte con Guzzi!" },
-  { id: "oferta", label: "Oferta", color: "#3b82f6", tip: "La empresa te ha hecho una oferta económica. Negocia con datos reales." },
-  { id: "contratado", label: "Contratado", color: "#ec4899", tip: "¡Enhorabuena! Aceptaste la oferta y ya tienes trabajo." },
-  { id: "rechazado", label: "Rechazado", color: "#64748b", tip: "No avanzaste en este proceso. No te desanimes, es normal recibir varios rechazos antes de encontrar trabajo." },
+  { id: "enviado", label: "Enviado", color: "#22c55e", tip: "CV enviado. Acabas de aplicar a esta oferta y estás esperando respuesta." },
+  { id: "visto_empresa", label: "Visto por empresa", color: "#f59e0b", tip: "La empresa ha abierto tu candidatura. Suele tardar 1-2 semanas en responder." },
+  { id: "en_revision", label: "En revisión", color: "#a855f7", tip: "La empresa está revisando tu candidatura. ¡Buen momento para prepararte con Guzzi!" },
+  { id: "entrevista", label: "Entrevista", color: "#3b82f6", tip: "Te han contactado para una entrevista. Prepara respuestas y negocia con datos reales de salarios." },
+  { id: "oferta", label: "Oferta", color: "#ec4899", tip: "La empresa te ha hecho una oferta económica. Negocia con datos reales del mercado." },
+  { id: "descartado", label: "Descartado", color: "#64748b", tip: "No avanzaste en este proceso. No te desanimes, es normal recibir varios rechazos antes de encontrar trabajo." },
 ];
+
+function diasDesde(fecha: string): number {
+  const diff = Date.now() - new Date(fecha).getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
 
 export default function PipelinePage() {
   const router = useRouter();
@@ -52,7 +58,7 @@ export default function PipelinePage() {
 
         const { data: envios } = await getSupabaseBrowser()
           .from("cv_sends")
-          .select("id, company_name, job_title, status, created_at, error_message")
+          .select("id, company_name, company_email, job_title, status, created_at, error_message")
           .eq("user_id", session.user.id)
           .order("created_at", { ascending: false });
 
@@ -71,6 +77,7 @@ export default function PipelinePage() {
           return {
             id: e.id,
             empresa: e.company_name || "Empresa desconocida",
+            email: e.company_email || "",
             puesto: e.job_title || "Candidatura espontánea",
             estado: pipelineEstado,
             fecha: e.created_at,
@@ -120,15 +127,16 @@ export default function PipelinePage() {
         job_title: nueva.puesto.trim() || null,
         status: "enviado",
         error_message: nueva.notas.trim()
-          ? JSON.stringify({ pipeline_estado: "aplicado", notas: nueva.notas.trim() })
+          ? JSON.stringify({ pipeline_estado: "enviado", notas: nueva.notas.trim() })
           : null,
       }).select().single();
       if (data) {
         setCandidaturas(prev => [{
           id: data.id,
           empresa: data.company_name,
+          email: data.company_email || "",
           puesto: data.job_title || "Candidatura espontánea",
-          estado: "aplicado",
+          estado: "enviado",
           fecha: data.created_at,
           notas: nueva.notas.trim() || undefined,
         }, ...prev]);
@@ -144,15 +152,20 @@ export default function PipelinePage() {
 
   function mapEstado(estado: string): EstadoCandidatura {
     const map: Record<string, EstadoCandidatura> = {
-      enviado: "aplicado",
-      pendiente: "aplicado",
-      visto: "en_revision",
+      enviado: "enviado",
+      pendiente: "enviado",
+      visto: "visto_empresa",
+      visto_empresa: "visto_empresa",
+      en_revision: "en_revision",
+      revision: "en_revision",
       respuesta: "entrevista",
+      entrevista: "entrevista",
       oferta: "oferta",
-      rechazado: "rechazado",
-      contratado: "contratado",
+      rechazado: "descartado",
+      descartado: "descartado",
+      contratado: "oferta",
     };
-    return map[estado] || "aplicado";
+    return map[estado] || "enviado";
   }
 
   async function moverCandidatura(id: string, nuevoEstado: EstadoCandidatura) {
@@ -164,7 +177,7 @@ export default function PipelinePage() {
       await getSupabaseBrowser().from("cv_sends").update({
         error_message: JSON.stringify({ pipeline_estado: nuevoEstado, notas: cand?.notas || "" })
       }).eq("id", id);
-      if (nuevoEstado === "contratado") {
+      if (nuevoEstado === "oferta") {
         setCelebracion(true);
         setTimeout(() => setCelebracion(false), 4000);
       }
@@ -190,7 +203,7 @@ export default function PipelinePage() {
 
   const stats = {
     total: candidaturas.length,
-    activas: candidaturas.filter(c => c.estado !== "rechazado" && c.estado !== "contratado").length,
+    activas: candidaturas.filter(c => c.estado !== "descartado" && c.estado !== "oferta").length,
     entrevistas: candidaturas.filter(c => c.estado === "entrevista").length,
     ofertas: candidaturas.filter(c => c.estado === "oferta").length,
   };
@@ -200,7 +213,7 @@ export default function PipelinePage() {
       {celebracion && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl text-sm font-bold shadow-2xl"
           style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", animation: "fade-in 0.3s ease" }}>
-          🎉 ¡Enhorabuena! Marcado como contratado.
+          🎉 ¡Oferta recibida! Negocia con datos reales de salarios.
         </div>
       )}
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.05))" }}>
@@ -208,7 +221,7 @@ export default function PipelinePage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Pipeline de candidaturas</h1>
-              <p className="text-xs mt-1" style={{ color: "#64748b" }}>Arrastra las tarjetas entre columnas</p>
+              <p className="text-xs mt-1" style={{ color: "#64748b" }}>Arrastra las tarjetas entre columnas para actualizar el estado</p>
             </div>
             <button onClick={() => setModalNueva(true)}
               className="px-4 py-2 text-xs font-semibold rounded-xl transition hover:opacity-90"
@@ -219,7 +232,7 @@ export default function PipelinePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
             {[
               { label: "Total", valor: stats.total, color: "#22c55e" },
-              { label: "Activas", valor: stats.activas, color: "#f59e0b" },
+              { label: "En proceso", valor: stats.activas, color: "#f59e0b" },
               { label: "Entrevistas", valor: stats.entrevistas, color: "#a855f7" },
               { label: "Ofertas", valor: stats.ofertas, color: "#3b82f6" },
             ].map(s => (
@@ -245,7 +258,7 @@ export default function PipelinePage() {
             {COLUMNAS.map(col => {
               const items = candidaturas.filter(c => c.estado === col.id);
               return (
-                <div key={col.id} className="flex-shrink-0 w-60" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, col.id)}>
+                <div key={col.id} className="flex-shrink-0 w-64" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, col.id)}>
                   <div className="flex items-center gap-2 mb-3 px-1">
                     <div className="w-2 h-2 rounded-full" style={{ background: col.color }} />
                     <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: col.color }}>{col.label}</span>
@@ -253,16 +266,37 @@ export default function PipelinePage() {
                     <span className="text-[10px] ml-auto" style={{ color: "#475569" }}>{items.length}</span>
                   </div>
                   <div className="space-y-2 min-h-[80px]">
-                    {items.map(item => (
-                      <div key={item.id} draggable onDragStart={() => handleDragStart(item.id)}
-                        className="card-game p-3 cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-transform"
-                        style={{ borderLeft: `3px solid ${col.color}` }}
-                        onClick={() => { setCandidaturaEdit(item); setNotasEdit(item.notas || ""); setModalAbierto(true); }}>
-                        <p className="text-xs font-semibold truncate" style={{ color: "#f1f5f9" }}>{item.puesto}</p>
-                        <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>{item.empresa}</p>
-                        <p className="text-[10px] mt-1" style={{ color: "#475569" }}>{new Date(item.fecha).toLocaleDateString("es-ES")}</p>
-                      </div>
-                    ))}
+                    {items.map(item => {
+                      const dias = diasDesde(item.fecha);
+                      const necesitaAtencion = dias > 2 && item.estado !== "descartado" && item.estado !== "oferta";
+                      return (
+                        <div key={item.id} draggable onDragStart={() => handleDragStart(item.id)}
+                          className="card-game p-3 cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-transform relative"
+                          style={{ borderLeft: `3px solid ${col.color}` }}
+                          onClick={() => { setCandidaturaEdit(item); setNotasEdit(item.notas || ""); setModalAbierto(true); }}>
+                          {/* Badge de notificación: sin cambios en más de 48h */}
+                          {necesitaAtencion && (
+                            <div className="absolute -top-1.5 -right-1.5 z-10">
+                              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+                                style={{ background: "#ef4444", color: "#fff", boxShadow: "0 0 8px rgba(239,68,68,0.4)" }}>
+                                Hace {dias}d
+                              </span>
+                            </div>
+                          )}
+                          <p className="text-xs font-semibold truncate" style={{ color: "#f1f5f9" }}>{item.puesto}</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>{item.empresa}</p>
+                          {item.email && (
+                            <p className="text-[10px] mt-0.5 truncate" style={{ color: "#475569" }}>✉️ {item.email}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <p className="text-[10px]" style={{ color: "#475569" }}>{new Date(item.fecha).toLocaleDateString("es-ES")}</p>
+                            <p className="text-[10px]" style={{ color: dias <= 1 ? "#22c55e" : dias <= 3 ? "#f59e0b" : "#64748b" }}>
+                              {dias === 0 ? "Hoy" : `+${dias}d`}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -276,9 +310,17 @@ export default function PipelinePage() {
           <div className="w-full max-w-sm rounded-xl p-5 space-y-3" style={{ background: "#1e212b", border: "1px solid #2d3142" }} onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>{candidaturaEdit.puesto}</h3>
             <p className="text-xs" style={{ color: "#94a3b8" }}>{candidaturaEdit.empresa}</p>
+            {candidaturaEdit.email && (
+              <p className="text-[11px]" style={{ color: "#f59e0b" }}>✉️ {candidaturaEdit.email}</p>
+            )}
             <div className="space-y-1.5">
-              <p className="text-[11px]" style={{ color: "#64748b" }}><span className="font-medium">Estado:</span> {COLUMNAS.find(c => c.id === candidaturaEdit.estado)?.label}</p>
-              <p className="text-[11px]" style={{ color: "#64748b" }}><span className="font-medium">Fecha:</span> {new Date(candidaturaEdit.fecha).toLocaleDateString("es-ES")}</p>
+              <p className="text-[11px]" style={{ color: "#64748b" }}>
+                <span className="font-medium">Estado:</span> {COLUMNAS.find(c => c.id === candidaturaEdit.estado)?.label}
+              </p>
+              <p className="text-[11px]" style={{ color: "#64748b" }}>
+                <span className="font-medium">Fecha:</span> {new Date(candidaturaEdit.fecha).toLocaleDateString("es-ES")}
+                <span className="ml-2" style={{ color: "#475569" }}>(+{diasDesde(candidaturaEdit.fecha)} días)</span>
+              </p>
             </div>
 
             {/* Notas editables */}
@@ -296,7 +338,7 @@ export default function PipelinePage() {
 
             {/* Mover a columna */}
             <div className="flex gap-2 flex-wrap">
-              {COLUMNAS.filter(c => c.id !== candidaturaEdit.estado && c.id !== "rechazado").map(c => (
+              {COLUMNAS.filter(c => c.id !== candidaturaEdit.estado).map(c => (
                 <button key={c.id} onClick={() => { moverCandidatura(candidaturaEdit.id, c.id); setModalAbierto(false); }}
                   className="px-2.5 py-1 rounded-lg text-[10px] font-medium transition"
                   style={{ background: `${c.color}12`, border: `1px solid ${c.color}25`, color: c.color }}>

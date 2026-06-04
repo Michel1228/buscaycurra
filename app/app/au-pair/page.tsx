@@ -10,6 +10,7 @@ import {
   PAISES_AU_PAIR,
 } from "@/lib/au-pair";
 import { PAISES } from "@/lib/paises";
+import AuPairPlantilla from "@/components/AuPairPlantilla";
 
 const MAX_FOTOS = 6;
 
@@ -49,6 +50,7 @@ export default function AuPairProfilePage() {
   const [generandoIA, setGenerandoIA] = useState(false);
   const [auPairStats, setAuPairStats] = useState({ hoy: 0, limiteHoy: 2, disponibles: 2, plan: "free" });
   const [previewHTML, setPreviewHTML] = useState("");
+  const [showPlantilla, setShowPlantilla] = useState(true);
   const [descargandoCarta, setDescargandoCarta] = useState(false);
   const iframeCartaRef = useRef<HTMLIFrameElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +61,12 @@ export default function AuPairProfilePage() {
   const [enviandoPerfil, setEnviandoPerfil] = useState(false);
   const [envioExito, setEnvioExito] = useState("");
   const [envioError, setEnvioError] = useState("");
+
+  // ── Preview & Confirmación ──
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewSubject, setPreviewSubject] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmData, setConfirmData] = useState<{familyName: string; email: string; subject: string; carta: string} | null>(null);
 
   // Modal referencia
   const [refNombre, setRefNombre] = useState("");
@@ -442,6 +450,17 @@ export default function AuPairProfilePage() {
       setEnvioError("Introduce un email válido");
       return;
     }
+    setEnvioError("");
+    setEnvioExito("");
+
+    // Generar asunto de preview
+    const subject = `Au Pair Application — ${nombre || "Candidato"} from ${PAISES[nationality] || nationality || "Spain"}`;
+    setPreviewSubject(subject);
+    setShowPreview(true);
+  }
+
+  async function confirmarEnvioAuPair() {
+    setShowPreview(false);
     setEnviandoPerfil(true);
     setEnvioError("");
     setEnvioExito("");
@@ -457,6 +476,15 @@ export default function AuPairProfilePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar");
+
+      // Mostrar confirmación detallada
+      setConfirmData({
+        familyName: familyName || familyEmail,
+        email: familyEmail,
+        subject: previewSubject,
+        carta: letterText || "Carta de presentación Au Pair",
+      });
+      setShowConfirm(true);
       setEnvioExito(`✅ Perfil enviado a ${familyName || familyEmail}`);
       setFamilyEmail("");
       setFamilyName("");
@@ -889,28 +917,48 @@ export default function AuPairProfilePage() {
         </div>
 
         {/* Vista previa */}
-        {previewHTML && (
-          <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5">
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <h3 className="text-sm font-semibold text-[#e2e8f0]">Vista previa — Plantilla profesional</h3>
-              <div className="flex gap-2">
-                <button onClick={() => setPreviewHTML("")} className="text-xs px-3 py-1.5 rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>← Cerrar</button>
-                <button onClick={descargarCarta} disabled={descargandoCarta} className="text-xs font-semibold px-4 py-1.5 rounded-lg disabled:opacity-60" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-                  {descargandoCarta ? "Generando PDF..." : "⬇ Descargar carta PDF"}
-                </button>
-              </div>
-            </div>
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #252836" }}>
-              <iframe
-                ref={iframeCartaRef}
-                srcDoc={previewHTML}
-                className="w-full bg-white"
-                style={{ height: "700px", border: "none" }}
-                title="Vista previa carta Au Pair"
-              />
+        {/* ── Plantilla en vivo ── */}
+        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
+              <span>📄</span> Plantilla profesional <span className="text-[10px] text-[#4ade80] font-normal">(vista previa en vivo)</span>
+            </h3>
+            <div className="flex gap-2">
+              <button onClick={() => setShowPlantilla(!showPlantilla)} className="text-xs px-3 py-1.5 rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+                {showPlantilla ? "Ocultar" : "Mostrar"}
+              </button>
+              <button onClick={descargarCarta} disabled={descargandoCarta} className="text-xs font-semibold px-4 py-1.5 rounded-lg disabled:opacity-60" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                {descargandoCarta ? "Generando PDF..." : "⬇ Descargar PDF"}
+              </button>
             </div>
           </div>
-        )}
+          {showPlantilla && (
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #252836", maxHeight: "80vh", overflowY: "auto" }}>
+              <AuPairPlantilla
+                nombre={nombre}
+                age={age}
+                nationality={nationality}
+                ciudad={ciudad}
+                languages={languages}
+                childcareExperience={childcareExperience}
+                hobbies={hobbies}
+                letterText={letterText}
+                photos={photos}
+                paisDestino={paisDestino}
+                nivelEducativo={nivelEducativo}
+                duracionPreferida={duracionPreferida}
+                availableFrom={availableFrom}
+                hasDrivingLicense={hasDrivingLicense}
+                fumador={fumador}
+                primerosAuxilios={primerosAuxilios}
+                sabeNadar={sabeNadar}
+                dietaryInfo={dietaryInfo}
+                references={references}
+                tipoPerfil={tipoPerfil}
+              />
+            </div>
+          )}
+        </div>
 
         {/* ── Enviar perfil a familia ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
@@ -981,6 +1029,110 @@ export default function AuPairProfilePage() {
           </button>
         </div>
       </section>
+
+      {/* ── MODAL: Preview antes de enviar perfil Au Pair ── */}
+      {showPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #2d3142" }}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold" style={{ color: "#f1f5f9" }}>📄 Previsualizar envío</h3>
+              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#64748b" }}>✕</button>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span style={{ color: "#64748b" }}>Para:</span>
+                <span className="font-medium" style={{ color: "#22c55e" }}>{familyEmail}</span>
+              </div>
+              {familyName && (
+                <div className="flex items-center gap-2">
+                  <span style={{ color: "#64748b" }}>Familia:</span>
+                  <span style={{ color: "#94a3b8" }}>{familyName}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <span style={{ color: "#64748b" }}>Asunto:</span>
+                <span style={{ color: "#94a3b8" }}>{previewSubject}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span style={{ color: "#64748b" }}>Adjunto:</span>
+                <span style={{ color: "#94a3b8" }}>Perfil Au Pair completo (foto, datos, experiencia, referencias)</span>
+              </div>
+            </div>
+
+            {/* Carta */}
+            <div>
+              <label className="block text-xs font-semibold mb-2" style={{ color: "#94a3b8" }}>Carta de presentación:</label>
+              <div className="rounded-lg p-4 text-xs leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto" style={{ background: "#0f1117", border: "1px solid #1e212b", color: "#cbd5e1" }}>
+                {letterText || "No has escrito tu carta de presentación aún. Ve a la sección «Carta de presentación» para redactarla."}
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex gap-3 pt-2" style={{ borderTop: "1px solid #2d3142" }}>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="flex-1 py-2.5 rounded-lg text-xs font-medium transition"
+                style={{ background: "#252836", color: "#94a3b8" }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarEnvioAuPair}
+                className="flex-1 py-2.5 rounded-lg text-xs font-bold transition"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+              >
+                ✅ Confirmar envío
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: Confirmación post-envío ── */}
+      {showConfirm && confirmData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #22c55e" }}>
+            <div className="text-center">
+              <span className="text-3xl">✅</span>
+              <h3 className="text-lg font-bold mt-2" style={{ color: "#22c55e" }}>¡Perfil Au Pair enviado!</h3>
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-lg p-4 space-y-2" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.1)" }}>
+                <div className="flex justify-between text-xs">
+                  <span style={{ color: "#64748b" }}>Familia:</span>
+                  <span className="font-medium" style={{ color: "#f1f5f9" }}>{confirmData.familyName}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span style={{ color: "#64748b" }}>Email:</span>
+                  <span className="font-medium" style={{ color: "#22c55e" }}>{confirmData.email}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span style={{ color: "#64748b" }}>Asunto:</span>
+                  <span className="font-medium" style={{ color: "#94a3b8" }}>{confirmData.subject}</span>
+                </div>
+              </div>
+
+              {/* Carta enviada */}
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "#94a3b8" }}>📧 Carta enviada:</label>
+                <div className="rounded-lg p-3 text-xs leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto" style={{ background: "#0f1117", border: "1px solid #1e212b", color: "#cbd5e1" }}>
+                  {confirmData.carta}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="w-full py-2.5 rounded-lg text-sm font-bold transition"
+              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

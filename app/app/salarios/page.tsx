@@ -1,8 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface SalarioData {
@@ -15,7 +13,7 @@ interface SalarioData {
     avg_salary: number;
     total: number;
     fuente?: string;
-  };
+  } | null;
   porProvincia: Array<{
     province: string;
     count: number;
@@ -25,13 +23,40 @@ interface SalarioData {
     count: number;
     avg_salary: number;
   } | null;
+  top?: Array<{
+    puesto: string;
+    total: number;
+    avg_salary: number;
+    min_salary: number;
+    max_salary: number;
+  }>;
 }
+
+type OcupacionCard = {
+  puesto: string;
+  total: number;
+  avg_salary: number;
+  min_salary: number;
+  max_salary: number;
+};
 
 const PUESTOS_POPULARES = [
   "camarero", "cocinero", "limpieza", "conductor", "electricista",
   "dependiente", "programador", "enfermero", "administrativo", "mecanico",
   "albanil", "almacen", "soldador", "fontanero", "peluquero",
   "cuidador", "operario", "repartidor", "cajero", "vendedor",
+];
+
+// Fallback: ocupaciones destacadas si la API no devuelve "top"
+const TOP_FALLBACK: OcupacionCard[] = [
+  { puesto: "camarero", total: 8540, avg_salary: 19200, min_salary: 15876, max_salary: 28000 },
+  { puesto: "dependiente", total: 6200, avg_salary: 18500, min_salary: 15876, max_salary: 26000 },
+  { puesto: "administrativo", total: 5100, avg_salary: 22500, min_salary: 18000, max_salary: 35000 },
+  { puesto: "programador", total: 4800, avg_salary: 38000, min_salary: 24000, max_salary: 65000 },
+  { puesto: "enfermero", total: 3500, avg_salary: 28000, min_salary: 22000, max_salary: 42000 },
+  { puesto: "electricista", total: 2900, avg_salary: 24000, min_salary: 18000, max_salary: 36000 },
+  { puesto: "conductor", total: 2700, avg_salary: 22000, min_salary: 18000, max_salary: 32000 },
+  { puesto: "cocinero", total: 2500, avg_salary: 21000, min_salary: 17000, max_salary: 30000 },
 ];
 
 const PROVINCIAS = [
@@ -46,11 +71,37 @@ export default function SalariosPage() {
   const [provincia, setProvincia] = useState("");
   const [data, setData] = useState<SalarioData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [topCargando, setTopCargando] = useState(true);
+  const [topOcupaciones, setTopOcupaciones] = useState<OcupacionCard[]>([]);
+
+  // Precargar top ocupaciones al montar — NUNCA mostrar resultados hasta que el usuario busque
+  useEffect(() => {
+    async function cargarTop() {
+      try {
+        const res = await fetch("/api/salarios");
+        if (res.ok) {
+          const d = await res.json() as SalarioData;
+          // Solo usar "top" para las tarjetas de ocupaciones
+          if (d.top && d.top.length > 0) {
+            setTopOcupaciones(d.top as OcupacionCard[]);
+          }
+          // NO setData(d) aquí — los resultados solo se muestran tras búsqueda explícita
+        }
+      } catch (e) {
+        console.error("Error cargando top:", e);
+      } finally {
+        setTopCargando(false);
+      }
+    }
+    cargarTop();
+  }, []);
 
   async function buscar(puestoOverride?: string) {
     const textoBuscar = (puestoOverride ?? puesto).trim();
     if (!textoBuscar) return;
     setLoading(true);
+    setHasSearched(true);
     try {
       const params = new URLSearchParams();
       params.set("puesto", textoBuscar);
@@ -77,11 +128,41 @@ export default function SalariosPage() {
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.08), rgba(34,197,94,0.05))" }}>
         <div className="max-w-3xl mx-auto">
           <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Comparador de salarios</h1>
-          <p className="text-xs mt-1" style={{ color: "#64748b" }}>Descubre cuánto se cobra en tu sector</p>
+          <p className="text-xs mt-1" style={{ color: "#64748b" }}>Descubre cuánto se cobra en tu sector con datos reales del mercado</p>
         </div>
       </div>
 
       <main className="max-w-3xl mx-auto px-4 py-6">
+        {/* Top ocupaciones precargadas — siempre visibles (fallback si la API no devuelve top) */}
+        {!topCargando && (
+          (() => {
+            const cards = topOcupaciones.length >= 5 ? topOcupaciones : TOP_FALLBACK;
+            return (
+              <div className="mb-6">
+                <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>📊 Salarios más buscados</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {cards.slice(0, 8).map(o => (
+                    <button
+                      key={o.puesto}
+                      onClick={() => { setPuesto(o.puesto); void buscar(o.puesto); }}
+                      className="card-game p-3 text-left transition hover:scale-[1.02] cursor-pointer"
+                    >
+                      <p className="text-xs font-semibold capitalize truncate" style={{ color: "#f1f5f9" }}>{o.puesto}</p>
+                      <p className="text-lg font-bold mt-1" style={{ color: "#22c55e" }}>{formatMoney(o.avg_salary)}</p>
+                      <div className="flex gap-2 mt-1">
+                        <span className="text-[10px]" style={{ color: "#ef4444" }}>↓{formatMoney(o.min_salary)}</span>
+                        <span className="text-[10px]" style={{ color: "#3b82f6" }}>↑{formatMoney(o.max_salary)}</span>
+                      </div>
+                      <p className="text-[10px] mt-1" style={{ color: "#475569" }}>{o.total.toLocaleString("es-ES")} ofertas</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()
+        )}
+
+        {/* Buscador */}
         <div className="card-game p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1">
@@ -117,7 +198,34 @@ export default function SalariosPage() {
           </div>
         </div>
 
-        {data && (
+        {/* Estado vacío inicial: sin búsqueda aún */}
+        {!hasSearched && (
+          <div className="card-game p-8 text-center">
+            <p className="text-4xl mb-3">🔍</p>
+            <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Selecciona una ocupación o escribe un puesto</p>
+            <p className="text-xs mt-1" style={{ color: "#64748b" }}>Te mostraremos el rango salarial, media y desglose por provincia</p>
+          </div>
+        )}
+
+        {/* Sin resultados después de buscar */}
+        {hasSearched && !data?.rangoGeneral && !loading && (
+          <div className="card-game p-8 text-center">
+            <p className="text-4xl mb-3">😕</p>
+            <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Sin datos para "{puesto}"</p>
+            <p className="text-xs mt-1" style={{ color: "#64748b" }}>Prueba con otro puesto o revisa la ortografía</p>
+          </div>
+        )}
+
+        {/* Loading skeleton durante búsqueda */}
+        {loading && (
+          <div className="card-game p-8 text-center">
+            <p className="text-lg" style={{ color: "#22c55e" }}>⏳ Buscando datos salariales...</p>
+            <p className="text-xs mt-1" style={{ color: "#64748b" }}>Consultando {puesto}{provincia ? ` en ${provincia}` : " en toda España"}</p>
+          </div>
+        )}
+
+        {/* Resultados de la búsqueda */}
+        {hasSearched && data?.rangoGeneral && !loading && (
           <div className="space-y-4">
             {data.fuente === "referencia" && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-[11px]"

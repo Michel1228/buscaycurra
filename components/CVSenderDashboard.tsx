@@ -176,7 +176,9 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
             </span>
           </div>
           <p className="text-xs mt-2" style={{ color: "#706a58" }}>
-            {rateLimit.cvsRestantesHoy > 0
+            {rateLimit.cvsRestantesHoy === Infinity
+              ? "Envíos ilimitados"
+              : rateLimit.cvsRestantesHoy > 0
               ? `${rateLimit.cvsRestantesHoy} CVs restantes hoy`
               : "Límite alcanzado. Se reinicia a las 00:00."}
           </p>
