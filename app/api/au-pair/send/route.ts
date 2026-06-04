@@ -4,7 +4,6 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getPool } from "@/lib/db";
 import { sendCVEmail } from "@/lib/cv-sender/email-sender";
 
 export const dynamic = "force-dynamic";
@@ -37,28 +36,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email de la familia requerido" }, { status: 400 });
     }
 
-    // ── Obtener perfil Au Pair ──────────────────────────────────────────
-    const pool = getPool();
-    const profileRow = await pool.query(
-      "SELECT * FROM au_pair_profiles WHERE user_id = $1",
-      [userId]
+    // ── Obtener perfil Au Pair de Supabase ──────────────────────────────
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+    const { data: profileRow } = await adminClient
+      .from("au_pair_profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
 
-    if (!profileRow.rows[0]) {
+    if (!profileRow) {
       return NextResponse.json(
         { error: "No tienes perfil Au Pair. Crea tu perfil primero." },
         { status: 400 }
       );
     }
 
-    const profile = profileRow.rows[0];
+    const profile = profileRow;
 
     // ── Verificar rate limit (mismo sistema que cv-sender) ──────────────
-    const adminClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
     const { data: userProfile } = await adminClient
       .from("profiles")
       .select("plan")
