@@ -510,12 +510,6 @@ export async function buscarOfertasReales(
     if (li.status === "fulfilled") addResults(li.value, "🇪🇸 España");
   }
 
-  // ── FASE 7: Fallback con empresas reales + emails ──────────────────
-  if (resultados.length < 5) {
-    const fb = generarOfertasFallback(puesto, ciudad, Math.min(10, limit - resultados.length));
-    addResults(fb);
-  }
-
   // ── Scoring final ──────────────────────────────────────────────────
   for (const o of resultados) {
     if (!o.match) o.match = 50;
@@ -541,76 +535,3 @@ export async function buscarOfertasReales(
   return final;
 }
 
-/**
- * Fallback: empresas reales españolas + emails de RRHH
- */
-function generarOfertasFallback(puesto: string, ciudad: string, cantidad: number): OfertaReal[] {
-  const empresasPorSector: Record<string, { empresas: string[]; salarioBase: number; emails: string[] }> = {
-    hosteleria: {
-      empresas: ["Meliá Hotels", "NH Hotels", "Paradores", "Grupo Vips", "Rodilla", "McDonald's España", "100 Montaditos", "Burger King España"],
-      salarioBase: 1300,
-      emails: ["rrhh@melia.com", "careers@nh-hotels.com", "empleo@paradores.es", "rrhh@grupovips.com", "", "", "", ""]
-    },
-    construccion: {
-      empresas: ["ACS Grupo", "Ferrovial", "Acciona", "Sacyr", "FCC", "OHL"],
-      salarioBase: 1500,
-      emails: ["empleo@grupoacs.com", "careers@ferrovial.com", "empleo@acciona.com", "", "", ""]
-    },
-    tecnologia: {
-      empresas: ["Indra", "Telefónica Tech", "Capgemini", "Accenture", "NTT Data", "Sopra Steria"],
-      salarioBase: 1800,
-      emails: ["empleo@indra.es", "talento@telefonica.com", "", "", "", ""]
-    },
-    comercio: {
-      empresas: ["Mercadona", "Inditex", "El Corte Inglés", "Carrefour", "Lidl", "Aldi", "DIA"],
-      salarioBase: 1300,
-      emails: ["", "empleo@inditex.com", "", "empleo@carrefour.es", "empleo@lidl.es", "empleo@aldi.es", ""]
-    },
-    logistica: {
-      empresas: ["SEUR", "MRW", "DHL España", "Amazon Logistics", "GLS Spain", "Correos"],
-      salarioBase: 1400,
-      emails: ["empleo@seur.com", "empleo@mrw.es", "", "", "", "empleo@correos.com"]
-    },
-    industria: {
-      empresas: ["Viscofan", "AN Group", "Florette", "Congelados de Navarra", "MTorres", "Samca"],
-      salarioBase: 1500,
-      emails: ["rrhh@viscofan.com", "", "", "", "", ""]
-    },
-    ett: {
-      empresas: ["Adecco", "Randstad", "ManpowerGroup", "Eurofirms", "Gi Group", "Synergie", "Page Personnel", "Hays"],
-      salarioBase: 1300,
-      emails: ["info@adecco.es", "info@randstad.es", "info@manpower.es", "info@eurofirms.es", "info@gigroup.es", "info@synergie.es", "", ""]
-    },
-    default: {
-      empresas: ["Adecco", "Randstad", "ManpowerGroup", "Eurofirms", "Gi Group", "Synergie"],
-      salarioBase: 1300,
-      emails: ["info@adecco.es", "info@randstad.es", "info@manpower.es", "info@eurofirms.es", "info@gigroup.es", "info@synergie.es"]
-    },
-  };
-
-  const p = puesto.toLowerCase();
-  let sector = "default";
-  if (/camarer|cociner|hotel|restaur|chef|barman|fregar/i.test(p)) sector = "hosteleria";
-  else if (/electr|fontaner|albañil|obrer|construc|peón|soldad/i.test(p)) sector = "construccion";
-  else if (/program|desarroll|web|software|devops|data|informátic/i.test(p)) sector = "tecnologia";
-  else if (/vendedor|cajero|depend|comerci|tienda|reponedor/i.test(p)) sector = "comercio";
-  else if (/conduc|repartid|almacén|logíst|carretill|mozo/i.test(p)) sector = "logistica";
-  else if (/operario|fábrica|producc|industri|montaj/i.test(p)) sector = "industria";
-  else if (/ett|temporal|agencia/i.test(p)) sector = "ett";
-
-  const { empresas, salarioBase, emails } = empresasPorSector[sector];
-  return Array.from({ length: Math.min(cantidad, empresas.length) }, (_, i) => ({
-    id: `fb-${Date.now()}-${i}`,
-    titulo: `${puesto.charAt(0).toUpperCase() + puesto.slice(1)}${["", " - Jornada completa", " - Media jornada", " - Urgente", " - Temporal"][i % 5]}`,
-    empresa: empresas[i],
-    ubicacion: ciudad,
-    salario: `${salarioBase + (4 - i) * 150}€ - ${salarioBase + 600 + (4 - i) * 200}€/mes`,
-    descripcion: `${empresas[i]} busca ${puesto} en ${ciudad}. Envía tu CV directamente.`,
-    fuente: "BuscayCurra",
-    url: `https://jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ciudad)}`,
-    fecha: new Date().toISOString(),
-    match: Math.max(65 - i * 7, 30),
-    emailEmpresa: emails[i] || undefined,
-    distancia: "📧 Envío directo",
-  }));
-}
