@@ -117,6 +117,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("[SemanticSearch]", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error al buscar ofertas' }, { status: 500 });
   }
 }

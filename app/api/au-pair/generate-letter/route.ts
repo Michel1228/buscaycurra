@@ -100,8 +100,9 @@ export async function POST(req: NextRequest) {
       ],
     });
   } catch (error) {
+    console.error('[au-pair/generate-letter] Error:', (error as Error).message);
     return NextResponse.json(
-      { error: `Error: ${(error as Error).message}` },
+      { error: 'Error al generar la carta' },
       { status: 500 }
     );
   }

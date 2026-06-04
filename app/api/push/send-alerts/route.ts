@@ -202,6 +202,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true, procesadas, enviadas });
   } catch (error) {
     console.error("[send-alerts] Error:", (error as Error).message);
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json({ error: 'Error en alertas' }, { status: 500 });
   }
 }

@@ -55,6 +55,6 @@ Sé directo pero motivador. Máximo 150 palabras.`;
     return NextResponse.json({ feedback });
   } catch (err: any) {
     console.error("[Entrevistas]", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error al generar feedback' }, { status: 500 });
   }
 }

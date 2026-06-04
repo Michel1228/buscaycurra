@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ saved: true });
   } catch (error) {
     console.error("[jobs/guardar] Error:", (error as Error).message);
-    return NextResponse.json({ error: "Error al guardar oferta: " + (error as Error).message }, { status: 500 });
+    return NextResponse.json({ error: 'Error al guardar ofertas' }, { status: 500 });
   }
 }
 
@@ -67,6 +67,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ guardados: result.rows || [] });
   } catch (error) {
     console.error("[jobs/guardar] Error GET:", (error as Error).message);
-    return NextResponse.json({ error: "Error al obtener guardados: " + (error as Error).message }, { status: 500 });
+    return NextResponse.json({ error: 'Error al obtener ofertas' }, { status: 500 });
   }
 }

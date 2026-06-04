@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error en perfil au pair' }, { status: 500 });
   }
 
   return NextResponse.json({ profile: data || null });
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (result.error) {
-    return NextResponse.json({ error: result.error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error en perfil au pair' }, { status: 500 });
   }
 
   return NextResponse.json({ profile: result.data, ok: true });

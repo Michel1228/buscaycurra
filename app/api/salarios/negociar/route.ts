@@ -123,6 +123,6 @@ Genera una respuesta EN ESPAÑOL con este formato exacto:
     });
   } catch (err: any) {
     console.error("[Negociar]", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error al calcular negociación' }, { status: 500 });
   }
 }

@@ -104,6 +104,6 @@ Responde con este JSON exacto:
     });
   } catch (err: any) {
     console.error("[SkillGap]", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error al analizar habilidades' }, { status: 500 });
   }
 }

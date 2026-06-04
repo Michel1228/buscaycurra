@@ -15,6 +15,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    console.error('[ping] Error:', (e as Error).message);
+    return NextResponse.json({ ok: false, error: 'Error de conexión' }, { status: 500 });
   }
 }

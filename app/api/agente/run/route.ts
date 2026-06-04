@@ -141,6 +141,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("[Agente]", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error del agente' }, { status: 500 });
   }
 }

@@ -380,7 +380,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[company/extract] Error:", (error as Error).message);
     return NextResponse.json(
-      { error: `Error: ${(error as Error).message}` },
+      { error: 'Error al extraer datos' },
       { status: 500 }
     );
   }

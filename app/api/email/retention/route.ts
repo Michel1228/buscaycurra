@@ -141,6 +141,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, enviados, total: perfiles.length });
   } catch (err) {
     console.error("[Retention] Error:", (err as Error).message);
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    return NextResponse.json({ error: 'Error en retención' }, { status: 500 });
   }
 }
