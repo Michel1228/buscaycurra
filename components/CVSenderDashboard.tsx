@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface PendingJob {
   id: string;
@@ -75,7 +76,11 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
   const loadData = useCallback(async (silencioso = false) => {
     try {
       if (!silencioso) { setLoading(true); setError(null); }
-      const res = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`);
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      const token = session?.access_token || "";
+      const res = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json() as {
         success?: boolean; error?: string;
         pendingJobs?: PendingJob[]; history?: HistoryRecord[];
