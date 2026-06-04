@@ -60,7 +60,7 @@ export default function GusiPage() {
         {/* Tagline */}
         <div className="rounded-xl p-3 text-center" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(245,158,11,0.05))", border: "1px solid rgba(34,197,94,0.12)" }}>
           <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>InfoJobs es 2005</p>
-          <p className="text-xs font-bold" style={{ color: "#22c55e" }}>BuscayCurra es 2025</p>
+          <p className="text-xs font-bold" style={{ color: "#22c55e" }}>BuscayCurra es 2026</p>
           <p className="text-[10px] mt-1.5" style={{ color: "#64748b" }}>
             IA que trabaja por ti, no un portal que te deja solo
           </p>

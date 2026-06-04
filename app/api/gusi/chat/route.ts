@@ -442,7 +442,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         salario: (j.salary as string) || "Ver en oferta",
         fuente: (j.sourceName as string) || "BuscayCurra",
         url: (j.sourceUrl as string) || "",
-        match: 65,
+        match: 0,
       }));
     }
     
@@ -533,6 +533,10 @@ function localReply(intent: string, cv?: CVParsed | null): string {
       return "✉️ **Carta de presentación no disponible en este momento.**\n\nMientras tanto, puedes estructurarla así:\n1. **Asunto**: Candidatura [Puesto] — [Tu Nombre]\n2. **Apertura**: por qué te interesa esa empresa en concreto\n3. **Cuerpo**: 2-3 logros que conecten con lo que buscan\n4. **Cierre**: disponibilidad para entrevista y despedida cordial\n\n¿Te ayudo a redactarla paso a paso? 🐛";
     case "info_empresa":
       return "🏢 **No puedo consultar información de esa empresa ahora mismo.**\n\nPuedes buscar en:\n• **LinkedIn** — página de empresa y empleados\n• **Glassdoor** — opiniones de empleados y rangos salariales\n• **Google Maps** — sede, tamaño, sector\n\n¿Quieres que busque ofertas activas de esa empresa en nuestra base de datos? 🔍";
+    case "buscar_au_pair":
+      return "👶 **Búsqueda Au Pair** — dime el país donde quieres ser au pair (ej: 'busca au pair en Alemania' o 'au pair en Reino Unido') y te busco ofertas con familias que necesitan cuidadores. También puedo ayudarte con tu carta 'Dear Family'. 🐛";
+    case "carta_au_pair":
+      return "💌 **Carta 'Dear Family'** — primero completa tu perfil Au Pair en la sección 🧒 del menú. Luego vuelve y dime 'crea mi carta au pair' para generarla personalizada con tus datos, experiencia con niños y fotos. 🐛";
     default:
       return "🐛 Puedo ayudarte a buscar trabajo en España y Europa, mejorar tu CV, preparar entrevistas o generar una carta de presentación. ¿Qué necesitas?";
   }
@@ -970,7 +974,7 @@ El candidato tiene mucha experiencia.
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({ model: "qwen/qwen3-32b", messages: msgsConNoThink, max_tokens: 500, temperature: 0.7 }),
+      body: JSON.stringify({ model: "qwen/qwen3-32b", messages: msgsConNoThink, max_tokens: 1024, temperature: 0.7 }),
       signal: AbortSignal.timeout(15000),
     });
 
@@ -1109,7 +1113,7 @@ async function searchAuPairJobs(country: string, limit = 5) {
         salario: (j.salary as string) || "Paga de bolsillo + alojamiento",
         fuente: (j.sourceName as string) || "BuscayCurra",
         url: (j.sourceUrl as string) || "",
-        match: 65,
+        match: 0,
       }));
     }
     return null;
