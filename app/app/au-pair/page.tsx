@@ -53,6 +53,13 @@ export default function AuPairProfilePage() {
   const iframeCartaRef = useRef<HTMLIFrameElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Enviar perfil a familia ──
+  const [familyEmail, setFamilyEmail] = useState("");
+  const [familyName, setFamilyName] = useState("");
+  const [enviandoPerfil, setEnviandoPerfil] = useState(false);
+  const [envioExito, setEnvioExito] = useState("");
+  const [envioError, setEnvioError] = useState("");
+
   // Modal referencia
   const [refNombre, setRefNombre] = useState("");
   const [refEmail, setRefEmail] = useState("");
@@ -98,7 +105,7 @@ export default function AuPairProfilePage() {
       if (saved) setPaisDestino(saved);
 
       fetch(`/api/user/stats?userId=${user.id}`).then(r => r.json()).then(d => {
-        setAuPairStats({ hoy: d.auPair.hoy, limiteHoy: d.auPair.limiteHoy, disponibles: d.auPair.disponibles, plan: d.plan });
+        setAuPairStats({ hoy: d.cv.hoy, limiteHoy: d.cv.limiteHoy, disponibles: d.cv.disponibles, plan: d.plan });
       }).catch(() => {});
 
       setLoading(false);
@@ -423,6 +430,37 @@ export default function AuPairProfilePage() {
       }
     } finally {
       setDescargandoCarta(false);
+    }
+  }
+
+  async function enviarPerfil() {
+    if (!familyEmail || !familyEmail.includes("@")) {
+      setEnvioError("Introduce un email válido");
+      return;
+    }
+    setEnviandoPerfil(true);
+    setEnvioError("");
+    setEnvioExito("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/au-pair/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || ""}`,
+        },
+        body: JSON.stringify({ familyEmail, familyName: familyName || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al enviar");
+      setEnvioExito(`✅ Perfil enviado a ${familyName || familyEmail}`);
+      setFamilyEmail("");
+      setFamilyName("");
+      setAuPairStats(prev => ({ ...prev, hoy: prev.hoy + 1, disponibles: Math.max(0, prev.disponibles - 1) }));
+    } catch (err) {
+      setEnvioError((err as Error).message);
+    } finally {
+      setEnviandoPerfil(false);
     }
   }
 
@@ -869,6 +907,67 @@ export default function AuPairProfilePage() {
             </div>
           </div>
         )}
+
+        {/* ── Enviar perfil a familia ── */}
+        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
+            <span>📤</span> Enviar perfil a una familia
+          </h3>
+          <p className="text-xs text-[#64748b] mb-4">
+            Introduce el email de la familia o agencia para enviarles tu perfil Au Pair completo.
+          </p>
+
+          {/* Contador */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-[11px] font-semibold" style={{ color: auPairStats.disponibles <= 0 ? "#fca5a5" : "#22c55e" }}>
+              {auPairStats.disponibles} envíos disponibles hoy
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
+              {auPairStats.plan}
+            </span>
+          </div>
+
+          {/* Éxito / Error */}
+          {envioExito && (
+            <div className="mb-3 rounded-lg p-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
+              <p className="text-xs font-medium" style={{ color: "#22c55e" }}>{envioExito}</p>
+            </div>
+          )}
+          {envioError && (
+            <div className="mb-3 rounded-lg p-3" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
+              <p className="text-xs font-medium" style={{ color: "#ef4444" }}>{envioError}</p>
+            </div>
+          )}
+
+          {/* Formulario */}
+          <div className="space-y-3">
+            <input
+              type="email"
+              value={familyEmail}
+              onChange={(e) => setFamilyEmail(e.target.value)}
+              placeholder="Email de la familia o agencia *"
+              className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+            />
+            <input
+              type="text"
+              value={familyName}
+              onChange={(e) => setFamilyName(e.target.value)}
+              placeholder="Nombre de la familia (opcional)"
+              className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+            />
+            <button
+              onClick={enviarPerfil}
+              disabled={enviandoPerfil || !familyEmail}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50"
+              style={{
+                background: enviandoPerfil ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                color: enviandoPerfil ? "#64748b" : "#fff",
+              }}
+            >
+              {enviandoPerfil ? "Enviando..." : "📤 Enviar perfil Au Pair"}
+            </button>
+          </div>
+        </div>
 
         {/* Guardar */}
         <div className="flex gap-3 justify-end">
