@@ -65,7 +65,8 @@ export default function EmpresasPage() {
   // ── Tab "Buscar" state ──
   const [nombre, setNombre] = useState("");
   const [buscando, setBuscando] = useState(false);
-  const [empresa, setEmpresa] = useState<EmpresaCompleta | null>(null);
+  const [empresas, setEmpresas] = useState<EmpresaCompleta[]>([]);
+  const [empresaSeleccionada, setEmpresaSeleccionada] = useState<EmpresaCompleta | null>(null);
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState("");
@@ -133,10 +134,7 @@ export default function EmpresasPage() {
   };
 
   const handleJobScheduled = () => {
-    // Refrescar stats después de programar un envío
-    setTimeout(() => {
-      init();
-    }, 1500);
+    setTimeout(() => { init(); }, 1500);
   };
 
   // ── Tab "Buscar empresa" handlers ──
@@ -149,7 +147,8 @@ export default function EmpresasPage() {
     }
 
     setError("");
-    setEmpresa(null);
+    setEmpresas([]);
+    setEmpresaSeleccionada(null);
     setExito("");
     setSendResult(null);
     setBuscando(true);
@@ -164,7 +163,19 @@ export default function EmpresasPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
 
-      setEmpresa(data.empresa);
+      // Manejar respuesta: data.empresas (array, nuevo) o data.empresa (objeto único, compat)
+      if (data.empresas?.length) {
+        setEmpresas(data.empresas);
+        if (data.empresas.length === 1) {
+          setEmpresaSeleccionada(data.empresas[0]);
+        }
+      } else if (data.empresa) {
+        // Compatibilidad con respuesta antigua
+        setEmpresas([data.empresa]);
+        setEmpresaSeleccionada(data.empresa);
+      } else {
+        setError(data.mensaje || `No se encontró "${term}". Prueba con el nombre completo.`);
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -172,8 +183,25 @@ export default function EmpresasPage() {
     }
   }
 
+  function seleccionarEmpresa(emp: EmpresaCompleta) {
+    setEmpresaSeleccionada(emp);
+    setExito("");
+    setSendResult(null);
+    // Scroll al detalle
+    setTimeout(() => {
+      document.getElementById("empresa-detalle")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }
+
+  function volverALista() {
+    setEmpresaSeleccionada(null);
+    setExito("");
+    setSendResult(null);
+  }
+
   async function handleEnviarCV(email?: string) {
-    if (!empresa || !userId) return;
+    const emp = empresaSeleccionada;
+    if (!emp || !userId) return;
     if (stats.cv.disponibles <= 0) {
       setError(`Límite diario (${stats.cv.limiteHoy} envíos). Mejora tu plan.`);
       return;
@@ -193,9 +221,9 @@ export default function EmpresasPage() {
           "Authorization": `Bearer ${session?.access_token || ""}`,
         },
         body: JSON.stringify({
-          companyName: empresa.nombre,
-          companyEmail: email || empresa.emailRrhh || "",
-          companyUrl: empresa.urlWeb,
+          companyName: emp.nombre,
+          companyEmail: email || emp.emailRrhh || "",
+          companyUrl: emp.urlWeb,
           jobTitle: "Candidatura espontánea",
           strategy: sendStrategy,
           useAIPersonalization: true,
@@ -206,7 +234,7 @@ export default function EmpresasPage() {
       if (!res.ok) throw new Error(data.error || "Error");
 
       setStats(prev => ({ ...prev, cv: { ...prev.cv, hoy: prev.cv.hoy + 1, disponibles: Math.max(0, prev.cv.disponibles - 1) } }));
-      setExito(`✅ CV programado para ${empresa.nombre}`);
+      setExito(`✅ CV programado para ${emp.nombre}`);
       if (data.estimatedTimeFormatted) {
         setSendResult({
           estimatedTime: data.estimatedTimeFormatted,
@@ -218,9 +246,9 @@ export default function EmpresasPage() {
 
       setHistorial((prev) => [
         {
-          nombre: empresa.nombre,
-          dominio: empresa.dominio || "",
-          emailRrhh: email || empresa.emailRrhh || "",
+          nombre: emp.nombre,
+          dominio: emp.dominio || "",
+          emailRrhh: email || emp.emailRrhh || "",
           enviada: true,
           fecha: new Date().toISOString(),
         },
@@ -249,12 +277,11 @@ export default function EmpresasPage() {
             Enviar CV a empresas
           </h1>
           <p className="text-xs mt-1 opacity-80" style={{ color: "#fff" }}>
-            Envía tu CV automáticamente con carta personalizada por IA. Tú eliges cuándo y cómo.
+            Busca empresas reales con Google. Envía tu CV automáticamente con carta personalizada por IA.
           </p>
 
           {/* Contador de envíos interactivo */}
           <div className="mt-3 flex items-center gap-3">
-            {/* Badge clickable: "X quedan" */}
             <button
               onClick={() => setShowStats(!showStats)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold transition hover:scale-105 cursor-pointer"
@@ -270,7 +297,6 @@ export default function EmpresasPage() {
               <span className="text-[10px]">{showStats ? "▲" : "▼"}</span>
             </button>
 
-            {/* Info adicional */}
             <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.6)" }}>
               <span>📤 </span>
               <span className="tabular-nums font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>{stats.cv.semana}</span>
@@ -280,7 +306,6 @@ export default function EmpresasPage() {
               <span> este mes</span>
             </div>
 
-            {/* Plan badge */}
             <span
               className="px-2 py-0.5 rounded text-[9px] font-bold uppercase"
               style={{
@@ -292,7 +317,6 @@ export default function EmpresasPage() {
             </span>
           </div>
 
-          {/* Panel expandible con detalle de envíos recientes */}
           {showStats && (
             <div
               className="mt-3 p-4 rounded-lg max-w-sm transition-all"
@@ -302,7 +326,6 @@ export default function EmpresasPage() {
                 <span className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
                   📋 Tus últimos envíos
                 </span>
-                {/* Barra de progreso compacta */}
                 <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
                   {stats.cv.hoy}/{stats.cv.limiteHoy} hoy
                 </span>
@@ -319,7 +342,7 @@ export default function EmpresasPage() {
 
               {(!stats.recientes || stats.recientes.length === 0) ? (
                 <p className="text-[11px]" style={{ color: "#64748b" }}>
-                  Aún no has enviado ningún CV esta semana. ¡Busca una empresa y prueba!
+                  Aún no has enviado ningún CV esta semana.
                 </p>
               ) : (
                 <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -405,7 +428,7 @@ export default function EmpresasPage() {
                 </button>
               </div>
               <p className="text-[10px] mt-2" style={{ color: "#475569" }}>
-                Encontramos email, web, redes sociales y datos de contacto de la empresa.
+                Buscamos en Google Places: web oficial, teléfono, dirección, Google Maps, rating y más.
               </p>
             </div>
 
@@ -454,59 +477,98 @@ export default function EmpresasPage() {
               </div>
             )}
 
-            {/* Resultado empresa */}
-            {empresa && !buscando && (
-              <div className="card-game p-5 space-y-4">
+            {/* ── LISTA DE RESULTADOS (múltiples empresas) ── */}
+            {empresas.length > 1 && !empresaSeleccionada && !buscando && (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold" style={{ color: "#94a3b8" }}>
+                  {empresas.length} resultados para "{nombre}" — selecciona la correcta:
+                </p>
+                {empresas.map((emp, i) => (
+                  <button
+                    key={i}
+                    onClick={() => seleccionarEmpresa(emp)}
+                    className="card-game p-4 w-full text-left transition hover:scale-[1.01] cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>{emp.nombre}</h3>
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          {emp.sector && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e" }}>
+                              {emp.sector}
+                            </span>
+                          )}
+                          {emp.googleAddress && (
+                            <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#64748b" }}>
+                              📍 {emp.googleAddress}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {emp.googleRating && (
+                        <div className="text-right shrink-0 ml-3">
+                          <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>★ {emp.googleRating}</span>
+                          {emp.googleReviews && (
+                            <p className="text-[10px]" style={{ color: "#64748b" }}>({emp.googleReviews})</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* ── DETALLE DE EMPRESA SELECCIONADA ── */}
+            {empresaSeleccionada && !buscando && (
+              <div id="empresa-detalle" className="card-game p-5 space-y-4">
+                {/* Botón volver si hay múltiples */}
+                {empresas.length > 1 && (
+                  <button onClick={volverALista}
+                    className="text-[11px] font-medium mb-1" style={{ color: "#60a5fa" }}>
+                    ← Volver a resultados
+                  </button>
+                )}
+
                 {/* Nombre y fuente */}
                 <div className="flex items-start justify-between">
                   <div>
-                    <h2 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>{empresa.nombre}</h2>
+                    <h2 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>{empresaSeleccionada.nombre}</h2>
                     <p className="text-[11px] mt-0.5" style={{ color: "#475569" }}>
-                      {empresa.sector && `${empresa.sector} · `}
-                      {empresa.fuente}
+                      {empresaSeleccionada.sector && `${empresaSeleccionada.sector} · `}
+                      Google Places
                     </p>
                   </div>
-                  {empresa.googleRating && (
+                  {empresaSeleccionada.googleRating && (
                     <div className="text-right shrink-0">
-                      <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>★ {empresa.googleRating}</span>
-                      <p className="text-[10px]" style={{ color: "#64748b" }}>{empresa.googleReviews} reseñas</p>
+                      <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>★ {empresaSeleccionada.googleRating}</span>
+                      <p className="text-[10px]" style={{ color: "#64748b" }}>{empresaSeleccionada.googleReviews} reseñas</p>
                     </div>
                   )}
                 </div>
 
                 {/* Info extraída */}
                 <div className="space-y-2 text-xs">
-                  {empresa.descripcion && (
-                    <p style={{ color: "#94a3b8" }} className="line-clamp-3">{empresa.descripcion}</p>
-                  )}
-
-                  {empresa.emailRrhh && (
+                  {empresaSeleccionada.emailRrhh && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📧 Email RRHH:</span>
-                      <span style={{ color: "#22c55e" }} className="font-medium">{empresa.emailRrhh}</span>
+                      <span style={{ color: "#64748b" }}>📧 Email:</span>
+                      <span style={{ color: "#22c55e" }} className="font-medium">{empresaSeleccionada.emailRrhh}</span>
                     </div>
                   )}
 
-                  {empresa.emailContacto && empresa.emailContacto !== empresa.emailRrhh && (
-                    <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📧 Contacto:</span>
-                      <span style={{ color: "#94a3b8" }}>{empresa.emailContacto}</span>
-                    </div>
-                  )}
-
-                  {empresa.emailsExtraidos.length > 1 && (
+                  {empresaSeleccionada.emailsExtraidos.length > 1 && (
                     <div>
                       <button
                         onClick={() => setMostrarTodosEmails(!mostrarTodosEmails)}
                         className="text-[10px] font-medium"
                         style={{ color: "#60a5fa" }}
                       >
-                        {mostrarTodosEmails ? "▲ Ocultar" : `▼ ${empresa.emailsExtraidos.length - 1} emails más encontrados`}
+                        {mostrarTodosEmails ? "▲ Ocultar" : `▼ ${empresaSeleccionada.emailsExtraidos.length - 1} emails alternativos`}
                       </button>
                       {mostrarTodosEmails && (
                         <div className="mt-1 space-y-0.5">
-                          {empresa.emailsExtraidos
-                            .filter(e => e !== empresa.emailRrhh && e !== empresa.emailContacto)
+                          {empresaSeleccionada.emailsExtraidos
+                            .filter(e => e !== empresaSeleccionada.emailRrhh)
                             .map((e, i) => (
                               <div key={i} className="flex items-center gap-2">
                                 <span className="text-[10px]" style={{ color: "#475569" }}>{e}</span>
@@ -515,7 +577,7 @@ export default function EmpresasPage() {
                                   className="text-[9px] px-1.5 py-0.5 rounded font-medium"
                                   style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}
                                 >
-                                  Enviar a este
+                                  Usar este
                                 </button>
                               </div>
                             ))}
@@ -524,67 +586,53 @@ export default function EmpresasPage() {
                     </div>
                   )}
 
-                  {empresa.urlWeb && (
+                  {empresaSeleccionada.urlWeb && (
                     <div className="flex items-center gap-2">
                       <span style={{ color: "#64748b" }}>🌐 Web:</span>
-                      <a href={empresa.urlWeb} target="_blank" rel="noopener noreferrer"
+                      <a href={empresaSeleccionada.urlWeb} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
-                        {empresa.urlWeb.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                        {empresaSeleccionada.urlWeb.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                       </a>
                     </div>
                   )}
 
-                  {empresa.paginaEmpleo && (
+                  {empresaSeleccionada.telefono && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#64748b" }}>📞 Tel:</span>
+                      <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.telefono}</span>
+                    </div>
+                  )}
+
+                  {empresaSeleccionada.googleAddress && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#64748b" }}>📍</span>
+                      <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.googleAddress}</span>
+                    </div>
+                  )}
+
+                  {empresaSeleccionada.googleMapsUrl && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#64748b" }}>🗺️</span>
+                      <a href={empresaSeleccionada.googleMapsUrl} target="_blank" rel="noopener noreferrer"
+                        className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
+                        Ver en Google Maps →
+                      </a>
+                    </div>
+                  )}
+
+                  {empresaSeleccionada.paginaEmpleo && (
                     <div className="flex items-center gap-2">
                       <span style={{ color: "#64748b" }}>💼 Empleo:</span>
-                      <a href={empresa.paginaEmpleo} target="_blank" rel="noopener noreferrer"
+                      <a href={empresaSeleccionada.paginaEmpleo} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         Ver ofertas →
                       </a>
                     </div>
                   )}
-
-                  {empresa.telefono && (
-                    <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📞 Tel:</span>
-                      <span style={{ color: "#94a3b8" }}>{empresa.telefono}</span>
-                    </div>
-                  )}
-
-                  {empresa.googleAddress && (
-                    <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📍</span>
-                      <span style={{ color: "#94a3b8" }}>{empresa.googleAddress}</span>
-                    </div>
-                  )}
                 </div>
 
-                {/* Redes sociales */}
-                {(empresa.linkedin || empresa.twitter || empresa.instagram) && (
-                  <div className="flex gap-3">
-                    {empresa.linkedin && (
-                      <a href={empresa.linkedin} target="_blank" rel="noopener noreferrer"
-                        className="text-[11px] font-medium hover:underline" style={{ color: "#60a5fa" }}>
-                        LinkedIn →
-                      </a>
-                    )}
-                    {empresa.twitter && (
-                      <a href={empresa.twitter} target="_blank" rel="noopener noreferrer"
-                        className="text-[11px] font-medium hover:underline" style={{ color: "#60a5fa" }}>
-                        Twitter →
-                      </a>
-                    )}
-                    {empresa.instagram && (
-                      <a href={empresa.instagram} target="_blank" rel="noopener noreferrer"
-                        className="text-[11px] font-medium hover:underline" style={{ color: "#60a5fa" }}>
-                        Instagram →
-                      </a>
-                    )}
-                  </div>
-                )}
-
                 {/* Acciones de envío */}
-                {empresa.emailRrhh && (
+                {empresaSeleccionada.emailRrhh ? (
                   <div className="pt-2 space-y-3" style={{ borderTop: "1px solid #2d3142" }}>
                     {/* Selector de estrategia */}
                     <div>
@@ -623,17 +671,15 @@ export default function EmpresasPage() {
                         color: enviando ? "#64748b" : "#fff",
                       }}
                     >
-                      {enviando ? "Enviando..." : `📤 Enviar CV a ${empresa.nombre.split(" ")[0]}`}
+                      {enviando ? "Enviando..." : `📤 Enviar CV a ${empresaSeleccionada.nombre.split(" ")[0]}`}
                     </button>
                   </div>
-                )}
-
-                {!empresa.emailRrhh && (
+                ) : (
                   <div className="pt-2" style={{ borderTop: "1px solid #2d3142" }}>
                     <div className="rounded-lg p-3" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)" }}>
                       <p className="text-xs font-medium mb-1" style={{ color: "#f59e0b" }}>⚠️ Email no encontrado</p>
                       <p className="text-[11px]" style={{ color: "#64748b" }}>
-                        No pudimos extraer el email de RRHH. Ve a la pestaña <button onClick={() => { setEnvioPrefillName(empresa.nombre); setEnvioTabKey(prev => prev + 1); setActiveTab("envio"); }} className="font-medium underline" style={{ color: "#22c55e" }}>"Envío personalizado"</button> para buscar por URL o introducirlo manualmente.
+                        Google no proporciona el email corporativo. Ve a la pestaña <button onClick={() => { setEnvioPrefillName(empresaSeleccionada.nombre); setEnvioTabKey(prev => prev + 1); setActiveTab("envio"); }} className="font-medium underline" style={{ color: "#22c55e" }}>"Envío personalizado"</button> para buscar por URL o introducirlo manualmente.
                       </p>
                     </div>
                   </div>
