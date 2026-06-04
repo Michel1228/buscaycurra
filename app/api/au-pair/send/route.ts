@@ -6,8 +6,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { sendCVEmail } from "@/lib/cv-sender/email-sender";
-import { generarCVHTML } from "@/lib/cv-generator/cv-template";
-import { normalizar } from "@/lib/cv-generator/normalizar";
 
 export const dynamic = "force-dynamic";
 
@@ -122,14 +120,17 @@ ${userName}`;
     });
 
     // ── Enviar email ───────────────────────────────────────────────────
-    const emailResult = await sendCVEmail(familyEmail, {
-      userName,
-      userEmail,
-      userPhone: profile.phone,
-      companyName: familyName || "Host Family",
+    const emailResult = await sendCVEmail(
+      familyEmail,
+      {
+        userName,
+        userEmail,
+        userPhone: profile.phone,
+      },
       coverLetter,
       subjectLine,
-    });
+      familyName || "Host Family"
+    );
 
     if (!emailResult.success) {
       // Actualizar estado a fallido
