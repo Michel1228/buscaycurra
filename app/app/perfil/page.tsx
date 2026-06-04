@@ -43,7 +43,7 @@ export default function PerfilPage() {
     setIosNativo(isNativeIOS());
   }, []);
   const [iosNativo, setIosNativo] = useState(false);
-  const [planActual, setPlanActual] = useState<"free" | "esencial" | "basico" | "pro" | "empresa">("free");
+  const [planActual, setPlanActual] = useState<"free" | "esencial" | "pro" | "empresa">("free");
   const [cargandoPlan, setCargandoPlan] = useState(false);
   const [errorPlan, setErrorPlan] = useState<string | null>(null);
   const [nuevaPassword, setNuevaPassword] = useState("");
@@ -79,8 +79,8 @@ export default function PerfilPage() {
         ciudad: p?.ciudad || "",
         sector: p?.sector || "",
       });
-      if (p?.plan && ["esencial", "basico", "pro", "empresa"].includes(p.plan)) {
-        setPlanActual(p.plan as "esencial" | "basico" | "pro" | "empresa");
+      if (p?.plan && ["esencial", "pro", "empresa"].includes(p.plan)) {
+        setPlanActual(p.plan as "esencial" | "pro" | "empresa");
       }
       setCargando(false);
     }
@@ -145,7 +145,7 @@ export default function PerfilPage() {
     router.push("/auth/login");
   }
 
-  async function irACheckout(plan: "esencial" | "basico" | "pro" | "empresa") {
+  async function irACheckout(plan: "esencial" | "pro" | "empresa") {
     setCargandoPlan(true);
     setErrorPlan(null);
     try {
@@ -333,7 +333,6 @@ export default function PerfilPage() {
           const PLANES_INFO = {
             free:     { emoji: "🥚", nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
             esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "30 candidaturas/mes · Buscador avanzado" },
-            basico:   { emoji: "🐣", nombre: "Básico",   color: "#22c55e", desc: "5 CVs/día · IA básica" },
             pro:      { emoji: "🐛", nombre: "Pro",      color: "#a855f7", desc: "10 CVs/día · IA avanzada · Estadísticas" },
             empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
           };
@@ -392,19 +391,6 @@ export default function PerfilPage() {
                     </div>
                   )}
                   {!iosNativo && (planActual === "free" || planActual === "esencial") && (
-                    <div className="rounded-xl p-4 flex items-center justify-between"
-                      style={{ background: "#161922", border: "1px solid #252836" }}>
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🐣 Plan Básico — 4,99€/mes</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>5 CVs/día · IA básica</p>
-                      </div>
-                      <button onClick={() => void irACheckout("basico")} disabled={cargandoPlan}
-                        className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
-                        {cargandoPlan ? "..." : "Contratar"}
-                      </button>
-                    </div>
-                  )}
-                  {!iosNativo && (planActual === "free" || planActual === "esencial" || planActual === "basico") && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
