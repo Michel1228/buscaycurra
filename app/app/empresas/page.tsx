@@ -1,8 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import AutoSendSetup from "@/components/AutoSendSetup";
+import CVSenderDashboard from "@/components/CVSenderDashboard";
+
+type TabId = "buscar" | "envio" | "historial";
+
+const TABS: { id: TabId; label: string; icon: string }[] = [
+  { id: "buscar", label: "Buscar empresa", icon: "🔍" },
+  { id: "envio", label: "Envío personalizado", icon: "📧" },
+  { id: "historial", label: "Historial", icon: "📋" },
+];
 
 interface EmpresaCompleta {
   nombre: string;
@@ -39,21 +49,35 @@ interface UserStats {
   recientes?: Array<{ empresa: string; email: string; puesto: string; fecha: string }>;
 }
 
+interface RateLimitInfo {
+  enviadosHoy: number;
+  limiteHoy: number;
+  cvsRestantesHoy: number;
+  userPlan?: string;
+}
+
 export default function EmpresasPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabId>("buscar");
+  const [envioPrefillName, setEnvioPrefillName] = useState("");
+  const [envioTabKey, setEnvioTabKey] = useState(0);
+
+  // ── Tab "Buscar" state ──
   const [nombre, setNombre] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [empresa, setEmpresa] = useState<EmpresaCompleta | null>(null);
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [exito, setExito] = useState("");
-  const [userId, setUserId] = useState("");
-  const [historial, setHistorial] = useState<EmpresaGuardada[]>([]);
   const [mostrarTodosEmails, setMostrarTodosEmails] = useState(false);
-  const [stats, setStats] = useState<UserStats>({ cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 2, disponibles: 2 }, plan: "free" });
-  const [showStats, setShowStats] = useState(false);
   const [sendStrategy, setSendStrategy] = useState<"ahora" | "optimo">("optimo");
   const [sendResult, setSendResult] = useState<{estimatedTime: string; positionInQueue: number; strategy: string; horaLocal: string} | null>(null);
+
+  // ── Shared state ──
+  const [userId, setUserId] = useState("");
+  const [historial, setHistorial] = useState<EmpresaGuardada[]>([]);
+  const [stats, setStats] = useState<UserStats>({ cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 2, disponibles: 2 }, plan: "free" });
+  const [showStats, setShowStats] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -97,6 +121,26 @@ export default function EmpresasPage() {
     } catch {}
   }
 
+  const handleRateLimitUpdate = (info: RateLimitInfo) => {
+    setStats(prev => ({
+      ...prev,
+      cv: {
+        ...prev.cv,
+        hoy: info.enviadosHoy,
+        disponibles: info.cvsRestantesHoy,
+      },
+    }));
+  };
+
+  const handleJobScheduled = () => {
+    // Refrescar stats después de programar un envío
+    setTimeout(() => {
+      init();
+    }, 1500);
+  };
+
+  // ── Tab "Buscar empresa" handlers ──
+
   async function handleBuscar() {
     const term = nombre.trim();
     if (!term || term.length < 2) {
@@ -107,6 +151,7 @@ export default function EmpresasPage() {
     setError("");
     setEmpresa(null);
     setExito("");
+    setSendResult(null);
     setBuscando(true);
 
     try {
@@ -194,7 +239,7 @@ export default function EmpresasPage() {
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
-      {/* Header */}
+      {/* ── Header compartido ── */}
       <div
         className="py-8 px-4"
         style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
@@ -204,11 +249,12 @@ export default function EmpresasPage() {
             Enviar CV a empresas
           </h1>
           <p className="text-xs mt-1 opacity-80" style={{ color: "#fff" }}>
-            Escribe el nombre de la empresa. Nosotros encontramos su web, email y datos de contacto.
+            Envía tu CV automáticamente con carta personalizada por IA. Tú eliges cuándo y cómo.
           </p>
+
           {/* Contador de envíos interactivo */}
           <div className="mt-3 flex items-center gap-3">
-            {/* Badge clickable: "5 quedan" */}
+            {/* Badge clickable: "X quedan" */}
             <button
               onClick={() => setShowStats(!showStats)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold transition hover:scale-105 cursor-pointer"
@@ -300,428 +346,327 @@ export default function EmpresasPage() {
                   )}
                 </div>
               )}
-              <button
-                onClick={() => setShowStats(false)}
-                className="mt-2 text-[10px] block w-full text-center"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-              >
-                Cerrar ▲
-              </button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-        {/* Buscador */}
-        <div className="card-game p-5">
-          <label className="text-xs font-semibold mb-2 block" style={{ color: "#f1f5f9" }}>
-            Nombre de la empresa
-          </label>
-          <p className="text-[10px] mb-3" style={{ color: "#64748b" }}>
-            Solo el nombre. Ej: "Mercadona", "Inditex", "BBVA". Nosotros encontramos el resto.
-          </p>
-          <div className="flex gap-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ej: Mercadona"
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm border outline-none transition"
-              style={{
-                background: "#0f1117",
-                border: "1px solid #2d3142",
-                color: "#f1f5f9",
-              }}
-            />
-            <button
-              onClick={handleBuscar}
-              disabled={buscando || nombre.trim().length < 2}
-              className="px-5 py-2.5 rounded-lg text-sm font-semibold transition"
-              style={{
-                background: buscando ? "#1e212b" : "linear-gradient(135deg, #22c55e, #16a34a)",
-                color: buscando ? "#64748b" : "#fff",
-                opacity: nombre.trim().length < 2 ? 0.5 : 1,
-              }}
-            >
-              {buscando ? "Buscando..." : "Buscar"}
-            </button>
-          </div>
-
-          {/* Mensajes */}
-          {error && (
-            <div
-              className="mt-3 rounded-lg px-4 py-3 text-xs"
-              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}
-            >
-              {error}
-            </div>
-          )}
-          {exito && (
-            <div
-              className="mt-3 rounded-lg px-4 py-3 text-xs"
-              style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}
-            >
-              {exito}
-            </div>
-          )}
+      {/* ── Tabs ── */}
+      <div className="sticky top-14 z-10" style={{ background: "#0f1117", borderBottom: "1px solid #2d3142" }}>
+        <div className="max-w-2xl mx-auto px-4">
+          <nav className="flex">
+            {TABS.map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className="flex items-center gap-2 px-4 py-3 text-xs font-medium transition"
+                style={{
+                  borderBottom: activeTab === tab.id ? "2px solid #22c55e" : "2px solid transparent",
+                  color: activeTab === tab.id ? "#22c55e" : "#64748b",
+                }}>
+                <span>{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
+      </div>
 
-        {/* Resultado */}
-        {empresa && (
-          <div className="card-game overflow-hidden">
-            {/* Cabecera */}
-            <div className="p-5" style={{ borderBottom: "1px solid #2d3142" }}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold" style={{ color: "#22c55e" }}>
-                      {empresa.nombre}
-                    </h3>
-                    {empresa.fuente === "google_places" && (
-                      <span
-                        className="text-[9px] px-1.5 py-0.5 rounded"
-                        style={{ background: "rgba(66,133,244,0.15)", color: "#4285f4" }}
-                        title="Datos verificados por Google Places"
-                      >
-                        ✓ Google
-                      </span>
+      {/* ── Tab content ── */}
+      <main className="max-w-2xl mx-auto px-4 py-6">
+
+        {/* ── TAB 1: Buscar empresa ── */}
+        {activeTab === "buscar" && (
+          <div className="space-y-4">
+            {/* Buscador */}
+            <div className="card-game p-5">
+              <label className="block text-xs font-semibold mb-2" style={{ color: "#94a3b8" }}>
+                Nombre de la empresa
+              </label>
+              <div className="flex gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={nombre}
+                  onChange={e => setNombre(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ej: Mercadona, Telefónica, Inditex..."
+                  className="flex-1 text-sm"
+                />
+                <button
+                  onClick={handleBuscar}
+                  disabled={buscando || nombre.trim().length < 2}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold transition"
+                  style={{
+                    background: buscando ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                    color: buscando ? "#64748b" : "#fff",
+                    opacity: nombre.trim().length < 2 ? 0.5 : 1,
+                  }}
+                >
+                  {buscando ? "Buscando..." : "Buscar"}
+                </button>
+              </div>
+              <p className="text-[10px] mt-2" style={{ color: "#475569" }}>
+                Encontramos email, web, redes sociales y datos de contacto de la empresa.
+              </p>
+            </div>
+
+            {/* Loading */}
+            {buscando && (
+              <div className="card-game p-8 flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
+              </div>
+            )}
+
+            {/* Error */}
+            {error && !buscando && (
+              <div className="rounded-lg p-3" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                <p className="text-xs font-medium" style={{ color: "#ef4444" }}>{error}</p>
+              </div>
+            )}
+
+            {/* Éxito */}
+            {exito && (
+              <div className="rounded-lg p-4" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
+                <p className="text-sm font-semibold mb-2" style={{ color: "#22c55e" }}>{exito}</p>
+                {sendResult && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
+                      <span>⏰</span>
+                      <span>Envío estimado: <strong style={{ color: "#f1f5f9" }}>{sendResult.estimatedTime}</strong></span>
+                    </div>
+                    {sendResult.horaLocal && (
+                      <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
+                        <span>🕐</span>
+                        <span>Hora local empresa: <strong style={{ color: "#f1f5f9" }}>{sendResult.horaLocal}</strong></span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
+                      <span>📊</span>
+                      <span>Estrategia: <strong style={{ color: sendResult.strategy === "optimo" ? "#22c55e" : "#f59e0b" }}>{sendResult.strategy === "optimo" ? "Ventana óptima" : "Envío inmediato"}</strong></span>
+                    </div>
+                    {sendResult.positionInQueue > 0 && (
+                      <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
+                        <span>📬</span>
+                        <span>Posición en cola: <strong style={{ color: "#f1f5f9" }}>#{sendResult.positionInQueue}</strong></span>
+                      </div>
                     )}
                   </div>
-                  {empresa.sector && (
-                    <span
-                      className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e" }}
-                    >
-                      {empresa.sector}
-                    </span>
-                  )}
-                  {/* Google rating */}
+                )}
+              </div>
+            )}
+
+            {/* Resultado empresa */}
+            {empresa && !buscando && (
+              <div className="card-game p-5 space-y-4">
+                {/* Nombre y fuente */}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>{empresa.nombre}</h2>
+                    <p className="text-[11px] mt-0.5" style={{ color: "#475569" }}>
+                      {empresa.sector && `${empresa.sector} · `}
+                      {empresa.fuente}
+                    </p>
+                  </div>
                   {empresa.googleRating && (
-                    <div className="flex items-center gap-1 mt-1.5">
-                      <span className="text-xs" style={{ color: "#f59e0b" }}>
-                        {"★".repeat(Math.round(empresa.googleRating))}
-                        {"☆".repeat(5 - Math.round(empresa.googleRating))}
-                      </span>
-                      <span className="text-[10px]" style={{ color: "#94a3b8" }}>
-                        {empresa.googleRating.toFixed(1)} ({empresa.googleReviews || 0} reseñas)
-                      </span>
+                    <div className="text-right shrink-0">
+                      <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>★ {empresa.googleRating}</span>
+                      <p className="text-[10px]" style={{ color: "#64748b" }}>{empresa.googleReviews} reseñas</p>
                     </div>
                   )}
                 </div>
-                <div className="text-right">
-                  <a
-                    href={empresa.urlWeb || "#"}
-                    target="_blank"
-                    rel="noopener"
-                    className="text-[10px] underline block"
-                    style={{ color: "#64748b" }}
-                  >
-                    {empresa.dominio}
-                  </a>
+
+                {/* Info extraída */}
+                <div className="space-y-2 text-xs">
                   {empresa.descripcion && (
-                    <p className="text-[9px] mt-1 max-w-[200px]" style={{ color: "#475569" }}>
-                      {empresa.descripcion.slice(0, 120)}...
-                    </p>
+                    <p style={{ color: "#94a3b8" }} className="line-clamp-3">{empresa.descripcion}</p>
                   )}
-                </div>
-              </div>
 
-              {/* ESTRATEGIA DE ENVÍO */}
-              <div className="mt-3 space-y-2">
-                <p className="text-[10px] font-medium" style={{ color: "#64748b" }}>Estrategia de envío</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSendStrategy("ahora")}
-                    className="flex-1 py-2 px-3 rounded-lg text-[11px] font-medium transition border"
-                    style={{
-                      background: sendStrategy === "ahora" ? "rgba(34,197,94,0.1)" : "#1e212b",
-                      borderColor: sendStrategy === "ahora" ? "rgba(34,197,94,0.4)" : "#2d3142",
-                      color: sendStrategy === "ahora" ? "#22c55e" : "#94a3b8",
-                    }}
-                  >
-                    🚀 Ahora
-                  </button>
-                  <button
-                    onClick={() => setSendStrategy("optimo")}
-                    className="flex-1 py-2 px-3 rounded-lg text-[11px] font-medium transition border"
-                    style={{
-                      background: sendStrategy === "optimo" ? "rgba(34,197,94,0.1)" : "#1e212b",
-                      borderColor: sendStrategy === "optimo" ? "rgba(34,197,94,0.4)" : "#2d3142",
-                      color: sendStrategy === "optimo" ? "#22c55e" : "#94a3b8",
-                    }}
-                  >
-                    🎯 Ventana óptima
-                  </button>
-                </div>
-                {sendStrategy === "optimo" && (
-                  <p className="text-[9px]" style={{ color: "#475569" }}>
-                    📊 BuscayCurra analiza la zona horaria de la empresa y envía tu CV en el momento en que RRHH es más probable que lo lea.
-                  </p>
-                )}
-                {sendStrategy === "ahora" && (
-                  <p className="text-[9px]" style={{ color: "#475569" }}>
-                    ⚡ Tu CV se enviará en 1-2 minutos. Ideal si necesitas aplicar rápido.
-                  </p>
-                )}
-              </div>
-
-              {/* RESULTADO DEL ENVÍO */}
-              {sendResult && (
-                <div className="mt-2 p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                  <p className="text-[10px] font-medium" style={{ color: "#22c55e" }}>✅ CV programado</p>
-                  <p className="text-[9px] mt-1" style={{ color: "#94a3b8" }}>
-                    📅 {sendResult.estimatedTime}
-                  </p>
-                  {sendResult.strategy === "optimo" && sendResult.horaLocal && (
-                    <p className="text-[9px]" style={{ color: "#94a3b8" }}>
-                      🕐 Hora local empresa: {sendResult.horaLocal}
-                    </p>
+                  {empresa.emailRrhh && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#64748b" }}>📧 Email RRHH:</span>
+                      <span style={{ color: "#22c55e" }} className="font-medium">{empresa.emailRrhh}</span>
+                    </div>
                   )}
-                  <p className="text-[9px]" style={{ color: "#64748b" }}>
-                    📬 Posición en cola: #{sendResult.positionInQueue}
-                  </p>
-                </div>
-              )}
 
-              {/* BOTÓN ENVIAR CV */}
-              <button
-                onClick={() => handleEnviarCV()}
-                disabled={enviando || stats.cv.disponibles <= 0}
-                className="w-full mt-4 py-3 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2"
-                style={{
-                  background: enviando || stats.cv.disponibles <= 0 ? "#1e212b" : "linear-gradient(135deg, #22c55e, #16a34a)",
-                  color: enviando || stats.cv.disponibles <= 0 ? "#64748b" : "#fff",
-                  boxShadow: enviando || stats.cv.disponibles <= 0 ? "none" : "0 4px 20px rgba(34,197,94,0.3)",
-                }}
-              >
-                {enviando ? (
-                  <>⏳ Enviando CV...</>
-                ) : stats.cv.disponibles <= 0 ? (
-                  `🚫 Límite diario (${stats.cv.limiteHoy}/${stats.cv.limiteHoy})`
-                ) : (
-                  <>📤 Enviar mi CV a {empresa.nombre}</>
-                )}
-              </button>
-            </div>
-
-            {/* Datos de contacto */}
-            <div className="p-5 space-y-3">
-              {/* Dirección Google */}
-              {empresa.googleAddress && (
-                <div className="flex items-center gap-2">
-                  <span className="text-base">📍</span>
-                  <div className="flex-1">
-                    <span className="text-[9px] block" style={{ color: "#475569" }}>Dirección</span>
-                    <span className="text-sm" style={{ color: "#94a3b8" }}>{empresa.googleAddress}</span>
-                  </div>
-                  {empresa.googleMapsUrl && (
-                    <a
-                      href={empresa.googleMapsUrl}
-                      target="_blank"
-                      rel="noopener"
-                      className="text-[10px] px-2 py-1 rounded"
-                      style={{ background: "rgba(66,133,244,0.15)", color: "#4285f4" }}
-                    >
-                      Maps ↗
-                    </a>
+                  {empresa.emailContacto && empresa.emailContacto !== empresa.emailRrhh && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#64748b" }}>📧 Contacto:</span>
+                      <span style={{ color: "#94a3b8" }}>{empresa.emailContacto}</span>
+                    </div>
                   )}
-                </div>
-              )}
 
-              {/* Email principal */}
-              {empresa.emailRrhh && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">📧</span>
+                  {empresa.emailsExtraidos.length > 1 && (
                     <div>
-                      <span className="text-[9px] block" style={{ color: "#475569" }}>Email RRHH</span>
-                      <span className="text-sm font-mono" style={{ color: "#22c55e" }}>
-                        {empresa.emailRrhh}
-                      </span>
+                      <button
+                        onClick={() => setMostrarTodosEmails(!mostrarTodosEmails)}
+                        className="text-[10px] font-medium"
+                        style={{ color: "#60a5fa" }}
+                      >
+                        {mostrarTodosEmails ? "▲ Ocultar" : `▼ ${empresa.emailsExtraidos.length - 1} emails más encontrados`}
+                      </button>
+                      {mostrarTodosEmails && (
+                        <div className="mt-1 space-y-0.5">
+                          {empresa.emailsExtraidos
+                            .filter(e => e !== empresa.emailRrhh && e !== empresa.emailContacto)
+                            .map((e, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="text-[10px]" style={{ color: "#475569" }}>{e}</span>
+                                <button
+                                  onClick={() => handleEnviarCV(e)}
+                                  className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+                                  style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}
+                                >
+                                  Enviar a este
+                                </button>
+                              </div>
+                            ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(empresa.emailRrhh!);
-                      setExito("📋 Copiado");
-                      setTimeout(() => setExito(""), 2000);
-                    }}
-                    className="text-[10px] px-2 py-1 rounded"
-                    style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}
-                  >
-                    Copiar
-                  </button>
-                </div>
-              )}
+                  )}
 
-              {/* Todos los emails */}
-              {empresa.emailsExtraidos.length > 1 && (
-                <div>
-                  <button
-                    onClick={() => setMostrarTodosEmails(!mostrarTodosEmails)}
-                    className="text-[10px] flex items-center gap-1"
-                    style={{ color: "#64748b" }}
-                  >
-                    {mostrarTodosEmails ? "▲ Ocultar" : `▼ ${empresa.emailsExtraidos.length - 1} emails más`}
-                  </button>
-                  {mostrarTodosEmails && (
-                    <div className="mt-2 ml-7 space-y-1">
-                      {empresa.emailsExtraidos
-                        .filter((e) => e !== empresa.emailRrhh)
-                        .map((e) => (
-                          <div key={e} className="flex items-center justify-between text-[11px]">
-                            <span className="font-mono" style={{ color: "#94a3b8" }}>{e}</span>
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(e);
-                                setExito("📋 Copiado");
-                                setTimeout(() => setExito(""), 2000);
-                              }}
-                              className="text-[9px]"
-                              style={{ color: "#22c55e" }}
-                            >
-                              Copiar
-                            </button>
-                          </div>
-                        ))}
+                  {empresa.urlWeb && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#64748b" }}>🌐 Web:</span>
+                      <a href={empresa.urlWeb} target="_blank" rel="noopener noreferrer"
+                        className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
+                        {empresa.urlWeb.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                      </a>
+                    </div>
+                  )}
+
+                  {empresa.paginaEmpleo && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#64748b" }}>💼 Empleo:</span>
+                      <a href={empresa.paginaEmpleo} target="_blank" rel="noopener noreferrer"
+                        className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
+                        Ver ofertas →
+                      </a>
+                    </div>
+                  )}
+
+                  {empresa.telefono && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#64748b" }}>📞 Tel:</span>
+                      <span style={{ color: "#94a3b8" }}>{empresa.telefono}</span>
+                    </div>
+                  )}
+
+                  {empresa.googleAddress && (
+                    <div className="flex items-center gap-2">
+                      <span style={{ color: "#64748b" }}>📍</span>
+                      <span style={{ color: "#94a3b8" }}>{empresa.googleAddress}</span>
                     </div>
                   )}
                 </div>
-              )}
 
-              {/* Teléfono */}
-              {empresa.telefono && (
-                <div className="flex items-center gap-2">
-                  <span className="text-base">📞</span>
-                  <div>
-                    <span className="text-[9px] block" style={{ color: "#475569" }}>Teléfono</span>
-                    <span className="text-sm" style={{ color: "#94a3b8" }}>{empresa.telefono}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Página de empleo */}
-              {empresa.paginaEmpleo && (
-                <div className="flex items-center gap-2">
-                  <span className="text-base">💼</span>
-                  <div>
-                    <span className="text-[9px] block" style={{ color: "#475569" }}>Página de empleo</span>
-                    <a
-                      href={empresa.paginaEmpleo}
-                      target="_blank"
-                      rel="noopener"
-                      className="text-sm underline"
-                      style={{ color: "#22c55e" }}
-                    >
-                      Ver ofertas de {empresa.nombre}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {/* Redes sociales */}
-              {(empresa.linkedin || empresa.twitter || empresa.instagram) && (
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-base">🌐</span>
-                  <div className="flex gap-2">
+                {/* Redes sociales */}
+                {(empresa.linkedin || empresa.twitter || empresa.instagram) && (
+                  <div className="flex gap-3">
                     {empresa.linkedin && (
-                      <a href={empresa.linkedin} target="_blank" rel="noopener"
-                        className="text-[10px] px-2 py-0.5 rounded"
-                        style={{ background: "rgba(59,130,246,0.15)", color: "#60a5fa" }}>
-                        LinkedIn
+                      <a href={empresa.linkedin} target="_blank" rel="noopener noreferrer"
+                        className="text-[11px] font-medium hover:underline" style={{ color: "#60a5fa" }}>
+                        LinkedIn →
                       </a>
                     )}
                     {empresa.twitter && (
-                      <a href={empresa.twitter} target="_blank" rel="noopener"
-                        className="text-[10px] px-2 py-0.5 rounded"
-                        style={{ background: "rgba(59,130,246,0.15)", color: "#60a5fa" }}>
-                        Twitter
+                      <a href={empresa.twitter} target="_blank" rel="noopener noreferrer"
+                        className="text-[11px] font-medium hover:underline" style={{ color: "#60a5fa" }}>
+                        Twitter →
                       </a>
                     )}
                     {empresa.instagram && (
-                      <a href={empresa.instagram} target="_blank" rel="noopener"
-                        className="text-[10px] px-2 py-0.5 rounded"
-                        style={{ background: "rgba(236,72,153,0.15)", color: "#f472b6" }}>
-                        Instagram
+                      <a href={empresa.instagram} target="_blank" rel="noopener noreferrer"
+                        className="text-[11px] font-medium hover:underline" style={{ color: "#60a5fa" }}>
+                        Instagram →
                       </a>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
+                )}
 
-            {/* Botón enviar */}
-            <div className="px-5 pb-5">
-              <button
-                onClick={() => handleEnviarCV()}
-                disabled={enviando || stats.cv.disponibles <= 0}
-                className="w-full py-3 rounded-xl text-sm font-bold transition"
-                style={{
-                  background: enviando || stats.cv.disponibles <= 0 ? "#1e212b" : "linear-gradient(135deg, #22c55e, #16a34a)",
-                  color: enviando || stats.cv.disponibles <= 0 ? "#64748b" : "#fff",
-                }}
-              >
-                {enviando ? "Enviando..." :
-                  stats.cv.disponibles <= 0 ? `Límite diario (${stats.cv.limiteHoy}/${stats.cv.limiteHoy})` :
-                  `📤 Enviar mi CV a ${empresa.nombre}`}
-              </button>
-            </div>
-          </div>
-        )}
+                {/* Acciones de envío */}
+                {empresa.emailRrhh && (
+                  <div className="pt-2 space-y-3" style={{ borderTop: "1px solid #2d3142" }}>
+                    {/* Selector de estrategia */}
+                    <div>
+                      <label className="block text-xs font-medium mb-2" style={{ color: "#94a3b8" }}>
+                        Estrategia de envío
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {([
+                          { id: "optimo" as const, label: "🎯 Horario óptimo", sub: "El CV llega cuando lo van a leer" },
+                          { id: "ahora" as const, label: "⚡ Enviar ya", sub: "Inmediato, sin esperas" },
+                        ]).map(s => (
+                          <button key={s.id} type="button" onClick={() => setSendStrategy(s.id)}
+                            className="py-2.5 px-3 rounded-lg text-left transition"
+                            style={{
+                              background: sendStrategy === s.id ? "rgba(34,197,94,0.1)" : "#161922",
+                              border: sendStrategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+                            }}>
+                            <div className="text-[11px] font-semibold" style={{ color: sendStrategy === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
+                            <div className="text-[9px] mt-0.5" style={{ color: "#475569" }}>{s.sub}</div>
+                          </button>
+                        ))}
+                      </div>
+                      {sendStrategy === "optimo" && (
+                        <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>
+                          🎯 Analizamos la zona horaria y enviamos en su ventana de máxima apertura (9-10:30am hora local).
+                        </p>
+                      )}
+                    </div>
 
-        {/* Historial */}
-        {historial.length > 0 && (
-          <div className="card-game p-5">
-            <h3 className="text-xs font-semibold mb-3" style={{ color: "#f1f5f9" }}>
-              📋 Empresas contactadas
-            </h3>
-            <div className="space-y-1.5">
-              {historial.map((h, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-1.5"
-                  style={{ borderBottom: "1px solid rgba(45,49,66,0.3)" }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px]" style={{ color: "#22c55e" }}>✓</span>
-                    <span className="text-[11px] font-medium" style={{ color: "#f1f5f9" }}>
-                      {h.nombre}
-                    </span>
+                    <button
+                      onClick={() => handleEnviarCV()}
+                      disabled={enviando}
+                      className="w-full py-3 rounded-lg font-bold text-sm transition"
+                      style={{
+                        background: enviando ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                        color: enviando ? "#64748b" : "#fff",
+                      }}
+                    >
+                      {enviando ? "Enviando..." : `📤 Enviar CV a ${empresa.nombre.split(" ")[0]}`}
+                    </button>
                   </div>
-                  <span className="text-[9px]" style={{ color: "#475569" }}>
-                    {new Date(h.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
-                  </span>
-                </div>
-              ))}
-            </div>
+                )}
+
+                {!empresa.emailRrhh && (
+                  <div className="pt-2" style={{ borderTop: "1px solid #2d3142" }}>
+                    <div className="rounded-lg p-3" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)" }}>
+                      <p className="text-xs font-medium mb-1" style={{ color: "#f59e0b" }}>⚠️ Email no encontrado</p>
+                      <p className="text-[11px]" style={{ color: "#64748b" }}>
+                        No pudimos extraer el email de RRHH. Ve a la pestaña <button onClick={() => { setEnvioPrefillName(empresa.nombre); setEnvioTabKey(prev => prev + 1); setActiveTab("envio"); }} className="font-medium underline" style={{ color: "#22c55e" }}>"Envío personalizado"</button> para buscar por URL o introducirlo manualmente.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Cómo funciona */}
-        <div
-          className="rounded-xl p-4"
-          style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.1)" }}
-        >
-          <h4 className="text-[11px] font-semibold mb-2" style={{ color: "#22c55e" }}>
-            💡 Así de simple
-          </h4>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            {[
-              { icon: "✏️", text: "Escribe el nombre de la empresa" },
-              { icon: "🔍", text: "Encontramos web, email y datos" },
-              { icon: "📤", text: "Envías tu CV en un clic" },
-            ].map((s) => (
-              <div key={s.icon}>
-                <span className="text-xl block mb-1">{s.icon}</span>
-                <span className="text-[9px]" style={{ color: "#64748b" }}>{s.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+        {/* ── TAB 2: Envío personalizado ── */}
+        {activeTab === "envio" && (
+          <Suspense fallback={
+            <div className="card-game p-8 flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
+            </div>
+          }>
+            <AutoSendSetup
+              key={envioTabKey}
+              userId={userId}
+              initialCompanyName={envioPrefillName}
+              onJobScheduled={handleJobScheduled}
+              onRateLimitUpdate={handleRateLimitUpdate}
+              onViewHistory={() => setActiveTab("historial")}
+            />
+          </Suspense>
+        )}
+
+        {/* ── TAB 3: Historial ── */}
+        {activeTab === "historial" && (
+          <CVSenderDashboard userId={userId} userPlan={stats.plan as "free" | "basico" | "pro" | "empresa"} />
+        )}
+
+      </main>
     </div>
   );
 }
