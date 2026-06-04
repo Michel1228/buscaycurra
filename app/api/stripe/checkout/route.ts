@@ -59,7 +59,7 @@ const PLANES_ORDEN: UserPlan[] = ["free", "esencial", "pro", "empresa"];
 
     const priceId =
       plan === "esencial" ? PLANES.ESENCIAL :
-      plan === "basico"   ? PLANES.BASICO   :
+
       plan === "pro"      ? PLANES.PRO       :
       PLANES.EMPRESA;
 

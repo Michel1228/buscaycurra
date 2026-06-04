@@ -19,7 +19,6 @@ function PagoExitosoContenido() {
         if (perfil?.plan === "empresa") setPlanActivo("Empresa");
         else if (perfil?.plan === "pro") setPlanActivo("Pro");
         else if (perfil?.plan === "esencial") setPlanActivo("Esencial");
-        else if (perfil?.plan === "basico") setPlanActivo("Básico");
         else setPlanActivo("Pro");
       } catch { /* default Pro */ }
     };

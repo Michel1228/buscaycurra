@@ -22,7 +22,6 @@ interface Stats {
 const PLAN_LABELS: Record<string, { label: string; color: string; precio: number }> = {
   free:    { label: "Free",    color: "#64748b", precio: 0 },
   esencial:{ label: "Esencial",color: "#60a5fa", precio: 2.99 },
-  basico:  { label: "Básico",  color: "#a78bfa", precio: 4.99 },
   pro:     { label: "Pro",     color: "#22c55e", precio: 9.99 },
   empresa: { label: "Empresa", color: "#f59e0b", precio: 49.99 },
 };
