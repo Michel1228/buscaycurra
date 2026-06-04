@@ -76,29 +76,33 @@ export default function AuPairProfilePage() {
       }
       setUserId(user.id);
 
-      const res = await fetch(`/api/au-pair/profile?userId=${user.id}`);
-      const json = await res.json();
-      if (json.profile) {
-        const p = json.profile as AuPairProfile;
-        setNombre(p.nombre || "");
-        setLetterText(p.letter_text || "");
-        setAge(p.age?.toString() || "");
-        setNationality(p.nationality || "ES");
-        setCiudad(p.ciudad || "");
-        setLanguages(p.languages || ["Español"]);
-        setChildcareExperience(p.childcare_experience || "");
-        setHasDrivingLicense(p.has_driving_license || false);
-        setAvailableFrom(p.available_from || "");
-        setAvailableTo(p.available_to || "");
-        setDietaryInfo(p.dietary_info || "");
-        setHobbies(p.hobbies || "");
-        setNivelEducativo(p.nivel_educativo || "");
-        setDuracionPreferida(p.duracion_preferida || "");
-        setFumador(p.fumador || false);
-        setPrimerosAuxilios(p.primeros_auxilios || false);
-        setSabeNadar(p.sabe_nadar || false);
-        setPhotos(Array.isArray(p.photos) ? p.photos : []);
-        setReferences(Array.isArray(p.references_json) ? p.references_json : []);
+      try {
+        const res = await fetch(`/api/au-pair/profile?userId=${user.id}`);
+        const json = await res.json();
+        if (json.profile) {
+          const p = json.profile as AuPairProfile;
+          setNombre(p.nombre || "");
+          setLetterText(p.letter_text || "");
+          setAge(p.age?.toString() || "");
+          setNationality(p.nationality || "ES");
+          setCiudad(p.ciudad || "");
+          setLanguages(p.languages || ["Español"]);
+          setChildcareExperience(p.childcare_experience || "");
+          setHasDrivingLicense(p.has_driving_license || false);
+          setAvailableFrom(p.available_from || "");
+          setAvailableTo(p.available_to || "");
+          setDietaryInfo(p.dietary_info || "");
+          setHobbies(p.hobbies || "");
+          setNivelEducativo(p.nivel_educativo || "");
+          setDuracionPreferida(p.duracion_preferida || "");
+          setFumador(p.fumador || false);
+          setPrimerosAuxilios(p.primeros_auxilios || false);
+          setSabeNadar(p.sabe_nadar || false);
+          setPhotos(Array.isArray(p.photos) ? p.photos : []);
+          setReferences(Array.isArray(p.references_json) ? p.references_json : []);
+        }
+      } catch (e) {
+        console.warn("[AU Pair] Error cargando perfil:", e);
       }
 
       const saved = localStorage.getItem("bc_pais");
