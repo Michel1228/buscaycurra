@@ -47,11 +47,13 @@ export async function POST(request: NextRequest) {
       jobTitle?: string;
       priority?: "normal" | "prioritario";
       useAIPersonalization?: boolean;
+      strategy?: "ahora" | "optimo";
+      scheduledFor?: string;
     };
 
     // userId siempre del token — nunca del body
     const userId = user.id;
-    const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization } = body;
+    const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization, strategy, scheduledFor } = body;
 
     if (!companyEmail) {
       return NextResponse.json(
@@ -125,6 +127,8 @@ export async function POST(request: NextRequest) {
       {
         priority: priority ?? "normal",
         useAIPersonalization: useAIPersonalization ?? true,
+        strategy: strategy ?? "optimo",
+        scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined,
       }
     );
 
@@ -153,9 +157,12 @@ export async function POST(request: NextRequest) {
         rateLimitInfo: {
           enviadosHoy: rateLimitCheck.enviadosHoy,
           limiteHoy: rateLimitCheck.limiteHoy,
-          cvsRestantesHoy: rateLimitCheck.cvsRestantesHoy - 1, // Restamos el que acabamos de añadir
+          cvsRestantesHoy: rateLimitCheck.cvsRestantesHoy - 1,
           userPlan,
         },
+        strategy: resultado.strategy,
+        companyIntel: resultado.companyIntel || null,
+        horaLocalEmpresa: resultado.horaLocalEmpresa || null,
       },
       { status: 201 } // 201 = Created
     );
