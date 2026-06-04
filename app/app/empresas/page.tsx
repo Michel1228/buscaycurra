@@ -52,6 +52,8 @@ export default function EmpresasPage() {
   const [mostrarTodosEmails, setMostrarTodosEmails] = useState(false);
   const [stats, setStats] = useState<UserStats>({ cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 2, disponibles: 2 }, plan: "free" });
   const [showStats, setShowStats] = useState(false);
+  const [sendStrategy, setSendStrategy] = useState<"ahora" | "optimo">("optimo");
+  const [sendResult, setSendResult] = useState<{estimatedTime: string; positionInQueue: number; strategy: string; horaLocal: string} | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -135,16 +137,23 @@ export default function EmpresasPage() {
     setEnviando(true);
     setError("");
     setExito("");
+    setSendResult(null);
 
     try {
-      const res = await fetch("/api/cv-sender/registrar", {
+      const session = (await (await import("@/lib/supabase-browser")).getSupabaseBrowser().auth.getSession()).data.session;
+      const res = await fetch("/api/cv-sender/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token || ""}`,
+        },
         body: JSON.stringify({
-          userId,
           companyName: empresa.nombre,
+          companyEmail: email || empresa.emailRrhh || "",
           companyUrl: empresa.urlWeb,
           jobTitle: "Candidatura espontánea",
+          strategy: sendStrategy,
+          useAIPersonalization: true,
         }),
       });
 
@@ -152,7 +161,15 @@ export default function EmpresasPage() {
       if (!res.ok) throw new Error(data.error || "Error");
 
       setStats(prev => ({ ...prev, cv: { ...prev.cv, hoy: prev.cv.hoy + 1, disponibles: Math.max(0, prev.cv.disponibles - 1) } }));
-      setExito(`✅ CV enviado a ${empresa.nombre}`);
+      setExito(`✅ CV programado para ${empresa.nombre}`);
+      if (data.estimatedTimeFormatted) {
+        setSendResult({
+          estimatedTime: data.estimatedTimeFormatted,
+          positionInQueue: data.positionInQueue || 0,
+          strategy: data.strategy || sendStrategy,
+          horaLocal: data.horaLocalEmpresa || "",
+        });
+      }
 
       setHistorial((prev) => [
         {
@@ -411,6 +428,63 @@ export default function EmpresasPage() {
                   )}
                 </div>
               </div>
+
+              {/* ESTRATEGIA DE ENVÍO */}
+              <div className="mt-3 space-y-2">
+                <p className="text-[10px] font-medium" style={{ color: "#64748b" }}>Estrategia de envío</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSendStrategy("ahora")}
+                    className="flex-1 py-2 px-3 rounded-lg text-[11px] font-medium transition border"
+                    style={{
+                      background: sendStrategy === "ahora" ? "rgba(34,197,94,0.1)" : "#1e212b",
+                      borderColor: sendStrategy === "ahora" ? "rgba(34,197,94,0.4)" : "#2d3142",
+                      color: sendStrategy === "ahora" ? "#22c55e" : "#94a3b8",
+                    }}
+                  >
+                    🚀 Ahora
+                  </button>
+                  <button
+                    onClick={() => setSendStrategy("optimo")}
+                    className="flex-1 py-2 px-3 rounded-lg text-[11px] font-medium transition border"
+                    style={{
+                      background: sendStrategy === "optimo" ? "rgba(34,197,94,0.1)" : "#1e212b",
+                      borderColor: sendStrategy === "optimo" ? "rgba(34,197,94,0.4)" : "#2d3142",
+                      color: sendStrategy === "optimo" ? "#22c55e" : "#94a3b8",
+                    }}
+                  >
+                    🎯 Ventana óptima
+                  </button>
+                </div>
+                {sendStrategy === "optimo" && (
+                  <p className="text-[9px]" style={{ color: "#475569" }}>
+                    📊 BuscayCurra analiza la zona horaria de la empresa y envía tu CV en el momento en que RRHH es más probable que lo lea.
+                  </p>
+                )}
+                {sendStrategy === "ahora" && (
+                  <p className="text-[9px]" style={{ color: "#475569" }}>
+                    ⚡ Tu CV se enviará en 1-2 minutos. Ideal si necesitas aplicar rápido.
+                  </p>
+                )}
+              </div>
+
+              {/* RESULTADO DEL ENVÍO */}
+              {sendResult && (
+                <div className="mt-2 p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                  <p className="text-[10px] font-medium" style={{ color: "#22c55e" }}>✅ CV programado</p>
+                  <p className="text-[9px] mt-1" style={{ color: "#94a3b8" }}>
+                    📅 {sendResult.estimatedTime}
+                  </p>
+                  {sendResult.strategy === "optimo" && sendResult.horaLocal && (
+                    <p className="text-[9px]" style={{ color: "#94a3b8" }}>
+                      🕐 Hora local empresa: {sendResult.horaLocal}
+                    </p>
+                  )}
+                  <p className="text-[9px]" style={{ color: "#64748b" }}>
+                    📬 Posición en cola: #{sendResult.positionInQueue}
+                  </p>
+                </div>
+              )}
 
               {/* BOTÓN ENVIAR CV */}
               <button
