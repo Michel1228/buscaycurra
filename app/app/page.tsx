@@ -60,6 +60,9 @@ export default function HomePage() {
       } else {
         router.replace("/auth/login");
       }
+    }).catch(() => {
+      // Si falla la verificación, mostrar la landing en vez de spinner infinito
+      setVerificando(false);
     });
   }, [router]);
 
