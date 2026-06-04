@@ -271,11 +271,13 @@ function BuscarPageInner() {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-xl font-bold mb-4">Buscar ofertas de trabajo</h1>
           <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-2">
-            <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
+            <label className="sr-only" htmlFor="buscar-keyword">Palabra clave</label>
+            <input id="buscar-keyword" type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
               placeholder="¿Qué trabajo buscas?" className="flex-1 px-4 py-2.5 rounded-lg text-sm"
               style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
             <div className="relative w-full sm:w-56">
-              <input type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
+              <label className="sr-only" htmlFor="buscar-ubicacion">Ubicación</label>
+              <input id="buscar-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
                 placeholder="¿Dónde?" className="w-full px-4 py-2.5 rounded-lg text-sm"
                 style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
               {geoDetected && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-70">📍 Auto</span>}
@@ -337,20 +339,20 @@ function BuscarPageInner() {
                 <InfoTooltip text="Refina tu búsqueda por tipo de jornada, experiencia y salario mínimo. Los filtros se aplican sobre los resultados actuales." position="right" />
               </div>
               <div className="mb-4">
-                <label className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Tipo de jornada</label>
-                <select value={jornada} onChange={(e) => setJornada(e.target.value)} className="w-full text-sm">
+                <label htmlFor="filtro-jornada" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Tipo de jornada</label>
+                <select id="filtro-jornada" value={jornada} onChange={(e) => setJornada(e.target.value)} className="w-full text-sm">
                   {opcionesJornada.map(op => <option key={op.valor} value={op.valor}>{op.etiqueta}</option>)}
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Experiencia</label>
-                <select value={experiencia} onChange={(e) => setExperiencia(e.target.value)} className="w-full text-sm">
+                <label htmlFor="filtro-experiencia" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Experiencia</label>
+                <select id="filtro-experiencia" value={experiencia} onChange={(e) => setExperiencia(e.target.value)} className="w-full text-sm">
                   {opcionesExperiencia.map(op => <option key={op.valor} value={op.valor}>{op.etiqueta}</option>)}
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario mínimo (€/año)</label>
-                <input type="number" value={salarioMin} onChange={(e) => setSalarioMin(e.target.value)}
+                <label htmlFor="filtro-salario" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario mínimo (€/año)</label>
+                <input id="filtro-salario" type="number" value={salarioMin} onChange={(e) => setSalarioMin(e.target.value)}
                   placeholder="Ej: 20000" className="w-full text-sm" />
               </div>
               <button onClick={() => buscar()} className="btn-game w-full text-xs py-2">Aplicar filtros</button>

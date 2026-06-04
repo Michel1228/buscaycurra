@@ -9,7 +9,7 @@ import { PAISES, LISTA_PAISES } from "@/lib/paises";
 import { IDIOMAS, type IdiomaCode } from "@/lib/i18n/translations";
 import { useLanguage } from "@/components/LanguageProvider";
 
-const ADMIN_EMAIL = "michelbatistagonzalez1992@gmail.com";
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 
 const NAV_ITEMS = [
   { href: "/app/gusi",       label: "Guzzi",      icon: "🐛", title: "Guzzi - Asistente IA" },

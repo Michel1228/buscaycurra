@@ -37,6 +37,20 @@ const PLANES = [
     dest: false, btn: "Elegir Esencial", accion: "esencial" as const,
   },
   {
+    id: "basico", nombre: "Básico", precio: "4,99€", periodo: "/mes", emoji: "🐣",
+    desc: "Más CVs y IA básica",
+    items: [
+      { t: "5 CVs enviados por día", ok: true },
+      { t: "Buscador avanzado", ok: true },
+      { t: "Mejora CV con IA", ok: true },
+      { t: "Historial de envíos", ok: true },
+      { t: "IA básica incluida", ok: true },
+      { t: "IA avanzada", ok: false },
+      { t: "Soporte prioritario", ok: false },
+    ],
+    dest: false, btn: "Elegir Básico", accion: "basico" as const,
+  },
+  {
     id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛",
     desc: "Para profesionales serios",
     items: [

@@ -322,21 +322,27 @@ export default function PipelinePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setModalNueva(false)}>
           <div className="w-full max-w-sm rounded-xl p-5 space-y-3" style={{ background: "#1e212b", border: "1px solid #2d3142" }} onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Nueva candidatura</h3>
+            <label className="sr-only" htmlFor="nueva-empresa">Empresa</label>
             <input
+              id="nueva-empresa"
               placeholder="Empresa *"
               value={nueva.empresa}
               onChange={e => setNueva(p => ({ ...p, empresa: e.target.value }))}
               className="w-full px-3 py-2.5 rounded-lg text-sm"
               style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
             />
+            <label className="sr-only" htmlFor="nueva-puesto">Puesto</label>
             <input
+              id="nueva-puesto"
               placeholder="Puesto (opcional)"
               value={nueva.puesto}
               onChange={e => setNueva(p => ({ ...p, puesto: e.target.value }))}
               className="w-full px-3 py-2.5 rounded-lg text-sm"
               style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
             />
+            <label className="sr-only" htmlFor="nueva-notas">Notas</label>
             <textarea
+              id="nueva-notas"
               placeholder="Notas (recruiter, teléfono...)"
               value={nueva.notas}
               onChange={e => setNueva(p => ({ ...p, notas: e.target.value }))}

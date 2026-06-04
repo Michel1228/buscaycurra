@@ -257,22 +257,28 @@ export default function PerfilPage() {
                 Estos datos se usan para personalizar tu experiencia. El CV completo (foto, experiencia, formación) está en <button onClick={() => router.push("/app/curriculum")} className="underline" style={{ color: "#22c55e" }}>Mi CV</button>.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input placeholder="Nombre" value={perfil.nombre} onChange={e => updateField("nombre", e.target.value)}
+                <label className="sr-only" htmlFor="perfil-nombre">Nombre</label>
+                <input id="perfil-nombre" placeholder="Nombre" value={perfil.nombre} onChange={e => updateField("nombre", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Apellidos" value={perfil.apellidos} onChange={e => updateField("apellidos", e.target.value)}
+                <label className="sr-only" htmlFor="perfil-apellidos">Apellidos</label>
+                <input id="perfil-apellidos" placeholder="Apellidos" value={perfil.apellidos} onChange={e => updateField("apellidos", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Teléfono" value={perfil.telefono} onChange={e => updateField("telefono", e.target.value)}
+                <label className="sr-only" htmlFor="perfil-telefono">Teléfono</label>
+                <input id="perfil-telefono" placeholder="Teléfono" value={perfil.telefono} onChange={e => updateField("telefono", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Email" value={perfil.email} onChange={e => updateField("email", e.target.value)}
+                <label className="sr-only" htmlFor="perfil-email">Email</label>
+                <input id="perfil-email" placeholder="Email" value={perfil.email} onChange={e => updateField("email", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Ciudad" value={perfil.ciudad} onChange={e => updateField("ciudad", e.target.value)}
+                <label className="sr-only" htmlFor="perfil-ciudad">Ciudad</label>
+                <input id="perfil-ciudad" placeholder="Ciudad" value={perfil.ciudad} onChange={e => updateField("ciudad", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Sector / Profesión" value={perfil.sector} onChange={e => updateField("sector", e.target.value)}
+                <label className="sr-only" htmlFor="perfil-sector">Sector / Profesión</label>
+                <input id="perfil-sector" placeholder="Sector / Profesión" value={perfil.sector} onChange={e => updateField("sector", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               </div>
@@ -386,6 +392,19 @@ export default function PerfilPage() {
                     </div>
                   )}
                   {!iosNativo && (planActual === "free" || planActual === "esencial") && (
+                    <div className="rounded-xl p-4 flex items-center justify-between"
+                      style={{ background: "#161922", border: "1px solid #252836" }}>
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🐣 Plan Básico — 4,99€/mes</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>5 CVs/día · IA básica</p>
+                      </div>
+                      <button onClick={() => void irACheckout("basico")} disabled={cargandoPlan}
+                        className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
+                        {cargandoPlan ? "..." : "Contratar"}
+                      </button>
+                    </div>
+                  )}
+                  {!iosNativo && (planActual === "free" || planActual === "esencial" || planActual === "basico") && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>

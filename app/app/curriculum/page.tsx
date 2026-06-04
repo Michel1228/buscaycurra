@@ -679,22 +679,28 @@ export default function CurriculumPage() {
                 <InfoTooltip text="Tu nombre, teléfono, email y ciudad aparecen en la cabecera del CV. El título profesional resume tu perfil (ej: 'Camarero con 5 años de experiencia')." />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input placeholder="Nombre" value={form.nombre} onChange={e => f("nombre", e.target.value)}
+                <label className="sr-only" htmlFor="cv-nombre">Nombre</label>
+                <input id="cv-nombre" placeholder="Nombre" value={form.nombre} onChange={e => f("nombre", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Apellidos" value={form.apellidos} onChange={e => f("apellidos", e.target.value)}
+                <label className="sr-only" htmlFor="cv-apellidos">Apellidos</label>
+                <input id="cv-apellidos" placeholder="Apellidos" value={form.apellidos} onChange={e => f("apellidos", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Título profesional" value={form.subtitulo} onChange={e => f("subtitulo", e.target.value)}
+                <label className="sr-only" htmlFor="cv-subtitulo">Título profesional</label>
+                <input id="cv-subtitulo" placeholder="Título profesional" value={form.subtitulo} onChange={e => f("subtitulo", e.target.value)}
                   className="sm:col-span-2 w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Teléfono" value={form.telefono} onChange={e => f("telefono", e.target.value)}
+                <label className="sr-only" htmlFor="cv-telefono">Teléfono</label>
+                <input id="cv-telefono" placeholder="Teléfono" value={form.telefono} onChange={e => f("telefono", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Email" value={form.email} onChange={e => f("email", e.target.value)}
+                <label className="sr-only" htmlFor="cv-email">Email</label>
+                <input id="cv-email" placeholder="Email" value={form.email} onChange={e => f("email", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <input placeholder="Ciudad" value={form.ciudad} onChange={e => f("ciudad", e.target.value)}
+                <label className="sr-only" htmlFor="cv-ciudad">Ciudad</label>
+                <input id="cv-ciudad" placeholder="Ciudad" value={form.ciudad} onChange={e => f("ciudad", e.target.value)}
                   className="sm:col-span-2 w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               </div>
@@ -715,18 +721,23 @@ export default function CurriculumPage() {
                         className="text-[11px]" style={{ color: "#ef4444" }}>Eliminar</button>
                     )}
                   </div>
-                  <input placeholder="Fechas (ej: 2020 - 2023)" value={exp.fechas}
+                  <label className="sr-only" htmlFor={`cv-exp-fechas-${i}`}>Fechas</label>
+                  <input id={`cv-exp-fechas-${i}`} placeholder="Fechas (ej: 2020 - 2023)" value={exp.fechas}
                     onChange={e => updExp(i, "fechas", e.target.value)}
                     className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                   <div className="grid grid-cols-2 gap-2">
-                    <input placeholder="Puesto" value={exp.puesto} onChange={e => updExp(i, "puesto", e.target.value)}
+                    <label className="sr-only" htmlFor={`cv-exp-puesto-${i}`}>Puesto</label>
+                    <input id={`cv-exp-puesto-${i}`} placeholder="Puesto" value={exp.puesto} onChange={e => updExp(i, "puesto", e.target.value)}
                       className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                    <input placeholder="Empresa" value={exp.empresa} onChange={e => updExp(i, "empresa", e.target.value)}
+                    <label className="sr-only" htmlFor={`cv-exp-empresa-${i}`}>Empresa</label>
+                    <input id={`cv-exp-empresa-${i}`} placeholder="Empresa" value={exp.empresa} onChange={e => updExp(i, "empresa", e.target.value)}
                       className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                   </div>
-                  <input placeholder="Ubicación" value={exp.ubicacion} onChange={e => updExp(i, "ubicacion", e.target.value)}
+                  <label className="sr-only" htmlFor={`cv-exp-ubicacion-${i}`}>Ubicación</label>
+                  <input id={`cv-exp-ubicacion-${i}`} placeholder="Ubicación" value={exp.ubicacion} onChange={e => updExp(i, "ubicacion", e.target.value)}
                     className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                  <textarea placeholder="Descripción de tareas (una por línea)" value={exp.descripcion} rows={3}
+                  <label className="sr-only" htmlFor={`cv-exp-descripcion-${i}`}>Descripción</label>
+                  <textarea id={`cv-exp-descripcion-${i}`} placeholder="Descripción de tareas (una por línea)" value={exp.descripcion} rows={3}
                     onChange={e => updExp(i, "descripcion", e.target.value)}
                     className="w-full px-4 py-2 rounded-lg text-sm resize-none" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                 </div>
@@ -750,13 +761,16 @@ export default function CurriculumPage() {
                         className="text-[11px]" style={{ color: "#ef4444" }}>Eliminar</button>
                     )}
                   </div>
-                  <input placeholder="Título / Estudios" value={edu.titulo}
+                  <label className="sr-only" htmlFor={`cv-edu-titulo-${i}`}>Título / Estudios</label>
+                  <input id={`cv-edu-titulo-${i}`} placeholder="Título / Estudios" value={edu.titulo}
                     onChange={e => updEdu(i, "titulo", e.target.value)}
                     className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                   <div className="grid grid-cols-2 gap-2">
-                    <input placeholder="Centro" value={edu.centro} onChange={e => updEdu(i, "centro", e.target.value)}
+                    <label className="sr-only" htmlFor={`cv-edu-centro-${i}`}>Centro</label>
+                    <input id={`cv-edu-centro-${i}`} placeholder="Centro" value={edu.centro} onChange={e => updEdu(i, "centro", e.target.value)}
                       className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                    <input placeholder="Ubicación" value={edu.ubicacion} onChange={e => updEdu(i, "ubicacion", e.target.value)}
+                    <label className="sr-only" htmlFor={`cv-edu-ubicacion-${i}`}>Ubicación</label>
+                    <input id={`cv-edu-ubicacion-${i}`} placeholder="Ubicación" value={edu.ubicacion} onChange={e => updEdu(i, "ubicacion", e.target.value)}
                       className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                   </div>
                 </div>
@@ -772,7 +786,8 @@ export default function CurriculumPage() {
                   <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎯 Habilidades</h2>
                   <InfoTooltip text="Tus puntos fuertes separados por comas. Ej: Trabajo en equipo, Excel, Liderazgo, Resolución de problemas." position="right" />
                 </div>
-                <input placeholder="Separadas por comas" value={form.aptitudes}
+                <label className="sr-only" htmlFor="cv-aptitudes">Habilidades</label>
+                <input id="cv-aptitudes" placeholder="Separadas por comas" value={form.aptitudes}
                   onChange={e => f("aptitudes", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               </div>
@@ -781,7 +796,8 @@ export default function CurriculumPage() {
                   <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🌍 Idiomas</h2>
                   <InfoTooltip text="Escribe cada idioma con un nivel del 0 al 100. Ej: Español:95, Inglés:60, Francés:40. El número controla la barra de progreso en el CV." position="left" />
                 </div>
-                <input placeholder="Español:95, Inglés:60, Francés:40" value={form.idiomas}
+                <label className="sr-only" htmlFor="cv-idiomas">Idiomas</label>
+                <input id="cv-idiomas" placeholder="Español:95, Inglés:60, Francés:40" value={form.idiomas}
                   onChange={e => f("idiomas", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                 <p className="text-[10px] mt-1" style={{ color: "#475569" }}>Formato: Idioma:nivel (0-100). Ej: Español:95, Inglés:60</p>
@@ -794,7 +810,8 @@ export default function CurriculumPage() {
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>📝 Perfil profesional (opcional)</h2>
                 <InfoTooltip text="2-3 frases que resumen quién eres como profesional. Si lo dejas vacío, la IA lo generará automáticamente a partir de tu experiencia." />
               </div>
-              <textarea placeholder="Breve descripción de ti como profesional... (la IA lo mejorará)"
+              <label className="sr-only" htmlFor="cv-perfil-profesional">Perfil profesional</label>
+              <textarea id="cv-perfil-profesional" placeholder="Breve descripción de ti como profesional... (la IA lo mejorará)"
                 value={form.perfilProfesional} onChange={e => f("perfilProfesional", e.target.value)} rows={3}
                 className="w-full px-4 py-2.5 rounded-lg text-sm resize-none" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
             </div>

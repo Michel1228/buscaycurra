@@ -24,13 +24,13 @@ PERSONALIDAD:
 - Puedes charlar de cualquier tema, no solo de trabajo.
 - Responde de forma conversacional — ni demasiado corto ni demasiado largo.
 - Usa el emoji 🐛 con moderación, no en cada mensaje.
-- Cuando des datos salariales o legales, cita la fuente brevemente (ej: "según el SMI 2025").
+- Cuando des datos salariales o legales, cita la fuente brevemente (ej: "según el SMI 2026").
 
 ════════ CONOCIMIENTO DEL MERCADO LABORAL ESPAÑOL ════════
 
 CONTRATOS Y DERECHOS:
 - Tipos de contrato: indefinido, temporal (máx 6 meses), fijo-discontinuo, formación, ETT, obra y servicio
-- SMI 2025: 1.184 €/mes brutos (16 pagas) = 14.208 €/año
+- SMI 2026: 1.231 €/mes brutos (16 pagas) = 14.772 €/año
 - Finiquito: suma de: días de preaviso no dados, vacaciones no disfrutadas, parte proporcional de pagas extra
 - Indemnización despido improcedente: 33 días/año trabajado (máx 24 mensualidades)
 - SEPE (antiguo INEM): solicitar paro en los 15 días hábiles siguientes al despido. Necesitas: DNI, IBAN, certificado de empresa, historial laboral
@@ -45,7 +45,7 @@ DERECHOS LABORALES CLAVE:
 - Reducción de jornada: derecho por guarda de menor <12 años o familiar dependiente. Reducción del 12,5% al 50%
 - Teletrabajo: si supera el 30% de la jornada en 3 meses, la empresa DEBE firmar acuerdo escrito
 
-SECTORES CON MÁS DEMANDA EN ESPAÑA (2025):
+SECTORES CON MÁS DEMANDA EN ESPAÑA (2026):
 - IT/Tech: developers (React, Python, Java), data engineers, ciberseguridad, DevOps — los más demandados y mejor pagados
 - Salud: enfermería (1.800-2.500€), médicos (2.500-5.000€), auxiliares, fisioterapeutas — escasez crónica
 - Logística/almacén: operarios, carretilleros, gestores de almacén — Amazon, Mercadona, DHL contratan masivo
@@ -525,6 +525,14 @@ function localReply(intent: string, cv?: CVParsed | null): string {
         : "📧 Sube tu CV primero (botón clip de abajo) y luego te busco ofertas que encajen.";
     case "crear_cv":
       return "📝 ¡Vamos! ¿Cuál es tu nombre completo? (Te pregunto de uno en uno, facilísimo) 🐛";
+    case "cv_mejorado":
+      return "✨ **Mejora de CV no disponible ahora mismo.**\n\nPuedo ayudarte con estos consejos mientras tanto:\n• Usa verbos de acción (logré, implementé, coordiné)\n• Incluye logros cuantificables (\"aumenté ventas un 20%\")\n• Adapta las palabras clave al puesto que buscas\n• Mantén el CV en 1-2 páginas máximo\n\n¿Quieres que te dé más consejos personalizados? 🐛";
+    case "entrevista_prep":
+      return "🎯 **Preparación de entrevistas no disponible ahora mismo.**\n\nMientras tanto, aquí tienes un guion rápido:\n• Prepara 3 ejemplos con método STAR (Situación, Tarea, Acción, Resultado)\n• Investiga la empresa: sector, tamaño, noticias recientes\n• Prepara preguntas para hacer tú al final\n• Ensaya tu presentación de 1 minuto en voz alta\n\n¿Sobre qué puesto es la entrevista? Te ayudo a enfocarla. 🐛";
+    case "carta_recomendacion":
+      return "✉️ **Carta de presentación no disponible en este momento.**\n\nMientras tanto, puedes estructurarla así:\n1. **Asunto**: Candidatura [Puesto] — [Tu Nombre]\n2. **Apertura**: por qué te interesa esa empresa en concreto\n3. **Cuerpo**: 2-3 logros que conecten con lo que buscan\n4. **Cierre**: disponibilidad para entrevista y despedida cordial\n\n¿Te ayudo a redactarla paso a paso? 🐛";
+    case "info_empresa":
+      return "🏢 **No puedo consultar información de esa empresa ahora mismo.**\n\nPuedes buscar en:\n• **LinkedIn** — página de empresa y empleados\n• **Glassdoor** — opiniones de empleados y rangos salariales\n• **Google Maps** — sede, tamaño, sector\n\n¿Quieres que busque ofertas activas de esa empresa en nuestra base de datos? 🔍";
     default:
       return "🐛 Puedo ayudarte a buscar trabajo en España y Europa, mejorar tu CV, preparar entrevistas o generar una carta de presentación. ¿Qué necesitas?";
   }

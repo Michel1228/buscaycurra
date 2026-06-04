@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 
-const ADMIN_EMAIL = "michelbatistagonzalez1992@gmail.com";
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 
 interface Stats {
   totalUsuarios: number;

@@ -28,12 +28,13 @@ export default function RegistroPage() {
     if (err) { setError(err); return; }
     setCargando(true);
     try {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
       const { error: sErr } = await getSupabaseBrowser().auth.signUp({
         email: email.trim(),
         password: contrasena,
         options: {
           data: { full_name: nombre.trim() },
-          emailRedirectTo: "https://buscaycurra.es/auth/callback",
+          emailRedirectTo: `${siteUrl}/auth/callback`,
         },
       });
       if (sErr) {

@@ -48,7 +48,8 @@ function ReferidosPageInner() {
   }, []);
 
   async function copiarLink() {
-    const link = `https://buscaycurra.es/auth/registro?ref=${codigo}`;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+    const link = `${siteUrl}/auth/registro?ref=${codigo}`;
     await navigator.clipboard.writeText(link);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
