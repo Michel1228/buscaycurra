@@ -179,11 +179,11 @@ export async function GET(request: NextRequest) {
         // WhatsApp: solo si el usuario tiene teléfono guardado
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("whatsapp_phone, full_name")
+          .select("whatsapp_phone, whatsapp_alertas, full_name")
           .eq("id", alerta.user_id)
           .single();
 
-        if (profileData?.whatsapp_phone) {
+        if (profileData?.whatsapp_alertas && profileData?.whatsapp_phone) {
           const { enviarAlertaWhatsApp } = await import("@/lib/whatsapp/sender");
           await enviarAlertaWhatsApp(profileData.whatsapp_phone, {
             nombre: profileData.full_name?.split(" ")[0] || "Candidato",

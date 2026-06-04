@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface Notif {
   id: string;
@@ -63,7 +64,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   async function fetchNotifs() {
     try {
-      const res = await fetch(`/api/notifications?userId=${encodeURIComponent(userId)}`);
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) return;
+      const res = await fetch("/api/notifications", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       if (!res.ok) return;
       const data = await res.json() as { notificaciones: Notif[]; sinLeer: number };
       setNotifs(data.notificaciones || []);
@@ -72,12 +77,16 @@ export default function NotificationBell({ userId }: { userId: string }) {
   }
 
   async function marcarTodasLeidas() {
-    if (!userId) return;
     try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) return;
       await fetch("/api/notifications", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, marcarTodas: true }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ marcarTodas: true }),
       });
       setNotifs((prev) => prev.map((n) => ({ ...n, leida: true })));
       setSinLeer(0);
@@ -86,9 +95,14 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   async function marcarLeida(id: string) {
     try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) return;
       await fetch("/api/notifications", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ notifId: id }),
       });
       setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, leida: true } : n));
