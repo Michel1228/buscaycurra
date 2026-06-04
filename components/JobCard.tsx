@@ -417,6 +417,11 @@ export default function JobCard({
               Sin URL
             </span>
           )}
+          <a href={`/app/ofertas/${encodeURIComponent(id)}`}
+            className="text-center py-2 px-3 text-[11px] font-medium rounded-lg transition hover:opacity-80"
+            style={{ border: "1px solid #2d3142", color: "#22c55e" }}>
+            📋 Detalle
+          </a>
           {url && (
             <a
               href={`/app/empresas?url=${encodeURIComponent(url)}`}
