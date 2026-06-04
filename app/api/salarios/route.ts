@@ -33,13 +33,13 @@ export async function GET(request: NextRequest) {
         `SELECT 
           LOWER(REGEXP_REPLACE(title, '(Senior|Junior|Jr\\.|Sr\\.|Lead|Trainee|Becario|Prácticas)', '', 'gi')) as ocupacion,
           COUNT(*) as total,
-          AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '(\d[\d.,]*\d)'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary,
-          MIN(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '(\d[\d.,]*\d)'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as min_salary,
-          MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '(\d[\d.,]*\d)'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary
+          AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary,
+          MIN(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as min_salary,
+          MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary
          FROM "JobListing"
          WHERE "isActive" = true AND salary ~ '[0-9]'
          GROUP BY ocupacion
-         HAVING COUNT(*) >= 10 AND AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '(\d[\d.,]*\d)'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) > 10000
+         HAVING COUNT(*) >= 10 AND AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) > 10000
          ORDER BY total DESC
          LIMIT 10`
       );
@@ -91,9 +91,9 @@ export async function GET(request: NextRequest) {
     const statsResult = await pool.query(
       `SELECT 
         COUNT(*) as total,
-        AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '(\d[\d.,]*\d)'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary,
-        MIN(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '(\d[\d.,]*\d)'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as min_salary,
-        MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '(\d[\d.,]*\d)'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary,
+        AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary,
+        MIN(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as min_salary,
+        MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary,
         COUNT(CASE WHEN salary ~ '[0-9]' THEN 1 END) as con_salario
        FROM "JobListing"
        WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1)`,
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
       `SELECT 
         COALESCE(NULLIF(province, ''), city) as province,
         COUNT(*) as count,
-        AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '(\d[\d.,]*\d)'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary
+        AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary
        FROM "JobListing"
        WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1)
        GROUP BY COALESCE(NULLIF(province, ''), city)
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
       const detResult = await pool.query(
         `SELECT 
           COUNT(*) as count,
-          AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '(\d[\d.,]*\d)'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary
+          AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary
          FROM "JobListing"
          WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1)
            AND (province ILIKE $2 OR city ILIKE $2)`,
