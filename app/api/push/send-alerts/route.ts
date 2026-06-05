@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
 
       for (const sub of subsResult.rows) {
         try {
-          await sendPush(sub, { title: titulo, body: cuerpo, url: `/app/buscar?q=${encodeURIComponent(alerta.keyword)}` });
+          await sendPush(sub, { title: titulo, body: cuerpo, url: `/app/notificaciones` });
           enviadas++;
         } catch (pushErr) {
           const code = (pushErr as { statusCode?: number }).statusCode;

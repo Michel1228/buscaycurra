@@ -210,7 +210,7 @@ function BuscarPageInner() {
       const params = new URLSearchParams();
       if (keyword.trim()) params.set("keyword", keyword.trim());
       if (ubicacion.trim()) params.set("location", ubicacion.trim());
-      if (paisSeleccionado && paisSeleccionado !== "ES") params.set("country", paisSeleccionado);
+      if (paisSeleccionado) params.set("country", paisSeleccionado);
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
@@ -274,7 +274,7 @@ function BuscarPageInner() {
       const params = new URLSearchParams();
       if (keyword.trim()) params.set("keyword", keyword.trim());
       if (ubicacion.trim()) params.set("location", ubicacion.trim());
-      if (paisSeleccionado && paisSeleccionado !== "ES") params.set("country", paisSeleccionado);
+      if (paisSeleccionado) params.set("country", paisSeleccionado);
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);

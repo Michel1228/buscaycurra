@@ -160,3 +160,35 @@ jobs:
           BODY=$(echo "$RESULT" | head -1)
           echo "Careerjet ${{ matrix.country }}: HTTP $HTTP — $BODY"
           if [ "$HTTP" != "200" ]; then exit 1; fi
+
+  # ── France Travail — API oficial gobierno francés (1.5M+ ofertas, 300 combos) ─
+
+  sync-france-travail:
+    name: "🇫🇷 France Travail — lote ${{ matrix.offset }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { offset: 0,   maxCombos: 30 }
+          - { offset: 30,  maxCombos: 30 }
+          - { offset: 60,  maxCombos: 30 }
+          - { offset: 90,  maxCombos: 30 }
+          - { offset: 120, maxCombos: 30 }
+          - { offset: 150, maxCombos: 30 }
+          - { offset: 180, maxCombos: 30 }
+          - { offset: 210, maxCombos: 30 }
+          - { offset: 240, maxCombos: 30 }
+          - { offset: 270, maxCombos: 30 }
+    steps:
+      - name: Sync France Travail (offset=${{ matrix.offset }})
+        run: |
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-france-travail" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"maxCombos\":${{ matrix.maxCombos }},\"startCombo\":${{ matrix.offset }}}" \
+            --max-time 300)
+          HTTP=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "France Travail offset=${{ matrix.offset }}: HTTP $HTTP — $BODY"
+          if [ "$HTTP" != "200" ]; then exit 1; fi

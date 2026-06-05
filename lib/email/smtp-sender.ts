@@ -359,7 +359,7 @@ export async function sendJobAlertEmail(params: {
   ejemploCity?: string;
 }): Promise<void> {
   const { userEmail, keyword, location, total, ejemploTitle, ejemploCompany, ejemploCity } = params;
-  const searchUrl = `https://buscaycurra.es/app/buscar?q=${encodeURIComponent(keyword)}${location ? `&loc=${encodeURIComponent(location)}` : ""}`;
+  const searchUrl = `https://buscaycurra.es/app/notificaciones`;
 
   const header = headerGradient(
     "🔔",

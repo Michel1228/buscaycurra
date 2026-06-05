@@ -64,16 +64,17 @@ export default function NotificationBell({ userId }: { userId: string }) {
   function getNotifUrl(n: Notif): string | null {
     const datos = n.datos || {};
 
-    // Si hay job_id, ir al detalle de oferta
+    // Alertas de empleo: SIEMPRE a la página de notificaciones (expansión inline)
+    if (n.tipo === "nuevas_ofertas" || n.tipo === "alerta_empleo") {
+      return "/app/notificaciones";
+    }
+
+    // Si hay job_id, ir al detalle de oferta (para otros tipos: cv_enviado, cv_visto...)
     if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
 
     // Usar el mapa de tipos
     if (TIPO_NAV[n.tipo]) return TIPO_NAV[n.tipo];
 
-    // Fallback
-    if (n.tipo === "nuevas_ofertas" || n.tipo === "alerta_empleo") {
-      return "/app/notificaciones";
-    }
     return null;
   }
 

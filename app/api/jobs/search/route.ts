@@ -237,7 +237,7 @@ export async function GET(request: NextRequest) {
           [`%${cityParts}%`, `%${keyword}%`, limit, locOffset]
         );
         const locOfertas = deduplicar(locResult.rows).map(j => rowToOferta(j, location, userSkills));
-        return NextResponse.json({ ofertas: locOfertas, total: locTotal, page, hasMore: locOffset + locResult.rows.length < locTotal, keyword, location, source: "database-city-fallback" });
+        return NextResponse.json({ ofertas: locOfertas, total: locTotal, page, hasMore: locOffset + locOfertas.length < locTotal, keyword, location, source: "database-city-fallback" });
       }
     }
 
@@ -246,7 +246,7 @@ export async function GET(request: NextRequest) {
       let ofertas = deduped.map(j => rowToOferta(j, location, userSkills));
       if (jornada === "remoto") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("remoto") || (o.titulo as string).toLowerCase().includes("teletrabajo"));
       else if (jornada === "parcial") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("parcial"));
-      return NextResponse.json({ ofertas, total: totalDB, page, hasMore: offset + dbResult.rows.length < totalDB, keyword, location, source: "database" });
+      return NextResponse.json({ ofertas, total: totalDB, page, hasMore: offset + ofertas.length < totalDB, keyword, location, source: "database" });
     }
 
     // Fallback final a APIs en tiempo real
