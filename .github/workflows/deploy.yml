@@ -37,7 +37,7 @@ jobs:
             NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co
             NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN
             NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-            NEXT_PUBLIC_VAPID_PUBLIC_KEY=BPDdb2-fw0bEfAEn5ypk59WfuzGQVKZ19IZO3zfqH9xlKINRGLykVKEGDcBzcIOHais_mjeyXY34Jcwiw0ZZcDQ
+            NEXT_PUBLIC_VAPID_PUBLIC_KEY=BDy57EXay3f97rznP-2QOJOrs2KWYqgWAK-PtQ9oF8W9Yxpu9ri_kqbYKKVgHByP5wOnoEfyTLigsaLRuawblZo
 
       - name: Deploy to Easypanel via webhook
         run: |
