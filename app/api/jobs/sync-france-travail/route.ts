@@ -106,12 +106,15 @@ export async function POST(req: NextRequest) {
 
   for (const combo of selected) {
     try {
+      const params = new URLSearchParams({
+        motsCles: combo.kw,
+        lieux: combo.city.code,
+        range: "0-49",
+      });
       const res = await fetch(
-        "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search",
+        `https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search?${params}`,
         {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ motsCles: combo.kw, lieux: combo.city.code, range: "0-49" }),
+          headers: { Authorization: `Bearer ${token}` },
           signal: AbortSignal.timeout(15000),
         }
       );
@@ -144,7 +147,8 @@ export async function POST(req: NextRequest) {
         totalInserted++;
       }
 
-      await new Promise(r => setTimeout(r, 250));
+      // Rate limit: 10 req/window para este client_id → 8s entre requests
+      await new Promise(r => setTimeout(r, 8000));
     } catch { /* skip */ }
   }
 
