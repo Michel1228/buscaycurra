@@ -1,0 +1,146 @@
+name: Sync Global APIs (USAJOBS + EURES + EU + Careerjet + Free)
+
+on:
+  schedule:
+    - cron: '0 0,6,12,18 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-eu-apis:
+    name: "🇸🇪🇵🇱 Sweden + Poland (JobTech + JJIT + NFJ)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync EU APIs
+        run: |
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-eu-apis" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 300)
+          HTTP=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "EU APIs: HTTP $HTTP — $BODY"
+          if [ "$HTTP" != "200" ]; then exit 1; fi
+
+  sync-arbeitsagentur:
+    name: "🇩🇪 Bundesagentur fur Arbeit"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Arbeitsagentur
+        run: |
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-arbeitsagentur" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{"maxPerKeyword":100}' \
+            --max-time 300)
+          HTTP=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "Arbeitsagentur: HTTP $HTTP — $BODY"
+          if [ "$HTTP" != "200" ]; then exit 1; fi
+
+  sync-global-free:
+    name: "🌍 Muse + Jobicy + Remotive + DevITJobs"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Global Free APIs
+        run: |
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-global-free" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{"musePages":30}' \
+            --max-time 300)
+          HTTP=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "Global Free: HTTP $HTTP — $BODY"
+          if [ "$HTTP" != "200" ]; then exit 1; fi
+
+  sync-usajobs:
+    name: "🇺🇸 USAJobs — lote ${{ matrix.offset }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { offset: 0,   batchSize: 50 }
+          - { offset: 50,  batchSize: 50 }
+          - { offset: 100, batchSize: 50 }
+          - { offset: 150, batchSize: 50 }
+    steps:
+      - name: Sync USAJobs (offset=${{ matrix.offset }})
+        run: |
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-usajobs" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"batchSize\":${{ matrix.batchSize }},\"offset\":${{ matrix.offset }}}" \
+            --max-time 120)
+          HTTP=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "USAJobs offset=${{ matrix.offset }}: HTTP $HTTP — $BODY"
+          if [ "$HTTP" != "200" ]; then exit 1; fi
+
+  sync-eures:
+    name: "🇪🇺 EURES — lote ${{ matrix.offset }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { offset: 0,   batchSize: 50 }
+          - { offset: 50,  batchSize: 50 }
+          - { offset: 100, batchSize: 50 }
+          - { offset: 150, batchSize: 50 }
+          - { offset: 200, batchSize: 50 }
+          - { offset: 250, batchSize: 50 }
+    steps:
+      - name: Sync EURES (offset=${{ matrix.offset }})
+        run: |
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-eures" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"batchSize\":${{ matrix.batchSize }},\"offset\":${{ matrix.offset }}}" \
+            --max-time 180)
+          HTTP=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "EURES offset=${{ matrix.offset }}: HTTP $HTTP — $BODY"
+          if [ "$HTTP" != "200" ]; then exit 1; fi
+
+  sync-careerjet-global:
+    name: "Careerjet — ${{ matrix.country }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - { country: de, batchSize: 30 }
+          - { country: us, batchSize: 30 }
+          - { country: uk, batchSize: 30 }
+          - { country: au, batchSize: 30 }
+          - { country: ca, batchSize: 30 }
+          - { country: fr, batchSize: 30 }
+          - { country: es, batchSize: 30 }
+          - { country: ie, batchSize: 30 }
+          - { country: nl, batchSize: 25 }
+          - { country: it, batchSize: 25 }
+          - { country: ch, batchSize: 25 }
+          - { country: se, batchSize: 25 }
+          - { country: no, batchSize: 25 }
+          - { country: be, batchSize: 25 }
+          - { country: pt, batchSize: 25 }
+          - { country: pl, batchSize: 25 }
+          - { country: dk, batchSize: 20 }
+          - { country: at, batchSize: 20 }
+          - { country: fi, batchSize: 20 }
+          - { country: nz, batchSize: 20 }
+          - { country: gr, batchSize: 20 }
+    steps:
+      - name: Sync Careerjet ${{ matrix.country }}
+        run: |
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-careerjet-global" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batchSize }}}" \
+            --max-time 180)
+          HTTP=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "Careerjet ${{ matrix.country }}: HTTP $HTTP — $BODY"
+          if [ "$HTTP" != "200" ]; then exit 1; fi

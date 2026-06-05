@@ -22,26 +22,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { country: uk, batch: 15 }
-          - { country: uk, batch: 15 }
-          - { country: us, batch: 15 }
-          - { country: us, batch: 15 }
-          - { country: de, batch: 15 }
-          - { country: de, batch: 15 }
-          - { country: fr, batch: 15 }
-          - { country: fr, batch: 15 }
-          - { country: au, batch: 15 }
-          - { country: au, batch: 15 }
+          # Tier 1 — máximo volumen (un solo job por país, batch razonable)
+          - { country: uk, batch: 20 }
+          - { country: us, batch: 20 }
+          - { country: de, batch: 20 }
+          - { country: au, batch: 20 }
+          - { country: ca, batch: 20 }
+          - { country: fr, batch: 20 }
+          # Tier 2 — mercados fuertes
           - { country: es, batch: 15 }
-          - { country: es, batch: 15 }
+          - { country: ie, batch: 15 }
+          - { country: nl, batch: 15 }
+          # Tier 3 — secundarios
+          - { country: it, batch: 12 }
+          - { country: se, batch: 12 }
+          - { country: ch, batch: 12 }
     steps:
       - name: Sync Adzuna ${{ matrix.country }}
         run: |
           RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-adzuna-global" \
             -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
             -H "Content-Type: application/json" \
-            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}" \
-            --max-time 120)
+            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}}" \
+            --max-time 180)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
           echo "${{ matrix.country }}: HTTP $HTTP_CODE — $BODY"
@@ -55,19 +58,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # English countries — keywords funcionan bien
-          - { country: us, batch: 10 }
-          - { country: uk, batch: 10 }
-          - { country: au, batch: 10 }
-          - { country: ca, batch: 10 }
-          # European — keywords nativas
-          - { country: de, batch: 10 }
-          - { country: fr, batch: 10 }
-          - { country: nl, batch: 10 }
-          - { country: it, batch: 10 }
-          - { country: es, batch: 10 }
-          - { country: se, batch: 10 }
-          - { country: ch, batch: 10 }
+          # English countries
+          - { country: us, batch: 15 }
+          - { country: uk, batch: 15 }
+          - { country: au, batch: 15 }
+          - { country: ca, batch: 15 }
+          # European
+          - { country: de, batch: 15 }
+          - { country: fr, batch: 15 }
+          - { country: nl, batch: 12 }
+          - { country: it, batch: 12 }
+          - { country: es, batch: 12 }
+          - { country: se, batch: 12 }
+          - { country: ch, batch: 12 }
           - { country: be, batch: 10 }
           - { country: pt, batch: 10 }
           - { country: ie, batch: 10 }
@@ -83,8 +86,8 @@ jobs:
           RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-careerjet-global" \
             -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
             -H "Content-Type: application/json" \
-            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}" \
-            --max-time 120)
+            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}}" \
+            --max-time 180)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
           echo "${{ matrix.country }}: HTTP $HTTP_CODE — $BODY"
