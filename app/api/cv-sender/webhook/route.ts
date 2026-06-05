@@ -46,6 +46,12 @@ async function enviarPushAlUsuario(
 }
 
 export async function POST(request: NextRequest) {
+  // Verificar secret interno (el worker lo envía en cada llamada)
+  const secret = request.headers.get("x-webhook-secret");
+  if (!secret || secret !== process.env.WEBHOOK_SECRET) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   const supabase = getSupabase();
   try {
     const body = await request.json();
@@ -57,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // Actualizar estado del envío si se proporciona ID
     if (envioId) {
-      const nuevoEstado = tipo === "respuesta" ? "enviado" : tipo === "visto" ? "enviado" : "enviado";
+      const nuevoEstado = tipo === "respuesta" ? "respondido" : tipo === "visto" ? "visto" : "enviado";
       const updatePayload: Record<string, unknown> = { status: nuevoEstado };
       if (nuevoEstado === "enviado") updatePayload.sent_at = new Date().toISOString();
       await supabase.from("cv_sends").update(updatePayload).eq("id", envioId);
@@ -132,6 +138,14 @@ export async function POST(request: NextRequest) {
 
 // GET — Pixel de tracking para detectar apertura de emails
 export async function GET(request: NextRequest) {
+  // Verificar secret interno
+  const secret = request.headers.get("x-webhook-secret") ?? request.nextUrl.searchParams.get("wsecret");
+  if (!secret || secret !== process.env.WEBHOOK_SECRET) {
+    // Para el pixel de tracking devolver el gif igualmente (no romper el email)
+    const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+    return new NextResponse(pixel, { headers: { "Content-Type": "image/gif", "Cache-Control": "no-cache, no-store" } });
+  }
+
   const supabase = getSupabase();
   const { searchParams } = new URL(request.url);
   const trackId = searchParams.get("track");
@@ -139,36 +153,39 @@ export async function GET(request: NextRequest) {
 
   if (trackId && uid) {
     try {
-      await supabase.from("cv_sends").update({ status: "enviado" }).eq("id", trackId);
+      // Verificar que uid es el dueño del envío antes de actualizar
+      const { data: envio } = await supabase.from("cv_sends").select("user_id").eq("id", trackId).single();
+      if (envio && envio.user_id === uid) {
+        await supabase.from("cv_sends").update({ status: "visto" }).eq("id", trackId);
 
-      const titulo = "👀 Tu CV fue abierto";
-      const mensaje = "Una empresa ha abierto el email con tu CV. ¡Buena señal!";
+        const titulo = "👀 Tu CV fue abierto";
+        const mensaje = "Una empresa ha abierto el email con tu CV. ¡Buena señal!";
 
-      await supabase.from("notificaciones").insert({
-        user_id: uid,
-        tipo: "cv_visto",
-        titulo,
-        mensaje,
-        datos: { envioId: trackId },
-        leida: false,
-      });
+        await supabase.from("notificaciones").insert({
+          user_id: uid,
+          tipo: "cv_visto",
+          titulo,
+          mensaje,
+          datos: { envioId: trackId },
+          leida: false,
+        });
 
-      await enviarPushAlUsuario(supabase, uid, {
-        title: titulo,
-        body: mensaje,
-        url: "/app/envios?tab=envios",
-        tag: "cv_visto",
-      });
+        await enviarPushAlUsuario(supabase, uid, {
+          title: titulo,
+          body: mensaje,
+          url: "/app/envios?tab=envios",
+          tag: "cv_visto",
+        });
 
-      // WhatsApp tracking pixel
-      const { data: perfil } = await supabase
-        .from("profiles")
-        .select("whatsapp_phone")
-        .eq("id", uid)
-        .single();
-      if (perfil?.whatsapp_phone) {
-        await enviarWhatsApp({ tipo: "cv_visto", to: perfil.whatsapp_phone, empresa: "una empresa", puesto: "" });
-      }
+        const { data: perfil } = await supabase
+          .from("profiles")
+          .select("whatsapp_phone")
+          .eq("id", uid)
+          .single();
+        if (perfil?.whatsapp_phone) {
+          await enviarWhatsApp({ tipo: "cv_visto", to: perfil.whatsapp_phone, empresa: "una empresa", puesto: "" });
+        }
+      } // solo actualizar si uid es el dueño del envío
     } catch { /* opcional */ }
   }
 

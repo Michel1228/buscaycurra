@@ -58,32 +58,19 @@ function obtenerClienteGemini(): GenerativeModel | null {
 // ==========================================
 
 /**
- * Comprueba si hemos superado el límite diario de Gemini
+ * Incrementa el contador atómicamente y verifica si superamos el límite diario.
+ * Patrón atómico: INCR primero, luego comparar — evita race condition TOCTOU.
  */
 async function podemosUsarGemini(): Promise<boolean> {
   const fecha = new Date().toISOString().split("T")[0];
   const clave = `gemini:calls:${fecha}`;
-
-  const llamadasStr = await get(clave);
-  const llamadasHoy = parseInt(llamadasStr || "0");
-
-  if (llamadasHoy >= LIMITE_DIARIO_GEMINI) {
-    console.warn(`⚠️  Gemini: límite diario alcanzado (${llamadasHoy}/${LIMITE_DIARIO_GEMINI})`);
+  const total = await incrementar(clave, 86400); // incremento atómico + TTL
+  if (total > LIMITE_DIARIO_GEMINI) {
+    console.warn(`⚠️  Gemini: límite diario alcanzado (${total}/${LIMITE_DIARIO_GEMINI})`);
     return false;
   }
-
-  return true;
-}
-
-/**
- * Registra una llamada a Gemini en el contador diario
- */
-async function registrarLlamadaGemini(): Promise<void> {
-  const fecha = new Date().toISOString().split("T")[0];
-  const clave = `gemini:calls:${fecha}`;
-
-  const total = await incrementar(clave, 86400); // expira en 24h
   console.log(`📊 Gemini llamadas hoy: ${total}/${LIMITE_DIARIO_GEMINI}`);
+  return true;
 }
 
 // ==========================================
@@ -119,8 +106,7 @@ export async function llamarGemini(
     const respuesta = resultado.response;
     const texto = respuesta.text();
 
-    // Registrar llamada
-    await registrarLlamadaGemini();
+    // El contador ya fue incrementado en podemosUsarGemini()
 
     console.log(`✅ Gemini respondió (${texto.length} caracteres)`);
     return texto;

@@ -64,13 +64,33 @@ const HORA_INICIO = 9; // 9:00 (hora española)
 const HORA_FIN = 18; // 18:00 (hora española)
 const ZONA_HORARIA = "Europe/Madrid";
 
+// Helpers para obtener hora/día en zona horaria de Madrid (no del servidor)
+function getMadridHour(date: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: ZONA_HORARIA, hour: "2-digit", hour12: false }).formatToParts(date);
+  return parseInt(parts.find(p => p.type === "hour")?.value ?? "0");
+}
+
+function getMadridDayOfWeek(date: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: ZONA_HORARIA, weekday: "short" }).formatToParts(date);
+  const day = parts.find(p => p.type === "weekday")?.value ?? "Sun";
+  return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(day);
+}
+
+function getMadridMonthDay(date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: ZONA_HORARIA, month: "2-digit", day: "2-digit" }).formatToParts(date);
+  const m = parts.find(p => p.type === "month")?.value ?? "01";
+  const d = parts.find(p => p.type === "day")?.value ?? "01";
+  return `${m}-${d}`;
+}
+
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 /** Preferencias de envío del usuario */
 export interface SendPreferences {
   priority?: "normal" | "prioritario";
   useAIPersonalization?: boolean;
-  preferredHour?: number; // Hora preferida (9-18)
+  preferredHour?: number;
+  frecuencia?: "unico" | "cada4dias";
 }
 
 /** Información de la empresa destino */
@@ -96,7 +116,7 @@ export interface ScheduleResult {
  * @param date - Fecha a comprobar
  */
 function esFestivo(date: Date): boolean {
-  const mesdia = `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const mesdia = getMadridMonthDay(date); // Usa hora Madrid, no del servidor
   return FESTIVOS_NACIONALES.has(mesdia);
 }
 
@@ -105,7 +125,7 @@ function esFestivo(date: Date): boolean {
  * @param date - Fecha a comprobar
  */
 function esLaborable(date: Date): boolean {
-  const diaSemana = date.getDay(); // 0=domingo, 6=sábado
+  const diaSemana = getMadridDayOfWeek(date); // Usa día de semana en Madrid
   const esDiaLaboral = diaSemana >= 1 && diaSemana <= 5;
   return esDiaLaboral && !esFestivo(date);
 }
@@ -124,7 +144,7 @@ export function getNextBusinessHour(desde?: Date): Date {
   const resultado = new Date(ahora);
 
   // Si ya es hora laboral y día laborable, elegimos un momento aleatorio en las próximas 2 horas
-  const hora = resultado.getHours();
+  const hora = getMadridHour(resultado); // Hora en Madrid, no del servidor
   if (esLaborable(resultado) && hora >= HORA_INICIO && hora < HORA_FIN) {
     // Añadimos un retraso aleatorio de 0-120 minutos para distribuir los envíos
     const minutosAleatorios = Math.floor(Math.random() * 120);
@@ -139,7 +159,7 @@ export function getNextBusinessHour(desde?: Date): Date {
     }
   }
 
-  // Si es fuera de horario, mover al próximo inicio de jornada
+  // Si es fuera de horario, mover al próximo inicio de jornada (hora Madrid)
   if (hora >= HORA_FIN) {
     resultado.setDate(resultado.getDate() + 1);
   }
@@ -211,6 +231,7 @@ export async function scheduleCV(
     useAIPersonalization: preferences.useAIPersonalization ?? true,
     scheduledFor: fechaEnvio.getTime(),
     userPlan,
+    frecuencia: preferences.frecuencia,
   };
 
   // Prioridad en la cola: prioritario = 1, normal = 10
@@ -257,6 +278,8 @@ export async function scheduleBulkCV(
 
   // Procesamos cada empresa con un pequeño retraso entre ellas
   // Esto evita sobrecargar la cola y distribuye los envíos naturalmente
+  // Obtener plan UNA sola vez antes del bucle (evita N consultas a Supabase)
+  const userPlanBulk = await getUserPlan(userId);
   let offsetMinutos = 0;
 
   for (const company of companies) {
@@ -278,14 +301,14 @@ export async function scheduleBulkCV(
       priority: preferences.priority ?? "normal",
       useAIPersonalization: preferences.useAIPersonalization ?? true,
       scheduledFor: fechaBase.getTime(),
-      userPlan: await getUserPlan(userId),
+      userPlan: userPlanBulk,
     };
 
     const delayMs = Math.max(0, fechaBase.getTime() - Date.now());
 
     try {
       // Verificar rate limit antes de cada envío
-      const userPlan = await getUserPlan(userId);
+      const userPlan = userPlanBulk;
       const rateLimitCheck = await checkRateLimit(userId, userPlan, company.email);
 
       if (!rateLimitCheck.allowed) {

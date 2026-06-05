@@ -56,17 +56,21 @@ export default function NotificacionesBell() {
   const [userId, setUserId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const tokenRef = useRef<string>("");
+
   // Carga inicial + suscripción Supabase Realtime
   useEffect(() => {
     async function init() {
-      const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-      if (!user) return;
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) return;
+      const user = session.user;
+      tokenRef.current = session.access_token;
       setUserId(user.id);
 
       // Carga inicial desde API
       try {
         const res = await fetch("/api/notifications", {
-          headers: { "x-user-id": user.id },
+          headers: { "Authorization": `Bearer ${session.access_token}` },
         });
         const data = await res.json();
         setNotifs(data.notificaciones || []);
@@ -127,7 +131,7 @@ export default function NotificacionesBell() {
       setSinLeer((prev) => Math.max(0, prev - 1));
       fetch("/api/notifications", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${tokenRef.current}` },
         body: JSON.stringify({ notifId: n.id }),
       }).catch(() => {});
     }
@@ -143,7 +147,7 @@ export default function NotificacionesBell() {
     setSinLeer(0);
     fetch("/api/notifications", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${tokenRef.current}` },
       body: JSON.stringify({ userId, marcarTodas: true }),
     }).catch(() => {});
   }

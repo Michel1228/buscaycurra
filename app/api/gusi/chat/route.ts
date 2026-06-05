@@ -315,9 +315,12 @@ async function searchJobs(message: string, query?: string, city?: string) {
     } catch {
       ofertas = [];
     }
-    // Fallback siempre activo si la API externa no devuelve resultados
+    // Si no hay resultados, mostrar mensaje honesto (sin datos inventados)
     if (ofertas.length === 0) {
-      ofertas = generarOfertas(searchTerm, searchCity || "España");
+      return {
+        text: `🔍 Busqué **${searchTerm}**${searchCity ? ` en **${searchCity}**` : ""} pero no encontré resultados en este momento.\n\n💡 Prueba en **🔍 Buscar** donde tienes más filtros y fuentes, o cambia el término de búsqueda.\n\n📧 Si ya tienes empresas en mente, **¡envío tu CV directamente!** 🐛→🦋`,
+        jobs: [],
+      };
     }
 
     let text = `🔍 He encontrado **${ofertas.length} ofertas** de **${searchTerm}**${searchCity ? ` en **${searchCity}**` : ""}:\n\n`;

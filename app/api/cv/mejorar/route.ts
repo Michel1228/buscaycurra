@@ -17,9 +17,10 @@ import { enrutarMejoraCV, enrutarPeticionIA } from "@/lib/ai/ai-router";
 
 export async function POST(request: NextRequest) {
   // ── Verificar autenticación del usuario ───────────────────────────────────
-  const supabase = createClient(
+  // Usar cliente público para verificar token, cliente admin para operaciones de DB
+  const supabasePublico = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   // Auth obligatoria
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
   if (!token) {
     return NextResponse.json({ error: "No autorizado. Por favor, inicia sesión." }, { status: 401 });
   }
-  const { error: authError } = await supabase.auth.getUser(token);
+  const { error: authError } = await supabasePublico.auth.getUser(token);
   if (authError) {
     return NextResponse.json({ error: "No autorizado. Por favor, inicia sesión." }, { status: 401 });
   }

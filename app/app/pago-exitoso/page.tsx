@@ -44,11 +44,8 @@ function PagoExitosoContenido() {
           .eq("id", session.user.id)
           .single();
 
-        if (perfil?.plan === "empresa") {
-          setPlanActivo("Empresa");
-        } else {
-          setPlanActivo("Pro");
-        }
+        const planMap: Record<string, string> = { basico: "Básico", pro: "Pro", empresa: "Empresa" };
+        setPlanActivo(planMap[perfil?.plan ?? ""] ?? "Pro");
       } catch {
         // Mantenemos "Pro" como valor por defecto
       }

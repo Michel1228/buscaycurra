@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
  * Colores de marca: azul #2563EB y naranja #F97316.
  */
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
@@ -61,6 +61,13 @@ function BuscarPageInner() {
   const [cargando, setCargando] = useState(false);
   const [buscado, setBuscado] = useState(false);
   const [error, setError] = useState("");
+
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Cleanup al desmontar
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, []);
 
   // Verificar sesión + geolocalización automática — solo al montar
   useEffect(() => {
@@ -148,6 +155,11 @@ function BuscarPageInner() {
     if (e) e.preventDefault();
     if (!keyword.trim() && !ubicacion.trim()) return;
 
+    // Cancelar búsqueda anterior si existe (evita race condition)
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setCargando(true);
     setError("");
     setBuscado(true);
@@ -162,9 +174,12 @@ function BuscarPageInner() {
 
       // Lanzar ambas búsquedas en paralelo
       const [serverRes, joobleRes] = await Promise.allSettled([
-        fetch(`/api/jobs/search?${params.toString()}`).then(r => r.ok ? r.json() : { ofertas: [] }),
+        fetch(`/api/jobs/search?${params.toString()}`, { signal: controller.signal }).then(r => r.ok ? r.json() : { ofertas: [] }),
         buscarJoobleCliente(keyword.trim(), ubicacion.trim()),
       ]);
+
+      // Si la búsqueda fue cancelada por una más reciente, no actualizar estado
+      if (controller.signal.aborted) return;
 
       // Combinar resultados
       const serverOfertas = serverRes.status === "fulfilled" ? (serverRes.value.ofertas || []) : [];

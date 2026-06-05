@@ -20,8 +20,10 @@ export default function PushRegister() {
 
     async function register() {
       try {
-        const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-        if (!user) return;
+        const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+        if (!session) return;
+        const user = session.user;
+        const token = session.access_token;
 
         // Registrar Service Worker
         const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
@@ -41,11 +43,14 @@ export default function PushRegister() {
           applicationServerKey: urlBase64ToUint8Array(vapidKey!),
         });
 
-        // Guardar suscripción en BD
+        // Guardar suscripción en BD (auth Bearer obligatorio desde fix de seguridad)
         await fetch("/api/notifications/subscribe", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id, subscription }),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ subscription }),
         });
       } catch {
         // Silencioso — las notificaciones push son opcionales

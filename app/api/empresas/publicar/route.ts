@@ -27,6 +27,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Campos obligatorios: empresa, email, título, ciudad" }, { status: 400 });
     }
 
+    // Validación de input
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailEmpresa.trim())) {
+      return NextResponse.json({ error: "Email de empresa no válido" }, { status: 400 });
+    }
+    if (empresa.trim().length > 100) {
+      return NextResponse.json({ error: "Nombre de empresa demasiado largo (máx 100)" }, { status: 400 });
+    }
+    if ((body.descripcion || "").length > 5000) {
+      return NextResponse.json({ error: "Descripción demasiado larga (máx 5000 caracteres)" }, { status: 400 });
+    }
+    if (titulo.trim().length > 200) {
+      return NextResponse.json({ error: "Título demasiado largo (máx 200)" }, { status: 400 });
+    }
+
     // Guardar en Supabase
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

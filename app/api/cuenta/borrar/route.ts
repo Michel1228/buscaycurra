@@ -75,6 +75,14 @@ export async function DELETE(request: NextRequest) {
       // No bloqueamos el proceso aunque falle esta parte
     }
 
+    // ── Limpiar push_subscriptions y notificaciones antes de borrar el usuario ──
+    try {
+      await supabaseAdmin.from("push_subscriptions").delete().eq("user_id", userId);
+    } catch { /* tabla puede no existir */ }
+    try {
+      await supabaseAdmin.from("notificaciones").delete().eq("user_id", userId);
+    } catch { /* puede ya tener CASCADE */ }
+
     // ── Borrar el usuario de Supabase Auth (operación irreversible) ────────
     const { error: errorAuth } = await supabaseAdmin.auth.admin.deleteUser(userId);
 

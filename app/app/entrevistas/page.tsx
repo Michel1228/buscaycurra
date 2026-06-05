@@ -98,6 +98,18 @@ export default function EntrevistasPage() {
     }
   }, [router]);
 
+  // Liberar micrófono y síntesis de voz al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch { /* ok */ }
+      }
+      if (synthRef.current) {
+        try { synthRef.current.cancel(); } catch { /* ok */ }
+      }
+    };
+  }, []);
+
   const cambiarSector = (s: string) => {
     setSector(s); setPreguntas(PREGUNTAS[s]); setIdx(0);
     setTexto(""); setFeedback(""); setHistorial([]); setFinalizado(false);

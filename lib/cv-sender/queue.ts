@@ -86,8 +86,9 @@ export function getNotificationsQueue(): Queue {
 // ─── Rate Limiting por Usuario ───────────────────────────────────────────────
 
 export const RATE_LIMITS = {
-  free: { perDay: 2, perMonth: 20 },
-  pro: { perDay: 10, perMonth: 200 },
+  free:    { perDay: 3,        perMonth: 30  },
+  basico:  { perDay: 15,       perMonth: 150 },
+  pro:     { perDay: 50,       perMonth: 500 },
   empresa: { perDay: Infinity, perMonth: Infinity },
 } as const;
 
@@ -103,6 +104,7 @@ export interface CVJobData {
   useAIPersonalization: boolean;
   scheduledFor: number;
   userPlan: "free" | "basico" | "pro" | "empresa";
+  frecuencia?: "unico" | "cada4dias";
 }
 
 export interface NotificationJobData {

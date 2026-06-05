@@ -30,6 +30,10 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "No se recibió archivo" }, { status: 400 });
 
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "Archivo demasiado grande (máximo 10 MB)" }, { status: 400 });
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // ── Extraer texto con pdftotext (execFileSync — sin shell, sin injection) ──

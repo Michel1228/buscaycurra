@@ -174,9 +174,9 @@ export default function PreciosPage() {
                 ))}
               </ul>
 
-              <button onClick={() => void handlePlan(plan)} disabled={cargando === plan.id}
+              <button onClick={() => void handlePlan(plan)} disabled={cargando !== null}
                 className={plan.dest ? "btn-game w-full text-sm py-2.5" : "btn-game-outline w-full text-sm py-2.5"}
-                style={{ opacity: cargando === plan.id ? 0.6 : 1 }}>
+                style={{ opacity: cargando !== null ? 0.6 : 1 }}>
                 {cargando === plan.id ? "Procesando..." : plan.btn}
               </button>
 

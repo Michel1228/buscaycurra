@@ -3,7 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  if (searchParams.get("secret") !== process.env.ADMIN_SECRET) {
+  const secret = request.headers.get("x-admin-secret") ?? searchParams.get("secret");
+  if (secret !== process.env.ADMIN_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -24,7 +24,9 @@ function EnviosPageInner() {
   const webParam = searchParams.get("web") ?? "";
 
   // Permite navegar directamente a una pestaña desde notificaciones (?tab=envios)
-  const tabParam = (searchParams.get("tab") as TabId) ?? "nuevo";
+  const TAB_IDS: TabId[] = ["nuevo", "envios", "estadisticas"];
+  const rawTab = searchParams.get("tab");
+  const tabParam: TabId = TAB_IDS.includes(rawTab as TabId) ? (rawTab as TabId) : "nuevo";
 
   const [userId, setUserId] = useState<string>("");
   const [activeTab, setActiveTab] = useState<TabId>(tabParam);
@@ -130,7 +132,12 @@ function StatsTab({ userId }: { userId: string }) {
     if (!userId) return;
     (async () => {
       try {
-        const res = await fetch(`/api/cv-sender/status?userId=${encodeURIComponent(userId)}`);
+        const { getSupabaseBrowser } = await import("@/lib/supabase-browser");
+        const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+        const token = session?.access_token ?? "";
+        const res = await fetch("/api/cv-sender/status", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         const data = await res.json() as { stats?: typeof stats };
         if (data.stats) setStats(data.stats);
       } catch {} finally { setLoading(false); }

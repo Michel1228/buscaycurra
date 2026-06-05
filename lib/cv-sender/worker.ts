@@ -67,6 +67,13 @@ interface CVDocument {
  * @param job - Job de BullMQ con todos los datos del envío
  */
 async function processCVJob(job: Job<CVJobData>): Promise<void> {
+  // Garantizar que el job tiene ID antes de procesar (evita que updateSendStatus sin filtro actualice todo)
+  if (!job.id) {
+    console.error("[Worker] Job sin ID asignado — abortando procesamiento");
+    throw new Error("Job sin ID asignado");
+  }
+  const jobId = job.id;
+
   const { userId, companyName, companyEmail, companyUrl, jobTitle, useAIPersonalization } = job.data;
 
   console.log(`[Worker] Procesando job ${job.id}: ${userId} → ${companyName} (${companyEmail})`);
@@ -163,7 +170,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
     company_name: companyName,
     company_url: companyUrl,
     job_title: jobTitle,
-    job_id: job.id,
+    job_id: jobId,
   });
 
   await job.updateProgress(70);
@@ -189,7 +196,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   if (!emailResult.success) {
     // Actualizamos el estado a fallido en Supabase
     if (recordId) {
-      await updateSendStatus(job.id!, "fallido", emailResult.error);
+      await updateSendStatus(jobId, "fallido", emailResult.error);
     }
     throw new Error(`Error enviando email a ${companyEmail}: ${emailResult.error}`);
   }
@@ -201,7 +208,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   // Actualizar estado en Supabase a "enviado"
   if (recordId) {
-    await updateSendStatus(job.id!, "enviado");
+    await updateSendStatus(jobId, "enviado");
   }
 
   // Enviar confirmación al usuario

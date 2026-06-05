@@ -21,6 +21,11 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 /** Email de remitente (configurable en variables de entorno) */
 const FROM_EMAIL = process.env.FROM_EMAIL ?? "noreply@buscaycurra.es";
 
+/** Elimina caracteres de control MIME para prevenir header injection */
+function sanitizeEmailHeader(value: string): string {
+  return (value || "").replace(/[\r\n\t]/g, " ").trim().slice(0, 200);
+}
+
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 /** Datos del CV a enviar */
@@ -64,10 +69,10 @@ export async function sendCVEmail(
 
   try {
     const { data, error } = await resend.emails.send({
-      from: `${cvData.userName} via BuscayCurra <${FROM_EMAIL}>`,
+      from: `${sanitizeEmailHeader(cvData.userName)} via BuscayCurra <${FROM_EMAIL}>`,
       to: [to],
-      reply_to: cvData.userEmail, // Las respuestas van directamente al candidato
-      subject,
+      reply_to: cvData.userEmail,
+      subject: sanitizeEmailHeader(subject),
       html: buildCVEmailHTML(cvData, coverLetter, companyName),
       attachments: [
         {
@@ -190,7 +195,7 @@ function buildCVEmailHTML(
                   <a href="mailto:${cvData.userEmail}" style="color:#2563EB;text-decoration:none;">${cvData.userEmail}</a>
                 </p>
                 ${cvData.userPhone ? `<p style="margin:4px 0 0;color:#64748b;font-size:14px;">📞 ${cvData.userPhone}</p>` : ""}
-                ${cvData.userLinkedIn ? `<p style="margin:4px 0 0;font-size:14px;"><a href="${cvData.userLinkedIn}" style="color:#2563EB;text-decoration:none;">🔗 LinkedIn</a></p>` : ""}
+                ${cvData.userLinkedIn && /^https:\/\/(www\.)?linkedin\.com\//.test(cvData.userLinkedIn) ? `<p style="margin:4px 0 0;font-size:14px;"><a href="${cvData.userLinkedIn}" style="color:#2563EB;text-decoration:none;">🔗 LinkedIn</a></p>` : ""}
               </div>
             </td>
           </tr>

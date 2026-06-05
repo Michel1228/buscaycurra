@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export async function GET(request: NextRequest) {
-  const secret = new URL(request.url).searchParams.get("secret");
+  const secret = request.headers.get("x-admin-secret") ?? new URL(request.url).searchParams.get("secret");
   if (secret !== process.env.ADMIN_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

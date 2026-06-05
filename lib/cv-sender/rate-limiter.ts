@@ -10,7 +10,6 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { RATE_LIMITS } from "./queue";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

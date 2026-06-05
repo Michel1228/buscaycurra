@@ -45,8 +45,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Máximo 5 MB" }, { status: 400 });
     }
 
+    // Validar magic bytes del PDF antes de subir (%PDF = 0x25 0x50 0x44 0x46)
+    const tempBuffer = await archivo.arrayBuffer();
+    const header = new Uint8Array(tempBuffer, 0, 4);
+    if (header[0] !== 0x25 || header[1] !== 0x50 || header[2] !== 0x44 || header[3] !== 0x46) {
+      return NextResponse.json({ error: "El archivo no es un PDF válido" }, { status: 400 });
+    }
+
     // Upload to Storage
-    const buffer = await archivo.arrayBuffer();
+    const buffer = tempBuffer;
     const rutaArchivo = `${user.id}/cv.pdf`;
 
     const { error: errorSubida } = await supabaseAdmin.storage
@@ -64,7 +71,7 @@ export async function POST(request: NextRequest) {
     // Get signed URL
     const { data: urlData } = await supabaseAdmin.storage
       .from("cvs")
-      .createSignedUrl(rutaArchivo, 60 * 60 * 24 * 365);
+      .createSignedUrl(rutaArchivo, 60 * 60 * 24 * 7); // 7 días — regenerar cuando se necesite
 
     // Try to save cv_url in profiles (optional - column may not exist)
     try {

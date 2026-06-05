@@ -1460,7 +1460,7 @@ export default function EmigrarPage() {
         </div>
 
         {/* Tabs */}
-        <div className="grid grid-cols-4 gap-1 rounded-xl p-1" style={{ background: "#1a1f2e" }}>
+        <div className="grid grid-cols-5 gap-1 rounded-xl p-1" style={{ background: "#1a1f2e" }}>
           {PESTAÑAS.map(t => (
             <button
               key={t.id}

@@ -80,10 +80,12 @@ const niveles = [
 ];
 
 const colorEstado: Record<string, { bg: string; text: string }> = {
-  pendiente: { bg: "#f0c04020", text: "#f0c040" },
-  enviado: { bg: "#7ed56f20", text: "#7ed56f" },
-  visto: { bg: "#a070d020", text: "#a070d0" },
-  respuesta: { bg: "#60d09020", text: "#60d090" },
+  pendiente:  { bg: "#f0c04020", text: "#f0c040" },
+  enviado:    { bg: "#7ed56f20", text: "#7ed56f" },
+  visto:      { bg: "#a070d020", text: "#a070d0" },
+  respondido: { bg: "#60d09020", text: "#60d090" },
+  fallido:    { bg: "#ef444420", text: "#f87171" },
+  cancelado:  { bg: "#50504020", text: "#706a58" },
 };
 
 export default function DashboardPage() {
@@ -134,13 +136,23 @@ export default function DashboardPage() {
       let todosEnvios: { empresa: string; estado: string; creado_en: string }[] = [];
       try {
         const { data: envios } = await getSupabaseBrowser().from("cv_sends")
-          .select("id, empresa, puesto, estado, creado_en")
-          .eq("user_id", user.id).order("creado_en", { ascending: false }).limit(5);
-        if (envios) enviosData = envios as EnvioCV[];
+          .select("id, company_name, job_title, status, created_at")
+          .eq("user_id", user.id).order("created_at", { ascending: false }).limit(5);
+        if (envios) enviosData = envios.map(e => ({
+          id: e.id,
+          empresa: e.company_name ?? "",
+          puesto: e.job_title ?? "",
+          estado: e.status ?? "pendiente",
+          creado_en: e.created_at ?? "",
+        }));
 
         const { data: todos } = await getSupabaseBrowser().from("cv_sends")
-          .select("empresa, estado, creado_en").eq("user_id", user.id);
-        if (todos) todosEnvios = todos;
+          .select("company_name, status, created_at").eq("user_id", user.id);
+        if (todos) todosEnvios = todos.map(e => ({
+          empresa: e.company_name ?? "",
+          estado: e.status ?? "",
+          creado_en: e.created_at ?? "",
+        }));
       } catch { /* cv_sends table may not exist */ }
 
       setUltimosEnvios(enviosData);

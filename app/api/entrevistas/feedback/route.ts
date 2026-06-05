@@ -25,14 +25,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "pregunta y respuesta requeridos" }, { status: 400 });
     }
 
+    // Sanitizar inputs para prevenir prompt injection
+    const sectorSafe = String(sector ?? "general").replace(/[^\w\s\-áéíóúüñÁÉÍÓÚÜÑ]/g, "").slice(0, 50);
+    const preguntaSafe = String(pregunta).replace(/[\r\n]/g, " ").slice(0, 300);
+    const respuestaSafe = String(respuesta).replace(/[\r\n]{3,}/g, "\n\n").slice(0, 1500);
+
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "GROQ_API_KEY no configurada" }, { status: 500 });
 
-    const prompt = `[ESPAÑOL OBLIGATORIO] Eres un coach de entrevistas experto en el sector ${sector || "general"} en España. Analiza esta respuesta de entrevista y da feedback constructivo.
+    const prompt = `[ESPAÑOL OBLIGATORIO] Eres un coach de entrevistas experto en el sector ${sectorSafe} en España. Analiza esta respuesta de entrevista y da feedback constructivo.
 
-PREGUNTA: "${pregunta}"
+PREGUNTA: "${preguntaSafe}"
 
-RESPUESTA DEL CANDIDATO: "${respuesta.slice(0, 1500)}"
+RESPUESTA DEL CANDIDATO: "${respuestaSafe}"
 
 Da feedback EN ESPAÑOL en este formato:
 ✅ Lo que hiciste bien: [1-2 frases]

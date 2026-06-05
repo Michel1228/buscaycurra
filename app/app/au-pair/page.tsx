@@ -233,7 +233,7 @@ const PAISES_AUPAIR = [
     seguro: "INPS (seguro social italiano) — la familia gestiona el alta",
     clases: "Clases de italiano recomendadas — Università per Stranieri de Perugia o Siena",
     ley: "Regulado: Contratto Nazionale di Lavoro Domestico (CCNL Colf)",
-    enlace: { texto: "INPS — Trabajadores domésticos Italia", url: "https://www.inps.it/it/it/dati-e-bilanci/dati-statistici-e-attuariali/osservatori/collaboratori-domestici.html" },
+    enlace: { texto: "INPS — Colf e badanti: cómo darte de alta", url: "https://www.inps.it/it/it/dettaglio-scheda.schede-servizio-e-prestazioni.50281.colf-e-badanti---rapporto-di-lavoro.html" },
   },
   {
     flag: "🇵🇹",

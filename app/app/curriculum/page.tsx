@@ -112,6 +112,7 @@ export default function CurriculumPage() {
       extractData.append("file", file);
       const extractRes = await fetch("/api/cv/extraer", {
         method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: extractData,
       });
 
@@ -307,7 +308,7 @@ export default function CurriculumPage() {
         const cvData = { ...buildCVData(), perfilProfesional: perfilMejorado || cvMejorado.slice(0, 500) };
         const genRes = await fetch("/api/cv/generar-pdf", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(cvData),
         });
         const genData = await genRes.json();
@@ -340,10 +341,11 @@ export default function CurriculumPage() {
         htmlFinal = htmlFinal.split(fotoUrl).join(b64);
       } catch { /* usar URL original si falla */ }
     }
-    const win = window.open("", "_blank");
+    const htmlBlob = new Blob([htmlFinal], { type: "text/html; charset=utf-8" });
+    const blobUrl = URL.createObjectURL(htmlBlob);
+    const win = window.open(blobUrl, "_blank");
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     if (win) {
-      win.document.write(htmlFinal);
-      win.document.close();
       setTimeout(() => {
         try { win.print(); } catch { /* mobile may block */ }
       }, 1500);

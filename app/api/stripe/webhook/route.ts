@@ -54,6 +54,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Idempotencia: evitar procesar el mismo evento dos veces ─────────────
+    try {
+      const { data: existing } = await supabaseAdmin
+        .from("stripe_events")
+        .select("id")
+        .eq("id", event.id)
+        .maybeSingle();
+      if (existing) {
+        return NextResponse.json({ recibido: true, idempotent: true });
+      }
+      await supabaseAdmin.from("stripe_events").insert({ id: event.id });
+    } catch {
+      // La tabla puede no existir — continuar de todas formas
+    }
+
     // ── Procesar eventos de Stripe ───────────────────────────────────────────
 
     switch (event.type) {
@@ -141,6 +156,20 @@ export async function POST(request: NextRequest) {
           console.error("[stripe/webhook] Error al resetear plan:", errorUpdate.message);
         } else {
           console.log(`[stripe/webhook] Plan reseteado a 'free' para customer ${customerId}`);
+        }
+        break;
+      }
+
+      // ── Pago recurrente fallido: marcar plan como past_due ───────────────
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as { id: string })?.id;
+        if (customerId) {
+          await supabaseAdmin
+            .from("profiles")
+            .update({ plan: "past_due", updated_at: new Date().toISOString() })
+            .eq("stripe_customer_id", customerId);
+          console.log(`[stripe/webhook] Pago fallido — plan marcado como past_due para customer ${customerId}`);
         }
         break;
       }

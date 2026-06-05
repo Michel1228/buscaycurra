@@ -85,13 +85,25 @@ const SUGERENCIAS = [
   { icon: "📄", label: "Subir mi CV", msg: "__SUBIR_CV__" },
 ];
 
+function sanitizeGusiHtml(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, "")
+    .replace(/javascript\s*:/gi, "about:")
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "");
+}
+
 export default function GusiChat() {
   const [abierto, setAbierto] = useState(false);
   const [logueado, setLogueado] = useState<boolean | null>(null);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
 
-  // Verificar login al abrir
+  const inicializadoRef = useRef(false);
+
+  // Verificar login — solo una vez al montar (no resetear en cada toggle del chat)
   useEffect(() => {
+    if (inicializadoRef.current) return;
+    inicializadoRef.current = true;
     async function checkAuth() {
       try {
         const { data: { user } } = await getSupabaseBrowser().auth.getUser();
@@ -312,7 +324,7 @@ export default function GusiChat() {
                       border: m.role === "gusi" ? "1px solid rgba(126,213,111,0.1)" : "none",
                       fontWeight: m.role === "user" ? 500 : 400,
                     }}
-                    dangerouslySetInnerHTML={{ __html: formatGusiText(m.text) }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeGusiHtml(formatGusiText(m.text)) }}
                   />
                 </div>
                 {/* Botón CV visual cuando la entrevista termina */}

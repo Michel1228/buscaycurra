@@ -24,7 +24,9 @@ services:
     container_name: buscaycurra-redis
     restart: unless-stopped         # Se reinicia automáticamente si falla
     ports:
-      - "6379:6379"                 # Puerto Redis accesible en localhost:6379
+      - "127.0.0.1:6379:6379"       # Solo loopback — Redis no accesible desde internet
+    environment:
+      - TZ=Europe/Madrid
     volumes:
       - redis_data:/data            # Volumen persistente: los datos no se pierden al reiniciar
     command: redis-server --appendonly yes  # Persistencia en disco activada

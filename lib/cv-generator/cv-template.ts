@@ -1,6 +1,6 @@
 /**
  * lib/cv-generator/cv-template.ts — Plantilla HTML profesional de CV
- * 
+ *
  * Diseño de referencia: CV de Erick De Leon González
  * - Dos columnas: sidebar 30% (gris) + contenido 70% (blanco)
  * - Foto circular con borde azul arriba
@@ -13,14 +13,14 @@
 export interface CVData {
   nombre: string;
   apellidos?: string;
-  subtitulo?: string; // "Operario · Atención al Cliente"
+  subtitulo?: string;
   telefono?: string;
   email?: string;
   ciudad?: string;
   fotoUrl?: string;
   perfilProfesional?: string;
   aptitudes?: string[];
-  idiomas?: { nombre: string; nivel: number }[]; // nivel 0-100
+  idiomas?: { nombre: string; nivel: number }[];
   experiencia?: {
     fechas: string;
     puesto: string;
@@ -33,23 +33,41 @@ export interface CVData {
     centro: string;
     ubicacion?: string;
   }[];
-  // Color personalizable
-  accentColor?: string; // default #3B5FE0
+  accentColor?: string;
+}
+
+// Escapa caracteres HTML especiales para prevenir XSS
+function escapeHtml(str: string | undefined | null): string {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Valida que accentColor sea un color CSS seguro (hex o rgb)
+function sanitizeColor(color: string | undefined): string {
+  if (!color) return "#3B5FE0";
+  const hex = /^#[0-9A-Fa-f]{3,8}$/.test(color.trim());
+  const rgb = /^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/.test(color.trim());
+  return (hex || rgb) ? color.trim() : "#3B5FE0";
 }
 
 export function generarCVHTML(data: CVData): string {
-  const accent = data.accentColor || "#3B5FE0";
+  const accent = sanitizeColor(data.accentColor);
 
   const aptitudesHTML = (data.aptitudes || [])
-    .map(a => `<span class="aptitude-pill">${a}</span>`)
+    .map(a => `<span class="aptitude-pill">${escapeHtml(a)}</span>`)
     .join("\n              ");
 
   const idiomasHTML = (data.idiomas || [])
     .map(i => `
             <div class="idioma-item">
-              <div class="idioma-name">${i.nombre}</div>
+              <div class="idioma-name">${escapeHtml(i.nombre)}</div>
               <div class="progress-bar-track">
-                <div class="progress-bar-fill" style="width: ${i.nivel}%"></div>
+                <div class="progress-bar-fill" style="width: ${Math.min(100, Math.max(0, i.nivel))}%"></div>
               </div>
             </div>`)
     .join("");
@@ -57,13 +75,13 @@ export function generarCVHTML(data: CVData): string {
   const experienciaHTML = (data.experiencia || [])
     .map(exp => {
       const bullets = (exp.descripcion || [])
-        .map(d => `<li>${d}</li>`)
+        .map(d => `<li>${escapeHtml(d)}</li>`)
         .join("\n                  ");
       return `
               <div class="experience-entry">
-                <span class="date-badge">${exp.fechas}</span>
-                <div class="job-title">${exp.puesto}</div>
-                <div class="job-company">${exp.empresa}${exp.ubicacion ? ` · ${exp.ubicacion}` : ""}</div>
+                <span class="date-badge">${escapeHtml(exp.fechas)}</span>
+                <div class="job-title">${escapeHtml(exp.puesto)}</div>
+                <div class="job-company">${escapeHtml(exp.empresa)}${exp.ubicacion ? ` · ${escapeHtml(exp.ubicacion)}` : ""}</div>
                 ${bullets ? `<ul class="job-bullets">${bullets}</ul>` : ""}
               </div>`;
     })
@@ -72,30 +90,32 @@ export function generarCVHTML(data: CVData): string {
   const formacionHTML = (data.formacion || [])
     .map(f => `
               <div class="education-entry">
-                <div class="edu-title">${f.titulo}</div>
-                <div class="edu-center">${f.centro}${f.ubicacion ? ` · ${f.ubicacion}` : ""}</div>
+                <div class="edu-title">${escapeHtml(f.titulo)}</div>
+                <div class="edu-center">${escapeHtml(f.centro)}${f.ubicacion ? ` · ${escapeHtml(f.ubicacion)}` : ""}</div>
               </div>`)
     .join("");
 
-  const fotoSection = data.fotoUrl
-    ? `<img src="${data.fotoUrl}" alt="Foto" />`
+  // Validar foto URL — solo https
+  const fotoUrlSafe = data.fotoUrl && /^https?:\/\//.test(data.fotoUrl) ? data.fotoUrl : null;
+  const fotoSection = fotoUrlSafe
+    ? `<img src="${escapeHtml(fotoUrlSafe)}" alt="Foto" />`
     : `<div class="photo-placeholder">📷<br>Foto</div>`;
 
   const contactItems = [
-    data.telefono ? `<li><span class="contact-icon">■</span>${data.telefono}</li>` : "",
-    data.email ? `<li><span class="contact-icon">✉</span>${data.email}</li>` : "",
-    data.ciudad ? `<li><span class="contact-icon">■</span>${data.ciudad}</li>` : "",
+    data.telefono ? `<li><span class="contact-icon">■</span>${escapeHtml(data.telefono)}</li>` : "",
+    data.email ? `<li><span class="contact-icon">✉</span>${escapeHtml(data.email)}</li>` : "",
+    data.ciudad ? `<li><span class="contact-icon">■</span>${escapeHtml(data.ciudad)}</li>` : "",
   ].filter(Boolean).join("\n              ");
 
   const footerParts = [data.nombre, data.apellidos, data.telefono, data.email, data.ciudad]
-    .filter(Boolean).join(" · ");
+    .filter(Boolean).map(p => escapeHtml(p)).join(" · ");
 
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CV - ${data.nombre}${data.apellidos ? " " + data.apellidos : ""}</title>
+<title>CV - ${escapeHtml(data.nombre)}${data.apellidos ? " " + escapeHtml(data.apellidos) : ""}</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4 portrait; margin: 0; }
@@ -161,9 +181,9 @@ export function generarCVHTML(data: CVData): string {
         ${fotoSection}
       </div>
       <div class="name-block">
-        <div class="first-name">${data.nombre}</div>
-        ${data.apellidos ? `<div class="last-name">${data.apellidos}</div>` : ""}
-        ${data.subtitulo ? `<div class="subtitle">${data.subtitulo}</div>` : ""}
+        <div class="first-name">${escapeHtml(data.nombre)}</div>
+        ${data.apellidos ? `<div class="last-name">${escapeHtml(data.apellidos)}</div>` : ""}
+        ${data.subtitulo ? `<div class="subtitle">${escapeHtml(data.subtitulo)}</div>` : ""}
       </div>
 
       ${contactItems ? `
@@ -189,7 +209,7 @@ export function generarCVHTML(data: CVData): string {
     <div class="right-column">
       ${data.perfilProfesional ? `
       <h2 class="section-title">Perfil Profesional</h2>
-      <p class="profile-text">${data.perfilProfesional}</p>` : ""}
+      <p class="profile-text">${escapeHtml(data.perfilProfesional)}</p>` : ""}
 
       ${(data.experiencia || []).length > 0 ? `
       <h2 class="section-title">Experiencia Laboral</h2>

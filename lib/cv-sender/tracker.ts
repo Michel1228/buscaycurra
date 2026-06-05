@@ -139,8 +139,10 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   // Fechas de referencia para filtrar
   const ahora = new Date();
   const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).toISOString();
-  const inicioSemana = new Date(ahora.setDate(ahora.getDate() - ahora.getDay())).toISOString();
-  const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  const semanaCopia = new Date(ahora);
+  semanaCopia.setDate(ahora.getDate() - ahora.getDay());
+  const inicioSemana = new Date(semanaCopia.getFullYear(), semanaCopia.getMonth(), semanaCopia.getDate()).toISOString();
+  const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
 
   // Obtenemos todos los envíos del usuario (solo los enviados)
   const { data, error } = await getSupabase()

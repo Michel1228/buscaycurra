@@ -33,8 +33,26 @@ export async function GET(req: NextRequest) {
 
 // ─── POST: mensajes entrantes de WhatsApp ─────────────────────────────────────
 export async function POST(req: NextRequest) {
+  // Verificar firma HMAC-SHA256 de Meta (X-Hub-Signature-256)
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-hub-signature-256");
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
+  if (signature && appSecret) {
+    const { createHmac, timingSafeEqual } = await import("crypto");
+    const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
+    try {
+      const sigBuf = Buffer.from(signature);
+      const expBuf = Buffer.from(expected);
+      if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) {
+        return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
+      }
+    } catch {
+      return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
+    }
+  }
+
   try {
-    const body = await req.json();
+    const body = JSON.parse(rawBody);
 
     const entry = body?.entry?.[0];
     const changes = entry?.changes?.[0];

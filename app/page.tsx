@@ -4,8 +4,9 @@
  */
 
 import Link from "next/link";
-import LogoGusano from "@/components/LogoGusano";
+import LogoGuzzi from "@/components/LogoGuzzi";
 import LandingFondo from "@/components/LandingFondo";
+import PWAInstallButton from "@/components/PWAInstallButton";
 
 const pasos = [
   {
@@ -180,10 +181,11 @@ export default function LandingPage() {
       <header className="glass-warm sticky top-0 z-50" style={{ borderBottom: "1px solid rgba(126,213,111,0.12)" }}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <LogoGusano size={34} animated />
+            <LogoGuzzi size={36} animated />
             <span className="font-bold text-lg" style={{ color: "#7ed56f" }}>BuscayCurra</span>
           </div>
           <div className="flex items-center gap-2">
+            <PWAInstallButton />
             <Link href="/precios" className="px-3 py-1.5 text-sm font-bold rounded-xl transition"
               style={{ color: "#f0c040", border: "1px solid rgba(240,192,64,0.3)", background: "rgba(240,192,64,0.06)" }}>
               ⭐ Precios
@@ -218,7 +220,7 @@ export default function LandingPage() {
             {/* Oruga animada */}
             <div className="flex justify-center mb-8">
               <div className="animate-float" style={{ filter: "drop-shadow(0 12px 30px rgba(126,213,111,0.3))" }}>
-                <LogoGusano size={110} animated />
+                <LogoGuzzi size={120} animated />
               </div>
             </div>
 
@@ -593,7 +595,7 @@ export default function LandingPage() {
           <div className="max-w-2xl mx-auto">
             <div className="flex justify-center mb-6 animate-float">
               <div style={{ filter: "drop-shadow(0 8px 24px rgba(126,213,111,0.3))" }}>
-                <LogoGusano size={80} animated />
+                <LogoGuzzi size={80} animated />
               </div>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "#f0ebe0" }}>
@@ -614,7 +616,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-2">
-              <LogoGusano size={24} />
+              <LogoGuzzi size={24} />
               <span className="font-bold text-sm" style={{ color: "#7ed56f" }}>BuscayCurra</span>
             </div>
             <div className="flex flex-wrap gap-5 text-sm">

@@ -28,6 +28,7 @@ const UA = "Mozilla/5.0 (compatible; BuscayCurraBot/1.0; +https://buscaycurra.es
 
 // Bloquear IPs privadas, loopback, link-local y metadata de cloud (SSRF)
 const PRIVATE_IP_RE = /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$|fc00:|fd)/i;
+const CLOUD_METADATA_HOSTS = ["metadata.google.internal", "instance-data", "169.254.169.254", "metadata.azure.com"];
 
 function esUrlSegura(rawUrl: string): boolean {
   try {
@@ -35,6 +36,7 @@ function esUrlSegura(rawUrl: string): boolean {
     if (!["http:", "https:"].includes(parsed.protocol)) return false;
     const host = parsed.hostname.toLowerCase();
     if (host === "localhost" || PRIVATE_IP_RE.test(host)) return false;
+    if (CLOUD_METADATA_HOSTS.some(h => host.includes(h))) return false;
     return true;
   } catch {
     return false;
@@ -90,7 +92,7 @@ export async function extraerInfoEmpresa(url: string): Promise<DatosEmpresa> {
 
   // 5. Si no encontramos email en la home, intentar cargar la página de empleo
   let emailFinal = emailRrhh;
-  if (!emailFinal && paginaEmpleo) {
+  if (!emailFinal && paginaEmpleo && esUrlSegura(paginaEmpleo)) {
     try {
       const controller2 = new AbortController();
       const tid2 = setTimeout(() => controller2.abort(), 6000);

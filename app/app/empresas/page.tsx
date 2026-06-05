@@ -56,7 +56,11 @@ export default function EmpresasPage() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
       try {
-        const res = await fetch(`/api/cv-sender/status?userId=${user.id}`);
+        const { data: { session: s } } = await getSupabaseBrowser().auth.getSession();
+        const token = s?.access_token ?? "";
+        const res = await fetch("/api/cv-sender/status", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.rateLimitInfo) setRateLimit(data.rateLimitInfo);

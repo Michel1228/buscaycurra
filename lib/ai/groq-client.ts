@@ -62,34 +62,19 @@ function obtenerClienteGroq(): Groq | null {
 // ==========================================
 
 /**
- * Comprueba si hemos superado el límite diario de Groq
- * Devuelve true si podemos hacer más llamadas, false si no
+ * Incrementa el contador atómicamente y verifica el límite diario de Groq.
+ * Patrón atómico: INCR primero, luego comparar — evita race condition TOCTOU.
  */
 async function podemosUsarGroq(): Promise<boolean> {
   const fecha = new Date().toISOString().split("T")[0];
   const clave = `groq:calls:${fecha}`;
-
-  const llamadasStr = await get(clave);
-  const llamadasHoy = parseInt(llamadasStr || "0");
-
-  if (llamadasHoy >= LIMITE_DIARIO_GROQ) {
-    console.warn(`⚠️  Groq: límite diario alcanzado (${llamadasHoy}/${LIMITE_DIARIO_GROQ})`);
+  const total = await incrementar(clave, 86400); // atómico + TTL 24h
+  if (total > LIMITE_DIARIO_GROQ) {
+    console.warn(`⚠️  Groq: límite diario alcanzado (${total}/${LIMITE_DIARIO_GROQ})`);
     return false;
   }
-
-  return true;
-}
-
-/**
- * Registra una llamada a Groq en el contador diario
- */
-async function registrarLlamadaGroq(): Promise<void> {
-  const fecha = new Date().toISOString().split("T")[0];
-  const clave = `groq:calls:${fecha}`;
-
-  // El contador expira a medianoche (86400 segundos = 24 horas)
-  const total = await incrementar(clave, 86400);
   console.log(`📊 Groq llamadas hoy: ${total}/${LIMITE_DIARIO_GROQ}`);
+  return true;
 }
 
 // ==========================================
@@ -152,8 +137,7 @@ export async function llamarGroq(
       max_tokens: opciones.maxTokens ?? 2048,
     });
 
-    // Registrar la llamada en el contador
-    await registrarLlamadaGroq();
+    // El contador ya fue incrementado en podemosUsarGroq()
 
     const contenido = respuesta.choices[0]?.message?.content || "";
     console.log(`✅ Groq respondió (${contenido.length} caracteres)`);

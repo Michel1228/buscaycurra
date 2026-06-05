@@ -18,8 +18,71 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { scheduleCV } from "@/lib/cv-sender/scheduler";
+import { scheduleCV, getNextBusinessHour } from "@/lib/cv-sender/scheduler";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
+import { addCVJob } from "@/lib/cv-sender/queue";
+import { canSendToCompany } from "@/lib/cv-sender/tracker";
+
+// ─── Programa empresas adicionales en background para "cada4días" ─────────────
+async function programarEmpresasAdicionales(opts: {
+  userId: string;
+  jobTitle: string;
+  companyEmail: string; // excluir esta empresa (ya programada)
+  priority?: "normal" | "prioritario";
+  useAIPersonalization?: boolean;
+  userPlan: "free" | "basico" | "pro" | "empresa";
+}) {
+  try {
+    const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
+    const ofertas = await buscarOfertasReales(opts.jobTitle, "España", 15);
+
+    // Filtrar: con email, no contactada recientemente, distinta a la ya programada
+    const candidatas = ofertas.filter(o =>
+      o.emailEmpresa &&
+      o.emailEmpresa !== opts.companyEmail
+    );
+
+    let diasOffset = 4;
+    let programadas = 0;
+
+    for (const oferta of candidatas) {
+      if (programadas >= 4) break; // max 4 envíos automáticos adicionales
+      if (!oferta.emailEmpresa) continue;
+
+      const puedeEnviar = await canSendToCompany(opts.userId, oferta.emailEmpresa);
+      if (!puedeEnviar) continue;
+
+      const rateLimitOk = await checkRateLimit(opts.userId, opts.userPlan, oferta.emailEmpresa);
+      if (!rateLimitOk.allowed) continue;
+
+      // Calcular fecha: diasOffset días laborables desde ahora
+      const fechaBase = new Date();
+      fechaBase.setDate(fechaBase.getDate() + diasOffset);
+      const fechaEnvio = getNextBusinessHour(fechaBase);
+      const delayMs = Math.max(0, fechaEnvio.getTime() - Date.now());
+
+      await addCVJob({
+        userId: opts.userId,
+        companyName: oferta.empresa,
+        companyEmail: oferta.emailEmpresa,
+        companyUrl: oferta.url || "",
+        jobTitle: oferta.titulo || opts.jobTitle,
+        priority: opts.priority ?? "normal",
+        useAIPersonalization: opts.useAIPersonalization ?? true,
+        scheduledFor: fechaEnvio.getTime(),
+        userPlan: opts.userPlan,
+        frecuencia: "cada4dias",
+      }, delayMs, 10);
+
+      programadas++;
+      diasOffset += 4 + Math.floor(Math.random() * 2); // 4-5 días entre cada envío
+    }
+
+    console.log(`[AutoSend] Programados ${programadas} envíos adicionales para ${opts.userId}`);
+  } catch (err) {
+    console.warn("[AutoSend] No se pudieron programar envíos adicionales:", (err as Error).message);
+  }
+}
 
 // ─── POST /api/cv-sender/send ─────────────────────────────────────────────────
 
@@ -47,11 +110,12 @@ export async function POST(request: NextRequest) {
       jobTitle?: string;
       priority?: "normal" | "prioritario";
       useAIPersonalization?: boolean;
+      frecuencia?: "unico" | "cada4dias";
     };
 
     // userId siempre del token — nunca del body
     const userId = user.id;
-    const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization } = body;
+    const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization, frecuencia } = body;
 
     if (!companyEmail) {
       return NextResponse.json(
@@ -125,12 +189,21 @@ export async function POST(request: NextRequest) {
       {
         priority: priority ?? "normal",
         useAIPersonalization: useAIPersonalization ?? true,
+        frecuencia: frecuencia ?? "unico",
       }
     );
 
     // Si scheduleCV devuelve un error
     if ("error" in resultado) {
       return NextResponse.json({ error: resultado.error }, { status: 400 });
+    }
+
+    // ── Si frecuencia = "cada4dias", buscar y programar empresas adicionales ──
+    // Se lanza en background sin bloquear la respuesta al usuario
+    if (frecuencia === "cada4dias" && jobTitle) {
+      void programarEmpresasAdicionales({
+        userId, jobTitle, companyEmail, priority, useAIPersonalization, userPlan,
+      });
     }
 
     // ── Respuesta exitosa ─────────────────────────────────────────────────

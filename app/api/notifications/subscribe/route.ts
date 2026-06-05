@@ -8,28 +8,43 @@ import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
-function getSupabase() {
+function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 }
 
+async function verificarAuth(req: NextRequest) {
+  const supabasePublico = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const { data: { user }, error } = await supabasePublico.auth.getUser(authHeader.slice(7));
+  if (error || !user) return null;
+  return user;
+}
+
 export async function POST(req: NextRequest) {
+  const user = await verificarAuth(req);
+  if (!user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   try {
-    const { userId, subscription } = await req.json() as {
-      userId: string;
-      subscription: object;
-    };
-    if (!userId || !subscription) {
-      return NextResponse.json({ error: "userId y subscription requeridos" }, { status: 400 });
+    const body = await req.json() as { subscription?: object };
+    const { subscription } = body;
+    if (!subscription) {
+      return NextResponse.json({ error: "subscription requerida" }, { status: 400 });
     }
 
-    const supabase = getSupabase();
+    const supabase = getSupabaseAdmin();
     const { error } = await supabase
       .from("push_subscriptions")
       .upsert(
-        { user_id: userId, subscription: JSON.stringify(subscription), updated_at: new Date().toISOString() },
+        { user_id: user.id, subscription: JSON.stringify(subscription), updated_at: new Date().toISOString() },
         { onConflict: "user_id" }
       );
 
@@ -42,12 +57,14 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  try {
-    const { userId } = await req.json() as { userId: string };
-    if (!userId) return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+  const user = await verificarAuth(req);
+  if (!user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
 
-    const supabase = getSupabase();
-    await supabase.from("push_subscriptions").delete().eq("user_id", userId);
+  try {
+    const supabase = getSupabaseAdmin();
+    await supabase.from("push_subscriptions").delete().eq("user_id", user.id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
