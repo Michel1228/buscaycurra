@@ -31,9 +31,13 @@ export default function PerfilPage() {
       setUserId(session.user.id);
       setToken(session.access_token);
       setEmail(session.user.email ?? "");
+      // Nombre inmediato desde metadatos de sesión (sin esperar a la DB)
+      const nombreMeta = session.user.user_metadata?.full_name as string | undefined;
+      if (nombreMeta) setDatos(prev => ({ ...prev, nombre: nombreMeta }));
+
       const { data: p } = await getSupabaseBrowser().from("profiles")
         .select("full_name, phone, ciudad, sector").eq("id", session.user.id).single();
-      if (p) setDatos({ nombre: p.full_name ?? "", telefono: p.phone ?? "", ciudad: p.ciudad ?? "", sector: p.sector ?? "" });
+      if (p) setDatos({ nombre: p.full_name ?? nombreMeta ?? "", telefono: p.phone ?? "", ciudad: p.ciudad ?? "", sector: p.sector ?? "" });
     } catch { /* */ } finally { setCargando(false); }
   }, [router]);
 
@@ -48,8 +52,9 @@ export default function PerfilPage() {
 
   const iniciales = () => {
     const n = (datos.nombre || email || "").trim();
+    if (!n) return "";
     const p = n.split(" ").filter(Boolean);
-    if (!p.length) return "·";
+    if (!p.length) return "";
     return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
   };
 
@@ -63,7 +68,7 @@ export default function PerfilPage() {
         <div className="max-w-2xl mx-auto flex items-center gap-5">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
             style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
-            {iniciales()}
+            {iniciales() || <span style={{ opacity: 0.4, fontSize: "14px" }}>...</span>}
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>{datos.nombre || "Mi cuenta"}</h1>
