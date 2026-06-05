@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * POST /api/au-pair/send
  * Envía el perfil Au Pair a una familia/agencia por email

@@ -1,10 +1,10 @@
 // Punto de entrada del worker para el build de producción
 import "../lib/cv-sender/worker";
-import { redisConnection, getQueueStats } from "../lib/cv-sender/queue";
+import { getRedisConnection, getQueueStats } from "../lib/cv-sender/queue";
 
 async function start() {
   try {
-    await redisConnection.ping();
+    await getRedisConnection().ping();
     console.log("[Worker] Redis OK");
     const stats = await getQueueStats();
     console.log(`[Worker] Cola: ${stats.waiting} esperando, ${stats.active} activos`);

@@ -15,13 +15,14 @@
 import { addCVJob, getCvSenderQueue, CVJobData } from "./queue";
 import { checkRateLimit, getUserPlan } from "./rate-limiter";
 import { canSendToCompany } from "./tracker";
-import { analizarEmpresa, calcularEnvioOptimo, type CompanyIntel } from "./company-intel";
 
 // ─── Festivos Nacionales de España ───────────────────────────────────────────
 /**
  * Lista de festivos nacionales de España.
  * Formato: "MM-DD" (mes-día)
- * Viernes Santo se calcula automáticamente con el algoritmo de Pascua.
+ * ⚠️  ATENCIÓN: El Viernes Santo varía cada año (entre marzo y abril).
+ *     Actualiza "04-18" con la fecha correcta cada año o implementa
+ *     el algoritmo de cálculo de Pascua (algoritmo de Butcher/Meeus).
  */
 // Calcula el Viernes Santo de cualquier año (algoritmo de Butcher/Meeus)
 function calcularViernesSanto(year: number): string {
@@ -106,9 +107,6 @@ export interface ScheduleResult {
   scheduledFor: Date;
   positionInQueue: number;
   estimatedWaitMinutes: number;
-  companyIntel?: CompanyIntel; // Info de la empresa detectada (estrategia "optimo")
-  strategy: string; // Estrategia usada
-  horaLocalEmpresa?: string; // Hora local en destino cuando llegue el CV
 }
 
 // ─── Funciones Auxiliares de Tiempo ──────────────────────────────────────────
@@ -217,35 +215,8 @@ export async function scheduleCV(
     };
   }
 
-  // ── 3. Calcular estrategia de envío ──────────────────────────────────────
-  const strategy = preferences.strategy ?? "optimo"; // Por defecto: ventana óptima
-
-  let fechaEnvio: Date;
-  let companyIntel: CompanyIntel | undefined;
-  let horaLocalLlegada: string | undefined;
-
-  if (preferences.scheduledFor) {
-    // El usuario eligió fecha/hora exacta → respetarla siempre
-    fechaEnvio = preferences.scheduledFor;
-  } else if (strategy === "ahora") {
-    // Envío inmediato: 1 minuto desde ahora
-    fechaEnvio = new Date(Date.now() + 60_000);
-    companyIntel = analizarEmpresa(companyData.email, companyData.name, companyData.url);
-    horaLocalLlegada = fechaEnvio.toLocaleTimeString("es-ES", {
-      timeZone: companyIntel.timezone,
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } else {
-    // Estrategia "optimo": calcular ventana óptima en zona horaria de la empresa
-    companyIntel = analizarEmpresa(companyData.email, companyData.name, companyData.url);
-    fechaEnvio = calcularEnvioOptimo(companyIntel.timezone, companyIntel.ventanaOptima);
-    horaLocalLlegada = fechaEnvio.toLocaleTimeString("es-ES", {
-      timeZone: companyIntel.timezone,
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
+  // ── 3. Calcular cuándo enviar ────────────────────────────────────────────
+  const fechaEnvio = getNextBusinessHour();
   const ahora = Date.now();
   const delayMs = Math.max(0, fechaEnvio.getTime() - ahora);
 
@@ -283,9 +254,6 @@ export async function scheduleCV(
     scheduledFor: fechaEnvio,
     positionInQueue: posicion,
     estimatedWaitMinutes: Math.ceil(delayMs / 60_000),
-    strategy,
-    companyIntel,
-    horaLocalEmpresa: horaLocalLlegada,
   };
 }
 
@@ -322,7 +290,7 @@ export async function scheduleBulkCV(
     // Añadimos un offset incremental: primera empresa en hora X, segunda en X+15min, etc.
     const ahora = new Date();
     ahora.setMinutes(ahora.getMinutes() + offsetMinutos);
-    const fechaBase = preferences.scheduledFor ?? getNextBusinessHour(ahora);
+    const fechaBase = getNextBusinessHour(ahora);
 
     const jobData: CVJobData = {
       userId,
@@ -370,7 +338,6 @@ export async function scheduleBulkCV(
           scheduledFor: fechaBase,
           positionInQueue: waitingCount,
           estimatedWaitMinutes: Math.ceil(delayMs / 60_000),
-          strategy: preferences.strategy ?? "optimo",
         },
       });
 

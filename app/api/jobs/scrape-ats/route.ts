@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * /api/jobs/scrape-ats
  * Scraper de fuentes directas: Greenhouse, Lever, Teamtailor

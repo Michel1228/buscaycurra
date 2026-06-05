@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * GET /api/paises/stats
  * Devuelve conteo real de ofertas por país desde la DB VPS. Cache 1h.

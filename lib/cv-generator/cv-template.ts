@@ -72,15 +72,7 @@ export function generarCVHTML(data: CVData): string {
             </div>`)
     .join("");
 
-  const idiomasHTML = idiomas
-    .map(i => `
-      <div class="idioma-item">
-        <div class="idioma-name">${i.nombre}</div>
-        <div class="idioma-bar-bg"><div class="idioma-bar-fill" style="width:${i.nivel || 80}%"></div></div>
-      </div>`)
-    .join("");
-
-  const experienciaHTML = experiencias
+  const experienciaHTML = (data.experiencia || [])
     .map(exp => {
       const bullets = (exp.descripcion || [])
         .map(d => `<li>${escapeHtml(d)}</li>`)
@@ -95,7 +87,7 @@ export function generarCVHTML(data: CVData): string {
     })
     .join("");
 
-  const formacionHTML = formaciones
+  const formacionHTML = (data.formacion || [])
     .map(f => `
               <div class="education-entry">
                 <div class="edu-title">${escapeHtml(f.titulo)}</div>
@@ -132,104 +124,47 @@ export function generarCVHTML(data: CVData): string {
   .cv-page { width: 794px; min-height: 1123px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; }
   .cv-body { display: flex; flex: 1; }
 
-  body { font-family:'Montserrat',sans-serif; background:#888; display:flex; justify-content:center; padding:20px; }
+  /* LEFT COLUMN */
+  .left-column { width: 30%; background: #1B2845; padding: 35px 22px 30px; display: flex; flex-direction: column; align-items: center; }
+  .photo-wrapper { width: 155px; height: 155px; border-radius: 50%; border: 3px solid ${accent}; overflow: hidden; margin-bottom: 18px; }
+  .photo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-placeholder { width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 10px; text-align: center; border-radius: 50%; }
+  .name-block { text-align: center; margin-bottom: 8px; }
+  .name-block .first-name { font-size: 21px; font-style: italic; font-weight: 600; color: #ffffff; line-height: 1.2; }
+  .name-block .last-name { font-size: 21px; font-style: italic; font-weight: 700; color: ${accent}; line-height: 1.2; }
+  .name-block .subtitle { font-size: 10.5px; color: rgba(255,255,255,0.65); font-weight: 400; margin-top: 6px; }
+  .sidebar-section-title { font-size: 12px; font-weight: 700; color: ${accent}; text-transform: uppercase; letter-spacing: 1.5px; align-self: flex-start; margin-top: 22px; margin-bottom: 12px; }
+  .contact-list { align-self: flex-start; list-style: none; }
+  .contact-list li { font-size: 10px; color: #cdd8e8; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
+  .contact-icon { color: ${accent}; font-size: 10px; flex-shrink: 0; margin-top: 1px; }
+  .aptitudes-list { align-self: flex-start; display: flex; flex-direction: column; gap: 7px; }
+  .aptitude-pill { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 18px; padding: 5px 16px; font-size: 10px; color: #e0eaf5; display: inline-block; align-self: flex-start; }
+  .idiomas-list { align-self: flex-start; width: 100%; }
+  .idioma-item { margin-bottom: 10px; }
+  .idioma-name { font-size: 10.5px; color: #cdd8e8; margin-bottom: 5px; }
+  .progress-bar-track { width: 100%; height: 5px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: ${accent}; border-radius: 3px; }
 
-  .cv-page {
-    width: 794px; min-height: 1123px;
-    background: #fff;
-    display: flex; flex-direction: column;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-  }
+  /* RIGHT COLUMN */
+  .right-column { width: 70%; padding: 38px 32px 30px 35px; }
+  .section-title { font-size: 14px; font-weight: 700; color: ${accent}; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .section-title::after { content: ''; flex: 1; height: 1.5px; background: ${accent}; }
+  .profile-text { font-size: 10.5px; color: #444; line-height: 1.65; margin-bottom: 22px; }
+  .experience-section { margin-bottom: 22px; }
+  .experience-entry { margin-bottom: 20px; }
+  .date-badge { display: inline-block; background: ${accent}; color: #fff; font-size: 9px; font-weight: 600; padding: 4px 14px; border-radius: 14px; margin-bottom: 6px; }
+  .job-title { font-size: 13px; font-weight: 700; color: #222; margin-bottom: 3px; }
+  .job-company { font-size: 10.5px; color: #777; font-style: italic; margin-bottom: 8px; }
+  .job-bullets { list-style: none; padding-left: 15px; }
+  .job-bullets li { font-size: 10px; color: #444; line-height: 1.65; margin-bottom: 3px; position: relative; padding-left: 12px; }
+  .job-bullets li::before { content: '●'; color: ${accent}; position: absolute; left: 0; font-size: 7px; top: 2px; }
+  .education-section { margin-bottom: 20px; }
+  .education-entry { margin-bottom: 15px; }
+  .edu-title { font-size: 12.5px; font-weight: 700; color: #222; }
+  .edu-center { font-size: 10.5px; color: #777; font-weight: 400; }
+  .cv-footer { background: #131e35; padding: 12px 30px; text-align: center; }
+  .cv-footer p { font-size: 9px; color: #fff; letter-spacing: 0.5px; }
 
-  .cv-body { display:flex; flex:1; }
-
-  /* ── SIDEBAR OSCURO ─────────────────────────── */
-  .left-col {
-    width: 30%; background: ${sidebarBg};
-    padding: 20px 14px 16px;
-    display: flex; flex-direction: column; align-items: center;
-    flex-shrink: 0;
-  }
-
-  .photo-wrap {
-    width: 100px; height: 100px; border-radius: 50%;
-    border: 3px solid ${accent};
-    overflow: hidden; margin-bottom: 10px; flex-shrink: 0;
-  }
-
-  .name-block { text-align:center; margin-bottom:12px; flex-shrink:0; }
-  .name-first  { font-size:14px; font-style:italic; font-weight:400; color:#c8d6f0; line-height:1.2; }
-  .name-last   { font-size:14px; font-weight:700;   color:#c8d6f0; line-height:1.3; }
-  .name-sub    { font-size:8.5px; color:rgba(200,214,240,0.6); margin-top:4px; }
-
-  .s-title {
-    font-size:9.5px; font-weight:700; color:${accent};
-    text-transform:uppercase; letter-spacing:1.5px;
-    align-self:flex-start; margin-bottom:3px; flex-shrink:0;
-  }
-  .s-divider { width:100%; height:1.5px; background:${accent}; margin-bottom:7px; }
-
-  .contact-list { align-self:flex-start; list-style:none; margin-bottom:12px; width:100%; }
-  .contact-list li { font-size:8.5px; color:#c8d6f0; margin-bottom:4px; display:flex; align-items:flex-start; gap:6px; line-height:1.4; word-break:break-all; }
-  .c-icon { color:${accent}; flex-shrink:0; margin-top:1px; }
-
-  .apt-list { align-self:flex-start; display:flex; flex-direction:column; gap:4px; margin-bottom:12px; width:100%; }
-  .apt-pill {
-    font-size:8px; color:#c8d6f0;
-    background:rgba(255,255,255,0.10);
-    border-radius:20px; padding:3px 10px;
-    display:inline-block; width:fit-content;
-    border:1px solid rgba(255,255,255,0.12);
-  }
-
-  .idiomas-list { align-self:flex-start; width:100%; margin-bottom:12px; }
-  .idioma-item  { margin-bottom:7px; }
-  .idioma-name  { font-size:8.5px; color:#c8d6f0; margin-bottom:3px; }
-  .idioma-bar-bg   { width:100%; height:3px; background:rgba(255,255,255,0.15); border-radius:2px; }
-  .idioma-bar-fill { height:100%; background:${accent}; border-radius:2px; }
-
-  /* ── COLUMNA DERECHA ───────────────────────── */
-  .right-col { flex:1; padding:22px 22px 14px 22px; }
-
-  .sec-title {
-    font-size:11px; font-weight:700; color:${accent};
-    text-transform:uppercase; letter-spacing:1.5px;
-    display:flex; align-items:center; gap:8px; margin-bottom:8px;
-  }
-  .sec-title::after { content:''; flex:1; height:1.5px; background:${accent}; }
-
-  .profile-text { font-size:8.5px; color:#444; line-height:1.6; margin-bottom:12px; }
-
-  .exp-section  { margin-bottom:12px; }
-  .exp-entry    { margin-bottom:10px; }
-  .date-badge {
-    display:inline-block; background:${accent}; color:#fff;
-    font-size:7.5px; font-weight:600; padding:2px 10px;
-    border-radius:12px; margin-bottom:3px;
-  }
-  .job-title   { font-size:10px; font-weight:700; color:#1a1a2e; margin-bottom:1px; }
-  .job-company { font-size:8.5px; color:#888; font-style:italic; margin-bottom:3px; }
-  .job-bullets { list-style:none; padding-left:10px; }
-  .job-bullets li {
-    font-size:8px; color:#444; line-height:1.5; margin-bottom:1px;
-    position:relative; padding-left:9px;
-  }
-  .job-bullets li::before { content:'●'; color:${accent}; position:absolute; left:0; font-size:5px; top:3px; }
-
-  .edu-section { margin-bottom:10px; }
-  .edu-entry   { margin-bottom:7px; }
-  .edu-title   { font-size:10px; font-weight:700; color:#1a1a2e; }
-  .edu-center  { font-size:8.5px; color:#888; }
-
-  /* ── FOOTER ─────────────────────────────────── */
-  .cv-footer {
-    background:${sidebarBg}; padding:6px 24px;
-    text-align:center; flex-shrink:0;
-  }
-  .cv-footer p { font-size:7.5px; color:rgba(200,214,240,0.7); letter-spacing:0.3px; }
-
-  /* ── IMPRESIÓN 1 PÁGINA ─────────────────────── */
-  @page { size: A4 portrait; margin: 0; }
   @media print {
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     html, body { background: none !important; padding: 0 !important; margin: 0 !important; }
@@ -240,35 +175,34 @@ export function generarCVHTML(data: CVData): string {
 <body>
 <div class="cv-page">
   <div class="cv-body">
-
-    <!-- SIDEBAR -->
-    <div class="left-col">
-      <div class="photo-wrap">${fotoSection}</div>
-
+    <!-- LEFT SIDEBAR -->
+    <div class="left-column">
+      <div class="photo-wrapper">
+        ${fotoSection}
+      </div>
       <div class="name-block">
         <div class="first-name">${escapeHtml(data.nombre)}</div>
         ${data.apellidos ? `<div class="last-name">${escapeHtml(data.apellidos)}</div>` : ""}
         ${data.subtitulo ? `<div class="subtitle">${escapeHtml(data.subtitulo)}</div>` : ""}
       </div>
 
-      ${(data.telefono || data.email || data.ciudad) ? `
-      <div class="s-title">Contacto</div>
-      <div class="s-divider"></div>
+      ${contactItems ? `
+      <div class="sidebar-section-title">Contacto</div>
       <ul class="contact-list">
-        ${data.telefono ? `<li><span class="c-icon">■</span>${data.telefono}</li>` : ""}
-        ${data.email    ? `<li><span class="c-icon">✉</span>${data.email}</li>` : ""}
-        ${data.ciudad   ? `<li><span class="c-icon">■</span>${data.ciudad}</li>` : ""}
+        ${contactItems}
       </ul>` : ""}
 
-      ${aptitudes.length > 0 ? `
-      <div class="s-title">Aptitudes</div>
-      <div class="s-divider"></div>
-      <div class="apt-list">${aptitudesHTML}</div>` : ""}
+      ${(data.aptitudes || []).length > 0 ? `
+      <div class="sidebar-section-title">Aptitudes</div>
+      <div class="aptitudes-list">
+        ${aptitudesHTML}
+      </div>` : ""}
 
-      ${idiomas.length > 0 ? `
-      <div class="s-title">Idiomas</div>
-      <div class="s-divider"></div>
-      <div class="idiomas-list">${idiomasHTML}</div>` : ""}
+      ${(data.idiomas || []).length > 0 ? `
+      <div class="sidebar-section-title">Idiomas</div>
+      <div class="idiomas-list">
+        ${idiomasHTML}
+      </div>` : ""}
     </div>
 
     <!-- RIGHT CONTENT -->
@@ -277,13 +211,17 @@ export function generarCVHTML(data: CVData): string {
       <h2 class="section-title">Perfil Profesional</h2>
       <p class="profile-text">${escapeHtml(data.perfilProfesional)}</p>` : ""}
 
-      ${experiencias.length > 0 ? `
-      <h2 class="sec-title">Experiencia Laboral</h2>
-      <div class="exp-section">${experienciaHTML}</div>` : ""}
+      ${(data.experiencia || []).length > 0 ? `
+      <h2 class="section-title">Experiencia Laboral</h2>
+      <div class="experience-section">
+        ${experienciaHTML}
+      </div>` : ""}
 
-      ${formaciones.length > 0 ? `
-      <h2 class="sec-title">Formación</h2>
-      <div class="edu-section">${formacionHTML}</div>` : ""}
+      ${(data.formacion || []).length > 0 ? `
+      <h2 class="section-title">Formación</h2>
+      <div class="education-section">
+        ${formacionHTML}
+      </div>` : ""}
     </div>
   </div>
 

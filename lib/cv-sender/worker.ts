@@ -22,11 +22,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getRedisConnection, CVJobData } from "./queue";
 import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
-import { updateSendStatus } from "./tracker";
-import { getPool } from "@/lib/db";
-import { generarCVHTML } from "@/lib/cv-generator/cv-template";
-import { normalizar } from "@/lib/cv-generator/normalizar";
-import { generateCombinedPdf } from "@/lib/cv-generator/generate-pdf";
+import { recordSent, updateSendStatus } from "./tracker";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,10 +49,13 @@ interface UserProfile {
   linkedin_url?: string;
 }
 
-/** Datos del CV almacenado en user_cvs (VPS PostgreSQL) */
+/** Datos del CV almacenado en Supabase */
 interface CVDocument {
-  form_data: Record<string, unknown>;
-  html: string;
+  id: string;
+  user_id: string;
+  file_url: string; // URL del PDF en Supabase Storage
+  text_content?: string; // Texto extraído del CV (para personalización con IA)
+  file_name?: string;
 }
 
 // ─── Función Principal: processCVJob ─────────────────────────────────────────
@@ -119,12 +118,14 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   await job.updateProgress(25);
 
-  // Paso 2: Generar HTML del CV (el PDF combinado se genera en paso 4 cuando ya tenemos la carta)
-  console.log(`[Worker] Paso 2/6: Preparando datos del CV...`);
-  const cvData = normalizar(cvDocument.form_data);
-  const cvHtml = generarCVHTML(cvData);
-  let cvPdfBuffer: Buffer | undefined;
-  let cvPdfFileName: string | undefined;
+  // ── Paso 2: Descargar el PDF del CV ─────────────────────────────────────
+  console.log(`[Worker] Paso 2/6: Descargando CV de ${cvDocument.file_url}...`);
+
+  const cvResponse = await fetch(cvDocument.file_url);
+  if (!cvResponse.ok) {
+    throw new Error(`No se pudo descargar el CV de ${cvDocument.file_url}: ${cvResponse.statusText}`);
+  }
+  const cvBuffer = Buffer.from(await cvResponse.arrayBuffer());
 
   await job.updateProgress(40);
 
@@ -151,30 +152,12 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
         : `Candidatura espontánea — ${userProfile.full_name}`;
     }
   } else {
+    // Sin personalización IA
     console.log(`[Worker] Paso 3/6: Usando carta genérica (sin IA)...`);
     coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nAdjunto mi CV para su consideración.\n\nUn cordial saludo,\n${userProfile.full_name}`;
     subjectLine = jobTitle
       ? `Candidatura para ${jobTitle} — ${userProfile.full_name}`
       : `Candidatura espontánea — ${userProfile.full_name}`;
-  }
-
-  // Generar PDF combinado: carta (página 1) + CV (página 2)
-  console.log(`[Worker] Paso 3b/6: Generando PDF combinado (carta + CV)...`);
-  try {
-    cvPdfBuffer = await generateCombinedPdf(
-      {
-        userName:    userProfile.full_name,
-        userEmail:   userProfile.email,
-        userPhone:   userProfile.phone,
-        companyName,
-        coverLetter,
-      },
-      cvHtml
-    );
-    cvPdfFileName = `Candidatura_${companyName.replace(/\s+/g, "_")}_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`;
-    console.log(`[Worker] PDF combinado generado: ${cvPdfBuffer.length} bytes`);
-  } catch (pdfErr) {
-    console.warn(`[Worker] No se pudo generar PDF combinado:`, (pdfErr as Error).message);
   }
 
   await job.updateProgress(60);
@@ -201,9 +184,8 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       userEmail: userProfile.email,
       userPhone: userProfile.phone,
       userLinkedIn: userProfile.linkedin_url,
-      cvPdfBuffer,
-      cvFileName: cvPdfFileName,
-      cvHtmlSection: cvPdfBuffer ? undefined : buildCVHtmlSection(cvDocument.form_data),
+      cvPdfBuffer: cvBuffer,
+      cvFileName: cvDocument.file_name ?? `CV_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`,
     },
     coverLetter,
     subjectLine,
@@ -253,62 +235,6 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   await job.updateProgress(100);
 
   console.log(`[Worker] ✅ Job ${job.id} completado: CV de ${userProfile.full_name} enviado a ${companyName}`);
-}
-
-// ─── Helpers: generar contenido del CV ───────────────────────────────────────
-
-function buildCVTextSummary(form: Record<string, unknown>): string {
-  const lines: string[] = [];
-  const nombre = `${form.nombre || ""} ${form.apellidos || ""}`.trim();
-  if (nombre) lines.push(`Candidato: ${nombre}`);
-  if (form.ciudad) lines.push(`Ciudad: ${form.ciudad}`);
-  if (form.subtitulo) lines.push(`Perfil: ${form.subtitulo}`);
-  if (form.perfilProfesional) lines.push(`Resumen: ${form.perfilProfesional}`);
-  if (form.aptitudes) lines.push(`Habilidades: ${form.aptitudes}`);
-  if (Array.isArray(form.experiencia)) {
-    const exp = form.experiencia as Array<Record<string, unknown>>;
-    exp.slice(0, 3).forEach(e => {
-      lines.push(`Exp: ${e.puesto || ""} en ${e.empresa || ""} (${e.fechas || ""})`);
-    });
-  }
-  return lines.join("\n");
-}
-
-function buildCVHtmlSection(form: Record<string, unknown>): string {
-  const nombre = `${form.nombre || ""} ${form.apellidos || ""}`.trim();
-  const rows: string[] = [];
-
-  const addRow = (label: string, value: unknown) => {
-    if (value && String(value).trim()) {
-      rows.push(`<tr><td style="color:#64748b;font-size:12px;padding:3px 8px 3px 0;width:100px;vertical-align:top;">${label}</td><td style="color:#1e293b;font-size:13px;padding:3px 0;">${String(value)}</td></tr>`);
-    }
-  };
-
-  if (nombre) rows.push(`<tr><td colspan="2" style="padding:0 0 8px;"><strong style="font-size:15px;color:#1e293b;">${nombre}</strong></td></tr>`);
-  addRow("Subtítulo", form.subtitulo);
-  addRow("Ciudad", form.ciudad);
-  addRow("Teléfono", form.telefono);
-  addRow("Email", form.email);
-
-  if (form.perfilProfesional) {
-    rows.push(`<tr><td colspan="2" style="padding:10px 0 4px;"><strong style="color:#1e293b;font-size:12px;">PERFIL</strong></td></tr>`);
-    rows.push(`<tr><td colspan="2" style="color:#374151;font-size:13px;padding-bottom:8px;">${form.perfilProfesional}</td></tr>`);
-  }
-
-  if (Array.isArray(form.experiencia) && form.experiencia.length > 0) {
-    rows.push(`<tr><td colspan="2" style="padding:8px 0 4px;"><strong style="color:#1e293b;font-size:12px;">EXPERIENCIA</strong></td></tr>`);
-    (form.experiencia as Array<Record<string, unknown>>).forEach(e => {
-      rows.push(`<tr><td colspan="2" style="padding:2px 0;color:#374151;font-size:13px;"><strong>${e.puesto || ""}</strong> — ${e.empresa || ""}<span style="color:#64748b;"> (${e.fechas || ""})</span></td></tr>`);
-      if (e.descripcion) rows.push(`<tr><td colspan="2" style="color:#64748b;font-size:12px;padding:0 0 6px 0;">${e.descripcion}</td></tr>`);
-    });
-  }
-
-  if (form.aptitudes) {
-    rows.push(`<tr><td colspan="2" style="padding:8px 0 4px;"><strong style="color:#1e293b;font-size:12px;">HABILIDADES</strong></td></tr>`);
-    rows.push(`<tr><td colspan="2" style="color:#374151;font-size:13px;">${form.aptitudes}</td></tr>`);
-  }
-
-  return `<table style="width:100%;border-collapse:collapse;">${rows.join("")}</table>`;
 }
 
 // ─── Creación del Worker ─────────────────────────────────────────────────────

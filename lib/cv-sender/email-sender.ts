@@ -30,13 +30,12 @@ function sanitizeEmailHeader(value: string): string {
 
 /** Datos del CV a enviar */
 export interface CVEmailData {
-  userName: string;
-  userEmail: string;
-  userPhone?: string;
-  userLinkedIn?: string;
-  cvPdfBuffer?: Buffer; // Opcional — si no hay PDF, el CV va en el cuerpo del email
-  cvFileName?: string;
-  cvHtmlSection?: string; // HTML del CV para incluir en el cuerpo del email
+  userName: string; // Nombre completo del usuario
+  userEmail: string; // Email del usuario (para que RRHH pueda responder)
+  userPhone?: string; // Teléfono del usuario (opcional)
+  userLinkedIn?: string; // LinkedIn del usuario (opcional)
+  cvPdfBuffer: Buffer; // PDF del CV en binario
+  cvFileName?: string; // Nombre del archivo PDF (ej: "CV_Juan_Garcia.pdf")
 }
 
 /** Resultado del envío de email */
@@ -75,16 +74,13 @@ export async function sendCVEmail(
       reply_to: cvData.userEmail,
       subject: sanitizeEmailHeader(subject),
       html: buildCVEmailHTML(cvData, coverLetter, companyName),
-    };
-
-    if (cvData.cvPdfBuffer) {
-      sendPayload.attachments = [{
-        filename: cvData.cvFileName ?? `CV_${cvData.userName.replace(/\s+/g, "_")}.pdf`,
-        content: cvData.cvPdfBuffer,
-      }];
-    }
-
-    const { data, error } = await resend.emails.send(sendPayload);
+      attachments: [
+        {
+          filename: cvData.cvFileName ?? `CV_${cvData.userName.replace(/\s+/g, "_")}.pdf`,
+          content: cvData.cvPdfBuffer,
+        },
+      ],
+    });
 
     if (error) {
       console.error(`[EmailSender] Error de Resend al enviar a ${to}:`, error.message);
@@ -145,56 +141,45 @@ function buildCVEmailHTML(
   coverLetter: string,
   companyName: string
 ): string {
-  const today = new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
-
+  // Convertimos los saltos de línea en párrafos HTML
   const coverLetterHtml = coverLetter
     .split("\n")
     .filter((line) => line.trim())
-    .map((line) => `<p style="margin:0 0 14px 0;line-height:1.7;color:#1e293b;font-size:15px;">${line}</p>`)
+    .map((line) => `<p style="margin:0 0 12px 0;line-height:1.6;">${line}</p>`)
     .join("");
 
-  const hasPdf = !!cvData.cvPdfBuffer;
-
-  return `<!DOCTYPE html>
+  return `
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Candidatura de ${cvData.userName}</title>
 </head>
-<body style="margin:0;padding:0;font-family:Georgia,'Times New Roman',serif;background:#f0f0f0;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f0;padding:32px 0;">
+<body style="margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif;background:#f4f4f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 0;">
     <tr>
       <td align="center">
-        <table width="620" cellpadding="0" cellspacing="0" style="background:#ffffff;box-shadow:0 2px 12px rgba(0,0,0,0.1);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
 
-          <!-- Cabecera del candidato -->
+          <!-- Cabecera -->
           <tr>
-            <td style="background:#1a2744;padding:28px 48px;">
-              <p style="color:#a3b4d0;font-size:11px;margin:0 0 4px;letter-spacing:1px;font-family:Arial,sans-serif;text-transform:uppercase;">Carta de presentación</p>
-              <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:normal;font-family:Georgia,serif;">${cvData.userName}</h1>
-              <p style="color:#7a9abf;margin:6px 0 0;font-size:13px;font-family:Arial,sans-serif;">
-                <a href="mailto:${cvData.userEmail}" style="color:#7a9abf;text-decoration:none;">${cvData.userEmail}</a>
-                ${cvData.userPhone ? ` &nbsp;·&nbsp; ${cvData.userPhone}` : ""}
+            <td style="background:linear-gradient(135deg,#2563EB,#1d4ed8);padding:32px 40px;text-align:center;">
+              <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">
+                Candidatura — ${companyName}
+              </h1>
+              <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">
+                Enviado a través de BuscayCurra
               </p>
             </td>
           </tr>
 
-          <!-- Fecha y destinatario -->
+          <!-- Cuerpo: carta de presentación -->
           <tr>
-            <td style="padding:36px 48px 0;">
-              <p style="color:#64748b;font-size:13px;margin:0 0 24px;font-family:Arial,sans-serif;">${today}</p>
-              <p style="color:#374151;font-size:14px;margin:0 0 24px;font-family:Arial,sans-serif;">
-                <strong>A/A: Departamento de RRHH</strong><br>
-                ${companyName}
-              </p>
-            </td>
-          </tr>
-
-          <!-- Cuerpo de la carta -->
-          <tr>
-            <td style="padding:0 48px 32px;">
-              ${coverLetterHtml}
+            <td style="padding:40px;">
+              <div style="color:#374151;font-size:15px;">
+                ${coverLetterHtml}
+              </div>
             </td>
           </tr>
 
@@ -215,30 +200,21 @@ function buildCVEmailHTML(
             </td>
           </tr>
 
-          ${hasPdf ? `
-          <!-- Aviso de adjunto PDF -->
+          <!-- Nota sobre el adjunto -->
           <tr>
-            <td style="padding:0 48px 32px;">
-              <div style="background:#f0f9f4;border:1px solid #bbf7d0;border-radius:6px;padding:14px 18px;">
-                <p style="margin:0;font-family:Arial,sans-serif;font-size:13px;color:#166534;">📎 <strong>Curriculum Vitae adjunto</strong> — CV_${cvData.userName.replace(/\s+/g, "_")}.pdf</p>
-              </div>
+            <td style="padding:0 40px 24px;">
+              <p style="color:#6b7280;font-size:13px;margin:0;text-align:center;">
+                📎 CV adjunto en formato PDF
+              </p>
             </td>
-          </tr>` : cvData.cvHtmlSection ? `
-          <!-- CV inline si no hay PDF -->
-          <tr>
-            <td style="padding:0 48px 32px;">
-              <div style="border:1px solid #e5e7eb;border-radius:6px;padding:24px;background:#fafafa;">
-                <p style="margin:0 0 12px;font-weight:bold;color:#1a2744;font-size:12px;font-family:Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">Currículum Vitae</p>
-                ${cvData.cvHtmlSection}
-              </div>
-            </td>
-          </tr>` : ""}
+          </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="background:#f8fafc;padding:16px 48px;border-top:1px solid #e5e7eb;">
-              <p style="color:#9ca3af;font-size:11px;margin:0;font-family:Arial,sans-serif;">
-                Enviado automáticamente con <a href="https://buscaycurra.es" style="color:#22c55e;text-decoration:none;">BuscayCurra</a> — Plataforma de búsqueda de empleo con IA
+            <td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
+              <p style="color:#9ca3af;font-size:12px;margin:0;">
+                Enviado con <a href="https://buscaycurra.es" style="color:#F97316;text-decoration:none;font-weight:600;">BuscayCurra</a>
+                — Plataforma de búsqueda de empleo con IA
               </p>
             </td>
           </tr>
@@ -248,7 +224,8 @@ function buildCVEmailHTML(
     </tr>
   </table>
 </body>
-</html>`;
+</html>
+`.trim();
 }
 
 /**
@@ -280,11 +257,15 @@ function buildConfirmationEmailHTML(
       <td align="center">
         <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
 
+          <!-- Cabecera con check verde -->
           <tr>
-            <td style="background:linear-gradient(135deg,#166534,#15803d);padding:40px;text-align:center;">
-              <div style="font-size:40px;margin-bottom:10px;">🐛</div>
-              <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">¡CV Enviado!</h1>
-              <p style="color:rgba(255,255,255,0.75);margin:6px 0 0;font-size:13px;">Guzzi ha trabajado por ti</p>
+            <td style="background:linear-gradient(135deg,#2563EB,#1d4ed8);padding:40px;text-align:center;">
+              <div style="width:64px;height:64px;background:rgba(255,255,255,0.15);border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+                <span style="font-size:32px;">✅</span>
+              </div>
+              <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:700;">
+                ¡CV Enviado!
+              </h1>
             </td>
           </tr>
 
@@ -296,12 +277,12 @@ function buildConfirmationEmailHTML(
               </p>
               <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 24px;">
                 Tu CV ha sido enviado correctamente a
-                <strong style="color:#16a34a;">${companyName}</strong>
+                <strong style="color:#2563EB;">${companyName}</strong>
                 ${jobTitle ? `para el puesto de <strong>${jobTitle}</strong>` : ""}.
               </p>
 
               <!-- Tarjeta de detalles -->
-              <div style="background:#f0fdf4;border-radius:8px;padding:20px;margin:0 0 24px;text-align:left;">
+              <div style="background:#f0f7ff;border-radius:8px;padding:20px;margin:0 0 24px;text-align:left;">
                 <table width="100%">
                   <tr>
                     <td style="padding:4px 0;color:#6b7280;font-size:14px;">📅 Fecha de envío</td>
@@ -324,8 +305,8 @@ function buildConfirmationEmailHTML(
                 en tu panel de control.
               </p>
 
-              <a href="https://buscaycurra.es/app/empresas"
-                style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;display:inline-block;">
+              <a href="https://buscaycurra.es/app/envios"
+                style="background:#F97316;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;display:inline-block;">
                 Ver mis envíos →
               </a>
             </td>
@@ -335,8 +316,8 @@ function buildConfirmationEmailHTML(
           <tr>
             <td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
               <p style="color:#9ca3af;font-size:12px;margin:0;">
-                <a href="https://buscaycurra.es" style="color:#22c55e;text-decoration:none;font-weight:600;">BuscayCurra</a>
-                — Tu asistente de búsqueda de empleo con IA 🐛
+                <a href="https://buscaycurra.es" style="color:#F97316;text-decoration:none;font-weight:600;">BuscayCurra</a>
+                — Tu asistente de búsqueda de empleo con IA 🚀
               </p>
             </td>
           </tr>

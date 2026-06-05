@@ -58,23 +58,6 @@ export default function NotificacionesBell() {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-
-  function getNotifUrl(n: Notificacion): string | null {
-    const datos = n.datos || {};
-    if (n.tipo === "nuevas_ofertas" || n.tipo === "nuevo_empleo" || n.tipo === "alerta_empleo") {
-      // Usar keyword; si no hay, usar location; si no, buscar vacío
-      const searchTerm = datos.keyword || datos.location || "";
-      const kw = searchTerm ? `keyword=${encodeURIComponent(searchTerm)}` : "";
-      const loc = datos.location ? `&location=${encodeURIComponent(datos.location)}` : "";
-      if (kw) return `/app/buscar?${kw}${loc}`;
-      return "/app/buscar";
-    }
-    if (n.tipo === "cv_enviado") return "/app/empresas";
-    if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
-    if (n.tipo === "recordatorio") return "/app/gusi";
-    return null;
-  }
 
   const tokenRef = useRef<string>("");
 

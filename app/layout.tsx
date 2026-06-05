@@ -2,6 +2,7 @@
  * app/layout.tsx — Layout raíz de BuscayCurra
  * La AppNavbar se muestra solo en /app/* via AppNavWrapper (client component).
  */
+
 import type { Metadata } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
@@ -32,36 +33,6 @@ export const metadata: Metadata = {
       "Busca trabajo gratis con IA. 100k+ ofertas en España, envío automático a empresas y CV profesional en minutos. Mejor que InfoJobs.",
     locale: "es_ES",
     type: "website",
-    siteName: "BuscayCurra",
-    alternateLocale: ["en_US"],
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "BuscayCurra — Agente IA que busca trabajo por ti en 20+ países",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "BuscayCurra — Agente IA que busca trabajo por ti",
-    description:
-      "Guzzi busca, adapta y envía candidaturas por ti en 20+ países. 24/7. Sin que muevas un dedo.",
-    images: ["/og-image.png"],
-  },
-  alternates: {
-    canonical: "https://buscaycurra.es",
-    languages: {
-      es: "https://buscaycurra.es",
-      en: "https://buscaycurra.es/en",
-    },
-  },
-  robots: {
-    index: true,
-    follow: true,
-    "max-image-preview": "large",
-    "max-snippet": -1,
   },
 };
 
