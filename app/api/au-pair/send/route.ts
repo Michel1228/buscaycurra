@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     const plan = userProfile?.plan || "free";
-    const LIMITES: Record<string, number> = { free: 2, esencial: 5, pro: 10, empresa: 9999 };
+    const LIMITES: Record<string, number> = { free: 2, esencial: 5, basico: 15, pro: 50, empresa: 9999 };
     const limiteHoy = LIMITES[plan] ?? 2;
 
     const hoy = new Date();

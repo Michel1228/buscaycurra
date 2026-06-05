@@ -74,12 +74,12 @@ export async function sendCVEmail(
       reply_to: cvData.userEmail,
       subject: sanitizeEmailHeader(subject),
       html: buildCVEmailHTML(cvData, coverLetter, companyName),
-      attachments: [
-        {
+      ...(cvData.cvPdfBuffer?.length ? {
+        attachments: [{
           filename: cvData.cvFileName ?? `CV_${cvData.userName.replace(/\s+/g, "_")}.pdf`,
           content: cvData.cvPdfBuffer,
-        },
-      ],
+        }],
+      } : {}),
     });
 
     if (error) {
