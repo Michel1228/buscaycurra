@@ -192,3 +192,21 @@ jobs:
           BODY=$(echo "$RESULT" | head -1)
           echo "France Travail offset=${{ matrix.offset }}: HTTP $HTTP — $BODY"
           if [ "$HTTP" != "200" ]; then exit 1; fi
+
+  # ── Arbeitnow — API gratuita alemana/europea (100 ofertas/página) ─────────────
+
+  sync-arbeitnow:
+    name: "🇩🇪 Arbeitnow"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Arbeitnow
+        run: |
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-arbeitnow" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{"pages":5}' \
+            --max-time 120)
+          HTTP=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "Arbeitnow: HTTP $HTTP — $BODY"
+          if [ "$HTTP" != "200" ]; then exit 1; fi
