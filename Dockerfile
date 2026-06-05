@@ -9,7 +9,7 @@ COPY package.json package-lock.json ./
 RUN npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
     npm config set fetch-retries 5 && \
-    npm ci
+    npm ci --legacy-peer-deps
 
 COPY . .
 
@@ -17,38 +17,35 @@ COPY . .
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-ARG BUILD_ID=dev-build
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
 
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
 
 RUN npm run build
 
-# Compilar el worker de BullMQ como bundle Node.js standalone
-RUN node_modules/.bin/esbuild scripts/start-worker.ts \
-    --bundle \
-    --platform=node \
-    --target=node20 \
-    --packages=external \
-    --tsconfig=tsconfig.json \
-    --outfile=.next/standalone/worker.js
-
-# Production stage — imagen mínima con el standalone output
+# Production stage
 FROM node:20.19.0-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Standalone Next.js output
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Script de inicio: worker BullMQ con auto-restart + servidor Next.js
-RUN printf '#!/bin/sh\n(while true; do node worker.js || true; sleep 3; done) &\nexec node server.js\n' > /app/start.sh \
-    && chmod +x /app/start.sh
+# node_modules necesarios para el worker (tsx + bullmq + ioredis + supabase)
+COPY --from=builder /app/node_modules ./node_modules
+
+# Scripts del worker
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/lib ./lib
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 EXPOSE 3000
 
-CMD ["/bin/sh", "/app/start.sh"]
+CMD ["/bin/sh", "./scripts/docker-start.sh"]
