@@ -200,9 +200,14 @@ export async function POST(request: NextRequest) {
 
     // ── Si frecuencia = "cada4dias", buscar y programar empresas adicionales ──
     // Se lanza en background sin bloquear la respuesta al usuario
-    if (frecuencia === "cada4dias" && jobTitle) {
+    if (frecuencia === "cada4dias") {
       void programarEmpresasAdicionales({
-        userId, jobTitle, companyEmail, priority, useAIPersonalization, userPlan,
+        userId,
+        jobTitle: jobTitle || companyName, // usar nombre de empresa como fallback si no hay puesto
+        companyEmail,
+        priority,
+        useAIPersonalization,
+        userPlan,
       });
     }
 
@@ -226,7 +231,7 @@ export async function POST(request: NextRequest) {
         rateLimitInfo: {
           enviadosHoy: rateLimitCheck.enviadosHoy,
           limiteHoy: rateLimitCheck.limiteHoy,
-          cvsRestantesHoy: rateLimitCheck.cvsRestantesHoy - 1, // Restamos el que acabamos de añadir
+          cvsRestantesHoy: rateLimitCheck.cvsRestantesHoy === null ? null : rateLimitCheck.cvsRestantesHoy - 1,
           userPlan,
         },
       },

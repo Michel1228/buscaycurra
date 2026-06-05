@@ -19,7 +19,7 @@
 
 import { Worker, Job } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
-import { getRedisConnection, CVJobData, addNotificationJob, NotificationJobData } from "./queue";
+import { getRedisConnection, CVJobData } from "./queue";
 import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
 import { recordSent, updateSendStatus } from "./tracker";
@@ -133,12 +133,12 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   let coverLetter: string;
   let subjectLine: string;
 
-  if (useAIPersonalization && cvDocument.text_content) {
+  if (useAIPersonalization) {
     console.log(`[Worker] Paso 3/6: Personalizando carta con OpenClaw IA para ${companyName}...`);
 
     try {
       const personalizacion = await personalizeForCompany(
-        cvDocument.text_content,
+        cvDocument.text_content ?? "",
         { name: companyName, url: companyUrl },
         jobTitle
       );
@@ -146,7 +146,6 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       subjectLine = personalizacion.subjectLine;
     } catch (aiError) {
       console.warn(`[Worker] OpenClaw IA no disponible, usando carta genérica:`, (aiError as Error).message);
-      // Fallback: carta genérica si la IA no está disponible
       coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nQuedo a su disposición para cualquier consulta.\n\nUn cordial saludo,\n${userProfile.full_name}`;
       subjectLine = jobTitle
         ? `Candidatura para ${jobTitle} — ${userProfile.full_name}`
@@ -219,15 +218,19 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
     jobTitle
   );
 
-  // Añadir notificación a la cola de notificaciones
-  const notificacion: NotificationJobData = {
-    userId,
-    type: "cv_sent",
-    message: `Tu CV fue enviado correctamente a ${companyName}${jobTitle ? ` para el puesto de ${jobTitle}` : ""}.`,
-    companyName,
-    jobId: job.id,
-  };
-  await addNotificationJob(notificacion);
+  // Insertar notificación directamente en Supabase (la cola de notificaciones no tiene worker)
+  try {
+    await getSupabase().from("notificaciones").insert({
+      user_id: userId,
+      tipo: "cv_enviado",
+      titulo: `📧 CV enviado a ${companyName}`,
+      mensaje: `Tu CV fue enviado correctamente a ${companyName}${jobTitle ? ` para el puesto de ${jobTitle}` : ""}.`,
+      datos: { companyName, jobId },
+      leida: false,
+    });
+  } catch (notifErr) {
+    console.warn("[Worker] No se pudo crear notificación:", (notifErr as Error).message);
+  }
 
   await job.updateProgress(100);
 
