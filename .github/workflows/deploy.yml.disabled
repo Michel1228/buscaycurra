@@ -1,0 +1,114 @@
+name: Build & Deploy to VPS
+
+on:
+  push:
+    branches: [unified-production, main]
+
+env:
+  REGISTRY: ghcr.io/michel1228/buscaycurra
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}:latest
+            ${{ env.REGISTRY }}:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY }}:latest
+          GH_ACTOR: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          E_ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+          E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          E_STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          E_STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          E_STRIPE_PRICE_ESENCIAL: ${{ secrets.STRIPE_PRICE_ESENCIAL }}
+          E_STRIPE_PRICE_BASICO: ${{ secrets.STRIPE_PRICE_BASICO }}
+          E_STRIPE_PRICE_PRO: ${{ secrets.STRIPE_PRICE_PRO }}
+          E_STRIPE_PRICE_EMPRESA: ${{ secrets.STRIPE_PRICE_EMPRESA }}
+          E_RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          E_JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
+          E_CAREERJET_API_KEY: ${{ secrets.CAREERJET_API_KEY }}
+          E_ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          E_ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+          E_GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          E_USAJOBS_KEY: ${{ secrets.USAJOBS_KEY }}
+        with:
+          host: 187.124.37.183
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 120s
+          envs: REGISTRY_IMAGE,GH_ACTOR,GH_TOKEN,E_ADMIN_SECRET,E_SUPABASE_SERVICE_ROLE_KEY,E_STRIPE_SECRET_KEY,E_STRIPE_WEBHOOK_SECRET,E_STRIPE_PRICE_ESENCIAL,E_STRIPE_PRICE_BASICO,E_STRIPE_PRICE_PRO,E_STRIPE_PRICE_EMPRESA,E_RESEND_API_KEY,E_JOOBLE_API_KEY,E_CAREERJET_API_KEY,E_ADZUNA_APP_ID,E_ADZUNA_APP_KEY,E_GROQ_API_KEY,E_USAJOBS_KEY
+          script: |
+            echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+
+            docker pull "$REGISTRY_IMAGE"
+
+            docker stop buscaycurra-nextjs 2>/dev/null || true
+            docker rm   buscaycurra-nextjs 2>/dev/null || true
+
+            ENV_FILE=$(mktemp)
+            printf '%s\n' "NODE_ENV=production"                                    > "$ENV_FILE"
+            printf '%s\n' "REDIS_URL=redis://buscaycurra-redis:6379"               >> "$ENV_FILE"
+            printf '%s\n' "FROM_EMAIL=noreply@buscaycurra.es"                      >> "$ENV_FILE"
+            printf '%s\n' "NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co" >> "$ENV_FILE"
+            printf 'ADMIN_SECRET=%s\n'              "$E_ADMIN_SECRET"              >> "$ENV_FILE"
+            printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n' "$E_SUPABASE_SERVICE_ROLE_KEY" >> "$ENV_FILE"
+            printf 'STRIPE_SECRET_KEY=%s\n'         "$E_STRIPE_SECRET_KEY"         >> "$ENV_FILE"
+            printf 'STRIPE_WEBHOOK_SECRET=%s\n'     "$E_STRIPE_WEBHOOK_SECRET"     >> "$ENV_FILE"
+            printf 'STRIPE_PRICE_ESENCIAL=%s\n'     "$E_STRIPE_PRICE_ESENCIAL"     >> "$ENV_FILE"
+            printf 'STRIPE_PRICE_BASICO=%s\n'       "$E_STRIPE_PRICE_BASICO"       >> "$ENV_FILE"
+            printf 'STRIPE_PRICE_PRO=%s\n'          "$E_STRIPE_PRICE_PRO"          >> "$ENV_FILE"
+            printf 'STRIPE_PRICE_EMPRESA=%s\n'      "$E_STRIPE_PRICE_EMPRESA"      >> "$ENV_FILE"
+            printf 'RESEND_API_KEY=%s\n'            "$E_RESEND_API_KEY"            >> "$ENV_FILE"
+            printf 'JOOBLE_API_KEY=%s\n'            "$E_JOOBLE_API_KEY"            >> "$ENV_FILE"
+            printf 'CAREERJET_API_KEY=%s\n'         "$E_CAREERJET_API_KEY"         >> "$ENV_FILE"
+            printf 'ADZUNA_APP_ID=%s\n'             "$E_ADZUNA_APP_ID"             >> "$ENV_FILE"
+            printf 'ADZUNA_APP_KEY=%s\n'            "$E_ADZUNA_APP_KEY"            >> "$ENV_FILE"
+            printf 'GROQ_API_KEY=%s\n'              "$E_GROQ_API_KEY"              >> "$ENV_FILE"
+            printf 'USAJOBS_KEY=%s\n'              "$E_USAJOBS_KEY"              >> "$ENV_FILE"
+
+            docker run -d \
+              --name buscaycurra-nextjs \
+              --network busca-y-curra_default \
+              -p 8892:3000 \
+              --restart unless-stopped \
+              --env-file "$ENV_FILE" \
+              "$REGISTRY_IMAGE"
+
+            rm -f "$ENV_FILE"
+
+            sleep 8
+            STATUS=$(docker inspect buscaycurra-nextjs --format='{{.State.Status}}' 2>/dev/null)
+            if [ "$STATUS" != "running" ]; then
+              echo "ERROR: Container not running after deploy"
+              docker logs buscaycurra-nextjs --tail 20
+              exit 1
+            fi
+            echo "Deploy OK — container status: $STATUS"

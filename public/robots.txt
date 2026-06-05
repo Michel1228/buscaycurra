@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Sitemap: https://buscaycurra.es/sitemap.xml
+
+# Prioridad máxima para Google - páginas de ofertas y países
+User-agent: Googlebot
+Allow: /empleo/oferta/
+Allow: /trabajar-en/
+Allow: /empleo/
+Crawl-delay: 0
+
+# Bloquear rutas internas sin valor SEO
+Disallow: /app/
+Disallow: /auth/
+Disallow: /api/

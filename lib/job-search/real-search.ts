@@ -227,7 +227,7 @@ async function buscarEnDB(puesto: string, ciudad: string, limit = 100): Promise<
 // ═══════════════════════════════════════════════════════════════════════════
 // API 1: JOOBLE — 162.000+ ofertas, agrega InfoJobs + Indeed + locales
 // ═══════════════════════════════════════════════════════════════════════════
-async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
+async function buscarJooble(puesto: string, ubicacion: string, limit = 50): Promise<OfertaReal[]> {
   const apiKey = process.env.JOOBLE_API_KEY;
   if (!apiKey) { console.warn("[Jooble] No API key"); return []; }
 
@@ -245,6 +245,7 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Prom
     const jobs = data.jobs || [];
     console.log(`[Jooble] "${puesto}" en "${ubicacion}": ${jobs.length} ofertas`);
 
+    console.log(`[Jooble] "${puesto}" en Spain: ${jobs.length} ofertas (mostrando para ${ubicacion})`);
     return jobs.slice(0, limit).map((j: Record<string, string>, i: number) => ({
       id: `jooble-${Date.now()}-${i}`,
       titulo: j.title || puesto,
@@ -253,9 +254,8 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Prom
       salario: j.salary || "Ver en oferta",
       descripcion: (j.snippet || j.title || "").replace(/<[^>]+>/g, "").slice(0, 200),
       fuente: "Jooble",
-      url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ubicacion)}`,
+      url: j.link || `https://jooble.org/SearchResult?ukw=${encodeURIComponent(puesto)}&loc=${encodeURIComponent(ubicacion)}`,
       fecha: j.updated || new Date().toISOString(),
-      match: Math.max(85 - i * 3, 40),
     }));
   } catch (e) {
     console.warn("[Jooble] Error:", (e as Error).message);
@@ -266,9 +266,9 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 20): Prom
 // ═══════════════════════════════════════════════════════════════════════════
 // API 2: ADZUNA — Agregador multi-bolsa
 // ═══════════════════════════════════════════════════════════════════════════
-async function buscarAdzuna(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
+async function buscarAdzuna(puesto: string, ubicacion: string, limit = 50): Promise<OfertaReal[]> {
   const appId = process.env.ADZUNA_APP_ID;
-  const apiKey = process.env.ADZUNA_API_KEY;
+  const apiKey = process.env.ADZUNA_APP_KEY;
   if (!appId || !apiKey) { console.warn("[Adzuna] No credentials"); return []; }
 
   try {
@@ -301,7 +301,6 @@ async function buscarAdzuna(puesto: string, ubicacion: string, limit = 20): Prom
         fuente: "Adzuna",
         url: (j.redirect_url as string) || `https://www.adzuna.es/search?q=${what}&loc=${where}`,
         fecha: (j.created as string) || new Date().toISOString(),
-        match: Math.max(82 - i * 3, 35),
       };
     });
   } catch (e) {
@@ -313,7 +312,7 @@ async function buscarAdzuna(puesto: string, ubicacion: string, limit = 20): Prom
 // ═══════════════════════════════════════════════════════════════════════════
 // API 3: CAREERJET — Red global de empleo
 // ═══════════════════════════════════════════════════════════════════════════
-async function buscarCareerjet(puesto: string, ubicacion: string, limit = 20): Promise<OfertaReal[]> {
+async function buscarCareerjet(puesto: string, ubicacion: string, limit = 50): Promise<OfertaReal[]> {
   const apiKey = process.env.CAREERJET_API_KEY;
   if (!apiKey) { console.warn("[Careerjet] No API key"); return []; }
 
@@ -344,7 +343,6 @@ async function buscarCareerjet(puesto: string, ubicacion: string, limit = 20): P
       fuente: "Careerjet",
       url: j.url || `https://www.careerjet.es/${encodeURIComponent(puesto)}-empleo.html`,
       fecha: j.date || new Date().toISOString(),
-      match: Math.max(80 - i * 3, 35),
     }));
   } catch (e) {
     console.warn("[Careerjet] Error:", (e as Error).message);
@@ -411,7 +409,7 @@ async function buscarLinkedIn(puesto: string, ubicacion: string): Promise<Oferta
       fuente: "LinkedIn",
       url: links[i] || `https://www.linkedin.com/jobs/search?keywords=${kw}&location=${locEnc}`,
       fecha: dates[i] || new Date().toISOString(),
-      match: Math.max(Math.min(baseMatch + 10, 99), 30),
+      match: Math.max(Math.min(baseMatch, 95), 30),
     };
   });
 }
@@ -706,7 +704,7 @@ export async function buscarOfertasReales(
         addResults(kwCached, "🏠 Tu ciudad");
       } else {
         const [a, li] = await Promise.allSettled([
-          buscarAdzuna(kw, ciudad, 10),
+          buscarAdzuna(kw, ciudad, 30),
           buscarLinkedIn(kw, ciudad),
         ]);
         const kwResults: OfertaReal[] = [];
@@ -751,7 +749,7 @@ export async function buscarOfertasReales(
     const ca = PROVINCIAS_CA[ciudadLower];
     if (ca && ca.toLowerCase() !== ciudadLower) {
       const [a, li] = await Promise.allSettled([
-        buscarAdzuna(puesto, ca, 15),
+        buscarAdzuna(puesto, ca, 50),
         buscarLinkedIn(puesto, ca),
       ]);
       if (a.status === "fulfilled") addResults(a.value, `🗺️ ${ca}`);

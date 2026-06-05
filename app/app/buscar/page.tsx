@@ -1,6 +1,5 @@
 "use client";
 
-// Deshabilitar prerenderizado estático — la página requiere autenticación dinámica
 export const dynamic = "force-dynamic";
 
 /**
@@ -22,9 +21,9 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
+import InfoTooltip from "@/components/InfoTooltip";
+import CountrySelector from "@/components/CountrySelector";
 
-
-// ─── Opciones de filtros ──────────────────────────────────────────────────────
 const opcionesJornada = [
   { valor: "", etiqueta: "Todas" },
   { valor: "completa", etiqueta: "Jornada completa" },
@@ -40,27 +39,54 @@ const opcionesExperiencia = [
   { valor: "5+", etiqueta: "Más de 5 años" },
 ];
 
-// ─── Componente Principal ─────────────────────────────────────────────────────
-
 function BuscarPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Campos de búsqueda
-  const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
-  const [ubicacion, setUbicacion] = useState(searchParams.get("location") || "");
+  const urlKeyword = searchParams.get("keyword") || "";
+  const urlUbicacion = searchParams.get("location") || searchParams.get("ubicacion") || "";
+  const [keyword, setKeyword] = useState(urlKeyword);
+  const [ubicacion, setUbicacion] = useState(urlUbicacion);
   const [geoDetected, setGeoDetected] = useState(false);
-
-  // Filtros adicionales
   const [jornada, setJornada] = useState("");
   const [experiencia, setExperiencia] = useState("");
   const [salarioMin, setSalarioMin] = useState("");
+  const [salarioMax, setSalarioMax] = useState("");
 
-  // Estado de la búsqueda
   const [ofertas, setOfertas] = useState<PropiedadesJobCard[]>([]);
   const [cargando, setCargando] = useState(false);
+  const [cargandoMas, setCargandoMas] = useState(false);
   const [buscado, setBuscado] = useState(false);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResultados, setTotalResultados] = useState(0);
+  const [hayMas, setHayMas] = useState(false);
+  const [fuenteResultados, setFuenteResultados] = useState<string>("");
+
+  const [mostrarAlertaModal, setMostrarAlertaModal] = useState(false);
+  const [alertaCreada, setAlertaCreada] = useState(false);
+  const [creandoAlerta, setCreandoAlerta] = useState(false);
+
+  const [paisSeleccionado, setPaisSeleccionado] = useState(() => {
+    // Prioridad: URL > localStorage > España
+    const urlPais = searchParams.get("pais");
+    if (urlPais) return urlPais.toUpperCase();
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("bc_pais");
+      if (saved) return saved;
+    }
+    return "ES";
+  });
+  function cambiarPais(codigo: string) {
+    setPaisSeleccionado(codigo);
+    localStorage.setItem("bc_pais", codigo);
+    // Disparar evento para que otros componentes reaccionen
+    window.dispatchEvent(new CustomEvent("bc-pais-change", { detail: codigo }));
+  }
+
+  // Ref para que el auto-fill de ciudad solo ocurra una vez (evita que el campo se reponga al borrarlo)
+  const locationFetched = useRef(false);
+  const mountedRef = useRef(true);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -71,6 +97,7 @@ function BuscarPageInner() {
 
   // Verificar sesión + geolocalización automática — solo al montar
   useEffect(() => {
+    mountedRef.current = true;
     async function init() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
@@ -149,14 +176,43 @@ function BuscarPageInner() {
         distancia: "🏠 Tu ciudad",
       }));
     } catch {
-      console.log("[Jooble client] no disponible");
       return [];
     }
   }
 
-  /**
-   * Ejecuta búsqueda MULTI-FUENTE: servidor (LinkedIn) + cliente (Jooble) en paralelo
-   */
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // ── Infinite Scroll via IntersectionObserver ──
+  useEffect(() => {
+    if (!hayMas || cargando || cargandoMas) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hayMas && !cargandoMas) {
+          cargarMas();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hayMas, cargando, cargandoMas, ofertas.length]);
+
+
+  // Calcula match % entre keyword del usuario y título/descripción de la oferta
+  function calcularMatch(titulo: string, descripcion?: string): number {
+    if (!keyword.trim()) return 0;
+    const kw = keyword.toLowerCase().split(/\s+/);
+    const texto = ((titulo || "") + " " + (descripcion || "")).toLowerCase();
+    let hits = 0;
+    for (const w of kw) {
+      if (w.length > 2 && texto.includes(w)) hits++;
+    }
+    return kw.length > 0 ? Math.min(99, Math.round((hits / kw.length) * 100)) : 0;
+  }
+
   async function buscar(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (!keyword.trim() && !ubicacion.trim()) return;
@@ -174,11 +230,12 @@ function BuscarPageInner() {
       const params = new URLSearchParams();
       if (keyword.trim()) params.set("keyword", keyword.trim());
       if (ubicacion.trim()) params.set("location", ubicacion.trim());
+      if (paisSeleccionado) params.set("country", paisSeleccionado);
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
+      if (salarioMax) params.set("salarioMax", salarioMax);
 
-      // Lanzar ambas búsquedas en paralelo
       const [serverRes, joobleRes] = await Promise.allSettled([
         fetch(`/api/jobs/search?${params.toString()}`, { signal: controller.signal }).then(r => r.ok ? r.json() : { ofertas: [] }),
         buscarJoobleCliente(keyword.trim(), ubicacion.trim(), controller.signal),
@@ -190,11 +247,26 @@ function BuscarPageInner() {
       // Combinar resultados
       const serverOfertas = serverRes.status === "fulfilled" ? (serverRes.value.ofertas || []) : [];
       const joobleOfertas = joobleRes.status === "fulfilled" ? joobleRes.value : [];
+      const serverTotal = serverRes.status === "fulfilled" ? (serverRes.value.total || 0) : 0;
+      const serverHasMore = serverRes.status === "fulfilled" ? (serverRes.value.hasMore || false) : false;
+      
+      console.log(`[Buscar] Server: ${serverOfertas.length} ofertas, total: ${serverTotal}, hasMore: ${serverHasMore}`);
 
-      // Deduplicar por título+empresa
+      // Priorizar ofertas de la BD (más completas) sobre Jooble
       const seen = new Set<string>();
       const todas: PropiedadesJobCard[] = [];
-      for (const o of [...joobleOfertas, ...serverOfertas]) {
+      
+      // Primero las de la base de datos
+      for (const o of serverOfertas) {
+        const key = `${(o.titulo || "").toLowerCase().replace(/\s+/g, "")}-${(o.empresa || "").toLowerCase().replace(/\s+/g, "")}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          todas.push(o);
+        }
+      }
+      
+      // Luego las de Jooble si no están duplicadas
+      for (const o of joobleOfertas) {
         const key = `${(o.titulo || "").toLowerCase().replace(/\s+/g, "")}-${(o.empresa || "").toLowerCase().replace(/\s+/g, "")}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -202,9 +274,14 @@ function BuscarPageInner() {
         }
       }
 
-      // Ordenar por match descendente
-      todas.sort((a, b) => (b.match || 0) - (a.match || 0));
-      setOfertas(todas);
+      const conMatch = todas.map(o => ({ ...o, match: calcularMatch(o.titulo || "", o.descripcion) }));
+      setOfertas(conMatch);
+      setCurrentPage(1);
+      const source = serverRes.status === "fulfilled" ? (serverRes.value.source || "") : "";
+      setFuenteResultados(source);
+      setTotalResultados(serverTotal > 0 ? serverTotal : todas.length);
+      setHayMas(serverHasMore);
+      console.log(`[Buscar] Final: ${todas.length} ofertas, hayMas: ${serverHasMore}, total: ${serverTotal}`);
     } catch (err) {
       setError((err as Error).message || "Error al buscar ofertas");
       setOfertas([]);
@@ -213,210 +290,318 @@ function BuscarPageInner() {
     }
   }
 
+  async function cargarMas() {
+    if (cargandoMas || !hayMas) return;
+    setCargandoMas(true);
+    try {
+      const nextPage = currentPage + 1;
+      const params = new URLSearchParams();
+      if (keyword.trim()) params.set("keyword", keyword.trim());
+      if (ubicacion.trim()) params.set("location", ubicacion.trim());
+      if (paisSeleccionado) params.set("country", paisSeleccionado);
+      if (jornada) params.set("jornada", jornada);
+      if (experiencia) params.set("experiencia", experiencia);
+      if (salarioMin) params.set("salarioMin", salarioMin);
+      if (salarioMax) params.set("salarioMax", salarioMax);
+      params.set("page", String(nextPage));
+      const res = await fetch(`/api/jobs/search?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        const nuevas = data.ofertas || [];
+        const seen = new Set(ofertas.map(o => o.id));
+        const sinDuplicados = nuevas.filter((o: {id: string}) => !seen.has(o.id));
+        const conMatchNuevas = sinDuplicados.map((o: PropiedadesJobCard) => ({ ...o, match: calcularMatch(o.titulo || "", o.descripcion) }));
+        setOfertas(prev => [...prev, ...conMatchNuevas]);
+        setCurrentPage(nextPage);
+        setHayMas(data.hasMore || false);
+        setTotalResultados(data.total || totalResultados);
+        setFuenteResultados(data.source || fuenteResultados);
+      }
+    } catch (err) { console.error("Error cargarMas:", err); }
+    finally { setCargandoMas(false); }
+  }
+
+
+
+  const esEnTiempoReal = fuenteResultados.startsWith("live-api");
+
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
 
-      {/* ── Cabecera de búsqueda ──────────────────────────────────────── */}
-      <div className="text-white py-10 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+      {/* Cabecera de búsqueda */}
+      <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}>
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">🔍 Buscar ofertas de trabajo</h1>
-
-          {/* Formulario de búsqueda */}
-          <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-3">
-            {/* Campo: qué trabajo buscas */}
-            <input
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="¿Qué trabajo buscas? (electricista, contable...)"
-              className="flex-1 px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-            />
-            {/* Campo: dónde buscas */}
-            <div className="relative w-full sm:w-64">
-              <input
-                type="text"
-                value={ubicacion}
-                onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
-                placeholder="¿Dónde? (Madrid, Barcelona...)"
-                className="w-full px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-              {geoDetected && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#1a1a12" }}>
-                  📍 Auto
-                </span>
-              )}
+          <h1 className="text-xl font-bold mb-4">Buscar ofertas de trabajo</h1>
+          <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-2">
+            <label className="sr-only" htmlFor="buscar-keyword">Palabra clave</label>
+            <input id="buscar-keyword" type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
+              placeholder="¿Qué trabajo buscas?" className="flex-1 px-4 py-2.5 rounded-lg text-sm"
+              style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
+            <div className="relative w-full sm:w-56">
+              <label className="sr-only" htmlFor="buscar-ubicacion">Ubicación</label>
+              <input id="buscar-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
+                placeholder="¿Dónde?" className="w-full px-4 py-2.5 rounded-lg text-sm"
+                style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
+              {geoDetected && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-70">📍 Auto</span>}
             </div>
-            {/* Botón buscar */}
-            <button
-              type="submit"
-              disabled={cargando}
-              className="px-8 py-3 bg-white font-semibold rounded-xl shadow-sm hover: transition disabled:opacity-50"
-              style={{ color: "#7ed56f" }}
-            >
+            <button type="submit" disabled={cargando}
+              className="px-6 py-2.5 bg-white font-semibold rounded-lg text-sm transition disabled:opacity-50"
+              style={{ color: "#16a34a" }}>
               {cargando ? "Buscando..." : "Buscar"}
             </button>
           </form>
+          <div className="mt-2 flex justify-end">
+            <CountrySelector paisActual={paisSeleccionado} onCambiarPais={cambiarPais} variant="buscar" />
+          </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex gap-8">
+      {/* Franja SEO: por qué BuscayCurra */}
+      <div className="border-b" style={{ background: "#111827", borderColor: "#1e212b" }}>
+        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-4 md:gap-8">
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">👥</span>
+            <div>
+              <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>2.400+ personas</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>ya encontraron trabajo con nosotros</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">💸</span>
+            <div>
+              <p className="text-xs font-bold" style={{ color: "#22c55e" }}>CV propio, no uno entre 2.000</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>InfoJobs te mete en una cola — aquí Guzzi te pone delante</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">🎯</span>
+            <div>
+              <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>Contrato directo con la empresa</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>sin esperar a que alguien en un portal te encuentre</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 ml-auto">
+            <a href="/app/gusi"
+              className="text-[11px] font-semibold px-4 py-2 rounded-lg transition"
+              style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e" }}>
+              🐛 Que Guzzi busque por mí
+            </a>
+          </div>
+        </div>
+      </div>
 
-          {/* ── Panel de filtros (columna izquierda) ─────────────────── */}
-          <aside className="hidden md:block w-56 shrink-0">
-            <div className="card-game p-5 sticky top-20">
-              <h2 className="font-semibold text-[#f0ebe0] mb-4">Filtros</h2>
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="flex gap-6">
 
-              {/* Filtro: tipo de jornada */}
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-[#b0a890] mb-2">
-                  Tipo de jornada
-                </label>
-                <select
-                  value={jornada}
-                  onChange={(e) => setJornada(e.target.value)}
-                  className="w-full text-sm border border-[#3d3c30] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                >
-                  {opcionesJornada.map((op) => (
-                    <option key={op.valor} value={op.valor}>
-                      {op.etiqueta}
-                    </option>
-                  ))}
+          {/* Filtros */}
+          <aside className="hidden md:block w-52 shrink-0">
+            <div className="card-game p-4 sticky top-20">
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Filtros</h2>
+                <InfoTooltip text="Refina tu búsqueda por tipo de jornada, experiencia y rango salarial. Los filtros se aplican sobre los resultados actuales." position="right" />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="filtro-jornada" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Tipo de jornada</label>
+                <select id="filtro-jornada" value={jornada} onChange={(e) => setJornada(e.target.value)} className="w-full text-sm">
+                  {opcionesJornada.map(op => <option key={op.valor} value={op.valor}>{op.etiqueta}</option>)}
                 </select>
               </div>
-
-              {/* Filtro: experiencia requerida */}
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-[#b0a890] mb-2">
-                  Experiencia
-                </label>
-                <select
-                  value={experiencia}
-                  onChange={(e) => setExperiencia(e.target.value)}
-                  className="w-full text-sm border border-[#3d3c30] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                >
-                  {opcionesExperiencia.map((op) => (
-                    <option key={op.valor} value={op.valor}>
-                      {op.etiqueta}
-                    </option>
-                  ))}
+              <div className="mb-4">
+                <label htmlFor="filtro-experiencia" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Experiencia</label>
+                <select id="filtro-experiencia" value={experiencia} onChange={(e) => setExperiencia(e.target.value)} className="w-full text-sm">
+                  {opcionesExperiencia.map(op => <option key={op.valor} value={op.valor}>{op.etiqueta}</option>)}
                 </select>
               </div>
-
-              {/* Filtro: salario mínimo */}
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-[#b0a890] mb-2">
-                  Salario mínimo (€/año)
-                </label>
-                <input
-                  type="number"
-                  value={salarioMin}
-                  onChange={(e) => setSalarioMin(e.target.value)}
-                  placeholder="Ej: 20000"
-                  className="w-full text-sm border border-[#3d3c30] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                />
+              <div className="mb-4">
+                <label htmlFor="filtro-salario" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario mínimo (€/año)</label>
+                <input id="filtro-salario" type="number" value={salarioMin} onChange={(e) => setSalarioMin(e.target.value)}
+                  placeholder="Ej: 20000" className="w-full text-sm" />
               </div>
-
-              {/* Botón aplicar filtros */}
-              <button
-                onClick={() => buscar()}
-                className="w-full py-2.5 text-sm font-medium text-white rounded-xl transition hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
-              >
-                Aplicar filtros
-              </button>
+              <div className="mb-4">
+                <label htmlFor="filtro-salario-max" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario máximo (€/año)</label>
+                <input id="filtro-salario-max" type="number" value={salarioMax} onChange={(e) => setSalarioMax(e.target.value)}
+                  placeholder="Ej: 50000" className="w-full text-sm" />
+              </div>
+              <button onClick={() => buscar()} className="btn-game w-full text-xs py-2">Aplicar filtros</button>
             </div>
           </aside>
 
-          {/* ── Resultados (columna derecha) ─────────────────────────── */}
+          {/* Resultados */}
           <div className="flex-1 min-w-0">
-
-            {/* Estado: cargando → mostrar skeleton */}
             {cargando && (
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="card-game p-5 animate-pulse">
-                    <div className="h-3 bg-gray-200 rounded w-1/4 mb-4" />
-                    <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
-                    <div className="h-3 bg-gray-200 rounded w-1/3 mb-6" />
+                  <div key={i} className="card-game p-4 animate-pulse">
+                    <div className="h-3 rounded w-1/4 mb-3" style={{ background: "#252836" }} />
+                    <div className="h-4 rounded w-3/4 mb-2" style={{ background: "#252836" }} />
+                    <div className="h-3 rounded w-1/2 mb-2" style={{ background: "#252836" }} />
+                    <div className="h-3 rounded w-1/3 mb-4" style={{ background: "#252836" }} />
                     <div className="flex gap-2">
-                      <div className="flex-1 h-10 bg-gray-200 rounded-xl" />
-                      <div className="flex-1 h-10 bg-gray-200 rounded-xl" />
+                      <div className="flex-1 h-9 rounded-lg" style={{ background: "#252836" }} />
+                      <div className="flex-1 h-9 rounded-lg" style={{ background: "#252836" }} />
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Estado: error en la búsqueda */}
             {!cargando && error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl px-5 py-4 text-sm">
+              <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
                 ⚠️ {error}
               </div>
             )}
 
-            {/* Estado: búsqueda realizada sin resultados */}
             {!cargando && !error && buscado && ofertas.length === 0 && (
-              <div className="card-game p-12 text-center">
-                <p className="text-5xl mb-4">🔍</p>
-                <p className="font-semibold text-[#f0ebe0] mb-2">No se encontraron ofertas</p>
-                <p className="text-[#706a58] text-sm">
-                  Prueba con otras palabras clave o cambia la ubicación
-                </p>
+              <div className="card-game p-10 text-center">
+                <p className="text-4xl mb-3">🔍</p>
+                <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No se encontraron ofertas</p>
+                <p className="text-xs mt-1" style={{ color: "#64748b" }}>Prueba con otras palabras clave</p>
               </div>
             )}
 
-            {/* Estado: sin buscar aún */}
             {!cargando && !buscado && (
-              <div className="card-game p-12 text-center">
-                <p className="text-5xl mb-4">🚀</p>
-                <p className="font-semibold text-[#f0ebe0] mb-2">
-                  ¡Empieza tu búsqueda!
-                </p>
-                <p className="text-[#706a58] text-sm">
-                  Introduce el trabajo que buscas y la ciudad para ver ofertas
-                </p>
+              <div className="card-game p-10 text-center">
+                <p className="text-4xl mb-3">🚀</p>
+                <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¡Empieza tu búsqueda!</p>
+                <p className="text-xs mt-1" style={{ color: "#64748b" }}>Introduce el trabajo y la ciudad</p>
               </div>
             )}
 
-            {/* Estado: hay resultados */}
             {!cargando && ofertas.length > 0 && (
               <>
-                <p className="text-sm text-[#706a58] mb-4">
-                  {ofertas.length} oferta{ofertas.length !== 1 ? "s" : ""} encontrada
-                  {ofertas.length !== 1 ? "s" : ""}
-                </p>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {ofertas.map((oferta) => (
-                    <JobCard key={oferta.id} {...oferta} />
-                  ))}
+                <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <p className="text-xs" style={{ color: "#64748b" }}>
+                      {esEnTiempoReal ? `${ofertas.length} ofertas` : `${ofertas.length} de ${(totalResultados > ofertas.length ? totalResultados : ofertas.length).toLocaleString("es-ES")} ofertas`}
+                    </p>
+                    {esEnTiempoReal && <p className="text-[10px]" style={{ color: "#475569" }}>Resultados en tiempo real</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setMostrarAlertaModal(true)}
+                        className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
+                        style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
+                        🔔 Alerta
+                      </button>
+                      <InfoTooltip text="Te avisamos por email cuando salgan nuevas ofertas que coincidan con esta búsqueda. Puedes elegir frecuencia diaria o semanal." position="bottom" />
+                    </div>
+                    <a href="/app/guardados"
+                      className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
+                      style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
+                      ❤️ Guardados
+                    </a>
+                  </div>
                 </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {ofertas.map(oferta => <JobCard key={oferta.id} {...oferta} />)}
+                </div>
+                
+                {hayMas && (
+                  <div className="flex flex-col items-center mt-6 gap-2">
+                    {/* Sentinel para IntersectionObserver — dispara cargarMas() */}
+                    <div ref={sentinelRef} className="w-full h-1" />
+                    {cargandoMas && (
+                      <div className="flex items-center gap-2 py-4">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
+                        <span className="text-xs" style={{ color: "#64748b" }}>Cargando más ofertas...</span>
+                      </div>
+                    )}
+                    <p className="text-[10px]" style={{ color: "#475569" }}>
+                      Mostrando {ofertas.length.toLocaleString("es-ES")} de {totalResultados.toLocaleString("es-ES")} ofertas
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Modal alerta */}
+      {mostrarAlertaModal && (
+        <AlertaModal keyword={keyword} location={ubicacion}
+          onClose={() => setMostrarAlertaModal(false)} onCreada={() => setAlertaCreada(true)} />
+      )}
+
+      {alertaCreada && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-xl text-xs font-medium"
+          style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}>
+          ✅ Alerta creada. Te avisaremos de nuevas ofertas.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AlertaModal({ keyword, location, onClose, onCreada }: {
+  keyword: string; location: string; onClose: () => void; onCreada: () => void;
+}) {
+  const [freq, setFreq] = useState<"daily" | "weekly">("daily");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function crear() {
+    setLoading(true);
+    setError("");
+    try {
+      const session = (await getSupabaseBrowser().auth.getSession()).data.session;
+      if (!session) { setError("Debes iniciar sesión"); return; }
+      const res = await fetch("/api/jobs/alertas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ keyword, location, frequency: freq }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data as { error?: string }).error || "Error al crear alerta");
+        return;
+      }
+      onCreada(); onClose();
+    } catch { setError("Error de red"); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+      <div className="w-full max-w-sm rounded-xl p-5 space-y-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }} onClick={e => e.stopPropagation()}>
+        <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🔔 Crear alerta de empleo</h3>
+        <p className="text-xs" style={{ color: "#64748b" }}>Te avisaremos cuando haya nuevas ofertas para:</p>
+        <div className="p-2.5 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
+          <p className="text-xs font-medium" style={{ color: "#22c55e" }}>{keyword || "Cualquier puesto"} {location ? `en ${location}` : ""}</p>
+        </div>
+        <div>
+          <label className="text-[11px] block mb-1.5" style={{ color: "#94a3b8" }}>Frecuencia</label>
+          <div className="flex gap-2">
+            {(["daily", "weekly"] as const).map(f => (
+              <button key={f} onClick={() => setFreq(f)}
+                className="flex-1 py-2 rounded-lg text-[11px] font-medium transition"
+                style={{
+                  background: freq === f ? "rgba(34,197,94,0.12)" : "#252836",
+                  border: freq === f ? "1px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
+                  color: freq === f ? "#22c55e" : "#64748b",
+                }}>
+                {f === "daily" ? "📅 Diaria" : "📆 Semanal"}
+              </button>
+            ))}
+          </div>
+        </div>
+        {error && <p className="text-[11px]" style={{ color: "#ef4444" }}>{error}</p>}
+        <div className="flex gap-2 justify-end">
+          <button onClick={onClose} className="px-4 py-2 text-[11px] rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>Cancelar</button>
+          <button onClick={crear} disabled={loading} className="btn-game px-5 py-2 text-[11px] disabled:opacity-50">{loading ? "Creando..." : "Crear"}</button>
         </div>
       </div>
     </div>
   );
 }
 
-
-// ─── Wrapper con Suspense ─────────────────────────────────────────────────────
-// useSearchParams() requiere un boundary de Suspense en Next.js 15
-
 export default function BuscarPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div
-            className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin"
-            style={{ borderColor: "#2563EB", borderTopColor: "transparent" }}
-          />
-        </div>
-      }
-    >
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
+      </div>
+    }>
       <BuscarPageInner />
     </Suspense>
   );

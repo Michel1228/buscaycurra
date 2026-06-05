@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
+import { isNativeIOS } from "@/lib/utils/platform";
 
 const PLANES = [
   {
@@ -73,6 +74,9 @@ export default function PreciosPage() {
   const router = useRouter();
   const [cargando, setCargando] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [iosNativo, setIosNativo] = useState(false);
+
+  useEffect(() => { setIosNativo(isNativeIOS()); }, []);
 
   const handlePlan = async (plan: typeof PLANES[0]) => {
     setError("");
@@ -127,6 +131,20 @@ export default function PreciosPage() {
             <span className="font-bold" style={{ color: "#7ed56f" }}>Nosotros: 50 envíos/día por €9,99/mes</span>
           </div>
         </div>
+
+        {iosNativo && (
+          <div className="max-w-md mx-auto mb-8 rounded-xl p-5 text-center"
+            style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
+            <p className="text-2xl mb-2">🍎</p>
+            <p className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>
+              Suscríbete desde la web
+            </p>
+            <p className="text-xs" style={{ color: "#64748b" }}>
+              Las suscripciones se gestionan en buscaycurra.es desde tu navegador.
+              Tu plan estará disponible en la app inmediatamente.
+            </p>
+          </div>
+        )}
 
         {error && (
           <div className="max-w-md mx-auto mb-6 rounded-xl px-4 py-3 text-sm"

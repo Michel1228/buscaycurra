@@ -177,6 +177,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Insertar registro en cv_sends ANTES de encolar (nunca se pierde) ──
+    const { error: insertError } = await supabaseAdmin.from("cv_sends").insert({
+      user_id: userId,
+      company_name: companyName,
+      company_email: companyEmail,
+      company_url: companyUrl ?? null,
+      job_title: jobTitle ?? null,
+      status: "pendiente",
+      sent_at: null,
+    });
+    if (insertError) {
+      console.error("[cv-sender/send] Error insertando cv_sends:", insertError.message);
+      return NextResponse.json({ error: "Error al registrar el envío" }, { status: 500 });
+    }
+
     // ── Programar el envío ────────────────────────────────────────────────
     const resultado = await scheduleCV(
       userId,
@@ -193,8 +208,13 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Si scheduleCV devuelve un error
+    // Si scheduleCV devuelve un error, actualizar a fallido (pero NO perder el registro)
     if ("error" in resultado) {
+      await supabaseAdmin.from("cv_sends")
+        .update({ status: "fallido", error_message: resultado.error })
+        .eq("user_id", userId)
+        .eq("company_email", companyEmail)
+        .eq("status", "pendiente");
       return NextResponse.json({ error: resultado.error }, { status: 400 });
     }
 
@@ -234,6 +254,9 @@ export async function POST(request: NextRequest) {
           cvsRestantesHoy: rateLimitCheck.cvsRestantesHoy === null ? null : rateLimitCheck.cvsRestantesHoy - 1,
           userPlan,
         },
+        strategy: resultado.strategy,
+        companyIntel: resultado.companyIntel || null,
+        horaLocalEmpresa: resultado.horaLocalEmpresa || null,
       },
       { status: 201 } // 201 = Created
     );

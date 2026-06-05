@@ -35,6 +35,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ html });
   } catch (err) {
     console.error("[CV PDF] Error:", (err as Error).message);
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    return NextResponse.json({ error: 'Error al generar PDF' }, { status: 500 });
   }
 }

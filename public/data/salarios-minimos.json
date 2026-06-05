@@ -1,0 +1,27 @@
+{
+  "actualizadoEn": "2026-06-01",
+  "nota": "Salarios mínimos mensuales brutos. Países UE: fuente Eurostat. Resto: agencias oficiales.",
+  "paises": {
+    "ES": { "salarioMinimo": 1184, "moneda": "EUR", "periodo": "2025-S1", "fuente": "Eurostat earn_mw_cur" },
+    "DE": { "salarioMinimo": 2222, "moneda": "EUR", "periodo": "2025-S1", "fuente": "Eurostat earn_mw_cur" },
+    "FR": { "salarioMinimo": 1802, "moneda": "EUR", "periodo": "2025-S1", "fuente": "Eurostat earn_mw_cur" },
+    "NL": { "salarioMinimo": 2191, "moneda": "EUR", "periodo": "2025-S1", "fuente": "Eurostat earn_mw_cur" },
+    "BE": { "salarioMinimo": 2097, "moneda": "EUR", "periodo": "2025-S1", "fuente": "Eurostat earn_mw_cur" },
+    "IE": { "salarioMinimo": 2340, "moneda": "EUR", "periodo": "2025-S1", "fuente": "Eurostat earn_mw_cur" },
+    "PT": { "salarioMinimo": 1020, "moneda": "EUR", "periodo": "2025-S1", "fuente": "Eurostat earn_mw_cur" },
+    "PL": { "salarioMinimo": 4666, "moneda": "PLN", "periodo": "2025-S1", "fuente": "Eurostat earn_mw_cur" },
+    "GR": { "salarioMinimo": 950,  "moneda": "EUR", "periodo": "2025-S1", "fuente": "Eurostat earn_mw_cur" },
+    "SE": { "salarioMinimo": 25000, "moneda": "SEK", "fuente": "Fuente oficial nacional", "nota": "Acuerdo colectivo medio (Kollektivavtal) — no hay mínimo legal" },
+    "DK": { "salarioMinimo": 28000, "moneda": "DKK", "fuente": "Fuente oficial nacional", "nota": "Acuerdo colectivo medio — no hay mínimo legal" },
+    "NO": { "salarioMinimo": 30000, "moneda": "NOK", "fuente": "Fuente oficial nacional", "nota": "Acuerdo colectivo medio — mínimo varía por sector" },
+    "FI": { "salarioMinimo": 2100,  "moneda": "EUR", "fuente": "Fuente oficial nacional", "nota": "Acuerdo colectivo medio — no hay mínimo legal" },
+    "IT": { "salarioMinimo": 1300,  "moneda": "EUR", "fuente": "Fuente oficial nacional", "nota": "Acuerdo colectivo mínimo — no hay mínimo legal nacional" },
+    "AT": { "salarioMinimo": 2100,  "moneda": "EUR", "fuente": "Fuente oficial nacional", "nota": "Acuerdo colectivo mínimo — no hay mínimo legal nacional" },
+    "CH": { "salarioMinimo": 4200,  "moneda": "CHF", "fuente": "Fuente oficial nacional", "nota": "Varía por cantón. Ginebra: 4.434 CHF, Neuchâtel: 4.200 CHF" },
+    "UK": { "salarioMinimo": 2116,  "moneda": "GBP", "fuente": "Fuente oficial nacional", "nota": "National Living Wage: £12.21/h × 173h (Apr 2025)" },
+    "US": { "salarioMinimo": 1256,  "moneda": "USD", "fuente": "Fuente oficial nacional", "nota": "Federal: $7.25/h. California: $16/h. Varía por estado." },
+    "CA": { "salarioMinimo": 2752,  "moneda": "CAD", "fuente": "Fuente oficial nacional", "nota": "Ontario: $17.20/h. BC: $17.40/h. Varía por provincia." },
+    "AU": { "salarioMinimo": 3830,  "moneda": "AUD", "fuente": "Fuente oficial nacional", "nota": "National Minimum Wage: $23.23/h × 38h (Jul 2024)" },
+    "NZ": { "salarioMinimo": 4019,  "moneda": "NZD", "fuente": "Fuente oficial nacional", "nota": "Minimum Wage: $23.15/h × 40h (Apr 2025)" }
+  }
+}

@@ -1,0 +1,39 @@
+name: Sync APIs externas (Remote OK + Arbeitnow)
+
+on:
+  schedule:
+    - cron: '30 */6 * * *'  # Cada 6 horas
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Arbeitnow
+        run: |
+          echo "Obteniendo Arbeitnow..."
+          JOBS=$(curl -s "https://www.arbeitnow.com/api/job-board-api" -H "User-Agent: BuscayCurra/1.0" | jq -c '.data[:100]')
+          COUNT=$(echo "$JOBS" | jq 'length')
+          echo "Encontradas: $COUNT ofertas"
+          
+          RESULT=$(curl -s -X POST "https://buscaycurra.es/api/jobs/ingest-remote" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"source\":\"Arbeitnow\",\"jobs\":$JOBS}" \
+            --max-time 60)
+          echo "Resultado: $RESULT"
+      
+      - name: Sync Remote OK
+        run: |
+          echo "Obteniendo Remote OK..."
+          # RemoteOK cambió de dominio
+          JOBS=$(curl -sL "https://remoteok.com/api" -H "User-Agent: BuscayCurra/1.0" | jq -c '[.[1:101] | .[] | {title: .position, company: .company, location: (.location // "Remoto"), description: (.description // ""), url: ("https://remoteok.com/l/" + (.slug // .id // "")), created_at: (.date // "")}]')
+          COUNT=$(echo "$JOBS" | jq 'length')
+          echo "Encontradas: $COUNT ofertas"
+          
+          RESULT=$(curl -s -X POST "https://buscaycurra.es/api/jobs/ingest-remote" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"source\":\"RemoteOK\",\"jobs\":$JOBS}" \
+            --max-time 60)
+          echo "Resultado: $RESULT"

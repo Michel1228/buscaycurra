@@ -248,20 +248,58 @@ export default function TerminosPage() {
             </ul>
           </section>
 
-          {/* 7. Cancelación */}
+          {/* 7. Derecho de desistimiento */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              7. Cancelación
+              7. Derecho de desistimiento (14 días)
+            </h2>
+            <p>
+              De conformidad con el Real Decreto Legislativo 1/2007 y la
+              Directiva 2011/83/UE, el usuario consumidor dispone de un plazo
+              de <strong>14 días naturales</strong> desde la contratación de
+              cualquier plan de pago para desistir del contrato sin necesidad
+              de justificación y sin penalización alguna.
+            </p>
+            <p className="mt-2">
+              Para ejercer este derecho, el usuario debe comunicarlo a{" "}
+              <a
+                href="mailto:privacidad@buscaycurra.es"
+                className="font-medium hover:underline"
+                style={{ color: "#7ed56f" }}
+              >
+                privacidad@buscaycurra.es
+              </a>{" "}
+              antes de que expire dicho plazo. Se procederá al reembolso
+              íntegro en un plazo máximo de 14 días desde la recepción de la
+              solicitud, utilizando el mismo medio de pago empleado en la
+              compra.
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Nota: si el usuario ha hecho uso efectivo del servicio (envíos
+              de CV realizados, uso de la IA), el derecho de desistimiento
+              puede quedar limitado conforme al artículo 103.m) del RDL
+              1/2007, al tratarse de contenido digital cuya ejecución ha
+              comenzado con consentimiento expreso del usuario.
+            </p>
+          </section>
+
+          {/* 8. Cancelación */}
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              8. Cancelación de suscripción
             </h2>
             <p>
               El usuario puede cancelar su suscripción en cualquier momento
               desde la sección <strong>Mi perfil</strong> de la plataforma. La
               cancelación tendrá efecto al finalizar el período de facturación
-              en curso, sin derecho a reembolso proporcional.
+              en curso, sin derecho a reembolso proporcional salvo ejercicio
+              del derecho de desistimiento descrito en el artículo anterior.
             </p>
             <p className="mt-2">
               El usuario también puede solicitar la eliminación completa de su
-              cuenta y datos enviando un correo a{" "}
+              cuenta y todos sus datos directamente desde{" "}
+              <strong>Mi perfil → Eliminar mi cuenta</strong>, o enviando un
+              correo a{" "}
               <a
                 href="mailto:privacidad@buscaycurra.es"
                 className="font-medium hover:underline"
@@ -273,10 +311,10 @@ export default function TerminosPage() {
             </p>
           </section>
 
-          {/* 8. Modificaciones */}
+          {/* 9. Modificaciones */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              8. Modificaciones del servicio y condiciones
+              9. Modificaciones del servicio y condiciones
             </h2>
             <p>
               BuscayCurra se reserva el derecho de modificar estos Términos y
@@ -287,10 +325,10 @@ export default function TerminosPage() {
             </p>
           </section>
 
-          {/* 9. Ley aplicable */}
+          {/* 10. Ley aplicable */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              9. Ley aplicable y jurisdicción
+              10. Ley aplicable y jurisdicción
             </h2>
             <p>
               Los presentes Términos y Condiciones se rigen por la{" "}

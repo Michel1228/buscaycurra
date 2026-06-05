@@ -12,10 +12,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getStripe, getPlanFromPriceId } from "@/lib/stripe";
 import Stripe from "stripe";
+import { sendPaymentConfirmationEmail } from "@/lib/email/smtp-sender";
 
-// ─── Necesario: deshabilitar el body parser de Next.js para webhooks ──────────
-// Stripe necesita el body en bruto para verificar la firma
 export const runtime = "nodejs";
+
+const NOMBRES_PLAN: Record<string, string> = {
+  esencial: "Esencial — 2,99€/mes",
+  pro:      "Pro — 9,99€/mes",
+  empresa:  "Empresa — 49,99€/mes",
+};
 
 // ─── POST /api/stripe/webhook ─────────────────────────────────────────────────
 
@@ -71,12 +76,49 @@ export async function POST(request: NextRequest) {
 
     // ── Procesar eventos de Stripe ───────────────────────────────────────────
 
+const PLANES_VALIDOS = ["gratis","free","esencial","pro","empresa"];
+    type PlanPago = typeof PLANES_VALIDOS[number];
+
+    // Obtiene el plan desde un price ID o metadata, garantizando que sea válido
+    async function resolverPlan(
+      planMetadata: string | undefined,
+      subscriptionId: string | null | undefined
+    ): Promise<PlanPago | null> {
+      // Intentar obtener desde el price ID real de Stripe (más fiable)
+      if (subscriptionId) {
+        try {
+          const sub = await getStripe().subscriptions.retrieve(subscriptionId as string);
+          const priceId = sub.items.data[0]?.price.id;
+          const planDesdePrice = priceId ? getPlanFromPriceId(priceId) : "free";
+          if ((PLANES_VALIDOS as readonly string[]).includes(planDesdePrice)) {
+            return planDesdePrice as PlanPago;
+          }
+        } catch { /* fallback a metadata */ }
+      }
+      if (planMetadata && (PLANES_VALIDOS as readonly string[]).includes(planMetadata)) {
+        return planMetadata as PlanPago;
+      }
+      return null;
+    }
+
+    // Actualiza el plan de un usuario por customerId
+    async function actualizarPlanPorCustomer(customerId: string, nuevoPlan: string) {
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({ plan: nuevoPlan, updated_at: new Date().toISOString() })
+        .eq("stripe_customer_id", customerId);
+      if (error) {
+        console.error(`[stripe/webhook] Error actualizando plan a '${nuevoPlan}' para customer ${customerId}:`, error.message);
+      } else {
+        console.log(`[stripe/webhook] Plan '${nuevoPlan}' aplicado a customer ${customerId}`);
+      }
+    }
+
     switch (event.type) {
       // ── Pago completado: activar el plan del usuario ──────────────────────
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
-        const plan = session.metadata?.plan;
 
         if (!userId) {
           console.error("[stripe/webhook] checkout.session.completed sin userId en metadata");
@@ -119,19 +161,41 @@ export async function POST(request: NextRequest) {
           });
 
         if (error) {
-          console.error("[stripe/webhook] Error al actualizar plan:", error.message);
+          console.error("[stripe/webhook] Error al activar plan:", error.message);
         } else {
           console.log(`[stripe/webhook] Plan '${planFinal}' activado para usuario ${userId}`);
+          // Enviar email de confirmación
+          const emailCliente = session.customer_details?.email ?? (session.customer_email as string | null);
+          if (emailCliente) {
+            const nombrePlan = NOMBRES_PLAN[planFinal] ?? planFinal;
+            await sendPaymentConfirmationEmail(emailCliente, planFinal, nombrePlan).catch(
+              err => console.error("[stripe/webhook] Error enviando email:", err)
+            );
+          }
         }
+        break;
+      }
+
+      // ── Suscripción actualizada: el usuario cambió de plan ────────────────
+      case "customer.subscription.updated": {
+        const sub = event.data.object as Stripe.Subscription;
+        const customerId = sub.customer as string;
+        const priceId = sub.items.data[0]?.price.id;
+
+        if (!priceId) break;
+
+        const planActualizado = getPlanFromPriceId(priceId);
+        if (!(PLANES_VALIDOS as readonly string[]).includes(planActualizado)) break;
+
+        await actualizarPlanPorCustomer(customerId, planActualizado);
         break;
       }
 
       // ── Suscripción cancelada: resetear el plan a 'free' ─────────────────
       case "customer.subscription.deleted": {
-        const suscripcion = event.data.object as Stripe.Subscription;
-        const customerId = suscripcion.customer as string;
+        const sub = event.data.object as Stripe.Subscription;
+        const customerId = sub.customer as string;
 
-        // Buscar el usuario por su stripe_customer_id
         const { data: perfiles, error: errorBusqueda } = await supabaseAdmin
           .from("profiles")
           .select("id")
@@ -143,20 +207,7 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Resetear el plan a 'free'
-        const { error: errorUpdate } = await supabaseAdmin
-          .from("profiles")
-          .update({
-            plan: "free",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("stripe_customer_id", customerId);
-
-        if (errorUpdate) {
-          console.error("[stripe/webhook] Error al resetear plan:", errorUpdate.message);
-        } else {
-          console.log(`[stripe/webhook] Plan reseteado a 'free' para customer ${customerId}`);
-        }
+        await actualizarPlanPorCustomer(customerId, "free");
         break;
       }
 

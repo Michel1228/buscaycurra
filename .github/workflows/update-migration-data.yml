@@ -1,0 +1,52 @@
+name: Update Migration Data (Salarios Mínimos)
+
+# Ejecuta el primero de cada mes a las 8:00 UTC
+# También se puede lanzar manualmente desde GitHub Actions
+
+on:
+  schedule:
+    - cron: '0 8 1 * *'
+  workflow_dispatch:
+
+jobs:
+  sync-wages:
+    name: "Sincronizar salarios mínimos (Eurostat)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Ejecutar sync de salarios mínimos
+        run: node scripts/sync-minimum-wages.mjs
+
+      - name: Commit si hay cambios
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/salarios-minimos.json
+          if ! git diff --staged --quiet; then
+            PERIODO=$(date +'%Y-%m')
+            git commit -m "data: actualizar salarios minimos desde Eurostat [$PERIODO]"
+            echo "CAMBIOS=true" >> $GITHUB_ENV
+          else
+            echo "Sin cambios en salarios minimos."
+            echo "CAMBIOS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Push cambios
+        if: env.CAMBIOS == 'true'
+        run: git push origin HEAD
+
+      - name: Resumen
+        run: |
+          echo "✅ Sincronización completada"
+          echo "📅 Fecha: $(date +'%Y-%m-%d')"
+          cat public/data/salarios-minimos.json | grep actualizadoEn

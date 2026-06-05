@@ -50,7 +50,8 @@ export default function CookieBanner() {
   return (
     // Banner fijo en la parte inferior de la pantalla, ancho completo
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg"
+      style={{ background: "#1e212b", borderColor: "#2d3142" }}
       role="dialog"
       aria-live="polite"
       aria-label="Banner de consentimiento de cookies"
@@ -58,7 +59,7 @@ export default function CookieBanner() {
       <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 
         {/* Texto del banner */}
-        <div className="flex-1 text-sm text-gray-600">
+        <div className="flex-1 text-sm" style={{ color: "#94a3b8" }}>
           <p>
             Usamos cookies necesarias para el funcionamiento del servicio. No
             usamos cookies publicitarias.{" "}
@@ -78,7 +79,8 @@ export default function CookieBanner() {
           {/* Botón "Solo necesarias" — borde gris, texto oscuro */}
           <button
             onClick={soloNecesarias}
-            className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+            className="px-4 py-2 text-sm font-medium rounded-lg transition"
+            style={{ color: "#94a3b8", border: "1px solid #2d3142" }}
           >
             Solo necesarias
           </button>
