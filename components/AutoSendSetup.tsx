@@ -89,10 +89,15 @@ export default function AutoSendSetup({ userId, onJobScheduled, initialValues }:
       const data = await response.json() as ScheduleSuccess & { error?: string };
       if (!response.ok || data.error) throw new Error(data.error ?? "Error al programar");
 
+      // BUG-07: limpiar formulario SOLO después de confirmar éxito
       setSuccess(data);
       onJobScheduled?.(data);
-      setCompanyUrl(""); setCompanyName(""); setCompanyEmail(""); setJobTitle("");
-      setPriority("normal"); setShowPreview(false);
+      setCompanyUrl("");
+      setCompanyName("");
+      setCompanyEmail("");
+      setJobTitle("");
+      setPriority("normal");
+      setShowPreview(false);
     } catch (err) {
       setError((err as Error).message);
     } finally {

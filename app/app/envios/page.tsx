@@ -32,6 +32,11 @@ function EnviosPageInner() {
   const [activeTab, setActiveTab] = useState<TabId>(tabParam);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Sincronizar tab cuando cambian los searchParams (ej: clic en notificación estando ya en /app/envios)
+  useEffect(() => {
+    setActiveTab(tabParam);
+  }, [tabParam]);
+
   useEffect(() => {
     async function loadUser() {
       try {

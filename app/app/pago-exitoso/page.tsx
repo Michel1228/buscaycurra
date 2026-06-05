@@ -64,7 +64,7 @@ function PagoExitosoContenido() {
           "✅ Soporte dedicado 24/7",
         ]
       : [
-          "✅ 10 CVs enviados por día",
+          "✅ 50 CVs enviados por día",
           "✅ IA avanzada activada",
           "✅ Estadísticas detalladas",
           "✅ Soporte prioritario",

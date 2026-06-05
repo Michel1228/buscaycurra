@@ -176,7 +176,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
         </label>
         <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
           placeholder="Tu nombre completo"
-          className="w-full" />
+          className="input-game w-full" />
       </div>
 
       {/* Teléfono */}
@@ -185,7 +185,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
           Teléfono
         </label>
         <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)}
-          placeholder="+34 600 000 000" className="w-full" />
+          placeholder="+34 600 000 000" className="input-game w-full" />
       </div>
 
       {/* Ciudad */}
@@ -194,7 +194,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
           Ciudad
         </label>
         <input type="text" value={ciudad} onChange={(e) => setCiudad(e.target.value)}
-          placeholder="Madrid, Barcelona, Tudela..." className="w-full" />
+          placeholder="Madrid, Barcelona, Tudela..." className="input-game w-full" />
       </div>
 
       {/* Sector */}
@@ -202,7 +202,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
         <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
           Sector profesional
         </label>
-        <select value={sector} onChange={(e) => setSector(e.target.value)} className="w-full">
+        <select value={sector} onChange={(e) => setSector(e.target.value)} className="input-game w-full">
           <option value="">Selecciona tu sector</option>
           {SECTORES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>

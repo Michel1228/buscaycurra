@@ -84,25 +84,37 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
     finally { setLoading(false); }
   }, [userId]);
 
+  // BUG-03: no arrancar polling hasta tener userId
   useEffect(() => {
+    if (!userId) return;
     void loadData();
     const iv = setInterval(() => void loadData(), 30_000);
     return () => clearInterval(iv);
-  }, [loadData]);
+  }, [loadData, userId]);
 
   const cancelJob = async (jobId: string) => {
     if (!confirm("¿Cancelar este envío?")) return;
     setCancellingId(jobId);
     try {
+      // BUG-01: enviar Bearer token
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      const token = session?.access_token ?? "";
       const res = await fetch("/api/cv-sender/cancel", {
-        method: "DELETE", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId, userId }),
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ jobId }),
       });
-      const data = await res.json() as { success?: boolean; error?: string };
+      const data = await res.json() as { success?: boolean; error?: string; message?: string };
       if (data.success) {
         setPendingJobs(prev => prev.filter(j => j.id !== jobId));
+        void loadData(); // refrescar
+      } else {
+        // BUG-02: mostrar error al usuario
+        setError(data.error ?? data.message ?? "No se pudo cancelar el envío");
       }
-    } catch {} finally { setCancellingId(null); }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally { setCancellingId(null); }
   };
 
   if (loading) {

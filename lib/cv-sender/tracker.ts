@@ -30,7 +30,7 @@ function getSupabase(): any {
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 /** Estado posible de un envío */
-export type SendStatus = "pendiente" | "enviado" | "fallido" | "cancelado";
+export type SendStatus = "pendiente" | "enviado" | "fallido" | "cancelado" | "visto" | "respondido";
 
 /** Fila de la tabla cv_sends en Supabase */
 export interface CVSendRecord {
@@ -220,7 +220,7 @@ export async function canSendToCompany(
     .select("sent_at")
     .eq("user_id", userId)
     .eq("company_email", companyEmail)
-    .eq("status", "enviado")
+    .in("status", ["enviado", "visto", "respondido"]) // todos cuentan para el periodo de 90 días
     .order("sent_at", { ascending: false })
     .limit(1);
 

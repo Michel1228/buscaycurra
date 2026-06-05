@@ -53,11 +53,11 @@ export default function EmpresasPage() {
   // Verificar sesión al cargar + obtener rate limit
   useEffect(() => {
     async function verificarSesion() {
-      const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-      if (!user) { router.push("/auth/login"); return; }
+      // BUG-10: una sola llamada (getSession incluye al usuario)
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session?.user) { router.push("/auth/login"); return; }
       try {
-        const { data: { session: s } } = await getSupabaseBrowser().auth.getSession();
-        const token = s?.access_token ?? "";
+        const token = session.access_token ?? "";
         const res = await fetch("/api/cv-sender/status", {
           headers: { "Authorization": `Bearer ${token}` }
         });
@@ -95,7 +95,10 @@ export default function EmpresasPage() {
 
     try {
       const params = new URLSearchParams({ url: urlEmpresa.trim() });
-      const respuesta = await fetch(`/api/empresas/analizar?${params.toString()}`);
+      const { data: { session: sesionEmp } } = await getSupabaseBrowser().auth.getSession();
+      const respuesta = await fetch(`/api/empresas/analizar?${params.toString()}`, {
+        headers: { "Authorization": `Bearer ${sesionEmp?.access_token ?? ""}` },
+      });
 
       if (!respuesta.ok) {
         const datos = await respuesta.json();

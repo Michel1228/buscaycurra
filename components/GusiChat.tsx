@@ -390,7 +390,7 @@ export default function GusiChat() {
                                 <span className="text-[11px] font-bold" style={{ color: matchColor }}>{job.match}%</span>
                               </div>
                               <button
-                                onClick={() => router.push(`/app/empresas?empresa=${encodeURIComponent(job.empresa)}`)}
+                                onClick={() => router.push(`/app/envios?empresa=${encodeURIComponent(job.empresa)}&puesto=${encodeURIComponent(job.titulo)}&web=${encodeURIComponent(job.url)}`)}
                                 className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:opacity-90"
                                 style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
                                 ✓ Enviar CV

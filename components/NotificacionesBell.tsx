@@ -36,6 +36,9 @@ function getNotifUrl(n: Notificacion): string {
   switch (n.tipo) {
     case "respuesta_empresa":
     case "cv_visto":
+      return n.datos?.envioId
+        ? `/app/envios?tab=envios&envioId=${n.datos.envioId}`
+        : "/app/envios?tab=envios";
     case "cv_enviado":
     case "recordatorio":
       return "/app/envios?tab=envios";
@@ -60,6 +63,11 @@ export default function NotificacionesBell() {
 
   // Carga inicial + suscripción Supabase Realtime
   useEffect(() => {
+    // Variables en el scope del efecto para que el cleanup las alcance
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let canal: any = null;
+    let authSub: { unsubscribe: () => void } | null = null;
+
     async function init() {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       if (!session) return;
@@ -80,8 +88,14 @@ export default function NotificacionesBell() {
         setSinLeer(0);
       }
 
+      // Actualizar token si Supabase lo renueva automáticamente
+      const { data: { subscription } } = getSupabaseBrowser().auth.onAuthStateChange(
+        (_event, s) => { if (s?.access_token) tokenRef.current = s.access_token; }
+      );
+      authSub = subscription;
+
       // Suscripción en tiempo real — llega al instante sin polling
-      const canal = getSupabaseBrowser()
+      canal = getSupabaseBrowser()
         .channel(`notifs-${user.id}`)
         .on(
           "postgres_changes",
@@ -96,8 +110,12 @@ export default function NotificacionesBell() {
             setNotifs((prev) => [nueva, ...prev].slice(0, 50));
             setSinLeer((prev) => prev + 1);
 
-            // Notificación nativa del navegador si hay permiso
-            if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+            // Notificación nativa solo si el SW no está activo (evitar duplicado con push)
+            if (
+              typeof Notification !== "undefined" &&
+              Notification.permission === "granted" &&
+              !("serviceWorker" in navigator && navigator.serviceWorker.controller)
+            ) {
               new Notification(nueva.titulo, {
                 body: nueva.mensaje,
                 icon: "/qr-buscaycurra.png",
@@ -106,11 +124,15 @@ export default function NotificacionesBell() {
           }
         )
         .subscribe();
-
-      return () => { canal.unsubscribe(); };
     }
 
     init();
+
+    // Cleanup correcto: React ejecuta esto, no el return de init()
+    return () => {
+      canal?.unsubscribe();
+      authSub?.unsubscribe();
+    };
   }, []);
 
   // Cerrar panel al clicar fuera

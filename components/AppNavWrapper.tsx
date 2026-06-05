@@ -22,7 +22,7 @@ const navItems = [
   { href: "/app/au-pair", label: "Au Pair", icon: "👶" },
   { href: "/app/perfil", label: "Perfil", icon: "👤" },
   { href: "/precios", label: "Pro", icon: "⭐" },
-  { href: "/empresas/publicar", label: "Empresas", icon: "🏢" },
+  { href: "/app/empresas", label: "Empresas", icon: "🏢" },
 ];
 
 export default function AppNavWrapper() {

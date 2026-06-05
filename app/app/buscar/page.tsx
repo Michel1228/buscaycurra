@@ -118,13 +118,13 @@ function BuscarPageInner() {
   /**
    * Búsqueda a Jooble vía proxy server-side — la API key nunca sale al cliente
    */
-  async function buscarJoobleCliente(kw: string, loc: string): Promise<PropiedadesJobCard[]> {
+  async function buscarJoobleCliente(kw: string, loc: string, signal?: AbortSignal): Promise<PropiedadesJobCard[]> {
     try {
       const res = await fetch("/api/jobs/jooble", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keywords: kw, location: loc }),
-        signal: AbortSignal.timeout(12000),
+        signal: signal ?? AbortSignal.timeout(12000),
       });
       if (!res.ok) return [];
       const data = await res.json();
@@ -139,7 +139,13 @@ function BuscarPageInner() {
         fuente: "Jooble",
         url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(kw)}&loc=${encodeURIComponent(loc)}`,
         fecha: j.updated || new Date().toISOString(),
-        match: Math.max(88 - i * 3, 40),
+        match: (() => {
+          const words = kw.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+          if (words.length === 0) return 75;
+          const title = (j.title || "").toLowerCase();
+          const hits = words.filter(w => title.includes(w)).length;
+          return Math.round(Math.min(96, 55 + Math.round((hits / words.length) * 40)));
+        })(),
         distancia: "🏠 Tu ciudad",
       }));
     } catch {
@@ -175,7 +181,7 @@ function BuscarPageInner() {
       // Lanzar ambas búsquedas en paralelo
       const [serverRes, joobleRes] = await Promise.allSettled([
         fetch(`/api/jobs/search?${params.toString()}`, { signal: controller.signal }).then(r => r.ok ? r.json() : { ofertas: [] }),
-        buscarJoobleCliente(keyword.trim(), ubicacion.trim()),
+        buscarJoobleCliente(keyword.trim(), ubicacion.trim(), controller.signal),
       ]);
 
       // Si la búsqueda fue cancelada por una más reciente, no actualizar estado

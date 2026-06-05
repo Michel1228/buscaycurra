@@ -1083,7 +1083,7 @@ export default function AuPairPage() {
 
         {/* CTA buscar */}
         <Link
-          href="/app/buscar?q=au+pair"
+          href="/app/buscar?keyword=au+pair"
           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm"
           style={{ background: "#10b981", color: "#fff" }}
         >
