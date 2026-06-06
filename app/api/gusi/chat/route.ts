@@ -487,6 +487,8 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       }
 
       // ── Estrategia 2: título + provincia de esa ciudad ─────────────────
+      // NOTA: province suele ser NULL en la BD — la provincia está codificada
+      // dentro del campo city como "Tudela, Navarra". Por eso buscamos en city.
       const provincia = CIUDAD_A_PROVINCIA[city.toLowerCase()];
       if (provincia) {
         const provPat = `%${provincia}%`;
@@ -495,10 +497,12 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
            FROM "JobListing"
            WHERE "isActive" = true
              AND LOWER(title) LIKE $1
-             AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2 OR LOWER(city) LIKE $3 OR LOWER(province) LIKE $3)
-             AND (LOWER(country) LIKE $4 OR country IS NULL)
-           ORDER BY "createdAt" DESC LIMIT $5`,
-          [kw, cityPat, provPat, countryFilter, N]
+             AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2
+                  OR LOWER(city) LIKE $3 OR LOWER(province) LIKE $3
+                  OR LOWER(city) LIKE $4)
+             AND (LOWER(country) LIKE $5 OR country IS NULL)
+           ORDER BY "createdAt" DESC LIMIT $6`,
+          [kw, cityPat, provPat, `%, ${provincia}%`, countryFilter, N]
         );
         if (r2.rows.length > 0) {
           return { jobs: (r2.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "provincia" };

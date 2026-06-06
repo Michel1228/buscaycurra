@@ -333,7 +333,7 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
 export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, country?: string): Promise<number> {
   if (!jobs.length) return 0;
   const pool = getPool();
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
   let inserted = 0;
   for (const j of jobs) {
     if (!j.url || !j.title) continue;
