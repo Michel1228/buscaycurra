@@ -335,7 +335,7 @@ export default function PerfilPage() {
             free:     { emoji: "🥚", nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
             basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
             esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
-            pro:      { emoji: "🐛", nombre: "Pro",      color: "#a855f7", desc: "10 CVs/día · 200 candidaturas/mes · IA avanzada" },
+            pro:      { emoji: "⚡", nombre: "Pro",      color: "#a855f7", desc: "10 CVs/día · 200 candidaturas/mes · IA avanzada" },
             empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
           };
           const info = PLANES_INFO[planActual];
@@ -396,7 +396,7 @@ export default function PerfilPage() {
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🐛 Plan Pro — 9,99€/mes</p>
+                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>⚡ Plan Pro — 9,99€/mes</p>
                         <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>10 CVs/día · IA avanzada · Estadísticas</p>
                       </div>
                       <button onClick={() => void irACheckout("pro")} disabled={cargandoPlan}

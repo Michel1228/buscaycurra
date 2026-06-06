@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function RegistroPage() {
   const [nombre, setNombre] = useState("");
@@ -76,7 +77,7 @@ export default function RegistroPage() {
 
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-2 mb-6 lg:mb-10">
-            <span className="text-2xl">🐛</span>
+            <Image src="/icon-192.png" alt="Guzzi" width={28} height={28} style={{ borderRadius: "50%" }} />
             <span className="font-bold text-lg" style={{ color: "#22c55e" }}>BuscayCurra</span>
           </Link>
 

@@ -339,7 +339,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             ¿Listo para trabajar en {pais.nombre}? {pais.bandera}
           </h2>
           <p className="text-[#94a3b8] mb-6">
-            Regístrate gratis en BuscayCurra, sube tu CV y deja que Guzzi 🐛 encuentre las mejores ofertas para ti en {pais.nombreLocal}.
+            Regístrate gratis en BuscayCurra, sube tu CV y deja que Guzzi encuentre las mejores ofertas para ti en {pais.nombreLocal}.
           </p>
           <Link
             href="/auth/registro"

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * GusiChat — Chatbot flotante "Gusi" 🐛
+ * GusiChat — Chatbot flotante "Guzzi"
  * Centro de control de BuscayCurra:
  * - Chat libre IA sobre empleo
  * - Crear CV paso a paso (entrevista guiada)
@@ -154,7 +154,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     // Acción especial: subir CV
     if (texto === "__SUBIR_CV__") {
       addMsg("user", "Quiero subir mi CV");
-      addMsg("gusi", "📄 ¡Perfecto! Tienes dos opciones:\n\n1. **Aquí abajo** → Pulsa el clip 📎 para subir tu PDF\n2. **En Perfil** → Ve a 👤 Perfil → Mi CV\n\n¿Tienes tu CV en PDF? ¡Súbelo y yo me encargo del resto! 🐛", "upload_hint");
+      addMsg("gusi", "📄 ¡Perfecto! Tienes dos opciones:\n\n1. **Aquí abajo** → Pulsa el clip 📎 para subir tu PDF\n2. **En Perfil** → Ve a 👤 Perfil → Mi CV\n\n¿Tienes tu CV en PDF? ¡Súbelo y yo me encargo del resto!", "upload_hint");
       setMostrarSugerencias(false);
       return;
     }
@@ -164,7 +164,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       setModoEntrevista(true);
       setMostrarSugerencias(false);
       addMsg("user", "Quiero crear mi CV paso a paso");
-      addMsg("gusi", "¡Genial! 🐛 Vamos a crear un CV increíble juntos. Yo pregunto, tú respondes. ¡Será rápido!\n\n👉 Empecemos: **¿Cuál es tu nombre completo?**");
+      addMsg("gusi", "¡Genial! Vamos a crear un CV increíble juntos. Yo pregunto, tú respondes. ¡Será rápido!\n\n👉 Empecemos: **¿Cuál es tu nombre completo?**");
       return;
     }
 
@@ -187,9 +187,9 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       });
 
       const data = await res.json();
-      setMensajes(prev => [...prev, { role: "gusi", text: data.reply || "¡Ups! Inténtalo de nuevo 🐛", action: data.action, jobs: data.jobs }]);
+      setMensajes(prev => [...prev, { role: "gusi", text: data.reply || "¡Ups! Inténtalo de nuevo.", action: data.action, jobs: data.jobs }]);
     } catch {
-      addMsg("gusi", "Sin conexión. Comprueba tu internet 🐛");
+      addMsg("gusi", "Sin conexión. Comprueba tu internet.");
     }
     setCargando(false);
   };
@@ -200,11 +200,11 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     e.target.value = "";
 
     if (file.type !== "application/pdf") {
-      addMsg("gusi", "⚠️ Solo acepto PDFs. Por favor, selecciona un archivo .pdf 🐛");
+      addMsg("gusi", "⚠️ Solo acepto PDFs. Por favor, selecciona un archivo .pdf");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      addMsg("gusi", "⚠️ El archivo es muy grande (máx 5MB). Intenta comprimir el PDF. 🐛");
+      addMsg("gusi", "⚠️ El archivo es muy grande (máx 5MB). Intenta comprimir el PDF.");
       return;
     }
 
@@ -216,7 +216,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       const { getSupabaseBrowser } = await import("@/lib/supabase-browser");
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       if (!session) {
-        addMsg("gusi", "⚠️ Necesitas estar logueado. Ve a iniciar sesión primero. 🐛");
+        addMsg("gusi", "⚠️ Necesitas estar logueado. Ve a iniciar sesión primero.");
         setCargando(false);
         return;
       }
@@ -233,13 +233,13 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        addMsg("gusi", `⚠️ ${(data as {error?: string}).error || "No pude subir el CV. Inténtalo de nuevo."} 🐛`);
+        addMsg("gusi", `⚠️ ${(data as {error?: string}).error || "No pude subir el CV. Inténtalo de nuevo."}`);
         setCargando(false);
         return;
       }
 
       // 2. Extraer datos con IA
-      addMsg("gusi", "🔍 Leyendo tu CV con IA... un momento 🐛");
+      addMsg("gusi", "🔍 Leyendo tu CV con IA... un momento");
       const extractData = new FormData();
       extractData.append("file", file);
       const extractRes = await fetch("/api/cv/extraer", {
@@ -252,15 +252,15 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
         if (parsed.fuente && parsed.nombre) {
           const exp = (parsed.experiencia || []).slice(0, 3);
           const expText = exp.map((e: {puesto?: string; empresa?: string}) => `  • ${e.puesto || "?"} en ${e.empresa || "?"}`).join("\n");
-          addMsg("gusi", `✅ **¡CV subido y analizado!** 🐛🎉\n\n👤 **${parsed.nombre} ${parsed.apellidos || ""}**\n📞 ${parsed.telefono || "Sin teléfono"}\n📧 ${parsed.email || "Sin email"}\n📍 ${parsed.ciudad || "Sin ciudad"}\n${expText ? `\n💼 Experiencia:\n${expText}` : ""}\n\n✨ **Los campos se han rellenado** en la página de CV.\n\n¿Qué hacemos ahora?\n📧 **Enviar CV automáticamente**\n🔍 Buscar ofertas que encajen\n✨ Mejorar el CV con IA`);
+          addMsg("gusi", `✅ **¡CV subido y analizado!** 🎉\n\n👤 **${parsed.nombre} ${parsed.apellidos || ""}**\n📞 ${parsed.telefono || "Sin teléfono"}\n📧 ${parsed.email || "Sin email"}\n📍 ${parsed.ciudad || "Sin ciudad"}\n${expText ? `\n💼 Experiencia:\n${expText}` : ""}\n\n✨ **Los campos se han rellenado** en la página de CV.\n\n¿Qué hacemos ahora?\n📧 **Enviar CV automáticamente**\n🔍 Buscar ofertas que encajen\n✨ Mejorar el CV con IA`);
         } else {
-          addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nNo pude leer todos los datos automáticamente, pero tu PDF está guardado.\n\nVe a 📄 **Currículum** para rellenar los campos manualmente o mejorarlos con IA.");
+          addMsg("gusi", "✅ **¡CV subido!** 🎉\n\nNo pude leer todos los datos automáticamente, pero tu PDF está guardado.\n\nVe a 📄 **Currículum** para rellenar los campos manualmente o mejorarlos con IA.");
         }
       } else {
-        addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nAhora puedo:\n📧 **Enviar tu CV automáticamente** a empresas\n🔍 Buscar ofertas que encajen contigo\n\n¿Empezamos a buscar trabajo? 🚀");
+        addMsg("gusi", "✅ **¡CV subido!** 🎉\n\nAhora puedo:\n📧 **Enviar tu CV automáticamente** a empresas\n🔍 Buscar ofertas que encajen contigo\n\n¿Empezamos a buscar trabajo? 🚀");
       }
     } catch {
-      addMsg("gusi", "⚠️ Error al subir. Comprueba tu conexión. 🐛");
+      addMsg("gusi", "⚠️ Error al subir. Comprueba tu conexión.");
     }
     setCargando(false);
   };

@@ -288,7 +288,7 @@ export default function BienvenidaClient() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(quickActions.length > 0 ? quickActions : [
-              { icon: "🐛", label: "Hablar con Guzzi", href: "/app/gusi", color: "#22c55e" },
+              { icon: "✨", label: "Hablar con Guzzi", href: "/app/gusi", color: "#22c55e" },
               { icon: "📄", label: "Mejorar mi CV", href: "/app/curriculum", color: "#f59e0b" },
               { icon: "🔍", label: "Buscar ofertas", href: "/app/buscar", color: "#3b82f6" },
               { icon: "📊", label: "Mi pipeline", href: "/app/pipeline", color: "#a855f7" },
@@ -313,7 +313,7 @@ export default function BienvenidaClient() {
 
         {/* ── Footer tagline ── */}
         <p className="text-center text-xs" style={{ color: "#475569" }}>
-          🐛 BuscayCurra — La alternativa real a InfoJobs y LinkedIn
+          BuscayCurra — La alternativa real a InfoJobs y LinkedIn
         </p>
       </div>
     </div>

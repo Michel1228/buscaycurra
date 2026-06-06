@@ -78,7 +78,7 @@ export default function CandidatosPage() {
       <header className="sticky top-0 z-50" style={{ background: "rgba(15,17,23,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(45,49,66,0.4)" }}>
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/empresas" className="flex items-center gap-2.5">
-            <span className="text-xl">🐛</span>
+            <img src="/icon-192.png" alt="Guzzi" width={24} height={24} style={{ borderRadius: "50%", objectFit: "cover" }} />
             <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
             <span className="hidden sm:inline text-xs" style={{ color: "#475569" }}>/ Candidatos</span>
           </Link>

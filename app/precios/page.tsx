@@ -37,7 +37,7 @@ const PLANES = [
     dest: false, btn: "Elegir Esencial", accion: "esencial" as const,
   },
   {
-    id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛",
+    id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "⚡",
     desc: "Para profesionales serios",
     items: [
       { t: "10 CVs enviados por día", ok: true },
