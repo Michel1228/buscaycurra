@@ -81,6 +81,7 @@ export default function BienvenidaClient() {
       value: stats.ofertasNuevasHoy,
       color: "#3b82f6",
       bg: "rgba(59,130,246,0.1)",
+      href: "/app/buscar",
     },
     {
       icon: "📧",
@@ -88,6 +89,7 @@ export default function BienvenidaClient() {
       value: stats.cvsEnviadosHoy,
       color: "#22c55e",
       bg: "rgba(34,197,94,0.1)",
+      href: "/app/envios",
     },
     {
       icon: "📊",
@@ -95,6 +97,7 @@ export default function BienvenidaClient() {
       value: stats.pipelineActivo,
       color: "#a855f7",
       bg: "rgba(168,85,247,0.1)",
+      href: "/app/pipeline",
     },
     {
       icon: "🎯",
@@ -102,6 +105,7 @@ export default function BienvenidaClient() {
       value: stats.entrevistasPendientes,
       color: "#f59e0b",
       bg: "rgba(245,158,11,0.1)",
+      href: "/app/entrevistas",
     },
   ];
 
@@ -139,9 +143,10 @@ export default function BienvenidaClient() {
         {/* ── Stats row ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {statCards.map((s) => (
-            <div
+            <Link
               key={s.label}
-              className="rounded-xl p-4 transition hover:scale-[1.02]"
+              href={s.href}
+              className="rounded-xl p-4 transition hover:scale-[1.02] cursor-pointer block"
               style={{ background: s.bg, border: `1px solid ${s.color}20` }}
             >
               <div className="flex items-center gap-2 mb-1">
@@ -151,7 +156,8 @@ export default function BienvenidaClient() {
                 </span>
               </div>
               <p className="text-xs" style={{ color: "#94a3b8" }}>{s.label}</p>
-            </div>
+              <p className="text-[10px] mt-1 font-medium" style={{ color: s.color, opacity: 0.7 }}>Ver →</p>
+            </Link>
           ))}
         </div>
 
