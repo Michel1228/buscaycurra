@@ -332,8 +332,9 @@ export default function PerfilPage() {
         {tab === "plan" && (() => {
           const PLANES_INFO = {
             free:     { emoji: "🥚", nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
-            esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "30 candidaturas/mes · Buscador avanzado" },
-            pro:      { emoji: "🐛", nombre: "Pro",      color: "#a855f7", desc: "10 CVs/día · IA avanzada · Estadísticas" },
+            basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
+            esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
+            pro:      { emoji: "🐛", nombre: "Pro",      color: "#a855f7", desc: "10 CVs/día · 200 candidaturas/mes · IA avanzada" },
             empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
           };
           const info = PLANES_INFO[planActual];

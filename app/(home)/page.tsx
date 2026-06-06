@@ -8,7 +8,7 @@ import { getPool } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 function formatOfertas(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000_000) return "millones de";
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
   return String(n);
 }
@@ -35,7 +35,7 @@ export default async function LandingPage() {
   // ── Datos reales desde la DB (con fallback a hardcoded) ──
   const stats = await getRealStats();
   
-  const OFERTAS = stats ? formatOfertas(stats.totalGlobal) : "1.9M";
+  const OFERTAS = stats ? formatOfertas(stats.totalGlobal) : "millones de";
   const PAISES = stats ? String(stats.countryCount) : "21";
   const OBJETIVO = "10.000.000";
 

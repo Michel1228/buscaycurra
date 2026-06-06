@@ -65,16 +65,16 @@ export async function checkRateLimit(
   // Usamos las variables de entorno si están definidas, o los valores por defecto del plan
   const limites = {
     free: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_FREE ?? "3"),
-      perMonth: 30,
+      perDay: 2,
+      perMonth: 20,
     },
     basico: {
-      perDay: 15,
-      perMonth: 150,
+      perDay: 5,
+      perMonth: 50,
     },
     pro: {
-      perDay: parseInt(process.env.MAX_CVS_PER_DAY_PRO ?? "50"),
-      perMonth: 500,
+      perDay: 10,
+      perMonth: 200,
     },
     empresa: {
       perDay: Infinity,

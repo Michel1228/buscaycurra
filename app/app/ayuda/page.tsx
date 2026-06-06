@@ -17,7 +17,7 @@ const FAQS = [
     categoria: "CV y candidaturas",
     items: [
       { q: "¿Cómo sube Guzzi mi CV?", a: "Ve a 'Mi CV' en el menú. Sube tu CV en PDF (máx. 5 MB) o cuéntale a Guzzi tu experiencia en el chat. Guzzi lo analiza, lo mejora y lo adapta a cada oferta antes de enviarlo." },
-      { q: "¿Cuántos CVs puedo enviar al día?", a: "Depende de tu plan: Gratis (2/día), Esencial (5/día), Pro (10/día), Empresa (ilimitado). Los envíos se reinician cada día a medianoche." },
+      { q: "¿Cuántos CVs puedo enviar al día?", a: "Depende de tu plan: Gratis (2/día), Básico (5/día), Pro (10/día), Empresa (ilimitado). Los envíos se reinician cada día a medianoche." },
       { q: "¿Puedo ver a qué empresas he enviado mi CV?", a: "Sí. En 'Pipeline' tienes el historial completo de candidaturas: empresa, fecha, estado y respuestas." },
       { q: "¿Guzzi envía mi CV sin que yo lo apruebe?", a: "No. Guzzi te muestra las ofertas encontradas y tú decides cuáles enviar. El envío requiere tu confirmación o que hayas configurado previamente tus filtros." },
       { q: "¿Cada cuánto tiempo puedo enviar a la misma empresa?", a: "Cada 90 días. Esto evita el spam y protege tu imagen profesional." },

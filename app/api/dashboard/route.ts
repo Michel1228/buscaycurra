@@ -4,6 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getPool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +40,17 @@ export async function GET(request: NextRequest) {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    // Ofertas nuevas hoy
-    const { count: ofertasHoy } = await supabaseAdmin
-      .from("ofertas")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", hoy.toISOString());
+    // Ofertas nuevas hoy desde la BD local (JobListing PostgreSQL)
+    let ofertasHoy = 0;
+    try {
+      const pool = getPool();
+      const res = await pool.query<{ count: string }>(
+        `SELECT COUNT(*)::int AS count FROM "JobListing"
+         WHERE "isActive" = true AND "createdAt" >= $1`,
+        [hoy.toISOString()]
+      );
+      ofertasHoy = parseInt(res.rows[0]?.count || "0", 10);
+    } catch { /* fallback a 0 si la BD local no está disponible */ }
 
     // CVs enviados (total y hoy)
     const { count: cvsEnviadosTotal } = await supabaseAdmin
@@ -128,7 +135,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       stats: {
-        ofertasNuevasHoy: ofertasHoy || 0,
+        ofertasNuevasHoy: ofertasHoy,
         cvsEnviados: cvsEnviadosTotal || 0,
         cvsEnviadosHoy: cvsEnviadosHoy || 0,
         entrevistasPendientes,
