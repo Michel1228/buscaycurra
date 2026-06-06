@@ -477,7 +477,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
 
           {/* ── Sugerencias (bajo el input) ── */}
           {mostrarSugerencias && (
-            <div className="px-4 pb-3 pt-2 shrink-0" style={{ background: "#111827" }}>
+            <div className="px-4 pb-2 pt-1.5 shrink-0" style={{ background: "#111827" }}>
               {logueado === false ? (
                 <div className="flex gap-2">
                   <button onClick={() => router.push("/auth/registro")}
@@ -492,20 +492,20 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-2 gap-1">
                   {SUGERENCIAS.map((s, i) => (
                     <button key={i} onClick={() => enviar(s.msg)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-left transition hover:opacity-80"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition hover:opacity-80"
                       style={{
                         background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
                         border: `1px solid ${s.destacado ? "rgba(34,197,94,0.2)" : "#2d3142"}`,
                       }}>
-                      <span className="text-base shrink-0">{s.icon}</span>
+                      <span className="text-sm shrink-0">{s.icon}</span>
                       <div className="min-w-0">
-                        <p className="text-[11px] font-semibold truncate" style={{ color: s.destacado ? "#22c55e" : "#e2e8f0" }}>
+                        <p className="text-[10px] font-semibold truncate" style={{ color: s.destacado ? "#22c55e" : "#e2e8f0" }}>
                           {s.label}
                         </p>
-                        <p className="text-[10px] truncate" style={{ color: s.destacado ? "rgba(34,197,94,0.6)" : "#475569" }}>
+                        <p className="text-[9px] truncate" style={{ color: s.destacado ? "rgba(34,197,94,0.6)" : "#475569" }}>
                           {s.desc}
                         </p>
                       </div>
