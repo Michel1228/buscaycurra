@@ -42,7 +42,7 @@ function colorFuente(fuente: string): { bg: string; text: string } {
 }
 
 export default function JobCard({
-  titulo, empresa, ubicacion, salario, fuente = "Otro",
+  id, titulo, empresa, ubicacion, salario, fuente = "Otro",
   url, modalidad, descripcion, match, distancia, emailEmpresa,
 }: PropiedadesJobCard) {
   const fc = colorFuente(fuente);
@@ -99,11 +99,11 @@ export default function JobCard({
 
       {/* Actions */}
       <div className="flex gap-2 mt-auto">
-        <a href={url} target="_blank" rel="noopener noreferrer"
+        <Link href={`/app/ofertas/${encodeURIComponent(id)}`}
           className="flex-1 text-center py-2.5 text-xs font-medium rounded-xl transition hover:opacity-80"
           style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#b0a890" }}>
           Ver oferta
-        </a>
+        </Link>
         <Link href={`/app/envios?empresa=${encodeURIComponent(empresa)}${emailEmpresa ? `&email=${encodeURIComponent(emailEmpresa)}` : ""}${titulo ? `&puesto=${encodeURIComponent(titulo)}` : ""}${url ? `&web=${encodeURIComponent(url)}` : ""}`}
           className="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition hover:opacity-90"
           style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>

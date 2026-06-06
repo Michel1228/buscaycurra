@@ -44,6 +44,8 @@ export default function PipelinePage() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [candidaturaEdit, setCandidaturaEdit] = useState<Candidatura | null>(null);
   const [notasEdit, setNotasEdit] = useState("");
+  const [salarioEdit, setSalarioEdit] = useState("");
+  const [contactoEdit, setContactoEdit] = useState("");
   const [guardandoNotas, setGuardandoNotas] = useState(false);
   const [modalNueva, setModalNueva] = useState(false);
   const [nueva, setNueva] = useState({ empresa: "", puesto: "", notas: "" });
@@ -83,6 +85,8 @@ export default function PipelinePage() {
             estado: pipelineEstado,
             fecha: e.created_at,
             notas,
+            salario: (() => { try { return JSON.parse(e.error_message)?.salario || ""; } catch { return ""; } })(),
+            contacto: (() => { try { return JSON.parse(e.error_message)?.contacto || ""; } catch { return ""; } })(),
           };
         });
 
@@ -104,9 +108,9 @@ export default function PipelinePage() {
       if (!session) return;
       const currentEstado = candidaturaEdit.estado;
       await getSupabaseBrowser().from("cv_sends").update({
-        error_message: JSON.stringify({ pipeline_estado: currentEstado, notas: notasEdit })
+        error_message: JSON.stringify({ pipeline_estado: currentEstado, notas: notasEdit, salario: salarioEdit, contacto: contactoEdit })
       }).eq("id", candidaturaEdit.id);
-      setCandidaturas(prev => prev.map(c => c.id === candidaturaEdit.id ? { ...c, notas: notasEdit } : c));
+      setCandidaturas(prev => prev.map(c => c.id === candidaturaEdit.id ? { ...c, notas: notasEdit, salario: salarioEdit, contacto: contactoEdit } : c));
       setModalAbierto(false);
     } catch (e) {
       console.error("Error guardando notas:", e);
@@ -305,7 +309,7 @@ export default function PipelinePage() {
                         <div key={item.id} draggable onDragStart={() => handleDragStart(item.id)}
                           className="card-game p-3 cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-transform relative"
                           style={{ borderLeft: `3px solid ${col.color}` }}
-                          onClick={() => { setCandidaturaEdit(item); setNotasEdit(item.notas || ""); setModalAbierto(true); }}>
+                          onClick={() => { setCandidaturaEdit(item); setNotasEdit(item.notas || ""); setSalarioEdit(item.salario || ""); setContactoEdit(item.contacto || ""); setModalAbierto(true); }}>
                           {/* Badge de notificación: sin cambios en más de 48h */}
                           {necesitaAtencion && (
                             <div className="absolute -top-1.5 -right-1.5 z-10">
@@ -354,6 +358,30 @@ export default function PipelinePage() {
                 <span className="font-medium">Fecha:</span> {new Date(candidaturaEdit.fecha).toLocaleDateString("es-ES")}
                 <span className="ml-2" style={{ color: "#475569" }}>(+{diasDesde(candidaturaEdit.fecha)} días)</span>
               </p>
+            </div>
+
+            {/* Salario y contacto */}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-[11px] font-semibold block mb-1" style={{ color: "#94a3b8" }}>Salario ofrecido</label>
+                <input
+                  value={salarioEdit}
+                  onChange={e => setSalarioEdit(e.target.value)}
+                  placeholder="ej. 28.000€/año"
+                  className="w-full px-3 py-2 rounded-lg text-xs"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-[11px] font-semibold block mb-1" style={{ color: "#94a3b8" }}>Contacto RRHH</label>
+                <input
+                  value={contactoEdit}
+                  onChange={e => setContactoEdit(e.target.value)}
+                  placeholder="Nombre o teléfono"
+                  className="w-full px-3 py-2 rounded-lg text-xs"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+                />
+              </div>
             </div>
 
             {/* Notas editables */}

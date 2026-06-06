@@ -71,6 +71,19 @@ export default function EnviosPage() {
   const filtrados = filtro === "todos" ? envios : envios.filter(e => e.status === filtro);
   const contadores = envios.reduce((acc, e) => ({ ...acc, [e.status]: (acc[e.status] || 0) + 1 }), {} as Record<string, number>);
 
+  async function cancelarEnvio(id: string) {
+    const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+    if (!session) return;
+    const res = await fetch("/api/cv-sender/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+      body: JSON.stringify({ jobId: id }),
+    });
+    if (res.ok) {
+      setEnvios(prev => prev.map(e => e.id === id ? { ...e, status: "cancelado" } : e));
+    }
+  }
+
   return (
     <div className="min-h-screen pt-16 pb-10 px-4">
       <div className="max-w-3xl mx-auto">
@@ -129,10 +142,19 @@ export default function EnviosPage() {
                         : ""}
                   </p>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-xs font-bold shrink-0"
-                  style={{ background: `${STATUS_COLOR[envio.status]}22`, color: STATUS_COLOR[envio.status] }}>
-                  {envio.status}
-                </span>
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold"
+                    style={{ background: `${STATUS_COLOR[envio.status]}22`, color: STATUS_COLOR[envio.status] }}>
+                    {envio.status}
+                  </span>
+                  {envio.status === "pendiente" && (
+                    <button onClick={() => cancelarEnvio(envio.id)}
+                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold transition hover:opacity-80"
+                      style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#ef4444" }}>
+                      Cancelar
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
