@@ -275,8 +275,13 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       {/* ── Chat panel ───────────────────── */}
       {abierto && (
         <div
-          className="fixed z-[9998] flex flex-col overflow-hidden"
-          style={{
+          className={modoIncrustado
+            ? "flex flex-col h-full overflow-hidden"
+            : "fixed z-[9998] flex flex-col overflow-hidden"
+          }
+          style={modoIncrustado ? {
+            background: "#12160d",
+          } : {
             bottom: "5rem", right: "1rem", left: "1rem",
             maxWidth: "420px", marginLeft: "auto",
             height: "min(70vh, 560px)",
@@ -308,8 +313,10 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
             <div className="flex items-center gap-1.5">
               <button onClick={limpiar} title="Limpiar" className="w-7 h-7 rounded-full flex items-center justify-center text-xs transition hover:opacity-80"
                 style={{ background: "rgba(126,213,111,0.08)", color: "#706a58" }}>🗑</button>
-              <button onClick={() => setAbierto(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-sm transition hover:opacity-80"
-                style={{ background: "rgba(126,213,111,0.08)", color: "#706a58" }}>✕</button>
+              {!modoIncrustado && (
+                <button onClick={() => setAbierto(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-sm transition hover:opacity-80"
+                  style={{ background: "rgba(126,213,111,0.08)", color: "#706a58" }}>✕</button>
+              )}
             </div>
           </div>
 
@@ -494,39 +501,44 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
         </div>
       )}
 
-      {/* ── Burbuja flotante ──────────────── */}
-      <button onClick={() => { setAbierto(!abierto); setPulso(false); setNotif(false); }}
-        className="fixed bottom-4 right-4 z-[9999] w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-        style={{
-          background: abierto ? "rgba(42,42,30,0.9)" : "linear-gradient(135deg, #7ed56f, #5cb848)",
-          boxShadow: abierto ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 24px rgba(126,213,111,0.4), 0 0 50px rgba(126,213,111,0.12)",
-          border: abierto ? "2px solid rgba(126,213,111,0.2)" : "2px solid rgba(255,255,255,0.15)",
-          animation: pulso && !abierto ? "gusi-pulse 2s ease-in-out infinite" : "none",
-        }}>
-        {abierto ? (
-          <span className="text-lg" style={{ color: "#706a58" }}>✕</span>
-        ) : (
-          <>
-            <span className="text-2xl">🐛</span>
-            {notif && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                style={{ background: "#e05050", color: "white", boxShadow: "0 2px 8px rgba(224,80,80,0.4)" }}>
-                1
-              </span>
+      {/* ── Burbuja flotante y tooltip — solo en modo no incrustado ──── */}
+      {!modoIncrustado && (
+        <>
+          <button
+            onClick={() => { setAbierto(!abierto); setPulso(false); setNotif(false); }}
+            className="fixed bottom-4 right-4 z-[9999] w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+            style={{
+              background: abierto ? "rgba(42,42,30,0.9)" : "linear-gradient(135deg, #7ed56f, #5cb848)",
+              boxShadow: abierto ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 24px rgba(126,213,111,0.4), 0 0 50px rgba(126,213,111,0.12)",
+              border: abierto ? "2px solid rgba(126,213,111,0.2)" : "2px solid rgba(255,255,255,0.15)",
+              animation: pulso && !abierto ? "gusi-pulse 2s ease-in-out infinite" : "none",
+            }}
+          >
+            {abierto ? (
+              <span className="text-lg" style={{ color: "#706a58" }}>✕</span>
+            ) : (
+              <>
+                <span className="text-2xl">🐛</span>
+                {notif && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                    style={{ background: "#e05050", color: "white", boxShadow: "0 2px 8px rgba(224,80,80,0.4)" }}>
+                    1
+                  </span>
+                )}
+              </>
             )}
-          </>
-        )}
-      </button>
+          </button>
 
-      {/* Tooltip primera vez */}
-      {!abierto && pulso && (
-        <div className="fixed z-[9998] px-3 py-2 rounded-xl text-[11px] font-medium pointer-events-none"
-          style={{ bottom: "4.5rem", right: "4.5rem",
-            background: "rgba(15,26,10,0.95)", color: "#7ed56f",
-            border: "1px solid rgba(126,213,111,0.2)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-            animation: "gusi-tooltip 2s ease-in-out infinite" }}>
-          📧 ¡Envío tu CV automático! Toca aquí 🐛
-        </div>
+          {!abierto && pulso && (
+            <div className="fixed z-[9998] px-3 py-2 rounded-xl text-[11px] font-medium pointer-events-none"
+              style={{ bottom: "4.5rem", right: "4.5rem",
+                background: "rgba(15,26,10,0.95)", color: "#7ed56f",
+                border: "1px solid rgba(126,213,111,0.2)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+                animation: "gusi-tooltip 2s ease-in-out infinite" }}>
+              📧 ¡Envío tu CV automático! Toca aquí 🐛
+            </div>
+          )}
+        </>
       )}
 
       <style jsx global>{`
