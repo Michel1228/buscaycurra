@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import GuzziAvatar from "@/components/GuzziAvatar";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import NotificationBell from "@/components/NotificationBell";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
@@ -88,7 +89,7 @@ export default function AppNavWrapper() {
         <div className="h-full max-w-6xl mx-auto px-4 flex items-center justify-between">
           {/* Logo */}
           <Link href="/app/gusi" className="flex items-center gap-2.5">
-            <span className="text-xl">🐛</span>
+            <GuzziAvatar size={28} />
             <span className="font-bold text-sm hidden sm:inline" style={{ color: "#22c55e" }}>
               BuscayCurra
             </span>

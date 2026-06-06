@@ -15,6 +15,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import GuzziAvatar from "@/components/GuzziAvatar";
 
 // Mapa de palabras clave → id de país en /app/emigrar
 const LOCATION_TO_PAIS: Record<string, string> = {
@@ -295,19 +296,16 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
           <div className="px-4 py-3 flex items-center justify-between shrink-0"
             style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.08), rgba(15,26,10,0.95))", borderBottom: "1px solid rgba(126,213,111,0.15)" }}>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-lg"
-                style={{ background: "rgba(126,213,111,0.15)", border: "1.5px solid rgba(126,213,111,0.3)" }}>
-                🐛
-              </div>
+              <GuzziAvatar size={36} />
               <div>
-                <span className="font-bold text-sm" style={{ color: "#7ed56f" }}>Gusi</span>
+                <span className="font-bold text-sm" style={{ color: "#7ed56f" }}>Guzzi</span>
                 {modoEntrevista && (
                   <span className="ml-2 text-[9px] font-semibold px-2 py-0.5 rounded-full"
                     style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040", border: "1px solid rgba(240,192,64,0.25)" }}>
                     📝 MODO CV
                   </span>
                 )}
-                <div className="text-[10px]" style={{ color: "#706a58" }}>Tu asistente de empleo 🐛</div>
+                <div className="text-[10px]" style={{ color: "#706a58" }}>Tu asistente de empleo</div>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
@@ -325,7 +323,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
             {mensajes.map((m, i) => (
               <div key={i}>
                 <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} items-end gap-1.5`}>
-                  {m.role === "gusi" && <span className="text-sm mb-1 shrink-0">🐛</span>}
+                  {m.role === "gusi" && <GuzziAvatar size={22} className="mb-1 shrink-0" />}
                   <div className={`max-w-[85%] px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap ${
                     m.role === "user" ? "rounded-2xl rounded-br-md" : "rounded-2xl rounded-bl-md"}`}
                     style={{
@@ -518,7 +516,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
               <span className="text-lg" style={{ color: "#706a58" }}>✕</span>
             ) : (
               <>
-                <span className="text-2xl">🐛</span>
+                <GuzziAvatar size={42} />
                 {notif && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
                     style={{ background: "#e05050", color: "white", boxShadow: "0 2px 8px rgba(224,80,80,0.4)" }}>

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import GuzziAvatar from "@/components/GuzziAvatar";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface DashboardStats {
@@ -123,10 +124,7 @@ export default function BienvenidaClient() {
       <div className="px-4 py-10" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.12), rgba(22,163,74,0.04))" }}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-              style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(22,163,74,0.1))", border: "2px solid rgba(34,197,94,0.25)" }}>
-              🐛
-            </div>
+            <GuzziAvatar size={48} />
             <div>
               <h1 className="text-2xl font-bold" style={{ color: "#f1f5f9" }}>
                 ¡Hola{userName ? `, ${userName}` : ""}! Soy Guzzi
@@ -173,7 +171,7 @@ export default function BienvenidaClient() {
             }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-3xl">🐛</span>
+              <GuzziAvatar size={44} />
               <div>
                 <p className="font-bold text-sm" style={{ color: "#22c55e" }}>Usar a Guzzi</p>
                 <p className="text-[11px] font-medium" style={{ color: "#16a34a" }}>Recomendado</p>
