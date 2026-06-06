@@ -93,7 +93,7 @@ function sanitizeGusiHtml(html: string): string {
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "");
 }
 
-export default function GusiChat() {
+export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean } = {}) {
   const [abierto, setAbierto] = useState(false);
   const [logueado, setLogueado] = useState<boolean | null>(null);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
@@ -111,7 +111,7 @@ export default function GusiChat() {
         if (user) {
           setMensajes([{ role: "gusi", text: `¡Hola! 🐛 Soy Gusi. ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Mejorar tu foto\n🎯 Preparar entrevistas` }]);
         } else {
-          setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Gusi, tu asistente de empleo.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**\n\n¡Y luego te ayudo con todo! 🐛→🦋" }]);
+          setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Gusi, tu asistente de empleo.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**\n\n¡Y luego te ayudo con todo! 🐛" }]);
         }
       } catch {
         setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Gusi. Regístrate primero para que pueda ayudarte." }]);
@@ -250,10 +250,10 @@ export default function GusiChat() {
           const expText = exp.map((e: {puesto?: string; empresa?: string}) => `  • ${e.puesto || "?"} en ${e.empresa || "?"}`).join("\n");
           addMsg("gusi", `✅ **¡CV subido y analizado!** 🐛🎉\n\n👤 **${parsed.nombre} ${parsed.apellidos || ""}**\n📞 ${parsed.telefono || "Sin teléfono"}\n📧 ${parsed.email || "Sin email"}\n📍 ${parsed.ciudad || "Sin ciudad"}\n${expText ? `\n💼 Experiencia:\n${expText}` : ""}\n\n✨ **Los campos se han rellenado** en la página de CV.\n\n¿Qué hacemos ahora?\n📧 **Enviar CV automáticamente**\n🔍 Buscar ofertas que encajen\n✨ Mejorar el CV con IA`);
         } else {
-          addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nNo pude leer todos los datos automáticamente, pero tu PDF está guardado.\n\nVe a 📄 **Currículum** para rellenar los campos manualmente o mejorarlos con IA. 🦋");
+          addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nNo pude leer todos los datos automáticamente, pero tu PDF está guardado.\n\nVe a 📄 **Currículum** para rellenar los campos manualmente o mejorarlos con IA.");
         }
       } else {
-        addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nAhora puedo:\n📧 **Enviar tu CV automáticamente** a empresas\n🔍 Buscar ofertas que encajen contigo\n\n¿Qué hacemos? ¡Un paso más cerca de ser mariposa! 🦋");
+        addMsg("gusi", "✅ **¡CV subido!** 🐛🎉\n\nAhora puedo:\n📧 **Enviar tu CV automáticamente** a empresas\n🔍 Buscar ofertas que encajen contigo\n\n¿Empezamos a buscar trabajo? 🚀");
       }
     } catch {
       addMsg("gusi", "⚠️ Error al subir. Comprueba tu conexión. 🐛");
@@ -299,7 +299,7 @@ export default function GusiChat() {
                     📝 MODO CV
                   </span>
                 )}
-                <div className="text-[10px]" style={{ color: "#706a58" }}>Tu centro de empleo 🐛→🦋</div>
+                <div className="text-[10px]" style={{ color: "#706a58" }}>Tu asistente de empleo 🐛</div>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
@@ -403,7 +403,7 @@ export default function GusiChat() {
                     <button
                       onClick={() => {
                         addMsg("user", "Envía mi CV a todas las ofertas");
-                        addMsg("gusi", "📧 **¡Enviando tu CV a todas las ofertas!** 🐛\n\nVe a 🏢 **Empresa** para ver el progreso y el contador de envíos de hoy. ¡Un paso más cerca de ser mariposa! 🦋");
+                        addMsg("gusi", "📧 **¡Enviando tu CV a todas las ofertas!** 🐛\n\nVe a 🏢 **Empresa** para ver el progreso y el contador de envíos de hoy. ¡A por ello! 🚀");
                         router.push("/app/empresas");
                       }}
                       className="w-full py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90"

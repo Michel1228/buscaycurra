@@ -15,34 +15,24 @@ function PagoExitosoContenido() {
         const { data: { session } } = await getSupabaseBrowser().auth.getSession();
         if (!session) return;
         const { data: perfil } = await getSupabaseBrowser()
-          .from("profiles")
-          .select("plan")
-          .eq("id", session.user.id)
-          .single();
-
-        const planMap: Record<string, string> = { basico: "Básico", pro: "Pro", empresa: "Empresa" };
-        setPlanActivo(planMap[perfil?.plan ?? ""] ?? "Pro");
-      } catch {
-        // Mantenemos "Pro" como valor por defecto
-      }
+          .from("profiles").select("plan").eq("id", session.user.id).single();
+        if (perfil?.plan === "empresa") setPlanActivo("Empresa");
+        else if (perfil?.plan === "pro") setPlanActivo("Pro");
+        else if (perfil?.plan === "esencial") setPlanActivo("Esencial");
+        else setPlanActivo("Pro");
+      } catch { /* default Pro */ }
     };
     void obtenerPlan();
   }, [searchParams]);
 
   const caracteristicas =
     planActivo === "Empresa"
-      ? [
-          "✅ Envíos ilimitados de CV",
-          "✅ IA avanzada activada",
-          "✅ Acceso a API",
-          "✅ Soporte dedicado 24/7",
-        ]
-      : [
-          "✅ 50 CVs enviados por día",
-          "✅ IA avanzada activada",
-          "✅ Estadísticas detalladas",
-          "✅ Soporte prioritario",
-        ];
+      ? ["Envíos ilimitados de CV", "IA avanzada activada", "Acceso a API", "Soporte dedicado 24/7"]
+      : planActivo === "Esencial"
+      ? ["60 candidaturas al mes", "5 CVs por día", "Mejora CV con IA", "Estadísticas básicas"]
+      : planActivo === "Básico"
+      ? ["5 CVs enviados por día", "Buscador avanzado", "Mejora CV con IA"]
+      : ["10 CVs enviados por día", "IA avanzada activada", "Estadísticas detalladas", "Soporte prioritario"];
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-16" style={{ background: "#0f1117" }}>

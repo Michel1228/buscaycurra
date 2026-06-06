@@ -1,7 +1,5 @@
 /* app/globals.css — BuscayCurra "Professional" UI — Estilo limpio y realista */
 
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,7 +35,10 @@
   --radio-pill:        9999px;
 }
 
-/* ── Base ────────────────────────────────────────────────────────────────── */
+/* ── Fuente Inter (profesional) ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
 body {
   background: var(--color-fondo);
   color: var(--color-texto);

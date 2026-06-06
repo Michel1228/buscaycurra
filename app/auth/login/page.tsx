@@ -120,7 +120,7 @@ export default function LoginPage() {
 
           <div className="flex items-center gap-2 text-xs" style={{ color: "#475569" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-            3.000.000+ ofertas · 21 países · 24/7 trabajando por ti
+            1.900.000+ ofertas · 21 países · 24/7 trabajando por ti
           </div>
         </div>
 

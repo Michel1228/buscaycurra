@@ -1,293 +1,541 @@
 "use client";
 
-/**
- * AutoSendSetup.tsx — Formulario de envío automático de CV
- * Tema: Bosque Encantado (oscuro)
- * Frecuencia: cada 4-5 días (no diario)
- */
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-import { useState, useRef } from "react";
-import { getSupabaseBrowser } from "@/lib/supabase-browser";
-
-interface ScheduleSuccess {
-  jobId: string;
-  estimatedTime: string;
-  estimatedTimeFormatted: string;
-  positionInQueue: number;
-  estimatedWaitMinutes: number;
-  rateLimitInfo: {
-    enviadosHoy: number;
-    limiteHoy: number | null;
-    cvsRestantesHoy: number | null;
-    userPlan: string;
-  };
+interface RateLimitInfo {
+  enviadosHoy: number;
+  limiteHoy: number;
+  cvsRestantesHoy: number;
+  userPlan?: string;
 }
 
 interface AutoSendSetupProps {
   userId: string;
-  onJobScheduled?: (result: ScheduleSuccess) => void;
-  initialValues?: {
-    companyName?: string;
-    companyEmail?: string;
-    jobTitle?: string;
-    companyUrl?: string;
-  };
+  onJobScheduled?: () => void;
+  onRateLimitUpdate?: (info: RateLimitInfo) => void;
+  onViewHistory?: () => void;
+  initialCompanyName?: string;
 }
 
-export default function AutoSendSetup({ userId, onJobScheduled, initialValues }: AutoSendSetupProps) {
-  const [companyUrl, setCompanyUrl] = useState(initialValues?.companyUrl ?? "");
-  const [companyName, setCompanyName] = useState(initialValues?.companyName ?? "");
-  const [companyEmail, setCompanyEmail] = useState(initialValues?.companyEmail ?? "");
-  const [jobTitle, setJobTitle] = useState(initialValues?.jobTitle ?? "");
-  const [priority, setPriority] = useState<"normal" | "prioritario">("normal");
+type Modo = "tengo-email" | "buscar-email" | "ya-aplique";
+
+export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdate, onViewHistory, initialCompanyName }: AutoSendSetupProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [modo, setModo] = useState<Modo>("buscar-email");
+  const [companyName, setCompanyName] = useState("");
+  const [companyEmail, setCompanyEmail] = useState("");
+  const [companyUrl, setCompanyUrl] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
   const [useAI, setUseAI] = useState(true);
-  const [frecuencia, setFrecuencia] = useState<"unico" | "cada4dias">("cada4dias");
-  const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<ScheduleSuccess | null>(null);
-  const submittingRef = useRef(false);
+  const [success, setSuccess] = useState(false);
+  const [scheduled, setScheduled] = useState<{ fecha: string } | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submittingRef.current) return; // double-submit guard
-    setError(null);
-    setSuccess(null);
+  const [urlBusqueda, setUrlBusqueda] = useState("");
+  const [buscandoEmail, setBuscandoEmail] = useState(false);
+  const [emailEncontrado, setEmailEncontrado] = useState<string | null>(null);
+  const [busquedaRealizada, setBusquedaRealizada] = useState(false);
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) {
-      setError("Introduce un email de empresa válido (ej: rrhh@empresa.com)");
-      return;
-    }
-    if (!companyName.trim()) {
-      setError("Introduce el nombre de la empresa");
-      return;
-    }
-    if (companyUrl.trim() && !/^https?:\/\//i.test(companyUrl.trim())) {
-      setError("La web debe comenzar con https:// (ej: https://empresa.com)");
-      return;
-    }
+  // Estrategia de envío: "ahora" (inmediato) o "optimo" (ventana óptima empresa)
+  const [estrategia, setEstrategia] = useState<"ahora" | "optimo">("optimo");
 
-    submittingRef.current = true;
-    setLoading(true);
+  // ── Preview de carta ────────────────────────────────────────────────
+  const [showPreview, setShowPreview] = useState(false);
+  const [cartaPreview, setCartaPreview] = useState("");
+  const [cartaEditada, setCartaEditada] = useState("");
+  const [generandoPreview, setGenerandoPreview] = useState(false);
+
+  useEffect(() => {
+    const empresa = searchParams.get("empresa");
+    const url = searchParams.get("url");
+    const puesto = searchParams.get("puesto");
+    if (empresa) setCompanyName(empresa);
+    else if (initialCompanyName) setCompanyName(initialCompanyName);
+    if (url) { setCompanyUrl(url); setUrlBusqueda(url); }
+    if (puesto) setJobTitle(puesto);
+  }, [searchParams, initialCompanyName]);
+
+  function calcularFechaEnvio(): string | undefined {
+    // "ahora" → 1 min desde ahora, "optimo" → el scheduler decide (undefined)
+    if (estrategia === "ahora") {
+      return new Date(Date.now() + 60_000).toISOString();
+    }
+    return undefined; // "optimo": el servidor calcula ventana óptima
+  }
+
+  function getSlotLabel(): string {
+    if (estrategia === "ahora") return "Enviar ya";
+    return "Enviar en horario óptimo";
+  }
+
+  const generarVistaPreviaCarta = async (): Promise<boolean> => {
+    setGenerandoPreview(true);
     try {
-      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-      const token = session?.access_token ?? "";
-      const response = await fetch("/api/cv-sender/send", {
+      // Obtener CV del usuario
+      let cvTexto = "";
+      if (userId) {
+        try {
+          const cvRes = await fetch(`/api/gusi/cv?userId=${encodeURIComponent(userId)}`);
+          if (cvRes.ok) {
+            const cvData = await cvRes.json() as { cv?: Record<string, unknown> };
+            if (cvData.cv) {
+              const cv = cvData.cv;
+              const nombre = String(cv.nombre || cv.full_name || "");
+              const exp = Array.isArray(cv.experiencia)
+                ? (cv.experiencia as Record<string, unknown>[]).map(e => `${e.puesto} en ${e.empresa}: ${e.descripcion}`).join("\n")
+                : "";
+              cvTexto = `Nombre: ${nombre}\nExperiencia:\n${exp}\nHabilidades: ${String(cv.aptitudes || "")}`;
+            }
+          }
+        } catch { /* usa texto genérico */ }
+      }
+
+      const res = await fetch("/api/cv/mejorar", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyUrl: companyUrl.trim() || undefined,
-          companyEmail: companyEmail.trim().toLowerCase(),
-          companyName: companyName.trim(),
-          jobTitle: jobTitle.trim() || undefined,
-          priority,
-          useAIPersonalization: useAI,
-          frecuencia,
+          cvText: cvTexto || "Candidato con experiencia profesional buscando nuevas oportunidades.",
+          jobTitle: jobTitle || companyName,
+          tipo: "carta",
+          empresa: companyName,
         }),
       });
 
-      const data = await response.json() as ScheduleSuccess & { error?: string };
-      if (!response.ok || data.error) throw new Error(data.error ?? "Error al programar");
+      if (res.ok) {
+        const data = await res.json() as { cvMejorado?: string };
+        const carta = data.cvMejorado || "";
+        setCartaPreview(carta);
+        setCartaEditada(carta);
+        setShowPreview(true);
+        return true;
+      }
+    } catch { /* silencioso */ }
+    finally { setGenerandoPreview(false); }
+    // Si falla la preview, dejar enviar directamente
+    return false;
+  };
 
-      // BUG-07: limpiar formulario SOLO después de confirmar éxito
-      setSuccess(data);
-      onJobScheduled?.(data);
-      setCompanyUrl("");
-      setCompanyName("");
-      setCompanyEmail("");
-      setJobTitle("");
-      setPriority("normal");
-      setShowPreview(false);
+  const buscarEmail = async () => {
+    if (!urlBusqueda.trim()) return;
+    setBuscandoEmail(true);
+    setBusquedaRealizada(false);
+    setEmailEncontrado(null);
+    try {
+      const res = await fetch(`/api/empresas/analizar?url=${encodeURIComponent(urlBusqueda.trim())}`);
+      const data = await res.json() as { emailRrhh?: string; nombre?: string };
+      if (data.emailRrhh) {
+        setEmailEncontrado(data.emailRrhh);
+        setCompanyEmail(data.emailRrhh);
+        if (data.nombre && !companyName.trim()) setCompanyName(data.nombre);
+      }
+    } catch { /* silencioso */ }
+    setBusquedaRealizada(true);
+    setBuscandoEmail(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent, cartaAprobada?: string) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!companyName.trim()) { setError("Introduce el nombre de la empresa"); return; }
+
+    if (modo === "tengo-email") {
+      if (!companyEmail.trim()) { setError("Introduce el email de RRHH"); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) {
+        setError("El email no parece válido"); return;
+      }
+    }
+
+    if (modo === "buscar-email" && !companyEmail.trim()) {
+      setError("Necesitas el email para enviar automáticamente. Si no lo encuentras, usa 'Ya apliqué yo'.");
+      return;
+    }
+
+    // Si usa IA y no se ha generado preview aún, generar primero
+    if (useAI && modo !== "ya-aplique" && !cartaAprobada) {
+      const generado = await generarVistaPreviaCarta();
+      if (generado) return; // Esperamos a que el usuario confirme en el modal
+      // Si falla la preview, continuar sin carta personalizada
+    }
+
+    setLoading(true);
+    try {
+      if (modo === "ya-aplique") {
+        const res = await fetch("/api/cv-sender/registrar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, companyName: companyName.trim(), jobTitle: jobTitle.trim(), companyUrl: companyUrl.trim() || undefined }),
+        });
+        const data = await res.json() as { error?: string };
+        if (!res.ok) throw new Error(data.error ?? "Error al registrar");
+      } else {
+        const res = await fetch("/api/cv-sender/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            companyName: companyName.trim(),
+            companyEmail: companyEmail.trim().toLowerCase(),
+            companyUrl: companyUrl.trim() || undefined,
+            jobTitle: jobTitle.trim() || undefined,
+            priority: "normal",
+            useAIPersonalization: useAI,
+            strategy: estrategia,
+            cartaPersonalizada: cartaAprobada || undefined,
+          }),
+        });
+        const data = await res.json() as {
+          error?: string;
+          estimatedTimeFormatted?: string;
+          rateLimitInfo?: RateLimitInfo;
+          companyIntel?: { country: string; sector: string | null; horaLocalEmpresa: string; diffConEspana: string; infoTurnos: string | null };
+          horaLocalEmpresa?: string;
+          strategy?: string;
+        };
+        if (!res.ok) {
+          if (data.rateLimitInfo) onRateLimitUpdate?.(data.rateLimitInfo);
+          throw new Error(data.error ?? "Error al programar");
+        }
+        setScheduled({ fecha: data.estimatedTimeFormatted ?? "" });
+        if (data.rateLimitInfo) onRateLimitUpdate?.(data.rateLimitInfo);
+      }
+      setSuccess(true);
+      onJobScheduled?.();
+      setCompanyName(""); setCompanyEmail(""); setCompanyUrl(""); setJobTitle("");
+      setUrlBusqueda(""); setEmailEncontrado(null); setBusquedaRealizada(false);
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      submittingRef.current = false;
       setLoading(false);
     }
   };
 
+  if (success) {
+    return (
+      <div className="card-game p-6 text-center space-y-3">
+        <h3 className="text-base font-semibold" style={{ color: "#22c55e" }}>
+          {modo === "ya-aplique" ? "Candidatura registrada" : "CV programado para envío"}
+        </h3>
+        {scheduled?.fecha && (
+          <p className="text-xs" style={{ color: "#4ade80" }}>Se enviará el {scheduled.fecha}</p>
+        )}
+        <p className="text-[11px]" style={{ color: "#64748b" }}>Recibirás un email de confirmación cuando se procese.</p>
+        <p className="text-[10px] mt-1 px-2" style={{ color: "#475569" }}>
+          Algunas empresas prefieren el anonimato y no muestran su nombre público, pero tu candidatura ha sido enviada con éxito.
+        </p>
+        <div className="flex gap-2 justify-center mt-3">
+          <button onClick={() => { setSuccess(false); setScheduled(null); }}
+            className="px-4 py-2 rounded-lg text-xs font-medium"
+            style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+            + Otro envío
+          </button>
+          <button onClick={() => onViewHistory?.()} className="btn-game px-4 py-2 text-xs">
+            Ver historial
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="card-game p-6">
-      <h2 className="text-lg font-bold mb-1" style={{ color: "#f0ebe0" }}>📧 Programar envío de CV</h2>
-      <p className="text-sm mb-6" style={{ color: "#706a58" }}>
-        Tu CV se envía automáticamente en horario laboral con carta personalizada por IA.
+    <div className="card-game p-5">
+      <h2 className="text-base font-semibold mb-0.5" style={{ color: "#f1f5f9" }}>Enviar candidatura</h2>
+      <p className="text-[11px] mb-4" style={{ color: "#64748b" }}>
+        Tu CV se envía con carta personalizada por IA.
       </p>
 
-      {success && (
-        <div className="mb-6 rounded-xl p-5" style={{ background: "rgba(126,213,111,0.1)", border: "1px solid rgba(126,213,111,0.2)" }}>
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">✅</span>
-            <div>
-              <p className="font-bold" style={{ color: "#7ed56f" }}>¡Envío programado!</p>
-              <p className="text-sm mt-1" style={{ color: "#a8e6a1" }}>📅 {success.estimatedTimeFormatted}</p>
-              <p className="text-sm" style={{ color: "#a8e6a1" }}>📋 Cola: #{success.positionInQueue}</p>
-              <p className="text-xs mt-2" style={{ color: "#706a58" }}>ID: {success.jobId}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Selector de modo */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {([
+          { id: "buscar-email" as Modo, titulo: "Buscar email", sub: "Pega la web" },
+          { id: "tengo-email" as Modo, titulo: "Tengo email", sub: "Contacto directo" },
+          { id: "ya-aplique" as Modo, titulo: "Ya apliqué", sub: "Solo registrar" },
+        ]).map(m => (
+          <button key={m.id} type="button" onClick={() => { setModo(m.id); setError(null); }}
+            className="py-2.5 px-2 rounded-lg text-[10px] font-medium transition text-center"
+            style={{
+              background: modo === m.id ? "rgba(34,197,94,0.1)" : "#161922",
+              border: modo === m.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+              color: modo === m.id ? "#22c55e" : "#64748b",
+            }}>
+            <div className="font-semibold mb-0.5 text-[11px]">{m.titulo}</div>
+            <div style={{ opacity: 0.7, fontSize: "9px" }}>{m.sub}</div>
+          </button>
+        ))}
+      </div>
 
       {error && (
-        <div className="mb-6 rounded-xl p-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <p className="text-sm font-medium" style={{ color: "#f87171" }}>❌ {error}</p>
+        <div className="mb-3 rounded-lg p-2.5" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
+          <p className="text-[11px] font-medium" style={{ color: "#ef4444" }}>{error}</p>
         </div>
       )}
 
-      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
-        {/* Nombre empresa */}
-        <div>
-          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-            Empresa <span style={{ color: "#f87171" }}>*</span>
-          </label>
-          <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
-            placeholder="ej: Telefónica España" required className="w-full" />
-        </div>
+      <form onSubmit={(e) => void handleSubmit(e)} className="space-y-3">
 
-        {/* Email RRHH */}
-        <div>
-          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-            Email de RRHH <span style={{ color: "#f87171" }}>*</span>
-          </label>
-          <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)}
-            placeholder="rrhh@empresa.com" required className="w-full" />
-          <p className="text-xs mt-1" style={{ color: "#504a3a" }}>Búscalo en "Trabaja con nosotros"</p>
-        </div>
+        {/* Modo: BUSCAR EMAIL */}
+        {modo === "buscar-email" && (
+          <>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Web de la empresa <span style={{ color: "#ef4444" }}>*</span>
+              </label>
+              <div className="flex gap-2">
+                <input type="url" value={urlBusqueda}
+                  onChange={e => { setUrlBusqueda(e.target.value); setCompanyUrl(e.target.value); }}
+                  placeholder="https://www.empresa.com" className="flex-1 text-sm" />
+                <button type="button" onClick={() => void buscarEmail()} disabled={buscandoEmail || !urlBusqueda.trim()}
+                  className="px-3 py-2 rounded-lg text-xs font-medium transition flex-shrink-0"
+                  style={{
+                    background: buscandoEmail ? "#252836" : "rgba(34,197,94,0.1)",
+                    border: "1px solid rgba(34,197,94,0.2)",
+                    color: buscandoEmail ? "#64748b" : "#22c55e",
+                  }}>
+                  {buscandoEmail ? "Buscando…" : "Buscar"}
+                </button>
+              </div>
+              <p className="text-[10px] mt-1" style={{ color: "#475569" }}>Pega la URL de la empresa o de la oferta.</p>
+            </div>
 
-        {/* URL empresa */}
-        <div>
-          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-            Web <span className="font-normal" style={{ color: "#504a3a" }}>(mejora la personalización IA)</span>
-          </label>
-          <input type="url" value={companyUrl} onChange={(e) => setCompanyUrl(e.target.value)}
-            placeholder="https://www.empresa.com" className="w-full" />
-        </div>
-
-        {/* Puesto */}
-        <div>
-          <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-            Puesto <span className="font-normal" style={{ color: "#504a3a" }}>(opcional)</span>
-          </label>
-          <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)}
-            placeholder="ej: Camarero, Electricista..." className="w-full" />
-        </div>
-
-        {/* Frecuencia de envío */}
-        <div>
-          <label className="block text-sm font-semibold mb-2" style={{ color: "#b0a890" }}>📅 Frecuencia</label>
-          <div className="flex gap-3">
-            <button type="button" onClick={() => setFrecuencia("unico")}
-              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition"
-              style={{
-                background: frecuencia === "unico" ? "rgba(126,213,111,0.15)" : "rgba(42,42,30,0.5)",
-                border: frecuencia === "unico" ? "2px solid rgba(126,213,111,0.4)" : "1px solid #3d3c30",
-                color: frecuencia === "unico" ? "#7ed56f" : "#706a58",
+            {busquedaRealizada && (
+              <div className="rounded-lg p-3" style={{
+                background: emailEncontrado ? "rgba(34,197,94,0.05)" : "rgba(245,158,11,0.05)",
+                border: emailEncontrado ? "1px solid rgba(34,197,94,0.15)" : "1px solid rgba(245,158,11,0.15)",
               }}>
-              📧 Envío único
-            </button>
-            <button type="button" onClick={() => setFrecuencia("cada4dias")}
-              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition"
-              style={{
-                background: frecuencia === "cada4dias" ? "rgba(126,213,111,0.15)" : "rgba(42,42,30,0.5)",
-                border: frecuencia === "cada4dias" ? "2px solid rgba(126,213,111,0.4)" : "1px solid #3d3c30",
-                color: frecuencia === "cada4dias" ? "#7ed56f" : "#706a58",
-              }}>
-              🔄 Cada 4-5 días
-            </button>
-          </div>
-          {frecuencia === "cada4dias" && (
-            <p className="text-xs mt-2" style={{ color: "#7ed56f" }}>
-              🔄 Tu CV se enviará automáticamente cada 4-5 días a nuevas empresas del sector
-            </p>
-          )}
-        </div>
+                {emailEncontrado ? (
+                  <>
+                    <p className="text-[11px] font-semibold mb-1.5" style={{ color: "#22c55e" }}>Email encontrado</p>
+                    <input type="email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)} className="w-full text-sm" />
+                    <p className="text-[10px] mt-1" style={{ color: "#475569" }}>Puedes editarlo si no es correcto.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[11px] font-semibold mb-1" style={{ color: "#f59e0b" }}>No encontramos el email</p>
+                    <p className="text-[10px] mb-2" style={{ color: "#64748b" }}>Búscalo en la web de la empresa y pégalo aquí:</p>
+                    <input type="email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)}
+                      placeholder="rrhh@empresa.com" className="w-full text-sm" />
+                  </>
+                )}
+              </div>
+            )}
 
-        {/* Urgencia */}
-        <div>
-          <label className="block text-sm font-semibold mb-2" style={{ color: "#b0a890" }}>⚡ Urgencia</label>
-          <div className="flex gap-3">
-            <button type="button" onClick={() => setPriority("normal")}
-              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition"
-              style={{
-                background: priority === "normal" ? "rgba(126,213,111,0.15)" : "rgba(42,42,30,0.5)",
-                border: priority === "normal" ? "2px solid rgba(126,213,111,0.4)" : "1px solid #3d3c30",
-                color: priority === "normal" ? "#7ed56f" : "#706a58",
-              }}>
-              🕒 Normal
-            </button>
-            <button type="button" onClick={() => setPriority("prioritario")}
-              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition"
-              style={{
-                background: priority === "prioritario" ? "rgba(240,192,64,0.15)" : "rgba(42,42,30,0.5)",
-                border: priority === "prioritario" ? "2px solid rgba(240,192,64,0.4)" : "1px solid #3d3c30",
-                color: priority === "prioritario" ? "#f0c040" : "#706a58",
-              }}>
-              ⚡ Prioritario
-            </button>
-          </div>
-        </div>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>Empresa</label>
+              <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
+                placeholder="ej: Mercadona, Telefónica..." className="w-full text-sm" />
+            </div>
 
-        {/* IA toggle */}
-        <div className="flex items-start gap-3 rounded-xl p-4" style={{ background: "rgba(126,213,111,0.06)", border: "1px solid rgba(126,213,111,0.12)" }}>
-          <input id="useAI" type="checkbox" checked={useAI} onChange={(e) => setUseAI(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded accent-green-500 cursor-pointer" />
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Puesto <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(opcional)</span>
+              </label>
+              <input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)}
+                placeholder="ej: Camarero, Electricista..." className="w-full text-sm" />
+            </div>
+          </>
+        )}
+
+        {/* Modo: TENGO EMAIL */}
+        {modo === "tengo-email" && (
+          <>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Empresa <span style={{ color: "#ef4444" }}>*</span>
+              </label>
+              <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
+                placeholder="ej: Mercadona, Telefónica..." className="w-full text-sm" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Puesto <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(opcional)</span>
+              </label>
+              <input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)}
+                placeholder="ej: Camarero, Electricista..." className="w-full text-sm" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Email de RRHH <span style={{ color: "#ef4444" }}>*</span>
+              </label>
+              <input type="email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)}
+                placeholder="rrhh@empresa.com" className="w-full text-sm" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Web <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(mejora la carta IA)</span>
+              </label>
+              <input type="url" value={companyUrl} onChange={e => setCompanyUrl(e.target.value)}
+                placeholder="https://www.empresa.com" className="w-full text-sm" />
+            </div>
+          </>
+        )}
+
+        {/* Modo: YA APLIQUÉ */}
+        {modo === "ya-aplique" && (
+          <>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Empresa <span style={{ color: "#ef4444" }}>*</span>
+              </label>
+              <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
+                placeholder="ej: Mercadona, Telefónica..." className="w-full text-sm" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Puesto <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(opcional)</span>
+              </label>
+              <input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)}
+                placeholder="ej: Camarero, Electricista..." className="w-full text-sm" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
+                Link de la oferta <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(para seguimiento)</span>
+              </label>
+              <input type="url" value={companyUrl} onChange={e => setCompanyUrl(e.target.value)}
+                placeholder="https://infojobs.net/oferta/..." className="w-full text-sm" />
+            </div>
+
+            <div className="rounded-lg p-3" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.1)" }}>
+              <p className="text-[11px]" style={{ color: "#4ade80" }}>
+                Se guardará en tu historial para hacer seguimiento. No se enviará ningún email.
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* Selector de estrategia de envío */}
+        {modo !== "ya-aplique" && (
           <div>
-            <label htmlFor="useAI" className="text-sm font-semibold cursor-pointer" style={{ color: "#a8e6a1" }}>
-              ✨ Personalizar carta con IA
+            <label className="block text-xs font-medium mb-2" style={{ color: "#94a3b8" }}>
+              Estrategia de envío
             </label>
-            <p className="text-xs mt-0.5" style={{ color: "#706a58" }}>
-              La IA analiza la empresa y adapta tu carta. Aumenta mucho las respuestas.
-            </p>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {([
+                { id: "optimo" as const, label: "🎯 En horario óptimo", sub: "El CV llega cuando lo van a leer" },
+                { id: "ahora" as const,  label: "⚡ Enviar ya",         sub: "Inmediato, sin esperas" },
+              ]).map(s => (
+                <button key={s.id} type="button" onClick={() => setEstrategia(s.id)}
+                  className="py-2.5 px-3 rounded-lg text-left transition"
+                  style={{
+                    background: estrategia === s.id ? "rgba(34,197,94,0.1)" : "#161922",
+                    border: estrategia === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+                  }}>
+                  <div className="text-[11px] font-semibold" style={{ color: estrategia === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
+                  <div className="text-[9px] mt-0.5" style={{ color: "#475569" }}>{s.sub}</div>
+                </button>
+              ))}
+            </div>
+            {estrategia === "optimo" && (
+              <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>
+                🎯 BuscayCurra analiza la zona horaria de la empresa y envía tu CV en su ventana de máxima apertura (9-10:30am hora local). Detectamos el sector y ajustamos el momento ideal.
+              </p>
+            )}
+            {estrategia === "ahora" && (
+              <p className="text-[10px] mt-1.5" style={{ color: "#f59e0b" }}>
+                ⚠️ Se enviará de inmediato, aunque en la empresa puedan ser las 3am. Si la empresa está en otra zona horaria, mejor usar "horario óptimo".
+              </p>
+            )}
           </div>
-        </div>
+        )}
 
-        {/* Preview */}
-        <button type="button" onClick={() => setShowPreview(!showPreview)}
-          className="text-sm font-medium flex items-center gap-1" style={{ color: "#7ed56f" }}>
-          {showPreview ? "▲ Ocultar" : "▼ Ver"} vista previa
-        </button>
-        {showPreview && (
-          <div className="rounded-xl p-5 space-y-2 text-sm" style={{ background: "rgba(42,42,30,0.5)", border: "1px solid #3d3c30" }}>
-            <p className="font-semibold" style={{ color: "#b0a890" }}>Vista previa:</p>
-            <div className="space-y-1" style={{ color: "#706a58" }}>
-              <p><span style={{ color: "#504a3a" }}>Para:</span> {companyEmail || "rrhh@empresa.com"}</p>
-              <p><span style={{ color: "#504a3a" }}>Asunto:</span>{" "}
-                {jobTitle ? `Candidatura: ${jobTitle}` : `Candidatura — ${companyName || "Tu Nombre"}`}
-              </p>
-              <p><span style={{ color: "#504a3a" }}>Adjunto:</span>{" "}
-                <span style={{ color: "#7ed56f" }}>📎 Tu_CV.pdf</span>
-              </p>
-              <hr style={{ borderColor: "#3d3c30" }} />
-              <p className="text-xs italic" style={{ color: "#706a58" }}>
-                {useAI ? "✨ Carta personalizada por IA para esta empresa." : "📝 Carta genérica profesional."}
-              </p>
-              <p className="text-xs" style={{ color: "#504a3a" }}>
-                📅 Envío en horario laboral (lun-vie 9:00-18:00 España)
+
+        {/* Personalización IA */}
+        {modo !== "ya-aplique" && (
+          <div className="flex items-start gap-2.5 rounded-lg p-3"
+            style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.1)" }}>
+            <input id="useAI" type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)}
+              className="mt-0.5 w-3.5 h-3.5 rounded accent-green-500 cursor-pointer" />
+            <div>
+              <label htmlFor="useAI" className="text-xs font-medium cursor-pointer" style={{ color: "#4ade80" }}>
+                Personalizar carta con IA
+              </label>
+              <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>
+                La IA adapta la carta a esta empresa. Aumenta las respuestas.
               </p>
             </div>
           </div>
         )}
 
-        {/* Submit */}
-        <button type="submit" disabled={loading}
-          className="w-full py-3.5 px-6 font-bold rounded-xl transition flex items-center justify-center gap-2 text-sm"
+        <button type="submit" disabled={loading || generandoPreview}
+          className="w-full py-2.5 font-semibold rounded-lg transition text-xs"
           style={{
-            background: loading ? "#3d3c30" : "linear-gradient(135deg, #7ed56f, #5cb848)",
-            color: loading ? "#706a58" : "#1a1a12",
-            boxShadow: loading ? "none" : "0 4px 16px rgba(126,213,111,0.25)",
+            background: (loading || generandoPreview) ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+            color: (loading || generandoPreview) ? "#64748b" : "#fff",
           }}>
-          {loading ? (
-            <><span className="animate-spin">⏳</span> Programando...</>
-          ) : (
-            <>📧 {frecuencia === "cada4dias" ? "Activar envío automático" : "Programar envío"}</>
-          )}
+          {generandoPreview
+            ? "Generando carta con IA..."
+            : loading
+              ? "Procesando..."
+              : modo === "ya-aplique"
+                ? "Registrar candidatura"
+                : useAI
+                  ? "Ver carta y enviar →"
+                  : "Enviar CV automáticamente"}
         </button>
-
-        <p className="text-xs text-center" style={{ color: "#504a3a" }}>
-          {frecuencia === "cada4dias"
-            ? "🔄 Se enviarán CVs cada 4-5 días a empresas del sector en horario laboral."
-            : "📅 Se enviará una vez en horario laboral español (lun-vie 9:00-18:00)."}
-        </p>
       </form>
+
+      {/* Modal de vista previa de carta */}
+      {showPreview && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto"
+          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowPreview(false); }}>
+          <div className="w-full max-w-xl rounded-2xl my-8" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #2d3142" }}>
+              <div>
+                <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Vista previa de la carta</h3>
+                <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Para <strong style={{ color: "#94a3b8" }}>{companyName}</strong> — puedes editarla antes de enviar</p>
+              </div>
+              <button onClick={() => setShowPreview(false)} style={{ color: "#64748b" }} className="text-xl">✕</button>
+            </div>
+
+            <div className="p-5">
+              <textarea
+                value={cartaEditada}
+                onChange={e => setCartaEditada(e.target.value)}
+                rows={14}
+                className="w-full px-4 py-3 rounded-xl text-sm resize-none focus:outline-none"
+                style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9", lineHeight: 1.7 }}
+              />
+              <p className="text-[10px] mt-2" style={{ color: "#475569" }}>
+                Puedes editar libremente el texto. Esta es la carta que se enviará junto a tu CV.
+              </p>
+            </div>
+
+            <div className="flex gap-3 px-5 pb-5">
+              <button onClick={() => setShowPreview(false)}
+                className="flex-1 py-2.5 text-xs font-medium rounded-lg transition"
+                style={{ background: "#252836", color: "#94a3b8" }}>
+                Cancelar
+              </button>
+              <button
+                onClick={async (e) => {
+                  setShowPreview(false);
+                  // Archivar la carta antes de enviar
+                  if (userId && cartaEditada) {
+                    void fetch("/api/cv-cartas", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ userId, companyName: companyName.trim(), companyEmail: companyEmail.trim().toLowerCase(), cartaTexto: cartaEditada }),
+                    });
+                  }
+                  await handleSubmit(e as unknown as React.FormEvent, cartaEditada);
+                }}
+                disabled={loading}
+                className="flex-1 py-2.5 text-xs font-semibold rounded-lg transition disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                {loading ? "Enviando..." : "Confirmar y enviar →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

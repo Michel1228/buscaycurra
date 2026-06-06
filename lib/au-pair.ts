@@ -1,6 +1,7 @@
 /**
  * lib/au-pair.ts
  * Detector y utilidades para ofertas de tipo Au Pair / Niñera / Childcare
+ * Tipos alineados con la tabla au_pair_profiles en Supabase.
  */
 
 // Palabras clave que identifican ofertas de tipo au pair / cuidado de niños
@@ -20,11 +21,22 @@ export function esOfertaAuPair(titulo: string | null | undefined): boolean {
 }
 
 /**
- * Tipo para el perfil Au Pair
+ * Tipo para referencias del perfil Au Pair (columna references_json)
+ */
+export interface AuPairReference {
+  nombre: string;
+  email: string;
+  telefono: string;
+  relacion: string;
+}
+
+/**
+ * Tipo completo del perfil Au Pair — alineado con la tabla au_pair_profiles
  */
 export interface AuPairProfile {
   id?: string;
   user_id: string;
+  /** Carta de presentación / Dear Family letter */
   letter_text: string;
   nombre: string;
   age: number | null;
@@ -48,11 +60,34 @@ export interface AuPairProfile {
   updated_at?: string;
 }
 
-export interface AuPairReference {
-  nombre: string;
-  email: string;
-  telefono: string;
-  relacion: string;
+/**
+ * Row type exactly matching the Supabase au_pair_profiles table.
+ * Use this when reading/writing to the database directly.
+ */
+export interface AuPairProfileRow {
+  id: string;
+  user_id: string;
+  letter_text: string | null;
+  nombre: string | null;
+  age: number | null;
+  nationality: string | null;
+  ciudad: string | null;
+  languages: string[] | null;
+  childcare_experience: string | null;
+  has_driving_license: boolean | null;
+  available_from: string | null;
+  available_to: string | null;
+  dietary_info: string | null;
+  hobbies: string | null;
+  nivel_educativo: string | null;
+  fumador: boolean | null;
+  primeros_auxilios: boolean | null;
+  sabe_nadar: boolean | null;
+  duracion_preferida: string | null;
+  photos: string[] | null;
+  references_json: AuPairReference[] | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 /**

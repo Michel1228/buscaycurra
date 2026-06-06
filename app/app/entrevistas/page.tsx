@@ -5,6 +5,8 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import VoiceRecorder from "@/components/VoiceInterview/VoiceRecorder";
+import InterviewFeedback from "@/components/VoiceInterview/InterviewFeedback";
 
 const PREGUNTAS: Record<string, string[]> = {
   general: [
@@ -56,6 +58,8 @@ const SECTORES = [
 
 type Respuesta = { pregunta: string; respuesta: string; feedback: string };
 
+const LS_KEY = "bc_entrevistas";
+
 export default function EntrevistasPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
@@ -63,15 +67,15 @@ export default function EntrevistasPage() {
   const [preguntas, setPreguntas] = useState(PREGUNTAS.general);
   const [idx, setIdx] = useState(0);
   const [texto, setTexto] = useState("");
-  const [escuchando, setEscuchando] = useState(false);
-  const [soporteVoz, setSoporteVoz] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [analizando, setAnalizando] = useState(false);
   const [historial, setHistorial] = useState<Respuesta[]>([]);
   const [finalizado, setFinalizado] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const [soporteVoz, setSoporteVoz] = useState(false);
+  const [cargando, setCargando] = useState(true);
   const synthRef = useRef<SpeechSynthesis | null>(null);
 
+  // ─── Inicialización (auth + localStorage) ──────────────────────
   useEffect(() => {
     async function init() {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
@@ -84,10 +88,38 @@ export default function EntrevistasPage() {
         .select("sector")
         .eq("id", session.user.id)
         .single();
+      
+      let sectorDetectado = "general";
       if (p?.sector) {
         const s = p.sector.toLowerCase();
-        if (PREGUNTAS[s]) { setSector(s); setPreguntas(PREGUNTAS[s]); }
+        if (PREGUNTAS[s]) sectorDetectado = s;
       }
+
+      // Restaurar estado desde localStorage
+      try {
+        const saved = localStorage.getItem(LS_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          // Solo restaurar si es del mismo sector y no ha pasado mucho tiempo (>24h)
+          if (data.sector === sectorDetectado || data.sector === p?.sector?.toLowerCase()) {
+            if (typeof data.idx === "number" && data.idx >= 0) setIdx(data.idx);
+            if (Array.isArray(data.historial)) setHistorial(data.historial);
+            setSector(data.sector || sectorDetectado);
+            setPreguntas(PREGUNTAS[data.sector || sectorDetectado]);
+          } else {
+            setSector(sectorDetectado);
+            setPreguntas(PREGUNTAS[sectorDetectado]);
+          }
+        } else {
+          setSector(sectorDetectado);
+          setPreguntas(PREGUNTAS[sectorDetectado]);
+        }
+      } catch {
+        setSector(sectorDetectado);
+        setPreguntas(PREGUNTAS[sectorDetectado]);
+      }
+
+      setCargando(false);
     }
     init();
 
@@ -98,12 +130,17 @@ export default function EntrevistasPage() {
     }
   }, [router]);
 
-  // Liberar micrófono y síntesis de voz al desmontar el componente
+  // ─── Persistencia automática en localStorage ───────────────────
+  useEffect(() => {
+    if (cargando) return;
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({ sector, idx, historial }));
+    } catch { /* localStorage puede no estar disponible */ }
+  }, [sector, idx, historial, cargando]);
+
+  // Liberar síntesis de voz al desmontar
   useEffect(() => {
     return () => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch { /* ok */ }
-      }
       if (synthRef.current) {
         try { synthRef.current.cancel(); } catch { /* ok */ }
       }
@@ -122,23 +159,6 @@ export default function EntrevistasPage() {
     u.lang = "es-ES"; u.rate = 0.9;
     synthRef.current.speak(u);
   };
-
-  const toggleVoz = useCallback(() => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
-    if (escuchando) { recognitionRef.current?.stop(); setEscuchando(false); return; }
-
-    const r = new SR();
-    r.lang = "es-ES"; r.interimResults = true; r.continuous = false;
-    r.onresult = (e: any) => {
-      let t = ""; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
-      setTexto(t);
-    };
-    r.onerror = () => setEscuchando(false);
-    r.onend = () => setEscuchando(false);
-    recognitionRef.current = r;
-    r.start(); setEscuchando(true); setFeedback("");
-  }, [escuchando]);
 
   const analizar = async () => {
     if (!texto.trim()) return;
@@ -171,6 +191,17 @@ export default function EntrevistasPage() {
   const reiniciar = () => {
     setIdx(0); setTexto(""); setFeedback(""); setHistorial([]); setFinalizado(false);
   };
+
+  if (cargando) {
+    return (
+      <div className="min-h-screen pt-24 pb-8 px-4 flex items-center justify-center" style={{ background: "#0f1117" }}>
+        <div className="text-center">
+          <div className="text-4xl mb-3">🎙️</div>
+          <p className="text-sm" style={{ color: "#6b7280" }}>Cargando simulador...</p>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Resumen final ────────────────────────────────────────────
   if (finalizado) {
@@ -241,7 +272,7 @@ export default function EntrevistasPage() {
         <div>
           <div className="flex justify-between text-xs mb-1" style={{ color: "#6b7280" }}>
             <span>Pregunta {idx + 1} de {preguntas.length}</span>
-            <span>{Math.round(((idx) / preguntas.length) * 100)}%</span>
+            <span>{Math.round((idx / preguntas.length) * 100)}%</span>
           </div>
           <div className="h-1.5 rounded-full" style={{ background: "#1a1f2e" }}>
             <div
@@ -270,43 +301,15 @@ export default function EntrevistasPage() {
           </div>
         </div>
 
-        {/* Área de respuesta */}
-        <div className="rounded-2xl p-4 space-y-3" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
-          <textarea
-            value={texto}
-            onChange={e => setTexto(e.target.value)}
-            placeholder="Escribe tu respuesta aquí..."
-            rows={4}
-            className="w-full text-sm resize-none outline-none"
-            style={{
-              background: "transparent",
-              color: "#e5e7eb",
-              border: "none",
-            }}
-          />
+        {/* VoiceRecorder con fallback a textarea */}
+        <VoiceRecorder
+          value={texto}
+          onChange={setTexto}
+          disabled={analizando}
+        />
 
-          {/* Botón voz (si disponible) */}
-          {soporteVoz && (
-            <button
-              onClick={toggleVoz}
-              className="w-full py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2"
-              style={{
-                background: escuchando ? "#dc2626" : "#0f1117",
-                color: escuchando ? "#fff" : "#10b981",
-                border: `1px solid ${escuchando ? "#dc2626" : "#10b981"}`,
-              }}
-            >
-              {escuchando ? "🔴 Escuchando... (pulsa para parar)" : "🎤 Responder con voz"}
-            </button>
-          )}
-        </div>
-
-        {/* Feedback */}
-        {feedback && (
-          <div className="rounded-2xl p-4 text-sm whitespace-pre-wrap" style={{ background: "#0d2818", border: "1px solid #065f46", color: "#d1fae5" }}>
-            {feedback}
-          </div>
-        )}
+        {/* InterviewFeedback con animación */}
+        <InterviewFeedback feedback={feedback} />
 
         {/* Acciones */}
         <div className="flex gap-3">

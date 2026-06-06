@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // 1. Usuarios activos con busqueda configurada (excluir mariposas)
+    // 1. Usuarios activos con busqueda configurada
     const supabase = getSupabase();
     const { data: perfiles } = await supabase
       .from("profiles")
