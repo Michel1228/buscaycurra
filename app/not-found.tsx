@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function NotFound() {
   return (
@@ -6,8 +7,10 @@ export default function NotFound() {
       className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
       style={{ background: "#0f1117" }}
     >
-      {/* Gusano */}
-      <div className="text-7xl mb-6">🐛</div>
+      {/* Guzzi */}
+      <div className="mb-6">
+        <Image src="/icon-192.png" alt="Guzzi" width={96} height={96} style={{ borderRadius: "50%" }} />
+      </div>
 
       {/* Título */}
       <h1

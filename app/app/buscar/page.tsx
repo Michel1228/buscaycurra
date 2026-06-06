@@ -362,7 +362,7 @@ function BuscarPageInner() {
             <a href="/app/gusi"
               className="text-[11px] font-semibold px-4 py-2 rounded-lg transition"
               style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e" }}>
-              🐛 Que Guzzi busque por mí
+              Que Guzzi busque por mí
             </a>
           </div>
         </div>

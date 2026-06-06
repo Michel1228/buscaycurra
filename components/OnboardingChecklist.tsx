@@ -151,7 +151,7 @@ export default function OnboardingChecklist() {
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-base">🐛</span>
+          <img src="/icon-192.png" alt="Guzzi" width={18} height={18} style={{ borderRadius: "50%" }} />
           <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
             Primeros pasos — {completados}/{steps.length} completados
           </p>

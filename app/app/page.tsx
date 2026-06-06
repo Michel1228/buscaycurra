@@ -10,9 +10,9 @@ import LogoGusano from "@/components/LogoGusano";
 
 const pasos = [
   { num: "01", titulo: "Crea tu perfil", desc: "30 segundos. Sin tarjeta. Empieza tu aventura con Guzzi.", icon: "✨", color: "#7ed56f", detalle: "Tu aventura comienza aquí" },
-  { num: "02", titulo: "Sube tu CV", desc: "Nuestra IA lo analiza y mejora automáticamente para cada sector", icon: "📄", color: "#f0c040", detalle: "Guzzi perfecciona tu CV 🐛" },
+  { num: "02", titulo: "Sube tu CV", desc: "Nuestra IA lo analiza y mejora automáticamente para cada sector", icon: "📄", color: "#f0c040", detalle: "Guzzi perfecciona tu CV" },
   { num: "03", titulo: "Busca ofertas", desc: "millones de ofertas en 21 países filtradas por zona, sector y salario", icon: "🔍", color: "#e07850", detalle: "Guzzi escanea el mercado 🎯" },
-  { num: "04", titulo: "Envía candidaturas", desc: "Automáticamente a cientos de empresas. Tú descansas.", icon: "📧", color: "#a070d0", detalle: "Guzzi trabaja por ti 🐛" },
+  { num: "04", titulo: "Envía candidaturas", desc: "Automáticamente a cientos de empresas. Tú descansas.", icon: "📧", color: "#a070d0", detalle: "Guzzi trabaja por ti" },
   { num: "05", titulo: "¡Encuentra trabajo!", desc: "Empleo directo. Sin intermediarios. Tu salario completo.", icon: "🎉", color: "#ff6090", detalle: "¡Lo conseguiste! 🎉" },
 ];
 
@@ -137,7 +137,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/auth/registro" className="btn-game text-lg !py-4 !px-10">
-                🐛 Comenzar gratis — sin tarjeta
+                Comenzar gratis — sin tarjeta
               </Link>
               <Link href="/auth/login" className="px-8 py-4 rounded-xl text-sm font-medium transition"
                 style={{ border: "1px solid rgba(126,213,111,0.25)", color: "#b0a890", background: "rgba(126,213,111,0.04)" }}>
@@ -263,7 +263,7 @@ export default function HomePage() {
               {[
                 { nombre: "Gratis", precio: "0€", periodo: "", emoji: "🥚", desc: "Para probar", items: ["2 CVs/día", "Buscador básico", "Sin tarjeta"], dest: false, badge: null },
                 { nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱", desc: "Menos que un café", items: ["5 CVs/día", "IA básica", "Historial completo"], dest: true, badge: "🔥 Más elegido" },
-                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "🐛", desc: "Para encontrar trabajo", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: false, badge: "⭐ Popular" },
+                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "⚡", desc: "Para encontrar trabajo", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: false, badge: "⭐ Popular" },
                 { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🚀", desc: "Sin límites", items: ["Envíos ilimitados", "Todo incluido", "Multi-usuarios", "API"], dest: false, badge: null },
               ].map((plan) => (
                 <div key={plan.nombre} className={`card-game p-6 text-center relative ${plan.dest ? "scale-[1.03]" : ""}`}
@@ -315,7 +315,7 @@ export default function HomePage() {
                         <p className="text-xs" style={{ color: "#706a58" }}>{t.puesto} — {t.empresa}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl">🐛</p>
+                        <p className="text-xl">⚡</p>
                       </div>
                     </div>
                   </div>
@@ -340,7 +340,7 @@ export default function HomePage() {
               Miles de personas ya trabajan con Guzzi. Es tu turno.
             </p>
             <Link href="/auth/registro" className="btn-game text-lg !py-4 !px-12">
-              🐛 Comenzar ahora — Es gratis
+              Comenzar ahora — Es gratis
             </Link>
           </div>
         </section>

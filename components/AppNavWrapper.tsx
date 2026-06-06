@@ -14,7 +14,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 
 const NAV_ITEMS = [
-  { href: "/app/gusi",       label: "Guzzi",      icon: "🐛", title: "Guzzi - Asistente IA" },
+  { href: "/app/gusi",       label: "Guzzi",      icon: "✨", title: "Guzzi - Asistente IA" },
   { href: "/app/buscar",     label: "Buscar",     icon: "🔍", title: "Buscar ofertas" },
   { href: "/app/curriculum", label: "Mi CV",      icon: "📄", title: "Mi currículum" },
   { href: "/app/pipeline",   label: "Pipeline",   icon: "📊", title: "Pipeline de candidaturas" },

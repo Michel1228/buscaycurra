@@ -122,7 +122,7 @@ export default async function OfertaPublicaPage({
             <Link
               href={`/auth/registro`}
               className="btn-game text-sm px-5 py-2.5 rounded-lg font-semibold">
-              🐛 Enviar CV con IA
+              Enviar CV con IA
             </Link>
           </div>
         </div>

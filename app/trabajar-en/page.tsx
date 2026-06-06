@@ -116,7 +116,7 @@ export default function TrabajarEnPage() {
               href="/auth/registro"
               className="inline-block bg-[#22c55e] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
             >
-              🐛 Empezar gratis →
+              Empezar gratis →
             </Link>
           </div>
         </div>

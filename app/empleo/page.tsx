@@ -95,7 +95,7 @@ export default function EmpleoPage() {
             href="/auth/registro"
             className="inline-block bg-[#22c55e] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
           >
-            🐛 Probar Guzzi gratis →
+            Probar Guzzi gratis →
           </Link>
         </div>
       </div>

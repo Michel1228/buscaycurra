@@ -169,7 +169,7 @@ export default async function EmpleoPage({
         <div className="card-game p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <p className="font-bold text-lg" style={{ color: "#f0ebe0" }}>
-              🐛 ¿Quieres que Guzzi busque por ti?
+              ¿Quieres que Guzzi busque por ti?
             </p>
             <p className="text-sm" style={{ color: "#706a58" }}>
               Envía tu CV automáticamente a empresas de {ciudadFmt}
