@@ -138,9 +138,14 @@ export async function GET(request: NextRequest) {
         [alerta.user_id]
       );
 
+      // URL directo a la oferta concreta si hay job_id, si no al buscador con la keyword
+      const pushUrl = ejemplo.id
+        ? `/app/ofertas/${encodeURIComponent(ejemplo.id)}`
+        : `/app/buscar?q=${encodeURIComponent(alerta.keyword)}${alerta.location ? `&ciudad=${encodeURIComponent(alerta.location)}` : ""}`;
+
       for (const sub of subsResult.rows) {
         try {
-          await sendPush(sub, { title: titulo, body: cuerpo, url: `/app/notificaciones` });
+          await sendPush(sub, { title: titulo, body: cuerpo, url: pushUrl });
           enviadas++;
         } catch (pushErr) {
           const code = (pushErr as { statusCode?: number }).statusCode;

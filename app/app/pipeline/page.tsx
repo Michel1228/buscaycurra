@@ -201,12 +201,21 @@ export default function PipelinePage() {
     );
   }
 
+  const [filtroActivo, setFiltroActivo] = useState<string | null>(null);
+
   const stats = {
     total: candidaturas.length,
     activas: candidaturas.filter(c => c.estado !== "descartado" && c.estado !== "oferta").length,
     entrevistas: candidaturas.filter(c => c.estado === "entrevista").length,
     ofertas: candidaturas.filter(c => c.estado === "oferta").length,
   };
+
+  const statCards = [
+    { label: "Total", valor: stats.total, color: "#22c55e", filtro: null, tooltip: "Todas las candidaturas" },
+    { label: "En proceso", valor: stats.activas, color: "#f59e0b", filtro: "activas", tooltip: "Candidaturas sin respuesta final" },
+    { label: "Entrevistas", valor: stats.entrevistas, color: "#a855f7", filtro: "entrevista", tooltip: "Con entrevista programada" },
+    { label: "Ofertas", valor: stats.ofertas, color: "#3b82f6", filtro: "oferta", tooltip: "Ofertas recibidas" },
+  ];
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
@@ -230,17 +239,24 @@ export default function PipelinePage() {
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-            {[
-              { label: "Total", valor: stats.total, color: "#22c55e" },
-              { label: "En proceso", valor: stats.activas, color: "#f59e0b" },
-              { label: "Entrevistas", valor: stats.entrevistas, color: "#a855f7" },
-              { label: "Ofertas", valor: stats.ofertas, color: "#3b82f6" },
-            ].map(s => (
-              <div key={s.label} className="card-game p-3 text-center">
-                <p className="text-xl font-bold" style={{ color: s.color }}>{s.valor}</p>
-                <p className="text-[10px]" style={{ color: "#64748b" }}>{s.label}</p>
-              </div>
-            ))}
+            {statCards.map(s => {
+              const activo = filtroActivo === s.filtro;
+              return (
+                <button
+                  key={s.label}
+                  onClick={() => setFiltroActivo(activo ? null : s.filtro)}
+                  title={s.tooltip}
+                  className="card-game p-3 text-center transition hover:scale-[1.03] cursor-pointer"
+                  style={{ border: activo ? `1.5px solid ${s.color}` : undefined, opacity: filtroActivo && !activo ? 0.5 : 1 }}
+                >
+                  <p className="text-xl font-bold" style={{ color: s.color }}>{s.valor}</p>
+                  <p className="text-[10px]" style={{ color: "#64748b" }}>{s.label}</p>
+                  {s.filtro === "entrevista" && s.valor === 0 && (
+                    <p className="text-[9px] mt-0.5" style={{ color: "#475569" }}>0 entrevistas</p>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -254,9 +270,26 @@ export default function PipelinePage() {
             <Link href="/app/empresas" className="btn-game text-xs">Enviar CV</Link>
           </div>
         ) : (
+          <>
+          {filtroActivo && (
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-xs" style={{ color: "#94a3b8" }}>
+                Filtrando: <strong style={{ color: "#22c55e" }}>{statCards.find(s => s.filtro === filtroActivo)?.label}</strong>
+              </span>
+              <button onClick={() => setFiltroActivo(null)} className="text-[11px] px-2 py-0.5 rounded-lg" style={{ background: "#2d3142", color: "#94a3b8" }}>
+                × Quitar filtro
+              </button>
+            </div>
+          )}
           <div className="flex gap-3 overflow-x-auto pb-4" style={{ scrollbarWidth: "thin" }}>
             {COLUMNAS.map(col => {
-              const items = candidaturas.filter(c => c.estado === col.id);
+              const todosItems = candidaturas.filter(c => c.estado === col.id);
+              const items = filtroActivo === "activas"
+                ? candidaturas.filter(c => c.estado === col.id && c.estado !== "descartado" && c.estado !== "oferta")
+                : filtroActivo
+                  ? candidaturas.filter(c => c.estado === col.id && c.estado === filtroActivo)
+                  : todosItems;
+              const _ = todosItems; // evitar lint unused
               return (
                 <div key={col.id} className="flex-shrink-0 w-64" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, col.id)}>
                   <div className="flex items-center gap-2 mb-3 px-1">
@@ -302,6 +335,7 @@ export default function PipelinePage() {
               );
             })}
           </div>
+          </>
         )}
       </main>
 
