@@ -94,7 +94,7 @@ function sanitizeGusiHtml(html: string): string {
 }
 
 export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean } = {}) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto] = useState(!!modoIncrustado);
   const [logueado, setLogueado] = useState<boolean | null>(null);
   const [userId, setUserId] = useState<string>("");
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
