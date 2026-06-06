@@ -217,7 +217,9 @@ function BuscarPageInner() {
       if (salarioMax) params.set("salarioMax", salarioMax);
 
       const [serverRes, joobleRes] = await Promise.allSettled([
-        fetch(`/api/jobs/search?${params.toString()}`).then(r => r.ok ? r.json() : { ofertas: [] }),
+        fetch(`/api/jobs/search?${params.toString()}`, { signal: AbortSignal.timeout(15000) })
+          .then(r => r.ok ? r.json() : { ofertas: [] })
+          .catch(() => ({ ofertas: [] })),
         buscarJoobleCliente(keyword.trim(), ubicacion.trim()),
       ]);
 
