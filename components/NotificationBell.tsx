@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface Notif {
   id: string;
@@ -59,7 +60,19 @@ export default function NotificationBell({ userId }: { userId: string }) {
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [sinLeer, setSinLeer] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const tokenRef = useRef<string>("");
   const router = useRouter();
+
+  // Obtener y mantener el token de sesión actualizado
+  useEffect(() => {
+    getSupabaseBrowser().auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) tokenRef.current = session.access_token;
+    });
+    const { data: { subscription } } = getSupabaseBrowser().auth.onAuthStateChange(
+      (_e, session) => { if (session?.access_token) tokenRef.current = session.access_token; }
+    );
+    return () => subscription.unsubscribe();
+  }, []);
 
   function getNotifUrl(n: Notif): string | null {
     const datos = n.datos || {};
@@ -94,8 +107,16 @@ export default function NotificationBell({ userId }: { userId: string }) {
   }, []);
 
   async function fetchNotifs() {
+    if (!tokenRef.current) {
+      // Token aún no cargado — reintentar obteniendo sesión
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (session?.access_token) tokenRef.current = session.access_token;
+      else return;
+    }
     try {
-      const res = await fetch(`/api/notifications?userId=${encodeURIComponent(userId)}`);
+      const res = await fetch("/api/notifications", {
+        headers: { "Authorization": `Bearer ${tokenRef.current}` },
+      });
       if (!res.ok) return;
       const data = await res.json() as { notificaciones: Notif[]; sinLeer: number };
       setNotifs(data.notificaciones || []);
@@ -104,11 +125,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
   }
 
   async function marcarTodasLeidas() {
-    if (!userId) return;
+    if (!userId || !tokenRef.current) return;
     try {
       await fetch("/api/notifications", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${tokenRef.current}` },
         body: JSON.stringify({ userId, marcarTodas: true }),
       });
       setNotifs((prev) => prev.map((n) => ({ ...n, leida: true })));
@@ -120,7 +141,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
     try {
       await fetch("/api/notifications", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${tokenRef.current}` },
         body: JSON.stringify({ notifId: id }),
       });
       setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, leida: true } : n));

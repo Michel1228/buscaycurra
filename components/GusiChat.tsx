@@ -96,6 +96,7 @@ function sanitizeGusiHtml(html: string): string {
 export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean } = {}) {
   const [abierto, setAbierto] = useState(false);
   const [logueado, setLogueado] = useState<boolean | null>(null);
+  const [userId, setUserId] = useState<string>("");
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
 
   const inicializadoRef = useRef(false);
@@ -108,6 +109,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       try {
         const { data: { user } } = await getSupabaseBrowser().auth.getUser();
         setLogueado(!!user);
+        if (user?.id) setUserId(user.id);
         if (user) {
           setMensajes([{ role: "gusi", text: `¡Hola! 🐛 Soy Gusi. ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Mejorar tu foto\n🎯 Preparar entrevistas` }]);
         } else {
@@ -125,7 +127,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
   const [mostrarSugerencias, setMostrarSugerencias] = useState(true);
   const [modoEntrevista, setModoEntrevista] = useState(false);
   const [pulso, setPulso] = useState(true);
-  const [notif, setNotif] = useState(true);
+  const [notif, setNotif] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -179,6 +181,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
           message: texto,
           history: nuevosMensajes.slice(-12),
           mode: modoEntrevista ? "entrevista" : "chat",
+          userId: userId || undefined,
         }),
       });
 
