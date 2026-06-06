@@ -402,9 +402,59 @@ function detectIntent(text: string): string {
   return "chat";
 }
 
-async function searchJobsReal(query: string, city: string, limit = 5, countryCode = "ES") {
+// Mapa ciudad → provincia para expansión geográfica
+const CIUDAD_A_PROVINCIA: Record<string, string> = {
+  tudela: "navarra", pamplona: "navarra", estella: "navarra", tafalla: "navarra",
+  zaragoza: "zaragoza", huesca: "huesca", teruel: "teruel",
+  bilbao: "vizcaya", "san sebastian": "guipuzcoa", donostia: "guipuzcoa", vitoria: "alava",
+  logrono: "la rioja", logroño: "la rioja", calahorra: "la rioja",
+  madrid: "madrid", barcelona: "barcelona", valencia: "valencia",
+  sevilla: "sevilla", malaga: "malaga", cordoba: "cordoba", granada: "granada",
+  santander: "cantabria", oviedo: "asturias", gijon: "asturias",
+  valladolid: "valladolid", burgos: "burgos", salamanca: "salamanca",
+  "la coruña": "coruña", vigo: "pontevedra", lugo: "lugo", ourense: "ourense",
+  murcia: "murcia", cartagena: "murcia", alicante: "alicante", elche: "alicante",
+  palma: "baleares", "las palmas": "canarias",
+};
+
+// Sinónimos de puestos para ampliar la búsqueda
+const SINONIMOS_PUESTO: Record<string, string[]> = {
+  carretillero: ["carretilla", "almacen", "logistica", "operario almacen", "mozo almacen", "picking", "preparador pedidos"],
+  mecanico: ["taller", "mantenimiento mecanico", "mecanico vehiculos", "mecanico industrial"],
+  camarero: ["hosteleria", "restaurante", "sala", "servicio mesas", "barman"],
+  cocinero: ["cocina", "chef", "ayudante cocina", "cocinero", "gastronomia"],
+  conductor: ["chofer", "transportista", "repartidor", "camionero", "distribuidor"],
+  administrativo: ["administracion", "oficina", "secretaria", "gestion administrativa"],
+  electricista: ["instalacion electrica", "mantenimiento electrico", "tecnico electrico"],
+  fontanero: ["fontaneria", "instalaciones", "plomero", "climatizacion"],
+  albañil: ["construccion", "obra", "albanileria", "peón construccion"],
+  enfermero: ["enfermeria", "auxiliar enfermeria", "atencion sanitaria", "clinica"],
+  comercial: ["ventas", "vendedor", "asesor comercial", "agente ventas"],
+  programador: ["desarrollador", "developer", "software", "informatico", "programacion"],
+  carpintero: ["carpinteria", "madera", "ebanisteria"],
+  soldador: ["soldadura", "metalurgia", "chapista", "caldereria"],
+};
+
+type DbJobRow = { id: unknown; title: unknown; company: unknown; city: unknown; province: unknown; salary: unknown; sourceName: unknown; sourceUrl: unknown };
+
+function mapRowToJob(j: DbJobRow, cityFallback: string) {
+  return {
+    id: `db-${j.id}`,
+    titulo: j.title as string,
+    empresa: (j.company as string) || "Ver en oferta",
+    ubicacion: (j.city || j.province || cityFallback) as string,
+    salario: (j.salary as string) || "Ver en oferta",
+    fuente: (j.sourceName as string) || "BuscayCurra",
+    url: (j.sourceUrl as string) || "",
+    match: 0,
+  };
+}
+
+async function searchJobsReal(query: string, city: string, limit = 5, countryCode = "ES"): Promise<{
+  jobs: ReturnType<typeof mapRowToJob>[];
+  scope: "ciudad" | "provincia" | "pais" | "sinonimo" | "api";
+} | null> {
   try {
-    // Mapear código de país a nombre para búsqueda
     const countryMap: Record<string, string> = {
       ES: "spain", DE: "germany", FR: "france", IT: "italy", PT: "portugal",
       GB: "united kingdom", UK: "united kingdom", US: "united states", CA: "canada",
@@ -413,62 +463,104 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       FI: "finland", NZ: "new zealand", PL: "poland",
     };
     const countryName = countryMap[countryCode?.toUpperCase()] || "spain";
-
-    // ── PRIMERO: consultar la BD local ──
     const { getPool } = await import("@/lib/db");
     const pool = getPool();
-    
-    const cityPattern = city ? `%${city.toLowerCase()}%` : "%";
-    const keywordPattern = `%${query.toLowerCase()}%`;
-    
-    const dbResult = await pool.query(
-      `SELECT id, title, company, city, province, salary, description, \"sourceName\", \"sourceUrl\", \"scrapedAt\"
-       FROM \"JobListing\"
-       WHERE LOWER(title) LIKE $1
-         AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2)
-         AND (LOWER(country) LIKE $3 OR country IS NULL)
-       ORDER BY scrapedat DESC
-       LIMIT $4`,
-      [keywordPattern, cityPattern, `%${countryName}%`, Math.min(limit * 2, 30)]
-    );
-    
-    if (dbResult.rows.length > 0) {
-      console.log(`[Guzzi] BD local: ${dbResult.rows.length} ofertas para "${query}" en "${city}"`);
-      return dbResult.rows.slice(0, limit).map((j: Record<string, unknown>) => ({
-        id: `db-${j.id}`,
-        titulo: j.title as string,
-        empresa: (j.company as string) || "Ver en oferta",
-        ubicacion: (j.city || j.province || city) as string,
-        salario: (j.salary as string) || "Ver en oferta",
-        fuente: (j.sourceName as string) || "BuscayCurra",
-        url: (j.sourceUrl as string) || "",
-        match: 0,
-      }));
+    const kw = `%${query.toLowerCase()}%`;
+    const countryFilter = `%${countryName}%`;
+    const N = Math.min(limit * 2, 30);
+
+    // ── Estrategia 1: título + ciudad exacta ─────────────────────────────
+    if (city) {
+      const cityPat = `%${city.toLowerCase()}%`;
+      const r1 = await pool.query(
+        `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
+         FROM "JobListing"
+         WHERE "isActive" = true
+           AND LOWER(title) LIKE $1
+           AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2)
+           AND (LOWER(country) LIKE $3 OR country IS NULL)
+         ORDER BY "createdAt" DESC LIMIT $4`,
+        [kw, cityPat, countryFilter, N]
+      );
+      if (r1.rows.length > 0) {
+        return { jobs: (r1.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "ciudad" };
+      }
+
+      // ── Estrategia 2: título + provincia de esa ciudad ─────────────────
+      const provincia = CIUDAD_A_PROVINCIA[city.toLowerCase()];
+      if (provincia) {
+        const provPat = `%${provincia}%`;
+        const r2 = await pool.query(
+          `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
+           FROM "JobListing"
+           WHERE "isActive" = true
+             AND LOWER(title) LIKE $1
+             AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2 OR LOWER(city) LIKE $3 OR LOWER(province) LIKE $3)
+             AND (LOWER(country) LIKE $4 OR country IS NULL)
+           ORDER BY "createdAt" DESC LIMIT $5`,
+          [kw, cityPat, provPat, countryFilter, N]
+        );
+        if (r2.rows.length > 0) {
+          return { jobs: (r2.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "provincia" };
+        }
+      }
     }
-    
-    // ── FALLBACK: APIs externas (Jooble, Adzuna, Careerjet) ──
-    console.log(`[Guzzi] Sin resultados en BD local, buscando en APIs externas...`);
+
+    // ── Estrategia 3: título en cualquier lugar del país ─────────────────
+    const r3 = await pool.query(
+      `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
+       FROM "JobListing"
+       WHERE "isActive" = true
+         AND LOWER(title) LIKE $1
+         AND (LOWER(country) LIKE $2 OR country IS NULL)
+       ORDER BY "createdAt" DESC LIMIT $3`,
+      [kw, countryFilter, N]
+    );
+    if (r3.rows.length > 0) {
+      return { jobs: (r3.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "pais" };
+    }
+
+    // ── Estrategia 4: sinónimos del puesto ───────────────────────────────
+    const queryNorm = query.toLowerCase();
+    for (const [key, syns] of Object.entries(SINONIMOS_PUESTO)) {
+      if (queryNorm.includes(key) || syns.some(s => queryNorm.includes(s))) {
+        for (const syn of [key, ...syns]) {
+          const synPat = `%${syn}%`;
+          const r4 = await pool.query(
+            `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
+             FROM "JobListing"
+             WHERE "isActive" = true
+               AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
+               AND (LOWER(country) LIKE $2 OR country IS NULL)
+             ORDER BY "createdAt" DESC LIMIT $3`,
+            [synPat, countryFilter, N]
+          );
+          if (r4.rows.length > 0) {
+            return { jobs: (r4.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "sinonimo" };
+          }
+        }
+        break;
+      }
+    }
+
+    // ── Estrategia 5: APIs externas ──────────────────────────────────────
     const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
-    const ofertas = await Promise.race([
+    const extOfertas = await Promise.race([
       buscarOfertasReales(query, city, Math.min(limit * 2, 20)),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
     ]);
-    
-    if (!ofertas) {
-      console.log(`[Guzzi] Timeout APIs externas (8s)`);
-      return null;
+    if (extOfertas && extOfertas.length > 0) {
+      return {
+        jobs: extOfertas.slice(0, limit).map(o => ({
+          id: String(o.id), titulo: String(o.titulo), empresa: String(o.empresa),
+          ubicacion: String(o.ubicacion), salario: String(o.salario ?? "Ver en oferta"),
+          fuente: String(o.fuente), match: Number(o.match ?? 0), url: String(o.url ?? ""),
+        })),
+        scope: "api",
+      };
     }
-    
-    return ofertas.slice(0, limit).map(o => ({
-      id: o.id,
-      titulo: o.titulo,
-      empresa: o.empresa,
-      ubicacion: o.ubicacion,
-      salario: o.salario,
-      fuente: o.fuente,
-      match: o.match,
-      url: o.url,
-    }));
+
+    return null;
   } catch (e) {
     console.error("[Guzzi] Error en searchJobsReal:", (e as Error).message);
     return null;
@@ -476,17 +568,36 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
 }
 
 function fallbackMessage(puesto: string, ciudad: string): string {
-  return `🔍 No encontré ofertas activas ahora mismo para **${puesto}**${ciudad ? ` en **${ciudad}**` : ""}.\n\nPuedes:\n• 🔄 Pedirme que busque con otras palabras\n• 📍 Probar otra ciudad\n• 📧 Usar el botón de abajo para búsqueda automática\n\n🐛 ¡No te desanimes! El mercado se mueve a diario.`;
+  const syn = Object.entries(SINONIMOS_PUESTO).find(([k, v]) =>
+    puesto.toLowerCase().includes(k) || v.some(s => puesto.toLowerCase().includes(s))
+  );
+  const sugerencias = syn
+    ? `\n• 🔄 Prueba: "${syn[1][0]}" o "${syn[1][1]}"`
+    : "\n• 🔄 Prueba con otro nombre del puesto";
+  return `🔍 No encontré ofertas activas para **${puesto}**${ciudad ? ` en **${ciudad}**` : ""}.\n${sugerencias}\n• 📍 Amplía la zona (provincia o comunidad)\n• 🔍 Usa el buscador avanzado con más filtros\n• 📧 Activa alertas y te aviso cuando lleguen\n\n🐛 ¡El mercado se mueve a diario, vuelvo a mirar mañana!`;
 }
 
-function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[]): string {
-  let text = `🔍 **${ofertas.length} ofertas** de **${puesto}**${ciudad ? ` en **${ciudad}**` : ""}:\n\n`;
-  (ofertas as Array<{ titulo?: string; empresa?: string; ubicacion?: string; salario?: string; match?: number }>)
+function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope?: string): string {
+  const scopeMsg = scope === "provincia"
+    ? ` (en la provincia de ${ciudad})`
+    : scope === "pais"
+      ? " (en toda España)"
+      : scope === "sinonimo"
+        ? " (puestos relacionados)"
+        : ciudad ? ` en **${ciudad}**` : "";
+
+  let text = `🔍 **${ofertas.length} oferta${ofertas.length !== 1 ? "s" : ""}** de **${puesto}**${scopeMsg}:\n\n`;
+  (ofertas as Array<{ titulo?: string; empresa?: string; ubicacion?: string; salario?: string; url?: string }>)
     .forEach((o, i) => {
       const em = ["🥇", "🥈", "🥉", "📌"][i] || "📌";
-      text += `${em} **${o.titulo}**\n   📍 ${o.ubicacion} · 💰 ${o.salario || "Ver oferta"}\n\n`;
+      const link = o.url ? ` — [Ver oferta](${o.url})` : "";
+      text += `${em} **${o.titulo}**\n   📍 ${o.ubicacion} · 💰 ${o.salario || "Ver en oferta"}${link}\n\n`;
     });
-  text += `📧 **¿Envío tu CV a todas?** Di "sí" y me encargo. O usa el botón en cada oferta del buscador. 🐛`;
+
+  if (scope && scope !== "ciudad") {
+    text += `ℹ️ _No encontré resultados exactos en "${ciudad}", te muestro los más cercanos._\n\n`;
+  }
+  text += `📧 **¿Envío tu CV a todas?** Di "sí" y me encargo. O dime en qué empresa te interesa más. 🐛`;
   return text;
 }
 
@@ -904,8 +1015,8 @@ El candidato tiene mucha experiencia.
       }
 
       if (puestoBusqueda) {
-        const ofertas = await searchJobsReal(puestoBusqueda, ciudadBusqueda, 5, pais || "ES");
-        if (!ofertas || ofertas.length === 0) {
+        const result = await searchJobsReal(puestoBusqueda, ciudadBusqueda, 5, pais || "ES");
+        if (!result || result.jobs.length === 0) {
           return NextResponse.json({
             reply: (cvParsed?.ultimoPuesto
               ? `Basándome en tu CV (último puesto: **${cvParsed.ultimoPuesto}**), ` : "") +
@@ -917,8 +1028,8 @@ El candidato tiene mucha experiencia.
           ? `Basándome en tu CV (último puesto: **${cvParsed.ultimoPuesto}**), aquí tienes lo mejor que encontré:\n\n`
           : "";
         return NextResponse.json({
-          reply: prefix + buildJobsText(puestoBusqueda, ciudadBusqueda, ofertas as unknown[]),
-          jobs: ofertas,
+          reply: prefix + buildJobsText(puestoBusqueda, ciudadBusqueda, result.jobs, result.scope),
+          jobs: result.jobs,
           action: "search_results",
         });
       }
@@ -927,16 +1038,16 @@ El candidato tiene mucha experiencia.
     // ── Intent: enviar CV ────────────────────────────────────────────────────
     if (intent === "enviar") {
       if (cvParsed?.ultimoPuesto) {
-        const ofertas = await searchJobsReal(cvParsed.ultimoPuesto, cvParsed.ciudad, 5, pais || "ES");
-        if (!ofertas || ofertas.length === 0) {
+        const enviarResult = await searchJobsReal(cvParsed.ultimoPuesto, cvParsed.ciudad, 5, pais || "ES");
+        if (!enviarResult || enviarResult.jobs.length === 0) {
           return NextResponse.json({
             reply: fallbackMessage(cvParsed.ultimoPuesto, cvParsed.ciudad),
             action: "search_results",
           });
         }
         return NextResponse.json({
-          reply: `🔍 Encontré estas ofertas para **${cvParsed.ultimoPuesto}**${cvParsed.ciudad ? ` en **${cvParsed.ciudad}**` : ""}:\n\n${buildJobsText(cvParsed.ultimoPuesto, cvParsed.ciudad, ofertas as unknown[]).split("\n\n").slice(1).join("\n\n")}`,
-          jobs: ofertas,
+          reply: buildJobsText(cvParsed.ultimoPuesto, cvParsed.ciudad, enviarResult.jobs, enviarResult.scope),
+          jobs: enviarResult.jobs,
           action: "search_results",
         });
       }
@@ -990,7 +1101,6 @@ El candidato tiene mucha experiencia.
 }
 
 function extractJobTerm(text: string): string {
-  const t = text.toLowerCase();
   // "busco trabajo de/como X en Y" — captura X
   const m1 = text.match(/(?:busco|buscar|busca)\s+(?:trabajo|empleo|curro|oferta)\s+(?:de\s+|como\s+)([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)(?:\s+en\s+|\s*$)/i);
   if (m1?.[1]?.trim()) return m1[1].trim();
