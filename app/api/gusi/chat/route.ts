@@ -463,6 +463,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       FI: "finland", NZ: "new zealand", PL: "poland",
     };
     const countryName = countryMap[countryCode?.toUpperCase()] || "spain";
+    const isoCode = countryCode?.toUpperCase() || "ES";
     const { getPool } = await import("@/lib/db");
     const pool = getPool();
     const kw = `%${query.toLowerCase()}%`;
@@ -478,9 +479,9 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
          WHERE "isActive" = true
            AND LOWER(title) LIKE $1
            AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2)
-           AND (LOWER(country) LIKE $3 OR country IS NULL)
-         ORDER BY "createdAt" DESC LIMIT $4`,
-        [kw, cityPat, countryFilter, N]
+           AND (country = $3 OR LOWER(country) LIKE $4 OR country IS NULL)
+         ORDER BY "createdAt" DESC LIMIT $5`,
+        [kw, cityPat, isoCode, countryFilter, N]
       );
       if (r1.rows.length > 0) {
         return { jobs: (r1.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "ciudad" };
@@ -500,9 +501,9 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
              AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2
                   OR LOWER(city) LIKE $3 OR LOWER(province) LIKE $3
                   OR LOWER(city) LIKE $4)
-             AND (LOWER(country) LIKE $5 OR country IS NULL)
-           ORDER BY "createdAt" DESC LIMIT $6`,
-          [kw, cityPat, provPat, `%, ${provincia}%`, countryFilter, N]
+             AND (country = $5 OR LOWER(country) LIKE $6 OR country IS NULL)
+           ORDER BY "createdAt" DESC LIMIT $7`,
+          [kw, cityPat, provPat, `%, ${provincia}%`, isoCode, countryFilter, N]
         );
         if (r2.rows.length > 0) {
           return { jobs: (r2.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "provincia" };
@@ -516,9 +517,9 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
        FROM "JobListing"
        WHERE "isActive" = true
          AND LOWER(title) LIKE $1
-         AND (LOWER(country) LIKE $2 OR country IS NULL)
-       ORDER BY "createdAt" DESC LIMIT $3`,
-      [kw, countryFilter, N]
+         AND (country = $2 OR LOWER(country) LIKE $3 OR country IS NULL)
+       ORDER BY "createdAt" DESC LIMIT $4`,
+      [kw, isoCode, countryFilter, N]
     );
     if (r3.rows.length > 0) {
       return { jobs: (r3.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "pais" };
@@ -535,9 +536,9 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
              FROM "JobListing"
              WHERE "isActive" = true
                AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
-               AND (LOWER(country) LIKE $2 OR country IS NULL)
-             ORDER BY "createdAt" DESC LIMIT $3`,
-            [synPat, countryFilter, N]
+               AND (country = $2 OR LOWER(country) LIKE $3 OR country IS NULL)
+             ORDER BY "createdAt" DESC LIMIT $4`,
+            [synPat, isoCode, countryFilter, N]
           );
           if (r4.rows.length > 0) {
             return { jobs: (r4.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "sinonimo" };
