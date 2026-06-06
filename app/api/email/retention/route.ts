@@ -20,20 +20,28 @@ async function enviarEmail(
   email: string,
   nombre: string,
   puesto: string,
-  ofertas: Array<{ titulo: string; empresa: string; ubicacion: string }>,
+  ofertas: Array<{ id: string; titulo: string; empresa: string; ubicacion: string }>,
 ) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
 
-  const filas = ofertas.map(o => `
+  const filas = ofertas.map(o => {
+    const href = o.id
+      ? `${APP_URL}/app/ofertas/${encodeURIComponent(o.id)}`
+      : `${APP_URL}/app/buscar?q=${encodeURIComponent(o.titulo)}`;
+    return `
     <tr>
       <td style="padding:12px 0;border-bottom:1px solid #2a2a1f;">
-        <div style="font-size:15px;font-weight:bold;color:#f0ebe0;">${o.titulo}</div>
-        <div style="font-size:13px;color:#7ed56f;margin-top:2px;">${o.empresa}
-          <span style="color:#504a3a;font-weight:normal;"> &middot; ${o.ubicacion}</span>
-        </div>
+        <a href="${href}" style="text-decoration:none;display:block;">
+          <div style="font-size:15px;font-weight:bold;color:#f0ebe0;">${o.titulo}</div>
+          <div style="font-size:13px;color:#7ed56f;margin-top:2px;">${o.empresa}
+            <span style="color:#504a3a;font-weight:normal;"> &middot; ${o.ubicacion}</span>
+          </div>
+          <div style="font-size:11px;color:#504a3a;margin-top:4px;">Ver oferta →</div>
+        </a>
       </td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
 
   const html = `
 <div style="font-family:-apple-system,Arial,sans-serif;max-width:520px;margin:0 auto;background:#1a1a12;color:#f0ebe0;border-radius:16px;overflow:hidden;">
@@ -116,9 +124,9 @@ export async function POST(request: NextRequest) {
 
       // 3. Ofertas nuevas de las ultimas 24h en BD local
       const { rows } = await pool.query<{
-        title: string; company: string; city: string; province: string;
+        id: string; title: string; company: string; city: string; province: string;
       }>(
-        `SELECT title, company, city, province
+        `SELECT id::text, title, company, city, province
          FROM "JobListing"
          WHERE "isActive" = true
            AND LOWER(title) LIKE LOWER($1)
@@ -130,6 +138,7 @@ export async function POST(request: NextRequest) {
       if (rows.length < 2) continue;
 
       const ofertas = rows.map(r => ({
+        id: r.id,
         titulo: r.title,
         empresa: r.company || "Ver en oferta",
         ubicacion: r.city || r.province || "Espana",
