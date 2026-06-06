@@ -273,7 +273,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
 
   return (
     <>
-      {/* ── Chat panel ───────────────────── */}
+      {/* ── Panel principal ─────────────────────────────────────── */}
       {abierto && (
         <div
           className={modoIncrustado
@@ -281,190 +281,193 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
             : "fixed z-[9998] flex flex-col overflow-hidden"
           }
           style={modoIncrustado ? {
-            background: "#12160d",
+            background: "#0f1117",
           } : {
             bottom: "5rem", right: "1rem", left: "1rem",
-            maxWidth: "420px", marginLeft: "auto",
-            height: "min(70vh, 560px)",
-            background: "#12160d",
-            borderRadius: "1.25rem",
-            border: "2px solid rgba(126,213,111,0.25)",
-            boxShadow: "0 8px 40px rgba(0,0,0,0.6), 0 0 60px rgba(126,213,111,0.08)",
+            maxWidth: "440px", marginLeft: "auto",
+            height: "min(72vh, 580px)",
+            background: "#0f1117",
+            borderRadius: "1rem",
+            border: "1px solid #2d3142",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.7)",
           }}
         >
-          {/* Header */}
+          {/* ── Header ── */}
           <div className="px-4 py-3 flex items-center justify-between shrink-0"
-            style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.08), rgba(15,26,10,0.95))", borderBottom: "1px solid rgba(126,213,111,0.15)" }}>
+            style={{ background: "#111827", borderBottom: "1px solid #1e212b" }}>
             <div className="flex items-center gap-2.5">
-              <GuzziAvatar size={36} />
+              <GuzziAvatar size={34} />
               <div>
-                <span className="font-bold text-sm" style={{ color: "#7ed56f" }}>Guzzi</span>
-                {modoEntrevista && (
-                  <span className="ml-2 text-[9px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040", border: "1px solid rgba(240,192,64,0.25)" }}>
-                    📝 MODO CV
-                  </span>
-                )}
-                <div className="text-[10px]" style={{ color: "#706a58" }}>Tu asistente de empleo</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Guzzi</span>
+                  {modoEntrevista && (
+                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
+                      style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
+                      MODO CV
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#22c55e" }} />
+                  <span className="text-[10px]" style={{ color: "#64748b" }}>Asistente de empleo IA</span>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <button onClick={limpiar} title="Limpiar" className="w-7 h-7 rounded-full flex items-center justify-center text-xs transition hover:opacity-80"
-                style={{ background: "rgba(126,213,111,0.08)", color: "#706a58" }}>🗑</button>
+            <div className="flex items-center gap-1">
+              <button onClick={limpiar} title="Nueva conversación"
+                className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition hover:opacity-80"
+                style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
+                Nueva
+              </button>
               {!modoIncrustado && (
-                <button onClick={() => setAbierto(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-sm transition hover:opacity-80"
-                  style={{ background: "rgba(126,213,111,0.08)", color: "#706a58" }}>✕</button>
+                <button onClick={() => setAbierto(false)}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition hover:opacity-80"
+                  style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
+                  ✕
+                </button>
               )}
             </div>
           </div>
 
-          {/* Mensajes */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5" style={{ background: "#12160d" }}>
+          {/* ── Área de mensajes ── */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+            style={{ background: "#0f1117" }}>
             {mensajes.map((m, i) => (
-              <div key={i}>
-                <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} items-end gap-1.5`}>
-                  {m.role === "gusi" && <GuzziAvatar size={22} className="mb-1 shrink-0" />}
-                  <div className={`max-w-[85%] px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap ${
-                    m.role === "user" ? "rounded-2xl rounded-br-md" : "rounded-2xl rounded-bl-md"}`}
+              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} gap-2.5`}>
+                {m.role === "gusi" && (
+                  <div className="shrink-0 mt-0.5">
+                    <GuzziAvatar size={28} />
+                  </div>
+                )}
+                <div className="max-w-[80%] space-y-2">
+                  <div
+                    className="px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap"
                     style={{
-                      background: m.role === "user" ? "linear-gradient(135deg, #7ed56f, #5cb848)" : "rgba(42,42,30,0.7)",
-                      color: m.role === "user" ? "#0f1a0a" : "#f0ebe0",
-                      border: m.role === "gusi" ? "1px solid rgba(126,213,111,0.1)" : "none",
+                      background: m.role === "user" ? "#22c55e" : "#1e212b",
+                      color: m.role === "user" ? "#0a1208" : "#e2e8f0",
+                      borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "4px 18px 18px 18px",
+                      border: m.role === "gusi" ? "1px solid #2d3142" : "none",
                       fontWeight: m.role === "user" ? 500 : 400,
                     }}
                     dangerouslySetInnerHTML={{ __html: sanitizeGusiHtml(formatGusiText(m.text)) }}
                   />
-                </div>
-                {/* Botón CV visual cuando la entrevista termina */}
-                {m.action === "cv_complete" && (
-                  <div className="ml-7 mt-2">
-                    <button
-                      onClick={() => router.push("/app/curriculum")}
-                      className="w-full py-2.5 rounded-xl text-[12px] font-bold transition hover:opacity-90"
-                      style={{ background: "linear-gradient(135deg, #3B5FE0, #2244CC)", color: "white", boxShadow: "0 2px 10px rgba(59,95,224,0.35)" }}>
-                      📄 Generar mi CV visual ahora →
+                  {/* Acción: CV completo */}
+                  {m.action === "cv_complete" && (
+                    <button onClick={() => router.push("/app/curriculum")}
+                      className="w-full py-2.5 rounded-xl text-sm font-semibold transition hover:opacity-90"
+                      style={{ background: "#3b82f6", color: "white" }}>
+                      📄 Ver mi CV generado →
                     </button>
-                    <p className="text-[10px] mt-1 text-center" style={{ color: "#706a58" }}>Con plantilla profesional, foto y colores</p>
-                  </div>
-                )}
-                {/* Ofertas con % de match */}
-                {m.jobs && m.jobs.length > 0 && (
-                  <div className="ml-7 mt-2 space-y-2">
-                    {m.jobs.map((job) => {
-                      const matchColor = job.match >= 80 ? "#7ed56f" : job.match >= 60 ? "#f0c040" : "#e07850";
-                      const paisId = getCountryFromLocation(job.ubicacion);
-                      const enEspana = isSpainOrRemote(job.ubicacion);
-                      const locationHref = paisId
-                        ? `/app/emigrar?pais=${paisId}`
-                        : enEspana
-                          ? `/app/buscar?q=${encodeURIComponent(job.titulo)}`
-                          : null;
-                      return (
-                        <div key={job.id} className="rounded-xl p-3 transition hover:scale-[1.01]"
-                          style={{ background: "rgba(42,42,30,0.5)", border: "1px solid rgba(126,213,111,0.1)" }}>
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              {/* Título → abre oferta en nueva pestaña */}
-                              {job.url ? (
-                                <a href={job.url} target="_blank" rel="noopener noreferrer"
-                                  className="text-[12px] font-bold truncate block hover:underline"
-                                  style={{ color: "#f0ebe0" }}>
-                                  {job.titulo} ↗
-                                </a>
-                              ) : (
-                                <p className="text-[12px] font-bold truncate" style={{ color: "#f0ebe0" }}>{job.titulo}</p>
-                              )}
-                              <p className="text-[10px] mt-0.5" style={{ color: "#b0a890" }}>
-                                {job.empresa}
-                                {" · "}
-                                {/* Ubicación → redirige a país o búsqueda */}
-                                {locationHref ? (
-                                  <button onClick={() => router.push(locationHref)}
-                                    className="hover:underline font-medium"
-                                    style={{ color: "#a0d0f0" }}>
-                                    🌍 {job.ubicacion}
-                                  </button>
+                  )}
+                  {/* Acción: Ofertas */}
+                  {m.jobs && m.jobs.length > 0 && (
+                    <div className="space-y-2">
+                      {m.jobs.map((job) => {
+                        const matchColor = job.match >= 80 ? "#22c55e" : job.match >= 60 ? "#f59e0b" : "#94a3b8";
+                        const paisId = getCountryFromLocation(job.ubicacion);
+                        const enEspana = isSpainOrRemote(job.ubicacion);
+                        const locationHref = paisId
+                          ? `/app/emigrar?pais=${paisId}`
+                          : enEspana ? `/app/buscar?q=${encodeURIComponent(job.titulo)}` : null;
+                        return (
+                          <div key={job.id} className="rounded-xl p-3 transition hover:border-[#3d4258]"
+                            style={{ background: "#161922", border: "1px solid #2d3142" }}>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                {job.url ? (
+                                  <a href={job.url} target="_blank" rel="noopener noreferrer"
+                                    className="text-[13px] font-semibold truncate block hover:underline"
+                                    style={{ color: "#f1f5f9" }}>
+                                    {job.titulo} ↗
+                                  </a>
                                 ) : (
-                                  <span>📍 {job.ubicacion}</span>
+                                  <p className="text-[13px] font-semibold truncate" style={{ color: "#f1f5f9" }}>{job.titulo}</p>
                                 )}
-                              </p>
-                              <p className="text-[10px] font-semibold mt-0.5" style={{ color: "#7ed56f" }}>💰 {job.salario}</p>
-                            </div>
-                            <div className="flex flex-col items-center gap-1 shrink-0">
-                              <div className="flex items-center gap-1">
-                                <div className="w-10 h-1.5 rounded-full" style={{ background: "#2a2a1e" }}>
-                                  <div className="h-full rounded-full" style={{ width: `${job.match}%`, background: matchColor }} />
-                                </div>
-                                <span className="text-[11px] font-bold" style={{ color: matchColor }}>{job.match}%</span>
+                                <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>
+                                  {job.empresa}
+                                  {locationHref ? (
+                                    <button onClick={() => router.push(locationHref)}
+                                      className="ml-1 hover:underline" style={{ color: "#94a3b8" }}>
+                                      · 📍 {job.ubicacion}
+                                    </button>
+                                  ) : (
+                                    <span> · 📍 {job.ubicacion}</span>
+                                  )}
+                                </p>
+                                {job.salario && job.salario !== "Ver en oferta" && (
+                                  <p className="text-[11px] font-semibold mt-1" style={{ color: "#22c55e" }}>{job.salario}</p>
+                                )}
                               </div>
                               <button
                                 onClick={() => router.push(`/app/envios?empresa=${encodeURIComponent(job.empresa)}&puesto=${encodeURIComponent(job.titulo)}&web=${encodeURIComponent(job.url)}`)}
-                                className="px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:opacity-90"
-                                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
-                                ✓ Enviar CV
+                                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition hover:opacity-90 shrink-0"
+                                style={{ background: "#22c55e", color: "#0a1208" }}>
+                                Enviar CV
                               </button>
                             </div>
+                            {job.match > 0 && (
+                              <div className="mt-2 flex items-center gap-2">
+                                <div className="flex-1 h-1 rounded-full" style={{ background: "#2d3142" }}>
+                                  <div className="h-full rounded-full transition-all" style={{ width: `${job.match}%`, background: matchColor }} />
+                                </div>
+                                <span className="text-[10px] font-semibold" style={{ color: matchColor }}>{job.match}%</span>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      );
-                    })}
-                    <button
-                      onClick={() => {
-                        addMsg("user", "Envía mi CV a todas las ofertas");
-                        addMsg("gusi", "📧 **¡Enviando tu CV a todas las ofertas!** 🐛\n\nVe a 🏢 **Empresa** para ver el progreso y el contador de envíos de hoy. ¡A por ello! 🚀");
-                        router.push("/app/empresas");
-                      }}
-                      className="w-full py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90"
-                      style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.15), rgba(92,184,72,0.15))", border: "1.5px solid rgba(126,213,111,0.3)", color: "#7ed56f" }}>
-                      ✓ Enviar CV a TODAS ({m.jobs.length} ofertas)
-                    </button>
-                  </div>
-                )}
+                        );
+                      })}
+                      <button
+                        onClick={() => { addMsg("user", "Envía mi CV a todas"); router.push("/app/empresas"); }}
+                        className="w-full py-2 rounded-xl text-sm font-semibold transition hover:opacity-90"
+                        style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#22c55e" }}>
+                        Enviar CV a todas ({m.jobs.length} ofertas) →
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
+            {/* Typing indicator */}
             {cargando && (
-              <div className="flex justify-start items-end gap-1.5">
-                <span className="text-sm mb-1">🐛</span>
-                <div className="px-3.5 py-2.5 rounded-2xl rounded-bl-md text-[13px]"
-                  style={{ background: "rgba(42,42,30,0.7)", border: "1px solid rgba(126,213,111,0.1)" }}>
-                  <span className="inline-flex gap-1" style={{ color: "#7ed56f" }}>
-                    <span className="animate-bounce" style={{ animationDelay: "0ms" }}>●</span>
-                    <span className="animate-bounce" style={{ animationDelay: "150ms" }}>●</span>
-                    <span className="animate-bounce" style={{ animationDelay: "300ms" }}>●</span>
+              <div className="flex justify-start gap-2.5">
+                <GuzziAvatar size={28} />
+                <div className="px-4 py-3 rounded-[4px_18px_18px_18px]"
+                  style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+                  <span className="inline-flex gap-1" style={{ color: "#64748b" }}>
+                    <span className="animate-bounce" style={{ animationDelay: "0ms", fontSize: "18px", lineHeight: 1 }}>·</span>
+                    <span className="animate-bounce" style={{ animationDelay: "150ms", fontSize: "18px", lineHeight: 1 }}>·</span>
+                    <span className="animate-bounce" style={{ animationDelay: "300ms", fontSize: "18px", lineHeight: 1 }}>·</span>
                   </span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Sugerencias */}
+          {/* ── Sugerencias (sobre el input) ── */}
           {mostrarSugerencias && (
-            <div className="px-3 py-2.5 flex flex-wrap gap-1.5 shrink-0"
-              style={{ borderTop: "1px solid rgba(126,213,111,0.08)", background: "rgba(15,26,10,0.5)" }}>
+            <div className="px-4 pb-2 pt-2 flex flex-wrap gap-1.5 shrink-0"
+              style={{ background: "#0f1117", borderTop: "1px solid #1e212b" }}>
               {logueado === false ? (
-                /* No logueado: solo botones de registro/login */
                 <>
                   <button onClick={() => router.push("/auth/registro")}
-                    className="flex items-center gap-1 px-3 py-2 rounded-full text-[12px] font-bold transition hover:opacity-80"
-                    style={{ background: "rgba(126,213,111,0.18)", color: "#7ed56f", border: "1.5px solid rgba(126,213,111,0.35)" }}>
-                    📝 Registrarme gratis
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition hover:opacity-90"
+                    style={{ background: "#22c55e", color: "#0a1208" }}>
+                    Crear cuenta gratis
                   </button>
                   <button onClick={() => router.push("/auth/login")}
-                    className="flex items-center gap-1 px-3 py-2 rounded-full text-[12px] font-medium transition hover:opacity-80"
-                    style={{ background: "rgba(126,213,111,0.06)", color: "#b0a890", border: "1px solid rgba(126,213,111,0.12)" }}>
-                    🔑 Ya tengo cuenta
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition hover:opacity-80"
+                    style={{ background: "#1e212b", color: "#94a3b8", border: "1px solid #2d3142" }}>
+                    Ya tengo cuenta
                   </button>
                 </>
               ) : (
-                /* Logueado: todas las sugerencias */
                 SUGERENCIAS.map((s, i) => (
                   <button key={i} onClick={() => enviar(s.msg)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition hover:opacity-80"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium transition hover:opacity-80"
                     style={{
-                      background: s.destacado ? "rgba(126,213,111,0.18)" : "rgba(126,213,111,0.06)",
-                      color: s.destacado ? "#7ed56f" : "#b0a890",
-                      border: s.destacado ? "1.5px solid rgba(126,213,111,0.35)" : "1px solid rgba(126,213,111,0.12)",
-                      fontWeight: s.destacado ? 700 : 500,
+                      background: s.destacado ? "rgba(34,197,94,0.1)" : "#1e212b",
+                      color: s.destacado ? "#22c55e" : "#94a3b8",
+                      border: `1px solid ${s.destacado ? "rgba(34,197,94,0.25)" : "#2d3142"}`,
                     }}>
                     <span>{s.icon}</span> {s.label}
                   </button>
@@ -473,53 +476,61 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
             </div>
           )}
 
-          {/* Input + file upload */}
-          <div className="px-3 py-2.5 flex gap-2 shrink-0 items-center"
-            style={{ borderTop: "1px solid rgba(126,213,111,0.1)", background: "rgba(15,26,10,0.95)" }}>
-            {/* Clip para subir CV */}
-            <button onClick={() => fileRef.current?.click()} title="Subir CV (PDF)"
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition hover:opacity-80 shrink-0"
-              style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.12)", color: "#706a58" }}>
-              📎
-            </button>
-            <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleFile} />
-
-            <input value={input} onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && !e.shiftKey && enviar(input)}
-              placeholder={modoEntrevista ? "Escribe tu respuesta..." : "Pregúntale a Gusi..."}
-              className="flex-1 rounded-xl px-3.5 py-2.5 text-[13px] focus:outline-none"
-              style={{ background: "rgba(126,213,111,0.05)", border: "1.5px solid rgba(126,213,111,0.12)", color: "#f0ebe0" }}
-            />
-            <button onClick={() => enviar(input)} disabled={!input.trim() || cargando}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition disabled:opacity-30 hover:scale-105 active:scale-95 shrink-0"
-              style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#0f1a0a", boxShadow: "0 2px 8px rgba(126,213,111,0.2)" }}>
-              ➤
-            </button>
+          {/* ── Input ── */}
+          <div className="px-4 py-3 shrink-0" style={{ background: "#111827", borderTop: "1px solid #1e212b" }}>
+            <div className="flex items-center gap-2">
+              <button onClick={() => fileRef.current?.click()} title="Subir CV (PDF)"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
+                style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
+                📎
+              </button>
+              <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleFile} />
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && !e.shiftKey && enviar(input)}
+                placeholder={modoEntrevista ? "Escribe tu respuesta..." : "Escribe un mensaje..."}
+                className="flex-1 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1"
+                style={{
+                  background: "#1e212b",
+                  border: "1px solid #2d3142",
+                  color: "#f1f5f9",
+                  caretColor: "#22c55e",
+                }}
+              />
+              <button
+                onClick={() => enviar(input)}
+                disabled={!input.trim() || cargando}
+                className="w-9 h-9 rounded-lg flex items-center justify-center transition disabled:opacity-30 hover:opacity-90 active:scale-95 shrink-0"
+                style={{ background: input.trim() ? "#22c55e" : "#1e212b", color: input.trim() ? "#0a1208" : "#64748b", border: "1px solid #2d3142" }}>
+                ➤
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Burbuja flotante y tooltip — solo en modo no incrustado ──── */}
+      {/* ── Burbuja flotante (solo modo no incrustado) ── */}
       {!modoIncrustado && (
         <>
           <button
             onClick={() => { setAbierto(!abierto); setPulso(false); setNotif(false); }}
-            className="fixed bottom-4 right-4 z-[9999] w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+            className="fixed bottom-4 right-4 z-[9999] w-14 h-14 rounded-2xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 overflow-hidden"
             style={{
-              background: abierto ? "rgba(42,42,30,0.9)" : "linear-gradient(135deg, #7ed56f, #5cb848)",
-              boxShadow: abierto ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 24px rgba(126,213,111,0.4), 0 0 50px rgba(126,213,111,0.12)",
-              border: abierto ? "2px solid rgba(126,213,111,0.2)" : "2px solid rgba(255,255,255,0.15)",
-              animation: pulso && !abierto ? "gusi-pulse 2s ease-in-out infinite" : "none",
+              background: abierto ? "#1e212b" : "#111827",
+              border: `1.5px solid ${abierto ? "#2d3142" : "#22c55e"}`,
+              boxShadow: abierto ? "0 4px 16px rgba(0,0,0,0.5)" : "0 4px 20px rgba(34,197,94,0.25)",
+              animation: pulso && !abierto ? "gusi-pulse 2.5s ease-in-out infinite" : "none",
             }}
           >
             {abierto ? (
-              <span className="text-lg" style={{ color: "#706a58" }}>✕</span>
+              <span className="text-lg" style={{ color: "#64748b" }}>✕</span>
             ) : (
               <>
-                <GuzziAvatar size={42} />
+                <GuzziAvatar size={44} />
                 {notif && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                    style={{ background: "#e05050", color: "white", boxShadow: "0 2px 8px rgba(224,80,80,0.4)" }}>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold"
+                    style={{ background: "#ef4444", color: "white" }}>
                     1
                   </span>
                 )}
@@ -528,12 +539,15 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
           </button>
 
           {!abierto && pulso && (
-            <div className="fixed z-[9998] px-3 py-2 rounded-xl text-[11px] font-medium pointer-events-none"
-              style={{ bottom: "4.5rem", right: "4.5rem",
-                background: "rgba(15,26,10,0.95)", color: "#7ed56f",
-                border: "1px solid rgba(126,213,111,0.2)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-                animation: "gusi-tooltip 2s ease-in-out infinite" }}>
-              📧 ¡Envío tu CV automático! Toca aquí 🐛
+            <div className="fixed z-[9998] px-3 py-2 rounded-xl text-[12px] font-medium pointer-events-none whitespace-nowrap"
+              style={{
+                bottom: "4.5rem", right: "4.5rem",
+                background: "#111827", color: "#f1f5f9",
+                border: "1px solid #2d3142",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+                animation: "gusi-tooltip 2s ease-in-out infinite",
+              }}>
+              ✨ Habla con Guzzi
             </div>
           )}
         </>
@@ -541,22 +555,22 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
 
       <style jsx global>{`
         @keyframes gusi-pulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 4px 24px rgba(126,213,111,0.4); }
-          50% { transform: scale(1.08); box-shadow: 0 4px 32px rgba(126,213,111,0.6), 0 0 60px rgba(126,213,111,0.2); }
+          0%, 100% { box-shadow: 0 4px 20px rgba(34,197,94,0.25); }
+          50% { box-shadow: 0 4px 28px rgba(34,197,94,0.45); }
         }
         @keyframes gusi-tooltip {
           0%, 100% { opacity: 1; transform: translateY(0); }
-          50% { opacity: 0.8; transform: translateY(-3px); }
+          50% { opacity: 0.8; transform: translateY(-2px); }
         }
       `}</style>
     </>
   );
 }
 
-/** Formatea **bold** y _italic_ en el texto de Gusi */
+/** Formatea **bold** y _italic_ en el texto de Guzzi */
 function formatGusiText(text: string): string {
   return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#7ed56f">$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#f1f5f9;font-weight:600">$1</strong>')
     .replace(/_(.+?)_/g, '<em>$1</em>')
     .replace(/\n/g, '<br/>');
 }
