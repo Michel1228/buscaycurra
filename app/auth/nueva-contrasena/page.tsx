@@ -27,20 +27,18 @@ export default function NuevaContrasenaPage() {
   const [exito, setExito] = useState(false);
   const [error, setError] = useState("");
 
-  // Supabase procesa el token de recuperación del hash de la URL de forma asíncrona.
-  // getSession() puede retornar null antes de que el SDK haya parseado el hash,
-  // causando un falso "enlace expirado". onAuthStateChange lo detecta cuando está listo.
+  // Supabase detecta el token de recuperación en la URL automáticamente
+  // al inicializar el cliente, por eso no necesitamos procesarlo manualmente.
   useEffect(() => {
-    const { data: { subscription } } = getSupabaseBrowser().auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "PASSWORD_RECOVERY" || session) {
-          setError(""); // enlace válido — limpiar error
-        } else if (event === "SIGNED_OUT" || (!session && event !== "INITIAL_SESSION")) {
-          setError("El enlace de recuperación no es válido o ha expirado. Solicita uno nuevo.");
-        }
+    // Verificar que hay una sesión activa (el token de Supabase es válido)
+    const comprobarSesion = async () => {
+      const { data } = await getSupabaseBrowser().auth.getSession();
+      if (!data.session) {
+        // Si no hay sesión, el enlace puede haber expirado
+        setError("El enlace de recuperación no es válido o ha expirado. Solicita uno nuevo.");
       }
-    );
-    return () => subscription.unsubscribe();
+    };
+    void comprobarSesion();
   }, []);
 
   /**
@@ -89,7 +87,7 @@ export default function NuevaContrasenaPage() {
 
       // Redirigir al dashboard tras 2 segundos
       setTimeout(() => {
-        router.push("/app");
+        router.push("/app/gusi");
       }, 2000);
     } catch {
       setError("Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.");

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import BuscadorPublico from "@/components/BuscadorPublico";
@@ -6,8 +5,7 @@ import PWAInstallButton from "@/components/PWAInstallButton";
 import PublicHeader from "@/components/PublicHeader";
 import { getPool } from "@/lib/db";
 
-// Revalidar cada hora para que los cambios se reflejen sin redeploy
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 function formatOfertas(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -48,7 +46,6 @@ export default async function LandingPage() {
     ES: { flag: "🇪🇸", nombre: "España" },
     FR: { flag: "🇫🇷", nombre: "Francia" },
     GB: { flag: "🇬🇧", nombre: "Reino Unido" },
-    UK: { flag: "🇬🇧", nombre: "Reino Unido" },
     CA: { flag: "🇨🇦", nombre: "Canadá" },
     AU: { flag: "🇦🇺", nombre: "Australia" },
     SE: { flag: "🇸🇪", nombre: "Suecia" },
@@ -468,7 +465,7 @@ export default async function LandingPage() {
             </div>
 
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-              {PAISES_DATA.map((p) => (
+              {PAISES_DATA.map((p: { flag: string; nombre: string; ofertas: string }) => (
                 <Link
                   key={p.nombre}
                   href={`/trabajar-en/${p.nombre.toLowerCase().replace(/\s+/g, "-")}`}

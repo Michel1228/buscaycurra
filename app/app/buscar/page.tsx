@@ -2,22 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-/**
- * app/app/buscar/page.tsx — Buscador de ofertas de trabajo
- *
- * Permite al usuario:
- *   - Buscar ofertas por palabra clave y ubicación
- *   - Filtrar por tipo de jornada, experiencia y salario mínimo
- *   - Ver resultados en un grid de tarjetas JobCard
- *   - Estado de carga con skeleton animado
- *   - Mensaje si no hay resultados
- *
- * Llama al endpoint GET /api/jobs/search?keyword=X&location=Y.
- * Si el usuario no está logado, redirige a /auth/login.
- * Colores de marca: azul #2563EB y naranja #F97316.
- */
-
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
@@ -88,75 +73,82 @@ function BuscarPageInner() {
   const locationFetched = useRef(false);
   const mountedRef = useRef(true);
 
-  const abortRef = useRef<AbortController | null>(null);
-
-  // Cleanup al desmontar
-  useEffect(() => {
-    return () => { abortRef.current?.abort(); };
-  }, []);
-
-  // Verificar sesión + geolocalización automática — solo al montar
   useEffect(() => {
     mountedRef.current = true;
     async function init() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
-      // Solo auto-detectar si el campo está vacío al cargar la página
-      if (searchParams.get("location")) return;
+      if (locationFetched.current || searchParams.get("location") || searchParams.get("ubicacion")) return;
+      locationFetched.current = true;
 
-      // 1. Primero mirar el perfil del usuario
       const { data: perfil } = await getSupabaseBrowser().from("profiles")
         .select("ciudad").eq("id", user.id).single();
       if (perfil?.ciudad) {
+        if (!mountedRef.current) return;
         setUbicacion(perfil.ciudad);
         setGeoDetected(true);
         return;
       }
 
-      // 2. Si no hay ciudad en perfil, usar geolocalización del navegador
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
+            if (!mountedRef.current) return;
             try {
               const res = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`
               );
               const data = await res.json();
               const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
-              if (city) {
+              if (city && mountedRef.current) {
                 setUbicacion(city);
                 setGeoDetected(true);
-                await getSupabaseBrowser().from("profiles")
-                  .update({ ciudad: city })
-                  .eq("id", user.id);
+                await getSupabaseBrowser().from("profiles").update({ ciudad: city }).eq("id", user.id);
               }
-            } catch { /* ignore geo errors */ }
+            } catch { /* ignore */ }
           },
-          () => { /* user denied geolocation */ },
+          () => { /* denied */ },
           { timeout: 5000, enableHighAccuracy: false }
         );
       }
     }
     init();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => { mountedRef.current = false; };
+  }, [router, searchParams]);
 
-  /**
-   * Búsqueda a Jooble vía proxy server-side — la API key nunca sale al cliente
-   */
-  async function buscarJoobleCliente(kw: string, loc: string, signal?: AbortSignal): Promise<PropiedadesJobCard[]> {
+  // Auto-disparar búsqueda al entrar desde una página SEO con params pre-rellenados
+  const autoSearched = useRef(false);
+  useEffect(() => {
+    if (autoSearched.current) return;
+    if (urlKeyword || urlUbicacion) {
+      autoSearched.current = true;
+      // Pequeño delay para que el usuario esté autenticado y el DOM listo
+      const t = setTimeout(() => {
+        setKeyword(urlKeyword);
+        setUbicacion(urlUbicacion);
+        // Disparamos submit manualmente
+        const form = document.querySelector('form') as HTMLFormElement;
+        if (form) form.requestSubmit();
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [urlKeyword, urlUbicacion]);
+
+  async function buscarJoobleCliente(kw: string, loc: string): Promise<PropiedadesJobCard[]> {
+    // Solo buscar en Jooble si hay keyword, no para búsquedas solo por ciudad
+    if (!kw.trim()) return [];
     try {
       const res = await fetch("/api/jobs/jooble", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keywords: kw, location: loc }),
-        signal: signal ?? AbortSignal.timeout(12000),
+        signal: AbortSignal.timeout(12000),
       });
       if (!res.ok) return [];
       const data = await res.json();
-      const jobs: Record<string, string>[] = data.jobs || [];
-      return jobs.slice(0, 20).map((j, i) => ({
+      const jobs = data.jobs || [];
+      return jobs.slice(0, 20).map((j: Record<string, string>, i: number) => ({
         id: `jooble-${Date.now()}-${i}`,
         titulo: j.title || kw,
         empresa: j.company || "Ver en oferta",
@@ -166,13 +158,6 @@ function BuscarPageInner() {
         fuente: "Jooble",
         url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(kw)}&loc=${encodeURIComponent(loc)}`,
         fecha: j.updated || new Date().toISOString(),
-        match: (() => {
-          const words = kw.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-          if (words.length === 0) return 75;
-          const title = (j.title || "").toLowerCase();
-          const hits = words.filter(w => title.includes(w)).length;
-          return Math.round(Math.min(96, 55 + Math.round((hits / words.length) * 40)));
-        })(),
         distancia: "🏠 Tu ciudad",
       }));
     } catch {
@@ -217,11 +202,6 @@ function BuscarPageInner() {
     if (e) e.preventDefault();
     if (!keyword.trim() && !ubicacion.trim()) return;
 
-    // Cancelar búsqueda anterior si existe (evita race condition)
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
     setCargando(true);
     setError("");
     setBuscado(true);
@@ -237,14 +217,10 @@ function BuscarPageInner() {
       if (salarioMax) params.set("salarioMax", salarioMax);
 
       const [serverRes, joobleRes] = await Promise.allSettled([
-        fetch(`/api/jobs/search?${params.toString()}`, { signal: controller.signal }).then(r => r.ok ? r.json() : { ofertas: [] }),
-        buscarJoobleCliente(keyword.trim(), ubicacion.trim(), controller.signal),
+        fetch(`/api/jobs/search?${params.toString()}`).then(r => r.ok ? r.json() : { ofertas: [] }),
+        buscarJoobleCliente(keyword.trim(), ubicacion.trim()),
       ]);
 
-      // Si la búsqueda fue cancelada por una más reciente, no actualizar estado
-      if (controller.signal.aborted) return;
-
-      // Combinar resultados
       const serverOfertas = serverRes.status === "fulfilled" ? (serverRes.value.ofertas || []) : [];
       const joobleOfertas = joobleRes.status === "fulfilled" ? joobleRes.value : [];
       const serverTotal = serverRes.status === "fulfilled" ? (serverRes.value.total || 0) : 0;
