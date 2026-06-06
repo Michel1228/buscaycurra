@@ -1,6 +1,7 @@
 # BuscayCurra — Estado del Proyecto
 
-> Última actualización: 06/06/2026
+> Última actualización: 06/06/2026 — sesión completa documentada
+> Para retomar: leer este archivo + `SESION_2026-06-06.md` en el escritorio
 
 ---
 
@@ -79,15 +80,25 @@ El rechazo de Apple fue por **Directriz 2.2 (Pruebas Beta)** — la cuenta de re
 
 ## Historial de cambios recientes
 
-### 06/06/2026
-- **fix:** GusiChat en `/app/gusi` ahora llena el contenedor (no flota encima del layout)
-- **fix:** Stat cards del dashboard son clickables — Ofertas→/app/buscar, CVs→/app/envios, Pipeline→/app/pipeline, Entrevistas→/app/entrevistas
-- **fix:** Email de retención — cada oferta tiene link directo a `/app/ofertas/{id}` en lugar del genérico `/app/gusi`
-- **fix:** OfflineScreen implementado — pantalla profesional en lugar de pantalla en blanco (crítico para iOS)
-- **fix:** GusiChat abierto directamente al entrar en `/app/gusi`
-- **fix:** Timeout 15s en búsqueda (elimina skeleton infinito)
-- **fix:** NSLocationWhenInUseUsageDescription eliminado del capacitor.config.ts (no se usa)
-- **fix:** Icono iOS 1024×1024 Guzzi con traje/sombrero/maletín
+### 06/06/2026 (sesión completa)
+- **redesign:** Guzzi nueva interfaz azul oscura tipo Claude/ChatGPT — elimina verde pantano (#12160d)
+- **fix:** Discrepancia ofertas 169→105 — 60.521 ofertas reactivadas, expiresAt 30→60 días
+- **fix:** Motor búsqueda Guzzi con expansión geográfica: ciudad→provincia→país→sinónimos→APIs
+  - Mapa Tudela→Navarra, Pamplona→Navarra, etc.; sinónimos carretillero→almacén/logística
+  - Fix provincia: campo `province` es NULL en BD, 'Navarra' está en `city` como "Tudela, Navarra"
+- **feat:** Icono Guzzi (sombrero/traje/maletín) en nav, chat, dashboard — GuzziAvatar.tsx
+- **fix:** Micrófono entrevistas — sin getUserMedia bloqueante, instrucciones por plataforma
+- **fix:** Plan básico = 5 CVs/día (free:2, básico:5, pro:10, empresa:∞)
+- **fix:** Contador "millones de ofertas" sin número hardcoded
+- **fix:** Pipeline stats clickables, "0 entrevistas" siempre visible
+- **fix:** Notificaciones push → link directo /app/ofertas/{id}
+- **fix:** Dashboard "Ofertas hoy" desde JobListing (PostgreSQL real)
+- **fix:** GusiChat modo incrustado llena el contenedor en `/app/gusi`
+- **fix:** Stat cards dashboard clickables
+- **fix:** Email retención con links por oferta
+- **fix:** OfflineScreen implementado (crítico para iOS)
+- **fix:** Icono iOS 1024×1024 Guzzi
+- **fix:** NSLocationWhenInUseUsageDescription eliminado
 
 ### Antes de 06/06/2026
 - **sync:** Código del VPS sincronizado con GitHub — elimina componentes de Metamorfosis antigua (EvolucionUsuario, RevelacionMariposa, AvatarMariposa, BosqueAmbiente, SplashWrapper, SplashScreen, LandingFondo, LogoGuzzi, lib/especies.ts)
@@ -101,20 +112,27 @@ El rechazo de Apple fue por **Directriz 2.2 (Pruebas Beta)** — la cuenta de re
 
 ## Pendiente (bugs / mejoras conocidos)
 
-### Para iOS App Store (re-envío)
-- [ ] Responder a Apple en App Store Connect con nueva cuenta de revisión (datos creíbles, no "Demo BuscayCurra")
-- [ ] La cuenta demo ya tiene `plan: empresa` y `subscription_status: active` en Supabase
-- [ ] Ejecutar GitHub Action `ios-deploy.yml` manualmente para generar nuevo .ipa
-- [ ] Re-enviar para revisión con nota explicativa de que es una plataforma real
+### Para iOS App Store (re-envío) — PENDIENTE
+- [ ] Responder a Apple (Directriz 2.2 — app parecía beta por cuenta demo evidente)
+- [ ] Cuenta demo ya tiene `plan: empresa` + `subscription_status: active` en Supabase
+- [ ] Ejecutar GitHub Action `ios-deploy.yml` (workflow_dispatch) para nuevo .ipa
+- [ ] Re-enviar con cuenta de revisión real (no "Demo BuscayCurra")
 
-### Funcionales
-- [ ] Página `/app/notificaciones` — revisar que muestra el historial correcto
-- [ ] Verificar que el envío de CV via BullMQ llega correctamente (worker activo)
-- [ ] Verificar que el cron de retención de email está activo (GitHub Action o cron externo)
+### Funcionales — PENDIENTE
+- [ ] Verificar 169 ofertas de Tudela visibles en buscador en producción
+- [ ] Testear búsqueda Guzzi "carretillero en Tudela" → debe dar resultados Navarra
+- [ ] Verificar micrófono en simulador entrevistas (iOS Safari / Capacitor)
+- [ ] Verificar notificaciones push → link directo oferta concreta
 
-### UX / diseño
-- [ ] Hacer que el buscador conserve el estado al recargar (guardar en URL params)
-- [ ] Completar capturas de auditoría pendientes: empresas (desktop), entrevistas (desktop)
+### UX / diseño — PENDIENTE
+- [ ] Buscador conserve estado al recargar (URL params)
+- [ ] Capturas auditoría: empresas (desktop), entrevistas (desktop)
+- [ ] Verificar nuevo diseño Guzzi en producción tras reinicio de contenedor
+
+### Próxima sesión — PRIMER PASO
+1. Verificar build en VPS: `docker images buscaycurra --format '{{.CreatedAt}}'`
+2. Si build listo, reiniciar contenedor (ver SESION_2026-06-06.md en escritorio)
+3. Testear Guzzi visualmente en https://buscaycurra.es/app/gusi
 
 ---
 
