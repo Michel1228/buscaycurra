@@ -76,14 +76,14 @@ interface Mensaje {
 }
 
 const SUGERENCIAS = [
-  { icon: "📧", label: "Enviar CV automático", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
-  { icon: "📝", label: "Crear mi CV", msg: "__ENTREVISTA__" },
-  { icon: "🔍", label: "Buscar trabajo", msg: "Quiero buscar trabajo, ¿me ayudas?" },
-  { icon: "🌍", label: "Emigrar", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
-  { icon: "👶", label: "Au Pair", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
-  { icon: "🎯", label: "Preparar entrevista", msg: "Quiero preparar una entrevista de trabajo" },
-  { icon: "📸", label: "Mejorar mi foto", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
-  { icon: "📄", label: "Subir mi CV", msg: "__SUBIR_CV__" },
+  { icon: "📧", label: "Enviar CV automático", desc: "A múltiples empresas en segundos", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
+  { icon: "🔍", label: "Buscar trabajo", desc: "Por puesto y ciudad", msg: "Quiero buscar trabajo, ¿me ayudas?" },
+  { icon: "📝", label: "Crear mi CV", desc: "Paso a paso con IA", msg: "__ENTREVISTA__" },
+  { icon: "🎯", label: "Preparar entrevista", desc: "Simula preguntas reales", msg: "Quiero preparar una entrevista de trabajo" },
+  { icon: "🌍", label: "Emigrar", desc: "Alemania, Irlanda, UK...", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
+  { icon: "👶", label: "Au Pair", desc: "Programa de trabajo internacional", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
+  { icon: "📸", label: "Mejorar mi foto", desc: "Prompts IA para foto profesional", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
+  { icon: "📄", label: "Subir mi CV", desc: "PDF, Word — lo analizo al instante", msg: "__SUBIR_CV__" },
 ];
 
 function sanitizeGusiHtml(html: string): string {
@@ -112,12 +112,12 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
         setLogueado(!!user);
         if (user?.id) setUserId(user.id);
         if (user) {
-          setMensajes([{ role: "gusi", text: `¡Hola! 🐛 Soy Gusi. ¿Qué hacemos hoy?\n\n📧 **Enviar tu CV automático** (¡nuestro FUERTE!)\n📝 Crear tu CV paso a paso\n🔍 Buscar ofertas para ti\n📸 Mejorar tu foto\n🎯 Preparar entrevistas` }]);
+          setMensajes([{ role: "gusi", text: `¡Hola! Soy Guzzi, tu asistente de empleo. ¿Qué hacemos hoy?\n\nPuedo ayudarte con:\n📧 **Enviar tu CV automático** a empresas\n📝 Crear o mejorar tu CV\n🔍 Buscar ofertas por puesto y ciudad\n🎯 Prepararte para entrevistas` }]);
         } else {
-          setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Gusi, tu asistente de empleo.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**\n\n¡Y luego te ayudo con todo! 🐛" }]);
+          setMensajes([{ role: "gusi", text: "¡Hola! Soy Guzzi, tu asistente de empleo de BuscayCurra.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**" }]);
         }
       } catch {
-        setMensajes([{ role: "gusi", text: "¡Hola! 🐛 Soy Gusi. Regístrate primero para que pueda ayudarte." }]);
+        setMensajes([{ role: "gusi", text: "¡Hola! Soy Guzzi. Regístrate primero para que pueda ayudarte." }]);
         setLogueado(false);
       }
     }
@@ -266,7 +266,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
   };
 
   const limpiar = () => {
-    setMensajes([{ role: "gusi", text: "¡Chat limpio! 🐛 ¿En qué te ayudo?\n\n📧 Enviar CV automático\n📝 Crear CV\n🔍 Buscar trabajo\n📸 Foto\n🎯 Entrevista" }]);
+    setMensajes([{ role: "gusi", text: "¡Nueva conversación! ¿En qué te ayudo hoy?" }]);
     setModoEntrevista(false);
     setMostrarSugerencias(true);
   };
@@ -463,13 +463,18 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
               ) : (
                 SUGERENCIAS.map((s, i) => (
                   <button key={i} onClick={() => enviar(s.msg)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium transition hover:opacity-80"
+                    className="flex flex-col items-start gap-0.5 px-3 py-2 rounded-lg text-left transition hover:opacity-80"
                     style={{
-                      background: s.destacado ? "rgba(34,197,94,0.1)" : "#1e212b",
+                      background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
                       color: s.destacado ? "#22c55e" : "#94a3b8",
-                      border: `1px solid ${s.destacado ? "rgba(34,197,94,0.25)" : "#2d3142"}`,
+                      border: `1px solid ${s.destacado ? "rgba(34,197,94,0.2)" : "#2d3142"}`,
                     }}>
-                    <span>{s.icon}</span> {s.label}
+                    <span className="text-[12px] font-semibold flex items-center gap-1">
+                      <span>{s.icon}</span> {s.label}
+                    </span>
+                    <span className="text-[10px]" style={{ color: s.destacado ? "rgba(34,197,94,0.7)" : "#475569" }}>
+                      {s.desc}
+                    </span>
                   </button>
                 ))
               )}
