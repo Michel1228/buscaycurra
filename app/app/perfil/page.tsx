@@ -43,7 +43,7 @@ export default function PerfilPage() {
     setIosNativo(isNativeIOS());
   }, []);
   const [iosNativo, setIosNativo] = useState(false);
-  const [planActual, setPlanActual] = useState<"free" | "esencial" | "pro" | "empresa">("free");
+  const [planActual, setPlanActual] = useState<"free" | "basico" | "esencial" | "pro" | "empresa">("free");
   const [cargandoPlan, setCargandoPlan] = useState(false);
   const [errorPlan, setErrorPlan] = useState<string | null>(null);
   const [nuevaPassword, setNuevaPassword] = useState("");
@@ -79,8 +79,8 @@ export default function PerfilPage() {
         ciudad: p?.ciudad || "",
         sector: p?.sector || "",
       });
-      if (p?.plan && ["esencial", "pro", "empresa"].includes(p.plan)) {
-        setPlanActual(p.plan as "esencial" | "pro" | "empresa");
+      if (p?.plan && ["basico", "esencial", "pro", "empresa"].includes(p.plan)) {
+        setPlanActual(p.plan as "basico" | "esencial" | "pro" | "empresa");
       }
       setCargando(false);
     }
@@ -270,9 +270,10 @@ export default function PerfilPage() {
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="perfil-email">Email</label>
-                <input id="perfil-email" placeholder="Email" value={perfil.email} onChange={e => updateField("email", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <input id="perfil-email" placeholder="Email" value={perfil.email} readOnly
+                  className="w-full px-4 py-2.5 rounded-lg text-sm cursor-default"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#64748b" }}
+                  title="El email no se puede cambiar desde aquí" />
                 <label className="sr-only" htmlFor="perfil-ciudad">Ciudad</label>
                 <input id="perfil-ciudad" placeholder="Ciudad" value={perfil.ciudad} onChange={e => updateField("ciudad", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"

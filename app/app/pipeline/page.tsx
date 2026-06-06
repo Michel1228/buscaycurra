@@ -49,6 +49,7 @@ export default function PipelinePage() {
   const [nueva, setNueva] = useState({ empresa: "", puesto: "", notas: "" });
   const [guardandoNueva, setGuardandoNueva] = useState(false);
   const [celebracion, setCelebracion] = useState(false);
+  const [filtroActivo, setFiltroActivo] = useState<string | null>(null);
 
   useEffect(() => {
     async function cargar() {
@@ -200,8 +201,6 @@ export default function PipelinePage() {
       </div>
     );
   }
-
-  const [filtroActivo, setFiltroActivo] = useState<string | null>(null);
 
   const stats = {
     total: candidaturas.length,

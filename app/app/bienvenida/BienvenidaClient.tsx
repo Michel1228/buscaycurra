@@ -52,7 +52,14 @@ export default function BienvenidaClient() {
         const session = (await getSupabaseBrowser().auth.getSession()).data.session;
         if (!session) { router.push("/auth/login"); return; }
 
-        setUserName(session.user.email?.[0].toUpperCase() || "");
+        // Obtener nombre real del perfil
+        const { data: perfil } = await getSupabaseBrowser()
+          .from("profiles")
+          .select("full_name")
+          .eq("id", session.user.id)
+          .single();
+        const nombre = perfil?.full_name?.split(" ")[0] || session.user.email?.split("@")[0] || "";
+        setUserName(nombre);
 
         // Cargar dashboard
         const res = await fetch("/api/dashboard", {
