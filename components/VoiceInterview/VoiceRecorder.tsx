@@ -176,25 +176,44 @@ export default function VoiceRecorder({
 
       {/* Estado bloqueado — instrucciones claras por plataforma */}
       {soporteVoz && bloqueado && (
-        <div className="space-y-3 p-3 rounded-xl" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <p className="text-xs font-semibold" style={{ color: "#f87171" }}>
-            🎤 Micrófono bloqueado
-          </p>
-          <p className="text-xs leading-relaxed" style={{ color: "#9ca3af" }}>
-            {instruccionesDesbloqueo}
-          </p>
-          <button
-            onClick={desbloquear}
-            className="w-full py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2"
-            style={{
-              background: "rgba(239,68,68,0.12)",
-              color: "#f87171",
-              border: "1px solid rgba(239,68,68,0.3)",
-            }}
-          >
-            🔓 Intentar de nuevo
-          </button>
-          <p className="text-[11px] text-center" style={{ color: "#6b7280" }}>
+        <div className="space-y-3 p-3 rounded-xl" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.18)" }}>
+          <div className="flex items-center gap-2">
+            <span style={{ fontSize: "16px" }}>🎙️</span>
+            <p className="text-xs font-semibold" style={{ color: "#f87171" }}>Micrófono bloqueado</p>
+          </div>
+          {esIOS ? (
+            <ol className="text-xs space-y-1 pl-1" style={{ color: "#9ca3af" }}>
+              <li>1. Ve a <strong style={{ color: "#e5e7eb" }}>Ajustes</strong> del iPhone</li>
+              <li>2. Busca <strong style={{ color: "#e5e7eb" }}>Privacidad → Micrófono</strong></li>
+              <li>3. Activa el interruptor de <strong style={{ color: "#e5e7eb" }}>BuscayCurra</strong></li>
+              <li>4. Vuelve aquí y pulsa <strong style={{ color: "#e5e7eb" }}>Intentar de nuevo</strong></li>
+            </ol>
+          ) : (
+            <ol className="text-xs space-y-1 pl-1" style={{ color: "#9ca3af" }}>
+              <li>1. Toca el <strong style={{ color: "#e5e7eb" }}>🔒 candado</strong> en la barra de dirección</li>
+              <li>2. Selecciona <strong style={{ color: "#e5e7eb" }}>Permisos → Micrófono → Permitir</strong></li>
+              <li>3. Pulsa <strong style={{ color: "#e5e7eb" }}>Recargar</strong> abajo</li>
+            </ol>
+          )}
+          <div className="flex gap-2">
+            {!esIOS && (
+              <button
+                onClick={() => window.location.reload()}
+                className="flex-1 py-2 rounded-xl text-xs font-medium transition"
+                style={{ background: "#1e212b", color: "#94a3b8", border: "1px solid #2d3142" }}
+              >
+                🔄 Recargar página
+              </button>
+            )}
+            <button
+              onClick={desbloquear}
+              className="flex-1 py-2 rounded-xl text-xs font-medium transition"
+              style={{ background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.25)" }}
+            >
+              {esIOS ? "🔓 Ya activé el permiso" : "🔓 Intentar de nuevo"}
+            </button>
+          </div>
+          <p className="text-[11px] text-center" style={{ color: "#475569" }}>
             También puedes escribir tu respuesta directamente arriba ↑
           </p>
         </div>
