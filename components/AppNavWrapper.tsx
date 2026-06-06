@@ -201,7 +201,11 @@ export default function AppNavWrapper() {
                     color: activo ? "#22c55e" : "#94a3b8",
                   }}
                 >
-                  <span className="text-lg">{item.icon}</span>
+                  {item.href === "/app/gusi" ? (
+                    <GuzziAvatar size={22} />
+                  ) : (
+                    <span className="text-lg">{item.icon}</span>
+                  )}
                   <span>{navLabel(item.label)}</span>
                 </Link>
               );
