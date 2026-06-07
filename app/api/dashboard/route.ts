@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
 
     // ── Quick actions ──
     const quickActions = [
-      { icon: "🐛", label: "Hablar con Guzzi", href: "/app/gusi", color: "#22c55e" },
+      { icon: "✨", label: "Hablar con Guzzi", href: "/app/gusi", color: "#22c55e" },
       { icon: "📄", label: "Mejorar mi CV", href: "/app/curriculum", color: "#f59e0b" },
       { icon: "🔍", label: "Buscar ofertas", href: "/app/buscar", color: "#3b82f6" },
       { icon: "📊", label: "Mi pipeline", href: "/app/pipeline", color: "#a855f7" },
