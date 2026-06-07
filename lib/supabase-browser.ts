@@ -13,21 +13,6 @@ let _cliente: SupabaseClient | null = null;
 
 export function getSupabaseBrowser(): SupabaseClient {
   if (!_cliente) {
-    // No crear el cliente durante SSR/build — solo en el navegador
-    if (typeof window === "undefined") {
-      // Devolver un stub que no explota durante prerender
-      return {
-        auth: {
-          getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-          signOut: () => Promise.resolve({ error: null }),
-        },
-        from: () => ({
-          select: () => ({
-            eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }),
-          }),
-        }),
-      } as unknown as SupabaseClient;
-    }
     _cliente = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
