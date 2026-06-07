@@ -3,6 +3,7 @@
  */
 import { Metadata } from "next";
 import Link from "next/link";
+import { NUM_PAISES } from "@/lib/paises";
 
 export const metadata: Metadata = {
   title: "Trabajar en el extranjero — Guías por país | BuscayCurra",
@@ -93,7 +94,7 @@ export default function TrabajarEnPage() {
               <div className="text-2xl mb-2">🤖</div>
               <h3 className="font-semibold mb-1">Guzzi 24/7</h3>
               <p className="text-sm text-[#94a3b8]">
-                IA que busca ofertas, adapta tu CV y envía candidaturas automáticamente en 20+ países.
+                IA que busca ofertas, adapta tu CV y envía candidaturas automáticamente en {NUM_PAISES} países.
               </p>
             </div>
             <div>

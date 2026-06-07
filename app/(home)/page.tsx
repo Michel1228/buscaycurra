@@ -4,6 +4,7 @@ import BuscadorPublico from "@/components/BuscadorPublico";
 import PWAInstallButton from "@/components/PWAInstallButton";
 import PublicHeader from "@/components/PublicHeader";
 import { getPool } from "@/lib/db";
+import { NUM_PAISES } from "@/lib/paises";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export default async function LandingPage() {
   const stats = await getRealStats();
   
   const OFERTAS = stats ? formatOfertas(stats.totalGlobal) : "millones de";
-  const PAISES = stats ? String(stats.countryCount) : "21";
+  const PAISES = String(NUM_PAISES);
   const OBJETIVO = "10.000.000";
 
   // Mapa flags + nombres para traducir códigos ISO
@@ -156,7 +157,7 @@ export default async function LandingPage() {
     { q: "¿Cómo funciona el envío automático de CVs?", a: "Nuestra IA adapta tu CV a cada oferta antes de enviarlo. No es spam — cada candidatura se personaliza con el perfil y palabras clave de la empresa. Tú marcas sector, países y tipo de contrato, y Guzzi trabaja por ti." },
     { q: "¿Es legal enviar CVs automáticamente?", a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente inteligente que te representa — sin cobrarte comisiones ni quedarse con parte de tu salario." },
     { q: "¿Puedo buscar trabajo en el extranjero sin hablar el idioma?", a: "Sí. Guzzi traduce ofertas a 12 idiomas y adapta tu CV al formato de cada país. Muchas empresas multinacionales trabajan en inglés. Además, si quieres emigrar, te mostramos qué países tienen más demanda de tu perfil y qué salarios ofrecen." },
-    { q: "¿Qué diferencia hay con InfoJobs, LinkedIn o Indeed?", a: "InfoJobs, LinkedIn e Indeed son tablones de anuncios: tú buscas, tú filtras, tú envías. El 95% de esos CVs no llegan a ningún humano. BuscayCurra es activo: Guzzi trabaja por ti 24/7, adapta tu CV a cada oferta y envía candidaturas automáticamente en 20+ países. No es un portal de empleo. Es tu agente personal de búsqueda." },
+    { q: "¿Qué diferencia hay con InfoJobs, LinkedIn o Indeed?", a: "InfoJobs, LinkedIn e Indeed son tablones de anuncios: tú buscas, tú filtras, tú envías. El 95% de esos CVs no llegan a ningún humano. BuscayCurra es activo: Guzzi trabaja por ti 24/7, adapta tu CV a cada oferta y envía candidaturas automáticamente en ${NUM_PAISES} países. No es un portal de empleo. Es tu agente personal de búsqueda." },
     { q: "¿Puedo ver las ofertas sin registrarme?", a: "Sí. El buscador público está disponible sin cuenta. Puedes explorar ofertas por país, salario y sector. Para enviar candidaturas y usar la IA necesitas crear una cuenta — es gratis y tarda 30 segundos." },
     { q: "¿En cuánto tiempo puedo encontrar trabajo?", a: "La media de nuestros usuarios activos que usan envío automático es de 3 semanas. Con CV bien optimizado y búsqueda en varios países, los usuarios suelen recibir respuesta en 1-2 semanas. Tu caso depende de tu sector y experiencia." },
   ];

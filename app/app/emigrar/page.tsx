@@ -256,7 +256,7 @@ export default function EmigrarPage() {
       {/* Country selector */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 mb-8">
         <div className="flex flex-wrap gap-2 justify-center">
-          {LISTA_PAISES.filter((p) => p.codigo !== "ES").map((p) => (
+          {LISTA_PAISES.map((p) => (
             <button
               key={p.codigo}
               onClick={() => { setPaisCode(p.codigo); setTab("visado"); }}

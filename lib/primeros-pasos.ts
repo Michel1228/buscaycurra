@@ -629,9 +629,14 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
   ES: {
     codigo: "ES",
     auPair: {
-      disponible: false,
-      plataformas: [],
-      requisitos: "",
+      disponible: true,
+      sueldoMensual: "70-100€/semana + alojamiento y comida",
+      plataformas: [
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/spain", descripcion: "España es un destino muy popular para au pairs. Familias en Madrid, Barcelona, Valencia, Sevilla y zonas costeras." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/spain.php", descripcion: "Registro gratuito. Muchas familias buscan au pairs nativos en inglés, francés o alemán." },
+        { nombre: "Cultural Care", url: "https://www.culturalcare.es/au-pair-en-espana", descripcion: "Agencia con sede en España. Soporte en español durante toda la estancia." },
+      ],
+      requisitos: "17-30 años, español básico (A1), soltero/a y sin hijos. Contrato de al menos 6 meses. La familia debe proporcionar habitación propia, manutención completa y al menos 70€ semanales. El au pair no es un empleado — es un intercambio cultural.",
     },
     alojamiento: {
       plataformas: [
@@ -664,6 +669,13 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       ],
       consejo: "El empadronamiento es el primer paso para todo. Con él puedes solicitar la tarjeta sanitaria (TSI) en el Centro de Salud y acceder al sistema público de empleo (SEPE).",
     },
+    programasExtra: [
+      { nombre: "Garantía Juvenil", url: "https://garantiajuvenil.sepe.es", descripcion: "Programa europeo para jóvenes 16-29 años. Formación gratuita, prácticas en empresas y ayudas a la contratación." },
+      { nombre: "Programa Vulcanus (UE-Japón)", url: "https://www.eu-japan.eu/vulcanus", descripcion: "Prácticas remuneradas en Japón para estudiantes de ingeniería y ciencia. Convocatoria anual." },
+      { nombre: "EURES España", url: "https://eures.sepe.es", descripcion: "Portal oficial de movilidad laboral europea. Ofertas verificadas con condiciones de trabajo transparentes." },
+      { nombre: "ICEX Vives", url: "https://www.icex.es/icex/vives", descripcion: "Becas de internacionalización. Prácticas remuneradas en empresas españolas con actividad internacional." },
+      { nombre: "Auxiliares de Conversación", url: "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/profesorado/convocatorias/extranjeros/auxiliares-conversacion-espanoles-extranjero.html", descripcion: "Programa del Ministerio de Educación. Auxiliar de español en colegios de Francia, Alemania, Reino Unido, Italia y más. 700-1.000€/mes." },
+    ],
   },
 
   // ─── BÉLGICA ─────────────────────────────────────────────────────────────────

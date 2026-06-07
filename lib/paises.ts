@@ -435,6 +435,9 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.PL,  // Polonia — 8.000 PLN/mes
 ];
 
+/** Número oficial de países que soporta BuscayCurra */
+export const NUM_PAISES = LISTA_PAISES.length;
+
 /** Formatea un salario según el país */
 export function formatearSalario(cantidad: number, codigoPais: string): string {
   const pais = PAISES[codigoPais] || PAISES.ES;

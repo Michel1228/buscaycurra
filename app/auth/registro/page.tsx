@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
+import { NUM_PAISES } from "@/lib/paises";
 import Image from "next/image";
 
 export default function RegistroPage() {
@@ -86,13 +87,13 @@ export default function RegistroPage() {
             <span style={{ color: "#22c55e" }}>al vacío.</span>
           </h2>
           <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            En 30 segundos tienes cuenta. Guzzi empieza a buscar trabajo por ti en 20+ países al instante.
+            En 30 segundos tienes cuenta. Guzzi empieza a buscar trabajo por ti en {NUM_PAISES} países al instante.
           </p>
 
           {/* 3 puntos fuertes */}
           <div className="space-y-3">
             {[
-              { icon: "🌍", title: "20+ países, un solo agente", desc: "Busca en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
+              { icon: "🌍", title: "{NUM_PAISES} países, un solo agente", desc: "Busca en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
               { icon: "🎯", title: "CV único para cada oferta", desc: "Tu CV se adapta a cada empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
               { icon: "⏰", title: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. Timing inteligente." },
             ].map(p => (
@@ -109,7 +110,7 @@ export default function RegistroPage() {
         </div>
 
         <p className="relative z-10 hidden lg:block text-xs mt-8" style={{ color: "#374151" }}>
-          © 2026 BuscayCurra · Sin permanencia · 20+ países · Cancela cuando quieras
+          © 2026 BuscayCurra · Sin permanencia · {NUM_PAISES} países · Cancela cuando quieras
         </p>
       </div>
 
