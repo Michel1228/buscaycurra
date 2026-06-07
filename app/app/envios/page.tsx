@@ -84,17 +84,52 @@ export default function EnviosPage() {
     }
   }
 
+  async function eliminarEnvio(id: string) {
+    const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+    if (!session) return;
+    const res = await fetch("/api/cv-sender/delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      setEnvios(prev => prev.filter(e => e.id !== id));
+    }
+  }
+
+  async function eliminarTodos() {
+    if (!confirm("¿Eliminar todos los envíos de la lista?")) return;
+    const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+    if (!session) return;
+    const res = await fetch("/api/cv-sender/delete", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+      body: JSON.stringify({ all: true }),
+    });
+    if (res.ok) setEnvios([]);
+  }
+
   return (
     <div className="min-h-screen pt-16 pb-10 px-4">
       <div className="max-w-3xl mx-auto">
 
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white mb-1">Mis envíos de CV</h1>
-          <p className="text-sm text-slate-400">
-            {envios.length} envíos en total ·{" "}
-            <Link href="/app/empresas" className="text-green-400 underline">Enviar nuevo CV →</Link>
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-1">Mis envíos de CV</h1>
+            <p className="text-sm text-slate-400">
+              {envios.length} envíos en total ·{" "}
+              <Link href="/app/empresas" className="text-green-400 underline">Enviar nuevo CV →</Link>
+            </p>
+          </div>
+          {envios.length > 0 && (
+            <button
+              onClick={eliminarTodos}
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition hover:opacity-80"
+              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
+              Limpiar todo
+            </button>
+          )}
         </div>
 
         {/* Filtros */}
@@ -147,13 +182,21 @@ export default function EnviosPage() {
                     style={{ background: `${STATUS_COLOR[envio.status]}22`, color: STATUS_COLOR[envio.status] }}>
                     {envio.status}
                   </span>
-                  {envio.status === "pendiente" && (
-                    <button onClick={() => cancelarEnvio(envio.id)}
+                  <div className="flex gap-1">
+                    {envio.status === "pendiente" && (
+                      <button onClick={() => cancelarEnvio(envio.id)}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-semibold transition hover:opacity-80"
+                        style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#ef4444" }}>
+                        Cancelar
+                      </button>
+                    )}
+                    <button onClick={() => eliminarEnvio(envio.id)}
                       className="px-2 py-0.5 rounded-full text-[10px] font-semibold transition hover:opacity-80"
-                      style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#ef4444" }}>
-                      Cancelar
+                      style={{ background: "rgba(100,116,139,0.12)", border: "1px solid rgba(100,116,139,0.25)", color: "#64748b" }}
+                      title="Eliminar de la lista">
+                      ✕
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             ))}

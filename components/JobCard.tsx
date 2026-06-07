@@ -3,10 +3,12 @@
 /**
  * JobCard — Tarjeta de oferta con % de compatibilidad
  * Tema oscuro "Bosque Encantado"
- * Badge de fuente, barra de match, botón enviar CV
+ * Badge de fuente, barra de match, botón enviar CV (envío directo inline)
  */
 
+import { useState } from "react";
 import Link from "next/link";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export interface PropiedadesJobCard {
   id: string;
@@ -41,12 +43,87 @@ function colorFuente(fuente: string): { bg: string; text: string } {
   return mapa[fuente.toLowerCase()] || { bg: "rgba(112,106,88,0.12)", text: "#b0a890" };
 }
 
+// Extrae dominio de la URL de la oferta para construir email fallback
+function buildFallbackEmail(url: string): string {
+  try {
+    const domain = new URL(url).hostname.replace(/^www\./, "");
+    const jobBoards = ["adzuna", "jooble", "careerjet", "infojobs", "jobviewtrack", "indeed", "linkedin", "monster", "tecnoempleo"];
+    if (jobBoards.some(b => domain.includes(b))) return "";
+    return `empleo@${domain}`;
+  } catch {
+    return "";
+  }
+}
+
 export default function JobCard({
   id, titulo, empresa, ubicacion, salario, fuente = "Otro",
   url, modalidad, descripcion, match, distancia, emailEmpresa,
 }: PropiedadesJobCard) {
   const fc = colorFuente(fuente);
   const matchColor = match !== undefined ? colorMatch(match) : "#706a58";
+
+  const [enviando, setEnviando] = useState(false);
+  const [estadoEnvio, setEstadoEnvio] = useState<"idle" | "ok" | "sin-email">("idle");
+
+  async function enviarCV(e: React.MouseEvent) {
+    e.preventDefault();
+    if (enviando || estadoEnvio === "ok") return;
+    setEnviando(true);
+
+    try {
+      const supabase = getSupabaseBrowser();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = "/auth/login"; return; }
+
+      // Resolver email: prop → extract API → fallback de dominio
+      let email = emailEmpresa || "";
+      if (!email) {
+        try {
+          const r = await fetch("/api/company/extract", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: empresa }),
+            signal: AbortSignal.timeout(6000),
+          });
+          const d = await r.json() as { empresas?: Array<{ emailRrhh?: string }>; emailRrhh?: string };
+          email = d.empresas?.[0]?.emailRrhh || d.emailRrhh || "";
+        } catch { /* ignorar */ }
+      }
+      if (!email) email = buildFallbackEmail(url);
+
+      if (!email) {
+        setEstadoEnvio("sin-email");
+        setTimeout(() => setEstadoEnvio("idle"), 4000);
+        return;
+      }
+
+      const res = await fetch("/api/cv-sender/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          companyName: empresa,
+          companyEmail: email,
+          companyUrl: url,
+          jobTitle: titulo,
+        }),
+      });
+
+      if (res.ok) {
+        setEstadoEnvio("ok");
+        setTimeout(() => setEstadoEnvio("idle"), 4000);
+      } else {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        alert(err.error || "Error al enviar CV");
+      }
+    } catch {
+      alert("Error de conexión al enviar CV");
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   return (
     <div className="card-game p-5 flex flex-col gap-3 group hover:scale-[1.01] transition-transform">
@@ -97,6 +174,16 @@ export default function JobCard({
         )}
       </div>
 
+      {/* Aviso sin email */}
+      {estadoEnvio === "sin-email" && (
+        <p className="text-[11px] text-center" style={{ color: "#f0c040" }}>
+          Sin email disponible.{" "}
+          <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: "#7ed56f", textDecoration: "underline" }}>
+            Aplica en la web original →
+          </a>
+        </p>
+      )}
+
       {/* Actions */}
       <div className="flex gap-2 mt-auto">
         <Link href={`/app/ofertas/${encodeURIComponent(id)}`}
@@ -104,11 +191,22 @@ export default function JobCard({
           style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#b0a890" }}>
           Ver oferta
         </Link>
-        <Link href={`/app/envios?empresa=${encodeURIComponent(empresa)}${emailEmpresa ? `&email=${encodeURIComponent(emailEmpresa)}` : ""}${titulo ? `&puesto=${encodeURIComponent(titulo)}` : ""}${url ? `&web=${encodeURIComponent(url)}` : ""}`}
-          className="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition hover:opacity-90"
-          style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
-          📧 Enviar CV
-        </Link>
+        <button
+          onClick={enviarCV}
+          disabled={enviando}
+          className="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition hover:opacity-90 disabled:opacity-60"
+          style={{
+            background: estadoEnvio === "ok"
+              ? "linear-gradient(135deg, #22c55e, #16a34a)"
+              : "linear-gradient(135deg, #7ed56f, #5cb848)",
+            color: "#1a1a12",
+          }}>
+          {enviando
+            ? "⏳ Enviando..."
+            : estadoEnvio === "ok"
+              ? "✅ Enviado"
+              : "📧 Enviar CV"}
+        </button>
       </div>
     </div>
   );

@@ -83,14 +83,13 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
     setEnviando(true);
     try {
       const supabase = getSupabaseBrowser();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { alert("Inicia sesión para enviar tu CV"); setEnviando(false); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { alert("Inicia sesión para enviar tu CV"); setEnviando(false); return; }
 
-      // Buscar email de la empresa: primero Google Places, luego scraping
+      // Buscar email de la empresa: campo en BD → Google Places → fallback de dominio
       let email = oferta.email_empresa || "";
       if (!email && oferta.empresa) {
         try {
-          // Usar el extractor con Google Places (más fiable que scraping)
           const r = await fetch("/api/company/extract", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -102,18 +101,30 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         } catch { /* continuar */ }
       }
 
-      // Si tras todo no hay email, NO enviar a dirección falsa
+      // Fallback: construir email desde el dominio de la URL de la oferta
+      if (!email && oferta.url) {
+        try {
+          const domain = new URL(oferta.url).hostname.replace(/^www\./, "");
+          const jobBoards = ["adzuna", "jooble", "careerjet", "infojobs", "jobviewtrack", "indeed", "linkedin", "monster", "tecnoempleo"];
+          if (!jobBoards.some(b => domain.includes(b))) {
+            email = `empleo@${domain}`;
+          }
+        } catch { /* ignorar */ }
+      }
+
       if (!email) {
-        alert("No se encontró email de contacto para esta empresa. Prueba a buscar la oferta en la web original para enviar tu CV.");
+        alert("No se encontró email de contacto para esta empresa. Usa 'Ver original' para aplicar desde su web.");
         setEnviando(false);
         return;
       }
 
       const res = await fetch("/api/cv-sender/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
-          userId: user.id,
           companyName: oferta.empresa,
           companyEmail: email,
           companyUrl: oferta.url,
