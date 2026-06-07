@@ -394,6 +394,8 @@ function detectIntent(text: string): string {
   if (/(crea|genera|haz|escrib).*(carta|dear family).*(au pair|aupair)/i.test(t) || /carta.*au.?pair/i.test(t) || /dear.?family/i.test(t)) return "carta_au_pair";
   if (/(busco|buscar|busca|necesito|quiero).*(au pair|aupair|niñera|nanny|canguro|childcare)/i.test(t)) return "buscar_au_pair";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)/.test(t)) return "buscar";
+  // Detectar "[puesto] en [ciudad]" sin verbo explícito (ej: "camarero en Tudela")
+  if (/\w{3,}\s+(en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios)/i.test(t)) return "buscar";
   if (/(envi|manda|submit).*(cv|candidatura)|cv.*(envi|manda|automátic)/.test(t)) return "enviar";
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
   if (/(preparar|practicar|simul).*(entrevista)|entrevista.*(preparar|practica)/.test(t)) return "entrevista_prep";
