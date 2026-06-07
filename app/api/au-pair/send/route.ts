@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
-import { jsPDF } from "jspdf";
+import { generateCVPdf } from "@/lib/cv-generator/generate-pdf";
 import type { AuPairProfile, AuPairReference } from "@/lib/au-pair";
 
 export const dynamic = "force-dynamic";
@@ -37,159 +37,115 @@ function escapeHtml(str: string | undefined | null): string {
     .replace(/'/g, "&#039;");
 }
 
-// ─── Generación de PDF ────────────────────────────────────────────────────────
+// ─── Generación de PDF con plantilla visual ───────────────────────────────────
 
-/**
- * Genera un PDF del perfil Au Pair usando jsPDF.
- * Incluye datos personales, idiomas, experiencia, referencias y carta de presentación.
- */
-function generateAuPairPDF(profile: AuPairProfile, coverLetter: string): Buffer {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 20;
-  let y = 25;
+function generateAuPairProfileHTML(profile: AuPairProfile, coverLetter: string): string {
+  const nombre = escapeHtml(profile.nombre || "Au Pair");
+  const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
-  // ── Título ────────────────────────────────────────────────────────────
-  doc.setFontSize(18);
-  doc.setTextColor(37, 99, 235); // Azul BuscayCurra
-  doc.text("Au Pair Profile", pageWidth / 2, y, { align: "center" });
-  y += 12;
+  const aptitudes: string[] = [];
+  if (profile.has_driving_license) aptitudes.push("🚗 Driving License");
+  if (!profile.fumador) aptitudes.push("🚭 Non-smoker");
+  if (profile.primeros_auxilios) aptitudes.push("⛑️ First Aid");
+  if (profile.sabe_nadar) aptitudes.push("🏊 Swimmer");
 
-  // ── Nombre y datos básicos ────────────────────────────────────────────
-  doc.setFontSize(14);
-  doc.setTextColor(30, 41, 59);
-  const nombre = profile.nombre || "Candidate";
-  doc.text(nombre, margin, y);
-  y += 8;
+  const headerMeta = [
+    profile.nationality ? `${escapeHtml(profile.nationality)}${profile.ciudad ? ` · ${escapeHtml(profile.ciudad)}` : ""}` : "",
+    profile.age ? `🎂 ${escapeHtml(String(profile.age))} años` : "",
+    profile.languages?.length ? `🗣 ${profile.languages.map(l => escapeHtml(l)).join(" · ")}` : "",
+    profile.available_from ? `📅 Available ${escapeHtml(profile.available_from)}` : "",
+  ].filter(Boolean).map(s => `<span style="font-size:11px;color:rgba(255,255,255,0.85);margin-right:16px;">${s}</span>`).join("");
 
-  doc.setFontSize(10);
-  doc.setTextColor(100, 116, 139);
-  const basicInfo: string[] = [];
-  if (profile.age) basicInfo.push(`Age: ${profile.age}`);
-  if (profile.nationality) basicInfo.push(`Nationality: ${profile.nationality}`);
-  if (profile.ciudad) basicInfo.push(`City: ${profile.ciudad}`);
-  if (basicInfo.length > 0) {
-    doc.text(basicInfo.join("  |  "), margin, y);
-    y += 6;
-  }
+  const photosHtml = profile.photos && profile.photos.length > 0
+    ? `<div style="background:#f8f6f0;padding:28px 40px;">
+        <p style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#9ca3af;font-weight:bold;margin:0 0 12px;">📸 PHOTO GALLERY</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          ${profile.photos.slice(0, 5).map((url, i) =>
+            /^https?:\/\//.test(url)
+              ? `<img src="${escapeHtml(url)}" alt="Photo ${i + 1}" style="width:${i === 0 && profile.photos!.length >= 3 ? "160px;height:160px" : "120px;height:90px"};object-fit:cover;border-radius:8px;" />`
+              : ""
+          ).filter(Boolean).join("")}
+        </div>
+      </div>`
+    : "";
 
-  // ── Separador ─────────────────────────────────────────────────────────
-  y += 4;
-  doc.setDrawColor(37, 99, 235);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 8;
+  const aptitudesHtml = aptitudes.length > 0
+    ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;">
+        ${aptitudes.map(a => `<span style="font-size:11px;padding:4px 14px;border-radius:9999px;background:#e8f5e9;color:#1a3d34;">${a}</span>`).join("")}
+      </div>`
+    : "";
 
-  // ── Secciones ─────────────────────────────────────────────────────────
-  const addSection = (title: string, content: string | null | undefined) => {
-    if (!content) return;
-    doc.setFontSize(11);
-    doc.setTextColor(37, 99, 235);
-    doc.text(title, margin, y);
-    y += 6;
-    doc.setFontSize(9);
-    doc.setTextColor(71, 85, 105);
-    const lines = doc.splitTextToSize(content, pageWidth - margin * 2);
-    doc.text(lines, margin, y);
-    y += lines.length * 4.5 + 6;
-  };
+  const infoCards = [
+    profile.childcare_experience ? { label: "Experience", value: profile.childcare_experience, border: "#2d5a4e" } : null,
+    profile.hobbies ? { label: "About Me", value: profile.hobbies, border: "#4a9d84" } : null,
+    profile.dietary_info ? { label: "Diet", value: profile.dietary_info, border: "#8cb8a8" } : null,
+    profile.duracion_preferida ? { label: "Duration", value: profile.duracion_preferida, border: "#2d5a4e" } : null,
+  ].filter(Boolean) as { label: string; value: string; border: string }[];
 
-  // Idiomas
-  if (profile.languages && profile.languages.length > 0) {
-    doc.setFontSize(11);
-    doc.setTextColor(37, 99, 235);
-    doc.text("Languages", margin, y);
-    y += 6;
-    doc.setFontSize(9);
-    doc.setTextColor(71, 85, 105);
-    doc.text(profile.languages.join(", "), margin, y);
-    y += 8;
-  }
+  const infoCardsHtml = infoCards.length > 0
+    ? `<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:28px;">
+        ${infoCards.map(c => `
+          <div style="flex:1;min-width:140px;background:#f8faf9;border-left:3px solid ${c.border};border-radius:8px;padding:12px;">
+            <p style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#9ca3af;font-weight:bold;margin:0 0 4px;">${c.label}</p>
+            <p style="font-size:11px;color:#374151;margin:0;">${escapeHtml(c.value)}</p>
+          </div>`).join("")}
+      </div>`
+    : "";
 
-  // Nivel educativo
-  if (profile.nivel_educativo) {
-    addSection("Education", profile.nivel_educativo);
-  }
+  const letterHtml = coverLetter
+    ? `<div style="margin-bottom:28px;">
+        <div style="width:48px;height:4px;border-radius:2px;background:linear-gradient(90deg,#2d5a4e,#4a9d84);margin-bottom:24px;"></div>
+        <div style="font-size:13px;line-height:1.8;color:#374151;font-family:Georgia,'Times New Roman',serif;white-space:pre-wrap;">${escapeHtml(coverLetter)}</div>
+      </div>`
+    : "";
 
-  // Experiencia con niños
-  if (profile.childcare_experience) {
-    addSection("Childcare Experience", profile.childcare_experience);
-  }
+  const refs = (profile.references_json || []) as AuPairReference[];
+  const refsHtml = refs.length > 0
+    ? `<div>
+        <p style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#9ca3af;font-weight:bold;margin:0 0 12px;">References</p>
+        ${refs.map(ref => `
+          <div style="background:#f8faf9;border-left:3px solid #2d5a4e;border-radius:4px;padding:12px;margin-bottom:8px;">
+            <p style="font-weight:bold;font-size:13px;color:#1a3d34;margin:0;">${escapeHtml(ref.nombre)}</p>
+            <p style="font-size:11px;color:#6b7280;margin:4px 0 0;">${[ref.relacion, ref.email, ref.telefono].filter(Boolean).map(v => escapeHtml(String(v))).join(" · ")}</p>
+          </div>`).join("")}
+      </div>`
+    : "";
 
-  // Hobbies
-  if (profile.hobbies) {
-    addSection("Hobbies & Interests", profile.hobbies);
-  }
-
-  // Información dietética
-  if (profile.dietary_info) {
-    addSection("Dietary Information", profile.dietary_info);
-  }
-
-  // Duración preferida
-  if (profile.duracion_preferida) {
-    addSection("Preferred Duration", profile.duracion_preferida);
-  }
-
-  // Disponibilidad
-  if (profile.available_from || profile.available_to) {
-    const avail = [
-      profile.available_from ? `From: ${profile.available_from}` : "",
-      profile.available_to ? `To: ${profile.available_to}` : "",
-    ].filter(Boolean).join("  —  ");
-    if (avail) addSection("Availability", avail);
-  }
-
-  // Aptitudes (boolean flags)
-  const skills: string[] = [];
-  if (profile.has_driving_license) skills.push("Driving License");
-  if (profile.primeros_auxilios) skills.push("First Aid Certified");
-  if (profile.sabe_nadar) skills.push("Can Swim");
-  if (!profile.fumador) skills.push("Non-Smoker");
-  if (skills.length > 0) {
-    addSection("Skills & Certifications", skills.join(", "));
-  }
-
-  // Referencias
-  if (profile.references_json && profile.references_json.length > 0) {
-    doc.setFontSize(11);
-    doc.setTextColor(37, 99, 235);
-    doc.text("References", margin, y);
-    y += 7;
-    for (const ref of profile.references_json) {
-      doc.setFontSize(9);
-      doc.setTextColor(71, 85, 105);
-      const refText = [
-        ref.nombre,
-        ref.relacion ? `(${ref.relacion})` : "",
-        ref.email,
-        ref.telefono,
-      ].filter(Boolean).join(" — ");
-      doc.text(`• ${refText}`, margin + 4, y);
-      y += 5;
-    }
-    y += 4;
-  }
-
-  // ── Carta de presentación ────────────────────────────────────────────
-  y += 4;
-  doc.setDrawColor(37, 99, 235);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 8;
-
-  doc.setFontSize(11);
-  doc.setTextColor(37, 99, 235);
-  doc.text("Cover Letter", margin, y);
-  y += 7;
-  doc.setFontSize(8);
-  doc.setTextColor(71, 85, 105);
-  const letterLines = doc.splitTextToSize(coverLetter, pageWidth - margin * 2);
-  doc.text(letterLines, margin, y);
-
-  // ── Output ────────────────────────────────────────────────────────────
-  const arrayBuffer = doc.output("arraybuffer");
-  return Buffer.from(arrayBuffer);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Au Pair Profile — ${nombre}</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    body { font-family:system-ui,-apple-system,Arial,sans-serif; background:white; }
+    @page { size:A4 portrait; margin:0; }
+  </style>
+</head>
+<body>
+  <div style="width:210mm;min-height:297mm;background:white;">
+    <div style="background:linear-gradient(135deg,#1a3d34 0%,#2d5a4e 100%);padding:40px;">
+      <h1 style="font-size:26px;font-weight:bold;color:white;margin:0 0 4px;">${nombre}</h1>
+      <p style="font-size:10px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">Childcare Professional · Dear Family Letter</p>
+      <div style="display:flex;flex-wrap:wrap;">${headerMeta}</div>
+      ${profile.nivel_educativo ? `<p style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:8px;">🎓 ${escapeHtml(profile.nivel_educativo)}</p>` : ""}
+    </div>
+    <div style="padding:14px 40px;background:#fafafa;border-bottom:1px solid #e8e4d9;">
+      <p style="font-size:12px;color:#94a3b8;font-style:italic;">${dateStr}</p>
+    </div>
+    ${photosHtml}
+    <div style="padding:32px 40px;">
+      ${aptitudesHtml}
+      ${infoCardsHtml}
+      ${letterHtml}
+      ${refsHtml}
+    </div>
+    <div style="background:#f8f6f0;border-top:1px solid #e8e4d9;padding:14px 40px;">
+      <span style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Au Pair Profile · ${dateStr} · BuscayCurra</span>
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 // ─── HTML del email ───────────────────────────────────────────────────────────
@@ -522,8 +478,8 @@ ${personalMessage ? personalMessage + "\n\n" : ""}I look forward to hearing from
 Warm regards,
 ${userName}`;
 
-    // ── Generar PDF ──────────────────────────────────────────────────────
-    const pdfBuffer = generateAuPairPDF(profile, coverLetter);
+    // ── Generar PDF con plantilla visual ─────────────────────────────────
+    const pdfBuffer = await generateCVPdf(generateAuPairProfileHTML(profile, coverLetter));
 
     // ── Generar HTML del email ────────────────────────────────────────────
     const htmlBody = buildAuPairEmailHTML(
