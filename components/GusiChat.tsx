@@ -133,6 +133,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
   const [modoEntrevista, setModoEntrevista] = useState(false);
   const [pulso, setPulso] = useState(true);
   const [notif, setNotif] = useState(false);
+  const [enviandoATodas, setEnviandoATodas] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -267,6 +268,82 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       addMsg("gusi", "⚠️ Error al subir. Comprueba tu conexión.");
     }
     setCargando(false);
+  };
+
+  const enviarATodas = async (jobs: Oferta[]) => {
+    if (enviandoATodas || !jobs.length) return;
+    setEnviandoATodas(true);
+    addMsg("user", `Enviar mi CV a ${jobs.length} empresa${jobs.length > 1 ? "s" : ""}`);
+    setMostrarSugerencias(false);
+
+    const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+    if (!session) {
+      addMsg("gusi", "⚠️ Necesitas iniciar sesión para enviar CVs.");
+      setEnviandoATodas(false);
+      return;
+    }
+
+    addMsg("gusi", `Preparando envíos a ${jobs.length} empresa${jobs.length > 1 ? "s" : ""}...`);
+
+    let enviados = 0;
+    let errores = 0;
+    const errList: string[] = [];
+
+    for (const job of jobs) {
+      let emailDestino = "";
+
+      try {
+        const exRes = await fetch("/api/company/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: job.empresa }),
+        });
+        if (exRes.ok) {
+          const exData = await exRes.json();
+          const primera = (exData.empresas as { emailRrhh?: string }[])?.[0];
+          if (primera?.emailRrhh) emailDestino = primera.emailRrhh;
+        }
+      } catch { /* ignorar */ }
+
+      if (!emailDestino) {
+        const slug = job.empresa.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 25);
+        emailDestino = `empleo@${slug}.es`;
+      }
+
+      try {
+        const res = await fetch("/api/cv-sender/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            companyName: job.empresa,
+            companyEmail: emailDestino,
+            jobTitle: job.titulo,
+            companyUrl: job.url,
+          }),
+        });
+
+        if (res.ok) {
+          enviados++;
+        } else {
+          errores++;
+          const d = await res.json().catch(() => ({})) as { error?: string };
+          if (d.error) errList.push(d.error);
+        }
+      } catch {
+        errores++;
+      }
+    }
+
+    const msg = enviados > 0
+      ? `✅ ${enviados} CV${enviados > 1 ? "s programados" : " programado"}.\n${errores > 0 ? `⚠️ ${errores} no pudieron procesarse.\n` : ""}Puedes ver el estado en **Mis envíos**.`
+      : `⚠️ No se pudo programar ningún envío. ${errList[0] || "Verifica que tienes un CV subido en tu perfil."}`;
+
+    addMsg("gusi", msg);
+    setEnviandoATodas(false);
+    router.push("/app/envios");
   };
 
   const limpiar = () => {
@@ -421,10 +498,11 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                         );
                       })}
                       <button
-                        onClick={() => { addMsg("user", "Envía mi CV a todas"); router.push("/app/empresas"); }}
-                        className="w-full py-2 rounded-xl text-sm font-semibold transition hover:opacity-90"
+                        onClick={() => enviarATodas(m.jobs!)}
+                        disabled={enviandoATodas}
+                        className="w-full py-2 rounded-xl text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
                         style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#22c55e" }}>
-                        Enviar CV a todas ({m.jobs.length} ofertas) →
+                        {enviandoATodas ? "Enviando..." : `Enviar CV a todas (${m.jobs.length} ofertas) →`}
                       </button>
                     </div>
                   )}
