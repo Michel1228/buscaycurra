@@ -1181,6 +1181,13 @@ El candidato tiene mucha experiencia.
 }
 
 function extractJobTerm(text: string): string {
+  // "[puesto] en [ciudad]" — patrón más común (ej: "camarero en Tudela")
+  const mDirect = text.match(/^([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)\s+(?:en|por)\s+\w+/i);
+  if (mDirect?.[1]?.trim()) {
+    const job = mDirect[1].trim();
+    const stopwords = ["trabajo", "empleo", "curro", "oferta", "algo", "hola", "buscar", "busco"];
+    if (!stopwords.includes(job.toLowerCase())) return job;
+  }
   // "busco trabajo de/como X en Y" — captura X
   const m1 = text.match(/(?:busco|buscar|busca)\s+(?:trabajo|empleo|curro|oferta)\s+(?:de\s+|como\s+)([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)(?:\s+en\s+|\s*$)/i);
   if (m1?.[1]?.trim()) return m1[1].trim();
