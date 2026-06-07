@@ -654,7 +654,7 @@ function localReply(intent: string, cv?: CVParsed | null): string {
     case "carta_au_pair":
       return "💌 **Carta 'Dear Family'** — primero completa tu perfil Au Pair en la sección 🧒 del menú. Luego vuelve y dime 'crea mi carta au pair' para generarla personalizada con tus datos, experiencia con niños y fotos. 🐛";
     default:
-      return "🐛 Puedo ayudarte a buscar trabajo en España y Europa, mejorar tu CV, preparar entrevistas o generar una carta de presentación. ¿Qué necesitas?";
+      return "¡Hola! Soy Guzzi, tu asistente de empleo. Puedo ayudarte con:\n\n🔍 Buscar ofertas de trabajo\n📝 Crear o mejorar tu CV\n🎯 Preparar entrevistas\n✉️ Cartas de presentación\n🌍 Información para emigrar\n💰 Comparar salarios\n\n¿En qué quieres que te ayude hoy?";
   }
 }
 
@@ -760,25 +760,38 @@ export async function POST(req: NextRequest) {
     async function callGroq(systemPrompt: string, userContent: string, maxTokens = 600) {
       if (!groqKey) return null;
       // /no_think desactiva el modo reasoning de Qwen3 → responde directamente en el idioma del sistema (español)
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "qwen/qwen3-32b",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: "/no_think " + userContent },
-          ],
-          temperature: 0.6,
-          max_tokens: maxTokens,
-        }),
-        signal: AbortSignal.timeout(15000),
+      const body = JSON.stringify({
+        model: "qwen/qwen3-32b",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: "/no_think " + userContent },
+        ],
+        temperature: 0.6,
+        max_tokens: maxTokens,
       });
-      if (!res.ok) return null;
-      const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-      const raw = data.choices?.[0]?.message?.content || null;
-      // Por si acaso aún aparecen bloques <think>...</think>, los eliminamos
-      return raw ? raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() : null;
+
+      // Hasta 2 intentos con backoff
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+            body,
+            signal: AbortSignal.timeout(20000),
+          });
+          if (!res.ok) {
+            if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
+            return null;
+          }
+          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+          const raw = data.choices?.[0]?.message?.content || null;
+          return raw ? raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() : null;
+        } catch {
+          if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
+          return null;
+        }
+      }
+      return null;
     }
 
     // ── Modo preparación de entrevista ───────────────────────────────────────
@@ -1087,16 +1100,26 @@ El candidato tiene mucha experiencia.
         ? { ...m, content: "/no_think " + m.content }
         : m
     );
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
-      body: JSON.stringify({ model: "qwen/qwen3-32b", messages: msgsConNoThink, max_tokens: 1024, temperature: 0.7 }),
-      signal: AbortSignal.timeout(15000),
-    });
+    // Chat normal con retry
+    let rawReply = "";
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
+          body: JSON.stringify({ model: "qwen/qwen3-32b", messages: msgsConNoThink, max_tokens: 1024, temperature: 0.7 }),
+          signal: AbortSignal.timeout(20000),
+        });
+        if (res.ok) {
+          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+          rawReply = data.choices?.[0]?.message?.content || "";
+          break;
+        }
+      } catch { /* retry */ }
+      if (attempt === 0) await new Promise(r => setTimeout(r, 800));
+    }
 
-    if (!res.ok) return NextResponse.json({ reply: localReply(intent, cvParsed) });
-    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const rawReply = data.choices?.[0]?.message?.content || "";
+    if (!rawReply) return NextResponse.json({ reply: localReply(intent, cvParsed) });
     const reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
     return NextResponse.json({ reply });
 
