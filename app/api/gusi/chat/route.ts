@@ -1191,6 +1191,12 @@ function extractJobTerm(text: string): string {
       const re = new RegExp(`^${v}\\s+`, "i");
       job = job.replace(re, "");
     }
+    // Limpiar palabras genéricas: "trabajo de camarero" → "camarero"
+    const genericPrefixes = ["trabajo de", "trabajo como", "empleo de", "empleo como", "trabajo", "empleo", "curro", "oferta"];
+    for (const g of genericPrefixes) {
+      const re = new RegExp(`^${g}\\s+`, "i");
+      job = job.replace(re, "");
+    }
     job = job.trim();
     // Si tras limpiar solo queda una palabra genérica → no es un puesto real
     const genericWords = ["trabajo", "empleo", "curro", "oferta", "algo", "hola"];
