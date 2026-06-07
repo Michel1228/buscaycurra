@@ -23,6 +23,10 @@ import { getRedisConnection, CVJobData } from "./queue";
 import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
 import { recordSent, updateSendStatus } from "./tracker";
+import { getPool } from "../db";
+import { normalizar } from "../cv-generator/normalizar";
+import { generarCVHTML } from "../cv-generator/cv-template";
+import { generateCVPdf } from "../cv-generator/generate-pdf";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,15 +51,6 @@ interface UserProfile {
   email: string;
   phone?: string;
   linkedin_url?: string;
-}
-
-/** Datos del CV almacenado en Supabase */
-interface CVDocument {
-  id: string;
-  user_id: string;
-  file_url: string; // URL del PDF en Supabase Storage
-  text_content?: string; // Texto extraído del CV (para personalización con IA)
-  file_name?: string;
 }
 
 // ─── Función Principal: processCVJob ─────────────────────────────────────────
@@ -94,38 +89,55 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
     throw new Error(`No se encontró el perfil del usuario ${userId}: ${profileResult.error?.message}`);
   }
 
-  // Obtener CV desde Supabase Storage (convención: {userId}/cv.pdf en bucket 'cvs')
-  const cvPath = `${userId}/cv.pdf`;
-  const { data: cvFiles } = await getSupabase().storage.from("cvs").list(userId, { limit: 1, search: "cv.pdf" });
-
-  if (!cvFiles || cvFiles.length === 0) {
-    throw new Error(`El usuario ${userId} no tiene CV subido. Por favor sube tu CV primero.`);
-  }
-
-  const { data: signedUrlData } = await getSupabase().storage.from("cvs").createSignedUrl(cvPath, 3600);
-  if (!signedUrlData?.signedUrl) {
-    throw new Error(`No se pudo obtener URL firmada del CV del usuario ${userId}`);
-  }
-
   const userProfile = profileResult.data as UserProfile;
-  const cvDocument: CVDocument = {
-    id: cvPath,
-    user_id: userId,
-    file_url: signedUrlData.signedUrl,
-    text_content: undefined, // El texto extraído no se almacena por separado
-    file_name: "cv.pdf",
-  };
 
   await job.updateProgress(25);
 
-  // ── Paso 2: Descargar el PDF del CV ─────────────────────────────────────
-  console.log(`[Worker] Paso 2/6: Descargando CV de ${cvDocument.file_url}...`);
+  // ── Paso 2: Generar PDF de plantilla (o descargar raw como fallback) ─────
+  console.log(`[Worker] Paso 2/6: Generando PDF de plantilla para ${userId}...`);
+  let cvBuffer: Buffer;
+  let cvFileName = `CV_BuscayCurra_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`;
 
-  const cvResponse = await fetch(cvDocument.file_url);
-  if (!cvResponse.ok) {
-    throw new Error(`No se pudo descargar el CV de ${cvDocument.file_url}: ${cvResponse.statusText}`);
+  try {
+    const pool = getPool();
+    const cvDataResult = await pool.query(
+      `SELECT form_data FROM user_cvs WHERE user_id = $1`,
+      [userId]
+    );
+
+    if (!cvDataResult.rows.length || !cvDataResult.rows[0].form_data) {
+      throw new Error("Sin datos de formulario en user_cvs");
+    }
+
+    const rawData = typeof cvDataResult.rows[0].form_data === "string"
+      ? JSON.parse(cvDataResult.rows[0].form_data)
+      : cvDataResult.rows[0].form_data;
+
+    const cvData = normalizar(rawData);
+    const html = generarCVHTML(cvData);
+    cvBuffer = await generateCVPdf(html);
+    console.log(`[Worker] ✅ PDF de plantilla generado para ${userId}`);
+  } catch (templateErr) {
+    console.warn(`[Worker] Plantilla no disponible, usando CV subido:`, (templateErr as Error).message);
+
+    const cvPath = `${userId}/cv.pdf`;
+    const { data: cvFiles } = await getSupabase().storage.from("cvs").list(userId, { limit: 1, search: "cv.pdf" });
+    if (!cvFiles || cvFiles.length === 0) {
+      throw new Error(`El usuario ${userId} no tiene CV subido ni datos de formulario.`);
+    }
+
+    const { data: signedUrlData } = await getSupabase().storage.from("cvs").createSignedUrl(cvPath, 3600);
+    if (!signedUrlData?.signedUrl) {
+      throw new Error(`No se pudo obtener URL firmada del CV de ${userId}`);
+    }
+
+    const cvResponse = await fetch(signedUrlData.signedUrl);
+    if (!cvResponse.ok) {
+      throw new Error(`No se pudo descargar el CV: ${cvResponse.statusText}`);
+    }
+    cvBuffer = Buffer.from(await cvResponse.arrayBuffer());
+    cvFileName = `CV_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`;
   }
-  const cvBuffer = Buffer.from(await cvResponse.arrayBuffer());
 
   await job.updateProgress(40);
 
@@ -138,7 +150,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
     try {
       const personalizacion = await personalizeForCompany(
-        cvDocument.text_content ?? "",
+        "",
         { name: companyName, url: companyUrl },
         jobTitle
       );
@@ -185,7 +197,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       userPhone: userProfile.phone,
       userLinkedIn: userProfile.linkedin_url,
       cvPdfBuffer: cvBuffer,
-      cvFileName: cvDocument.file_name ?? `CV_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`,
+      cvFileName: cvFileName,
     },
     coverLetter,
     subjectLine,
