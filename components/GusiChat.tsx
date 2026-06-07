@@ -84,6 +84,10 @@ const SUGERENCIAS = [
   { icon: "👶", label: "Au Pair", desc: "Programa de trabajo internacional", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
   { icon: "📸", label: "Mejorar mi foto", desc: "Prompts IA para foto profesional", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
   { icon: "📄", label: "Subir mi CV", desc: "PDF, Word — lo analizo al instante", msg: "__SUBIR_CV__" },
+  { icon: "📋", label: "Mi CV", desc: "Ver y editar mi currículum", href: "/app/curriculum" },
+  { icon: "📬", label: "Mis envíos", desc: "Historial de CVs enviados", href: "/app/empresas" },
+  { icon: "📊", label: "Pipeline", desc: "Mis candidaturas activas", href: "/app/pipeline" },
+  { icon: "❤️", label: "Guardadas", desc: "Ofertas que guardé", href: "/app/guardados" },
 ];
 
 function sanitizeGusiHtml(html: string): string {
@@ -494,7 +498,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
               ) : (
                 <div className="grid grid-cols-2 gap-1">
                   {SUGERENCIAS.map((s, i) => (
-                    <button key={i} onClick={() => enviar(s.msg)}
+                    <button key={i} onClick={() => s.href ? router.push(s.href) : enviar(s.msg)}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition hover:opacity-80"
                       style={{
                         background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
