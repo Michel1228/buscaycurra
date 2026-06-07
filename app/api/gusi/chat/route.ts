@@ -512,12 +512,13 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     }
 
     // ── Estrategia 3: título en cualquier lugar del país ─────────────────
+    // country IS NULL excluido: hay 64k ofertas sin país asignado que son de EEUU/otros
     const r3 = await pool.query(
       `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
        FROM "JobListing"
        WHERE "isActive" = true
          AND LOWER(title) LIKE $1
-         AND (country = $2 OR LOWER(country) LIKE $3 OR country IS NULL)
+         AND (country = $2 OR LOWER(country) LIKE $3)
        ORDER BY "createdAt" DESC LIMIT $4`,
       [kw, isoCode, countryFilter, N]
     );
@@ -1007,14 +1008,18 @@ El candidato tiene mucha experiencia.
     if (intent === "buscar" || mode === "buscar") {
       // Lo que el usuario PIDE explícitamente tiene prioridad sobre el CV
       const extractedJob = extractJobTerm(message);
-      const puestoBusqueda = extractedJob || cvParsed?.ultimoPuesto || "";
       const extractedCity = extractCity(message);
       const ciudadBusqueda = extractedCity || cvParsed?.ciudad || "";
 
-      // Si no hay puesto ni en CV ni en mensaje, pedir aclaración
+      // Si el usuario menciona una ciudad pero NO un puesto, no usar el puesto del CV
+      // (evita buscar "Senior Frontend Developer en Pamplona" cuando el usuario solo dijo "trabajo en Pamplona")
+      const puestoBusqueda = extractedJob || (extractedCity ? "" : cvParsed?.ultimoPuesto) || "";
+
+      // Si no hay puesto ni en mensaje ni se puede inferir sin ambigüedad, pedir aclaración
       if (!puestoBusqueda) {
+        const ciudadMsg = extractedCity ? ` en **${extractedCity}**` : "";
         return NextResponse.json({
-          reply: "🔍 Claro, ¿qué tipo de trabajo buscas? Dime el puesto y la ciudad (ej: 'camarero en Madrid') y te busco al instante. 🐛",
+          reply: `🔍 Claro, ¿qué tipo de trabajo buscas${ciudadMsg}? Dime el puesto (ej: "camarero", "administrativo", "electricista") y te busco al instante. 🐛`,
           action: "need_keyword",
         });
       }
