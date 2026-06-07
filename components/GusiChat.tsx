@@ -498,7 +498,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
               ) : (
                 <div className="grid grid-cols-2 gap-1">
                   {SUGERENCIAS.map((s, i) => (
-                    <button key={i} onClick={() => s.href ? router.push(s.href) : enviar(s.msg)}
+                    <button key={i} onClick={() => s.href ? router.push(s.href) : enviar(s.msg ?? "")}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition hover:opacity-80"
                       style={{
                         background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
