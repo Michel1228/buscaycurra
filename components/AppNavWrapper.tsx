@@ -65,10 +65,26 @@ export default function AppNavWrapper() {
   }, []);
 
   useEffect(() => {
-    getSupabaseBrowser().auth.getUser().then(({ data: { user } }) => {
-      setEsAdmin(user?.email === ADMIN_EMAIL);
-      if (user?.id) setUserId(user.id);
-      if (user?.email) setUserInicial(user.email[0].toUpperCase());
+    const supabase = getSupabaseBrowser();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      setEsAdmin(user.email === ADMIN_EMAIL);
+      setUserId(user.id);
+
+      // Intentar sacar inicial del nombre real del perfil, no del email
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.full_name) {
+        setUserInicial(profile.full_name.trim()[0].toUpperCase());
+      } else if (user.user_metadata?.full_name) {
+        setUserInicial(user.user_metadata.full_name.trim()[0].toUpperCase());
+      } else if (user.email) {
+        setUserInicial(user.email[0].toUpperCase());
+      }
     });
   }, []);
 
@@ -105,7 +121,12 @@ export default function AppNavWrapper() {
             style={{ background: "rgba(34,197,94,0.15)", border: "1.5px solid rgba(34,197,94,0.4)", color: "#22c55e" }}
             title="Mi perfil"
           >
-            {userInicial || "?"}
+            {userInicial || (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            )}
           </Link>
 
           {/* Botón de menú — visible en todos los tamaños */}
