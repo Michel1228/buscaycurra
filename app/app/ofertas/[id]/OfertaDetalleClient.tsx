@@ -107,7 +107,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
           const domain = new URL(oferta.url).hostname.replace(/^www\./, "");
           const jobBoards = ["adzuna", "jooble", "careerjet", "infojobs", "jobviewtrack", "indeed", "linkedin", "monster", "tecnoempleo"];
           if (!jobBoards.some(b => domain.includes(b))) {
-            email = `rrhh@${domain}`;
+            email = `empleo@${domain}`;
           }
         } catch { /* ignorar */ }
       }

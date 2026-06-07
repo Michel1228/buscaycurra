@@ -49,7 +49,7 @@ function buildFallbackEmail(url: string): string {
     const domain = new URL(url).hostname.replace(/^www\./, "");
     const jobBoards = ["adzuna", "jooble", "careerjet", "infojobs", "jobviewtrack", "indeed", "linkedin", "monster", "tecnoempleo"];
     if (jobBoards.some(b => domain.includes(b))) return "";
-    return `rrhh@${domain}`;
+    return `empleo@${domain}`;
   } catch {
     return "";
   }
