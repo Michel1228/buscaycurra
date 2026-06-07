@@ -417,6 +417,35 @@ const CIUDAD_A_PROVINCIA: Record<string, string> = {
   palma: "baleares", "las palmas": "canarias",
 };
 
+// Ciudades cercanas (misma provincia/área metropolitana) para búsqueda ampliada
+const CIUDADES_CERCANAS: Record<string, string[]> = {
+  zaragoza: ["calatayud", "utebo", "alagon", "zuera", "la puebla", "cuarte"],
+  tudela: ["pamplona", "estella", "tafalla", "corella", "cintruenigo"],
+  pamplona: ["tudela", "estella", "tafalla", "barañain", "burlada", "zizur"],
+  barcelona: ["hospitalet", "badalona", "sabadell", "terrassa", "sant cugat", "cornella"],
+  madrid: ["alcobendas", "pozuelo", "las rozas", "getafe", "leganes", "alcorcon", "mostoles", "fuenlabrada", "torrejon"],
+  valencia: ["paterna", "torrent", "mislata", "burjassot", "aldaya", "quart"],
+  sevilla: ["dos hermanas", "alcala de guadaira", "mairena", "camas", "san juan"],
+  bilbao: ["barakaldo", "getxo", "santurtzi", "portugalete", "basauri", "leioa", "erandio"],
+  malaga: ["torremolinos", "benalmadena", "fuengirola", "mijas", "rincon de la victoria"],
+  vigo: ["pontevedra", "redondela", "cangas", "moaña", "porriño"],
+  gijon: ["oviedo", "aviles", "langreo", "mieres", "siero"],
+  santander: ["torrelavega", "camargo", "el astillero", "piélagos"],
+  valladolid: ["laguna de duero", "arroyo", "medina del campo", "tudela de duero"],
+  murcia: ["cartagena", "lorca", "molina de segura", "alhama", "alcantarilla", "las torres de cotillas"],
+  alicante: ["elche", "san vicente", "santa pola", "torrevieja", "orihuela", "benidorm", "alcoy"],
+  "la coruña": ["santiago", "ferrol", "oleiros", "culleredo", "arteixo", "cambre"],
+  logroño: ["calahorra", "haro", "alfaro", "lardero", "villamediana"],
+  palma: ["calvia", "marratxi", "llucmajor", "manacor", "inca"],
+  cordoba: ["lucena", "puente genil", "montilla", "priego", "palma del rio"],
+  granada: ["armilla", "maracena", "santa fe", "motril", "guadix"],
+  salamanca: ["santa marta", "villamayor", "carbajosa", "villares"],
+  burgos: ["aranda de duero", "miranda de ebro", "briviesca"],
+  pontevedra: ["vigo", "marín", "sanxenxo", "vilagarcía", "lalín"],
+  lugo: ["monforte", "viveiro", "sarria", "vilalba", "chantada"],
+  ourense: ["verín", "o barco", "xinzo", "o carballiño", "celanova"],
+};
+
 // Sinónimos de puestos para ampliar la búsqueda
 const SINONIMOS_PUESTO: Record<string, string[]> = {
   carretillero: ["carretilla", "almacen", "logistica", "operario almacen", "mozo almacen", "picking", "preparador pedidos"],
@@ -452,7 +481,7 @@ function mapRowToJob(j: DbJobRow, cityFallback: string) {
 
 async function searchJobsReal(query: string, city: string, limit = 5, countryCode = "ES"): Promise<{
   jobs: ReturnType<typeof mapRowToJob>[];
-  scope: "ciudad" | "provincia" | "pais" | "sinonimo" | "api";
+  scope: "ciudad" | "provincia" | "cercanas" | "pais" | "sinonimo" | "api";
 } | null> {
   try {
     const countryMap: Record<string, string> = {
@@ -488,8 +517,6 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       }
 
       // ── Estrategia 2: título + provincia de esa ciudad ─────────────────
-      // NOTA: province suele ser NULL en la BD — la provincia está codificada
-      // dentro del campo city como "Tudela, Navarra". Por eso buscamos en city.
       const provincia = CIUDAD_A_PROVINCIA[city.toLowerCase()];
       if (provincia) {
         const provPat = `%${provincia}%`;
@@ -507,6 +534,27 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         );
         if (r2.rows.length > 0) {
           return { jobs: (r2.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "provincia" };
+        }
+
+        // ── Estrategia 2.5: ciudades cercanas en la misma provincia ──
+        const cercanas = CIUDADES_CERCANAS[city.toLowerCase()];
+        if (cercanas && cercanas.length > 0) {
+          const nearPatterns = cercanas.map(c => `%${c}%`);
+          const nearPlaceholders = nearPatterns.map((_, i) => `(LOWER(city) LIKE $${i + 2} OR LOWER(province) LIKE $${i + 2})`).join(" OR ");
+          const nearParams = [kw, ...nearPatterns, isoCode, countryFilter, N];
+          const rNear = await pool.query(
+            `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
+             FROM "JobListing"
+             WHERE "isActive" = true
+               AND LOWER(title) LIKE $1
+               AND (${nearPlaceholders})
+               AND (country = $${nearPatterns.length + 2} OR LOWER(country) LIKE $${nearPatterns.length + 3} OR country IS NULL)
+             ORDER BY "createdAt" DESC LIMIT $${nearPatterns.length + 4}`,
+            nearParams
+          );
+          if (rNear.rows.length > 0) {
+            return { jobs: (rNear.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "cercanas" };
+          }
         }
       }
     }
@@ -585,11 +633,13 @@ function fallbackMessage(puesto: string, ciudad: string): string {
 function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope?: string): string {
   const scopeMsg = scope === "provincia"
     ? ` (en la provincia de ${ciudad})`
-    : scope === "pais"
-      ? " (en toda España)"
-      : scope === "sinonimo"
-        ? " (puestos relacionados)"
-        : ciudad ? ` en **${ciudad}**` : "";
+    : scope === "cercanas"
+      ? ` (cerca de ${ciudad})`
+      : scope === "pais"
+        ? ` (en toda España)`
+        : scope === "sinonimo"
+          ? " (puestos relacionados)"
+          : ciudad ? ` en **${ciudad}**` : "";
 
   let text = `🔍 **${ofertas.length} oferta${ofertas.length !== 1 ? "s" : ""}** de **${puesto}**${scopeMsg}:\n\n`;
   (ofertas as Array<{ titulo?: string; empresa?: string; ubicacion?: string; salario?: string; url?: string }>)
