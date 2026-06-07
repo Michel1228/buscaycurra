@@ -1184,9 +1184,17 @@ function extractJobTerm(text: string): string {
   // "[puesto] en [ciudad]" — patrón más común (ej: "camarero en Tudela")
   const mDirect = text.match(/^([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)\s+(?:en|por)\s+\w+/i);
   if (mDirect?.[1]?.trim()) {
-    const job = mDirect[1].trim();
-    const stopwords = ["trabajo", "empleo", "curro", "oferta", "algo", "hola", "buscar", "busco"];
-    if (!stopwords.includes(job.toLowerCase())) return job;
+    let job = mDirect[1].trim();
+    // Limpiar verbos de búsqueda del inicio: "busca camarero" → "camarero"
+    const prefixVerbs = ["busca", "busco", "buscar", "buscando", "necesito", "necesita", "quiero", "quiere", "búsqueda de", "busqueda de"];
+    for (const v of prefixVerbs) {
+      const re = new RegExp(`^${v}\\s+`, "i");
+      job = job.replace(re, "");
+    }
+    job = job.trim();
+    // Si tras limpiar solo queda una palabra genérica → no es un puesto real
+    const genericWords = ["trabajo", "empleo", "curro", "oferta", "algo", "hola"];
+    if (!genericWords.includes(job.toLowerCase()) && job.length >= 3) return job;
   }
   // "busco trabajo de/como X en Y" — captura X
   const m1 = text.match(/(?:busco|buscar|busca)\s+(?:trabajo|empleo|curro|oferta)\s+(?:de\s+|como\s+)([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)(?:\s+en\s+|\s*$)/i);
