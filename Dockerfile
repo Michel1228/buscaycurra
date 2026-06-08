@@ -33,6 +33,18 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Chromium para generación de PDFs con Playwright (plantillas CV y Au Pair)
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    font-noto \
+    font-noto-emoji
+ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+
 # Standalone Next.js output
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
