@@ -419,6 +419,18 @@ const CIUDAD_A_PROVINCIA: Record<string, string> = {
   palma: "baleares", "las palmas": "canarias",
 };
 
+// Provincias limítrofes para búsqueda expandida (estrategia 2.5)
+const PROVINCIAS_LIMITROFES: Record<string, string[]> = {
+  navarra: ["la rioja", "zaragoza", "huesca", "guipuzcoa", "alava"],
+  "la rioja": ["navarra", "zaragoza", "alava", "burgos", "soria"],
+  zaragoza: ["navarra", "la rioja", "huesca", "teruel", "soria", "guadalajara", "tarragona", "lleida"],
+  madrid: ["toledo", "guadalajara", "segovia", "avila", "cuenca"],
+  barcelona: ["tarragona", "lleida", "girona"],
+  valencia: ["alicante", "castellon", "cuenca", "teruel"],
+  sevilla: ["huelva", "cadiz", "cordoba", "malaga", "badajoz"],
+  vizcaya: ["guipuzcoa", "alava", "cantabria", "burgos"],
+};
+
 // Ciudades cercanas (misma provincia/área metropolitana) para búsqueda ampliada
 const CIUDADES_CERCANAS: Record<string, string[]> = {
   zaragoza: ["calatayud", "utebo", "alagon", "zuera", "la puebla", "cuarte"],
@@ -557,6 +569,34 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
           if (rNear.rows.length > 0) {
             return { jobs: (rNear.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "cercanas" };
           }
+        }
+      }
+    }
+
+    // ── Estrategia 2.5: provincias limítrofes ─────────────────────────────
+    // Si no encuentra en la provincia exacta, busca en las limítrofes
+    const provincia = CIUDAD_A_PROVINCIA[city.toLowerCase()];
+    if (city && provincia) {
+      const limitrofes = PROVINCIAS_LIMITROFES[provincia];
+      if (limitrofes && limitrofes.length > 0) {
+        const provPatterns = limitrofes.map((p: string) => `%${p}%`);
+        const orClauses = limitrofes.map((_: string, i: number) =>
+          `LOWER(city) LIKE $${3 + i} OR LOWER(province) LIKE $${3 + i}`
+        ).join(" OR ");
+        const params: unknown[] = [kw, isoCode, countryFilter, ...provPatterns, N];
+
+        const r25 = await pool.query(
+          `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
+           FROM "JobListing"
+           WHERE "isActive" = true
+             AND LOWER(title) LIKE $1
+             AND (${orClauses})
+             AND (country = $2 OR LOWER(country) LIKE $3 OR country IS NULL)
+           ORDER BY "createdAt" DESC LIMIT $${params.length}`,
+          params
+        );
+        if (r25.rows.length > 0) {
+          return { jobs: (r25.rows as DbJobRow[]).slice(0, limit).map((j: DbJobRow) => mapRowToJob(j, city)), scope: "provincia" };
         }
       }
     }
@@ -1070,13 +1110,25 @@ El candidato tiene mucha experiencia.
     }
 
     if (intent === "buscar" || mode === "buscar") {
+      // Detectar si el usuario está INSATISFECHO con los resultados anteriores
+      const isDissatisfied = /(est[áa]n?\s+(muy\s+)?lejos|no\s+me\s+sirve|demasiado\s+lejos|busca\s+otra?\s+cosa|algo\s+diferente|mejor\s+(salario|horario|sueldo)|no\s+es\s+lo\s+que\s+busco|cerca\s+de|m[áa]s\s+cerca)/i.test(message);
+
       // Lo que el usuario PIDE explícitamente tiene prioridad sobre el CV
       const extractedJob = extractJobTerm(message);
       const puestoBusqueda = extractedJob || cvParsed?.ultimoPuesto || "";
       const extractedCity = extractCity(message);
       const ciudadBusqueda = extractedCity || cvParsed?.ciudad || "";
 
-      // Si no hay puesto ni en CV ni en mensaje, pedir aclaración
+      // Si el usuario está insatisfecho y no especifica nuevo puesto, pedir aclaración
+      // en vez de repetir los mismos resultados
+      if (isDissatisfied && !extractedJob) {
+        return NextResponse.json({
+          reply: `Entendido, busquemos algo diferente. ¿Qué tipo de trabajo te interesa? Dime el puesto (ej: "camarero", "administrativo", "electricista") y te busco al instante.`,
+          action: "need_keyword",
+        });
+      }
+
+      // Si el usuario menciona una ciudad pero NO un puesto, no usar el puesto del CV
       if (!puestoBusqueda) {
         return NextResponse.json({
           reply: "🔍 Claro, ¿qué tipo de trabajo buscas? Dime el puesto y la ciudad (ej: 'camarero en Madrid') y te busco al instante. 🐛",

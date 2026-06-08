@@ -5,7 +5,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 
 interface Notif {
-  id: number;
+  id: string;
   user_id: string;
   tipo: string;
   titulo: string;
@@ -44,9 +44,9 @@ export default function NotificacionesPage() {
   const [error, setError] = useState("");
 
   // Estado expandido por notificación
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
-  const [ofertasPorNotif, setOfertasPorNotif] = useState<Record<number, Oferta[]>>({});
-  const [cargandoOfertas, setCargandoOfertas] = useState<Set<number>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [ofertasPorNotif, setOfertasPorNotif] = useState<Record<string, Oferta[]>>({});
+  const [cargandoOfertas, setCargandoOfertas] = useState<Set<string>>(new Set());
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
   const [enviando, setEnviando] = useState<Set<string>>(new Set());
   const [enviadosHoy, setEnviadosHoy] = useState(0);
@@ -87,7 +87,7 @@ export default function NotificacionesPage() {
     }
   }
 
-  async function marcarLeida(id: number) {
+  async function marcarLeida(id: string) {
     try {
       const session = (await getSupabaseBrowser().auth.getSession()).data.session;
       if (!session) return;

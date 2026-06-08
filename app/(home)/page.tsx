@@ -9,7 +9,7 @@ import { NUM_PAISES } from "@/lib/paises";
 export const dynamic = "force-dynamic";
 
 function formatOfertas(n: number): string {
-  if (n >= 1_000_000) return "millones de";
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} millones de`;
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
   return String(n);
 }
@@ -36,7 +36,7 @@ export default async function LandingPage() {
   // ── Datos reales desde la DB (con fallback a hardcoded) ──
   const stats = await getRealStats();
   
-  const OFERTAS = stats ? formatOfertas(stats.totalGlobal) : "millones de";
+  const OFERTAS = stats ? formatOfertas(stats.totalGlobal) : "miles de";
   const PAISES = String(NUM_PAISES);
   const OBJETIVO = "10.000.000";
 
