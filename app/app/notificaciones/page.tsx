@@ -232,7 +232,7 @@ export default function NotificacionesPage() {
     }
   }
 
-  async function enviarSeleccionados(notifId: number) {
+  async function enviarSeleccionados(notifId: string) {
     const ofertas = ofertasPorNotif[notifId] || [];
     const seleccionadas = ofertas.filter((o) => selectedJobs.has(o.id));
 
