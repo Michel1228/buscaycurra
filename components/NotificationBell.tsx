@@ -109,18 +109,21 @@ export default function NotificationBell({ userId }: { userId: string }) {
   async function fetchNotifs() {
     // Token aún no cargado — reintentar obteniendo sesión
     const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+    console.log("[BELL-DEBUG] session:", session ? "OK uid="+session.user.id.slice(0,8) : "NULL");
     if (session?.access_token) tokenRef.current = session.access_token;
-    else return;
+    else { console.log("[BELL-DEBUG] NO SESSION"); return; }
 
     try {
       const res = await fetch("/api/notifications", {
         headers: { "Authorization": `Bearer ${tokenRef.current}` },
       });
-      if (!res.ok) return;
+      console.log("[BELL-DEBUG] status:", res.status);
+      if (!res.ok) { console.log("[BELL-DEBUG] !ok", res.status); return; }
       const data = await res.json() as { notificaciones: Notif[]; sinLeer: number };
+      console.log("[BELL-DEBUG] notifs:", data.notificaciones?.length, "unread:", data.sinLeer);
       setNotifs(data.notificaciones || []);
       setSinLeer(data.sinLeer || 0);
-    } catch {}
+    } catch(e) { console.log("[BELL-DEBUG] catch:", e) }
   }
 
   async function marcarTodasLeidas() {
