@@ -45,7 +45,8 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false })
       .limit(50);
 
-    if (error) throw error;
+    if (error) { console.error("[NOTIF-DEBUG] Query error:", error.message); throw error; }
+    console.log("[NOTIF-DEBUG] userId:", userId, "rows:", (notifs || []).length);
     const sinLeer = (notifs || []).filter((n: { leida: boolean }) => !n.leida).length;
     return NextResponse.json({ notificaciones: notifs || [], sinLeer });
   } catch (err) {
