@@ -23,10 +23,11 @@ interface WhatsAppMessage {
   components?: Array<{
     type: "header" | "body" | "button";
     parameters?: Array<{
-      type: "text";
-      text: string;
+      type: "text" | "payload";
+      text?: string;
+      payload?: string;
     }>;
-    sub_type?: string;
+    sub_type?: "url" | "quick_reply" | "call_to_action";
     index?: number;
   }>;
 }
@@ -157,17 +158,21 @@ export async function sendWhatsAppText(to: string, body: string): Promise<{
  * Envía una alerta de nueva oferta de empleo por WhatsApp.
  * Usa la plantilla "buscaycurra_alerta_empleo" (aprobada en Meta).
  *
- * Parámetros de la plantilla:
+ * Parámetros del cuerpo:
  * {{1}} = nombre del usuario
  * {{2}} = título del puesto
  * {{3}} = ciudad
+ * {{4}} = URL directa a la oferta (o búsqueda si no hay jobId)
  */
 export async function enviarAlertaWhatsApp(
   telefono: string,
-  datos: { nombre: string; puesto: string; ciudad: string }
+  datos: { nombre: string; puesto: string; ciudad: string; url?: string; keyword?: string }
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const limpio = telefono.replace(/[\s\+\-\(\)]/g, "");
   const to = limpio.startsWith("34") ? limpio : `34${limpio}`;
+
+  const urlOferta = datos.url
+    || `https://buscaycurra.es/app/buscar?q=${encodeURIComponent(datos.keyword || datos.puesto)}`;
 
   return sendWhatsAppTemplate({
     to,
@@ -180,6 +185,7 @@ export async function enviarAlertaWhatsApp(
           { type: "text", text: datos.nombre },
           { type: "text", text: datos.puesto },
           { type: "text", text: datos.ciudad || "España" },
+          { type: "text", text: urlOferta },
         ],
       },
     ],

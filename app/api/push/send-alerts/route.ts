@@ -194,6 +194,10 @@ export async function GET(request: NextRequest) {
             nombre: profileData.full_name?.split(" ")[0] || "Candidato",
             puesto: ejemplo.title,
             ciudad: ejemplo.city || alerta.location || "España",
+            url: ejemplo.id
+              ? `https://buscaycurra.es/app/ofertas/${encodeURIComponent(ejemplo.id)}`
+              : undefined,
+            keyword: alerta.keyword,
           });
         }
       } catch (emailErr) {
