@@ -8,8 +8,8 @@ export function middleware(request: NextRequest) {
     (c) => c.name.startsWith("sb-") && c.name.includes("auth-token")
   );
 
-  // Usuario autenticado en la raíz → ir directamente al app
-  if (pathname === "/") {
+  // Usuario autenticado en la raíz o en páginas de auth → ir al app
+  if (pathname === "/" || pathname.startsWith("/auth/")) {
     if (hasSession) {
       return NextResponse.redirect(new URL("/app/gusi", request.url));
     }
@@ -29,5 +29,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/app/:path*"],
+  matcher: ["/", "/auth/:path*", "/app/:path*"],
 };

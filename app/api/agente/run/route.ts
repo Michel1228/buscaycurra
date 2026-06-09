@@ -114,9 +114,12 @@ export async function POST(req: NextRequest) {
           try {
             const { enviarAlertaWhatsApp } = await import("@/lib/whatsapp/sender");
             await enviarAlertaWhatsApp(perfil.whatsapp_phone, {
-              nombre: ofertas[0].empresa,
+              nombre: perfil.full_name?.split(" ")[0] || "Candidato",
               puesto: ofertas[0].titulo,
               ciudad: ofertas[0].ubicacion,
+              url: ofertas[0].id
+                ? `https://buscaycurra.es/app/ofertas/${encodeURIComponent(ofertas[0].id)}`
+                : `https://buscaycurra.es/app/buscar?q=${encodeURIComponent(ofertas[0].titulo)}`,
             });
           } catch { /* WhatsApp optional */ }
         }
