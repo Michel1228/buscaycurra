@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         // 2. Obtener perfil para preferencias
         const { data: perfil } = await supabase
           .from("profiles")
-          .select("ciudad, sector, whatsapp_phone, whatsapp_alertas, email")
+          .select("ciudad, sector, whatsapp_phone, whatsapp_alertas, email, full_name")
           .eq("id", cv.user_id)
           .single();
 
