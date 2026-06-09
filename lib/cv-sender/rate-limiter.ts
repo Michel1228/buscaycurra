@@ -10,6 +10,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { PLAN_LIMITS, type UserPlan } from "./plans";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,8 +29,7 @@ function getSupabase(): any {
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
-/** Planes de usuario disponibles */
-export type UserPlan = "free" | "basico" | "esencial" | "pro" | "empresa";
+export type { UserPlan };
 
 /** Resultado de la verificación de límites */
 export interface RateLimitResult {
@@ -62,31 +62,7 @@ export async function checkRateLimit(
   plan: UserPlan,
   companyEmail?: string
 ): Promise<RateLimitResult> {
-  // Usamos las variables de entorno si están definidas, o los valores por defecto del plan
-  const limites = {
-    free: {
-      perDay: 2,
-      perMonth: 20,
-    },
-    basico: {
-      perDay: 5,
-      perMonth: 50,
-    },
-    esencial: {
-      perDay: 5,
-      perMonth: 60,
-    },
-    pro: {
-      perDay: 10,
-      perMonth: 200,
-    },
-    empresa: {
-      perDay: Infinity,
-      perMonth: Infinity,
-    },
-  };
-
-  const limite = limites[plan] ?? limites.free;
+  const limite = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
 
   // Si el plan es "empresa", siempre puede enviar (ilimitado)
   if (plan === "empresa") {

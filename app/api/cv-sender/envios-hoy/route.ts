@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { PLAN_LIMITS } from "@/lib/cv-sender/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -7,14 +8,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "http://placeholder",
   process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
 );
-
-// Límites diarios por plan
-const LIMITS: Record<string, number> = {
-  free: 2,
-  esencial: 5,
-  pro: 10,
-  empresa: 999,
-};
 
 // GET /api/cv-sender/envios-hoy?userId=xxx
 export async function GET(request: NextRequest) {
@@ -43,9 +36,10 @@ export async function GET(request: NextRequest) {
       .eq("user_id", userId)
       .gte("created_at", hoy.toISOString());
 
+    const planKey = (plan in PLAN_LIMITS ? plan : "free") as keyof typeof PLAN_LIMITS;
     return NextResponse.json({
       enviados: count || 0,
-      limite: LIMITS[plan] || 2,
+      limite: PLAN_LIMITS[planKey].perDay,
       plan: plan,
     });
   } catch (error) {
