@@ -20,14 +20,16 @@ export const stripe = getStripe();
 
 export const PLANES = {
   BASICO: process.env.STRIPE_PRICE_BASICO ?? "price_basico",
+  ESENCIAL: process.env.STRIPE_PRICE_ESENCIAL ?? "price_esencial",
   PRO: process.env.STRIPE_PRICE_PRO ?? "price_pro",
   EMPRESA: process.env.STRIPE_PRICE_EMPRESA ?? "price_empresa",
 } as const;
 
 export function getPlanFromPriceId(
   priceId: string
-): "free" | "basico" | "pro" | "empresa" {
+): "free" | "basico" | "esencial" | "pro" | "empresa" {
   if (priceId === PLANES.BASICO) return "basico";
+  if (priceId === PLANES.ESENCIAL) return "esencial";
   if (priceId === PLANES.PRO) return "pro";
   if (priceId === PLANES.EMPRESA) return "empresa";
   return "free";

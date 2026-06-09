@@ -30,7 +30,7 @@ async function programarEmpresasAdicionales(opts: {
   companyEmail: string; // excluir esta empresa (ya programada)
   priority?: "normal" | "prioritario";
   useAIPersonalization?: boolean;
-  userPlan: "free" | "basico" | "pro" | "empresa";
+  userPlan: "free" | "basico" | "esencial" | "pro" | "empresa";
 }) {
   try {
     const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
