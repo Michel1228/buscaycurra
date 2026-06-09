@@ -107,12 +107,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
   }, []);
 
   async function fetchNotifs() {
-    if (!tokenRef.current) {
-      // Token aún no cargado — reintentar obteniendo sesión
-      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-      if (session?.access_token) tokenRef.current = session.access_token;
-      else return;
-    }
+    // Token aún no cargado — reintentar obteniendo sesión
+    const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+    if (session?.access_token) tokenRef.current = session.access_token;
+    else return;
+
     try {
       const res = await fetch("/api/notifications", {
         headers: { "Authorization": `Bearer ${tokenRef.current}` },
