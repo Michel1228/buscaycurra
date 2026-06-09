@@ -393,7 +393,7 @@ function detectIntent(text: string): string {
   if (/(carta.*(recomendaci|presentaci|para\s+\w)|presentaci.*carta)/.test(t)) return "carta_recomendacion";
   if (/(crea|genera|haz|escrib).*(carta|dear family).*(au pair|aupair)/i.test(t) || /carta.*au.?pair/i.test(t) || /dear.?family/i.test(t)) return "carta_au_pair";
   if (/(busco|buscar|busca|necesito|quiero).*(au pair|aupair|niñera|nanny|canguro|childcare)/i.test(t)) return "buscar_au_pair";
-  if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)/.test(t)) return "buscar";
+  if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
   // Detectar "[puesto] en [ciudad]" sin verbo explícito (ej: "camarero en Tudela")
   if (/\w{3,}\s+(en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios)/i.test(t)) return "buscar";
   if (/(envi|manda|submit).*(cv|candidatura)|cv.*(envi|manda|automátic)/.test(t)) return "enviar";
@@ -522,7 +522,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
          WHERE "isActive" = true
            AND LOWER(title) LIKE $1
            AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2)
-           AND (country = $3 OR LOWER(country) LIKE $4 OR country IS NULL)
+           AND (country = $3 OR LOWER(country) LIKE $4)
          ORDER BY "createdAt" DESC LIMIT $5`,
         [kw, cityPat, isoCode, countryFilter, N]
       );
@@ -542,7 +542,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
              AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2
                   OR LOWER(city) LIKE $3 OR LOWER(province) LIKE $3
                   OR LOWER(city) LIKE $4)
-             AND (country = $5 OR LOWER(country) LIKE $6 OR country IS NULL)
+             AND (country = $5 OR LOWER(country) LIKE $6)
            ORDER BY "createdAt" DESC LIMIT $7`,
           [kw, cityPat, provPat, `%, ${provincia}%`, isoCode, countryFilter, N]
         );
@@ -626,7 +626,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
              FROM "JobListing"
              WHERE "isActive" = true
                AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
-               AND (country = $2 OR LOWER(country) LIKE $3 OR country IS NULL)
+               AND (country = $2 OR LOWER(country) LIKE $3)
              ORDER BY "createdAt" DESC LIMIT $4`,
             [synPat, isoCode, countryFilter, N]
           );
@@ -1233,24 +1233,20 @@ El candidato tiene mucha experiencia.
 }
 
 function extractJobTerm(text: string): string {
+  const stopwords = new Set(["trabajo", "empleo", "curro", "oferta", "algo", "en", "por", "para", "que", "lo", "la", "el", "un", "una"]);
   // "[puesto] en [ciudad]" — patrón más común (ej: "camarero en Tudela")
   const mDirect = text.match(/^([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)\s+(?:en|por)\s+\w+/i);
   if (mDirect?.[1]?.trim()) {
     let job = mDirect[1].trim();
-    // Limpiar verbos de búsqueda del inicio: "busca camarero" → "camarero"
     const prefixVerbs = ["busca", "busco", "buscar", "buscando", "necesito", "necesita", "quiero", "quiere", "búsqueda de", "busqueda de"];
     for (const v of prefixVerbs) {
-      const re = new RegExp(`^${v}\\s+`, "i");
-      job = job.replace(re, "");
+      job = job.replace(new RegExp(`^${v}\\s+`, "i"), "");
     }
-    // Limpiar palabras genéricas: "trabajo de camarero" → "camarero"
     const genericPrefixes = ["trabajo de", "trabajo como", "empleo de", "empleo como", "trabajo", "empleo", "curro", "oferta"];
     for (const g of genericPrefixes) {
-      const re = new RegExp(`^${g}\\s+`, "i");
-      job = job.replace(re, "");
+      job = job.replace(new RegExp(`^${g}\\s+`, "i"), "");
     }
     job = job.trim();
-    // Si tras limpiar solo queda una palabra genérica → no es un puesto real
     const genericWords = ["trabajo", "empleo", "curro", "oferta", "algo", "hola"];
     if (!genericWords.includes(job.toLowerCase()) && job.length >= 3) return job;
   }
@@ -1266,11 +1262,16 @@ function extractJobTerm(text: string): string {
   // "busco de/como X" sin "trabajo"
   const m4 = text.match(/busco\s+(?:de\s+|como\s+)([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)(?:\s+en\s+|\s*$)/i);
   if (m4?.[1]?.trim()) return m4[1].trim();
+  // "busco camarero en Madrid" — captura directamente el puesto sin "trabajo de"
+  const m5 = text.match(/(?:busco|busca)\s+((?!trabajo\b|empleo\b|curro\b|oferta\b)[a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]{1,30}?)(?:\s+en\s+|\s*$)/i);
+  if (m5?.[1]?.trim() && !stopwords.has(m5[1].trim().toLowerCase())) return m5[1].trim();
+  // "me interesa / estoy buscando [puesto]"
+  const m6 = text.match(/(?:me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)(?:\s+en\s+|\s*$)/i);
+  if (m6?.[1]?.trim()) return m6[1].trim();
   // fallback generico
-  const m5 = text.match(/(?:busco|buscar|necesito)\s+(?:trabajo|empleo)?\s*(?:de\s+|como\s+)(.+?)(?:\s+en\s+|$)/i);
-  const fallback = m5?.[1]?.trim() || "";
-  const stopwords = ["trabajo", "empleo", "curro", "oferta", "algo"];
-  return stopwords.includes(fallback.toLowerCase()) ? "" : fallback;
+  const m7 = text.match(/(?:busco|buscar|necesito)\s+(?:trabajo|empleo)?\s*(?:de\s+|como\s+)(.+?)(?:\s+en\s+|$)/i);
+  const fallback = m7?.[1]?.trim() || "";
+  return stopwords.has(fallback.toLowerCase()) ? "" : fallback;
 }
 
 function extractCity(text: string): string {
