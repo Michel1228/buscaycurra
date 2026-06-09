@@ -31,11 +31,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as { plan?: string };
     const plan = body.plan;
 
-    if (plan !== "basico" && plan !== "pro" && plan !== "empresa") {
+    if (plan !== "basico" && plan !== "esencial" && plan !== "pro" && plan !== "empresa") {
       return NextResponse.json({ error: "Plan no válido." }, { status: 400 });
     }
 
-    const priceId = plan === "basico" ? PLANES.BASICO : plan === "pro" ? PLANES.PRO : PLANES.EMPRESA;
+    const priceId =
+      plan === "basico" ? PLANES.BASICO :
+      plan === "esencial" ? PLANES.ESENCIAL :
+      plan === "pro" ? PLANES.PRO :
+      PLANES.EMPRESA;
 
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL ??

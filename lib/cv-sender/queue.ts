@@ -103,7 +103,7 @@ export interface CVJobData {
   priority: "normal" | "prioritario";
   useAIPersonalization: boolean;
   scheduledFor: number;
-  userPlan: "free" | "basico" | "pro" | "empresa";
+  userPlan: "free" | "basico" | "esencial" | "pro" | "empresa";
   frecuencia?: "unico" | "cada4dias";
 }
 

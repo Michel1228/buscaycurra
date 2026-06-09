@@ -83,12 +83,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        if (!plan || !["basico", "pro", "empresa"].includes(plan)) {
+        if (!plan || !["basico", "esencial", "pro", "empresa"].includes(plan)) {
           console.error("[stripe/webhook] checkout.session.completed con plan inválido en metadata:", plan);
           break;
         }
 
-        let planFinal = plan as "basico" | "pro" | "empresa";
+        let planFinal = plan as "basico" | "esencial" | "pro" | "empresa";
 
         // Si hay suscripción, obtener el price ID para determinar el plan exacto
         if (session.subscription) {
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
             if (priceId) {
               const planDesdePrice = getPlanFromPriceId(priceId);
               if (planDesdePrice !== "free") {
-                planFinal = planDesdePrice as "basico" | "pro" | "empresa";
+                planFinal = planDesdePrice as "basico" | "esencial" | "pro" | "empresa";
               }
             }
           } catch {
