@@ -83,14 +83,10 @@ export function getNotificationsQueue(): Queue {
   return _notificationsQueue;
 }
 
-// ─── Rate Limiting por Usuario ───────────────────────────────────────────────
-
-export const RATE_LIMITS = {
-  free:    { perDay: 3,        perMonth: 30  },
-  basico:  { perDay: 15,       perMonth: 150 },
-  pro:     { perDay: 50,       perMonth: 500 },
-  empresa: { perDay: Infinity, perMonth: Infinity },
-} as const;
+// ─── Límites de plan (fuente única: lib/cv-sender/plans.ts) ─────────────────
+import { PLAN_LIMITS, type UserPlan } from "./plans";
+export { PLAN_LIMITS as RATE_LIMITS };
+export type { UserPlan };
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -103,7 +99,7 @@ export interface CVJobData {
   priority: "normal" | "prioritario";
   useAIPersonalization: boolean;
   scheduledFor: number;
-  userPlan: "free" | "basico" | "esencial" | "pro" | "empresa";
+  userPlan: UserPlan;
   frecuencia?: "unico" | "cada4dias";
 }
 

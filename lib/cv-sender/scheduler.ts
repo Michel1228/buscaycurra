@@ -14,7 +14,7 @@
 
 import { addCVJob, getCvSenderQueue, CVJobData } from "./queue";
 import { checkRateLimit, getUserPlan } from "./rate-limiter";
-import { canSendToCompany } from "./tracker";
+import { canSendToCompany, recordSent } from "./tracker";
 
 // ─── Festivos Nacionales de España ───────────────────────────────────────────
 /**
@@ -237,8 +237,17 @@ export async function scheduleCV(
   // Prioridad en la cola: prioritario = 1, normal = 10
   const queuePriority = preferences.priority === "prioritario" ? 1 : 10;
 
-  // ── 5. Añadir a la cola ──────────────────────────────────────────────────
+  // ── 5. Añadir a la cola y reservar el slot de rate-limit ────────────────
   const jobId = await addCVJob(jobData, delayMs, queuePriority);
+  // Inserta "pendiente" en cv_sends para que el rate-limiter lo cuente
+  // antes de que el worker procese el job. Evita la race condition donde
+  // dos peticiones simultáneas pasan el check porque ninguna ha escrito aún.
+  await recordSent(userId, companyData.email, "pendiente", {
+    company_name: companyData.name,
+    company_url: companyData.url,
+    job_title: companyData.jobTitle,
+    job_id: jobId,
+  });
 
   // ── 6. Calcular posición en la cola ──────────────────────────────────────
   const waitingCount = await getCvSenderQueue().getWaitingCount();
@@ -329,6 +338,12 @@ export async function scheduleBulkCV(
       }
 
       const jobId = await addCVJob(jobData, delayMs, preferences.priority === "prioritario" ? 1 : 10);
+      await recordSent(userId, company.email, "pendiente", {
+        company_name: company.name,
+        company_url: company.url,
+        job_title: company.jobTitle,
+        job_id: jobId,
+      });
       const waitingCount = await getCvSenderQueue().getWaitingCount();
 
       resultados.push({
