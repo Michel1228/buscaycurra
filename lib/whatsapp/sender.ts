@@ -176,7 +176,7 @@ export async function enviarAlertaWhatsApp(
 
   return sendWhatsAppTemplate({
     to,
-    templateName: "buscaycurra_alerta_empleo",
+    templateName: "buscaycurra_alerta_en",
     language: "es",
     components: [
       {
