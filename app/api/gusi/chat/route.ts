@@ -562,7 +562,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
              WHERE "isActive" = true
                AND LOWER(title) LIKE $1
                AND (${nearPlaceholders})
-               AND (country = $${nearPatterns.length + 2} OR LOWER(country) LIKE $${nearPatterns.length + 3} OR country IS NULL)
+               AND (country = $${nearPatterns.length + 2} OR LOWER(country) LIKE $${nearPatterns.length + 3})
              ORDER BY "createdAt" DESC LIMIT $${nearPatterns.length + 4}`,
             nearParams
           );
@@ -591,7 +591,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
            WHERE "isActive" = true
              AND LOWER(title) LIKE $1
              AND (${orClauses})
-             AND (country = $2 OR LOWER(country) LIKE $3 OR country IS NULL)
+             AND (country = $2 OR LOWER(country) LIKE $3)
            ORDER BY "createdAt" DESC LIMIT $${params.length}`,
           params
         );
@@ -607,7 +607,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
        FROM "JobListing"
        WHERE "isActive" = true
          AND LOWER(title) LIKE $1
-         AND (country = $2 OR LOWER(country) LIKE $3 OR country IS NULL)
+         AND (country = $2 OR LOWER(country) LIKE $3)
        ORDER BY "createdAt" DESC LIMIT $4`,
       [kw, isoCode, countryFilter, N]
     );
