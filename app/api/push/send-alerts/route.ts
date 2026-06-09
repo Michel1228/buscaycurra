@@ -14,7 +14,7 @@ import { sendJobAlertEmail } from "@/lib/email/smtp-sender";
 
 export const dynamic = "force-dynamic";
 
-const ALERTS_SECRET = process.env.ALERTS_SECRET || "bcv-alerts-2026";
+const ALERTS_SECRET = process.env.ALERTS_SECRET;
 
 // Ciudad → provincia para búsqueda regional ampliada
 const CIUDAD_PROVINCIA: Record<string, string> = {
@@ -76,6 +76,9 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   // Auth del cron
+  if (!ALERTS_SECRET) {
+    return NextResponse.json({ error: "ALERTS_SECRET no configurada" }, { status: 503 });
+  }
   const auth = request.headers.get("Authorization");
   if (auth !== `Bearer ${ALERTS_SECRET}`) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });

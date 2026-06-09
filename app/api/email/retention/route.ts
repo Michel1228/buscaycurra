@@ -86,7 +86,10 @@ async function enviarEmail(
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
-  const secret = process.env.CRON_SECRET || "buscaycurra-cron-2025";
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    return NextResponse.json({ error: "CRON_SECRET no configurada" }, { status: 503 });
+  }
   if (authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

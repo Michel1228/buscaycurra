@@ -244,8 +244,6 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 50): Prom
     const data = await res.json();
     const jobs = data.jobs || [];
     console.log(`[Jooble] "${puesto}" en "${ubicacion}": ${jobs.length} ofertas`);
-
-    console.log(`[Jooble] "${puesto}" en Spain: ${jobs.length} ofertas (mostrando para ${ubicacion})`);
     return jobs.slice(0, limit).map((j: Record<string, string>, i: number) => ({
       id: `jooble-${Date.now()}-${i}`,
       titulo: j.title || puesto,
@@ -639,9 +637,13 @@ export async function buscarOfertasReales(
   const resultados: OfertaReal[] = [];
   const ciudadLower = ciudad.toLowerCase().trim();
 
+  function normKey(s: string): string {
+    return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "").slice(0, 40);
+  }
+
   function addResults(ofertas: OfertaReal[], distanciaTag?: string) {
     for (const o of ofertas) {
-      const key = `${o.titulo.toLowerCase().replace(/\s+/g, "")}-${o.empresa.toLowerCase().replace(/\s+/g, "")}`;
+      const key = `${normKey(o.titulo)}-${normKey(o.empresa)}`;
       if (!seen.has(key)) {
         seen.add(key);
         if (distanciaTag && !o.distancia) o.distancia = distanciaTag;
@@ -662,11 +664,11 @@ export async function buscarOfertasReales(
     console.log(`[JobSearch] Cache hit: ${cached.length} ofertas`);
     addResults(cached, "🏠 Tu ciudad");
   } else {
-    console.log("[JobSearch] Fase 1: Búsqueda paralela en 8 fuentes...");
+    console.log("[JobSearch] Fase 1: Búsqueda paralela en 7 fuentes...");
     const [joobleRes, adzunaRes, careerjetRes, linkedinRes, arbeitnowRes, remotiveRes, indeedRes, tecnoRes] =
       await Promise.allSettled([
         buscarJooble(puesto, ciudad, 25),
-        buscarAdzuna(puesto, ciudad, 25),
+        Promise.resolve([]), // Adzuna desactivada (rota desde mayo 2026)
         buscarCareerjet(puesto, ciudad, 25),
         buscarLinkedIn(puesto, ciudad),
         buscarArbeitnow(puesto, 20),
@@ -703,12 +705,10 @@ export async function buscarOfertasReales(
       if (kwCached) {
         addResults(kwCached, "🏠 Tu ciudad");
       } else {
-        const [a, li] = await Promise.allSettled([
-          buscarAdzuna(kw, ciudad, 30),
+        const [li] = await Promise.allSettled([
           buscarLinkedIn(kw, ciudad),
         ]);
         const kwResults: OfertaReal[] = [];
-        if (a.status === "fulfilled") kwResults.push(...a.value);
         if (li.status === "fulfilled") kwResults.push(...li.value);
         setCache(kwCacheKey, kwResults);
         addResults(kwResults, "🏠 Tu ciudad");
@@ -727,7 +727,7 @@ export async function buscarOfertasReales(
       if (cCached) {
         addResults(cCached, `📍 ${c.distancia}`);
       } else {
-        const r = await buscarAdzuna(puesto, c.nombre, 10);
+        const r = await buscarJooble(puesto, c.nombre, 10);
         setCache(cCacheKey, r);
         addResults(r, `📍 ${c.distancia}`);
       }
@@ -739,7 +739,7 @@ export async function buscarOfertasReales(
     const polis = POLIGONOS[ciudadLower] || [];
     for (const poli of polis.slice(0, 2)) {
       if (resultados.length >= limit) break;
-      const r = await buscarAdzuna("", poli, 5);
+      const r = await buscarJooble(puesto, poli, 5);
       addResults(r, "🏭 Polígono");
     }
   }

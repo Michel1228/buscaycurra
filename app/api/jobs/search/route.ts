@@ -131,17 +131,17 @@ export async function GET(request: NextRequest) {
       idx++;
     }
 
-    // Filtro por jornada (remoto, parcial, completa)
-    if (jornada) {
-      if (jornada === "remoto") {
-        conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
-        params.push("%remoto%");
-      } else if (jornada === "parcial") {
-        conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
-        params.push("%parcial%");
-      }
+    // Filtro por jornada (remoto, parcial)
+    if (jornada === "remoto") {
+      conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
+      params.push("%remoto%");
+      idx++;
+    } else if (jornada === "parcial") {
+      conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
+      params.push("%parcial%");
       idx++;
     }
+    // "completa" no añade condición (devuelve todo, que ya es el default)
 
     // Filtro por experiencia
     if (experiencia) {
@@ -154,7 +154,10 @@ export async function GET(request: NextRequest) {
       };
       const keywords = expMap[experiencia] || [];
       if (keywords.length > 0) {
-        const orClauses = keywords.map(() => `(title ILIKE $${idx} OR description ILIKE $${idx})`);
+        const orClauses = keywords.map((_, i) => {
+          const pi = idx + i;
+          return `(title ILIKE $${pi} OR description ILIKE $${pi})`;
+        });
         conditions.push(`(${orClauses.join(" OR ")})`);
         keywords.forEach(k => params.push(k));
         idx += keywords.length;

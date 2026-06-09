@@ -21,7 +21,7 @@ const opcionesExperiencia = [
   { valor: "sin-experiencia", etiqueta: "Sin experiencia" },
   { valor: "1-3", etiqueta: "1 – 3 años" },
   { valor: "3-5", etiqueta: "3 – 5 años" },
-  { valor: "5+", etiqueta: "Más de 5 años" },
+  { valor: "5-10", etiqueta: "Más de 5 años" },
 ];
 
 function BuscarPageInner() {
