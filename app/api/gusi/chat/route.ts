@@ -1238,7 +1238,7 @@ function extractJobTerm(text: string): string {
   const mDirect = text.match(/^([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)\s+(?:en|por)\s+\w+/i);
   if (mDirect?.[1]?.trim()) {
     let job = mDirect[1].trim();
-    const prefixVerbs = ["busca", "busco", "buscar", "buscando", "necesito", "necesita", "quiero", "quiere", "búsqueda de", "busqueda de"];
+    const prefixVerbs = ["busca", "busco", "buscar", "buscando", "necesito", "necesita", "quiero", "quiere", "búsqueda de", "busqueda de", "me interesa", "me gustaría", "estoy buscando", "quiero trabajar de", "quiero curro de"];
     for (const v of prefixVerbs) {
       job = job.replace(new RegExp(`^${v}\\s+`, "i"), "");
     }
