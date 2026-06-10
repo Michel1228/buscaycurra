@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
+import UsageCounter from "@/components/UsageCounter";
 
 interface Envio {
   id: string;
@@ -135,6 +136,11 @@ export default function EnviosPage() {
               Limpiar todo
             </button>
           )}
+        </div>
+
+        {/* Contador de uso del plan */}
+        <div className="mb-4 -mx-1">
+          <UsageCounter compact />
         </div>
 
         {/* Filtros */}

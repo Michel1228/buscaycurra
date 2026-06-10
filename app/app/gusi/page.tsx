@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GusiChat from "@/components/GusiChat";
 import { isNativeIOS } from "@/lib/utils/platform";
+import UsageCounter from "@/components/UsageCounter";
 
 const COMPARATIVA = [
   { aspecto: "Coste", buscaycurra: "2,99 €/mes", infojobs: "Gratis... con publicidad" },
@@ -118,6 +119,9 @@ export default function GusiPage() {
 
       {/* DERECHA: pills + chat */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+
+        {/* Contador de uso */}
+        <UsageCounter />
 
         {/* Chat */}
         <div className="flex-1 min-h-0 overflow-hidden">
