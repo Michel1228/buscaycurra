@@ -6,8 +6,8 @@ let pool: Pool | null = null;
 export function getPool(): Pool {
   if (!pool) {
     pool = new Pool({
-      host: "buscaycurra-db",
-      port: 5432,
+      host: process.env.PGHOST || "buscaycurra-db",
+      port: parseInt(process.env.PGPORT || "5432"),
       database: "buscaycurra",
       user: "buscaycurra",
       password: "ByCurra2026Secure!",

@@ -6,7 +6,7 @@
 import { fetchCareerjetGlobal, upsertJobsForSync } from "../lib/job-search/sync-worker";
 import { CAREERJET_COUNTRIES } from "../lib/job-search/careerjet-countries";
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10");
 const COUNTRIES = ["us","uk","au","ca","de","fr","nl","it","es","se","ch","be","pt","ie","no","dk","at","fi","nz","pl"];
 
 const offsets: Record<string, number> = {};

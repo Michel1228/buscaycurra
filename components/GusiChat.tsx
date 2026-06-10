@@ -73,6 +73,12 @@ interface Mensaje {
   text: string;
   action?: string;
   jobs?: Oferta[];
+  company?: {
+    nombre?: string; emailRrhh?: string; emailContacto?: string;
+    telefono?: string; urlWeb?: string; sector?: string;
+    googleAddress?: string; googleRating?: number; googleReviews?: number;
+    googleMapsUrl?: string;
+  };
 }
 
 const SUGERENCIAS = [
@@ -136,6 +142,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
   const [enviandoATodas, setEnviandoATodas] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -192,7 +199,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       });
 
       const data = await res.json();
-      setMensajes(prev => [...prev, { role: "gusi", text: data.reply || "¡Ups! Inténtalo de nuevo.", action: data.action, jobs: data.jobs }]);
+      setMensajes(prev => [...prev, { role: "gusi", text: data.reply || "¡Ups! Inténtalo de nuevo.", action: data.action, jobs: data.jobs, company: data.company }]);
     } catch {
       addMsg("gusi", "Sin conexión. Comprueba tu internet.");
     }
@@ -270,6 +277,69 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     setCargando(false);
   };
 
+  // ── Subir imagen (foto de cartel/tienda) → OCR + Google Places ──
+  const handleImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    if (!file.type.startsWith("image/")) {
+      addMsg("gusi", "⚠️ Solo acepto imágenes (JPG, PNG, WebP).");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      addMsg("gusi", "⚠️ La imagen es muy grande (máx 10MB).");
+      return;
+    }
+
+    addMsg("user", "📸 Analizando imagen...");
+    setCargando(true);
+
+    try {
+      // Convertir a base64
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Error leyendo imagen"));
+        reader.readAsDataURL(file);
+      });
+
+      // Capturar ubicación GPS (si el usuario lo permite)
+      let lat: number | undefined;
+      let lng: number | undefined;
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          if (!navigator.geolocation) reject(new Error("Sin GPS"));
+          else navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 60000,
+          });
+        });
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      } catch {
+        // Sin GPS — no pasa nada, la búsqueda será menos precisa
+      }
+
+      const res = await fetch("/api/gusi/analyze-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64, userId, lat, lng }),
+      });
+
+      const data = await res.json();
+      if (data.reply) {
+        addMsg("gusi", data.reply, data.action);
+      } else {
+        addMsg("gusi", data.error || "No pude analizar la imagen. Prueba de nuevo.");
+      }
+    } catch {
+      addMsg("gusi", "⚠️ Error al analizar la imagen. ¿Tienes conexión?");
+    }
+    setCargando(false);
+  };
+
   const enviarATodas = async (jobs: Oferta[]) => {
     if (enviandoATodas || !jobs.length) return;
     setEnviandoATodas(true);
@@ -306,8 +376,10 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       } catch { /* ignorar */ }
 
       if (!emailDestino) {
-        const slug = job.empresa.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 25);
-        emailDestino = `empleo@${slug}.es`;
+        // No hay email real — NO inventar emails falsos
+        errores++;
+        errList.push(`Sin email para ${job.empresa}`);
+        continue;
       }
 
       try {
@@ -344,6 +416,55 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     addMsg("gusi", msg);
     setEnviandoATodas(false);
     router.push("/app/envios");
+  };
+
+  const enviarCVAEmpresa = async (company: NonNullable<Mensaje["company"]>) => {
+    if (enviandoATodas || !company.nombre) return;
+    setEnviandoATodas(true);
+    setMostrarSugerencias(false);
+
+    const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+    if (!session) {
+      addMsg("gusi", "⚠️ Necesitas iniciar sesión para enviar CVs.");
+      setEnviandoATodas(false);
+      return;
+    }
+
+    const email = company.emailRrhh || company.emailContacto || "";
+    if (!email) {
+      addMsg("gusi", `⚠️ No tengo un email para **${company.nombre}**. Prueba con el nombre completo de la empresa o busca una oferta activa en el buscador.`);
+      setEnviandoATodas(false);
+      return;
+    }
+
+    addMsg("user", `Enviar mi CV a ${company.nombre}`);
+    addMsg("gusi", `📧 Enviando tu CV a **${company.nombre}** (${email})...`);
+
+    try {
+      const res = await fetch("/api/cv-sender/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          companyName: company.nombre,
+          companyEmail: email,
+          companyUrl: company.urlWeb || "",
+          jobTitle: `Candidatura a ${company.nombre}${company.sector ? ` (${company.sector})` : ""}`,
+        }),
+      });
+
+      if (res.ok) {
+        addMsg("gusi", `✅ **¡CV enviado a ${company.nombre}!**\n\n📧 Email: ${email}${company.telefono ? `\n📞 Teléfono: ${company.telefono}` : ""}${company.googleAddress ? `\n📍 Dirección: ${company.googleAddress}` : ""}\n\nPuedes ver el estado en **Mis envíos**. ¡Suerte! 🍀`);
+      } else {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        addMsg("gusi", `⚠️ ${err.error || "No se pudo enviar el CV. Revisa que tengas un CV subido."}`);
+      }
+    } catch {
+      addMsg("gusi", "⚠️ Error de conexión al enviar el CV.");
+    }
+    setEnviandoATodas(false);
   };
 
   const limpiar = () => {
@@ -506,6 +627,47 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                       </button>
                     </div>
                   )}
+                  {/* Acción: Enviar CV a empresa (Google Places) */}
+                  {m.action === "company_info" && m.company && (
+                    <div className="space-y-2">
+                      <div className="rounded-xl p-3" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-semibold" style={{ color: "#f1f5f9" }}>
+                              🏢 {m.company.nombre || "Empresa"}
+                            </p>
+                            {m.company.sector && (
+                              <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>
+                                📂 {m.company.sector}
+                              </p>
+                            )}
+                            {m.company.googleRating && (
+                              <p className="text-[11px]" style={{ color: "#f59e0b" }}>
+                                ⭐ {m.company.googleRating}/5 ({m.company.googleReviews || "?"} reseñas)
+                              </p>
+                            )}
+                            {m.company.emailRrhh && (
+                              <p className="text-[11px] mt-0.5" style={{ color: "#22c55e" }}>
+                                📧 {m.company.emailRrhh}
+                              </p>
+                            )}
+                            {m.company.telefono && (
+                              <p className="text-[11px]" style={{ color: "#94a3b8" }}>
+                                📞 {m.company.telefono}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => enviarCVAEmpresa(m.company!)}
+                            disabled={enviandoATodas}
+                            className="px-4 py-2 rounded-lg text-[12px] font-semibold transition hover:opacity-90 disabled:opacity-50 shrink-0"
+                            style={{ background: "#22c55e", color: "#0a1208" }}>
+                            {enviandoATodas ? "Enviando..." : "📧 Enviar mi CV"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -534,6 +696,12 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                 📎
               </button>
               <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleFile} />
+              <button onClick={() => imageRef.current?.click()} title="Foto de cartel/tienda (OCR)"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
+                style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
+                📸
+              </button>
+              <input ref={imageRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImage} />
               <input
                 value={input}
                 onChange={e => setInput(e.target.value)}

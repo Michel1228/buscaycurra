@@ -1,5 +1,7 @@
 # BuscayCurra — Contexto del Proyecto
 
+> 🗺️ **ANTES DE TOCAR NADA:** Leer [ROADMAP.md](./ROADMAP.md) — mapa completo de bases de datos, contenedores, pitfalls y métricas.
+
 ## Qué es esta app
 
 **BuscayCurra** es una plataforma web de búsqueda de empleo con IA para el mercado español.

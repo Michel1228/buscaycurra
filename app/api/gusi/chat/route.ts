@@ -17,7 +17,7 @@ Tu idioma es el ESPAÑOL. Toda tu respuesta debe estar en español de España, s
 - Si el usuario escribe en inglés, respóndele en español.
 - Esta instrucción tiene prioridad absoluta sobre cualquier otra.
 
-Eres Guzzi, el asistente de empleo de BuscayCurra (plataforma GLOBAL de empleo con IA, 21 países, 1.900.000+ ofertas activas).
+Eres Guzzi, el asistente de empleo de BuscayCurra (plataforma GLOBAL de empleo con IA, 21 países, 2.100.000+ ofertas activas).
 
 PERSONALIDAD:
 - Natural y cercano, como un amigo que sabe mucho de empleo en Europa.
@@ -393,10 +393,19 @@ function detectIntent(text: string): string {
   if (/(carta.*(recomendaci|presentaci|para\s+\w)|presentaci.*carta)/.test(t)) return "carta_recomendacion";
   if (/(crea|genera|haz|escrib).*(carta|dear family).*(au pair|aupair)/i.test(t) || /carta.*au.?pair/i.test(t) || /dear.?family/i.test(t)) return "carta_au_pair";
   if (/(busco|buscar|busca|necesito|quiero).*(au pair|aupair|niñera|nanny|canguro|childcare)/i.test(t)) return "buscar_au_pair";
+  // "busca [nombre de empresa]" — detectar como info_empresa si empieza con artículo o palabra de negocio
+  // "busca [nombre de empresa]" — detectar como info_empresa si empieza con artículo o palabra de negocio
+  if (/(?:busca|busco|info|información|hay|conoces|sabes)\s+(?:el\s+|la\s+|los\s+|las\s+|un\s+|una\s+)?(?:bar\s+|restaurante\s+|tienda\s+|hotel\s+|cafeter[ií]a\s+|empresa\s+|supermercado\s+|taller\s+|panader[ií]a\s+|farmacia\s+|cl[ií]nica\s+|peluquer[ií]a\s+)/i.test(t)) return "info_empresa";
+  // "empresas de [sector] en [ciudad]" → info_empresa
+  if (/empresas?\s+(?:de|del?)\s+\w+/i.test(t) && /\s+(?:en|por|cerca)\s+\w+/i.test(t)) return "info_empresa";
+  // "qué empresas / fábricas / negocios hay en X" → info_empresa
+  if (/(?:qué|que)\s+(?:empresas?|f[áa]bricas?|negocios?|comercios?|tiendas?)\s+(?:hay|conoces|sabes)\s+(?:en|por|cerca|de)\s+\w+/i.test(t)) return "info_empresa";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
   // Detectar "[puesto] en [ciudad]" sin verbo explícito (ej: "camarero en Tudela")
-  if (/\w{3,}\s+(en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios)/i.test(t)) return "buscar";
+  if (/\w{3,}\s+(?:en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios|trabajado|trabaj[éeáa]|trabajaba|experiencia|no\s+puedo|cargar\s+peso|espalda|dolor|lesi[oó]n|baja\s+m[ée]dica)/i.test(t)) return "buscar";
   if (/(envi|manda|submit).*(cv|candidatura)|cv.*(envi|manda|automátic)/.test(t)) return "enviar";
+  // "echar/tirar/dejar currículum/CV en [sitio]" → buscar
+  if (/(?:echar|tirar|dejar|entregar|repartir)\s+(?:el\s+)?(?:curr[ií]culum|cv|curriculo)s?/i.test(t) && /\s+(?:en|por)\s+\w+/i.test(t)) return "buscar";
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
   if (/(preparar|practicar|simul).*(entrevista)|entrevista.*(preparar|practica)/.test(t)) return "entrevista_prep";
   if (/(crear|hacer|nuevo).*(cv|curriculum)/.test(t)) return "crear_cv";
@@ -464,7 +473,7 @@ const CIUDADES_CERCANAS: Record<string, string[]> = {
 const SINONIMOS_PUESTO: Record<string, string[]> = {
   carretillero: ["carretilla", "almacen", "logistica", "operario almacen", "mozo almacen", "picking", "preparador pedidos"],
   mecanico: ["taller", "mantenimiento mecanico", "mecanico vehiculos", "mecanico industrial"],
-  camarero: ["hosteleria", "restaurante", "sala", "servicio mesas", "barman"],
+  camarero: ["hosteleria", "restaurante", "sala", "servicio mesas", "barman", "bares", "bar", "barra", "comedor"],
   cocinero: ["cocina", "chef", "ayudante cocina", "cocinero", "gastronomia"],
   conductor: ["chofer", "transportista", "repartidor", "camionero", "distribuidor"],
   administrativo: ["administracion", "oficina", "secretaria", "gestion administrativa"],
@@ -669,7 +678,7 @@ function fallbackMessage(puesto: string, ciudad: string): string {
   const sugerencias = syn
     ? `\n• 🔄 Prueba: "${syn[1][0]}" o "${syn[1][1]}"`
     : "\n• 🔄 Prueba con otro nombre del puesto";
-  return `🔍 No encontré ofertas activas para **${puesto}**${ciudad ? ` en **${ciudad}**` : ""}.\n${sugerencias}\n• 📍 Amplía la zona (provincia o comunidad)\n• 🔍 Usa el buscador avanzado con más filtros\n• 📧 Activa alertas y te aviso cuando lleguen\n\n🐛 ¡El mercado se mueve a diario, vuelvo a mirar mañana!`;
+  return `🔍 No encontré ofertas activas para **${puesto}**${ciudad ? ` en **${ciudad}**` : ""}.\n${sugerencias}\n• 📍 Amplía la zona (provincia o comunidad)\n• 🔍 Usa el buscador avanzado con más filtros\n• 📧 Activa alertas y te aviso cuando lleguen\n• 🏢 ¿Es una empresa pequeña o local? Dime el nombre y te busco en Google Maps con teléfono, email y web para enviar el CV directamente.\n\n🐛 ¡El mercado se mueve a diario, vuelvo a mirar mañana!`;
 }
 
 function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope?: string): string {
@@ -694,7 +703,7 @@ function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope
   if (scope && scope !== "ciudad") {
     text += `ℹ️ _No encontré resultados exactos en "${ciudad}", te muestro los más cercanos._\n\n`;
   }
-  text += `📧 **¿Envío tu CV a todas?** Di "sí" y me encargo. O dime en qué empresa te interesa más. 🐛`;
+  text += `📧 **¿Envío tu CV a todas?** Di "sí" y me encargo.\n\n💡 _¿Buscas una empresa que no sale? Dime "busca [nombre]" y te doy email y teléfono con Google Maps._`;
   return text;
 }
 
@@ -711,7 +720,14 @@ function extractCompanyName(text: string): string | null {
     if (m?.[1]) return m[1].trim();
   }
   // Fallback: si el texto es corto y parece nombre de empresa
-  const clean = text.replace(/^(?:busca|info|información|datos|dime|conoce|saber)\s+(?:sobre\s+)?(?:la\s+)?(?:empresa\s+)?/i, "").trim();
+  let clean = text.replace(/^(?:busca|busco|info|información|datos|dime|conoce|saber|rastrea|rastreame)\s+(?:sobre\s+)?(?:la\s+)?(?:empresa\s+)?/i, "").trim();
+  // Quitar artículos y palabras de tipo de negocio del principio
+  clean = clean.replace(/^(?:el|la|los|las|un|una)\s+/i, "");
+  clean = clean.replace(/^(?:bar|restaurante|tienda|hotel|cafeter[ií]a|empresa|supermercado|taller|panader[ií]a|farmacia|cl[ií]nica|peluquer[ií]a|pizzer[ií]a|hamburgueser[ií]a|asador|sidrer[ií]a|taberna|bodega|mes[óo]n)\s+/i, "");
+  // Quitar "en [ciudad]" o ", [ciudad]" del final
+  clean = clean.replace(/\s+(?:en|por)\s+\w[\w\s]*$/i, "");
+  clean = clean.replace(/,\s*\w[\w\s]*$/i, "");
+  clean = clean.replace(/\s+para\s+echar\s+(?:el\s+)?curr[ií]culum.*$/i, "");
   if (clean.length >= 3 && clean.length <= 50 && !/(?:trabajo|empleo|cv|curriculum|oferta|buscar)/i.test(clean)) {
     return clean;
   }
@@ -848,6 +864,7 @@ export async function POST(req: NextRequest) {
 
     const cvParsed = cvData ? parseCVData(cvData) : null;
     const groqKey = process.env.GROQ_API_KEY;
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
 
     async function callGroq(systemPrompt: string, userContent: string, maxTokens = 600) {
       if (!groqKey) return null;
@@ -878,6 +895,40 @@ export async function POST(req: NextRequest) {
           const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
           const raw = data.choices?.[0]?.message?.content || null;
           return raw ? raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() : null;
+        } catch {
+          if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
+          return null;
+        }
+      }
+      return null;
+    }
+
+    async function callDeepSeek(systemPrompt: string, userContent: string, maxTokens = 800) {
+      if (!deepseekKey) return null;
+      const body = JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+        temperature: 0.7,
+        max_tokens: maxTokens,
+      });
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch("https://api.deepseek.com/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
+            body,
+            signal: AbortSignal.timeout(25000),
+          });
+          if (!res.ok) {
+            if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
+            return null;
+          }
+          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+          return data.choices?.[0]?.message?.content?.trim() || null;
         } catch {
           if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
           return null;
@@ -962,10 +1013,11 @@ El candidato tiene mucha experiencia.
 
       try {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://buscaycurra.es";
+        const searchCity = extractCity(message) || "";
         const extractRes = await fetch(`${siteUrl}/api/company/extract`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: companyName }),
+          body: JSON.stringify({ name: companyName, city: searchCity || undefined }),
           signal: AbortSignal.timeout(15000),
         });
 
@@ -976,28 +1028,41 @@ El candidato tiene mucha experiencia.
           });
         }
 
-        const empresa = await extractRes.json() as {
-          nombre?: string; dominio?: string; urlWeb?: string;
-          emailRrhh?: string; emailContacto?: string; telefono?: string;
-          paginaEmpleo?: string; descripcion?: string; sector?: string;
-          linkedin?: string; twitter?: string; instagram?: string;
-          fuente?: string; googleRating?: number; googleReviews?: number;
-          googleAddress?: string; googleMapsUrl?: string;
+        const extractData = await extractRes.json() as {
+          success?: boolean;
+          empresas?: Array<{
+            nombre?: string; dominio?: string; urlWeb?: string;
+            emailRrhh?: string; emailContacto?: string; emailsExtraidos?: string[];
+            telefono?: string; paginaEmpleo?: string; descripcion?: string;
+            sector?: string; linkedin?: string; twitter?: string; instagram?: string;
+            fuente?: string; googleRating?: number; googleReviews?: number;
+            googleAddress?: string; googleMapsUrl?: string;
+          }>;
         };
 
-        let reply = `🏢 **${empresa.nombre || companyName}**\n\n`;
+        const empresa = extractData.empresas?.[0];
+        if (!empresa || !empresa.nombre) {
+          return NextResponse.json({
+            reply: `🏢 No encontré información de **${companyName}** en Google Places. ¿Seguro que el nombre es correcto? Prueba con el nombre completo o la ciudad. 🐛`,
+            action: "company_not_found",
+          });
+        }
+
+        let reply = `🏢 **${empresa.nombre}**\n\n`;
         if (empresa.sector) reply += `📂 **Sector:** ${empresa.sector}\n`;
-        if (empresa.descripcion) reply += `📝 ${empresa.descripcion.slice(0, 300)}...\n`;
         if (empresa.googleRating) reply += `⭐ **Valoración Google:** ${empresa.googleRating}/5 (${empresa.googleReviews || "?"} reseñas)\n`;
         if (empresa.googleAddress) reply += `📍 ${empresa.googleAddress}\n`;
         if (empresa.telefono) reply += `📞 ${empresa.telefono}\n`;
         if (empresa.emailRrhh) reply += `📧 ${empresa.emailRrhh}\n`;
         if (empresa.urlWeb) reply += `🌐 [Web](${empresa.urlWeb})\n`;
-        if (empresa.paginaEmpleo) reply += `💼 [Ofertas de empleo](${empresa.paginaEmpleo})\n`;
-        if (empresa.linkedin) reply += `🔗 [LinkedIn](${empresa.linkedin})\n`;
-        reply += `\n📧 ¿Quieres que envíe tu CV a esta empresa? Dime \"sí\" y me encargo.`;
+        if (empresa.googleMapsUrl) reply += `🗺️ [Google Maps](${empresa.googleMapsUrl})\n`;
+        reply += `\n📧 **¿Envío tu CV a ${empresa.nombre}?** Responde \"sí\" y me encargo.`;
 
-        return NextResponse.json({ reply, action: "company_info", company: empresa });
+        return NextResponse.json({
+          reply,
+          action: "company_info",
+          company: empresa,
+        });
       } catch {
         return NextResponse.json({
           reply: `🏢 **${companyName}** — no pude conectar con Google Places ahora. ¿Quieres que busque ofertas de esta empresa en nuestra base de datos? 🔍`,
@@ -1194,33 +1259,52 @@ El candidato tiene mucha experiencia.
       { role: "user" as const, content: message },
     ];
 
-    if (!groqKey) {
-      return NextResponse.json({ reply: localReply(intent, cvParsed) });
+    // Chat normal: DeepSeek primero (mejor español), Groq como fallback
+    let rawReply = "";
+
+    // Intento 1: DeepSeek (sin /no_think, no lo necesita)
+    if (deepseekKey) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch("https://api.deepseek.com/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
+            body: JSON.stringify({ model: "deepseek-chat", messages, max_tokens: 1024, temperature: 0.7 }),
+            signal: AbortSignal.timeout(25000),
+          });
+          if (res.ok) {
+            const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+            rawReply = data.choices?.[0]?.message?.content || "";
+            if (rawReply) break;
+          }
+        } catch { /* retry */ }
+        if (attempt === 0) await new Promise(r => setTimeout(r, 600));
+      }
     }
 
-    // Añadir /no_think al último mensaje del usuario para forzar respuesta directa en español
-    const msgsConNoThink = messages.map((m, i) =>
-      i === messages.length - 1 && m.role === "user"
-        ? { ...m, content: "/no_think " + m.content }
-        : m
-    );
-    // Chat normal con retry
-    let rawReply = "";
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
-          body: JSON.stringify({ model: "qwen/qwen3-32b", messages: msgsConNoThink, max_tokens: 1024, temperature: 0.7 }),
-          signal: AbortSignal.timeout(20000),
-        });
-        if (res.ok) {
-          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-          rawReply = data.choices?.[0]?.message?.content || "";
-          break;
-        }
-      } catch { /* retry */ }
-      if (attempt === 0) await new Promise(r => setTimeout(r, 800));
+    // Intento 2: Groq (fallback con /no_think)
+    if (!rawReply && groqKey) {
+      const msgsConNoThink = messages.map((m, i) =>
+        i === messages.length - 1 && m.role === "user"
+          ? { ...m, content: "/no_think " + m.content }
+          : m
+      );
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
+            body: JSON.stringify({ model: "qwen/qwen3-32b", messages: msgsConNoThink, max_tokens: 1024, temperature: 0.7 }),
+            signal: AbortSignal.timeout(20000),
+          });
+          if (res.ok) {
+            const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+            rawReply = data.choices?.[0]?.message?.content || "";
+            if (rawReply) break;
+          }
+        } catch { /* retry */ }
+        if (attempt === 0) await new Promise(r => setTimeout(r, 800));
+      }
     }
 
     if (!rawReply) return NextResponse.json({ reply: localReply(intent, cvParsed) });
@@ -1238,11 +1322,17 @@ function extractJobTerm(text: string): string {
   const mDirect = text.match(/^([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)\s+(?:en|por)\s+\w+/i);
   if (mDirect?.[1]?.trim()) {
     let job = mDirect[1].trim();
-    const prefixVerbs = ["busca", "busco", "buscar", "buscando", "necesito", "necesita", "quiero", "quiere", "búsqueda de", "busqueda de", "me interesa", "me gustaría", "estoy buscando", "quiero trabajar de", "quiero curro de"];
+    const prefixVerbs = ["busca", "busco", "buscar", "buscando", "necesito", "necesita", "quiero", "quiere", "búsqueda de", "busqueda de", "me interesa", "me gustaría", "estoy buscando", "quiero trabajar de", "quiero curro de", "rastreame", "rastrea", "rastrear", "búscame", "encuéntrame", "localízame", "encuentrame", "localizame", "échame un ojo a", "quiero echar", "quiero tirar", "quiero dejar", "voy a echar", "voy a tirar", "voy a dejar", "echar", "tirar", "dejar"];
+    // Limpiar "currículum/CV en [lugar]" del job term
+    job = job.replace(/\s+(?:el\s+)?(?:curr[ií]culum|curriculo|cv)\s*(?:en|por)?\s*$/i, "");
+    job = job.replace(/\s+(?:el\s+)?(?:curr[ií]culum|curriculo|cv)\s+(?:en|por)\s+\w[\w\s]*$/i, "");
     for (const v of prefixVerbs) {
       job = job.replace(new RegExp(`^${v}\\s+`, "i"), "");
     }
     const genericPrefixes = ["trabajo de", "trabajo como", "empleo de", "empleo como", "trabajo", "empleo", "curro", "oferta"];
+    // Limpiar sufijos: "para echar currículum", "para enviar CV", etc.
+    job = job.replace(/\s+para\s+echar\s+(?:el\s+)?curr[íi]culum.*$/i, "");
+    job = job.replace(/\s+para\s+(?:enviar|mandar|tirar)\s+(?:el\s+)?(?:cv|curr[íi]culum).*$/i, "");
     for (const g of genericPrefixes) {
       job = job.replace(new RegExp(`^${g}\\s+`, "i"), "");
     }
@@ -1268,6 +1358,9 @@ function extractJobTerm(text: string): string {
   // "me interesa / estoy buscando [puesto]"
   const m6 = text.match(/(?:me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)(?:\s+en\s+|\s*$)/i);
   if (m6?.[1]?.trim()) return m6[1].trim();
+  // "echar/tirar/dejar (el) currículum/CV en [puesto/lugar]" → extraer puesto
+  const m6b = text.match(/(?:echar|tirar|dejar|entregar|repartir)\s+(?:el\s+)?(?:curr[ií]culum|curriculo|cv)\s+(?:en|por)\s+(?:el\s+|la\s+|los\s+|las\s+)?([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)(?:\s+(?:en|por|de)\s+\w+|\s*$)/i);
+  if (m6b?.[1]?.trim()) return m6b[1].trim();
   // fallback generico
   const m7 = text.match(/(?:busco|buscar|necesito)\s+(?:trabajo|empleo)?\s*(?:de\s+|como\s+)(.+?)(?:\s+en\s+|$)/i);
   const fallback = m7?.[1]?.trim() || "";

@@ -2,9 +2,9 @@
  * Router inteligente de IA para BuscayCurra
  *
  * Decide automáticamente qué IA usar según:
- * - El tipo de tarea (CV largo → Gemini, chat rápido → Groq)
- * - Los límites de cada API (si Groq está lleno, usa Gemini y viceversa)
- * - Si ambos están llenos, pone la tarea en cola para mañana
+ * - El tipo de tarea (chat → DeepSeek, CV largo → Gemini, rápido → Groq)
+ * - Los límites de cada API (si una está llena, usa otra)
+ * - Si todas están llenas, pone la tarea en cola para mañana
  *
  * El resto de la app solo llama a este router y no necesita
  * saber qué IA se usa internamente ✅
@@ -13,6 +13,7 @@
 import { get } from "../cache/redis-client";
 import { llamarGroq, mejorarCV, generarCartaPresentacion, analizarOfertaTrabajo, LIMITE_DIARIO_GROQ } from "./groq-client";
 import { llamarGemini, analizarCVLargo, extraerDatosEmpresa, LIMITE_DIARIO_GEMINI } from "./gemini-client";
+import { llamarDeepSeek, LIMITE_DIARIO_DEEPSEEK } from "./deepseek-client";
 import { TipoPeticionIA } from "../cache/ai-cache";
 
 // ==========================================
@@ -32,10 +33,12 @@ export type TareaIA =
 // Estructura de respuesta del router
 export interface RespuestaRouter {
   respuesta: string;
-  iaUsada: "groq" | "gemini" | "cola";
+  iaUsada: "groq" | "gemini" | "deepseek" | "cola";
   desdecache: boolean;
   tiempoMs: number;
 }
+
+type IA = "groq" | "gemini" | "deepseek";
 
 // ==========================================
 // LÓGICA DE SELECCIÓN DE IA
@@ -43,52 +46,44 @@ export interface RespuestaRouter {
 
 /**
  * Determina la IA preferida para cada tipo de tarea
- * Basado en las características de cada modelo:
  *
- * Groq  → Velocidad (500 tokens/s), ideal para tareas cortas y chat
- * Gemini → Contexto largo (1M tokens), ideal para análisis complejos
+ * DeepSeek → Chat y NLP (mejor español coloquial)
+ * Gemini   → Contexto largo (1M tokens), análisis complejos
+ * Groq     → Velocidad (500 tokens/s), tareas cortas
  */
-function iaPreferida(tarea: TareaIA): "groq" | "gemini" {
-  const tareasGemini: TareaIA[] = [
-    "mejorar-cv-largo",      // CVs largos necesitan más contexto
-    "analizar-empresa-web",  // Analizar webs completas (HTML largo)
-  ];
+function iaPreferida(tarea: TareaIA): IA {
+  // DeepSeek: el mejor para entender español coloquial
+  if (tarea === "chat-agente") return "deepseek";
 
-  const tareasGroq: TareaIA[] = [
-    "chat-agente",           // Chat requiere velocidad máxima
-    "carta-presentacion",    // Rápido y preciso
-    "analizar-oferta",       // Análisis corto
-    "mejorar-cv",            // CVs normales
-    "generico",
-  ];
+  // Gemini: contexto largo para CVs largos y análisis web
+  if (tarea === "mejorar-cv-largo" || tarea === "analizar-empresa-web") {
+    return "gemini";
+  }
 
-  if (tareasGemini.includes(tarea)) return "gemini";
-  return "groq"; // Por defecto Groq (más rápido)
+  // Groq: rápido para el resto
+  return "groq";
 }
 
 // ==========================================
 // VERIFICACIÓN DE LÍMITES
 // ==========================================
 
-/**
- * Comprueba cuántas llamadas llevamos hoy para cada IA
- * Devuelve true si la IA especificada puede recibir más llamadas
- */
-async function iaDisponible(ia: "groq" | "gemini"): Promise<boolean> {
+async function iaDisponible(ia: IA): Promise<boolean> {
   const fecha = new Date().toISOString().split("T")[0];
 
   try {
     if (ia === "groq") {
       const llamadasStr = await get(`groq:calls:${fecha}`);
-      const llamadas = parseInt(llamadasStr || "0");
-      return llamadas < LIMITE_DIARIO_GROQ;
-    } else {
+      return parseInt(llamadasStr || "0") < LIMITE_DIARIO_GROQ;
+    } else if (ia === "gemini") {
       const llamadasStr = await get(`gemini:calls:${fecha}`);
-      const llamadas = parseInt(llamadasStr || "0");
-      return llamadas < LIMITE_DIARIO_GEMINI;
+      return parseInt(llamadasStr || "0") < LIMITE_DIARIO_GEMINI;
+    } else {
+      const llamadasStr = await get(`deepseek:calls:${fecha}`);
+      return parseInt(llamadasStr || "0") < LIMITE_DIARIO_DEEPSEEK;
     }
   } catch {
-    return true; // Si no podemos verificar, asumir que está disponible
+    return true;
   }
 }
 
@@ -96,14 +91,6 @@ async function iaDisponible(ia: "groq" | "gemini"): Promise<boolean> {
 // ROUTER PRINCIPAL
 // ==========================================
 
-/**
- * Función principal del router
- * Decide qué IA usar y la llama automáticamente
- *
- * @param tarea - Tipo de tarea a realizar
- * @param contenido - El texto a procesar (CV, oferta, prompt, etc.)
- * @param extra - Información adicional (empresa, puesto, etc.)
- */
 export async function enrutarPeticionIA(
   tarea: TareaIA,
   contenido: string,
@@ -114,72 +101,78 @@ export async function enrutarPeticionIA(
   }
 ): Promise<RespuestaRouter> {
   const inicio = Date.now();
-  let iaUsada: "groq" | "gemini" | "cola" = "groq";
+  let iaUsada: IA | "cola" = "groq";
   let respuesta = "";
 
   try {
-    // Paso 1: Determinar qué IA preferiríamos usar
     const iaPreferidaParaTarea = iaPreferida(tarea);
 
-    // Paso 2: Comprobar si la IA preferida está disponible
-    const iaPreferidaDisponible = await iaDisponible(iaPreferidaParaTarea);
-    const iaAlternativa = iaPreferidaParaTarea === "groq" ? "gemini" : "groq";
-    const iaAlternativaDisponible = await iaDisponible(iaAlternativa);
+    // Comprobar disponibilidad de las 3 IAs
+    const preferidaOk = await iaDisponible(iaPreferidaParaTarea);
 
-    // Paso 3: Seleccionar la IA a usar
-    let iaSeleccionada: "groq" | "gemini";
-
-    if (iaPreferidaDisponible) {
-      iaSeleccionada = iaPreferidaParaTarea;
-      console.log(`🎯 Router: usando ${iaSeleccionada} (preferida para ${tarea})`);
-    } else if (iaAlternativaDisponible) {
-      iaSeleccionada = iaAlternativa;
-      console.log(`🔄 Router: ${iaPreferidaParaTarea} lleno, usando ${iaAlternativa}`);
+    if (preferidaOk) {
+      iaUsada = iaPreferidaParaTarea;
+      console.log(`🎯 Router: usando ${iaUsada} (preferida para ${tarea})`);
     } else {
-      // Ambas IAs han llegado a su límite
-      console.warn("⚠️  Router: ambas IAs han alcanzado el límite diario");
-      iaUsada = "cola";
-      return {
-        respuesta: "Tu petición ha sido recibida pero las IAs han alcanzado su límite diario. Se procesará mañana.",
-        iaUsada: "cola",
-        desdecache: false,
-        tiempoMs: Date.now() - inicio,
-      };
+      // Fallback: probar las otras dos en orden
+      const alternativas: IA[] = ["deepseek", "groq", "gemini"].filter(
+        (ia) => ia !== iaPreferidaParaTarea
+      ) as IA[];
+
+      let encontrada = false;
+      for (const alt of alternativas) {
+        if (await iaDisponible(alt)) {
+          iaUsada = alt;
+          console.log(`🔄 Router: ${iaPreferidaParaTarea} lleno, usando ${alt}`);
+          encontrada = true;
+          break;
+        }
+      }
+
+      if (!encontrada) {
+        console.warn("⚠️  Router: las 3 IAs han alcanzado el límite diario");
+        return {
+          respuesta:
+            "Todas las IAs han alcanzado su límite diario. Tu petición se procesará mañana.",
+          iaUsada: "cola",
+          desdecache: false,
+          tiempoMs: Date.now() - inicio,
+        };
+      }
     }
 
-    iaUsada = iaSeleccionada;
-
-    // Paso 4: Ejecutar la tarea con la IA seleccionada
-    respuesta = await ejecutarTareaConIA(iaSeleccionada, tarea, contenido, extra);
+    // Ejecutar con la IA seleccionada
+    respuesta = await ejecutarTareaConIA(iaUsada, tarea, contenido, extra);
 
     const tiempoMs = Date.now() - inicio;
     console.log(`✅ Router completado: ${tarea} con ${iaUsada} en ${tiempoMs}ms`);
 
-    return {
-      respuesta,
-      iaUsada,
-      desdecache: false, // El caché está manejado internamente en cada cliente
-      tiempoMs,
-    };
+    return { respuesta, iaUsada, desdecache: false, tiempoMs };
   } catch (error) {
     const mensaje = (error as Error).message;
 
-    // Si una IA da error de límite, intentar con la otra
-    if (mensaje === "GROQ_LIMIT_REACHED" || mensaje === "GEMINI_LIMIT_REACHED") {
-      const iaFallback = iaUsada === "groq" ? "gemini" : "groq";
-      const fallbackDisponible = await iaDisponible(iaFallback);
+    // Si una IA da error de límite, intentar con otra
+    if (
+      mensaje === "GROQ_LIMIT_REACHED" ||
+      mensaje === "GEMINI_LIMIT_REACHED" ||
+      mensaje === "DEEPSEEK_LIMIT_REACHED"
+    ) {
+      const iaFallida = mensaje.split("_")[0].toLowerCase() as IA;
+      const alternativas: IA[] = ["deepseek", "groq", "gemini"].filter(
+        (ia) => ia !== iaFallida
+      ) as IA[];
 
-      if (fallbackDisponible) {
-        console.log(`🔄 Router: error en ${iaUsada}, intentando con ${iaFallback}`);
-        respuesta = await ejecutarTareaConIA(iaFallback, tarea, contenido, extra);
-        iaUsada = iaFallback;
-
-        return {
-          respuesta,
-          iaUsada,
-          desdecache: false,
-          tiempoMs: Date.now() - inicio,
-        };
+      for (const fallback of alternativas) {
+        if (await iaDisponible(fallback)) {
+          console.log(`🔄 Router: error en ${iaFallida}, usando ${fallback}`);
+          respuesta = await ejecutarTareaConIA(fallback, tarea, contenido, extra);
+          return {
+            respuesta,
+            iaUsada: fallback,
+            desdecache: false,
+            tiempoMs: Date.now() - inicio,
+          };
+        }
       }
     }
 
@@ -192,12 +185,8 @@ export async function enrutarPeticionIA(
 // EJECUTOR DE TAREAS
 // ==========================================
 
-/**
- * Ejecuta una tarea específica con la IA seleccionada
- * Llama a la función especializada según el tipo de tarea
- */
 async function ejecutarTareaConIA(
-  ia: "groq" | "gemini",
+  ia: IA,
   tarea: TareaIA,
   contenido: string,
   extra?: {
@@ -206,7 +195,6 @@ async function ejecutarTareaConIA(
     urlEmpresa?: string;
   }
 ): Promise<string> {
-  // Mapear tarea a tipo de caché
   const tipoCache: Record<TareaIA, TipoPeticionIA> = {
     "mejorar-cv": "mejora-cv",
     "mejorar-cv-largo": "mejora-cv",
@@ -217,46 +205,42 @@ async function ejecutarTareaConIA(
     "generico": "generico",
   };
 
+  // === GROQ ===
   if (ia === "groq") {
     switch (tarea) {
       case "mejorar-cv":
         return await mejorarCV(contenido, extra?.puesto || "");
-
       case "carta-presentacion":
         return await generarCartaPresentacion(
           contenido,
           extra?.empresa || "",
           extra?.puesto || ""
         );
-
       case "analizar-oferta":
         return await analizarOfertaTrabajo(contenido);
-
       default:
-        // Para tareas genéricas o chat, usar la función base
         return await llamarGroq(contenido, tipoCache[tarea]);
     }
-  } else {
-    // Gemini
+  }
+
+  // === GEMINI ===
+  if (ia === "gemini") {
     switch (tarea) {
       case "mejorar-cv-largo":
         return await analizarCVLargo(contenido);
-
       case "analizar-empresa-web":
         return await extraerDatosEmpresa(contenido, extra?.urlEmpresa || "");
-
       default:
         return await llamarGemini(contenido, tipoCache[tarea]);
     }
   }
+
+  // === DEEPSEEK ===
+  return await llamarDeepSeek(contenido, tipoCache[tarea]);
 }
 
 /**
  * Función de conveniencia: enrutar según la longitud del CV
- * Si el CV tiene más de 2000 palabras, usa Gemini (más contexto)
- *
- * @param textoCv - El texto del CV
- * @param puesto - El puesto al que aplica
  */
 export async function enrutarMejoraCV(
   textoCv: string,
