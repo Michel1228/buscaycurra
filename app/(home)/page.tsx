@@ -100,10 +100,74 @@ export default async function LandingPage() {
 
   // ── Planes ──
   const planes = [
-    { nombre: "Gratis", precio: "0", periodo: "", desc: "Para probar sin compromiso", items: ["2 CVs enviados por día", "Mejora de CV con IA", "Búsqueda de ofertas", "Pipeline de candidaturas"], nota: "Sin tarjeta de crédito", destacado: false, cta: "Empezar gratis" },
-    { nombre: "Esencial", precio: "2,99", periodo: "/mes", desc: "Menos que un café al mes", items: ["60 candidaturas al mes", "Carta personalizada por IA", "Buscador avanzado", "Estadísticas básicas"], nota: null, destacado: true, cta: "Empezar", tag: "🔥 Más elegido" },
-    { nombre: "Pro", precio: "9,99", periodo: "/mes", desc: "Para profesionales serios", items: ["10 CVs enviados por día", "IA avanzada", "Estadísticas detalladas", "Historial completo", "Soporte prioritario"], nota: null, destacado: false, cta: "Empezar" },
-    { nombre: "Empresa", precio: "49,99", periodo: "/mes", desc: "Para RRHH y reclutadores", items: ["Envíos ilimitados", "Dashboard de equipo", "API e integraciones", "Soporte 24/7"], nota: null, destacado: false, cta: "Contactar" },
+    { 
+      nombre: "Gratis", precio: "0", periodo: "", 
+      desc: "Para probar sin compromiso", 
+      items: [
+        "Búsqueda de ofertas en 21 países", 
+        "Pipeline de candidaturas", 
+        "Comparador de salarios",
+        "1 CV guardado"
+      ], 
+      nota: "Sin tarjeta de crédito · Sin Guzzi · Sin envíos", 
+      destacado: false, 
+      cta: "Empezar gratis",
+      limitado: true
+    },
+    { 
+      nombre: "Esencial", precio: "2,99", periodo: "/mes", 
+      desc: "Menos que un café al mes", 
+      items: [
+        "Guzzi con IA (GPT-4o-mini)",
+        "20 consultas al día",
+        "10 envíos de CV al día",
+        "50 envíos a la semana",
+        "Carta personalizada por IA",
+        "3 CVs guardados",
+        "50 ofertas guardadas"
+      ], 
+      nota: "Sin permanencia · Cancela cuando quieras", 
+      destacado: true, 
+      cta: "Contratar Esencial", 
+      tag: "🔥 Más elegido" 
+    },
+    { 
+      nombre: "Pro", precio: "9,99", periodo: "/mes", 
+      desc: "Para profesionales serios", 
+      items: [
+        "Guzzi con IA avanzada (GPT-4o)",
+        "100 consultas al día",
+        "50 envíos de CV al día",
+        "300 envíos a la semana",
+        "Carta personalizada premium",
+        "10 CVs guardados",
+        "200 ofertas guardadas",
+        "Códigos promocionales",
+        "Soporte prioritario"
+      ], 
+      nota: "Sin permanencia · Cancela cuando quieras", 
+      destacado: false, 
+      cta: "Contratar Pro" 
+    },
+    { 
+      nombre: "Empresa", precio: "49,99", periodo: "/mes", 
+      desc: "Para RRHH y reclutadores", 
+      items: [
+        "Guzzi IA ilimitado (GPT-4o)",
+        "Consultas sin límite",
+        "200 envíos de CV al día",
+        "1.000 envíos a la semana",
+        "CVs guardados ilimitados",
+        "Ofertas guardadas ilimitadas",
+        "API e integraciones",
+        "Dashboard de equipo",
+        "Códigos promocionales",
+        "Soporte 24/7"
+      ], 
+      nota: "Sin permanencia · Facturación mensual", 
+      destacado: false, 
+      cta: "Contactar" 
+    },
   ];
 
   // ── Cómo funciona ──
@@ -152,7 +216,7 @@ export default async function LandingPage() {
 
   // ── FAQ ──
   const faq = [
-    { q: "¿Es realmente gratis para los candidatos?", a: "Sí, completamente. El plan gratuito permite enviar hasta 2 CVs al día con mejora por IA. No pedimos tarjeta de crédito para registrarte. Las funciones avanzadas (60+ envíos/mes, estadísticas, ATS Score) están en los planes de pago — desde 2,99€/mes." },
+    { q: "¿Es realmente gratis para los candidatos?", a: "Sí, completamente. El plan gratuito permite buscar ofertas, usar el pipeline y comparar salarios. No incluye Guzzi (asistente IA) ni envío de CVs. Para enviar candidaturas y usar Guzzi necesitas un plan de pago — desde 2,99€/mes con 10 envíos al día y 20 consultas a Guzzi." },
     { q: "¿En cuántos países busca Guzzi?", a: `Actualmente en ${PAISES} países: España, Alemania, Reino Unido, Estados Unidos, Canadá, Francia, Suecia, Australia, Países Bajos, Italia, Suiza, Irlanda, Bélgica, Portugal, Noruega, Polonia, Dinamarca, Austria, Finlandia y más. Añadimos países nuevos constantemente.` },
     { q: "¿Cómo funciona el envío automático de CVs?", a: "Nuestra IA adapta tu CV a cada oferta antes de enviarlo. No es spam — cada candidatura se personaliza con el perfil y palabras clave de la empresa. Tú marcas sector, países y tipo de contrato, y Guzzi trabaja por ti." },
     { q: "¿Es legal enviar CVs automáticamente?", a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente inteligente que te representa — sin cobrarte comisiones ni quedarse con parte de tu salario." },
@@ -654,6 +718,16 @@ export default async function LandingPage() {
                         style={{ background: "#22c55e", color: "#fff" }}
                       >
                         {plan.tag}
+                      </span>
+                    </div>
+                  )}
+                  {plan.limitado && (
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                      <span
+                        className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                        style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}
+                      >
+                        🔒 Sin Guzzi ni envíos
                       </span>
                     </div>
                   )}
