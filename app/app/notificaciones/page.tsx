@@ -68,7 +68,9 @@ export default function NotificacionesPage() {
       setUserId(uid);
 
       // Cargar notificaciones
-      const res = await fetch(`/api/notifications?userId=${uid}`);
+      const res = await fetch("/api/notifications", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       if (!res.ok) throw new Error("Error cargando");
       const data = (await res.json()) as { notificaciones: Notif[] };
       setNotifs(data.notificaciones || []);
@@ -93,8 +95,8 @@ export default function NotificacionesPage() {
       if (!session) return;
       await fetch("/api/notifications", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: session.user.id, notifId: id }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ notifId: id }),
       });
       setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
     } catch {
@@ -109,8 +111,8 @@ export default function NotificacionesPage() {
       for (const n of notifs.filter((n) => !n.leida)) {
         await fetch("/api/notifications", {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: session.user.id, notifId: n.id }),
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ notifId: n.id }),
         });
       }
       setNotifs((prev) => prev.map((n) => ({ ...n, leida: true })));
