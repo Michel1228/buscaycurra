@@ -35,6 +35,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Plan no válido." }, { status: 400 });
     }
 
+    // ⛔ Bloquear suscripción duplicada — si ya tiene plan activo, no permitir comprar otra vez
+    const { data: perfil } = await supabaseAdmin
+      .from("profiles")
+      .select("plan, subscription_status")
+      .eq("id", user.id)
+      .single();
+
+    if (perfil?.subscription_status === "active" && perfil?.plan !== "free") {
+      return NextResponse.json({
+        error: `Ya tienes el plan ${perfil.plan === "basico" ? "Básico" : perfil.plan === "esencial" ? "Esencial" : perfil.plan === "pro" ? "Pro" : "Empresa"} activo. Puedes gestionarlo en tu perfil.`
+      }, { status: 409 });
+    }
+
     const priceId =
       plan === "basico" ? PLANES.BASICO :
       plan === "esencial" ? PLANES.ESENCIAL :
