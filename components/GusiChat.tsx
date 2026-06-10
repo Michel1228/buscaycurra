@@ -742,25 +742,38 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-1">
-                  {SUGERENCIAS.map((s, i) => (
-                    <button key={i} onClick={() => s.href ? router.push(s.href) : enviar(s.msg ?? "")}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-left transition hover:opacity-80"
-                      style={{
-                        background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
-                        border: `1px solid ${s.destacado ? "rgba(34,197,94,0.2)" : "#2d3142"}`,
-                      }}>
-                      <span className="text-sm shrink-0">{s.icon}</span>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-semibold truncate" style={{ color: s.destacado ? "#22c55e" : "#e2e8f0" }}>
+                <div className="relative">
+                  {/* Scroll horizontal de tarjetas */}
+                  <div 
+                    className="flex gap-2 overflow-x-auto pb-1"
+                    style={{ 
+                      scrollbarWidth: 'none', 
+                      msOverflowStyle: 'none',
+                      WebkitOverflowScrolling: 'touch',
+                    }}
+                  >
+                    {SUGERENCIAS.map((s, i) => (
+                      <button key={i} onClick={() => s.href ? router.push(s.href) : enviar(s.msg ?? "")}
+                        className="flex flex-col items-start shrink-0 w-[130px] px-3 py-2.5 rounded-lg text-left transition hover:opacity-80 active:scale-[0.98]"
+                        style={{
+                          background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
+                          border: `1px solid ${s.destacado ? "rgba(34,197,94,0.2)" : "#2d3142"}`,
+                        }}>
+                        <span className="text-base leading-none mb-1">{s.icon}</span>
+                        <p className="text-[10px] font-semibold leading-tight" style={{ color: s.destacado ? "#22c55e" : "#e2e8f0" }}>
                           {s.label}
                         </p>
-                        <p className="text-[9px] truncate" style={{ color: s.destacado ? "rgba(34,197,94,0.6)" : "#475569" }}>
+                        <p className="text-[9px] leading-tight mt-0.5" style={{ color: s.destacado ? "rgba(34,197,94,0.6)" : "#475569" }}>
                           {s.desc}
                         </p>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Degradado indicador "hay más" */}
+                  <div 
+                    className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 rounded-r-lg"
+                    style={{ background: "linear-gradient(to right, transparent, #111827 70%)" }}
+                  />
                 </div>
               )}
             </div>

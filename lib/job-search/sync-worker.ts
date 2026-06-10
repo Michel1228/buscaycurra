@@ -303,7 +303,8 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
       });
       if (!res.ok) { await reportFailure("careerjet", keyInfo.idx, res.status); continue; }
       const data = await res.json();
-      if (data.type === "ERROR") continue;
+      console.error("[CJ-DEBUG]", keyword, countryLocation, "page", page, "type:", data.type, "jobs:", data.jobs?.length ?? 0);
+      if (data.type === "ERROR") { console.error("[CJ-ERROR]", JSON.stringify(data).slice(0, 500)); continue; }
       const jobs = (data.jobs || []).map((j: Record<string, string>) => ({
         source: `EURES_${countryLocation.slice(0, 3).toUpperCase()}`,
         url: j.url || "",
