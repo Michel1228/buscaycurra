@@ -10,14 +10,15 @@ import { isNativeIOS } from "@/lib/utils/platform";
 const PLANES = [
   {
     id: "free", nombre: "Gratis", precio: "0€", periodo: "para siempre", emoji: "🥚",
-    desc: "Para empezar tu aventura",
+    desc: "Para probar la plataforma",
+    badge: "🔒 Sin Guzzi ni envíos",
     items: [
-      { t: "2 CVs enviados por día", ok: true },
+      { t: "🤖 Guzzi IA", ok: false },
+      { t: "0 consultas/día", ok: false, muted: true },
+      { t: "0 envíos CV/día", ok: false, muted: true },
       { t: "Buscador básico", ok: true },
-      { t: "Mejora CV con IA", ok: true },
-      { t: "Historial de envíos", ok: true },
-      { t: "IA avanzada", ok: false },
-      { t: "Estadísticas", ok: false },
+      { t: "Carta IA personalizada", ok: false },
+      { t: "Códigos promocionales", ok: false },
       { t: "Soporte prioritario", ok: false },
     ],
     dest: false, btn: "Empezar gratis", accion: "registro" as const,
@@ -26,12 +27,12 @@ const PLANES = [
     id: "esencial", nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱",
     desc: "Menos que un café al mes",
     items: [
-      { t: "60 candidaturas al mes", ok: true },
-      { t: "Buscador avanzado", ok: true },
-      { t: "Mejora CV con IA", ok: true },
-      { t: "Historial de envíos", ok: true },
-      { t: "Estadísticas básicas", ok: true },
-      { t: "IA avanzada", ok: false },
+      { t: "🤖 Guzzi GPT-4o-mini", ok: true, highlight: true },
+      { t: "20 consultas/día", ok: true },
+      { t: "10 envíos CV/día", ok: true },
+      { t: "50 envíos CV/semana", ok: true },
+      { t: "Carta IA personalizada", ok: true },
+      { t: "Códigos promocionales", ok: false },
       { t: "Soporte prioritario", ok: false },
     ],
     dest: false, btn: "Elegir Esencial", accion: "esencial" as const,
@@ -40,13 +41,13 @@ const PLANES = [
     id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "⚡",
     desc: "Para profesionales serios",
     items: [
-      { t: "10 CVs enviados por día", ok: true },
-      { t: "Buscador avanzado", ok: true },
-      { t: "IA avanzada (Llama + Gemini)", ok: true },
-      { t: "Estadísticas detalladas", ok: true },
+      { t: "🤖 Guzzi GPT-4o", ok: true, highlight: true },
+      { t: "100 consultas/día", ok: true },
+      { t: "50 envíos CV/día", ok: true },
+      { t: "300 envíos CV/semana", ok: true },
+      { t: "Carta IA personalizada", ok: true },
+      { t: "Códigos promocionales", ok: true },
       { t: "Soporte prioritario", ok: true },
-      { t: "Historial completo", ok: true },
-      { t: "Acceso API", ok: false },
     ],
     dest: true, btn: "Elegir Pro", accion: "pro" as const,
   },
@@ -54,13 +55,13 @@ const PLANES = [
     id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🏢",
     desc: "Sin límites para equipos",
     items: [
-      { t: "Envíos ilimitados", ok: true },
-      { t: "Todo lo del Pro", ok: true },
-      { t: "Acceso API", ok: true },
-      { t: "Dashboard de equipo", ok: true },
+      { t: "🤖 Guzzi GPT-4o", ok: true, highlight: true },
+      { t: "Consultas ilimitadas", ok: true },
+      { t: "200 envíos CV/día", ok: true },
+      { t: "1.000 envíos CV/semana", ok: true },
+      { t: "Carta IA personalizada", ok: true },
+      { t: "Códigos promocionales", ok: true },
       { t: "Soporte 24/7", ok: true },
-      { t: "Onboarding personalizado", ok: true },
-      { t: "Factura empresarial", ok: true },
     ],
     dest: false, btn: "Elegir Empresa", accion: "empresa" as const,
   },
@@ -154,6 +155,15 @@ export default function PreciosPage() {
                 </div>
               )}
 
+              {plan.badge && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="text-[10px] px-3 py-0.5 rounded-full font-medium"
+                    style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}>
+                    {plan.badge}
+                  </span>
+                </div>
+              )}
+
               <div className="text-4xl mb-3">{plan.emoji}</div>
               <h2 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h2>
               <p className="text-xs mt-1 mb-4" style={{ color: "#706a58" }}>{plan.desc}</p>
@@ -175,7 +185,10 @@ export default function PreciosPage() {
                       }}>
                       {item.ok ? "✓" : "✕"}
                     </span>
-                    <span style={{ color: item.ok ? "#b0a890" : "#504a3a" }}>{item.t}</span>
+                    <span style={{ 
+                      color: item.highlight ? "#f0ebe0" : item.ok ? "#b0a890" : "#504a3a",
+                      fontWeight: item.highlight ? 600 : 400,
+                    }}>{item.t}</span>
                   </li>
                 ))}
               </ul>
