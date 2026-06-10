@@ -67,16 +67,18 @@ export default function NotificacionesPage() {
       const uid = session.user.id;
       setUserId(uid);
 
-      // Cargar notificaciones
-      const res = await fetch("/api/notifications", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      if (!res.ok) throw new Error("Error cargando");
-      const data = (await res.json()) as { notificaciones: Notif[] };
+      // Cargar notificaciones y envíos en paralelo
+      const [notifRes, enviosRes] = await Promise.all([
+        fetch("/api/notifications", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }),
+        fetch(`/api/cv-sender/envios-hoy?userId=${uid}`),
+      ]);
+
+      if (!notifRes.ok) throw new Error("Error cargando");
+      const data = (await notifRes.json()) as { notificaciones: Notif[] };
       setNotifs(data.notificaciones || []);
 
-      // Cargar envíos de hoy y plan
-      const enviosRes = await fetch(`/api/cv-sender/envios-hoy?userId=${uid}`);
       if (enviosRes.ok) {
         const enviosData = (await enviosRes.json()) as { enviados: number; limite: number };
         setEnviadosHoy(enviosData.enviados || 0);
