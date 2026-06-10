@@ -13,13 +13,13 @@ const PLANES = [
     desc: "Para probar la plataforma",
     badge: "🔒 Sin Guzzi ni envíos",
     items: [
-      { t: "🤖 Guzzi IA", ok: false },
-      { t: "0 consultas/día", ok: false, muted: true },
-      { t: "0 envíos CV/día", ok: false, muted: true },
-      { t: "Buscador básico", ok: true },
-      { t: "Carta IA personalizada", ok: false },
-      { t: "Códigos promocionales", ok: false },
-      { t: "Soporte prioritario", ok: false },
+      { t: "🤖 Guzzi IA", ok: false, highlight: false },
+      { t: "0 consultas/día", ok: false, muted: true, highlight: false },
+      { t: "0 envíos CV/día", ok: false, muted: true, highlight: false },
+      { t: "Buscador básico", ok: true, highlight: false },
+      { t: "Carta IA personalizada", ok: false, highlight: false },
+      { t: "Códigos promocionales", ok: false, highlight: false },
+      { t: "Soporte prioritario", ok: false, highlight: false },
     ],
     dest: false, btn: "Empezar gratis", accion: "registro" as const,
   },
@@ -28,12 +28,12 @@ const PLANES = [
     desc: "Menos que un café al mes",
     items: [
       { t: "🤖 Guzzi GPT-4o-mini", ok: true, highlight: true },
-      { t: "20 consultas/día", ok: true },
-      { t: "10 envíos CV/día", ok: true },
-      { t: "50 envíos CV/semana", ok: true },
-      { t: "Carta IA personalizada", ok: true },
-      { t: "Códigos promocionales", ok: false },
-      { t: "Soporte prioritario", ok: false },
+      { t: "20 consultas/día", ok: true, highlight: false },
+      { t: "10 envíos CV/día", ok: true, highlight: false },
+      { t: "50 envíos CV/semana", ok: true, highlight: false },
+      { t: "Carta IA personalizada", ok: true, highlight: false },
+      { t: "Códigos promocionales", ok: false, highlight: false },
+      { t: "Soporte prioritario", ok: false, highlight: false },
     ],
     dest: false, btn: "Elegir Esencial", accion: "esencial" as const,
   },
@@ -42,12 +42,12 @@ const PLANES = [
     desc: "Para profesionales serios",
     items: [
       { t: "🤖 Guzzi GPT-4o", ok: true, highlight: true },
-      { t: "100 consultas/día", ok: true },
-      { t: "50 envíos CV/día", ok: true },
-      { t: "300 envíos CV/semana", ok: true },
-      { t: "Carta IA personalizada", ok: true },
-      { t: "Códigos promocionales", ok: true },
-      { t: "Soporte prioritario", ok: true },
+      { t: "100 consultas/día", ok: true, highlight: false },
+      { t: "50 envíos CV/día", ok: true, highlight: false },
+      { t: "300 envíos CV/semana", ok: true, highlight: false },
+      { t: "Carta IA personalizada", ok: true, highlight: false },
+      { t: "Códigos promocionales", ok: true, highlight: false },
+      { t: "Soporte prioritario", ok: true, highlight: false },
     ],
     dest: true, btn: "Elegir Pro", accion: "pro" as const,
   },
@@ -56,12 +56,12 @@ const PLANES = [
     desc: "Sin límites para equipos",
     items: [
       { t: "🤖 Guzzi GPT-4o", ok: true, highlight: true },
-      { t: "Consultas ilimitadas", ok: true },
-      { t: "200 envíos CV/día", ok: true },
-      { t: "1.000 envíos CV/semana", ok: true },
-      { t: "Carta IA personalizada", ok: true },
-      { t: "Códigos promocionales", ok: true },
-      { t: "Soporte 24/7", ok: true },
+      { t: "Consultas ilimitadas", ok: true, highlight: false },
+      { t: "200 envíos CV/día", ok: true, highlight: false },
+      { t: "1.000 envíos CV/semana", ok: true, highlight: false },
+      { t: "Carta IA personalizada", ok: true, highlight: false },
+      { t: "Códigos promocionales", ok: true, highlight: false },
+      { t: "Soporte 24/7", ok: true, highlight: false },
     ],
     dest: false, btn: "Elegir Empresa", accion: "empresa" as const,
   },
@@ -176,7 +176,10 @@ export default function PreciosPage() {
               </div>
 
               <ul className="space-y-2.5 mb-6 text-left flex-1">
-                {plan.items.map((item) => (
+                {plan.items.map((item) => {
+                  const itemColor = item.highlight ? "#f0ebe0" : item.ok ? "#b0a890" : "#504a3a";
+                  const itemWeight = item.highlight ? 600 : 400;
+                  return (
                   <li key={item.t} className="flex items-start gap-2 text-sm">
                     <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
                       style={{
@@ -185,12 +188,9 @@ export default function PreciosPage() {
                       }}>
                       {item.ok ? "✓" : "✕"}
                     </span>
-                    <span style={{ 
-                      color: item.highlight ? "#f0ebe0" : item.ok ? "#b0a890" : "#504a3a",
-                      fontWeight: item.highlight ? 600 : 400,
-                    }}>{item.t}</span>
+                    <span style={{ color: itemColor, fontWeight: itemWeight }}>{item.t}</span>
                   </li>
-                ))}
+                )})}
               </ul>
 
               {iosNativo ? (
