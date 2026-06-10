@@ -1,7 +1,3 @@
-import dynamic from "next/dynamic";
+"use client";
 
-const CurriculumContent = dynamic(() => import("./Content"), { ssr: false });
-
-export default function CurriculumPage() {
-  return <CurriculumContent />;
-}
+export { default } from "./Content";

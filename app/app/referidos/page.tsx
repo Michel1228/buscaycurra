@@ -1,7 +1,3 @@
-import dynamic from "next/dynamic";
+"use client";
 
-const ReferidosContent = dynamic(() => import("./Content"), { ssr: false });
-
-export default function ReferidosPage() {
-  return <ReferidosContent />;
-}
+export { default } from "./Content";

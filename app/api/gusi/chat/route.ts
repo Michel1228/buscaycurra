@@ -832,6 +832,23 @@ export async function POST(req: NextRequest) {
 
     if (!message) return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
 
+    // ── Verificar límites del plan ──
+    if (userId) {
+      const { checkGuzziAccess } = await import("@/lib/guzzi-limits");
+      const access = await checkGuzziAccess(userId);
+      if (!access.allowed) {
+        return NextResponse.json(
+          { 
+            error: access.errorMessage,
+            plan: access.plan,
+            planName: access.planName,
+            upgradeUrl: "/app/perfil",
+          },
+          { status: 402 }
+        );
+      }
+    }
+
     // Si hay userId, leer el CV fresco desde la BD (ignora el cvData del cliente)
     let cvData = cvDataFromClient;
     let auPairProfile: Record<string, unknown> | null = null;
