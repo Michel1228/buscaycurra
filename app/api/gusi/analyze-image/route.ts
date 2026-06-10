@@ -30,26 +30,13 @@ export async function POST(req: NextRequest) {
     // Limpiar el prefijo data:image si viene
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
-    // ─── Paso 1: OCR con Gemini Vision ────────────────────────────────
-    const geminiKey = process.env.GEMINI_API_KEY;
-    if (!geminiKey) {
+    // ─── Paso 1: OCR con GPT-4o Vision ────────────────────────────────
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
       return NextResponse.json({ error: "Servicio no disponible" }, { status: 503 });
     }
 
-    const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-
-    const ocrRes = await fetch(geminiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-goog-api-key": geminiKey,
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `Analiza esta imagen para ayudar a buscar trabajo. Eres un asistente de empleo.
+    const ocrPrompt = `Analiza esta imagen para ayudar a buscar trabajo. Eres un asistente de empleo.
 
 INSTRUCCIONES:
 1. PRIMERO: ¿Hay texto visible? Si ves un nombre de tienda/bar/restaurante/empresa, escribe EXACTAMENTE: "NEGOCIO: [nombre]"
@@ -65,24 +52,34 @@ INSTRUCCIONES:
 4. Si la imagen está demasiado borrosa/oscura para distinguir nada, escribe: "BORROSA"
 5. Si no ves ni texto, ni objetos, ni nada útil para buscar trabajo, escribe: "NO_UTIL"
 
-Responde en español. Máximo 2 líneas.`,
-              },
-              {
-                inline_data: {
-                  mime_type: "image/jpeg",
-                  data: base64Data,
-                },
-              },
+Responde en español. Máximo 2 líneas.`;
+
+    const ocrRes = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openaiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: ocrPrompt },
+              { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Data}` } },
             ],
           },
         ],
+        max_tokens: 150,
+        temperature: 0.1,
       }),
       signal: AbortSignal.timeout(15000),
     });
 
     if (!ocrRes.ok) {
       const errText = await ocrRes.text();
-      console.error("Gemini Vision error:", ocrRes.status, errText);
+      console.error("GPT-4o Vision error:", ocrRes.status, errText);
       return NextResponse.json(
         { error: "No se pudo leer la imagen. Prueba con más luz o más cerca." },
         { status: 500 }
@@ -90,10 +87,10 @@ Responde en español. Máximo 2 líneas.`,
     }
 
     const ocrData = await ocrRes.json() as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      choices?: Array<{ message?: { content?: string } }>;
     };
-    const ocrText = ocrData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    console.log("OCR Gemini:", ocrText);
+    const ocrText = ocrData.choices?.[0]?.message?.content?.trim() || "";
+    console.log("OCR GPT-4o:", ocrText);
 
     if (!ocrText || ocrText.length < 3) {
       return NextResponse.json({
