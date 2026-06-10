@@ -10,6 +10,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { Pool } from "pg";
+import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
@@ -127,14 +129,13 @@ Responde en español. Máximo 2 líneas.`;
 
       console.log("Objeto:", objeto, "| Marca:", marca, "| Sector:", sector);
 
-      // Nivel 1: Buscar la marca específica
+      // Nivel 1: Buscar la marca específica + ofertas reales
       if (tieneMarca) {
         const marcaResult = await searchGooglePlaces(marca, lat, lng);
+        const ofertasReales = await searchJobsBySector(sector, userId);
         if (marcaResult) {
-          const sectorResult = await searchGooglePlaces(sector, lat, lng);
-          const extra = sectorResult
-            ? `\n\n💡 ¿No hay suerte con ${marca}? También puedo buscar en otras empresas de **${sector}**:\n🏢 **${sectorResult.name}**\n📍 ${sectorResult.address}`
-            : `\n\n💡 Dime tu ciudad y busco todas las ofertas de **${sector}** cerca de ti.`;
+          const extra = ofertasReales
+            || `\n\n💡 Dime tu ciudad y busco todas las ofertas de **${sector}** cerca de ti.`;
 
           return NextResponse.json({
             reply: `📸 He visto **${objeto}** de **${marca}**\n\n🏢 **${marcaResult.name}**\n📍 ${marcaResult.address}\n${marcaResult.phone ? `📞 ${marcaResult.phone}` : ""}\n${marcaResult.website ? `🌐 ${marcaResult.website}` : ""}${extra}`,
@@ -152,7 +153,17 @@ Responde en español. Máximo 2 líneas.`;
         }
       }
 
-      // Sin marca o marca no encontrada → buscar sector
+      // Sin marca o marca no encontrada → buscar ofertas reales
+      const ofertasReales2 = await searchJobsBySector(sector, userId);
+      if (ofertasReales2) {
+        return NextResponse.json({
+          reply: `📸 He visto **${objeto}**${tieneMarca ? ` de **${marca}**` : ""} → sector **${sector}**${ofertasReales2}`,
+          action: "object_to_sector",
+          suggestedSector: sector,
+        });
+      }
+      
+      // Sin ofertas en DB → fallback a Google Places
       const sectorResult = await searchGooglePlaces(sector, lat, lng);
       if (sectorResult) {
         return NextResponse.json({
@@ -296,6 +307,70 @@ interface PlacesResult {
   website: string;
   mapsUrl: string;
   rating: number;
+}
+
+async function searchJobsBySector(sector: string, userId?: string): Promise<string> {
+  try {
+    const vpsPassword = process.env.VPS_DB_PASSWORD;
+    if (!vpsPassword) return "";
+
+    // 1. Obtener ubicación del perfil del usuario
+    let ciudadUsuario = "";
+    if (userId) {
+      try {
+        const sb = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data: profile } = await sb.from("profiles").select("ciudad").eq("id", userId).single();
+        ciudadUsuario = profile?.ciudad || "";
+      } catch { /* sin perfil, sin problema */ }
+    }
+
+    // 2. Buscar ofertas por sector en DB VPS
+    const pool = new Pool({
+      host: "buscaycurra-db",
+      port: 5432,
+      database: "buscaycurra",
+      user: "buscaycurra",
+      password: vpsPassword,
+      max: 1,
+      connectionTimeoutMillis: 5000,
+      idleTimeoutMillis: 10000,
+    });
+
+    // Extraer palabras clave del sector
+    const keywords = sector.split(/[/,\s]+/).filter(k => k.length > 2).join("|");
+    
+    const { rows } = await pool.query(
+      `SELECT title, company, city, province, country, "sourceUrl", id
+       FROM "JobListing"
+       WHERE "isActive" = true
+         AND (LOWER(title) ~ LOWER($1) OR LOWER(company) ~ LOWER($1))
+       ORDER BY 
+         CASE WHEN LOWER(city) = LOWER($2) THEN 0 ELSE 1 END,
+         "scrapedAt" DESC
+       LIMIT 5`,
+      [keywords, ciudadUsuario]
+    );
+    await pool.end();
+
+    if (!rows.length) return "";
+
+    // 3. Formatear ofertas
+    const ciudadStr = ciudadUsuario ? ` cerca de **${ciudadUsuario}**` : "";
+    let result = `\n\n📋 **${rows.length} ofertas de ${sector}${ciudadStr}:**\n`;
+    rows.forEach((r: any, i: number) => {
+      const loc = r.city || r.province || "";
+      result += `\n${i+1}. **${r.title}** — ${r.company}${loc ? ` · 📍 ${loc}` : ""}`;
+    });
+    result += `\n\n💡 ¿Quieres que envíe tu CV a estas empresas?`;
+
+    return result;
+  } catch (e) {
+    console.error("searchJobsBySector error:", e);
+    return "";
+  }
 }
 
 async function searchGooglePlaces(
