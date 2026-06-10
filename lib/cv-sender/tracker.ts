@@ -41,9 +41,11 @@ export interface CVSendRecord {
   company_url?: string;
   job_title?: string;
   status: SendStatus;
-  job_id?: string; // ID del job en BullMQ
-  sent_at?: string; // ISO timestamp de cuándo se envió
-  error_message?: string; // Mensaje de error si falló
+  job_id?: string;
+  sent_at?: string;
+  error_message?: string;
+  cover_letter?: string;
+  cv_snapshot?: string;
   created_at?: string;
 }
 
@@ -111,12 +113,16 @@ export async function recordSent(
 export async function updateSendStatus(
   jobId: string,
   status: SendStatus,
-  errorMessage?: string
+  errorMessage?: string,
+  coverLetter?: string,
+  cvSnapshot?: string
 ): Promise<void> {
   const updates: Partial<CVSendRecord> = {
     status,
     ...(status === "enviado" && { sent_at: new Date().toISOString() }),
     ...(errorMessage && { error_message: errorMessage }),
+    ...(coverLetter && { cover_letter: coverLetter }),
+    ...(cvSnapshot && { cv_snapshot: cvSnapshot }),
   };
 
   const { error } = await getSupabase()

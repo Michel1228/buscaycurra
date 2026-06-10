@@ -80,6 +80,8 @@ export async function GET(request: NextRequest) {
         status: record.status,
         sentAt: record.sent_at,
         createdAt: record.created_at,
+        coverLetter: record.cover_letter || "",
+        cvSnapshot: record.cv_snapshot || "",
       })),
       stats: {
         totalEnviados: stats.totalEnviados,

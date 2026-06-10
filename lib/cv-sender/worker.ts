@@ -96,7 +96,8 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   // ── Paso 2: Generar PDF de plantilla (o descargar raw como fallback) ─────
   console.log(`[Worker] Paso 2/6: Generando PDF de plantilla para ${userId}...`);
   let cvBuffer: Buffer;
-  let cvFileName = `CV_BuscayCurra_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`;
+  let cvFileName = `CV_BuscayCurra_${userProfile.full_name.replace(/\\s+/g, "_")}.pdf`;
+  let cvSnapshot = "";
 
   try {
     const pool = getPool();
@@ -112,6 +113,8 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
     const rawData = typeof cvDataResult.rows[0].form_data === "string"
       ? JSON.parse(cvDataResult.rows[0].form_data)
       : cvDataResult.rows[0].form_data;
+    
+    cvSnapshot = JSON.stringify(rawData);
 
     const cvData = normalizar(rawData);
     const html = generarCVHTML(cvData);
@@ -219,7 +222,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   // Actualizar estado en Supabase a "enviado"
   if (recordId) {
-    await updateSendStatus(jobId, "enviado");
+    await updateSendStatus(jobId, "enviado", undefined, coverLetter, cvSnapshot);
   }
 
   // Enviar confirmación al usuario

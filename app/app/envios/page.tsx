@@ -15,6 +15,8 @@ interface Envio {
   status: string;
   sent_at?: string;
   created_at: string;
+  cover_letter?: string;
+  cv_snapshot?: string;
 }
 
 const STATUS_ICON: Record<string, string> = {
@@ -31,6 +33,7 @@ export default function EnviosPage() {
   const [envios, setEnvios] = useState<Envio[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<string>("todos");
+  const [detalle, setDetalle] = useState<Envio | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -50,6 +53,8 @@ export default function EnviosPage() {
           status: h.status,
           sent_at: h.sentAt,
           created_at: h.createdAt,
+          cover_letter: h.coverLetter || "",
+          cv_snapshot: h.cvSnapshot || "",
         }));
         // Pending jobs también
         const pending: Envio[] = (data.pendingJobs || []).map((p: Record<string, string>) => ({
@@ -162,7 +167,8 @@ export default function EnviosPage() {
         ) : (
           <div className="space-y-2">
             {filtrados.map(envio => (
-              <div key={envio.id} className="rounded-xl p-4 flex items-center gap-4"
+              <div key={envio.id} onClick={() => setDetalle(envio)}
+                className="rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:opacity-80 transition"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <span className="text-2xl shrink-0">{STATUS_ICON[envio.status] || "📄"}</span>
                 <div className="flex-1 min-w-0">
@@ -203,6 +209,63 @@ export default function EnviosPage() {
           </div>
         )}
       </div>
+
+      {/* Modal detalle de envío */}
+      {detalle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}
+          onClick={() => setDetalle(null)}>
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl p-6" style={{ background: "#1a1d2e", border: "1px solid #2d3142" }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white">{detalle.company_name}</h2>
+              <button onClick={() => setDetalle(null)} className="text-slate-400 hover:text-white text-xl">✕</button>
+            </div>
+
+            <div className="space-y-3 text-sm mb-4">
+              {detalle.job_title && (
+                <div><span className="text-slate-400">Puesto:</span> <span className="text-white">{detalle.job_title}</span></div>
+              )}
+              <div><span className="text-slate-400">Email:</span> <span className="text-white">{detalle.company_email}</span></div>
+              <div><span className="text-slate-400">Estado:</span> <span className="font-semibold" style={{ color: STATUS_COLOR[detalle.status] }}>{detalle.status}</span></div>
+              <div><span className="text-slate-400">Fecha:</span> <span className="text-white">
+                {detalle.sent_at ? new Date(detalle.sent_at).toLocaleString("es-ES", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })
+                  : new Date(detalle.created_at).toLocaleString("es-ES", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })}
+              </span></div>
+            </div>
+
+            {detalle.cover_letter && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-green-400 mb-2">📝 Carta de presentación</h3>
+                <div className="rounded-xl p-4 text-sm text-slate-300 whitespace-pre-line" style={{ background: "#0f1117", border: "1px solid #2d3142" }}>
+                  {detalle.cover_letter}
+                </div>
+              </div>
+            )}
+
+            {detalle.cv_snapshot && (() => {
+              try {
+                const cv = JSON.parse(detalle.cv_snapshot);
+                return (
+                  <div>
+                    <h3 className="text-sm font-semibold text-green-400 mb-2">📄 CV enviado</h3>
+                    <div className="rounded-xl p-4 text-sm space-y-2" style={{ background: "#0f1117", border: "1px solid #2d3142" }}>
+                      {cv.nombre && <p className="text-white font-semibold">{cv.nombre} {cv.apellidos || ""}</p>}
+                      {cv.ciudad && <p className="text-slate-400">📍 {cv.ciudad}{cv.provincia ? `, ${cv.provincia}` : ""}</p>}
+                      {cv.telefono && <p className="text-slate-400">📞 {cv.telefono}</p>}
+                      {cv.email && <p className="text-slate-400">✉️ {cv.email}</p>}
+                      {cv.perfil && <p className="text-slate-300 mt-2 italic">"{cv.perfil}"</p>}
+                    </div>
+                  </div>
+                );
+              } catch { return null; }
+            })()}
+
+            {!detalle.cover_letter && !detalle.cv_snapshot && (
+              <p className="text-slate-500 text-sm text-center py-4">Este envío no tiene detalle guardado (se envió antes de esta actualización).</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
