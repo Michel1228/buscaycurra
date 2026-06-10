@@ -302,6 +302,8 @@ function parseStringList(val: unknown): string[] {
 interface CVParsed {
   nombre: string;
   ciudad: string;
+  provincia: string;
+  codigo_postal: string;
   ultimoPuesto: string;
   ultimaEmpresa: string;
   sector: string;
@@ -314,6 +316,8 @@ function parseCVData(raw: string): CVParsed | null {
     const cv = JSON.parse(raw);
     const nombre = String(cv.nombre || cv.full_name || "").trim();
     const ciudad = String(cv.ciudad || cv.location || "").trim();
+    const provincia = String(cv.provincia || "").trim();
+    const codigo_postal = String(cv.codigo_postal || "").trim();
     const sector = String(cv.sector || "").trim();
 
     let ultimoPuesto = "";
@@ -341,13 +345,15 @@ function parseCVData(raw: string): CVParsed | null {
     const resumenTexto = [
       nombre && `Nombre: ${nombre}`,
       ciudad && `Ciudad: ${ciudad}`,
+      provincia && `Provincia: ${provincia}`,
+      codigo_postal && `CP: ${codigo_postal}`,
       ultimoPuesto && `Último puesto: ${ultimoPuesto}`,
       ultimaEmpresa && `Última empresa: ${ultimaEmpresa}`,
       sector && `Sector: ${sector}`,
       habilidades && `Habilidades: ${habilidades}`,
     ].filter(Boolean).join("\n");
 
-    return { nombre, ciudad, ultimoPuesto, ultimaEmpresa, sector, habilidades, resumenTexto };
+    return { nombre, ciudad, provincia, codigo_postal, ultimoPuesto, ultimaEmpresa, sector, habilidades, resumenTexto };
   } catch {
     return null;
   }

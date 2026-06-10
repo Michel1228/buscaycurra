@@ -19,11 +19,13 @@ interface PerfilData {
   telefono: string;
   email: string;
   ciudad: string;
+  provincia: string;
+  codigo_postal: string;
   sector: string;
 }
 
 const emptyPerfil: PerfilData = {
-  nombre: "", apellidos: "", telefono: "", email: "", ciudad: "", sector: "",
+  nombre: "", apellidos: "", telefono: "", email: "", ciudad: "", provincia: "", codigo_postal: "", sector: "",
 };
 
 export default function PerfilPage() {
@@ -64,7 +66,7 @@ export default function PerfilPage() {
       setEmail(session.user.email ?? "");
 
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, ciudad, sector, plan")
+        .select("full_name, phone, ciudad, provincia, codigo_postal, sector, plan")
         .eq("id", session.user.id).single();
 
       // Fallback a metadatos de auth si el perfil no tiene nombre
@@ -77,6 +79,8 @@ export default function PerfilPage() {
         telefono: p?.phone || "",
         email: session.user.email || "",
         ciudad: p?.ciudad || "",
+        provincia: p?.provincia || "",
+        codigo_postal: p?.codigo_postal || "",
         sector: p?.sector || "",
       });
       if (p?.plan && ["basico", "esencial", "pro", "empresa"].includes(p.plan)) {
@@ -102,6 +106,8 @@ export default function PerfilPage() {
         full_name: `${perfil.nombre} ${perfil.apellidos}`.trim(),
         phone: perfil.telefono,
         ciudad: perfil.ciudad,
+        provincia: perfil.provincia,
+        codigo_postal: perfil.codigo_postal,
         sector: perfil.sector,
       }, { onConflict: "id" });
       setGuardado(true);
@@ -276,6 +282,14 @@ export default function PerfilPage() {
                   title="El email no se puede cambiar desde aquí" />
                 <label className="sr-only" htmlFor="perfil-ciudad">Ciudad</label>
                 <input id="perfil-ciudad" placeholder="Ciudad" value={perfil.ciudad} onChange={e => updateField("ciudad", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <label className="sr-only" htmlFor="perfil-provincia">Provincia</label>
+                <input id="perfil-provincia" placeholder="Provincia" value={perfil.provincia} onChange={e => updateField("provincia", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <label className="sr-only" htmlFor="perfil-cpostal">Código Postal</label>
+                <input id="perfil-cpostal" placeholder="Código Postal" value={perfil.codigo_postal} onChange={e => updateField("codigo_postal", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="perfil-sector">Sector / Profesión</label>
