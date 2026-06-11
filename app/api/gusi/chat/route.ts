@@ -1266,6 +1266,14 @@ El candidato tiene mucha experiencia.
         });
       }
 
+      // Si no hay ciudad ni en mensaje ni en CV, preguntar ANTES de buscar
+      if (!ciudadBusqueda) {
+        return NextResponse.json({
+          reply: `🔍 Vale, busco ofertas de **${puestoBusqueda}**. Pero necesito saber dónde. ¿En qué ciudad o zona estás buscando?`,
+          action: "need_city",
+        });
+      }
+
       if (puestoBusqueda) {
         const result = await searchJobsReal(puestoBusqueda, ciudadBusqueda, 5, pais || "ES");
         if (!result || result.jobs.length === 0) {
@@ -1274,6 +1282,13 @@ El candidato tiene mucha experiencia.
               ? `Basándome en tu CV (último puesto: **${cvParsed.ultimoPuesto}**), ` : "") +
               fallbackMessage(puestoBusqueda, ciudadBusqueda),
             action: "search_results",
+          });
+        }
+        // Si los resultados NO son locales (pais, sinonimo, api) y el usuario pidió ciudad, avisar, no mostrar
+        if (ciudadBusqueda && result.scope && !["ciudad","provincia","cercanas"].includes(result.scope)) {
+          return NextResponse.json({
+            reply: `🔍 No encontré ofertas de **${puestoBusqueda}** en **${ciudadBusqueda}** ni en sus alrededores.\n\n¿Quieres que busque en **toda España**? Te aviso: la mayoría de ofertas estarán en Madrid, Barcelona, Valencia...\n\nResponde **"sí, busca en toda España"** y amplío la búsqueda.`,
+            action: "search_scope_pais",
           });
         }
         const prefix = cvParsed?.ultimoPuesto
@@ -1308,8 +1323,21 @@ El candidato tiene mucha experiencia.
       const puestoEnviar = extractJobTerm(message) || cvParsed?.ultimoPuesto || "";
       const ciudadEnviar = extractCity(message) || cvParsed?.ciudad || "";
       if (puestoEnviar) {
+        if (!ciudadEnviar) {
+          return NextResponse.json({
+            reply: `📧 Vale, busco ofertas de **${puestoEnviar}** para enviar CVs. ¿En qué ciudad?`,
+            action: "need_city",
+          });
+        }
         const enviarResult = await searchJobsReal(puestoEnviar, ciudadEnviar, 5, pais || "ES");
         if (enviarResult && enviarResult.jobs.length > 0) {
+          // Filtrar resultados no locales
+          if (ciudadEnviar && enviarResult.scope && !["ciudad","provincia","cercanas"].includes(enviarResult.scope)) {
+            return NextResponse.json({
+              reply: `📧 No encontré ofertas de **${puestoEnviar}** en **${ciudadEnviar}** ni cerca. ¿Busco en toda España?`,
+              action: "search_scope_pais",
+            });
+          }
           return NextResponse.json({
             reply: `📧 **¡A enviar CVs!**\n\nEncontré ${enviarResult.jobs.length} ofertas de **${puestoEnviar}**${ciudadEnviar ? ` en **${ciudadEnviar}**` : ""}.\n\nPulsa **"Enviar CV"** en cualquiera de ellas para personalizar la carta, elegir la hora de envío y mandarlo.\n\n${buildJobsText(puestoEnviar, ciudadEnviar, enviarResult.jobs, enviarResult.scope)}`,
             jobs: enviarResult.jobs,
