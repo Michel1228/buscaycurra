@@ -5,6 +5,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GuzziAvatar from "@/components/GuzziAvatar";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import {
+  Mail, BarChart2, Target, Sparkles, FilePen, Search, Zap,
+  MapPin, Briefcase, Check, Bell, type LucideIcon,
+} from "lucide-react";
+
+const QUICK_ACTION_ICONS: Record<string, LucideIcon> = {
+  "✨": Sparkles, "📄": FilePen, "🔍": Search, "📊": BarChart2,
+  "📧": Mail, "🎯": Target, "⚡": Zap,
+};
 
 interface DashboardStats {
   ofertasNuevasHoy: number;
@@ -84,7 +93,7 @@ export default function BienvenidaClient() {
   // ── Stat cards ──
   const statCards = [
     {
-      icon: "🆕",
+      Icon: Bell,
       label: "Ofertas nuevas hoy",
       value: stats.ofertasNuevasHoy,
       color: "#3b82f6",
@@ -92,7 +101,7 @@ export default function BienvenidaClient() {
       href: "/app/buscar",
     },
     {
-      icon: "📧",
+      Icon: Mail,
       label: "CVs enviados hoy",
       value: stats.cvsEnviadosHoy,
       color: "#22c55e",
@@ -100,7 +109,7 @@ export default function BienvenidaClient() {
       href: "/app/envios",
     },
     {
-      icon: "📊",
+      Icon: BarChart2,
       label: "Pipeline activo",
       value: stats.pipelineActivo,
       color: "#a855f7",
@@ -108,7 +117,7 @@ export default function BienvenidaClient() {
       href: "/app/pipeline",
     },
     {
-      icon: "🎯",
+      Icon: Target,
       label: "Entrevistas",
       value: stats.entrevistasPendientes,
       color: "#f59e0b",
@@ -155,7 +164,7 @@ export default function BienvenidaClient() {
               style={{ background: s.bg, border: `1px solid ${s.color}20` }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">{s.icon}</span>
+                <s.Icon size={16} strokeWidth={1.6} style={{ color: s.color }} />
                 <span className="text-2xl font-bold" style={{ color: s.color }}>
                   {s.value.toLocaleString()}
                 </span>
@@ -185,10 +194,10 @@ export default function BienvenidaClient() {
               </div>
             </div>
             <ul className="space-y-1.5 text-[11px]" style={{ color: "#94a3b8" }}>
-              <li>✅ Busca ofertas adaptadas a ti</li>
-              <li>✅ Mejora tu CV con IA</li>
-              <li>✅ Envía candidaturas automáticamente</li>
-              <li>✅ Tú apruebas cada envío</li>
+              <li><Check size={12} strokeWidth={2.5} className="inline mr-1 text-green-500" />Busca ofertas adaptadas a ti</li>
+              <li><Check size={12} strokeWidth={2.5} className="inline mr-1 text-green-500" />Mejora tu CV con IA</li>
+              <li><Check size={12} strokeWidth={2.5} className="inline mr-1 text-green-500" />Envía candidaturas automáticamente</li>
+              <li><Check size={12} strokeWidth={2.5} className="inline mr-1 text-green-500" />Tú apruebas cada envío</li>
             </ul>
             <span
               className="w-full text-center py-2 rounded-xl text-xs font-semibold mt-1"
@@ -208,17 +217,17 @@ export default function BienvenidaClient() {
             }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-3xl">🔍</span>
+              <Search size={28} strokeWidth={1.4} style={{ color: "#3b82f6" }} />
               <div>
                 <p className="font-bold text-sm" style={{ color: "#f1f5f9" }}>Modo manual</p>
                 <p className="text-[11px]" style={{ color: "#64748b" }}>Control total</p>
               </div>
             </div>
             <ul className="space-y-1.5 text-[11px]" style={{ color: "#94a3b8" }}>
-              <li>🔍 Busca ofertas tú mismo</li>
-              <li>📊 Gestiona tu pipeline</li>
-              <li>📧 Controla los envíos</li>
-              <li>💰 Compara salarios</li>
+              <li><Search size={11} strokeWidth={2} className="inline mr-1" />Busca ofertas tú mismo</li>
+              <li><BarChart2 size={11} strokeWidth={2} className="inline mr-1" />Gestiona tu pipeline</li>
+              <li><Mail size={11} strokeWidth={2} className="inline mr-1" />Controla los envíos</li>
+              <li><Briefcase size={11} strokeWidth={2} className="inline mr-1" />Compara salarios</li>
             </ul>
             <span
               className="w-full text-center py-2 rounded-xl text-xs font-semibold mt-1"
@@ -234,7 +243,7 @@ export default function BienvenidaClient() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-lg">💼</span>
+                <Briefcase size={16} strokeWidth={1.5} style={{ color: "#22c55e" }} />
                 <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>
                   Ofertas recomendadas para ti
                 </h2>
@@ -268,7 +277,7 @@ export default function BienvenidaClient() {
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-[10px]" style={{ color: "#475569" }}>
-                    <span>📍 {oferta.ubicacion || "Sin ubicación"}</span>
+                    <span className="flex items-center gap-0.5"><MapPin size={9} strokeWidth={1.8} className="shrink-0" />{oferta.ubicacion || "Sin ubicación"}</span>
                     <span>·</span>
                     <span>{oferta.fuente}</span>
                   </div>
@@ -281,7 +290,7 @@ export default function BienvenidaClient() {
         {/* ── Quick actions ── */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-lg">⚡</span>
+            <Zap size={16} strokeWidth={1.6} style={{ color: "#22c55e" }} />
             <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>
               Acciones rápidas
             </h2>
@@ -299,9 +308,9 @@ export default function BienvenidaClient() {
                 className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all hover:scale-[1.03]"
                 style={{ background: "#161922", border: "1px solid #252836" }}
               >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: `${action.color}18`, border: `1px solid ${action.color}30` }}>
-                  {action.icon}
+                  {(() => { const I = QUICK_ACTION_ICONS[action.icon]; return I ? <I size={18} strokeWidth={1.6} style={{ color: action.color }} /> : <span className="text-lg">{action.icon}</span>; })()}
                 </div>
                 <span className="text-[11px] font-medium text-center" style={{ color: "#94a3b8" }}>
                   {action.label}
