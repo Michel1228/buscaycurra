@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -119,7 +120,7 @@ export default function AuthCallbackPage() {
 
           {estado === "error" && (
             <>
-              <div className="text-4xl mb-4">⚠️</div>
+              <div className="mb-4 flex justify-center"><AlertTriangle size={44} strokeWidth={1.5} style={{ color: "#f59e0b" }} /></div>
               <h2 className="text-base font-bold mb-2" style={{ color: "#f1f5f9" }}>Algo no fue bien</h2>
               <p className="text-sm mb-5" style={{ color: "#94a3b8" }}>{mensaje}</p>
               <Link href="/auth/login" className="btn-game text-sm">

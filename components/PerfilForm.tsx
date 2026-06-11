@@ -9,6 +9,7 @@
  */
 
 import { useState, useRef, useEffect } from "react";
+import { Camera, Check, Save } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export interface DatosPerfil {
@@ -149,9 +150,9 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
             <img src={fotoUrl} alt="Foto" className="w-20 h-20 rounded-2xl object-cover"
               style={{ border: "3px solid rgba(126,213,111,0.3)" }} />
           ) : (
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl"
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
               style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.15), rgba(92,184,72,0.1))", border: "3px solid rgba(126,213,111,0.2)" }}>
-              📷
+              <Camera size={28} strokeWidth={1.3} style={{ color: "#7ed56f" }} />
             </div>
           )}
           <div className="absolute inset-0 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
@@ -218,7 +219,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
       {/* Éxito */}
       {exito && (
         <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(126,213,111,0.1)", border: "1px solid rgba(126,213,111,0.2)", color: "#7ed56f" }}>
-          ✅ Perfil guardado correctamente
+          <Check size={14} strokeWidth={2.5} className="inline mr-1" />Perfil guardado correctamente
         </div>
       )}
 
@@ -230,7 +231,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
           color: guardando ? "#706a58" : "#1a1a12",
           boxShadow: guardando ? "none" : "0 4px 16px rgba(126,213,111,0.25)",
         }}>
-        {guardando ? "Guardando..." : "💾 Guardar perfil"}
+        {guardando ? "Guardando..." : <><Save size={14} strokeWidth={1.8} className="inline mr-1.5" />Guardar perfil</>}
       </button>
     </form>
   );

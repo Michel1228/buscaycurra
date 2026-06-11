@@ -13,6 +13,10 @@ import {
 } from "@/lib/au-pair";
 import { PAISES } from "@/lib/paises";
 import AuPairPlantilla from "@/components/AuPairPlantilla";
+import {
+  Users, Sparkles, User, Check, Globe, Camera, Star, ClipboardList,
+  Mail, FileText, Clock, Eye, Download, Upload, Save, X, CheckCircle2,
+} from "lucide-react";
 
 const MAX_FOTOS = 6;
 
@@ -230,7 +234,7 @@ export default function AuPairProfilePage() {
       duracion: duracionPreferida || undefined,
     });
     setLetterText(plantilla);
-    setMensaje("✅ Plantilla generada. ¡Personalízala a tu estilo!");
+    setMensaje("Plantilla generada. ¡Personalízala a tu estilo!");
     setTimeout(() => setMensaje(""), 4000);
   }, [nombre, age, nationality, ciudad, languages, childcareExperience, hobbies, paisDestino, nivelEducativo, duracionPreferida]);
 
@@ -260,7 +264,7 @@ export default function AuPairProfilePage() {
       const json = await res.json();
       if (json.success) {
         setLetterText(json.letter);
-        setMensaje("✅ ¡Carta generada por IA! Personaliza los detalles a tu gusto.");
+        setMensaje("¡Carta generada por IA! Personaliza los detalles a tu gusto.");
       } else {
         setError(json.error || "Error al generar");
       }
@@ -311,7 +315,7 @@ export default function AuPairProfilePage() {
     setSaving(false);
 
     if (json.ok) {
-      setMensaje("✅ Perfil Au Pair guardado correctamente");
+      setMensaje("Perfil Au Pair guardado correctamente");
       setTimeout(() => setMensaje(""), 4000);
     } else {
       setError(json.error || "Error al guardar");
@@ -487,7 +491,7 @@ export default function AuPairProfilePage() {
         carta: letterText || "Carta de presentación Au Pair",
       });
       setShowConfirm(true);
-      setEnvioExito(`✅ Perfil enviado a ${familyName || familyEmail}`);
+      setEnvioExito(`Perfil enviado a ${familyName || familyEmail}`);
       setFamilyEmail("");
       setFamilyName("");
       setAuPairStats(prev => ({ ...prev, hoy: prev.hoy + 1, disponibles: Math.max(0, prev.disponibles - 1) }));
@@ -510,7 +514,7 @@ export default function AuPairProfilePage() {
     <main className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
       {/* Hero */}
       <section className="py-10 px-4 sm:px-6 max-w-3xl mx-auto text-center">
-        <span className="text-5xl mb-4 block">🧒</span>
+        <div className="flex justify-center mb-4"><Users size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Tu Perfil Au Pair</h1>
         <p className="text-[#94a3b8] max-w-lg mx-auto text-sm">
           Las familias no buscan un CV. Buscan conocerte. Crea tu perfil completo con fotos
@@ -532,7 +536,7 @@ export default function AuPairProfilePage() {
               />
             </div>
             <p className="text-[9px] text-[#22c55e] mt-1">
-              ✨ {auPairStats.disponibles} disponible{auPairStats.disponibles !== 1 ? "s" : ""} hoy — ¡vuelve mañana!
+              {auPairStats.disponibles} disponible{auPairStats.disponibles !== 1 ? "s" : ""} hoy — ¡vuelve mañana!
             </p>
           </div>
         )}
@@ -550,7 +554,7 @@ export default function AuPairProfilePage() {
         {/* ── Datos personales ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
-            <span>👤</span> Datos personales
+            <User size={13} strokeWidth={1.8} /> Datos personales
           </h3>
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
@@ -662,14 +666,14 @@ export default function AuPairProfilePage() {
         {/* ── Aptitudes (toggles) ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
-            <span>✅</span> Aptitudes
+            <Check size={13} strokeWidth={1.8} /> Aptitudes
           </h3>
           <div className="grid sm:grid-cols-2 gap-3">
             {[
-              { label: "🚗 Carnet de conducir", state: hasDrivingLicense, set: setHasDrivingLicense },
-              { label: "🚭 No fumador/a", state: !fumador, set: (v: boolean) => setFumador(!v), invert: true },
-              { label: "⛑️ Primeros auxilios", state: primerosAuxilios, set: setPrimerosAuxilios },
-              { label: "🏊 Sabe nadar", state: sabeNadar, set: setSabeNadar },
+              { label: "Carnet de conducir", state: hasDrivingLicense, set: setHasDrivingLicense },
+              { label: "No fumador/a", state: !fumador, set: (v: boolean) => setFumador(!v), invert: true },
+              { label: "Primeros auxilios", state: primerosAuxilios, set: setPrimerosAuxilios },
+              { label: "Sabe nadar", state: sabeNadar, set: setSabeNadar },
             ].map((item, i) => (
               <label key={i} className="flex items-center gap-3 bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 cursor-pointer hover:border-[#22c55e]/30 transition-colors">
                 <input
@@ -679,7 +683,7 @@ export default function AuPairProfilePage() {
                   className="sr-only peer"
                 />
                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${item.state ? "bg-[#22c55e] border-[#22c55e]" : "border-[#2d3142]"}`}>
-                  {item.state && <span className="text-black text-xs">✓</span>}
+                  {item.state && <Check size={12} strokeWidth={3} style={{ color: "#000" }} />}
                 </div>
                 <span className="text-sm text-[#94a3b8] peer-checked:text-[#e2e8f0]">{item.label}</span>
               </label>
@@ -692,9 +696,9 @@ export default function AuPairProfilePage() {
                 className="sr-only peer"
               />
               <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${fumador ? "bg-[#ef4444] border-[#ef4444]" : "border-[#2d3142]"}`}>
-                {fumador && <span className="text-white text-xs">✓</span>}
+                {fumador && <Check size={12} strokeWidth={3} style={{ color: "#fff" }} />}
               </div>
-              <span className={`text-sm ${fumador ? "text-[#ef4444]" : "text-[#94a3b8]"}`}>🚬 Fumador/a</span>
+              <span className={`text-sm ${fumador ? "text-[#ef4444]" : "text-[#94a3b8]"}`}>Fumador/a</span>
             </label>
           </div>
         </div>
@@ -702,7 +706,7 @@ export default function AuPairProfilePage() {
         {/* ── Idiomas ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
-            <span>🗣️</span> Idiomas
+            <Globe size={13} strokeWidth={1.8} /> Idiomas
           </h3>
           <div className="flex gap-2 mb-3">
             <input
@@ -733,7 +737,7 @@ export default function AuPairProfilePage() {
         {/* ── Fotos ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
-            <span>📸</span> Fotos <span className="text-[10px] text-[#64748b] font-normal">({photos.length}/{MAX_FOTOS})</span>
+            <Camera size={13} strokeWidth={1.8} /> Fotos <span className="text-[10px] text-[#64748b] font-normal">({photos.length}/{MAX_FOTOS})</span>
           </h3>
           <p className="text-xs text-[#64748b] mb-4">
             Las familias quieren verte. Sube fotos tuyas, con niños, haciendo actividades.
@@ -777,9 +781,9 @@ export default function AuPairProfilePage() {
                 className="flex items-center gap-2 bg-[#0f1117] border-2 border-dashed border-[#2d3142] hover:border-[#22c55e]/40 rounded-xl px-5 py-4 text-sm text-[#94a3b8] hover:text-[#22c55e] transition-all disabled:opacity-50 w-full justify-center"
               >
                 {uploadingPhoto ? (
-                  <>⏳ Subiendo...</>
+                  <>Subiendo...</>
                 ) : (
-                  <>📷 Añadir foto {photos.length > 0 ? `(${photos.length}/${MAX_FOTOS})` : ""}</>
+                  <><Camera size={14} strokeWidth={1.8} className="inline mr-1.5" />Añadir foto {photos.length > 0 ? `(${photos.length}/${MAX_FOTOS})` : ""}</>
                 )}
               </button>
             </div>
@@ -789,7 +793,7 @@ export default function AuPairProfilePage() {
         {/* ── Experiencia con niños ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
-            <span>👶</span> Experiencia con niños
+            <Users size={13} strokeWidth={1.8} /> Experiencia con niños
           </h3>
           <textarea
             value={childcareExperience}
@@ -803,7 +807,7 @@ export default function AuPairProfilePage() {
         {/* ── Hobbies ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
-            <span>🌟</span> Sobre ti
+            <Star size={13} strokeWidth={1.8} /> Sobre ti
           </h3>
           <textarea
             value={hobbies}
@@ -824,7 +828,7 @@ export default function AuPairProfilePage() {
         {/* ── Referencias ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
-            <span>📋</span> Referencias
+            <ClipboardList size={13} strokeWidth={1.8} /> Referencias
           </h3>
           {references.length > 0 && (
             <div className="space-y-2 mb-4">
@@ -861,27 +865,27 @@ export default function AuPairProfilePage() {
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
-              <span>💌</span> Dear Family Letter
+              <Mail size={13} strokeWidth={1.8} /> Dear Family Letter
             </h3>
             <div className="flex gap-2 flex-wrap">
-              <button onClick={generarCarta} className="text-[11px] bg-[#252839] hover:bg-[#2d3142] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors">📝 Plantilla</button>
+              <button onClick={generarCarta} className="text-[11px] bg-[#252839] hover:bg-[#2d3142] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><FileText size={12} strokeWidth={1.8} />Plantilla</button>
               <button
                 onClick={generarConIA}
                 disabled={generandoIA}
                 className="text-[11px] bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea34d] hover:to-[#15803d] text-black font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1"
               >
-                {generandoIA ? <>⏳ Generando...</> : <>✨ IA</>}
+                {generandoIA ? <>Generando...</> : <><Sparkles size={12} strokeWidth={1.8} className="inline mr-1" />IA</>}
               </button>
-              <button onClick={verCarta} className="text-[11px] border font-semibold px-3 py-1.5 rounded-lg transition-colors" style={{ borderColor: "rgba(34,197,94,0.3)", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}>👁 Ver carta</button>
+              <button onClick={verCarta} className="text-[11px] border font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1" style={{ borderColor: "rgba(34,197,94,0.3)", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}><Eye size={12} strokeWidth={1.8} />Ver carta</button>
             </div>
           </div>
 
           {/* Selector tipo perfil */}
           <div className="mb-3 flex flex-wrap gap-1.5">
             {[
-              { id: "joven_estudiante", label: "🎓 Joven", desc: "Estudiante, primera vez" },
-              { id: "con_experiencia", label: "👶 Experiencia", desc: "Ya he cuidado niños" },
-              { id: "profesional_cambio", label: "💼 Cambio", desc: "Dejo trabajo por esto" },
+              { id: "joven_estudiante", label: "Joven", desc: "Estudiante, primera vez" },
+              { id: "con_experiencia", label: "Experiencia", desc: "Ya he cuidado niños" },
+              { id: "profesional_cambio", label: "Cambio", desc: "Dejo trabajo por esto" },
             ].map(tipo => (
               <button
                 key={tipo.id}
@@ -900,19 +904,19 @@ export default function AuPairProfilePage() {
           </div>
 
           <p className="text-xs text-[#64748b] mb-3">
-            ⚡ Rellena tus datos y fotos arriba, elige tu perfil, y pulsa <strong>✨ IA</strong> para que Guzzi genere tu carta perfecta.
+            Rellena tus datos y fotos arriba, elige tu perfil, y pulsa <strong>IA</strong> para que Guzzi genere tu carta perfecta.
           </p>
 
           <textarea
             value={letterText}
             onChange={(e) => setLetterText(e.target.value)}
-            placeholder={"Dear Host Family,\n\nMy name is... (o pulsa ✨ IA para generarla automáticamente)"}
+            placeholder={"Dear Host Family,\n\nMy name is... (o pulsa IA para generarla automáticamente)"}
             rows={14}
             className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none resize-y font-serif leading-relaxed"
           />
 
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {["✏️ Añade anécdotas personales", "📸 Sube fotos con niños", "💬 Sé auténtica, no genérica", "🔍 Menciona por qué ese país"].map(tip => (
+            {["Añade anécdotas personales", "Sube fotos con niños", "Sé auténtica, no genérica", "Menciona por qué ese país"].map(tip => (
               <span key={tip} className="text-[9px] px-2 py-1 rounded-full bg-[#252839] text-[#94a3b8] border border-[#2d3142]">{tip}</span>
             ))}
           </div>
@@ -923,14 +927,14 @@ export default function AuPairProfilePage() {
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
-              <span>📄</span> Plantilla profesional <span className="text-[10px] text-[#4ade80] font-normal">(vista previa en vivo)</span>
+              <FileText size={13} strokeWidth={1.8} /> Plantilla profesional <span className="text-[10px] text-[#4ade80] font-normal">(vista previa en vivo)</span>
             </h3>
             <div className="flex gap-2">
               <button onClick={() => setShowPlantilla(!showPlantilla)} className="text-xs px-3 py-1.5 rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
                 {showPlantilla ? "Ocultar" : "Mostrar"}
               </button>
               <button onClick={descargarCarta} disabled={descargandoCarta} className="text-xs font-semibold px-4 py-1.5 rounded-lg disabled:opacity-60" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-                {descargandoCarta ? "Generando PDF..." : "⬇ Descargar PDF"}
+                {descargandoCarta ? "Generando PDF..." : <><Download size={12} strokeWidth={1.8} className="inline mr-1" />Descargar PDF</>}
               </button>
             </div>
           </div>
@@ -965,7 +969,7 @@ export default function AuPairProfilePage() {
         {/* ── Enviar perfil a familia ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
-            <span>📤</span> Enviar perfil a una familia
+            <Upload size={13} strokeWidth={1.8} /> Enviar perfil a una familia
           </h3>
           <p className="text-xs text-[#64748b] mb-4">
             Introduce el email de la familia o agencia para enviarles tu perfil Au Pair completo.
@@ -1018,7 +1022,7 @@ export default function AuPairProfilePage() {
                 color: enviandoPerfil ? "#64748b" : "#fff",
               }}
             >
-              {enviandoPerfil ? "Enviando..." : "📤 Enviar perfil Au Pair"}
+              {enviandoPerfil ? "Enviando..." : <><Upload size={14} strokeWidth={1.8} className="inline mr-1.5" />Enviar perfil Au Pair</>}
             </button>
           </div>
         </div>
@@ -1027,7 +1031,7 @@ export default function AuPairProfilePage() {
         <div className="flex gap-3 justify-end">
           <button onClick={() => router.push("/app/emigrar")} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-[#2d3142] text-[#94a3b8] hover:bg-[#3d4152] transition-colors">Cancelar</button>
           <button onClick={guardar} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#22c55e] hover:bg-[#1ea34d] text-black transition-colors disabled:opacity-50">
-            {saving ? "Guardando..." : "💾 Guardar perfil Au Pair"}
+            {saving ? "Guardando..." : <><Save size={14} strokeWidth={1.8} className="inline mr-1.5" />Guardar perfil Au Pair</>}
           </button>
         </div>
       </section>
@@ -1037,8 +1041,8 @@ export default function AuPairProfilePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
           <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #2d3142" }}>
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold" style={{ color: "#f1f5f9" }}>📄 Previsualizar envío</h3>
-              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#64748b" }}>✕</button>
+              <h3 className="text-base font-bold flex items-center gap-2" style={{ color: "#f1f5f9" }}><FileText size={14} strokeWidth={1.8} />Previsualizar envío</h3>
+              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#64748b" }}><X size={16} strokeWidth={1.8} /></button>
             </div>
 
             <div className="space-y-2 text-xs">
@@ -1084,7 +1088,7 @@ export default function AuPairProfilePage() {
                 className="flex-1 py-2.5 rounded-lg text-xs font-bold transition"
                 style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
               >
-                ✅ Confirmar envío
+                <Check size={13} strokeWidth={2.5} className="inline mr-1" />Confirmar envío
               </button>
             </div>
           </div>
@@ -1096,7 +1100,7 @@ export default function AuPairProfilePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
           <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #22c55e" }}>
             <div className="text-center">
-              <span className="text-3xl">✅</span>
+              <div className="flex justify-center"><CheckCircle2 size={32} strokeWidth={1.5} style={{ color: "#22c55e" }} /></div>
               <h3 className="text-lg font-bold mt-2" style={{ color: "#22c55e" }}>¡Perfil Au Pair enviado!</h3>
             </div>
 
@@ -1118,7 +1122,7 @@ export default function AuPairProfilePage() {
 
               {/* Carta enviada */}
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "#94a3b8" }}>📧 Carta enviada:</label>
+                <label className="block text-xs font-semibold mb-1 flex items-center gap-1" style={{ color: "#94a3b8" }}><Mail size={11} strokeWidth={1.8} />Carta enviada:</label>
                 <div className="rounded-lg p-3 text-xs leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto" style={{ background: "#0f1117", border: "1px solid #1e212b", color: "#cbd5e1" }}>
                   {confirmData.carta}
                 </div>

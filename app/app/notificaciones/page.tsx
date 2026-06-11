@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { Upload, Bell, Briefcase, Target, UserCheck, Info, BellOff, Check, type LucideIcon } from "lucide-react";
 
 interface Notif {
   id: number;
@@ -27,13 +28,13 @@ interface Oferta {
   descripcion: string;
 }
 
-const ICONOS: Record<string, string> = {
-  cv_enviado: "📤",
-  nueva_oferta: "🔔",
-  alerta_empleo: "💼",
-  entrevista: "🎯",
-  bienvenida: "👋",
-  sistema: "ℹ️",
+const ICONOS: Record<string, LucideIcon> = {
+  cv_enviado:    Upload,
+  nueva_oferta:  Bell,
+  alerta_empleo: Briefcase,
+  entrevista:    Target,
+  bienvenida:    UserCheck,
+  sistema:       Info,
 };
 
 export default function NotificacionesPage() {
@@ -220,7 +221,7 @@ export default function NotificacionesPage() {
       }
 
       setEnviadosHoy((prev) => prev + 1);
-      setEnvioExito(`✅ CV enviado a ${job.empresa}`);
+      setEnvioExito(`CV enviado a ${job.empresa}`);
       setTimeout(() => setEnvioExito(""), 4000);
     } catch (err) {
       setErrorEnvio((err as Error).message);
@@ -375,7 +376,7 @@ export default function NotificacionesPage() {
                   color: filtro === f ? "#22c55e" : "#94a3b8",
                 }}
               >
-                {f === "todas" ? "📋 Todas" : `🔵 No leídas (${sinLeer})`}
+                {f === "todas" ? "Todas" : `No leídas (${sinLeer})`}
               </button>
             )
           )}
@@ -396,7 +397,7 @@ export default function NotificacionesPage() {
 
         {filtradas.length === 0 ? (
           <div className="card-game p-10 text-center">
-            <p className="text-4xl mb-3">🔕</p>
+            <BellOff size={36} strokeWidth={1.3} className="mx-auto mb-3" style={{ color: "#475569" }} />
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>
               {filtro === "no_leidas"
                 ? "No tienes notificaciones pendientes"
@@ -431,9 +432,7 @@ export default function NotificacionesPage() {
                     }}
                   >
                     <div className="flex items-start gap-3">
-                      <span className="text-lg mt-0.5">
-                        {ICONOS[n.tipo] || "📌"}
-                      </span>
+                      {(() => { const Icon = ICONOS[n.tipo] ?? Bell; return <span className="mt-0.5 flex-shrink-0"><Icon size={18} strokeWidth={1.8} /></span>; })()}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <h4
@@ -608,12 +607,7 @@ export default function NotificacionesPage() {
                                   }}
                                 >
                                   {selected && (
-                                    <span
-                                      className="text-[9px] font-bold"
-                                      style={{ color: "#0f1117" }}
-                                    >
-                                      ✓
-                                    </span>
+                                    <Check size={8} strokeWidth={3} style={{ color: "#0f1117" }} />
                                   )}
                                 </button>
 

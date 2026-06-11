@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { WifiOff } from "lucide-react";
 
 export function useIsOnline() {
   const [online, setOnline] = useState(true);
@@ -20,7 +21,7 @@ export default function OfflineScreen() {
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
       style={{ background: "#0f1117" }}>
       <div className="text-center px-8 max-w-sm">
-        <div className="text-6xl mb-6">📡</div>
+        <WifiOff size={64} strokeWidth={1.2} className="mx-auto mb-6" style={{ color: "#64748b" }} />
         <h1 className="text-xl font-bold text-white mb-3">Sin conexión</h1>
         <p className="text-sm mb-6" style={{ color: "#64748b" }}>
           BuscayCurra necesita conexión a internet para funcionar.

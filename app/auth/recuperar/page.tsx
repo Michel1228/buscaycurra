@@ -11,6 +11,7 @@
 import { useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
+import { Check } from "lucide-react";
 
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
@@ -84,7 +85,7 @@ export default function RecuperarPage() {
                 className="inline-flex items-center justify-center w-16 h-16 rounded-full text-white text-2xl mb-4"
                 style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >
-                ✓
+                <Check size={28} strokeWidth={2.5} />
               </div>
               {/* Mensaje principal */}
               <h2 className="text-lg font-semibold text-[#f0ebe0] mb-2">Email enviado</h2>

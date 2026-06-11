@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
-import { Mail, Eye, MessageSquare, Clock, XCircle, Ban, FileText, Briefcase, AtSign, Calendar, Inbox } from "lucide-react";
+import { Mail, Eye, MessageSquare, Clock, XCircle, Ban, FileText, Briefcase, AtSign, Calendar, Inbox, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface Envio {
@@ -196,7 +196,7 @@ export default function EnviosPage() {
                       className="px-2 py-0.5 rounded-full text-[10px] font-semibold transition hover:opacity-80"
                       style={{ background: "rgba(100,116,139,0.12)", border: "1px solid rgba(100,116,139,0.25)", color: "#64748b" }}
                       title="Eliminar de la lista">
-                      ✕
+                      <X size={11} strokeWidth={2} />
                     </button>
                   </div>
                 </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { MessageSquare, Mail, Eye, Clock, Info, Bell, BellOff, type LucideIcon } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface Notificacion {
@@ -14,13 +15,13 @@ interface Notificacion {
   created_at: string;
 }
 
-const ICONOS: Record<string, string> = {
-  respuesta_empresa: "💬",
-  cv_enviado: "📧",
-  cv_visto: "👀",
-  recordatorio: "⏰",
-  info: "ℹ️",
-  nuevo_empleo: "🔔",
+const ICONOS: Record<string, LucideIcon> = {
+  respuesta_empresa: MessageSquare,
+  cv_enviado:        Mail,
+  cv_visto:          Eye,
+  recordatorio:      Clock,
+  info:              Info,
+  nuevo_empleo:      Bell,
 };
 
 const COLORES: Record<string, string> = {
@@ -196,7 +197,7 @@ export default function NotificacionesBell() {
         }}
         aria-label="Notificaciones"
       >
-        <span className="text-lg">🔔</span>
+        <Bell size={18} strokeWidth={1.8} />
         {sinLeer > 0 && (
           <span
             className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold animate-pulse"
@@ -239,7 +240,7 @@ export default function NotificacionesBell() {
           {/* Lista */}
           {notifs.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <p className="text-3xl mb-2">🔕</p>
+              <BellOff size={28} strokeWidth={1.3} className="mx-auto mb-2" style={{ color: "#706a58" }} />
               <p className="text-sm" style={{ color: "#706a58" }}>Sin notificaciones</p>
               <p className="text-xs mt-1" style={{ color: "#504a3a" }}>
                 Te avisaremos cuando una empresa responda
@@ -257,9 +258,7 @@ export default function NotificacionesBell() {
                     borderBottom: "1px solid #2a2a1e",
                   }}
                 >
-                  <span className="text-xl mt-0.5 shrink-0">
-                    {ICONOS[n.tipo] || "📌"}
-                  </span>
+                  {(() => { const Icon = ICONOS[n.tipo] ?? Bell; return <span className="mt-0.5 shrink-0" style={{ color: COLORES[n.tipo] ?? "#b0a890" }}><Icon size={18} strokeWidth={1.8} /></span>; })()}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span

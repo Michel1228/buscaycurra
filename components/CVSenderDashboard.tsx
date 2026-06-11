@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
+import { CheckCircle2, Clock, XCircle, Ban, FileText, RefreshCw, Calendar, Zap, ClipboardList, Briefcase, X, type LucideIcon } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface PendingJob {
@@ -45,12 +46,21 @@ function statusStyle(s: string) {
   if (s === "fallido") return { bg: "rgba(239,68,68,0.12)", color: "#f87171" };
   return { bg: "rgba(61,60,48,0.3)", color: "#706a58" };
 }
-function statusEmoji(s: string) {
-  if (s === "enviado") return "✅";
-  if (s === "pendiente") return "⏳";
-  if (s === "fallido") return "❌";
-  if (s === "cancelado") return "🚫";
-  return "📄";
+const STATUS_ICON: Record<string, LucideIcon> = {
+  enviado:   CheckCircle2,
+  pendiente: Clock,
+  fallido:   XCircle,
+  cancelado: Ban,
+};
+const STATUS_COLOR: Record<string, string> = {
+  enviado:   "#7ed56f",
+  pendiente: "#f0c040",
+  fallido:   "#f87171",
+  cancelado: "#706a58",
+};
+function StatusIcon({ status }: { status: string }) {
+  const Icon = STATUS_ICON[status] ?? FileText;
+  return <Icon size={18} strokeWidth={1.6} style={{ color: STATUS_COLOR[status] ?? "#706a58", flexShrink: 0 }} />;
 }
 
 export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSenderDashboardProps) {
@@ -132,7 +142,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
   if (error) {
     return (
       <div className="card-game p-6 text-center">
-        <p className="font-medium" style={{ color: "#f87171" }}>❌ {error}</p>
+        <p className="font-medium flex items-center gap-1" style={{ color: "#f87171" }}><X size={13} strokeWidth={2} />{error}</p>
         <button onClick={() => void loadData()} className="mt-3 text-sm" style={{ color: "#7ed56f" }}>Reintentar</button>
       </div>
     );
@@ -192,8 +202,8 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       <div className="card-game overflow-hidden">
         <div className="px-5 py-4 flex items-center justify-between"
           style={{ borderBottom: "1px solid #3d3c30" }}>
-          <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>
-            ⏳ Pendientes
+          <h3 className="font-bold text-sm flex items-center gap-1.5" style={{ color: "#f0ebe0" }}>
+            <Clock size={13} strokeWidth={2} style={{ color: "#f0c040" }} />Pendientes
             {pendingJobs.length > 0 && (
               <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold"
                 style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}>
@@ -201,7 +211,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
               </span>
             )}
           </h3>
-          <button onClick={() => void loadData()} className="text-xs" style={{ color: "#7ed56f" }}>🔄</button>
+          <button onClick={() => void loadData()} className="text-xs flex items-center" style={{ color: "#7ed56f" }}><RefreshCw size={13} strokeWidth={2} /></button>
         </div>
         {pendingJobs.length === 0 ? (
           <div className="px-5 py-8 text-center">
@@ -216,11 +226,11 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
                   style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}>{i + 1}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm truncate" style={{ color: "#f0ebe0" }}>{job.companyName}</p>
-                  <p className="text-[10px]" style={{ color: "#706a58" }}>📅 {job.scheduledForFormatted}</p>
+                  <p className="text-[10px] flex items-center gap-1" style={{ color: "#706a58" }}><Calendar size={11} strokeWidth={1.8} />{job.scheduledForFormatted}</p>
                 </div>
                 {job.priority === "prioritario" && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                    style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}>⚡</span>
+                  <span className="flex items-center text-[10px] px-2 py-0.5 rounded-full font-bold"
+                    style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}><Zap size={11} strokeWidth={2} /></span>
                 )}
                 <button onClick={() => void cancelJob(job.id)} disabled={cancellingId === job.id}
                   className="text-[10px] px-2 py-1 rounded-lg transition"
@@ -236,7 +246,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       {/* History */}
       <div className="card-game overflow-hidden">
         <div className="px-5 py-4" style={{ borderBottom: "1px solid #3d3c30" }}>
-          <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>📋 Historial</h3>
+          <h3 className="font-bold text-sm flex items-center gap-1.5" style={{ color: "#f0ebe0" }}><ClipboardList size={13} strokeWidth={2} style={{ color: "#94a3b8" }} />Historial</h3>
         </div>
         {history.length === 0 ? (
           <div className="px-5 py-8 text-center">
@@ -249,10 +259,10 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
               return (
                 <li key={rec.id} className="px-5 py-3.5 flex items-center gap-3 transition"
                   style={{ borderBottom: i < history.length - 1 ? "1px solid rgba(61,60,48,0.3)" : "none" }}>
-                  <span className="text-lg">{statusEmoji(rec.status)}</span>
+                  <StatusIcon status={rec.status} />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate" style={{ color: "#f0ebe0" }}>{rec.companyName}</p>
-                    {rec.jobTitle && <p className="text-[10px] truncate" style={{ color: "#706a58" }}>💼 {rec.jobTitle}</p>}
+                    {rec.jobTitle && <p className="text-[10px] truncate flex items-center gap-1" style={{ color: "#706a58" }}><Briefcase size={11} strokeWidth={1.8} />{rec.jobTitle}</p>}
                     {rec.sentAt && (
                       <p className="text-[10px]" style={{ color: "#504a3a" }}>
                         {new Date(rec.sentAt).toLocaleDateString("es-ES", {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Bot } from "lucide-react";
 
 interface InterviewFeedbackProps {
   feedback: string;
@@ -36,7 +37,7 @@ export default function InterviewFeedback({ feedback }: InterviewFeedbackProps) 
     >
       {/* Cabecera del feedback */}
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-base">🤖</span>
+        <Bot size={18} strokeWidth={1.6} style={{ color: "#34d399", flexShrink: 0 }} />
         <span className="text-xs font-semibold" style={{ color: "#34d399" }}>
           Feedback de IA
         </span>

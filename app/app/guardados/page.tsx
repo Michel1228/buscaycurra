@@ -71,23 +71,19 @@ export default function GuardadosPage() {
           return;
         }
 
-        // Cargar detalles de cada oferta
-        const ofertasDetalle: PropiedadesJobCard[] = [];
-        
-        for (const g of listaGuardados) {
-          try {
-            const jobRes = await fetch(`/api/jobs/detail?id=${encodeURIComponent(g.job_id)}`);
-            if (jobRes.ok) {
-              const jobData = await jobRes.json() as { oferta?: PropiedadesJobCard };
-              if (jobData.oferta) {
-                ofertasDetalle.push(jobData.oferta);
-              }
-            }
-          } catch { 
-            // Ignorar errores individuales
-          }
-        }
-        
+        // Cargar detalles en paralelo (evita N+1 sequential calls)
+        const resultados = await Promise.allSettled(
+          listaGuardados.map(g =>
+            fetch(`/api/jobs/detail?id=${encodeURIComponent(g.job_id)}`)
+              .then(r => r.ok ? r.json() as Promise<{ oferta?: PropiedadesJobCard }> : null)
+              .catch(() => null)
+          )
+        );
+        const ofertasDetalle = resultados
+          .filter((r): r is PromiseFulfilledResult<{ oferta?: PropiedadesJobCard } | null> => r.status === "fulfilled")
+          .map(r => r.value?.oferta)
+          .filter((o): o is PropiedadesJobCard => !!o);
+
         setOfertas(ofertasDetalle);
       } catch (error) {
         console.error("Error cargando guardados:", error);

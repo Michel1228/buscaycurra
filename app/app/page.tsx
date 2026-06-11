@@ -5,21 +5,22 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
+import { Sparkles, FileText, Search, Mail, PartyPopper, Brain, Target, Zap, Box, Sprout, Rocket, Check, X, type LucideIcon } from "lucide-react";
 
 // ─── Datos de la landing ──────────────────────────────────────────────────────
 
-const pasos = [
-  { num: "01", titulo: "Crea tu perfil", desc: "30 segundos. Sin tarjeta. Empieza tu aventura con Guzzi.", icon: "✨", color: "#7ed56f", detalle: "Tu aventura comienza aquí" },
-  { num: "02", titulo: "Sube tu CV", desc: "Nuestra IA lo analiza y mejora automáticamente para cada sector", icon: "📄", color: "#f0c040", detalle: "Guzzi perfecciona tu CV" },
-  { num: "03", titulo: "Busca ofertas", desc: "millones de ofertas en 21 países filtradas por zona, sector y salario", icon: "🔍", color: "#e07850", detalle: "Guzzi escanea el mercado 🎯" },
-  { num: "04", titulo: "Envía candidaturas", desc: "Automáticamente a cientos de empresas. Tú descansas.", icon: "📧", color: "#a070d0", detalle: "Guzzi trabaja por ti" },
-  { num: "05", titulo: "¡Encuentra trabajo!", desc: "Empleo directo. Sin intermediarios. Tu salario completo.", icon: "🎉", color: "#ff6090", detalle: "¡Lo conseguiste! 🎉" },
+const pasos: { num: string; titulo: string; desc: string; Icon: LucideIcon; color: string; detalle: string }[] = [
+  { num: "01", titulo: "Crea tu perfil", desc: "30 segundos. Sin tarjeta. Empieza tu aventura con Guzzi.", Icon: Sparkles, color: "#7ed56f", detalle: "Tu aventura comienza aquí" },
+  { num: "02", titulo: "Sube tu CV", desc: "Nuestra IA lo analiza y mejora automáticamente para cada sector", Icon: FileText, color: "#f0c040", detalle: "Guzzi perfecciona tu CV" },
+  { num: "03", titulo: "Busca ofertas", desc: "millones de ofertas en 21 países filtradas por zona, sector y salario", Icon: Search, color: "#e07850", detalle: "Guzzi escanea el mercado" },
+  { num: "04", titulo: "Envía candidaturas", desc: "Automáticamente a cientos de empresas. Tú descansas.", Icon: Mail, color: "#a070d0", detalle: "Guzzi trabaja por ti" },
+  { num: "05", titulo: "¡Encuentra trabajo!", desc: "Empleo directo. Sin intermediarios. Tu salario completo.", Icon: PartyPopper, color: "#ff6090", detalle: "¡Lo conseguiste!" },
 ];
 
-const superpotencias = [
-  { icon: "🧠", titulo: "Tu CV, mejorado y listo para descargar", desc: "Nuestra IA analiza tu currículum, lo adapta a cada sector y oferta, corrige errores y lo optimiza para pasar los filtros ATS de las empresas. En segundos tienes una versión profesional lista para descargar en PDF.", acento: "#7ed56f" },
-  { icon: "🎯", titulo: "Entrevistas simuladas adaptadas a cada empresa", desc: "Antes de ir a una entrevista, practica con nuestra IA que conoce los valores, cultura y preguntas típicas de esa empresa específica. No es una entrevista genérica — es exactamente lo que te van a preguntar.", acento: "#f0c040" },
-  { icon: "⚡", titulo: "Enviamos tu CV cuando más probabilidades tienes", desc: "Analizamos el horario de actividad de cada empresa: cuándo abren el email, cuándo está el responsable de RRHH, si trabajan en turno de noche. Tu CV llega en el momento exacto en que hay alguien para leerlo.", acento: "#a070d0" },
+const superpotencias: { Icon: LucideIcon; titulo: string; desc: string; acento: string }[] = [
+  { Icon: Brain,  titulo: "Tu CV, mejorado y listo para descargar", desc: "Nuestra IA analiza tu currículum, lo adapta a cada sector y oferta, corrige errores y lo optimiza para pasar los filtros ATS de las empresas. En segundos tienes una versión profesional lista para descargar en PDF.", acento: "#7ed56f" },
+  { Icon: Target, titulo: "Entrevistas simuladas adaptadas a cada empresa", desc: "Antes de ir a una entrevista, practica con nuestra IA que conoce los valores, cultura y preguntas típicas de esa empresa específica. No es una entrevista genérica — es exactamente lo que te van a preguntar.", acento: "#f0c040" },
+  { Icon: Zap,    titulo: "Enviamos tu CV cuando más probabilidades tienes", desc: "Analizamos el horario de actividad de cada empresa: cuándo abren el email, cuándo está el responsable de RRHH, si trabajan en turno de noche. Tu CV llega en el momento exacto en que hay alguien para leerlo.", acento: "#a070d0" },
 ];
 
 const testimonios = [
@@ -107,7 +108,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-3">
             <Link href="/auth/login" className="px-4 py-2 text-sm font-medium" style={{ color: "#b0a890" }}>Entrar</Link>
-            <Link href="/auth/registro" className="btn-game text-sm !py-2 !px-5">🌱 Empezar</Link>
+            <Link href="/auth/registro" className="btn-game text-sm !py-2 !px-5">Empezar</Link>
           </div>
         </div>
       </header>
@@ -124,7 +125,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex justify-center mb-5">
-              <span className="badge-game badge-verde text-xs">🌱 +2.400 personas ya evolucionando</span>
+              <span className="badge-game badge-verde text-xs flex items-center gap-1"><Sprout size={11} strokeWidth={1.8} />+2.400 personas ya evolucionando</span>
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-[1.1] mb-6">
               <span style={{ color: "#f0ebe0" }}>Tu trabajo </span>
@@ -172,11 +173,11 @@ export default function HomePage() {
               {superpotencias.map((s) => (
                 <div key={s.titulo} className="card-game p-7 relative">
                   <div className="absolute top-4 right-4">
-                    <span className="badge-game badge-verde text-[10px]">✓ Disponible ya</span>
+                    <span className="badge-game badge-verde text-[10px] flex items-center gap-0.5"><Check size={9} strokeWidth={2.5} />Disponible ya</span>
                   </div>
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-5"
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5"
                     style={{ background: `${s.acento}18`, border: `2px solid ${s.acento}40` }}>
-                    {s.icon}
+                    <s.Icon size={28} strokeWidth={1.4} style={{ color: s.acento }} />
                   </div>
                   <h3 className="text-base font-bold mb-3 leading-snug" style={{ color: "#f0ebe0" }}>{s.titulo}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: "#b0a890" }}>{s.desc}</p>
@@ -204,7 +205,7 @@ export default function HomePage() {
                   </div>
                   <div className="card-game p-6 flex-1 max-w-lg">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{paso.icon}</span>
+                      <paso.Icon size={22} strokeWidth={1.4} style={{ color: paso.color }} />
                       <h3 className="text-lg font-bold" style={{ color: paso.color }}>{paso.titulo}</h3>
                     </div>
                     <p className="text-sm leading-relaxed mb-2" style={{ color: "#b0a890" }}>{paso.desc}</p>
@@ -242,8 +243,8 @@ export default function HomePage() {
                 <div key={fila.concepto} className="grid grid-cols-3 text-center text-sm py-4 px-4 items-center gap-2"
                   style={{ background: i % 2 === 0 ? "rgba(126,213,111,0.02)" : "transparent", borderBottom: "1px solid rgba(126,213,111,0.05)" }}>
                   <div className="font-medium text-left text-xs md:text-sm" style={{ color: "#b0a890" }}>{fila.concepto}</div>
-                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#e07850" }}>❌ {fila.ellos}</div>
-                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#7ed56f" }}>✅ {fila.byc}</div>
+                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#e07850" }}><X size={13} strokeWidth={2.5} className="shrink-0" />{fila.ellos}</div>
+                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#7ed56f" }}><Check size={13} strokeWidth={2.5} className="shrink-0" />{fila.byc}</div>
                 </div>
               ))}
             </div>
@@ -261,10 +262,10 @@ export default function HomePage() {
             <p className="text-center mb-14" style={{ color: "#706a58" }}>Empieza gratis. Evoluciona cuando quieras.</p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { nombre: "Gratis", precio: "0€", periodo: "", emoji: "🥚", desc: "Para probar", items: ["2 CVs/día", "Buscador básico", "Sin tarjeta"], dest: false, badge: null },
-                { nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱", desc: "Menos que un café", items: ["5 CVs/día", "IA básica", "Historial completo"], dest: true, badge: "🔥 Más elegido" },
-                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "⚡", desc: "Para encontrar trabajo", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: false, badge: "⭐ Popular" },
-                { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🚀", desc: "Sin límites", items: ["Envíos ilimitados", "Todo incluido", "Multi-usuarios", "API"], dest: false, badge: null },
+                { nombre: "Gratis", precio: "0€", periodo: "", Icon: Box as LucideIcon, desc: "Para probar", items: ["2 CVs/día", "Buscador básico", "Sin tarjeta"], dest: false, badge: null },
+                { nombre: "Esencial", precio: "2,99€", periodo: "/mes", Icon: Sprout as LucideIcon, desc: "Menos que un café", items: ["5 CVs/día", "IA básica", "Historial completo"], dest: true, badge: "Más elegido" },
+                { nombre: "Pro", precio: "9,99€", periodo: "/mes", Icon: Zap as LucideIcon, desc: "Para encontrar trabajo", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: false, badge: "Popular" },
+                { nombre: "Empresa", precio: "49,99€", periodo: "/mes", Icon: Rocket as LucideIcon, desc: "Sin límites", items: ["Envíos ilimitados", "Todo incluido", "Multi-usuarios", "API"], dest: false, badge: null },
               ].map((plan) => (
                 <div key={plan.nombre} className={`card-game p-6 text-center relative ${plan.dest ? "scale-[1.03]" : ""}`}
                   style={plan.dest ? { borderColor: "#7ed56f", boxShadow: "0 0 40px rgba(126,213,111,0.12)" } : {}}>
@@ -273,7 +274,7 @@ export default function HomePage() {
                       <span className="badge-game badge-dorado text-[10px]">{plan.badge}</span>
                     </div>
                   )}
-                  <div className="text-3xl mb-2">{plan.emoji}</div>
+                  <div className="mb-2 flex justify-center"><plan.Icon size={30} strokeWidth={1.3} /></div>
                   <h3 className="text-base font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h3>
                   <p className="text-[11px] mb-3" style={{ color: "#706a58" }}>{plan.desc}</p>
                   <div className="mb-4">
@@ -283,7 +284,7 @@ export default function HomePage() {
                   <ul className="space-y-1.5 mb-5 text-left">
                     {plan.items.map((item) => (
                       <li key={item} className="flex items-center gap-2 text-xs" style={{ color: "#b0a890" }}>
-                        <span style={{ color: "#7ed56f" }}>✓</span>{item}
+                        <Check size={12} strokeWidth={2.5} style={{ color: "#7ed56f" }} className="flex-shrink-0" />{item}
                       </li>
                     ))}
                   </ul>
@@ -315,7 +316,7 @@ export default function HomePage() {
                         <p className="text-xs" style={{ color: "#706a58" }}>{t.puesto} — {t.empresa}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl">⚡</p>
+                        <Zap size={20} strokeWidth={1.6} style={{ color: "#f0c040" }} />
                       </div>
                     </div>
                   </div>

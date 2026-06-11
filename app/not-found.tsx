@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Search } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -43,7 +44,7 @@ export default function NotFound() {
             border: "1px solid #2d3142",
           }}
         >
-          🔍 Buscar ofertas
+          <Search size={14} strokeWidth={2} className="inline mr-1" /> Buscar ofertas
         </Link>
       </div>
 

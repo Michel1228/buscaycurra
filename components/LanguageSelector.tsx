@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Check } from "lucide-react";
 import { IDIOMAS, type IdiomaCode } from "@/lib/i18n/translations";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -57,7 +58,7 @@ export default function LanguageSelector() {
                 <span className="text-base">{idioma.flag}</span>
                 <span>{idioma.name}</span>
                 {lang === idioma.code && (
-                  <span className="ml-auto text-[#22c55e]">✓</span>
+                  <Check size={12} strokeWidth={2.5} className="ml-auto" style={{ color: "#22c55e" }} />
                 )}
               </button>
             ))}

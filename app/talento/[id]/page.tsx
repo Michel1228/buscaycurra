@@ -6,6 +6,7 @@
 import { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import { Lock, User, MapPin, Wrench, Briefcase, GraduationCap, Globe } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export default async function TalentoPage({ params }: Props) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1117" }}>
         <div className="text-center p-10">
-          <p className="text-5xl mb-4">🔒</p>
+          <div className="flex justify-center mb-4"><Lock size={48} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
           <h1 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Perfil no disponible</h1>
           <p className="text-sm" style={{ color: "#64748b" }}>Este candidato no tiene su perfil público activado.</p>
           <Link href="/" className="inline-block mt-4 text-sm" style={{ color: "#22c55e" }}>← Volver al inicio</Link>
@@ -53,13 +54,13 @@ export default async function TalentoPage({ params }: Props) {
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
       <div className="py-16 px-4" style={{ background: "linear-gradient(135deg, #1a1d28, #0f1117)" }}>
         <div className="max-w-3xl mx-auto text-center">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center text-4xl mx-auto mb-4"
+          <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
             style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(59,130,246,0.2))", border: "2px solid rgba(34,197,94,0.3)" }}>
-            👤
+            <User size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} />
           </div>
           <h1 className="text-3xl font-bold mb-1" style={{ color: "#f1f5f9" }}>{cv.nombre_completo || "Candidato"}</h1>
           <p className="text-lg mb-3" style={{ color: "#22c55e" }}>{cv.titulo || "Profesional"}</p>
-          <p className="text-sm" style={{ color: "#94a3b8" }}>📍 {cv.ciudad || "España"}</p>
+          <p className="flex items-center justify-center gap-1 text-sm" style={{ color: "#94a3b8" }}><MapPin size={13} strokeWidth={1.8} />{cv.ciudad || "España"}</p>
         </div>
       </div>
 
@@ -67,7 +68,7 @@ export default async function TalentoPage({ params }: Props) {
         {/* Habilidades */}
         {habilidades.length > 0 && (
           <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
-            <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>🛠️ Habilidades</h2>
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><Wrench size={13} strokeWidth={1.8} />Habilidades</h2>
             <div className="flex flex-wrap gap-2">
               {habilidades.map((h: string) => (
                 <span key={h} className="px-3 py-1.5 rounded-lg text-xs"
@@ -82,7 +83,7 @@ export default async function TalentoPage({ params }: Props) {
         {/* Experiencia */}
         {cv.experiencia && (
           <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
-            <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>💼 Experiencia</h2>
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><Briefcase size={13} strokeWidth={1.8} />Experiencia</h2>
             <p className="text-sm whitespace-pre-wrap" style={{ color: "#94a3b8" }}>{cv.experiencia}</p>
           </div>
         )}
@@ -90,7 +91,7 @@ export default async function TalentoPage({ params }: Props) {
         {/* Educación */}
         {cv.educacion && (
           <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
-            <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>🎓 Formación</h2>
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><GraduationCap size={13} strokeWidth={1.8} />Formación</h2>
             <p className="text-sm whitespace-pre-wrap" style={{ color: "#94a3b8" }}>{cv.educacion}</p>
           </div>
         )}
@@ -98,7 +99,7 @@ export default async function TalentoPage({ params }: Props) {
         {/* Idiomas */}
         {cv.idiomas && (
           <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
-            <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>🌍 Idiomas</h2>
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><Globe size={13} strokeWidth={1.8} />Idiomas</h2>
             <p className="text-sm" style={{ color: "#94a3b8" }}>{cv.idiomas}</p>
           </div>
         )}

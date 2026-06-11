@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { FileText, Bot, Bell, Search, PartyPopper, type LucideIcon } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface Step {
   id: string;
-  icon: string;
+  Icon: LucideIcon;
   titulo: string;
   desc: string;
   cta: string;
@@ -65,7 +66,7 @@ export default function OnboardingChecklist() {
       const stepsList: Step[] = [
         {
           id: "cv",
-          icon: "📄",
+          Icon: FileText,
           titulo: "Completa tu CV",
           desc: "Añade tu experiencia, foto y datos de contacto.",
           cta: "Ir a mi CV →",
@@ -74,7 +75,7 @@ export default function OnboardingChecklist() {
         },
         {
           id: "envios",
-          icon: "🤖",
+          Icon: Bot,
           titulo: "Activa envíos automáticos",
           desc: "Guzzi envía tu CV personalizado a empresas mientras duermes.",
           cta: "Activar envíos →",
@@ -83,7 +84,7 @@ export default function OnboardingChecklist() {
         },
         {
           id: "alerta",
-          icon: "🔔",
+          Icon: Bell,
           titulo: "Crea tu alerta de empleo",
           desc: "Recibe notificaciones cuando aparezcan ofertas para ti.",
           cta: "Crear alerta →",
@@ -92,7 +93,7 @@ export default function OnboardingChecklist() {
         },
         {
           id: "buscar",
-          icon: "🔍",
+          Icon: Search,
           titulo: "Explora ofertas de empleo",
           desc: "Busca y guarda las que más te interesen.",
           cta: "Buscar ofertas →",
@@ -132,7 +133,7 @@ export default function OnboardingChecklist() {
       <div className="rounded-xl p-5 mb-6 flex items-center justify-between gap-4"
         style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🎉</span>
+          <PartyPopper size={22} strokeWidth={1.3} style={{ color: "#22c55e" }} />
           <div>
             <p className="font-semibold text-sm" style={{ color: "#22c55e" }}>¡Todo configurado!</p>
             <p className="text-xs" style={{ color: "#64748b" }}>Guzzi ya está trabajando para ti. Revisa el pipeline cuando quieras.</p>
@@ -186,7 +187,7 @@ export default function OnboardingChecklist() {
               }}>
               {step.done
                 ? <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                : <span className="text-xs">{step.icon}</span>
+                : <step.Icon size={12} strokeWidth={1.8} style={{ color: "#94a3b8" }} />
               }
             </div>
 

@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Check } from "lucide-react";
 
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
@@ -124,7 +125,7 @@ export default function NuevaContrasenaPage() {
                 className="inline-flex items-center justify-center w-16 h-16 rounded-full text-white text-2xl mb-4"
                 style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
               >
-                ✓
+                <Check size={28} strokeWidth={2.5} />
               </div>
               <h2 className="text-lg font-semibold text-[#f0ebe0] mb-2">
                 ¡Contraseña actualizada!
@@ -175,7 +176,7 @@ export default function NuevaContrasenaPage() {
                 {nuevaContrasena.length > 0 && (
                   <p className={`text-xs mt-1 ${nuevaContrasena.length >= 8 ? "text-green-600" : "text-red-500"}`}>
                     {nuevaContrasena.length >= 8
-                      ? "✓ Longitud correcta"
+                      ? "Longitud correcta"
                       : `Faltan ${8 - nuevaContrasena.length} caracteres`}
                   </p>
                 )}
@@ -202,7 +203,7 @@ export default function NuevaContrasenaPage() {
                 {confirmarContrasena.length > 0 && (
                   <p className={`text-xs mt-1 ${nuevaContrasena === confirmarContrasena ? "text-green-600" : "text-red-500"}`}>
                     {nuevaContrasena === confirmarContrasena
-                      ? "✓ Las contraseñas coinciden"
+                      ? "Las contraseñas coinciden"
                       : "Las contraseñas no coinciden"}
                   </p>
                 )}

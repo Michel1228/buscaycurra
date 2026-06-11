@@ -7,6 +7,7 @@
 import { Metadata } from "next";
 import { getPool } from "@/lib/db";
 import Link from "next/link";
+import { Building2, Briefcase, MapPin, DollarSign, BarChart2, Search, type LucideIcon } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -72,9 +73,9 @@ export default async function EmpresaPage({ params }: Props) {
       {/* Header */}
       <div className="py-16 px-4" style={{ background: "linear-gradient(135deg, #1a1d28, #0f1117)" }}>
         <div className="max-w-4xl mx-auto text-center">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4"
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(59,130,246,0.15))", border: "1px solid rgba(34,197,94,0.2)" }}>
-            🏢
+            <Building2 size={36} strokeWidth={1.2} style={{ color: "#22c55e" }} />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#f1f5f9" }}>
             {nombre}
@@ -89,14 +90,14 @@ export default async function EmpresaPage({ params }: Props) {
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         {/* Stats cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: "Ofertas activas", value: total.toLocaleString("es-ES"), icon: "📋" },
-            { label: "Ciudades", value: numCiudades.toString(), icon: "📍" },
-            { label: "Salario medio", value: salarioMedio ? `${salarioMedio}€` : "—", icon: "💰" },
-            { label: "Ofertas con salario", value: salario?.con_salario || "0", icon: "📊" },
-          ].map(s => (
+          {([
+            { label: "Ofertas activas", value: total.toLocaleString("es-ES"), Icon: Briefcase as LucideIcon },
+            { label: "Ciudades", value: numCiudades.toString(), Icon: MapPin as LucideIcon },
+            { label: "Salario medio", value: salarioMedio ? `${salarioMedio}€` : "—", Icon: DollarSign as LucideIcon },
+            { label: "Ofertas con salario", value: salario?.con_salario || "0", Icon: BarChart2 as LucideIcon },
+          ] as { label: string; value: string; Icon: LucideIcon }[]).map(s => (
             <div key={s.label} className="p-4 rounded-xl text-center" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <p className="text-2xl mb-1">{s.icon}</p>
+              <div className="flex justify-center mb-1"><s.Icon size={22} strokeWidth={1.4} style={{ color: "#64748b" }} /></div>
               <p className="text-lg font-bold" style={{ color: "#f1f5f9" }}>{s.value}</p>
               <p className="text-[10px]" style={{ color: "#64748b" }}>{s.label}</p>
             </div>
@@ -106,7 +107,7 @@ export default async function EmpresaPage({ params }: Props) {
         {/* Ciudades */}
         {ciudades.length > 0 && (
           <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
-            <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>📍 Ciudades donde contrata</h2>
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><MapPin size={13} strokeWidth={1.8} />Ciudades donde contrata</h2>
             <div className="flex flex-wrap gap-2">
               {ciudades.map((c: any) => (
                 <span key={c.city} className="px-3 py-1.5 rounded-lg text-xs"
@@ -121,7 +122,7 @@ export default async function EmpresaPage({ params }: Props) {
         {/* Ofertas */}
         <div>
           <h2 className="text-lg font-bold mb-4" style={{ color: "#f1f5f9" }}>
-            💼 Ofertas de empleo en {nombre}
+            <Briefcase size={16} strokeWidth={1.8} className="inline mr-1.5" />Ofertas de empleo en {nombre}
           </h2>
           {ofertas.length > 0 ? (
             <div className="space-y-3">
@@ -132,8 +133,8 @@ export default async function EmpresaPage({ params }: Props) {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>{o.title}</h3>
-                      <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>📍 {o.city || "Varias"}</p>
-                      {o.salary && <p className="text-xs font-medium mt-1" style={{ color: "#22c55e" }}>💰 {o.salary}</p>}
+                      <p className="flex items-center gap-1 text-xs mt-1" style={{ color: "#94a3b8" }}><MapPin size={10} strokeWidth={1.8} />{o.city || "Varias"}</p>
+                      {o.salary && <p className="flex items-center gap-1 text-xs font-medium mt-1" style={{ color: "#22c55e" }}><DollarSign size={10} strokeWidth={1.8} />{o.salary}</p>}
                     </div>
                     <span className="text-xs px-3 py-1.5 rounded-lg flex-shrink-0"
                       style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
@@ -145,7 +146,7 @@ export default async function EmpresaPage({ params }: Props) {
             </div>
           ) : (
             <div className="p-10 text-center rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <p className="text-3xl mb-2">🔍</p>
+              <div className="flex justify-center mb-2"><Search size={32} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
               <p className="text-sm" style={{ color: "#64748b" }}>No hay ofertas activas ahora. Vuelve pronto.</p>
             </div>
           )}

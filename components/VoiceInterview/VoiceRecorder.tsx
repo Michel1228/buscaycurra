@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { isNativeIOS } from "@/lib/utils/platform";
+import { Mic, Lock, RefreshCw, Lightbulb } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionInstance = any;
@@ -125,7 +126,7 @@ export default function VoiceRecorder({
 
   const instruccionesDesbloqueo = esIOS
     ? "En iPhone/iPad: Ajustes → Privacidad → Micrófono → BuscayCurra → Activar. Luego vuelve aquí."
-    : "En Chrome: toca el candado 🔒 en la barra de dirección → Permisos → Micrófono → Permitir. Recarga la página.";
+    : "En Chrome: toca el candado en la barra de dirección → Permisos → Micrófono → Permitir. Recarga la página.";
 
   return (
     <div className="rounded-2xl p-4 space-y-3" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
@@ -160,7 +161,7 @@ export default function VoiceRecorder({
                 Escuchando... (pulsa para parar)
               </>
             ) : (
-              <>🎤 Responder con voz</>
+              <><Mic size={16} strokeWidth={1.8} />Responder con voz</>
             )}
           </button>
           {errorVoz && (
@@ -178,7 +179,7 @@ export default function VoiceRecorder({
       {soporteVoz && bloqueado && (
         <div className="space-y-3 p-3 rounded-xl" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.18)" }}>
           <div className="flex items-center gap-2">
-            <span style={{ fontSize: "16px" }}>🎙️</span>
+            <Mic size={16} strokeWidth={1.8} style={{ color: "#f87171", flexShrink: 0 }} />
             <p className="text-xs font-semibold" style={{ color: "#f87171" }}>Micrófono bloqueado</p>
           </div>
           {esIOS ? (
@@ -190,7 +191,7 @@ export default function VoiceRecorder({
             </ol>
           ) : (
             <ol className="text-xs space-y-1 pl-1" style={{ color: "#9ca3af" }}>
-              <li>1. Toca el <strong style={{ color: "#e5e7eb" }}>🔒 candado</strong> en la barra de dirección</li>
+              <li>1. Toca el <strong style={{ color: "#e5e7eb" }}>candado <Lock size={11} strokeWidth={2} className="inline" /></strong> en la barra de dirección</li>
               <li>2. Selecciona <strong style={{ color: "#e5e7eb" }}>Permisos → Micrófono → Permitir</strong></li>
               <li>3. Pulsa <strong style={{ color: "#e5e7eb" }}>Recargar</strong> abajo</li>
             </ol>
@@ -202,7 +203,7 @@ export default function VoiceRecorder({
                 className="flex-1 py-2 rounded-xl text-xs font-medium transition"
                 style={{ background: "#1e212b", color: "#94a3b8", border: "1px solid #2d3142" }}
               >
-                🔄 Recargar página
+                <RefreshCw size={13} strokeWidth={2} className="inline mr-1" />Recargar página
               </button>
             )}
             <button
@@ -210,7 +211,7 @@ export default function VoiceRecorder({
               className="flex-1 py-2 rounded-xl text-xs font-medium transition"
               style={{ background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.25)" }}
             >
-              {esIOS ? "🔓 Ya activé el permiso" : "🔓 Intentar de nuevo"}
+              {esIOS ? "Ya activé el permiso" : "Intentar de nuevo"}
             </button>
           </div>
           <p className="text-[11px] text-center" style={{ color: "#475569" }}>
@@ -221,8 +222,8 @@ export default function VoiceRecorder({
 
       {/* Sin soporte (Firefox, navegadores no compatibles) */}
       {!soporteVoz && (
-        <p className="text-xs" style={{ color: "#6b7280" }}>
-          💡 Voz disponible en Chrome, Edge y Safari. Escribe tu respuesta en el recuadro de arriba.
+        <p className="text-xs flex items-center gap-1" style={{ color: "#6b7280" }}>
+          <Lightbulb size={12} strokeWidth={2} className="shrink-0" />Voz disponible en Chrome, Edge y Safari. Escribe tu respuesta en el recuadro de arriba.
         </p>
       )}
     </div>

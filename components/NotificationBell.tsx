@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Mail, Eye, Search, Briefcase, Target, PartyPopper, Trophy, MailMinus, Bell, Lightbulb, Clock, UserCheck, Gem, Megaphone, Settings, type LucideIcon } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface Notif {
@@ -15,26 +16,26 @@ interface Notif {
   datos?: Record<string, string>;
 }
 
-const TIPO_ICON: Record<string, string> = {
+const TIPO_ICON: Record<string, LucideIcon> = {
   // Pipeline notifications
-  cv_enviado: "📧",
-  cv_visto: "👀",
-  cv_visto_por_empresa: "👁️",
-  en_revision: "🔍",
-  respuesta_empresa: "💼",
-  movido_a_entrevista: "🎯",
-  oferta_recibida: "🎉",
-  contratado: "🏆",
-  rechazado: "📭",
+  cv_enviado:           Mail,
+  cv_visto:             Eye,
+  cv_visto_por_empresa: Eye,
+  en_revision:          Search,
+  respuesta_empresa:    Briefcase,
+  movido_a_entrevista:  Target,
+  oferta_recibida:      PartyPopper,
+  contratado:           Trophy,
+  rechazado:            MailMinus,
   // Ofertas
-  nuevas_ofertas: "🆕",
-  alerta_empleo: "🔔",
-  oferta_recomendada: "💡",
+  nuevas_ofertas:       Bell,
+  alerta_empleo:        Bell,
+  oferta_recomendada:   Lightbulb,
   // Sistema
-  recordatorio: "⏰",
-  bienvenida: "👋",
-  plan: "💎",
-  default: "📢",
+  recordatorio:         Clock,
+  bienvenida:           UserCheck,
+  plan:                 Gem,
+  default:              Megaphone,
 };
 
 const TIPO_NAV: Record<string, string> = {
@@ -208,7 +209,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
           <div className="max-h-80 overflow-y-auto">
             {notifs.length === 0 ? (
               <div className="py-10 text-center">
-                <p className="text-2xl mb-2">🔔</p>
+                <Bell size={24} strokeWidth={1.4} className="mx-auto mb-2" style={{ color: "#475569" }} />
                 <p className="text-xs" style={{ color: "#475569" }}>Sin notificaciones</p>
                 <p className="text-[10px] mt-1" style={{ color: "#334155" }}>
                   Te avisaremos cuando Guzzi envíe tu CV o haya nuevas ofertas.
@@ -226,9 +227,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
                   }}
                   className="flex gap-3 px-4 py-3 cursor-pointer transition hover:bg-[#252836]"
                   style={{ borderBottom: "1px solid rgba(45,49,66,0.5)", opacity: n.leida ? 0.6 : 1 }}>
-                  <span className="text-base flex-shrink-0 mt-0.5">
-                    {TIPO_ICON[n.tipo] ?? TIPO_ICON.default}
-                  </span>
+                  {(() => { const Icon = TIPO_ICON[n.tipo] ?? TIPO_ICON.default; return <span className="flex-shrink-0 mt-0.5"><Icon size={16} strokeWidth={1.8} /></span>; })()}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate" style={{ color: "#f1f5f9" }}>{n.titulo}</p>
                     {n.mensaje && (
@@ -251,8 +250,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
               Ver todas →
             </Link>
             <Link href="/app/perfil" onClick={() => setOpen(false)}
-              className="text-[10px]" style={{ color: "#475569" }}>
-              ⚙ Configurar
+              className="text-[10px] flex items-center gap-1" style={{ color: "#475569" }}>
+              <Settings size={10} strokeWidth={2} />Configurar
             </Link>
           </div>
         </div>

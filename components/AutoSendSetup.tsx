@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Target, Zap, AlertTriangle, X, type LucideIcon } from "lucide-react";
 
 interface RateLimitInfo {
   enviadosHoy: number;
@@ -418,8 +419,8 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
             </label>
             <div className="grid grid-cols-2 gap-2 mb-2">
               {([
-                { id: "optimo" as const, label: "🎯 En horario óptimo", sub: "El CV llega cuando lo van a leer" },
-                { id: "ahora" as const,  label: "⚡ Enviar ya",         sub: "Inmediato, sin esperas" },
+                { id: "optimo" as const, Icon: Target as LucideIcon, label: "En horario óptimo", sub: "El CV llega cuando lo van a leer" },
+                { id: "ahora" as const,  Icon: Zap as LucideIcon,    label: "Enviar ya",         sub: "Inmediato, sin esperas" },
               ]).map(s => (
                 <button key={s.id} type="button" onClick={() => setEstrategia(s.id)}
                   className="py-2.5 px-3 rounded-lg text-left transition"
@@ -427,19 +428,19 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
                     background: estrategia === s.id ? "rgba(34,197,94,0.1)" : "#161922",
                     border: estrategia === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
                   }}>
-                  <div className="text-[11px] font-semibold" style={{ color: estrategia === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
+                  <div className="text-[11px] font-semibold flex items-center gap-1" style={{ color: estrategia === s.id ? "#22c55e" : "#f1f5f9" }}><s.Icon size={11} strokeWidth={2} />{s.label}</div>
                   <div className="text-[9px] mt-0.5" style={{ color: "#475569" }}>{s.sub}</div>
                 </button>
               ))}
             </div>
             {estrategia === "optimo" && (
-              <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>
-                🎯 BuscayCurra analiza la zona horaria de la empresa y envía tu CV en su ventana de máxima apertura (9-10:30am hora local). Detectamos el sector y ajustamos el momento ideal.
+              <p className="text-[10px] mt-1.5 flex items-start gap-1" style={{ color: "#4ade80" }}>
+                <Target size={11} strokeWidth={2} className="mt-0.5 shrink-0" />BuscayCurra analiza la zona horaria de la empresa y envía tu CV en su ventana de máxima apertura (9-10:30am hora local). Detectamos el sector y ajustamos el momento ideal.
               </p>
             )}
             {estrategia === "ahora" && (
-              <p className="text-[10px] mt-1.5" style={{ color: "#f59e0b" }}>
-                ⚠️ Se enviará de inmediato, aunque en la empresa puedan ser las 3am. Si la empresa está en otra zona horaria, mejor usar "horario óptimo".
+              <p className="text-[10px] mt-1.5 flex items-start gap-1" style={{ color: "#f59e0b" }}>
+                <AlertTriangle size={11} strokeWidth={2} className="mt-0.5 shrink-0" />Se enviará de inmediato, aunque en la empresa puedan ser las 3am. Si la empresa está en otra zona horaria, mejor usar "horario óptimo".
               </p>
             )}
           </div>
@@ -492,7 +493,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
                 <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Vista previa de la carta</h3>
                 <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Para <strong style={{ color: "#94a3b8" }}>{companyName}</strong> — puedes editarla antes de enviar</p>
               </div>
-              <button onClick={() => setShowPreview(false)} style={{ color: "#64748b" }} className="text-xl">✕</button>
+              <button onClick={() => setShowPreview(false)} style={{ color: "#64748b" }}><X size={18} strokeWidth={1.8} /></button>
             </div>
 
             <div className="p-5">

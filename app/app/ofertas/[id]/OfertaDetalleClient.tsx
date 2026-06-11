@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { esOfertaAuPair } from "@/lib/au-pair";
+import { Check, User, FileText, ClipboardList } from "lucide-react";
 
 export interface OfertaDetalle {
   id: string;
@@ -206,7 +207,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
                 {enviando ? (
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white" />
                 ) : enviado ? (
-                  "✅ Perfil enviado"
+                  <><Check size={14} strokeWidth={2.5} className="inline mr-1" />Perfil enviado</>
                 ) : (
                   <>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -219,7 +220,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
                   onClick={() => router.push("/app/au-pair")}
                   className="text-sm px-4 py-2.5 rounded-lg font-medium transition"
                   style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-                  🧒 Crear perfil Au Pair primero
+                  <User size={14} strokeWidth={1.8} className="inline mr-1" />Crear perfil Au Pair primero
                 </button>
               )}
             </>
@@ -233,7 +234,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
                 {enviando ? (
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white" />
                 ) : enviado ? (
-                  "✅ CV Enviado"
+                  <><Check size={14} strokeWidth={2.5} className="inline mr-1" />CV Enviado</>
                 ) : (
                   <>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -246,7 +247,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
                   onClick={() => router.push("/app/curriculum")}
                   className="text-sm px-4 py-2.5 rounded-lg font-medium transition"
                   style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-                  📄 Crear CV primero
+                  <FileText size={14} strokeWidth={1.8} className="inline mr-1" />Crear CV primero
                 </button>
               )}
             </>
@@ -265,7 +266,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         {oferta.descripcion && (
           <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
             <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>
-              📋 Descripción
+              <ClipboardList size={13} strokeWidth={1.8} className="inline mr-1.5" />Descripción
             </h2>
             <div
               className="prose prose-invert prose-sm max-w-none text-sm leading-relaxed whitespace-pre-wrap"

@@ -100,7 +100,7 @@ export default function CurriculumPage() {
       form.perfilProfesional, form.aptitudes, form.idiomas,
       JSON.stringify(form.experiencia), JSON.stringify(form.formacion), fotoUrl]);
 
-  // ⚠️ NO incluye useMemo como dependencia — necesitamos la función pura
+  // NO incluye useMemo como dependencia — necesitamos la función pura
   function formToCVDataRaw(): CVData {
     const expOrdenada = [...form.experiencia]
       .filter(e => e.puesto)
@@ -463,7 +463,7 @@ export default function CurriculumPage() {
           }));
         }
       }
-      setError("✅ PDF procesado — revisa los campos");
+      setError("ok:PDF procesado — revisa los campos");
       setTimeout(() => setError(""), 3000);
     } catch {
       setError("Error al procesar el PDF.");
@@ -758,11 +758,11 @@ export default function CurriculumPage() {
       {/* ── LAYOUT 2 COLUMNAS: formulario + previsualización EN VIVO ── */}
       <main className="max-w-[100rem] mx-auto px-4 py-6">
         {error && (
-          <div className={`mb-4 p-3 rounded-lg text-xs ${error.startsWith("✅") ? "" : ""}`}
-            style={{ background: error.startsWith("✅") ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", 
-                     color: error.startsWith("✅") ? "#22c55e" : "#ef4444",
-                     border: `1px solid ${error.startsWith("✅") ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)"}` }}>
-            {error}
+          <div className={`mb-4 p-3 rounded-lg text-xs ${error.startsWith("ok:") ? "" : ""}`}
+            style={{ background: error.startsWith("ok:") ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", 
+                     color: error.startsWith("ok:") ? "#22c55e" : "#ef4444",
+                     border: `1px solid ${error.startsWith("ok:") ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)"}` }}>
+            {error.startsWith("ok:") ? error.slice(3) : error}
           </div>
         )}
 

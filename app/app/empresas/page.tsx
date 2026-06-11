@@ -8,7 +8,7 @@ import CVSenderDashboard from "@/components/CVSenderDashboard";
 import {
   Search, Building2, Mail, FileText, Send, Upload, Clock, BarChart2,
   Inbox, AtSign, Globe, Phone, MapPin, Map, Briefcase, Star,
-  AlertTriangle, Target, Zap, MailOpen, type LucideIcon,
+  AlertTriangle, Target, Zap, MailOpen, Lightbulb, X, Check, CheckCircle2, type LucideIcon,
 } from "lucide-react";
 
 type TabId = "buscar" | "ett" | "envio" | "historial";
@@ -1071,7 +1071,7 @@ export default function EmpresasPage() {
                     {/* Nota: carta adaptada para ETTs */}
                     <div className="rounded-lg p-2" style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.1)" }}>
                       <p className="text-[10px]" style={{ color: "#4ade80" }}>
-                        💡 La carta se adaptará automáticamente: "Estimado equipo de selección de {empresaSeleccionada.nombre}..."
+                        <Lightbulb size={11} strokeWidth={2} className="inline mr-1" />La carta se adaptará automáticamente: "Estimado equipo de selección de {empresaSeleccionada.nombre}..."
                       </p>
                     </div>
 
@@ -1160,8 +1160,8 @@ export default function EmpresasPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
           <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #2d3142" }}>
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold" style={{ color: "#f1f5f9" }}>📄 Previsualizar envío</h3>
-              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#64748b" }}>✕</button>
+              <h3 className="flex items-center gap-1.5 text-base font-bold" style={{ color: "#f1f5f9" }}><FileText size={14} strokeWidth={1.8} />Previsualizar envío</h3>
+              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#64748b" }}><X size={16} strokeWidth={1.8} /></button>
             </div>
 
             <div className="space-y-2 text-xs">
@@ -1221,7 +1221,7 @@ export default function EmpresasPage() {
                 className="flex-1 py-2.5 rounded-lg text-xs font-bold transition"
                 style={{ background: previewLoading ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)", color: previewLoading ? "#64748b" : "#fff" }}
               >
-                ✅ Confirmar envío
+                <Check size={13} strokeWidth={2.5} className="inline mr-1.5" />Confirmar envío
               </button>
             </div>
           </div>
@@ -1233,7 +1233,7 @@ export default function EmpresasPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
           <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #22c55e" }}>
             <div className="text-center">
-              <span className="text-3xl">✅</span>
+              <CheckCircle2 size={32} strokeWidth={1.5} style={{ color: "#22c55e" }} />
               <h3 className="text-lg font-bold mt-2" style={{ color: "#22c55e" }}>¡CV enviado!</h3>
             </div>
 
@@ -1267,7 +1267,7 @@ export default function EmpresasPage() {
 
               {/* Carta enviada */}
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "#94a3b8" }}>📧 Carta enviada:</label>
+                <label className="flex items-center gap-1 text-xs font-semibold mb-1" style={{ color: "#94a3b8" }}><Mail size={11} strokeWidth={1.8} />Carta enviada:</label>
                 <div className="rounded-lg p-3 text-xs leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto" style={{ background: "#0f1117", border: "1px solid #1e212b", color: "#cbd5e1" }}>
                   {confirmData.carta}
                 </div>

@@ -12,7 +12,7 @@ import InfoTooltip from "@/components/InfoTooltip";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
 import WhatsAppSubscribeButton from "@/components/WhatsAppSubscribeButton";
 import { isNativeIOS } from "@/lib/utils/platform";
-import { User, Gem, Lock } from "lucide-react";
+import { User, Gem, Lock, FileText, Check, X, XCircle, Box, Sprout, Zap, Building2, Key, LogOut, AlertTriangle, Trash2, type LucideIcon } from "lucide-react";
 
 interface PerfilData {
   nombre: string;
@@ -220,8 +220,8 @@ export default function PerfilPage() {
             <p className="text-sm" style={{ color: "#64748b" }}>{email}</p>
           </div>
           {guardado && (
-            <span className="ml-auto text-xs font-medium px-3 py-1 rounded-full" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
-              ✅ Guardado
+            <span className="ml-auto text-xs font-medium px-3 py-1 rounded-full flex items-center gap-1" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
+              <Check size={12} strokeWidth={2.5} />Guardado
             </span>
           )}
         </div>
@@ -314,9 +314,9 @@ export default function PerfilPage() {
 
             {/* Link al CV */}
             <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(59,130,246,0.15)" }}>
-                📄
+                <FileText size={22} strokeWidth={1.4} style={{ color: "#3b82f6" }} />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Tu CV completo</h3>
@@ -332,12 +332,12 @@ export default function PerfilPage() {
         )}
 
         {tab === "plan" && (() => {
-          const PLANES_INFO = {
-            free:     { emoji: "🥚", nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
-            basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
-            esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
-            pro:      { emoji: "⚡", nombre: "Pro",      color: "#a855f7", desc: "10 CVs/día · 200 candidaturas/mes · IA avanzada" },
-            empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
+          const PLANES_INFO: Record<string, { Icon: LucideIcon; nombre: string; color: string; desc: string }> = {
+            free:     { Icon: Box,   nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
+            basico:   { Icon: Sprout,    nombre: "Básico",   color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
+            esencial: { Icon: Sprout,    nombre: "Esencial", color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
+            pro:      { Icon: Zap,       nombre: "Pro",      color: "#a855f7", desc: "10 CVs/día · 200 candidaturas/mes · IA avanzada" },
+            empresa:  { Icon: Building2, nombre: "Empresa",  color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
           };
           const info = PLANES_INFO[planActual];
           return (
@@ -345,7 +345,7 @@ export default function PerfilPage() {
               {/* Plan actual */}
               <div className="rounded-xl p-5" style={{ background: "#161922", border: `1px solid ${info.color}30` }}>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="text-3xl">{info.emoji}</div>
+                  <div style={{ color: info.color }}><info.Icon size={32} strokeWidth={1.3} /></div>
                   <div>
                     <p className="text-xs font-medium" style={{ color: "#64748b" }}>Plan actual</p>
                     <h2 className="text-lg font-bold" style={{ color: info.color }}>Plan {info.nombre}</h2>
@@ -360,7 +360,7 @@ export default function PerfilPage() {
 
               {errorPlan && (
                 <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
-                  ❌ {errorPlan}
+                  <XCircle size={14} strokeWidth={2} className="inline mr-1" />{errorPlan}
                 </div>
               )}
 
@@ -374,7 +374,7 @@ export default function PerfilPage() {
                   {iosNativo && (
                     <div className="rounded-xl p-4 text-center" style={{ background: "#161922", border: "1px solid #252836" }}>
                       <p className="text-xs" style={{ color: "#64748b" }}>
-                        🍎 Para cambiar de plan, visita{" "}
+                        Para cambiar de plan, visita{" "}
                         <span style={{ color: "#22c55e" }}>buscaycurra.es</span>
                         {" "}desde Safari. Tu plan se actualizará en la app automáticamente.
                       </p>
@@ -384,7 +384,7 @@ export default function PerfilPage() {
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🌱 Plan Esencial — 2,99€/mes</p>
+                        <p className="text-sm font-semibold flex items-center gap-1" style={{ color: "#f1f5f9" }}><Sprout size={14} strokeWidth={1.8} />Plan Esencial — 2,99€/mes</p>
                         <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>30 candidaturas/mes · Buscador avanzado</p>
                       </div>
                       <button onClick={() => void irACheckout("esencial")} disabled={cargandoPlan}
@@ -397,7 +397,7 @@ export default function PerfilPage() {
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>⚡ Plan Pro — 9,99€/mes</p>
+                        <p className="text-sm font-semibold flex items-center gap-1" style={{ color: "#f1f5f9" }}><Zap size={14} strokeWidth={1.8} />Plan Pro — 9,99€/mes</p>
                         <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>10 CVs/día · IA avanzada · Estadísticas</p>
                       </div>
                       <button onClick={() => void irACheckout("pro")} disabled={cargandoPlan}
@@ -410,7 +410,7 @@ export default function PerfilPage() {
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🏢 Plan Empresa — 49,99€/mes</p>
+                        <p className="text-sm font-semibold flex items-center gap-1" style={{ color: "#f1f5f9" }}><Building2 size={14} strokeWidth={1.8} />Plan Empresa — 49,99€/mes</p>
                         <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
                       </div>
                       <button onClick={() => void irACheckout("empresa")} disabled={cargandoPlan}
@@ -436,7 +436,7 @@ export default function PerfilPage() {
           <div className="space-y-5">
             {/* Cambiar contraseña */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🔑 Cambiar contraseña</h2>
+              <h2 className="font-semibold text-sm mb-1 flex items-center gap-1.5" style={{ color: "#f1f5f9" }}><Key size={14} strokeWidth={1.8} />Cambiar contraseña</h2>
               <p className="text-xs mb-4" style={{ color: "#64748b" }}>Mínimo 8 caracteres.</p>
               <div className="space-y-3">
                 <input
@@ -462,7 +462,7 @@ export default function PerfilPage() {
                       color: msgSeguridad.tipo === "ok" ? "#22c55e" : "#ef4444",
                       border: `1px solid ${msgSeguridad.tipo === "ok" ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
                     }}>
-                    {msgSeguridad.tipo === "ok" ? "✅ " : "❌ "}{msgSeguridad.texto}
+                    {msgSeguridad.tipo === "ok" ? <Check size={12} strokeWidth={2.5} className="inline mr-1" /> : <XCircle size={12} strokeWidth={2} className="inline mr-1" />}{msgSeguridad.texto}
                   </p>
                 )}
                 <button
@@ -478,7 +478,7 @@ export default function PerfilPage() {
 
             {/* Sesiones */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🚪 Cerrar sesión en todos los dispositivos</h2>
+              <h2 className="font-semibold text-sm mb-1 flex items-center gap-1.5" style={{ color: "#f1f5f9" }}><LogOut size={14} strokeWidth={1.8} />Cerrar sesión en todos los dispositivos</h2>
               <p className="text-xs mb-4" style={{ color: "#64748b" }}>Cierra sesión en todos los dispositivos donde hayas iniciado sesión.</p>
               <button
                 onClick={cerrarTodasLasSesiones}
@@ -504,7 +504,7 @@ export default function PerfilPage() {
 
             {/* Zona de peligro */}
             <div className="rounded-xl p-5" style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)" }}>
-              <h2 className="font-semibold text-sm mb-1" style={{ color: "#ef4444" }}>⚠️ Zona de peligro</h2>
+              <h2 className="font-semibold text-sm mb-1 flex items-center gap-1.5" style={{ color: "#ef4444" }}><AlertTriangle size={14} strokeWidth={2} />Zona de peligro</h2>
               <p className="text-xs mb-4" style={{ color: "#94a3b8" }}>
                 Elimina tu cuenta y todos tus datos de forma permanente. Si tienes un plan activo, se cancelará automáticamente. Esta acción no se puede deshacer.
               </p>
@@ -531,9 +531,9 @@ export default function PerfilPage() {
 
             {/* Cabecera */}
             <div className="flex items-start gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(239,68,68,0.1)" }}>
-                🗑️
+                <Trash2 size={20} strokeWidth={1.4} style={{ color: "#ef4444" }} />
               </div>
               <div>
                 <h2 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Eliminar cuenta y datos</h2>
@@ -554,7 +554,7 @@ export default function PerfilPage() {
                 "Suscripción activa de Stripe (sin reembolso)",
               ].map(item => (
                 <div key={item} className="flex items-center gap-2">
-                  <span className="text-[10px]" style={{ color: "#ef4444" }}>✕</span>
+                  <X size={9} strokeWidth={2.5} style={{ color: "#ef4444" }} />
                   <span className="text-xs" style={{ color: "#94a3b8" }}>{item}</span>
                 </div>
               ))}
@@ -583,7 +583,7 @@ export default function PerfilPage() {
 
             {errorEliminar && (
               <p className="text-xs mb-4 px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
-                ❌ {errorEliminar}
+                <XCircle size={13} strokeWidth={2} className="inline mr-1" />{errorEliminar}
               </p>
             )}
 

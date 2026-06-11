@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { PartyPopper, Check } from "lucide-react";
 
 function PagoExitosoContenido() {
   const router = useRouter();
@@ -37,9 +38,9 @@ function PagoExitosoContenido() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-16" style={{ background: "#0f1117" }}>
       <div className="w-full max-w-md rounded-2xl p-8 text-center" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-        <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl mx-auto mb-6"
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
           style={{ background: "rgba(34,197,94,0.1)", border: "2px solid rgba(34,197,94,0.2)" }}>
-          🎉
+          <PartyPopper size={36} strokeWidth={1.4} style={{ color: "#22c55e" }} />
         </div>
 
         <h1 className="text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>¡Pago completado!</h1>
@@ -54,7 +55,7 @@ function PagoExitosoContenido() {
           style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
           {caracteristicas.map((item) => (
             <p key={item} className="text-sm flex items-center gap-2" style={{ color: "#94a3b8" }}>
-              <span style={{ color: "#22c55e" }}>✓</span> {item}
+              <Check size={14} strokeWidth={2.5} style={{ color: "#22c55e", flexShrink: 0 }} /> {item}
             </p>
           ))}
         </div>

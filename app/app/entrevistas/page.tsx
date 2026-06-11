@@ -7,6 +7,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import VoiceRecorder from "@/components/VoiceInterview/VoiceRecorder";
 import InterviewFeedback from "@/components/VoiceInterview/InterviewFeedback";
+import { Mic, PartyPopper, Volume2, BarChart2 } from "lucide-react";
 
 const PREGUNTAS: Record<string, string[]> = {
   general: [
@@ -196,7 +197,7 @@ export default function EntrevistasPage() {
     return (
       <div className="min-h-screen pt-24 pb-8 px-4 flex items-center justify-center" style={{ background: "#0f1117" }}>
         <div className="text-center">
-          <div className="text-4xl mb-3">🎙️</div>
+          <div className="flex justify-center mb-3"><Mic size={40} strokeWidth={1.2} style={{ color: "#10b981" }} /></div>
           <p className="text-sm" style={{ color: "#6b7280" }}>Cargando simulador...</p>
         </div>
       </div>
@@ -209,7 +210,7 @@ export default function EntrevistasPage() {
       <div className="min-h-screen pt-16 pb-8 px-4" style={{ background: "#0f1117" }}>
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <div className="text-5xl mb-3">🎉</div>
+            <div className="flex justify-center mb-3"><PartyPopper size={48} strokeWidth={1.2} style={{ color: "#10b981" }} /></div>
             <h1 className="text-2xl font-bold text-white mb-1">¡Entrevista completada!</h1>
             <p className="text-sm" style={{ color: "#6b7280" }}>
               {historial.length} de {preguntas.length} preguntas respondidas
@@ -243,7 +244,7 @@ export default function EntrevistasPage() {
       <div className="max-w-2xl mx-auto space-y-5">
         {/* Header */}
         <div className="text-center pt-2">
-          <div className="text-4xl mb-2">🎙️</div>
+          <div className="flex justify-center mb-2"><Mic size={36} strokeWidth={1.2} style={{ color: "#10b981" }} /></div>
           <h1 className="text-xl font-bold text-white">Simulador de Entrevistas</h1>
           <p className="text-xs mt-1" style={{ color: "#6b7280" }}>
             Practica y recibe feedback de IA
@@ -295,7 +296,7 @@ export default function EntrevistasPage() {
                 style={{ background: "#0f1117", color: "#10b981" }}
                 title="Escuchar pregunta"
               >
-                🔊
+                <Volume2 size={18} strokeWidth={1.8} />
               </button>
             )}
           </div>
@@ -322,7 +323,7 @@ export default function EntrevistasPage() {
               color: texto.trim() && !analizando ? "#fff" : "#6b7280",
             }}
           >
-            {analizando ? "Analizando..." : "📊 Analizar respuesta"}
+            {analizando ? "Analizando..." : <><BarChart2 size={14} strokeWidth={1.8} className="inline mr-1.5" />Analizar respuesta</>}
           </button>
           <button
             onClick={siguiente}
@@ -334,7 +335,7 @@ export default function EntrevistasPage() {
               border: `1px solid ${feedback ? "#2d3748" : "#1a1f2e"}`,
             }}
           >
-            {idx < preguntas.length - 1 ? "Siguiente →" : "Finalizar ✓"}
+            {idx < preguntas.length - 1 ? "Siguiente →" : "Finalizar"}
           </button>
         </div>
       </div>

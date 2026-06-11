@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Building2, LogIn, Sparkles } from "lucide-react";
 import LogoGusano from "@/components/LogoGusano";
 
 export default function PublicHeader() {
@@ -107,7 +108,7 @@ export default function PublicHeader() {
                 className="px-4 py-3 rounded-lg text-sm transition"
                 style={{ color: "#94a3b8" }}
               >
-                🏢 Para empresas
+                <Building2 size={14} strokeWidth={1.8} className="inline mr-1.5" />Para empresas
               </Link>
               <Link
                 href="/auth/login"
@@ -115,7 +116,7 @@ export default function PublicHeader() {
                 className="px-4 py-3 rounded-lg text-sm transition"
                 style={{ color: "#94a3b8" }}
               >
-                🔑 Entrar
+                <LogIn size={14} strokeWidth={1.8} className="inline mr-1.5" />Entrar
               </Link>
               <div style={{ height: "1px", background: "#2d3142", margin: "4px 0" }} />
               <Link
@@ -124,7 +125,7 @@ export default function PublicHeader() {
                 className="px-4 py-3 rounded-lg text-sm font-semibold transition"
                 style={{ color: "#22c55e" }}
               >
-                ✨ Crear cuenta gratis
+                <Sparkles size={14} strokeWidth={1.8} className="inline mr-1.5" />Crear cuenta gratis
               </Link>
             </nav>
           </div>
