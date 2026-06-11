@@ -1292,11 +1292,31 @@ El candidato tiene mucha experiencia.
       { role: "user" as const, content: message },
     ];
 
-    // Chat normal: Groq primero (DeepSeek key inválida 11 Jun), DeepSeek como fallback
+    // Chat normal: DeepSeek primero (mejor español), Groq como fallback
     let rawReply = "";
 
-    // Intento 1: Groq (con /no_think para evitar reasoning mode)
-    if (groqKey) {
+    // Intento 1: DeepSeek (sin /no_think, no lo necesita)
+    if (deepseekKey) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch("https://api.deepseek.com/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
+            body: JSON.stringify({ model: "deepseek-chat", messages, max_tokens: 1024, temperature: 0.7 }),
+            signal: AbortSignal.timeout(25000),
+          });
+          if (res.ok) {
+            const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+            rawReply = data.choices?.[0]?.message?.content || "";
+            if (rawReply) break;
+          }
+        } catch { /* retry */ }
+        if (attempt === 0) await new Promise(r => setTimeout(r, 600));
+      }
+    }
+
+    // Intento 2: Groq (fallback con /no_think)
+    if (!rawReply && groqKey) {
       const msgsConNoThink = messages.map((m, i) =>
         i === messages.length - 1 && m.role === "user"
           ? { ...m, content: "/no_think " + m.content }
@@ -1320,27 +1340,10 @@ El candidato tiene mucha experiencia.
       }
     }
 
-    // Intento 2: DeepSeek (fallback)
-    if (!rawReply && deepseekKey) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const res = await fetch("https://api.deepseek.com/chat/completions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
-            body: JSON.stringify({ model: "deepseek-chat", messages, max_tokens: 1024, temperature: 0.7 }),
-            signal: AbortSignal.timeout(25000),
-          });
-          if (res.ok) {
-            const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-            rawReply = data.choices?.[0]?.message?.content || "";
-            if (rawReply) break;
-          }
-        } catch { /* retry */ }
-        if (attempt === 0) await new Promise(r => setTimeout(r, 600));
-      }
+    if (!rawReply) {
+      console.error("[Guzzi] AI call failed — both DeepSeek and Groq returned no reply. Falling back to localReply.");
+      return NextResponse.json({ reply: localReply(intent, cvParsed) });
     }
-
-    if (!rawReply) return NextResponse.json({ reply: localReply(intent, cvParsed) });
     const reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
     return NextResponse.json({ reply });
 
