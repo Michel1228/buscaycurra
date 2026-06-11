@@ -278,9 +278,15 @@ export default function AuPairProfilePage() {
     setSaving(true);
     setError("");
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setError("Sesión expirada"); setSaving(false); return; }
+
     const res = await fetch("/api/au-pair/profile", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({
         user_id: userId,
         nombre,
@@ -300,7 +306,7 @@ export default function AuPairProfilePage() {
         primeros_auxilios: primerosAuxilios,
         sabe_nadar: sabeNadar,
         duracion_preferida: duracionPreferida,
-        photos,
+        fotos: photos,
         references_json: references,
       }),
     });
@@ -308,7 +314,7 @@ export default function AuPairProfilePage() {
     const json = await res.json();
     setSaving(false);
 
-    if (json.ok) {
+    if (json.success) {
       setMensaje("✅ Perfil Au Pair guardado correctamente");
       setTimeout(() => setMensaje(""), 4000);
     } else {
