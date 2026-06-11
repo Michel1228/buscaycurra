@@ -16,6 +16,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import GuzziAvatar from "@/components/GuzziAvatar";
+import ChatSendPanel from "@/components/ChatSendPanel";
 
 // Mapa de palabras clave → id de país en /app/emigrar
 const LOCATION_TO_PAIS: Record<string, string> = {
@@ -140,6 +141,8 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
   const [pulso, setPulso] = useState(true);
   const [notif, setNotif] = useState(false);
   const [enviandoATodas, setEnviandoATodas] = useState(false);
+  const [sendTarget, setSendTarget] = useState<{ empresa: string; titulo: string; url: string; email?: string } | null>(null);
+  const [sessionToken, setSessionToken] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLInputElement>(null);
@@ -601,7 +604,11 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                                 )}
                               </div>
                               <button
-                                onClick={() => router.push(`/app/envios?empresa=${encodeURIComponent(job.empresa)}&puesto=${encodeURIComponent(job.titulo)}&web=${encodeURIComponent(job.url)}`)}
+                                onClick={async () => {
+                                  const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+                                  setSessionToken(session?.access_token || "");
+                                  setSendTarget({ empresa: job.empresa, titulo: job.titulo, url: job.url });
+                                }}
                                 className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition hover:opacity-90 shrink-0"
                                 style={{ background: "#22c55e", color: "#0a1208" }}>
                                 Enviar CV
@@ -619,13 +626,15 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                         );
                       })}
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           const first = m.jobs![0];
-                          router.push(`/app/envios?empresa=${encodeURIComponent(first.empresa)}&puesto=${encodeURIComponent(first.titulo)}&web=${encodeURIComponent(first.url)}`);
+                          const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+                          setSessionToken(session?.access_token || "");
+                          setSendTarget({ empresa: first.empresa, titulo: first.titulo, url: first.url });
                         }}
                         className="w-full py-2 rounded-xl text-sm font-semibold transition hover:opacity-90"
                         style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#22c55e" }}>
-                        ✍️ Enviar CVs uno a uno (con preview) →
+                        ✍️ Enviar CV con preview →
                       </button>
                     </div>
                   )}
@@ -660,7 +669,11 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                             )}
                           </div>
                           <button
-                            onClick={() => router.push(`/app/envios?empresa=${encodeURIComponent(m.company!.nombre || "")}&web=${encodeURIComponent(m.company!.urlWeb || "")}`)}
+                            onClick={async () => {
+                              const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+                              setSessionToken(session?.access_token || "");
+                              setSendTarget({ empresa: m.company!.nombre || "", titulo: "", url: m.company!.urlWeb || "", email: m.company!.emailRrhh || "" });
+                            }}
                             disabled={enviandoATodas}
                             className="px-4 py-2 rounded-lg text-[12px] font-semibold transition hover:opacity-90 disabled:opacity-50 shrink-0"
                             style={{ background: "#22c55e", color: "#0a1208" }}>
@@ -836,6 +849,20 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
           50% { opacity: 0.8; transform: translateY(-2px); }
         }
       `}</style>
+
+      {/* ── Panel de envío inline ── */}
+      {sendTarget && sessionToken && (
+        <ChatSendPanel
+          target={sendTarget}
+          userId={userId}
+          sessionToken={sessionToken}
+          onClose={() => setSendTarget(null)}
+          onSent={(msg: string) => {
+            addMsg("gusi", msg);
+            setSendTarget(null);
+          }}
+        />
+      )}
     </>
   );
 }
