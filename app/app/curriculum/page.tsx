@@ -18,6 +18,11 @@ import { useRouter } from "next/navigation";
 import { generarCVHTML } from "@/lib/cv-generator/cv-template";
 import type { CVData } from "@/lib/cv-generator/cv-template";
 import InfoTooltip from "@/components/InfoTooltip";
+import {
+  Save, Sparkles, Eye, EyeOff, Lock, Paperclip, Camera, User,
+  Briefcase, GraduationCap, Target, Globe, PenLine, FileText,
+  Trash2, Check, Lightbulb,
+} from "lucide-react";
 
 interface Exp {
   fechas: string;
@@ -680,7 +685,7 @@ export default function CurriculumPage() {
                   className="text-[10px] px-1.5 py-1 rounded opacity-50 hover:opacity-100"
                   style={{ color: "#ef4444" }}
                   title="Eliminar esta versión"
-                >🗑</button>
+                ><Trash2 size={12} strokeWidth={1.8} /></button>
               </div>
             )}
             <button
@@ -689,18 +694,18 @@ export default function CurriculumPage() {
               className="text-[10px] px-2 py-1.5 rounded-lg font-medium transition disabled:opacity-50"
               style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
             >
-              {guardando ? "..." : "💾 Nueva versión"}
+              {guardando ? "..." : <><Save size={13} strokeWidth={2} className="inline mr-1" />Nueva versión</>}
             </button>
             {guardado && (
               <span className="text-xs font-medium px-3 py-1 rounded-full bg-white/20 text-white">
-                ✅ Guardado
+                <Check size={13} strokeWidth={2.5} className="inline mr-1" />Guardado
               </span>
             )}
             {!mejoradoHTML && (
               <button onClick={generarYMejorar} disabled={procesando}
                 className="px-4 py-2 text-xs font-semibold rounded-xl transition disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg, #fff, #e2e8f0)", color: "#16a34a" }}>
-                {procesando ? "Mejorando..." : "✨ Mejorar con IA"}
+                {procesando ? "Mejorando..." : <><Sparkles size={13} strokeWidth={2} className="inline mr-1" />Mejorar con IA</>}
               </button>
             )}
             {previewHTML && (
@@ -743,7 +748,7 @@ export default function CurriculumPage() {
                   color: c.done ? "#22c55e" : "#94a3b8",
                   border: `1px solid ${c.done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.05)"}`,
                 }}>
-                {c.done ? "✓" : "○"} {c.label}
+                {c.done ? <Check size={10} strokeWidth={2.5} className="inline mr-0.5" /> : "○"} {c.label}
               </span>
             ))}
           </div>
@@ -774,7 +779,7 @@ export default function CurriculumPage() {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
                     style={{ background: visibleEmpresas ? "rgba(34,197,94,0.15)" : "rgba(100,116,139,0.15)" }}>
-                    {visibleEmpresas ? "👁️" : "🔒"}
+                    {visibleEmpresas ? <Eye size={14} strokeWidth={1.8} /> : <Lock size={14} strokeWidth={1.8} />}
                   </div>
                   <div>
                     <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
@@ -799,16 +804,16 @@ export default function CurriculumPage() {
               </div>
               {visibleEmpresas && (
                 <p className="text-[11px] mt-3 pt-3" style={{ color: "#22c55e", borderTop: "1px solid rgba(34,197,94,0.15)" }}>
-                  ✓ Activo — empresas y ETTs pueden ver tu perfil y contactarte
+                  <Check size={12} strokeWidth={2.5} className="inline mr-1" />Activo — empresas y ETTs pueden ver tu perfil y contactarte
                 </p>
               )}
             </div>
 
             {/* Subir PDF */}
             <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(59,130,246,0.15)" }}>
-                📎
+                <Paperclip size={22} strokeWidth={1.4} style={{ color: "#3b82f6" }} />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¿Ya tienes un CV en PDF?</h3>
@@ -816,7 +821,7 @@ export default function CurriculumPage() {
               </div>
               <label className={`shrink-0 px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
                 style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }}>
-                {subiendoPDF ? "Procesando…" : "📎 Subir PDF"}
+                {subiendoPDF ? "Procesando…" : <><Paperclip size={12} strokeWidth={2} className="inline mr-1" />Subir PDF</>}
                 <input type="file" accept=".pdf" className="hidden"
                   onChange={e => e.target.files?.[0] && subirPDF(e.target.files[0])}
                   disabled={subiendoPDF} />
@@ -825,14 +830,14 @@ export default function CurriculumPage() {
 
             {/* Foto profesional */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>📸 Foto profesional para tu CV</h2>
+              <h2 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: "#f1f5f9" }}><Camera size={14} strokeWidth={1.6} />Foto profesional para tu CV</h2>
               
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ border: "2px solid rgba(34,197,94,0.3)" }}>
                   {fotoUrl ? (
                     <img src={fotoUrl} alt="Foto CV" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl" style={{ background: "#1e212b", color: "#475569" }}>👤</div>
+                    <div className="w-full h-full flex items-center justify-center" style={{ background: "#1e212b", color: "#475569" }}><User size={32} strokeWidth={1.2} /></div>
                   )}
                 </div>
                 <div>
@@ -846,7 +851,7 @@ export default function CurriculumPage() {
               </div>
 
               <div className="p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}>
-                <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>💡 Truco: Foto profesional gratis con IA</p>
+                <p className="flex items-center gap-1 text-xs font-semibold mb-2" style={{ color: "#22c55e" }}><Lightbulb size={13} strokeWidth={1.8} />Truco: Foto profesional gratis con IA</p>
                 <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia el prompt y pégalo en ChatGPT con tu foto:</p>
                 <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
                   Utiliza esta foto para realizar los siguientes cambios: 1. Crear un fondo blanco y cambiar todo el fondo actual. 2. Cambiar la camiseta por una camisa blanca. 3. Poner la figura en posición sentada. Fotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.
@@ -886,7 +891,7 @@ export default function CurriculumPage() {
             {/* Datos personales */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>👤 Datos personales</h2>
+                <h2 className="font-semibold text-sm flex items-center gap-2" style={{ color: "#f1f5f9" }}><User size={14} strokeWidth={1.6} />Datos personales</h2>
                 <InfoTooltip text="Tu nombre, teléfono, email y ciudad aparecen en la cabecera del CV. El título profesional resume tu perfil (ej: 'Camarero con 5 años de experiencia')." />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -920,7 +925,7 @@ export default function CurriculumPage() {
             {/* Experiencia */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>💼 Experiencia laboral</h2>
+                <h2 className="font-semibold text-sm flex items-center gap-2" style={{ color: "#f1f5f9" }}><Briefcase size={14} strokeWidth={1.6} />Experiencia laboral</h2>
                 <InfoTooltip text="Añade tus trabajos del más reciente al más antiguo. Incluye fechas, puesto, empresa y una descripción breve de tus tareas con verbos de acción (Gestioné, Coordiné...)." />
               </div>
               {form.experiencia.map((exp, i) => (
@@ -960,7 +965,7 @@ export default function CurriculumPage() {
             {/* Formación */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎓 Formación</h2>
+                <h2 className="font-semibold text-sm flex items-center gap-2" style={{ color: "#f1f5f9" }}><GraduationCap size={14} strokeWidth={1.6} />Formación</h2>
                 <InfoTooltip text="Tus estudios y cursos relevantes. Incluye el título (ej: ESO, FP, Grado), el centro educativo y la ciudad." />
               </div>
               {form.formacion.map((edu, i) => (
@@ -994,7 +999,7 @@ export default function CurriculumPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎯 Habilidades</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2" style={{ color: "#f1f5f9" }}><Target size={14} strokeWidth={1.6} />Habilidades</h2>
                   <InfoTooltip text="Tus puntos fuertes separados por comas. Ej: Trabajo en equipo, Excel, Liderazgo, Resolución de problemas." position="right" />
                 </div>
                 <label className="sr-only" htmlFor="cv-aptitudes">Habilidades</label>
@@ -1004,7 +1009,7 @@ export default function CurriculumPage() {
               </div>
               <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🌍 Idiomas</h2>
+                  <h2 className="font-semibold text-sm flex items-center gap-2" style={{ color: "#f1f5f9" }}><Globe size={14} strokeWidth={1.6} />Idiomas</h2>
                   <InfoTooltip text="Escribe cada idioma con un nivel del 0 al 100. Ej: Español:95, Inglés:60, Francés:40. El número controla la barra de progreso en el CV." position="left" />
                 </div>
                 <label className="sr-only" htmlFor="cv-idiomas">Idiomas</label>
@@ -1018,7 +1023,7 @@ export default function CurriculumPage() {
             {/* Perfil profesional */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
               <div className="flex items-center gap-2 mb-3">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>📝 Perfil profesional (opcional)</h2>
+                <h2 className="font-semibold text-sm flex items-center gap-2" style={{ color: "#f1f5f9" }}><PenLine size={14} strokeWidth={1.6} />Perfil profesional (opcional)</h2>
                 <InfoTooltip text="2-3 frases que resumen quién eres como profesional. Si lo dejas vacío, la IA lo generará automáticamente a partir de tu experiencia." />
               </div>
               <label className="sr-only" htmlFor="cv-perfil-profesional">Perfil profesional</label>
@@ -1036,7 +1041,7 @@ export default function CurriculumPage() {
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
                   <span className="text-xs font-semibold" style={{ color: "#22c55e" }}>
-                    {mejoradoHTML ? "CV Mejorado con IA ✨" : "Previsualización en vivo"}
+                    {mejoradoHTML ? <><Sparkles size={12} strokeWidth={2} className="inline mr-1" />CV Mejorado con IA</> : "Previsualización en vivo"}
                   </span>
                 </div>
                 {mejoradoHTML && (
@@ -1057,7 +1062,7 @@ export default function CurriculumPage() {
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 px-6" style={{ background: "#f8fafc", minHeight: "400px" }}>
-                  <div className="text-5xl mb-4 opacity-30">📄</div>
+                  <FileText size={48} strokeWidth={1.1} className="mx-auto mb-4 opacity-30" style={{ color: "#64748b" }} />
                   <p className="text-sm font-medium text-slate-400 mb-1">Tu CV aparecerá aquí</p>
                   <p className="text-xs text-slate-300 text-center max-w-xs">
                     Escribe tu nombre y completa los campos de la izquierda para ver la plantilla en tiempo real
@@ -1071,7 +1076,7 @@ export default function CurriculumPage() {
               <button onClick={generarYMejorar} disabled={procesando || !form.nombre.trim()}
                 className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-                {procesando ? "✨ Mejorando..." : "✨ Mejorar con IA"}
+                <Sparkles size={13} strokeWidth={2} className="inline mr-1" />{procesando ? "Mejorando..." : "Mejorar con IA"}
               </button>
               <button onClick={descargarPDF} disabled={descargando || !previewHTML}
                 className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
