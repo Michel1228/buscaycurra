@@ -446,7 +446,10 @@ function detectIntent(text: string): string {
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
   // Detectar "[puesto] en [ciudad]" sin verbo explícito (ej: "camarero en Tudela")
   if (/\w{3,}\s+(?:en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios|trabajado|trabaj[éeáa]|trabajaba|experiencia|no\s+puedo|cargar\s+peso|espalda|dolor|lesi[oó]n|baja\s+m[ée]dica|salario|sueldo|m[ií]nimo|smi|cu[aá]nto|cuesta|vale|cobra|gana|derecho|paro|sepe|finiquito|vacaciones|despido|indemnizaci[oó]n)/i.test(t)) return "buscar";
-  if (/(envi|manda|submit).*(cv|candidatura)|cv.*(envi|manda|automátic)/.test(t)) return "enviar";
+  // "envíalo / mándalo / envíamelo / mándaselo / envía mi CV / manda currículum"
+  if (/(?:env[ií]a|manda|env[ií]o|mando|env[ií]ame|m[aá]ndame)\s*(?:lo|la|los|las|me|mi|les|se)?\s*(?:mi\s+)?(?:cv|curr[ií]culum|candidatura|solicitud)?\s*$/.test(t)) return "enviar";
+  if (/(?:env[ií]a|manda|env[ií]ame|m[aá]ndame|env[ií]o|mando)\s+(?:mi\s+)?(?:cv|curr[ií]culum|candidatura)/.test(t)) return "enviar";
+  if (/(?:quiero|puedes|puede|vas a)\s+(?:enviar|mandar)\s+(?:mi\s+)?(?:cv|curr[ií]culum|candidatura)/.test(t)) return "enviar";
   // "echar/tirar/dejar currículum/CV en [sitio]" → buscar
   if (/(?:echar|tirar|dejar|entregar|repartir)\s+(?:el\s+)?(?:curr[ií]culum|cv|curriculo)s?/i.test(t) && /\s+(?:en|por)\s+\w+/i.test(t)) return "buscar";
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
@@ -1284,24 +1287,40 @@ El candidato tiene mucha experiencia.
 
     // ── Intent: enviar CV ────────────────────────────────────────────────────
     if (intent === "enviar") {
-      if (cvParsed?.ultimoPuesto) {
-        const enviarResult = await searchJobsReal(cvParsed.ultimoPuesto, cvParsed.ciudad, 5, pais || "ES");
-        if (!enviarResult || enviarResult.jobs.length === 0) {
+      if (!cvData) {
+        return NextResponse.json({
+          reply: "📧 Para enviar tu CV necesito que lo subas primero.\n\nUsa el clip 📎 de abajo para subir tu CV en PDF o escribe **'crear cv'** y te lo hago paso a paso. ",
+          action: "send_cv_flow",
+        });
+      }
+      // ¿El usuario menciona una empresa concreta?
+      const empresaMatch = message.match(/(?:a|para|en)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúüñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúüñ]+){0,3})\s*$/);
+      const empresaNombre = empresaMatch?.[1]?.trim();
+      if (empresaNombre && empresaNombre.length >= 3) {
+        return NextResponse.json({
+          reply: `📧 ¡Perfecto! Para enviar tu CV a **${empresaNombre}** necesito el email de la empresa.\n\nTienes 3 opciones:\n\n**1. Pegar la web** de la empresa → busco el email de RRHH yo solo\n**2. Darme el email** directamente → si ya lo tienes\n**3. Solo registrar** → si ya aplicaste y quieres hacer seguimiento\n\nVe a la página de envíos para completar el proceso → [✍️ Ir a Envíos](/app/envios?empresa=${encodeURIComponent(empresaNombre)})`,
+          action: "send_cv_flow",
+        });
+      }
+      // Buscar ofertas del perfil del usuario que tengan email para enviar
+      const puestoEnviar = extractJobTerm(message) || cvParsed?.ultimoPuesto || "";
+      const ciudadEnviar = extractCity(message) || cvParsed?.ciudad || "";
+      if (puestoEnviar) {
+        const enviarResult = await searchJobsReal(puestoEnviar, ciudadEnviar, 5, pais || "ES");
+        if (enviarResult && enviarResult.jobs.length > 0) {
           return NextResponse.json({
-            reply: fallbackMessage(cvParsed.ultimoPuesto, cvParsed.ciudad),
+            reply: `📧 **¡A enviar CVs!**\n\nEncontré ${enviarResult.jobs.length} ofertas de **${puestoEnviar}**${ciudadEnviar ? ` en **${ciudadEnviar}**` : ""}.\n\nPulsa **"Enviar CV"** en cualquiera de ellas para personalizar la carta, elegir la hora de envío y mandarlo.\n\n${buildJobsText(puestoEnviar, ciudadEnviar, enviarResult.jobs, enviarResult.scope)}`,
+            jobs: enviarResult.jobs,
             action: "search_results",
           });
         }
         return NextResponse.json({
-          reply: buildJobsText(cvParsed.ultimoPuesto, cvParsed.ciudad, enviarResult.jobs, enviarResult.scope),
-          jobs: enviarResult.jobs,
+          reply: fallbackMessage(puestoEnviar, ciudadEnviar) + "\n\n📧 Si conoces alguna empresa directamente, dime su nombre y te ayudo a enviarle el CV. ",
           action: "search_results",
         });
       }
       return NextResponse.json({
-        reply: cvData
-          ? "📧 Para enviarte a ofertas dime: ¿qué tipo de trabajo buscas y en qué ciudad? "
-          : "📧 Primero necesito tu CV. Súbelo desde el clip de abajo o escribe **'crear cv'** y te lo hago paso a paso. ",
+        reply: "📧 Claro, ¿para qué tipo de trabajo quieres enviar CVs? Dime el puesto y la ciudad (ej: 'camarero en Tudela') y te busco ofertas con email para enviar directamente. ",
         action: "send_cv_flow",
       });
     }

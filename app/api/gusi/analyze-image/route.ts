@@ -32,6 +32,19 @@ export async function POST(req: NextRequest) {
     // Limpiar el prefijo data:image si viene
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
+    // Obtener ciudad del usuario para búsquedas locales
+    let ciudadUsuario = "";
+    if (userId) {
+      try {
+        const sbCiudad = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data: profileCiudad } = await sbCiudad.from("profiles").select("ciudad").eq("id", userId).single();
+        ciudadUsuario = profileCiudad?.ciudad || "";
+      } catch { /* sin perfil, sin problema */ }
+    }
+
     // ─── Paso 1: OCR con GPT-4o Vision ────────────────────────────────
     const openaiKey = process.env.OPENAI_API_KEY;
     if (!openaiKey) {
@@ -131,7 +144,7 @@ Responde en español. Máximo 2 líneas.`;
 
       // Nivel 1: Buscar la marca específica + ofertas reales
       if (tieneMarca) {
-        const marcaResult = await searchGooglePlaces(marca, lat, lng);
+        const marcaResult = await searchGooglePlaces(marca, lat, lng, ciudadUsuario);
         const ofertasReales = await searchJobsBySector(sector, userId);
         if (marcaResult) {
           const extra = ofertasReales
@@ -164,7 +177,7 @@ Responde en español. Máximo 2 líneas.`;
       }
       
       // Sin ofertas en DB → fallback a Google Places
-      const sectorResult = await searchGooglePlaces(sector, lat, lng);
+      const sectorResult = await searchGooglePlaces(sector, lat, lng, ciudadUsuario);
       if (sectorResult) {
         return NextResponse.json({
           reply: `📸 He visto **${objeto}** → sector **${sector}**\n\n🏢 **${sectorResult.name}**\n📍 ${sectorResult.address}\n${sectorResult.phone ? `📞 ${sectorResult.phone}` : ""}\n${sectorResult.website ? `🌐 ${sectorResult.website}` : ""}\n\n💡 Dime tu ciudad y busco todas las empresas de **${sector}** cerca de ti.`,
@@ -194,7 +207,7 @@ Responde en español. Máximo 2 líneas.`;
     if (negocioMatch) {
       const companyName = negocioMatch[1].trim();
       console.log("Negocio detectado:", companyName);
-      const placesResult = await searchGooglePlaces(companyName, lat, lng);
+      const placesResult = await searchGooglePlaces(companyName, lat, lng, ciudadUsuario);
       if (placesResult) {
         return NextResponse.json({
           reply: buildCompanyReply(ocrText, placesResult, companyName),
@@ -235,7 +248,7 @@ Responde en español. Máximo 2 líneas.`;
     // ─── Paso 3: Buscar en Google Places (con ubicación si disponible) ─
     let placesResult: PlacesResult | null = null;
     if (companyName) {
-      placesResult = await searchGooglePlaces(companyName, lat, lng);
+      placesResult = await searchGooglePlaces(companyName, lat, lng, ciudadUsuario);
     }
 
     // ─── Paso 4: Construir respuesta ────────────────────────────────
@@ -376,7 +389,8 @@ async function searchJobsBySector(sector: string, userId?: string): Promise<stri
 async function searchGooglePlaces(
   companyName: string,
   lat?: number,
-  lng?: number
+  lng?: number,
+  city?: string
 ): Promise<PlacesResult | null> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) return null;
