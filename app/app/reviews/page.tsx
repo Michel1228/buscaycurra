@@ -251,7 +251,7 @@ function ReviewsPageInner() {
 
         {reviews.length === 0 && company && !loading && (
           <div className="card-game p-8 text-center">
-            <p className="text-3xl mb-2">⭐</p>
+            <Star size={36} strokeWidth={0} fill="#f59e0b" className="mx-auto mb-2" />
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Sin reviews todavía</p>
             <p className="text-xs" style={{ color: "#64748b" }}>Sé el primero en opinar sobre {company}</p>
           </div>
