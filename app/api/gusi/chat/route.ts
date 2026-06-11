@@ -1068,7 +1068,26 @@ El candidato tiene mucha experiencia.
     const preIntent = detectIntent(message);
     if (preIntent === "info_empresa") {
       const companyName = extractCompanyName(message);
+      const searchCity = extractCity(message) || "";
+
+      // Si no es un nombre de empresa concreto, pero es búsqueda por sector+ciudad
+      // (ej: "empresas de limpieza en Tudela", "bares en Corella")
       if (!companyName) {
+        const sectorMatch = message.match(
+          /(?:empresas?|negocios?|comercios?|tiendas?|f[aá]bricas?|bares?|restaurantes?|cafeter[ií]as?|talleres?|panader[ií]as?|farmacias?|cl[ií]nicas?|peluquer[ií]as?|supermercados?|hoteles?|de\\s+limpieza|de\\s+reparto)\\s+(?:de\\s+)?([a-záéíóúüñA-Z][\\w\\s]{2,40}?)(?:\\s+(?:en|por|cerca|de)\\s+(\\w[\\w\\s]+))?$/i
+        );
+        const sectorRaw = sectorMatch?.[2]?.trim();
+        const cityFromSector = sectorMatch?.[3]?.trim() || searchCity;
+
+        if (sectorRaw && cityFromSector) {
+          return NextResponse.json({
+            reply: `🏢 **${sectorRaw} en ${cityFromSector}** — ¿cómo quieres que busque?\n\n**1. 🔍 Empresa grande** — busco ofertas publicadas en portales de empleo\n**2. 📍 Negocio local** — busco en Google Maps (email, teléfono, para enviar CV directo)\n\nResponde **"grande"** o **"pequeña"** y me pongo.`,
+            action: "choose_size",
+            sector: sectorRaw,
+            city: cityFromSector,
+          });
+        }
+
         return NextResponse.json({
           reply: "🏢 Dime el nombre de la empresa y te busco toda la información: email, teléfono, web, valoraciones... ",
           action: "need_company_name",
@@ -1131,6 +1150,83 @@ El candidato tiene mucha experiencia.
         return NextResponse.json({
           reply: `🏢 **${companyName}** — no pude conectar con Google Places ahora. ¿Quieres que busque ofertas de esta empresa en nuestra base de datos? 🔍`,
           action: "company_search_fallback",
+        });
+      }
+    }
+
+    // ── Respuesta a choose_size: "grande" o "pequeña" ─────────────────────────
+    const isChooseSizeReply = /^(grande|pequeñ[oa]|pequen[oa]|local|negocio\\s+local|empresa\\s+grande|pequeñas?\\s+empresas?)$/i.test(message.trim());
+    if (isChooseSizeReply) {
+      const wantSmall = /^(pequeñ[oa]|pequen[oa]|local|negocio\\s+local|pequeñas?\\s+empresas?)$/i.test(message.trim());
+      // Extraer sector+ciudad del último mensaje de Guzzi en el historial
+      let sector = "";
+      let city = "";
+      const lastGuzziMsg = [...history].reverse().find((h: {role: string; text: string}) => h.role === "gusi");
+      if (lastGuzziMsg) {
+        const m = lastGuzziMsg.text.match(/\*\*(.+?)\*\*\s+en\s+\*\*(.+?)\*\*/);
+        if (m) { sector = m[1]; city = m[2]; }
+      }
+
+      if (!sector || !city) {
+        return NextResponse.json({
+          reply: "Perdona, he perdido el hilo. ¿Qué sector y ciudad buscabas?",
+          action: "need_keyword",
+        });
+      }
+
+      if (wantSmall) {
+        // Google Places para negocios locales
+        try {
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://buscaycurra.es";
+          const extractRes = await fetch(`${siteUrl}/api/company/extract`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: `${sector} ${city}`, city }),
+            signal: AbortSignal.timeout(15000),
+          });
+
+          if (extractRes.ok) {
+            const extractData = await extractRes.json() as {
+              empresas?: Array<{ nombre?: string; emailRrhh?: string; telefono?: string; googleAddress?: string; googleRating?: number; googleReviews?: number; sector?: string; }>;
+            };
+            const empresas = (extractData.empresas || []).slice(0, 5);
+            if (empresas.length > 0) {
+              const conEmail = empresas.filter(e => e.emailRrhh);
+              let reply = `📍 **${empresas.length} negocios de ${sector} en ${city}** (Google Maps)\n\n`;
+              empresas.forEach((e, i) => {
+                reply += `${["🥇","🥈","🥉","📌","📌"][i]} **${e.nombre}**\n`;
+                if (e.telefono) reply += `   📞 ${e.telefono}\n`;
+                if (e.emailRrhh) reply += `   📧 ${e.emailRrhh}\n`;
+                if (e.googleAddress) reply += `   📍 ${e.googleAddress}\n`;
+                reply += "\n";
+              });
+              if (conEmail.length > 0) reply += `📧 ¿Envío tu CV a las ${conEmail.length} con email? Responde "sí" y las enviamos.`;
+              return NextResponse.json({ reply, action: "sector_search_results" });
+            }
+          }
+          return NextResponse.json({
+            reply: `📍 No encontré negocios de **${sector}** en **${city}** en Google Maps.\n\n¿Quieres que busque por nombre exacto? Dame el nombre y te busco email y teléfono.`,
+            action: "need_company_name",
+          });
+        } catch {
+          return NextResponse.json({
+            reply: `📍 No pude conectar con Google Maps. ¿Buscamos ofertas grandes de **${sector}** en **${city}**? Responde "grande".`,
+            action: "need_keyword",
+          });
+        }
+      } else {
+        // Empresa grande → buscar en BD
+        const result = await searchJobsReal(sector, city, 5, pais || "ES");
+        if (result && result.jobs.length > 0) {
+          return NextResponse.json({
+            reply: `🔍 **${result.jobs.length} ofertas de ${sector} en ${city}**\n\n${buildJobsText(sector, city, result.jobs, result.scope)}`,
+            jobs: result.jobs,
+            action: "search_results",
+          });
+        }
+        return NextResponse.json({
+          reply: `🔍 No encontré ofertas grandes de **${sector}** en **${city}**.\n\n¿Quieres que busque **negocios locales** en Google Maps? Responde "pequeña".`,
+          action: "need_keyword",
         });
       }
     }
