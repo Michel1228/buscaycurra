@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { Gem, Check, Search, MapPin, Briefcase, AtSign, Phone, Lock } from "lucide-react";
 
 interface Candidato {
   id: string;
@@ -86,12 +87,12 @@ export default function CandidatosPage() {
             <Link href="/precios"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:opacity-90"
               style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-              💎 Plan Empresa — Ver contactos
+              <Gem size={11} strokeWidth={1.8} className="inline mr-1" />Plan Empresa — Ver contactos
             </Link>
           )}
           {esEmpresa && (
             <span className="text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-              ✓ Plan Empresa activo
+              <Check size={11} strokeWidth={2.5} className="inline mr-1" />Plan Empresa activo
             </span>
           )}
         </div>
@@ -178,7 +179,7 @@ export default function CandidatosPage() {
           </div>
         ) : candidatos.length === 0 ? (
           <div className="text-center py-20">
-            <div className="text-4xl mb-3">🔍</div>
+            <Search size={44} strokeWidth={1.2} className="mx-auto mb-3" style={{ color: "#3b82f6" }} />
             <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Sin resultados</p>
             <p className="text-xs" style={{ color: "#64748b" }}>Prueba con otra ciudad o perfil diferente.</p>
           </div>
@@ -195,13 +196,13 @@ export default function CandidatosPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate" style={{ color: "#f1f5f9" }}>{c.nombre}</p>
-                    <p className="text-[11px]" style={{ color: "#64748b" }}>📍 {c.ciudad}</p>
+                    <p className="text-[11px] flex items-center gap-1" style={{ color: "#64748b" }}><MapPin size={9} strokeWidth={1.8} />{c.ciudad}</p>
                   </div>
                 </div>
 
                 {/* Puesto */}
                 {c.puesto && (
-                  <p className="text-[11px] font-medium" style={{ color: "#94a3b8" }}>💼 {c.puesto}</p>
+                  <p className="text-[11px] font-medium flex items-center gap-1" style={{ color: "#94a3b8" }}><Briefcase size={9} strokeWidth={1.8} />{c.puesto}</p>
                 )}
 
                 {/* Aptitudes */}
@@ -222,13 +223,13 @@ export default function CandidatosPage() {
                     {c.email && (
                       <a href={`mailto:${c.email}`} className="flex items-center gap-2 text-[11px] hover:opacity-80 transition"
                         style={{ color: "#22c55e" }}>
-                        ✉️ {c.email}
+                        <AtSign size={11} strokeWidth={1.8} />{c.email}
                       </a>
                     )}
                     {c.telefono && (
                       <a href={`tel:${c.telefono}`} className="flex items-center gap-2 text-[11px] hover:opacity-80 transition"
                         style={{ color: "#94a3b8" }}>
-                        📞 {c.telefono}
+                        <Phone size={11} strokeWidth={1.8} />{c.telefono}
                       </a>
                     )}
                     {!c.email && !c.telefono && (
@@ -240,11 +241,11 @@ export default function CandidatosPage() {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px]">🔒</span>
+                          <Lock size={10} strokeWidth={1.8} style={{ color: "#475569" }} />
                           <div className="h-2 w-28 rounded" style={{ background: "rgba(45,49,66,0.8)", filter: "blur(2px)" }} />
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px]">🔒</span>
+                          <Lock size={10} strokeWidth={1.8} style={{ color: "#475569" }} />
                           <div className="h-2 w-20 rounded" style={{ background: "rgba(45,49,66,0.8)", filter: "blur(2px)" }} />
                         </div>
                       </div>

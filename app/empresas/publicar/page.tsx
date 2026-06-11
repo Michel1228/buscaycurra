@@ -7,6 +7,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Building2, Check, Target, Mail, Bot, PartyPopper, FileText, Rocket, AlertTriangle, Briefcase } from "lucide-react";
 
 const SECTORES = [
   "Hostelería y turismo", "Construcción", "Tecnología", "Sanidad",
@@ -70,16 +71,21 @@ export default function PublicarOfertaPage() {
       {/* Header */}
       <div className="py-12 px-4" style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.1), rgba(240,192,64,0.05))" }}>
         <div className="max-w-2xl mx-auto text-center">
-          <span className="text-4xl block mb-3">🏢</span>
+          <Building2 size={44} strokeWidth={1.3} className="mx-auto mb-3" style={{ color: "#7ed56f" }} />
           <h1 className="text-2xl font-bold mb-2" style={{ color: "#f0ebe0" }}>Portal de Empresas</h1>
           <p className="text-sm" style={{ color: "#b0a890" }}>
             Publica tu oferta de trabajo y llega a miles de candidatos cualificados. <strong style={{ color: "#7ed56f" }}>¡100% gratis!</strong>
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-4">
-            {["✅ Gratis", "🎯 Candidatos filtrados", "📧 CVs directos", "🤖 IA matching"].map(f => (
-              <span key={f} className="text-xs px-3 py-1 rounded-full"
+            {[
+              { Icon: Check, label: "Gratis" },
+              { Icon: Target, label: "Candidatos filtrados" },
+              { Icon: Mail, label: "CVs directos" },
+              { Icon: Bot, label: "IA matching" },
+            ].map(({ Icon, label }) => (
+              <span key={label} className="text-xs px-3 py-1 rounded-full flex items-center gap-1"
                 style={{ background: "rgba(126,213,111,0.1)", color: "#7ed56f", border: "1px solid rgba(126,213,111,0.15)" }}>
-                {f}
+                <Icon size={10} strokeWidth={2} />{label}
               </span>
             ))}
           </div>
@@ -90,7 +96,7 @@ export default function PublicarOfertaPage() {
       <div className="max-w-2xl mx-auto px-4 py-8">
         {exito ? (
           <div className="card-game p-8 text-center">
-            <span className="text-5xl block mb-4">🎉</span>
+            <PartyPopper size={52} strokeWidth={1.3} className="mx-auto mb-4" style={{ color: "#7ed56f" }} />
             <h2 className="text-xl font-bold mb-2" style={{ color: "#7ed56f" }}>¡Oferta publicada!</h2>
             <p className="text-sm mb-6" style={{ color: "#b0a890" }}>
               Tu oferta será revisada y publicada en minutos. Los candidatos que encajen recibirán una notificación.
@@ -98,14 +104,14 @@ export default function PublicarOfertaPage() {
             <button onClick={() => setExito(false)}
               className="px-6 py-3 rounded-xl font-bold text-sm"
               style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
-              📝 Publicar otra oferta
+              <FileText size={13} className="inline mr-1" />Publicar otra oferta
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Datos de la empresa */}
             <div className="card-game p-6">
-              <h2 className="text-sm font-bold mb-4" style={{ color: "#f0c040" }}>🏢 Datos de tu empresa</h2>
+              <h2 className="text-sm font-bold mb-4 flex items-center gap-1.5" style={{ color: "#f0c040" }}><Building2 size={14} strokeWidth={1.6} />Datos de tu empresa</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
@@ -133,7 +139,7 @@ export default function PublicarOfertaPage() {
 
             {/* Datos de la oferta */}
             <div className="card-game p-6">
-              <h2 className="text-sm font-bold mb-4" style={{ color: "#f0c040" }}>💼 Datos de la oferta</h2>
+              <h2 className="text-sm font-bold mb-4 flex items-center gap-1.5" style={{ color: "#f0c040" }}><Briefcase size={14} strokeWidth={1.6} />Datos de la oferta</h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
@@ -189,7 +195,7 @@ export default function PublicarOfertaPage() {
 
             {error && (
               <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-                ❌ {error}
+                <AlertTriangle size={13} strokeWidth={1.8} className="inline mr-1" />{error}
               </div>
             )}
 
@@ -200,7 +206,7 @@ export default function PublicarOfertaPage() {
                 color: enviando ? "#706a58" : "#1a1a12",
                 boxShadow: enviando ? "none" : "0 4px 16px rgba(126,213,111,0.25)",
               }}>
-              {enviando ? "Publicando..." : "🚀 Publicar oferta gratis"}
+              {enviando ? "Publicando..." : <><Rocket size={13} className="inline mr-1" />Publicar oferta gratis</>}
             </button>
 
             <p className="text-xs text-center" style={{ color: "#504a3a" }}>

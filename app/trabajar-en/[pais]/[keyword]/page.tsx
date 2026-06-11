@@ -7,6 +7,7 @@ import { Metadata } from "next";
 import { getPool } from "@/lib/db";
 import { PAISES, LISTA_PAISES, SLUG_A_CODIGO, formatearSalario } from "@/lib/paises";
 import Link from "next/link";
+import { Search, MapPin, Banknote, CalendarDays } from "lucide-react";
 
 interface Props {
   params: Promise<{ pais: string; keyword: string }>;
@@ -143,7 +144,7 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
           className="inline-block mt-6 px-6 py-3 rounded-xl font-semibold transition-colors"
           style={{ background: "#22c55e", color: "#000" }}
         >
-          🔍 Buscar ofertas de {keywordFmt} en {pais.nombre}
+          <Search size={14} className="inline mr-1.5" />Buscar ofertas de {keywordFmt} en {pais.nombre}
         </Link>
       </section>
 
@@ -171,10 +172,10 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-3 text-xs" style={{ color: "#94a3b8" }}>
-                    <span>📍 {oferta.city || pais.nombre}</span>
-                    {oferta.salary && <span>💰 {oferta.salary}</span>}
+                    <span className="flex items-center gap-1"><MapPin size={11} strokeWidth={1.8} />{oferta.city || pais.nombre}</span>
+                    {oferta.salary && <span className="flex items-center gap-1"><Banknote size={11} strokeWidth={1.8} />{oferta.salary}</span>}
                     {oferta.createdAt && (
-                      <span>📅 {new Date(oferta.createdAt).toLocaleDateString("es-ES")}</span>
+                      <span className="flex items-center gap-1"><CalendarDays size={11} strokeWidth={1.8} />{new Date(oferta.createdAt).toLocaleDateString("es-ES")}</span>
                     )}
                   </div>
                 </div>

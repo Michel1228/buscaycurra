@@ -3,6 +3,7 @@ import { PAISES, LISTA_PAISES, SLUG_A_CODIGO, formatearSalario, convertirSalario
 import { getPool } from "@/lib/db";
 import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import Link from "next/link";
+import { Search, MapPin, Bot, Mail, Globe, MessageCircle, Banknote, BarChart2, Package, Baby, Home, Lightbulb, ClipboardList, FileText, Timer, Star, Rocket, type LucideIcon } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -96,7 +97,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
           href={`/app/buscar?pais=${codigo}`}
           className="inline-block mt-6 px-6 py-3 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl transition-colors"
         >
-          🔍 Buscar ofertas en {pais.nombre}
+          <Search size={14} className="inline mr-1.5" />Buscar ofertas en {pais.nombre}
         </Link>
       </section>
 
@@ -132,7 +133,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
               href={`/app/buscar?ubicacion=${encodeURIComponent(ciudad)}&pais=${codigo}`}
               className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg px-4 py-3 text-sm text-[#e2e8f0] transition-colors"
             >
-              📍 {ciudad}
+              <MapPin size={12} strokeWidth={1.8} className="inline mr-1" />{ciudad}
             </Link>
           ))}
         </div>
@@ -158,16 +159,16 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
       <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto">
         <h2 className="text-xl font-bold mb-6">Por qué usar BuscayCurra para trabajar en Europa</h2>
         <div className="grid sm:grid-cols-2 gap-4">
-          {[
-            { icon: "🤖", title: "Agente 24/7", desc: "Guzzi busca y envía tus CVs automáticamente a ofertas en toda Europa mientras duermes." },
-            { icon: "📧", title: "Envío masivo", desc: "Envía tu CV a decenas de ofertas en un solo click. Sin formularios repetitivos." },
-            { icon: "🌍", title: "20+ países", desc: "Ofertas en España, EEUU, Canadá, Australia, Reino Unido, Alemania, Suiza y más países." },
-            { icon: "💬", title: "Guzzi multilingüe", desc: "Tu asistente habla español y te ayuda con ofertas en cualquier idioma europeo." },
-            { icon: "💰", title: "Comparador de salarios", desc: `Calcula tu sueldo neto en cada país con la calculadora de impuestos.` },
-            { icon: "📊", title: "Skill Gap Analysis", desc: "Compara tu CV con los requisitos de la oferta y recibe recomendaciones." },
-          ].map((item) => (
+          {([
+            { Icon: Bot, title: "Agente 24/7", desc: "Guzzi busca y envía tus CVs automáticamente a ofertas en toda Europa mientras duermes." },
+            { Icon: Mail, title: "Envío masivo", desc: "Envía tu CV a decenas de ofertas en un solo click. Sin formularios repetitivos." },
+            { Icon: Globe, title: "20+ países", desc: "Ofertas en España, EEUU, Canadá, Australia, Reino Unido, Alemania, Suiza y más países." },
+            { Icon: MessageCircle, title: "Guzzi multilingüe", desc: "Tu asistente habla español y te ayuda con ofertas en cualquier idioma europeo." },
+            { Icon: Banknote, title: "Comparador de salarios", desc: `Calcula tu sueldo neto en cada país con la calculadora de impuestos.` },
+            { Icon: BarChart2, title: "Skill Gap Analysis", desc: "Compara tu CV con los requisitos de la oferta y recibe recomendaciones." },
+          ] as { Icon: LucideIcon; title: string; desc: string }[]).map((item) => (
             <div key={item.title} className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5 flex gap-4">
-              <span className="text-2xl flex-shrink-0">{item.icon}</span>
+              <item.Icon size={24} strokeWidth={1.4} className="flex-shrink-0" style={{ color: "#22c55e" }} />
               <div>
                 <h3 className="font-semibold text-[#e2e8f0]">{item.title}</h3>
                 <p className="text-sm text-[#94a3b8] mt-1">{item.desc}</p>
@@ -180,7 +181,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
       {/* Primeros pasos en el país */}
       {primerosPasos && (
         <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#2d3142]">
-          <h2 className="text-xl font-bold mb-2">📦 Primeros pasos en {pais.nombre}</h2>
+          <h2 className="text-xl font-bold mb-2 flex items-center gap-2"><Package size={22} strokeWidth={1.5} style={{ color: "#22c55e" }} />Primeros pasos en {pais.nombre}</h2>
           <p className="text-sm text-[#94a3b8] mb-8">Todo lo que necesitas saber para aterrizar: au pair, alojamiento y visados.</p>
 
           <div className="grid sm:grid-cols-2 gap-6">
@@ -188,11 +189,11 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             {primerosPasos.auPair.disponible && (
               <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
                 <h3 className="font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
-                  <span className="text-xl">🧒</span> Programa Au Pair
+                  <Baby size={20} strokeWidth={1.5} style={{ color: "#22c55e" }} /> Programa Au Pair
                 </h3>
                 {primerosPasos.auPair.sueldoMensual && (
                   <p className="text-xs font-semibold mb-3" style={{ color: "#22c55e" }}>
-                    💶 {primerosPasos.auPair.sueldoMensual}
+                    <Banknote size={11} strokeWidth={1.8} className="inline mr-1" />{primerosPasos.auPair.sueldoMensual}
                   </p>
                 )}
                 <p className="text-sm text-[#94a3b8] mb-3">{primerosPasos.auPair.requisitos}</p>
@@ -210,7 +211,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             {/* Alojamiento */}
             <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
               <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
-                <span className="text-xl">🏠</span> Alojamiento temporal
+                <Home size={20} strokeWidth={1.5} style={{ color: "#22c55e" }} /> Alojamiento temporal
               </h3>
               <div className="space-y-1.5 mb-3">
                 {primerosPasos.alojamiento.plataformas.map((p) => (
@@ -220,14 +221,14 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
                   </a>
                 ))}
               </div>
-              <p className="text-xs text-[#64748b] mt-3 border-t border-[#2d3142] pt-3">💡 {primerosPasos.alojamiento.consejo}</p>
+              <p className="text-xs text-[#64748b] mt-3 border-t border-[#2d3142] pt-3"><Lightbulb size={12} strokeWidth={1.8} className="inline mr-1" />{primerosPasos.alojamiento.consejo}</p>
             </div>
 
             {/* Precios de alojamiento por ciudad */}
             {primerosPasos.alojamiento.preciosMedios && primerosPasos.alojamiento.preciosMedios.length > 0 && (
               <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
                 <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
-                  <span className="text-xl">💶</span> Precios de alquiler
+                  <Banknote size={20} strokeWidth={1.5} style={{ color: "#22c55e" }} /> Precios de alquiler
                 </h3>
                 <div className="space-y-2">
                   {primerosPasos.alojamiento.preciosMedios.map((pm) => (
@@ -243,7 +244,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             {/* Visado */}
             <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
               <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
-                <span className="text-xl">📋</span> Requisitos legales y visado
+                <ClipboardList size={20} strokeWidth={1.5} style={{ color: "#22c55e" }} /> Requisitos legales y visado
               </h3>
               <p className="text-sm text-[#94a3b8] mb-3">{primerosPasos.visado.descripcion}</p>
               {primerosPasos.visado.enlaceOficial && (
@@ -258,9 +259,9 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             {primerosPasos.papeleo && primerosPasos.papeleo.documentos.length > 0 && (
               <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
                 <h3 className="font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
-                  <span className="text-xl">📄</span> Documentos y trámites al llegar
+                  <FileText size={20} strokeWidth={1.5} style={{ color: "#22c55e" }} /> Documentos y trámites al llegar
                 </h3>
-                <p className="text-xs text-[#64748b] mb-4">💡 {primerosPasos.papeleo.consejo}</p>
+                <p className="text-xs text-[#64748b] mb-4"><Lightbulb size={12} strokeWidth={1.8} className="inline mr-1" />{primerosPasos.papeleo.consejo}</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {primerosPasos.papeleo.documentos.map((doc) => (
                     <div key={doc.nombre}
@@ -279,7 +280,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
                       </div>
                       <p className="text-xs text-[#94a3b8] mb-2">{doc.descripcion}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-[#64748b]">⏱ {doc.tiempoObtener}</span>
+                        <span className="text-[11px] text-[#64748b] flex items-center gap-1"><Timer size={10} strokeWidth={1.8} />{doc.tiempoObtener}</span>
                         {doc.enlaceOficial && (
                           <a href={doc.enlaceOficial} target="_blank" rel="noopener"
                             className="text-[11px] text-[#22c55e] hover:underline">
@@ -297,7 +298,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             {primerosPasos.programasExtra && primerosPasos.programasExtra.length > 0 && (
               <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
                 <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
-                  <span className="text-xl">🌟</span> Otros programas
+                  <Star size={20} strokeWidth={1.5} style={{ color: "#22c55e" }} /> Otros programas
                 </h3>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {primerosPasos.programasExtra.map((p) => (
@@ -345,7 +346,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             href="/auth/registro"
             className="inline-block px-8 py-3 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-bold rounded-xl transition-colors"
           >
-            🚀 Crear cuenta gratis
+            <Rocket size={14} className="inline mr-1.5" />Crear cuenta gratis
           </Link>
         </div>
       </section>

@@ -3,6 +3,7 @@
  */
 import { Metadata } from "next";
 import Link from "next/link";
+import { Globe, Search, Banknote, ClipboardList, Bot } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Trabajar en el extranjero — Guías por país | BuscayCurra",
@@ -38,8 +39,8 @@ export default function TrabajarEnPage() {
       <div className="max-w-5xl mx-auto px-4 py-12">
         {/* Hero */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4">
-            🌍 Trabajar en el extranjero
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4 flex items-center justify-center gap-2">
+            <Globe size={32} strokeWidth={1.5} style={{ color: "#22c55e" }} />Trabajar en el extranjero
           </h1>
           <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
             Guías completas para trabajar fuera de España: requisitos de visado,
@@ -50,13 +51,13 @@ export default function TrabajarEnPage() {
               href="/app/emigrar"
               className="inline-block bg-[#22c55e] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
             >
-              🌍 Guía para emigrar →
+              <Globe size={14} className="inline mr-1.5" />Guía para emigrar →
             </Link>
             <Link
               href="/app/buscar"
               className="inline-block bg-[#1e212b] border border-[#2d3142] text-white px-6 py-3 rounded-lg font-medium hover:border-[#22c55e]/30 transition-colors"
             >
-              🔍 Buscar ofertas
+              <Search size={14} className="inline mr-1.5" />Buscar ofertas
             </Link>
           </div>
         </div>
@@ -76,8 +77,8 @@ export default function TrabajarEnPage() {
                 </h2>
               </div>
               <div className="flex gap-4 text-sm text-[#94a3b8]">
-                <span>💰 {pais.salario}/mes</span>
-                <span>📋 {pais.ofertas} ofertas</span>
+                <span className="flex items-center gap-1"><Banknote size={12} strokeWidth={1.8} />{pais.salario}/mes</span>
+                <span className="flex items-center gap-1"><ClipboardList size={12} strokeWidth={1.8} />{pais.ofertas} ofertas</span>
               </div>
             </Link>
           ))}
@@ -90,21 +91,21 @@ export default function TrabajarEnPage() {
           </h2>
           <div className="grid sm:grid-cols-3 gap-6 mt-6 text-left">
             <div>
-              <div className="text-2xl mb-2">🤖</div>
+              <Bot size={28} strokeWidth={1.4} className="mb-2" style={{ color: "#22c55e" }} />
               <h3 className="font-semibold mb-1">Guzzi 24/7</h3>
               <p className="text-sm text-[#94a3b8]">
                 IA que busca ofertas, adapta tu CV y envía candidaturas automáticamente en 20+ países.
               </p>
             </div>
             <div>
-              <div className="text-2xl mb-2">📋</div>
+              <ClipboardList size={28} strokeWidth={1.4} className="mb-2" style={{ color: "#22c55e" }} />
               <h3 className="font-semibold mb-1">Guías por país</h3>
               <p className="text-sm text-[#94a3b8]">
                 Visados, alojamiento, au pair y programas especiales para cada destino.
               </p>
             </div>
             <div>
-              <div className="text-2xl mb-2">💰</div>
+              <Banknote size={28} strokeWidth={1.4} className="mb-2" style={{ color: "#22c55e" }} />
               <h3 className="font-semibold mb-1">Comparador salarial</h3>
               <p className="text-sm text-[#94a3b8]">
                 Compara salarios, impuestos y coste de vida entre países antes de emigrar.

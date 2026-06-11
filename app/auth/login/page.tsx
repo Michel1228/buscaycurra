@@ -5,6 +5,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Globe, Target, Clock, X, Check, type LucideIcon } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -79,14 +80,14 @@ export default function LoginPage() {
 
           {/* 3 puntos fuertes — siempre visibles */}
           <div className="space-y-3 mb-6">
-            {[
-              { icon: "🌍", titulo: "21 países, un solo agente", desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
-              { icon: "🎯", titulo: "CV único para cada oferta", desc: "Cada candidatura se adapta a la empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
-              { icon: "⏰", titulo: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. La diferencia entre que te lean o te ignoren." },
-            ].map(p => (
+            {([
+              { Icon: Globe, titulo: "21 países, un solo agente", desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
+              { Icon: Target, titulo: "CV único para cada oferta", desc: "Cada candidatura se adapta a la empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
+              { Icon: Clock, titulo: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. La diferencia entre que te lean o te ignoren." },
+            ] as { Icon: LucideIcon; titulo: string; desc: string }[]).map(p => (
               <div key={p.titulo} className="flex items-start gap-3 p-3 rounded-xl"
                 style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
-                <span className="text-xl shrink-0 mt-0.5">{p.icon}</span>
+                <p.Icon size={20} strokeWidth={1.5} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
                 <div>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.titulo}</p>
                   <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{p.desc}</p>
@@ -113,8 +114,8 @@ export default function LoginPage() {
                 className="px-4 py-2 grid grid-cols-3 gap-2 text-[11px] items-center"
                 style={{ background: i % 2 === 0 ? "#0f1117" : "#0a0c10", borderTop: "1px solid #1a1d27" }}>
                 <span style={{ color: "#94a3b8" }}>{row.label}</span>
-                <span className="text-center" style={{ color: "#ef4444" }}>✕ {row.ellos}</span>
-                <span className="text-center font-semibold" style={{ color: "#22c55e" }}>✓ {row.nosotros}</span>
+                <span className="text-center flex items-center justify-center gap-1" style={{ color: "#ef4444" }}><X size={10} strokeWidth={2.5} />{row.ellos}</span>
+                <span className="text-center font-semibold flex items-center justify-center gap-1" style={{ color: "#22c55e" }}><Check size={10} strokeWidth={2.5} />{row.nosotros}</span>
               </div>
             ))}
           </div>

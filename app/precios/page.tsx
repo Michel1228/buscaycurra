@@ -6,10 +6,11 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import { isNativeIOS } from "@/lib/utils/platform";
+import { Egg, Sprout, Zap, Building2, Apple, Star, Check, X, CreditCard, type LucideIcon } from "lucide-react";
 
 const PLANES = [
   {
-    id: "free", nombre: "Gratis", precio: "0€", periodo: "para siempre", emoji: "🥚",
+    id: "free", nombre: "Gratis", precio: "0€", periodo: "para siempre", Icon: Egg as LucideIcon,
     desc: "Para empezar tu aventura",
     items: [
       { t: "2 CVs enviados por día", ok: true },
@@ -23,7 +24,7 @@ const PLANES = [
     dest: false, btn: "Empezar gratis", accion: "registro" as const,
   },
   {
-    id: "esencial", nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱",
+    id: "esencial", nombre: "Esencial", precio: "2,99€", periodo: "/mes", Icon: Sprout as LucideIcon,
     desc: "Menos que un café al mes",
     items: [
       { t: "60 candidaturas al mes", ok: true },
@@ -37,7 +38,7 @@ const PLANES = [
     dest: false, btn: "Elegir Esencial", accion: "esencial" as const,
   },
   {
-    id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "⚡",
+    id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", Icon: Zap as LucideIcon,
     desc: "Para profesionales serios",
     items: [
       { t: "10 CVs enviados por día", ok: true },
@@ -51,7 +52,7 @@ const PLANES = [
     dest: true, btn: "Elegir Pro", accion: "pro" as const,
   },
   {
-    id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🏢",
+    id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", Icon: Building2 as LucideIcon,
     desc: "Sin límites para equipos",
     items: [
       { t: "Envíos ilimitados", ok: true },
@@ -123,7 +124,7 @@ export default function PreciosPage() {
         {iosNativo && (
           <div className="max-w-md mx-auto mb-8 rounded-xl p-5 text-center"
             style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
-            <p className="text-2xl mb-2">🍎</p>
+            <Apple size={32} strokeWidth={1.4} className="mx-auto mb-2" style={{ color: "#94a3b8" }} />
             <p className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>
               Suscríbete desde la web
             </p>
@@ -150,11 +151,11 @@ export default function PreciosPage() {
 
               {plan.dest && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="badge-game badge-dorado text-[10px]">⭐ Más popular</span>
+                  <span className="badge-game badge-dorado text-[10px] flex items-center gap-1"><Star size={9} strokeWidth={0} fill="#f59e0b" />Más popular</span>
                 </div>
               )}
 
-              <div className="text-4xl mb-3">{plan.emoji}</div>
+              <plan.Icon size={40} strokeWidth={1.3} className="mx-auto mb-3" style={{ color: plan.dest ? "#7ed56f" : "#94a3b8" }} />
               <h2 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h2>
               <p className="text-xs mt-1 mb-4" style={{ color: "#706a58" }}>{plan.desc}</p>
 
@@ -173,7 +174,7 @@ export default function PreciosPage() {
                         background: item.ok ? "rgba(126,213,111,0.15)" : "rgba(80,74,58,0.3)",
                         color: item.ok ? "#7ed56f" : "#504a3a",
                       }}>
-                      {item.ok ? "✓" : "✕"}
+                      {item.ok ? <Check size={9} strokeWidth={2.5} /> : <X size={9} strokeWidth={2.5} />}
                     </span>
                     <span style={{ color: item.ok ? "#b0a890" : "#504a3a" }}>{item.t}</span>
                   </li>
@@ -197,7 +198,7 @@ export default function PreciosPage() {
 
         {!iosNativo && (
           <p className="text-center text-xs mt-10" style={{ color: "#504a3a" }}>
-            💳 Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
+            <CreditCard size={12} strokeWidth={1.8} className="inline mr-1" />Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
           </p>
         )}
 

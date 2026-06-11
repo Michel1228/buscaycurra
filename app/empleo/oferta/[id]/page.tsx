@@ -1,6 +1,7 @@
 import { getPool } from "@/lib/db";
 import { Metadata } from "next";
 import Link from "next/link";
+import { Search, MapPin, Banknote, CalendarDays, ClipboardList } from "lucide-react";
 
 export async function generateMetadata({
   params,
@@ -44,7 +45,7 @@ export default async function OfertaPublicaPage({
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1117" }}>
         <div className="text-center">
-          <p className="text-4xl mb-4">🔍</p>
+          <Search size={44} strokeWidth={1.2} className="mx-auto mb-4" style={{ color: "#3b82f6" }} />
           <p className="text-lg font-semibold" style={{ color: "#f1f5f9" }}>Oferta no encontrada</p>
           <Link href="/" className="mt-4 inline-block text-sm" style={{ color: "#22c55e" }}>← Ir a BuscayCurra</Link>
         </div>
@@ -94,16 +95,16 @@ export default async function OfertaPublicaPage({
           </p>
 
           <div className="flex flex-wrap gap-4 mb-5 text-sm" style={{ color: "#94a3b8" }}>
-            <span>📍 {row.city}</span>
-            {row.salary && <span>💰 {row.salary}</span>}
+            <span className="flex items-center gap-1"><MapPin size={13} strokeWidth={1.8} />{row.city}</span>
+            {row.salary && <span className="flex items-center gap-1"><Banknote size={13} strokeWidth={1.8} />{row.salary}</span>}
             {row.createdAt && (
-              <span>📅 {new Date(row.createdAt).toLocaleDateString("es-ES")}</span>
+              <span className="flex items-center gap-1"><CalendarDays size={13} strokeWidth={1.8} />{new Date(row.createdAt).toLocaleDateString("es-ES")}</span>
             )}
           </div>
 
           {row.description && (
             <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
-              <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>📋 Descripción</h2>
+              <h2 className="text-sm font-semibold mb-3 flex items-center gap-1.5" style={{ color: "#f1f5f9" }}><ClipboardList size={14} strokeWidth={1.6} />Descripción</h2>
               <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "#94a3b8" }}>
                 {row.description}
               </div>

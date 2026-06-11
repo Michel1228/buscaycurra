@@ -7,6 +7,7 @@
 import { Metadata } from "next";
 import { getPool } from "@/lib/db";
 import Link from "next/link";
+import { Search, Banknote } from "lucide-react";
 
 // ─── Lista de puestos populares para pre-renderizar ─────────────────────────
 const PUESTOS_POPULARES = [
@@ -194,7 +195,7 @@ export default async function EmpleoPage({
                     <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>{o.title}</h3>
                     <p className="text-xs mt-1" style={{ color: "#b0a890" }}>{o.company || "Empresa"} · {o.city}</p>
                     {o.salary && (
-                      <p className="text-xs font-semibold mt-1" style={{ color: "#7ed56f" }}>💰 {o.salary}</p>
+                      <p className="text-xs font-semibold mt-1 flex items-center gap-1" style={{ color: "#7ed56f" }}><Banknote size={11} strokeWidth={1.8} />{o.salary}</p>
                     )}
                     {o.description && (
                       <p className="text-xs mt-2 line-clamp-2" style={{ color: "#706a58" }}>{o.description.slice(0, 150)}...</p>
@@ -217,7 +218,7 @@ export default async function EmpleoPage({
           </div>
         ) : (
           <div className="card-game p-10 text-center mb-10">
-            <p className="text-4xl mb-3">🔍</p>
+            <Search size={44} strokeWidth={1.2} className="mx-auto mb-3" style={{ color: "#3b82f6" }} />
             <p className="font-semibold" style={{ color: "#f0ebe0" }}>No hay ofertas en este momento</p>
             <p className="text-sm mt-1" style={{ color: "#706a58" }}>
               Prueba con términos similares o deja que Guzzi busque por ti

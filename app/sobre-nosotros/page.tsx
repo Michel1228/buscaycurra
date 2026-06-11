@@ -1,17 +1,18 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
+import { Target, Lock, Zap, Globe, Search, Sparkles, Mail, BarChart2, type LucideIcon } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Sobre nosotros — BuscayCurra | El agente IA que busca trabajo por ti",
   description: "BuscayCurra es la plataforma de empleo con IA que automatiza tu búsqueda de trabajo en 21 países. Conoce nuestra historia, misión y el equipo detrás de Guzzi.",
 };
 
-const VALORES = [
-  { icon: "🎯", titulo: "Honestidad radical", desc: "No prometemos lo que no podemos cumplir. Si una oferta no encaja con tu perfil, Guzzi te lo dice." },
-  { icon: "🔒", titulo: "Tu privacidad primero", desc: "Tus datos son tuyos. No los vendemos, no los compartimos. Los borramos cuando nos lo pides." },
-  { icon: "⚡", titulo: "Automatización con criterio", desc: "Automatizamos lo repetitivo — no la decisión. Tú siempre tienes el control de qué se envía y a quién." },
-  { icon: "🌍", titulo: "Empleo sin fronteras", desc: "El mercado laboral es global. BuscayCurra también. Buscamos trabajo donde hay trabajo, no solo donde hay portales." },
+const VALORES: { Icon: LucideIcon; titulo: string; desc: string }[] = [
+  { Icon: Target, titulo: "Honestidad radical", desc: "No prometemos lo que no podemos cumplir. Si una oferta no encaja con tu perfil, Guzzi te lo dice." },
+  { Icon: Lock, titulo: "Tu privacidad primero", desc: "Tus datos son tuyos. No los vendemos, no los compartimos. Los borramos cuando nos lo pides." },
+  { Icon: Zap, titulo: "Automatización con criterio", desc: "Automatizamos lo repetitivo — no la decisión. Tú siempre tienes el control de qué se envía y a quién." },
+  { Icon: Globe, titulo: "Empleo sin fronteras", desc: "El mercado laboral es global. BuscayCurra también. Buscamos trabajo donde hay trabajo, no solo donde hay portales." },
 ];
 
 const HITOS = [
@@ -84,14 +85,14 @@ export default function SobreNosotrosPage() {
         <section className="mb-16">
           <h2 className="text-xl font-bold mb-6" style={{ color: "#f1f5f9" }}>Guzzi, tu agente de empleo</h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            {[
-              { icon: "🔍", titulo: "Busca por ti", desc: "Escanea más de 1.900.000 ofertas en 21 países cada 6 horas. Filtra por tu perfil, sector y salario esperado." },
-              { icon: "✨", titulo: "Mejora tu CV", desc: "Analiza tu currículum con IA y lo adapta a cada oferta antes de enviarlo. Supera los filtros ATS que descartan el 75% de candidatos." },
-              { icon: "📧", titulo: "Envía candidaturas", desc: "Envía tu CV automáticamente con carta personalizada para cada empresa. Tú solo vas a la entrevista." },
-              { icon: "📊", titulo: "Seguimiento en tiempo real", desc: "Pipeline visual de todas tus candidaturas: enviada, abierta, en revisión, entrevista. Sin agujeros negros." },
-            ].map((s) => (
+            {([
+              { Icon: Search, titulo: "Busca por ti", desc: "Escanea más de 1.900.000 ofertas en 21 países cada 6 horas. Filtra por tu perfil, sector y salario esperado." },
+              { Icon: Sparkles, titulo: "Mejora tu CV", desc: "Analiza tu currículum con IA y lo adapta a cada oferta antes de enviarlo. Supera los filtros ATS que descartan el 75% de candidatos." },
+              { Icon: Mail, titulo: "Envía candidaturas", desc: "Envía tu CV automáticamente con carta personalizada para cada empresa. Tú solo vas a la entrevista." },
+              { Icon: BarChart2, titulo: "Seguimiento en tiempo real", desc: "Pipeline visual de todas tus candidaturas: enviada, abierta, en revisión, entrevista. Sin agujeros negros." },
+            ] as { Icon: LucideIcon; titulo: string; desc: string }[]).map((s) => (
               <div key={s.titulo} className="rounded-xl p-5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-                <span className="text-2xl block mb-3">{s.icon}</span>
+                <s.Icon size={24} strokeWidth={1.4} className="mb-3" style={{ color: "#22c55e" }} />
                 <h3 className="text-sm font-bold mb-2" style={{ color: "#f1f5f9" }}>{s.titulo}</h3>
                 <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{s.desc}</p>
               </div>
@@ -127,7 +128,7 @@ export default function SobreNosotrosPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {VALORES.map((v) => (
               <div key={v.titulo} className="rounded-xl p-5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-                <span className="text-2xl block mb-2">{v.icon}</span>
+                <v.Icon size={24} strokeWidth={1.4} className="mb-2" style={{ color: "#22c55e" }} />
                 <h3 className="text-sm font-bold mb-1" style={{ color: "#f1f5f9" }}>{v.titulo}</h3>
                 <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{v.desc}</p>
               </div>
