@@ -119,11 +119,22 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     inicializadoRef.current = true;
     async function checkAuth() {
       try {
-        const { data: { user } } = await getSupabaseBrowser().auth.getUser();
+        const sb = getSupabaseBrowser();
+        const { data: { user } } = await sb.auth.getUser();
         setLogueado(!!user);
-        if (user?.id) setUserId(user.id);
-        if (user) {
-          setMensajes([{ role: "gusi", text: `¡Hola! Soy Guzzi, tu asistente de empleo. ¿Qué hacemos hoy?\n\nPuedo ayudarte con:\n⚡ **Enviar tu CV automático** a empresas\n✨ Crear o mejorar tu CV\n🧭 Buscar ofertas por puesto y ciudad\n🎙️ Prepararte para entrevistas` }]);
+        if (user?.id) {
+          setUserId(user.id);
+          // Cargar conversación guardada
+          const { data: conv } = await sb
+            .from("gusi_conversations")
+            .select("messages")
+            .eq("user_id", user.id)
+            .single();
+          if (conv?.messages && Array.isArray(conv.messages) && conv.messages.length > 0) {
+            setMensajes(conv.messages as Mensaje[]);
+          } else {
+            setMensajes([{ role: "gusi", text: `¡Hola! Soy Guzzi, tu asistente de empleo. ¿Qué hacemos hoy?\n\nPuedo ayudarte con:\n⚡ **Enviar tu CV automático** a empresas\n✨ Crear o mejorar tu CV\n🧭 Buscar ofertas por puesto y ciudad\n🎙️ Prepararte para entrevistas` }]);
+          }
         } else {
           setMensajes([{ role: "gusi", text: "¡Hola! Soy Guzzi, tu asistente de empleo de BuscayCurra.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**" }]);
         }
@@ -134,6 +145,23 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     }
     checkAuth();
   }, [abierto]);
+
+  // Guardar conversación en Supabase cuando cambian los mensajes (debounced)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!userId || mensajes.length <= 1) return;
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const sb = getSupabaseBrowser();
+        await sb.from("gusi_conversations").upsert({
+          user_id: userId,
+          messages: mensajes,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+      } catch { /* silencioso */ }
+    }, 2000);
+  }, [mensajes, userId]);
   const [input, setInput] = useState("");
   const [cargando, setCargando] = useState(false);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(true);
@@ -470,10 +498,16 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     setEnviandoATodas(false);
   };
 
-  const limpiar = () => {
+  const limpiar = async () => {
     setMensajes([{ role: "gusi", text: "¡Nueva conversación! ¿En qué te ayudo hoy?" }]);
     setModoEntrevista(false);
     setMostrarSugerencias(true);
+    // Limpiar también en Supabase
+    if (userId) {
+      try {
+        await getSupabaseBrowser().from("gusi_conversations").delete().eq("user_id", userId);
+      } catch { /* ok */ }
+    }
   };
 
   return (
