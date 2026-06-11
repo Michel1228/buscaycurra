@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GuzziAvatar from "@/components/GuzziAvatar";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { Sparkles, FileText, Search, BarChart3, Target, Mail, Zap, Briefcase, Check } from "lucide-react";
 
 interface DashboardStats {
   ofertasNuevasHoy: number;
@@ -30,6 +31,20 @@ interface QuickAction {
   label: string;
   href: string;
   color: string;
+}
+
+/** Mapea iconos string → componente Lucide con color */
+function renderIcon(name: string, size = 20, color?: string) {
+  const s = { width: size, height: size, style: color ? { color } : undefined };
+  switch (name) {
+    case "SPARKLES": return <Sparkles {...s} />;
+    case "MAIL": return <Mail {...s} />;
+    case "BARCHART3": return <BarChart3 {...s} />;
+    case "TARGET": return <Target {...s} />;
+    case "FILETEXT": return <FileText {...s} />;
+    case "SEARCH": return <Search {...s} />;
+    default: return <Zap {...s} />;
+  }
 }
 
 export default function BienvenidaClient() {
@@ -84,7 +99,7 @@ export default function BienvenidaClient() {
   // ── Stat cards ──
   const statCards = [
     {
-      icon: "🆕",
+      icon: "SPARKLES",
       label: "Ofertas nuevas hoy",
       value: stats.ofertasNuevasHoy,
       color: "#3b82f6",
@@ -92,7 +107,7 @@ export default function BienvenidaClient() {
       href: "/app/buscar",
     },
     {
-      icon: "📧",
+      icon: "MAIL",
       label: "CVs enviados hoy",
       value: stats.cvsEnviadosHoy,
       color: "#22c55e",
@@ -100,7 +115,7 @@ export default function BienvenidaClient() {
       href: "/app/envios",
     },
     {
-      icon: "📊",
+      icon: "BARCHART3",
       label: "Pipeline activo",
       value: stats.pipelineActivo,
       color: "#a855f7",
@@ -108,7 +123,7 @@ export default function BienvenidaClient() {
       href: "/app/pipeline",
     },
     {
-      icon: "🎯",
+      icon: "TARGET",
       label: "Entrevistas",
       value: stats.entrevistasPendientes,
       color: "#f59e0b",
@@ -155,7 +170,7 @@ export default function BienvenidaClient() {
               style={{ background: s.bg, border: `1px solid ${s.color}20` }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">{s.icon}</span>
+                <span className="text-lg">{renderIcon(s.icon, 20, s.color)}</span>
                 <span className="text-2xl font-bold" style={{ color: s.color }}>
                   {s.value.toLocaleString()}
                 </span>
@@ -185,10 +200,10 @@ export default function BienvenidaClient() {
               </div>
             </div>
             <ul className="space-y-1.5 text-[11px]" style={{ color: "#94a3b8" }}>
-              <li>✅ Busca ofertas adaptadas a ti</li>
-              <li>✅ Mejora tu CV con IA</li>
-              <li>✅ Envía candidaturas automáticamente</li>
-              <li>✅ Tú apruebas cada envío</li>
+              <li><Check className="w-3.5 h-3.5 inline" style={{color: "#22c55e"}} /> Busca ofertas adaptadas a ti</li>
+              <li><Check className="w-3.5 h-3.5 inline" style={{color: "#22c55e"}} /> Mejora tu CV con IA</li>
+              <li><Check className="w-3.5 h-3.5 inline" style={{color: "#22c55e"}} /> Envía candidaturas automáticamente</li>
+              <li><Check className="w-3.5 h-3.5 inline" style={{color: "#22c55e"}} /> Tú apruebas cada envío</li>
             </ul>
             <span
               className="w-full text-center py-2 rounded-xl text-xs font-semibold mt-1"
@@ -208,17 +223,17 @@ export default function BienvenidaClient() {
             }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-3xl">🔍</span>
+              <span className="text-3xl"><Search className="w-8 h-8" style={{color: "#3b82f6"}} /></span>
               <div>
                 <p className="font-bold text-sm" style={{ color: "#f1f5f9" }}>Modo manual</p>
                 <p className="text-[11px]" style={{ color: "#64748b" }}>Control total</p>
               </div>
             </div>
             <ul className="space-y-1.5 text-[11px]" style={{ color: "#94a3b8" }}>
-              <li>🔍 Busca ofertas tú mismo</li>
-              <li>📊 Gestiona tu pipeline</li>
-              <li>📧 Controla los envíos</li>
-              <li>💰 Compara salarios</li>
+              <li><Search className="w-3.5 h-3.5 inline" style={{color: "#3b82f6"}} /> Busca ofertas tú mismo</li>
+              <li><BarChart3 className="w-3.5 h-3.5 inline" style={{color: "#a855f7"}} /> Gestiona tu pipeline</li>
+              <li><Mail className="w-3.5 h-3.5 inline" style={{color: "#22c55e"}} /> Controla los envíos</li>
+              <li><Briefcase className="w-3.5 h-3.5 inline" style={{color: "#f59e0b"}} /> Compara salarios</li>
             </ul>
             <span
               className="w-full text-center py-2 rounded-xl text-xs font-semibold mt-1"
@@ -234,7 +249,7 @@ export default function BienvenidaClient() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-lg">💼</span>
+                <span className="text-lg"><Briefcase className="w-5 h-5" style={{color: "#f59e0b"}} /></span>
                 <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>
                   Ofertas recomendadas para ti
                 </h2>
@@ -281,17 +296,17 @@ export default function BienvenidaClient() {
         {/* ── Quick actions ── */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-lg">⚡</span>
+            <span className="text-lg"><Zap className="w-5 h-5" style={{color: "#fbbf24"}} /></span>
             <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>
               Acciones rápidas
             </h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(quickActions.length > 0 ? quickActions : [
-              { icon: "✨", label: "Hablar con Guzzi", href: "/app/gusi", color: "#22c55e" },
-              { icon: "📄", label: "Mejorar mi CV", href: "/app/curriculum", color: "#f59e0b" },
-              { icon: "🔍", label: "Buscar ofertas", href: "/app/buscar", color: "#3b82f6" },
-              { icon: "📊", label: "Mi pipeline", href: "/app/pipeline", color: "#a855f7" },
+              { icon: "SPARKLES", label: "Hablar con Guzzi", href: "/app/gusi", color: "#22c55e" },
+              { icon: "FILETEXT", label: "Mejorar mi CV", href: "/app/curriculum", color: "#f59e0b" },
+              { icon: "SEARCH", label: "Buscar ofertas", href: "/app/buscar", color: "#3b82f6" },
+              { icon: "BARCHART3", label: "Mi pipeline", href: "/app/pipeline", color: "#a855f7" },
             ]).map((action) => (
               <Link
                 key={action.label}
@@ -301,7 +316,7 @@ export default function BienvenidaClient() {
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
                   style={{ background: `${action.color}18`, border: `1px solid ${action.color}30` }}>
-                  {action.icon}
+                  {renderIcon(action.icon, 18, action.color)}
                 </div>
                 <span className="text-[11px] font-medium text-center" style={{ color: "#94a3b8" }}>
                   {action.label}

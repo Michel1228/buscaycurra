@@ -81,6 +81,7 @@ export default function CurriculumPage() {
   const [visibleEmpresas, setVisibleEmpresas] = useState(false);
   const [descargando, setDescargando] = useState(false);
   const [esPreviewIA, setEsPreviewIA] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // ── Múltiples CVs ──
@@ -1039,12 +1040,24 @@ export default function CurriculumPage() {
                     {mejoradoHTML ? "CV Mejorado con IA ✨" : "Previsualización en vivo"}
                   </span>
                 </div>
-                {mejoradoHTML && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
-                    style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-                    IA activa
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {mejoradoHTML && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                      style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                      IA activa
+                    </span>
+                  )}
+                  {previewHTML && (
+                    <button
+                      onClick={() => setFullscreen(true)}
+                      className="text-[10px] px-2.5 py-1 rounded-lg font-medium transition hover:scale-105"
+                      style={{ background: "rgba(255,255,255,0.06)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.1)" }}
+                      title="Ver en pantalla completa"
+                    >
+                      ⛶ Pantalla completa
+                    </button>
+                  )}
+                </div>
               </div>
 
               {previewHTML ? (
@@ -1082,6 +1095,51 @@ export default function CurriculumPage() {
           </div>
         </div>
       </main>
+
+      {/* ── FULLSCREEN CV ── */}
+      {fullscreen && previewHTML && (
+        <div
+          className="fixed inset-0 z-[9999] flex flex-col"
+          style={{ background: "#0f1117" }}
+        >
+          {/* Toolbar */}
+          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#161922", borderBottom: "1px solid #252836" }}>
+            <div className="flex items-center gap-3">
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
+              <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>
+                {mejoradoHTML ? "CV Mejorado con IA ✨" : "Vista previa del CV"}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setFullscreen(false); }}
+                className="text-xs px-3 py-1.5 rounded-lg font-medium transition hover:scale-105"
+                style={{ background: "rgba(255,255,255,0.06)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                ✕ Cerrar
+              </button>
+              <button
+                onClick={descargarPDF}
+                disabled={descargando}
+                className="text-xs px-4 py-1.5 rounded-lg font-semibold transition disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+              >
+                {descargando ? "Generando..." : "⬇ Descargar PDF"}
+              </button>
+            </div>
+          </div>
+          {/* Iframe a pantalla completa */}
+          <div className="flex-1 overflow-auto flex justify-center bg-neutral-200 py-4">
+            <iframe
+              srcDoc={previewHTML}
+              className="bg-white shadow-2xl"
+              style={{ width: "210mm", minHeight: "297mm", border: "none", maxWidth: "100%" }}
+              title="CV en pantalla completa"
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

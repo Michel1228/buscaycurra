@@ -14,9 +14,16 @@
 
 import { Resend } from "resend";
 
-// ─── Cliente Resend ──────────────────────────────────────────────────────────
-// La API key se configura en la variable de entorno RESEND_API_KEY
-const resend = new Resend(process.env.RESEND_API_KEY);
+// ─── Cliente Resend (inicialización lazy para no crashear el worker si falta la key) ──
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) throw new Error("RESEND_API_KEY no configurada — los emails no se pueden enviar");
+    _resend = new Resend(apiKey);
+  }
+  return _resend;
+}
 
 /** Email de remitente (configurable en variables de entorno) */
 const FROM_EMAIL = process.env.FROM_EMAIL ?? "noreply@buscaycurra.es";
@@ -68,7 +75,7 @@ export async function sendCVEmail(
   console.log(`[EmailSender] Enviando CV de ${cvData.userName} a ${to} (${companyName})...`);
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: `${sanitizeEmailHeader(cvData.userName)} via BuscayCurra <${FROM_EMAIL}>`,
       to: [to],
       reply_to: cvData.userEmail,
@@ -116,7 +123,7 @@ export async function sendConfirmationToUser(
   console.log(`[EmailSender] Enviando confirmación a ${userEmail}...`);
 
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from: `BuscayCurra <${FROM_EMAIL}>`,
       to: [userEmail],
       subject: `✅ Tu CV fue enviado a ${companyName}`,

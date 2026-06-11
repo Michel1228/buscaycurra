@@ -5,6 +5,10 @@ import PWAInstallButton from "@/components/PWAInstallButton";
 import PublicHeader from "@/components/PublicHeader";
 import { getPool } from "@/lib/db";
 import { NUM_PAISES } from "@/lib/paises";
+import {
+  Paperclip, Globe, Rocket, Target, Clock, Bot, BarChart3,
+  DollarSign, Mail, Search, Lock, Check, X
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -172,19 +176,19 @@ export default async function LandingPage() {
 
   // ── Cómo funciona ──
   const pasos = [
-    { num: "1", icon: "📎", titulo: "Sube tu CV o cuéntaselo a Guzzi", desc: "En 2 minutos Guzzi analiza tu experiencia, la mejora con IA y la adapta al formato que esperan las empresas." },
-    { num: "2", icon: "🌍", titulo: "Elige dónde quieres trabajar", desc: `España, Alemania, Irlanda... Guzzi escanea cientos de miles de ofertas en ${PAISES} países. Filtra por salario, sector y tipo de contrato.` },
-    { num: "3", icon: "🚀", titulo: "Guzzi envía. Tú solo vas a la entrevista.", desc: "Carta personalizada para cada empresa. Envío en el momento exacto en que el reclutador abre el email. Automático." },
+    { num: "1", icon: <Paperclip className="w-5 h-5" />, titulo: "Sube tu CV o cuéntaselo a Guzzi", desc: "En 2 minutos Guzzi analiza tu experiencia, la mejora con IA y la adapta al formato que esperan las empresas." },
+    { num: "2", icon: <Globe className="w-5 h-5" />, titulo: "Elige dónde quieres trabajar", desc: `España, Alemania, Irlanda... Guzzi escanea cientos de miles de ofertas en ${PAISES} países. Filtra por salario, sector y tipo de contrato.` },
+    { num: "3", icon: <Rocket className="w-5 h-5" />, titulo: "Guzzi envía. Tú solo vas a la entrevista.", desc: "Carta personalizada para cada empresa. Envío en el momento exacto en que el reclutador abre el email. Automático." },
   ];
 
   // ── Superpotencias ──
   const superpotencias = [
-    { icon: "🌍", titulo: `${PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país. De España a Alemania, de Irlanda a Australia — sin mover un dedo.", acento: "#22c55e" },
-    { icon: "🎯", titulo: "CV único para cada oferta. Cero spam.", desc: "Tu CV no se dispara a lo loco. Guzzi lo adapta a cada empresa: palabras clave, formato, tono. Supera los filtros ATS que descartan al 75% de candidatos antes de que un humano lo vea.", acento: "#f59e0b" },
-    { icon: "⏰", titulo: "Enviado cuando el reclutador está leyendo", desc: "Analizamos la hora de actividad de cada empresa. Tu candidatura llega a las 8:32am del martes — no a las 3am de un sábado. La diferencia entre abrirlo o borrarlo sin leer.", acento: "#a855f7" },
-    { icon: "🤖", titulo: "24/7. No duerme. No se cansa. No se rinde.", desc: "Mientras tú vives tu vida, duermes o ves Netflix, Guzzi está escaneando ofertas, adaptando candidaturas y enviando. Como tener un comercial trabajando para ti a tiempo completo.", acento: "#e07850" },
-    { icon: "📊", titulo: "Pipeline visual: sabes dónde está cada CV", desc: "Deja de preguntarte \"¿lo habrán leído?\". Ve en tiempo real el estado de cada candidatura: enviada, abierta, en revisión, entrevista, oferta. Sin agujeros negros.", acento: "#3b82f6" },
-    { icon: "💰", titulo: "Comparador de salarios reales", desc: "¿Cuánto pagan por tu puesto en Berlín vs Barcelona? ¿Merece la pena emigrar? Datos reales de cientos de miles de ofertas. Decide con números, no con intuición.", acento: "#f59e0b" },
+    { icon: <Globe className="w-8 h-8" />, titulo: `${PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país. De España a Alemania, de Irlanda a Australia — sin mover un dedo.", acento: "#22c55e" },
+    { icon: <Target className="w-8 h-8" />, titulo: "CV único para cada oferta. Cero spam.", desc: "Tu CV no se dispara a lo loco. Guzzi lo adapta a cada empresa: palabras clave, formato, tono. Supera los filtros ATS que descartan al 75% de candidatos antes de que un humano lo vea.", acento: "#f59e0b" },
+    { icon: <Clock className="w-8 h-8" />, titulo: "Enviado cuando el reclutador está leyendo", desc: "Analizamos la hora de actividad de cada empresa. Tu candidatura llega a las 8:32am del martes — no a las 3am de un sábado. La diferencia entre abrirlo o borrarlo sin leer.", acento: "#a855f7" },
+    { icon: <Bot className="w-8 h-8" />, titulo: "24/7. No duerme. No se cansa. No se rinde.", desc: "Mientras tú vives tu vida, duermes o ves Netflix, Guzzi está escaneando ofertas, adaptando candidaturas y enviando. Como tener un comercial trabajando para ti a tiempo completo.", acento: "#e07850" },
+    { icon: <BarChart3 className="w-8 h-8" />, titulo: "Pipeline visual: sabes dónde está cada CV", desc: "Deja de preguntarte \"¿lo habrán leído?\". Ve en tiempo real el estado de cada candidatura: enviada, abierta, en revisión, entrevista, oferta. Sin agujeros negros.", acento: "#3b82f6" },
+    { icon: <DollarSign className="w-8 h-8" />, titulo: "Comparador de salarios reales", desc: "¿Cuánto pagan por tu puesto en Berlín vs Barcelona? ¿Merece la pena emigrar? Datos reales de cientos de miles de ofertas. Decide con números, no con intuición.", acento: "#f59e0b" },
   ];
 
   // ── La verdad incómoda ──
@@ -313,15 +317,15 @@ export default async function LandingPage() {
 
             {/* Ventajas rápidas — visible sin scroll */}
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 mb-6 text-[11px] font-medium" style={{ color: "#94a3b8" }}>
-              <span>🤖 CV personalizado con IA</span>
+              <span><Bot className="w-3.5 h-3.5 inline" /> CV personalizado con IA</span>
               <span style={{ color: "#2d3142" }}>·</span>
-              <span>📧 Envío automático 24/7</span>
+              <span><Mail className="w-3.5 h-3.5 inline" /> Envío automático 24/7</span>
               <span style={{ color: "#2d3142" }}>·</span>
-              <span>🌍 {PAISES} países</span>
+              <span><Globe className="w-3.5 h-3.5 inline" /> {PAISES} países</span>
               <span style={{ color: "#2d3142" }}>·</span>
-              <span>📊 Pipeline visual</span>
+              <span><BarChart3 className="w-3.5 h-3.5 inline" /> Pipeline visual</span>
               <span style={{ color: "#2d3142" }}>·</span>
-              <span>💰 Comparador de salarios</span>
+              <span><DollarSign className="w-3.5 h-3.5 inline" /> Comparador de salarios</span>
             </div>
 
             {/* CTAs */}
@@ -553,7 +557,7 @@ export default async function LandingPage() {
                 className="inline-flex items-center gap-2 text-sm font-semibold transition hover:opacity-80"
                 style={{ color: "#22c55e" }}
               >
-                🌍 Ver todos los países y salarios →
+                <Globe className="w-4 h-4 inline" /> Ver todos los países y salarios →
               </Link>
             </div>
           </div>
@@ -600,7 +604,7 @@ export default async function LandingPage() {
                         border: "1px solid rgba(239,68,68,0.08)",
                       }}
                     >
-                      <span style={{ color: "#ef4444" }}>✕ </span>
+                      <span style={{ color: "#ef4444" }}><X className="w-3 h-3 inline" /> </span>
                       {row.ellos}
                     </div>
                     <div
@@ -611,7 +615,7 @@ export default async function LandingPage() {
                         border: "1px solid rgba(34,197,94,0.10)",
                       }}
                     >
-                      <span style={{ color: "#22c55e" }}>✓ </span>
+                      <span style={{ color: "#22c55e" }}><Check className="w-3 h-3 inline" /> </span>
                       {row.nosotros}
                     </div>
                   </div>
@@ -727,7 +731,7 @@ export default async function LandingPage() {
                         className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
                         style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}
                       >
-                        🔒 Sin Guzzi ni envíos
+                        <Lock className="w-3 h-3 inline" /> Sin Guzzi ni envíos
                       </span>
                     </div>
                   )}
@@ -761,7 +765,7 @@ export default async function LandingPage() {
                           className="mt-0.5 flex-shrink-0"
                           style={{ color: plan.destacado ? "#22c55e" : "#64748b" }}
                         >
-                          ✓
+                          <Check className="w-3 h-3 inline" />
                         </span>
                         {item}
                       </li>
@@ -929,7 +933,7 @@ export default async function LandingPage() {
               © 2026 BuscayCurra. Todos los derechos reservados.
             </span>
             <span className="text-[10px]" style={{ color: "#334155" }}>
-              Hecho con 💚 en España
+              Hecho con <span style={{color: "#22c55e"}}>♥</span> en España
             </span>
           </div>
         </div>

@@ -406,7 +406,7 @@ export default function EmpresasPage() {
           <h1 className="text-xl font-bold" style={{ color: "#fff" }}>
             Enviar CV a empresas
           </h1>
-          <p className="text-xs mt-1 opacity-80" style={{ color: "#fff" }}>
+          <p className="text-xs mt-1 opacity-90" style={{ color: "#fff" }}>
             Busca empresas reales con Google. Envía tu CV automáticamente con carta personalizada por IA.
           </p>
 
@@ -417,27 +417,27 @@ export default function EmpresasPage() {
               onClick={() => setShowStats(!showStats)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold transition hover:scale-105 cursor-pointer"
               style={{
-                background: stats.cv.disponibles <= 0 ? "rgba(239,68,68,0.3)" : stats.cv.disponibles <= 2 ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.15)",
-                color: stats.cv.disponibles <= 0 ? "#fca5a5" : stats.cv.disponibles <= 2 ? "#fcd34d" : "#fff",
-                border: `1.5px solid ${stats.cv.disponibles <= 0 ? "rgba(239,68,68,0.5)" : stats.cv.disponibles <= 2 ? "rgba(245,158,11,0.5)" : "rgba(255,255,255,0.25)"}`,
+                background: stats.cv.disponibles <= 0 ? "rgba(239,68,68,0.35)" : stats.cv.disponibles <= 2 ? "rgba(245,158,11,0.35)" : "rgba(255,255,255,0.18)",
+                color: stats.cv.disponibles <= 0 ? "#fecaca" : stats.cv.disponibles <= 2 ? "#fde68a" : "#fff",
+                border: `1.5px solid ${stats.cv.disponibles <= 0 ? "rgba(239,68,68,0.6)" : stats.cv.disponibles <= 2 ? "rgba(245,158,11,0.6)" : "rgba(255,255,255,0.3)"}`,
               }}
               title="Click para ver detalle de envíos"
             >
               <span className="text-lg tabular-nums">
                 {stats.cv.disponibles >= 9999 ? "∞" : stats.cv.disponibles}
               </span>
-              <span className="text-[10px] opacity-80">
+              <span className="text-[10px] opacity-90">
                 {stats.cv.disponibles >= 9999 ? "ilimitado" : "quedan hoy"}
               </span>
               <span className="text-[10px]">{showStats ? "▲" : "▼"}</span>
             </button>
 
-            <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.6)" }}>
+            <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.8)" }}>
               <span>📤 </span>
-              <span className="tabular-nums font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>{stats.cv.semana}</span>
+              <span className="tabular-nums font-semibold" style={{ color: "#fff" }}>{stats.cv.semana}</span>
               <span> esta semana</span>
               <span className="mx-1">·</span>
-              <span className="tabular-nums font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>{stats.cv.mes}</span>
+              <span className="tabular-nums font-semibold" style={{ color: "#fff" }}>{stats.cv.mes}</span>
               <span> este mes</span>
             </div>
 

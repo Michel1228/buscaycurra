@@ -40,10 +40,10 @@ interface CVSenderDashboardProps {
 }
 
 function statusStyle(s: string) {
-  if (s === "enviado") return { bg: "rgba(126,213,111,0.12)", color: "#7ed56f" };
-  if (s === "pendiente") return { bg: "rgba(240,192,64,0.12)", color: "#f0c040" };
-  if (s === "fallido") return { bg: "rgba(239,68,68,0.12)", color: "#f87171" };
-  return { bg: "rgba(61,60,48,0.3)", color: "#706a58" };
+  if (s === "enviado") return { bg: "rgba(34,197,94,0.12)", color: "#22c55e" };
+  if (s === "pendiente") return { bg: "rgba(245,158,11,0.12)", color: "#f59e0b" };
+  if (s === "fallido") return { bg: "rgba(239,68,68,0.12)", color: "#ef4444" };
+  return { bg: "rgba(100,116,139,0.12)", color: "#94a3b8" };
 }
 function statusEmoji(s: string) {
   if (s === "enviado") return "✅";
@@ -122,8 +122,8 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       <div className="flex items-center justify-center py-16">
         <div className="text-center">
           <div className="animate-spin rounded-full h-10 w-10 mx-auto mb-3"
-            style={{ border: "4px solid #3d3c30", borderTopColor: "#7ed56f" }} />
-          <p className="text-sm" style={{ color: "#706a58" }}>Cargando tus envíos...</p>
+            style={{ border: "4px solid #2d3142", borderTopColor: "#22c55e" }} />
+          <p className="text-sm" style={{ color: "#94a3b8" }}>Cargando tus envíos...</p>
         </div>
       </div>
     );
@@ -132,8 +132,8 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
   if (error) {
     return (
       <div className="card-game p-6 text-center">
-        <p className="font-medium" style={{ color: "#f87171" }}>❌ {error}</p>
-        <button onClick={() => void loadData()} className="mt-3 text-sm" style={{ color: "#7ed56f" }}>Reintentar</button>
+        <p className="font-medium" style={{ color: "#ef4444" }}>❌ {error}</p>
+        <button onClick={() => void loadData()} className="mt-3 text-sm" style={{ color: "#22c55e" }}>Reintentar</button>
       </div>
     );
   }
@@ -145,25 +145,25 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       {rateLimit && (
         <div className="card-game p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>Límite diario</h3>
+            <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>Límite diario</h3>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-              style={{ background: "rgba(126,213,111,0.12)", color: "#7ed56f" }}>
+              style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e" }}>
               Plan {userPlan}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-2.5 rounded-full" style={{ background: "#2a2a1e" }}>
+            <div className="flex-1 h-2.5 rounded-full" style={{ background: "#1e212b" }}>
               <div className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: rateLimit.limiteHoy === null ? "5%" : `${Math.min(100, (rateLimit.enviadosHoy / (rateLimit.limiteHoy || 1)) * 100)}%`,
-                  background: (rateLimit.cvsRestantesHoy !== null && rateLimit.cvsRestantesHoy === 0) ? "#f87171" : "#7ed56f",
+                  background: (rateLimit.cvsRestantesHoy !== null && rateLimit.cvsRestantesHoy === 0) ? "#ef4444" : "#22c55e",
                 }} />
             </div>
-            <span className="text-sm font-bold" style={{ color: "#f0ebe0" }}>
+            <span className="text-sm font-bold" style={{ color: "#f1f5f9" }}>
               {rateLimit.enviadosHoy}/{(rateLimit.limiteHoy === null || rateLimit.limiteHoy === Infinity) ? "∞" : rateLimit.limiteHoy}
             </span>
           </div>
-          <p className="text-xs mt-2" style={{ color: "#706a58" }}>
+          <p className="text-xs mt-2" style={{ color: "#94a3b8" }}>
             {(rateLimit.cvsRestantesHoy === null || rateLimit.cvsRestantesHoy > 0)
               ? (rateLimit.cvsRestantesHoy === null ? "Sin límite — Plan Empresa" : `${rateLimit.cvsRestantesHoy} CVs restantes hoy`)
               : "Límite alcanzado. Se reinicia a las 00:00."}
@@ -175,14 +175,14 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { val: stats.totalEnviados, label: "Total enviados", color: "#7ed56f" },
-            { val: stats.enviadosEstaSemana, label: "Esta semana", color: "#f0c040" },
-            { val: stats.enviadosEsteMes, label: "Este mes", color: "#7ed56f" },
-            { val: stats.empresasContactadas, label: "Empresas", color: "#f0c040" },
+            { val: stats.totalEnviados, label: "Total enviados", color: "#22c55e" },
+            { val: stats.enviadosEstaSemana, label: "Esta semana", color: "#f59e0b" },
+            { val: stats.enviadosEsteMes, label: "Este mes", color: "#3b82f6" },
+            { val: stats.empresasContactadas, label: "Empresas", color: "#a855f7" },
           ].map((s, i) => (
             <div key={i} className="card-game p-4 text-center">
               <p className="text-2xl font-bold" style={{ color: s.color }}>{s.val}</p>
-              <p className="text-[10px] mt-1" style={{ color: "#706a58" }}>{s.label}</p>
+              <p className="text-[10px] mt-1" style={{ color: "#94a3b8" }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -191,36 +191,36 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       {/* Pending */}
       <div className="card-game overflow-hidden">
         <div className="px-5 py-4 flex items-center justify-between"
-          style={{ borderBottom: "1px solid #3d3c30" }}>
-          <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>
+          style={{ borderBottom: "1px solid #2d3142" }}>
+          <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>
             ⏳ Pendientes
             {pendingJobs.length > 0 && (
               <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold"
-                style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}>
+                style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}>
                 {pendingJobs.length}
               </span>
             )}
           </h3>
-          <button onClick={() => void loadData()} className="text-xs" style={{ color: "#7ed56f" }}>🔄</button>
+          <button onClick={() => void loadData()} className="text-xs" style={{ color: "#22c55e" }}>🔄</button>
         </div>
         {pendingJobs.length === 0 ? (
           <div className="px-5 py-8 text-center">
-            <p className="text-sm" style={{ color: "#504a3a" }}>No tienes envíos pendientes</p>
+            <p className="text-sm" style={{ color: "#64748b" }}>No tienes envíos pendientes</p>
           </div>
         ) : (
           <ul>
             {pendingJobs.map((job, i) => (
               <li key={job.id} className="px-5 py-3.5 flex items-center gap-3 transition"
-                style={{ borderBottom: i < pendingJobs.length - 1 ? "1px solid rgba(61,60,48,0.3)" : "none" }}>
+                style={{ borderBottom: i < pendingJobs.length - 1 ? "1px solid #2d3142" : "none" }}>
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}>{i + 1}</div>
+                  style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}>{i + 1}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate" style={{ color: "#f0ebe0" }}>{job.companyName}</p>
-                  <p className="text-[10px]" style={{ color: "#706a58" }}>📅 {job.scheduledForFormatted}</p>
+                  <p className="font-semibold text-sm truncate" style={{ color: "#f1f5f9" }}>{job.companyName}</p>
+                  <p className="text-[10px]" style={{ color: "#94a3b8" }}>📅 {job.scheduledForFormatted}</p>
                 </div>
                 {job.priority === "prioritario" && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                    style={{ background: "rgba(240,192,64,0.15)", color: "#f0c040" }}>⚡</span>
+                    style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}>⚡</span>
                 )}
                 <button onClick={() => void cancelJob(job.id)} disabled={cancellingId === job.id}
                   className="text-[10px] px-2 py-1 rounded-lg transition"
@@ -235,12 +235,12 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
 
       {/* History */}
       <div className="card-game overflow-hidden">
-        <div className="px-5 py-4" style={{ borderBottom: "1px solid #3d3c30" }}>
-          <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>📋 Historial</h3>
+        <div className="px-5 py-4" style={{ borderBottom: "1px solid #2d3142" }}>
+          <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>📋 Historial</h3>
         </div>
         {history.length === 0 ? (
           <div className="px-5 py-8 text-center">
-            <p className="text-sm" style={{ color: "#504a3a" }}>Aún no has enviado ningún CV</p>
+            <p className="text-sm" style={{ color: "#64748b" }}>Aún no has enviado ningún CV</p>
           </div>
         ) : (
           <ul>
@@ -248,13 +248,13 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
               const st = statusStyle(rec.status);
               return (
                 <li key={rec.id} className="px-5 py-3.5 flex items-center gap-3 transition"
-                  style={{ borderBottom: i < history.length - 1 ? "1px solid rgba(61,60,48,0.3)" : "none" }}>
+                  style={{ borderBottom: i < history.length - 1 ? "1px solid #2d3142" : "none" }}>
                   <span className="text-lg">{statusEmoji(rec.status)}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate" style={{ color: "#f0ebe0" }}>{rec.companyName}</p>
-                    {rec.jobTitle && <p className="text-[10px] truncate" style={{ color: "#706a58" }}>💼 {rec.jobTitle}</p>}
+                    <p className="font-semibold text-sm truncate" style={{ color: "#f1f5f9" }}>{rec.companyName}</p>
+                    {rec.jobTitle && <p className="text-[10px] truncate" style={{ color: "#94a3b8" }}>💼 {rec.jobTitle}</p>}
                     {rec.sentAt && (
-                      <p className="text-[10px]" style={{ color: "#504a3a" }}>
+                      <p className="text-[10px]" style={{ color: "#64748b" }}>
                         {new Date(rec.sentAt).toLocaleDateString("es-ES", {
                           day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
                         })}
