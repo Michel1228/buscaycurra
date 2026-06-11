@@ -10,24 +10,37 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { PAISES, LISTA_PAISES } from "@/lib/paises";
 import { IDIOMAS, type IdiomaCode } from "@/lib/i18n/translations";
 import { useLanguage } from "@/components/LanguageProvider";
+import {
+  Search, FileText, TrendingUp, Mic, Globe, Users,
+  CircleDollarSign, Bookmark, Star, Building2, Gift,
+  CircleHelp, Layers, BarChart2, LogOut,
+  type LucideIcon,
+} from "lucide-react";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 
-const NAV_ITEMS = [
-  { href: "/app/gusi",       label: "Guzzi",      icon: "✨", title: "Guzzi - Asistente IA" },
-  { href: "/app/buscar",     label: "Buscar",     icon: "🔍", title: "Buscar ofertas" },
-  { href: "/app/curriculum", label: "Mi CV",      icon: "📄", title: "Mi currículum" },
-  { href: "/app/pipeline",   label: "Pipeline",   icon: "📊", title: "Pipeline de candidaturas" },
-  { href: "/app/entrevistas",label: "Entrevistas",icon: "🎙️", title: "Simulador de entrevistas" },
-  { href: "/app/emigrar",    label: "Emigrar",    icon: "🌍", title: "Guía para emigrar" },
-  { href: "/app/au-pair",    label: "Au Pair",    icon: "🧒", title: "Perfil y ofertas Au Pair" },
-  { href: "/app/salarios",   label: "Salarios",   icon: "💰", title: "Comparador de salarios" },
-  { href: "/app/guardados",  label: "Guardados",  icon: "❤️", title: "Ofertas guardadas" },
-  { href: "/app/reviews",    label: "Reviews",    icon: "⭐", title: "Reviews de empresas" },
-  { href: "/app/empresas",   label: "Empresas",   icon: "🏢", title: "Enviar CV a empresas" },
-  { href: "/app/referidos",  label: "Invitar",    icon: "🎁", title: "Invitar amigos" },
-  { href: "/app/ayuda",      label: "Ayuda",      icon: "❓", title: "Centro de ayuda" },
-  { href: "/app/perfil?tab=plan",     label: "Mi Plan",    icon: "💎", title: "Mi plan y cuenta" },
+type NavItem = {
+  href: string;
+  label: string;
+  Icon: LucideIcon;
+  animClass: string;
+  title: string;
+};
+
+const NAV_ITEMS: NavItem[] = [
+  { href: "/app/buscar",          label: "Buscar",      Icon: Search,           animClass: "nav-icon-search", title: "Buscar ofertas" },
+  { href: "/app/curriculum",      label: "Mi CV",       Icon: FileText,         animClass: "nav-icon-lift",   title: "Mi currículum" },
+  { href: "/app/pipeline",        label: "Pipeline",    Icon: TrendingUp,       animClass: "nav-icon-lift",   title: "Pipeline de candidaturas" },
+  { href: "/app/entrevistas",     label: "Entrevistas", Icon: Mic,              animClass: "nav-icon-pulse",  title: "Simulador de entrevistas" },
+  { href: "/app/emigrar",         label: "Emigrar",     Icon: Globe,            animClass: "nav-icon-spin",   title: "Guía para emigrar" },
+  { href: "/app/au-pair",         label: "Au Pair",     Icon: Users,            animClass: "nav-icon-lift",   title: "Perfil y ofertas Au Pair" },
+  { href: "/app/salarios",        label: "Salarios",    Icon: CircleDollarSign, animClass: "nav-icon-lift",   title: "Comparador de salarios" },
+  { href: "/app/guardados",       label: "Guardados",   Icon: Bookmark,         animClass: "nav-icon-bounce", title: "Ofertas guardadas" },
+  { href: "/app/reviews",         label: "Reviews",     Icon: Star,             animClass: "nav-icon-bounce", title: "Reviews de empresas" },
+  { href: "/app/empresas",        label: "Empresas",    Icon: Building2,        animClass: "nav-icon-lift",   title: "Enviar CV a empresas" },
+  { href: "/app/referidos",       label: "Invitar",     Icon: Gift,             animClass: "nav-icon-bounce", title: "Invitar amigos" },
+  { href: "/app/ayuda",           label: "Ayuda",       Icon: CircleHelp,       animClass: "nav-icon-lift",   title: "Centro de ayuda" },
+  { href: "/app/perfil?tab=plan", label: "Mi Plan",     Icon: Layers,           animClass: "nav-icon-lift",   title: "Mi plan y cuenta" },
 ];
 
 export default function AppNavWrapper() {
@@ -42,7 +55,6 @@ export default function AppNavWrapper() {
   const { lang, t, setLang } = useLanguage();
   const navLabel = (key: string) => t(key);
 
-  // Cargar país guardado
   useEffect(() => {
     const saved = localStorage.getItem("bc_pais");
     if (saved) setPaisSeleccionado(saved);
@@ -72,7 +84,6 @@ export default function AppNavWrapper() {
     });
   }, []);
 
-  // Solo mostrar nav en rutas /app/*
   if (!pathname.startsWith("/app")) return null;
 
   return (
@@ -108,10 +119,10 @@ export default function AppNavWrapper() {
             {userInicial || "?"}
           </Link>
 
-          {/* Botón de menú — visible en todos los tamaños */}
+          {/* Botón menú hamburguesa */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="flex items-center justify-center w-10 h-10 rounded-lg"
+            className="flex items-center justify-center w-10 h-10 rounded-lg transition-colors hover:bg-white/5"
             style={{ color: "#64748b" }}
             aria-label="Menú"
           >
@@ -124,7 +135,7 @@ export default function AppNavWrapper() {
         </div>
       </nav>
 
-      {/* Menu overlay */}
+      {/* Overlay del menú */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40"
@@ -136,101 +147,101 @@ export default function AppNavWrapper() {
             style={{ background: "#1e212b", border: "1px solid #2d3142", maxHeight: "calc(100vh - 80px)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 🌍 Región e idioma */}
+
+            {/* Región e idioma */}
             <div className="mb-2">
-              <p className="text-[10px] uppercase tracking-wider text-[#64748b] px-2 mb-1.5">
-                🌍 Región e idioma
+              <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider px-2 mb-1.5" style={{ color: "#64748b" }}>
+                <Globe size={11} strokeWidth={1.5} />
+                <span>{navLabel("region_idioma") || "Región e idioma"}</span>
               </p>
               <div className="flex gap-2">
-                <div className="flex-1">
-                  <select
-                    value={paisSeleccionado}
-                    onChange={(e) => cambiarPais(e.target.value)}
-                    className="w-full px-2.5 py-2 rounded-lg text-xs appearance-none cursor-pointer"
-                    style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      color: "#e2e8f0",
-                    }}
-                  >
-                    {LISTA_PAISES.map((p) => (
-                      <option key={p.codigo} value={p.codigo} style={{ background: "#1e212b" }}>
-                        {p.bandera} {p.nombre} ({p.simboloMoneda})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex-1">
-                  <select
-                    value={lang}
-                    onChange={(e) => {
-                      const code = e.target.value as IdiomaCode;
-                      setLang(code);
-                    }}
-                    className="w-full px-2.5 py-2 rounded-lg text-xs appearance-none cursor-pointer"
-                    style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      color: "#e2e8f0",
-                    }}
-                  >
-                    {IDIOMAS.map((idioma) => (
-                      <option key={idioma.code} value={idioma.code} style={{ background: "#1e212b" }}>
-                        {idioma.flag} {idioma.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  value={paisSeleccionado}
+                  onChange={(e) => cambiarPais(e.target.value)}
+                  className="flex-1 w-full px-2.5 py-2 rounded-lg text-xs appearance-none cursor-pointer"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#e2e8f0" }}
+                >
+                  {LISTA_PAISES.map((p) => (
+                    <option key={p.codigo} value={p.codigo} style={{ background: "#1e212b" }}>
+                      {p.bandera} {p.nombre} ({p.simboloMoneda})
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value as IdiomaCode)}
+                  className="flex-1 w-full px-2.5 py-2 rounded-lg text-xs appearance-none cursor-pointer"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#e2e8f0" }}
+                >
+                  {IDIOMAS.map((idioma) => (
+                    <option key={idioma.code} value={idioma.code} style={{ background: "#1e212b" }}>
+                      {idioma.flag} {idioma.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
             <div style={{ height: "1px", background: "#2d3142", margin: "8px 0" }} />
 
+            {/* Guzzi — primer ítem especial */}
+            <Link
+              href="/app/gusi"
+              onClick={() => setMobileOpen(false)}
+              className={`nav-link-item${pathname === "/app/gusi" || pathname.startsWith("/app/gusi/") ? " nav-active" : ""}`}
+            >
+              <GuzziAvatar size={20} />
+              <span>{navLabel("Guzzi") || "Guzzi"}</span>
+            </Link>
+
+            {/* Resto de ítems */}
             {NAV_ITEMS.map((item) => {
               const activo =
                 pathname === item.href ||
-                (item.href !== "/app" && pathname.startsWith(item.href + "/"));
+                (item.href !== "/app" && pathname.startsWith(item.href.split("?")[0] + "/"));
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition"
-                  style={{
-                    background: activo ? "rgba(34,197,94,0.08)" : "transparent",
-                    color: activo ? "#22c55e" : "#94a3b8",
-                  }}
+                  className={`nav-link-item${activo ? " nav-active" : ""}`}
+                  title={item.title}
                 >
-                  {item.href === "/app/gusi" ? (
-                    <GuzziAvatar size={22} />
-                  ) : (
-                    <span className="text-lg">{item.icon}</span>
-                  )}
-                  <span>{navLabel(item.label)}</span>
+                  <item.Icon
+                    className={`nav-icon ${item.animClass}`}
+                    size={18}
+                    strokeWidth={1.6}
+                  />
+                  <span>{navLabel(item.label) || item.label}</span>
                 </Link>
               );
             })}
+
+            {/* Admin (solo si corresponde) */}
             {esAdmin && (
-              <Link href="/app/admin" onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition"
-                style={{ background: pathname === "/app/admin" ? "rgba(245,158,11,0.08)" : "transparent", color: "#f59e0b" }}>
-                <span className="text-lg">📊</span>
+              <Link
+                href="/app/admin"
+                onClick={() => setMobileOpen(false)}
+                className={`nav-link-item${pathname === "/app/admin" ? " nav-active" : ""}`}
+                style={{ color: pathname === "/app/admin" ? "#f59e0b" : "#94a3b8" }}
+              >
+                <BarChart2 className="nav-icon nav-icon-lift" size={18} strokeWidth={1.6} />
                 <span>Admin</span>
               </Link>
             )}
+
             <div style={{ height: "1px", background: "#2d3142", margin: "4px 0" }} />
+
+            {/* Cerrar sesión */}
             <button
               onClick={() => { setMobileOpen(false); cerrarSesion(); }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition"
+              className="nav-link-item w-full"
               style={{ color: "#ef4444" }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
+              <LogOut className="nav-icon nav-icon-lift" size={18} strokeWidth={1.6} />
               <span>Cerrar sesión</span>
             </button>
+
           </div>
         </div>
       )}
