@@ -7,6 +7,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import InfoTooltip from "@/components/InfoTooltip";
+import { PartyPopper, Inbox, AtSign } from "lucide-react";
 
 type EstadoCandidatura = "enviado" | "visto_empresa" | "en_revision" | "entrevista" | "oferta" | "descartado";
 
@@ -225,7 +226,7 @@ export default function PipelinePage() {
       {celebracion && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl text-sm font-bold shadow-2xl"
           style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", animation: "fade-in 0.3s ease" }}>
-          🎉 ¡Oferta recibida! Negocia con datos reales de salarios.
+          <PartyPopper size={16} strokeWidth={1.8} className="inline mr-1.5" />¡Oferta recibida! Negocia con datos reales de salarios.
         </div>
       )}
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.05))" }}>
@@ -267,7 +268,7 @@ export default function PipelinePage() {
       <main className="max-w-6xl mx-auto px-4 py-6">
         {candidaturas.length === 0 ? (
           <div className="card-game p-10 text-center">
-            <p className="text-4xl mb-3">📭</p>
+            <Inbox size={40} strokeWidth={1.2} className="mx-auto mb-3" style={{ color: "#475569" }} />
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Aún no tienes candidaturas</p>
             <p className="text-xs mt-1 mb-4" style={{ color: "#64748b" }}>Empieza enviando tu CV a empresas</p>
             <Link href="/app/empresas" className="btn-game text-xs">Enviar CV</Link>
@@ -322,7 +323,7 @@ export default function PipelinePage() {
                           <p className="text-xs font-semibold truncate" style={{ color: "#f1f5f9" }}>{item.puesto}</p>
                           <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>{item.empresa}</p>
                           {item.email && (
-                            <p className="text-[10px] mt-0.5 truncate" style={{ color: "#475569" }}>✉️ {item.email}</p>
+                            <p className="flex items-center gap-0.5 text-[10px] mt-0.5 truncate" style={{ color: "#475569" }}><AtSign size={9} strokeWidth={1.6} className="shrink-0" />{item.email}</p>
                           )}
                           <div className="flex items-center gap-2 mt-1.5">
                             <p className="text-[10px]" style={{ color: "#475569" }}>{new Date(item.fecha).toLocaleDateString("es-ES")}</p>
@@ -348,7 +349,7 @@ export default function PipelinePage() {
             <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>{candidaturaEdit.puesto}</h3>
             <p className="text-xs" style={{ color: "#94a3b8" }}>{candidaturaEdit.empresa}</p>
             {candidaturaEdit.email && (
-              <p className="text-[11px]" style={{ color: "#f59e0b" }}>✉️ {candidaturaEdit.email}</p>
+              <p className="flex items-center gap-1 text-[11px]" style={{ color: "#f59e0b" }}><AtSign size={10} strokeWidth={1.6} className="shrink-0" />{candidaturaEdit.email}</p>
             )}
             <div className="space-y-1.5">
               <p className="text-[11px]" style={{ color: "#64748b" }}>

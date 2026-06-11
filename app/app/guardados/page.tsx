@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
+import { AlertTriangle, Heart, Lightbulb } from "lucide-react";
 
 interface Guardado {
   job_id: string;
@@ -121,13 +122,13 @@ export default function GuardadosPage() {
       <main className="max-w-4xl mx-auto px-4 py-6">
         {error && (
           <div className="rounded-xl px-4 py-3 text-sm mb-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
-            ⚠️ {error}
+            <AlertTriangle size={14} strokeWidth={2} className="inline mr-1" />{error}
           </div>
         )}
         
         {ofertas.length === 0 && recomendaciones.length === 0 ? (
           <div className="card-game p-10 text-center">
-            <p className="text-4xl mb-3">🤍</p>
+            <Heart size={40} strokeWidth={1.2} className="mx-auto mb-3" style={{ color: "#475569" }} />
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No tienes ofertas guardadas</p>
             <p className="text-xs mt-1 mb-4" style={{ color: "#64748b" }}>Guarda las ofertas que te interesen desde el buscador</p>
             <button onClick={() => router.push("/app/buscar")} className="btn-game text-xs">Buscar ofertas</button>
@@ -136,7 +137,7 @@ export default function GuardadosPage() {
           <div className="space-y-6">
             {/* Mensaje sutil de que no hay guardados */}
             <div className="card-game p-6 text-center">
-              <p className="text-2xl mb-2">🤍</p>
+              <Heart size={28} strokeWidth={1.3} className="mx-auto mb-2" style={{ color: "#475569" }} />
               <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No tienes ofertas guardadas aún</p>
               <p className="text-xs mt-1" style={{ color: "#64748b" }}>Guarda las que te interesen desde el buscador</p>
               <button onClick={() => router.push("/app/buscar")} className="btn-game text-xs mt-3">Buscar ofertas</button>
@@ -145,7 +146,7 @@ export default function GuardadosPage() {
             {/* Recomendaciones basadas en tu perfil */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">💡</span>
+                <Lightbulb size={18} strokeWidth={1.5} style={{ color: "#f59e0b" }} />
                 <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Recomendaciones para ti</h2>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">

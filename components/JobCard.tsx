@@ -9,6 +9,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { MapPin, Banknote, AtSign, Loader2, Check, Send } from "lucide-react";
 
 export interface PropiedadesJobCard {
   id: string;
@@ -152,11 +153,11 @@ export default function JobCard({
         <h3 className="font-bold text-sm leading-snug" style={{ color: "#f0ebe0" }}>{titulo}</h3>
         <p className="text-xs mt-1" style={{ color: "#b0a890" }}>{empresa}</p>
         <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: "#706a58" }}>
-          <span>📍</span><span>{ubicacion}</span>
+          <MapPin size={11} strokeWidth={1.6} className="shrink-0" /><span>{ubicacion}</span>
         </div>
         {salario && (
           <div className="flex items-center gap-1 mt-1 text-xs font-semibold" style={{ color: "#7ed56f" }}>
-            <span>💰</span><span>{salario}</span>
+            <Banknote size={11} strokeWidth={1.6} className="shrink-0" /><span>{salario}</span>
           </div>
         )}
         {distancia && (
@@ -166,7 +167,7 @@ export default function JobCard({
         )}
         {emailEmpresa && (
           <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#f0c040" }}>
-            <span>✉️</span><span>{emailEmpresa}</span>
+            <AtSign size={10} strokeWidth={1.6} className="shrink-0" /><span>{emailEmpresa}</span>
           </div>
         )}
         {descripcion && (
@@ -202,10 +203,10 @@ export default function JobCard({
             color: "#1a1a12",
           }}>
           {enviando
-            ? "⏳ Enviando..."
+            ? <><Loader2 size={13} strokeWidth={2} className="inline mr-1 animate-spin" />Enviando...</>
             : estadoEnvio === "ok"
-              ? "✅ Enviado"
-              : "📧 Enviar CV"}
+              ? <><Check size={13} strokeWidth={2.5} className="inline mr-1" />Enviado</>
+              : <><Send size={13} strokeWidth={2} className="inline mr-1" />Enviar CV</>}
         </button>
       </div>
     </div>
