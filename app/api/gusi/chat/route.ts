@@ -425,7 +425,7 @@ function buildSystemPrompt(cvData?: string, pais?: string, auPairData?: Record<s
 ${cv.resumenTexto}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${auPairContext}
-Cuando el usuario pregunte qué trabajo buscar → sugiérele ofertas de "${cv.ultimoPuesto || cv.sector || "su sector"}" en "${cv.ciudad || "su zona"}".
+Cuando el usuario pregunte qué trabajo buscar → sugiérele ofertas de "${cv.ultimoPuesto || cv.sector || "su sector"}" SIEMPRE primero en "${cv.ciudad || "su zona"}" y sus alrededores (máx 30km). NUNCA sugieras Madrid o Barcelona a menos que el usuario lo pida explícitamente. Si no encuentras en su zona, DÍSELO claramente antes de ofrecer otras ciudades.
 Cuando mejores el CV → usa exactamente los datos de arriba, no los inventes.
 Cuando generes una carta → pon el nombre "${cv.nombre}" y la ciudad "${cv.ciudad}" reales.`;
 }

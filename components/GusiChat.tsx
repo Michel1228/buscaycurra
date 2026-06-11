@@ -19,7 +19,7 @@ import GuzziAvatar from "@/components/GuzziAvatar";
 import ChatSendPanel from "@/components/ChatSendPanel";
 import {
   Zap, Compass, Sparkles, Mic, Plane, Home, Image, Upload,
-  Pin, Mail, Inbox, ChartColumn, Gem, type LucideIcon
+  Pin, Mail, Inbox, ChartColumn, Gem, Paperclip, Camera, type LucideIcon
 } from "lucide-react";
 
 // Mapa de palabras clave → id de país en /app/emigrar
@@ -86,21 +86,21 @@ interface Mensaje {
   };
 }
 
-type SugerenciaItem = { Icon: LucideIcon; label: string; desc: string; msg?: string; href?: string; destacado?: boolean };
+type SugerenciaItem = { Icon: LucideIcon; label: string; desc: string; color: string; msg?: string; href?: string; destacado?: boolean };
 
 const SUGERENCIAS: SugerenciaItem[] = [
-  { Icon: Zap,      label: "Enviar CV automático", desc: "A múltiples empresas en segundos", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
-  { Icon: Compass,  label: "Buscar trabajo", desc: "Por puesto y ciudad", msg: "Quiero buscar trabajo, ¿me ayudas?" },
-  { Icon: Sparkles, label: "Crear mi CV", desc: "Paso a paso con IA", msg: "__ENTREVISTA__" },
-  { Icon: Mic,      label: "Preparar entrevista", desc: "Simula preguntas reales", msg: "Quiero preparar una entrevista de trabajo" },
-  { Icon: Plane,    label: "Emigrar", desc: "Alemania, Irlanda, UK...", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
-  { Icon: Home,     label: "Au Pair", desc: "Programa de trabajo internacional", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
-  { Icon: Image,    label: "Mejorar mi foto", desc: "Prompts IA para foto profesional", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
-  { Icon: Upload,   label: "Subir mi CV", desc: "PDF, Word — lo analizo al instante", msg: "__SUBIR_CV__" },
-  { Icon: Pin,      label: "Mi CV", desc: "Ver y editar mi currículum", href: "/app/curriculum" },
-  { Icon: Inbox,    label: "Mis envíos", desc: "Historial de CVs enviados", href: "/app/empresas" },
-  { Icon: ChartColumn, label: "Pipeline", desc: "Mis candidaturas activas", href: "/app/pipeline" },
-  { Icon: Gem,      label: "Guardadas", desc: "Ofertas que guardé", href: "/app/guardados" },
+  { Icon: Zap,      label: "Enviar CV automático", desc: "A múltiples empresas en segundos", color: "#22c55e", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
+  { Icon: Compass,  label: "Buscar trabajo", desc: "Por puesto y ciudad", color: "#3b82f6", msg: "Quiero buscar trabajo, ¿me ayudas?" },
+  { Icon: Sparkles, label: "Crear mi CV", desc: "Paso a paso con IA", color: "#f59e0b", msg: "__ENTREVISTA__" },
+  { Icon: Mic,      label: "Preparar entrevista", desc: "Simula preguntas reales", color: "#a855f7", msg: "Quiero preparar una entrevista de trabajo" },
+  { Icon: Plane,    label: "Emigrar", desc: "Alemania, Irlanda, UK...", color: "#06b6d4", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
+  { Icon: Home,     label: "Au Pair", desc: "Programa de trabajo internacional", color: "#ec4899", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
+  { Icon: Image,    label: "Mejorar mi foto", desc: "Prompts IA para foto profesional", color: "#f59e0b", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
+  { Icon: Upload,   label: "Subir mi CV", desc: "PDF, Word — lo analizo al instante", color: "#22c55e", msg: "__SUBIR_CV__" },
+  { Icon: Pin,      label: "Mi CV", desc: "Ver y editar mi currículum", color: "#3b82f6", href: "/app/curriculum" },
+  { Icon: Inbox,    label: "Mis envíos", desc: "Historial de CVs enviados", color: "#a855f7", href: "/app/empresas" },
+  { Icon: ChartColumn, label: "Pipeline", desc: "Mis candidaturas activas", color: "#f59e0b", href: "/app/pipeline" },
+  { Icon: Gem,      label: "Guardadas", desc: "Ofertas que guardé", color: "#22c55e", href: "/app/guardados" },
 ];
 
 function sanitizeGusiHtml(html: string): string {
@@ -586,7 +586,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                 )}
                 <div className="max-w-[80%] space-y-2">
                   <div
-                    className="px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap"
+                    className="px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden"
                     style={{
                       background: m.role === "user" ? "#22c55e" : "#1e212b",
                       color: m.role === "user" ? "#0a1208" : "#e2e8f0",
@@ -748,13 +748,13 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
               <button onClick={() => fileRef.current?.click()} title="Subir CV (PDF)"
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
                 style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
-                📎
+                <Paperclip className="w-5 h-5" />
               </button>
               <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleFile} />
               <button onClick={() => imageRef.current?.click()} title="Foto de cartel/tienda (OCR)"
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
                 style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
-                📸
+                <Camera className="w-5 h-5" />
               </button>
               <input ref={imageRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImage} />
               <input
@@ -814,7 +814,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                           background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
                           border: `1px solid ${s.destacado ? "rgba(34,197,94,0.2)" : "#2d3142"}`,
                         }}>
-                        <s.Icon size={16} className="mb-1" />
+                        <s.Icon size={16} color={s.color} className="mb-1" style={{ filter: `drop-shadow(0 0 4px ${s.color}40)` }} />
                         <p className="text-[10px] font-semibold leading-tight" style={{ color: s.destacado ? "#22c55e" : "#e2e8f0" }}>
                           {s.label}
                         </p>

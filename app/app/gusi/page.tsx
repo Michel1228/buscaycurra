@@ -5,6 +5,7 @@ import Link from "next/link";
 import GusiChat from "@/components/GusiChat";
 import { isNativeIOS } from "@/lib/utils/platform";
 import UsageCounter from "@/components/UsageCounter";
+import { Users, Mail, Rocket, Trophy } from "lucide-react";
 
 const COMPARATIVA = [
   { aspecto: "Coste", buscaycurra: "2,99 €/mes", infojobs: "Gratis... con publicidad" },
@@ -32,13 +33,13 @@ export default function GusiPage() {
           </p>
           <div className="space-y-2">
             {[
-              { icon: "🧑‍💼", stat: "2.400+", desc: "personas encontraron trabajo" },
-              { icon: "📨", stat: "18.000+", desc: "CVs enviados este mes" },
-              { icon: "🚀", stat: "3 min", desc: "para enviar tu primer CV" },
-              { icon: "🏆", stat: "x4", desc: "más respuestas que en portales" },
+              { Icon: Users, stat: "2.400+", desc: "personas encontraron trabajo", color: "#22c55e" },
+              { Icon: Mail,  stat: "18.000+", desc: "CVs enviados este mes", color: "#3b82f6" },
+              { Icon: Rocket, stat: "3 min", desc: "para enviar tu primer CV", color: "#f59e0b" },
+              { Icon: Trophy, stat: "x4", desc: "más respuestas que en portales", color: "#a855f7" },
             ].map(item => (
               <div key={item.stat} className="flex items-center gap-2.5">
-                <span className="text-base w-5 text-center">{item.icon}</span>
+                <item.Icon size={16} style={{ color: item.color }} />
                 <div>
                   <span className="text-sm font-bold" style={{ color: "#22c55e" }}>{item.stat}</span>
                   <span className="text-[11px] ml-1" style={{ color: "#64748b" }}>{item.desc}</span>
