@@ -111,11 +111,14 @@ export async function POST(request: NextRequest) {
       priority?: "normal" | "prioritario";
       useAIPersonalization?: boolean;
       frecuencia?: "unico" | "cada4dias";
+      strategy?: "ahora" | "optimo" | "personalizada";
+      scheduledFor?: string; // ISO string cuando strategy="personalizada"
+      cartaPersonalizada?: string;
     };
 
     // userId siempre del token — nunca del body
     const userId = user.id;
-    const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization, frecuencia } = body;
+    const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization, frecuencia, strategy, scheduledFor, cartaPersonalizada } = body;
 
     if (!companyEmail) {
       return NextResponse.json(
@@ -177,6 +180,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Calcular scheduledFor según estrategia ────────────────────────────
+    let scheduledForMs: number | undefined;
+    if (strategy === "ahora") {
+      scheduledForMs = Date.now() + 60_000; // 1 min desde ahora
+    } else if (strategy === "personalizada" && scheduledFor) {
+      scheduledForMs = new Date(scheduledFor).getTime();
+      if (scheduledForMs <= Date.now()) {
+        return NextResponse.json(
+          { error: "La fecha programada debe ser futura" },
+          { status: 400 }
+        );
+      }
+    }
+    // strategy="optimo" o no especificada → scheduledForMs = undefined → el scheduler decide
+
     // ── Programar el envío ────────────────────────────────────────────────
     const resultado = await scheduleCV(
       userId,
@@ -190,6 +208,7 @@ export async function POST(request: NextRequest) {
         priority: priority ?? "normal",
         useAIPersonalization: useAIPersonalization ?? true,
         frecuencia: frecuencia ?? "unico",
+        scheduledFor: scheduledForMs,
       }
     );
 

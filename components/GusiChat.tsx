@@ -619,11 +619,13 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                         );
                       })}
                       <button
-                        onClick={() => enviarATodas(m.jobs!)}
-                        disabled={enviandoATodas}
-                        className="w-full py-2 rounded-xl text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
+                        onClick={() => {
+                          const first = m.jobs![0];
+                          router.push(`/app/envios?empresa=${encodeURIComponent(first.empresa)}&puesto=${encodeURIComponent(first.titulo)}&web=${encodeURIComponent(first.url)}`);
+                        }}
+                        className="w-full py-2 rounded-xl text-sm font-semibold transition hover:opacity-90"
                         style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#22c55e" }}>
-                        {enviandoATodas ? "Enviando..." : `Enviar CV a todas (${m.jobs.length} ofertas) →`}
+                        ✍️ Enviar CVs uno a uno (con preview) →
                       </button>
                     </div>
                   )}
@@ -658,11 +660,11 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                             )}
                           </div>
                           <button
-                            onClick={() => enviarCVAEmpresa(m.company!)}
+                            onClick={() => router.push(`/app/envios?empresa=${encodeURIComponent(m.company!.nombre || "")}&web=${encodeURIComponent(m.company!.urlWeb || "")}`)}
                             disabled={enviandoATodas}
                             className="px-4 py-2 rounded-lg text-[12px] font-semibold transition hover:opacity-90 disabled:opacity-50 shrink-0"
                             style={{ background: "#22c55e", color: "#0a1208" }}>
-                            {enviandoATodas ? "Enviando..." : "📧 Enviar mi CV"}
+                            📧 Enviar mi CV
                           </button>
                         </div>
                       </div>

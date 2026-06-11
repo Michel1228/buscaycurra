@@ -91,6 +91,8 @@ export interface SendPreferences {
   useAIPersonalization?: boolean;
   preferredHour?: number;
   frecuencia?: "unico" | "cada4dias";
+  /** Fecha/hora exacta de envío (ms). Si se proporciona, ignora getNextBusinessHour */
+  scheduledFor?: number;
 }
 
 /** Información de la empresa destino */
@@ -216,7 +218,9 @@ export async function scheduleCV(
   }
 
   // ── 3. Calcular cuándo enviar ────────────────────────────────────────────
-  const fechaEnvio = getNextBusinessHour();
+  const fechaEnvio = preferences.scheduledFor
+    ? new Date(preferences.scheduledFor)  // El cliente elige la hora exacta
+    : getNextBusinessHour();              // El scheduler calcula ventana óptima
   const ahora = Date.now();
   const delayMs = Math.max(0, fechaEnvio.getTime() - ahora);
 

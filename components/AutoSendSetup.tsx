@@ -40,8 +40,9 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
   const [emailEncontrado, setEmailEncontrado] = useState<string | null>(null);
   const [busquedaRealizada, setBusquedaRealizada] = useState(false);
 
-  // Estrategia de envío: "ahora" (inmediato) o "optimo" (ventana óptima empresa)
-  const [estrategia, setEstrategia] = useState<"ahora" | "optimo">("optimo");
+  // Estrategia de envío: "ahora" (inmediato) o "optimo" (ventana óptima empresa) o "personalizada" (elige fecha/hora)
+  const [estrategia, setEstrategia] = useState<"ahora" | "optimo" | "personalizada">("optimo");
+  const [fechaPersonalizada, setFechaPersonalizada] = useState("");
 
   // ── Preview de carta ────────────────────────────────────────────────
   const [showPreview, setShowPreview] = useState(false);
@@ -61,14 +62,19 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
 
   function calcularFechaEnvio(): string | undefined {
     // "ahora" → 1 min desde ahora, "optimo" → el scheduler decide (undefined)
+    // "personalizada" → la fecha/hora elegida por el usuario
     if (estrategia === "ahora") {
       return new Date(Date.now() + 60_000).toISOString();
+    }
+    if (estrategia === "personalizada" && fechaPersonalizada) {
+      return new Date(fechaPersonalizada).toISOString();
     }
     return undefined; // "optimo": el servidor calcula ventana óptima
   }
 
   function getSlotLabel(): string {
     if (estrategia === "ahora") return "Enviar ya";
+    if (estrategia === "personalizada") return "Enviar a la hora elegida";
     return "Enviar en horario óptimo";
   }
 
@@ -185,6 +191,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
             priority: "normal",
             useAIPersonalization: useAI,
             strategy: estrategia,
+            scheduledFor: estrategia === "personalizada" ? calcularFechaEnvio() : undefined,
             cartaPersonalizada: cartaAprobada || undefined,
           }),
         });
@@ -416,10 +423,11 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
             <label className="block text-xs font-medium mb-2" style={{ color: "#94a3b8" }}>
               Estrategia de envío
             </label>
-            <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="grid grid-cols-3 gap-2 mb-2">
               {([
-                { id: "optimo" as const, label: "🎯 En horario óptimo", sub: "El CV llega cuando lo van a leer" },
-                { id: "ahora" as const,  label: "⚡ Enviar ya",         sub: "Inmediato, sin esperas" },
+                { id: "optimo" as const, label: "🎯 Horario óptimo", sub: "Cuando lo van a leer" },
+                { id: "ahora" as const,  label: "⚡ Enviar ya",      sub: "Inmediato" },
+                { id: "personalizada" as const, label: "📅 Elegir hora", sub: "Tú decides cuándo" },
               ]).map(s => (
                 <button key={s.id} type="button" onClick={() => setEstrategia(s.id)}
                   className="py-2.5 px-3 rounded-lg text-left transition"
@@ -441,6 +449,21 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
               <p className="text-[10px] mt-1.5" style={{ color: "#f59e0b" }}>
                 ⚠️ Se enviará de inmediato, aunque en la empresa puedan ser las 3am. Si la empresa está en otra zona horaria, mejor usar "horario óptimo".
               </p>
+            )}
+            {estrategia === "personalizada" && (
+              <div className="mt-2">
+                <input
+                  type="datetime-local"
+                  value={fechaPersonalizada}
+                  onChange={e => setFechaPersonalizada(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full rounded-lg px-3 py-2 text-sm"
+                  style={{ background: "#161922", border: "1px solid #252836", color: "#f1f5f9" }}
+                />
+                <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>
+                  📅 El CV se enviará exactamente a la fecha y hora que elijas.
+                </p>
+              </div>
             )}
           </div>
         )}
