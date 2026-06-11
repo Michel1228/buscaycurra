@@ -32,10 +32,10 @@ export default function GusiPage() {
           </p>
           <div className="space-y-2">
             {[
-              { icon: "👥", stat: "2.400+", desc: "personas encontraron trabajo" },
-              { icon: "📬", stat: "18.000+", desc: "CVs enviados este mes" },
-              { icon: "⚡", stat: "3 min", desc: "para enviar tu primer CV" },
-              { icon: "🎯", stat: "x4", desc: "más respuestas que en portales" },
+              { icon: "🧑‍💼", stat: "2.400+", desc: "personas encontraron trabajo" },
+              { icon: "📨", stat: "18.000+", desc: "CVs enviados este mes" },
+              { icon: "🚀", stat: "3 min", desc: "para enviar tu primer CV" },
+              { icon: "🏆", stat: "x4", desc: "más respuestas que en portales" },
             ].map(item => (
               <div key={item.stat} className="flex items-center gap-2.5">
                 <span className="text-base w-5 text-center">{item.icon}</span>

@@ -102,17 +102,27 @@ export default function SalariosPage() {
     if (!textoBuscar) return;
     setLoading(true);
     setHasSearched(true);
+    setData(null);
     try {
       const params = new URLSearchParams();
       params.set("puesto", textoBuscar);
       if (provincia) params.set("provincia", provincia);
-      const res = await fetch(`/api/salarios?${params.toString()}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch(`/api/salarios?${params.toString()}`, { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const d = await res.json() as SalarioData;
         setData(d);
+      } else {
+        console.error("Error API salarios:", res.status);
       }
-    } catch (e) {
-      console.error("Error:", e);
+    } catch (e: any) {
+      if (e.name === "AbortError") {
+        console.warn("Timeout en búsqueda de salarios");
+      } else {
+        console.error("Error:", e);
+      }
     } finally {
       setLoading(false);
     }

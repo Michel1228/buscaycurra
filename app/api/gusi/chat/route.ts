@@ -23,7 +23,7 @@ PERSONALIDAD:
 - Natural y cercano, como un amigo que sabe mucho de empleo en Europa.
 - Puedes charlar de cualquier tema, no solo de trabajo.
 - Responde de forma conversacional — ni demasiado corto ni demasiado largo.
-- NO uses el emoji 🐛 en ningún mensaje. Tu personalidad se expresa con palabras, no emojis de gusano.
+- NO uses el emoji  en ningún mensaje. Tu personalidad se expresa con palabras, no emojis de gusano.
 - Cuando des datos salariales o legales, cita la fuente brevemente (ej: "según el SMI 2026").
 
 ════════ CONOCIMIENTO DEL MERCADO LABORAL ESPAÑOL ════════
@@ -684,7 +684,7 @@ function fallbackMessage(puesto: string, ciudad: string): string {
   const sugerencias = syn
     ? `\n• 🔄 Prueba: "${syn[1][0]}" o "${syn[1][1]}"`
     : "\n• 🔄 Prueba con otro nombre del puesto";
-  return `🔍 No encontré ofertas activas para **${puesto}**${ciudad ? ` en **${ciudad}**` : ""}.\n${sugerencias}\n• 📍 Amplía la zona (provincia o comunidad)\n• 🔍 Usa el buscador avanzado con más filtros\n• 📧 Activa alertas y te aviso cuando lleguen\n• 🏢 ¿Es una empresa pequeña o local? Dime el nombre y te busco en Google Maps con teléfono, email y web para enviar el CV directamente.\n\n🐛 ¡El mercado se mueve a diario, vuelvo a mirar mañana!`;
+  return `🔍 No encontré ofertas activas para **${puesto}**${ciudad ? ` en **${ciudad}**` : ""}.\n${sugerencias}\n• 📍 Amplía la zona (provincia o comunidad)\n• 🔍 Usa el buscador avanzado con más filtros\n• 📧 Activa alertas y te aviso cuando lleguen\n• 🏢 ¿Es una empresa pequeña o local? Dime el nombre y te busco en Google Maps con teléfono, email y web para enviar el CV directamente.\n\n✨ ¡El mercado se mueve a diario, vuelvo a mirar mañana!`;
 }
 
 function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope?: string): string {
@@ -743,30 +743,30 @@ function extractCompanyName(text: string): string | null {
 function localReply(intent: string, cv?: CVParsed | null): string {
   switch (intent) {
     case "foto":
-      return "📸 **Cómo mejorar tu foto de CV con IA:**\n\nSube tu foto a ChatGPT (o cualquier IA con imagen) y usa este prompt:\n\n---\n*Utiliza esta foto para realizar los siguientes cambios:\n\n1. Crear un fondo blanco y cambiar todo el fondo actual.\n2. Cambiar la camiseta por una camisa blanca.\n3. Poner la figura en posición sentada.\n\nFotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.*\n\n---\n\n**Resultado:** foto profesional lista para el CV. Una buena foto = +40% más respuestas. 🐛";
+      return "📸 **Cómo mejorar tu foto de CV con IA:**\n\nSube tu foto a ChatGPT (o cualquier IA con imagen) y usa este prompt:\n\n---\n*Utiliza esta foto para realizar los siguientes cambios:\n\n1. Crear un fondo blanco y cambiar todo el fondo actual.\n2. Cambiar la camiseta por una camisa blanca.\n3. Poner la figura en posición sentada.\n\nFotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.*\n\n---\n\n**Resultado:** foto profesional lista para el CV. Una buena foto = +40% más respuestas. ";
     case "buscar":
       if (cv?.ultimoPuesto) {
-        return `🔍 Conozco tu perfil (**${cv.ultimoPuesto}**${cv.ciudad ? ` en **${cv.ciudad}**` : ""}). Dime "buscar ofertas" y te muestro las que mejor encajan ahora mismo. También puedes usar el buscador avanzado. 🐛`;
+        return `🔍 Conozco tu perfil (**${cv.ultimoPuesto}**${cv.ciudad ? ` en **${cv.ciudad}**` : ""}). Dime "buscar ofertas" y te muestro las que mejor encajan ahora mismo. También puedes usar el buscador avanzado. `;
       }
-      return "🔍 Dime qué trabajo buscas y en qué ciudad o país, y te busco las mejores ofertas en toda Europa. 🐛";
+      return "🔍 Dime qué trabajo buscas y en qué ciudad o país, y te busco las mejores ofertas en toda Europa. ";
     case "enviar":
       return cv?.ultimoPuesto
         ? `📧 Basándome en tu CV (${cv.ultimoPuesto}), busca en 🔍 Buscar y usa el botón "Enviar CV" en cada oferta.`
         : "📧 Sube tu CV primero (botón clip de abajo) y luego te busco ofertas que encajen.";
     case "crear_cv":
-      return "📝 ¡Vamos! ¿Cuál es tu nombre completo? (Te pregunto de uno en uno, facilísimo) 🐛";
+      return "📝 ¡Vamos! ¿Cuál es tu nombre completo? (Te pregunto de uno en uno, facilísimo) ";
     case "cv_mejorado":
-      return "✨ **Mejora de CV no disponible ahora mismo.**\n\nPuedo ayudarte con estos consejos mientras tanto:\n• Usa verbos de acción (logré, implementé, coordiné)\n• Incluye logros cuantificables (\"aumenté ventas un 20%\")\n• Adapta las palabras clave al puesto que buscas\n• Mantén el CV en 1-2 páginas máximo\n\n¿Quieres que te dé más consejos personalizados? 🐛";
+      return "✨ **Mejora de CV no disponible ahora mismo.**\n\nPuedo ayudarte con estos consejos mientras tanto:\n• Usa verbos de acción (logré, implementé, coordiné)\n• Incluye logros cuantificables (\"aumenté ventas un 20%\")\n• Adapta las palabras clave al puesto que buscas\n• Mantén el CV en 1-2 páginas máximo\n\n¿Quieres que te dé más consejos personalizados? ";
     case "entrevista_prep":
-      return "🎯 **Preparación de entrevistas no disponible ahora mismo.**\n\nMientras tanto, aquí tienes un guion rápido:\n• Prepara 3 ejemplos con método STAR (Situación, Tarea, Acción, Resultado)\n• Investiga la empresa: sector, tamaño, noticias recientes\n• Prepara preguntas para hacer tú al final\n• Ensaya tu presentación de 1 minuto en voz alta\n\n¿Sobre qué puesto es la entrevista? Te ayudo a enfocarla. 🐛";
+      return "🎯 **Preparación de entrevistas no disponible ahora mismo.**\n\nMientras tanto, aquí tienes un guion rápido:\n• Prepara 3 ejemplos con método STAR (Situación, Tarea, Acción, Resultado)\n• Investiga la empresa: sector, tamaño, noticias recientes\n• Prepara preguntas para hacer tú al final\n• Ensaya tu presentación de 1 minuto en voz alta\n\n¿Sobre qué puesto es la entrevista? Te ayudo a enfocarla. ";
     case "carta_recomendacion":
-      return "✉️ **Carta de presentación no disponible en este momento.**\n\nMientras tanto, puedes estructurarla así:\n1. **Asunto**: Candidatura [Puesto] — [Tu Nombre]\n2. **Apertura**: por qué te interesa esa empresa en concreto\n3. **Cuerpo**: 2-3 logros que conecten con lo que buscan\n4. **Cierre**: disponibilidad para entrevista y despedida cordial\n\n¿Te ayudo a redactarla paso a paso? 🐛";
+      return "✉️ **Carta de presentación no disponible en este momento.**\n\nMientras tanto, puedes estructurarla así:\n1. **Asunto**: Candidatura [Puesto] — [Tu Nombre]\n2. **Apertura**: por qué te interesa esa empresa en concreto\n3. **Cuerpo**: 2-3 logros que conecten con lo que buscan\n4. **Cierre**: disponibilidad para entrevista y despedida cordial\n\n¿Te ayudo a redactarla paso a paso? ";
     case "info_empresa":
       return "🏢 **No puedo consultar información de esa empresa ahora mismo.**\n\nPuedes buscar en:\n• **LinkedIn** — página de empresa y empleados\n• **Glassdoor** — opiniones de empleados y rangos salariales\n• **Google Maps** — sede, tamaño, sector\n\n¿Quieres que busque ofertas activas de esa empresa en nuestra base de datos? 🔍";
     case "buscar_au_pair":
-      return "👶 **Búsqueda Au Pair** — dime el país donde quieres ser au pair (ej: 'busca au pair en Alemania' o 'au pair en Reino Unido') y te busco ofertas con familias que necesitan cuidadores. También puedo ayudarte con tu carta 'Dear Family'. 🐛";
+      return "👶 **Búsqueda Au Pair** — dime el país donde quieres ser au pair (ej: 'busca au pair en Alemania' o 'au pair en Reino Unido') y te busco ofertas con familias que necesitan cuidadores. También puedo ayudarte con tu carta 'Dear Family'. ";
     case "carta_au_pair":
-      return "💌 **Carta 'Dear Family'** — primero completa tu perfil Au Pair en la sección 🧒 del menú. Luego vuelve y dime 'crea mi carta au pair' para generarla personalizada con tus datos, experiencia con niños y fotos. 🐛";
+      return "💌 **Carta 'Dear Family'** — primero completa tu perfil Au Pair en la sección 🧒 del menú. Luego vuelve y dime 'crea mi carta au pair' para generarla personalizada con tus datos, experiencia con niños y fotos. ";
     default:
       return "¡Hola! Soy Guzzi, tu asistente de empleo. Puedo ayudarte con:\n\n🔍 Buscar ofertas de trabajo\n📝 Crear o mejorar tu CV\n🎯 Preparar entrevistas\n✉️ Cartas de presentación\n🌍 Información para emigrar\n💰 Comparar salarios\n\n¿En qué quieres que te ayude hoy?";
   }
@@ -972,7 +972,7 @@ export async function POST(req: NextRequest) {
     if (mode === "cv_mejorado" || detectIntent(message) === "cv_mejorado") {
       if (!cvData) {
         return NextResponse.json({
-          reply: "📝 Para mejorar tu CV necesito tus datos. Súbelo en PDF (botón clip) o cuéntame tus datos aquí. 🐛",
+          reply: "📝 Para mejorar tu CV necesito tus datos. Súbelo en PDF (botón clip) o cuéntame tus datos aquí. ",
           action: "need_cv_data",
         });
       }
@@ -1013,7 +1013,7 @@ El candidato tiene mucha experiencia.
     if (mode === "carta_recomendacion" || detectIntent(message) === "carta_recomendacion") {
       if (!empresa || !puesto) {
         return NextResponse.json({
-          reply: "✉️ Para la carta necesito:\n1. 🏢 Nombre de la empresa\n2. 🎯 Puesto al que aplicas\n\nDime los dos y te la genero ahora. 🐛",
+          reply: "✉️ Para la carta necesito:\n1. 🏢 Nombre de la empresa\n2. 🎯 Puesto al que aplicas\n\nDime los dos y te la genero ahora. ",
           action: "need_empresa_puesto",
         });
       }
@@ -1029,7 +1029,7 @@ El candidato tiene mucha experiencia.
       const companyName = extractCompanyName(message);
       if (!companyName) {
         return NextResponse.json({
-          reply: "🏢 Dime el nombre de la empresa y te busco toda la información: email, teléfono, web, valoraciones... 🐛",
+          reply: "🏢 Dime el nombre de la empresa y te busco toda la información: email, teléfono, web, valoraciones... ",
           action: "need_company_name",
         });
       }
@@ -1046,7 +1046,7 @@ El candidato tiene mucha experiencia.
 
         if (!extractRes.ok) {
           return NextResponse.json({
-            reply: `🏢 No encontré información de **${companyName}** en Google Places. ¿Seguro que el nombre es correcto? Prueba con el nombre completo o la ciudad. 🐛`,
+            reply: `🏢 No encontré información de **${companyName}** en Google Places. ¿Seguro que el nombre es correcto? Prueba con el nombre completo o la ciudad. `,
             action: "company_not_found",
           });
         }
@@ -1066,7 +1066,7 @@ El candidato tiene mucha experiencia.
         const empresa = extractData.empresas?.[0];
         if (!empresa || !empresa.nombre) {
           return NextResponse.json({
-            reply: `🏢 No encontré información de **${companyName}** en Google Places. ¿Seguro que el nombre es correcto? Prueba con el nombre completo o la ciudad. 🐛`,
+            reply: `🏢 No encontré información de **${companyName}** en Google Places. ¿Seguro que el nombre es correcto? Prueba con el nombre completo o la ciudad. `,
             action: "company_not_found",
           });
         }
@@ -1106,7 +1106,7 @@ El candidato tiene mucha experiencia.
       const ofertas = await searchAuPairJobs(cityOrCountry, 5);
       if (!ofertas || ofertas.length === 0) {
         return NextResponse.json({
-          reply: `👶 No encontré ofertas au pair para **${cityOrCountry}** ahora mismo.\n\nPero puedo ayudarte:\n• 💌 **Crear tu carta "Dear Family"** — dime "crea mi carta au pair"\n• 🌍 **Buscar en otro país** — dime "busca au pair en Alemania"\n• 📄 **Completar tu perfil** — en la sección Au Pair del menú 🐛`,
+          reply: `👶 No encontré ofertas au pair para **${cityOrCountry}** ahora mismo.\n\nPero puedo ayudarte:\n• 💌 **Crear tu carta "Dear Family"** — dime "crea mi carta au pair"\n• 🌍 **Buscar en otro país** — dime "busca au pair en Alemania"\n• 📄 **Completar tu perfil** — en la sección Au Pair del menú `,
           action: "au_pair_no_results",
         });
       }
@@ -1114,7 +1114,7 @@ El candidato tiene mucha experiencia.
         reply: `👶 **${ofertas.length} ofertas Au Pair** en **${cityOrCountry}**:\n\n${ofertas.map((o: Record<string, unknown>, i: number) => {
           const em = ["🥇", "🥈", "🥉", "📌"][i] || "📌";
           return `${em} **${(o as { titulo?: string }).titulo}**\n   🏠 ${(o as { empresa?: string }).empresa} · 📍 ${(o as { ubicacion?: string }).ubicacion}\n   💰 ${(o as { salario?: string }).salario}\n`;
-        }).join("\n")}\n📧 **¿Quieres aplicar?** Ve a la sección Au Pair del menú para completar tu perfil con fotos y carta. 🐛`,
+        }).join("\n")}\n📧 **¿Quieres aplicar?** Ve a la sección Au Pair del menú para completar tu perfil con fotos y carta. `,
         jobs: ofertas,
         action: "au_pair_search_results",
       });
@@ -1124,7 +1124,7 @@ El candidato tiene mucha experiencia.
     if (intent === "carta_au_pair" || mode === "carta_au_pair") {
       if (!auPairProfile) {
         return NextResponse.json({
-          reply: "💌 Para generar tu carta \"Dear Family\" primero necesitas crear tu perfil Au Pair.\n\nVe a la sección **Au Pair** del menú (🧒) y rellena:\n• Tus datos personales\n• Experiencia con niños\n• Fotos\n\nLuego vuelve y dime \"crea mi carta au pair\". 🐛",
+          reply: "💌 Para generar tu carta \"Dear Family\" primero necesitas crear tu perfil Au Pair.\n\nVe a la sección **Au Pair** del menú (🧒) y rellena:\n• Tus datos personales\n• Experiencia con niños\n• Fotos\n\nLuego vuelve y dime \"crea mi carta au pair\". ",
           action: "need_au_pair_profile",
         });
       }
@@ -1164,7 +1164,7 @@ El candidato tiene mucha experiencia.
             const letter = data.choices?.[0]?.message?.content || "";
             if (letter) {
               return NextResponse.json({
-                reply: `💌 **Aquí tienes tu carta "Dear Family" personalizada:**\n\n${letter}\n\n✅ **¿Te gusta?** Puedes copiarla y pegarla en tu perfil Au Pair, o dime "cambia [lo que quieras modificar]" y la ajusto. 🐛\n\n🧒 También puedes ir a la sección **Au Pair** para guardarla en tu perfil.`,
+                reply: `💌 **Aquí tienes tu carta "Dear Family" personalizada:**\n\n${letter}\n\n✅ **¿Te gusta?** Puedes copiarla y pegarla en tu perfil Au Pair, o dime "cambia [lo que quieras modificar]" y la ajusto. \n\n🧒 También puedes ir a la sección **Au Pair** para guardarla en tu perfil.`,
                 action: "au_pair_letter_generated",
                 auPairLetter: letter,
               });
@@ -1185,13 +1185,13 @@ El candidato tiene mucha experiencia.
         });
 
         return NextResponse.json({
-          reply: `💌 **Aquí tienes tu carta "Dear Family":**\n\n${letter}\n\n✅ Personalízala a tu gusto en la sección **Au Pair** del menú. 🐛`,
+          reply: `💌 **Aquí tienes tu carta "Dear Family":**\n\n${letter}\n\n✅ Personalízala a tu gusto en la sección **Au Pair** del menú. `,
           action: "au_pair_letter_generated",
           auPairLetter: letter,
         });
       } catch (e) {
         return NextResponse.json({
-          reply: `❌ Error al generar la carta: ${(e as Error).message}. Inténtalo de nuevo. 🐛`,
+          reply: `❌ Error al generar la carta: ${(e as Error).message}. Inténtalo de nuevo. `,
           action: "au_pair_letter_error",
         });
       }
@@ -1219,7 +1219,7 @@ El candidato tiene mucha experiencia.
       // Si el usuario menciona una ciudad pero NO un puesto, no usar el puesto del CV
       if (!puestoBusqueda) {
         return NextResponse.json({
-          reply: "🔍 Claro, ¿qué tipo de trabajo buscas? Dime el puesto y la ciudad (ej: 'camarero en Madrid') y te busco al instante. 🐛",
+          reply: "🔍 Claro, ¿qué tipo de trabajo buscas? Dime el puesto y la ciudad (ej: 'camarero en Madrid') y te busco al instante. ",
           action: "need_keyword",
         });
       }
@@ -1263,8 +1263,8 @@ El candidato tiene mucha experiencia.
       }
       return NextResponse.json({
         reply: cvData
-          ? "📧 Para enviarte a ofertas dime: ¿qué tipo de trabajo buscas y en qué ciudad? 🐛"
-          : "📧 Primero necesito tu CV. Súbelo desde el clip de abajo o escribe **'crear cv'** y te lo hago paso a paso. 🐛",
+          ? "📧 Para enviarte a ofertas dime: ¿qué tipo de trabajo buscas y en qué ciudad? "
+          : "📧 Primero necesito tu CV. Súbelo desde el clip de abajo o escribe **'crear cv'** y te lo hago paso a paso. ",
         action: "send_cv_flow",
       });
     }
@@ -1335,7 +1335,7 @@ El candidato tiene mucha experiencia.
     return NextResponse.json({ reply });
 
   } catch {
-    return NextResponse.json({ reply: "¡Ups! Algo falló. Inténtalo de nuevo 🐛" });
+    return NextResponse.json({ reply: "¡Ups! Algo falló. Inténtalo de nuevo " });
   }
 }
 

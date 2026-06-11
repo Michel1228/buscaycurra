@@ -267,7 +267,7 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
   const keyInfo = await getCareerjetKey();
   if (!keyInfo) return [];
   try {
-    const url = `https://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(city + " Espana")}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F1.0&pagesize=20&page=${page}&sort=relevance`;
+    const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(city + " Espana")}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F1.0&pagesize=20&page=${page}&sort=relevance`;
     const res = await fetch(url, {
       headers: { "Referer": "https://buscaycurra.es" },
       signal: AbortSignal.timeout(15000),
@@ -296,7 +296,7 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
   
   for (const page of [1, 2, 3]) { // Reducido de 10→3 páginas para no exceder maxDuration=300s
     try {
-      const url = `https://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F3.0&pagesize=50&page=${page}&sort=relevance`;
+      const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F3.0&pagesize=50&page=${page}&sort=relevance`;
       const res = await fetch(url, {
         headers: { "Referer": "https://buscaycurra.es" },
         signal: AbortSignal.timeout(15000),

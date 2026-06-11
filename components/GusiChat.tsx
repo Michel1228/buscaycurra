@@ -82,18 +82,18 @@ interface Mensaje {
 }
 
 const SUGERENCIAS = [
-  { icon: "📧", label: "Enviar CV automático", desc: "A múltiples empresas en segundos", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
-  { icon: "🔍", label: "Buscar trabajo", desc: "Por puesto y ciudad", msg: "Quiero buscar trabajo, ¿me ayudas?" },
-  { icon: "📝", label: "Crear mi CV", desc: "Paso a paso con IA", msg: "__ENTREVISTA__" },
-  { icon: "🎯", label: "Preparar entrevista", desc: "Simula preguntas reales", msg: "Quiero preparar una entrevista de trabajo" },
-  { icon: "🌍", label: "Emigrar", desc: "Alemania, Irlanda, UK...", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
-  { icon: "👶", label: "Au Pair", desc: "Programa de trabajo internacional", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
-  { icon: "📸", label: "Mejorar mi foto", desc: "Prompts IA para foto profesional", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
-  { icon: "📄", label: "Subir mi CV", desc: "PDF, Word — lo analizo al instante", msg: "__SUBIR_CV__" },
-  { icon: "📋", label: "Mi CV", desc: "Ver y editar mi currículum", href: "/app/curriculum" },
-  { icon: "📬", label: "Mis envíos", desc: "Historial de CVs enviados", href: "/app/empresas" },
-  { icon: "📊", label: "Pipeline", desc: "Mis candidaturas activas", href: "/app/pipeline" },
-  { icon: "❤️", label: "Guardadas", desc: "Ofertas que guardé", href: "/app/guardados" },
+  { icon: "⚡", label: "Enviar CV automático", desc: "A múltiples empresas en segundos", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
+  { icon: "🧭", label: "Buscar trabajo", desc: "Por puesto y ciudad", msg: "Quiero buscar trabajo, ¿me ayudas?" },
+  { icon: "✨", label: "Crear mi CV", desc: "Paso a paso con IA", msg: "__ENTREVISTA__" },
+  { icon: "🎙️", label: "Preparar entrevista", desc: "Simula preguntas reales", msg: "Quiero preparar una entrevista de trabajo" },
+  { icon: "✈️", label: "Emigrar", desc: "Alemania, Irlanda, UK...", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
+  { icon: "🏡", label: "Au Pair", desc: "Programa de trabajo internacional", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
+  { icon: "🖼️", label: "Mejorar mi foto", desc: "Prompts IA para foto profesional", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
+  { icon: "📤", label: "Subir mi CV", desc: "PDF, Word — lo analizo al instante", msg: "__SUBIR_CV__" },
+  { icon: "📌", label: "Mi CV", desc: "Ver y editar mi currículum", href: "/app/curriculum" },
+  { icon: "📨", label: "Mis envíos", desc: "Historial de CVs enviados", href: "/app/empresas" },
+  { icon: "🚦", label: "Pipeline", desc: "Mis candidaturas activas", href: "/app/pipeline" },
+  { icon: "💎", label: "Guardadas", desc: "Ofertas que guardé", href: "/app/guardados" },
 ];
 
 function sanitizeGusiHtml(html: string): string {
@@ -122,7 +122,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
         setLogueado(!!user);
         if (user?.id) setUserId(user.id);
         if (user) {
-          setMensajes([{ role: "gusi", text: `¡Hola! Soy Guzzi, tu asistente de empleo. ¿Qué hacemos hoy?\n\nPuedo ayudarte con:\n📧 **Enviar tu CV automático** a empresas\n📝 Crear o mejorar tu CV\n🔍 Buscar ofertas por puesto y ciudad\n🎯 Prepararte para entrevistas` }]);
+          setMensajes([{ role: "gusi", text: `¡Hola! Soy Guzzi, tu asistente de empleo. ¿Qué hacemos hoy?\n\nPuedo ayudarte con:\n⚡ **Enviar tu CV automático** a empresas\n✨ Crear o mejorar tu CV\n🧭 Buscar ofertas por puesto y ciudad\n🎙️ Prepararte para entrevistas` }]);
         } else {
           setMensajes([{ role: "gusi", text: "¡Hola! Soy Guzzi, tu asistente de empleo de BuscayCurra.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**" }]);
         }
@@ -707,7 +707,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && !e.shiftKey && enviar(input)}
                 placeholder={modoEntrevista ? "Escribe tu respuesta..." : "Escribe un mensaje..."}
-                className="flex-1 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1"
+                className="flex-1 min-w-0 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-1 truncate"
                 style={{
                   background: "#1e212b",
                   border: "1px solid #2d3142",
