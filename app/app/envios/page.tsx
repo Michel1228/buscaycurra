@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
+import { Mail, Eye, MessageSquare, Clock, XCircle, Ban, FileText, Briefcase, AtSign, Calendar, Inbox } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface Envio {
   id: string;
@@ -17,9 +19,9 @@ interface Envio {
   created_at: string;
 }
 
-const STATUS_ICON: Record<string, string> = {
-  enviado: "📧", visto: "👀", respondido: "💬",
-  pendiente: "⏳", fallido: "❌", cancelado: "🚫",
+const STATUS_ICON: Record<string, LucideIcon> = {
+  enviado: Mail, visto: Eye, respondido: MessageSquare,
+  pendiente: Clock, fallido: XCircle, cancelado: Ban,
 };
 const STATUS_COLOR: Record<string, string> = {
   enviado: "#22c55e", visto: "#a855f7", respondido: "#f59e0b",
@@ -142,7 +144,7 @@ export default function EnviosPage() {
                 color: filtro === f ? "#0a0a0a" : "#94a3b8",
                 border: `1px solid ${filtro === f ? "#22c55e" : "rgba(255,255,255,0.1)"}`,
               }}>
-              {STATUS_ICON[f] || "📋"} {f.charAt(0).toUpperCase() + f.slice(1)}
+              {(() => { const Icon = STATUS_ICON[f] || FileText; return <Icon size={12} strokeWidth={1.8} className="inline mr-1" />; })()} {f.charAt(0).toUpperCase() + f.slice(1)}
               {contadores[f] ? ` (${contadores[f]})` : ""}
             </button>
           ))}
@@ -153,7 +155,7 @@ export default function EnviosPage() {
           <div className="text-center py-16 text-slate-500">Cargando...</div>
         ) : filtrados.length === 0 ? (
           <div className="text-center py-16 text-slate-500">
-            <p className="text-4xl mb-3">📭</p>
+            <Inbox size={40} strokeWidth={1.2} className="mx-auto mb-3" style={{ color: "#475569" }} />
             <p>No hay envíos con este filtro.</p>
             <Link href="/app/empresas" className="mt-4 inline-block px-4 py-2 bg-green-500 text-black rounded-lg text-sm font-semibold">
               Enviar mi primer CV →
@@ -164,17 +166,17 @@ export default function EnviosPage() {
             {filtrados.map(envio => (
               <div key={envio.id} className="rounded-xl p-4 flex items-center gap-4"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <span className="text-2xl shrink-0">{STATUS_ICON[envio.status] || "📄"}</span>
+                {(() => { const Icon = STATUS_ICON[envio.status] || FileText; return <Icon size={22} strokeWidth={1.4} className="shrink-0" style={{ color: STATUS_COLOR[envio.status] || "#64748b" }} />; })()}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-white truncate">{envio.company_name}</p>
-                  {envio.job_title && <p className="text-xs text-slate-400 truncate">💼 {envio.job_title}</p>}
-                  {envio.company_email && <p className="text-xs text-slate-500 truncate">✉️ {envio.company_email}</p>}
-                  <p className="text-xs text-slate-600 mt-0.5">
+                  {envio.job_title && <p className="flex items-center gap-1 text-xs text-slate-400 truncate"><Briefcase size={10} strokeWidth={1.6} className="shrink-0" />{envio.job_title}</p>}
+                  {envio.company_email && <p className="flex items-center gap-1 text-xs text-slate-500 truncate"><AtSign size={10} strokeWidth={1.6} className="shrink-0" />{envio.company_email}</p>}
+                  <p className="flex items-center gap-1 text-xs text-slate-600 mt-0.5">
                     {envio.sent_at
                       ? new Date(envio.sent_at).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
                       : envio.created_at
-                        ? `📅 ${new Date(envio.created_at).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}`
-                        : ""}
+                        ? <><Calendar size={10} strokeWidth={1.6} className="shrink-0" />{new Date(envio.created_at).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</>
+                        : null}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">

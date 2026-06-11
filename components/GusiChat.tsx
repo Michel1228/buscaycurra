@@ -16,6 +16,11 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import GuzziAvatar from "@/components/GuzziAvatar";
+import {
+  Mail, Search, FilePen, Target, Globe, Users, Camera, Upload,
+  FileText, Inbox, BarChart2, Bookmark, Paperclip, ArrowRight, X,
+  type LucideIcon,
+} from "lucide-react";
 
 // Mapa de palabras clave → id de país en /app/emigrar
 const LOCATION_TO_PAIS: Record<string, string> = {
@@ -75,19 +80,21 @@ interface Mensaje {
   jobs?: Oferta[];
 }
 
-const SUGERENCIAS = [
-  { icon: "📧", label: "Enviar CV automático", desc: "A múltiples empresas en segundos", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
-  { icon: "🔍", label: "Buscar trabajo", desc: "Por puesto y ciudad", msg: "Quiero buscar trabajo, ¿me ayudas?" },
-  { icon: "📝", label: "Crear mi CV", desc: "Paso a paso con IA", msg: "__ENTREVISTA__" },
-  { icon: "🎯", label: "Preparar entrevista", desc: "Simula preguntas reales", msg: "Quiero preparar una entrevista de trabajo" },
-  { icon: "🌍", label: "Emigrar", desc: "Alemania, Irlanda, UK...", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
-  { icon: "👶", label: "Au Pair", desc: "Programa de trabajo internacional", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
-  { icon: "📸", label: "Mejorar mi foto", desc: "Prompts IA para foto profesional", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
-  { icon: "📄", label: "Subir mi CV", desc: "PDF, Word — lo analizo al instante", msg: "__SUBIR_CV__" },
-  { icon: "📋", label: "Mi CV", desc: "Ver y editar mi currículum", href: "/app/curriculum" },
-  { icon: "📬", label: "Mis envíos", desc: "Historial de CVs enviados", href: "/app/empresas" },
-  { icon: "📊", label: "Pipeline", desc: "Mis candidaturas activas", href: "/app/pipeline" },
-  { icon: "❤️", label: "Guardadas", desc: "Ofertas que guardé", href: "/app/guardados" },
+type Sugerencia = { Icon: LucideIcon; label: string; desc: string; msg?: string; href?: string; destacado?: boolean };
+
+const SUGERENCIAS: Sugerencia[] = [
+  { Icon: Mail,      label: "Enviar CV automático", desc: "A múltiples empresas en segundos",  msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
+  { Icon: Search,    label: "Buscar trabajo",        desc: "Por puesto y ciudad",               msg: "Quiero buscar trabajo, ¿me ayudas?" },
+  { Icon: FilePen,   label: "Crear mi CV",           desc: "Paso a paso con IA",               msg: "__ENTREVISTA__" },
+  { Icon: Target,    label: "Preparar entrevista",   desc: "Simula preguntas reales",           msg: "Quiero preparar una entrevista de trabajo" },
+  { Icon: Globe,     label: "Emigrar",               desc: "Alemania, Irlanda, UK...",          msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
+  { Icon: Users,     label: "Au Pair",               desc: "Programa de trabajo internacional", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
+  { Icon: Camera,    label: "Mejorar mi foto",       desc: "Prompts IA para foto profesional",  msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
+  { Icon: Upload,    label: "Subir mi CV",           desc: "PDF, Word — lo analizo al instante", msg: "__SUBIR_CV__" },
+  { Icon: FileText,  label: "Mi CV",                 desc: "Ver y editar mi currículum",        href: "/app/curriculum" },
+  { Icon: Inbox,     label: "Mis envíos",            desc: "Historial de CVs enviados",         href: "/app/empresas" },
+  { Icon: BarChart2, label: "Pipeline",              desc: "Mis candidaturas activas",          href: "/app/pipeline" },
+  { Icon: Bookmark,  label: "Guardadas",             desc: "Ofertas que guardé",                href: "/app/guardados" },
 ];
 
 function sanitizeGusiHtml(html: string): string {
@@ -116,7 +123,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
         setLogueado(!!user);
         if (user?.id) setUserId(user.id);
         if (user) {
-          setMensajes([{ role: "gusi", text: `¡Hola! Soy Guzzi, tu asistente de empleo. ¿Qué hacemos hoy?\n\nPuedo ayudarte con:\n📧 **Enviar tu CV automático** a empresas\n📝 Crear o mejorar tu CV\n🔍 Buscar ofertas por puesto y ciudad\n🎯 Prepararte para entrevistas` }]);
+          setMensajes([{ role: "gusi", text: "¡Hola! Soy Guzzi, tu asistente de empleo. ¿Qué hacemos hoy?\n\nPuedo ayudarte con:\n- **Enviar tu CV automático** a empresas\n- Crear o mejorar tu CV\n- Buscar ofertas por puesto y ciudad\n- Prepararte para entrevistas" }]);
         } else {
           setMensajes([{ role: "gusi", text: "¡Hola! Soy Guzzi, tu asistente de empleo de BuscayCurra.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**" }]);
         }
@@ -529,9 +536,9 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
           <div className="px-4 pt-3 pb-2 shrink-0" style={{ background: "#111827", borderTop: "1px solid #1e212b" }}>
             <div className="flex items-center gap-2">
               <button onClick={() => fileRef.current?.click()} title="Subir CV (PDF)"
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
+                className="w-9 h-9 rounded-lg flex items-center justify-center transition hover:opacity-80 shrink-0"
                 style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
-                📎
+                <Paperclip size={16} strokeWidth={1.6} />
               </button>
               <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleFile} />
               <input
@@ -552,7 +559,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                 disabled={!input.trim() || cargando}
                 className="w-9 h-9 rounded-lg flex items-center justify-center transition disabled:opacity-30 hover:opacity-90 active:scale-95 shrink-0"
                 style={{ background: input.trim() ? "#22c55e" : "#1e212b", color: input.trim() ? "#0a1208" : "#64748b", border: "1px solid #2d3142" }}>
-                ➤
+                <ArrowRight size={16} strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -582,7 +589,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                         background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
                         border: `1px solid ${s.destacado ? "rgba(34,197,94,0.2)" : "#2d3142"}`,
                       }}>
-                      <span className="text-sm shrink-0">{s.icon}</span>
+                      <s.Icon size={14} strokeWidth={1.6} className="shrink-0" style={{ color: s.destacado ? "#22c55e" : "#64748b" }} />
                       <div className="min-w-0">
                         <p className="text-[10px] font-semibold truncate" style={{ color: s.destacado ? "#22c55e" : "#e2e8f0" }}>
                           {s.label}
@@ -614,7 +621,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
             }}
           >
             {abierto ? (
-              <span className="text-lg" style={{ color: "#64748b" }}>✕</span>
+              <X size={18} strokeWidth={2} style={{ color: "#64748b" }} />
             ) : (
               <>
                 <GuzziAvatar size={44} />
@@ -637,7 +644,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                 boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
                 animation: "gusi-tooltip 2s ease-in-out infinite",
               }}>
-              ✨ Habla con Guzzi
+              Habla con Guzzi
             </div>
           )}
         </>

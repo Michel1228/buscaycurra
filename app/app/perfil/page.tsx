@@ -12,6 +12,7 @@ import InfoTooltip from "@/components/InfoTooltip";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
 import WhatsAppSubscribeButton from "@/components/WhatsAppSubscribeButton";
 import { isNativeIOS } from "@/lib/utils/platform";
+import { User, Gem, Lock } from "lucide-react";
 
 interface PerfilData {
   nombre: string;
@@ -230,9 +231,9 @@ export default function PerfilPage() {
       <div className="sticky top-14 z-10" style={{ background: "#0f1117", borderBottom: "1px solid #2d3142" }}>
         <div className="max-w-2xl mx-auto px-4 flex">
           {[
-            { id: "perfil" as const, label: "Mi Perfil", icon: "👤" },
-            { id: "plan" as const, label: "Mi Plan", icon: "💎" },
-            { id: "seguridad" as const, label: "Seguridad", icon: "🔒" },
+            { id: "perfil"    as const, label: "Mi Perfil", Icon: User },
+            { id: "plan"      as const, label: "Mi Plan",   Icon: Gem },
+            { id: "seguridad" as const, label: "Seguridad", Icon: Lock },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className="flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition"
@@ -240,7 +241,7 @@ export default function PerfilPage() {
                 borderColor: tab === t.id ? "#22c55e" : "transparent",
                 color: tab === t.id ? "#22c55e" : "#64748b",
               }}>
-              <span>{t.icon}</span>
+              <t.Icon size={14} strokeWidth={1.6} />
               <span>{t.label}</span>
             </button>
           ))}
@@ -252,7 +253,7 @@ export default function PerfilPage() {
         {tab === "perfil" && (
           <div className="space-y-6">
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
-              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>👤 Datos personales</h2>
+              <h2 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: "#f1f5f9" }}><User size={14} strokeWidth={1.6} /> Datos personales</h2>
               <p className="text-xs mb-4" style={{ color: "#64748b" }}>
                 Estos datos se usan para personalizar tu experiencia. El CV completo (foto, experiencia, formación) está en <button onClick={() => router.push("/app/curriculum")} className="underline" style={{ color: "#22c55e" }}>Mi CV</button>.
               </p>
@@ -295,9 +296,9 @@ export default function PerfilPage() {
             <div className="rounded-xl p-5 flex items-center gap-4 cursor-pointer hover:opacity-90 transition"
               onClick={() => setTab("plan")}
               style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.12), rgba(34,197,94,0.06))", border: "1px solid rgba(168,85,247,0.25)" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(168,85,247,0.15)" }}>
-                💎
+                <Gem size={22} strokeWidth={1.4} style={{ color: "#a855f7" }} />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Mi Plan</h3>

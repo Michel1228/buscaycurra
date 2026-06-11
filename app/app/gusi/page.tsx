@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GusiChat from "@/components/GusiChat";
 import { isNativeIOS } from "@/lib/utils/platform";
+import { Users, Inbox, Zap, Target, Check, type LucideIcon } from "lucide-react";
 
 const COMPARATIVA = [
   { aspecto: "Coste", buscaycurra: "2,99 €/mes", infojobs: "Gratis... con publicidad" },
@@ -30,14 +31,14 @@ export default function GusiPage() {
             BuscayCurra en cifras
           </p>
           <div className="space-y-2">
-            {[
-              { icon: "👥", stat: "2.400+", desc: "personas encontraron trabajo" },
-              { icon: "📬", stat: "18.000+", desc: "CVs enviados este mes" },
-              { icon: "⚡", stat: "3 min", desc: "para enviar tu primer CV" },
-              { icon: "🎯", stat: "x4", desc: "más respuestas que en portales" },
-            ].map(item => (
+            {([
+              { Icon: Users,  stat: "2.400+",  desc: "personas encontraron trabajo" },
+              { Icon: Inbox,  stat: "18.000+", desc: "CVs enviados este mes" },
+              { Icon: Zap,    stat: "3 min",   desc: "para enviar tu primer CV" },
+              { Icon: Target, stat: "x4",      desc: "más respuestas que en portales" },
+            ] as { Icon: LucideIcon; stat: string; desc: string }[]).map(item => (
               <div key={item.stat} className="flex items-center gap-2.5">
-                <span className="text-base w-5 text-center">{item.icon}</span>
+                <item.Icon size={16} strokeWidth={1.5} style={{ color: "#22c55e" }} className="shrink-0" />
                 <div>
                   <span className="text-sm font-bold" style={{ color: "#22c55e" }}>{item.stat}</span>
                   <span className="text-[11px] ml-1" style={{ color: "#64748b" }}>{item.desc}</span>
@@ -97,7 +98,7 @@ export default function GusiPage() {
               "Sin colas, sin esperas",
             ].map(item => (
               <div key={item} className="flex items-start gap-2">
-                <span className="text-[10px] mt-0.5" style={{ color: "#22c55e" }}>✓</span>
+                <Check size={12} strokeWidth={2.5} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
                 <p className="text-[11px]" style={{ color: "#94a3b8" }}>{item}</p>
               </div>
             ))}

@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
 import InfoTooltip from "@/components/InfoTooltip";
 import CountrySelector from "@/components/CountrySelector";
+import { Users, Banknote, Target, Bell, Heart, Search, Rocket, AlertTriangle, Check, CalendarDays, CalendarCheck } from "lucide-react";
 
 const opcionesJornada = [
   { valor: "", etiqueta: "Todas" },
@@ -158,7 +159,7 @@ function BuscarPageInner() {
         fuente: "Jooble",
         url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(kw)}&loc=${encodeURIComponent(loc)}`,
         fecha: j.updated || new Date().toISOString(),
-        distancia: "🏠 Tu ciudad",
+        distancia: "Tu ciudad",
       }));
     } catch {
       return [];
@@ -320,7 +321,7 @@ function BuscarPageInner() {
               <input id="buscar-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
                 placeholder="¿Dónde?" className="w-full px-4 py-2.5 rounded-lg text-sm"
                 style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
-              {geoDetected && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-70">📍 Auto</span>}
+              {geoDetected && <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 text-[10px] opacity-70"><Target size={10} strokeWidth={2} />Auto</span>}
             </div>
             <button type="submit" disabled={cargando}
               className="px-6 py-2.5 bg-white font-semibold rounded-lg text-sm transition disabled:opacity-50"
@@ -338,21 +339,21 @@ function BuscarPageInner() {
       <div className="border-b" style={{ background: "#111827", borderColor: "#1e212b" }}>
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-4 md:gap-8">
           <div className="flex items-center gap-2.5">
-            <span className="text-lg">👥</span>
+            <Users size={18} strokeWidth={1.5} style={{ color: "#22c55e" }} className="shrink-0" />
             <div>
               <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>2.400+ personas</p>
               <p className="text-[10px]" style={{ color: "#64748b" }}>ya encontraron trabajo con nosotros</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="text-lg">💸</span>
+            <Banknote size={18} strokeWidth={1.5} style={{ color: "#22c55e" }} className="shrink-0" />
             <div>
               <p className="text-xs font-bold" style={{ color: "#22c55e" }}>CV propio, no uno entre 2.000</p>
               <p className="text-[10px]" style={{ color: "#64748b" }}>InfoJobs te mete en una cola — aquí Guzzi te pone delante</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="text-lg">🎯</span>
+            <Target size={18} strokeWidth={1.5} style={{ color: "#22c55e" }} className="shrink-0" />
             <div>
               <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>Contrato directo con la empresa</p>
               <p className="text-[10px]" style={{ color: "#64748b" }}>sin esperar a que alguien en un portal te encuentre</p>
@@ -424,14 +425,14 @@ function BuscarPageInner() {
             )}
 
             {!cargando && error && (
-              <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
-                ⚠️ {error}
+              <div className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
+                <AlertTriangle size={14} strokeWidth={2} className="shrink-0" /> {error}
               </div>
             )}
 
             {!cargando && !error && buscado && ofertas.length === 0 && (
               <div className="card-game p-10 text-center">
-                <p className="text-4xl mb-3">🔍</p>
+                <Search size={40} strokeWidth={1.2} className="mx-auto mb-3" style={{ color: "#475569" }} />
                 <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No se encontraron ofertas</p>
                 <p className="text-xs mt-1" style={{ color: "#64748b" }}>Prueba con otras palabras clave</p>
               </div>
@@ -439,7 +440,7 @@ function BuscarPageInner() {
 
             {!cargando && !buscado && (
               <div className="card-game p-10 text-center">
-                <p className="text-4xl mb-3">🚀</p>
+                <Rocket size={40} strokeWidth={1.2} className="mx-auto mb-3" style={{ color: "#475569" }} />
                 <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¡Empieza tu búsqueda!</p>
                 <p className="text-xs mt-1" style={{ color: "#64748b" }}>Introduce el trabajo y la ciudad</p>
               </div>
@@ -459,14 +460,14 @@ function BuscarPageInner() {
                       <button onClick={() => setMostrarAlertaModal(true)}
                         className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
                         style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
-                        🔔 Alerta
+                        <Bell size={12} strokeWidth={1.8} className="inline mr-1" />Alerta
                       </button>
                       <InfoTooltip text="Te avisamos por email cuando salgan nuevas ofertas que coincidan con esta búsqueda. Puedes elegir frecuencia diaria o semanal." position="bottom" />
                     </div>
                     <a href="/app/guardados"
                       className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
                       style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
-                      ❤️ Guardados
+                      <Heart size={12} strokeWidth={1.8} className="inline mr-1" />Guardados
                     </a>
                   </div>
                 </div>
@@ -504,7 +505,7 @@ function BuscarPageInner() {
       {alertaCreada && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-xl text-xs font-medium"
           style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}>
-          ✅ Alerta creada. Te avisaremos de nuevas ofertas.
+          <Check size={13} strokeWidth={2.5} className="inline mr-1" />Alerta creada. Te avisaremos de nuevas ofertas.
         </div>
       )}
     </div>
@@ -542,7 +543,7 @@ function AlertaModal({ keyword, location, onClose, onCreada }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
       <div className="w-full max-w-sm rounded-xl p-5 space-y-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }} onClick={e => e.stopPropagation()}>
-        <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🔔 Crear alerta de empleo</h3>
+        <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: "#f1f5f9" }}><Bell size={14} strokeWidth={1.8} />Crear alerta de empleo</h3>
         <p className="text-xs" style={{ color: "#64748b" }}>Te avisaremos cuando haya nuevas ofertas para:</p>
         <div className="p-2.5 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
           <p className="text-xs font-medium" style={{ color: "#22c55e" }}>{keyword || "Cualquier puesto"} {location ? `en ${location}` : ""}</p>
@@ -558,7 +559,7 @@ function AlertaModal({ keyword, location, onClose, onCreada }: {
                   border: freq === f ? "1px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
                   color: freq === f ? "#22c55e" : "#64748b",
                 }}>
-                {f === "daily" ? "📅 Diaria" : "📆 Semanal"}
+                {f === "daily" ? <><CalendarDays size={12} strokeWidth={1.8} className="inline mr-1" />Diaria</> : <><CalendarCheck size={12} strokeWidth={1.8} className="inline mr-1" />Semanal</>}
               </button>
             ))}
           </div>
