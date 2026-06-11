@@ -94,11 +94,32 @@ export async function reportFailure(provider: ApiProvider, idx: number, status?:
   }
 }
 
+async function resetAllCounters(provider: ApiProvider, total: number): Promise<void> {
+  const date = today();
+  for (let idx = 0; idx < total; idx++) {
+    await redis.del(usageKey(provider, idx));
+    // También limpiamos circuit breakers abiertos (no por cuota, sino por errores)
+    if (await isCircuitOpen(provider, idx)) {
+      await redis.del(breakerKey(provider, idx));
+    }
+  }
+  console.warn(`[API Pool] 🔄 AUTO-RESET: todas las keys de ${provider} agotadas para ${date} — contadores reiniciados`);
+}
+
 async function selectKeyIndex(provider: ApiProvider, total: number): Promise<number> {
   for (let idx = 0; idx < total; idx++) {
     if (await isCircuitOpen(provider, idx)) continue;
     const usage = await getUsage(provider, idx);
     if (usage < DAILY_LIMIT[provider]) return idx;
+  }
+  // ⚡ AUTO-RESET: cuando TODAS las keys llegan al límite, reiniciamos todos los contadores
+  // y volvemos a intentar. Las APIs reales tienen su propio límite — si lo superamos
+  // recibiremos 429 y el circuit breaker se abrirá automáticamente.
+  await resetAllCounters(provider, total);
+  // Segunda vuelta: ahora sí debería haber keys disponibles
+  for (let idx = 0; idx < total; idx++) {
+    if (await isCircuitOpen(provider, idx)) continue;
+    return idx;
   }
   return -1;
 }

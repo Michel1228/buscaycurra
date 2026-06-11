@@ -16,7 +16,7 @@ export function getStripe(): Stripe {
   return _stripeInstance;
 }
 
-export const stripe = getStripe();
+export const stripe = (typeof window === "undefined" && process.env.STRIPE_SECRET_KEY) ? getStripe() : null as unknown as Stripe;
 
 export const PLANES = {
   BASICO: process.env.STRIPE_PRICE_BASICO ?? "price_basico",

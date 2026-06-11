@@ -17,6 +17,10 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import GuzziAvatar from "@/components/GuzziAvatar";
 import ChatSendPanel from "@/components/ChatSendPanel";
+import {
+  Zap, Compass, Sparkles, Mic, Plane, Home, Image, Upload,
+  Pin, Mail, Inbox, ChartColumn, Gem, type LucideIcon
+} from "lucide-react";
 
 // Mapa de palabras clave → id de país en /app/emigrar
 const LOCATION_TO_PAIS: Record<string, string> = {
@@ -82,19 +86,21 @@ interface Mensaje {
   };
 }
 
-const SUGERENCIAS = [
-  { icon: "⚡", label: "Enviar CV automático", desc: "A múltiples empresas en segundos", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
-  { icon: "🧭", label: "Buscar trabajo", desc: "Por puesto y ciudad", msg: "Quiero buscar trabajo, ¿me ayudas?" },
-  { icon: "✨", label: "Crear mi CV", desc: "Paso a paso con IA", msg: "__ENTREVISTA__" },
-  { icon: "🎙️", label: "Preparar entrevista", desc: "Simula preguntas reales", msg: "Quiero preparar una entrevista de trabajo" },
-  { icon: "✈️", label: "Emigrar", desc: "Alemania, Irlanda, UK...", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
-  { icon: "🏡", label: "Au Pair", desc: "Programa de trabajo internacional", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
-  { icon: "🖼️", label: "Mejorar mi foto", desc: "Prompts IA para foto profesional", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
-  { icon: "📤", label: "Subir mi CV", desc: "PDF, Word — lo analizo al instante", msg: "__SUBIR_CV__" },
-  { icon: "📌", label: "Mi CV", desc: "Ver y editar mi currículum", href: "/app/curriculum" },
-  { icon: "📨", label: "Mis envíos", desc: "Historial de CVs enviados", href: "/app/empresas" },
-  { icon: "🚦", label: "Pipeline", desc: "Mis candidaturas activas", href: "/app/pipeline" },
-  { icon: "💎", label: "Guardadas", desc: "Ofertas que guardé", href: "/app/guardados" },
+type SugerenciaItem = { Icon: LucideIcon; label: string; desc: string; msg?: string; href?: string; destacado?: boolean };
+
+const SUGERENCIAS: SugerenciaItem[] = [
+  { Icon: Zap,      label: "Enviar CV automático", desc: "A múltiples empresas en segundos", msg: "Quiero enviar mi CV automáticamente a empresas", destacado: true },
+  { Icon: Compass,  label: "Buscar trabajo", desc: "Por puesto y ciudad", msg: "Quiero buscar trabajo, ¿me ayudas?" },
+  { Icon: Sparkles, label: "Crear mi CV", desc: "Paso a paso con IA", msg: "__ENTREVISTA__" },
+  { Icon: Mic,      label: "Preparar entrevista", desc: "Simula preguntas reales", msg: "Quiero preparar una entrevista de trabajo" },
+  { Icon: Plane,    label: "Emigrar", desc: "Alemania, Irlanda, UK...", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
+  { Icon: Home,     label: "Au Pair", desc: "Programa de trabajo internacional", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
+  { Icon: Image,    label: "Mejorar mi foto", desc: "Prompts IA para foto profesional", msg: "¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT" },
+  { Icon: Upload,   label: "Subir mi CV", desc: "PDF, Word — lo analizo al instante", msg: "__SUBIR_CV__" },
+  { Icon: Pin,      label: "Mi CV", desc: "Ver y editar mi currículum", href: "/app/curriculum" },
+  { Icon: Inbox,    label: "Mis envíos", desc: "Historial de CVs enviados", href: "/app/empresas" },
+  { Icon: ChartColumn, label: "Pipeline", desc: "Mis candidaturas activas", href: "/app/pipeline" },
+  { Icon: Gem,      label: "Guardadas", desc: "Ofertas que guardé", href: "/app/guardados" },
 ];
 
 function sanitizeGusiHtml(html: string): string {
@@ -808,7 +814,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                           background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
                           border: `1px solid ${s.destacado ? "rgba(34,197,94,0.2)" : "#2d3142"}`,
                         }}>
-                        <span className="text-base leading-none mb-1">{s.icon}</span>
+                        <s.Icon size={16} className="mb-1" />
                         <p className="text-[10px] font-semibold leading-tight" style={{ color: s.destacado ? "#22c55e" : "#e2e8f0" }}>
                           {s.label}
                         </p>
