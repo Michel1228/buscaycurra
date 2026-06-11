@@ -1,170 +1,166 @@
-# 🗺️ HOJA DE RUTA — BuscayCurra
-
-> **ATENCIÓN AGENTE:** Leer esto ANTES de tocar cualquier cosa.
-> Cada "pasillo" tiene indicaciones de qué hay y dónde.
+# 🐛 BuscayCurra — Hoja de Ruta y Estado Actual
+> Actualizado: 12 Jun 2026 01:30 UTC · Por: Hermes (DeepSeek V4 Pro)
 
 ---
 
-## 🏠 PLANO GENERAL
+## 📍 ESTADO ACTUAL DE LA APLICACIÓN
 
-```
-buscaycurra.es (Traefik)
-    │
-    ├── / → Next.js (buscaycurra-nextjs:8892)
-    │       └── Frontend + Server Actions
-    │
-    ├── API interna → buscaycurra-api:3001 (Express + Prisma)
-    │       └── Conecta a → VPS PostgreSQL (buscaycurra-db:5433)
-    │
-    └── Auth / Cloud → Supabase (ojesordjedovnpyxspxi.supabase.co)
-```
+### Producción (https://buscaycurra.es)
+- **Build**: commit `bf51260` + cambios UI de hoy (CVSenderDashboard + header empresas)
+- **Modelo IA**: DeepSeek V4 Pro, thinking OFF, temp 0.5
+- **Ofertas**: 2.05M en 34 países (PG VPS) + 18.6K ES en Supabase
+- **Usuarios**: 21 registrados
+- **Envíos CV**: 58 totales
+- **APIs empleo activas**: Jooble, Careerjet · Adzuna roto desde ~8 mayo
+- **Google Places**: Funcional, sin emails extraídos aún
 
----
+### Lo que FUNCIONA ✅
+- Login/Registro Supabase
+- Búsqueda de ofertas (Jooble + Careerjet)
+- Guzzi chat IA con tools, streaming SSE, conversación memory
+- Envío CV con BullMQ + Redis + carta IA personalizada
+- Pipeline kanban
+- Editor CV con foto y visibilidad
+- Stripe suscripciones (Esencial 2.99€, Pro, Empresa)
+- Sistema notificaciones (bell + Supabase + Web Push)
+- Google Places (buscar empresas, extraer datos)
+- ETTs por ciudad
+- Comparador salarios (pocos datos aún)
+- Entrevistas IA
+- Emigrar a 34 países
+- Au Pair
+- Cámara Guzzi (OCR + Google Places)
 
-## 🗄️ PASILLO 1: BASES DE DATOS (¡NO CONFUNDIR!)
-
-### 📦 VPS PostgreSQL (buscaycurra-db:5433)
-**→ Esta es LA base de datos principal. 2.18M de ofertas.**
-
-| Tabla | Filas | Qué contiene |
-|-------|-------|-------------|
-| `JobListing` | **2.180.587** | 🔴 OFERTAS PRINCIPALES — el tesoro |
-| `User` | 18 | Usuarios (auth local Prisma) |
-| `Application` | 3 | Candidaturas pipeline |
-| `CV` | ? | CVs completos (Prisma ORM) |
-| `SavedJob` | ? | Ofertas guardadas |
-| `cv_sends` | 51 | Envíos de CV |
-| `gusi_conversations` | 300 | Historial chat Guzzi |
-| `ScheduledCampaign` | ? | Campañas envío masivo |
-| `CampaignRun` | ? | Ejecuciones de campañas |
-| `company_reviews` | ? | Reviews empresas |
-| `job_alerts` | ? | Alertas empleo |
-| `push_subscriptions` | ? | Suscripciones push |
-| `referrals` | ? | Referidos |
-| `user_cvs` | ? | CVs subidos |
-| `cv_cartas` | ? | Cartas presentación |
-
-**Schema:** `contactEmail` (no `email_empresa`), `country` (no `ubicacion` para país)
-**Conexión:** `docker exec buscaycurra-db psql -U buscaycurra -d buscaycurra`
-**ORM:** Prisma (`buscaycurra-api:/app/prisma/schema.prisma`)
-
-### ☁️ Supabase (cloud)
-**→ Auth + perfiles + notificaciones. NO es la base de ofertas principal.**
-
-| Tabla | Filas | Qué contiene |
-|-------|-------|-------------|
-| `auth.users` | 21 | Autenticación |
-| `profiles` | 10 | Perfiles (plan, stripe, etc) |
-| `ofertas` | 18.232 | ⚠️ LEGACY — NO USAR para contar |
-| `cv_sends` | 53 | ⚠️ LEGACY — NO USAR para contar |
-| `notificaciones` | 187 | Notificaciones push/email |
-| `cvs` | 1 | CV (legacy) |
+### Lo que FALTA ❌
+- **Extracción de emails de empresas**: 0 en Supabase. Worker existe pero no activo
+- **Alertas inteligentes**: 0 alertas creadas. Sistema existe pero no se auto-crean
+- **Portal de empresas**: Pendiente de implementar
+- **Adzuna**: Scraper roto desde mayo. Sin nuevas ofertas de Adzuna
+- **App móvil**: Rechazada por Apple (Guideline 2.2). Necesita resubmit
+- **SEO programático**: Solo /empleo/[puesto]/[ciudad] básico, sin datos enriquecidos
+- **Web Push**: 0 suscripciones activas
 
 ---
 
-## 🚪 PASILLO 2: CONTENEDORES DOCKER
+## 🎯 PRÓXIMOS PASOS (orden prioridad)
 
-```
-buscaycurra-nextjs  → :8892 → Next.js 14 (App Router)
-buscaycurra-api     → :3001 → Express + Prisma
-buscaycurra-db      → :5433 → PostgreSQL 16 (2.18M ofertas)
-buscaycurra-redis   → :6379 → Redis 7 (BullMQ colas)
-```
+### 🔴 Críticos (esta semana)
+1. **Activar extracción de emails de empresas** → Sin emails no se puede enviar CV
+2. **Auto-crear alertas desde búsquedas** → Retención de usuarios
+3. **Preparar resubmit iOS** → App Store es canal clave
 
-**Red:** `busca-y-curra_default`
+### 🟡 Importantes (este mes)
+4. **Agente Autónomo Guzzi Apply** → Unique Selling Point. NADIE en España lo tiene
+5. **Skill Gap Analysis** → Premium feature. Visual radar chart
+6. **Estimación salarial IA** → Desbloquear comparador salarios con datos estimados
+7. **SEO Programático Ciudad×Puesto** → Tráfico orgánico masivo con 2M+ ofertas
 
----
-
-## 📁 PASILLO 3: CÓDIGO FUENTE
-
-```
-/root/.openclaw/workspace/buscaycurra-unified/
-├── app/                    → Next.js App Router
-│   ├── app/                → Rutas protegidas (/app/*)
-│   │   ├── gusi/           → Chat Guzzi (asistente IA)
-│   │   ├── buscar/         → Búsqueda ofertas
-│   │   ├── pipeline/       → Kanban candidaturas
-│   │   ├── envios/         → Envíos masivos
-│   │   ├── perfil/         → Cuenta + Stripe
-│   │   └── ...
-│   ├── auth/               → Login/Registro (sin nav)
-│   ├── api/                → API Routes (server actions)
-│   └── page.tsx            → Landing
-├── components/             → Componentes compartidos
-├── lib/                    → Supabase client, utils
-└── .env.local              → Variables entorno (CRÍTICO)
-```
-
-**Rama GitHub:** `unified-production` (Michel1228/buscaycurra)
+### 🟢 Estratégicos (largo plazo)
+8. **Talent Marketplace Inverso** → Empresas pagan por buscar candidatos
+9. **WhatsApp Alerts** → 95% penetración España, >90% apertura
+10. **Entrevistas IA con Voz** → Web Speech API
 
 ---
 
-## 🔑 PASILLO 4: CREDENCIALES Y ACCESOS
+## 🔐 CREDENCIALES Y ACCESOS
 
-| Servicio | Ubicación |
-|----------|-----------|
-| Todas las claves | `C:\Users\miche\OneDrive\Escritorio\CREDENCIALES\todas_las_credenciales.txt` |
-| .env.local VPS | `/root/.openclaw/workspace/buscaycurra-unified/.env.local` |
-| Supabase dashboard | https://supabase.com/dashboard/project/ojesordjedovnpyxspxi |
-| Stripe dashboard | https://dashboard.stripe.com |
-| VPS SSH | `ssh -i ~/.ssh/hostinger_openclaw root@187.124.37.183` |
+### VPS Hostinger
+- IP: 187.124.37.183
+- SSH: `ssh -i ~/.ssh/hostinger_openclaw root@187.124.37.183`
+- **Hermes workspace**: `/root/.openclaw/workspace/buscaycurra-unified/`
+- **Rama**: `unified-production`
+- **Repo**: `Michel1228/buscaycurra`
 
----
+### Supabase
+- URL: https://ojesordjedovnpyxspxi.supabase.co
+- Anon key: `sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN`
+- PAT expira: 17 junio 2026
 
-## 🚨 PASILLO 5: PITFALLS (ERRORES COMUNES)
+### APIs IA
+- DeepSeek: `deepseek-v4-pro` (primario) · Key: en .env.local
+- Groq: `qwen/qwen3-32b` (fallback) · Key: en .env.local
+- DeepSeek legacy `deepseek-chat` MUERE 24 julio 2026 → YA migrado a V4 Pro
 
-1. **NO uses Supabase `ofertas` para métricas** → solo tiene 18K legacy. Usa VPS `JobListing` (2.18M).
-2. **NO uses Supabase `cv_sends`** → legacy. El real está en VPS.
-3. **Schema VPS**: `contactEmail` no `email_empresa`. `country` no `ubicacion`.
-4. **Deploy**: siempre con `--env-file .env.local`. NUNCA sin él.
-5. **Build NEXT_PUBLIC_***: usar `export VAR="${ARG}" && npm run build` en mismo RUN. NUNCA `ENV` separado. (Ver skill `buscaycurra-docker-build`)
-6. **PWA cache**: el service worker cachea bundles viejos. `unregister()` antes de auditar.
-7. **Docker stop cuelga** → `timeout 10 docker kill` + `timeout 5 docker rm -f`.
-8. **JSX/SWC**: arrow functions en template literals dentro de JSX rompen build → precomputar fuera.
-9. **Guzzi intent detection**: patrón `\w+ en \w+` captura frases coloquiales → tiene exclusiones.
-
----
-
-## 📊 PASILLO 6: MÉTRICAS CLAVE (actualizado 10 Jun 2026)
-
-| Métrica | Valor | Fuente |
-|---------|-------|--------|
-| Ofertas totales | 2.180.587 | VPS JobListing |
-| Ofertas nuevas/día | ~17.865 | VPS JobListing |
-| Ofertas con email | 86 (0.004%) | VPS JobListing |
-| Usuarios | 18 VPS / 21 Supabase auth | Ambos |
-| Suscripciones pago | 2 (plan empresa) | Supabase profiles |
-| Candidaturas | 3 | VPS Application |
-| CV enviados | 51 | VPS cv_sends |
+### WhatsApp Business
+- Phone Number ID: 1148143131713343
+- Template: `buscaycurra_alerta_en` (4 params: nombre, puesto, ciudad, URL)
+- Token expira → regenerar en business.facebook.com/settings/system-users
 
 ---
 
-## 🔄 PASILLO 7: FLUJO DE DATOS
+## 🐳 COMANDOS DOCKER
 
-```
-Extracción (GitHub Actions / cron)
-    ↓
-VPS PostgreSQL (JobListing) ← 2.18M ofertas
-    ↓
-buscaycurra-api (Express + Prisma)
-    ↓
-Next.js frontend → Usuario ve ofertas
-    ↓
-Guzzi envía CV → cv_sends (VPS) + notificaciones (Supabase)
-    ↓
-Stripe webhook → Supabase profiles (subscription_status)
+### Build
+```bash
+cd /root/.openclaw/workspace/buscaycurra-unified
+docker build --no-cache -t buscaycurra:latest \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://ojesordjedovnpyxspxi.supabase.co \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_YCsE2bdWgmtR8U9AvmfRCA_n09gvZyN \
+  --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_51R6VvuFpJ5Zv2pUCptbHrsIsgcZJnEWZfBneZB3iZSBnf61Tuwsa4GHgydmAp8aQVoqzIowEaZoIAIAQbDVn0osJ00fclX6yn4 \
+  --build-arg NEXT_PUBLIC_API_URL=https://buscaycurra.es .
 ```
 
+### Deploy
+```bash
+timeout 10 docker kill buscaycurra-nextjs 2>/dev/null
+timeout 5 docker rm -f buscaycurra-nextjs 2>/dev/null
+docker run -d --name buscaycurra-nextjs \
+  --network busca-y-curra_default \
+  --env-file /root/.openclaw/workspace/buscaycurra-unified/.env.local \
+  -e REDIS_URL=redis://buscaycurra-redis:6379 \
+  -e API_URL=http://buscaycurra-api:3001 \
+  -p 8892:3000 buscaycurra:latest
+```
+
+### Contenedores activos
+- `buscaycurra-nextjs` → :8892 (Next.js)
+- `buscaycurra-api` → :3001 (Express/Prisma)
+- `buscaycurra-redis` → :6379
+- `buscaycurra-db` → :5433 (PostgreSQL)
+- Red: `busca-y-curra_default`
+
 ---
 
-## 📝 PASILLO 8: QUÉ HACE CADA AGENTE
+## ⚠️ PITFALLS RECURRENTES
 
-| Agente | Rol |
-|--------|-----|
-| **Claw** (yo) | Auditoría, navegador, deploys, diagnóstico |
-| **Cloud** | Codea features, corrige bugs |
-| **Cron jobs** | Extracción ofertas cada 2h, alertas empleo cada 3h |
+1. **NUNCA cambiar modelo IA sin consultar a Michel**
+2. **NUNCA pedir API keys repetidamente** — si Michel dice que rotó, buscar en .env.local
+3. **Build sin --no-cache** → variables NEXT_PUBLIC_* vacías en cliente → página en blanco
+4. **Si Guzzi solo dice "¡Hola! Soy Guzzi..."** → LLMs no funcionan (keys inválidas)
+5. **docker stop puede colgar** → usar timeout + kill + rm -f
+6. **NO enlaces externos** a InfoJobs, LinkedIn, Indeed, Jooble, Careerjet, Adzuna
+7. **NUNCA sugerir Madrid/Barcelona** por defecto en Guzzi — priorizar ciudad del usuario
+8. **Límite DB pool**: max 5 conexiones
 
 ---
 
-*Última actualización: 10 Jun 2026 — Claw tras cagarla mirando Supabase en vez de VPS*
+## 📊 MÉTRICAS CLAVE
+
+| Métrica | Valor |
+|---------|-------|
+| Ofertas totales | 2.05M |
+| Países | 34 |
+| Ofertas España | 18,610 |
+| Usuarios registrados | 21 |
+| CVs enviados | 58 |
+| Tasa apertura email | 54K (2.5%) |
+| Planes activos | Esencial (2.99€), Pro (9.99€), Empresa (49.99€) |
+
+---
+
+## 🔄 CRONS ACTIVOS
+
+- **GitHub Actions sync**: cada 2h (L-V), 4h (finde) → `.github/workflows/sync-jobs.yml`
+- **Cron alertas VPS**: cada 3h → crontab root
+- **WhatsApp alerts**: worker en background
+
+---
+
+## 📝 CONVENCIONES
+
+- `"use client"` solo con estado/hooks
+- Paleta: fondo `#0f1117`, verde `#22c55e`, texto `#f1f5f9`, secundario `#94a3b8`, muted `#64748b`
+- Componentes: `btn-game` (botón verde), `card-game` (tarjeta con borde `#2d3142`)
+- Commits: español o inglés, sin emojis
+- Rutas `/app/*` → con AppNavWrapper
+- Rutas `/auth/*` → sin nav, split-screen marketing
