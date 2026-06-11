@@ -1309,10 +1309,14 @@ El candidato tiene mucha experiencia.
             const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
             rawReply = data.choices?.[0]?.message?.content || "";
             if (rawReply) break;
+          } else {
+            console.error("[Guzzi] DeepSeek HTTP", res.status, await res.text().catch(()=>""));
           }
-        } catch { /* retry */ }
+        } catch (e) { console.error("[Guzzi] DeepSeek error:", (e as Error).message); }
         if (attempt === 0) await new Promise(r => setTimeout(r, 600));
       }
+    } else {
+      console.error("[Guzzi] DeepSeek key MISSING");
     }
 
     // Intento 2: Groq (fallback con /no_think)
@@ -1334,10 +1338,14 @@ El candidato tiene mucha experiencia.
             const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
             rawReply = data.choices?.[0]?.message?.content || "";
             if (rawReply) break;
+          } else {
+            console.error("[Guzzi] Groq HTTP", res.status, await res.text().catch(()=>""));
           }
-        } catch { /* retry */ }
+        } catch (e) { console.error("[Guzzi] Groq error:", (e as Error).message); }
         if (attempt === 0) await new Promise(r => setTimeout(r, 800));
       }
+    } else if (!rawReply) {
+      console.error("[Guzzi] Groq key MISSING or DeepSeek already succeeded");
     }
 
     if (!rawReply) {
