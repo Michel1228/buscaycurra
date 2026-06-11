@@ -25,7 +25,7 @@ function loadAdzunaKeys(): ApiKey[] {
   if (process.env.ADZUNA_APP_ID && process.env.ADZUNA_APP_KEY) {
     keys.push({ id: process.env.ADZUNA_APP_ID, key: process.env.ADZUNA_APP_KEY });
   }
-  for (let i = 2; i <= 10; i++) {
+  for (let i = 2; i <= 12; i++) {
     const id = process.env[`ADZUNA_APP_ID_${i}`];
     const key = process.env[`ADZUNA_APP_KEY_${i}`];
     if (id && key) keys.push({ id, key });
@@ -46,7 +46,7 @@ function loadSimpleKeys(provider: "jooble" | "careerjet"): { key: string }[] {
 
 // Cuántas peticiones por clave por día antes de rotar
 const DAILY_LIMIT: Record<ApiProvider, number> = {
-  adzuna: 200,      // Free: 250/día, paramos en 200 para margen de seguridad
+  adzuna: 220,      // Free: 250/día, paramos en 220 para margen de seguridad
   jooble: 500,
    careerjet: 20000,  // Subido para extracción masiva global (15 países × 100+ keywords × 5 páginas)
 };
