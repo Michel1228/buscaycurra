@@ -969,13 +969,14 @@ export async function POST(req: NextRequest) {
     async function callDeepSeek(systemPrompt: string, userContent: string, maxTokens = 800) {
       if (!deepseekKey) return null;
       const body = JSON.stringify({
-        model: "deepseek-chat",
+        model: "deepseek-v4-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
         ],
-        temperature: 0.7,
+        temperature: 0.5,
         max_tokens: maxTokens,
+        extra_body: { thinking: { type: "disabled" } },
       });
 
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -1185,7 +1186,7 @@ El candidato tiene mucha experiencia.
             method: "POST",
             headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "deepseek-chat",
+              model: "deepseek-v4-pro",
               messages: [{
                 role: "system",
                 content: `Eres experto en cartas "Dear Family" para au pairs. Escribe en INGLÉS (idioma estándar internacional para au pair). La carta debe ser cálida, personal y profesional. Máximo 300 palabras. NO uses placeholders — usa los datos reales proporcionados.`
@@ -1193,8 +1194,9 @@ El candidato tiene mucha experiencia.
                 role: "user",
                 content: `Genera una carta "Dear Family" para una au pair con estos datos:\n\nNombre: ${nombre}\nEdad: ${edad}\nCiudad: ${ciudad}\nIdiomas: ${idiomas}\nExperiencia con niños: ${experiencia}\nHobbies: ${hobbies}\nPaís de destino: ${paisDestino}\n\nLa carta debe incluir: presentación personal, experiencia con niños, por qué quiere ser au pair en ese país, hobbies y personalidad, y despedida cálida.`
               }],
-              temperature: 0.8,
+              temperature: 0.7,
               max_tokens: 800,
+              extra_body: { thinking: { type: "disabled" } },
             }),
             signal: AbortSignal.timeout(20000),
           });
@@ -1348,7 +1350,7 @@ El candidato tiene mucha experiencia.
           const res = await fetch("https://api.deepseek.com/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
-            body: JSON.stringify({ model: "deepseek-chat", messages, max_tokens: 1024, temperature: 0.7 }),
+            body: JSON.stringify({ model: "deepseek-v4-pro", messages, max_tokens: 1024, temperature: 0.5, extra_body: { thinking: { type: "disabled" } } }),
             signal: AbortSignal.timeout(25000),
           });
           if (res.ok) {
