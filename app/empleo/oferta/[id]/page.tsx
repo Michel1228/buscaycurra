@@ -111,14 +111,12 @@ export default async function OfertaPublicaPage({
           )}
 
           <div className="mt-6 pt-4 flex flex-wrap gap-3" style={{ borderTop: "1px solid #2d3142" }}>
-            <a
-              href={row.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href={`/app/buscar?keyword=${encodeURIComponent(row.title || "")}&location=${encodeURIComponent(row.city || "")}`}
               className="text-sm px-5 py-2.5 rounded-lg font-medium"
               style={{ background: "transparent", color: "#64748b", border: "1px solid #2d3142" }}>
-              Ver oferta original →
-            </a>
+              Buscar similares en BuscayCurra
+            </Link>
             <Link
               href={`/auth/registro`}
               className="btn-game text-sm px-5 py-2.5 rounded-lg font-semibold">

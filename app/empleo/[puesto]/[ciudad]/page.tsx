@@ -200,11 +200,11 @@ export default async function EmpleoPage({
                       <p className="text-xs mt-2 line-clamp-2" style={{ color: "#706a58" }}>{o.description.slice(0, 150)}...</p>
                     )}
                   </div>
-                  <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer"
+                  <Link href={`/app/buscar?keyword=${encodeURIComponent(puestoFmt)}&location=${encodeURIComponent(ciudadFmt)}`}
                     className="shrink-0 px-4 py-2 rounded-xl text-xs font-semibold transition hover:opacity-80"
                     style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
-                    Ver oferta
-                  </a>
+                    Buscar ahora
+                  </Link>
                 </div>
               </div>
             ))}

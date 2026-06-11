@@ -177,10 +177,7 @@ export default function JobCard({
       {/* Aviso sin email */}
       {estadoEnvio === "sin-email" && (
         <p className="text-[11px] text-center" style={{ color: "#f0c040" }}>
-          Sin email disponible.{" "}
-          <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: "#7ed56f", textDecoration: "underline" }}>
-            Aplica en la web original →
-          </a>
+          Sin email aún. 📌 Guarda esta oferta y te avisamos cuando lo encontremos.
         </p>
       )}
 

@@ -619,15 +619,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                             style={{ background: "#161922", border: "1px solid #2d3142" }}>
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0 flex-1">
-                                {job.url ? (
-                                  <a href={job.url} target="_blank" rel="noopener noreferrer"
-                                    className="text-[13px] font-semibold truncate block hover:underline"
-                                    style={{ color: "#f1f5f9" }}>
-                                    {job.titulo} ↗
-                                  </a>
-                                ) : (
-                                  <p className="text-[13px] font-semibold truncate" style={{ color: "#f1f5f9" }}>{job.titulo}</p>
-                                )}
+                                <p className="text-[13px] font-semibold truncate" style={{ color: "#f1f5f9" }}>{job.titulo}</p>
                                 <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>
                                   {job.empresa}
                                   {locationHref ? (
