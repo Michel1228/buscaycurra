@@ -27,15 +27,10 @@ const CIUDADES_POPULARES = [
   "sabadell", "mostoles", "alcalá", "pamplona", "fuenlabrada",
 ];
 
-// Generar parámetros estáticos para las páginas más importantes
-export async function generateStaticParams() {
-  const params: Array<{ puesto: string; ciudad: string }> = [];
-  for (const puesto of PUESTOS_POPULARES) {
-    for (const ciudad of CIUDADES_POPULARES) {
-      params.push({ puesto, ciudad });
-    }
-  }
-  return params;
+// Páginas SEO generadas on-demand (ISR), no en build time
+export const dynamicParams = true;
+export function generateStaticParams() {
+  return [];
 }
 
 // ─── Metadata dinámica ──────────────────────────────────────────────────────

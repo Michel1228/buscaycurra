@@ -445,7 +445,7 @@ function detectIntent(text: string): string {
   if (/(?:qué|que)\s+(?:empresas?|f[áa]bricas?|negocios?|comercios?|tiendas?)\s+(?:hay|conoces|sabes)\s+(?:en|por|cerca|de)\s+\w+/i.test(t)) return "info_empresa";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
   // Detectar "[puesto] en [ciudad]" sin verbo explícito (ej: "camarero en Tudela")
-  if (/\w{3,}\s+(?:en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios|trabajado|trabaj[éeáa]|trabajaba|experiencia|no\s+puedo|cargar\s+peso|espalda|dolor|lesi[oó]n|baja\s+m[ée]dica|salario|sueldo|m[ií]nimo|smi|cu[aá]nto|cuesta|vale|cobra|gana|derecho|paro|sepe|finiquito|vacaciones|despido|indemnizaci[oó]n)/i.test(t)) return "buscar";
+  if (/\w{3,}\s+(?:en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios|trabajado|trabaj[éeáa]|trabajaba|experiencia|no\s+puedo|cargar\s+peso|espalda|dolor|lesi[oó]n|baja\s+m[ée]dica|salario|sueldo|m[ií]nimo|smi|cu[aá]nto|cuesta|vale|cobra|gana|derecho|paro|sepe|finiquito|vacaciones|despido|indemnizaci[oó]n|mercado\s+laboral|situaci[oó]n\s+laboral|perspectivas\s+laborales|c[oó]mo\s+est[aá]|hay\s+trabajo|posibilidades|emigrar|emigraci[oó]n)/i.test(t)) return "buscar";
   // "envíalo / mándalo / envíamelo / mándaselo / envía mi CV / manda currículum"
   if (/(?:env[ií]a|manda|env[ií]o|mando|env[ií]ame|m[aá]ndame)\s*(?:lo|la|los|las|me|mi|les|se)?\s*(?:mi\s+)?(?:cv|curr[ií]culum|candidatura|solicitud)?\s*$/.test(t)) return "enviar";
   if (/(?:env[ií]a|manda|env[ií]ame|m[aá]ndame|env[ií]o|mando)\s+(?:mi\s+)?(?:cv|curr[ií]culum|candidatura)/.test(t)) return "enviar";
@@ -459,7 +459,7 @@ function detectIntent(text: string): string {
     return "send_cv_local_confirm";
   }
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
-  if (/(preparar|practicar|simul).*(entrevista)|entrevista.*(preparar|practica)/.test(t)) return "entrevista_prep";
+  if (/(prep[aá]r|practicar|simul).*(entrevista)|entrevista.*(prep[aá]r|practica)/.test(t)) return "entrevista_prep";
   if (/(crear|hacer|nuevo).*(cv|curriculum)/.test(t)) return "crear_cv";
   if (/(info|informacion|datos|busca|conoce|saber|dime).*(sobre\s+)?(la\s+)?empresa\s+\w|(qué|quien)\s+(es|conoces)\s+\w+\s*(empresa)?/.test(t)) return "info_empresa";
   return "chat";
@@ -1675,7 +1675,7 @@ Responde en JSON exactamente así:
 function extractJobTerm(text: string): string {
   const stopwords = new Set(["trabajo", "empleo", "curro", "oferta", "algo", "en", "por", "para", "que", "lo", "la", "el", "un", "una"]);
   // "[puesto] en [ciudad]" — patrón más común (ej: "camarero en Tudela")
-  const mDirect = text.match(/^([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)\s+(?:en|por)\s+\w+/i);
+  const mDirect = text.match(/(?:^|\s)([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)\s+(?:en|por)\s+\w+/i);
   if (mDirect?.[1]?.trim()) {
     let job = mDirect[1].trim();
     const prefixVerbs = ["busca", "busco", "buscar", "buscando", "necesito", "necesita", "quiero", "quiere", "búsqueda de", "busqueda de", "me interesa", "me gustaría", "estoy buscando", "quiero trabajar de", "quiero curro de", "rastreame", "rastrea", "rastrear", "búscame", "encuéntrame", "localízame", "encuentrame", "localizame", "échame un ojo a", "quiero echar", "quiero tirar", "quiero dejar", "voy a echar", "voy a tirar", "voy a dejar", "echar", "tirar", "dejar"];
