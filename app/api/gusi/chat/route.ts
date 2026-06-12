@@ -5,9 +5,10 @@
  * los datos reales del CV del usuario. Guzzi nunca pregunta lo que ya sabe.
  */
 /**
- * 🔒 SELLO GUZZI — BuscayCurra
+/**
+ * 🔒 SELLO GUZZI detectIntent - BuscayCurra
  * detectIntent + extractJobTerm: NO TOCAR sin ejecutar tests
- * 🧪 sello-verificacion.mjs bloques 1 y 2 (12 tests de regex)
+ * Tests: sello-verificacion.mjs bloques 1 y 2 (12 tests de regex)
  */
 
 
@@ -16,7 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// ─── Prompt base ─────────────────────────────────────────────────────────────
+// --- Prompt base -------------------------------------------------------------
 
 const PROMPT_BASE = `[IDIOMA: ESPAÑOL OBLIGATORIO]
 Tu idioma es el ESPAÑOL. Toda tu respuesta debe estar en español de España, sin excepción.
@@ -232,7 +233,7 @@ CUANDO USES EL CV DEL USUARIO:
 
 RECUERDA: SIEMPRE en español. Esta es la regla número uno.`;
 
-// ─── Prompts especializados ───────────────────────────────────────────────────
+// --- Prompts especializados ---------------------------------------------------
 
 const PROMPT_ENTREVISTA = `IDIOMA OBLIGATORIO: ESPAÑOL. Nunca respondas en inglés.
 
@@ -304,7 +305,7 @@ Atentamente,
 REGLAS: menciona la empresa mínimo 3 veces, tono adaptado al sector (formal para banca,
 cercano para startups), NO inventes datos.`;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function analyzeCVDensity(cvData: string): { isSparse: boolean; isRich: boolean } {
   try {
@@ -581,7 +582,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     const countryFilter = `%${countryName}%`;
     const N = Math.min(limit * 2, 30);
 
-    // ── Estrategia 1: título + ciudad exacta ─────────────────────────────
+    // -- Estrategia 1: título + ciudad exacta -----------------------------
     if (city) {
       const cityPat = `%${city.toLowerCase()}%`;
       const r1 = await pool.query(
@@ -598,7 +599,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         return { jobs: (r1.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "ciudad" };
       }
 
-      // ── Estrategia 2: título + provincia de esa ciudad ─────────────────
+      // -- Estrategia 2: título + provincia de esa ciudad -----------------
       const provincia = CIUDAD_A_PROVINCIA[city.toLowerCase()];
       if (provincia) {
         const provPat = `%${provincia}%`;
@@ -618,7 +619,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
           return { jobs: (r2.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "provincia" };
         }
 
-        // ── Estrategia 2.5: ciudades cercanas en la misma provincia ──
+        // -- Estrategia 2.5: ciudades cercanas en la misma provincia --
         const cercanas = CIUDADES_CERCANAS[city.toLowerCase()];
         if (cercanas && cercanas.length > 0) {
           const nearPatterns = cercanas.map(c => `%${c}%`);
@@ -641,7 +642,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       }
     }
 
-    // ── Estrategia 2.5: provincias limítrofes ─────────────────────────────
+    // -- Estrategia 2.5: provincias limítrofes -----------------------------
     // Si no encuentra en la provincia exacta, busca en las limítrofes
     const provincia = CIUDAD_A_PROVINCIA[city.toLowerCase()];
     if (city && provincia) {
@@ -669,7 +670,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       }
     }
 
-    // ── Estrategia 3: título en cualquier lugar del país ─────────────────
+    // -- Estrategia 3: título en cualquier lugar del país -----------------
     const r3 = await pool.query(
       `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
        FROM "JobListing"
@@ -683,7 +684,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       return { jobs: (r3.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "pais" };
     }
 
-    // ── Estrategia 4: sinónimos del puesto ───────────────────────────────
+    // -- Estrategia 4: sinónimos del puesto -------------------------------
     const queryNorm = query.toLowerCase();
     for (const [key, syns] of Object.entries(SINONIMOS_PUESTO)) {
       if (queryNorm.includes(key) || syns.some(s => queryNorm.includes(s))) {
@@ -706,7 +707,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       }
     }
 
-    // ── Estrategia 5: APIs externas ──────────────────────────────────────
+    // -- Estrategia 5: APIs externas --------------------------------------
     const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
     const extOfertas = await Promise.race([
       buscarOfertasReales(query, city, Math.min(limit * 2, 20)),
@@ -825,7 +826,7 @@ function localReply(intent: string, cv?: CVParsed | null): string {
   }
 }
 
-// ─── Rate Limiting ──────────────────────────────────────────────────────────
+// --- Rate Limiting ----------------------------------------------------------
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW = 60_000; // 1 minuto
 const RATE_LIMIT_MAX = 20; // 20 mensajes por minuto
@@ -852,7 +853,7 @@ setInterval(() => {
   }
 }, 300_000);
 
-// ─── Handler principal ────────────────────────────────────────────────────────
+// --- Handler principal --------------------------------------------------------
 
 export async function POST(req: NextRequest) {
   // Rate limiting: por IP o userId
@@ -885,7 +886,7 @@ export async function POST(req: NextRequest) {
 
     if (!message) return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
 
-    // ── Verificar límites del plan ──
+    // -- Verificar límites del plan --
     if (userId) {
       const { checkGuzziAccess } = await import("@/lib/guzzi-limits");
       const access = await checkGuzziAccess(userId);
@@ -1026,7 +1027,7 @@ export async function POST(req: NextRequest) {
       return null;
     }
 
-    // ── Modo preparación de entrevista ───────────────────────────────────────
+    // -- Modo preparación de entrevista ---------------------------------------
     if (mode === "prep_entrevista") {
       const ctx = cvData ? `Datos del candidato:\n${cvParsed?.resumenTexto || cvData.slice(0, 400)}` : "";
       const content = `Entrevista: "${message}". ${ctx}`;
@@ -1034,7 +1035,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply });
     }
 
-    // ── Modo CV mejorado ─────────────────────────────────────────────────────
+    // -- Modo CV mejorado -----------------------------------------------------
     if (mode === "cv_mejorado" || detectIntent(message) === "cv_mejorado") {
       if (!cvData) {
         return NextResponse.json({
@@ -1075,7 +1076,7 @@ El candidato tiene mucha experiencia.
       return NextResponse.json({ reply, action: "cv_mejorado" });
     }
 
-    // ── Modo carta ───────────────────────────────────────────────────────────
+    // -- Modo carta -----------------------------------------------------------
     if (mode === "carta_recomendacion" || detectIntent(message) === "carta_recomendacion") {
       // Extraer empresa/puesto del mensaje si el frontend no los pasó
       let cartaEmpresa = empresa || "";
@@ -1109,7 +1110,7 @@ El candidato tiene mucha experiencia.
       return NextResponse.json({ reply, action: "carta_recomendacion", empresa: cartaEmpresa, puesto: cartaPuesto });
     }
 
-    // ── Intent: info empresa (Google Places) ──────────────────────────────────
+    // -- Intent: info empresa (Google Places) ----------------------------------
     const preIntent = detectIntent(message);
     if (preIntent === "info_empresa") {
       const companyName = extractCompanyName(message);
@@ -1199,7 +1200,7 @@ El candidato tiene mucha experiencia.
       }
     }
 
-    // ── Respuesta a choose_size: "grande" o "pequeña" ─────────────────────────
+    // -- Respuesta a choose_size: "grande" o "pequeña" -------------------------
     const isChooseSizeReply = /^(grande|pequeñ[oa]|pequen[oa]|local|negocio\\s+local|empresa\\s+grande|pequeñas?\\s+empresas?)$/i.test(message.trim());
     if (isChooseSizeReply) {
       const wantSmall = /^(pequeñ[oa]|pequen[oa]|local|negocio\\s+local|pequeñas?\\s+empresas?)$/i.test(message.trim());
@@ -1276,10 +1277,10 @@ El candidato tiene mucha experiencia.
       }
     }
 
-    // ── Intent: buscar trabajo ───────────────────────────────────────────────
+    // -- Intent: buscar trabajo -----------------------------------------------
     const intent = detectIntent(message);
 
-    // ── Intent: buscar au pair ──────────────────────────────────────────────
+    // -- Intent: buscar au pair ----------------------------------------------
     if (intent === "buscar_au_pair" || mode === "buscar_au_pair") {
       const extractedCity = extractCity(message);
       const extractedCountry = extractCountryCode(message);
@@ -1302,7 +1303,7 @@ El candidato tiene mucha experiencia.
       });
     }
 
-    // ── Intent: carta au pair ───────────────────────────────────────────────
+    // -- Intent: carta au pair -----------------------------------------------
     if (intent === "carta_au_pair" || mode === "carta_au_pair") {
       if (!auPairProfile) {
         return NextResponse.json({
@@ -1442,7 +1443,7 @@ El candidato tiene mucha experiencia.
       }
     }
 
-    // ── Intent: enviar CV a negocio local (GOOGLE PLACES → REAL SEND) ────────
+    // -- Intent: enviar CV a negocio local (GOOGLE PLACES → REAL SEND) --------
     if (intent === "send_cv_local_confirm") {
       // Extraer contexto del historial: empresa, teléfono, puesto
       const histText = history.slice(-6).map((m: { text: string }) => m.text).join("\n");
@@ -1545,7 +1546,7 @@ Responde en JSON exactamente así:
       }
     }
 
-    // ── Intent: enviar CV ────────────────────────────────────────────────────
+    // -- Intent: enviar CV ----------------------------------------------------
     if (intent === "enviar") {
       if (!cvData) {
         return NextResponse.json({
@@ -1598,7 +1599,7 @@ Responde en JSON exactamente así:
       });
     }
 
-    // ── Chat normal con IA ───────────────────────────────────────────────────
+    // -- Chat normal con IA ---------------------------------------------------
     const systemPrompt = buildSystemPrompt(cvData, pais, auPairProfile);
     const messages = [
       { role: "system" as const, content: systemPrompt },
@@ -1789,7 +1790,7 @@ function extractCountryCode(text: string): string {
   return "";
 }
 
-// ─── Búsqueda de ofertas Au Pair ──────────────────────────────────────────
+// --- Búsqueda de ofertas Au Pair ------------------------------------------
 
 async function searchAuPairJobs(country: string, limit = 5) {
   try {
