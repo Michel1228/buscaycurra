@@ -38,3 +38,4 @@ scripts/explorar-*.mjs
 scripts/subir-cv-demo.mjs
 *temprun.json
 .env.local.bak
+.env.local.backup.*
