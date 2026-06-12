@@ -14,7 +14,7 @@
  *   WHATSAPP_VERIFY_TOKEN=buscaycurra_whatsapp_webhook
  */
 
-const WHATSAPP_API = "https://graph.facebook.com/v20.0";
+const WHATSAPP_API = "https://graph.facebook.com/v21.0";
 
 interface WhatsAppMessage {
   to: string; // Número con código de país: "34600123456"
