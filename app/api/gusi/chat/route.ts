@@ -814,8 +814,7 @@ function localReply(intent: string, cv?: CVParsed | null): string {
     case "entrevista_prep":
       return "🎯 **Preparación de entrevistas no disponible ahora mismo.**\n\nMientras tanto, aquí tienes un guion rápido:\n• Prepara 3 ejemplos con método STAR (Situación, Tarea, Acción, Resultado)\n• Investiga la empresa: sector, tamaño, noticias recientes\n• Prepara preguntas para hacer tú al final\n• Ensaya tu presentación de 1 minuto en voz alta\n\n¿Sobre qué puesto es la entrevista? Te ayudo a enfocarla. ";
     case "carta_recomendacion":
-      // Genera carta de presentación real usando datos del CV (sin depender de APIs externas)
-      return ""; // Se genera dinámicamente más abajo, nunca debe llegar aquí como fallback
+      return "✉️ **Carta de presentación no disponible en este momento.**\n\nMientras tanto, puedes estructurarla así:\n1. **Asunto**: Candidatura [Puesto] — [Tu Nombre]\n2. **Apertura**: por qué te interesa esa empresa en concreto\n3. **Cuerpo**: 2-3 logros que conecten con lo que buscan\n4. **Cierre**: disponibilidad para entrevista y despedida cordial\n\n¿Te ayudo a redactarla paso a paso? ";
     case "info_empresa":
       return "🏢 **No puedo consultar información de esa empresa ahora mismo.**\n\nPuedes buscar en:\n• **LinkedIn** — página de empresa y empleados\n• **Glassdoor** — opiniones de empleados y rangos salariales\n• **Google Maps** — sede, tamaño, sector\n\n¿Quieres que busque ofertas activas de esa empresa en nuestra base de datos? 🔍";
     case "buscar_au_pair":
@@ -1106,23 +1105,8 @@ El candidato tiene mucha experiencia.
       }
       const ctx = cvData ? `Datos del candidato: ${cvParsed?.resumenTexto || cvData.slice(0, 400)}` : "";
       const content = `Empresa: ${cartaEmpresa}. Puesto: ${cartaPuesto}. ${ctx}`;
-      // Generar carta real con datos del CV si las APIs fallan
-      const generarCartaLocal = () => {
-        const n = cvParsed?.nombre || "Candidato/a";
-        const c = cvParsed?.ciudad || "";
-        const up = cvParsed?.ultimoPuesto || "";
-        const fecha = new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" });
-        let carta = `${c || "España"}, ${fecha}\n\n`;
-        carta += `Estimado/a responsable de selección de **${cartaEmpresa}**:\n\n`;
-        carta += `Me dirijo a ustedes para presentar mi candidatura al puesto de **${cartaPuesto}** en ${cartaEmpresa}. `;
-        if (up) carta += `Cuento con experiencia como **${up}** y `;
-        carta += `estoy convencido/a de que mi perfil encaja con lo que buscan.\n\n`;
-        carta += `Me motiva ${cartaEmpresa} por su trayectoria en el sector. Soy una persona proactiva, con gran capacidad de adaptación, trabajo en equipo y orientación a resultados. Aporto compromiso, ganas de aprender y la determinación para cumplir objetivos.\n\n`;
-        carta += `Quedo a su disposición para ampliar información en una entrevista personal.\n\n`;
-        carta += `Atentamente,\n**${n}**`;
-        return carta;
-      };
-      const reply = await callDeepSeek(PROMPT_CARTA, content, 800) || await callGroq(PROMPT_CARTA, content, 800) || generarCartaLocal();
+      // DeepSeek primario (mejor español), Groq fallback
+      const reply = await callDeepSeek(PROMPT_CARTA, content, 800) || await callGroq(PROMPT_CARTA, content, 800) || localReply("carta_recomendacion");
       return NextResponse.json({ reply, action: "carta_recomendacion", empresa: cartaEmpresa, puesto: cartaPuesto });
     }
 
