@@ -59,6 +59,13 @@ const CIUDAD_PROVINCIA: Record<string, string> = {
   "gijon": "asturias", "oviedo": "asturias", "santander": "cantabria",
 };
 
+// Mapa inverso: provincia → [ciudades] para expansión geográfica
+const PROVINCIA_CIUDADES: Record<string, string[]> = {};
+for (const [ciudad, provincia] of Object.entries(CIUDAD_PROVINCIA)) {
+  if (!PROVINCIA_CIUDADES[provincia]) PROVINCIA_CIUDADES[provincia] = [];
+  PROVINCIA_CIUDADES[provincia].push(ciudad);
+}
+
 function getProvinciaExpansion(location: string): string | null {
   const norm = location.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "");
   for (const [ciudad, provincia] of Object.entries(CIUDAD_PROVINCIA)) {
@@ -67,6 +74,33 @@ function getProvinciaExpansion(location: string): string | null {
     }
   }
   return null;
+}
+
+/** 
+ * Expansión inversa: provincia → LIKE patterns para ciudades
+ * Cuando la location es una provincia ("navarra"), genera patrones para sus ciudades
+ * porque el campo `province` casi nunca está poblado en la DB
+ */
+function getCiudadPatterns(location: string): string[] {
+  const norm = location.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const patterns: string[] = [];
+  
+  // 1. Si es una provincia, añadir todas sus ciudades conocidas
+  const ciudades = PROVINCIA_CIUDADES[norm];
+  if (ciudades) {
+    patterns.push(...ciudades);
+  }
+  
+  // 2. Si es una ciudad, añadir la provincia + ciudades hermanas
+  const provincia = CIUDAD_PROVINCIA[norm];
+  if (provincia && PROVINCIA_CIUDADES[provincia]) {
+    patterns.push(provincia);
+    for (const c of PROVINCIA_CIUDADES[provincia]) {
+      if (c !== norm) patterns.push(c); // ciudades hermanas
+    }
+  }
+  
+  return [...new Set(patterns)]; // dedup
 }
 
 const supabase = createClient(
@@ -107,9 +141,32 @@ export async function GET(request: NextRequest) {
 
       // 2. Buscar nuevas ofertas que coincidan (con expansión geográfica provincial)
       const kw = `%${alerta.keyword.toLowerCase()}%`;
-      const loc = alerta.location ? `%${alerta.location.toLowerCase()}%` : null;
-      const provincia = alerta.location ? getProvinciaExpansion(alerta.location) : null;
-      const provLoc = provincia ? `%${provincia}%` : null;
+      const locNorm = alerta.location ? alerta.location.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+      
+      // Construir cláusulas geográficas con expansión provincia↔ciudades
+      let geoClause = "";
+      const geoParams: string[] = [];
+      let pIdx = 3; // $1=desde, $2=kw, $3+ = geo params
+      
+      if (alerta.location) {
+        const locPat = `%${locNorm}%`;
+        // Coincidencia directa (ciudad o provincia en DB)
+        geoClause += `LOWER(city) LIKE $${pIdx} OR LOWER(province) LIKE $${pIdx}`;
+        geoParams.push(locPat);
+        pIdx++;
+        
+        // Expansión: añadir ciudades relacionadas
+        const expandidas = getCiudadPatterns(alerta.location);
+        for (const c of expandidas) {
+          geoClause += ` OR LOWER(city) LIKE $${pIdx} OR LOWER(province) LIKE $${pIdx}`;
+          geoParams.push(`%${c}%`);
+          pIdx++;
+        }
+        
+        geoClause = `AND (${geoClause})`;
+      }
+
+      const allParams = [desde, kw, ...geoParams];
 
       const jobsResult = await pool.query<{ id: string; title: string; company: string; city: string; count: string; sourceUrl: string }>(
         `SELECT id, title, company, city, COUNT(*) OVER() AS count, "sourceUrl"
@@ -117,11 +174,9 @@ export async function GET(request: NextRequest) {
          WHERE "isActive" = true
            AND "createdAt" > $1
            AND (LOWER(title) LIKE $2 OR LOWER(company) LIKE $2 OR LOWER(description) LIKE $2)
-           ${loc ? `AND (LOWER(city) LIKE $3 OR LOWER(province) LIKE $3${provLoc ? " OR LOWER(city) LIKE $4 OR LOWER(province) LIKE $4" : ""})` : ""}
+           ${geoClause}
          LIMIT 3`,
-        loc
-          ? (provLoc ? [desde, kw, loc, provLoc] : [desde, kw, loc])
-          : [desde, kw]
+        allParams
       );
 
       if (jobsResult.rows.length === 0) {
