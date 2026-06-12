@@ -1,9 +1,16 @@
-﻿/**
+/**
  * /api/gusi/chat — Guzzi v4: asistente de empleo con contexto de CV real
  *
  * Cambio clave: el system prompt se construye dinámicamente inyectando
  * los datos reales del CV del usuario. Guzzi nunca pregunta lo que ya sabe.
  */
+/**
+ * 🔒 SELLO GUZZI — BuscayCurra
+ * detectIntent + extractJobTerm: NO TOCAR sin ejecutar tests
+ * 🧪 sello-verificacion.mjs bloques 1 y 2 (12 tests de regex)
+ */
+
+
 
 import { NextRequest, NextResponse } from "next/server";
 
