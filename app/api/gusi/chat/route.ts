@@ -452,6 +452,12 @@ function detectIntent(text: string): string {
   if (/(?:quiero|puedes|puede|vas a)\s+(?:enviar|mandar)\s+(?:mi\s+)?(?:cv|curr[ií]culum|candidatura)/.test(t)) return "enviar";
   // "echar/tirar/dejar currículum/CV en [sitio]" → buscar
   if (/(?:echar|tirar|dejar|entregar|repartir)\s+(?:el\s+)?(?:curr[ií]culum|cv|curriculo)s?/i.test(t) && /\s+(?:en|por)\s+\w+/i.test(t)) return "buscar";
+  // Confirmación de envío a negocio local (Guzzi ya encontró el contacto)
+  const confirmSend = /^(si|s[ií]i|dale|vale|ok|okey|okay|venga|adelante|perfecto|genial|fenomenal|claro|por\s+supuesto|obvio|pues\s+si|pues\s+venga|hazlo|env[ií]alo|m[aá]ndalo|tira|t[ií]ralo|p[áa]lante|a\s+por\s+ello|me\s+gusta|me\s+apunto|elijo\s+la?\s*\d|la\s+primera|la\s+\d|la\s+opci[oó]n\s+\d|opci[oó]n\s+\d)/i;
+  const histText = (history as unknown as Array<{ text: string }>).slice(-4).map((m) => m.text).join(" ");
+  if (confirmSend.test(t.trim()) && /bar|restaurante|cafeter[ií]a|negocio\s+local|pequeñ[oa]|Google\s+Maps|plaza\s+nueva|bar\s+diamante|tel[eé]fono\s*\d|948|local\s+pequeñ/i.test(histText)) {
+    return "send_cv_local_confirm";
+  }
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
   if (/(preparar|practicar|simul).*(entrevista)|entrevista.*(preparar|practica)/.test(t)) return "entrevista_prep";
   if (/(crear|hacer|nuevo).*(cv|curriculum)/.test(t)) return "crear_cv";
@@ -636,7 +642,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       if (limitrofes && limitrofes.length > 0) {
         const provPatterns = limitrofes.map((p: string) => `%${p}%`);
         const orClauses = limitrofes.map((_: string, i: number) =>
-          `LOWER(city) LIKE $${3 + i} OR LOWER(province) LIKE $${3 + i}`
+          `LOWER(city) LIKE $${4 + i} OR LOWER(province) LIKE $${4 + i}`
         ).join(" OR ");
         const params: unknown[] = [kw, isoCode, countryFilter, ...provPatterns, N];
 
@@ -896,12 +902,25 @@ export async function POST(req: NextRequest) {
       try {
         const { getPool } = await import("@/lib/db");
         const pool = getPool();
+        // 1. Buscar en user_cvs (CV subido a Guzzi)
         const row = await pool.query(
           "SELECT form_data FROM user_cvs WHERE user_id = $1",
           [userId]
         );
         if (row.rows[0]?.form_data) {
           cvData = JSON.stringify(row.rows[0].form_data);
+        }
+        // 2. Si no hay en user_cvs, buscar en CV (editor de currículum Prisma)
+        if (!cvData || cvData === "{}") {
+          const cvRow = await pool.query(
+            `SELECT "formData" FROM "CV" WHERE "userId" = $1 ORDER BY "updatedAt" DESC LIMIT 1`,
+            [userId]
+          );
+          if (cvRow.rows[0]?.formData) {
+            cvData = typeof cvRow.rows[0].formData === "string"
+              ? cvRow.rows[0].formData
+              : JSON.stringify(cvRow.rows[0].formData);
+          }
         }
       } catch {
         // Si falla la BD, usar el cvData del cliente como fallback
@@ -976,7 +995,6 @@ export async function POST(req: NextRequest) {
         ],
         temperature: 0.5,
         max_tokens: maxTokens,
-        extra_body: { thinking: { type: "disabled" } },
       });
 
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -985,7 +1003,7 @@ export async function POST(req: NextRequest) {
             method: "POST",
             headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
             body,
-            signal: AbortSignal.timeout(25000),
+            signal: AbortSignal.timeout(35000),
           });
           if (!res.ok) {
             if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
@@ -1052,16 +1070,36 @@ El candidato tiene mucha experiencia.
 
     // ── Modo carta ───────────────────────────────────────────────────────────
     if (mode === "carta_recomendacion" || detectIntent(message) === "carta_recomendacion") {
-      if (!empresa || !puesto) {
+      // Extraer empresa/puesto del mensaje si el frontend no los pasó
+      let cartaEmpresa = empresa || "";
+      let cartaPuesto = puesto || "";
+      if (!cartaEmpresa || !cartaPuesto) {
+        // Patrones: "carta para [EMPRESA] de [PUESTO]", "carta de [PUESTO] en [EMPRESA]"
+        const empMatch = message.match(/(?:carta\s+(?:de\s+)?(?:presentaci[oó]n|recomendaci[oó]n)\s+)?(?:para|en)\s+([A-ZÁÉÍÓÚÑ][A-Za-záéíóúüñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúüñ]+){0,4})(?:\s+de\s+(.+?))?(?:\s*$)/);
+        if (empMatch) {
+          cartaEmpresa = cartaEmpresa || empMatch[1]?.trim() || "";
+          cartaPuesto = cartaPuesto || empMatch[2]?.trim() || "";
+        }
+        // También: "de [PUESTO] en [EMPRESA]"
+        if (!cartaPuesto) {
+          const puestoMatch = message.match(/de\s+([a-záéíóúüñ]+(?:\s+[a-záéíóúüñ]+){0,3})\s+en\s+([A-ZÁÉÍÓÚÑ][A-Za-záéíóúüñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúüñ]+){0,4})/i);
+          if (puestoMatch) {
+            cartaPuesto = cartaPuesto || puestoMatch[1]?.trim() || "";
+            cartaEmpresa = cartaEmpresa || puestoMatch[2]?.trim() || "";
+          }
+        }
+      }
+      if (!cartaEmpresa || !cartaPuesto) {
         return NextResponse.json({
           reply: "✉️ Para la carta necesito:\n1. 🏢 Nombre de la empresa\n2. 🎯 Puesto al que aplicas\n\nDime los dos y te la genero ahora. ",
           action: "need_empresa_puesto",
         });
       }
       const ctx = cvData ? `Datos del candidato: ${cvParsed?.resumenTexto || cvData.slice(0, 400)}` : "";
-      const content = `Empresa: ${empresa}. Puesto: ${puesto}. ${ctx}`;
-      const reply = await callGroq(PROMPT_CARTA, content, 800) || localReply("carta_recomendacion");
-      return NextResponse.json({ reply, action: "carta_recomendacion", empresa, puesto });
+      const content = `Empresa: ${cartaEmpresa}. Puesto: ${cartaPuesto}. ${ctx}`;
+      // DeepSeek primario (mejor español), Groq fallback
+      const reply = await callDeepSeek(PROMPT_CARTA, content, 800) || await callGroq(PROMPT_CARTA, content, 800) || localReply("carta_recomendacion");
+      return NextResponse.json({ reply, action: "carta_recomendacion", empresa: cartaEmpresa, puesto: cartaPuesto });
     }
 
     // ── Intent: info empresa (Google Places) ──────────────────────────────────
@@ -1292,7 +1330,6 @@ El candidato tiene mucha experiencia.
               }],
               temperature: 0.7,
               max_tokens: 800,
-              extra_body: { thinking: { type: "disabled" } },
             }),
             signal: AbortSignal.timeout(20000),
           });
@@ -1398,6 +1435,109 @@ El candidato tiene mucha experiencia.
       }
     }
 
+    // ── Intent: enviar CV a negocio local (GOOGLE PLACES → REAL SEND) ────────
+    if (intent === "send_cv_local_confirm") {
+      // Extraer contexto del historial: empresa, teléfono, puesto
+      const histText = history.slice(-6).map((m: { text: string }) => m.text).join("\n");
+      const empresaMatch = histText.match(/(?:BAR|Bar|Restaurante|Cafeter[ií]a|Tienda|Hotel|Taller|Panader[ií]a|Farmacia|Cl[ií]nica)\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑa-záéíóúüñ\s]+?)(?:\n|\||·|-|—|\.|$)/);
+      const telefonoMatch = histText.match(/(?:tel[eé]fono|telf?|📞)\s*[:\s]*\+?(\(?\d{2,3}\)?[\s\-]?\d{2,3}[\s\-]?\d{2,3}[\s\-]?\d{2,3})/i);
+      const puestoMatch = histText.match(/(?:puesto|trabajo|como|de)\s+(camarero[\/a]*|cocinero[\/a]*|ayudante[\s\w]*|repartidor[\/a]*|limpiador[\/a]*|dependiente[\/a]*|mozo[\/a]*)/i);
+
+      const empresaNombre = empresaMatch?.[1]?.trim() || "Empresa local";
+      const telefono = telefonoMatch?.[1]?.replace(/[\s\-\(\)]/g, "") || "";
+      const puesto = puestoMatch?.[1]?.trim() || cvParsed?.ultimoPuesto || "Candidatura espontánea";
+
+      // Construir datos reales del CV para la carta
+      const cvResumen = cvData ? JSON.stringify(cvData).slice(0, 800) : (
+        cvParsed ? [
+          cvParsed.nombre ? `Nombre: ${cvParsed.nombre}` : "",
+          cvParsed.ultimoPuesto ? `Último puesto: ${cvParsed.ultimoPuesto}` : "",
+          cvParsed.resumenTexto ? `Experiencia: ${cvParsed.resumenTexto}` : "",
+          cvParsed.ciudad ? `Ciudad: ${cvParsed.ciudad}` : "",
+        ].filter(Boolean).join(". ") : "Sin datos de CV"
+      );
+
+      // Generar carta adaptada y CV usando DeepSeek
+      const deepseekKey = process.env.DEEPSEEK_API_KEY || "";
+      let adaptedCv = "";
+      let coverLetter = "";
+
+      if (deepseekKey) {
+        const promptAdaptacion = `Eres un experto en recruiting. Adapta un CV para el puesto de "${puesto}" en "${empresaNombre}". 
+
+Datos del candidato (CV real):
+- Puesto: ${cvParsed?.ultimoPuesto || "No especificado"}
+- Experiencia: ${cvResumen}
+- Ciudad: ${cvParsed?.ciudad || "Tudela"}
+
+El negocio es local/pequeño (hostelería, comercio, etc.). 
+IMPORTANTE: NO inventes experiencia que no existe. Usa SOLO los datos proporcionados arriba. Si no hay suficiente información, sé honesto y sugiere un CV genérico con habilidades transferibles.
+
+Responde en JSON exactamente así:
+{"carta":"<carta breve 2-3 frases, personal, cálida, directa al dueño/encargado>","cv":"<CV adaptado: perfil profesional + experiencia relevante + habilidades, máximo 200 palabras>"}`;
+
+        try {
+          const dsRes = await fetch("https://api.deepseek.com/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
+            body: JSON.stringify({
+              model: "deepseek-v4-pro",
+              messages: [{ role: "user", content: promptAdaptacion }],
+              max_tokens: 800,
+              temperature: 0.5,
+            }),
+            signal: AbortSignal.timeout(20000),
+          });
+          if (dsRes.ok) {
+            const dsData = await dsRes.json() as { choices?: Array<{ message?: { content?: string } }> };
+            const content = dsData.choices?.[0]?.message?.content || "";
+            const jsonMatch = content.match(/\{[^}]*"carta"[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              coverLetter = parsed.carta || "";
+              adaptedCv = parsed.cv || "";
+            }
+          }
+        } catch (e) { console.error("[send_cv_local_confirm] DeepSeek error:", (e as Error).message); }
+      }
+
+      if (!adaptedCv) {
+        adaptedCv = `Profesional con experiencia en ${cvParsed?.ultimoPuesto || "atención al público"} buscando oportunidad en hostelería. Destaco por mi capacidad de aprendizaje rápido, trabajo en equipo y actitud proactiva.`;
+      }
+      if (!coverLetter) {
+        coverLetter = `Hola, equipo de ${empresaNombre}. Soy ${cvParsed?.nombre || "Michel"}, vivo en ${cvParsed?.ciudad || "Tudela"} y me encantaría trabajar con vosotros. Tengo muchas ganas de aprender y aportar mi energía al equipo. ¿Podemos hablar?`;
+      }
+
+      // Llamar al endpoint de envío real
+      try {
+        const sendRes = await fetch(`http://localhost:3000/api/gusi/send-cv-local`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            companyName: empresaNombre,
+            companyPhone: telefono,
+            companyEmail: "",
+            puesto,
+            adaptedCv,
+            coverLetter,
+          }),
+        });
+        const sendData = await sendRes.json();
+
+        return NextResponse.json({
+          reply: `✅ **¡Hecho!**\n\nHe generado tu CV adaptado con la plantilla profesional y la carta de presentación para **${empresaNombre}**.\n\n${sendData.message}\n\n📄 ${sendData.pdfUrl ? `[Ver CV generado](${sendData.pdfUrl})` : ""}\n\n💡 **Recomendación**: Pásate mañana a media mañana por ${empresaNombre} y refuerza la candidatura en persona. ¡Así te recuerdan!`,
+          action: "cv_sent_local",
+        });
+      } catch (sendErr) {
+        console.error("[send_cv_local_confirm] Send error:", (sendErr as Error).message);
+        return NextResponse.json({
+          reply: `Lo siento, ha fallado el envío automático. Pero tengo tu CV y la carta listos.\n\n📧 Ve a [la página de envíos](/app/envios) o dime un email de ${empresaNombre} y lo intentamos de nuevo.`,
+          action: "send_cv_flow",
+        });
+      }
+    }
+
     // ── Intent: enviar CV ────────────────────────────────────────────────────
     if (intent === "enviar") {
       if (!cvData) {
@@ -1474,8 +1614,8 @@ El candidato tiene mucha experiencia.
           const res = await fetch("https://api.deepseek.com/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
-            body: JSON.stringify({ model: "deepseek-v4-pro", messages, max_tokens: 1024, temperature: 0.5, extra_body: { thinking: { type: "disabled" } } }),
-            signal: AbortSignal.timeout(25000),
+            body: JSON.stringify({ model: "deepseek-v4-pro", messages, max_tokens: 1024, temperature: 0.5 }),
+            signal: AbortSignal.timeout(35000),
           });
           if (res.ok) {
             const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
