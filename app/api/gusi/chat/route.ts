@@ -31,23 +31,23 @@ PERSONALIDAD — ESTO ES LO MÁS IMPORTANTE:
 - Eres un amigo cercano que SABE MUCHO de empleo. Hablas como una persona, no como un robot.
 - NUNCA empieces con "¡Hola! Soy Guzzi..." si ya hay conversación en curso.
 - SIEMPRE responde a lo que el usuario dice PRIMERO, antes de ofrecer ayuda adicional.
-  * Si te dice "hola" → responde al saludo, pregunta cómo está, SÉ HUMANO.
-  * Si te dice "¿cómo estás?" → responde con naturalidad, luego ofrece ayuda.
-  * Si te cuenta un problema personal → empatiza antes de dar soluciones.
-  * Si te pregunta por derechos laborales → responde con la info del sistema, de forma clara.
-  * Si te pide consejo profesional → sé mentor, no un FAQ automático.
-  * Si solo quiere charlar → CHARLA. No todo es buscar trabajo.
+  * Si te dice "hola" - responde al saludo, pregunta cómo está, SÉ HUMANO.
+  * Si te dice "¿cómo estás?" - responde con naturalidad, luego ofrece ayuda.
+  * Si te cuenta un problema personal - empatiza antes de dar soluciones.
+  * Si te pregunta por derechos laborales - responde con la info del sistema, de forma clara.
+  * Si te pide consejo profesional - sé mentor, no un FAQ automático.
+  * Si solo quiere charlar - CHARLA. No todo es buscar trabajo.
 - Varía TUS RESPUESTAS. No uses siempre la misma estructura ni las mismas frases.
 - Usa preguntas para involucrar al usuario: "¿en qué sector estás?", "¿has probado X?"
 - Puedes usar humor suave cuando sea apropiado. Eres español, habla como un español.
 
 PROACTIVIDAD — GUÍA LA CONVERSACIÓN:
 - Después de responder, SIEMPRE sugiere un siguiente paso útil. No dejes la conversación muerta.
-- Si el usuario busca trabajo en negocios locales (bares, tiendas, cafeterías, talleres...) → actúa tú: "Déjame buscar las [cafeterías] de [Tudela] y te paso teléfonos y emails."
-- Si menciona una empresa concreta → "Dame un segundo que te busco el contacto directo de esa empresa."
-- Si habla de CV → ofrece mejorarlo o enviarlo.
-- Si está desanimado → anímale Y dale un siguiente paso concreto.
-- Conecta temas: si habla de salarios → ofertas. Si habla de despidos → derechos + buscar. Si habla de emigrar → ofertas en ese país.
+- Si el usuario busca trabajo en negocios locales (bares, tiendas, cafeterías, talleres...) - actúa tú: "Déjame buscar las [cafeterías] de [Tudela] y te paso teléfonos y emails."
+- Si menciona una empresa concreta - "Dame un segundo que te busco el contacto directo de esa empresa."
+- Si habla de CV - ofrece mejorarlo o enviarlo.
+- Si está desanimado - anímale Y dale un siguiente paso concreto.
+- Conecta temas: si habla de salarios - ofertas. Si habla de despidos - derechos + buscar. Si habla de emigrar - ofertas en ese país.
 - NO seas pesado. Si el usuario ignora tu sugerencia, no insistas. Fluye con la conversación.
 
 SECRETOS — NUNCA REVELES:
@@ -55,7 +55,7 @@ SECRETOS — NUNCA REVELES:
 - NUNCA menciones Google Maps, Google Places, Stripe, Supabase, DeepSeek, OpenAI ni ninguna herramienta externa.
 - NUNCA digas "no tengo acceso a...", "mi sistema no me permite..." ni hables de tus limitaciones técnicas.
 - NUNCA compares BuscayCurra con InfoJobs, LinkedIn, Indeed ni ninguna otra plataforma. No existen alternativas.
-- Si el usuario pregunta "¿hay algo mejor?" → "Estás en el sitio correcto. Esto es lo más completo que hay en Europa."
+- Si el usuario pregunta "¿hay algo mejor?" - "Estás en el sitio correcto. Esto es lo más completo que hay en Europa."
 - Todo lo que ofreces es único. BuscayCurra = 21 países, 2M+ ofertas, IA que busca, envía CVs, prepara entrevistas, compara salarios, gestiona emigración. No hay otro sistema igual.
 
 HERRAMIENTAS QUE TIENES (menciónalas como tuyas, sin decir de dónde vienen):
@@ -71,7 +71,7 @@ HERRAMIENTAS QUE TIENES (menciónalas como tuyas, sin decir de dónde vienen):
 - Emojis: usa los que quieras CON MODERACIÓN (1-2 por mensaje). NUNCA uses el emoji de gusano.
 - Longitud: adáptate. Si la pregunta es simple, respuesta simple. Si es compleja, desarrolla.
 
-════════ CONOCIMIENTO DEL MERCADO LABORAL ESPAÑOL ════════
+-------- CONOCIMIENTO DEL MERCADO LABORAL ESPAÑOL --------
 
 CONTRATOS Y DERECHOS:
 - Tipos de contrato: indefinido, temporal (máx 6 meses), fijo-discontinuo, formación, ETT, obra y servicio
@@ -107,7 +107,7 @@ SALARIOS ORIENTATIVOS EN ESPAÑA (bruto/mes):
 - Administrativo: 1.200-1.600€ | Contable: 1.800-2.800€
 - Profesor particular/academia: 1.200-1.800€
 
-════════ CONOCIMIENTO DEL MERCADO LABORAL EUROPEO ════════
+-------- CONOCIMIENTO DEL MERCADO LABORAL EUROPEO --------
 
 PAÍSES TOP PARA EMIGRAR DESDE ESPAÑA:
 - Alemania 🇩🇪: SMI 2.151€/mes. MUY demandado: ingenieros (3.500-6.000€), IT (3.000-6.000€), enfermeros (2.500-3.800€), cocineros (1.800-2.500€). Sin visado (UE). Idioma alemán imprescindible para sanidad/oficios, inglés suficiente en IT. Ciudades: Berlín, Múnich, Hamburgo, Fráncfort.
@@ -136,7 +136,7 @@ FUERA DE LA UE — VISADOS:
 - Nueva Zelanda 🇳🇿: Working Holiday Visa. Parecido a Australia pero más pequeño y tranquilo.
 - Emiratos Árabes 🇦🇪: Sin impuestos sobre renta. Muy demandado en construcción, sanidad, hostelería de lujo. Necesitas contrato previo — la empresa te sponsorea el visado.
 
-════════ ESTRATEGIAS DE BÚSQUEDA AVANZADA ════════
+-------- ESTRATEGIAS DE BÚSQUEDA AVANZADA --------
 
 CV Y ATS (APPLICANT TRACKING SYSTEM):
 - El 75% de los CVs son rechazados por software automático antes de que los vea un humano
@@ -163,10 +163,10 @@ ENTREVISTAS — MÉTODO STAR:
 - Acción: qué hiciste exactamente ("Implementé...", "Coordiné...", "Reduje...")
 - Resultado: logro cuantificable ("Aumenté ventas un 20%", "Reducí tiempo de proceso en 3 horas/semana")
 - Preguntas trampa comunes:
-  * "¿Cuál es tu mayor debilidad?" → nombra UNA real pero que no afecte al puesto, y di cómo la estás mejorando
-  * "¿Dónde te ves en 5 años?" → alineado con la empresa, con ganas de crecer dentro
-  * "¿Por qué te fuiste de tu último trabajo?" → NUNCA hablar mal del ex-jefe. Siempre buscar oportunidades nuevas
-  * "¿Cuál es tu expectativa salarial?" → investiga el rango ANTES e indica una horquilla (ver negociación abajo)
+  * "¿Cuál es tu mayor debilidad?" - nombra UNA real pero que no afecte al puesto, y di cómo la estás mejorando
+  * "¿Dónde te ves en 5 años?" - alineado con la empresa, con ganas de crecer dentro
+  * "¿Por qué te fuiste de tu último trabajo?" - NUNCA hablar mal del ex-jefe. Siempre buscar oportunidades nuevas
+  * "¿Cuál es tu expectativa salarial?" - investiga el rango ANTES e indica una horquilla (ver negociación abajo)
 
 NEGOCIACIÓN SALARIAL — GUIÓN:
 1. Investiga el rango del mercado (Glassdoor, LinkedIn Salary, Infojobs Salarios, Nuestros datos en BuscayCurra)
@@ -209,25 +209,25 @@ AU PAIR — INFORMACIÓN ESPECÍFICA:
 - Beneficios: idioma, experiencia, conocer mundo, muchas familias pagan cursos de idioma
 - En BuscayCurra: tienes sección /app/au-pair para crear tu carta "Dear Family" y perfil profesional
 
-════════ CAPACIDADES DE GUZZI (menciona cuando sean relevantes) ════════
-1. 🔍 Buscar ofertas → búsqueda en BD + APIs de 21 países según lo que pides
-2. 📧 Enviar CV automático → la función estrella: Guzzi envía tu CV adaptado por ti
-3. ✨ Mejorar el CV → reescribe con verbos de acción, logros cuantificables, ATS-optimizado
-4. 🎯 Preparar entrevistas → ficha de empresa + preguntas + qué resaltar de tu perfil
-5. ✉️ Carta de presentación → personalizada para cada empresa con tus datos reales
-6. 💰 Orientación salarial → rangos reales del mercado según puesto, experiencia y país
-7. 📋 Plan de búsqueda personalizado → según perfil, país objetivo y urgencia
-8. 📊 Skill Gap → pega una oferta y te digo qué tienes, qué te falta y cómo conseguirlo
-9. 💼 Negociación salarial → guión real con datos del mercado ("prepárame para negociar")
-10. 🌍 Guía de emigración → salarios, requisitos, visados, ciudades para tu sector específico
-11. 🔗 LinkedIn Optimizer → cómo optimizar tu perfil para que los reclutadores te encuentren
-12. 📝 Gestión del paro → cómo tramitar el SEPE, finiquito, derechos laborales
-13. 👶 Perfil Au Pair → ayuda con tu carta "Dear Family" y búsqueda internacional
-14. 💬 Charlar → sobre cualquier tema, soy tu amigo
+-------- CAPACIDADES DE GUZZI (menciona cuando sean relevantes) --------
+1. 🔍 Buscar ofertas - búsqueda en BD + APIs de 21 países según lo que pides
+2. 📧 Enviar CV automático - la función estrella: Guzzi envía tu CV adaptado por ti
+3. ✨ Mejorar el CV - reescribe con verbos de acción, logros cuantificables, ATS-optimizado
+4. 🎯 Preparar entrevistas - ficha de empresa + preguntas + qué resaltar de tu perfil
+5. ✉️ Carta de presentación - personalizada para cada empresa con tus datos reales
+6. 💰 Orientación salarial - rangos reales del mercado según puesto, experiencia y país
+7. 📋 Plan de búsqueda personalizado - según perfil, país objetivo y urgencia
+8. 📊 Skill Gap - pega una oferta y te digo qué tienes, qué te falta y cómo conseguirlo
+9. 💼 Negociación salarial - guión real con datos del mercado ("prepárame para negociar")
+10. 🌍 Guía de emigración - salarios, requisitos, visados, ciudades para tu sector específico
+11. 🔗 LinkedIn Optimizer - cómo optimizar tu perfil para que los reclutadores te encuentren
+12. 📝 Gestión del paro - cómo tramitar el SEPE, finiquito, derechos laborales
+13. 👶 Perfil Au Pair - ayuda con tu carta "Dear Family" y búsqueda internacional
+14. 💬 Charlar - sobre cualquier tema, soy tu amigo
 
 CUANDO USES EL CV DEL USUARIO:
 - Si tienes sus datos, úsalos directamente — nunca preguntes lo que ya sabes.
-- Si dice "busco trabajo de CAMARERO" → busca camarero, NO su puesto del CV.
+- Si dice "busco trabajo de CAMARERO" - busca camarero, NO su puesto del CV.
 - Solo usa el puesto del CV si el usuario no especifica qué tipo de trabajo busca.
 - Adapta siempre los consejos a su perfil real.
 
@@ -420,7 +420,7 @@ function buildSystemPrompt(cvData?: string, pais?: string, auPairData?: Record<s
     const paisDestino = auPairData.nationality || "";
     const fotos = Array.isArray(auPairData.photos) ? (auPairData.photos as string[]).length : 0;
 
-    auPairContext = `\n━━━ PERFIL AU PAIR DEL USUARIO ━━━\nNombre: ${nombre}\nEdad: ${edad}\nCiudad: ${ciudad}\nIdiomas: ${idiomas}\nExperiencia con niños: ${experiencia}\nPaís preferido: ${paisDestino}\nFotos subidas: ${fotos}\nCarta Dear Family: ${auPairData.letter_text ? "✅ Creada" : "❌ Pendiente"}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCuando el usuario pida "generar carta au pair" o "carta dear family", usa estos datos para personalizarla.\nCuando pida "buscar au pair" o "busco trabajo de au pair", busca ofertas de tipo au pair/nanny/niñera.\n`;
+    auPairContext = `\n--- PERFIL AU PAIR DEL USUARIO ---\nNombre: ${nombre}\nEdad: ${edad}\nCiudad: ${ciudad}\nIdiomas: ${idiomas}\nExperiencia con niños: ${experiencia}\nPaís preferido: ${paisDestino}\nFotos subidas: ${fotos}\nCarta Dear Family: ${auPairData.letter_text ? "✅ Creada" : "❌ Pendiente"}\n-----------------------------\n\nCuando el usuario pida "generar carta au pair" o "carta dear family", usa estos datos para personalizarla.\nCuando pida "buscar au pair" o "busco trabajo de au pair", busca ofertas de tipo au pair/nanny/niñera.\n`;
   }
 
   if (!cvData) return PROMPT_BASE + paisInfo + auPairContext;
@@ -429,13 +429,13 @@ function buildSystemPrompt(cvData?: string, pais?: string, auPairData?: Record<s
   if (!cv || !cv.resumenTexto) return PROMPT_BASE + paisInfo + auPairContext;
 
   return `${PROMPT_BASE}${paisInfo}
-━━━ DATOS REALES DEL CV DEL USUARIO (usa esto en TODAS tus respuestas) ━━━
+--- DATOS REALES DEL CV DEL USUARIO (usa esto en TODAS tus respuestas) ---
 ${cv.resumenTexto}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+------------------------------------------------------------------------
 ${auPairContext}
-Cuando el usuario pregunte qué trabajo buscar → sugiérele ofertas de "${cv.ultimoPuesto || cv.sector || "su sector"}" SIEMPRE primero en "${cv.ciudad || "su zona"}" y sus alrededores (máx 30km). NUNCA sugieras Madrid o Barcelona a menos que el usuario lo pida explícitamente. Si no encuentras en su zona, DÍSELO claramente antes de ofrecer otras ciudades.
-Cuando mejores el CV → usa exactamente los datos de arriba, no los inventes.
-Cuando generes una carta → pon el nombre "${cv.nombre}" y la ciudad "${cv.ciudad}" reales.`;
+Cuando el usuario pregunte qué trabajo buscar - sugiérele ofertas de "${cv.ultimoPuesto || cv.sector || "su sector"}" SIEMPRE primero en "${cv.ciudad || "su zona"}" y sus alrededores (máx 30km). NUNCA sugieras Madrid o Barcelona a menos que el usuario lo pida explícitamente. Si no encuentras en su zona, DÍSELO claramente antes de ofrecer otras ciudades.
+Cuando mejores el CV - usa exactamente los datos de arriba, no los inventes.
+Cuando generes una carta - pon el nombre "${cv.nombre}" y la ciudad "${cv.ciudad}" reales.`;
 }
 
 function detectIntent(text: string): string {
@@ -447,9 +447,9 @@ function detectIntent(text: string): string {
   // "busca [nombre de empresa]" — detectar como info_empresa si empieza con artículo o palabra de negocio
   // "busca [nombre de empresa]" — detectar como info_empresa si empieza con artículo o palabra de negocio
   if (/(?:busca|busco|info|información|hay|conoces|sabes)\s+(?:el\s+|la\s+|los\s+|las\s+|un\s+|una\s+)?(?:bar\s+|restaurante\s+|tienda\s+|hotel\s+|cafeter[ií]a\s+|empresa\s+|supermercado\s+|taller\s+|panader[ií]a\s+|farmacia\s+|cl[ií]nica\s+|peluquer[ií]a\s+)/i.test(t)) return "info_empresa";
-  // "empresas de [sector] en [ciudad]" → info_empresa
+  // "empresas de [sector] en [ciudad]" - info_empresa
   if (/empresas?\s+(?:de|del?)\s+\w+/i.test(t) && /\s+(?:en|por|cerca)\s+\w+/i.test(t)) return "info_empresa";
-  // "qué empresas / fábricas / negocios hay en X" → info_empresa
+  // "qué empresas / fábricas / negocios hay en X" - info_empresa
   if (/(?:qué|que)\s+(?:empresas?|f[áa]bricas?|negocios?|comercios?|tiendas?)\s+(?:hay|conoces|sabes)\s+(?:en|por|cerca|de)\s+\w+/i.test(t)) return "info_empresa";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
   // Detectar "[puesto] en [ciudad]" sin verbo explícito (ej: "camarero en Tudela")
@@ -458,7 +458,7 @@ function detectIntent(text: string): string {
   if (/(?:env[ií]a|manda|env[ií]o|mando|env[ií]ame|m[aá]ndame)\s*(?:lo|la|los|las|me|mi|les|se)?\s*(?:mi\s+)?(?:cv|curr[ií]culum|candidatura|solicitud)?\s*$/.test(t)) return "enviar";
   if (/(?:env[ií]a|manda|env[ií]ame|m[aá]ndame|env[ií]o|mando)\s+(?:mi\s+)?(?:cv|curr[ií]culum|candidatura)/.test(t)) return "enviar";
   if (/(?:quiero|puedes|puede|vas a)\s+(?:enviar|mandar)\s+(?:mi\s+)?(?:cv|curr[ií]culum|candidatura)/.test(t)) return "enviar";
-  // "echar/tirar/dejar currículum/CV en [sitio]" → buscar
+  // "echar/tirar/dejar currículum/CV en [sitio]" - buscar
   if (/(?:echar|tirar|dejar|entregar|repartir)\s+(?:el\s+)?(?:curr[ií]culum|cv|curriculo)s?/i.test(t) && /\s+(?:en|por)\s+\w+/i.test(t)) return "buscar";
   // Confirmación de envío a negocio local (Guzzi ya encontró el contacto)
   const confirmSend = /^(si|s[ií]i|dale|vale|ok|okey|okay|venga|adelante|perfecto|genial|fenomenal|claro|por\s+supuesto|obvio|pues\s+si|pues\s+venga|hazlo|env[ií]alo|m[aá]ndalo|tira|t[ií]ralo|p[áa]lante|a\s+por\s+ello|me\s+gusta|me\s+apunto|elijo\s+la?\s*\d|la\s+primera|la\s+\d|la\s+opci[oó]n\s+\d|opci[oó]n\s+\d)/i;
@@ -473,7 +473,7 @@ function detectIntent(text: string): string {
   return "chat";
 }
 
-// Mapa ciudad → provincia para expansión geográfica
+// Mapa ciudad - provincia para expansión geográfica
 const CIUDAD_A_PROVINCIA: Record<string, string> = {
   tudela: "navarra", pamplona: "navarra", estella: "navarra", tafalla: "navarra",
   zaragoza: "zaragoza", huesca: "huesca", teruel: "teruel",
@@ -958,7 +958,7 @@ export async function POST(req: NextRequest) {
 
     async function callGroq(systemPrompt: string, userContent: string, maxTokens = 600) {
       if (!groqKey) return null;
-      // /no_think desactiva el modo reasoning de Qwen3 → responde directamente en el idioma del sistema (español)
+      // /no_think desactiva el modo reasoning de Qwen3 - responde directamente en el idioma del sistema (español)
       const body = JSON.stringify({
         model: "qwen/qwen3-32b",
         messages: [
@@ -1053,7 +1053,7 @@ export async function POST(req: NextRequest) {
 
 INSTRUCCIÓN CRÍTICA — CV CON POCA INFORMACIÓN:
 El candidato tiene poca experiencia o datos. NUNCA INVENTES información, pero SÍ:
-- Elabora cada experiencia con 3-4 responsabilidades típicas del puesto (ej: "Camarero" → atención al cliente, gestión de pedidos, preparación de bebidas, trabajo en equipo bajo presión)
+- Elabora cada experiencia con 3-4 responsabilidades típicas del puesto (ej: "Camarero" - atención al cliente, gestión de pedidos, preparación de bebidas, trabajo en equipo bajo presión)
 - Escribe el perfil profesional con 4-5 frases descriptivas, no solo 2
 - Añade habilidades implícitas del sector aunque no las hayan mencionado (las que cualquiera con ese puesto tendría)
 - Expande la sección de formación si hay datos
@@ -1261,7 +1261,7 @@ El candidato tiene mucha experiencia.
           });
         }
       } else {
-        // Empresa grande → buscar en BD
+        // Empresa grande - buscar en BD
         const result = await searchJobsReal(sector, city, 5, pais || "ES");
         if (result && result.jobs.length > 0) {
           return NextResponse.json({
@@ -1443,7 +1443,7 @@ El candidato tiene mucha experiencia.
       }
     }
 
-    // -- Intent: enviar CV a negocio local (GOOGLE PLACES → REAL SEND) --------
+    // -- Intent: enviar CV a negocio local (GOOGLE PLACES - REAL SEND) --------
     if (intent === "send_cv_local_confirm") {
       // Extraer contexto del historial: empresa, teléfono, puesto
       const histText = history.slice(-6).map((m: { text: string }) => m.text).join("\n");
@@ -1559,7 +1559,7 @@ Responde en JSON exactamente así:
       const empresaNombre = empresaMatch?.[1]?.trim();
       if (empresaNombre && empresaNombre.length >= 3) {
         return NextResponse.json({
-          reply: `📧 ¡Perfecto! Para enviar tu CV a **${empresaNombre}** necesito el email de la empresa.\n\nTienes 3 opciones:\n\n**1. Pegar la web** de la empresa → busco el email de RRHH yo solo\n**2. Darme el email** directamente → si ya lo tienes\n**3. Solo registrar** → si ya aplicaste y quieres hacer seguimiento\n\nVe a la página de envíos para completar el proceso → [✍️ Ir a Envíos](/app/envios?empresa=${encodeURIComponent(empresaNombre)})`,
+          reply: `📧 ¡Perfecto! Para enviar tu CV a **${empresaNombre}** necesito el email de la empresa.\n\nTienes 3 opciones:\n\n**1. Pegar la web** de la empresa - busco el email de RRHH yo solo\n**2. Darme el email** directamente - si ya lo tienes\n**3. Solo registrar** - si ya aplicaste y quieres hacer seguimiento\n\nVe a la página de envíos para completar el proceso - [✍️ Ir a Envíos](/app/envios?empresa=${encodeURIComponent(empresaNombre)})`,
           action: "send_cv_flow",
         });
       }
@@ -1722,7 +1722,7 @@ function extractJobTerm(text: string): string {
   // "me interesa / estoy buscando [puesto]"
   const m6 = text.match(/(?:me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)(?:\s+en\s+|\s*$)/i);
   if (m6?.[1]?.trim()) return m6[1].trim();
-  // "echar/tirar/dejar (el) currículum/CV en [puesto/lugar]" → extraer puesto
+  // "echar/tirar/dejar (el) currículum/CV en [puesto/lugar]" - extraer puesto
   const m6b = text.match(/(?:echar|tirar|dejar|entregar|repartir)\s+(?:el\s+)?(?:curr[ií]culum|curriculo|cv)\s+(?:en|por)\s+(?:el\s+|la\s+|los\s+|las\s+)?([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)(?:\s+(?:en|por|de)\s+\w+|\s*$)/i);
   if (m6b?.[1]?.trim()) return m6b[1].trim();
   // fallback generico
