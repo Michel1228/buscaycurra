@@ -159,22 +159,39 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // 4. Notificación en Supabase (campana)
-      await supabase.from("notificaciones").insert({
-        user_id: alerta.user_id,
-        tipo: "alerta_empleo",
-        titulo,
-        mensaje: cuerpo,
-        datos: { keyword: alerta.keyword, location: alerta.location, total, job_id: ejemplo.id, job_url: ejemplo.sourceUrl || "" },
-        leida: false,
-      });
-
-      // 4b. Email + WhatsApp de alerta
+      // 4. Notificación en Supabase (campana) — no bloquea si falla
       try {
-        const { data: { user: authUser } } = await supabase.auth.admin.getUserById(alerta.user_id);
-        if (authUser?.email) {
+        await supabase.from("notificaciones").insert({
+          user_id: alerta.user_id,
+          tipo: "alerta_empleo",
+          titulo,
+          mensaje: cuerpo,
+          datos: { keyword: alerta.keyword, location: alerta.location, total, job_id: ejemplo.id, job_url: ejemplo.sourceUrl || "" },
+          leida: false,
+        });
+      } catch { /* Supabase puede no estar disponible */ }
+
+      // 4b. Email + WhatsApp de alerta (VPS PostgreSQL, sin dependencia de Supabase)
+      try {
+        // Obtener datos de contacto desde VPS PG (user_contacts)
+        const contactResult = await pool.query<{
+          email: string | null;
+          whatsapp_phone: string | null;
+          whatsapp_alertas: boolean;
+          full_name: string | null;
+        }>(
+          `SELECT email, whatsapp_phone, whatsapp_alertas, full_name
+           FROM user_contacts
+           WHERE user_id = $1`,
+          [alerta.user_id]
+        );
+
+        const contact = contactResult.rows[0];
+
+        // Email
+        if (contact?.email) {
           await sendJobAlertEmail({
-            userEmail: authUser.email,
+            userEmail: contact.email,
             keyword: alerta.keyword,
             location: alerta.location || undefined,
             total,
@@ -185,16 +202,10 @@ export async function GET(request: NextRequest) {
         }
 
         // WhatsApp: solo si el usuario tiene teléfono guardado
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("whatsapp_phone, whatsapp_alertas, full_name")
-          .eq("id", alerta.user_id)
-          .single();
-
-        if (profileData?.whatsapp_alertas && profileData?.whatsapp_phone) {
+        if (contact?.whatsapp_alertas && contact?.whatsapp_phone) {
           const { enviarAlertaWhatsApp } = await import("@/lib/whatsapp/sender");
-          await enviarAlertaWhatsApp(profileData.whatsapp_phone, {
-            nombre: profileData.full_name?.split(" ")[0] || "Candidato",
+          await enviarAlertaWhatsApp(contact.whatsapp_phone, {
+            nombre: contact.full_name?.split(" ")[0] || "Candidato",
             puesto: ejemplo.title,
             ciudad: ejemplo.city || alerta.location || "España",
             url: ejemplo.id
