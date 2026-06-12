@@ -65,7 +65,7 @@ export async function checkGuzziAccess(userId: string): Promise<GuzziCheckResult
       planName: limits.name,
       guzziModel: limits.guzziModel,
       remaining: 0,
-      errorMessage: `Has alcanzado el límite de ${limits.guzziMaxConsultasDia} consultas hoy con el plan ${limits.name}. Mañana se resetea. Sube a Pro para consultas ilimitadas.`,
+      errorMessage: `🧠 ¡Has estrujado a Guzzi a tope hoy! ${limits.guzziMaxConsultasDia} consultas con el plan ${limits.name}. Mañana se resetea y seguimos. Sube a Pro para consultas ilimitadas. 🚀`,
     };
   }
 

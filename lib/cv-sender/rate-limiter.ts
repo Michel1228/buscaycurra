@@ -118,7 +118,7 @@ export async function checkRateLimit(
   if (hoy >= limite.perDay) {
     return {
       allowed: false,
-      reason: `Has alcanzado el límite diario de ${limite.perDay} CVs para el plan ${plan}. Prueba mañana o actualiza tu plan.`,
+      reason: `🎯 ¡Buen ritmo! Ya has enviado ${limite.perDay} CVs hoy, el máximo de tu plan ${plan}. Descansa y vuelve mañana — tus candidaturas ya están trabajando. ¡Mucha suerte! 🍀`,
       enviadosHoy: hoy,
       enviadosEsteMes: mes,
       limiteHoy: limite.perDay,
@@ -130,7 +130,7 @@ export async function checkRateLimit(
   if (mes >= limite.perMonth) {
     return {
       allowed: false,
-      reason: `Has alcanzado el límite mensual de ${limite.perMonth} CVs para el plan ${plan}. Actualiza tu plan para enviar más.`,
+      reason: `📦 ¡Vaya mes! Has alcanzado el tope mensual de ${limite.perMonth} CVs en el plan ${plan}. El plan Pro te da 500 envíos al mes para seguir a tope.`,
       enviadosHoy: hoy,
       enviadosEsteMes: mes,
       limiteHoy: limite.perDay,

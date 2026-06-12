@@ -35,10 +35,10 @@ const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   esencial: {
     name: "Esencial",
-    guzziModel: "gpt-4o-mini",    // Barato (~$0.15/1M tokens)
-    guzziMaxConsultasDia: 20,
-    enviosCVDia: 10,
-    enviosCVSemana: 50,
+    guzziModel: "gpt-4o-mini",
+    guzziMaxConsultasDia: 30,
+    enviosCVDia: 20,
+    enviosCVSemana: 100,
     cvsGuardados: 3,
     cartaPersonalizada: true,
     ofertasGuardadas: 50,
@@ -47,10 +47,10 @@ const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   pro: {
     name: "Pro",
-    guzziModel: "gpt-4o",         // Bueno (~$2.50/1M tokens)
-    guzziMaxConsultasDia: 100,
-    enviosCVDia: 50,
-    enviosCVSemana: 300,
+    guzziModel: "gpt-4o",
+    guzziMaxConsultasDia: 200,
+    enviosCVDia: 100,
+    enviosCVSemana: 500,
     cvsGuardados: 10,
     cartaPersonalizada: true,
     ofertasGuardadas: 200,
