@@ -68,6 +68,7 @@ export default function CurriculumPage() {
   const [form, setForm] = useState<CVForm>(emptyForm);
   const [fotoUrl, setFotoUrl] = useState("");
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [mejorandoFoto, setMejorandoFoto] = useState(false);
   const [subiendoPDF, setSubiendoPDF] = useState(false);
   const [mejoradoHTML, setMejoradoHTML] = useState("");
   const [procesando, setProcesando] = useState(false);
@@ -492,6 +493,43 @@ export default function CurriculumPage() {
     finally { setSubiendoFoto(false); }
   }
 
+  async function mejorarFoto() {
+    if (!fotoUrl) { setError("Primero sube una foto."); return; }
+    setMejorandoFoto(true);
+    setError("");
+    try {
+      // Descargar la foto actual para reenviarla al endpoint
+      const imgRes = await fetch(fotoUrl);
+      if (!imgRes.ok) throw new Error("No se pudo descargar la foto");
+      const blob = await imgRes.blob();
+      const fd = new FormData();
+      fd.append("foto", blob, "foto.jpg");
+
+      const res = await fetch("/api/cv/mejorar-foto", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.url) {
+          setFotoUrl(data.url);
+        } else if (data.base64) {
+          // Si no hay URL, usar base64
+          setFotoUrl(`data:${data.mimeType || "image/png"};base64,${data.base64}`);
+        }
+        setError("");
+      } else {
+        setError(data.error || "No se pudo mejorar la foto. Inténtalo de nuevo.");
+      }
+    } catch (err) {
+      setError("Error al mejorar la foto. Comprueba tu conexión.");
+    } finally {
+      setMejorandoFoto(false);
+    }
+  }
+
   function formToCVData(perfilMejorado?: string, experienciaOverride?: Exp[]): CVData {
     const expBase = experienciaOverride ?? form.experiencia;
     const expOrdenada = [...expBase]
@@ -848,38 +886,23 @@ export default function CurriculumPage() {
 
               <div className="p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}>
                 <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>💡 Truco: Foto profesional gratis con IA</p>
-                <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia el prompt y pégalo en ChatGPT con tu foto:</p>
-                <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
-                  Utiliza esta foto para realizar los siguientes cambios: 1. Crear un fondo blanco y cambiar todo el fondo actual. 2. Cambiar la camiseta por una camisa blanca. 3. Poner la figura en posición sentada. Fotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.
-                </div>
-                <div className="mt-2 flex gap-2">
+                <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Súbete un selfie y nuestra IA lo convierte en foto profesional:</p>
+                <div className="mt-2">
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText("Utiliza esta foto para realizar los siguientes cambios: 1. Crear un fondo blanco y cambiar todo el fondo actual. 2. Cambiar la camiseta por una camisa blanca. 3. Poner la figura en posición sentada. Fotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.");
-                    }}
-                    className="px-3 py-1 text-[10px] font-semibold rounded-md" style={{ background: "#22c55e", color: "#fff" }}>
-                    1. Copiar prompt
+                    onClick={mejorarFoto}
+                    disabled={!fotoUrl || mejorandoFoto}
+                    className="px-4 py-2 text-[12px] font-semibold rounded-lg transition w-full"
+                    style={{
+                      background: fotoUrl && !mejorandoFoto ? "linear-gradient(135deg, #22c55e, #16a34a)" : "#1e212b",
+                      color: fotoUrl && !mejorandoFoto ? "#fff" : "#475569",
+                      cursor: fotoUrl && !mejorandoFoto ? "pointer" : "not-allowed",
+                      opacity: mejorandoFoto ? 0.7 : 1,
+                    }}>
+                    {mejorandoFoto ? "⏳ Mejorando con IA..." : fotoUrl ? "✨ Mejorar foto con IA" : "⬆️ Primero sube una foto"}
                   </button>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText("Utiliza esta foto para realizar los siguientes cambios: 1. Crear un fondo blanco y cambiar todo el fondo actual. 2. Cambiar la camiseta por una camisa blanca. 3. Poner la figura en posición sentada. Fotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.");
-                      const ua = navigator.userAgent.toLowerCase();
-                      const isIOS = /iphone|ipad|ipod/.test(ua);
-                      const isAndroid = /android/.test(ua);
-                      if (isIOS) {
-                        window.location.href = "chatgpt://";
-                        setTimeout(() => { window.open("https://chatgpt.com", "_blank"); }, 1200);
-                      } else if (isAndroid) {
-                        window.location.href = "intent://chatgpt.com#Intent;scheme=https;package=com.openai.chatgpt;end";
-                        setTimeout(() => { window.open("https://chatgpt.com", "_blank"); }, 1200);
-                      } else {
-                        window.open("https://chatgpt.com", "_blank");
-                      }
-                    }}
-                    className="px-3 py-1 text-[10px] font-semibold rounded-md"
-                    style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
-                    2. Abrir ChatGPT →
-                  </button>
+                  <p className="text-[10px] mt-1.5 text-center" style={{ color: "#64748b" }}>
+                    Fondo blanco · camisa blanca · tamaño carnet · fiel a tu rostro
+                  </p>
                 </div>
               </div>
             </div>

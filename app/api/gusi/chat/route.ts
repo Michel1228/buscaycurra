@@ -438,7 +438,7 @@ Cuando mejores el CV - usa exactamente los datos de arriba, no los inventes.
 Cuando generes una carta - pon el nombre "${cv.nombre}" y la ciudad "${cv.ciudad}" reales.`;
 }
 
-function detectIntent(text: string): string {
+function detectIntent(text: string, history: Array<{ role: string; text: string }> = []): string {
   const t = text.toLowerCase();
   if (/(mejorar|mejora|optimizar|reescrib).*(cv|curriculum)|(cv|curriculum).*(mejorar|mejorado|profesional|limpio)/.test(t)) return "cv_mejorado";
   if (/(carta.*(recomendaci|presentaci|para\s+\w)|presentaci.*carta)/.test(t)) return "carta_recomendacion";
@@ -1036,7 +1036,7 @@ export async function POST(req: NextRequest) {
     }
 
     // -- Modo CV mejorado -----------------------------------------------------
-    if (mode === "cv_mejorado" || detectIntent(message) === "cv_mejorado") {
+    if (mode === "cv_mejorado" || detectIntent(message, history) === "cv_mejorado") {
       if (!cvData) {
         return NextResponse.json({
           reply: "📝 Para mejorar tu CV necesito tus datos. Súbelo en PDF (botón clip) o cuéntame tus datos aquí. ",
@@ -1077,7 +1077,7 @@ El candidato tiene mucha experiencia.
     }
 
     // -- Modo carta -----------------------------------------------------------
-    if (mode === "carta_recomendacion" || detectIntent(message) === "carta_recomendacion") {
+    if (mode === "carta_recomendacion" || detectIntent(message, history) === "carta_recomendacion") {
       // Extraer empresa/puesto del mensaje si el frontend no los pasó
       let cartaEmpresa = empresa || "";
       let cartaPuesto = puesto || "";
@@ -1111,7 +1111,7 @@ El candidato tiene mucha experiencia.
     }
 
     // -- Intent: info empresa (Google Places) ----------------------------------
-    const preIntent = detectIntent(message);
+    const preIntent = detectIntent(message, history);
     if (preIntent === "info_empresa") {
       const companyName = extractCompanyName(message);
       const searchCity = extractCity(message) || "";
@@ -1278,7 +1278,7 @@ El candidato tiene mucha experiencia.
     }
 
     // -- Intent: buscar trabajo -----------------------------------------------
-    const intent = detectIntent(message);
+    const intent = detectIntent(message, history);
 
     // -- Intent: buscar au pair ----------------------------------------------
     if (intent === "buscar_au_pair" || mode === "buscar_au_pair") {
@@ -1675,7 +1675,8 @@ Responde en JSON exactamente así:
     const reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
     return NextResponse.json({ reply });
 
-  } catch {
+  } catch (err) {
+    console.error("[Guzzi] FATAL catch:", (err as Error).message, (err as Error).stack?.split("\n").slice(0,3).join(" | "));
     return NextResponse.json({ reply: "¡Ups! Algo falló. Inténtalo de nuevo " });
   }
 }

@@ -174,7 +174,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => { setOpen(!open); if (!open && sinLeer > 0) marcarTodasLeidas(); }}
+        onClick={() => setOpen(!open)}
         title="Notificaciones"
         className="relative flex items-center justify-center w-9 h-9 rounded-lg transition"
         style={{ color: sinLeer > 0 ? badgeColor : "#64748b" }}
