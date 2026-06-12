@@ -850,19 +850,19 @@ export default function CurriculumPage() {
                 <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>💡 Truco: Foto profesional gratis con IA</p>
                 <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia el prompt y pégalo en ChatGPT con tu foto:</p>
                 <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
-                  Utiliza personajes pelo en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro
+                  Utiliza personajes pero en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro
                 </div>
                 <div className="mt-2 flex gap-2">
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("Utiliza personajes pelo en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro");
+                      navigator.clipboard.writeText("Utiliza personajes pero en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro");
                     }}
                     className="px-3 py-1 text-[10px] font-semibold rounded-md" style={{ background: "#22c55e", color: "#fff" }}>
                     1. Copiar prompt
                   </button>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("Utiliza personajes pelo en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro");
+                      navigator.clipboard.writeText("Utiliza personajes pero en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro");
                       window.open("https://chatgpt.com", "_blank");
                     }}
                     className="px-3 py-1 text-[10px] font-semibold rounded-md"
