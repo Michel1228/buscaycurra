@@ -204,7 +204,7 @@ export async function GET(request: NextRequest) {
         // WhatsApp: solo si el usuario tiene teléfono guardado
         if (contact?.whatsapp_alertas && contact?.whatsapp_phone) {
           const { enviarAlertaWhatsApp } = await import("@/lib/whatsapp/sender");
-          await enviarAlertaWhatsApp(contact.whatsapp_phone, {
+          const result = await enviarAlertaWhatsApp(contact.whatsapp_phone, {
             nombre: contact.full_name?.split(" ")[0] || "Candidato",
             puesto: ejemplo.title,
             ciudad: ejemplo.city || alerta.location || "España",
@@ -213,6 +213,9 @@ export async function GET(request: NextRequest) {
               : undefined,
             keyword: alerta.keyword,
           });
+          if (!result.success) {
+            console.error("[send-alerts] WhatsApp falló:", result.error);
+          }
         }
       } catch (emailErr) {
         console.error("[send-alerts] Error enviando email/whatsapp:", (emailErr as Error).message);
