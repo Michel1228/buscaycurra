@@ -1494,11 +1494,29 @@ El candidato tiene mucha experiencia.
       if (puestoBusqueda) {
         const result = await searchJobsReal(puestoBusqueda, ciudadBusqueda, 5, pais || "ES");
         if (!result || result.jobs.length === 0) {
+          // Buscar negocios locales en Google Places como alternativa
+          let googleReply = "";
+          if (ciudadBusqueda) {
+            try {
+              const negocios = await buscarNegociosLocales(puestoBusqueda, ciudadBusqueda);
+              if (negocios.length > 0) {
+                googleReply = `\n\nPero he buscado negocios locales en **${ciudadBusqueda}** que podrían necesitar a alguien como tú:\n\n`;
+                for (const n of negocios.slice(0, 4)) {
+                  const ratingStr = n.rating ? ` ⭐ ${n.rating}/5` : "";
+                  const addrStr = n.formatted_address ? `\n   📍 ${n.formatted_address}` : "";
+                  const phoneStr = n.formatted_phone_number ? `\n   📞 ${n.formatted_phone_number}` : "";
+                  googleReply += `🏢 **${n.name}**${ratingStr}${addrStr}${phoneStr}\n\n`;
+                }
+                googleReply += `📧 ¿Quieres que envíe tu CV a alguno de estos? Responde **"sí"** y elige cuál.`;
+              }
+            } catch { /* sin Google Places, solo mensaje normal */ }
+          }
+
           return NextResponse.json({
             reply: (cvParsed?.ultimoPuesto
               ? `Basándome en tu CV (último puesto: **${cvParsed.ultimoPuesto}**), ` : "") +
-              fallbackMessage(puestoBusqueda, ciudadBusqueda),
-            action: "search_results",
+              (googleReply || fallbackMessage(puestoBusqueda, ciudadBusqueda)),
+            action: googleReply ? "search_results" : "no_results",
           });
         }
         // Si los resultados NO son de la ciudad exacta, buscar en Google Places
