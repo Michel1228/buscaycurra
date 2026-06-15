@@ -550,6 +550,79 @@ const SINONIMOS_PUESTO: Record<string, string[]> = {
   soldador: ["soldadura", "metalurgia", "chapista", "caldereria"],
 };
 
+// Mapeo puesto → queries para Google Places cuando no hay ofertas locales
+const PUESTO_A_GOOGLE_QUERIES: Record<string, string[]> = {
+  camarero: ["bares", "restaurantes", "cafeterías"],
+  cocinero: ["restaurantes", "bares", "hoteles"],
+  repartidor: ["restaurantes", "pizzerías", "empresas de reparto"],
+  dependiente: ["tiendas de ropa", "comercios", "supermercados"],
+  limpiador: ["empresas de limpieza", "hoteles"],
+  administrativo: ["oficinas", "gestorías", "ayuntamiento"],
+  carretillero: ["almacenes", "empresas de logística", "naves industriales"],
+  mecanico: ["talleres mecánicos", "concesionarios"],
+  conductor: ["empresas de transporte", "mensajería"],
+  electricista: ["empresas de electricidad", "tiendas de electricidad"],
+  fontanero: ["empresas de fontanería", "tiendas de climatización"],
+  albañil: ["empresas de construcción", "reformas"],
+  enfermero: ["clínicas", "residencias", "hospitales"],
+  comercial: ["empresas", "agencias", "concesionarios"],
+  programador: ["empresas de informática", "agencias de desarrollo web"],
+  carpintero: ["carpinterías", "fábricas de muebles"],
+  soldador: ["empresas de metalurgia", "talleres de soldadura"],
+  jardinero: ["empresas de jardinería", "viveros"],
+  pintor: ["empresas de pintura", "empresas de reformas"],
+  panadero: ["panaderías", "pastelerías", "obradores"],
+  pescadero: ["pescaderías", "mercados"],
+  carnicero: ["carnicerías", "mercados"],
+  frutero: ["fruterías", "mercados"],
+};
+
+/**
+ * Busca negocios locales en Google Places cuando no hay ofertas de empleo
+ * Devuelve hasta 4 resultados combinados de varias queries
+ */
+async function buscarNegociosLocales(puesto: string, ciudad: string): Promise<Array<{ place_id: string; name: string; formatted_address?: string; formatted_phone_number?: string; rating?: number; website?: string; url?: string }>> {
+  const puestoNorm = puesto.toLowerCase().trim();
+  let queries = PUESTO_A_GOOGLE_QUERIES[puestoNorm];
+  
+  // Si no hay mapeo exacto, buscar por coincidencia parcial
+  if (!queries) {
+    for (const [key, qs] of Object.entries(PUESTO_A_GOOGLE_QUERIES)) {
+      if (puestoNorm.includes(key) || key.includes(puestoNorm)) {
+        queries = qs;
+        break;
+      }
+    }
+  }
+  
+  // Fallback genérico: buscar el puesto como query
+  if (!queries) {
+    queries = [`empresas de ${puestoNorm}`, `negocios ${puestoNorm}`];
+  }
+
+  // Import dinámico para evitar problemas de server/client bundles
+  const { buscarEmpresaGooglePlaces } = await import("@/lib/google-places");
+
+  // Buscar con las primeras 2-3 queries para no disparar muchas requests
+  const results: Array<{ place_id: string; name: string; formatted_address?: string; formatted_phone_number?: string; rating?: number; website?: string; url?: string }> = [];
+  const seen = new Set<string>();
+  
+  for (const q of queries.slice(0, 3)) {
+    try {
+      const places = await buscarEmpresaGooglePlaces(q, ciudad);
+      for (const p of places) {
+        if (!seen.has(p.place_id) && results.length < 5) {
+          seen.add(p.place_id);
+          results.push(p);
+        }
+      }
+    } catch { /* seguir con la siguiente query */ }
+    if (results.length >= 5) break;
+  }
+  
+  return results;
+}
+
 type DbJobRow = { id: unknown; title: unknown; company: unknown; city: unknown; province: unknown; salary: unknown; sourceName: unknown; sourceUrl: unknown };
 
 function mapRowToJob(j: DbJobRow, cityFallback: string) {
@@ -1428,10 +1501,26 @@ El candidato tiene mucha experiencia.
             action: "search_results",
           });
         }
-        // Si los resultados NO son locales (pais, sinonimo, api) y el usuario pidió ciudad, avisar, no mostrar
+        // Si los resultados NO son locales (pais, sinonimo, api) y el usuario pidió ciudad, buscar en Google Places
         if (ciudadBusqueda && result.scope && !["ciudad","provincia","cercanas"].includes(result.scope)) {
+          // Buscar negocios locales automáticamente
+          let googleReply = "";
+          try {
+            const negocios = await buscarNegociosLocales(puestoBusqueda, ciudadBusqueda);
+            if (negocios.length > 0) {
+              googleReply = `\n\nPero he buscado negocios locales en **${ciudadBusqueda}** que podrían necesitar a alguien como tú:\n\n`;
+              for (const n of negocios.slice(0, 4)) {
+                const ratingStr = n.rating ? ` ⭐ ${n.rating}/5` : "";
+                const addrStr = n.formatted_address ? `\n   📍 ${n.formatted_address}` : "";
+                const phoneStr = n.formatted_phone_number ? `\n   📞 ${n.formatted_phone_number}` : "";
+                googleReply += `🏢 **${n.name}**${ratingStr}${addrStr}${phoneStr}\n\n`;
+              }
+              googleReply += `📧 ¿Quieres que envíe tu CV a alguno de estos? Responde **"sí"** y elige cuál.`;
+            }
+          } catch { /* sin Google Places, solo mensaje normal */ }
+
           return NextResponse.json({
-            reply: `🔍 No encontré ofertas de **${puestoBusqueda}** en **${ciudadBusqueda}** ni en sus alrededores.\n\n¿Quieres que busque en **toda España**? Te aviso: la mayoría de ofertas estarán en Madrid, Barcelona, Valencia...\n\nResponde **"sí, busca en toda España"** y amplío la búsqueda.`,
+            reply: `🔍 No encontré ofertas de **${puestoBusqueda}** en **${ciudadBusqueda}** ni en sus alrededores.${googleReply}\n\n¿Buscamos en **toda España**? Responde **"sí, busca en toda España"** y amplío.`,
             action: "search_scope_pais",
           });
         }
