@@ -21,7 +21,6 @@ platform :ios do
     # Crear/descargar provisioning profile automáticamente
     sigh(
       api_key:              api_key,
-      bundle_identifier:    "es.buscaycurra.app",
       app_identifier:       "es.buscaycurra.app",
       output_path:          "/tmp/profiles",
       provisioning_name:    "BuscayCurra Distribution",
