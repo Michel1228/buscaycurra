@@ -39,6 +39,16 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
+      - name: Inyectar DEVELOPMENT_TEAM en proyecto Xcode
+        run: |
+          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          # Reemplazar DEVELOPMENT_TEAM vacío
+          sed -i '' 's/DEVELOPMENT_TEAM = "";/DEVELOPMENT_TEAM = P9L962T32A;/g' "$PBXPROJ"
+          sed -i '' 's/DEVELOPMENT_TEAM = "";/DEVELOPMENT_TEAM = P9L962T32A;/g' "$PBXPROJ"
+          # Verificar
+          echo "=== DEVELOPMENT_TEAM en proyecto ==="
+          grep "DEVELOPMENT_TEAM" "$PBXPROJ" | head -5 || echo "No encontrado (se añadirá en build via xcargs)"
+
       - name: Generate App Store icon 1024x1024
         run: cp public/icon-1024.png ios/App/App/Assets.xcassets/AppIcon.appiconset/Icon-1024.png 2>/dev/null || sips -z 1024 1024 public/icon-512.png --out ios/App/App/Assets.xcassets/AppIcon.appiconset/Icon-1024.png
 
