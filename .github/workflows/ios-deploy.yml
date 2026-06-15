@@ -42,11 +42,6 @@ jobs:
       - name: Generate App Store icon 1024x1024
         run: cp public/icon-1024.png ios/App/App/Assets.xcassets/AppIcon.appiconset/Icon-1024.png 2>/dev/null || sips -z 1024 1024 public/icon-512.png --out ios/App/App/Assets.xcassets/AppIcon.appiconset/Icon-1024.png
 
-      - name: Install CocoaPods dependencies
-        run: |
-          cd ios/App
-          pod install --repo-update
-
       - name: Build and upload with Fastlane
         env:
           APP_STORE_CONNECT_KEY_ID:     ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
