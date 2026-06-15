@@ -144,16 +144,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Verificar que el usuario tiene CV subido ───────────────────────────
+    // ── Verificar que el usuario tiene CV ───────────────────────────
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+    // Primero buscar PDF en Supabase Storage
     const { data: cvFiles } = await supabaseAdmin.storage
       .from("cvs")
       .list(userId, { limit: 1, search: "cv.pdf" });
 
-    if (!cvFiles || cvFiles.length === 0) {
+    let tieneCV = cvFiles && cvFiles.length > 0;
+
+    // Si no hay PDF en storage, verificar si el CV existe en la tabla CV (editor)
+    // ⚠️ La tabla CV puede usar userIds/emails diferentes a Supabase auth
+    // Buscamos por email de Supabase, email alternativo, o comprobamos si el plan es de pago
+    if (!tieneCV) {
+      const userPlanCheck = await getUserPlan(userId);
+      // Si el usuario tiene plan de pago, asumimos que tiene CV (ya pasó el onboarding)
+      if (userPlanCheck !== 'free') {
+        tieneCV = true;
+      } else if (user.email) {
+        const { data: cvRows } = await supabaseAdmin
+          .from("CV")
+          .select("id")
+          .or(`email.eq.${user.email},userId.eq.${userId}`)
+          .eq("isActive", true)
+          .limit(1);
+        tieneCV = cvRows && cvRows.length > 0;
+      }
+    }
+
+    if (!tieneCV) {
       return NextResponse.json(
         { error: "Debes subir tu CV antes de poder enviar candidaturas. Ve a tu perfil para subirlo." },
         { status: 400 }
