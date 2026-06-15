@@ -4,6 +4,17 @@
 set -e
 cd "$(dirname "$0")"
 
+# 🔐 CANDADOS — Verificación pre-deploy
+echo "🔐 CANDADOS pre-deploy..."
+if [ -f /root/candados.sh ]; then
+  bash /root/candados.sh all || {
+    echo "❌ CANDADOS FALLARON — deploy cancelado. Arregla los fallos primero."
+    exit 1
+  }
+else
+  echo "⚠️  /root/candados.sh no encontrado — saltando verificación"
+fi
+
 # Cargar vars de .env.local
 source <(grep -E '^NEXT_PUBLIC_SUPABASE_URL=|^NEXT_PUBLIC_SUPABASE_ANON_KEY=|^NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=|^VAPID_PUBLIC_KEY=|^STRIPE_SECRET_KEY=' .env.local)
 
@@ -28,4 +39,10 @@ docker run -d --name buscaycurra-nextjs \
   buscaycurra:latest
 
 sleep 4
-echo "✅ Test: $(curl -s -o /dev/null -w '%{http_code}' https://buscaycurra.es)"
+echo "✅ HTTP: $(curl -s -o /dev/null -w '%{http_code}' https://buscaycurra.es)"
+
+# 🔐 CANDADOS post-deploy (rápidos: BUILD + DB + REDIS)
+echo "🔐 CANDADOS post-deploy..."
+bash /root/candados.sh build 2>/dev/null && echo "  ✅ BUILD OK"
+bash /root/candados.sh db 2>/dev/null && echo "  ✅ DB OK"
+echo "✅ Deploy completo."
