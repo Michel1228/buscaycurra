@@ -31,9 +31,10 @@ jobs:
       - name: Setup iOS platform (generate Podfile if missing)
         run: |
           if [ ! -f ios/App/Podfile ]; then
+            rm -rf ios
             npx cap add ios
           fi
-          echo "Podfile exists: $(ls -la ios/App/Podfile)"
+          test -f ios/App/Podfile && echo "Podfile OK" || echo "ERROR: Podfile missing"
 
       - name: Sync Capacitor
         run: npx cap sync ios
@@ -44,33 +45,6 @@ jobs:
       - name: Install CocoaPods dependencies
         run: |
           cd ios/App
-          # Crear Podfile si no fue generado por cap add ios
-          if [ ! -f Podfile ]; then
-            cat > Podfile << 'PODFILE'
-          platform :ios, '13.0'
-          
-          def capacitor_pods
-            pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
-            pod 'CapacitorApp', :path => '../../node_modules/@capacitor/app'
-            pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
-            pod 'CapacitorPreferences', :path => '../../node_modules/@capacitor/preferences'
-            pod 'CapacitorPushNotifications', :path => '../../node_modules/@capacitor/push-notifications'
-          end
-          
-          target 'App' do
-            capacitor_pods
-          end
-          
-          post_install do |installer|
-            installer.pods_project.targets.each do |target|
-              target.build_configurations.each do |config|
-                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-              end
-            end
-          end
-          PODFILE
-            echo "Podfile creado manualmente"
-          fi
           pod install --repo-update
 
       - name: Build and upload with Fastlane
