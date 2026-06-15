@@ -1501,8 +1501,8 @@ El candidato tiene mucha experiencia.
             action: "search_results",
           });
         }
-        // Si los resultados NO son locales (pais, sinonimo, api) y el usuario pidió ciudad, buscar en Google Places
-        if (ciudadBusqueda && result.scope && !["ciudad","provincia","cercanas"].includes(result.scope)) {
+        // Si los resultados NO son de la ciudad exacta, buscar en Google Places
+        if (ciudadBusqueda && result.scope && result.scope !== "ciudad") {
           // Buscar negocios locales automáticamente
           let googleReply = "";
           try {
