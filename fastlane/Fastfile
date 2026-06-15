@@ -12,22 +12,6 @@ platform :ios do
       in_house:     false,
     )
 
-    # Revocar TODOS los certificados de distribución viejos (Apple limita a 3)
-    UI.message("Verificando certificados de distribución...")
-    require 'spaceship'
-    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-      key_id:     ENV["APP_STORE_CONNECT_KEY_ID"],
-      issuer_id:  ENV["APP_STORE_CONNECT_ISSUER_ID"],
-      key:        Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_P8"])
-    )
-    certs = Spaceship::ConnectAPI::Certificate.all.select { |c| c.certificate_type == "DISTRIBUTION" }
-    UI.message("Certificados de distribución: #{certs.length}")
-    certs.each do |c|
-      UI.message("Revocando certificado #{c.id} (#{c.name || 'sin nombre'})")
-      c.revoke!
-    end
-    UI.success("Todos los certificados viejos revocados. Slots libres: 3/3")
-
     # Crear/descargar certificado de distribución automáticamente
     cert(
       api_key:     api_key,

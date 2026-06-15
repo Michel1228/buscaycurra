@@ -42,6 +42,47 @@ jobs:
       - name: Generate App Store icon 1024x1024
         run: cp public/icon-1024.png ios/App/App/Assets.xcassets/AppIcon.appiconset/Icon-1024.png 2>/dev/null || sips -z 1024 1024 public/icon-512.png --out ios/App/App/Assets.xcassets/AppIcon.appiconset/Icon-1024.png
 
+      - name: Revocar certificados de distribucion viejos (Apple limita a 3)
+        env:
+          APP_STORE_CONNECT_KEY_ID:     ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID:  ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+        run: |
+          pip3 install PyJWT requests --quiet
+          python3 << 'PYEOF'
+          import jwt, time, requests, base64, os, json
+
+          key_b64 = os.environ["APP_STORE_CONNECT_API_KEY_P8"]
+          key_data = base64.b64decode(key_b64).decode()
+          key_id = os.environ["APP_STORE_CONNECT_KEY_ID"]
+          issuer_id = os.environ["APP_STORE_CONNECT_ISSUER_ID"]
+
+          token = jwt.encode(
+              {"iss": issuer_id, "iat": int(time.time()), "exp": int(time.time()) + 600, "aud": "appstoreconnect-v1"},
+              key_data, algorithm="ES256", headers={"kid": key_id, "typ": "JWT"}
+          )
+
+          headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+          base = "https://api.appstoreconnect.apple.com/v1"
+
+          # Listar certificados
+          r = requests.get(f"{base}/certificates?filter[certificateType]=DISTRIBUTION&limit=50", headers=headers)
+          certs = r.json().get("data", [])
+          print(f"Certificados encontrados: {len(certs)}")
+
+          # Revocar cada uno
+          for c in certs:
+              cid = c["id"]
+              name = c["attributes"].get("name", "sin nombre")
+              print(f"Revocando {cid} ({name})...")
+              rr = requests.delete(f"{base}/certificates/{cid}", headers=headers)
+              if rr.status_code in (204, 200):
+                  print(f"  ✓ Revocado")
+              else:
+                  print(f"  ✗ Error {rr.status_code}: {rr.text[:200]}")
+          print("Hecho.")
+          PYEOF
+
       - name: Build and upload with Fastlane
         env:
           APP_STORE_CONNECT_KEY_ID:     ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
