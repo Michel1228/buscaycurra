@@ -28,8 +28,12 @@ jobs:
           ruby-version: "3.2"
           bundler-cache: true
 
-      - name: Add iOS platform
-        run: npx cap add ios || true
+      - name: Setup iOS platform (generate Podfile if missing)
+        run: |
+          if [ ! -f ios/App/Podfile ]; then
+            npx cap add ios
+          fi
+          echo "Podfile exists: $(ls -la ios/App/Podfile)"
 
       - name: Sync Capacitor
         run: npx cap sync ios
