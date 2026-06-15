@@ -15,7 +15,11 @@ platform :ios do
     # Revocar certificados viejos para no exceder el límite de Apple (máx 3)
     UI.message("Verificando certificados de distribución...")
     require 'spaceship'
-    Spaceship::ConnectAPI.login(api_key)
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id:     ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id:  ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key:        Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_P8"])
+    )
     certs = Spaceship::ConnectAPI::Certificate.all.select { |c| c.certificate_type == "DISTRIBUTION" }
     UI.message("Certificados de distribución existentes: #{certs.length}/3")
     if certs.length >= 3
