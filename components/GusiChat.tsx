@@ -235,10 +235,18 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
         }),
       });
 
-      const data = await res.json();
-      setMensajes(prev => [...prev, { role: "gusi", text: data.reply || "¡Ups! Inténtalo de nuevo.", action: data.action, jobs: data.jobs, company: data.company }]);
+      const data = await res.json().catch(() => null);
+      if (!data) {
+        addMsg("gusi", res.ok ? "¡Ups! Respuesta inesperada. Inténtalo de nuevo." : `Error del servidor (${res.status}). Recarga la página o inténtalo más tarde.`);
+      } else if (data.error) {
+        addMsg("gusi", data.error);
+      } else if (data.reply) {
+        setMensajes(prev => [...prev, { role: "gusi", text: data.reply, action: data.action, jobs: data.jobs, company: data.company }]);
+      } else {
+        addMsg("gusi", "¡Ups! No entendí la respuesta. ¿Pruebas de nuevo?");
+      }
     } catch {
-      addMsg("gusi", "Sin conexión. Comprueba tu internet.");
+      addMsg("gusi", "Sin conexión. Comprueba tu internet o recarga la página.");
     }
     setCargando(false);
   };

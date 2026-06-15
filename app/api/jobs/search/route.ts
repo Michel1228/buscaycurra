@@ -88,9 +88,22 @@ export async function GET(request: NextRequest) {
     let idx = 2;
 
     if (keyword) {
-      conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
-      params.push(`%${keyword}%`);
-      idx++;
+      // Split keyword into words and search each with AND logic
+      // "Congelados de Navarra" → title ILIKE '%congelados%' AND title ILIKE '%navarra%'
+      const STOP_WORDS = new Set(["de", "la", "el", "en", "del", "las", "los", "un", "una", "y", "o", "a", "para", "por", "con", "sin", "que", "es", "se", "no", "al", "lo", "le", "the", "of", "in", "and", "to", "for", "a"]);
+      const words = keyword.split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w.toLowerCase()));
+      if (words.length > 1) {
+        const wordConditions = words.map(w => {
+          params.push(`%${w}%`);
+          const i = idx++;
+          return `(title ILIKE $${i} OR description ILIKE $${i} OR company ILIKE $${i})`;
+        });
+        conditions.push(`(${wordConditions.join(" AND ")})`);
+      } else {
+        conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx} OR company ILIKE $${idx})`);
+        params.push(`%${keyword}%`);
+        idx++;
+      }
     }
 
     // Filtro por país

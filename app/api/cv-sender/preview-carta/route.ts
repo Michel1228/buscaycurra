@@ -79,19 +79,7 @@ export async function POST(req: NextRequest) {
 
     const cvText = cvParts.join("\n");
 
-    // Generar carta con Groq
-    const GROQ_API_KEY = process.env.GROQ_API_KEY;
-    if (!GROQ_API_KEY) {
-      // Carta genérica si no hay API key
-      const cartaGenerica = `Estimado equipo de ${companyName},\n\nMe dirijo a ustedes para presentar mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : ""}. Tras conocer su empresa, considero que mi perfil puede aportar valor a su equipo.\n\nA lo largo de mi trayectoria profesional he desarrollado competencias que se alinean con lo que buscan. Soy una persona proactiva, con capacidad de adaptación y compromiso con los resultados.\n\nQuedo a su disposición para concertar una entrevista y ampliar la información que consideren necesaria.\n\nUn cordial saludo.`;
-
-      return NextResponse.json({
-        carta: cartaGenerica,
-        subject: jobTitle ? `Candidatura para ${jobTitle} — ${companyName}` : `Candidatura — ${companyName}`,
-        generatedBy: "template",
-      });
-    }
-
+    // Prompt compartido para todos los proveedores IA
     const prompt = `Eres un experto en RRHH. Genera una carta de presentación profesional en español basada en este CV y empresa.
 
 EMPRESA: ${companyName}
@@ -115,43 +103,109 @@ CARTA:
 ASUNTO:
 [asunto email, max 80 chars]`;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
+    // Template de fallback (último recurso si todas las APIs fallan)
+    const cartaTemplate = `Estimado equipo de ${companyName},
 
-    try {
-      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "qwen/qwen3-32b",
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.7,
-          max_tokens: 1200,
-        }),
-        signal: controller.signal,
-      });
+Me dirijo a ustedes para presentar mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : ""}. Tras conocer su empresa, considero que mi perfil puede aportar valor a su equipo.
 
-      if (!groqRes.ok) {
-        throw new Error(`Groq error ${groqRes.status}`);
+A lo largo de mi trayectoria profesional he desarrollado competencias que se alinean con lo que buscan. Soy una persona proactiva, con capacidad de adaptación y compromiso con los resultados.
+
+Quedo a su disposición para concertar una entrevista y ampliar la información que consideren necesaria.
+
+Un cordial saludo.`;
+
+    const defaultSubject = jobTitle
+      ? `Candidatura para ${jobTitle} — ${companyName}`
+      : `Candidatura — ${companyName}`;
+
+    // Función para parsear respuesta IA
+    const parseAIResponse = (raw: string) => {
+      const cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+      const cartaMatch = cleaned.match(/CARTA:\s*([\s\S]*?)(?=ASUNTO:|$)/i);
+      const asuntoMatch = cleaned.match(/ASUNTO:\s*(.*?)$/im);
+      return {
+        carta: cartaMatch?.[1]?.trim() || cleaned,
+        subject: asuntoMatch?.[1]?.trim() || defaultSubject,
+      };
+    };
+
+    // === INTENTO 1: DeepSeek (primario, key verificada 15 Jun 2026) ===
+    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+    if (DEEPSEEK_API_KEY) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const res = await fetch("https://api.deepseek.com/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.7,
+            max_tokens: 1200,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (res.ok) {
+          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+          const raw = data.choices?.[0]?.message?.content || "";
+          const parsed = parseAIResponse(raw);
+          return NextResponse.json({ ...parsed, generatedBy: "deepseek" });
+        }
+        console.warn("[preview-carta] DeepSeek falló, intentando Groq...");
+      } catch (e) {
+        console.warn("[preview-carta] DeepSeek error:", (e as Error).message);
       }
-
-      const data = await groqRes.json() as { choices?: Array<{ message?: { content?: string } }> };
-      const raw = (data.choices?.[0]?.message?.content || "").replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-
-      const cartaMatch = raw.match(/CARTA:\s*([\s\S]*?)(?=ASUNTO:|$)/i);
-      const asuntoMatch = raw.match(/ASUNTO:\s*(.*?)$/im);
-
-      const carta = cartaMatch?.[1]?.trim() || raw;
-      const subject = asuntoMatch?.[1]?.trim() || 
-        (jobTitle ? `Candidatura para ${jobTitle} — ${companyName}` : `Candidatura — ${companyName}`);
-
-      return NextResponse.json({ carta, subject, generatedBy: "ia" });
-    } finally {
-      clearTimeout(timeout);
     }
+
+    // === INTENTO 2: Groq (secundario) ===
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+    if (GROQ_API_KEY) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${GROQ_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "qwen/qwen3-32b",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.7,
+            max_tokens: 1200,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (res.ok) {
+          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+          const raw = data.choices?.[0]?.message?.content || "";
+          const parsed = parseAIResponse(raw);
+          return NextResponse.json({ ...parsed, generatedBy: "groq" });
+        }
+        console.warn("[preview-carta] Groq falló, usando template...");
+      } catch (e) {
+        console.warn("[preview-carta] Groq error:", (e as Error).message);
+      }
+    }
+
+    // === INTENTO 3: Template genérica (siempre disponible) ===
+    console.warn("[preview-carta] Sin APIs disponibles, usando template genérica");
+    return NextResponse.json({
+      carta: cartaTemplate,
+      subject: defaultSubject,
+      generatedBy: "template",
+    });
   } catch (err) {
     console.error("[preview-carta] Error:", (err as Error).message);
     return NextResponse.json({ error: "Error generando carta" }, { status: 500 });

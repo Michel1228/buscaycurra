@@ -59,6 +59,42 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
     setEnviando(true);
     setError("");
     try {
+      // Si no hay email en el target, intentar extraerlo
+      let email = target.email || "";
+      if (!email) {
+        setError("Buscando email de la empresa...");
+        try {
+          const exRes = await fetch("/api/company/extract", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: target.empresa }),
+          });
+          if (exRes.ok) {
+            const exData = await exRes.json();
+            const primera = (exData.empresas as { emailRrhh?: string }[])?.[0];
+            if (primera?.emailRrhh) email = primera.emailRrhh;
+          }
+        } catch { /* ignorar */ }
+
+        // Fallback: construir desde dominio de la URL
+        if (!email && target.url) {
+          try {
+            const domain = new URL(target.url).hostname.replace(/^www\./, "");
+            const jobBoards = ["adzuna", "jooble", "careerjet", "infojobs", "jobviewtrack", "indeed", "linkedin", "monster", "tecnoempleo"];
+            if (!jobBoards.some(b => domain.includes(b))) {
+              email = `empleo@${domain}`;
+            }
+          } catch { /* ignorar */ }
+        }
+
+        if (!email) {
+          setError("No se encontró email para esta empresa. Usa el buscador de ofertas o pega la web de la empresa.");
+          setEnviando(false);
+          return;
+        }
+        setError("");
+      }
+
       let scheduledFor: string | undefined;
       if (strategy === "personalizada" && fechaPersonalizada) {
         scheduledFor = new Date(fechaPersonalizada).toISOString();
@@ -72,7 +108,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
         },
         body: JSON.stringify({
           companyName: target.empresa,
-          companyEmail: target.email || "",
+          companyEmail: email,
           companyUrl: target.url,
           jobTitle: target.titulo,
           strategy,
