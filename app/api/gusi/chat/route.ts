@@ -1803,6 +1803,21 @@ Responde en JSON exactamente así:
 }
 
 function extractJobTerm(text: string): string {
+  // "[categoría] [nombre negocio] [dirección] [ciudad]" — buscar negocio concreto por nombre
+  // ej: "peluquería enjoy estilistas calle almajares 17 tudela"
+  const negocioMatch = text.match(/(?:peluquer[ií]a|barber[ií]a|restaurante|bar\b|hotel|cafeter[ií]a|cl[ií]nica|farmacia|panader[ií]a|tienda|taller|supermercado|sal[oó]n|est[eé]tica|gimnasio|lavander[ií]a|fruter[ií]a|carnicer[ií]a|pescader[ií]a)\s+(.+?)(?:\s+(?:calle|plaza|avenida|avda|paseo|crta|carretera|c\/)\s|\s+\d{4,5}\s|\s*$)/i);
+  if (negocioMatch?.[1]?.trim()) {
+    const nombre = negocioMatch[1].trim();
+    const words = nombre.split(/\s+/);
+    // Tomar solo las palabras que forman el nombre (antes de calle/plaza/números)
+    const nameParts: string[] = [];
+    for (const w of words) {
+      if (/^(calle|plaza|avenida|avda|paseo|crta|carretera|c\/|\d+)$/i.test(w)) break;
+      nameParts.push(w);
+    }
+    const businessName = nameParts.join(" ");
+    if (businessName.length >= 3) return businessName;
+  }
   const stopwords = new Set(["trabajo", "empleo", "curro", "oferta", "algo", "en", "por", "para", "que", "lo", "la", "el", "un", "una"]);
   // "[puesto] en [ciudad]" — patrón más común (ej: "camarero en Tudela")
   const mDirect = text.match(/(?:^|\s)([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)\s+(?:en|por)\s+\w+/i);
