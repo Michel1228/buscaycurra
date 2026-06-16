@@ -38,10 +38,7 @@ platform :ios do
       xcargs:                "DEVELOPMENT_TEAM=P9L962T32A",
       export_options: {
         teamID:                   "P9L962T32A",
-        signingStyle:             "manual",
-        provisioningProfiles: {
-          "es.buscaycurra.app" => "BuscayCurra Distribution",
-        },
+        signingStyle:             "automatic",
       },
     )
 
