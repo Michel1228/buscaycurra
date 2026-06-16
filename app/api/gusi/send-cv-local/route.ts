@@ -1,11 +1,12 @@
 /**
  * /api/gusi/send-cv-local — Envío real de CV a negocio local (Google Places)
  * 
- * POST { userId, companyName, companyPhone, companyEmail, puesto, adaptedCv, coverLetter }
+ * POST { userId, companyName, companyPhone, companyEmail, puesto, adaptedCv, coverLetter, website?, city? }
  */
 import { NextRequest, NextResponse } from "next/server";
 import { addCVJob } from "@/lib/cv-sender/queue";
 import { getUserId } from "@/lib/auth-server";
+import { findEmail } from "@/lib/email-finder";
 
 export const dynamic = "force-dynamic";
 
@@ -24,13 +25,30 @@ export async function POST(req: NextRequest) {
       puesto?: string;
       adaptedCv?: string;
       coverLetter?: string;
+      website?: string;
+      city?: string;
     };
 
     const companyName = body.companyName || "Empresa local";
-    const companyEmail = body.companyEmail || "";
+    let companyEmail = body.companyEmail || "";
     const jobTitle = body.puesto || "Candidatura espontánea";
 
-    // Si no hay email, no podemos enviar — devolver error amigable
+    // Si no hay email, intentar encontrarlo automáticamente
+    if (!companyEmail) {
+      const result = await findEmail(
+        companyName,
+        body.city || "Tudela",
+        body.website,
+        body.companyPhone
+      );
+
+      if (result.email) {
+        companyEmail = result.email;
+        console.log(`[send-cv-local] Email encontrado para ${companyName}: ${companyEmail} (fuente: ${result.source}, confianza: ${result.confidence})`);
+      }
+    }
+
+    // Si aún no hay email, devolver error amigable
     if (!companyEmail) {
       return NextResponse.json({
         success: false,
@@ -46,7 +64,7 @@ export async function POST(req: NextRequest) {
       userId,
       companyName,
       companyEmail,
-      companyUrl: "",
+      companyUrl: body.website || "",
       jobTitle,
       priority: "normal",
       useAIPersonalization: true,
