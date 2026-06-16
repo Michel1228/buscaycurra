@@ -1557,7 +1557,7 @@ El candidato tiene mucha experiencia.
     if (intent === "send_cv_local_confirm") {
       // Extraer contexto del historial: empresa, teléfono, puesto
       const histText = history.slice(-6).map((m: { text: string }) => m.text).join("\n");
-      const empresaMatch = histText.match(/(?:BAR|Bar|Restaurante|Cafeter[ií]a|Tienda|Hotel|Taller|Panader[ií]a|Farmacia|Cl[ií]nica)\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑa-záéíóúüñ\s]+?)(?:\n|\||·|-|—|\.|$)/);
+      const empresaMatch = histText.match(/(?:BAR|Bar|Restaurante|Cafeter[ií]a|Tienda|Hotel|Taller|Panader[ií]a|Farmacia|Cl[ií]nica|Peluquer[ií]a|Barber[ií]a|Centro\\s+de\\s+[Bb]elleza|Sal[oó]n|Est[eé]tica|SPA|Gimnasio|Lavander[ií]a|Supermercado|Fruter[ií]a|Carnicer[ií]a|Pescader[ií]a)\\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑa-záéíóúüñ\\s]+?)(?:\\n|\\||·|-|—|\\.|$)/);
       const telefonoMatch = histText.match(/(?:tel[eé]fono|telf?|📞)\s*[:\s]*\+?(\(?\d{2,3}\)?[\s\-]?\d{2,3}[\s\-]?\d{2,3}[\s\-]?\d{2,3})/i);
       const puestoMatch = histText.match(/(?:puesto|trabajo|como|de)\s+(camarero[\/a]*|cocinero[\/a]*|ayudante[\s\w]*|repartidor[\/a]*|limpiador[\/a]*|dependiente[\/a]*|mozo[\/a]*)/i);
 
@@ -1603,8 +1603,9 @@ Responde en JSON exactamente así:
               messages: [{ role: "user", content: promptAdaptacion }],
               max_tokens: 800,
               temperature: 0.5,
+              extra_body: { thinking: { type: "disabled" } },
             }),
-            signal: AbortSignal.timeout(20000),
+            signal: AbortSignal.timeout(30000),
           });
           if (dsRes.ok) {
             const dsData = await dsRes.json() as { choices?: Array<{ message?: { content?: string } }> };
@@ -1642,6 +1643,14 @@ Responde en JSON exactamente así:
           }),
         });
         const sendData = await sendRes.json();
+
+        if (sendData.needsEmail) {
+          // Sin email — pedir al usuario
+          return NextResponse.json({
+            reply: `No tengo el email de **${sendData.companyName || empresaNombre}**${sendData.companyPhone ? ` (📞 ${sendData.companyPhone})` : ""}.\n\n📧 ¿Me lo puedes pasar? Así lo envío ahora mismo.\n\nTambién puedes:\n- Pasarte en persona con el CV (causa mejor impresión)\n- Llamar y preguntar por el email de RRHH`,
+            action: "send_cv_flow",
+          });
+        }
 
         return NextResponse.json({
           reply: `✅ **¡Hecho!**\n\nHe generado tu CV adaptado con la plantilla profesional y la carta de presentación para **${empresaNombre}**.\n\n${sendData.message}\n\n📄 ${sendData.pdfUrl ? `[Ver CV generado](${sendData.pdfUrl})` : ""}\n\n💡 **Recomendación**: Pásate mañana a media mañana por ${empresaNombre} y refuerza la candidatura en persona. ¡Así te recuerdan!`,
