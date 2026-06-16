@@ -21,77 +21,80 @@ export async function findEmail(
   website?: string,
   phone?: string
 ): Promise<EmailResult> {
-  const results: EmailResult[] = [];
 
-  // ── Fuente 1: Website (si Google Places lo tiene) ──
+  // ── Lanzar las 3 fuentes EN PARALELO (máx 3s total) ──
+  const searches: Promise<EmailResult | null>[] = [];
+
+  // Fuente 1: Website (si Google Places lo tiene)
   if (website) {
-    try {
-      const controller = new AbortController();
-      const tid = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(website, {
-        headers: { "User-Agent": UA, Accept: "text/html" },
-        signal: controller.signal,
-        redirect: "follow",
-      });
-      clearTimeout(tid);
-      
-      const raw = await res.arrayBuffer();
-      const html = new TextDecoder("utf-8", { fatal: false }).decode(raw.slice(0, 150_000));
-      const emails = extractEmailsFast(html);
-      
-      if (emails.length > 0) {
-        const best = pickBestEmail(emails, businessName);
-        if (best) results.push({ email: best, confidence: "high", source: `web: ${website}` });
-      }
-    } catch { /* timeout o error, siguiente fuente */ }
+    searches.push((async () => {
+      try {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(website, {
+          headers: { "User-Agent": UA, Accept: "text/html" },
+          signal: controller.signal,
+          redirect: "follow",
+        });
+        clearTimeout(tid);
+        const raw = await res.arrayBuffer();
+        const html = new TextDecoder("utf-8", { fatal: false }).decode(raw.slice(0, 150_000));
+        const emails = extractEmailsFast(html);
+        if (emails.length > 0) {
+          const best = pickBestEmail(emails, businessName);
+          if (best) return { email: best, confidence: "high", source: `web: ${website}` };
+        }
+      } catch { /* timeout */ }
+      return null;
+    })());
   }
 
-  // ── Fuente 2: Google Search snippets ──
-  try {
-    const query = encodeURIComponent(`${businessName} ${city} email contacto`);
-    const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(
-      `https://www.google.com/search?q=${query}&hl=es`,
-      { headers: { "User-Agent": UA }, signal: controller.signal }
-    );
-    clearTimeout(tid);
-    
-    const html = await res.text();
-    const emails = extractEmailsFast(html);
-    
-    if (emails.length > 0) {
-      const best = pickBestEmail(emails, businessName);
-      if (best) results.push({ email: best, confidence: "medium", source: "google_search" });
-    }
-  } catch { /* ignorar */ }
+  // Fuente 2: Google Search snippets
+  searches.push((async () => {
+    try {
+      const q = encodeURIComponent(`${businessName} ${city} email contacto`);
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(`https://www.google.com/search?q=${q}&hl=es`, {
+        headers: { "User-Agent": UA }, signal: controller.signal
+      });
+      clearTimeout(tid);
+      const html = await res.text();
+      const emails = extractEmailsFast(html);
+      if (emails.length > 0) {
+        const best = pickBestEmail(emails, businessName);
+        if (best) return { email: best, confidence: "medium", source: "google_search" };
+      }
+    } catch { /* ignorar */ }
+    return null;
+  })());
 
-  // ── Fuente 3: Páginas Amarillas (directorio español) ──
-  try {
-    const query = encodeURIComponent(`${businessName} ${city}`);
-    const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), 2500);
-    const res = await fetch(
-      `https://www.paginasamarillas.es/search/${query}/all-ma/all/all/all?page=1`,
-      { headers: { "User-Agent": UA }, signal: controller.signal }
-    );
-    clearTimeout(tid);
-    
-    const html = await res.text();
-    const emails = extractEmailsFast(html);
-    
-    if (emails.length > 0) {
-      const best = pickBestEmail(emails, businessName);
-      if (best) results.push({ email: best, confidence: "medium", source: "paginas_amarillas" });
-    }
-  } catch { /* ignorar */ }
+  // Fuente 3: Páginas Amarillas (directorio español)
+  searches.push((async () => {
+    try {
+      const q = encodeURIComponent(`${businessName} ${city}`);
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`https://www.paginasamarillas.es/search/${q}/all-ma/all/all/all?page=1`, {
+        headers: { "User-Agent": UA }, signal: controller.signal
+      });
+      clearTimeout(tid);
+      const html = await res.text();
+      const emails = extractEmailsFast(html);
+      if (emails.length > 0) {
+        const best = pickBestEmail(emails, businessName);
+        if (best) return { email: best, confidence: "medium", source: "paginas_amarillas" };
+      }
+    } catch { /* ignorar */ }
+    return null;
+  })());
 
-  // ── Elegir el mejor resultado ──
-  if (results.length > 0) {
-    // Priorizar alta confianza
-    const high = results.find(r => r.confidence === "high");
-    if (high) return high;
-    return results[0];
+  // Esperar a la primera que devuelva resultado (o todas)
+  const settled = await Promise.allSettled(searches);
+  for (const r of settled) {
+    if (r.status === "fulfilled" && r.value?.email) {
+      return r.value;
+    }
   }
 
   return { email: null, confidence: "none", source: "no_sources" };
