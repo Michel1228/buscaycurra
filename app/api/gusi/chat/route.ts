@@ -1870,10 +1870,15 @@ function extractJobTerm(text: string): string {
 
 function extractCity(text: string): string {
   const cities = [
-    // España
+    // España — grandes ciudades + municipios navarros y cercanos
     "madrid", "barcelona", "valencia", "sevilla", "málaga", "bilbao", "zaragoza",
     "murcia", "pamplona", "tudela", "navarra", "alicante", "córdoba", "granada",
     "vitoria", "san sebastián", "santander", "toledo", "cádiz", "palma",
+    // Navarra (comunes)
+    "fustiñana", "cintruénigo", "corella", "estella", "tafalla", "tudelilla",
+    "cascante", "castejón", "burlada", "barañain", "zizur", "villava",
+    "murchante", "monteagudo", "milagro", "azagra", "san adrián", "peralta",
+    "andosilla", "marcilla", "olite", "tudela de duero",
     // Europa
     "berlin", "münchen", "munich", "hamburg", "frankfurt", "köln", "stuttgart",
     "paris", "lyon", "marseille", "toulouse", "bordeaux", "lille",
@@ -1891,9 +1896,29 @@ function extractCity(text: string): string {
     "wien", "vienna", "salzburg",
   ];
   const t = text.toLowerCase();
+  
+  // 1. Lista hardcodeada (rápido, ciudades grandes)
   for (const c of cities) {
     if (t.includes(c)) return c.charAt(0).toUpperCase() + c.slice(1);
   }
+  
+  // 2. Regex genérico: cualquier palabra(s) tras "en" → captura municipios no listados
+  //    Ej: "operario en Fustiñana" → "Fustiñana"
+  //    Ej: "camarero en San Sebastián de los Reyes" → "San Sebastián de los Reyes"
+  const enMatch = t.match(/en\s+([a-záéíóúñü]+(?:\s+(?:de\s+|la\s+|las\s+|los\s+|el\s+|del\s+)?[a-záéíóúñü]+){0,3})/i);
+  if (enMatch) {
+    const city = enMatch[1].trim();
+    // Filtrar palabras que NO son ciudades
+    const nonCities = ['españa', 'alemania', 'francia', 'italia', 'portugal', 'irlanda',
+      'holanda', 'suiza', 'suecia', 'noruega', 'dinamarca', 'finlandia', 'austria',
+      'bélgica', 'canadá', 'australia', 'remoto', 'casa', 'oficina', 'híbrido',
+      'teletrabajo', 'mi', 'el', 'la', 'los', 'las', 'todo', 'cualquier',
+      'empresa', 'general', 'total'];
+    if (!nonCities.includes(city) && city.length > 2) {
+      return city.charAt(0).toUpperCase() + city.slice(1);
+    }
+  }
+  
   return "";
 }
 

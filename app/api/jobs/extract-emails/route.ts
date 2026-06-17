@@ -126,7 +126,7 @@ async function processBatch(batchSize: number) {
      FROM "JobListing"
      WHERE "isActive" = true
        AND ("contactEmail" IS NULL OR "contactEmail" = '')
-       AND "sourceUrl" IS NOT NULL
+       AND "sourceUrl" IS NOT NULL AND "sourceUrl" NOT LIKE '%jobviewtrack%'
        AND "sourceUrl" != ''
      ORDER BY "createdAt" DESC
      LIMIT $1`,
@@ -183,7 +183,16 @@ async function processBatch(batchSize: number) {
     const url = (row.sourceUrl as string) || "";
     if (!url.startsWith("http")) continue;
 
-    const email = await scrapeUrl(url);
+    let email = await scrapeUrl(url);
+    // Fallback: Google search si el scrape no encuentra email
+    if (!email) {
+      const company = (row.company as string) || "";
+      const city = (row.city as string) || "";
+      if (company.length >= 3) {
+        email = await googleSearch(company, city);
+        if (email) await new Promise(r => setTimeout(r, 500)); // pausa post-Google
+      }
+    }
     if (email) {
       await pool.query(
         `UPDATE "JobListing" SET "contactEmail" = $1 WHERE id = $2`,
