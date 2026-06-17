@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (result.rows.length === 0) {
-      return NextResponse.json({ error: "Oferta no encontrada" }, { status: 404 });
+      return NextResponse.json({ notFound: true, oferta: null });
     }
 
     const j = result.rows[0];
