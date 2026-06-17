@@ -217,7 +217,7 @@ export default function CurriculumPage() {
       } catch { /* ignore */ }
 
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, ciudad, sector, avatar_url")
+        .select("full_name, phone, ciudad, sector")
         .eq("id", session.user.id).single();
 
       if (p) {
@@ -230,11 +230,6 @@ export default function CurriculumPage() {
           email: prev.email || session.user.email || "",
           ciudad: prev.ciudad || p.ciudad || "",
         }));
-        // Fallback: si el CV no tiene foto guardada, usar el avatar del perfil
-        if (!fotoUrlCargada && p.avatar_url) {
-          setFotoUrl(p.avatar_url);
-          fotoUrlCargada = p.avatar_url;
-        }
       }
 
       setCargando(false);
