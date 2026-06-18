@@ -35,7 +35,7 @@ platform :ios do
       output_directory:      "/tmp/ipa",
       output_name:           "BuscayCurra.ipa",
       export_method:         "app-store",
-      xcargs:                "DEVELOPMENT_TEAM=P9L962T32A",
+      xcargs:                "DEVELOPMENT_TEAM=P9L962T32A -allowProvisioningUpdates",
       export_options: {
         teamID:                   "P9L962T32A",
         signingStyle:             "automatic",
