@@ -21,7 +21,6 @@ workflows:
         APPLE_TEAM_ID: P9L962T32A
         APP_STORE_CONNECT_ISSUER_ID: "8e2fe663-67af-4d2d-9ad8-5696b6e580c9"
         APP_STORE_CONNECT_KEY_IDENTIFIER: "7MK73YRZ2J"
-        # APP_STORE_CONNECT_PRIVATE_KEY → añadir en Codemagic UI como variable encriptada
       node: latest
       xcode: latest
       cocoapods: default
@@ -30,29 +29,20 @@ workflows:
       - name: Instalar dependencias Node
         script: npm ci
 
-      - name: Añadir plataforma iOS y sincronizar Capacitor
+      - name: Añadir plataforma iOS (si no existe)
         script: |
-          set -e
           if [ ! -d "ios" ]; then
             npx cap add ios
           fi
-          npx cap sync ios
-          # Verificar que el workspace existe antes de continuar
-          if [ ! -d "ios/App/App.xcworkspace" ]; then
-            echo "ERROR: xcworkspace no existe tras cap sync. Forzando reinstalación..."
-            rm -rf ios
-            npx cap add ios
-            npx cap sync ios
-          fi
-          echo "Workspace OK: ios/App/App.xcworkspace"
 
-      - name: Configurar Info.plist (encriptación exenta + solo iPhone)
+      - name: Sincronizar Capacitor
+        script: npx cap sync ios
+
+      - name: Configurar Info.plist
         script: |
           PLIST="ios/App/App/Info.plist"
-          # Declarar encriptación estándar exenta (solo HTTPS)
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
           /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
-          # Limitar a iPhone (evita que Apple revise en iPad con UI estirada)
           /usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations~ipad" "$PLIST" 2>/dev/null || true
 
       - name: Incrementar build number automáticamente
