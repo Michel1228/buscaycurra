@@ -27,18 +27,22 @@ platform :ios do
       force:                true,
     )
 
-    # Build del IPA
+    # Build del IPA con firma MANUAL usando el perfil descargado por sigh
     gym(
-      project:               "ios/App/App.xcodeproj",
-      scheme:                "App",
-      configuration:         "Release",
-      output_directory:      "/tmp/ipa",
-      output_name:           "BuscayCurra.ipa",
-      export_method:         "app-store",
-      xcargs:                "DEVELOPMENT_TEAM=P9L962T32A CODE_SIGN_STYLE=Automatic -allowProvisioningUpdates",
+      project:                  "ios/App/App.xcodeproj",
+      scheme:                   "App",
+      configuration:            "Release",
+      output_directory:         "/tmp/ipa",
+      output_name:              "BuscayCurra.ipa",
+      export_method:            "app-store",
+      xcargs:                   "DEVELOPMENT_TEAM=P9L962T32A",
+      provisioning_profile_path: lane_context[SharedValues::SIGH_PROFILE_PATH],
       export_options: {
         teamID:                   "P9L962T32A",
-        signingStyle:             "automatic",
+        signingStyle:             "manual",
+        provisioningProfiles: {
+          "es.buscaycurra.app" => "BuscayCurra Distribution"
+        }
       },
     )
 
