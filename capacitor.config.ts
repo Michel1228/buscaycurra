@@ -4,6 +4,7 @@ import { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "es.buscaycurra.app",
   appName: "BuscayCurra",
+  webDir: "public",
   // Carga la web en remoto — siempre actualizada sin rebuild nativo
   server: {
     url: "https://buscaycurra.es",
