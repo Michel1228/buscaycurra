@@ -1,9 +1,12 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import InfoTooltip from "@/components/InfoTooltip";
+import { Star, Check, X, ThumbsUp, ThumbsDown } from "lucide-react";
 
 const EMPRESAS_POPULARES = [
   "Mercadona", "Inditex", "El Corte Inglés", "Repsol", "Telefónica",
@@ -111,7 +114,7 @@ function ReviewsPageInner() {
             className={`text-base ${interactive ? "cursor-pointer hover:scale-110 transition" : ""}`}
             style={{ color: i <= r ? "#f59e0b" : "#2d3142" }}
             disabled={!interactive}>
-            ★
+            <Star size={16} strokeWidth={0} fill={i <= r ? "#f59e0b" : "#2d3142"} />
           </button>
         ))}
       </div>
@@ -172,7 +175,7 @@ function ReviewsPageInner() {
                   return (
                     <div key={star} className="flex items-center gap-1.5 mb-0.5">
                       <span className="text-[10px] w-2" style={{ color: "#64748b" }}>{star}</span>
-                      <span style={{ color: "#f59e0b" }}>★</span>
+                      <Star size={12} strokeWidth={0} fill="#f59e0b" />
                       <div className="flex-1 h-1 rounded-full" style={{ background: "#252836" }}>
                         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "#f59e0b" }} />
                       </div>
@@ -234,12 +237,12 @@ function ReviewsPageInner() {
               {r.title && <p className="font-semibold text-xs mb-1" style={{ color: "#f1f5f9" }}>{r.title}</p>}
               {r.comment && <p className="text-xs mb-2" style={{ color: "#94a3b8" }}>{r.comment}</p>}
               <div className="flex gap-3 text-[11px]">
-                {r.pros && <div><span style={{ color: "#22c55e" }}>✓</span> <span style={{ color: "#64748b" }}>{r.pros}</span></div>}
-                {r.cons && <div><span style={{ color: "#ef4444" }}>✗</span> <span style={{ color: "#64748b" }}>{r.cons}</span></div>}
+                {r.pros && <div className="flex items-start gap-1"><Check size={12} strokeWidth={2.5} style={{ color: "#22c55e" }} className="shrink-0 mt-0.5" /><span style={{ color: "#64748b" }}>{r.pros}</span></div>}
+                {r.cons && <div className="flex items-start gap-1"><X size={12} strokeWidth={2.5} style={{ color: "#ef4444" }} className="shrink-0 mt-0.5" /><span style={{ color: "#64748b" }}>{r.cons}</span></div>}
               </div>
               {r.would_recommend !== null && (
                 <p className="text-[10px] mt-1.5" style={{ color: r.would_recommend ? "#22c55e" : "#ef4444" }}>
-                  {r.would_recommend ? "👍 Recomienda" : "👎 No recomienda"}
+                  {r.would_recommend ? <><ThumbsUp size={11} strokeWidth={1.8} className="inline mr-1" />Recomienda</> : <><ThumbsDown size={11} strokeWidth={1.8} className="inline mr-1" />No recomienda</>}
                 </p>
               )}
             </div>
@@ -248,7 +251,7 @@ function ReviewsPageInner() {
 
         {reviews.length === 0 && company && !loading && (
           <div className="card-game p-8 text-center">
-            <p className="text-3xl mb-2">⭐</p>
+            <Star size={36} strokeWidth={0} fill="#f59e0b" className="mx-auto mb-2" />
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Sin reviews todavía</p>
             <p className="text-xs" style={{ color: "#64748b" }}>Sé el primero en opinar sobre {company}</p>
           </div>

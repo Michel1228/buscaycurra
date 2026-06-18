@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { FolderOpen, FileText, Eye, Pencil, Download, Trash2 } from "lucide-react";
 
 interface CVGuardado {
   id: string;
@@ -69,8 +70,8 @@ export default function MisCurriculumsPage() {
   function descargar(html: string, nombre: string) {
     const banner = `
     <div id="cv-banner" style="position:fixed;top:0;left:0;right:0;background:#1B2845;color:#fff;padding:12px 20px;font-family:sans-serif;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
-      <span style="flex:1">💡 <strong>Para guardar con los colores:</strong> activa <strong>"Gráficos de fondo"</strong> en la ventana de impresión</span>
-      <button onclick="document.getElementById('cv-banner').style.display='none';window.print();" style="background:#7ed56f;color:#1a1a12;border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer;">⬇️ Guardar PDF</button>
+      <span style="flex:1"><strong>Para guardar con los colores:</strong> activa <strong>"Gráficos de fondo"</strong> en la ventana de impresión</span>
+      <button onclick="document.getElementById('cv-banner').style.display='none';window.print();" style="background:#7ed56f;color:#1a1a12;border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer;">Guardar PDF</button>
     </div>
     <div style="height:56px"></div>
     <style>@media print{#cv-banner,div[style*="height:56px"]{display:none!important}}</style>`;
@@ -133,7 +134,7 @@ export default function MisCurriculumsPage() {
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">📂 Mis currículums</h1>
+            <h1 className="flex items-center gap-2 text-2xl font-bold"><FolderOpen size={22} strokeWidth={1.8} />Mis currículums</h1>
             <p className="text-sm mt-1 opacity-75">Tus CVs guardados para distintos trabajos</p>
           </div>
           <button onClick={() => router.push("/app/curriculum")}
@@ -159,7 +160,7 @@ export default function MisCurriculumsPage() {
 
         {!cargando && cvs.length === 0 && (
           <div className="text-center py-16 space-y-4">
-            <div className="text-5xl opacity-30">📄</div>
+            <div className="flex justify-center opacity-30"><FileText size={48} strokeWidth={1.1} /></div>
             <p className="font-semibold" style={{ color: "#f0ebe0" }}>Aún no tienes currículums guardados</p>
             <p className="text-sm" style={{ color: "#706a58" }}>Crea tu primer CV y guárdalo desde el generador</p>
             <button onClick={() => router.push("/app/curriculum")}
@@ -191,20 +192,20 @@ export default function MisCurriculumsPage() {
                       onClick={() => verCV(cv.id)}
                       className="px-4 py-2 text-xs font-semibold rounded-xl transition"
                       style={{ background: viendoId === cv.id ? "rgba(126,213,111,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid #3d3c30", color: "#f0ebe0" }}>
-                      {viendoId === cv.id ? "Ocultar" : "👁 Ver"}
+                      {viendoId === cv.id ? "Ocultar" : <><Eye size={12} strokeWidth={1.8} className="inline mr-1" />Ver</>}
                     </button>
                     <button
                       onClick={() => editarCV(cv)}
                       className="px-4 py-2 text-xs font-semibold rounded-xl transition"
                       style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #3d3c30", color: "#f0ebe0" }}>
-                      ✏️ Editar
+                      <Pencil size={12} strokeWidth={1.8} className="inline mr-1" />Editar
                     </button>
                     {viendoId === cv.id && htmlVista && (
                       <button
                         onClick={() => descargar(htmlVista, cv.nombre)}
                         className="px-4 py-2 text-xs font-semibold rounded-xl transition"
                         style={{ background: "rgba(126,213,111,0.15)", border: "1px solid rgba(126,213,111,0.4)", color: "#7ed56f" }}>
-                        ⬇️ PDF
+                        <Download size={12} strokeWidth={1.8} className="inline mr-1" />PDF
                       </button>
                     )}
                     <button
@@ -212,7 +213,7 @@ export default function MisCurriculumsPage() {
                       disabled={eliminando === cv.id}
                       className="px-4 py-2 text-xs font-semibold rounded-xl transition disabled:opacity-50"
                       style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
-                      {eliminando === cv.id ? "…" : "🗑"}
+                      {eliminando === cv.id ? "…" : <Trash2 size={14} strokeWidth={1.8} />}
                     </button>
                   </div>
                 </div>

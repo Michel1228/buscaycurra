@@ -31,6 +31,15 @@ workflows:
       - name: Sincronizar Capacitor
         script: npx cap sync ios
 
+      - name: Configurar Info.plist (encriptación exenta + solo iPhone)
+        script: |
+          PLIST="ios/App/App/Info.plist"
+          # Declarar encriptación estándar exenta (solo HTTPS)
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          # Limitar a iPhone (evita que Apple revise en iPad con UI estirada)
+          /usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations~ipad" "$PLIST" 2>/dev/null || true
+
       - name: Incrementar build number automáticamente
         script: |
           LATEST=$(app-store-connect get-latest-build-number "$BUNDLE_ID" \
@@ -56,5 +65,5 @@ workflows:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testflight: true
-        submit_to_app_store: false
+        submit_to_testflight: false
+        submit_to_app_store: true

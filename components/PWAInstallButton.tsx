@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Smartphone } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -58,7 +59,7 @@ export default function PWAInstallButton() {
       }}
       aria-label="Instalar aplicación"
     >
-      <span className="text-base">📲</span>
+      <Smartphone size={16} strokeWidth={1.6} />
       <span>{installing ? "Instalando..." : "Instalar app"}</span>
     </button>
   );

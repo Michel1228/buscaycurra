@@ -1,5 +1,6 @@
 "use client";
 
+import { Car, CigaretteOff, ShieldCheck, Waves, GraduationCap, Cake, Globe, CalendarDays, Camera, type LucideIcon } from "lucide-react";
 import { type AuPairReference } from "@/lib/au-pair";
 import { PAISES } from "@/lib/paises";
 
@@ -37,16 +38,16 @@ export default function AuPairPlantilla({
   const pais = PAISES[paisDestino];
   const paisOrigen = PAISES[nationality];
 
-  const aptitudes: string[] = [];
-  if (hasDrivingLicense) aptitudes.push("🚗 Driving License");
-  if (!fumador) aptitudes.push("🚭 Non-smoker");
-  if (primerosAuxilios) aptitudes.push("⛑️ First Aid");
-  if (sabeNadar) aptitudes.push("🏊 Swimmer");
+  const aptitudes: { Icon: LucideIcon; label: string }[] = [];
+  if (hasDrivingLicense) aptitudes.push({ Icon: Car, label: "Driving License" });
+  if (!fumador) aptitudes.push({ Icon: CigaretteOff, label: "Non-smoker" });
+  if (primerosAuxilios) aptitudes.push({ Icon: ShieldCheck, label: "First Aid" });
+  if (sabeNadar) aptitudes.push({ Icon: Waves, label: "Swimmer" });
 
   const tipoLabel =
-    tipoPerfil === "joven_estudiante" ? "🎓 Young & Enthusiastic" :
-    tipoPerfil === "con_experiencia" ? "👶 Experienced Caregiver" :
-    "💼 Career Changer";
+    tipoPerfil === "joven_estudiante" ? "Young & Enthusiastic" :
+    tipoPerfil === "con_experiencia" ? "Experienced Caregiver" :
+    "Career Changer";
 
   return (
     <div className="w-full max-w-[210mm] mx-auto bg-white text-gray-800 rounded-lg overflow-hidden shadow-2xl" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
@@ -63,16 +64,16 @@ export default function AuPairPlantilla({
                 <span>{paisOrigen.bandera}</span> {paisOrigen.nombre}{ciudad ? ` · ${ciudad}` : ""}
               </span>
             )}
-            {age && <span>🎂 {age} años</span>}
-            {languages.length > 0 && <span>🗣 {languages.join(" · ")}</span>}
-            {availableFrom && <span>📅 Available {availableFrom}</span>}
+            {age && <span className="flex items-center gap-1"><Cake size={11} strokeWidth={1.6} />{age} años</span>}
+            {languages.length > 0 && <span className="flex items-center gap-1"><Globe size={11} strokeWidth={1.6} />{languages.join(" · ")}</span>}
+            {availableFrom && <span className="flex items-center gap-1"><CalendarDays size={11} strokeWidth={1.6} />Available {availableFrom}</span>}
           </div>
           {nivelEducativo && (
-            <p className="text-xs text-white/60 mt-2">🎓 {nivelEducativo}</p>
+            <p className="text-xs text-white/60 mt-2 flex items-center gap-1"><GraduationCap size={11} strokeWidth={1.6} />{nivelEducativo}</p>
           )}
           {pais && (
             <span className="absolute top-6 right-6 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
-              ➤ {pais.bandera} {pais.nombre}
+              {pais.bandera} {pais.nombre}
             </span>
           )}
         </div>
@@ -81,7 +82,7 @@ export default function AuPairPlantilla({
       {/* ── Photo Gallery ── */}
       {photos.length > 0 && (
         <div className="p-8 sm:p-10" style={{ background: "#f8f6f0" }}>
-          <h3 className="text-[10px] uppercase tracking-[2px] text-gray-400 font-bold mb-3">📸 Photo Gallery</h3>
+          <h3 className="text-[10px] uppercase tracking-[2px] text-gray-400 font-bold mb-3 flex items-center gap-1"><Camera size={11} strokeWidth={1.6} />Photo Gallery</h3>
           <div className={`grid gap-3 ${
             photos.length === 1 ? "grid-cols-1" :
             photos.length === 2 ? "grid-cols-2" :
@@ -110,8 +111,8 @@ export default function AuPairPlantilla({
         {aptitudes.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {aptitudes.map((a) => (
-              <span key={a} className="text-[11px] px-3 py-1 rounded-full" style={{ background: "#e8f5e9", color: "#1a3d34" }}>
-                {a}
+              <span key={a.label} className="text-[11px] px-3 py-1 rounded-full flex items-center gap-1" style={{ background: "#e8f5e9", color: "#1a3d34" }}>
+                <a.Icon size={11} strokeWidth={1.8} />{a.label}
               </span>
             ))}
           </div>

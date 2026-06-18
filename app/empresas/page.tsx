@@ -1,36 +1,37 @@
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
+import { Target, Bot, MapPin, Banknote, Zap, RefreshCw, Star, Check, type LucideIcon } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-const VENTAJAS = [
+const VENTAJAS: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   {
-    icon: "🎯",
+    Icon: Target,
     titulo: "Candidatos activos, no pasivos",
     desc: "Cada perfil pertenece a alguien que está buscando trabajo ahora mismo. No bases de datos de años atrás.",
   },
   {
-    icon: "🤖",
+    Icon: Bot,
     titulo: "CVs mejorados con IA",
     desc: "Guzzi optimiza cada CV antes de que llegue a tu bandeja. Recibes candidatos con el perfil bien estructurado.",
   },
   {
-    icon: "📍",
+    Icon: MapPin,
     titulo: "Filtra por ciudad y perfil",
     desc: "Busca exactamente lo que necesitas: cocinero en Madrid, electricista en Bilbao, programador remoto.",
   },
   {
-    icon: "💸",
+    Icon: Banknote,
     titulo: "Sin pagar por oferta",
     desc: "InfoJobs cobra hasta 369€ por publicar una oferta. Aquí accedes a candidatos ilimitados por 49,99€/mes.",
   },
   {
-    icon: "⚡",
+    Icon: Zap,
     titulo: "Contacto directo",
     desc: "Con Plan Empresa ves nombre, email y teléfono de cada candidato. Sin intermediarios, sin plataforma de mensajería.",
   },
   {
-    icon: "🔄",
+    Icon: RefreshCw,
     titulo: "Base actualizada diariamente",
     desc: "Nuevos candidatos cada día. Recibes alertas cuando alguien de tu sector y ciudad carga su CV.",
   },
@@ -198,7 +199,7 @@ export default function EmpresasLandingPage() {
             <div className="grid md:grid-cols-3 gap-5">
               {VENTAJAS.map(v => (
                 <div key={v.titulo} className="card-game p-6">
-                  <div className="text-3xl mb-4">{v.icon}</div>
+                  <v.Icon size={32} strokeWidth={1.3} className="mb-4" style={{ color: "#22c55e" }} />
                   <h3 className="text-sm font-bold mb-2" style={{ color: "#f1f5f9" }}>{v.titulo}</h3>
                   <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{v.desc}</p>
                 </div>
@@ -216,7 +217,7 @@ export default function EmpresasLandingPage() {
               {TESTIMONIOS.map(t => (
                 <div key={t.nombre} className="rounded-2xl p-6 flex flex-col gap-4"
                   style={{ background: "#161922", border: "1px solid #2d3142" }}>
-                  <div className="flex gap-0.5 text-sm" style={{ color: "#f59e0b" }}>{"★★★★★"}</div>
+                  <div className="flex gap-0.5">{[1,2,3,4,5].map(i => <Star key={i} size={13} strokeWidth={0} fill="#f59e0b" />)}</div>
                   <p className="text-sm leading-relaxed flex-1" style={{ color: "#94a3b8" }}>"{t.texto}"</p>
                   <div>
                     <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>{t.nombre}</p>
@@ -251,7 +252,7 @@ export default function EmpresasLandingPage() {
                   "Soporte prioritario 24/7",
                 ].map(item => (
                   <div key={item} className="flex items-center gap-2">
-                    <span className="text-xs flex-shrink-0" style={{ color: "#22c55e" }}>✓</span>
+                    <Check size={11} strokeWidth={2.5} className="flex-shrink-0" style={{ color: "#22c55e" }} />
                     <span className="text-xs" style={{ color: "#94a3b8" }}>{item}</span>
                   </div>
                 ))}

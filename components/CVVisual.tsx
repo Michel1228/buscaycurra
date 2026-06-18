@@ -160,7 +160,7 @@ export default function CVVisual({ data }: CVVisualProps) {
           }}>
             {fotoUrl
               ? <img src={fotoUrl} alt="Foto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <span style={{ fontSize: "28px", opacity: 0.3 }}>👤</span>
+              : <span style={{ fontSize: "28px", opacity: 0.3 }}>◯</span>
             }
           </div>
 
@@ -183,7 +183,7 @@ export default function CVVisual({ data }: CVVisualProps) {
               )}
               {email && (
                 <div style={{ display: "flex", gap: "6px", marginBottom: "4px", alignItems: "flex-start" }}>
-                  <span style={{ color: ACCENT, fontSize: "8px", marginTop: "1px" }}>✉</span>
+                  <span style={{ color: ACCENT, fontSize: "8px", marginTop: "1px" }}>@</span>
                   <span style={{ fontSize: "8.5px", color: SIDEBAR_TEXT, lineHeight: 1.4, wordBreak: "break-all" }}>{email}</span>
                 </div>
               )}

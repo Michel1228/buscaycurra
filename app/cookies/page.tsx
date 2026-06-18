@@ -9,6 +9,7 @@
 "use client";
 
 import Link from "next/link";
+import { Check, Globe, Compass, RefreshCw } from "lucide-react";
 
 // ─── Página de Política de Cookies ───────────────────────────────────────────
 
@@ -168,19 +169,19 @@ export default function CookiesPage() {
             <div className="bg-green-50 border border-green-200 rounded-xl p-5">
               <ul className="space-y-2 text-green-800">
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5 font-bold">✓</span>
+                  <Check size={14} strokeWidth={2.5} className="mt-0.5 flex-shrink-0 text-green-500" />
                   <span>No utilizamos cookies publicitarias ni de seguimiento.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5 font-bold">✓</span>
+                  <Check size={14} strokeWidth={2.5} className="mt-0.5 flex-shrink-0 text-green-500" />
                   <span>No compartimos datos de cookies con redes publicitarias.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5 font-bold">✓</span>
+                  <Check size={14} strokeWidth={2.5} className="mt-0.5 flex-shrink-0 text-green-500" />
                   <span>No usamos píxeles de seguimiento de redes sociales.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5 font-bold">✓</span>
+                  <Check size={14} strokeWidth={2.5} className="mt-0.5 flex-shrink-0 text-green-500" />
                   <span>No rastreamos tu comportamiento fuera de nuestra plataforma.</span>
                 </li>
               </ul>
@@ -202,7 +203,7 @@ export default function CookiesPage() {
             <div className="grid md:grid-cols-3 gap-4">
               {/* Chrome */}
               <div className="border border-gray-200 rounded-xl p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">🌐 Google Chrome</h3>
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Globe size={14} strokeWidth={1.8} className="text-blue-500" />Google Chrome</h3>
                 <ol className="list-decimal pl-4 text-sm space-y-1 text-gray-600">
                   <li>Menú → Configuración</li>
                   <li>Privacidad y seguridad</li>
@@ -212,7 +213,7 @@ export default function CookiesPage() {
 
               {/* Firefox */}
               <div className="border border-gray-200 rounded-xl p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">🦊 Mozilla Firefox</h3>
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Globe size={14} strokeWidth={1.8} className="text-orange-500" />Mozilla Firefox</h3>
                 <ol className="list-decimal pl-4 text-sm space-y-1 text-gray-600">
                   <li>Menú → Configuración</li>
                   <li>Privacidad y seguridad</li>
@@ -222,7 +223,7 @@ export default function CookiesPage() {
 
               {/* Safari */}
               <div className="border border-gray-200 rounded-xl p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">🧭 Safari</h3>
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Compass size={14} strokeWidth={1.8} className="text-blue-400" />Safari</h3>
                 <ol className="list-decimal pl-4 text-sm space-y-1 text-gray-600">
                   <li>Preferencias</li>
                   <li>Privacidad</li>
@@ -247,7 +248,7 @@ export default function CookiesPage() {
               onClick={resetearConsentimiento}
               className="px-6 py-3 rounded-xl font-semibold text-sm border-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition"
             >
-              🔄 Restablecer preferencias de cookies
+              <RefreshCw size={14} strokeWidth={1.8} className="inline mr-1.5" />Restablecer preferencias de cookies
             </button>
           </section>
 

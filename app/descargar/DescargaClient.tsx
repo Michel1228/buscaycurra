@@ -2,22 +2,23 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Mail, Search, BarChart2, Smartphone, Bot, Apple, type LucideIcon } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import LogoGusano from "@/components/LogoGusano";
 
-const FEATURES = [
+const FEATURES: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   {
-    icon: "📧",
+    Icon: Mail,
     titulo: "CV enviado automáticamente",
     desc: "Dile a Guzzi qué empresa te interesa. Él redacta la carta, adjunta tu CV y lo envía. Sin formularios, sin portales.",
   },
   {
-    icon: "🔍",
+    Icon: Search,
     titulo: "Búsqueda inteligente",
     desc: "Ofertas de Adzuna, Jooble y más, filtradas por Guzzi según tu perfil. Solo ves lo que de verdad te encaja.",
   },
   {
-    icon: "📊",
+    Icon: BarChart2,
     titulo: "Seguimiento de candidaturas",
     desc: "Pipeline visual de todo lo que has enviado. Nunca pierdas la pista de dónde estás en cada proceso.",
   },
@@ -84,17 +85,17 @@ export default function DescargaClient() {
               </Link>
             ) : canInstall ? (
               <button onClick={install} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
-                <span style={{ fontSize: "20px" }}>📲</span>
+                <Smartphone size={20} strokeWidth={1.4} />
                 Instalar gratis
               </button>
             ) : isIOS ? (
               <button onClick={() => setIosModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
-                <span style={{ fontSize: "20px" }}>📲</span>
+                <Smartphone size={20} strokeWidth={1.4} />
                 Instalar en iPhone
               </button>
             ) : (
               <button onClick={() => setAndroidModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
-                <span style={{ fontSize: "20px" }}>📲</span>
+                <Smartphone size={20} strokeWidth={1.4} />
                 Instalar gratis
               </button>
             )}
@@ -135,8 +136,8 @@ export default function DescargaClient() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
           {FEATURES.map((f) => (
             <div key={f.titulo} style={{ background: "#111520", border: "1px solid #1e2334", borderRadius: "20px", padding: "32px 28px", transition: "border-color 0.2s" }}>
-              <div style={{ width: "48px", height: "48px", background: "rgba(34,197,94,0.1)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", marginBottom: "20px" }}>
-                {f.icon}
+              <div style={{ width: "48px", height: "48px", background: "rgba(34,197,94,0.1)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" }}>
+                <f.Icon size={22} strokeWidth={1.4} style={{ color: "#22c55e" }} />
               </div>
               <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#f1f5f9", margin: "0 0 10px", letterSpacing: "-0.01em" }}>{f.titulo}</h3>
               <p style={{ fontSize: "14px", color: "#64748b", lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
@@ -175,7 +176,7 @@ export default function DescargaClient() {
           {/* Android */}
           <div style={{ background: "#111520", border: "1px solid #1e2334", borderRadius: "20px", padding: "32px 28px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-              <span style={{ fontSize: "26px" }}>🤖</span>
+              <Bot size={26} strokeWidth={1.3} style={{ color: "#22c55e" }} />
               <span style={{ fontSize: "16px", fontWeight: 700, color: "#f1f5f9" }}>Android (Chrome)</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -195,7 +196,7 @@ export default function DescargaClient() {
           {/* iOS */}
           <div style={{ background: "#111520", border: "1px solid #1e2334", borderRadius: "20px", padding: "32px 28px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-              <span style={{ fontSize: "26px" }}>🍎</span>
+              <Apple size={26} strokeWidth={1.3} style={{ color: "#94a3b8" }} />
               <span style={{ fontSize: "16px", fontWeight: 700, color: "#f1f5f9" }}>iPhone / iPad (Safari)</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

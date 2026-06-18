@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Smartphone, X } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -56,7 +57,7 @@ export default function PWAInstallPrompt() {
   return (
     <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg animate-bounce"
       style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-      <span className="text-sm">📲</span>
+      <Smartphone size={18} strokeWidth={1.6} className="shrink-0" />
       <div>
         <p className="text-xs font-bold">Instalar BuscayCurra</p>
         <p className="text-[10px] opacity-80">Acceso rápido + notificaciones</p>
@@ -65,7 +66,7 @@ export default function PWAInstallPrompt() {
         style={{ background: "rgba(255,255,255,0.2)" }}>
         Instalar
       </button>
-      <button onClick={() => setShowPrompt(false)} className="text-xs opacity-60">✕</button>
+      <button onClick={() => setShowPrompt(false)} className="opacity-60"><X size={14} strokeWidth={2} /></button>
     </div>
   );
 }

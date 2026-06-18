@@ -1,5 +1,6 @@
 import { getPool } from "@/lib/db";
 import OfertaDetalleClient, { type OfertaDetalle } from "./OfertaDetalleClient";
+import { Search } from "lucide-react";
 
 function generarJobPostingSchema(oferta: OfertaDetalle) {
   const schema: Record<string, unknown> = {
@@ -67,7 +68,7 @@ export default async function DetalleOfertaPage({
   if (!row) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <p className="text-4xl mb-4">🔍</p>
+        <div className="flex justify-center mb-4"><Search size={48} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
         <p className="text-lg font-semibold" style={{ color: "#f1f5f9" }}>
           Oferta no encontrada
         </p>

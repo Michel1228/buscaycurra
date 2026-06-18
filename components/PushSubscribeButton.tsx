@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Bell } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 const VAPID_PUBLIC_KEY = "BDy57EXay3f97rznP-2QOJOrs2KWYqgWAK-PtQ9oF8W9Yxpu9ri_kqbYKKVgHByP5wOnoEfyTLigsaLRuawblZo";
@@ -104,7 +105,7 @@ export default function PushSubscribeButton() {
     <div className="flex items-center justify-between p-4 rounded-xl"
       style={{ background: "#161922", border: "1px solid #2d3142" }}>
       <div className="flex items-center gap-3">
-        <span className="text-xl">🔔</span>
+        <Bell size={18} strokeWidth={1.8} />
         <div>
           <p className="text-sm font-medium" style={{ color: "#f1f5f9" }}>
             Notificaciones de empleo

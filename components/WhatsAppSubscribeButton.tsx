@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { MessageCircle, Check } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export default function WhatsAppSubscribeButton() {
@@ -84,14 +85,14 @@ export default function WhatsAppSubscribeButton() {
     <div className="p-4 rounded-xl space-y-3"
       style={{ background: "#161922", border: "1px solid #2d3142" }}>
       <div className="flex items-center gap-3">
-        <span className="text-xl">📱</span>
+        <MessageCircle size={20} strokeWidth={1.6} style={{ color: "#22c55e" }} className="shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-medium" style={{ color: "#f1f5f9" }}>
             Alertas por WhatsApp
           </p>
           <p className="text-xs" style={{ color: "#64748b" }}>
             {estado === "activo"
-              ? `✅ Activas — recibirás ofertas en ${telefono}`
+              ? <><Check size={12} strokeWidth={2.5} className="inline mr-1" style={{ color: "#22c55e" }} />Activas — recibirás ofertas en {telefono}</>
               : "Recibe ofertas de empleo directamente en WhatsApp."}
           </p>
         </div>
@@ -129,7 +130,7 @@ export default function WhatsAppSubscribeButton() {
           {estado === "cargando"
             ? "..."
             : guardado
-            ? "✅ Guardado"
+            ? <><Check size={11} strokeWidth={2.5} className="inline mr-0.5" />Guardado</>
             : estado === "activo"
             ? "Desactivar"
             : "Activar"}
