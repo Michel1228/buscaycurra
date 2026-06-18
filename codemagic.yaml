@@ -4,6 +4,14 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
 
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: unified-production
+          include: true
+          source: true
+
     environment:
       ios_signing:
         distribution_type: app_store
@@ -22,14 +30,21 @@ workflows:
       - name: Instalar dependencias Node
         script: npm ci
 
-      - name: Añadir plataforma iOS (si no existe)
+      - name: Añadir plataforma iOS y sincronizar Capacitor
         script: |
+          set -e
           if [ ! -d "ios" ]; then
             npx cap add ios
           fi
-
-      - name: Sincronizar Capacitor
-        script: npx cap sync ios
+          npx cap sync ios
+          # Verificar que el workspace existe antes de continuar
+          if [ ! -d "ios/App/App.xcworkspace" ]; then
+            echo "ERROR: xcworkspace no existe tras cap sync. Forzando reinstalación..."
+            rm -rf ios
+            npx cap add ios
+            npx cap sync ios
+          fi
+          echo "Workspace OK: ios/App/App.xcworkspace"
 
       - name: Configurar Info.plist (encriptación exenta + solo iPhone)
         script: |

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { BarChart2, Search, Frown } from "lucide-react";
 
 interface SalarioData {
   puesto: string;
@@ -149,7 +150,7 @@ export default function SalariosPage() {
             const cards = topOcupaciones.length >= 5 ? topOcupaciones : TOP_FALLBACK;
             return (
               <div className="mb-6">
-                <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>📊 Salarios más buscados</h2>
+                <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "#f1f5f9" }}><BarChart2 size={14} strokeWidth={1.8} />Salarios más buscados</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {cards.slice(0, 8).map(o => (
                     <button
@@ -211,7 +212,7 @@ export default function SalariosPage() {
         {/* Estado vacío inicial: sin búsqueda aún */}
         {!hasSearched && (
           <div className="card-game p-8 text-center">
-            <p className="text-4xl mb-3">🔍</p>
+            <div className="flex justify-center mb-3"><Search size={40} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
             <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Selecciona una ocupación o escribe un puesto</p>
             <p className="text-xs mt-1" style={{ color: "#64748b" }}>Te mostraremos el rango salarial, media y desglose por provincia</p>
           </div>
@@ -220,7 +221,7 @@ export default function SalariosPage() {
         {/* Sin resultados después de buscar */}
         {hasSearched && !data?.rangoGeneral && !loading && (
           <div className="card-game p-8 text-center">
-            <p className="text-4xl mb-3">😕</p>
+            <div className="flex justify-center mb-3"><Frown size={40} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
             <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Sin datos para "{puesto}"</p>
             <p className="text-xs mt-1" style={{ color: "#64748b" }}>Prueba con otro puesto o revisa la ortografía</p>
           </div>

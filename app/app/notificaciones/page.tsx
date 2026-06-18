@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { Upload, Bell, Briefcase, Target, Users, Info, Pin, BellOff, ClipboardList, Check, type LucideIcon } from "lucide-react";
 
 interface Notif {
   id: string;
@@ -27,13 +28,13 @@ interface Oferta {
   descripcion: string;
 }
 
-const ICONOS: Record<string, string> = {
-  cv_enviado: "📤",
-  nueva_oferta: "🔔",
-  alerta_empleo: "💼",
-  entrevista: "🎯",
-  bienvenida: "👋",
-  sistema: "ℹ️",
+const ICONOS: Record<string, LucideIcon> = {
+  cv_enviado: Upload,
+  nueva_oferta: Bell,
+  alerta_empleo: Briefcase,
+  entrevista: Target,
+  bienvenida: Users,
+  sistema: Info,
 };
 
 export default function NotificacionesPage() {
@@ -224,7 +225,7 @@ export default function NotificacionesPage() {
       }
 
       setEnviadosHoy((prev) => prev + 1);
-      setEnvioExito(`✅ CV enviado a ${job.empresa}`);
+      setEnvioExito(`CV enviado a ${job.empresa}`);
       setTimeout(() => setEnvioExito(""), 4000);
     } catch (err) {
       setErrorEnvio((err as Error).message);
@@ -379,7 +380,7 @@ export default function NotificacionesPage() {
                   color: filtro === f ? "#22c55e" : "#94a3b8",
                 }}
               >
-                {f === "todas" ? "📋 Todas" : `🔵 No leídas (${sinLeer})`}
+                {f === "todas" ? <><ClipboardList size={12} strokeWidth={1.8} className="inline mr-1" />Todas</> : `No leídas (${sinLeer})`}
               </button>
             )
           )}
@@ -400,7 +401,7 @@ export default function NotificacionesPage() {
 
         {filtradas.length === 0 ? (
           <div className="card-game p-10 text-center">
-            <p className="text-4xl mb-3">🔕</p>
+            <div className="flex justify-center mb-3"><BellOff size={40} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>
               {filtro === "no_leidas"
                 ? "No tienes notificaciones pendientes"
@@ -436,7 +437,7 @@ export default function NotificacionesPage() {
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-lg mt-0.5">
-                        {ICONOS[n.tipo] || "📌"}
+                        {(() => { const I = ICONOS[n.tipo] || Pin; return <I size={18} strokeWidth={1.8} />; })()}
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
@@ -616,7 +617,7 @@ export default function NotificacionesPage() {
                                       className="text-[9px] font-bold"
                                       style={{ color: "#0f1117" }}
                                     >
-                                      ✓
+                                      <Check size={9} strokeWidth={3} />
                                     </span>
                                   )}
                                 </button>

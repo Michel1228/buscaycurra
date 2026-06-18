@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PAISES, LISTA_PAISES, formatearSalario } from "@/lib/paises";
 import { getPrimerosPasos, type PrimerosPasosInfo } from "@/lib/primeros-pasos";
+import { PenLine, Search, Home, Lightbulb, Globe, ClipboardList, GraduationCap, Star, Briefcase, Users, AlertTriangle, Mail, type LucideIcon } from "lucide-react";
 
 type Tab = "au-pair" | "alojamiento" | "visado" | "programas";
 
@@ -17,7 +18,7 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
   if (!info.auPair.disponible) {
     return (
       <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 text-center">
-        <p className="text-5xl mb-4">🧒</p>
+        <div className="flex justify-center mb-4"><Users size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">Programa Au Pair</h3>
         <p className="text-sm text-[#94a3b8]">
           El programa au pair no está disponible actualmente en este país o no tenemos información suficiente.
@@ -32,7 +33,7 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
       {/* 🆕 Perfil Au Pair */}
       <div className="bg-gradient-to-br from-[#222c1a] to-[#1a2e1a] border border-[#22c55e]/30 rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2 flex items-center gap-2">
-          <span className="text-2xl">💌</span> Tu perfil Au Pair
+          <Mail size={18} strokeWidth={1.8} /> Tu perfil Au Pair
         </h3>
         <p className="text-sm text-[#94a3b8] mb-4">
           Las familias no buscan un CV. Buscan conocerte. Crea tu carta "Dear Family" 
@@ -42,13 +43,13 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
           href="/app/au-pair"
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl text-sm transition-colors"
         >
-          ✏️ Crear/Editar mi perfil Au Pair
+          <PenLine size={14} strokeWidth={1.8} className="inline mr-1.5" />Crear/Editar mi perfil Au Pair
         </Link>
       </div>
 
       <div className="bg-gradient-to-br from-[#1a1d2e] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
-          <span className="text-2xl">🧒</span> Programa Au Pair en {pais?.nombre || paisCode}
+          <Users size={18} strokeWidth={1.8} /> Programa Au Pair en {pais?.nombre || paisCode}
         </h3>
         <div className="bg-[#0f1117]/50 rounded-lg p-4 mb-4 border border-[#2d3142]">
           <p className="text-xs text-[#64748b] uppercase tracking-wider mb-1">Requisitos</p>
@@ -77,7 +78,7 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
         href={`/app/buscar?keyword=au%20pair&pais=${paisCode}`}
         className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl text-sm transition-colors"
       >
-        🔍 Buscar ofertas de Au Pair en {pais?.nombre || paisCode}
+        <Search size={14} strokeWidth={1.8} className="inline mr-1.5" />Buscar ofertas de Au Pair en {pais?.nombre || paisCode}
       </Link>
     </div>
   );
@@ -89,7 +90,7 @@ function AlojamientoTab({ paisCode, info }: { paisCode: string; info: PrimerosPa
     <div>
       <div className="bg-gradient-to-br from-[#1a1d2e] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
-          <span className="text-2xl">🏠</span> Alojamiento en {pais?.nombre || paisCode}
+          <Home size={18} strokeWidth={1.8} /> Alojamiento en {pais?.nombre || paisCode}
         </h3>
         <p className="text-xs text-[#64748b] uppercase tracking-wider mb-2">Portales de alquiler verificados</p>
         <div className="grid sm:grid-cols-2 gap-2 mb-4">
@@ -109,7 +110,7 @@ function AlojamientoTab({ paisCode, info }: { paisCode: string; info: PrimerosPa
           ))}
         </div>
         <div className="bg-[#0f1117]/50 rounded-lg p-4 border border-[#2d3142]">
-          <p className="text-xs text-[#64748b] uppercase tracking-wider mb-1">💡 Consejo local</p>
+          <p className="text-xs text-[#64748b] uppercase tracking-wider mb-1 flex items-center gap-1"><Lightbulb size={11} strokeWidth={1.8} /> Consejo local</p>
           <p className="text-sm text-[#e2e8f0] leading-relaxed">{info.alojamiento.consejo}</p>
         </div>
       </div>
@@ -118,7 +119,7 @@ function AlojamientoTab({ paisCode, info }: { paisCode: string; info: PrimerosPa
         href={`/app/buscar?pais=${paisCode}`}
         className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl text-sm transition-colors"
       >
-        🔍 Ver todas las ofertas en {pais?.nombre || paisCode}
+        <Search size={14} strokeWidth={1.8} className="inline mr-1.5" />Ver todas las ofertas en {pais?.nombre || paisCode}
       </Link>
     </div>
   );
@@ -128,17 +129,17 @@ function VisadoTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
   const pais = PAISES[paisCode];
   const tipoLabel: Record<string, { icon: string; label: string; color: string }> = {
     "ue-libre": { icon: "🇪🇺", label: "Libre circulación UE", color: "#22c55e" },
-    "visado-trabajo": { icon: "📋", label: "Visado de trabajo requerido", color: "#f59e0b" },
-    "working-holiday": { icon: "🎒", label: "Working Holiday Visa", color: "#3b82f6" },
-    "visado-estudiante": { icon: "🎓", label: "Visado de estudiante", color: "#8b5cf6" },
+    "visado-trabajo": { icon: "", label: "Visado de trabajo requerido", color: "#f59e0b" },
+    "working-holiday": { icon: "", label: "Working Holiday Visa", color: "#3b82f6" },
+    "visado-estudiante": { icon: "", label: "Visado de estudiante", color: "#8b5cf6" },
   };
-  const tipo = tipoLabel[info.visado.tipo] || { icon: "📋", label: info.visado.tipo, color: "#94a3b8" };
+  const tipo = tipoLabel[info.visado.tipo] || { icon: "", label: info.visado.tipo, color: "#94a3b8" };
 
   return (
     <div>
       <div className="bg-gradient-to-br from-[#1a1d2e] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
-          <span className="text-2xl">📋</span> Visado para {pais?.nombre || paisCode}
+          <ClipboardList size={18} strokeWidth={1.8} /> Visado para {pais?.nombre || paisCode}
         </h3>
         <div
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-4"
@@ -157,7 +158,7 @@ function VisadoTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#252839] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-xl text-sm font-medium text-[#22c55e] transition-colors"
           >
-            🌐 Web oficial de inmigración →
+            <Globe size={14} strokeWidth={1.8} className="inline mr-1.5" />Web oficial de inmigración →
           </a>
         )}
       </div>
@@ -170,7 +171,7 @@ function ProgramasTab({ paisCode, info }: { paisCode: string; info: PrimerosPaso
   if (!info.programasExtra || info.programasExtra.length === 0) {
     return (
       <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 text-center">
-        <p className="text-5xl mb-4">🌟</p>
+        <div className="flex justify-center mb-4"><Star size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">Programas especiales</h3>
         <p className="text-sm text-[#94a3b8]">
           No hay programas especiales listados para {pais?.nombre || paisCode} todavía.
@@ -183,7 +184,7 @@ function ProgramasTab({ paisCode, info }: { paisCode: string; info: PrimerosPaso
     <div>
       <div className="bg-gradient-to-br from-[#1a1d2e] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
-          <span className="text-2xl">🌟</span> Programas especiales en {pais?.nombre || paisCode}
+          <Star size={18} strokeWidth={1.8} /> Programas especiales en {pais?.nombre || paisCode}
         </h3>
         <div className="grid sm:grid-cols-2 gap-3">
           {info.programasExtra.map((p) => (
@@ -233,18 +234,18 @@ export default function EmigrarPage() {
     );
   }
 
-  const tabs: { id: Tab; icon: string; label: string }[] = [
-    { id: "visado", icon: "📋", label: "Visado" },
-    { id: "alojamiento", icon: "🏠", label: "Alojamiento" },
-    { id: "au-pair", icon: "🧒", label: "Au Pair" },
-    { id: "programas", icon: "🌟", label: "Programas" },
+  const tabs: { id: Tab; Icon: LucideIcon; label: string }[] = [
+    { id: "visado", Icon: ClipboardList, label: "Visado" },
+    { id: "alojamiento", Icon: Home, label: "Alojamiento" },
+    { id: "au-pair", Icon: Users, label: "Au Pair" },
+    { id: "programas", Icon: Star, label: "Programas" },
   ];
 
   return (
     <main className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
       {/* Hero */}
       <section className="relative py-12 px-4 sm:px-6 max-w-4xl mx-auto text-center">
-        <span className="text-5xl mb-4 block">🌍</span>
+        <div className="flex justify-center mb-4"><Globe size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         <h1 className="text-3xl sm:text-4xl font-bold mb-3">
           Emigrar al extranjero
         </h1>
@@ -287,7 +288,7 @@ export default function EmigrarPage() {
                 color: tab === t.id ? "#22c55e" : "#94a3b8",
               }}
             >
-              <span>{t.icon}</span>
+              <t.Icon size={15} strokeWidth={1.8} />
               <span className="hidden sm:inline">{t.label}</span>
             </button>
           ))}
@@ -298,7 +299,7 @@ export default function EmigrarPage() {
       <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
         {!primerosPasos ? (
           <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-8 text-center">
-            <p className="text-5xl mb-4">🚧</p>
+            <div className="flex justify-center mb-4"><AlertTriangle size={40} strokeWidth={1.2} style={{ color: "#f59e0b" }} /></div>
             <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">Información en construcción</h3>
             <p className="text-sm text-[#94a3b8]">
               Estamos recopilando información detallada sobre {pais.nombre}. Mientras tanto, puedes explorar las ofertas de empleo disponibles.
@@ -307,7 +308,7 @@ export default function EmigrarPage() {
               href={`/app/buscar?pais=${paisCode}`}
               className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl text-sm transition-colors"
             >
-              🔍 Buscar ofertas en {pais.nombre}
+              <Search size={14} strokeWidth={1.8} className="inline mr-1.5" />Buscar ofertas en {pais.nombre}
             </Link>
           </div>
         ) : (

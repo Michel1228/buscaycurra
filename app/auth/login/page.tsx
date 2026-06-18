@@ -5,6 +5,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Globe, Target, Clock } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -80,13 +81,13 @@ export default function LoginPage() {
           {/* 3 puntos fuertes — siempre visibles */}
           <div className="space-y-3 mb-6">
             {[
-              { icon: "🌍", titulo: "21 países, un solo agente", desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
-              { icon: "🎯", titulo: "CV único para cada oferta", desc: "Cada candidatura se adapta a la empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
-              { icon: "⏰", titulo: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. La diferencia entre que te lean o te ignoren." },
+              { Icon: Globe, titulo: "21 países, un solo agente", desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
+              { Icon: Target, titulo: "CV único para cada oferta", desc: "Cada candidatura se adapta a la empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
+              { Icon: Clock, titulo: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. La diferencia entre que te lean o te ignoren." },
             ].map(p => (
               <div key={p.titulo} className="flex items-start gap-3 p-3 rounded-xl"
                 style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
-                <span className="text-xl shrink-0 mt-0.5">{p.icon}</span>
+                <p.Icon size={20} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
                 <div>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.titulo}</p>
                   <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{p.desc}</p>

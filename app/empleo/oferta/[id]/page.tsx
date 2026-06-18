@@ -1,6 +1,7 @@
 import { getPool } from "@/lib/db";
 import { Metadata } from "next";
 import Link from "next/link";
+import { Search, MapPin, DollarSign, Calendar, ClipboardList } from "lucide-react";
 
 export async function generateMetadata({
   params,

@@ -5,6 +5,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import { NUM_PAISES } from "@/lib/paises";
 import Image from "next/image";
+import { Globe, Target, Clock, CheckCircle2 } from "lucide-react";
 
 export default function RegistroPage() {
   const [nombre, setNombre] = useState("");
@@ -93,13 +94,13 @@ export default function RegistroPage() {
           {/* 3 puntos fuertes */}
           <div className="space-y-3">
             {[
-              { icon: "🌍", title: "{NUM_PAISES} países, un solo agente", desc: "Busca en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
-              { icon: "🎯", title: "CV único para cada oferta", desc: "Tu CV se adapta a cada empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
-              { icon: "⏰", title: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. Timing inteligente." },
+              { Icon: Globe, title: "{NUM_PAISES} países, un solo agente", desc: "Busca en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
+              { Icon: Target, title: "CV único para cada oferta", desc: "Tu CV se adapta a cada empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
+              { Icon: Clock, title: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. Timing inteligente." },
             ].map(p => (
               <div key={p.title} className="flex items-start gap-3 p-3 rounded-xl"
                 style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
-                <span className="text-xl shrink-0 mt-0.5">{p.icon}</span>
+                <p.Icon size={20} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
                 <div>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.title}</p>
                   <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{p.desc}</p>
@@ -126,7 +127,7 @@ export default function RegistroPage() {
           <div className="card-game p-6">
             {registrado ? (
               <div className="text-center py-4">
-                <div className="text-4xl mb-3">✅</div>
+                <CheckCircle2 size={48} className="mx-auto mb-3" style={{ color: "#22c55e" }} />
                 <h2 className="text-base font-bold mb-2" style={{ color: "#22c55e" }}>¡Cuenta creada!</h2>
                 <p className="text-xs mb-5" style={{ color: "#94a3b8" }}>
                   Hemos enviado un email a <strong style={{ color: "#f1f5f9" }}>{email}</strong>. Confírmalo para empezar.
@@ -184,7 +185,7 @@ export default function RegistroPage() {
                   </div>
                   {confirmarContrasena.length > 0 && (
                     <p className="text-[11px] mt-1" style={{ color: contrasena === confirmarContrasena ? "#22c55e" : "#ef4444" }}>
-                      {contrasena === confirmarContrasena ? "✓ Coinciden" : "✗ No coinciden"}
+                      {contrasena === confirmarContrasena ? "Coinciden" : "No coinciden"}
                     </p>
                   )}
                 </div>

@@ -4,6 +4,7 @@
  */
 import { Metadata } from "next";
 import Link from "next/link";
+import { Search } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Ofertas de empleo en España | BuscayCurra",
@@ -41,9 +42,9 @@ export default function EmpleoPage() {
           <div className="mt-6">
             <Link
               href="/app/buscar"
-              className="inline-block bg-[#22c55e] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
+              className="inline-flex items-center gap-2 bg-[#22c55e] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
             >
-              🔍 Buscar ofertas ahora
+              <Search size={16} />Buscar ofertas ahora
             </Link>
           </div>
         </div>

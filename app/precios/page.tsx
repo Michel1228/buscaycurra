@@ -6,14 +6,15 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import { isNativeIOS } from "@/lib/utils/platform";
+import { Bot, Zap, Building2, Sprout, Egg, Star, CreditCard, Check, X, Apple } from "lucide-react";
 
 const PLANES = [
   {
-    id: "free", nombre: "Gratis", precio: "0€", periodo: "para siempre", emoji: "🥚",
+    id: "free", nombre: "Gratis", precio: "0€", periodo: "para siempre", PlanIcon: Egg,
     desc: "Para probar la plataforma",
-    badge: "🔒 Sin Guzzi ni envíos",
+    badge: "Sin Guzzi ni envíos",
     items: [
-      { t: "🤖 Guzzi IA", ok: false, highlight: false },
+      { t: "Guzzi IA", ok: false, highlight: false },
       { t: "0 consultas/día", ok: false, muted: true, highlight: false },
       { t: "0 envíos CV/día", ok: false, muted: true, highlight: false },
       { t: "Buscador básico", ok: true, highlight: false },
@@ -24,10 +25,10 @@ const PLANES = [
     dest: false, btn: "Empezar gratis", accion: "registro" as const,
   },
   {
-    id: "esencial", nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: "🌱",
+    id: "esencial", nombre: "Esencial", precio: "2,99€", periodo: "/mes", PlanIcon: Sprout,
     desc: "Menos que un café al mes",
     items: [
-      { t: "🤖 Guzzi GPT-4o-mini", ok: true, highlight: true },
+      { t: "Guzzi GPT-4o-mini", ok: true, highlight: true },
       { t: "20 consultas/día", ok: true, highlight: false },
       { t: "10 envíos CV/día", ok: true, highlight: false },
       { t: "50 envíos CV/semana", ok: true, highlight: false },
@@ -38,10 +39,10 @@ const PLANES = [
     dest: false, btn: "Elegir Esencial", accion: "esencial" as const,
   },
   {
-    id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: "⚡",
+    id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", PlanIcon: Zap,
     desc: "Para profesionales serios",
     items: [
-      { t: "🤖 Guzzi GPT-4o", ok: true, highlight: true },
+      { t: "Guzzi GPT-4o", ok: true, highlight: true },
       { t: "100 consultas/día", ok: true, highlight: false },
       { t: "50 envíos CV/día", ok: true, highlight: false },
       { t: "300 envíos CV/semana", ok: true, highlight: false },
@@ -52,10 +53,10 @@ const PLANES = [
     dest: true, btn: "Elegir Pro", accion: "pro" as const,
   },
   {
-    id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: "🏢",
+    id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", PlanIcon: Building2,
     desc: "Sin límites para equipos",
     items: [
-      { t: "🤖 Guzzi GPT-4o", ok: true, highlight: true },
+      { t: "Guzzi GPT-4o", ok: true, highlight: true },
       { t: "Consultas ilimitadas", ok: true, highlight: false },
       { t: "200 envíos CV/día", ok: true, highlight: false },
       { t: "1.000 envíos CV/semana", ok: true, highlight: false },
@@ -124,7 +125,7 @@ export default function PreciosPage() {
         {iosNativo && (
           <div className="max-w-md mx-auto mb-8 rounded-xl p-5 text-center"
             style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
-            <p className="text-2xl mb-2">🍎</p>
+            <Apple size={28} className="mx-auto mb-2" style={{ color: "#94a3b8" }} />
             <p className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>
               Suscríbete desde la web
             </p>
@@ -151,7 +152,7 @@ export default function PreciosPage() {
 
               {plan.dest && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="badge-game badge-dorado text-[10px]">⭐ Más popular</span>
+                  <span className="badge-game badge-dorado text-[10px] flex items-center gap-1"><Star size={10} className="inline" /> Más popular</span>
                 </div>
               )}
 
@@ -164,7 +165,9 @@ export default function PreciosPage() {
                 </div>
               )}
 
-              <div className="text-4xl mb-3">{plan.emoji}</div>
+              <div className="flex justify-center mb-3">
+                <plan.PlanIcon size={36} style={{ color: plan.dest ? "#7ed56f" : "#b0a890" }} />
+              </div>
               <h2 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h2>
               <p className="text-xs mt-1 mb-4" style={{ color: "#706a58" }}>{plan.desc}</p>
 
@@ -181,12 +184,12 @@ export default function PreciosPage() {
                   const itemWeight = item.highlight ? 600 : 400;
                   return (
                   <li key={item.t} className="flex items-start gap-2 text-sm">
-                    <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                    <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{
                         background: item.ok ? "rgba(126,213,111,0.15)" : "rgba(80,74,58,0.3)",
                         color: item.ok ? "#7ed56f" : "#504a3a",
                       }}>
-                      {item.ok ? "✓" : "✕"}
+                      {item.ok ? <Check size={10} strokeWidth={3} /> : <X size={10} strokeWidth={3} />}
                     </span>
                     <span style={{ color: itemColor, fontWeight: itemWeight }}>{item.t}</span>
                   </li>
@@ -209,8 +212,8 @@ export default function PreciosPage() {
         </div>
 
         {!iosNativo && (
-          <p className="text-center text-xs mt-10" style={{ color: "#504a3a" }}>
-            💳 Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
+          <p className="text-center text-xs mt-10 flex items-center justify-center gap-1.5" style={{ color: "#504a3a" }}>
+            <CreditCard size={12} />Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
           </p>
         )}
 

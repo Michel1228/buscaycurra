@@ -5,14 +5,15 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import AutoSendSetup from "@/components/AutoSendSetup";
 import CVSenderDashboard from "@/components/CVSenderDashboard";
+import { Search, Building2, Mail, ClipboardList, Upload, CheckCircle2, FileText, Check, Star, type LucideIcon } from "lucide-react";
 
 type TabId = "buscar" | "ett" | "envio" | "historial";
 
-const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: "buscar", label: "Buscar empresa", icon: "🔍" },
-  { id: "ett", label: "ETTs", icon: "🏢" },
-  { id: "envio", label: "Envío personalizado", icon: "📧" },
-  { id: "historial", label: "Historial", icon: "📋" },
+const TABS: { id: TabId; label: string; Icon: LucideIcon }[] = [
+  { id: "buscar", label: "Buscar empresa", Icon: Search },
+  { id: "ett", label: "ETTs", Icon: Building2 },
+  { id: "envio", label: "Envío personalizado", Icon: Mail },
+  { id: "historial", label: "Historial", Icon: ClipboardList },
 ];
 
 interface EmpresaCompleta {
@@ -318,7 +319,7 @@ export default function EmpresasPage() {
         horaLocal: data.horaLocalEmpresa || "",
       });
       setShowConfirm(true);
-      setExito(`✅ CV programado para ${emp.nombre}`);
+      setExito(`CV programado para ${emp.nombre}`);
 
       if (data.estimatedTimeFormatted) {
         setSendResult({
@@ -432,9 +433,9 @@ export default function EmpresasPage() {
               <span className="text-[10px]">{showStats ? "▲" : "▼"}</span>
             </button>
 
-            <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.8)" }}>
-              <span>📤 </span>
-              <span className="tabular-nums font-semibold" style={{ color: "#fff" }}>{stats.cv.semana}</span>
+            <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.6)" }}>
+              <Upload size={10} className="inline mr-0.5" />
+              <span className="tabular-nums font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>{stats.cv.semana}</span>
               <span> esta semana</span>
               <span className="mx-1">·</span>
               <span className="tabular-nums font-semibold" style={{ color: "#fff" }}>{stats.cv.mes}</span>
@@ -459,8 +460,8 @@ export default function EmpresasPage() {
               style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.1)" }}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
-                  📋 Tus últimos envíos
+                <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#f1f5f9" }}>
+                  <ClipboardList size={12} /> Tus últimos envíos
                 </span>
                 <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
                   {stats.cv.hoy}/{stats.cv.limiteHoy} hoy
@@ -488,7 +489,7 @@ export default function EmpresasPage() {
                       className="flex items-center gap-2 p-2 rounded text-[11px]"
                       style={{ background: "rgba(255,255,255,0.03)" }}
                     >
-                      <span className="text-base">📨</span>
+                      <Mail size={14} style={{ color: "#64748b", flexShrink: 0 }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate" style={{ color: "#f1f5f9" }}>{r.empresa}</p>
                         <p className="truncate" style={{ color: "#64748b" }}>{r.puesto || r.email}</p>
@@ -521,7 +522,7 @@ export default function EmpresasPage() {
                   borderBottom: activeTab === tab.id ? "2px solid #22c55e" : "2px solid transparent",
                   color: activeTab === tab.id ? "#22c55e" : "#64748b",
                 }}>
-                <span>{tab.icon}</span>
+                <tab.Icon size={14} />
                 <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
@@ -594,17 +595,14 @@ export default function EmpresasPage() {
                     </div>
                     {sendResult.horaLocal && (
                       <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
-                        <span>🕐</span>
                         <span>Hora local empresa: <strong style={{ color: "#f1f5f9" }}>{sendResult.horaLocal}</strong></span>
                       </div>
                     )}
                     <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
-                      <span>📊</span>
                       <span>Estrategia: <strong style={{ color: sendResult.strategy === "optimo" ? "#22c55e" : "#f59e0b" }}>{sendResult.strategy === "optimo" ? "Ventana óptima" : "Envío inmediato"}</strong></span>
                     </div>
                     {sendResult.positionInQueue > 0 && (
                       <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
-                        <span>📬</span>
                         <span>Posición en cola: <strong style={{ color: "#f1f5f9" }}>#{sendResult.positionInQueue}</strong></span>
                       </div>
                     )}
@@ -636,14 +634,14 @@ export default function EmpresasPage() {
                           )}
                           {emp.googleAddress && (
                             <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#64748b" }}>
-                              📍 {emp.googleAddress}
+                              {emp.googleAddress}
                             </span>
                           )}
                         </div>
                       </div>
                       {emp.googleRating && (
                         <div className="text-right shrink-0 ml-3">
-                          <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>★ {emp.googleRating}</span>
+                          <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{emp.googleRating}</span>
                           {emp.googleReviews && (
                             <p className="text-[10px]" style={{ color: "#64748b" }}>({emp.googleReviews})</p>
                           )}
@@ -677,7 +675,7 @@ export default function EmpresasPage() {
                   </div>
                   {empresaSeleccionada.googleRating && (
                     <div className="text-right shrink-0">
-                      <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>★ {empresaSeleccionada.googleRating}</span>
+                      <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{empresaSeleccionada.googleRating}</span>
                       <p className="text-[10px]" style={{ color: "#64748b" }}>{empresaSeleccionada.googleReviews} reseñas</p>
                     </div>
                   )}
@@ -687,7 +685,7 @@ export default function EmpresasPage() {
                 <div className="space-y-2 text-xs">
                   {empresaSeleccionada.emailRrhh && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📧 Email:</span>
+                      <span className="flex items-center gap-1" style={{ color: "#64748b" }}><Mail size={12} /> Email:</span>
                       <span style={{ color: "#22c55e" }} className="font-medium">{empresaSeleccionada.emailRrhh}</span>
                     </div>
                   )}
@@ -724,7 +722,7 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.urlWeb && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>🌐 Web:</span>
+                      <span style={{ color: "#64748b" }}>Web:</span>
                       <a href={empresaSeleccionada.urlWeb} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         {empresaSeleccionada.urlWeb.replace(/^https?:\/\//, "").replace(/\/$/, "")}
@@ -734,21 +732,21 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.telefono && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📞 Tel:</span>
+                      <span style={{ color: "#64748b" }}>Tel:</span>
                       <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.telefono}</span>
                     </div>
                   )}
 
                   {empresaSeleccionada.googleAddress && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📍</span>
+                      <span style={{ color: "#64748b" }}>Dir:</span>
                       <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.googleAddress}</span>
                     </div>
                   )}
 
                   {empresaSeleccionada.googleMapsUrl && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>🗺️</span>
+                      <span style={{ color: "#64748b" }}>Maps:</span>
                       <a href={empresaSeleccionada.googleMapsUrl} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         Ver en Google Maps →
@@ -758,7 +756,7 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.paginaEmpleo && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>💼 Empleo:</span>
+                      <span style={{ color: "#64748b" }}>Empleo:</span>
                       <a href={empresaSeleccionada.paginaEmpleo} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         Ver ofertas →
@@ -777,8 +775,8 @@ export default function EmpresasPage() {
                       </label>
                       <div className="grid grid-cols-2 gap-2">
                         {([
-                          { id: "optimo" as const, label: "🎯 Horario óptimo", sub: "El CV llega cuando lo van a leer" },
-                          { id: "ahora" as const, label: "⚡ Enviar ya", sub: "Inmediato, sin esperas" },
+                          { id: "optimo" as const, label: "Horario óptimo", sub: "El CV llega cuando lo van a leer" },
+                          { id: "ahora" as const, label: "Enviar ya", sub: "Inmediato, sin esperas" },
                         ]).map(s => (
                           <button key={s.id} type="button" onClick={() => setSendStrategy(s.id)}
                             className="py-2.5 px-3 rounded-lg text-left transition"
@@ -793,7 +791,7 @@ export default function EmpresasPage() {
                       </div>
                       {sendStrategy === "optimo" && (
                         <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>
-                          🎯 Analizamos la zona horaria y enviamos en su ventana de máxima apertura (9-10:30am hora local).
+                          Analizamos la zona horaria y enviamos en su ventana de máxima apertura (9-10:30am hora local).
                         </p>
                       )}
                     </div>
@@ -807,13 +805,13 @@ export default function EmpresasPage() {
                         color: enviando ? "#64748b" : "#fff",
                       }}
                     >
-                      {enviando ? "Enviando..." : `📤 Enviar CV a ${empresaSeleccionada.nombre.split(" ")[0]}`}
+                      {enviando ? "Enviando..." : <span className="flex items-center justify-center gap-2"><Upload size={14} />Enviar CV a {empresaSeleccionada.nombre.split(" ")[0]}</span>}
                     </button>
                   </div>
                 ) : (
                   <div className="pt-2" style={{ borderTop: "1px solid #2d3142" }}>
                     <div className="rounded-lg p-3" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)" }}>
-                      <p className="text-xs font-medium mb-1" style={{ color: "#f59e0b" }}>⚠️ Email no encontrado</p>
+                      <p className="text-xs font-medium mb-1" style={{ color: "#f59e0b" }}>Email no encontrado</p>
                       <p className="text-[11px]" style={{ color: "#64748b" }}>
                         Google no proporciona el email corporativo. Ve a la pestaña <button onClick={() => { setEnvioPrefillName(empresaSeleccionada.nombre); setEnvioTabKey(prev => prev + 1); setActiveTab("envio"); }} className="font-medium underline" style={{ color: "#22c55e" }}>"Envío personalizado"</button> para buscar por URL o introducirlo manualmente.
                       </p>
@@ -887,17 +885,14 @@ export default function EmpresasPage() {
                     </div>
                     {sendResult.horaLocal && (
                       <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
-                        <span>🕐</span>
                         <span>Hora local empresa: <strong style={{ color: "#f1f5f9" }}>{sendResult.horaLocal}</strong></span>
                       </div>
                     )}
                     <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
-                      <span>📊</span>
                       <span>Estrategia: <strong style={{ color: sendResult.strategy === "optimo" ? "#22c55e" : "#f59e0b" }}>{sendResult.strategy === "optimo" ? "Ventana óptima" : "Envío inmediato"}</strong></span>
                     </div>
                     {sendResult.positionInQueue > 0 && (
                       <div className="flex items-center gap-2 text-[11px]" style={{ color: "#94a3b8" }}>
-                        <span>📬</span>
                         <span>Posición en cola: <strong style={{ color: "#f1f5f9" }}>#{sendResult.positionInQueue}</strong></span>
                       </div>
                     )}
@@ -929,14 +924,14 @@ export default function EmpresasPage() {
                           )}
                           {emp.googleAddress && (
                             <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#64748b" }}>
-                              📍 {emp.googleAddress}
+                              {emp.googleAddress}
                             </span>
                           )}
                         </div>
                       </div>
                       {emp.googleRating && (
                         <div className="text-right shrink-0 ml-3">
-                          <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>★ {emp.googleRating}</span>
+                          <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{emp.googleRating}</span>
                           {emp.googleReviews && (
                             <p className="text-[10px]" style={{ color: "#64748b" }}>({emp.googleReviews})</p>
                           )}
@@ -970,7 +965,7 @@ export default function EmpresasPage() {
                   </div>
                   {empresaSeleccionada.googleRating && (
                     <div className="text-right shrink-0">
-                      <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>★ {empresaSeleccionada.googleRating}</span>
+                      <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{empresaSeleccionada.googleRating}</span>
                       <p className="text-[10px]" style={{ color: "#64748b" }}>{empresaSeleccionada.googleReviews} reseñas</p>
                     </div>
                   )}
@@ -980,7 +975,7 @@ export default function EmpresasPage() {
                 <div className="space-y-2 text-xs">
                   {empresaSeleccionada.emailRrhh && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📧 Email:</span>
+                      <span className="flex items-center gap-1" style={{ color: "#64748b" }}><Mail size={12} /> Email:</span>
                       <span style={{ color: "#22c55e" }} className="font-medium">{empresaSeleccionada.emailRrhh}</span>
                     </div>
                   )}
@@ -1017,7 +1012,7 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.urlWeb && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>🌐 Web:</span>
+                      <span style={{ color: "#64748b" }}>Web:</span>
                       <a href={empresaSeleccionada.urlWeb} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         {empresaSeleccionada.urlWeb.replace(/^https?:\/\//, "").replace(/\/$/, "")}
@@ -1027,21 +1022,21 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.telefono && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📞 Tel:</span>
+                      <span style={{ color: "#64748b" }}>Tel:</span>
                       <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.telefono}</span>
                     </div>
                   )}
 
                   {empresaSeleccionada.googleAddress && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>📍</span>
+                      <span style={{ color: "#64748b" }}>Dir:</span>
                       <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.googleAddress}</span>
                     </div>
                   )}
 
                   {empresaSeleccionada.googleMapsUrl && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>🗺️</span>
+                      <span style={{ color: "#64748b" }}>Maps:</span>
                       <a href={empresaSeleccionada.googleMapsUrl} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         Ver en Google Maps →
@@ -1051,7 +1046,7 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.paginaEmpleo && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>💼 Empleo:</span>
+                      <span style={{ color: "#64748b" }}>Empleo:</span>
                       <a href={empresaSeleccionada.paginaEmpleo} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         Ver ofertas →
@@ -1066,7 +1061,7 @@ export default function EmpresasPage() {
                     {/* Nota: carta adaptada para ETTs */}
                     <div className="rounded-lg p-2" style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.1)" }}>
                       <p className="text-[10px]" style={{ color: "#4ade80" }}>
-                        💡 La carta se adaptará automáticamente: "Estimado equipo de selección de {empresaSeleccionada.nombre}..."
+                        La carta se adaptará automáticamente: "Estimado equipo de selección de {empresaSeleccionada.nombre}..."
                       </p>
                     </div>
 
@@ -1077,8 +1072,8 @@ export default function EmpresasPage() {
                       </label>
                       <div className="grid grid-cols-2 gap-2">
                         {([
-                          { id: "optimo" as const, label: "🎯 Horario óptimo", sub: "El CV llega cuando lo van a leer" },
-                          { id: "ahora" as const, label: "⚡ Enviar ya", sub: "Inmediato, sin esperas" },
+                          { id: "optimo" as const, label: "Horario óptimo", sub: "El CV llega cuando lo van a leer" },
+                          { id: "ahora" as const, label: "Enviar ya", sub: "Inmediato, sin esperas" },
                         ]).map(s => (
                           <button key={s.id} type="button" onClick={() => setSendStrategy(s.id)}
                             className="py-2.5 px-3 rounded-lg text-left transition"
@@ -1093,7 +1088,7 @@ export default function EmpresasPage() {
                       </div>
                       {sendStrategy === "optimo" && (
                         <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>
-                          🎯 Analizamos la zona horaria y enviamos en su ventana de máxima apertura (9-10:30am hora local).
+                          Analizamos la zona horaria y enviamos en su ventana de máxima apertura (9-10:30am hora local).
                         </p>
                       )}
                     </div>
@@ -1107,13 +1102,13 @@ export default function EmpresasPage() {
                         color: enviando ? "#64748b" : "#fff",
                       }}
                     >
-                      {enviando ? "Enviando..." : `📤 Enviar CV a ${empresaSeleccionada.nombre.split(" ")[0]}`}
+                      {enviando ? "Enviando..." : <span className="flex items-center justify-center gap-2"><Upload size={14} />Enviar CV a {empresaSeleccionada.nombre.split(" ")[0]}</span>}
                     </button>
                   </div>
                 ) : (
                   <div className="pt-2" style={{ borderTop: "1px solid #2d3142" }}>
                     <div className="rounded-lg p-3" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)" }}>
-                      <p className="text-xs font-medium mb-1" style={{ color: "#f59e0b" }}>⚠️ Email no encontrado</p>
+                      <p className="text-xs font-medium mb-1" style={{ color: "#f59e0b" }}>Email no encontrado</p>
                       <p className="text-[11px]" style={{ color: "#64748b" }}>
                         Google no proporciona el email corporativo. Ve a la pestaña <button onClick={() => { setEnvioPrefillName(empresaSeleccionada.nombre); setEnvioTabKey(prev => prev + 1); setActiveTab("envio"); }} className="font-medium underline" style={{ color: "#22c55e" }}>"Envío personalizado"</button> para buscar por URL o introducirlo manualmente.
                       </p>
@@ -1155,8 +1150,8 @@ export default function EmpresasPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
           <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #2d3142" }}>
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold" style={{ color: "#f1f5f9" }}>📄 Previsualizar envío</h3>
-              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#64748b" }}>✕</button>
+              <h3 className="flex items-center gap-2 text-base font-bold" style={{ color: "#f1f5f9" }}><FileText size={16} /> Previsualizar envío</h3>
+              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#64748b" }}>×</button>
             </div>
 
             <div className="space-y-2 text-xs">
@@ -1216,7 +1211,7 @@ export default function EmpresasPage() {
                 className="flex-1 py-2.5 rounded-lg text-xs font-bold transition"
                 style={{ background: previewLoading ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)", color: previewLoading ? "#64748b" : "#fff" }}
               >
-                ✅ Confirmar envío
+                <span className="flex items-center justify-center gap-2"><Check size={14} /> Confirmar envío</span>
               </button>
             </div>
           </div>
@@ -1228,7 +1223,7 @@ export default function EmpresasPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
           <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #22c55e" }}>
             <div className="text-center">
-              <span className="text-3xl">✅</span>
+              <div className="flex justify-center"><CheckCircle2 size={36} color="#22c55e" /></div>
               <h3 className="text-lg font-bold mt-2" style={{ color: "#22c55e" }}>¡CV enviado!</h3>
             </div>
 
@@ -1262,7 +1257,7 @@ export default function EmpresasPage() {
 
               {/* Carta enviada */}
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "#94a3b8" }}>📧 Carta enviada:</label>
+                <label className="flex items-center gap-1.5 text-xs font-semibold mb-1" style={{ color: "#94a3b8" }}><Mail size={12} /> Carta enviada:</label>
                 <div className="rounded-lg p-3 text-xs leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto" style={{ background: "#0f1117", border: "1px solid #1e212b", color: "#cbd5e1" }}>
                   {confirmData.carta}
                 </div>

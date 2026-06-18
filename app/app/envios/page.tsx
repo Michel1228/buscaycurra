@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import UsageCounter from "@/components/UsageCounter";
+import { Mail, Eye, MessageCircle, Clock, X, Ban, FileText, Briefcase, MapPin, Phone, Send } from "lucide-react";
 
 interface Envio {
   id: string;
@@ -20,10 +21,17 @@ interface Envio {
   cv_snapshot?: string;
 }
 
-const STATUS_ICON: Record<string, string> = {
-  enviado: "📧", visto: "👀", respondido: "💬",
-  pendiente: "⏳", fallido: "❌", cancelado: "🚫",
-};
+function StatusIcon({ status, size = 24 }: { status: string; size?: number }) {
+  switch (status) {
+    case "enviado": return <Mail size={size} />;
+    case "visto": return <Eye size={size} />;
+    case "respondido": return <MessageCircle size={size} />;
+    case "pendiente": return <Clock size={size} />;
+    case "fallido": return <X size={size} />;
+    case "cancelado": return <Ban size={size} />;
+    default: return <Send size={size} />;
+  }
+}
 const STATUS_COLOR: Record<string, string> = {
   enviado: "#22c55e", visto: "#a855f7", respondido: "#f59e0b",
   pendiente: "#64748b", fallido: "#ef4444", cancelado: "#64748b",
@@ -147,13 +155,14 @@ export default function EnviosPage() {
         <div className="flex gap-2 flex-wrap mb-5">
           {["todos", "pendiente", "enviado", "visto", "respondido", "fallido"].map(f => (
             <button key={f} onClick={() => setFiltro(f)}
-              className="px-3 py-1 rounded-full text-xs font-semibold transition"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition"
               style={{
                 background: filtro === f ? "#22c55e" : "rgba(255,255,255,0.06)",
                 color: filtro === f ? "#0a0a0a" : "#94a3b8",
                 border: `1px solid ${filtro === f ? "#22c55e" : "rgba(255,255,255,0.1)"}`,
               }}>
-              {STATUS_ICON[f] || "📋"} {f.charAt(0).toUpperCase() + f.slice(1)}
+              <StatusIcon status={f} size={12} />
+              {f.charAt(0).toUpperCase() + f.slice(1)}
               {contadores[f] ? ` (${contadores[f]})` : ""}
             </button>
           ))}
@@ -164,7 +173,7 @@ export default function EnviosPage() {
           <div className="text-center py-16 text-slate-500">Cargando...</div>
         ) : filtrados.length === 0 ? (
           <div className="text-center py-16 text-slate-500">
-            <p className="text-4xl mb-3">📭</p>
+            <div className="flex justify-center mb-3"><Mail size={40} className="opacity-40" /></div>
             <p>No hay envíos con este filtro.</p>
             <Link href="/app/empresas" className="mt-4 inline-block px-4 py-2 bg-green-500 text-black rounded-lg text-sm font-semibold">
               Enviar mi primer CV →
@@ -176,16 +185,16 @@ export default function EnviosPage() {
               <div key={envio.id} onClick={() => setDetalle(envio)}
                 className="rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:opacity-80 transition"
                 style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <span className="text-2xl shrink-0">{STATUS_ICON[envio.status] || "📄"}</span>
+                <span className="shrink-0 flex items-center" style={{ color: STATUS_COLOR[envio.status] || "#94a3b8" }}><StatusIcon status={envio.status} size={22} /></span>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-white truncate">{envio.company_name}</p>
-                  {envio.job_title && <p className="text-xs text-slate-400 truncate">💼 {envio.job_title}</p>}
-                  {envio.company_email && <p className="text-xs text-slate-500 truncate">✉️ {envio.company_email}</p>}
+                  {envio.job_title && <p className="flex items-center gap-1 text-xs text-slate-400 truncate"><Briefcase size={11} />{envio.job_title}</p>}
+                  {envio.company_email && <p className="flex items-center gap-1 text-xs text-slate-500 truncate"><Mail size={11} />{envio.company_email}</p>}
                   <p className="text-xs text-slate-600 mt-0.5">
                     {envio.sent_at
                       ? new Date(envio.sent_at).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
                       : envio.created_at
-                        ? `📅 ${new Date(envio.created_at).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}`
+                        ? new Date(envio.created_at).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
                         : ""}
                   </p>
                 </div>
@@ -206,7 +215,7 @@ export default function EnviosPage() {
                       className="px-2 py-0.5 rounded-full text-[10px] font-semibold transition hover:opacity-80"
                       style={{ background: "rgba(100,116,139,0.12)", border: "1px solid rgba(100,116,139,0.25)", color: "#64748b" }}
                       title="Eliminar de la lista">
-                      ✕
+                      <X size={12} />
                     </button>
                   </div>
                 </div>
@@ -224,7 +233,7 @@ export default function EnviosPage() {
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-white">{detalle.company_name}</h2>
-              <button onClick={() => setDetalle(null)} className="text-slate-400 hover:text-white text-xl">✕</button>
+              <button onClick={() => setDetalle(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
             </div>
 
             <div className="space-y-3 text-sm mb-4">
@@ -241,7 +250,7 @@ export default function EnviosPage() {
 
             {detalle.cover_letter && (
               <div className="mb-4">
-                <h3 className="text-sm font-semibold text-green-400 mb-2">📝 Carta de presentación</h3>
+                <h3 className="flex items-center gap-1.5 text-sm font-semibold text-green-400 mb-2"><FileText size={14} /> Carta de presentación</h3>
                 <div className="rounded-xl p-4 text-sm text-slate-300 whitespace-pre-line" style={{ background: "#0f1117", border: "1px solid #2d3142" }}>
                   {detalle.cover_letter}
                 </div>
