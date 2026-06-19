@@ -70,6 +70,9 @@ const TRAD: Record<string, Record<string, string>> = {
   "Invitar":   { en: "Invite", fr: "Inviter", de: "Einladen", it: "Invita", pt: "Convidar", nl: "Uitnodigen", pl: "Zaproś", sv: "Bjud in", da: "Inviter", fi: "Kutsu", no: "Inviter" },
   "Mi Plan":   { en: "My Plan", fr: "Mon Plan", de: "Mein Plan", it: "Il mio piano", pt: "Meu Plano", nl: "Mijn Plan", pl: "Mój Plan", sv: "Min Plan", da: "Min Plan", fi: "Suunnitelmani", no: "Min Plan" },
   "Emigrar":   { en: "Emigrate", fr: "Émigrer", de: "Auswandern", it: "Emigrare", pt: "Emigrar", nl: "Emigreren", pl: "Emigracja", sv: "Emigrera", da: "Emigrere", fi: "Muuta ulkomaille", no: "Emigrere" },
+  "Empresas":  { en: "Companies", fr: "Entreprises", de: "Unternehmen", it: "Aziende", pt: "Empresas", nl: "Bedrijven", pl: "Firmy", sv: "Företag", da: "Virksomheder", fi: "Yritykset", no: "Bedrifter" },
+  "Ayuda":     { en: "Help", fr: "Aide", de: "Hilfe", it: "Aiuto", pt: "Ajuda", nl: "Hulp", pl: "Pomoc", sv: "Hjälp", da: "Hjælp", fi: "Apua", no: "Hjelp" },
+  "Au Pair":   { en: "Au Pair", fr: "Au Pair", de: "Au Pair", it: "Au Pair", pt: "Au Pair", nl: "Au Pair", pl: "Au Pair", sv: "Au Pair", da: "Au Pair", fi: "Au Pair", no: "Au Pair" },
 };
 
 export function t(key: string, lang: IdiomaCode): string {

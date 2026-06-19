@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { esOfertaAuPair } from "@/lib/au-pair";
-import { CheckCircle2, FileText, Users, ClipboardList } from "lucide-react";
+import { CheckCircle2, FileText, Users, ClipboardList, Bookmark } from "lucide-react";
 
 export interface OfertaDetalle {
   id: string;
@@ -19,6 +19,35 @@ export interface OfertaDetalle {
   email_empresa?: string;
   sector?: string;
   fecha?: string;
+}
+
+/** Limpia nombres de fuente: EURES_ESP → EURES España, ADZUNA_ES → Adzuna */
+function formatSource(raw: string): string {
+  const m: Record<string, string> = {
+    "EURES_ESP": "EURES España",
+    "EURES_UNI": "EURES Europa",
+    "EURES_UK": "EURES Reino Unido",
+    "EURES_DE": "EURES Alemania",
+    "EURES_FR": "EURES Francia",
+    "EURES_IT": "EURES Italia",
+    "ADZUNA_ES": "Adzuna",
+    "ADZUNA_UK": "Adzuna UK",
+    "ADZUNA_US": "Adzuna USA",
+    "ADZUNA_DE": "Adzuna DE",
+    "ADZUNA_FR": "Adzuna FR",
+    "ADZUNA_AU": "Adzuna AU",
+    "JOOBLE": "Jooble",
+    "CAREERJET": "Careerjet",
+  };
+  return m[raw?.toUpperCase()] || raw?.replace(/_/g, " ") || "Desconocida";
+}
+
+/** Separa secciones pegadas en la descripción: "textoRequisitos..." → "texto\nRequisitos..." */
+function formatDescription(desc: string): string {
+  if (!desc) return "";
+  return desc
+    .replace(/([a-záéíóúüñ])(Requisitos|Funciones|Responsabilidades|Experiencia|Formación|Ofrecemos|Beneficios|Se ofrece|Se requiere|Imprescindible|Condiciones|Horario|Contrato|Salario|Incorporación)/g, "$1\n\n$2")
+    .replace(/(Requisitos|Funciones|Responsabilidades|Experiencia|Formación|Ofrecemos|Beneficios|Se ofrece|Se requiere|Imprescindible|Condiciones|Horario|Contrato|Salario|Incorporación)([a-záéíóúüñ])/g, "$1: $2");
 }
 
 function colorFuente(fuente: string): { bg: string; text: string } {
@@ -43,9 +72,17 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   const [enviado, setEnviado] = useState(false);
   const [cvListo, setCvListo] = useState(false);
   const [perfilAuPair, setPerfilAuPair] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [guardado, setGuardado] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; type: "error" | "success" } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const esAuPair = esOfertaAuPair(oferta.titulo);
+
+  function showToast(msg: string, type: "error" | "success" = "error") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  }
 
   useEffect(() => {
     checkCV();
@@ -85,7 +122,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
     try {
       const supabase = getSupabaseBrowser();
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { alert("Inicia sesión para enviar tu CV"); setEnviando(false); return; }
+      if (!session) { showToast("Inicia sesión para enviar tu CV"); setEnviando(false); return; }
 
       // Buscar email de la empresa: campo en BD → Google Places → fallback de dominio
       let email = oferta.email_empresa || "";
@@ -114,7 +151,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
       }
 
       if (!email) {
-        alert("Aún no tenemos el email de esta empresa. Guarda la oferta y te avisamos cuando lo encontremos.");
+        showToast("Aún no tenemos el email de esta empresa. Guarda la oferta y te avisamos cuando lo encontremos.");
         setEnviando(false);
         return;
       }
@@ -138,12 +175,58 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         timerRef.current = setTimeout(() => setEnviado(false), 3000);
       } else {
         const err = await res.json().catch(() => ({})) as { error?: string };
-        alert(err.error || "Error al enviar CV");
+        showToast(err.error || "Error al enviar CV");
       }
     } catch (err) {
-      alert("Error de conexión al enviar CV");
+      showToast("Error de conexión al enviar CV");
     } finally {
       setEnviando(false);
+    }
+  }
+
+  async function guardarOferta() {
+    if (guardando || guardado) return;
+    setGuardando(true);
+    try {
+      const supabase = getSupabaseBrowser();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { showToast("Inicia sesión para guardar ofertas"); setGuardando(false); return; }
+
+      // Verificar si ya está guardada
+      const { data: existing } = await supabase
+        .from("guardados")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("oferta_id", oferta.id)
+        .single();
+
+      if (existing) {
+        setGuardado(true);
+        showToast("Ya tienes esta oferta guardada", "success");
+        setGuardando(false);
+        return;
+      }
+
+      const { error } = await supabase.from("guardados").insert({
+        user_id: user.id,
+        oferta_id: oferta.id,
+        titulo: oferta.titulo,
+        empresa: oferta.empresa,
+        ubicacion: oferta.ubicacion,
+        salario: oferta.salario,
+        url: oferta.url,
+        fuente: oferta.fuente,
+        guardado_en: new Date().toISOString(),
+      });
+
+      if (error) throw error;
+      setGuardado(true);
+      showToast("Oferta guardada", "success");
+      setTimeout(() => setGuardado(false), 3000);
+    } catch {
+      showToast("Error al guardar la oferta");
+    } finally {
+      setGuardando(false);
     }
   }
 
@@ -151,6 +234,15 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed top-16 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-xl text-sm font-medium shadow-lg transition-all ${
+          toast.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
+        }`}>
+          {toast.msg}
+        </div>
+      )}
+
       <button
         onClick={() => router.back()}
         className="text-xs mb-4 inline-flex items-center gap-1 hover:underline"
@@ -172,7 +264,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
             <span
               className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase"
               style={{ background: fuenteStyle.bg, color: fuenteStyle.text }}>
-              {oferta.fuente}
+              {formatSource(oferta.fuente || "Desconocida")}
             </span>
           )}
         </div>
@@ -252,6 +344,23 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
               )}
             </>
           )}
+          {/* Botón Guardar */}
+          <button
+            onClick={guardarOferta}
+            disabled={guardando}
+            className="text-sm font-medium px-5 py-2.5 rounded-lg transition flex items-center gap-2 disabled:opacity-50"
+            style={guardado
+              ? { background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }
+              : { background: "transparent", color: "#94a3b8", border: "1px solid #2d3142" }}
+          >
+            {guardando ? (
+              <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-[#94a3b8]" />
+            ) : guardado ? (
+              <><CheckCircle2 size={16} />Guardada</>
+            ) : (
+              <><Bookmark size={16} />Guardar</>
+            )}
+          </button>
         </div>
 
         {oferta.descripcion && (
@@ -262,7 +371,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
             <div
               className="prose prose-invert prose-sm max-w-none text-sm leading-relaxed whitespace-pre-wrap"
               style={{ color: "#94a3b8" }}>
-              {oferta.descripcion}
+              {formatDescription(oferta.descripcion)}
             </div>
           </div>
         )}
