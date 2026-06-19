@@ -93,9 +93,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="BuscayCurra" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
-        <link rel="canonical" href="https://buscaycurra.es" />
         <link rel="alternate" hrefLang="es" href="https://buscaycurra.es" />
-        <link rel="alternate" hrefLang="en" href="https://buscaycurra.es/en" />
         <link rel="alternate" hrefLang="x-default" href="https://buscaycurra.es" />
       </head>
       <body>

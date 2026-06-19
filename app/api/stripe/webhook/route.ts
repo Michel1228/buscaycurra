@@ -108,15 +108,16 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Actualizar el plan en el perfil del usuario
+        // Actualizar el plan en el perfil del usuario (update, no upsert)
         const { error } = await supabaseAdmin
           .from("profiles")
-          .upsert({
-            id: userId,
+          .update({
             plan: planFinal,
+            subscription_status: "active",
             stripe_customer_id: session.customer as string,
             updated_at: new Date().toISOString(),
-          });
+          })
+          .eq("id", userId);
 
         if (error) {
           console.error("[stripe/webhook] Error al actualizar plan:", error.message);
@@ -148,6 +149,7 @@ export async function POST(request: NextRequest) {
           .from("profiles")
           .update({
             plan: "free",
+            subscription_status: "canceled",
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_customer_id", customerId);
@@ -160,16 +162,16 @@ export async function POST(request: NextRequest) {
         break;
       }
 
-      // ── Pago recurrente fallido: marcar plan como past_due ───────────────
+      // ── Pago recurrente fallido: marcar subscription_status, NO cambiar plan ──
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as { id: string })?.id;
         if (customerId) {
           await supabaseAdmin
             .from("profiles")
-            .update({ plan: "past_due", updated_at: new Date().toISOString() })
+            .update({ subscription_status: "past_due", updated_at: new Date().toISOString() })
             .eq("stripe_customer_id", customerId);
-          console.log(`[stripe/webhook] Pago fallido — plan marcado como past_due para customer ${customerId}`);
+          console.log(`[stripe/webhook] Pago fallido — subscription_status marcado como past_due para customer ${customerId}`);
         }
         break;
       }

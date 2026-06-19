@@ -113,6 +113,11 @@ export default function AppNavWrapper() {
   function cambiarPais(codigo: string) {
     setPaisSeleccionado(codigo);
     localStorage.setItem("bc_pais", codigo);
+    // Auto-ajustar idioma al del país seleccionado
+    const idiomaPais = PAISES[codigo]?.idioma;
+    if (idiomaPais && IDIOMAS.some(i => i.code === idiomaPais)) {
+      setLang(idiomaPais as IdiomaCode);
+    }
   }
 
   async function cerrarSesion() {
