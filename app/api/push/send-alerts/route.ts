@@ -135,6 +135,37 @@ export async function GET(request: NextRequest) {
        LIMIT 100`
     );
 
+    // ── Batch fetch: push subscriptions + contacts for all users (fix N+1) ──
+    const userIds = [...new Set(alertasResult.rows.map(a => a.user_id))];
+
+    const subsMap = new Map<string, PushSub[]>();
+    if (userIds.length > 0) {
+      const allSubs = await pool.query<PushSub & { user_id: string }>(
+        `SELECT user_id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ANY($1)`,
+        [userIds]
+      );
+      for (const s of allSubs.rows) {
+        if (!subsMap.has(s.user_id)) subsMap.set(s.user_id, []);
+        subsMap.get(s.user_id)!.push(s);
+      }
+    }
+
+    const contactsMap = new Map<string, {
+      email: string | null; whatsapp_phone: string | null;
+      whatsapp_alertas: boolean; full_name: string | null;
+    }>();
+    if (userIds.length > 0) {
+      const allContacts = await pool.query<{
+        user_id: string; email: string | null; whatsapp_phone: string | null;
+        whatsapp_alertas: boolean; full_name: string | null;
+      }>(
+        `SELECT user_id, email, whatsapp_phone, whatsapp_alertas, full_name
+         FROM user_contacts WHERE user_id = ANY($1)`,
+        [userIds]
+      );
+      for (const c of allContacts.rows) contactsMap.set(c.user_id, c);
+    }
+
     for (const alerta of alertasResult.rows) {
       procesadas++;
       const desde = alerta.last_sent_at ?? new Date(Date.now() - 3 * 3600 * 1000);
@@ -190,18 +221,15 @@ export async function GET(request: NextRequest) {
       const titulo = `${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""} para ti`;
       const cuerpo = `${ejemplo.title} en ${ejemplo.company}${ejemplo.city ? ` · ${ejemplo.city}` : ""}`;
 
-      // 3. Push notification
-      const subsResult = await pool.query<PushSub>(
-        `SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = $1`,
-        [alerta.user_id]
-      );
+      // 3. Push notification (batched lookup)
+      const userSubs = subsMap.get(alerta.user_id) || [];
 
       // URL directo a la oferta concreta si hay job_id, si no al buscador con la keyword
       const pushUrl = ejemplo.id
         ? `/app/ofertas/${encodeURIComponent(ejemplo.id)}`
         : `/app/buscar?q=${encodeURIComponent(alerta.keyword)}${alerta.location ? `&ciudad=${encodeURIComponent(alerta.location)}` : ""}`;
 
-      for (const sub of subsResult.rows) {
+      for (const sub of userSubs) {
         try {
           await sendPush(sub, { title: titulo, body: cuerpo, url: pushUrl });
           enviadas++;
@@ -226,22 +254,9 @@ export async function GET(request: NextRequest) {
         });
       } catch { /* Supabase puede no estar disponible */ }
 
-      // 4b. Email + WhatsApp de alerta (VPS PostgreSQL, sin dependencia de Supabase)
+      // 4b. Email + WhatsApp de alerta (datos desde batch lookup)
       try {
-        // Obtener datos de contacto desde VPS PG (user_contacts)
-        const contactResult = await pool.query<{
-          email: string | null;
-          whatsapp_phone: string | null;
-          whatsapp_alertas: boolean;
-          full_name: string | null;
-        }>(
-          `SELECT email, whatsapp_phone, whatsapp_alertas, full_name
-           FROM user_contacts
-           WHERE user_id = $1`,
-          [alerta.user_id]
-        );
-
-        const contact = contactResult.rows[0];
+        const contact = contactsMap.get(alerta.user_id);
 
         // Email
         if (contact?.email) {

@@ -3,35 +3,39 @@
  */
 import { Metadata } from "next";
 import Link from "next/link";
-import { NUM_PAISES } from "@/lib/paises";
+import { LISTA_PAISES, NUM_PAISES } from "@/lib/paises";
 
 export const metadata: Metadata = {
   title: "Trabajar en el extranjero — Guías por país | BuscayCurra",
   description:
-    "Guías completas para trabajar en el extranjero: visados, alojamiento, salarios y ofertas de empleo en 18 países. Todo lo que necesitas para emigrar.",
+    `Guías completas para trabajar en el extranjero: visados, alojamiento, salarios y ofertas de empleo en ${NUM_PAISES} países. Todo lo que necesitas para emigrar.`,
   alternates: { canonical: "https://buscaycurra.es/trabajar-en" },
+  openGraph: {
+    title: "Trabajar en el extranjero — Guías por país | BuscayCurra",
+    description:
+      `Guías completas para trabajar en el extranjero: visados, alojamiento, salarios y ofertas de empleo en ${NUM_PAISES} países. Todo lo que necesitas para emigrar.`,
+    url: "https://buscaycurra.es/trabajar-en",
+    locale: "es_ES",
+    type: "website",
+    siteName: "BuscayCurra",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: `Trabajar en el extranjero — Guías por país en ${NUM_PAISES} países | BuscayCurra`,
+      },
+    ],
+  },
 };
 
-const PAISES = [
-  { codigo: "es", nombre: "España", bandera: "🇪🇸", salario: "2.100 €", ofertas: "80.000+" },
-  { codigo: "de", nombre: "Alemania", bandera: "🇩🇪", salario: "3.700 €", ofertas: "150.000+" },
-  { codigo: "fr", nombre: "Francia", bandera: "🇫🇷", salario: "2.900 €", ofertas: "12.000+" },
-  { codigo: "uk", nombre: "Reino Unido", bandera: "🇬🇧", salario: "2.800 £", ofertas: "32.000+" },
-  { codigo: "it", nombre: "Italia", bandera: "🇮🇹", salario: "2.100 €", ofertas: "8.700+" },
-  { codigo: "nl", nombre: "Países Bajos", bandera: "🇳🇱", salario: "3.300 €", ofertas: "8.300+" },
-  { codigo: "pt", nombre: "Portugal", bandera: "🇵🇹", salario: "1.500 €", ofertas: "3.100+" },
-  { codigo: "ie", nombre: "Irlanda", bandera: "🇮🇪", salario: "3.400 €", ofertas: "7.900+" },
-  { codigo: "be", nombre: "Bélgica", bandera: "🇧🇪", salario: "3.100 €", ofertas: "3.500+" },
-  { codigo: "at", nombre: "Austria", bandera: "🇦🇹", salario: "2.900 €", ofertas: "1.700+" },
-  { codigo: "se", nombre: "Suecia", bandera: "🇸🇪", salario: "3.100 €", ofertas: "2.600+" },
-  { codigo: "dk", nombre: "Dinamarca", bandera: "🇩🇰", salario: "3.500 €", ofertas: "900+" },
-  { codigo: "fi", nombre: "Finlandia", bandera: "🇫🇮", salario: "3.000 €", ofertas: "--" },
-  { codigo: "no", nombre: "Noruega", bandera: "🇳🇴", salario: "3.800 €", ofertas: "500+" },
-  { codigo: "pl", nombre: "Polonia", bandera: "🇵🇱", salario: "1.600 €", ofertas: "3.600+" },
-  { codigo: "ch", nombre: "Suiza", bandera: "🇨🇭", salario: "5.500 CHF", ofertas: "900+" },
-  { codigo: "us", nombre: "Estados Unidos", bandera: "🇺🇸", salario: "4.200 $", ofertas: "48.000+" },
-  { codigo: "au", nombre: "Australia", bandera: "🇦🇺", salario: "4.800 A$", ofertas: "19.000+" },
-];
+const PAISES = LISTA_PAISES.map((pais) => ({
+  codigo: pais.codigo.toLowerCase(),
+  nombre: pais.nombre,
+  bandera: pais.bandera,
+  salario: `${pais.salarioMedio.toLocaleString("es-ES")} ${pais.simboloMoneda}`,
+  ofertas: "disponibles",
+}));
 
 export default function TrabajarEnPage() {
   return (
@@ -43,8 +47,8 @@ export default function TrabajarEnPage() {
             🌍 Trabajar en el extranjero
           </h1>
           <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
-            Guías completas para trabajar fuera de España: requisitos de visado,
-            alojamiento, salarios medios y ofertas de empleo actualizadas en 18 países.
+            {`Guías completas para trabajar fuera de España: requisitos de visado,
+            alojamiento, salarios medios y ofertas de empleo actualizadas en ${NUM_PAISES} países.`}
           </p>
           <div className="mt-6 flex gap-3 justify-center flex-wrap">
             <Link

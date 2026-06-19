@@ -172,11 +172,10 @@ export async function GET(request: NextRequest) {
 
   console.log(`[scrape-ats] Nuevas: ${nuevas}, Errores: ${errores}`);
 
-  // Notificar a usuarios con alertas activas cuya ciudad coincida con ofertas nuevas
+  // ── Notificar a usuarios con alertas activas (batched N+1 fix) ──
   let notificados = 0;
   if (nuevas > 0 && ciudadesNuevas.size > 0) {
     try {
-      // Alertas activas no notificadas en las últimas 3h
       const alertasRes = await pool.query<{ id: number; user_id: string; keyword: string; location: string }>(
         `SELECT id, user_id, keyword, location FROM job_alerts
          WHERE active = true
@@ -184,59 +183,93 @@ export async function GET(request: NextRequest) {
          LIMIT 200`
       );
 
-      for (const alerta of alertasRes.rows) {
+      // Filter in-memory by ciudad match (no DB query)
+      const matchingAlerts = alertasRes.rows.filter(alerta => {
         const loc = (alerta.location || "").toLowerCase();
-        // Verificar si alguna de las ciudades nuevas coincide con la ubicación de la alerta
-        const ciudadMatch = loc === "" || Array.from(ciudadesNuevas).some(c =>
+        return loc === "" || Array.from(ciudadesNuevas).some(c =>
           c.includes(loc) || loc.includes(c) || loc.split(/[\s,]+/).some(part => c.includes(part) && part.length > 3)
         );
-        if (!ciudadMatch) continue;
+      });
 
-        // Contar cuántas ofertas nuevas coinciden con esta alerta
-        const kw = `%${alerta.keyword.toLowerCase()}%`;
-        const countRes = await pool.query<{ count: string }>(
-          `SELECT COUNT(*) as count FROM "JobListing"
-           WHERE "isActive" = true AND "createdAt" > NOW() - INTERVAL '7 hours'
-             AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)`,
-          [kw]
-        );
-        const totalNuevas = parseInt(countRes.rows[0]?.count || "0");
-        if (totalNuevas === 0) continue;
+      if (matchingAlerts.length === 0) {
+        console.log(`[scrape-ats] 0 alertas coinciden con ciudades nuevas`);
+      } else {
+        // ── Batch COUNT: una sola query para todas las keywords ──
+        const countMap = new Map<string, number>();
+        {
+          const valuePlaceholders = matchingAlerts.map((_, i) => `($${i + 1})`).join(', ');
+          const keywords = matchingAlerts.map(a => a.keyword.toLowerCase());
+          const countRes = await pool.query<{ keyword: string; count: string }>(
+            `SELECT k.keyword, COUNT(*)::text AS count
+             FROM "JobListing" j
+             CROSS JOIN (VALUES ${valuePlaceholders}) AS k(keyword)
+             WHERE j."isActive" = true
+               AND j."createdAt" > NOW() - INTERVAL '7 hours'
+               AND (LOWER(j.title) LIKE '%' || k.keyword || '%' OR LOWER(j.description) LIKE '%' || k.keyword || '%')
+             GROUP BY k.keyword`,
+            keywords
+          );
+          for (const row of countRes.rows) {
+            countMap.set(row.keyword, parseInt(row.count, 10));
+          }
+        }
 
-        // Obtener suscripciones push del usuario
-        const subsRes = await pool.query<PushSub>(
-          `SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = $1`,
-          [alerta.user_id]
-        );
-
-        for (const sub of subsRes.rows) {
-          try {
-            await sendPush(sub, {
-              title: `🐛 ${totalNuevas} nueva${totalNuevas > 1 ? "s" : ""} oferta${totalNuevas > 1 ? "s" : ""} de "${alerta.keyword}"`,
-              body: alerta.location ? `Acabamos de encontrarlas en ${alerta.location}` : "Revísalas ahora en BuscayCurra",
-              url: `/app/buscar?keyword=${encodeURIComponent(alerta.keyword)}${alerta.location ? `&location=${encodeURIComponent(alerta.location)}` : ""}`,
-            });
-            notificados++;
-          } catch (pushErr) {
-            const code = (pushErr as { statusCode?: number }).statusCode;
-            if (code === 410 || code === 404) {
-              await pool.query(`DELETE FROM push_subscriptions WHERE endpoint = $1`, [sub.endpoint]);
+        // ── Batch push subscriptions ──
+        const subsMap = new Map<string, PushSub[]>();
+        {
+          const userIds = [...new Set(matchingAlerts.map(a => a.user_id))];
+          if (userIds.length > 0) {
+            const allSubs = await pool.query<PushSub & { user_id: string }>(
+              `SELECT user_id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ANY($1)`,
+              [userIds]
+            );
+            for (const s of allSubs.rows) {
+              if (!subsMap.has(s.user_id)) subsMap.set(s.user_id, []);
+              subsMap.get(s.user_id)!.push(s);
             }
           }
         }
 
-        // Notificación en Supabase (campana)
-        await supabase.from("notificaciones").insert({
-          user_id: alerta.user_id,
-          tipo: "nuevas_ofertas",
-          titulo: `${totalNuevas} nueva${totalNuevas > 1 ? "s" : ""} oferta${totalNuevas > 1 ? "s" : ""} de "${alerta.keyword}"`,
-          mensaje: alerta.location ? `Acabamos de encontrarlas en ${alerta.location}` : "Revísalas ahora en BuscayCurra",
-          datos: { keyword: alerta.keyword, location: alerta.location, total: totalNuevas },
-          leida: false,
-        });
+        // ── Loop: notify only matching alerts with batched data ──
+        const updatedIds: number[] = [];
+        for (const alerta of matchingAlerts) {
+          const totalNuevas = countMap.get(alerta.keyword.toLowerCase()) || 0;
+          if (totalNuevas === 0) continue;
 
-        // Marcar como notificado para evitar spam
-        await pool.query(`UPDATE job_alerts SET last_sent_at = NOW() WHERE id = $1`, [alerta.id]);
+          const userSubs = subsMap.get(alerta.user_id) || [];
+          for (const sub of userSubs) {
+            try {
+              await sendPush(sub, {
+                title: `🐛 ${totalNuevas} nueva${totalNuevas > 1 ? "s" : ""} oferta${totalNuevas > 1 ? "s" : ""} de "${alerta.keyword}"`,
+                body: alerta.location ? `Acabamos de encontrarlas en ${alerta.location}` : "Revísalas ahora en BuscayCurra",
+                url: `/app/buscar?keyword=${encodeURIComponent(alerta.keyword)}${alerta.location ? `&location=${encodeURIComponent(alerta.location)}` : ""}`,
+              });
+              notificados++;
+            } catch (pushErr) {
+              const code = (pushErr as { statusCode?: number }).statusCode;
+              if (code === 410 || code === 404) {
+                await pool.query(`DELETE FROM push_subscriptions WHERE endpoint = $1`, [sub.endpoint]);
+              }
+            }
+          }
+
+          // Notificación en Supabase (campana)
+          await supabase.from("notificaciones").insert({
+            user_id: alerta.user_id,
+            tipo: "nuevas_ofertas",
+            titulo: `${totalNuevas} nueva${totalNuevas > 1 ? "s" : ""} oferta${totalNuevas > 1 ? "s" : ""} de "${alerta.keyword}"`,
+            mensaje: alerta.location ? `Acabamos de encontrarlas en ${alerta.location}` : "Revísalas ahora en BuscayCurra",
+            datos: { keyword: alerta.keyword, location: alerta.location, total: totalNuevas },
+            leida: false,
+          });
+
+          updatedIds.push(alerta.id);
+        }
+
+        // Batch update last_sent_at
+        if (updatedIds.length > 0) {
+          await pool.query(`UPDATE job_alerts SET last_sent_at = NOW() WHERE id = ANY($1)`, [updatedIds]);
+        }
       }
     } catch (notifErr) {
       console.error("[scrape-ats] Error en notificaciones:", (notifErr as Error).message);

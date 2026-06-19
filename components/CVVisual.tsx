@@ -159,7 +159,7 @@ export default function CVVisual({ data }: CVVisualProps) {
             alignItems: "center", justifyContent: "center",
           }}>
             {fotoUrl
-              ? <img src={fotoUrl} alt="Foto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ? <img src={fotoUrl} alt="Foto" width={90} height={90} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : <span style={{ fontSize: "28px", opacity: 0.3 }}>◯</span>
             }
           </div>

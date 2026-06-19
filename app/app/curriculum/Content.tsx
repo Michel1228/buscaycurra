@@ -826,7 +826,7 @@ export default function CurriculumPage() {
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ border: "2px solid rgba(34,197,94,0.3)" }}>
                   {fotoUrl ? (
-                    <img src={fotoUrl} alt="Foto CV" className="w-full h-full object-cover" />
+                    <img src={fotoUrl} alt="Foto CV" className="w-full h-full object-cover" width={80} height={80} loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-3xl" style={{ background: "#1e212b", color: "#475569" }}>👤</div>
                   )}

@@ -753,7 +753,7 @@ export default function AuPairProfilePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
               {photos.map((url, idx) => (
                 <div key={url} className="relative group aspect-[4/3] rounded-lg overflow-hidden bg-[#0f1117] border border-[#2d3142]">
-                  <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                  <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" width={400} height={300} loading="lazy" />
                   {idx === 0 && (
                     <span className="absolute top-1.5 left-1.5 bg-[#22c55e] text-black text-[9px] font-bold px-1.5 py-0.5 rounded">PORTADA</span>
                   )}

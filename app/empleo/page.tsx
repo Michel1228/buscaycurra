@@ -11,6 +11,23 @@ export const metadata: Metadata = {
   description:
     "Encuentra trabajo en España con BuscayCurra. Busca ofertas de empleo por puesto y ciudad. Más de 500.000 ofertas activas actualizadas a diario.",
   alternates: { canonical: "https://buscaycurra.es/empleo" },
+  openGraph: {
+    title: "Ofertas de empleo en España | BuscayCurra",
+    description:
+      "Encuentra trabajo en España con BuscayCurra. Busca ofertas de empleo por puesto y ciudad. Más de 500.000 ofertas activas actualizadas a diario.",
+    url: "https://buscaycurra.es/empleo",
+    locale: "es_ES",
+    type: "website",
+    siteName: "BuscayCurra",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Ofertas de empleo en España | BuscayCurra",
+      },
+    ],
+  },
 };
 
 const PUESTOS_POPULARES = [
