@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { Pool } from "pg";
+import { getPool } from "@/lib/db";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -334,14 +334,7 @@ function extractCompanyName(text: string): string | null {
 // Búsqueda combinada: marca/empresa + sector, con ciudad del usuario
 async function searchJobsByCompanyOrSector(marca: string, sector: string, ciudadUsuario: string): Promise<string> {
   try {
-    const vpsPassword = process.env.VPS_DB_PASSWORD;
-    if (!vpsPassword) return "";
-
-    const pool = new Pool({
-      host: "buscaycurra-db", port: 5432, database: "buscaycurra",
-      user: "buscaycurra", password: vpsPassword,
-      max: 1, connectionTimeoutMillis: 5000, idleTimeoutMillis: 10000,
-    });
+    const pool = getPool();
 
     // Buscar ofertas que mencionen la marca O el sector
     const keywords = sector.split(/[/,\s]+/).filter(k => k.length > 2).join("|");
@@ -359,7 +352,6 @@ async function searchJobsByCompanyOrSector(marca: string, sector: string, ciudad
        LIMIT 5`,
       [`%${marcaClean}%`, keywords, ciudadUsuario]
     );
-    await pool.end();
 
     if (!rows.length) return "";
 
@@ -390,9 +382,6 @@ interface PlacesResult {
 
 async function searchJobsBySector(sector: string, userId?: string): Promise<string> {
   try {
-    const vpsPassword = process.env.VPS_DB_PASSWORD;
-    if (!vpsPassword) return "";
-
     // 1. Obtener ubicación del perfil del usuario
     let ciudadUsuario = "";
     if (userId) {
@@ -407,16 +396,7 @@ async function searchJobsBySector(sector: string, userId?: string): Promise<stri
     }
 
     // 2. Buscar ofertas por sector en DB VPS
-    const pool = new Pool({
-      host: "buscaycurra-db",
-      port: 5432,
-      database: "buscaycurra",
-      user: "buscaycurra",
-      password: vpsPassword,
-      max: 1,
-      connectionTimeoutMillis: 5000,
-      idleTimeoutMillis: 10000,
-    });
+    const pool = getPool();
 
     // Extraer palabras clave del sector
     const keywords = sector.split(/[/,\s]+/).filter(k => k.length > 2).join("|");
@@ -432,7 +412,6 @@ async function searchJobsBySector(sector: string, userId?: string): Promise<stri
        LIMIT 5`,
       [keywords, ciudadUsuario]
     );
-    await pool.end();
 
     if (!rows.length) return "";
 

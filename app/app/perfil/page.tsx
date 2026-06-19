@@ -47,6 +47,7 @@ export default function PerfilPage() {
   const [iosNativo, setIosNativo] = useState(false);
   const [planActual, setPlanActual] = useState<"free" | "basico" | "esencial" | "pro" | "empresa">("free");
   const [cargandoPlan, setCargandoPlan] = useState(false);
+  const [cargandoPortal, setCargandoPortal] = useState(false);
   const [errorPlan, setErrorPlan] = useState<string | null>(null);
   const [nuevaPassword, setNuevaPassword] = useState("");
   const [confirmarPassword, setConfirmarPassword] = useState("");
@@ -167,6 +168,23 @@ export default function PerfilPage() {
       if (data.error) setErrorPlan(data.error);
     } catch { setErrorPlan("Error de conexión. Inténtalo de nuevo."); }
     finally { setCargandoPlan(false); }
+  }
+
+  async function irAPortal() {
+    setCargandoPortal(true);
+    setErrorPlan(null);
+    try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) { router.push("/auth/login"); return; }
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json() as { url?: string; error?: string };
+      if (data.url) { window.location.href = data.url; return; }
+      if (data.error) setErrorPlan(data.error);
+    } catch { setErrorPlan("Error de conexión. Inténtalo de nuevo."); }
+    finally { setCargandoPortal(false); }
   }
 
   async function eliminarCuenta() {
@@ -370,6 +388,27 @@ export default function PerfilPage() {
                 </div>
                 <p className="text-xs" style={{ color: "#94a3b8" }}>{info.desc}</p>
               </div>
+
+              {/* Botón portal Stripe — solo si no es plan free */}
+              {planActual !== "free" && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => void irAPortal()}
+                    disabled={cargandoPortal}
+                    className="w-full py-2.5 text-sm font-semibold rounded-lg transition disabled:opacity-50"
+                    style={{
+                      background: "rgba(59,130,246,0.1)",
+                      color: "#60a5fa",
+                      border: "1px solid rgba(59,130,246,0.25)",
+                    }}
+                  >
+                    {cargandoPortal ? "Cargando..." : "Gestionar suscripción →"}
+                  </button>
+                  <p className="text-[11px] text-center mt-1.5" style={{ color: "#475569" }}>
+                    Cambiar plan, método de pago o cancelar
+                  </p>
+                </div>
+              )}
 
               {errorPlan && (
                 <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>

@@ -5,7 +5,7 @@
  * Los límites se resetean diariamente (consultas, envíos) o semanalmente (envíos).
  */
 
-export type PlanTier = "free" | "esencial" | "pro" | "empresa";
+export type PlanTier = "free" | "basico" | "esencial" | "pro" | "empresa";
 
 export interface PlanLimits {
   name: string;
@@ -30,6 +30,18 @@ const LIMITS: Record<PlanTier, PlanLimits> = {
     cvsGuardados: 1,
     cartaPersonalizada: false,
     ofertasGuardadas: 10,
+    codigosPromocionales: false,
+    apiAccess: false,
+  },
+  basico: {
+    name: "Básico",
+    guzziModel: "gpt-4o-mini",
+    guzziMaxConsultasDia: 30,
+    enviosCVDia: 10,
+    enviosCVSemana: 50,
+    cvsGuardados: 3,
+    cartaPersonalizada: true,
+    ofertasGuardadas: 50,
     codigosPromocionales: false,
     apiAccess: false,
   },

@@ -10,7 +10,7 @@ export function getPool(): Pool {
       port: parseInt(process.env.PGPORT || "5432"),
       database: "buscaycurra",
       user: "buscaycurra",
-      password: "ByCurra2026Secure!",
+      password: process.env.DATABASE_PASSWORD || process.env.VPS_DB_PASSWORD || "",
       max: 5,
       idleTimeoutMillis: 30000,
     });

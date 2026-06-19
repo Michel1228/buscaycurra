@@ -4,7 +4,7 @@
  * Devuelve conteo real de ofertas por país desde la DB VPS. Cache 1h.
  */
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
+import { getPool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -55,16 +55,7 @@ function formatNumber(n: number): string {
 
 export async function GET() {
   try {
-    const pool = new Pool({
-      host: "buscaycurra-db",
-      port: 5432,
-      database: "buscaycurra",
-      user: "buscaycurra",
-      password: process.env.VPS_DB_PASSWORD || "",
-      max: 1,
-      connectionTimeoutMillis: 5000,
-      idleTimeoutMillis: 10000,
-    });
+    const pool = getPool();
 
     // Agrupar por UPPER(country) para unificar duplicados case-sensitive
     const { rows } = await pool.query(`
@@ -74,7 +65,6 @@ export async function GET() {
       GROUP BY UPPER(country)
       ORDER BY total DESC
     `);
-    await pool.end();
 
     const paises = rows
       .filter((r) => PAISES_MAP[r.code] && r.code !== "ES")
