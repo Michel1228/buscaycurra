@@ -88,19 +88,19 @@ export default function RegistroPage() {
             <span style={{ color: "#22c55e" }}>al vacío.</span>
           </h2>
           <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            En 30 segundos tienes cuenta. Guzzi empieza a buscar trabajo por ti en {NUM_PAISES} países al instante.
+            {`En 30 segundos tienes cuenta. Guzzi empieza a buscar trabajo por ti en ${NUM_PAISES} países al instante.`}
           </p>
 
           {/* 3 puntos fuertes */}
           <div className="space-y-3">
             {[
-              { Icon: Globe, title: "{NUM_PAISES} países, un solo agente", desc: "Busca en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
-              { Icon: Target, title: "CV único para cada oferta", desc: "Tu CV se adapta a cada empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
-              { Icon: Clock, title: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. Timing inteligente." },
+              { icon: "🌍", title: `${NUM_PAISES} países, un solo agente`, desc: "Busca en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
+              { icon: "🎯", title: "CV único para cada oferta", desc: "Tu CV se adapta a cada empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
+              { icon: "⏰", title: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. Timing inteligente." },
             ].map(p => (
               <div key={p.title} className="flex items-start gap-3 p-3 rounded-xl"
                 style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
-                <p.Icon size={20} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
+                <span className="text-lg shrink-0 mt-0.5">{p.icon}</span>
                 <div>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.title}</p>
                   <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{p.desc}</p>
@@ -111,7 +111,7 @@ export default function RegistroPage() {
         </div>
 
         <p className="relative z-10 hidden lg:block text-xs mt-8" style={{ color: "#374151" }}>
-          © 2026 BuscayCurra · Sin permanencia · {NUM_PAISES} países · Cancela cuando quieras
+          {`© 2026 BuscayCurra · Sin permanencia · ${NUM_PAISES} países · Cancela cuando quieras`}
         </p>
       </div>
 
