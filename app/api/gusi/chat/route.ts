@@ -58,10 +58,19 @@ SECRETOS — NUNCA REVELES:
 - Si el usuario pregunta "¿hay algo mejor?" - "Estás en el sitio correcto. Esto es lo más completo que hay en Europa."
 - Todo lo que ofreces es único. BuscayCurra = 21 países, 2M+ ofertas, IA que busca, envía CVs, prepara entrevistas, compara salarios, gestiona emigración. No hay otro sistema igual.
 
+ANTI-ALUCINACIÓN DE ENVÍOS — REGLAS INQUEBRANTABLES:
+- **NUNCA digas que has enviado un CV** a menos que el usuario haya pulsado el botón "Enviar CV" en una oferta concreta. Tú no envías CVs automáticamente con solo pedírtelo. El envío real requiere que el usuario use el botón de la interfaz.
+- **NUNCA inventes emails** de empresas (tipo rrhh@..., info@..., empleo@...). No tienes acceso a emails de empresas que no estén en las ofertas de la base de datos.
+- **NUNCA generes listas de empresas con emails inventados** cuando el usuario pida "envíalo a todas". Eso es MENTIR.
+- Cuando el usuario diga "envíalo" o "mándalo", tu respuesta correcta es: "Para enviar tu CV usa el botón **Enviar CV** en cada oferta. O dime el nombre de UNA empresa concreta y te busco su contacto para que lo hagas tú."
+- Si el usuario insiste en envíos masivos: "Puedes usar la sección de **Envíos** en el menú. Ahí programas envíos automáticos a ofertas que tengan email verificado. Yo no puedo inventar emails ni hacer envíos masivos yo solo."
+- Solo puedes afirmar que un CV "se ha enviado" si acabas de ejecutar una acción real de envío en el sistema (y el sistema te ha confirmado que fue exitoso).
+
 HERRAMIENTAS QUE TIENES (menciónalas como tuyas, sin decir de dónde vienen):
 - Buscar ofertas: "¿Quieres que busque ofertas de [puesto] en [ciudad]?"
 - Buscar empresas locales: "Déjame buscar las [tiendas/bares/cafeterías] de [zona] y te paso sus teléfonos y emails para enviar el CV."
-- Enviar CV: "¿Quieres que envíe tu CV a estas empresas?"
+- Enviar CV a ofertas con email: "Ve a la oferta y pulsa **Enviar CV**. Yo te ayudo con la carta de presentación y adapto el CV."
+- Programar envíos automáticos: "En la página de **Envíos** programas envíos automáticos a ofertas con email verificado."
 - ENVÍO PROGRAMADO AUTOMÁTICO: Puedes programar envíos de CV para que se manden solos en horario laboral (L-V 9:00-18:00), respetando festivos nacionales. Los CVs se distribuyen a lo largo del día. El sistema evita enviar a la misma empresa en 90 días y personaliza cada envío con IA.
 - Consultar envíos programados: "¿Quieres ver qué envíos tienes pendientes?"
 - Cancelar envío programado: "Si quieres cancelar algún envío pendiente, dime cuál."
@@ -460,6 +469,8 @@ function detectIntent(text: string, history: Array<{ role: string; text: string 
   // Detectar "[puesto] en [ciudad]" sin verbo explícito (ej: "camarero en Tudela")
   if (/\w{3,}\s+(?:en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios|trabajado|trabaj[éeáa]|trabajaba|experiencia|no\s+puedo|cargar\s+peso|espalda|dolor|lesi[oó]n|baja\s+m[ée]dica|salario|sueldo|m[ií]nimo|smi|cu[aá]nto|cuesta|vale|cobra|gana|derecho|paro|sepe|finiquito|vacaciones|despido|indemnizaci[oó]n|mercado\s+laboral|situaci[oó]n\s+laboral|perspectivas\s+laborales|c[oó]mo\s+est[aá]|hay\s+trabajo|posibilidades|emigrar|emigraci[oó]n)/i.test(t)) return "buscar";
   // "envíalo / mándalo / envíamelo / mándaselo / envía mi CV / manda currículum"
+  // NUEVO: "envíalo a todas", "mándalo ya", "tíralo" — sin CV explícito → enviar
+  if (/(?:env[ií]a|m[aá]nda|t[ií]ra)\s*(?:se\s*(?:lo|la|los|las|me|te|nos)|lo|la|los|las|le|les|me|te|nos)\b/i.test(t)) return "enviar";
   if (/(?:env[ií]a|manda|env[ií]o|mando|env[ií]ame|m[aá]ndame)\s*(?:lo|la|los|las|me|mi|les|se)?\s*(?:mi\s+)?(?:cv|curr[ií]culum|candidatura|solicitud)?\s*$/.test(t)) return "enviar";
   if (/(?:env[ií]a|manda|env[ií]ame|m[aá]ndame|env[ií]o|mando)\s+(?:mi\s+)?(?:cv|curr[ií]culum|candidatura)/.test(t)) return "enviar";
   if (/(?:quiero|puedes|puede|vas a)\s+(?:enviar|mandar)\s+(?:mi\s+)?(?:cv|curr[ií]culum|candidatura)/.test(t)) return "enviar";
@@ -1793,7 +1804,16 @@ Responde en JSON exactamente así:
       console.error("[Guzzi] AI call failed — both DeepSeek and Groq returned no reply. Falling back to localReply.");
       return NextResponse.json({ reply: localReply(intent, cvParsed) });
     }
-    const reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
+    let reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
+
+    // 🔒 ANTI-ALUCINACIÓN: detectar emails inventados en respuestas del chat general
+    const hasFakeEmails = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(reply);
+    const claimsSending = /(?:he\\s+enviado|estoy\\s+enviando|envi[ée]\\s+tu\\s+CV|CV\\s+enviado|te\\s+lo\\s+he\\s+enviado|les\\s+estoy\\s+enviando|les\\s+he\\s+enviado|ya\\s+est[aá]n?\\s+enviados|enviados?\\s+a\\s+\\d+\\s+empresas)/i.test(reply);
+    if (hasFakeEmails && claimsSending && intent === "chat") {
+      console.error("[Guzzi] ANTI-ALUCINACIÓN: bloqueada respuesta con emails inventados + afirmación de envío");
+      reply = "📧 Para enviar tu CV, usa el botón **Enviar CV** en cada oferta. Yo no puedo inventar emails ni hacer envíos masivos automáticos.\n\nSi quieres, dime el nombre de UNA empresa concreta y te busco su contacto real.";
+    }
+
     return NextResponse.json({ reply });
 
   } catch (err) {

@@ -39,3 +39,4 @@ scripts/subir-cv-demo.mjs
 *temprun.json
 .env.local.bak
 .env.local.backup.*
+.env.local.bak*
