@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Briefcase, MapPin, Mail, Banknote, ArrowRight, ExternalLink } from "lucide-react";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { Briefcase, MapPin, Send, Banknote, ArrowRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface OfertaAuPair {
   title: string;
@@ -23,9 +24,13 @@ interface Stats {
 
 export default function AuPairOfertasRecientes() {
   const router = useRouter();
+  const supabase = getSupabaseBrowser();
   const [stats, setStats] = useState<Stats | null>(null);
   const [ofertas, setOfertas] = useState<OfertaAuPair[]>([]);
   const [loading, setLoading] = useState(true);
+  const [enviandoIdx, setEnviandoIdx] = useState<number | null>(null);
+  const [enviadosIdx, setEnviadosIdx] = useState<Set<number>>(new Set());
+  const [erroresIdx, setErroresIdx] = useState<Record<number, string>>({});
 
   useEffect(() => {
     fetch("/api/au-pair/ofertas")
@@ -41,6 +46,70 @@ export default function AuPairOfertasRecientes() {
   const irABuscador = () => {
     router.push("/app/buscar?q=au pair&categoria=au_pair");
   };
+
+  /** Enviar CV a esta oferta usando nuestro sistema interno */
+  const enviarCv = useCallback(async (idx: number, oferta: OfertaAuPair) => {
+    setEnviandoIdx(idx);
+    setErroresIdx(prev => { const next = {...prev}; delete next[idx]; return next; });
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setErroresIdx(prev => ({ ...prev, [idx]: "Inicia sesión para enviar CV" }));
+        setEnviandoIdx(null);
+        return;
+      }
+
+      let email = oferta.email;
+
+      // Si no hay email, intentar extraerlo
+      if (!email || email === "Ver en oferta") {
+        try {
+          const extractRes = await fetch("/api/company/extract", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+            body: JSON.stringify({ companyName: oferta.company }),
+          });
+          const extractData = await extractRes.json();
+          if (extractData.email) email = extractData.email;
+        } catch {}
+      }
+
+      if (!email || email === "Ver en oferta") {
+        setErroresIdx(prev => ({ ...prev, [idx]: "No se pudo obtener el email de contacto" }));
+        setEnviandoIdx(null);
+        return;
+      }
+
+      // Enviar CV
+      const res = await fetch("/api/cv-sender/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          companyName: oferta.company,
+          companyEmail: email,
+          companyUrl: "",
+          jobTitle: oferta.title,
+          strategy: "ahora",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErroresIdx(prev => ({ ...prev, [idx]: data.error || "Error al enviar" }));
+      } else {
+        setEnviadosIdx(prev => new Set([...prev, idx]));
+      }
+    } catch {
+      setErroresIdx(prev => ({ ...prev, [idx]: "Error de conexión" }));
+    } finally {
+      setEnviandoIdx(null);
+    }
+  }, [supabase]);
 
   if (loading) {
     return (
@@ -70,11 +139,11 @@ export default function AuPairOfertasRecientes() {
           <p className="text-sm text-[#94a3b8] mt-1">
             {stats ? (
               <>
-                <span className="text-[#22c55e] font-bold">{stats.con_email.toLocaleString()}</span> con email de contacto
+                <span className="text-[#f1f5f9] font-bold">{stats.paises}</span> países
                 {" · "}
-                <span className="text-[#f1f5f9]">{stats.paises}</span> países
+                <span className="text-[#f1f5f9] font-bold">{stats.empresas}</span> agencias y familias
                 {" · "}
-                <span className="text-[#f1f5f9]">{stats.empresas}</span> agencias y familias
+                <span className="text-[#22c55e]">envío directo desde BuscayCurra</span>
               </>
             ) : "..."}
           </p>
@@ -91,53 +160,67 @@ export default function AuPairOfertasRecientes() {
       {/* Lista de ofertas */}
       {ofertas.length > 0 ? (
         <div className="space-y-2">
-          {ofertas.map((o, i) => (
-            <div
-              key={i}
-              className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-[#0f1117] border border-[#2d3142] hover:border-[#22c55e]/30 transition-colors group"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-[#f1f5f9] truncate">{o.title}</span>
-                  {o.salary && o.salary !== "Ver en oferta" && (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
-                      <Banknote className="w-3 h-3 inline mr-0.5" />
-                      {o.salary.length > 20 ? o.salary.slice(0, 20) + "…" : o.salary}
+          {ofertas.map((o, i) => {
+            const enviado = enviadosIdx.has(i);
+            const enviando = enviandoIdx === i;
+            const error = erroresIdx[i];
+
+            return (
+              <div
+                key={i}
+                className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-[#0f1117] border border-[#2d3142] hover:border-[#22c55e]/30 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium text-[#f1f5f9] truncate">{o.title}</span>
+                    {o.salary && o.salary !== "Ver en oferta" && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
+                        <Banknote className="w-3 h-3 inline mr-0.5" />
+                        {o.salary.length > 25 ? o.salary.slice(0, 25) + "…" : o.salary}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-[#64748b]">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {o.city && o.city !== "Ver en oferta" ? `${o.city}, ` : ""}{o.country}
                     </span>
+                    <span className="text-[#94a3b8]">{o.company}</span>
+                  </div>
+                  {error && (
+                    <p className="text-[10px] text-[#ef4444] mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {error}
+                    </p>
                   )}
                 </div>
-                <div className="flex items-center gap-3 mt-1 text-xs text-[#64748b]">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {o.city && o.city !== "Ver en oferta" ? `${o.city}, ` : ""}{o.country}
-                  </span>
-                  <span className="text-[#94a3b8]">{o.company}</span>
+
+                {/* Botón de envío */}
+                <div className="shrink-0">
+                  {enviado ? (
+                    <span className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-medium text-[#22c55e]" style={{ background: "rgba(34,197,94,0.08)" }}>
+                      <CheckCircle2 className="w-3 h-3" /> Enviado
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => enviarCv(i, o)}
+                      disabled={enviando}
+                      className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-medium transition-all disabled:opacity-50"
+                      style={{
+                        background: enviando ? "#1e212b" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                        color: enviando ? "#64748b" : "#fff",
+                      }}
+                    >
+                      {enviando ? (
+                        <><Loader2 className="w-3 h-3 animate-spin" /> Enviando...</>
+                      ) : (
+                        <><Send className="w-3 h-3" /> Enviar CV</>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {o.email && (
-                  <a
-                    href={`mailto:${o.email}?subject=Au Pair Application - ${encodeURIComponent(o.title)}`}
-                    className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors opacity-0 group-hover:opacity-100 sm:opacity-100"
-                    style={{ background: "#1a2e1a", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}
-                  >
-                    <Mail className="w-3 h-3" />
-                    Contactar
-                  </a>
-                )}
-                {o.url && o.url !== "Ver en oferta" && (
-                  <a
-                    href={o.url}
-                    target="_blank"
-                    rel="noopener"
-                    className="text-xs px-2 py-1.5 text-[#64748b] hover:text-[#f1f5f9]"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <p className="text-sm text-[#64748b] text-center py-4">
