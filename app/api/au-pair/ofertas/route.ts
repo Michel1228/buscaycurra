@@ -4,23 +4,14 @@
  * Sin autenticación — datos públicos para atraer tráfico.
  */
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
+import { getPool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 300; // cache 5 min
 
-const pool = new Pool({
-  host: "buscaycurra-db",
-  port: 5432,
-  user: "buscaycurra",
-  password: process.env.POSTGRES_PASSWORD || "buscaycurra",
-  database: "buscaycurra",
-  max: 3,
-  statement_timeout: 5000,
-});
-
 export async function GET() {
   try {
+    const pool = getPool();
     const [countRes, ofertasRes] = await Promise.all([
       pool.query(
         `SELECT COUNT(*)::int as total,
