@@ -203,8 +203,10 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Calcular scheduledFor según estrategia ────────────────────────────
+    // Default: "ahora" (1 min) en vez de "optimo". Los envíos no deben esperar a
+    // la siguiente hora hábil si el usuario acaba de hacer clic en "Enviar CV".
     let scheduledForMs: number | undefined;
-    if (strategy === "ahora") {
+    if (!strategy || strategy === "ahora") {
       scheduledForMs = Date.now() + 60_000; // 1 min desde ahora
     } else if (strategy === "personalizada" && scheduledFor) {
       scheduledForMs = new Date(scheduledFor).getTime();
@@ -215,7 +217,7 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    // strategy="optimo" o no especificada → scheduledForMs = undefined → el scheduler decide
+    // strategy="optimo" → scheduledForMs = undefined → el scheduler decide
 
     // ── Programar el envío ────────────────────────────────────────────────
     const resultado = await scheduleCV(

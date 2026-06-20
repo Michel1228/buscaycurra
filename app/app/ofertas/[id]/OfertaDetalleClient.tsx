@@ -167,6 +167,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
           companyEmail: email,
           companyUrl: oferta.url,
           jobTitle: oferta.titulo,
+          strategy: "ahora",
         }),
       });
       if (res.ok) {

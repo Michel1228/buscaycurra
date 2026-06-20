@@ -87,7 +87,10 @@ export async function GET(request: NextRequest) {
     const puestoClean = puesto.toLowerCase().trim();
     const kw = `%${puestoClean}%`;
 
-    // Estadísticas generales
+    // Evitar que queries lentas cuelguen la API
+    await pool.query(`SET LOCAL statement_timeout = '8s'`);
+
+    // Estadísticas generales — solo title (tiene índice GIN trigram, description no)
     const statsResult = await pool.query(
       `SELECT 
         COUNT(*) as total,
@@ -96,7 +99,7 @@ export async function GET(request: NextRequest) {
         MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary,
         COUNT(CASE WHEN salary ~ '[0-9]' THEN 1 END) as con_salario
        FROM "JobListing"
-       WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1)`,
+       WHERE "isActive" = true AND title ILIKE $1`,
       [kw]
     );
 
@@ -114,14 +117,14 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Por provincia
+    // Por provincia — solo title (tiene índice GIN trigram)
     const provResult = await pool.query(
       `SELECT 
         COALESCE(NULLIF(province, ''), city) as province,
         COUNT(*) as count,
         AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary
        FROM "JobListing"
-       WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1)
+       WHERE "isActive" = true AND title ILIKE $1
        GROUP BY COALESCE(NULLIF(province, ''), city)
        HAVING COUNT(*) >= 3
        ORDER BY count DESC
@@ -146,7 +149,7 @@ export async function GET(request: NextRequest) {
           COUNT(*) as count,
           AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary
          FROM "JobListing"
-         WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1)
+         WHERE "isActive" = true AND title ILIKE $1
            AND (province ILIKE $2 OR city ILIKE $2)`,
         [kw, loc]
       );

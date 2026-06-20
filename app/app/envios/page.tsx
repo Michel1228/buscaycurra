@@ -8,6 +8,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import UsageCounter from "@/components/UsageCounter";
 import { Mail, Eye, MessageCircle, Clock, X, Ban, FileText, Briefcase, MapPin, Phone, Send } from "lucide-react";
+import { formatLocalDate } from "@/lib/timezone";
 
 interface Envio {
   id: string;
@@ -191,11 +192,7 @@ export default function EnviosPage() {
                   {envio.job_title && <p className="flex items-center gap-1 text-xs text-slate-400 truncate"><Briefcase size={11} />{envio.job_title}</p>}
                   {envio.company_email && <p className="flex items-center gap-1 text-xs text-slate-500 truncate"><Mail size={11} />{envio.company_email}</p>}
                   <p className="text-xs text-slate-600 mt-0.5">
-                    {envio.sent_at
-                      ? new Date(envio.sent_at).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
-                      : envio.created_at
-                        ? new Date(envio.created_at).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
-                        : ""}
+                    {formatLocalDate(envio.sent_at || envio.created_at)}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -243,8 +240,7 @@ export default function EnviosPage() {
               <div><span className="text-slate-400">Email:</span> <span className="text-white">{detalle.company_email}</span></div>
               <div><span className="text-slate-400">Estado:</span> <span className="font-semibold" style={{ color: STATUS_COLOR[detalle.status] }}>{detalle.status}</span></div>
               <div><span className="text-slate-400">Fecha:</span> <span className="text-white">
-                {detalle.sent_at ? new Date(detalle.sent_at).toLocaleString("es-ES", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })
-                  : new Date(detalle.created_at).toLocaleString("es-ES", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })}
+                {formatLocalDate(detalle.sent_at || detalle.created_at, "ES", { month: "long" })}
               </span></div>
             </div>
 
