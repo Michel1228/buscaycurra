@@ -3,6 +3,7 @@
 import { Car, CigaretteOff, ShieldCheck, Waves, GraduationCap, Cake, Globe, CalendarDays, Camera, type LucideIcon } from "lucide-react";
 import { type AuPairReference } from "@/lib/au-pair";
 import { PAISES } from "@/lib/paises";
+import AuPairInfoFamilia from "@/components/AuPairInfoFamilia";
 
 interface Props {
   nombre: string;
@@ -172,6 +173,11 @@ export default function AuPairPlantilla({
             </div>
           </div>
         )}
+      </div>
+
+      {/* ── Info para la familia anfitriona ── */}
+      <div className="px-8 sm:px-10 pb-6">
+        <AuPairInfoFamilia paisCodigo={paisDestino} />
       </div>
 
       {/* ── Footer ── */}

@@ -8,6 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { generateCVPdf } from "@/lib/cv-generator/generate-pdf";
 import type { AuPairProfile, AuPairReference } from "@/lib/au-pair";
+import { PAISES_AU_PAIR_LEGAL, calcularCosteFamilia } from "@/lib/au-pair-legal-data";
 
 export const dynamic = "force-dynamic";
 
@@ -152,7 +153,8 @@ function generateAuPairProfileHTML(profile: AuPairProfile, coverLetter: string):
 
 /**
  * Genera el HTML completo del email con todos los datos del perfil Au Pair.
- * Incluye: datos personales, fotos, idiomas, experiencia, aptitudes, referencias.
+ * Incluye: datos personales, fotos, idiomas, experiencia, aptitudes, referencias,
+ * e info para la familia anfitriona (costes y requisitos del país destino).
  */
 function buildAuPairEmailHTML(
   profile: AuPairProfile,
@@ -354,6 +356,37 @@ function buildAuPairEmailHTML(
               </div>
             </td>
           </tr>` : ""}
+
+          <!-- Info para la familia anfitriona -->
+          ${(() => {
+            const paisDest = (profile as any).pais_destino || profile.nationality || "ES";
+            const paisInfo = PAISES_AU_PAIR_LEGAL.find(p => p.codigo === paisDest);
+            if (!paisInfo) return "";
+            const costes = calcularCosteFamilia(paisInfo);
+            return `
+          <tr>
+            <td style="padding:12px 40px 16px;">
+              <div style="background:#f0f7f4;border:1px solid #c8e6d4;border-radius:8px;padding:16px 20px;">
+                <p style="color:#2d5a4e;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;">
+                  ℹ️ Para la familia anfitriona — ${paisInfo.bandera} ${paisInfo.nombre}
+                </p>
+                <table cellpadding="0" cellspacing="0" style="width:100%;font-size:13px;color:#374151;">
+                  <tr>
+                    <td style="padding:4px 0;vertical-align:top;width:50%;">
+                      <strong>💰 Coste estimado mensual:</strong> ~${costes.total}€<br/>
+                      <span style="font-size:11px;color:#6b7280;">Salario ${costes.salario}€ + manutención ~${costes.comidaAlojamiento}€${costes.cursoIdioma > 0 ? ` + curso ~${costes.cursoIdioma}€` : ""} + seguro ~${costes.seguro}€</span>
+                    </td>
+                    <td style="padding:4px 0;vertical-align:top;width:50%;">
+                      <strong>⏱ ${paisInfo.horasSemanales}h/semana</strong> · ${paisInfo.edadMin}-${paisInfo.edadMax} años<br/>
+                      <span style="font-size:11px;color:#6b7280;">${paisInfo.cursoIdioma} · Duración: ${paisInfo.duracionMax}</span>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:8px 0 0;font-size:10px;color:#9ca3af;">Datos orientativos de BuscayCurra. Verifica requisitos actualizados oficialmente.</p>
+              </div>
+            </td>
+          </tr>`;
+          })()}
 
           <!-- Nota sobre PDF adjunto -->
           <tr>

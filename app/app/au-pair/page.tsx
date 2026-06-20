@@ -312,6 +312,7 @@ export default function AuPairProfilePage() {
         age: age ? parseInt(age) : null,
         nationality,
         ciudad,
+        pais_destino: paisDestino,
         languages,
         childcare_experience: childcareExperience,
         has_driving_license: hasDrivingLicense,
