@@ -212,7 +212,7 @@ export default function NotificacionesPage() {
       if (!session) { setErrorEnvio("Inicia sesión para enviar CV"); return; }
 
       // Extraer email de la oferta (mismo patrón que OfertaDetalleClient)
-      let email = (job as Record<string, string>).email_empresa || "";
+      let email = (job as any).email_empresa || "";
       if (!email && job.url) {
         try {
           const domain = new URL(job.url).hostname.replace(/^www\./, "");

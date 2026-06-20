@@ -148,6 +148,39 @@ FUERA DE LA UE — VISADOS:
 - Nueva Zelanda 🇳🇿: Working Holiday Visa. Parecido a Australia pero más pequeño y tranquilo.
 - Emiratos Árabes 🇦🇪: Sin impuestos sobre renta. Muy demandado en construcción, sanidad, hostelería de lujo. Necesitas contrato previo — la empresa te sponsorea el visado.
 
+-------- CONOCIMIENTO AU PAIR --------
+
+BuscayCurra es LA plataforma más completa para encontrar trabajo como au pair. Tenemos 2,263 ofertas activas de au pair/nanny en 21 países, con calculadora de costes, comparativa legal por país, y perfil profesional con carta IA.
+
+REQUISITOS POR PAÍS (datos 2026):
+- España 🇪🇸: 18-30 años, 30h/sem, €280-320/mes, curso idioma NO obligatorio, visado no-UE requiere curso español. Coste familia: €590-830/mes. El más fácil para empezar.
+- Alemania 🇩🇪: 18-27 años, 30h/sem, €280 fijo por ley, curso idioma OBLIGATORIO para no-UE, A1 alemán requerido. Coste familia: €580-710/mes. Muy regulado.
+- Francia 🇫🇷: 17-30 años, 30h/sem, €320-340/mes, curso francés OBLIGATORIO para TODOS (10h/sem). Coste familia: €620-840/mes.
+- Reino Unido 🇬🇧: 18-30 años, 30h/sem, £360-400/semana (~€430-480), desde Brexit necesita visado. MUY CARO: £776/año recargo sanitario. Coste familia: €1,600-1,770/mes.
+- Países Bajos 🇳🇱: 18-30 años, 30h/sem, €340/mes, seguro médico OBLIGATORIO (~€110/mes). No-UE solo vía agencia IND. Coste familia: €690-820/mes.
+- Italia 🇮🇹: 18-30 años, 30h/sem, €250-300/mes, curso italiano obligatorio. Salario bajo pero coste de vida bajo. Coste familia: €530-750/mes.
+- Bélgica 🇧🇪: 18-26 años (la edad más baja), SOLO 20h/sem, €450/mes — el mejor balance vida-trabajo. Curso obligatorio. Permiso B para no-UE.
+- Irlanda 🇮🇪: 18-30 años, 30h/sem, €360-400/mes, inglés nativo — ideal para aprender. Coste familia: €700-950/mes.
+- Austria 🇦🇹: 18-28 años, 20h/sem, €460-520/mes — el MEJOR salario por hora. 5 semanas vacaciones. Alemán A1 requerido. Coste familia: €700-900/mes.
+- Dinamarca 🇩🇰: 18-30 años, 30h/sem, DKK 4,550/mes (~€610) — el MEJOR salario. Hasta 24 meses de duración. Coste de vida muy alto. Coste familia: €1,070-1,410/mes.
+- Finlandia 🇫🇮: 18-30 años, 30h/sem, €280-340/mes. Seguro, buena calidad de vida, inglés muy hablado. Coste familia: €650-800/mes.
+
+CÓMO USAR BUSCAYCURRA PARA AU PAIR:
+- Perfil Au Pair: en la sección Au Pair puedes crear tu perfil con fotos, experiencia, referencias, y una Dear Family Letter generada por IA.
+- Comparativa legal: tabla interactiva para comparar requisitos de 11 países lado a lado.
+- Calculadora de costes: para familias — calcula el coste REAL mensual (salario + curso + seguro + comida + alojamiento).
+- Enviar perfil a familias/agencias: introduce el email y envías tu perfil completo.
+- Buscar ofertas: "busca ofertas de au pair en Londres" y te muestro las disponibles con email de contacto.
+- Agencias: tenemos 6 agencias activas con contacto directo (Little Ones UK, 99aupairs, Dreaming California...).
+
+CONSEJOS PARA AU PAIRS:
+- El mejor país para ahorrar: Dinamarca (€610/mes). El mejor para balance vida-trabajo: Bélgica o Austria (20h/semana).
+- El más fácil para españoles: Irlanda (inglés nativo, sin curso obligatorio, comunidad española grande).
+- El más regulado y seguro: Alemania (todo por ley, la familia paga seguro + curso).
+- Evita UK si no tienes visado — desde Brexit es muy caro y complicado.
+- Lleva siempre contrato firmado ANTES de viajar. Sin contrato = sin derechos.
+- La carta "Dear Family" es LO MÁS IMPORTANTE. Sé personal, menciona por qué ese país, incluye fotos.
+
 -------- ESTRATEGIAS DE BÚSQUEDA AVANZADA --------
 
 CV Y ATS (APPLICANT TRACKING SYSTEM):
@@ -217,7 +250,8 @@ AU PAIR — INFORMACIÓN ESPECÍFICA:
 - Requisitos habituales: 18-30 años, sin hijos, soltero/a, sin antecedentes
 - Paga de bolsillo: Alemania 260€/sem, Francia 80€/sem + Metro, USA 200$/sem, Australia 200AUD/sem
 - Horas de trabajo: máximo 30-45h/semana según país
-- Plataformas: AuPairWorld, Au Pair in America, GreatAuPair, Cultural Care
+- Plataformas con ofertas au pair: BuscayCurra tiene su propia base de datos con 73 ofertas de agencias como Little Ones UK, 99aupairs.com y Staff 360. NO menciones AuPairWorld, GreatAuPair ni otras plataformas externas.
+- El usuario puede ver las agencias disponibles en /app/au-pair y enviar su perfil directamente.
 - Beneficios: idioma, experiencia, conocer mundo, muchas familias pagan cursos de idioma
 - En BuscayCurra: tienes sección /app/au-pair para crear tu carta "Dear Family" y perfil profesional
 

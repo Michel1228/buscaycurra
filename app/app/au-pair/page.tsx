@@ -11,6 +11,8 @@ import {
 } from "@/lib/au-pair";
 import { PAISES } from "@/lib/paises";
 import AuPairPlantilla from "@/components/AuPairPlantilla";
+import AuPairComparativaLegal from "@/components/AuPairComparativaLegal";
+import AuPairCalculadoraCostes from "@/components/AuPairCalculadoraCostes";
 import {
   Users, Sparkles, User, Check, Globe, Camera, Star, ClipboardList,
   Mail, FileText, Eye, Upload, Save, X, CheckCircle2,
@@ -65,6 +67,18 @@ export default function AuPairProfilePage() {
   const [enviandoPerfil, setEnviandoPerfil] = useState(false);
   const [envioExito, setEnvioExito] = useState("");
   const [envioError, setEnvioError] = useState("");
+
+  // ── Agencias Au Pair ──
+  const [agencias, setAgencias] = useState<{nombre:string; email:string; pais:string; ofertas:number}[]>([]);
+  const [cargandoAgencias, setCargandoAgencias] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/au-pair/agencias")
+      .then(r => r.json())
+      .then(d => { if (d.agencias) setAgencias(d.agencias); })
+      .catch(() => {})
+      .finally(() => setCargandoAgencias(false));
+  }, []);
 
   // ── Preview & Confirmación ──
   const [showPreview, setShowPreview] = useState(false);
@@ -979,6 +993,29 @@ export default function AuPairProfilePage() {
             Introduce el email de la familia o agencia para enviarles tu perfil Au Pair completo.
           </p>
 
+          {/* ── Agencias disponibles ── */}
+          {!cargandoAgencias && agencias.length > 0 && (
+            <div className="mb-4 space-y-2">
+              <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider">🏠 Agencias disponibles</p>
+              {agencias.map((a, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setFamilyEmail(a.email); setFamilyName(a.nombre); }}
+                  className="w-full text-left bg-[#0f1117] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg px-3 py-2.5 transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-[#e2e8f0] font-medium truncate">{a.nombre}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>{a.ofertas}</span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-[10px] text-[#64748b]">
+                    <span>{a.pais}</span>
+                    <span className="truncate">{a.email}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Contador */}
           <div className="flex items-center gap-2 mb-4">
             <span className="text-[11px] font-semibold" style={{ color: auPairStats.disponibles <= 0 ? "#fca5a5" : "#22c55e" }}>
@@ -1039,6 +1076,12 @@ export default function AuPairProfilePage() {
           </button>
         </div>
       </section>
+
+      {/* ── Comparativa legal Au Pair ── */}
+      <AuPairComparativaLegal />
+
+      {/* ── Calculadora de costes Au Pair ── */}
+      <AuPairCalculadoraCostes />
 
       {/* ── MODAL: Preview antes de enviar perfil Au Pair ── */}
       {showPreview && (

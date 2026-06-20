@@ -10,6 +10,7 @@ import { Globe, Target, Clock, CheckCircle2 } from "lucide-react";
 export default function RegistroPage() {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
+  const [ciudad, setCiudad] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [confirmarContrasena, setConfirmarContrasena] = useState("");
   const [verContrasena, setVerContrasena] = useState(false);
@@ -32,11 +33,11 @@ export default function RegistroPage() {
     setCargando(true);
     try {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
-      const { error: sErr } = await getSupabaseBrowser().auth.signUp({
+      const { data, error: sErr } = await getSupabaseBrowser().auth.signUp({
         email: email.trim(),
         password: contrasena,
         options: {
-          data: { full_name: nombre.trim() },
+          data: { full_name: nombre.trim(), ciudad: ciudad.trim() },
           emailRedirectTo: `${siteUrl}/auth/callback`,
         },
       });
@@ -50,8 +51,8 @@ export default function RegistroPage() {
       fetch("/api/auth/welcome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), nombre: nombre.trim() }),
-      }).catch((err) => { console.error('[Registro] Error welcome email:', err) });
+        body: JSON.stringify({ email: email.trim(), nombre: nombre.trim(), ciudad: ciudad.trim(), userId: data?.user?.id || "" }),
+      }).catch((err) => { console.error('[Registro] Error welcome:', err) });
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
     } finally {
@@ -148,6 +149,14 @@ export default function RegistroPage() {
                   <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                     placeholder="tu@email.com" required autoComplete="email"
                     className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
+                </div>
+
+                <div>
+                  <label htmlFor="ciudad" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>Ciudad <span style={{ color: "#64748b" }}>(opcional)</span></label>
+                  <input id="ciudad" type="text" value={ciudad} onChange={(e) => setCiudad(e.target.value)}
+                    placeholder="Ej: Madrid, Barcelona..."
+                    className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
+                  <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>Te avisaremos cuando haya ofertas en tu zona</p>
                 </div>
 
                 <div>
