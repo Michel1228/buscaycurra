@@ -13,6 +13,7 @@ import { PAISES } from "@/lib/paises";
 import AuPairPlantilla from "@/components/AuPairPlantilla";
 import AuPairComparativaLegal from "@/components/AuPairComparativaLegal";
 import AuPairCalculadoraCostes from "@/components/AuPairCalculadoraCostes";
+import AuPairOfertasRecientes from "@/components/AuPairOfertasRecientes";
 import {
   Users, Sparkles, User, Check, Globe, Camera, Star, ClipboardList,
   Mail, FileText, Eye, Upload, Save, X, CheckCircle2,
@@ -560,6 +561,9 @@ export default function AuPairProfilePage() {
           </div>
         )}
       </section>
+
+      {/* ── Ofertas Au Pair en vivo ── */}
+      <AuPairOfertasRecientes />
 
       {/* Formulario */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-16 space-y-6">
