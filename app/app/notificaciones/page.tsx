@@ -207,15 +207,37 @@ export default function NotificacionesPage() {
     setErrorEnvio("");
 
     try {
+      const supabase = getSupabaseBrowser();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setErrorEnvio("Inicia sesión para enviar CV"); return; }
+
+      // Extraer email de la oferta (mismo patrón que OfertaDetalleClient)
+      let email = (job as Record<string, string>).email_empresa || "";
+      if (!email && job.url) {
+        try {
+          const domain = new URL(job.url).hostname.replace(/^www\./, "");
+          const boards = ["adzuna","jooble","careerjet","infojobs","indeed","linkedin","monster"];
+          if (!boards.some(b => domain.includes(b))) email = `empleo@${domain}`;
+        } catch {}
+      }
+      if (!email) {
+        setErrorEnvio("No hay email para esta oferta. Guárdala y te avisamos cuando lo encontremos.");
+        setEnviando(new Set());
+        return;
+      }
+
       const res = await fetch("/api/cv-sender/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
-          userId: userIdState,
-          jobId: job.id,
+          companyName: job.empresa,
+          companyEmail: email,
+          companyUrl: job.url,
           jobTitle: job.titulo,
-          company: job.empresa,
-          sourceUrl: job.url,
+          strategy: "ahora",
         }),
       });
 

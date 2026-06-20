@@ -153,7 +153,8 @@ export function getNextBusinessHour(desde?: Date): Date {
     resultado.setMinutes(resultado.getMinutes() + minutosAleatorios);
 
     // Si el retraso nos saca del horario laboral, movemos al día siguiente
-    if (resultado.getHours() >= HORA_FIN) {
+    // ⚠️ getMadridHour — NO getHours() (que devuelve UTC/hora del servidor)
+    if (getMadridHour(resultado) >= HORA_FIN) {
       resultado.setDate(resultado.getDate() + 1);
       resultado.setHours(HORA_INICIO, Math.floor(Math.random() * 60), 0, 0);
     } else {

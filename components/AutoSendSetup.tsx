@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface RateLimitInfo {
   enviadosHoy: number;
@@ -171,17 +172,19 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
     setLoading(true);
     try {
       if (modo === "ya-aplique") {
+        const { data: { session } } = await getSupabaseBrowser().auth.getSession();
         const res = await fetch("/api/cv-sender/registrar", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token || ""}` },
           body: JSON.stringify({ userId, companyName: companyName.trim(), jobTitle: jobTitle.trim(), companyUrl: companyUrl.trim() || undefined }),
         });
         const data = await res.json() as { error?: string };
         if (!res.ok) throw new Error(data.error ?? "Error al registrar");
       } else {
+        const { data: { session } } = await getSupabaseBrowser().auth.getSession();
         const res = await fetch("/api/cv-sender/send", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token || ""}` },
           body: JSON.stringify({
             userId,
             companyName: companyName.trim(),

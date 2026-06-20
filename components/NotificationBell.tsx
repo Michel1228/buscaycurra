@@ -93,9 +93,28 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   useEffect(() => {
     if (!userId) return;
+    // Fetch inmediato al montar (userId ya está disponible)
     fetchNotifs();
-    const interval = setInterval(fetchNotifs, 60000);
+    // Polling cada 30s como fallback (por si realtime falla)
+    const interval = setInterval(fetchNotifs, 30000);
     return () => clearInterval(interval);
+  }, [userId]);
+
+  // Suscripción realtime de Supabase — actualización instantánea
+  useEffect(() => {
+    if (!userId) return;
+    const channel = getSupabaseBrowser()
+      .channel("notif-bell")
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "notificaciones",
+        filter: `user_id=eq.${userId}`,
+      }, () => {
+        fetchNotifs();
+      })
+      .subscribe();
+    return () => { channel.unsubscribe(); };
   }, [userId]);
 
   useEffect(() => {
