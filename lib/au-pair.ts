@@ -41,6 +41,8 @@ export interface AuPairProfile {
   nombre: string;
   age: number | null;
   nationality: string;
+  residencia: string;
+  estatus_residencia: string;
   ciudad: string;
   languages: string[];
   childcare_experience: string;
@@ -71,6 +73,8 @@ export interface AuPairProfileRow {
   nombre: string | null;
   age: number | null;
   nationality: string | null;
+  residencia: string | null;
+  estatus_residencia: string | null;
   ciudad: string | null;
   languages: string[] | null;
   childcare_experience: string | null;
