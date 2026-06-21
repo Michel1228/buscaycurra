@@ -204,7 +204,8 @@ export async function enviarAlertaWhatsApp(
   const urlOferta = datos.url
     || `https://buscaycurra.es/app/buscar?q=${encodeURIComponent(datos.keyword || datos.puesto)}`;
 
-  return sendWhatsAppTemplate({
+  // 1. Intentar con template (más profesional, con botón)
+  const templateResult = await sendWhatsAppTemplate({
     to,
     templateName: "buscaycurra_alerta_empleo",
     language: "es",
@@ -228,4 +229,14 @@ export async function enviarAlertaWhatsApp(
       },
     ],
   });
+
+  if (templateResult.success) return templateResult;
+
+  // 2. Fallback: texto plano (sin botón, pero llega)
+  console.warn("[whatsapp] Template falló, usando texto plano:", templateResult.error);
+  const texto = `🐛 *${datos.puesto}*\\n📍 ${datos.ciudad || "España"}\\n📎 ${urlOferta}\\n\\n— Guzzi, tu asistente de empleo`;
+  const textResult = await sendWhatsAppText(to, texto);
+  if (textResult.success) return textResult;
+
+  return { success: false, error: `Template: ${templateResult.error} | Texto: ${textResult.error}` };
 }

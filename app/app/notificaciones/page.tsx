@@ -73,7 +73,9 @@ export default function NotificacionesPage() {
         fetch("/api/notifications", {
           headers: { Authorization: `Bearer ${session.access_token}` },
         }),
-        fetch(`/api/cv-sender/envios-hoy?userId=${uid}`),
+        fetch(`/api/cv-sender/envios-hoy?userId=${uid}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }),
       ]);
 
       if (!notifRes.ok) throw new Error("Error cargando");

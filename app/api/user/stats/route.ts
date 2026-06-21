@@ -1,14 +1,21 @@
 /**
  * GET /api/user/stats
  * Devuelve estadísticas de CV sends y plan del usuario
- * Acepta autenticación por token Bearer o query param userId (legacy)
+ * REQUIERE autenticación Bearer token
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { PLAN_LIMITS, type UserPlan } from "@/lib/cv-sender/plans";
 
 export const dynamic = "force-dynamic";
 
-const LIMITES: Record<string, number> = { free: 2, esencial: 5, pro: 10, empresa: 9999 };
+const DEFAULT_PLAN: UserPlan = "free";
+
+function getLimiteHoy(plan: string): number {
+  const key = (plan in PLAN_LIMITS ? plan : DEFAULT_PLAN) as UserPlan;
+  const limite = PLAN_LIMITS[key]?.perDay ?? PLAN_LIMITS[DEFAULT_PLAN].perDay;
+  return limite === Infinity ? 9999 : limite;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,32 +24,22 @@ export async function GET(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    let userId: string | null = null;
-
-    // 1. Intentar obtener userId del token Bearer
+    // SOLO autenticación por Bearer token — SIN fallback a query param
     const authHeader = request.headers.get("Authorization");
-    if (authHeader?.startsWith("Bearer ")) {
-      const supabasePublico = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      const { data: { user }, error: authError } = await supabasePublico.auth.getUser(authHeader.slice(7));
-      if (!authError && user) {
-        userId = user.id;
-      }
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    // 2. Fallback: userId como query param (legacy)
-    if (!userId) {
-      userId = request.nextUrl.searchParams.get("userId");
+    const supabasePublico = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user }, error: authError } = await supabasePublico.auth.getUser(authHeader.slice(7));
+    if (authError || !user) {
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
-    if (!userId) {
-      return NextResponse.json(
-        { plan: "free", cv: { hoy: 0, limiteHoy: 2, disponibles: 2 } },
-        { status: 200 }
-      );
-    }
+    const userId = user.id;
 
     // Obtener plan del usuario
     const { data: profile } = await supabase
@@ -52,7 +49,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     const plan = profile?.plan || "free";
-    const limiteHoy = LIMITES[plan] ?? 2;
+    const limiteHoy = getLimiteHoy(plan);
 
     // Contar envíos de hoy
     const hoy = new Date();
@@ -114,7 +111,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[user/stats] Error:", (error as Error).message);
     return NextResponse.json(
-      { plan: "free", cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 2, disponibles: 2 } },
+      { plan: "free", cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 0, disponibles: 0 } },
       { status: 200 }
     );
   }

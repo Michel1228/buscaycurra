@@ -135,7 +135,9 @@ export default function AuPairProfilePage() {
       const saved = localStorage.getItem("bc_pais");
       if (saved) setPaisDestino(saved);
 
-      fetch(`/api/user/stats?userId=${user.id}`).then(r => r.json()).then(d => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || "";
+      fetch(`/api/user/stats`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).then(d => {
         setAuPairStats({ hoy: d.cv.hoy, limiteHoy: d.cv.limiteHoy, disponibles: d.cv.disponibles, plan: d.plan });
       }).catch(() => {});
 

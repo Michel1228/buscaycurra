@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { PLAN_LIMITS } from "@/lib/cv-sender/plans";
+import { getUserFromToken, extractToken } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,25 @@ const supabase = createClient(
 // GET /api/cv-sender/envios-hoy?userId=xxx
 export async function GET(request: NextRequest) {
   try {
+    // Verificar autenticación
+    const token = extractToken(request.headers.get("Authorization"));
+    if (!token) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+    const authUser = await getUserFromToken(token);
+    if (!authUser) {
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
     if (!userId) {
       return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+    }
+
+    // Verificar que el userId del query coincide con el del token
+    if (userId !== authUser.id) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
     // Obtener plan del usuario desde Supabase
@@ -44,9 +60,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("[envios-hoy] Error:", (error as Error).message);
-    // En caso de error, devolver valores por defecto
     return NextResponse.json(
-      { enviados: 0, limite: 2, plan: "free" },
+      { enviados: 0, limite: 0, plan: "free" },
       { status: 200 }
     );
   }
