@@ -9,6 +9,7 @@ import {
   generarPlantillaLetter,
   PAISES_AU_PAIR,
 } from "@/lib/au-pair";
+import { NACIONALIDADES, ESTATUS_RESIDENCIA } from "@/lib/au-pair-legal-data";
 import { PAISES } from "@/lib/paises";
 import AuPairPlantilla from "@/components/AuPairPlantilla";
 import AuPairComparativaLegal from "@/components/AuPairComparativaLegal";
@@ -35,6 +36,8 @@ export default function AuPairProfilePage() {
   const [letterText, setLetterText] = useState("");
   const [age, setAge] = useState("");
   const [nationality, setNationality] = useState("ES");
+  const [residencia, setResidencia] = useState("ES"); // País donde vive actualmente
+  const [estatusResidencia, setEstatusResidencia] = useState(""); // Ciudadano UE, residente, etc.
   const [ciudad, setCiudad] = useState("");
   const [languages, setLanguages] = useState<string[]>(["Español"]);
   const [langInput, setLangInput] = useState("");
@@ -112,6 +115,8 @@ export default function AuPairProfilePage() {
           setLetterText(p.letter_text || "");
           setAge(p.age?.toString() || "");
           setNationality(p.nationality || "ES");
+          setResidencia(p.residencia || "ES");
+          setEstatusResidencia(p.estatus_residencia || "");
           setCiudad(p.ciudad || "");
           setLanguages(p.languages || ["Español"]);
           setChildcareExperience(p.childcare_experience || "");
@@ -314,6 +319,8 @@ export default function AuPairProfilePage() {
         letter_text: letterText,
         age: age ? parseInt(age) : null,
         nationality,
+        residencia,
+        estatus_residencia: estatusResidencia,
         ciudad,
         pais_destino: paisDestino,
         languages,
@@ -603,16 +610,46 @@ export default function AuPairProfilePage() {
               />
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">Nacionalidad</label>
+              <label className="text-xs text-[#64748b] block mb-1">Nacionalidad (pasaporte)</label>
               <select
                 value={nationality}
                 onChange={(e) => setNationality(e.target.value)}
                 className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
-                {Object.entries(PAISES).map(([code, p]) => (
-                  <option key={code} value={code}>{p.bandera} {p.nombre}</option>
+                {NACIONALIDADES.map((n) => (
+                  <option key={n.code} value={n.code}>{n.bandera} {n.nombre} ({n.code})</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="text-xs text-[#64748b] block mb-1">País de residencia actual</label>
+              <select
+                value={residencia}
+                onChange={(e) => setResidencia(e.target.value)}
+                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+              >
+                {NACIONALIDADES.map((n) => (
+                  <option key={n.code} value={n.code}>{n.bandera} {n.nombre} ({n.code})</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-[#64748b] block mb-1">Estatus legal en país de residencia</label>
+              <select
+                value={estatusResidencia}
+                onChange={(e) => setEstatusResidencia(e.target.value)}
+                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+              >
+                <option value="">Seleccionar...</option>
+                {ESTATUS_RESIDENCIA.map((s) => (
+                  <option key={s.value} value={s.value} title={s.desc}>{s.label}</option>
+                ))}
+              </select>
+              {estatusResidencia && (
+                <p className="text-[10px] text-[#64748b] mt-1">
+                  {ESTATUS_RESIDENCIA.find(s => s.value === estatusResidencia)?.desc}
+                </p>
+              )}
             </div>
             <div>
               <label className="text-xs text-[#64748b] block mb-1">Ciudad</label>

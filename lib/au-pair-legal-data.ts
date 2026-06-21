@@ -256,3 +256,88 @@ export function calcularCosteFamilia(pais: PaisAuPair, extras?: { curso?: number
     total: Math.round(salario + comidaAlojamiento + cursoIdioma + seguro + transporte),
   };
 }
+
+// ─── NACIONALIDADES MUNDIALES (para perfil au pair) ──────────────────────────
+
+export const NACIONALIDADES: { code: string; nombre: string; bandera: string }[] = [
+  // Europa
+  { code: "ES", nombre: "Española", bandera: "🇪🇸" },
+  { code: "DE", nombre: "Alemana", bandera: "🇩🇪" },
+  { code: "FR", nombre: "Francesa", bandera: "🇫🇷" },
+  { code: "IT", nombre: "Italiana", bandera: "🇮🇹" },
+  { code: "PT", nombre: "Portuguesa", bandera: "🇵🇹" },
+  { code: "GB", nombre: "Británica", bandera: "🇬🇧" },
+  { code: "IE", nombre: "Irlandesa", bandera: "🇮🇪" },
+  { code: "NL", nombre: "Neerlandesa", bandera: "🇳🇱" },
+  { code: "BE", nombre: "Belga", bandera: "🇧🇪" },
+  { code: "CH", nombre: "Suiza", bandera: "🇨🇭" },
+  { code: "AT", nombre: "Austriaca", bandera: "🇦🇹" },
+  { code: "SE", nombre: "Sueca", bandera: "🇸🇪" },
+  { code: "DK", nombre: "Danesa", bandera: "🇩🇰" },
+  { code: "NO", nombre: "Noruega", bandera: "🇳🇴" },
+  { code: "FI", nombre: "Finlandesa", bandera: "🇫🇮" },
+  { code: "PL", nombre: "Polaca", bandera: "🇵🇱" },
+  { code: "RO", nombre: "Rumana", bandera: "🇷🇴" },
+  { code: "CZ", nombre: "Checa", bandera: "🇨🇿" },
+  { code: "GR", nombre: "Griega", bandera: "🇬🇷" },
+  { code: "HU", nombre: "Húngara", bandera: "🇭🇺" },
+  { code: "BG", nombre: "Búlgara", bandera: "🇧🇬" },
+  { code: "UA", nombre: "Ucraniana", bandera: "🇺🇦" },
+  { code: "RU", nombre: "Rusa", bandera: "🇷🇺" },
+  // América
+  { code: "US", nombre: "Estadounidense", bandera: "🇺🇸" },
+  { code: "CA", nombre: "Canadiense", bandera: "🇨🇦" },
+  { code: "MX", nombre: "Mexicana", bandera: "🇲🇽" },
+  { code: "AR", nombre: "Argentina", bandera: "🇦🇷" },
+  { code: "BR", nombre: "Brasileña", bandera: "🇧🇷" },
+  { code: "CO", nombre: "Colombiana", bandera: "🇨🇴" },
+  { code: "CL", nombre: "Chilena", bandera: "🇨🇱" },
+  { code: "PE", nombre: "Peruana", bandera: "🇵🇪" },
+  { code: "VE", nombre: "Venezolana", bandera: "🇻🇪" },
+  { code: "EC", nombre: "Ecuatoriana", bandera: "🇪🇨" },
+  { code: "BO", nombre: "Boliviana", bandera: "🇧🇴" },
+  { code: "PY", nombre: "Paraguaya", bandera: "🇵🇾" },
+  { code: "UY", nombre: "Uruguaya", bandera: "🇺🇾" },
+  { code: "DO", nombre: "Dominicana", bandera: "🇩🇴" },
+  { code: "CU", nombre: "Cubana", bandera: "🇨🇺" },
+  { code: "CR", nombre: "Costarricense", bandera: "🇨🇷" },
+  { code: "PA", nombre: "Panameña", bandera: "🇵🇦" },
+  { code: "GT", nombre: "Guatemalteca", bandera: "🇬🇹" },
+  { code: "SV", nombre: "Salvadoreña", bandera: "🇸🇻" },
+  { code: "HN", nombre: "Hondureña", bandera: "🇭🇳" },
+  { code: "NI", nombre: "Nicaragüense", bandera: "🇳🇮" },
+  // Asia
+  { code: "CN", nombre: "China", bandera: "🇨🇳" },
+  { code: "JP", nombre: "Japonesa", bandera: "🇯🇵" },
+  { code: "KR", nombre: "Surcoreana", bandera: "🇰🇷" },
+  { code: "IN", nombre: "India", bandera: "🇮🇳" },
+  { code: "PH", nombre: "Filipina", bandera: "🇵🇭" },
+  { code: "VN", nombre: "Vietnamita", bandera: "🇻🇳" },
+  { code: "TH", nombre: "Tailandesa", bandera: "🇹🇭" },
+  { code: "ID", nombre: "Indonesia", bandera: "🇮🇩" },
+  { code: "MY", nombre: "Malasia", bandera: "🇲🇾" },
+  { code: "TR", nombre: "Turca", bandera: "🇹🇷" },
+  { code: "IL", nombre: "Israelí", bandera: "🇮🇱" },
+  { code: "TW", nombre: "Taiwanesa", bandera: "🇹🇼" },
+  // África
+  { code: "ZA", nombre: "Sudafricana", bandera: "🇿🇦" },
+  { code: "MA", nombre: "Marroquí", bandera: "🇲🇦" },
+  { code: "EG", nombre: "Egipcia", bandera: "🇪🇬" },
+  { code: "NG", nombre: "Nigeriana", bandera: "🇳🇬" },
+  { code: "KE", nombre: "Keniata", bandera: "🇰🇪" },
+  { code: "GH", nombre: "Ghanesa", bandera: "🇬🇭" },
+  { code: "SN", nombre: "Senegalesa", bandera: "🇸🇳" },
+  { code: "TN", nombre: "Tunecina", bandera: "🇹🇳" },
+  // Oceanía
+  { code: "AU", nombre: "Australiana", bandera: "🇦🇺" },
+  { code: "NZ", nombre: "Neozelandesa", bandera: "🇳🇿" },
+];
+
+/** Opciones de estatus legal / residencia para perfil au pair */
+export const ESTATUS_RESIDENCIA = [
+  { value: "ciudadano_ue", label: "Ciudadano UE/EEE", desc: "Pasaporte de un país de la UE o Espacio Económico Europeo" },
+  { value: "residente_permanente", label: "Residente permanente en UE", desc: "Residencia de larga duración o permanente en un país UE" },
+  { value: "residente_temporal", label: "Residente temporal en UE", desc: "Visado de estudiante, trabajo o familiar en país UE" },
+  { value: "no_ue_sin_residencia", label: "Ciudadano NO-UE sin residencia", desc: "Vives fuera de la UE, necesitas visado au pair específico" },
+  { value: "otro", label: "Otra situación", desc: "" },
+];

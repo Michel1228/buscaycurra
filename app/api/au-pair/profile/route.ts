@@ -46,6 +46,9 @@ interface AuPairProfileInput {
   nombre?: string;
   edad?: number;
   nacionalidad?: string;
+  nationality?: string; // fallback key inglés
+  residencia?: string;
+  estatus_residencia?: string;
   ciudad?: string;
   pais_destino?: string;
   nivel_educativo?: string;
@@ -96,6 +99,9 @@ export async function POST(request: NextRequest) {
     if (body.nombre !== undefined) dbRow.nombre = body.nombre;
     if (body.edad !== undefined) dbRow.age = body.edad;
     if (body.nacionalidad !== undefined) dbRow.nationality = body.nacionalidad;
+    if (body.nationality !== undefined) dbRow.nationality = body.nationality; // fallback key inglés
+    if (body.residencia !== undefined) dbRow.residencia = body.residencia;
+    if (body.estatus_residencia !== undefined) dbRow.estatus_residencia = body.estatus_residencia;
     if (body.ciudad !== undefined) dbRow.ciudad = body.ciudad;
     if (body.nivel_educativo !== undefined) dbRow.nivel_educativo = body.nivel_educativo;
     if (body.duracion !== undefined) dbRow.duracion_preferida = body.duracion;
