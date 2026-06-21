@@ -26,7 +26,7 @@ function BuscarPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const urlKeyword = searchParams.get("keyword") || "";
+  const urlKeyword = searchParams.get("keyword") || searchParams.get("q") || "";
   const urlUbicacion = searchParams.get("location") || searchParams.get("ubicacion") || "";
   const [keyword, setKeyword] = useState(urlKeyword);
   const [ubicacion, setUbicacion] = useState(urlUbicacion);

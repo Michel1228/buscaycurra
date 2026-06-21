@@ -44,7 +44,7 @@ export default function AuPairOfertasRecientes() {
   }, []);
 
   const irABuscador = () => {
-    router.push("/app/buscar?q=au pair&categoria=au_pair");
+    router.push("/app/buscar?keyword=au pair&categoria=au_pair&auto=1");
   };
 
   /** Enviar CV a esta oferta usando nuestro sistema interno */

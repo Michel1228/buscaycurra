@@ -150,7 +150,7 @@ FUERA DE LA UE — VISADOS:
 
 -------- CONOCIMIENTO AU PAIR --------
 
-BuscayCurra es LA plataforma más completa para encontrar trabajo como au pair. Tenemos 2,263 ofertas activas de au pair/nanny en 21 países, con calculadora de costes, comparativa legal por país, y perfil profesional con carta IA.
+BuscayCurra es LA plataforma más completa para encontrar trabajo como au pair. Tenemos miles de ofertas activas de au pair/nanny en 21 países, con calculadora de costes, comparativa legal por país, y perfil profesional con carta IA.
 
 REQUISITOS POR PAÍS (datos 2026):
 - España 🇪🇸: 18-30 años, 30h/sem, €280-320/mes, curso idioma NO obligatorio, visado no-UE requiere curso español. Coste familia: €590-830/mes. El más fácil para empezar.
@@ -486,10 +486,12 @@ Cuando generes una carta - pon el nombre "${cv.nombre}" y la ciudad "${cv.ciudad
 
 function detectIntent(text: string, history: Array<{ role: string; text: string }> = []): string {
   const t = text.toLowerCase();
+  // Normalizar acentos para que "búscame" → "buscame", etc.
+  const tn = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (/(mejorar|mejora|optimizar|reescrib).*(cv|curriculum)|(cv|curriculum).*(mejorar|mejorado|profesional|limpio)/.test(t)) return "cv_mejorado";
   if (/(carta.*(recomendaci|presentaci|para\s+\w)|presentaci.*carta)/.test(t)) return "carta_recomendacion";
   if (/(crea|genera|haz|escrib).*(carta|dear family).*(au pair|aupair)/i.test(t) || /carta.*au.?pair/i.test(t) || /dear.?family/i.test(t)) return "carta_au_pair";
-  if (/(busco|buscar|busca|necesito|quiero).*(au pair|aupair|niñera|nanny|canguro|childcare)/i.test(t)) return "buscar_au_pair";
+  if (/(busco|buscar|busca|necesito|quiero|buscame|búscame|encuentra|encuentrame).*(au pair|aupair|niñera|nanny|canguro|childcare)/i.test(tn)) return "buscar_au_pair";
   // "busca [nombre de empresa]" — detectar como info_empresa si empieza con artículo o palabra de negocio
   // "busca [nombre de empresa]" — detectar como info_empresa si empieza con artículo o palabra de negocio
   if (/(?:busca|busco|info|información|hay|conoces|sabes)\s+(?:el\s+|la\s+|los\s+|las\s+|un\s+|una\s+)?(?:bar\s+|restaurante\s+|tienda\s+|hotel\s+|cafeter[ií]a\s+|empresa\s+|supermercado\s+|taller\s+|panader[ií]a\s+|farmacia\s+|cl[ií]nica\s+|peluquer[ií]a\s+)/i.test(t)) return "info_empresa";
