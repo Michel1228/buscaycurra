@@ -20,7 +20,7 @@ export default function GusiPage() {
   useEffect(() => { setIosNativo(isNativeIOS()); }, []);
 
   return (
-    <div className="flex pt-14" style={{ background: "#0f1117", height: "100dvh" }}>
+    <div className="flex pt-14" style={{ background: "#0f1117", minHeight: "100dvh" }}>
 
       {/* SIDEBAR IZQUIERDO — marketing/SEO, solo desktop */}
       <aside className="hidden lg:flex flex-col w-64 xl:w-72 shrink-0 overflow-y-auto"

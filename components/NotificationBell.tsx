@@ -92,7 +92,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
   }
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      // Si userId no está disponible aún, intentar igual (el token viene de getSession)
+      fetchNotifs();
+      return;
+    }
     // Fetch inmediato al montar (userId ya está disponible)
     fetchNotifs();
     // Polling cada 30s como fallback (por si realtime falla)

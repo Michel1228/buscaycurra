@@ -104,6 +104,11 @@ export default function AppNavWrapper() {
   const { lang, t, setLang } = useLanguage();
   const navLabel = (key: string) => t(key);
 
+  // FIX: Forzar scroll al top al montar — evita que la nav quede oculta en móviles
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Cargar país guardado
   useEffect(() => {
     const saved = localStorage.getItem("bc_pais");
