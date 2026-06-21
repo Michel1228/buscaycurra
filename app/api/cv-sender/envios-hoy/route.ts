@@ -53,9 +53,10 @@ export async function GET(request: NextRequest) {
       .gte("created_at", hoy.toISOString());
 
     const planKey = (plan in PLAN_LIMITS ? plan : "free") as keyof typeof PLAN_LIMITS;
+    const perDay = PLAN_LIMITS[planKey].perDay;
     return NextResponse.json({
       enviados: count || 0,
-      limite: PLAN_LIMITS[planKey].perDay,
+      limite: perDay === Infinity ? 9999 : perDay,
       plan: plan,
     });
   } catch (error) {
