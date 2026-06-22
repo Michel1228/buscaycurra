@@ -44,7 +44,7 @@ platform :ios do
       output_directory:         "/tmp/ipa",
       output_name:              "BuscayCurra.ipa",
       export_method:            "app-store",
-      xcargs:                   "DEVELOPMENT_TEAM=P9L962T32A PROVISIONING_PROFILE_SPECIFIER=#{profile_name} CODE_SIGN_STYLE=Manual",
+      xcargs:                   "DEVELOPMENT_TEAM=P9L962T32A PROVISIONING_PROFILE_SPECIFIER='#{profile_name}' CODE_SIGN_STYLE=Manual",
       export_options: {
         teamID:       "P9L962T32A",
         signingStyle: "manual",
