@@ -55,10 +55,24 @@ workflows:
           agvtool new-version -all $BUILD
           echo "Build number: $BUILD"
 
+      - name: Revocar certificado malo y regenerar
+        script: |
+          set -x
+          echo "=== Certificados actuales en Apple ==="
+          app-store-connect list-certificates --type DISTRIBUTION 2>/dev/null || echo "Comando no disponible"
+          
+          echo "=== Intentando revocar certificado 663B42758A7528CBB19F84777C7FF2C0 ==="
+          app-store-connect revoke-certificate 663B42758A7528CBB19F84777C7FF2C0 2>/dev/null || echo "Revocación falló o no disponible"
+          
+          echo "=== Verificando keychain ==="
+          security find-certificate -c "Apple Distribution" -Z /Users/builder/Library/codemagic-cli-tools/keychains/*.keychain-db 2>/dev/null || true
+          
+          echo "=== Regenerando perfiles ==="
+          xcode-project use-profiles
+
       - name: Construir IPA para App Store
         script: |
           set -x
-          xcode-project use-profiles
           echo "=== ARCHIVANDO ==="
           xcodebuild -workspace ios/App/App.xcworkspace \
             -scheme App \
