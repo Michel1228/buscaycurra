@@ -38,7 +38,7 @@ export default function CountrySelector({ paisActual, onCambiarPais, variant = "
         aria-label="Cambiar país"
       >
         <span className="text-base">{pais.bandera}</span>
-        <span className="text-[#e2e8f0] font-medium hidden sm:inline">{pais.nombre}</span>
+        <span className="text-[#e2e8f0] font-medium truncate max-w-[80px]">{pais.nombre}</span>
         <span className="text-[#94a3b8] text-xs ml-0.5">{pais.simboloMoneda}</span>
         <svg className="w-3 h-3 text-[#64748b] ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

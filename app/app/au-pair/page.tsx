@@ -57,6 +57,7 @@ export default function AuPairProfilePage() {
   const [references, setReferences] = useState<AuPairReference[]>([]);
   const [paisDestino, setPaisDestino] = useState("UK");
   const [tipoPerfil, setTipoPerfil] = useState<"joven_estudiante" | "con_experiencia" | "profesional_cambio">("joven_estudiante");
+  const [modo, setModo] = useState<"au_pair" | "live_in_nanny">("au_pair");
   const [generandoIA, setGenerandoIA] = useState(false);
   const [auPairStats, setAuPairStats] = useState({ hoy: 0, limiteHoy: 2, disponibles: 2, plan: "free" });
   const [previewHTML, setPreviewHTML] = useState("");
@@ -541,18 +542,55 @@ export default function AuPairProfilePage() {
 
   return (
     <main className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
-      {/* Hero */}
+      {/* Hero con pestañas Au Pair / Live-in Nanny */}
       <section className="py-10 px-4 sm:px-6 max-w-3xl mx-auto text-center">
         <div className="flex justify-center mb-4"><Users size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Tu Perfil Au Pair</h1>
-        <p className="text-[#94a3b8] max-w-lg mx-auto text-sm">
-          Las familias no buscan un CV. Buscan conocerte. Crea tu perfil completo con fotos
-          y tu carta de presentación para aplicar a ofertas au pair.
-        </p>
+        
+        {/* Pestañas */}
+        <div className="inline-flex bg-[#111827] border border-[#2d3142] rounded-xl p-1 mb-6">
+          <button
+            onClick={() => setModo("au_pair")}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              modo === "au_pair"
+                ? "bg-[#22c55e] text-black shadow-lg shadow-[#22c55e]/20"
+                : "text-[#94a3b8] hover:text-[#f1f5f9]"
+            }`}
+          >
+            🧒 Au Pair
+          </button>
+          <button
+            onClick={() => setModo("live_in_nanny")}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              modo === "live_in_nanny"
+                ? "bg-[#22c55e] text-black shadow-lg shadow-[#22c55e]/20"
+                : "text-[#94a3b8] hover:text-[#f1f5f9]"
+            }`}
+          >
+            👩‍👧 Live-in Nanny
+          </button>
+        </div>
+
+        {modo === "au_pair" ? (
+          <>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Tu Perfil Au Pair</h1>
+            <p className="text-[#94a3b8] max-w-lg mx-auto text-sm">
+              Las familias no buscan un CV. Buscan conocerte. Crea tu perfil completo con fotos
+              y tu carta de presentación para aplicar a ofertas au pair.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Tu Perfil Live-in Nanny</h1>
+            <p className="text-[#94a3b8] max-w-lg mx-auto text-sm">
+              Trabaja como niñera profesional interna. Cuida niños, vive con la familia y cobra un salario.
+              Crea tu perfil con experiencia y referencias para aplicar a ofertas live-in nanny.
+            </p>
+          </>
+        )}
         {auPairStats.plan && (
           <div className="mt-4 max-w-xs mx-auto">
             <div className="flex items-center justify-between text-[10px] text-[#94a3b8] mb-1">
-              <span>Envíos au pair hoy</span>
+              <span>Envíos {modo === "au_pair" ? "au pair" : "live-in nanny"} hoy</span>
               <span className="tabular-nums">{auPairStats.hoy}/{auPairStats.limiteHoy}</span>
             </div>
             <div className="h-1 rounded-full bg-[#1e212b]">
@@ -572,7 +610,7 @@ export default function AuPairProfilePage() {
       </section>
 
       {/* ── Ofertas Au Pair en vivo ── */}
-      <AuPairOfertasRecientes />
+      <AuPairOfertasRecientes modo={modo} />
 
       {/* Formulario */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-16 space-y-6">

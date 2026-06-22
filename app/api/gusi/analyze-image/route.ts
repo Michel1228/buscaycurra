@@ -29,6 +29,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Imagen requerida" }, { status: 400 });
     }
 
+    // ─── Verificar límite de cámara según plan ────────────────────────
+    if (userId) {
+      try {
+        const { getPlanLimits } = await import("@/lib/plan-limits");
+        const { createClient: createSbClient } = await import("@supabase/supabase-js");
+        const sbAdmin = createSbClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data: profile } = await sbAdmin.from("profiles").select("plan").eq("id", userId).single();
+        const plan = profile?.plan || "free";
+        const limits = getPlanLimits(plan);
+
+        if (limits.camaraMaxUsos >= 999999) {
+          // Ilimitado — no hacer nada
+        } else {
+          const isTrial = plan === "free";
+          const dateKey = isTrial ? "trial" : new Date().toISOString().slice(0, 10);
+          const { data: usage } = await sbAdmin.from("usage_tracking")
+            .select("camara_usos").eq("user_id", userId).eq("date_key", dateKey).single();
+          const usos = usage?.camara_usos ?? 0;
+          if (usos >= limits.camaraMaxUsos) {
+            const msg = isTrial
+              ? `📸 ¡Has usado tus ${limits.camaraMaxUsos} búsquedas por cámara gratuitas! Contrata Esencial desde 2,99€/mes para seguir.`
+              : `📸 Límite de ${limits.camaraMaxUsos} fotos/día alcanzado. Mañana se resetea. Sube a Pro para 30/día.`;
+            return NextResponse.json({ error: msg }, { status: 429 });
+          }
+          // Registrar uso
+          await sbAdmin.from("usage_tracking").upsert(
+            { user_id: userId, date_key: dateKey, week_key: isTrial ? "trial" : "", camara_usos: usos + 1 },
+            { onConflict: "user_id,date_key" }
+          );
+        }
+      } catch { /* Si falla el check de límites, permitir igual */ }
+    }
+
     // Limpiar el prefijo data:image si viene
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 

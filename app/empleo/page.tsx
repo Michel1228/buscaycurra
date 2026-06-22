@@ -9,12 +9,12 @@ import { Search } from "lucide-react";
 export const metadata: Metadata = {
   title: "Ofertas de empleo en España | BuscayCurra",
   description:
-    "Encuentra trabajo en España con BuscayCurra. Busca ofertas de empleo por puesto y ciudad. Más de 500.000 ofertas activas actualizadas a diario.",
+    "Encuentra trabajo en España con BuscayCurra. Busca ofertas de empleo por puesto y ciudad. Miles de ofertas activas actualizadas a diario.",
   alternates: { canonical: "https://buscaycurra.es/empleo" },
   openGraph: {
     title: "Ofertas de empleo en España | BuscayCurra",
     description:
-      "Encuentra trabajo en España con BuscayCurra. Busca ofertas de empleo por puesto y ciudad. Más de 500.000 ofertas activas actualizadas a diario.",
+      "Encuentra trabajo en España con BuscayCurra. Busca ofertas de empleo por puesto y ciudad. Miles de ofertas activas actualizadas a diario.",
     url: "https://buscaycurra.es/empleo",
     locale: "es_ES",
     type: "website",
@@ -53,7 +53,7 @@ export default function EmpleoPage() {
             Encuentra trabajo en España
           </h1>
           <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
-            Más de 500.000 ofertas de empleo activas actualizadas a diario.
+            Miles de ofertas de empleo activas actualizadas a diario.
             Busca por puesto y ciudad o deja que nuestra IA Guzzi trabaje por ti.
           </p>
           <div className="mt-6">

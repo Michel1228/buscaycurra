@@ -2,7 +2,7 @@
  * app/layout.tsx — Layout raíz de BuscayCurra
  * La AppNavbar se muestra solo en /app/* via AppNavWrapper (client component).
  */
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 import AppNavWrapper from "@/components/AppNavWrapper";
@@ -13,7 +13,7 @@ import { RefreshCw } from "lucide-react";
 export const metadata: Metadata = {
   title: `BuscayCurra — Agente IA que busca trabajo por ti | ${NUM_PAISES} países`,
   description:
-    `Deja de enviar CVs al vacío. Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7. La alternativa real a InfoJobs, LinkedIn e Indeed.`,
+    `Deja de enviar CVs al vacío. Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7. Busca trabajo de au pair, live-in nanny, o cualquier sector. La alternativa real a InfoJobs, LinkedIn e Indeed.`,
   keywords: [
     "buscar trabajo",
     "empleo",
@@ -30,6 +30,18 @@ export const metadata: Metadata = {
     "Alemania",
     "Irlanda",
     "Europa",
+    "au pair",
+    "trabajar como au pair",
+    "live in nanny",
+    "live-in nanny",
+    "niñera interna",
+    "nanny profesional",
+    "trabajo cuidando niños",
+    "trabajar de niñera en el extranjero",
+    "carta Dear Family",
+    "requisitos au pair",
+    "ofertas au pair",
+    "ofertas live-in nanny",
   ],
  manifest: "/manifest.json",
   themeColor: "#0f1117",
@@ -77,6 +89,13 @@ export const metadata: Metadata = {
     "max-image-preview": "large",
     "max-snippet": -1,
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

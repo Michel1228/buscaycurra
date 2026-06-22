@@ -116,21 +116,31 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
   const [logueado, setLogueado] = useState<boolean | null>(null);
   const [userId, setUserId] = useState<string>("");
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const inicializadoRef = useRef(false);
 
-  // Verificar login — solo una vez al montar (no resetear en cada toggle del chat)
+  // Verificar login — con retry para evitar race condition tras login reciente
   useEffect(() => {
     if (inicializadoRef.current) return;
     inicializadoRef.current = true;
     async function checkAuth() {
       try {
         const sb = getSupabaseBrowser();
-        const { data: { user } } = await sb.auth.getUser();
+        let { data: { user } } = await sb.auth.getUser();
+        
+        // Si no hay usuario a la primera, esperar 800ms y reintentar
+        // (la sesión puede estar refrescándose tras un login reciente)
+        if (!user) {
+          await new Promise(r => setTimeout(r, 800));
+          const retry = await sb.auth.getUser();
+          user = retry.data.user;
+        }
+        
         setLogueado(!!user);
+        setAuthLoading(false);
         if (user?.id) {
           setUserId(user.id);
-          // Cargar conversación guardada
           const { data: conv } = await sb
             .from("gusi_conversations")
             .select("messages")
@@ -147,6 +157,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       } catch {
         setMensajes([{ role: "gusi", text: "¡Hola! Soy Guzzi. Regístrate primero para que pueda ayudarte." }]);
         setLogueado(false);
+        setAuthLoading(false);
       }
     }
     checkAuth();

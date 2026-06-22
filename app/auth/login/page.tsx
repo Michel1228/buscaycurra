@@ -75,13 +75,13 @@ export default function LoginPage() {
             <span style={{ color: "#22c55e" }}>al vacío.</span>
           </h2>
           <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en 21 países. 24/7. Tú solo vas a la entrevista.
+            Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en 24 países. 24/7. Tú solo vas a la entrevista.
           </p>
 
           {/* 3 puntos fuertes — siempre visibles */}
           <div className="space-y-3 mb-6">
             {[
-              { Icon: Globe, titulo: "21 países, un solo agente", desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
+              { Icon: Globe, titulo: "24 países, un solo agente", desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
               { Icon: Target, titulo: "CV único para cada oferta", desc: "Cada candidatura se adapta a la empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
               { Icon: Clock, titulo: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. La diferencia entre que te lean o te ignoren." },
             ].map(p => (
@@ -122,12 +122,12 @@ export default function LoginPage() {
 
           <div className="flex items-center gap-2 text-xs" style={{ color: "#475569" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-            2.100.000+ ofertas · 21 países · 24/7 trabajando por ti
+            Millones de ofertas · 24 países · 24/7 trabajando por ti
           </div>
         </div>
 
         <div className="relative z-10 hidden lg:flex items-center justify-between mt-8">
-          <p className="text-xs" style={{ color: "#374151" }}>© 2026 BuscayCurra · Sin permanencia · 21 países</p>
+          <p className="text-xs" style={{ color: "#374151" }}>© 2026 BuscayCurra · Sin permanencia · 24 países</p>
           <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#475569" }}>
             ¿Eres empresa o recruiter? →
           </Link>

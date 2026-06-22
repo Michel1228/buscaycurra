@@ -22,7 +22,18 @@ interface Stats {
   empresas: number;
 }
 
-export default function AuPairOfertasRecientes() {
+type Modo = "au_pair" | "live_in_nanny";
+
+interface Props {
+  modo?: Modo;
+}
+
+const LABELS: Record<Modo, { titulo: string; keyword: string; categoria: string }> = {
+  au_pair: { titulo: "Ofertas Au Pair", keyword: "au pair", categoria: "au_pair" },
+  live_in_nanny: { titulo: "Ofertas Live-in Nanny", keyword: "live in nanny", categoria: "live_in_nanny" },
+};
+
+export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
   const router = useRouter();
   const supabase = getSupabaseBrowser();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -32,8 +43,10 @@ export default function AuPairOfertasRecientes() {
   const [enviadosIdx, setEnviadosIdx] = useState<Set<number>>(new Set());
   const [erroresIdx, setErroresIdx] = useState<Record<number, string>>({});
 
+  const labels = LABELS[modo];
+
   useEffect(() => {
-    fetch("/api/au-pair/ofertas")
+    fetch(`/api/au-pair/ofertas?modo=${modo}`)
       .then(r => r.json())
       .then(d => {
         setStats(d.stats);
@@ -41,10 +54,10 @@ export default function AuPairOfertasRecientes() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [modo]);
 
   const irABuscador = () => {
-    router.push("/app/buscar?keyword=au pair&categoria=au_pair&auto=1&location=");
+    router.push(`/app/buscar?keyword=${encodeURIComponent(labels.keyword)}&categoria=${labels.categoria}&auto=1&location=`);
   };
 
   /** Enviar CV a esta oferta usando nuestro sistema interno */
@@ -127,6 +140,8 @@ export default function AuPairOfertasRecientes() {
     );
   }
 
+  const total = stats?.total?.toLocaleString() || "...";
+
   return (
     <section className="card-game p-4 sm:p-6 mt-6">
       {/* Cabecera con contador */}
@@ -134,7 +149,7 @@ export default function AuPairOfertasRecientes() {
         <div>
           <h2 className="text-xl font-bold text-[#f1f5f9] flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-[#22c55e]" />
-            Ofertas Au Pair — {stats?.total?.toLocaleString() || "..."} disponibles
+            {labels.titulo} — {total} disponibles
           </h2>
           <p className="text-sm text-[#94a3b8] mt-1">
             {stats ? (
@@ -224,7 +239,7 @@ export default function AuPairOfertasRecientes() {
         </div>
       ) : (
         <p className="text-sm text-[#64748b] text-center py-4">
-          Cargando ofertas au pair...
+          Cargando ofertas {modo === "live_in_nanny" ? "live-in nanny" : "au pair"}...
         </p>
       )}
 
@@ -234,7 +249,7 @@ export default function AuPairOfertasRecientes() {
           onClick={irABuscador}
           className="text-sm text-[#22c55e] hover:underline"
         >
-          🔍 Buscar ofertas au pair por país, ciudad o salario →
+          🔍 Buscar ofertas {modo === "live_in_nanny" ? "live-in nanny" : "au pair"} por país, ciudad o salario →
         </button>
       </div>
     </section>

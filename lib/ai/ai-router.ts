@@ -60,8 +60,8 @@ function iaPreferida(tarea: TareaIA): IA {
     return "gemini";
   }
 
-  // Groq: rápido para el resto
-  return "groq";
+  // DeepSeek: default para todo — consumo mínimo, español nativo
+  return "deepseek";
 }
 
 // ==========================================

@@ -408,6 +408,60 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["σερβιτόρος", "προγραμματιστής", "νοσηλευτής", "πωλητής", "διοικητικός"],
     slug: "grecia",
   },
+  CZ: {
+    codigo: "CZ",
+    nombre: "República Checa",
+    nombreLocal: "Česká republika",
+    moneda: "CZK",
+    simboloMoneda: "Kč",
+    posicionSimbolo: "despues",
+    idioma: "cs",
+    bandera: "🇨🇿",
+    salarioMinimo: 820,
+    salarioMedio: 1900,
+    tasaCambioEUR: 25.3,
+    formatoMiles: " ",
+    formatoDecimal: ",",
+    ciudades: ["Praga", "Brno", "Ostrava", "Pilsen", "Liberec", "Olomouc"],
+    keywordsLaborales: ["číšník", "programátor", "zdravotní sestra", "prodejce", "administrativa"],
+    slug: "republica-checa",
+  },
+  HU: {
+    codigo: "HU",
+    nombre: "Hungría",
+    nombreLocal: "Magyarország",
+    moneda: "HUF",
+    simboloMoneda: "Ft",
+    posicionSimbolo: "despues",
+    idioma: "hu",
+    bandera: "🇭🇺",
+    salarioMinimo: 650,
+    salarioMedio: 1300,
+    tasaCambioEUR: 395,
+    formatoMiles: " ",
+    formatoDecimal: ",",
+    ciudades: ["Budapest", "Debrecen", "Szeged", "Miskolc", "Pécs", "Győr"],
+    keywordsLaborales: ["pincér", "programozó", "ápoló", "értékesítő", "adminisztrátor"],
+    slug: "hungria",
+  },
+  RO: {
+    codigo: "RO",
+    nombre: "Rumanía",
+    nombreLocal: "România",
+    moneda: "RON",
+    simboloMoneda: "lei",
+    posicionSimbolo: "despues",
+    idioma: "ro",
+    bandera: "🇷🇴",
+    salarioMinimo: 600,
+    salarioMedio: 1100,
+    tasaCambioEUR: 4.98,
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    ciudades: ["Bucarest", "Cluj-Napoca", "Timisoara", "Iași", "Constanța", "Brașov"],
+    keywordsLaborales: ["ospătar", "programator", "asistent medical", "vânzător", "administrativ"],
+    slug: "rumania",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -433,6 +487,9 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.GR,  // Grecia — 1.600 EUR/mes
   PAISES.PT,  // Portugal — 1.600 EUR/mes
   PAISES.PL,  // Polonia — 8.000 PLN/mes
+  PAISES.CZ,  // República Checa — 1.900 EUR/mes
+  PAISES.HU,  // Hungría — 1.300 EUR/mes
+  PAISES.RO,  // Rumanía — 1.100 EUR/mes
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

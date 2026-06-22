@@ -28,8 +28,10 @@ function BuscarPageInner() {
 
   const urlKeyword = searchParams.get("keyword") || searchParams.get("q") || "";
   const urlUbicacion = searchParams.get("location") || searchParams.get("ubicacion") || "";
+  const urlCategoria = searchParams.get("categoria") || "";
   const [keyword, setKeyword] = useState(urlKeyword);
   const [ubicacion, setUbicacion] = useState(urlUbicacion);
+  const [categoria] = useState(urlCategoria); // au_pair | live_in_nanny — viene del URL, no cambia
   const [geoDetected, setGeoDetected] = useState(false);
   const [jornada, setJornada] = useState("");
   const [experiencia, setExperiencia] = useState("");
@@ -60,8 +62,10 @@ function BuscarPageInner() {
     }
     return "ES";
   });
+  const paisCambiadoPorUsuario = useRef(false);
   function cambiarPais(codigo: string) {
     setPaisSeleccionado(codigo);
+    paisCambiadoPorUsuario.current = true;
     localStorage.setItem("bc_pais", codigo);
     // Disparar evento para que otros componentes reaccionen
     window.dispatchEvent(new CustomEvent("bc-pais-change", { detail: codigo }));
@@ -196,9 +200,61 @@ function BuscarPageInner() {
     return kw.length > 0 ? Math.min(99, Math.round((hits / kw.length) * 100)) : 0;
   }
 
+  // Lista de ciudades españolas conocidas para extraer del keyword
+  const CIUDADES_CONOCIDAS = new Set([
+    "madrid", "barcelona", "valencia", "sevilla", "zaragoza", "málaga", "malaga",
+    "murcia", "palma", "bilbao", "alicante", "córdoba", "cordoba", "valladolid",
+    "vigo", "gijón", "gijon", "granada", "a coruña", "la coruña", "coruña",
+    "coruna", "vitoria", "gasteiz", "oviedo", "santander", "pamplona", "burgos",
+    "salamanca", "toledo", "cádiz", "cadiz", "jaén", "jaen", "almería", "almeria",
+    "huelva", "cáceres", "caceres", "badajoz", "león", "leon", "zamora", "segovia",
+    "ávila", "avila", "soria", "guadalajara", "cuenca", "ciudad real", "albacete",
+    "teruel", "huesca", "logroño", "logrono", "lugo", "ourense", "pontevedra",
+    "donostia", "san sebastián", "san sebastian", "londres", "london", "paris",
+    "parís", "berlin", "berlín", "roma", "dublin", "dublín", "lisboa", "amsterdam",
+    "bruselas", "viena", "estocolmo", "copenhague", "oslo", "helsinki", "nueva york",
+    "new york", "los angeles", "chicago", "miami", "toronto", "sydney", "melbourne"
+  ]);
+  
   async function buscar(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    if (!keyword.trim() && !ubicacion.trim()) return;
+    
+    // Extraer ciudad del keyword si el usuario escribió "trabajo ciudad"
+    let finalKeyword = keyword.trim();
+    let finalUbicacion = ubicacion.trim();
+    
+    if (finalKeyword && !finalUbicacion) {
+      const words = finalKeyword.split(/\s+/);
+      // Buscar palabras que sean ciudades conocidas al final o principio del keyword
+      for (let i = words.length - 1; i >= 0; i--) {
+        const candidate = words.slice(i).join(" ").toLowerCase();
+        if (CIUDADES_CONOCIDAS.has(candidate)) {
+          finalKeyword = words.slice(0, i).join(" ");
+          finalUbicacion = words.slice(i).join(" ");
+          break;
+        }
+      }
+      // Intentar con palabra individual si no encontró frase
+      if (!finalUbicacion && words.length >= 2) {
+        const lastWord = words[words.length - 1].toLowerCase();
+        if (CIUDADES_CONOCIDAS.has(lastWord) || lastWord.length > 4) {
+          // Si la última palabra parece una ciudad (larga o conocida)
+          for (const w of words) {
+            if (CIUDADES_CONOCIDAS.has(w.toLowerCase())) {
+              finalKeyword = words.filter(x => x.toLowerCase() !== w.toLowerCase()).join(" ");
+              finalUbicacion = w;
+              break;
+            }
+          }
+        }
+      }
+      if (finalUbicacion) {
+        setKeyword(finalKeyword);
+        setUbicacion(finalUbicacion);
+      }
+    }
+    
+    if (!finalKeyword && !finalUbicacion) return;
 
     setCargando(true);
     setError("");
@@ -206,19 +262,27 @@ function BuscarPageInner() {
 
     try {
       const params = new URLSearchParams();
-      if (keyword.trim()) params.set("keyword", keyword.trim());
-      if (ubicacion.trim()) params.set("location", ubicacion.trim());
-      if (paisSeleccionado) params.set("country", paisSeleccionado);
+      if (finalKeyword) params.set("keyword", finalKeyword);
+      if (finalUbicacion) params.set("location", finalUbicacion);
+      // Au Pair / Live-in Nanny: no filtrar por país si el usuario no lo cambió explícitamente
+      // (ES tiene pocas ofertas au pair; la mayoría están en UK/US/etc)
+      if (paisSeleccionado && !(categoria && !paisCambiadoPorUsuario.current && paisSeleccionado === "ES")) {
+        params.set("country", paisSeleccionado);
+      }
+      if (categoria) params.set("categoria", categoria);
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);
       if (salarioMax) params.set("salarioMax", salarioMax);
 
+      // Saltarse Jooble si hay categoría — Jooble no filtra por au_pair/live_in_nanny
+      const jooblePromise = categoria ? Promise.resolve([]) : buscarJoobleCliente(keyword.trim(), ubicacion.trim());
+
       const [serverRes, joobleRes] = await Promise.allSettled([
         fetch(`/api/jobs/search?${params.toString()}`, { signal: AbortSignal.timeout(15000) })
           .then(r => r.ok ? r.json() : { ofertas: [] })
           .catch(() => ({ ofertas: [] })),
-        buscarJoobleCliente(keyword.trim(), ubicacion.trim()),
+        jooblePromise,
       ]);
 
       const serverOfertas = serverRes.status === "fulfilled" ? (serverRes.value.ofertas || []) : [];
@@ -274,7 +338,11 @@ function BuscarPageInner() {
       const params = new URLSearchParams();
       if (keyword.trim()) params.set("keyword", keyword.trim());
       if (ubicacion.trim()) params.set("location", ubicacion.trim());
-      if (paisSeleccionado) params.set("country", paisSeleccionado);
+      // Au Pair / Live-in Nanny: no filtrar por país si el usuario no lo cambió explícitamente
+      if (paisSeleccionado && !(categoria && !paisCambiadoPorUsuario.current && paisSeleccionado === "ES")) {
+        params.set("country", paisSeleccionado);
+      }
+      if (categoria) params.set("categoria", categoria);
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
       if (salarioMin) params.set("salarioMin", salarioMin);

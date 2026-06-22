@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/app/entrevistas",label: "Entrevistas",icon: "entrevistas", title: "Simulador de entrevistas" },
   { href: "/app/emigrar",    label: "Emigrar",    icon: "emigrar", title: "Guía para emigrar" },
   { href: "/app/au-pair",    label: "Au Pair",    icon: "aupair", title: "Perfil y ofertas Au Pair" },
+  { href: "/app/au-pair?modo=live_in_nanny", label: "Live-in Nanny", icon: "liveinnanny", title: "Perfil y ofertas Live-in Nanny" },
   { href: "/app/salarios",   label: "Salarios",   icon: "salarios", title: "Comparador de salarios" },
   { href: "/app/guardados",  label: "Guardados",  icon: "guardados", title: "Ofertas guardadas" },
   { href: "/app/reviews",    label: "Reviews",    icon: "reviews", title: "Reviews de empresas" },
@@ -38,6 +39,7 @@ const ICON_COLORS: Record<string, string> = {
   entrevistas: "#a855f7",
   emigrar: "#06b6d4",
   aupair: "#ec4899",
+  liveinnanny: "#f97316",
   salarios: "#f59e0b",
   guardados: "#22c55e",
   reviews: "#fbbf24",
@@ -83,6 +85,8 @@ function NavIcon({ name, size = 22 }: { name: string; size?: number }) {
       return <svg {...base}><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>;
     case "referidos":
       return <svg {...base}><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>;
+    case "liveinnanny":
+      return <svg {...base}><path d="M12 4a4 4 0 0 1 4 4v1h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2V8a4 4 0 0 1 4-4z"/><circle cx="10" cy="12" r="1.5"/><circle cx="14" cy="12" r="1.5"/><path d="M9 15c.83 1 1.83 1.5 3 1.5s2.17-.5 3-1.5"/></svg>;
     case "ayuda":
       return <svg {...base} style={{...glow, transition: "transform 0.2s ease"}}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
     case "plan":

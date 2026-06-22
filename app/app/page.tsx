@@ -241,7 +241,7 @@ export default function HomePage() {
                 { concepto: "Tu CV entre otros", ellos: "Entre 200-2.000 candidatos", byc: "Llega en el momento exacto" },
                 { concepto: "Seguimiento", ellos: "No sabes si lo leyeron", byc: "Ves cada envío en tiempo real" },
                 { concepto: "Prep. entrevista", ellos: "Ninguna ayuda", byc: "Simulacro con IA por empresa" },
-                { concepto: "Fuentes de ofertas", ellos: "Solo las de ese portal", byc: "+1.900.000 de Adzuna, Careerjet, EURES…" },
+                { concepto: "Fuentes de ofertas", ellos: "Solo las de ese portal", byc: "Millones de ofertas de Adzuna, Careerjet, EURES…" },
                 { concepto: "Precio real", ellos: "Gratis (inútil) o 39€/mes", byc: "Desde 2,99€/mes" },
               ].map((fila, i) => (
                 <div key={fila.concepto} className="grid grid-cols-3 text-center text-sm py-4 px-4 items-center gap-2"

@@ -155,6 +155,7 @@ export default function RegistroPage() {
                   <label htmlFor="ciudad" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>Ciudad <span style={{ color: "#64748b" }}>(opcional)</span></label>
                   <input id="ciudad" type="text" value={ciudad} onChange={(e) => setCiudad(e.target.value)}
                     placeholder="Ej: Madrid, Barcelona..."
+                    autoComplete="off"
                     className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
                   <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>Te avisaremos cuando haya ofertas en tu zona</p>
                 </div>

@@ -897,6 +897,7 @@ export default function CurriculumPage() {
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="cv-ciudad">Ciudad</label>
                 <input id="cv-ciudad" placeholder="Ciudad" value={form.ciudad} onChange={e => f("ciudad", e.target.value)}
+                  autoComplete="off"
                   className="sm:col-span-2 w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               </div>

@@ -28,7 +28,7 @@ const FAQS = [
     categoria: "Búsqueda de empleo",
     items: [
       { q: "¿En qué países busca Guzzi ofertas?", a: `En ${NUM_PAISES} países: España, Alemania, Francia, Reino Unido, Irlanda, Países Bajos, Suecia, Noruega, Dinamarca, Suiza, Italia, Portugal, Bélgica, Austria, Finlandia, Polonia, Estados Unidos, Canadá, Australia, Nueva Zelanda y Grecia.` },
-      { q: "¿Las ofertas son actuales?", a: "Sí. Sincronizamos ofertas cada 6 horas desde Adzuna, EURES, Careerjet, Bundesagentur für Arbeit y otras fuentes. Tenemos más de 2.100.000 ofertas activas." },
+      { q: "¿Las ofertas son actuales?", a: "Sí. Sincronizamos ofertas cada 6 horas desde Adzuna, EURES, Careerjet, Bundesagentur für Arbeit y otras fuentes. Tenemos millones de ofertas activas." },
       { q: "¿Puedo guardar ofertas para verlas después?", a: "Sí. Pulsa el corazón en cualquier oferta. Accede a todas en la sección 'Guardados'." },
       { q: "¿Cómo funciona el comparador de salarios?", a: "En 'Salarios' busca tu puesto y verás el salario medio, mínimo y máximo en cada país, basado en ofertas reales publicadas." },
     ],

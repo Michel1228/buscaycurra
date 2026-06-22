@@ -300,10 +300,12 @@ export default function PerfilPage() {
                   title="El email no se puede cambiar desde aquí" />
                 <label className="sr-only" htmlFor="perfil-ciudad">Ciudad</label>
                 <input id="perfil-ciudad" placeholder="Ciudad" value={perfil.ciudad} onChange={e => updateField("ciudad", e.target.value)}
+                  autoComplete="off"
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="perfil-provincia">Provincia</label>
                 <input id="perfil-provincia" placeholder="Provincia" value={perfil.provincia} onChange={e => updateField("provincia", e.target.value)}
+                  autoComplete="off"
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="perfil-cpostal">Código Postal</label>

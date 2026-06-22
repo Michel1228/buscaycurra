@@ -40,9 +40,9 @@ export default async function LandingPage() {
   // ── Datos reales desde la DB (con fallback a hardcoded) ──
   const stats = await getRealStats();
   
-  const OFERTAS = stats ? formatOfertas(stats.totalGlobal) : "miles de";
+  const OFERTAS = "millones de";
   const PAISES = String(NUM_PAISES);
-  const OBJETIVO = "10.000.000";
+  const OBJETIVO = "millones de";
 
   // Mapa flags + nombres para traducir códigos ISO
   const FLAG_MAP: Record<string, { flag: string; nombre: string }> = {
@@ -108,12 +108,15 @@ export default async function LandingPage() {
       nombre: "Gratis", precio: "0", periodo: "", 
       desc: "Para probar sin compromiso", 
       items: [
-        "Búsqueda de ofertas en 21 países", 
-        "Pipeline de candidaturas", 
-        "Comparador de salarios",
-        "1 CV guardado"
+        "📸 3 búsquedas por cámara",
+        "🧠 2 consultas a Guzzi (total)",
+        "📄 1 CV creado con IA",
+        "🔍 Búsqueda en 24 países",
+        "📊 Pipeline de candidaturas",
+        "💰 Comparador de salarios",
+        "💾 10 ofertas guardadas"
       ], 
-      nota: "Sin tarjeta de crédito · Sin Guzzi · Sin envíos", 
+      nota: "Sin tarjeta · Sin envíos de CV · Sin cartas IA", 
       destacado: false, 
       cta: "Empezar gratis",
       limitado: true
@@ -122,13 +125,14 @@ export default async function LandingPage() {
       nombre: "Esencial", precio: "2,99", periodo: "/mes", 
       desc: "Menos que un café al mes", 
       items: [
-        "Guzzi con IA (GPT-4o-mini)",
-        "20 consultas al día",
-        "10 envíos de CV al día",
-        "50 envíos a la semana",
-        "Carta personalizada por IA",
-        "3 CVs guardados",
-        "50 ofertas guardadas"
+        "📸 10 búsquedas/día por cámara",
+        "🧠 30 consultas/día a Guzzi",
+        "📤 15 envíos de CV al día",
+        "📤 100 envíos a la semana",
+        "✉️ Carta personalizada con IA",
+        "🎤 Preparación de entrevistas",
+        "📄 3 CVs con IA",
+        "💾 50 ofertas guardadas"
       ], 
       nota: "Sin permanencia · Cancela cuando quieras", 
       destacado: true, 
@@ -139,15 +143,16 @@ export default async function LandingPage() {
       nombre: "Pro", precio: "9,99", periodo: "/mes", 
       desc: "Para profesionales serios", 
       items: [
-        "Guzzi con IA avanzada (GPT-4o)",
-        "100 consultas al día",
-        "50 envíos de CV al día",
-        "300 envíos a la semana",
-        "Carta personalizada premium",
-        "10 CVs guardados",
-        "200 ofertas guardadas",
-        "Códigos promocionales",
-        "Soporte prioritario"
+        "📸 30 búsquedas/día por cámara",
+        "🧠 100 consultas/día a Guzzi",
+        "📤 50 envíos de CV al día",
+        "📤 350 envíos a la semana",
+        "✉️ Carta personalizada premium",
+        "🎤 Preparación de entrevistas",
+        "📄 10 CVs con IA",
+        "💾 200 ofertas guardadas",
+        "🔗 Códigos promocionales",
+        "⭐ Soporte prioritario"
       ], 
       nota: "Sin permanencia · Cancela cuando quieras", 
       destacado: false, 
@@ -157,16 +162,18 @@ export default async function LandingPage() {
       nombre: "Empresa", precio: "49,99", periodo: "/mes", 
       desc: "Para RRHH y reclutadores", 
       items: [
-        "Guzzi IA ilimitado (GPT-4o)",
-        "Consultas sin límite",
-        "200 envíos de CV al día",
-        "1.000 envíos a la semana",
-        "CVs guardados ilimitados",
-        "Ofertas guardadas ilimitadas",
-        "API e integraciones",
-        "Dashboard de equipo",
-        "Códigos promocionales",
-        "Soporte 24/7"
+        "📸 Búsquedas por cámara ilimitadas",
+        "🧠 Guzzi IA ilimitado",
+        "📤 200 envíos de CV al día",
+        "📤 1.500 envíos a la semana",
+        "✉️ Cartas IA ilimitadas",
+        "🎤 Entrevistas ilimitadas",
+        "📄 CVs ilimitados",
+        "💾 Ofertas ilimitadas",
+        "🔌 API e integraciones",
+        "🔗 Códigos promocionales",
+        "📊 Dashboard de equipo",
+        "🛟 Soporte 24/7"
       ], 
       nota: "Sin permanencia · Facturación mensual", 
       destacado: false, 
@@ -220,7 +227,7 @@ export default async function LandingPage() {
 
   // ── FAQ ──
   const faq = [
-    { q: "¿Es realmente gratis para los candidatos?", a: "Sí, completamente. El plan gratuito permite buscar ofertas, usar el pipeline y comparar salarios. No incluye Guzzi (asistente IA) ni envío de CVs. Para enviar candidaturas y usar Guzzi necesitas un plan de pago — desde 2,99€/mes con 10 envíos al día y 20 consultas a Guzzi." },
+    { q: "¿Es realmente gratis para los candidatos?", a: "Sí, completamente. El plan gratuito permite buscar ofertas, usar el pipeline y comparar salarios. No incluye Guzzi (asistente IA) ni envío de CVs. Para enviar candidaturas y usar Guzzi necesitas un plan de pago — desde 2,99€/mes con 15 envíos al día y 30 consultas a Guzzi." },
     { q: "¿En cuántos países busca Guzzi?", a: `Actualmente en ${PAISES} países: España, Alemania, Reino Unido, Estados Unidos, Canadá, Francia, Suecia, Australia, Países Bajos, Italia, Suiza, Irlanda, Bélgica, Portugal, Noruega, Polonia, Dinamarca, Austria, Finlandia y más. Añadimos países nuevos constantemente.` },
     { q: "¿Cómo funciona el envío automático de CVs?", a: "Nuestra IA adapta tu CV a cada oferta antes de enviarlo. No es spam — cada candidatura se personaliza con el perfil y palabras clave de la empresa. Tú marcas sector, países y tipo de contrato, y Guzzi trabaja por ti." },
     { q: "¿Es legal enviar CVs automáticamente?", a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente inteligente que te representa — sin cobrarte comisiones ni quedarse con parte de tu salario." },
@@ -679,6 +686,42 @@ export default async function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ═══════════ AU PAIR + LIVE-IN NANNY ═══════════ */}
+        <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+          <div className="max-w-3xl mx-auto text-center">
+            <span className="text-xs font-semibold uppercase tracking-wider mb-3 block" style={{ color: "#22c55e" }}>
+              Nuevo en BuscayCurra
+            </span>
+            <h2 className="text-xl md:text-2xl font-bold mb-3" style={{ color: "#f1f5f9" }}>
+              ¿Quieres ser Au Pair o Live-in Nanny?
+            </h2>
+            <p className="text-sm mb-8 max-w-xl mx-auto" style={{ color: "#94a3b8" }}>
+              Miles de ofertas de au pair, nanny y live-in nanny en 24 países. 
+              Crea tu carta &ldquo;Dear Family&rdquo;, compara requisitos legales por país 
+              y envía tu perfil directamente a las familias.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Link
+                href="/app/au-pair"
+                className="px-6 py-3 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+              >
+                🧒 Perfil Au Pair
+              </Link>
+              <Link
+                href="/auth/registro"
+                className="px-6 py-3 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: "transparent", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}
+              >
+                👩‍👧 Live-in Nanny
+              </Link>
+            </div>
+            <p className="text-[10px] mt-4" style={{ color: "#64748b" }}>
+              +20.000 ofertas au pair/nanny · +19.500 con email · 24 países
+            </p>
           </div>
         </section>
 

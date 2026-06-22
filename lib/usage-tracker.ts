@@ -37,11 +37,11 @@ function weekKey(): string {
   return `${now.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
 }
 
-/** Obtiene o crea el registro de uso del usuario para hoy */
-async function getOrCreateUsage(userId: string): Promise<UsageRow> {
+/** Obtiene o crea el registro de uso del usuario para una fecha (por defecto hoy) */
+async function getOrCreateUsage(userId: string, dateKeyOverride?: string): Promise<UsageRow> {
   const supabase = getSupabase();
-  const today = todayKey();
-  const week = weekKey();
+  const today = dateKeyOverride || todayKey();
+  const week = dateKeyOverride || weekKey();
 
   const { data } = await supabase
     .from("usage_tracking")
@@ -71,7 +71,9 @@ export async function canQueryGuzzi(userId: string, plan?: string | null): Promi
   const limits = getPlanLimits(plan);
   if (limits.guzziMaxConsultasDia >= 999999) return true; // Ilimitado
 
-  const usage = await getOrCreateUsage(userId);
+  const isTrial = plan === "free";
+  const dateKey = isTrial ? "trial" : todayKey();
+  const usage = await getOrCreateUsage(userId, dateKey);
   return usage.guzzi_consultas < limits.guzziMaxConsultasDia;
 }
 
@@ -79,7 +81,9 @@ export async function canQueryGuzzi(userId: string, plan?: string | null): Promi
 export async function trackGuzziQuery(userId: string, plan?: string | null): Promise<{ allowed: boolean; remaining: number }> {
   const limits = getPlanLimits(plan);
   const supabase = getSupabase();
-  const today = todayKey();
+  // Para plan free: límite TOTAL (no diario) — usamos date_key fija "trial"
+  const isTrial = plan === "free";
+  const today = isTrial ? "trial" : todayKey();
 
   if (limits.guzziMaxConsultasDia >= 999999) {
     return { allowed: true, remaining: 999999 };
@@ -102,7 +106,7 @@ export async function trackGuzziQuery(userId: string, plan?: string | null): Pro
   await supabase
     .from("usage_tracking")
     .upsert(
-      { user_id: userId, date_key: today, week_key: weekKey(), guzzi_consultas: current + 1 },
+      { user_id: userId, date_key: today, week_key: isTrial ? "trial" : weekKey(), guzzi_consultas: current + 1 },
       { onConflict: "user_id,date_key" }
     );
 

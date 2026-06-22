@@ -21,7 +21,6 @@ function cityLike(col: string, idx: number): string {
 }
 
 function rowToOferta(j: Record<string, unknown>, location: string, userSkills: string[] = []) {
-  // Calcular match score basado en solapamiento de keywords
   let match = 0;
   const offerKeywords: string[] = Array.isArray(j.keywords) ? j.keywords as string[] : [];
   const title = (j.title as string) || "";
@@ -35,7 +34,6 @@ function rowToOferta(j: Record<string, unknown>, location: string, userSkills: s
     );
     match = Math.round((matched.length / Math.max(offerKeywords.length, 1)) * 100);
   } else if (userSkills.length > 0) {
-    // Si no hay keywords en la oferta, buscar en título+descripción
     const matched = userSkills.filter(skill => fullText.includes(skill.toLowerCase()));
     match = Math.round((matched.length / Math.max(userSkills.length, 1)) * 100);
   }
@@ -60,6 +58,7 @@ export async function GET(request: NextRequest) {
   const keyword  = (searchParams.get("keyword")  || "").trim();
   const location = (searchParams.get("location") || "").trim();
   const country  = (searchParams.get("country")  || "").trim();
+  const categoria = (searchParams.get("categoria") || "").trim(); // au_pair | live_in_nanny
   const page     = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const jornada      = searchParams.get("jornada") || "";
   const experiencia  = searchParams.get("experiencia") || "";
@@ -68,11 +67,17 @@ export async function GET(request: NextRequest) {
   const limit    = 500;
   const offset   = (page - 1) * limit;
 
-  if (!keyword && !location && !country) {
-    return NextResponse.json({ error: "Debes introducir al menos una palabra clave, ubicación o país" }, { status: 400 });
+  // Keywords especificas por categoria (mismas que en /api/au-pair/ofertas)
+  const NANNY_EXCLUSIONS = `title NOT ILIKE '%administrative%' AND title NOT ILIKE '%assistant%' AND title NOT ILIKE '%apprentice%' AND title NOT ILIKE '%teacher%' AND title NOT ILIKE '%support%' AND title NOT ILIKE '%coordinator%' AND title NOT ILIKE '%substitute%' AND title NOT ILIKE '%manager%' AND title NOT ILIKE '%director%' AND title NOT ILIKE '%supervisor%' AND title NOT ILIKE '%specialist%' AND title NOT ILIKE '%officer%' AND title NOT ILIKE '%receptionist%' AND title NOT ILIKE '%sales%' AND title NOT ILIKE '%marketing%' AND title NOT ILIKE '%payroll%' AND title NOT ILIKE '%accountant%' AND title NOT ILIKE '%clerk%' AND title NOT ILIKE '%secretary%' AND title NOT ILIKE '%office%' AND title NOT ILIKE '%reception%'`;
+  const CATEGORIA_KEYWORDS: Record<string, string> = {
+    au_pair: `(title ILIKE '%au pair%' OR title ILIKE '%aupair%' OR title ILIKE '%niñera%' OR title ILIKE '%canguro%' OR (title ILIKE '%nanny%' AND ${NANNY_EXCLUSIONS}))`,
+    live_in_nanny: `(title ILIKE '%live in nanny%' OR title ILIKE '%live-in nanny%' OR title ILIKE '%live-in caregiver%' OR title ILIKE '%live in caregiver%' OR title ILIKE '%niñera interna%' OR title ILIKE '%nanny interna%' OR title ILIKE '%full-time nanny%' OR title ILIKE '%professional nanny%' OR title ILIKE '%nanny housekeeper%' OR title ILIKE '%nanny/housekeeper%' OR title ILIKE '%live out nanny%' OR title ILIKE '%nanny live%' OR title ILIKE '%cuidador interno%' OR title ILIKE '%cuidadora interna%' OR (title ILIKE '%nanny%' AND ${NANNY_EXCLUSIONS}))`,
+  };
+
+  if (!keyword && !location && !country && !categoria) {
+    return NextResponse.json({ error: "Debes introducir al menos una palabra clave, ubicacion o pais" }, { status: 400 });
   }
 
-  // Extraer skills del usuario desde el header (opcional, para match score)
   let userSkills: string[] = [];
   try {
     const skillsHeader = request.headers.get("x-user-skills");
@@ -87,9 +92,9 @@ export async function GET(request: NextRequest) {
     const conditions: string[] = ['"isActive" = $1'];
     let idx = 2;
 
-    if (keyword) {
-      // Split keyword into words and search each with AND logic
-      // "Congelados de Navarra" → title ILIKE '%congelados%' AND title ILIKE '%navarra%'
+    // Keyword: si hay categoria, la categoria YA filtra — el keyword es redundante
+    // (evita que "au pair" no matchee ofertas con "nanny" en el titulo)
+    if (keyword && !categoria) {
       const STOP_WORDS = new Set(["de", "la", "el", "en", "del", "las", "los", "un", "una", "y", "o", "a", "para", "por", "con", "sin", "que", "es", "se", "no", "al", "lo", "le", "the", "of", "in", "and", "to", "for", "a"]);
       const words = keyword.split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w.toLowerCase()));
       if (words.length > 1) {
@@ -106,26 +111,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filtro por país
+    // Filtro por pais (case-insensitive: DB tiene 'uk' y 'UK' mezclados)
     if (country) {
-      conditions.push(`"country" = $${idx}`);
+      conditions.push(`LOWER("country") = LOWER($${idx})`);
       params.push(country);
       idx++;
     }
 
     // Ciudad: extraer solo el nombre de ciudad, ignorando provincia/comunidad
-    // Ej: "Tudela Navarra" → "Tudela", "Madrid, Comunidad de Madrid" → "Madrid"
     let cityParts = "";
     if (location) {
       const partes = location.split(/[,\-]/).map(p => p.trim());
-      // Lista de palabras que indican provincia/comunidad (ignorar)
       const provincias = [
         "navarra", "la rioja", "madrid", "cataluña", "valencia", "andalucía", "andalucia",
         "aragon", "aragón", "pais vasco", "país vasco", "murcia", "extremadura", "galicia",
         "asturias", "cantabria", "castilla y leon", "castilla y león", "castilla la mancha",
         "castilla-la mancha", "baleares", "canarias", "comunidad", "provincia", "region", "región"
       ];
-      // Buscar la primera parte que NO sea una provincia/comunidad
       for (const parte of partes) {
         const parteLower = parte.toLowerCase();
         if (!provincias.some(p => parteLower.includes(p) || p.includes(parteLower))) {
@@ -133,7 +135,6 @@ export async function GET(request: NextRequest) {
           break;
         }
       }
-      // Si todas son provincias, usar la primera parte
       if (!cityParts && partes.length > 0) {
         cityParts = stripAccents(partes[0]);
       }
@@ -144,7 +145,7 @@ export async function GET(request: NextRequest) {
       idx++;
     }
 
-    // Filtro por jornada (remoto, parcial)
+    // Filtro por jornada
     if (jornada === "remoto") {
       conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
       params.push("%remoto%");
@@ -154,7 +155,6 @@ export async function GET(request: NextRequest) {
       params.push("%parcial%");
       idx++;
     }
-    // "completa" no añade condición (devuelve todo, que ya es el default)
 
     // Filtro por experiencia
     if (experiencia) {
@@ -177,7 +177,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filtro por salario mínimo
     if (salarioMin > 0) {
       conditions.push(`(
         (salary ~ '^[0-9]+$' AND salary::int >= $${idx})
@@ -187,7 +186,6 @@ export async function GET(request: NextRequest) {
       idx++;
     }
 
-    // Filtro por salario máximo
     if (salarioMax > 0) {
       conditions.push(`(
         (salary ~ '^[0-9]+$' AND salary::int <= $${idx})
@@ -197,11 +195,15 @@ export async function GET(request: NextRequest) {
       idx++;
     }
 
+    // Filtro por categoria (au_pair / live_in_nanny)
+    if (categoria && CATEGORIA_KEYWORDS[categoria]) {
+      conditions.push(CATEGORIA_KEYWORDS[categoria]);
+    }
+
     const whereClause = conditions.join(" AND ");
     const countRes = await pool.query(`SELECT COUNT(*) FROM "JobListing" WHERE ${whereClause}`, params);
     const totalDB = parseInt(countRes.rows[0].count);
     
-    // Rotación diaria priorizando frescura: últimas 7 días primero, luego mes, luego antiguas
     const sql = `
       SELECT id, title, company, city, province, salary, description,
              "sourceUrl", "sourceName", "scrapedAt"
@@ -217,7 +219,6 @@ export async function GET(request: NextRequest) {
     params.push(limit, offset);
     const dbResult = await pool.query(sql, params);
 
-    // Deduplicar: primero por sourceUrl, si no por título+empresa (misma oferta de distintas fuentes)
     function deduplicar(rows: Record<string, unknown>[]) {
       const seen = new Set<string>();
       return rows.filter(j => {
@@ -229,15 +230,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Si keyword+ciudad da pocos resultados (<10) y la ciudad tiene mas ofertas,
-    // mostrar todas las de la ciudad (fallback inteligente). Si hay >=10, mostramos los matches exactos.
-    if (keyword && cityParts && dbResult.rows.length < 10) {
+    // Fallback ciudad: NO aplicar si hay categoria
+    if (keyword && cityParts && dbResult.rows.length < 10 && !categoria) {
       const locCount = await pool.query(
         `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})`,
         [`%${cityParts}%`]
       );
       const locTotal = parseInt(locCount.rows[0].count);
-      // Si la ciudad tiene significativamente mas ofertas que el keyword match, mostrar todas
       if (locTotal > dbResult.rows.length + 5) {
         const locOffset = (page - 1) * limit;
         const locResult = await pool.query(
@@ -265,13 +264,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ofertas, total: totalDB, page, hasMore: offset + ofertas.length < totalDB, keyword, location, source: "database" });
     }
 
-    // Fallback final a APIs en tiempo real
+    // NUNCA fallback a live-api para busquedas categorizadas
+    if (categoria) {
+      return NextResponse.json({ ofertas: [], total: 0, page, hasMore: false, keyword, location, source: "database-category-noresults" });
+    }
     console.log("[Search] BD: 0 -> APIs en tiempo real");
     const apiOfertas = await buscarOfertasReales(keyword, location, 50);
     return NextResponse.json({ ofertas: apiOfertas, total: apiOfertas.length, page: 1, hasMore: false, keyword, location, source: "live-api" });
 
   } catch (error) {
     console.error("Error en busqueda:", (error as Error).message);
+    if (categoria) {
+      return NextResponse.json({ ofertas: [], total: 0, page: 1, hasMore: false, source: "database-category-error" });
+    }
     try {
       const apiOfertas = await buscarOfertasReales(keyword, location, 50);
       return NextResponse.json({ ofertas: apiOfertas, total: apiOfertas.length, page: 1, hasMore: false, keyword, location, source: "live-api-fallback" });
