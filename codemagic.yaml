@@ -32,7 +32,7 @@ workflows:
       - name: Crear plataforma iOS
         script: |
           rm -rf ios
-          npx cap add ios
+          npx cap add ios --packagemanager cocoapods
 
       - name: Instalar CocoaPods
         script: cd ios/App && pod install
