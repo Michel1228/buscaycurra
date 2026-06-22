@@ -30,7 +30,7 @@ platform :ios do
     profile_name = lane_context[SharedValues::SIGH_NAME]
     UI.message("Using provisioning profile: #{profile_name}")
 
-    # Build del IPA con firma MANUAL usando el perfil descargado por sigh
+    # Build del IPA con firma AUTOMÁTICA — sigh ya descargó el perfil
     gym(
       project:                  "ios/App/App.xcodeproj",
       scheme:                   "App",
@@ -38,13 +38,10 @@ platform :ios do
       output_directory:         "/tmp/ipa",
       output_name:              "BuscayCurra.ipa",
       export_method:            "app-store",
-      xcargs:                   "DEVELOPMENT_TEAM=P9L962T32A",
+      xcargs:                   "DEVELOPMENT_TEAM=P9L962T32A -allowProvisioningUpdates",
       export_options: {
         teamID:                   "P9L962T32A",
-        signingStyle:             "manual",
-        provisioningProfiles: {
-          "es.buscaycurra.app" => profile_name
-        }
+        signingStyle:             "automatic",
       },
     )
 
