@@ -1,41 +1,11 @@
 workflows:
-  ios-app-store:
-    name: BuscayCurra iOS — App Store
-    max_build_duration: 60
+  ios-build:
+    name: iOS Build
     instance_type: mac_mini_m2
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: unified-production
-          include: true
-          source: true
+    max_build_duration: 60
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: es.buscaycurra.app
-      vars:
-        BUNDLE_ID: es.buscaycurra.app
-        APPLE_TEAM_ID: P9L962T32A
-      node: 22
       xcode: latest
-      cocoapods: default
+      node: 22
     scripts:
-      - name: Build
-        script: |
-          npm ci
-          rm -rf ios && npx cap add ios --packagemanager cocoapods
-          cd ios/App && pod install
-          npx cap sync ios
-          xcode-project use-profiles
-          xcode-project build-ipa \
-            --workspace ios/App/App.xcworkspace \
-            --scheme App
-    artifacts:
-      - build/ios/ipa/*.ipa
-    publishing:
-      app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_app_store: true
+      - name: Echo
+        script: echo "Hello"
