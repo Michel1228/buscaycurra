@@ -39,7 +39,6 @@ platform :ios do
       output_name:              "BuscayCurra.ipa",
       export_method:            "app-store",
       xcargs:                   "DEVELOPMENT_TEAM=P9L962T32A",
-      provisioning_profile_path: lane_context[SharedValues::SIGH_PROFILE_PATH],
       export_options: {
         teamID:                   "P9L962T32A",
         signingStyle:             "manual",
