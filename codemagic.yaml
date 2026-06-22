@@ -59,14 +59,26 @@ workflows:
         script: |
           set -x
           xcode-project use-profiles
-          xcode-project build-ipa \
-            --workspace ios/App/App.xcworkspace \
-            --scheme App \
-            --export-options-plist /Users/builder/export_options.plist \
-            --verbose 2>&1 | tee /tmp/build-ipa.log
+          echo "=== ESTRUCTURA DEL PROYECTO ==="
+          ls -la ios/App/Podfile && echo "Podfile OK" || echo "NO Podfile"
+          ls -la ios/App/App.xcworkspace/ && echo "xcworkspace OK" || echo "NO xcworkspace"
+          echo "=== COMPILANDO CON XCODE DIRECT ==="
+          xcodebuild -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath /tmp/App.xcarchive \
+            archive \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            DEVELOPMENT_TEAM=P9L962T32A \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_STYLE=Manual \
+            2>&1 | tee /tmp/xcode-raw.log
           BUILD_EXIT=${PIPESTATUS[0]}
-          echo "=== BUSCANDO ERRORES ==="
-          grep -i "error:" /tmp/build-ipa.log || echo "No se encontraron errores explícitos"
+          echo "=== ERRORES DE COMPILACIÓN ==="
+          grep -E "error:|warning:|fatal error:" /tmp/xcode-raw.log | head -50 || echo "Sin errores/warnings"
+          echo "=== ÚLTIMAS 30 LÍNEAS ==="
+          tail -30 /tmp/xcode-raw.log
           exit $BUILD_EXIT
 
     artifacts:
