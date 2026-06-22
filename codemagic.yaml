@@ -13,12 +13,14 @@ workflows:
           source: true
 
     environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: es.buscaycurra.app
       vars:
         BUNDLE_ID: es.buscaycurra.app
         APPLE_TEAM_ID: P9L962T32A
         APP_STORE_CONNECT_ISSUER_ID: "8e2fe663-67af-4d2d-9ad8-5696b6e580c9"
         APP_STORE_CONNECT_KEY_IDENTIFIER: "7MK73YRZ2J"
-        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
       node: 22
       xcode: latest
       cocoapods: default
@@ -55,61 +57,12 @@ workflows:
 
       - name: Construir IPA para App Store
         script: |
-          mkdir -p /tmp/keys
-          # Escribir API key con Python para evitar redacción de secretos
-          python3 -c "
-          import os
-          key = os.environ['APP_STORE_CONNECT_PRIVATE_KEY']
-          with open('/tmp/keys/AuthKey.p8', 'w') as f:
-              f.write(key)
-          print(f'Key written: {len(key)} chars')
-          "
-
           set -x
-          echo "=== ARCHIVANDO (firma via API key, sin ios_signing) ==="
-          xcodebuild -workspace ios/App/App.xcworkspace \
-            -scheme App \
-            -sdk iphoneos \
-            -configuration Release \
-            -archivePath /tmp/App.xcarchive \
-            archive \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
-            CODE_SIGN_STYLE=Automatic \
-            -allowProvisioningUpdates \
-            -authenticationKeyIssuerID $APP_STORE_CONNECT_ISSUER_ID \
-            -authenticationKeyID $APP_STORE_CONNECT_KEY_IDENTIFIER \
-            -authenticationKeyPath /tmp/keys/AuthKey.p8 \
-            2>&1 | tee /tmp/xcode-raw.log
-          BUILD_EXIT=${PIPESTATUS[0]}
-
-          if [ $BUILD_EXIT -eq 0 ]; then
-            echo "=== EXPORTANDO IPA ==="
-            /usr/libexec/PlistBuddy -c "Add :method string app-store" /tmp/ExportOptions.plist 2>/dev/null || true
-            /usr/libexec/PlistBuddy -c "Set :method app-store" /tmp/ExportOptions.plist 2>/dev/null
-            /usr/libexec/PlistBuddy -c "Add :teamID string P9L962T32A" /tmp/ExportOptions.plist 2>/dev/null || true
-            /usr/libexec/PlistBuddy -c "Set :teamID P9L962T32A" /tmp/ExportOptions.plist 2>/dev/null
-            xcodebuild -exportArchive \
-              -archivePath /tmp/App.xcarchive \
-              -exportOptionsPlist /tmp/ExportOptions.plist \
-              -exportPath /tmp/ipa \
-              -allowProvisioningUpdates \
-              -authenticationKeyIssuerID $APP_STORE_CONNECT_ISSUER_ID \
-              -authenticationKeyID $APP_STORE_CONNECT_KEY_IDENTIFIER \
-              -authenticationKeyPath /tmp/keys/AuthKey.p8 \
-              2>&1 | tee -a /tmp/xcode-raw.log
-            EXPORT_EXIT=${PIPESTATUS[0]}
-            if [ $EXPORT_EXIT -eq 0 ]; then
-              mkdir -p build/ios/ipa
-              cp /tmp/ipa/*.ipa build/ios/ipa/
-            else
-              BUILD_EXIT=$EXPORT_EXIT
-            fi
-          fi
-
-          echo "=== ERRORES ==="
-          grep -E "error:|fatal error:" /tmp/xcode-raw.log | head -30 || echo "Sin errores"
-          exit $BUILD_EXIT
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App \
+            --export-options-plist /Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
