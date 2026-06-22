@@ -4,7 +4,7 @@ platform :ios do
 
   desc "Build and upload to App Store Connect"
   lane :deploy do
-    # Autenticación con API key (sin Apple ID ni contraseña)
+    # Autenticación con API key
     api_key = app_store_connect_api_key(
       key_id:       ENV["APP_STORE_CONNECT_KEY_ID"],
       issuer_id:    ENV["APP_STORE_CONNECT_ISSUER_ID"],
@@ -12,25 +12,7 @@ platform :ios do
       in_house:     false,
     )
 
-    # Crear/descargar certificado de distribución automáticamente
-    cert(
-      api_key:     api_key,
-      output_path: "/tmp/certs",
-    )
-
-    # Crear/descargar provisioning profile automáticamente
-    sigh(
-      api_key:              api_key,
-      app_identifier:       "es.buscaycurra.app",
-      output_path:          "/tmp/profiles",
-      provisioning_name:    "BuscayCurra Distribution",
-      force:                true,
-    )
-
-    profile_name = lane_context[SharedValues::SIGH_NAME]
-    UI.message("Using provisioning profile: #{profile_name}")
-
-    # Build del IPA con firma AUTOMÁTICA — sigh ya descargó el perfil
+    # Build del IPA con firma 100% automática
     gym(
       project:                  "ios/App/App.xcodeproj",
       scheme:                   "App",
@@ -38,14 +20,14 @@ platform :ios do
       output_directory:         "/tmp/ipa",
       output_name:              "BuscayCurra.ipa",
       export_method:            "app-store",
-      xcargs:                   'DEVELOPMENT_TEAM=P9L962T32A CODE_SIGN_STYLE=Automatic -allowProvisioningUpdates',
+      xcargs:                   "DEVELOPMENT_TEAM=P9L962T32A CODE_SIGN_STYLE=Automatic -allowProvisioningUpdates",
       export_options: {
-        teamID:                   "P9L962T32A",
-        signingStyle:             "automatic",
+        teamID:       "P9L962T32A",
+        signingStyle: "automatic",
       },
     )
 
-    # Subir a App Store Connect (TestFlight)
+    # Subir a App Store Connect
     pilot(
       api_key:            api_key,
       ipa:                "/tmp/ipa/BuscayCurra.ipa",
