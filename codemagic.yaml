@@ -3,7 +3,13 @@ workflows:
     name: BuscayCurra iOS — App Store
     max_build_duration: 60
     instance_type: mac_mini_m2
-
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: unified-production
+          include: true
+          source: true
     environment:
       ios_signing:
         distribution_type: app_store
@@ -11,50 +17,25 @@ workflows:
       vars:
         BUNDLE_ID: es.buscaycurra.app
         APPLE_TEAM_ID: P9L962T32A
-        APP_STORE_CONNECT_ISSUER_ID: "8e2fe663-67af-4d2d-9ad8-5696b6e580c9"
-        APP_STORE_CONNECT_KEY_IDENTIFIER: "7MK73YRZ2J"
-        # APP_STORE_CONNECT_PRIVATE_KEY → añadir en Codemagic UI como variable encriptada
-      node: latest
+      node: 22
       xcode: latest
       cocoapods: default
-
     scripts:
-      - name: Instalar dependencias Node
-        script: npm ci
-
-      - name: Añadir plataforma iOS (si no existe)
+      - name: Build
         script: |
-          if [ ! -d "ios" ]; then
-            npx cap add ios
-          fi
-
-      - name: Sincronizar Capacitor
-        script: npx cap sync ios
-
-      - name: Incrementar build number automáticamente
-        script: |
-          LATEST=$(app-store-connect get-latest-build-number "$BUNDLE_ID" \
-            --platform IOS 2>/dev/null || echo "0")
-          BUILD=$(($LATEST + 1))
-          agvtool new-version -all $BUILD
-          echo "Build number: $BUILD"
-
-      - name: Construir IPA para App Store
-        script: |
+          npm ci
+          rm -rf ios && npx cap add ios --packagemanager cocoapods
+          cd ios/App && pod install
+          npx cap sync ios
           xcode-project use-profiles
           xcode-project build-ipa \
             --workspace ios/App/App.xcworkspace \
-            --scheme App \
-            --export-options-plist /tmp/ExportOptions.plist
-
+            --scheme App
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testflight: true
-        submit_to_app_store: false
+        submit_to_app_store: true
