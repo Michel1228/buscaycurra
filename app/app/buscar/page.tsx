@@ -81,7 +81,8 @@ function BuscarPageInner() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
-      if (locationFetched.current || searchParams.get("location") || searchParams.get("ubicacion")) return;
+      // Si la URL ya trae location (aunque sea vacío), respetarlo — no auto-rellenar
+      if (locationFetched.current || searchParams.has("location") || searchParams.has("ubicacion")) return;
       locationFetched.current = true;
 
       const { data: perfil } = await getSupabaseBrowser().from("profiles")
