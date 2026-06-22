@@ -18,6 +18,7 @@ workflows:
         APPLE_TEAM_ID: P9L962T32A
         APP_STORE_CONNECT_ISSUER_ID: "8e2fe663-67af-4d2d-9ad8-5696b6e580c9"
         APP_STORE_CONNECT_KEY_IDENTIFIER: "7MK73YRZ2J"
+        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
       node: 22
       xcode: latest
       cocoapods: default
@@ -54,10 +55,17 @@ workflows:
 
       - name: Construir IPA para App Store
         script: |
-          set -x
           mkdir -p /tmp/keys
-          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/keys/AuthKey.p8
+          # Escribir API key con Python para evitar redacción de secretos
+          python3 -c "
+          import os
+          key = os.environ['APP_STORE_CONNECT_PRIVATE_KEY']
+          with open('/tmp/keys/AuthKey.p8', 'w') as f:
+              f.write(key)
+          print(f'Key written: {len(key)} chars')
+          "
 
+          set -x
           echo "=== ARCHIVANDO (firma via API key, sin ios_signing) ==="
           xcodebuild -workspace ios/App/App.xcworkspace \
             -scheme App \
