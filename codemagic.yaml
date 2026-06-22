@@ -57,11 +57,17 @@ workflows:
 
       - name: Construir IPA para App Store
         script: |
+          set -x
           xcode-project use-profiles
           xcode-project build-ipa \
             --workspace ios/App/App.xcworkspace \
             --scheme App \
-            --export-options-plist /Users/builder/export_options.plist
+            --export-options-plist /Users/builder/export_options.plist \
+            --verbose 2>&1 | tee /tmp/build-ipa.log
+          BUILD_EXIT=${PIPESTATUS[0]}
+          echo "=== BUSCANDO ERRORES ==="
+          grep -i "error:" /tmp/build-ipa.log || echo "No se encontraron errores explícitos"
+          exit $BUILD_EXIT
 
     artifacts:
       - build/ios/ipa/*.ipa
