@@ -58,7 +58,12 @@ workflows:
       - name: Construir IPA para App Store
         script: |
           set -x
-          xcode-project use-profiles
+          echo "=== MATANDO CERTIFICADO VIEJO ==="
+          # Eliminar el certificado revocado del keychain
+          security find-certificate -c "Apple Distribution" -Z /Users/builder/Library/codemagic-cli-tools/keychains/*.keychain-db 2>/dev/null || true
+          security delete-certificate -Z 663B42758A7528CBB19F84777C7FF2C0 /Users/builder/Library/codemagic-cli-tools/keychains/*.keychain-db 2>/dev/null || true
+          # Forzar limpieza y regeneración
+          xcode-project use-profiles --clean
           echo "=== ESTRUCTURA DEL PROYECTO ==="
           ls -la ios/App/Podfile && echo "Podfile OK" || echo "NO Podfile"
           ls -la ios/App/App.xcworkspace/ && echo "xcworkspace OK" || echo "NO xcworkspace"
@@ -71,8 +76,8 @@ workflows:
             archive \
             COMPILER_INDEX_STORE_ENABLE=NO \
             DEVELOPMENT_TEAM=P9L962T32A \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_STYLE=Automatic \
+            -allowProvisioningUpdates \
             2>&1 | tee /tmp/xcode-raw.log
           BUILD_EXIT=${PIPESTATUS[0]}
           echo "=== ERRORES DE COMPILACIÓN ==="
