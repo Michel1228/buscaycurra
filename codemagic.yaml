@@ -29,16 +29,11 @@ workflows:
       - name: Instalar dependencias Node
         script: npm ci
 
-      - name: Crear plataforma iOS (siempre desde cero)
+      - name: Crear plataforma iOS y sincronizar
         script: |
           rm -rf ios
           npx cap add ios
-
-      - name: Instalar dependencias CocoaPods
-        script: cd ios/App && pod install
-
-      - name: Sincronizar Capacitor
-        script: npx cap sync ios
+          npx cap sync ios
 
       - name: Configurar Info.plist
         script: |
