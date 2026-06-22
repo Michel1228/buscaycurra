@@ -195,8 +195,11 @@ export async function GET(request: NextRequest) {
       idx++;
     }
 
-    // Filtro por categoria (au_pair / live_in_nanny)
-    if (categoria && CATEGORIA_KEYWORDS[categoria]) {
+    // Filtro por categoria (au_pair / live_in_nanny) — combinados: son el mismo sector
+    if (categoria === "au_pair" || categoria === "live_in_nanny") {
+      // Mostrar ambas categorías juntas — el usuario busca cuidar niños, no le importa la etiqueta
+      conditions.push(`(${CATEGORIA_KEYWORDS["au_pair"]} OR ${CATEGORIA_KEYWORDS["live_in_nanny"]})`);
+    } else if (categoria && CATEGORIA_KEYWORDS[categoria]) {
       conditions.push(CATEGORIA_KEYWORDS[categoria]);
     }
 
