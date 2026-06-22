@@ -1,11 +1,52 @@
 workflows:
-  ios-build:
-    name: iOS Build
-    instance_type: mac_mini_m2
+  ios-app-store:
+    name: BuscayCurra iOS — App Store
     max_build_duration: 60
+    instance_type: mac_mini_m2
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: unified-production
+          include: true
+          source: true
     environment:
-      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: es.buscaycurra.app
+      vars:
+        BUNDLE_ID: es.buscaycurra.app
+        APPLE_TEAM_ID: P9L962T32A
       node: 22
+      xcode: latest
+      cocoapods: default
     scripts:
-      - name: Echo
-        script: echo "Hello"
+      - name: Instalar dependencias Node
+        script: npm ci
+      - name: Crear plataforma iOS
+        script: |
+          rm -rf ios
+          npx cap add ios --packagemanager cocoapods
+      - name: Instalar CocoaPods
+        script: cd ios/App && pod install
+      - name: Sincronizar Capacitor
+        script: npx cap sync ios
+      - name: Configurar Info.plist
+        script: |
+          PLIST="ios/App/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+      - name: Construir IPA
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_app_store: true
