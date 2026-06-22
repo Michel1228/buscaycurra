@@ -13,9 +13,6 @@ workflows:
           source: true
 
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: es.buscaycurra.app
       vars:
         BUNDLE_ID: es.buscaycurra.app
         APPLE_TEAM_ID: P9L962T32A
@@ -58,11 +55,10 @@ workflows:
       - name: Construir IPA para App Store
         script: |
           set -x
-          echo "=== MATANDO CERTIFICADO REVOCADO ==="
-          security delete-certificate -Z 663B42758A7528CBB19F84777C7FF2C0 /Users/builder/Library/codemagic-cli-tools/keychains/*.keychain-db 2>/dev/null || echo "Cert ya eliminado o keychain no encontrado"
-          echo "=== CONFIGURANDO FIRMA (creará nuevo certificado si es necesario) ==="
-          xcode-project use-profiles
-          echo "=== COMPILANDO ==="
+          mkdir -p /tmp/keys
+          echo "$APP_STORE_CONNECT_PRIVATE_KEY" > /tmp/keys/AuthKey.p8
+
+          echo "=== ARCHIVANDO (firma via API key, sin ios_signing) ==="
           xcodebuild -workspace ios/App/App.xcworkspace \
             -scheme App \
             -sdk iphoneos \
@@ -70,11 +66,39 @@ workflows:
             -archivePath /tmp/App.xcarchive \
             archive \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            DEVELOPMENT_TEAM=P9L962T32A \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
+            CODE_SIGN_STYLE=Automatic \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID $APP_STORE_CONNECT_ISSUER_ID \
+            -authenticationKeyID $APP_STORE_CONNECT_KEY_IDENTIFIER \
+            -authenticationKeyPath /tmp/keys/AuthKey.p8 \
             2>&1 | tee /tmp/xcode-raw.log
           BUILD_EXIT=${PIPESTATUS[0]}
+
+          if [ $BUILD_EXIT -eq 0 ]; then
+            echo "=== EXPORTANDO IPA ==="
+            /usr/libexec/PlistBuddy -c "Add :method string app-store" /tmp/ExportOptions.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Set :method app-store" /tmp/ExportOptions.plist 2>/dev/null
+            /usr/libexec/PlistBuddy -c "Add :teamID string P9L962T32A" /tmp/ExportOptions.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Set :teamID P9L962T32A" /tmp/ExportOptions.plist 2>/dev/null
+            xcodebuild -exportArchive \
+              -archivePath /tmp/App.xcarchive \
+              -exportOptionsPlist /tmp/ExportOptions.plist \
+              -exportPath /tmp/ipa \
+              -allowProvisioningUpdates \
+              -authenticationKeyIssuerID $APP_STORE_CONNECT_ISSUER_ID \
+              -authenticationKeyID $APP_STORE_CONNECT_KEY_IDENTIFIER \
+              -authenticationKeyPath /tmp/keys/AuthKey.p8 \
+              2>&1 | tee -a /tmp/xcode-raw.log
+            EXPORT_EXIT=${PIPESTATUS[0]}
+            if [ $EXPORT_EXIT -eq 0 ]; then
+              mkdir -p build/ios/ipa
+              cp /tmp/ipa/*.ipa build/ios/ipa/
+            else
+              BUILD_EXIT=$EXPORT_EXIT
+            fi
+          fi
+
           echo "=== ERRORES ==="
           grep -E "error:|fatal error:" /tmp/xcode-raw.log | head -30 || echo "Sin errores"
           exit $BUILD_EXIT
