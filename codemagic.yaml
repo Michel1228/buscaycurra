@@ -58,10 +58,11 @@ workflows:
       - name: Construir IPA para App Store
         script: |
           set -x
+          echo "=== MATANDO CERTIFICADO REVOCADO ==="
+          security delete-certificate -Z 663B42758A7528CBB19F84777C7FF2C0 /Users/builder/Library/codemagic-cli-tools/keychains/*.keychain-db 2>/dev/null || echo "Cert ya eliminado o keychain no encontrado"
+          echo "=== CONFIGURANDO FIRMA (creará nuevo certificado si es necesario) ==="
           xcode-project use-profiles
-          echo "=== ESTRUCTURA DEL PROYECTO ==="
-          ls -la ios/App/Podfile && echo "Podfile OK" || echo "NO Podfile"
-          echo "=== COMPILANDO CON XCODE DIRECT ==="
+          echo "=== COMPILANDO ==="
           xcodebuild -workspace ios/App/App.xcworkspace \
             -scheme App \
             -sdk iphoneos \
@@ -74,8 +75,8 @@ workflows:
             CODE_SIGN_STYLE=Manual \
             2>&1 | tee /tmp/xcode-raw.log
           BUILD_EXIT=${PIPESTATUS[0]}
-          echo "=== ERRORES DE COMPILACIÓN ==="
-          grep -E "error:|warning:|fatal error:" /tmp/xcode-raw.log | head -50 || echo "Sin errores/warnings"
+          echo "=== ERRORES ==="
+          grep -E "error:|fatal error:" /tmp/xcode-raw.log | head -30 || echo "Sin errores"
           exit $BUILD_EXIT
 
     artifacts:
