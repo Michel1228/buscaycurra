@@ -3,7 +3,6 @@ workflows:
     name: BuscayCurra iOS — App Store
     max_build_duration: 60
     instance_type: mac_mini_m2
-
     triggering:
       events:
         - push
@@ -11,7 +10,6 @@ workflows:
         - pattern: unified-production
           include: true
           source: true
-
     environment:
       ios_signing:
         distribution_type: app_store
@@ -19,100 +17,25 @@ workflows:
       vars:
         BUNDLE_ID: es.buscaycurra.app
         APPLE_TEAM_ID: P9L962T32A
-        APP_STORE_CONNECT_ISSUER_ID: "8e2fe663-67af-4d2d-9ad8-5696b6e580c9"
-        APP_STORE_CONNECT_KEY_IDENTIFIER: "7MK73YRZ2J"
       node: 22
       xcode: latest
       cocoapods: default
-
     scripts:
-      - name: Instalar dependencias Node
-        script: npm ci
-
-      - name: Crear plataforma iOS
+      - name: Build
         script: |
-          rm -rf ios
-          npx cap add ios --packagemanager cocoapods
-
-      - name: Instalar CocoaPods
-        script: cd ios/App && pod install
-
-      - name: Sincronizar Capacitor
-        script: npx cap sync ios
-
-      - name: Configurar Info.plist
-        script: |
-          PLIST="ios/App/App/Info.plist"
-          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
-          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations~ipad" "$PLIST" 2>/dev/null || true
-
-      - name: Incrementar build number automáticamente
-        script: |
-          LATEST=$(app-store-connect get-latest-build-number "$BUNDLE_ID" \
-            --platform IOS 2>/dev/null || echo "0")
-          BUILD=$(($LATEST + 1))
-          agvtool new-version -all $BUILD
-          echo "Build number: $BUILD"
-
-      - name: Revocar certificado malo y regenerar
-        script: |
-          set -x
-          echo "=== Certificados actuales en Apple ==="
-          app-store-connect list-certificates --type DISTRIBUTION 2>/dev/null || echo "Comando no disponible"
-          
-          echo "=== Intentando revocar certificado 663B42758A7528CBB19F84777C7FF2C0 ==="
-          app-store-connect revoke-certificate 663B42758A7528CBB19F84777C7FF2C0 2>/dev/null || echo "Revocación falló o no disponible"
-          
-          echo "=== Verificando keychain ==="
-          security find-certificate -c "Apple Distribution" -Z /Users/builder/Library/codemagic-cli-tools/keychains/*.keychain-db 2>/dev/null || true
-          
-          echo "=== Regenerando perfiles ==="
+          npm ci
+          rm -rf ios && npx cap add ios --packagemanager cocoapods
+          cd ios/App && pod install
+          npx cap sync ios
           xcode-project use-profiles
-
-      - name: Construir IPA para App Store
-        script: |
-          set -x
-          echo "=== ARCHIVANDO ==="
-          xcodebuild -workspace ios/App/App.xcworkspace \
-            -scheme App \
-            -sdk iphoneos \
-            -configuration Release \
-            -archivePath /tmp/App.xcarchive \
-            archive \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            CODE_SIGN_STYLE=Manual \
-            2>&1 | tee /tmp/xcode-raw.log
-          BUILD_EXIT=${PIPESTATUS[0]}
-          echo "=== ERRORES ==="
-          grep -E "error:|fatal error:" /tmp/xcode-raw.log | head -20 || echo "Sin errores"
-          if [ $BUILD_EXIT -eq 0 ]; then
-            echo "=== EXPORTANDO IPA ==="
-            xcodebuild -exportArchive \
-              -archivePath /tmp/App.xcarchive \
-              -exportOptionsPlist /Users/builder/export_options.plist \
-              -exportPath /tmp/ipa \
-              2>&1 | tee -a /tmp/xcode-raw.log
-            EXPORT_EXIT=${PIPESTATUS[0]}
-            if [ $EXPORT_EXIT -eq 0 ]; then
-              mkdir -p build/ios/ipa
-              cp /tmp/ipa/*.ipa build/ios/ipa/
-            else
-              BUILD_EXIT=$EXPORT_EXIT
-            fi
-          fi
-          exit $BUILD_EXIT
-
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testflight: false
         submit_to_app_store: true
