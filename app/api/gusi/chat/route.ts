@@ -989,11 +989,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // 🔒 Verificar autenticación (NO confiar en userId del body)
+  const { getUserId } = await import("@/lib/auth-server");
+  const authUserId = await getUserId(req);
+  if (!authUserId) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const {
       message, history = [], mode = "chat",
-      cvData: cvDataFromClient, empresa, puesto, userId, pais,
+      cvData: cvDataFromClient, empresa, puesto, userId: bodyUserId, pais,
     } = body as {
       message: string;
       history?: Array<{ role: string; text: string }>;
@@ -1004,6 +1011,12 @@ export async function POST(req: NextRequest) {
       userId?: string;
       pais?: string;
     };
+
+    // ⚠️ Ignorar userId del body, usar el autenticado
+    const userId = authUserId;
+    if (bodyUserId && bodyUserId !== authUserId) {
+      console.warn(`[Guzzi] ⚠️ userId del body (${bodyUserId}) no coincide con token (${authUserId}) — posible ataque`);
+    }
 
     if (!message) return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
 

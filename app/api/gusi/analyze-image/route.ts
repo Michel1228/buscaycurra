@@ -16,14 +16,27 @@ import { createClient } from "@supabase/supabase-js";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  // 🔒 Verificar autenticación (NO confiar en userId del body)
+  const { getUserId } = await import("@/lib/auth-server");
+  const authUserId = await getUserId(req);
+  if (!authUserId) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
-    const { imageBase64, userId, lat, lng } = body as {
+    const { imageBase64, userId: bodyUserId, lat, lng } = body as {
       imageBase64: string;
       userId?: string;
       lat?: number;
       lng?: number;
     };
+
+    // ⚠️ Usar userId autenticado, ignorar el del body
+    const userId = authUserId;
+    if (bodyUserId && bodyUserId !== authUserId) {
+      console.warn(`[Guzzi OCR] ⚠️ userId del body (${bodyUserId}) no coincide con token (${authUserId})`);
+    }
 
     if (!imageBase64) {
       return NextResponse.json({ error: "Imagen requerida" }, { status: 400 });

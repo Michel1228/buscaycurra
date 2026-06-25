@@ -90,7 +90,7 @@ export default function EnviosPage() {
     const { data: { session } } = await getSupabaseBrowser().auth.getSession();
     if (!session) return;
     const res = await fetch("/api/cv-sender/cancel", {
-      method: "POST",
+      method: "DELETE",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
       body: JSON.stringify({ jobId: id }),
     });
