@@ -208,7 +208,7 @@ function obtenerDatosReferencia(puesto: string): {
     Madrid: 1.22, Barcelona: 1.18, Vizcaya: 1.12, Guipúzcoa: 1.10, Álava: 1.08,
     Navarra: 1.05, Zaragoza: 1.02, Baleares: 0.98, Girona: 0.97, Tarragona: 0.95,
     Valencia: 0.94, Alicante: 0.91, Castellón: 0.90, Lleida: 0.89,
-    Asturias: 0.93, Cantabria: 0.92, "La Rioja": 0.91,
+    Asturias: 0.93, Cantabria: 0.92, La Rioja: 0.91,
     Valladolid: 0.90, Burgos: 0.89, León: 0.86, Salamanca: 0.85, Segovia: 0.84,
     Palencia: 0.83, Zamora: 0.82, Ávila: 0.81, Soria: 0.80,
     Murcia: 0.87, Albacete: 0.84, Toledo: 0.86, CiudadReal: 0.83,
