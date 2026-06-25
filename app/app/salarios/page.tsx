@@ -61,10 +61,35 @@ const TOP_FALLBACK: OcupacionCard[] = [
 ];
 
 const PROVINCIAS = [
-  "Madrid", "Barcelona", "Valencia", "Sevilla", "Málaga",
-  "Zaragoza", "Murcia", "A Coruña", "Baleares", "Las Palmas",
-  "Vizcaya", "Tenerife", "Granada", "Tarragona", "Córdoba",
+  "Madrid", "Barcelona", "Valencia", "Sevilla", "Málaga", "Zaragoza", "Murcia",
+  "A Coruña", "Baleares", "Las Palmas", "Vizcaya", "Tenerife", "Granada",
+  "Tarragona", "Córdoba", "Alicante", "Asturias", "Cádiz", "Cantabria",
+  "Girona", "Guipúzcoa", "Huelva", "Jaén", "León", "Lleida", "Lugo",
+  "Navarra", "Ourense", "Pontevedra", "Salamanca", "Segovia", "Toledo",
+  "Valladolid", "Zamora", "Álava", "Albacete", "Badajoz", "Burgos",
+  "Cáceres", "Castellón", "Ciudad Real", "Cuenca", "Huesca", "Palencia",
+  "La Rioja", "Soria", "Teruel", "Ávila",
 ];
+
+const CCAA: Record<string, string[]> = {
+  "Andalucía": ["Almería","Cádiz","Córdoba","Granada","Huelva","Jaén","Málaga","Sevilla"],
+  "Aragón": ["Huesca","Teruel","Zaragoza"],
+  "Asturias": ["Asturias"],
+  "Baleares": ["Baleares"],
+  "Canarias": ["Las Palmas","Tenerife"],
+  "Cantabria": ["Cantabria"],
+  "Castilla y León": ["Ávila","Burgos","León","Palencia","Salamanca","Segovia","Soria","Valladolid","Zamora"],
+  "Castilla-La Mancha": ["Albacete","Ciudad Real","Cuenca","Guadalajara","Toledo"],
+  "Cataluña": ["Barcelona","Girona","Lleida","Tarragona"],
+  "C. Valenciana": ["Alicante","Castellón","Valencia"],
+  "Extremadura": ["Badajoz","Cáceres"],
+  "Galicia": ["A Coruña","Lugo","Ourense","Pontevedra"],
+  "Madrid": ["Madrid"],
+  "Murcia": ["Murcia"],
+  "Navarra": ["Navarra"],
+  "País Vasco": ["Álava","Guipúzcoa","Vizcaya"],
+  "La Rioja": ["La Rioja"],
+};
 
 export default function SalariosPage() {
   const router = useRouter();
