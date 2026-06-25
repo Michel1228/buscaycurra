@@ -23,6 +23,18 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const puesto = (searchParams.get("puesto") || "").trim();
   const provincia = (searchParams.get("provincia") || "").trim();
+  const pais = (searchParams.get("pais") || "ES").toUpperCase().trim();
+
+  // Si es un país distinto de España, devolver datos de referencia con ajuste GDP
+  if (pais && pais !== "ES") {
+    const refData = obtenerDatosReferenciaPais(puesto, pais);
+    return NextResponse.json({
+      ...refData,
+      puesto: puesto || "",
+      provincia: provincia || null,
+      provinciaDetalle: null,
+    });
+  }
 
   try {
     const pool = getPool();
@@ -35,7 +47,7 @@ export async function GET(request: NextRequest) {
           COUNT(*) as total,
           AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary,
           MIN(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as min_salary,
-          MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary
+          MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace(substring(salary from '.*([0-9][0-9.,]*[0-9])'), '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary
          FROM "JobListing"
          WHERE "isActive" = true AND salary ~ '[0-9]'
          GROUP BY ocupacion
@@ -56,8 +68,8 @@ export async function GET(request: NextRequest) {
       if (ocupaciones.length < 5) {
         return NextResponse.json({
           top: [
-            { puesto: "camarero", total: 8540, avg_salary: 19200, min_salary: 15876, max_salary: 28000 },
-            { puesto: "dependiente", total: 6200, avg_salary: 18500, min_salary: 15876, max_salary: 26000 },
+            { puesto: "camarero", total: 8540, avg_salary: 19200, min_salary: 16576, max_salary: 28000 },
+            { puesto: "dependiente", total: 6200, avg_salary: 18500, min_salary: 16576, max_salary: 26000 },
             { puesto: "administrativo", total: 5100, avg_salary: 22500, min_salary: 18000, max_salary: 35000 },
             { puesto: "programador", total: 4800, avg_salary: 38000, min_salary: 24000, max_salary: 65000 },
             { puesto: "enfermero", total: 3500, avg_salary: 28000, min_salary: 22000, max_salary: 42000 },
@@ -96,7 +108,7 @@ export async function GET(request: NextRequest) {
         COUNT(*) as total,
         AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary,
         MIN(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as min_salary,
-        MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary,
+        MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace(substring(salary from '.*([0-9][0-9.,]*[0-9])'), '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary,
         COUNT(CASE WHEN salary ~ '[0-9]' THEN 1 END) as con_salario
        FROM "JobListing"
        WHERE "isActive" = true AND title ILIKE $1`,
@@ -211,23 +223,23 @@ function obtenerDatosReferencia(puesto: string): {
     Asturias: 0.93, Cantabria: 0.92, "La Rioja": 0.91,
     Valladolid: 0.90, Burgos: 0.89, León: 0.86, Salamanca: 0.85, Segovia: 0.84,
     Palencia: 0.83, Zamora: 0.82, Ávila: 0.81, Soria: 0.80,
-    Murcia: 0.87, Albacete: 0.84, Toledo: 0.86, CiudadReal: 0.83,
+    Murcia: 0.87, Albacete: 0.84, Toledo: 0.86, "Ciudad Real": 0.83,
     Cuenca: 0.81, Guadalajara: 0.87,
     Sevilla: 0.90, Málaga: 0.92, Granada: 0.87, Córdoba: 0.85,
     Cádiz: 0.84, Huelva: 0.82, Jaén: 0.81, Almería: 0.83,
-    ACoruña: 0.91, Pontevedra: 0.89, Lugo: 0.83, Ourense: 0.81,
+    "A Coruña": 0.91, Pontevedra: 0.89, Lugo: 0.83, Ourense: 0.81,
     Badajoz: 0.82, Cáceres: 0.80,
-    LasPalmas: 0.88, Tenerife: 0.86,
+    "Las Palmas": 0.88, Tenerife: 0.86,
     Huesca: 0.84, Teruel: 0.81,
   };
 
   const referencias: Record<string, { min: number; avg: number; max: number }> = {
-    camarero: { min: 15876, avg: 19200, max: 28000 },
+    camarero: { min: 16576, avg: 19200, max: 28000 },
     cocinero: { min: 17000, avg: 21000, max: 30000 },
-    limpieza: { min: 15876, avg: 17500, max: 22000 },
+    limpieza: { min: 16576, avg: 17500, max: 22000 },
     conductor: { min: 18000, avg: 22000, max: 32000 },
     electricista: { min: 18000, avg: 24000, max: 36000 },
-    dependiente: { min: 15876, avg: 18500, max: 26000 },
+    dependiente: { min: 16576, avg: 18500, max: 26000 },
     programador: { min: 24000, avg: 38000, max: 65000 },
     enfermero: { min: 22000, avg: 28000, max: 42000 },
     administrativo: { min: 18000, avg: 22500, max: 35000 },
@@ -236,12 +248,12 @@ function obtenerDatosReferencia(puesto: string): {
     almacen: { min: 16000, avg: 19000, max: 24000 },
     soldador: { min: 18000, avg: 23000, max: 34000 },
     fontanero: { min: 17500, avg: 22500, max: 33000 },
-    peluquero: { min: 15876, avg: 17000, max: 22000 },
+    peluquero: { min: 16576, avg: 17000, max: 22000 },
     cuidador: { min: 16000, avg: 18500, max: 23000 },
     operario: { min: 16000, avg: 19500, max: 25000 },
     repartidor: { min: 16000, avg: 19000, max: 24000 },
-    cajero: { min: 15876, avg: 17200, max: 21000 },
-    vendedor: { min: 15876, avg: 19000, max: 28000 },
+    cajero: { min: 16576, avg: 17200, max: 21000 },
+    vendedor: { min: 16576, avg: 19000, max: 28000 },
     ingeniero: { min: 28000, avg: 42000, max: 72000 },
     contable: { min: 20000, avg: 28000, max: 42000 },
     farmaceutico: { min: 22000, avg: 32000, max: 50000 },
@@ -253,17 +265,17 @@ function obtenerDatosReferencia(puesto: string): {
     psicologo: { min: 19000, avg: 25000, max: 38000 },
     veterinario: { min: 20000, avg: 27000, max: 42000 },
     carnicero: { min: 16000, avg: 19500, max: 25000 },
-    panadero: { min: 15876, avg: 18000, max: 23000 },
-    jardinero: { min: 15876, avg: 17500, max: 22000 },
+    panadero: { min: 16576, avg: 18000, max: 23000 },
+    jardinero: { min: 16576, avg: 17500, max: 22000 },
     pintor: { min: 16500, avg: 20000, max: 27000 },
     carpintero: { min: 17000, avg: 21000, max: 28000 },
     informatico: { min: 22000, avg: 32000, max: 55000 },
-    teleoperador: { min: 15876, avg: 17000, max: 21000 },
-    mozo: { min: 15876, avg: 17500, max: 22000 },
+    teleoperador: { min: 16576, avg: 17000, max: 21000 },
+    mozo: { min: 16576, avg: 17500, max: 22000 },
     vigilante: { min: 17000, avg: 20000, max: 26000 },
     socorrista: { min: 16000, avg: 18000, max: 22000 },
     recepcionista: { min: 16000, avg: 18500, max: 24000 },
-    auxiliar: { min: 15876, avg: 17500, max: 23000 },
+    auxiliar: { min: 16576, avg: 17500, max: 23000 },
     tecnico: { min: 19000, avg: 26000, max: 40000 },
     comercial: { min: 18000, avg: 25000, max: 45000 },
     jefe: { min: 28000, avg: 42000, max: 75000 },
@@ -272,11 +284,21 @@ function obtenerDatosReferencia(puesto: string): {
     analista: { min: 22000, avg: 32000, max: 52000 },
   };
 
+  // Normalizar género femenino: quitar 'a' final si termina en -era/-ora/-esa/-ista
+  const femToMasc: Record<string, string> = {
+    camarera: "camarero", cocinera: "cocinero", enfermera: "enfermero",
+    peluquera: "peluquero", cajera: "cajero", vendedora: "vendedor",
+    repartidora: "repartidor", cuidadora: "cuidador", jardinera: "jardinero",
+    panadera: "panadero", carnicera: "carnicero", conductora: "conductor",
+    dependienta: "dependiente", limpiadora: "limpieza",
+  };
+  const puestoNorm = femToMasc[puesto] || puesto;
+
   // Búsqueda flexible: intentar match exacto, luego substring
-  let match = referencias[puesto];
+  let match = referencias[puestoNorm];
   if (!match) {
     for (const [key, val] of Object.entries(referencias)) {
-      if (puesto.includes(key) || key.includes(puesto)) {
+      if (puestoNorm.includes(key) || key.includes(puestoNorm)) {
         match = val;
         break;
       }
@@ -288,7 +310,7 @@ function obtenerDatosReferencia(puesto: string): {
   const provincias = Object.entries(indiceProvincial)
     .map(([prov, idx]) => ({
       province: prov,
-      count: Math.round(20 + Math.random() * 120),
+      count: (prov.length * 31 + puesto.length * 17) % 100 + 40,
       avg_salary: Math.round(match.avg * idx),
     }))
     .sort((a, b) => b.avg_salary - a.avg_salary)
@@ -304,5 +326,89 @@ function obtenerDatosReferencia(puesto: string): {
       fuente: "Referencia mercado laboral español 2026 (INE + portales empleo)",
     },
     porProvincia: provincias,
+  };
+}
+
+// ─── Datos de referencia para países no-España ───
+const GDP_FACTORS: Record<string, number> = {
+  PT: 0.72, US: 2.45, GB: 1.55, DE: 1.62, FR: 1.45, IT: 1.28,
+  CA: 1.70, MX: 0.55, AR: 0.50, CO: 0.38, CL: 0.58, PE: 0.35,
+  BR: 0.42, NL: 1.80, BE: 1.65, CH: 2.80, AT: 1.70, IE: 2.20,
+  AU: 1.95, NZ: 1.55, SE: 1.65, NO: 2.30, DK: 1.85,
+};
+
+const REGIONES_PAIS: Record<string, string[]> = {
+  PT: ["Lisboa","Oporto","Braga","Setúbal","Aveiro","Coimbra","Leiria","Faro","Viseu","Évora","Santarém","Viana do Castelo","Vila Real","Bragança","Guarda","Castelo Branco","Portalegre","Beja"],
+  US: ["California","Texas","New York","Florida","Illinois","Pennsylvania","Ohio","Georgia","North Carolina","Michigan","New Jersey","Virginia","Washington","Arizona","Massachusetts"],
+  GB: ["London","South East","North West","East of England","West Midlands","South West","Yorkshire","Scotland","East Midlands","Wales","North East","Northern Ireland"],
+  DE: ["Baviera","Baden-Wurtemberg","Renania del Norte","Baja Sajonia","Hesse","Berlín","Sajonia","Renania-Palatinado","Hamburgo","Schleswig-Holstein","Brandeburgo","Turingia"],
+  FR: ["Île-de-France","Auvernia-Ródano-Alpes","Nueva Aquitania","Occitania","Altos de Francia","Provenza-Alpes","Gran Este","Países del Loira","Bretaña","Normandía"],
+  IT: ["Lombardía","Lacio","Campania","Véneto","Emilia-Romaña","Sicilia","Piamonte","Apulia","Toscana","Calabria"],
+  CA: ["Ontario","Quebec","British Columbia","Alberta","Manitoba","Saskatchewan","Nova Scotia"],
+  MX: ["CDMX","Jalisco","Nuevo León","Estado de México","Guanajuato","Puebla","Veracruz","Chihuahua","Baja California","Sonora"],
+  AR: ["Buenos Aires","CABA","Córdoba","Santa Fe","Mendoza","Tucumán","Entre Ríos","Salta"],
+  CO: ["Bogotá","Antioquia","Valle del Cauca","Cundinamarca","Santander","Atlántico","Bolívar"],
+  CL: ["Metropolitana","Valparaíso","Biobío","Maule","La Araucanía","Los Lagos"],
+  PE: ["Lima","Arequipa","La Libertad","Piura","Cusco","Lambayeque"],
+  BR: ["São Paulo","Río de Janeiro","Minas Gerais","Bahía","Rio Grande do Sul","Paraná","Pernambuco"],
+  NL: ["Holanda Septentrional","Holanda Meridional","Brabante Septentrional","Güeldres","Utrecht"],
+  BE: ["Flandes","Valonia","Bruselas","Amberes","Limburgo"],
+  CH: ["Zúrich","Berna","Vaud","Argovia","San Galo","Ginebra","Lucerna"],
+  AT: ["Viena","Baja Austria","Alta Austria","Estiria","Tirol"],
+  IE: ["Dublín","Cork","Galway","Limerick","Waterford"],
+  AU: ["New South Wales","Victoria","Queensland","Western Australia","South Australia"],
+  NZ: ["Auckland","Wellington","Canterbury","Waikato","Bay of Plenty"],
+  SE: ["Estocolmo","Västra Götaland","Escania","Östergötland","Jönköping"],
+  NO: ["Oslo","Viken","Vestland","Rogaland","Trøndelag"],
+  DK: ["Hovedstaden","Midtjylland","Syddanmark","Sjælland","Nordjylland"],
+};
+
+function obtenerDatosReferenciaPais(puesto: string, pais: string): {
+  fuente: "referencia";
+  rangoGeneral: { min_salary: number; max_salary: number; avg_salary: number; total: number; fuente: string };
+  porProvincia: Array<{ province: string; count: number; avg_salary: number }>;
+} {
+  const factor = GDP_FACTORS[pais] || 1.0;
+  const regiones = REGIONES_PAIS[pais] || ["Nacional"];
+
+  // Datos base (equivalente español) ajustados por GDP per cápita
+  const baseRef: Record<string, { min: number; avg: number; max: number }> = {
+    camarero: { min: 16576, avg: 19200, max: 28000 },
+    cocinero: { min: 17000, avg: 21000, max: 30000 },
+    programador: { min: 24000, avg: 38000, max: 65000 },
+    enfermero: { min: 22000, avg: 28000, max: 42000 },
+    electricista: { min: 18000, avg: 24000, max: 36000 },
+    conductor: { min: 18000, avg: 22000, max: 32000 },
+    administrativo: { min: 18000, avg: 22500, max: 35000 },
+    dependiente: { min: 16576, avg: 18500, max: 26000 },
+    mecanico: { min: 17000, avg: 22000, max: 32000 },
+    ingeniero: { min: 28000, avg: 42000, max: 72000 },
+    profesor: { min: 22000, avg: 30000, max: 45000 },
+    contable: { min: 20000, avg: 28000, max: 42000 },
+    diseñador: { min: 18000, avg: 25000, max: 38000 },
+    comercial: { min: 18000, avg: 25000, max: 45000 },
+    director: { min: 35000, avg: 55000, max: 100000 },
+  };
+
+  const puestoClean = puesto.toLowerCase().trim();
+  let match = baseRef[puestoClean];
+  if (!match) match = { min: 18000, avg: 24000, max: 36000 };
+
+  const porProvincia = regiones.map((r, i) => ({
+    province: r,
+    count: (r.length * 31 + i * 7) % 60 + 20,
+    avg_salary: Math.round(match.avg * factor * (0.85 + (regiones.indexOf(r) % 5) * 0.07)),
+  })).sort((a, b) => b.avg_salary - a.avg_salary);
+
+  return {
+    fuente: "referencia",
+    rangoGeneral: {
+      min_salary: Math.round(match.min * factor),
+      max_salary: Math.round(match.max * factor),
+      avg_salary: Math.round(match.avg * factor),
+      total: 0,
+      fuente: `Referencia mercado laboral ${pais} 2026 (ajustado por PIB per cápita)`,
+    },
+    porProvincia,
   };
 }
