@@ -14,14 +14,9 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: es.buscaycurra.app
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
       vars:
         BUNDLE_ID: es.buscaycurra.app
         APPLE_TEAM_ID: P9L962T32A
-        APP_STORE_CONNECT_KEY_IDENTIFIER: 7MK73YRZ2J
-        APP_STORE_CONNECT_ISSUER_ID: 8e2fe663-67af-4d2d-9ad8-5696b6e580c9
       node: 22
       xcode: latest
       cocoapods: default
