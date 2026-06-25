@@ -202,25 +202,6 @@ function obtenerDatosReferencia(puesto: string): {
   rangoGeneral: { min_salary: number; max_salary: number; avg_salary: number; total: number; fuente: string };
   porProvincia: Array<{ province: string; count: number; avg_salary: number }>;
 } {
-  // Datos de referencia: salarios medios anuales por provincia (INE + portales empleo 2026)
-  // Índice: multiplicador sobre la media nacional para cada provincia
-  const indiceProvincial: Record<string, number> = {
-    Madrid: 1.22, Barcelona: 1.18, Vizcaya: 1.12, Guipúzcoa: 1.10, Álava: 1.08,
-    Navarra: 1.05, Zaragoza: 1.02, Baleares: 0.98, Girona: 0.97, Tarragona: 0.95,
-    Valencia: 0.94, Alicante: 0.91, Castellón: 0.90, Lleida: 0.89,
-    Asturias: 0.93, Cantabria: 0.92, La Rioja: 0.91,
-    Valladolid: 0.90, Burgos: 0.89, León: 0.86, Salamanca: 0.85, Segovia: 0.84,
-    Palencia: 0.83, Zamora: 0.82, Ávila: 0.81, Soria: 0.80,
-    Murcia: 0.87, Albacete: 0.84, Toledo: 0.86, CiudadReal: 0.83,
-    Cuenca: 0.81, Guadalajara: 0.87,
-    Sevilla: 0.90, Málaga: 0.92, Granada: 0.87, Córdoba: 0.85,
-    Cádiz: 0.84, Huelva: 0.82, Jaén: 0.81, Almería: 0.83,
-    ACoruña: 0.91, Pontevedra: 0.89, Lugo: 0.83, Ourense: 0.81,
-    Badajoz: 0.82, Cáceres: 0.80,
-    LasPalmas: 0.88, Tenerife: 0.86,
-    Huesca: 0.84, Teruel: 0.81,
-  };
-
   const referencias: Record<string, { min: number; avg: number; max: number }> = {
     camarero: { min: 15876, avg: 19200, max: 28000 },
     cocinero: { min: 17000, avg: 21000, max: 30000 },
@@ -242,57 +223,9 @@ function obtenerDatosReferencia(puesto: string): {
     repartidor: { min: 16000, avg: 19000, max: 24000 },
     cajero: { min: 15876, avg: 17200, max: 21000 },
     vendedor: { min: 15876, avg: 19000, max: 28000 },
-    ingeniero: { min: 28000, avg: 42000, max: 72000 },
-    contable: { min: 20000, avg: 28000, max: 42000 },
-    farmaceutico: { min: 22000, avg: 32000, max: 50000 },
-    abogado: { min: 24000, avg: 35000, max: 60000 },
-    arquitecto: { min: 22000, avg: 32000, max: 52000 },
-    diseñador: { min: 18000, avg: 25000, max: 38000 },
-    profesor: { min: 22000, avg: 30000, max: 45000 },
-    periodista: { min: 18000, avg: 24000, max: 38000 },
-    psicologo: { min: 19000, avg: 25000, max: 38000 },
-    veterinario: { min: 20000, avg: 27000, max: 42000 },
-    carnicero: { min: 16000, avg: 19500, max: 25000 },
-    panadero: { min: 15876, avg: 18000, max: 23000 },
-    jardinero: { min: 15876, avg: 17500, max: 22000 },
-    pintor: { min: 16500, avg: 20000, max: 27000 },
-    carpintero: { min: 17000, avg: 21000, max: 28000 },
-    informatico: { min: 22000, avg: 32000, max: 55000 },
-    teleoperador: { min: 15876, avg: 17000, max: 21000 },
-    mozo: { min: 15876, avg: 17500, max: 22000 },
-    vigilante: { min: 17000, avg: 20000, max: 26000 },
-    socorrista: { min: 16000, avg: 18000, max: 22000 },
-    recepcionista: { min: 16000, avg: 18500, max: 24000 },
-    auxiliar: { min: 15876, avg: 17500, max: 23000 },
-    tecnico: { min: 19000, avg: 26000, max: 40000 },
-    comercial: { min: 18000, avg: 25000, max: 45000 },
-    jefe: { min: 28000, avg: 42000, max: 75000 },
-    director: { min: 35000, avg: 55000, max: 100000 },
-    consultor: { min: 24000, avg: 38000, max: 65000 },
-    analista: { min: 22000, avg: 32000, max: 52000 },
   };
 
-  // Búsqueda flexible: intentar match exacto, luego substring
-  let match = referencias[puesto];
-  if (!match) {
-    for (const [key, val] of Object.entries(referencias)) {
-      if (puesto.includes(key) || key.includes(puesto)) {
-        match = val;
-        break;
-      }
-    }
-  }
-  if (!match) match = { min: 18000, avg: 24000, max: 36000 };
-
-  // Generar datos por provincia con índice real
-  const provincias = Object.entries(indiceProvincial)
-    .map(([prov, idx]) => ({
-      province: prov,
-      count: Math.round(20 + Math.random() * 120),
-      avg_salary: Math.round(match.avg * idx),
-    }))
-    .sort((a, b) => b.avg_salary - a.avg_salary)
-    .slice(0, 20);
+  const match = referencias[puesto] || { min: 18000, avg: 24000, max: 36000 };
 
   return {
     fuente: "referencia",
@@ -301,8 +234,17 @@ function obtenerDatosReferencia(puesto: string): {
       max_salary: match.max,
       avg_salary: match.avg,
       total: 0,
-      fuente: "Referencia mercado laboral español 2026 (INE + portales empleo)",
+      fuente: "Referencia de mercado laboral español 2026",
     },
-    porProvincia: provincias,
+    porProvincia: [
+      { province: "Madrid", count: 120, avg_salary: Math.round(match.avg * 1.15) },
+      { province: "Barcelona", count: 100, avg_salary: Math.round(match.avg * 1.12) },
+      { province: "Valencia", count: 65, avg_salary: Math.round(match.avg * 0.95) },
+      { province: "Sevilla", count: 55, avg_salary: Math.round(match.avg * 0.90) },
+      { province: "Málaga", count: 50, avg_salary: Math.round(match.avg * 0.92) },
+      { province: "Zaragoza", count: 40, avg_salary: Math.round(match.avg * 0.93) },
+      { province: "Murcia", count: 35, avg_salary: Math.round(match.avg * 0.88) },
+      { province: "A Coruña", count: 30, avg_salary: Math.round(match.avg * 0.90) },
+    ],
   };
 }
