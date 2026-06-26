@@ -190,37 +190,38 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
     setGuardando(true);
     try {
       const supabase = getSupabaseBrowser();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { showToast("Inicia sesión para guardar ofertas"); setGuardando(false); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { showToast("Inicia sesión para guardar ofertas"); setGuardando(false); return; }
 
-      // Verificar si ya está guardada
-      const { data: existing } = await supabase
-        .from("guardados")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("oferta_id", oferta.id)
-        .single();
+      const authHeaders = { Authorization: `Bearer ${session.access_token}` };
 
-      if (existing) {
-        setGuardado(true);
-        showToast("Ya tienes esta oferta guardada", "success");
-        setGuardando(false);
-        return;
+      // Verificar si ya está guardada (consulta API PostgreSQL)
+      const checkRes = await fetch("/api/jobs/guardar", { headers: authHeaders });
+
+      if (checkRes.ok) {
+        const data = await checkRes.json() as { guardados?: Array<{ job_id: string }> };
+        const yaGuardada = data.guardados?.some((g) => g.job_id === oferta.id);
+        if (yaGuardada) {
+          setGuardado(true);
+          showToast("Ya tienes esta oferta guardada", "success");
+          setTimeout(() => setGuardado(false), 3000);
+          setGuardando(false);
+          return;
+        }
       }
 
-      const { error } = await supabase.from("guardados").insert({
-        user_id: user.id,
-        oferta_id: oferta.id,
-        titulo: oferta.titulo,
-        empresa: oferta.empresa,
-        ubicacion: oferta.ubicacion,
-        salario: oferta.salario,
-        url: oferta.url,
-        fuente: oferta.fuente,
-        guardado_en: new Date().toISOString(),
+      // Guardar oferta vía API PostgreSQL
+      const res = await fetch("/api/jobs/guardar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ jobId: oferta.id, action: "save" }),
       });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error || "Error al guardar");
+      }
+
       setGuardado(true);
       showToast("Oferta guardada", "success");
       setTimeout(() => setGuardado(false), 3000);
