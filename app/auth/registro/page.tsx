@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { NUM_PAISES } from "@/lib/paises";
 import Image from "next/image";
 import { Globe, Target, Clock, CheckCircle2 } from "lucide-react";
 
-export default function RegistroPage() {
+function RegistroPageInner() {
+  const searchParams = useSearchParams();
+  const referralCode = useMemo(() => {
+    const raw = searchParams.get("ref");
+    return raw ? raw.trim().toUpperCase() : null;
+  }, [searchParams]);
+
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [ciudad, setCiudad] = useState("");
@@ -51,7 +58,7 @@ export default function RegistroPage() {
       fetch("/api/auth/welcome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), nombre: nombre.trim(), ciudad: ciudad.trim(), userId: data?.user?.id || "" }),
+        body: JSON.stringify({ email: email.trim(), nombre: nombre.trim(), ciudad: ciudad.trim(), userId: data?.user?.id || "", ref: referralCode }),
       }).catch((err) => { console.error('[Registro] Error welcome:', err) });
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
@@ -223,5 +230,17 @@ export default function RegistroPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegistroPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1117" }}>
+        <div className="animate-spin rounded-full h-8 w-8" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
+      </div>
+    }>
+      <RegistroPageInner />
+    </Suspense>
   );
 }

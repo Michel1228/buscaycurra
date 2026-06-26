@@ -80,7 +80,6 @@ export const metadata: Metadata = {
     canonical: "https://buscaycurra.es",
     languages: {
       es: "https://buscaycurra.es",
-      en: "https://buscaycurra.es/en",
     },
   },
   robots: {
@@ -106,6 +105,12 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
+        {/* Preconnect Google Fonts para carga async */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" media="print" />
+        <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
+        <link rel="icon" href="/favicon.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0f1117" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

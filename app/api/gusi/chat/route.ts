@@ -1072,7 +1072,7 @@ export async function POST(req: NextRequest) {
       try {
         const { createClient } = await import("@supabase/supabase-js");
         const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ojesordjedovnpyxspxi.supabase.co",
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY || ""
         );
         const { data } = await supabase
