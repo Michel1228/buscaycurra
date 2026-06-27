@@ -195,10 +195,13 @@ export async function GET(request: NextRequest) {
       idx++;
     }
 
-    // Filtro por categoria (au_pair / live_in_nanny) — combinados: son el mismo sector
-    if (categoria === "au_pair" || categoria === "live_in_nanny") {
-      // Mostrar ambas categorías juntas — el usuario busca cuidar niños, no le importa la etiqueta
-      conditions.push(`(${CATEGORIA_KEYWORDS["au_pair"]} OR ${CATEGORIA_KEYWORDS["live_in_nanny"]})`);
+    // Filtro por categoria (au_pair / live_in_nanny) — SEPARADOS: son sectores distintos
+    if (categoria === "au_pair") {
+      // Solo au pair estricto — sin nanny genéricas
+      conditions.push(`(title ILIKE '%au pair%' OR title ILIKE '%aupair%' OR title ILIKE '%niñera%' OR title ILIKE '%canguro%')`);
+    } else if (categoria === "live_in_nanny") {
+      // Live-in nanny + términos específicos de nanny profesional/interna
+      conditions.push(`(${CATEGORIA_KEYWORDS["live_in_nanny"]})`);
     } else if (categoria && CATEGORIA_KEYWORDS[categoria]) {
       conditions.push(CATEGORIA_KEYWORDS[categoria]);
     }
