@@ -331,6 +331,18 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
   return allJobs;
 }
 
+/** Auto-detecta categoria desde el titulo de la oferta */
+function detectCategoria(title: string): string | null {
+  const t = title.toLowerCase();
+  // Oper / fábrica / almacén
+  if (/\b(operario|operador|pe[oó]n\b|carretillero|reponedor|empaquetador|manipulador|montador|mozo\s.*almac[eé]n|producci[oó]n\b|f[aá]brica|almac[eé]n\b|log[ií]stica)\b/i.test(t)) return 'oper';
+  // Au pair
+  if (/\b(au\s*pair|aupair|ni[ñn]era|canguro|babysitter)\b/i.test(t)) return 'au_pair';
+  // Live-in nanny
+  if (/\b(live.in.nanny|nanny.*interna|governess|nanny.*household|nanny.*full.?time|nanny.*live)\b/i.test(t)) return 'live_in_nanny';
+  return null;
+}
+
 export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, country?: string): Promise<number> {
   if (!jobs.length) return 0;
   const pool = getPool();
@@ -339,12 +351,15 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, count
   for (const j of jobs) {
     if (!j.url || !j.title) continue;
     const id = makeId(j.title, j.company, j.city, j.source);
+    const categoria = detectCategoria(j.title);
     try {
       const result = await pool.query(
-        `INSERT INTO "JobListing" (id, title, company, description, sector, city, salary, "sourceUrl", "sourceName", "isActive", "scrapedAt", "createdAt", "expiresAt", country)
-         VALUES ($1, $2, $3, $4, $5::"JobSector", $6, $7, $8, $9, true, NOW(), NOW(), $10, $11)
-         ON CONFLICT (id) DO UPDATE SET country = COALESCE("JobListing".country, EXCLUDED.country)`,
-        [id, j.title, j.company, j.description, sector, j.city, j.salary, j.url, j.source, expiresAt, country || null]
+        `INSERT INTO "JobListing" (id, title, company, description, sector, city, salary, "sourceUrl", "sourceName", "isActive", "scrapedAt", "createdAt", "expiresAt", country, categoria)
+         VALUES ($1, $2, $3, $4, $5::"JobSector", $6, $7, $8, $9, true, NOW(), NOW(), $10, $11, $12)
+         ON CONFLICT (id) DO UPDATE SET 
+           country = COALESCE("JobListing".country, EXCLUDED.country),
+           categoria = COALESCE("JobListing".categoria, EXCLUDED.categoria)`,
+        [id, j.title, j.company, j.description, sector, j.city, j.salary, j.url, j.source, expiresAt, country || null, categoria]
       );
       if (result.rowCount && result.rowCount > 0) inserted++;
     } catch { /* skip */ }
