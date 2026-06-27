@@ -90,16 +90,29 @@ export async function POST(request: NextRequest) {
   try {
     // ── Verificar autenticación ───────────────────────────────────────────
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    const syncSecret = request.headers.get("x-sync-secret");
+    const internalUserId = request.headers.get("x-user-id");
+
+    let userId: string;
+
+    // 🔒 Ruta A: Llamada interna desde agente/cron (x-sync-secret + x-user-id)
+    if (syncSecret && internalUserId && syncSecret === process.env.ADMIN_SECRET) {
+      userId = internalUserId;
     }
-    const supabasePublico = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    const { data: { user }, error: authError } = await supabasePublico.auth.getUser(authHeader.slice(7));
-    if (authError || !user) {
-      return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
+    // 🔒 Ruta B: Llamada de usuario normal (Bearer token JWT)
+    else if (authHeader?.startsWith("Bearer ")) {
+      const supabasePublico = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { data: { user }, error: authError } = await supabasePublico.auth.getUser(authHeader.slice(7));
+      if (authError || !user) {
+        return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
+      }
+      userId = user.id;
+    }
+    else {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     // ── Leer y validar el cuerpo de la petición ────────────────────────────
@@ -116,8 +129,6 @@ export async function POST(request: NextRequest) {
       cartaPersonalizada?: string;
     };
 
-    // userId siempre del token — nunca del body
-    const userId = user.id;
     const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization, frecuencia, strategy, scheduledFor, cartaPersonalizada } = body;
 
     if (!companyEmail) {

@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+                "x-sync-secret": process.env.ADMIN_SECRET || "",
                 "x-user-id": cv.user_id,
               },
               body: JSON.stringify({

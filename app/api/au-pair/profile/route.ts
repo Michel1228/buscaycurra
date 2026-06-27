@@ -11,9 +11,31 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.nextUrl.searchParams.get("userId");
-    if (!userId) {
+    // ── Auth ──────────────────────────────────────────────────────────────
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const supabasePublico = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user }, error: authError } = await supabasePublico.auth.getUser(
+      authHeader.slice(7)
+    );
+    if (authError || !user) {
+      return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
+    }
+    const authenticatedUserId = user.id;
+
+    // userId debe coincidir con el usuario autenticado
+    const requestedUserId = request.nextUrl.searchParams.get("userId");
+    if (!requestedUserId) {
       return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+    }
+    if (requestedUserId !== authenticatedUserId) {
+      return NextResponse.json({ error: "No puedes ver el perfil de otro usuario" }, { status: 403 });
     }
 
     const supabase = createClient(
@@ -24,7 +46,7 @@ export async function GET(request: NextRequest) {
     const { data: profile, error } = await supabase
       .from("au_pair_profiles")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", authenticatedUserId)
       .maybeSingle();
 
     if (error) {
