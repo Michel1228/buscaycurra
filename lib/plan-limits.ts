@@ -29,8 +29,8 @@ const LIMITS: Record<PlanTier, PlanLimits> = {
     name: "Free",
     guzziModel: "deepseek-v4-pro",
     guzziMaxConsultasDia: 2,          // 2 consultas TOTAL (trial)
-    enviosCVDia: 0,
-    enviosCVSemana: 0,
+    enviosCVDia: 3,                   // 3 envíos/día trial para probar
+    enviosCVSemana: 5,               // 5 envíos/semana trial
     camaraMaxUsos: 3,                 // 3 búsquedas TOTAL — gancho de adquisición
     cvsGuardados: 1,
     cvConIAGratis: 1,                 // 1 CV gratis con IA
