@@ -94,10 +94,22 @@ export async function POST(request: NextRequest) {
     const internalUserId = request.headers.get("x-user-id");
 
     let userId: string;
+    let userEmail: string | undefined;
 
     // 🔒 Ruta A: Llamada interna desde agente/cron (x-sync-secret + x-user-id)
     if (syncSecret && internalUserId && syncSecret === process.env.ADMIN_SECRET) {
       userId = internalUserId;
+      // Obtener email desde BD para el lookup de CV
+      const supabaseAdminLookup = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      const { data: profile } = await supabaseAdminLookup
+        .from("profiles")
+        .select("email")
+        .eq("id", userId)
+        .maybeSingle();
+      userEmail = profile?.email;
     }
     // 🔒 Ruta B: Llamada de usuario normal (Bearer token JWT)
     else if (authHeader?.startsWith("Bearer ")) {
@@ -110,6 +122,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
       }
       userId = user.id;
+      userEmail = user.email;
     }
     else {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -175,11 +188,11 @@ export async function POST(request: NextRequest) {
       // Si el usuario tiene plan de pago, asumimos que tiene CV (ya pasó el onboarding)
       if (userPlanCheck !== 'free') {
         tieneCV = true;
-      } else if (user.email) {
+      } else if (userEmail) {
         const { data: cvRows } = await supabaseAdmin
           .from("CV")
           .select("id")
-          .or(`email.eq.${user.email},userId.eq.${userId}`)
+          .or(`email.eq.${userEmail},userId.eq.${userId}`)
           .eq("isActive", true)
           .limit(1);
         tieneCV = cvRows && cvRows.length > 0;
