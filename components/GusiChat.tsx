@@ -120,21 +120,37 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
 
   const inicializadoRef = useRef(false);
 
-  // Verificar login — con retry para evitar race condition tras login reciente
+  // Verificar login — con retry progresivo + listener reactivo de sesión
   useEffect(() => {
     if (inicializadoRef.current) return;
     inicializadoRef.current = true;
+    const sb = getSupabaseBrowser();
+
+    // Listener reactivo: cuando la sesión cambie (ej: tras login), recargar
+    const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+        const uid = session?.user?.id;
+        if (uid) {
+          setLogueado(true);
+          setUserId(uid);
+          setAuthLoading(false);
+        }
+      }
+      if (event === "SIGNED_OUT") {
+        setLogueado(false);
+        setMensajes([{ role: "gusi", text: "¡Hola! Soy Guzzi, tu asistente de empleo de BuscayCurra.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**" }]);
+      }
+    });
+
+    // Check inicial con retry progresivo (3 intentos, delays crecientes)
     async function checkAuth() {
       try {
-        const sb = getSupabaseBrowser();
-        let { data: { user } } = await sb.auth.getUser();
-        
-        // Si no hay usuario a la primera, esperar 800ms y reintentar
-        // (la sesión puede estar refrescándose tras un login reciente)
-        if (!user) {
-          await new Promise(r => setTimeout(r, 800));
-          const retry = await sb.auth.getUser();
-          user = retry.data.user;
+        let user = null;
+        for (let i = 0; i < 3; i++) {
+          const { data } = await sb.auth.getUser();
+          user = data.user;
+          if (user) break;
+          if (i < 2) await new Promise(r => setTimeout(r, 500 * (i + 1) * (i + 1)));
         }
         
         setLogueado(!!user);
@@ -161,6 +177,8 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       }
     }
     checkAuth();
+
+    return () => { subscription.unsubscribe(); };
   }, [abierto]);
 
   // Guardar conversación en Supabase cuando cambian los mensajes (debounced)
