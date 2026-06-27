@@ -36,7 +36,7 @@ export function extractJobTerm(text: string): string | null {
     /(?:busco|buscar|necesito|quiero|buscame|búscame)\s+(?:trabajo\s+(?:de|como)\s+)?([\w\sáéíóúüñ]{3,30}?)(?:\s+(?:en|por|cerca|alrededor|zona)\s+|$)/i,
     /(?:busco|buscar|necesito|quiero)\s+(?:un|una)\s+([\w\sáéíóúüñ]{3,30}?)(?:\s+(?:en|por|cerca|alrededor|zona)\s+|$)/i,
     /(?:trabajo|empleo|oferta|puesto)\s+(?:de|como)\s+([\w\sáéíóúüñ]{3,30}?)(?:\s+(?:en|por|cerca)\s+|$)/i,
-    /(?:^|\s)([a-záéíóúüñ]{3,20})\s+(?:en|por)\s+[a-záéíóúüñ]{3,}/i,
+    /(?:^|\s)([a-záéíóúüñ][\sa-záéíóúüñ]+?)\s+(?:en|por)\s+[a-záéíóúüñ]{3,}/i,
   ];
   for (const p of patterns) {
     const m = tn.match(p);

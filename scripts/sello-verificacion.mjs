@@ -55,7 +55,7 @@ test('SÍ buscar: "ingeniero de sonido en Barcelona"', () => cityKwRe.test('inge
 // ═══════════════════════════════════════════════════════════════
 console.log('\n📋 BLOQUE 2: extractJobTerm regex');
 
-const mDirectRe = /(?:^|\s)([a-záéíóúüñA-Z][a-záéíóúüñA-Z\s]+?)\s+(?:en|por)\s+\w+/i;
+const mDirectRe = /(?:^|\s)([a-záéíóúüñ][\sa-záéíóúüñ]+?)\s+(?:en|por)\s+\w+/i;
 test('extractJobTerm: "ingeniero de sonido en Madrid"', () => {
   const m = mDirectRe.exec('ingeniero de sonido en Madrid');
   return m && m[1].trim() === 'ingeniero de sonido';
@@ -67,6 +67,10 @@ test('extractJobTerm: "busco camarero en Madrid" (sin ^)', () => {
 test('extractJobTerm: "camarero en Tudela" (inicio)', () => {
   const m = mDirectRe.exec('camarero en Tudela');
   return m && m[1].trim() === 'camarero';
+});
+test('extractJobTerm: "desarrollador React en Madrid" (compuesto)', () => {
+  const m = mDirectRe.exec('desarrollador React en Madrid');
+  return m && m[1].trim() === 'desarrollador React';
 });
 
 // ═══════════════════════════════════════════════════════════════
