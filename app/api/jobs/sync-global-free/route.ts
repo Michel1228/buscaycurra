@@ -18,7 +18,7 @@ import path from "path";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const SYNC_SECRET = process.env.ADMIN_SECRET || "buscaycurra_sync_2024";
+const SYNC_SECRET = process.env.ADMIN_SECRET || "";
 const MUSE_OFFSET_FILE = "/tmp/muse_page_offset.txt";
 
 function getMuseOffset(): number {

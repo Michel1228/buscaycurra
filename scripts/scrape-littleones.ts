@@ -5,7 +5,7 @@
 import * as fs from "fs";
 
 const BASE = "https://littleoneslondon.co.uk/job/search";
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "buscaycurra_sync_2024";
+const ADMIN_SECRET = process.env.ADMIN_SECRET || "";
 const API = "http://localhost:8892/api/jobs/ingest-batch";
 
 interface RawJob {

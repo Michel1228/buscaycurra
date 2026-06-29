@@ -5,6 +5,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
+import { NUM_PAISES } from "@/lib/paises";
 import {
   Sparkles, FileText, Search, Mail, PartyPopper,
   Brain, Target, Zap, Sprout, Check, X, Egg, Rocket,
@@ -16,7 +17,7 @@ import {
 const pasos = [
   { num: "01", titulo: "Crea tu perfil", desc: "30 segundos. Sin tarjeta. Empieza tu aventura con Guzzi.", icon: <Sparkles className="w-6 h-6" />, color: "#7ed56f", detalle: "Tu aventura comienza aquí" },
   { num: "02", titulo: "Sube tu CV", desc: "Nuestra IA lo analiza y mejora automáticamente para cada sector", icon: <FileText className="w-6 h-6" />, color: "#f0c040", detalle: "Guzzi perfecciona tu CV" },
-  { num: "03", titulo: "Busca ofertas", desc: "millones de ofertas en ${NUM_PAISES} países filtradas por zona, sector y salario", icon: <Search className="w-6 h-6" />, color: "#e07850", detalle: "Guzzi escanea el mercado" },
+  { num: "03", titulo: "Busca ofertas", desc: `millones de ofertas en ${NUM_PAISES} países filtradas por zona, sector y salario`, icon: <Search className="w-6 h-6" />, color: "#e07850", detalle: "Guzzi escanea el mercado" },
   { num: "04", titulo: "Envía candidaturas", desc: "Automáticamente a cientos de empresas. Tú descansas.", icon: <Mail className="w-6 h-6" />, color: "#a070d0", detalle: "Guzzi trabaja por ti" },
   { num: "05", titulo: "¡Encuentra trabajo!", desc: "Empleo directo. Sin intermediarios. Tu salario completo.", icon: <PartyPopper className="w-6 h-6" />, color: "#ff6090", detalle: "¡Lo conseguiste!" },
 ];
@@ -153,7 +154,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 max-w-3xl mx-auto">
               {[
                 { num: "2.400+", label: "personas en activo" },
-                { num: "3M+", label: "ofertas en ${NUM_PAISES} países" },
+                { num: "3M+", label: `ofertas en ${NUM_PAISES} países` },
                 { num: "2,99€", label: "al mes para empezar" },
                 { num: "2,99€", label: "vs 39€/mes de InfoJobs Premium" },
               ].map((s) => (

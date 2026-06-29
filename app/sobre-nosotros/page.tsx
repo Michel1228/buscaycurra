@@ -1,10 +1,11 @@
 ﻿import type { Metadata } from "next";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
+import { NUM_PAISES } from "@/lib/paises";
 
 export const metadata: Metadata = {
   title: "Sobre nosotros — BuscayCurra | El agente IA que busca trabajo por ti",
-  description: "BuscayCurra es la plataforma de empleo con IA que automatiza tu búsqueda de trabajo en ${NUM_PAISES} países. Conoce nuestra historia, misión y el equipo detrás de Guzzi.",
+  description: `BuscayCurra es la plataforma de empleo con IA que automatiza tu búsqueda de trabajo en ${NUM_PAISES} países. Conoce nuestra historia, misión y el equipo detrás de Guzzi.`,
 };
 
 const VALORES = [
@@ -17,7 +18,7 @@ const VALORES = [
 const HITOS = [
   { año: "2024", texto: "Nace BuscayCurra con la idea de que buscar trabajo no debería ser un trabajo en sí mismo." },
   { año: "2025", texto: "Lanzamos Guzzi, el asistente IA que envía candidaturas personalizadas automáticamente." },
-  { año: "2026", texto: "Superamos millones de ofertas activas en ${NUM_PAISES} países y miles de usuarios activos." },
+  { año: "2026", texto: `Superamos millones de ofertas activas en ${NUM_PAISES} países y miles de usuarios activos.` },
 ];
 
 export default function SobreNosotrosPage() {
@@ -85,7 +86,7 @@ export default function SobreNosotrosPage() {
           <h2 className="text-xl font-bold mb-6" style={{ color: "#f1f5f9" }}>Guzzi, tu agente de empleo</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {[
-              { icon: "🔍", titulo: "Busca por ti", desc: "Escanea millones de ofertas en ${NUM_PAISES} países cada 6 horas. Filtra por tu perfil, sector y salario esperado." },
+              { icon: "🔍", titulo: "Busca por ti", desc: `Escanea millones de ofertas en ${NUM_PAISES} países cada 6 horas. Filtra por tu perfil, sector y salario esperado.` },
               { icon: "✨", titulo: "Mejora tu CV", desc: "Analiza tu currículum con IA y lo adapta a cada oferta antes de enviarlo. Supera los filtros ATS que descartan el 75% de candidatos." },
               { icon: "📧", titulo: "Envía candidaturas", desc: "Envía tu CV automáticamente con carta personalizada para cada empresa. Tú solo vas a la entrevista." },
               { icon: "📊", titulo: "Seguimiento en tiempo real", desc: "Pipeline visual de todas tus candidaturas: enviada, abierta, en revisión, entrevista. Sin agujeros negros." },

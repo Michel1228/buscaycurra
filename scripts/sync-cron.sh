@@ -2,7 +2,7 @@
 # Sync de ofertas — llama al endpoint de sincronización con cada combinación prioritaria
 # Se ejecuta con cron: 0 3 * * * /root/sync-cron.sh >> /var/log/sync-cron.log 2>&1
 
-ADMIN_SECRET="${BUSCAYCURRA_ADMIN_SECRET:-buscaycurra_sync_2024}"
+ADMIN_SECRET="${BUSCAYCURRA_ADMIN_SECRET:-}"
 BASE_URL="http://localhost:8892"
 
 SECTORES=("HOSTELERIA" "TRANSPORTE" "INDUSTRIA" "COMERCIO" "CONSTRUCCION" "OFICINA")

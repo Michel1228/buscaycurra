@@ -29,10 +29,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (!userId) {
-      userId = request.nextUrl.searchParams.get("userId");
-    }
-
-    if (!userId) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 

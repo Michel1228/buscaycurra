@@ -16,7 +16,7 @@ import { getPool } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 const UA = "Mozilla/5.0 (compatible; BuscayCurraBot/1.0; +https://buscaycurra.es)";
-const SYNC_SECRET = process.env.SYNC_SECRET || "buscaycurra_sync_2024";
+const SYNC_SECRET = process.env.SYNC_SECRET || "";
 
 // Extraer emails de HTML (versión rápida, misma lógica que email-finder)
 function extractEmails(html: string): string[] {

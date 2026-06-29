@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,12 @@ interface Mensaje {
 
 export async function POST(req: NextRequest) {
   try {
+    // Autenticación obligatoria
+    const userId = await getUserId(req);
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const body = await req.json() as {
       puesto: string;
       mensajes: Mensaje[];

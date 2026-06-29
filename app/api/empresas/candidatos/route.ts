@@ -3,25 +3,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  // Autenticación obligatoria
+  const authUserId = await getUserId(req);
+  if (!authUserId) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const ciudad = searchParams.get("ciudad") || "";
   const keyword = searchParams.get("q") || "";
-  const userId = searchParams.get("userId") || "";
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const limit = 24;
   const offset = (page - 1) * limit;
 
+  // Verificar si el usuario autenticado tiene plan empresa
   let esEmpresa = false;
-  if (userId) {
-    try {
-      const plan = await getUserPlan(userId);
-      esEmpresa = plan === "empresa";
-    } catch { /* tratar como free */ }
-  }
+  try {
+    const plan = await getUserPlan(authUserId);
+    esEmpresa = plan === "empresa";
+  } catch { /* tratar como free */ }
 
   // Solo mostrar candidatos que han activado la visibilidad
   const supabase = createClient(
