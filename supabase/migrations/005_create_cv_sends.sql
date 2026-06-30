@@ -39,14 +39,8 @@ BEGIN
       USING (auth.uid() = user_id);
   END IF;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'cv_sends' AND policyname = 'Service role manages cv_sends'
-  ) THEN
-    CREATE POLICY "Service role manages cv_sends"
-      ON cv_sends FOR ALL
-      USING (true)
-      WITH CHECK (true);
-  END IF;
+-- Solo service_role puede gestionar todos los envíos (service_role saltea RLS)
+-- No se añade política global para usuarios normales
 END $$;
 
 -- Reparar registros existentes con status='enviado' pero sent_at NULL

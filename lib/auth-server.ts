@@ -19,7 +19,7 @@ export async function getUserFromToken(token: string): Promise<AuthUser | null> 
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         },
       }
     );

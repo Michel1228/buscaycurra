@@ -40,20 +40,15 @@ CREATE TRIGGER ofertas_updated_at
   BEFORE UPDATE ON ofertas
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- RLS: solo lectura pública, escritura solo service role
+-- RLS: solo lectura pública, escritura solo service role (saltea RLS)
 ALTER TABLE ofertas ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Lectura pública de ofertas"
   ON ofertas FOR SELECT
   USING (true);
 
-CREATE POLICY "Solo service role puede insertar/actualizar"
-  ON ofertas FOR INSERT
-  WITH CHECK (true);
-
-CREATE POLICY "Solo service role puede actualizar ofertas"
-  ON ofertas FOR UPDATE
-  USING (true);
+-- No se crean políticas INSERT/UPDATE para usuarios normales;
+-- solo service_role puede escribir (saltea RLS automáticamente)
 
 -- Funciones RPC para estadísticas del indexador
 CREATE OR REPLACE FUNCTION count_by_fuente()

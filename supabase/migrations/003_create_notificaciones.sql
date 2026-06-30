@@ -24,6 +24,5 @@ CREATE POLICY "Users update own notifications"
   ON notificaciones FOR UPDATE
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Service role insert notifications"
-  ON notificaciones FOR INSERT
-  WITH CHECK (true);
+-- Solo service_role puede insertar notificaciones (service_role saltea RLS por defecto)
+-- No se añade política INSERT para usuarios normales

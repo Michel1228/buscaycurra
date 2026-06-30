@@ -2,13 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendWelcomeEmail } from "@/lib/email/smtp-sender";
 import { getPool } from "@/lib/db";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, nombre, ciudad, userId, ref } = await req.json() as {
-      email?: string; nombre?: string; ciudad?: string; userId?: string; ref?: string;
+    // Autenticación obligatoria: extraer userId del token, no del body
+    const userId = await getUserId(req);
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const { email, nombre, ciudad, ref } = await req.json() as {
+      email?: string; nombre?: string; ciudad?: string; ref?: string;
     };
     if (!email || !nombre) {
       return NextResponse.json({ error: "email y nombre requeridos" }, { status: 400 });
@@ -17,8 +24,8 @@ export async function POST(req: NextRequest) {
     // 1. Enviar email de bienvenida
     await sendWelcomeEmail(email, nombre);
 
-    // 2. Si hay ciudad y userId, guardar en user_contacts + crear alerta
-    if (ciudad && userId) {
+    // 2. Si hay ciudad, guardar en user_contacts + crear alerta
+    if (ciudad) {
       const pool = getPool();
       try {
         // Guardar datos de contacto para futuras notificaciones (email/WhatsApp)
@@ -42,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Canjear código de referido si viene en la URL de registro
-    if (ref && userId) {
+    if (ref) {
       try {
         const codigo = ref.trim().toUpperCase();
         if (codigo) {
