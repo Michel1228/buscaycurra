@@ -49,7 +49,7 @@ export default function NotFound() {
       </div>
 
       {/* Footer sutil */}
-      <p className="mt-12 text-xs" style={{ color: "#475569" }}>
+      <p className="mt-12 text-xs" style={{ color: "#6b7280" }}>
         BuscayCurra &mdash; Agente IA de empleo
       </p>
     </div>

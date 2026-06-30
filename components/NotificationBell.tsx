@@ -234,7 +234,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
             {notifs.length === 0 ? (
               <div className="py-10 text-center">
                 <p className="text-2xl mb-2">🔔</p>
-                <p className="text-xs" style={{ color: "#475569" }}>Sin notificaciones</p>
+                <p className="text-xs" style={{ color: "#6b7280" }}>Sin notificaciones</p>
                 <p className="text-[10px] mt-1" style={{ color: "#334155" }}>
                   Te avisaremos cuando Guzzi envíe tu CV o haya nuevas ofertas.
                 </p>
@@ -284,11 +284,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
           {/* Footer */}
           <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderTop: "1px solid #2d3142" }}>
             <Link href="/app/notificaciones" onClick={() => setOpen(false)}
-              className="text-[10px]" style={{ color: "#475569" }}>
+              className="text-[10px]" style={{ color: "#6b7280" }}>
               Ver todas →
             </Link>
             <Link href="/app/perfil" onClick={() => setOpen(false)}
-              className="text-[10px]" style={{ color: "#475569" }}>
+              className="text-[10px]" style={{ color: "#6b7280" }}>
               ⚙ Configurar
             </Link>
           </div>

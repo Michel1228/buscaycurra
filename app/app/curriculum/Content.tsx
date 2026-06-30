@@ -828,7 +828,7 @@ export default function CurriculumPage() {
                   {fotoUrl ? (
                     <img src={fotoUrl} alt="Foto CV" className="w-full h-full object-cover" width={80} height={80} loading="lazy" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl" style={{ background: "#1e212b", color: "#475569" }}>👤</div>
+                    <div className="w-full h-full flex items-center justify-center text-3xl" style={{ background: "#1e212b", color: "#6b7280" }}>👤</div>
                   )}
                 </div>
                 <div>
@@ -997,7 +997,7 @@ export default function CurriculumPage() {
                 <input id="cv-idiomas" placeholder="Español:95, Inglés:60, Francés:40" value={form.idiomas}
                   onChange={e => f("idiomas", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <p className="text-[10px] mt-1" style={{ color: "#475569" }}>Formato: Idioma:nivel (0-100). Ej: Español:95, Inglés:60</p>
+                <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>Formato: Idioma:nivel (0-100). Ej: Español:95, Inglés:60</p>
               </div>
             </div>
 

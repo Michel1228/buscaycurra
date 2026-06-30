@@ -80,7 +80,7 @@ export default function CandidatosPage() {
           <Link href="/empresas" className="flex items-center gap-2.5">
             <img src="/icon-192.png" alt="Guzzi" width={24} height={24} style={{ borderRadius: "50%", objectFit: "cover" }} />
             <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
-            <span className="hidden sm:inline text-xs" style={{ color: "#475569" }}>/ Candidatos</span>
+            <span className="hidden sm:inline text-xs" style={{ color: "#6b7280" }}>/ Candidatos</span>
           </Link>
           {!esEmpresa && (
             <Link href="/precios"
@@ -232,7 +232,7 @@ export default function CandidatosPage() {
                       </a>
                     )}
                     {!c.email && !c.telefono && (
-                      <p className="text-[10px]" style={{ color: "#475569" }}>Sin contacto en CV</p>
+                      <p className="text-[10px]" style={{ color: "#6b7280" }}>Sin contacto en CV</p>
                     )}
                   </div>
                 ) : (

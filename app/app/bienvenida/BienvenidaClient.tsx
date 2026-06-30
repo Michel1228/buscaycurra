@@ -282,7 +282,7 @@ export default function BienvenidaClient() {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-[10px]" style={{ color: "#475569" }}>
+                  <div className="flex items-center gap-3 text-[10px]" style={{ color: "#6b7280" }}>
                     <span>📍 {oferta.ubicacion || "Sin ubicación"}</span>
                     <span>·</span>
                     <span>{oferta.fuente}</span>
@@ -327,7 +327,7 @@ export default function BienvenidaClient() {
         </div>
 
         {/* ── Footer tagline ── */}
-        <p className="text-center text-xs" style={{ color: "#475569" }}>
+        <p className="text-center text-xs" style={{ color: "#6b7280" }}>
           BuscayCurra — La alternativa real a InfoJobs y LinkedIn
         </p>
       </div>

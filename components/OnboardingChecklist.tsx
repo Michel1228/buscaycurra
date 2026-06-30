@@ -156,14 +156,14 @@ export default function OnboardingChecklist() {
             Primeros pasos — {completados}/{steps.length} completados
           </p>
         </div>
-        <button onClick={dismiss} className="text-xs" style={{ color: "#475569" }}>
+        <button onClick={dismiss} className="text-xs" style={{ color: "#6b7280" }}>
           Omitir
         </button>
       </div>
 
       {/* Barra de progreso */}
       <div className="px-5 pb-4">
-        <div className="h-1.5 rounded-full" style={{ background: "#252836" }}>
+        <div className="h-1.5 rounded-full" style={{ background: "#252836" }} role="progressbar" aria-valuenow={completados} aria-valuemin={0} aria-valuemax={steps.length} aria-label={`${completados} de ${steps.length} pasos completados`}>
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{ width: `${pct}%`, background: "linear-gradient(90deg, #22c55e, #16a34a)" }}
@@ -196,7 +196,7 @@ export default function OnboardingChecklist() {
                 {step.titulo}
               </p>
               {!step.done && (
-                <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>{step.desc}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#6b7280" }}>{step.desc}</p>
               )}
             </div>
 

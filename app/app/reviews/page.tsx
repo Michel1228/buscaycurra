@@ -146,7 +146,7 @@ function ReviewsPageInner() {
           </div>
           {!company && (
             <div className="mt-3">
-              <p className="text-[10px] mb-2" style={{ color: "#475569" }}>Empresas más buscadas:</p>
+              <p className="text-[10px] mb-2" style={{ color: "#6b7280" }}>Empresas más buscadas:</p>
               <div className="flex flex-wrap gap-1.5">
                 {EMPRESAS_POPULARES.map(emp => (
                   <button key={emp} onClick={() => setCompany(emp)}
@@ -179,7 +179,7 @@ function ReviewsPageInner() {
                       <div className="flex-1 h-1 rounded-full" style={{ background: "#252836" }}>
                         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "#f59e0b" }} />
                       </div>
-                      <span className="text-[10px] w-5 text-right" style={{ color: "#475569" }}>{count}</span>
+                      <span className="text-[10px] w-5 text-right" style={{ color: "#6b7280" }}>{count}</span>
                     </div>
                   );
                 })}
@@ -232,7 +232,7 @@ function ReviewsPageInner() {
             <div key={r.id} className="card-game p-4">
               <div className="flex items-center justify-between mb-2">
                 {renderStars(r.rating)}
-                <span className="text-[10px]" style={{ color: "#475569" }}>{new Date(r.created_at).toLocaleDateString("es-ES")}</span>
+                <span className="text-[10px]" style={{ color: "#6b7280" }}>{new Date(r.created_at).toLocaleDateString("es-ES")}</span>
               </div>
               {r.title && <p className="font-semibold text-xs mb-1" style={{ color: "#f1f5f9" }}>{r.title}</p>}
               {r.comment && <p className="text-xs mb-2" style={{ color: "#94a3b8" }}>{r.comment}</p>}

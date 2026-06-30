@@ -68,9 +68,9 @@ export default function GusiPage() {
           <table className="w-full text-[10px]" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#111520" }}>
-                <th className="text-left px-2 py-1.5" style={{ color: "#475569", fontWeight: 500 }}></th>
+                <th className="text-left px-2 py-1.5" style={{ color: "#6b7280", fontWeight: 500 }}></th>
                 <th className="text-center px-2 py-1.5" style={{ color: "#22c55e", fontWeight: 700 }}>Nosotros</th>
-                <th className="text-center px-2 py-1.5" style={{ color: "#475569", fontWeight: 500 }}>InfoJobs</th>
+                <th className="text-center px-2 py-1.5" style={{ color: "#6b7280", fontWeight: 500 }}>InfoJobs</th>
               </tr>
             </thead>
             <tbody>
@@ -78,7 +78,7 @@ export default function GusiPage() {
                 <tr key={row.aspecto} style={{ borderTop: "1px solid #1a1d27", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)" }}>
                   <td className="px-2 py-1.5" style={{ color: "#64748b" }}>{row.aspecto}</td>
                   <td className="px-2 py-1.5 text-center font-semibold" style={{ color: "#22c55e" }}>{row.buscaycurra}</td>
-                  <td className="px-2 py-1.5 text-center" style={{ color: "#475569" }}>{row.infojobs}</td>
+                  <td className="px-2 py-1.5 text-center" style={{ color: "#6b7280" }}>{row.infojobs}</td>
                 </tr>
               ))}
             </tbody>

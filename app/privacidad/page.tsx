@@ -23,7 +23,7 @@ export default function PrivacidadPage() {
             ← Volver a BuscayCurra
           </Link>
           <h1 style={{ color: "#f1f5f9", fontSize: 28, fontWeight: 800, margin: "0 0 8px" }}>Política de Privacidad</h1>
-          <p style={{ color: "#475569", fontSize: 13, margin: 0 }}>Última actualización: mayo de 2026</p>
+          <p style={{ color: "#6b7280", fontSize: 13, margin: 0 }}>Última actualización: mayo de 2026</p>
         </div>
 
         <S titulo="1. Responsable del tratamiento">

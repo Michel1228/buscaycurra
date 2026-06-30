@@ -240,8 +240,8 @@ export default function NotificacionesBell() {
           {/* Lista */}
           {notifs.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <BellOff size={28} strokeWidth={1.3} className="mx-auto mb-2" style={{ color: "#706a58" }} />
-              <p className="text-sm" style={{ color: "#706a58" }}>Sin notificaciones</p>
+              <BellOff size={28} strokeWidth={1.3} className="mx-auto mb-2" style={{ color: "#9a9378" }} />
+              <p className="text-sm" style={{ color: "#9a9378" }}>Sin notificaciones</p>
               <p className="text-xs mt-1" style={{ color: "#504a3a" }}>
                 Te avisaremos cuando una empresa responda
               </p>
@@ -263,7 +263,7 @@ export default function NotificacionesBell() {
                     <div className="flex items-center gap-2">
                       <span
                         className="text-xs font-bold truncate"
-                        style={{ color: n.leida ? "#706a58" : (COLORES[n.tipo] || "#f0ebe0") }}
+                        style={{ color: n.leida ? "#9a9378" : (COLORES[n.tipo] || "#f0ebe0") }}
                       >
                         {n.titulo}
                       </span>

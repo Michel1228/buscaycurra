@@ -167,7 +167,7 @@ export default async function EmpleoPage({
             <p className="font-bold text-lg" style={{ color: "#f0ebe0" }}>
               ¿Quieres que Guzzi busque por ti?
             </p>
-            <p className="text-sm" style={{ color: "#706a58" }}>
+            <p className="text-sm" style={{ color: "#9a9378" }}>
               Envía tu CV automáticamente a empresas de {ciudadFmt}
             </p>
           </div>
@@ -193,7 +193,7 @@ export default async function EmpleoPage({
                       <p className="text-xs font-semibold mt-1 flex items-center gap-1" style={{ color: "#7ed56f" }}><DollarSign size={11} />{o.salary}</p>
                     )}
                     {o.description && (
-                      <p className="text-xs mt-2 line-clamp-2" style={{ color: "#706a58" }}>{o.description.slice(0, 150)}...</p>
+                      <p className="text-xs mt-2 line-clamp-2" style={{ color: "#9a9378" }}>{o.description.slice(0, 150)}...</p>
                     )}
                   </div>
                   <Link href={`/app/buscar?keyword=${encodeURIComponent(puestoFmt)}&location=${encodeURIComponent(ciudadFmt)}`}
@@ -213,9 +213,9 @@ export default async function EmpleoPage({
           </div>
         ) : (
           <div className="card-game p-10 text-center mb-10">
-            <Search size={40} className="mx-auto mb-3" style={{ color: "#706a58" }} />
+            <Search size={40} className="mx-auto mb-3" style={{ color: "#9a9378" }} />
             <p className="font-semibold" style={{ color: "#f0ebe0" }}>No hay ofertas en este momento</p>
-            <p className="text-sm mt-1" style={{ color: "#706a58" }}>
+            <p className="text-sm mt-1" style={{ color: "#9a9378" }}>
               Prueba con términos similares o deja que Guzzi busque por ti
             </p>
             <Link href={`/app/buscar?keyword=${encodeURIComponent(puestoFmt)}&location=${encodeURIComponent(ciudadFmt)}`}
@@ -227,7 +227,7 @@ export default async function EmpleoPage({
 
         {/* Puestos relacionados */}
         <div className="mb-8">
-          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#706a58" }}>
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#9a9378" }}>
             Empleos similares en {ciudadFmt}
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -243,7 +243,7 @@ export default async function EmpleoPage({
 
         {/* Ciudades cercanas */}
         <div className="mb-8">
-          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#706a58" }}>
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#9a9378" }}>
             {puestoFmt} en otras ciudades
           </h3>
           <div className="flex flex-wrap gap-2">

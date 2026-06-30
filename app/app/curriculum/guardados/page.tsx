@@ -162,7 +162,7 @@ export default function MisCurriculumsPage() {
           <div className="text-center py-16 space-y-4">
             <div className="flex justify-center opacity-30"><FileText size={48} strokeWidth={1.1} /></div>
             <p className="font-semibold" style={{ color: "#f0ebe0" }}>Aún no tienes currículums guardados</p>
-            <p className="text-sm" style={{ color: "#706a58" }}>Crea tu primer CV y guárdalo desde el generador</p>
+            <p className="text-sm" style={{ color: "#9a9378" }}>Crea tu primer CV y guárdalo desde el generador</p>
             <button onClick={() => router.push("/app/curriculum")}
               className="btn-game px-8 py-3 mt-2">
               Crear mi primer CV →
@@ -172,7 +172,7 @@ export default function MisCurriculumsPage() {
 
         {!cargando && cvs.length > 0 && (
           <div className="space-y-4">
-            <p className="text-sm" style={{ color: "#706a58" }}>{cvs.length} currículum{cvs.length !== 1 ? "s" : ""} guardado{cvs.length !== 1 ? "s" : ""}</p>
+            <p className="text-sm" style={{ color: "#9a9378" }}>{cvs.length} currículum{cvs.length !== 1 ? "s" : ""} guardado{cvs.length !== 1 ? "s" : ""}</p>
 
             {cvs.map(cv => (
               <div key={cv.id} className="card-game overflow-hidden">
@@ -180,7 +180,7 @@ export default function MisCurriculumsPage() {
                 <div className="p-5 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-base truncate" style={{ color: "#f0ebe0" }}>{cv.nombre}</h3>
-                    <p className="text-xs mt-1" style={{ color: "#706a58" }}>
+                    <p className="text-xs mt-1" style={{ color: "#9a9378" }}>
                       Guardado el {formatFecha(cv.created_at)}
                       {cv.updated_at !== cv.created_at && ` · Editado el ${formatFecha(cv.updated_at)}`}
                     </p>

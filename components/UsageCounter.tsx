@@ -37,7 +37,7 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
   return (
     <div className="px-3 py-1.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
       {!compact && (
-        <p className="text-[10px] font-medium mb-1.5" style={{ color: "#475569" }}>
+        <p className="text-[10px] font-medium mb-1.5" style={{ color: "#6b7280" }}>
           Plan {usage.planName}
         </p>
       )}

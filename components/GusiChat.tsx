@@ -602,7 +602,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                 Nueva
               </button>
               {!modoIncrustado && (
-                <button onClick={() => setAbierto(false)}
+                <button onClick={() => setAbierto(false)} aria-label="Cerrar chat"
                   className="w-7 h-7 rounded-lg flex items-center justify-center transition hover:opacity-80"
                   style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
                   ✕
@@ -775,13 +775,13 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
           {/* ── Input ── */}
           <div className="px-4 pt-3 pb-2 shrink-0" style={{ background: "#111827", borderTop: "1px solid #1e212b" }}>
             <div className="flex items-center gap-2">
-              <button onClick={() => fileRef.current?.click()} title="Subir CV (PDF)"
+              <button onClick={() => fileRef.current?.click()} title="Subir CV (PDF)" aria-label="Adjuntar archivo"
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
                 style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
                 <Paperclip className="w-5 h-5" />
               </button>
               <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleFile} />
-              <button onClick={() => imageRef.current?.click()} title="Foto de cartel/tienda (OCR)"
+              <button onClick={() => imageRef.current?.click()} title="Foto de cartel/tienda (OCR)" aria-label="Hacer foto"
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
                 style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
                 <Camera className="w-5 h-5" />
@@ -803,6 +803,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
               <button
                 onClick={() => enviar(input)}
                 disabled={!input.trim() || cargando}
+                aria-label="Enviar mensaje"
                 className="w-9 h-9 rounded-lg flex items-center justify-center transition disabled:opacity-30 hover:opacity-90 active:scale-95 shrink-0"
                 style={{ background: input.trim() ? "#22c55e" : "#1e212b", color: input.trim() ? "#0a1208" : "#64748b", border: "1px solid #2d3142" }}>
                 ➤
@@ -848,7 +849,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                         <p className="text-[10px] font-semibold leading-tight" style={{ color: s.destacado ? "#22c55e" : "#e2e8f0" }}>
                           {s.label}
                         </p>
-                        <p className="text-[9px] leading-tight mt-0.5" style={{ color: s.destacado ? "rgba(34,197,94,0.6)" : "#475569" }}>
+                        <p className="text-[9px] leading-tight mt-0.5" style={{ color: s.destacado ? "rgba(34,197,94,0.6)" : "#6b7280" }}>
                           {s.desc}
                         </p>
                       </button>

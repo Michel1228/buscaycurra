@@ -203,7 +203,7 @@ export default function PublicarOfertaPage() {
               className="w-full font-bold py-3.5 rounded-xl text-sm transition"
               style={{
                 background: enviando ? "#3d3c30" : "linear-gradient(135deg, #7ed56f, #5cb848)",
-                color: enviando ? "#706a58" : "#1a1a12",
+                color: enviando ? "#9a9378" : "#1a1a12",
                 boxShadow: enviando ? "none" : "0 4px 16px rgba(126,213,111,0.25)",
               }}>
               {enviando ? "Publicando..." : <><Rocket size={13} className="inline mr-1" />Publicar oferta gratis</>}

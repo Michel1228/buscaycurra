@@ -178,12 +178,12 @@ export default function SobreNosotrosPage() {
           >
             Activar Guzzi gratis →
           </Link>
-          <p className="mt-3 text-xs" style={{ color: "#475569" }}>Sin tarjeta de crédito. En 30 segundos.</p>
+          <p className="mt-3 text-xs" style={{ color: "#6b7280" }}>Sin tarjeta de crédito. En 30 segundos.</p>
         </div>
       </main>
 
       <footer className="py-8 px-6 text-center" style={{ borderTop: "1px solid rgba(45,49,66,0.4)" }}>
-        <div className="flex flex-wrap gap-4 justify-center text-xs" style={{ color: "#475569" }}>
+        <div className="flex flex-wrap gap-4 justify-center text-xs" style={{ color: "#6b7280" }}>
           {[
             { href: "/", label: "Inicio" },
             { href: "/precios", label: "Precios" },

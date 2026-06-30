@@ -306,7 +306,7 @@ export default function SalariosPage() {
                         <span className="text-[10px]" style={{ color: "#ef4444" }}>↓{formatMoney(o.min_salary)}</span>
                         <span className="text-[10px]" style={{ color: "#3b82f6" }}>↑{formatMoney(o.max_salary)}</span>
                       </div>
-                      <p className="text-[10px] mt-1" style={{ color: "#475569" }}>{o.total.toLocaleString("es-ES")} ofertas</p>
+                      <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>{o.total.toLocaleString("es-ES")} ofertas</p>
                     </button>
                   ))}
                 </div>
@@ -463,7 +463,7 @@ export default function SalariosPage() {
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #22c55e, #16a34a)" }} />
                         </div>
                         <span className="text-[11px] font-semibold w-14 text-right" style={{ color: "#f1f5f9" }}>{formatMoney(p.avg_salary)}</span>
-                        <span className="text-[10px] w-8 text-right" style={{ color: "#475569" }}>{p.count}</span>
+                        <span className="text-[10px] w-8 text-right" style={{ color: "#6b7280" }}>{p.count}</span>
                       </div>
                     );
                   })}

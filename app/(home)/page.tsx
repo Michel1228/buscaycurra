@@ -355,7 +355,7 @@ export default async function LandingPage() {
                 Ya tengo cuenta → Entrar
               </Link>
             </div>
-            <p className="mt-3 text-[11px]" style={{ color: "#475569" }}>
+            <p className="mt-3 text-[11px]" style={{ color: "#6b7280" }}>
               Sin tarjeta de crédito. En 30 segundos.
             </p>
             <div className="mt-4">
@@ -403,7 +403,7 @@ export default async function LandingPage() {
                   <div className="text-[11px] leading-tight mb-2" style={{ color: "#94a3b8" }}>
                     {v.label}
                   </div>
-                  <div className="text-[9px]" style={{ color: "#475569" }}>
+                  <div className="text-[9px]" style={{ color: "#6b7280" }}>
                     Fuente: {v.fuente}
                   </div>
                 </div>
@@ -793,7 +793,7 @@ export default async function LandingPage() {
                         {plan.periodo}
                       </span>
                     </div>
-                    <div className="text-[11px] mt-0.5" style={{ color: "#475569" }}>
+                    <div className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
                       {plan.desc}
                     </div>
                   </div>
@@ -829,14 +829,14 @@ export default async function LandingPage() {
                     {plan.cta}
                   </Link>
                   {plan.nota && (
-                    <p className="mt-2 text-center text-[10px]" style={{ color: "#475569" }}>
+                    <p className="mt-2 text-center text-[10px]" style={{ color: "#6b7280" }}>
                       {plan.nota}
                     </p>
                   )}
                 </div>
               ))}
             </div>
-            <p className="text-center mt-6 text-[11px]" style={{ color: "#475569" }}>
+            <p className="text-center mt-6 text-[11px]" style={{ color: "#6b7280" }}>
               Cancela en cualquier momento. Sin permanencia.
             </p>
           </div>
@@ -875,7 +875,7 @@ export default async function LandingPage() {
             >
               Activar Guzzi gratis →
             </Link>
-            <p className="mt-3 text-[11px]" style={{ color: "#475569" }}>
+            <p className="mt-3 text-[11px]" style={{ color: "#6b7280" }}>
               Sin tarjeta de crédito. En 30 segundos.
             </p>
           </div>
@@ -896,7 +896,7 @@ export default async function LandingPage() {
                   BuscayCurra
                 </span>
               </div>
-              <p className="text-[11px] leading-relaxed max-w-xs" style={{ color: "#475569" }}>
+              <p className="text-[11px] leading-relaxed max-w-xs" style={{ color: "#6b7280" }}>
                 El primer agente IA que busca trabajo por ti. {PAISES} países, 24/7, cero spam.
                 La alternativa real a InfoJobs, LinkedIn e Indeed.
               </p>

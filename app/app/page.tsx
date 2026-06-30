@@ -160,7 +160,7 @@ export default function HomePage() {
               ].map((s) => (
                 <div key={s.label} className="card-game p-4 text-center">
                   <p className="text-2xl font-black" style={{ color: "#7ed56f" }}>{s.num}</p>
-                  <p className="text-xs mt-1" style={{ color: "#706a58" }}>{s.label}</p>
+                  <p className="text-xs mt-1" style={{ color: "#9a9378" }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -173,7 +173,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
               Nuestras 3 superpotencias
             </h2>
-            <p className="text-center mb-14" style={{ color: "#706a58" }}>Tres herramientas reales que cambian el resultado de tu búsqueda.</p>
+            <p className="text-center mb-14" style={{ color: "#9a9378" }}>Tres herramientas reales que cambian el resultado de tu búsqueda.</p>
             <div className="grid md:grid-cols-3 gap-6">
               {superpotencias.map((s) => (
                 <div key={s.titulo} className="card-game p-7 relative">
@@ -198,7 +198,7 @@ export default function HomePage() {
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-4" style={{ color: "#f0ebe0" }}>
               Tu camino con Guzzi
             </h2>
-            <p className="text-center mb-16" style={{ color: "#706a58" }}>5 pasos. Guzzi trabaja, tú consigues el trabajo.</p>
+            <p className="text-center mb-16" style={{ color: "#9a9378" }}>5 pasos. Guzzi trabaja, tú consigues el trabajo.</p>
             <div className="space-y-8">
               {pasos.map((paso, i) => (
                 <div key={paso.num} className={`flex items-start gap-6 flex-col ${i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"}`}>
@@ -214,7 +214,7 @@ export default function HomePage() {
                       <h3 className="text-lg font-bold" style={{ color: paso.color }}>{paso.titulo}</h3>
                     </div>
                     <p className="text-sm leading-relaxed mb-2" style={{ color: "#b0a890" }}>{paso.desc}</p>
-                    <span className="text-xs font-medium" style={{ color: "#706a58" }}>{paso.detalle}</span>
+                    <span className="text-xs font-medium" style={{ color: "#9a9378" }}>{paso.detalle}</span>
                   </div>
                 </div>
               ))}
@@ -228,11 +228,11 @@ export default function HomePage() {
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
               InfoJobs, LinkedIn, Indeed… te tienen en una fila.
             </h2>
-            <p className="text-center mb-12" style={{ color: "#706a58" }}>Tú aplicas. Ellos esperan. Guzzi trabaja por ti cada día.</p>
+            <p className="text-center mb-12" style={{ color: "#9a9378" }}>Tú aplicas. Ellos esperan. Guzzi trabaja por ti cada día.</p>
             <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(15,26,10,0.6)", border: "1px solid rgba(126,213,111,0.12)" }}>
               <div className="grid grid-cols-3 text-center text-sm font-bold py-4 px-4"
                 style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(126,213,111,0.1)" }}>
-                <div style={{ color: "#706a58" }}>Aspecto</div>
+                <div style={{ color: "#9a9378" }}>Aspecto</div>
                 <div style={{ color: "#e07850" }}>InfoJobs / LinkedIn</div>
                 <div style={{ color: "#7ed56f" }}>BuscayCurra</div>
               </div>
@@ -264,7 +264,7 @@ export default function HomePage() {
         <section className="py-20 px-4" style={{ background: "rgba(15,26,10,0.5)" }}>
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>Planes simples</h2>
-            <p className="text-center mb-14" style={{ color: "#706a58" }}>Empieza gratis. Evoluciona cuando quieras.</p>
+            <p className="text-center mb-14" style={{ color: "#9a9378" }}>Empieza gratis. Evoluciona cuando quieras.</p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
                 { nombre: "Gratis", precio: "0€", periodo: "", emoji: <Egg className="w-7 h-7" />, desc: "Para probar", items: ["2 CVs/día", "Buscador básico", "Sin tarjeta"], dest: false, badge: null },
@@ -281,10 +281,10 @@ export default function HomePage() {
                   )}
                   <div className="text-3xl mb-2">{plan.emoji}</div>
                   <h3 className="text-base font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h3>
-                  <p className="text-[11px] mb-3" style={{ color: "#706a58" }}>{plan.desc}</p>
+                  <p className="text-[11px] mb-3" style={{ color: "#9a9378" }}>{plan.desc}</p>
                   <div className="mb-4">
                     <span className="text-2xl font-black" style={{ color: plan.dest ? "#7ed56f" : "#f0ebe0" }}>{plan.precio}</span>
-                    <span className="text-xs" style={{ color: "#706a58" }}>{plan.periodo}</span>
+                    <span className="text-xs" style={{ color: "#9a9378" }}>{plan.periodo}</span>
                   </div>
                   <ul className="space-y-1.5 mb-5 text-left">
                     {plan.items.map((item) => (
@@ -308,7 +308,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-center mb-3" style={{ color: "#f0ebe0" }}>
               Personas que ya encontraron trabajo con Guzzi
             </h2>
-            <p className="text-center mb-14" style={{ color: "#706a58" }}>Empezaron como tú. Guzzi los ayudó a llegar.</p>
+            <p className="text-center mb-14" style={{ color: "#9a9378" }}>Empezaron como tú. Guzzi los ayudó a llegar.</p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {testimonios.map((t) => (
                 <div key={t.nombre} className="card-game p-6 flex flex-col gap-3">
@@ -318,7 +318,7 @@ export default function HomePage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-bold" style={{ color: "#7ed56f" }}>{t.nombre} · {t.ciudad}</p>
-                        <p className="text-xs" style={{ color: "#706a58" }}>{t.puesto} — {t.empresa}</p>
+                        <p className="text-xs" style={{ color: "#9a9378" }}>{t.puesto} — {t.empresa}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xl"><Zap className="w-5 h-5" /></p>
@@ -361,9 +361,9 @@ export default function HomePage() {
               <span className="font-bold text-sm" style={{ color: "#7ed56f" }}>BuscayCurra</span>
             </div>
             <div className="flex flex-wrap gap-5 text-sm">
-              <Link href="/auth/login" style={{ color: "#706a58" }}>Entrar</Link>
-              <Link href="/auth/registro" style={{ color: "#706a58" }}>Registro</Link>
-              <Link href="/precios" style={{ color: "#706a58" }}>Precios</Link>
+              <Link href="/auth/login" style={{ color: "#9a9378" }}>Entrar</Link>
+              <Link href="/auth/registro" style={{ color: "#9a9378" }}>Registro</Link>
+              <Link href="/precios" style={{ color: "#9a9378" }}>Precios</Link>
             </div>
           </div>
           <div className="border-t pt-6 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderColor: "rgba(126,213,111,0.06)" }}>

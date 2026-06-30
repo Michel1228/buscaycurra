@@ -25,7 +25,7 @@ const config: Config = {
           crema: "#f5f0e0",
           texto: "#f0ebe0",
           textoSec: "#b0a890",
-          textoDim: "#706a58",
+          textoDim: "#9a9378",
         },
       },
       borderRadius: {

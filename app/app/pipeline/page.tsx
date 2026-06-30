@@ -273,7 +273,7 @@ export default function PipelinePage() {
                   <p className="text-xl font-bold" style={{ color: s.color }}>{s.valor}</p>
                   <p className="text-[10px]" style={{ color: "#64748b" }}>{s.label}</p>
                   {s.filtro === "entrevista" && s.valor === 0 && (
-                    <p className="text-[9px] mt-0.5" style={{ color: "#475569" }}>0 entrevistas</p>
+                    <p className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>0 entrevistas</p>
                   )}
                 </button>
               );
@@ -285,7 +285,7 @@ export default function PipelinePage() {
       <main className="max-w-6xl mx-auto px-4 py-6">
         {candidaturas.length === 0 ? (
           <div className="card-game p-10 text-center">
-            <Inbox size={40} strokeWidth={1.2} className="mx-auto mb-3" style={{ color: "#475569" }} />
+            <Inbox size={40} strokeWidth={1.2} className="mx-auto mb-3" style={{ color: "#6b7280" }} />
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Aún no tienes candidaturas</p>
             <p className="text-xs mt-1 mb-4" style={{ color: "#64748b" }}>Empieza enviando tu CV a empresas</p>
             <Link href="/app/empresas" className="btn-game text-xs">Enviar CV</Link>
@@ -317,7 +317,7 @@ export default function PipelinePage() {
                     <div className="w-2 h-2 rounded-full" style={{ background: col.color }} />
                     <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: col.color }}>{col.label}</span>
                     <InfoTooltip text={col.tip} position="bottom" />
-                    <span className="text-[10px] ml-auto" style={{ color: "#475569" }}>{items.length}</span>
+                    <span className="text-[10px] ml-auto" style={{ color: "#6b7280" }}>{items.length}</span>
                   </div>
                   <div className="space-y-2 min-h-[80px]">
                     {items.map(item => {
@@ -340,10 +340,10 @@ export default function PipelinePage() {
                           <p className="text-xs font-semibold truncate" style={{ color: "#f1f5f9" }}>{item.puesto}</p>
                           <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>{item.empresa}</p>
                           {item.email && (
-                            <p className="flex items-center gap-0.5 text-[10px] mt-0.5 truncate" style={{ color: "#475569" }}><AtSign size={9} strokeWidth={1.6} className="shrink-0" />{item.email}</p>
+                            <p className="flex items-center gap-0.5 text-[10px] mt-0.5 truncate" style={{ color: "#6b7280" }}><AtSign size={9} strokeWidth={1.6} className="shrink-0" />{item.email}</p>
                           )}
                           <div className="flex items-center gap-2 mt-1.5">
-                            <p className="text-[10px]" style={{ color: "#475569" }}>{new Date(item.fecha).toLocaleDateString("es-ES")}</p>
+                            <p className="text-[10px]" style={{ color: "#6b7280" }}>{new Date(item.fecha).toLocaleDateString("es-ES")}</p>
                             <p className="text-[10px]" style={{ color: dias <= 1 ? "#22c55e" : dias <= 3 ? "#f59e0b" : "#64748b" }}>
                               {dias === 0 ? "Hoy" : `+${dias}d`}
                             </p>
@@ -374,7 +374,7 @@ export default function PipelinePage() {
               </p>
               <p className="text-[11px]" style={{ color: "#64748b" }}>
                 <span className="font-medium">Fecha:</span> {new Date(candidaturaEdit.fecha).toLocaleDateString("es-ES")}
-                <span className="ml-2" style={{ color: "#475569" }}>(+{diasDesde(candidaturaEdit.fecha)} días)</span>
+                <span className="ml-2" style={{ color: "#6b7280" }}>(+{diasDesde(candidaturaEdit.fecha)} días)</span>
               </p>
             </div>
 

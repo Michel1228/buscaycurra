@@ -379,7 +379,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         )}
 
         {(oferta.sector || oferta.email_empresa) && (
-          <div className="mt-4 pt-4 flex flex-wrap gap-4 text-xs" style={{ borderTop: "1px solid #2d3142", color: "#475569" }}>
+          <div className="mt-4 pt-4 flex flex-wrap gap-4 text-xs" style={{ borderTop: "1px solid #2d3142", color: "#6b7280" }}>
             {oferta.sector && (
               <span>Sector: <strong style={{ color: "#94a3b8" }}>{oferta.sector}</strong></span>
             )}

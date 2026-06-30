@@ -475,7 +475,7 @@ export default function NotificacionesPage() {
                           </h4>
                           <span
                             className="text-[10px] shrink-0"
-                            style={{ color: "#475569" }}
+                            style={{ color: "#6b7280" }}
                           >
                             {formatearFecha(n.created_at)}
                           </span>
@@ -501,7 +501,7 @@ export default function NotificacionesPage() {
                             {!expanded && totalOfertas > 0 && (
                               <span
                                 className="text-[10px]"
-                                style={{ color: "#475569" }}
+                                style={{ color: "#6b7280" }}
                               >
                                 {n.datos?.keyword
                                   ? `"${n.datos.keyword}"`
@@ -712,7 +712,7 @@ export default function NotificacionesPage() {
                                         : "1px solid rgba(34,197,94,0.3)",
                                     color:
                                       enviadosHoy >= limiteDiario || sending
-                                        ? "#475569"
+                                        ? "#6b7280"
                                         : "#22c55e",
                                   }}
                                 >

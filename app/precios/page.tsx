@@ -129,7 +129,7 @@ export default function PreciosPage() {
           <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#f0ebe0" }}>
             Planes y precios
           </h1>
-          <p className="text-base" style={{ color: "#706a58" }}>
+          <p className="text-base" style={{ color: "#9a9378" }}>
             Sin permanencia. Cancela cuando quieras. Evoluciona a tu ritmo.
           </p>
         </div>
@@ -181,13 +181,13 @@ export default function PreciosPage() {
                 <plan.PlanIcon size={36} style={{ color: plan.dest ? "#7ed56f" : "#b0a890" }} />
               </div>
               <h2 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h2>
-              <p className="text-xs mt-1 mb-4" style={{ color: "#706a58" }}>{plan.desc}</p>
+              <p className="text-xs mt-1 mb-4" style={{ color: "#9a9378" }}>{plan.desc}</p>
 
               <div className="mb-5">
                 <span className="text-4xl font-black" style={{ color: plan.dest ? "#7ed56f" : "#f0ebe0" }}>
                   {plan.precio}
                 </span>
-                <span className="text-sm ml-1" style={{ color: "#706a58" }}>{plan.periodo}</span>
+                <span className="text-sm ml-1" style={{ color: "#9a9378" }}>{plan.periodo}</span>
               </div>
 
               <ul className="space-y-2.5 mb-6 text-left flex-1">
@@ -230,7 +230,7 @@ export default function PreciosPage() {
         )}
 
         <div className="text-center mt-6">
-          <Link href="/" className="text-sm hover:underline" style={{ color: "#706a58" }}>
+          <Link href="/" className="text-sm hover:underline" style={{ color: "#9a9378" }}>
             ← Volver a la landing
           </Link>
         </div>

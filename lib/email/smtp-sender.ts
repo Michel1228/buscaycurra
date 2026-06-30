@@ -108,7 +108,7 @@ function ctaButton(text: string, url: string, color: string = "#22c55e"): string
 function infoRow(label: string, value: string, valueColor: string = "#f1f5f9"): string {
   return `<tr>
     <td style="padding:14px 0;border-bottom:1px solid #1e2538;">
-      <p style="margin:0 0 4px;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">${label}</p>
+      <p style="margin:0 0 4px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">${label}</p>
       <p style="margin:0;color:${valueColor};font-size:15px;font-weight:600;">${value}</p>
     </td>
   </tr>`;
@@ -186,7 +186,7 @@ export async function sendPaymentConfirmationEmail(userEmail: string, plan: stri
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1520;border:1px solid rgba(34,197,94,0.15);border-radius:14px;margin-bottom:28px;">
       <tr><td style="padding:22px 24px;">
-        <p style="margin:0 0 6px;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">Plan activado</p>
+        <p style="margin:0 0 6px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">Plan activado</p>
         <p style="margin:0;color:#22c55e;font-size:22px;font-weight:700;">${nombrePlan}</p>
       </td></tr>
     </table>
@@ -375,7 +375,7 @@ export async function sendJobAlertEmail(params: {
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1520;border:1px solid rgba(34,197,94,0.15);border-radius:14px;margin-bottom:24px;">
       <tr><td style="padding:20px 24px;">
-        <p style="margin:0 0 4px;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">Ejemplo</p>
+        <p style="margin:0 0 4px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">Ejemplo</p>
         <p style="margin:0 0 4px;color:#f1f5f9;font-size:16px;font-weight:700;">${ejemploTitle}</p>
         <p style="margin:0;color:#64748b;font-size:13px;">${ejemploCompany}${ejemploCity ? ` · ${ejemploCity}` : ""}</p>
       </td></tr>

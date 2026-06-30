@@ -29,7 +29,7 @@ function colorMatch(pct: number): string {
   if (pct >= 80) return "#7ed56f";
   if (pct >= 60) return "#f0c040";
   if (pct >= 40) return "#e07850";
-  return "#706a58";
+  return "#9a9378";
 }
 
 function colorFuente(fuente: string): { bg: string; text: string } {
@@ -60,7 +60,7 @@ export default function JobCard({
   url, modalidad, descripcion, match, distancia, emailEmpresa,
 }: PropiedadesJobCard) {
   const fc = colorFuente(fuente);
-  const matchColor = match !== undefined ? colorMatch(match) : "#706a58";
+  const matchColor = match !== undefined ? colorMatch(match) : "#9a9378";
 
   const [enviando, setEnviando] = useState(false);
   const [estadoEnvio, setEstadoEnvio] = useState<"idle" | "ok" | "sin-email">("idle");
@@ -139,7 +139,7 @@ export default function JobCard({
         </div>
         {match !== undefined && (
           <div className="flex items-center gap-2">
-            <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: "#2a2a1e" }}>
+            <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: "#2a2a1e" }} role="progressbar" aria-valuenow={match} aria-valuemin={0} aria-valuemax={100} aria-label={`${match}% de compatibilidad`}>
               <div className="h-full rounded-full transition-all" style={{ width: `${match}%`, background: matchColor }} />
             </div>
             <span className="text-xs font-bold" style={{ color: matchColor }}>{match}%</span>
@@ -151,7 +151,7 @@ export default function JobCard({
       <div>
         <h3 className="font-bold text-sm leading-snug" style={{ color: "#f0ebe0" }}>{titulo}</h3>
         <p className="text-xs mt-1" style={{ color: "#b0a890" }}>{empresa}</p>
-        <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: "#706a58" }}>
+        <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: "#9a9378" }}>
           <span>📍</span><span>{ubicacion}</span>
         </div>
         {salario && (
@@ -170,7 +170,7 @@ export default function JobCard({
           </div>
         )}
         {descripcion && (
-          <p className="text-[11px] mt-2 line-clamp-2 leading-relaxed" style={{ color: "#706a58" }}>{descripcion}</p>
+          <p className="text-[11px] mt-2 line-clamp-2 leading-relaxed" style={{ color: "#9a9378" }}>{descripcion}</p>
         )}
       </div>
 

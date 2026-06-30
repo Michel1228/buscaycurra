@@ -366,10 +366,10 @@ export default function PerfilPage() {
 
         {tab === "plan" && (() => {
           const PLANES_INFO = {
-            free:     { emoji: "🥚", nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 2 CVs/día" },
-            basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
-            esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "5 CVs/día · 50 candidaturas/mes · Buscador avanzado" },
-            pro:      { emoji: "⚡", nombre: "Pro",      color: "#a855f7", desc: "10 CVs/día · 200 candidaturas/mes · IA avanzada" },
+            free:     { emoji: "🥚", nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 3 CVs/día" },
+            basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Buscador avanzado" },
+            esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Buscador avanzado" },
+            pro:      { emoji: "⚡", nombre: "Pro",      color: "#a855f7", desc: "50 CVs/día · 350 CVs/semana · IA avanzada" },
             empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
           };
           const info = PLANES_INFO[planActual];
@@ -406,7 +406,7 @@ export default function PerfilPage() {
                   >
                     {cargandoPortal ? "Cargando..." : "Gestionar suscripción →"}
                   </button>
-                  <p className="text-[11px] text-center mt-1.5" style={{ color: "#475569" }}>
+                  <p className="text-[11px] text-center mt-1.5" style={{ color: "#6b7280" }}>
                     Cambiar plan, método de pago o cancelar
                   </p>
                 </div>
@@ -439,7 +439,7 @@ export default function PerfilPage() {
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🌱 Plan Esencial — 2,99€/mes</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>30 candidaturas/mes · Buscador avanzado</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>15 CVs/día · 100 CVs/semana · Buscador avanzado</p>
                       </div>
                       <button onClick={() => void irACheckout("esencial")} disabled={cargandoPlan}
                         className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
@@ -452,7 +452,7 @@ export default function PerfilPage() {
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>⚡ Plan Pro — 9,99€/mes</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>10 CVs/día · IA avanzada · Estadísticas</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>50 CVs/día · IA avanzada · Estadísticas</p>
                       </div>
                       <button onClick={() => void irACheckout("pro")} disabled={cargandoPlan}
                         className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
@@ -477,7 +477,7 @@ export default function PerfilPage() {
               )}
 
               {/* Link a precios */}
-              <p className="text-xs text-center" style={{ color: "#475569" }}>
+              <p className="text-xs text-center" style={{ color: "#6b7280" }}>
                 <button onClick={() => router.push("/precios")} className="underline hover:opacity-80" style={{ color: "#22c55e" }}>
                   Ver comparativa completa de planes →
                 </button>
@@ -546,12 +546,12 @@ export default function PerfilPage() {
             {/* Legal — Política de privacidad y términos */}
             <div className="rounded-xl p-4 flex gap-4 text-xs" style={{ background: "#161922", border: "1px solid #252836" }}>
               <a href="/privacidad" target="_blank" rel="noopener noreferrer"
-                className="hover:underline" style={{ color: "#475569" }}>
+                className="hover:underline" style={{ color: "#6b7280" }}>
                 Política de privacidad
               </a>
               <span style={{ color: "#2d3142" }}>·</span>
               <a href="/terminos" target="_blank" rel="noopener noreferrer"
-                className="hover:underline" style={{ color: "#475569" }}>
+                className="hover:underline" style={{ color: "#6b7280" }}>
                 Términos de uso
               </a>
             </div>

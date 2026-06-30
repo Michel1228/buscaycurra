@@ -564,7 +564,7 @@ export default function EmpresasPage() {
                   {buscando ? "Buscando..." : "Buscar"}
                 </button>
               </div>
-              <p className="text-[10px] mt-2" style={{ color: "#475569" }}>
+              <p className="text-[10px] mt-2" style={{ color: "#6b7280" }}>
                 Buscamos en Google Places: web oficial, teléfono, dirección, Google Maps, rating y más.
               </p>
             </div>
@@ -668,7 +668,7 @@ export default function EmpresasPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>{empresaSeleccionada.nombre}</h2>
-                    <p className="text-[11px] mt-0.5" style={{ color: "#475569" }}>
+                    <p className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
                       {empresaSeleccionada.sector && `${empresaSeleccionada.sector} · `}
                       Google Places
                     </p>
@@ -705,7 +705,7 @@ export default function EmpresasPage() {
                             .filter(e => e !== empresaSeleccionada.emailRrhh)
                             .map((e, i) => (
                               <div key={i} className="flex items-center gap-2">
-                                <span className="text-[10px]" style={{ color: "#475569" }}>{e}</span>
+                                <span className="text-[10px]" style={{ color: "#6b7280" }}>{e}</span>
                                 <button
                                   onClick={() => handleEnviarCV(e)}
                                   className="text-[9px] px-1.5 py-0.5 rounded font-medium"
@@ -785,7 +785,7 @@ export default function EmpresasPage() {
                               border: sendStrategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
                             }}>
                             <div className="text-[11px] font-semibold" style={{ color: sendStrategy === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
-                            <div className="text-[9px] mt-0.5" style={{ color: "#475569" }}>{s.sub}</div>
+                            <div className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>{s.sub}</div>
                           </button>
                         ))}
                       </div>
@@ -831,7 +831,7 @@ export default function EmpresasPage() {
               <label className="block text-xs font-semibold mb-2" style={{ color: "#94a3b8" }}>
                 Buscar ETTs en tu ciudad
               </label>
-              <p className="text-[10px] mb-3" style={{ color: "#475569" }}>
+              <p className="text-[10px] mb-3" style={{ color: "#6b7280" }}>
                 Encuentra agencias de empleo temporal (ETTs) cerca de ti. Envíales tu CV con carta adaptada.
               </p>
               <div className="flex gap-2">
@@ -958,7 +958,7 @@ export default function EmpresasPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>{empresaSeleccionada.nombre}</h2>
-                    <p className="text-[11px] mt-0.5" style={{ color: "#475569" }}>
+                    <p className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
                       {empresaSeleccionada.sector && `${empresaSeleccionada.sector} · `}
                       Google Places
                     </p>
@@ -995,7 +995,7 @@ export default function EmpresasPage() {
                             .filter(e => e !== empresaSeleccionada.emailRrhh)
                             .map((e, i) => (
                               <div key={i} className="flex items-center gap-2">
-                                <span className="text-[10px]" style={{ color: "#475569" }}>{e}</span>
+                                <span className="text-[10px]" style={{ color: "#6b7280" }}>{e}</span>
                                 <button
                                   onClick={() => handleEnviarCV(e)}
                                   className="text-[9px] px-1.5 py-0.5 rounded font-medium"
@@ -1082,7 +1082,7 @@ export default function EmpresasPage() {
                               border: sendStrategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
                             }}>
                             <div className="text-[11px] font-semibold" style={{ color: sendStrategy === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
-                            <div className="text-[9px] mt-0.5" style={{ color: "#475569" }}>{s.sub}</div>
+                            <div className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>{s.sub}</div>
                           </button>
                         ))}
                       </div>

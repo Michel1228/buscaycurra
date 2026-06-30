@@ -69,7 +69,7 @@ export default function RecuperarPage() {
             B
           </div>
           <h1 className="text-2xl font-bold text-[#f0ebe0]">¿Olvidaste tu contraseña?</h1>
-          <p className="text-[#706a58] text-sm mt-1">
+          <p className="text-[#9a9378] text-sm mt-1">
             Te enviaremos un enlace para que puedas recuperar tu cuenta
           </p>
         </div>

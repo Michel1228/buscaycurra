@@ -1,39 +1,68 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { PartyPopper, Check } from "lucide-react";
+
+const planNames: Record<string, string> = {
+  empresa: "Empresa",
+  pro: "Pro",
+  esencial: "Esencial",
+  basico: "Básico",
+};
 
 function PagoExitosoContenido() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [planActivo, setPlanActivo] = useState<string>("Pro");
+  const [polling, setPolling] = useState(true);
+  const pollingRef = useRef(false);
 
   useEffect(() => {
-    const obtenerPlan = async () => {
+    if (pollingRef.current) return;
+    pollingRef.current = true;
+
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    const poll = async () => {
       try {
         const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-        if (!session) return;
+        if (!session) { setPolling(false); return; }
         const { data: perfil } = await getSupabaseBrowser()
           .from("profiles").select("plan").eq("id", session.user.id).single();
-        if (perfil?.plan === "empresa") setPlanActivo("Empresa");
-        else if (perfil?.plan === "pro") setPlanActivo("Pro");
-        else if (perfil?.plan === "esencial") setPlanActivo("Esencial");
-        else setPlanActivo("Pro");
-      } catch { /* default Pro */ }
+
+        if (perfil?.plan && perfil.plan !== "free") {
+          setPlanActivo(planNames[perfil.plan] || "Pro");
+          setPolling(false);
+          return;
+        }
+      } catch { /* retry */ }
+
+      attempts++;
+      if (attempts >= maxAttempts) {
+        setPolling(false);
+        return;
+      }
+
+      // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s cap
+      const delay = Math.min(1000 * Math.pow(2, attempts - 1), 30000);
+      setTimeout(poll, delay);
     };
-    void obtenerPlan();
+
+    // First attempt after a short initial delay (Stripe webhook needs ~2s)
+    setTimeout(poll, 2000);
   }, [searchParams]);
 
   const caracteristicas =
     planActivo === "Empresa"
       ? ["Envíos ilimitados de CV", "IA avanzada activada", "Acceso a API", "Soporte dedicado 24/7"]
       : planActivo === "Esencial"
-      ? ["60 candidaturas al mes", "5 CVs por día", "Mejora CV con IA", "Estadísticas básicas"]
+      ? ["15 CVs enviados por día", "100 CVs por semana", "Mejora CV con IA", "Buscador avanzado"]
       : planActivo === "Básico"
-      ? ["5 CVs enviados por día", "Buscador avanzado", "Mejora CV con IA"]
-      : ["10 CVs enviados por día", "IA avanzada activada", "Estadísticas detalladas", "Soporte prioritario"];
+      ? ["15 CVs enviados por día", "Buscador avanzado", "Mejora CV con IA"]
+      : ["50 CVs enviados por día", "350 CVs por semana", "IA avanzada activada", "Soporte prioritario"];
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-16" style={{ background: "#0f1117" }}>
@@ -48,7 +77,7 @@ function PagoExitosoContenido() {
           Ya tienes el plan <strong style={{ color: "#22c55e" }}>{planActivo}</strong> activado.
         </p>
         <p className="text-xs mb-6" style={{ color: "#64748b" }}>
-          Tu plan estará activo en unos segundos.
+          {polling ? "⏳ Verificando tu plan..." : "Tu plan estará activo en unos segundos."}
         </p>
 
         <div className="rounded-xl p-4 mb-6 text-left space-y-2"

@@ -146,6 +146,7 @@ export default function VoiceRecorder({
           <button
             onClick={toggleVoz}
             disabled={disabled}
+            aria-pressed={escuchando}
             className="w-full py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2"
             style={{
               background: escuchando ? "#dc2626" : "#0f1117",
@@ -213,7 +214,7 @@ export default function VoiceRecorder({
               {esIOS ? "🔓 Ya activé el permiso" : "🔓 Intentar de nuevo"}
             </button>
           </div>
-          <p className="text-[11px] text-center" style={{ color: "#475569" }}>
+          <p className="text-[11px] text-center" style={{ color: "#6b7280" }}>
             También puedes escribir tu respuesta directamente arriba ↑
           </p>
         </div>

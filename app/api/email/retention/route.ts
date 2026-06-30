@@ -50,7 +50,7 @@ async function enviarEmail(
     <h1 style="color:#7ed56f;margin:12px 0 6px;font-size:22px;letter-spacing:-0.5px;">
       Guzzi encontro ${ofertas.length} nuevas ofertas para ti
     </h1>
-    <p style="color:#706a58;margin:0;font-size:14px;">
+    <p style="color:#9a9378;margin:0;font-size:14px;">
       Hola <strong style="color:#f0ebe0;">${nombre || "campeon"}</strong>,
       hay ofertas nuevas de <strong style="color:#f0c040;">${puesto}</strong> desde ayer.
     </p>

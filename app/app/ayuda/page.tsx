@@ -98,7 +98,7 @@ export default function AyudaPage() {
             <p className="text-sm" style={{ color: "#64748b" }}>
               No encontramos resultados para &ldquo;{busqueda}&rdquo;.
             </p>
-            <p className="text-xs mt-2" style={{ color: "#475569" }}>
+            <p className="text-xs mt-2" style={{ color: "#6b7280" }}>
               Escríbenos a{" "}
               <a href="mailto:soporte@buscaycurra.es" style={{ color: "#22c55e" }}>soporte@buscaycurra.es</a>
             </p>
@@ -155,7 +155,7 @@ export default function AyudaPage() {
             { href: "/cookies", label: "Cookies" },
             { href: "/sobre-nosotros", label: "Sobre nosotros" },
           ].map((l) => (
-            <Link key={l.href} href={l.href} className="text-xs hover:underline" style={{ color: "#475569" }}>
+            <Link key={l.href} href={l.href} className="text-xs hover:underline" style={{ color: "#6b7280" }}>
               {l.label}
             </Link>
           ))}

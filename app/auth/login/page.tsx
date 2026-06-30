@@ -99,7 +99,7 @@ export default function LoginPage() {
           {/* Comparativa — solo en desktop */}
           <div className="hidden lg:block rounded-xl overflow-hidden mb-6" style={{ border: "1px solid #252836" }}>
             <div className="px-4 py-2 text-[10px] font-bold grid grid-cols-3 gap-2"
-              style={{ background: "#161922", color: "#475569" }}>
+              style={{ background: "#161922", color: "#6b7280" }}>
               <span></span>
               <span className="text-center">InfoJobs / LinkedIn</span>
               <span className="text-center" style={{ color: "#22c55e" }}>BuscayCurra</span>
@@ -120,7 +120,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="flex items-center gap-2 text-xs" style={{ color: "#475569" }}>
+          <div className="flex items-center gap-2 text-xs" style={{ color: "#6b7280" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
             Millones de ofertas · 24 países · 24/7 trabajando por ti
           </div>
@@ -128,7 +128,7 @@ export default function LoginPage() {
 
         <div className="relative z-10 hidden lg:flex items-center justify-between mt-8">
           <p className="text-xs" style={{ color: "#374151" }}>© 2026 BuscayCurra · Sin permanencia · 24 países</p>
-          <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#475569" }}>
+          <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#6b7280" }}>
             ¿Eres empresa o recruiter? →
           </Link>
         </div>

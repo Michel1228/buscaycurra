@@ -234,7 +234,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
           <p className="text-xs" style={{ color: "#4ade80" }}>Se enviará el {scheduled.fecha}</p>
         )}
         <p className="text-[11px]" style={{ color: "#64748b" }}>Recibirás un email de confirmación cuando se procese.</p>
-        <p className="text-[10px] mt-1 px-2" style={{ color: "#475569" }}>
+        <p className="text-[10px] mt-1 px-2" style={{ color: "#6b7280" }}>
           Algunas empresas prefieren el anonimato y no muestran su nombre público, pero tu candidatura ha sido enviada con éxito.
         </p>
         <div className="flex gap-2 justify-center mt-3">
@@ -307,7 +307,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
                   {buscandoEmail ? "Buscando…" : "Buscar"}
                 </button>
               </div>
-              <p className="text-[10px] mt-1" style={{ color: "#475569" }}>Pega la URL de la empresa o de la oferta.</p>
+              <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>Pega la URL de la empresa o de la oferta.</p>
             </div>
 
             {busquedaRealizada && (
@@ -319,7 +319,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
                   <>
                     <p className="text-[11px] font-semibold mb-1.5" style={{ color: "#22c55e" }}>Email encontrado</p>
                     <input type="email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)} className="w-full text-sm" />
-                    <p className="text-[10px] mt-1" style={{ color: "#475569" }}>Puedes editarlo si no es correcto.</p>
+                    <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>Puedes editarlo si no es correcto.</p>
                   </>
                 ) : (
                   <>
@@ -340,7 +340,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
 
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
-                Puesto <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(opcional)</span>
+                Puesto <span className="font-normal text-[10px]" style={{ color: "#6b7280" }}>(opcional)</span>
               </label>
               <input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)}
                 placeholder="ej: Camarero, Electricista..." className="w-full text-sm" />
@@ -361,7 +361,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
 
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
-                Puesto <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(opcional)</span>
+                Puesto <span className="font-normal text-[10px]" style={{ color: "#6b7280" }}>(opcional)</span>
               </label>
               <input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)}
                 placeholder="ej: Camarero, Electricista..." className="w-full text-sm" />
@@ -377,7 +377,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
 
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
-                Web <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(mejora la carta IA)</span>
+                Web <span className="font-normal text-[10px]" style={{ color: "#6b7280" }}>(mejora la carta IA)</span>
               </label>
               <input type="url" value={companyUrl} onChange={e => setCompanyUrl(e.target.value)}
                 placeholder="https://www.empresa.com" className="w-full text-sm" />
@@ -398,7 +398,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
 
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
-                Puesto <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(opcional)</span>
+                Puesto <span className="font-normal text-[10px]" style={{ color: "#6b7280" }}>(opcional)</span>
               </label>
               <input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)}
                 placeholder="ej: Camarero, Electricista..." className="w-full text-sm" />
@@ -406,7 +406,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
 
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>
-                Link de la oferta <span className="font-normal text-[10px]" style={{ color: "#475569" }}>(para seguimiento)</span>
+                Link de la oferta <span className="font-normal text-[10px]" style={{ color: "#6b7280" }}>(para seguimiento)</span>
               </label>
               <input type="url" value={companyUrl} onChange={e => setCompanyUrl(e.target.value)}
                 placeholder="https://infojobs.net/oferta/..." className="w-full text-sm" />
@@ -439,7 +439,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
                     border: estrategia === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
                   }}>
                   <div className="text-[11px] font-semibold" style={{ color: estrategia === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
-                  <div className="text-[9px] mt-0.5" style={{ color: "#475569" }}>{s.sub}</div>
+                  <div className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>{s.sub}</div>
                 </button>
               ))}
             </div>
@@ -529,7 +529,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
                 className="w-full px-4 py-3 rounded-xl text-sm resize-none focus:outline-none"
                 style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9", lineHeight: 1.7 }}
               />
-              <p className="text-[10px] mt-2" style={{ color: "#475569" }}>
+              <p className="text-[10px] mt-2" style={{ color: "#6b7280" }}>
                 Puedes editar libremente el texto. Esta es la carta que se enviará junto a tu CV.
               </p>
             </div>

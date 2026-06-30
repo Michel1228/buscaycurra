@@ -110,7 +110,7 @@ export default function NuevaContrasenaPage() {
             B
           </div>
           <h1 className="text-2xl font-bold text-[#f0ebe0]">Nueva contraseña</h1>
-          <p className="text-[#706a58] text-sm mt-1">
+          <p className="text-[#9a9378] text-sm mt-1">
             Elige una contraseña segura para tu cuenta
           </p>
         </div>
@@ -130,7 +130,7 @@ export default function NuevaContrasenaPage() {
               <h2 className="text-lg font-semibold text-[#f0ebe0] mb-2">
                 ¡Contraseña actualizada!
               </h2>
-              <p className="text-[#706a58] text-sm">Redirigiendo al panel de control...</p>
+              <p className="text-[#9a9378] text-sm">Redirigiendo al panel de control...</p>
             </div>
           ) : (
             // Formulario para nueva contraseña

@@ -276,7 +276,7 @@ export default function EmpresasLandingPage() {
                 style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
                 Contratar Plan Empresa →
               </Link>
-              <p className="text-[10px] mt-3" style={{ color: "#475569" }}>
+              <p className="text-[10px] mt-3" style={{ color: "#6b7280" }}>
                 Comparado con InfoJobs (mín. 369€/oferta) o LinkedIn (500€+/mes). Sin publicar ninguna oferta.
               </p>
             </div>
@@ -303,7 +303,7 @@ export default function EmpresasLandingPage() {
               ))}
             </div>
             <div className="text-center mt-8">
-              <p className="text-xs" style={{ color: "#475569" }}>
+              <p className="text-xs" style={{ color: "#6b7280" }}>
                 ¿Más preguntas? Escríbenos a{" "}
                 <a href="mailto:empresas@buscaycurra.es" className="underline" style={{ color: "#22c55e" }}>
                   empresas@buscaycurra.es

@@ -227,7 +227,7 @@ export default function PerfilForm({ userId, datosIniciales = {}, onGuardado }: 
         className="w-full font-bold py-3 rounded-xl transition"
         style={{
           background: guardando ? "#3d3c30" : "linear-gradient(135deg, #7ed56f, #5cb848)",
-          color: guardando ? "#706a58" : "#1a1a12",
+          color: guardando ? "#9a9378" : "#1a1a12",
           boxShadow: guardando ? "none" : "0 4px 16px rgba(126,213,111,0.25)",
         }}>
         {guardando ? "Guardando..." : "💾 Guardar perfil"}

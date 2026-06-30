@@ -20,8 +20,15 @@ export default function CountrySelector({ paisActual, onCambiarPais, variant = "
         setAbierto(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setAbierto(false);
+    }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const isNavbar = variant === "navbar";
@@ -30,6 +37,7 @@ export default function CountrySelector({ paisActual, onCambiarPais, variant = "
     <div ref={ref} className="relative">
       <button
         onClick={() => setAbierto(!abierto)}
+        aria-expanded={abierto}
         className={`flex items-center gap-1.5 rounded-lg transition-colors
           ${isNavbar
             ? "bg-[#1a1d2e] hover:bg-[#252839] px-2.5 py-1.5 text-sm"
@@ -46,7 +54,7 @@ export default function CountrySelector({ paisActual, onCambiarPais, variant = "
       </button>
 
       {abierto && (
-        <div className={`absolute z-50 mt-1.5 bg-[#1a1d2e] border border-[#2d3142] rounded-xl shadow-2xl overflow-hidden
+        <div role="listbox" className={`absolute z-50 mt-1.5 bg-[#1a1d2e] border border-[#2d3142] rounded-xl shadow-2xl overflow-hidden
           ${isNavbar ? "right-0 w-64" : "left-0 w-72"}`}
         >
           <div className="px-3 py-2 border-b border-[#2d3142]">

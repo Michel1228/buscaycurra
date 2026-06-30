@@ -519,7 +519,7 @@ function BuscarPageInner() {
                     <p className="text-xs" style={{ color: "#64748b" }}>
                       {esEnTiempoReal ? `${ofertas.length} ofertas` : `${ofertas.length} de ${(totalResultados > ofertas.length ? totalResultados : ofertas.length).toLocaleString("es-ES")} ofertas`}
                     </p>
-                    {esEnTiempoReal && <p className="text-[10px]" style={{ color: "#475569" }}>Resultados en tiempo real</p>}
+                    {esEnTiempoReal && <p className="text-[10px]" style={{ color: "#6b7280" }}>Resultados en tiempo real</p>}
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
@@ -551,7 +551,7 @@ function BuscarPageInner() {
                         <span className="text-xs" style={{ color: "#64748b" }}>Cargando más ofertas...</span>
                       </div>
                     )}
-                    <p className="text-[10px]" style={{ color: "#475569" }}>
+                    <p className="text-[10px]" style={{ color: "#6b7280" }}>
                       Mostrando {ofertas.length.toLocaleString("es-ES")} de {totalResultados.toLocaleString("es-ES")} ofertas
                     </p>
                   </div>

@@ -99,7 +99,7 @@ export default function DescargaClient() {
                 Instalar gratis
               </button>
             )}
-            <p style={{ fontSize: "13px", color: "#475569", margin: 0 }}>Sin tarjeta. Sin compromisos. Solo resultados.</p>
+            <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>Sin tarjeta. Sin compromisos. Solo resultados.</p>
           </div>
 
           {/* Stats */}
@@ -218,7 +218,7 @@ export default function DescargaClient() {
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#22c55e" }}>BuscayCurra</span>
         </div>
         <p style={{ fontSize: "12px", color: "#334155", margin: 0 }}>
-          © 2026 BuscayCurra · <Link href="/precios" style={{ color: "#475569", textDecoration: "none" }}>Precios</Link> · <Link href="/auth/login" style={{ color: "#475569", textDecoration: "none" }}>Acceder</Link>
+          © 2026 BuscayCurra · <Link href="/precios" style={{ color: "#6b7280", textDecoration: "none" }}>Precios</Link> · <Link href="/auth/login" style={{ color: "#6b7280", textDecoration: "none" }}>Acceder</Link>
         </p>
       </footer>
 

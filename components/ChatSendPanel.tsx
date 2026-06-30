@@ -158,7 +158,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
             <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Enviar CV a {target.empresa}</h3>
             <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{target.titulo}</p>
           </div>
-          <button onClick={onClose} className="text-xl" style={{ color: "#64748b" }}>✕</button>
+          <button onClick={onClose} aria-label="Cerrar" className="text-xl" style={{ color: "#64748b" }}>✕</button>
         </div>
 
         <div className="p-5 space-y-4">
@@ -201,6 +201,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
                   key={s.id}
                   type="button"
                   onClick={() => setStrategy(s.id)}
+                  aria-pressed={strategy === s.id}
                   className="py-2 px-2 rounded-lg text-center transition"
                   style={{
                     background: strategy === s.id ? "rgba(34,197,94,0.1)" : "#1e212b",
@@ -208,7 +209,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
                   }}
                 >
                   <div className="text-[11px] font-semibold" style={{ color: strategy === s.id ? "#22c55e" : "#94a3b8" }}>{s.label}</div>
-                  <div className="text-[9px] mt-0.5" style={{ color: "#475569" }}>{s.sub}</div>
+                  <div className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>{s.sub}</div>
                 </button>
               ))}
             </div>
