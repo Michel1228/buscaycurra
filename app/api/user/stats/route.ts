@@ -103,7 +103,6 @@ export async function GET(request: NextRequest) {
       },
       recientes: (recientes || []).map((r: any) => ({
         empresa: r.company_name,
-        email: r.company_email,
         puesto: r.job_title,
         fecha: r.created_at,
       })),
@@ -111,8 +110,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[user/stats] Error:", (error as Error).message);
     return NextResponse.json(
-      { plan: "free", cv: { hoy: 0, semana: 0, mes: 0, limiteHoy: 0, disponibles: 0 } },
-      { status: 200 }
+      { error: "Error al obtener estadísticas del usuario." },
+      { status: 500 }
     );
   }
 }

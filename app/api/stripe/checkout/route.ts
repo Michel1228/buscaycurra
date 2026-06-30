@@ -38,14 +38,32 @@ export async function POST(request: NextRequest) {
     // ⛔ Bloquear suscripción duplicada — si ya tiene plan activo, no permitir comprar otra vez
     const { data: perfil } = await supabaseAdmin
       .from("profiles")
-      .select("plan, subscription_status")
+      .select("plan, subscription_status, stripe_customer_id")
       .eq("id", user.id)
       .single();
 
     if (perfil?.subscription_status === "active" && perfil?.plan !== "free") {
-      return NextResponse.json({
-        error: `Ya tienes el plan ${perfil.plan === "basico" ? "Básico" : perfil.plan === "esencial" ? "Esencial" : perfil.plan === "pro" ? "Pro" : "Empresa"} activo. Puedes gestionarlo en tu perfil.`
-      }, { status: 409 });
+      return NextResponse.json({ error: "Ya tienes un plan activo." }, { status: 409 });
+    }
+
+    // ⛔ Verificar suscripción activa en Stripe API (source of truth)
+    if (perfil?.stripe_customer_id) {
+      try {
+        const activeSubscriptions = await getStripe().subscriptions.list({
+          customer: perfil.stripe_customer_id as string,
+          status: "active",
+          limit: 1,
+        });
+        if (activeSubscriptions.data.length > 0) {
+          return NextResponse.json(
+            { error: "Ya tienes una suscripción activa en Stripe. Gestiona tu plan desde tu perfil." },
+            { status: 409 }
+          );
+        }
+      } catch (stripeErr) {
+        // Si falla Stripe, permitimos continuar (mejor falso negativo que bloquear pagos)
+        console.error("[stripe/checkout] Error verificando Stripe:", (stripeErr as Error).message);
+      }
     }
 
     const priceId =

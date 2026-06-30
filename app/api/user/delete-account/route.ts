@@ -81,7 +81,7 @@ export async function DELETE(req: NextRequest) {
 
     // 5. Borrar archivos de storage (foto de perfil, CV subido)
     try {
-      await supabaseAdmin.storage.from("avatars").remove([`${userId}/avatar`]);
+      await supabaseAdmin.storage.from("profiles").remove([`${userId}/avatar`]);
       await supabaseAdmin.storage.from("cvs").remove([`${userId}/cv.pdf`]);
     } catch {
       // Storage es opcional, no bloqueamos

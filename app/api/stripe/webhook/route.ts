@@ -56,15 +56,12 @@ export async function POST(request: NextRequest) {
 
     // ── Idempotencia: evitar procesar el mismo evento dos veces ─────────────
     try {
-      const { data: existing } = await supabaseAdmin
+      const { error: insertError } = await supabaseAdmin
         .from("stripe_events")
-        .select("id")
-        .eq("id", event.id)
-        .maybeSingle();
-      if (existing) {
-        return NextResponse.json({ recibido: true, idempotent: true });
+        .upsert({ id: event.id }, { onConflict: "id", ignoreDuplicates: true });
+      if (insertError) {
+        console.error("[stripe/webhook] Error en idempotencia:", insertError.message);
       }
-      await supabaseAdmin.from("stripe_events").insert({ id: event.id });
     } catch {
       // La tabla puede no existir — continuar de todas formas
     }
@@ -119,9 +116,13 @@ export async function POST(request: NextRequest) {
           })
           .eq("id", userId);
 
-        if (error) {
-          console.error("[stripe/webhook] Error al actualizar plan:", error.message);
-        } else {
+       if (error) {
+         console.error("[stripe/webhook] Error al actualizar plan:", error.message);
+          return NextResponse.json(
+            { error: "Error al actualizar el plan del usuario." },
+            { status: 500 }
+          );
+       } else {
           console.log(`[stripe/webhook] Plan '${planFinal}' activado para usuario ${userId}`);
         }
         break;

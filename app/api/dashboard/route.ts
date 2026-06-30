@@ -62,22 +62,13 @@ export async function GET(request: NextRequest) {
       .in("status", ["enviado", "pendiente"])
       .gte("created_at", hoy.toISOString());
 
-    // Entrevistas pendientes (pipeline estado "entrevista")
-    const { data: entrevistasData } = await supabaseAdmin
+    // Entrevistas pendientes (pipeline estado "entrevista") — filtrado en SQL
+    const { count: entrevistasPendientes } = await supabaseAdmin
       .from("cv_sends")
-      .select("id")
+      .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
-      .not("error_message", "is", null);
-
-    let entrevistasPendientes = 0;
-    if (entrevistasData) {
-      for (const row of entrevistasData) {
-        try {
-          const parsed = JSON.parse((row as any).error_message || "{}");
-          if (parsed.pipeline_estado === "entrevista") entrevistasPendientes++;
-        } catch { /* ignore */ }
-      }
-    }
+      .not("error_message", "is", null)
+      .like("error_message", '%"pipeline_estado":"entrevista"%');
 
     // Ofertas en pipeline activas
     const { count: pipelineActivo } = await supabaseAdmin

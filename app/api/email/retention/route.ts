@@ -117,6 +117,28 @@ export async function POST(request: NextRequest) {
     const pool = getPool();
     let enviados = 0;
 
+    // 3. Ofertas nuevas de las últimas 24h en BD local — consolidado en una sola query
+    const keywords = perfiles.map(p => (p.puesto_objetivo as string).split(" ")[0]);
+    const { rows: allRows } = await pool.query<{
+      keyword: string; id: string; title: string; company: string; city: string; province: string;
+    }>(
+      `SELECT kw.keyword, j.id::text, j.title, j.company, j.city, j.province
+       FROM unnest($1::text[]) AS kw(keyword)
+       JOIN "JobListing" j ON j."isActive" = true
+         AND LOWER(j.title) LIKE LOWER('%' || kw.keyword || '%')
+         AND j.scrapedat >= NOW() - INTERVAL '24 hours'
+       LIMIT 5`,
+      [keywords]
+    );
+
+    // Agrupar resultados por keyword
+    const ofertasPorKeyword = new Map<string, Array<{ id: string; title: string; company: string; city: string; province: string }>>();
+    for (const row of allRows) {
+      const list = ofertasPorKeyword.get(row.keyword) || [];
+      if (list.length < 5) list.push(row);
+      ofertasPorKeyword.set(row.keyword, list);
+    }
+
     for (const perfil of perfiles) {
       const email = emailMap.get(perfil.id);
       if (!email) continue;
@@ -125,18 +147,7 @@ export async function POST(request: NextRequest) {
       const nombre = ((perfil.full_name as string) || "").split(" ")[0];
       const keyword = puesto.split(" ")[0];
 
-      // 3. Ofertas nuevas de las ultimas 24h en BD local
-      const { rows } = await pool.query<{
-        id: string; title: string; company: string; city: string; province: string;
-      }>(
-        `SELECT id::text, title, company, city, province
-         FROM "JobListing"
-         WHERE "isActive" = true
-           AND LOWER(title) LIKE LOWER($1)
-           AND scrapedat >= NOW() - INTERVAL '24 hours'
-         LIMIT 5`,
-        [`%${keyword}%`]
-      );
+      const rows = ofertasPorKeyword.get(keyword) || [];
 
       if (rows.length < 2) continue;
 
