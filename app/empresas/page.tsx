@@ -1,8 +1,22 @@
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import { Target, Bot, MapPin, Banknote, Zap, RefreshCw, Star, Check, type LucideIcon } from "lucide-react";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Para Empresas — BuscayCurra | Accede a talento activo",
+  description:
+    "Accede a más de 2.400 candidatos activos en España. Todos con CV optimizado por IA. Filtra por sector, ciudad y perfil. Contacta directo sin intermediarios. 49,99€/mes, sin coste por oferta.",
+  openGraph: {
+    title: "BuscayCurra para Empresas — Talento real, sin depender de InfoJobs",
+    description:
+      "Candidatos activos, CVs con IA, contacto directo. Publica ofertas gratis. Todo por 49,99€/mes.",
+    url: "https://buscaycurra.es/empresas",
+    type: "website",
+  },
+};
 
 const VENTAJAS: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   {

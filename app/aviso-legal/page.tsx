@@ -8,8 +8,22 @@
  */
 
 import Link from "next/link";
+import type { Metadata } from "next";
 
 // ─── Página de Aviso Legal ────────────────────────────────────────────────────
+
+export const metadata: Metadata = {
+  title: "Aviso Legal — BuscayCurra",
+  description:
+    "Aviso legal de BuscayCurra. Datos identificativos del titular conforme a la LSSI-CE, propiedad intelectual y condiciones de uso del sitio web.",
+  openGraph: {
+    title: "Aviso Legal — BuscayCurra",
+    description:
+      "Información legal del titular del sitio web BuscayCurra conforme a la LSSI-CE.",
+    url: "https://buscaycurra.es/aviso-legal",
+    type: "website",
+  },
+};
 
 export default function AvisoLegalPage() {
   return (

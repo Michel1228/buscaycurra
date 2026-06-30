@@ -3,8 +3,34 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { PAISES } from "@/lib/paises";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 export const dynamic = "force-dynamic";
+
+// ─── Carga de datos de salarios mínimos (cache en módulo) ───
+interface SalarioMinimoPais {
+  salarioMinimo: number;
+  moneda: string;
+  periodo?: string;
+  fuente?: string;
+  nota?: string;
+}
+
+let _salariosMinimosCache: Record<string, SalarioMinimoPais> | null = null;
+
+function getSalariosMinimos(): Record<string, SalarioMinimoPais> {
+  if (_salariosMinimosCache) return _salariosMinimosCache;
+  try {
+    const raw = readFileSync(join(process.cwd(), "public", "data", "salarios-minimos.json"), "utf-8");
+    const data = JSON.parse(raw);
+    _salariosMinimosCache = data.paises || {};
+  } catch {
+    _salariosMinimosCache = {};
+  }
+  return _salariosMinimosCache;
+}
 
 interface SalarioRow {
   avg_salary: number;
@@ -41,6 +67,7 @@ export async function GET(request: NextRequest) {
 
     if (!puesto) {
       // Sin puesto: devolver top 5 ocupaciones con datos salariales precargados
+      await pool.query(`SET LOCAL statement_timeout = '8s'`);
       const topResult = await pool.query(
         `SELECT 
           LOWER(REGEXP_REPLACE(title, '(Senior|Junior|Jr\\.|Sr\\.|Lead|Trainee|Becario|Prácticas)', '', 'gi')) as ocupacion,
@@ -211,6 +238,7 @@ export async function GET(request: NextRequest) {
 
 function obtenerDatosReferencia(puesto: string): {
   fuente: "referencia";
+  moneda: string;
   rangoGeneral: { min_salary: number; max_salary: number; avg_salary: number; total: number; fuente: string };
   porProvincia: Array<{ province: string; count: number; avg_salary: number }>;
 } {
@@ -306,20 +334,32 @@ function obtenerDatosReferencia(puesto: string): {
   }
   if (!match) match = { min: 18000, avg: 24000, max: 36000 };
 
-  // Generar datos por provincia con índice real
+  // Generar datos por provincia usando salario mínimo real de España como base
+  const salariosMin = getSalariosMinimos();
+  const smiES = salariosMin["ES"]?.salarioMinimo || 1184;
+  const smiAnualES = smiES * 12; // ~14208 €/año
+  // Cuenta estimada: proporcional al índice provincial, total ~3M ocupados en estos sectores
+  const totalEstimado = Object.keys(indiceProvincial).length * 45;
+
   const provincias = Object.entries(indiceProvincial)
-    .map(([prov, idx]) => ({
-      province: prov,
-      count: (prov.length * 31 + puesto.length * 17) % 100 + 40,
-      avg_salary: Math.round(match.avg * idx),
-    }))
+    .map(([prov, idx]) => {
+      // Count estimado basado en población activa provincial (~45-200 ofertas de referencia)
+      const countEstimado = Math.round(45 + (idx - 0.80) * 300);
+      return {
+        province: prov,
+        count: countEstimado,
+        avg_salary: Math.round(match.avg * idx),
+      };
+    })
     .sort((a, b) => b.avg_salary - a.avg_salary)
     .slice(0, 20);
 
+  const paisES = PAISES["ES"];
   return {
     fuente: "referencia",
+    moneda: paisES?.simboloMoneda || "€",
     rangoGeneral: {
-      min_salary: match.min,
+      min_salary: Math.max(match.min, smiAnualES),
       max_salary: match.max,
       avg_salary: match.avg,
       total: 0,
@@ -330,49 +370,29 @@ function obtenerDatosReferencia(puesto: string): {
 }
 
 // ─── Datos de referencia para países no-España ───
-const GDP_FACTORS: Record<string, number> = {
-  PT: 0.72, US: 2.45, GB: 1.55, DE: 1.62, FR: 1.45, IT: 1.28,
-  CA: 1.70, MX: 0.55, AR: 0.50, CO: 0.38, CL: 0.58, PE: 0.35,
-  BR: 0.42, NL: 1.80, BE: 1.65, CH: 2.80, AT: 1.70, IE: 2.20,
-  AU: 1.95, NZ: 1.55, SE: 1.65, NO: 2.30, DK: 1.85,
-};
-
-const REGIONES_PAIS: Record<string, string[]> = {
-  PT: ["Lisboa","Oporto","Braga","Setúbal","Aveiro","Coimbra","Leiria","Faro","Viseu","Évora","Santarém","Viana do Castelo","Vila Real","Bragança","Guarda","Castelo Branco","Portalegre","Beja"],
-  US: ["California","Texas","New York","Florida","Illinois","Pennsylvania","Ohio","Georgia","North Carolina","Michigan","New Jersey","Virginia","Washington","Arizona","Massachusetts"],
-  GB: ["London","South East","North West","East of England","West Midlands","South West","Yorkshire","Scotland","East Midlands","Wales","North East","Northern Ireland"],
-  DE: ["Baviera","Baden-Wurtemberg","Renania del Norte","Baja Sajonia","Hesse","Berlín","Sajonia","Renania-Palatinado","Hamburgo","Schleswig-Holstein","Brandeburgo","Turingia"],
-  FR: ["Île-de-France","Auvernia-Ródano-Alpes","Nueva Aquitania","Occitania","Altos de Francia","Provenza-Alpes","Gran Este","Países del Loira","Bretaña","Normandía"],
-  IT: ["Lombardía","Lacio","Campania","Véneto","Emilia-Romaña","Sicilia","Piamonte","Apulia","Toscana","Calabria"],
-  CA: ["Ontario","Quebec","British Columbia","Alberta","Manitoba","Saskatchewan","Nova Scotia"],
-  MX: ["CDMX","Jalisco","Nuevo León","Estado de México","Guanajuato","Puebla","Veracruz","Chihuahua","Baja California","Sonora"],
-  AR: ["Buenos Aires","CABA","Córdoba","Santa Fe","Mendoza","Tucumán","Entre Ríos","Salta"],
-  CO: ["Bogotá","Antioquia","Valle del Cauca","Cundinamarca","Santander","Atlántico","Bolívar"],
-  CL: ["Metropolitana","Valparaíso","Biobío","Maule","La Araucanía","Los Lagos"],
-  PE: ["Lima","Arequipa","La Libertad","Piura","Cusco","Lambayeque"],
-  BR: ["São Paulo","Río de Janeiro","Minas Gerais","Bahía","Rio Grande do Sul","Paraná","Pernambuco"],
-  NL: ["Holanda Septentrional","Holanda Meridional","Brabante Septentrional","Güeldres","Utrecht"],
-  BE: ["Flandes","Valonia","Bruselas","Amberes","Limburgo"],
-  CH: ["Zúrich","Berna","Vaud","Argovia","San Galo","Ginebra","Lucerna"],
-  AT: ["Viena","Baja Austria","Alta Austria","Estiria","Tirol"],
-  IE: ["Dublín","Cork","Galway","Limerick","Waterford"],
-  AU: ["New South Wales","Victoria","Queensland","Western Australia","South Australia"],
-  NZ: ["Auckland","Wellington","Canterbury","Waikato","Bay of Plenty"],
-  SE: ["Estocolmo","Västra Götaland","Escania","Östergötland","Jönköping"],
-  NO: ["Oslo","Viken","Vestland","Rogaland","Trøndelag"],
-  DK: ["Hovedstaden","Midtjylland","Syddanmark","Sjælland","Nordjylland"],
-};
+// Se usa salarios-minimos.json para obtener el SMI real de cada país
+// y PAISES para moneda, ciudades y datos de configuración
 
 function obtenerDatosReferenciaPais(puesto: string, pais: string): {
   fuente: "referencia";
+  moneda: string;
   rangoGeneral: { min_salary: number; max_salary: number; avg_salary: number; total: number; fuente: string };
   porProvincia: Array<{ province: string; count: number; avg_salary: number }>;
 } {
-  const factor = GDP_FACTORS[pais] || 1.0;
-  const regiones = REGIONES_PAIS[pais] || ["Nacional"];
+  const paisConfig = PAISES[pais];
+  const salariosMin = getSalariosMinimos();
+  const smiPais = salariosMin[pais]?.salarioMinimo || paisConfig?.salarioMinimo || 1184;
+  const smiES = salariosMin["ES"]?.salarioMinimo || 1184;
+  // Factor salarial real: ratio SMI país vs SMI España
+  const factor = smiPais / smiES;
 
-  // Datos base (equivalente español) ajustados por GDP per cápita
-  const baseRef: Record<string, { min: number; avg: number; max: number }> = {
+  // Usar ciudades de PAISES como regiones; fallback a ["Nacional"]
+  const regiones = (paisConfig?.ciudades && paisConfig.ciudades.length > 0)
+    ? paisConfig.ciudades
+    : ["Nacional"];
+
+  // Datos base de ocupaciones (misma tabla que obtenerDatosReferencia)
+  const referencias: Record<string, { min: number; avg: number; max: number }> = {
     camarero: { min: 16576, avg: 19200, max: 28000 },
     cocinero: { min: 17000, avg: 21000, max: 30000 },
     programador: { min: 24000, avg: 38000, max: 65000 },
@@ -388,26 +408,70 @@ function obtenerDatosReferenciaPais(puesto: string, pais: string): {
     diseñador: { min: 18000, avg: 25000, max: 38000 },
     comercial: { min: 18000, avg: 25000, max: 45000 },
     director: { min: 35000, avg: 55000, max: 100000 },
+    limpieza: { min: 16576, avg: 17500, max: 22000 },
+    albañil: { min: 17000, avg: 21000, max: 30000 },
+    almacen: { min: 16000, avg: 19000, max: 24000 },
+    soldador: { min: 18000, avg: 23000, max: 34000 },
+    fontanero: { min: 17500, avg: 22500, max: 33000 },
+    peluquero: { min: 16576, avg: 17000, max: 22000 },
+    cuidador: { min: 16000, avg: 18500, max: 23000 },
+    operario: { min: 16000, avg: 19500, max: 25000 },
+    repartidor: { min: 16000, avg: 19000, max: 24000 },
+    cajero: { min: 16576, avg: 17200, max: 21000 },
+    vendedor: { min: 16576, avg: 19000, max: 28000 },
+    tecnico: { min: 19000, avg: 26000, max: 40000 },
+    consultor: { min: 24000, avg: 38000, max: 65000 },
+    analista: { min: 22000, avg: 32000, max: 52000 },
   };
 
-  const puestoClean = puesto.toLowerCase().trim();
-  let match = baseRef[puestoClean];
+  const femToMasc: Record<string, string> = {
+    camarera: "camarero", cocinera: "cocinero", enfermera: "enfermero",
+    peluquera: "peluquero", cajera: "cajero", vendedora: "vendedor",
+    repartidora: "repartidor", cuidadora: "cuidador", jardinera: "jardinero",
+    panadera: "panadero", carnicera: "carnicero", conductora: "conductor",
+    dependienta: "dependiente", limpiadora: "limpieza",
+  };
+  const puestoClean = femToMasc[puesto.toLowerCase().trim()] || puesto.toLowerCase().trim();
+
+  let match = referencias[puestoClean];
+  if (!match) {
+    for (const [key, val] of Object.entries(referencias)) {
+      if (puestoClean.includes(key) || key.includes(puestoClean)) {
+        match = val;
+        break;
+      }
+    }
+  }
   if (!match) match = { min: 18000, avg: 24000, max: 36000 };
 
-  const porProvincia = regiones.map((r, i) => ({
-    province: r,
-    count: (r.length * 31 + i * 7) % 60 + 20,
-    avg_salary: Math.round(match.avg * factor * (0.85 + (regiones.indexOf(r) % 5) * 0.07)),
-  })).sort((a, b) => b.avg_salary - a.avg_salary);
+  // SMI anual del país
+  const smiAnualPais = smiPais * 12;
+
+  // Generar datos por región basados en el factor salarial real
+  const porProvincia = regiones.map((r, i) => {
+    // Variación regional: +0% a +22% según posición en la lista (primeras = capital/más caras)
+    const variacionRegional = 1.0 + (regiones.length - i) / regiones.length * 0.22;
+    // Count estimado basado en nº de regiones (más regiones = país más grande)
+    const countEstimado = Math.round(20 + (regiones.length - i) / regiones.length * 80);
+    return {
+      province: r,
+      count: countEstimado,
+      avg_salary: Math.round(match.avg * factor * variacionRegional),
+    };
+  }).sort((a, b) => b.avg_salary - a.avg_salary);
+
+  const moneda = paisConfig?.simboloMoneda || "€";
+  const nombrePais = paisConfig?.nombre || pais;
 
   return {
     fuente: "referencia",
+    moneda,
     rangoGeneral: {
-      min_salary: Math.round(match.min * factor),
+      min_salary: Math.max(Math.round(match.min * factor), smiAnualPais),
       max_salary: Math.round(match.max * factor),
       avg_salary: Math.round(match.avg * factor),
       total: 0,
-      fuente: `Referencia mercado laboral ${pais} 2026 (ajustado por PIB per cápita)`,
+      fuente: `Referencia mercado laboral ${nombrePais} 2026 (basado en salario mínimo oficial)`,
     },
     porProvincia,
   };

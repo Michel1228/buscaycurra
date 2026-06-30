@@ -94,7 +94,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false,
+  userScalable: true,
 };
 
 export default function RootLayout({
@@ -185,7 +185,7 @@ export default function RootLayout({
         {/* ⚡ FORCE UPDATE: comparar BUILD_ID con localStorage antes de que el SW intervenga */}
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
-            var BUILD_ID = '__BUILD_ID__';
+            var BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID || process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || 'dev';
             var stored = localStorage.getItem('bc_build_id');
             if (stored && stored !== BUILD_ID) {
               // Nuevo deploy detectado — limpiar TODO y recargar
@@ -222,7 +222,7 @@ export default function RootLayout({
         </div>
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
-            // BUILD_ID: __BUILD_ID__ — forzar detección de nuevos deploys
+            // BUILD_ID from env: NEXT_PUBLIC_BUILD_ID or NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA — forzar detección de nuevos deploys
             if ('serviceWorker' in navigator) {
               let refreshing = false;
               var banner = document.getElementById('pwa-update-banner');

@@ -7,8 +7,22 @@
  */
 
 import Link from "next/link";
+import type { Metadata } from "next";
 
 // ─── Página de Términos y Condiciones ────────────────────────────────────────
+
+export const metadata: Metadata = {
+  title: "Términos y Condiciones — BuscayCurra",
+  description:
+    "Términos y condiciones del servicio BuscayCurra. Condiciones de uso, planes, pagos, cancelación y política de desistimiento.",
+  openGraph: {
+    title: "Términos y Condiciones — BuscayCurra",
+    description:
+      "Términos de uso, planes, pagos y condiciones legales de BuscayCurra.",
+    url: "https://buscaycurra.es/terminos",
+    type: "website",
+  },
+};
 
 export default function TerminosPage() {
   return (
