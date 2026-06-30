@@ -18,20 +18,24 @@ export function getStripe(): Stripe {
 
 export const stripe = (typeof window === "undefined" && process.env.STRIPE_SECRET_KEY) ? getStripe() : null as unknown as Stripe;
 
-export const PLANES = {
-  BASICO: requireEnvPrice("STRIPE_PRICE_BASICO"),
-  ESENCIAL: requireEnvPrice("STRIPE_PRICE_ESENCIAL"),
-  PRO: requireEnvPrice("STRIPE_PRICE_PRO"),
-  EMPRESA: requireEnvPrice("STRIPE_PRICE_EMPRESA"),
-} as const;
-
 function requireEnvPrice(name: string): string {
   const val = process.env[name];
+  // No falla en build (next build no tiene estas vars)
   if (!val) {
-    throw new Error(`Falta la variable de entorno requerida: ${name}`);
+    if (typeof window === "undefined" && process.env.NODE_ENV === "production") {
+      throw new Error(`Falta la variable de entorno requerida: ${name}`);
+    }
+    return "";
   }
   return val;
 }
+
+export const PLANES = {
+  get BASICO() { return requireEnvPrice("STRIPE_PRICE_BASICO"); },
+  get ESENCIAL() { return requireEnvPrice("STRIPE_PRICE_ESENCIAL"); },
+  get PRO() { return requireEnvPrice("STRIPE_PRICE_PRO"); },
+  get EMPRESA() { return requireEnvPrice("STRIPE_PRICE_EMPRESA"); },
+} as const;
 
 export function getPlanFromPriceId(
   priceId: string
