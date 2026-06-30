@@ -47,9 +47,8 @@ workflows:
             --export-options-plist /Users/builder/export_options.plist \
             --build-number $BUILD_NUMBER
     cache:
-      paths:
-        - node_modules
-        - ios/Pods
+      - node_modules
+      - ios/Pods
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
