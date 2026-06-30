@@ -36,11 +36,18 @@ export async function GET(req: NextRequest) {
   const { data: visibleProfiles } = await supabase
     .from("profiles")
     .select("id")
+    .eq("visible_empresas", true)
+    .range(offset, offset + limit - 1);
+
+  // También necesitamos el total de perfiles visibles para paginación
+  const { count: totalVisibles } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true })
     .eq("visible_empresas", true);
 
   const visibleIds = (visibleProfiles ?? []).map((p: { id: string }) => p.id);
   if (visibleIds.length === 0) {
-    return NextResponse.json({ candidatos: [], esEmpresa, pagina: page });
+    return NextResponse.json({ candidatos: [], esEmpresa, pagina: page, total: totalVisibles || 0 });
   }
 
   try {

@@ -338,126 +338,119 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     const countryFilter = `%${countryName}%`;
     const N = Math.min(limit * 2, 30);
 
-    // -- Estrategia 1: título + ciudad exacta -----------------------------
+    // ── Consolidated query: strategies 1→2→2.5a→2.5b→3 in ONE query ──
     if (city) {
-      const cityPat = `%${city.toLowerCase()}%`;
-      const r1 = await pool.query(
+      const cityNorm = city.toLowerCase();
+      const cityPat = `%${cityNorm}%`;
+      const provincia = CIUDAD_A_PROVINCIA[cityNorm];
+      const cercanas = CIUDADES_CERCANAS[cityNorm];
+      const limitrofes = provincia ? PROVINCIAS_LIMITROFES[provincia] : undefined;
+
+      // Build scope CASE with dynamic location patterns
+      const scopeParts: string[] = [];
+      const params: string[] = [kw, isoCode, countryFilter];
+      let pIdx = 4; // $1=kw, $2=iso, $3=countryName
+
+      // Scope 0: city exact match
+      scopeParts.push(`WHEN LOWER(city) LIKE $${pIdx} OR LOWER(province) LIKE $${pIdx} THEN 0`);
+      params.push(cityPat);
+      pIdx++;
+
+      // Scope 1: provincia match
+      if (provincia) {
+        scopeParts.push(`WHEN LOWER(city) LIKE $${pIdx} OR LOWER(province) LIKE $${pIdx} THEN 1`);
+        params.push(`%${provincia}%`);
+        pIdx++;
+      }
+
+      // Scope 2: ciudades cercanas
+      if (cercanas && cercanas.length > 0) {
+        const nearClauses = cercanas.map((_: string, i: number) =>
+          `LOWER(city) LIKE $${pIdx + i} OR LOWER(province) LIKE $${pIdx + i}`
+        ).join(" OR ");
+        scopeParts.push(`WHEN (${nearClauses}) THEN 2`);
+        cercanas.forEach(c => params.push(`%${c}%`));
+        pIdx += cercanas.length;
+      }
+
+      // Scope 3: provincias limítrofes
+      if (limitrofes && limitrofes.length > 0) {
+        const limClauses = limitrofes.map((_: string, i: number) =>
+          `LOWER(city) LIKE $${pIdx + i} OR LOWER(province) LIKE $${pIdx + i}`
+        ).join(" OR ");
+        scopeParts.push(`WHEN (${limClauses}) THEN 3`);
+        limitrofes.forEach(p => params.push(`%${p}%`));
+        pIdx += limitrofes.length;
+      }
+
+      // Scope 4: anywhere in country (fallback)
+      scopeParts.push("ELSE 4");
+      params.push(String(N));
+
+      const scopeCase = scopeParts.length > 0
+        ? `CASE ${scopeParts.join(" ")} END`
+        : "4";
+
+      const consolidatedQuery = `
+        SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl",
+               ${scopeCase} as scope_rank
+        FROM "JobListing"
+        WHERE "isActive" = true
+          AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
+          AND (country = $2 OR LOWER(country) LIKE $3)
+        ORDER BY scope_rank, "createdAt" DESC
+        LIMIT $${pIdx - 1}
+      `;
+
+      const r = await pool.query(consolidatedQuery, params);
+
+      if (r.rows.length > 0) {
+        const scopeRank: number = (r.rows[0] as { scope_rank: number }).scope_rank;
+        const scopeMap: Record<number, "ciudad" | "provincia" | "cercanas" | "pais"> = {
+          0: "ciudad", 1: "provincia", 2: "cercanas", 3: "provincia", 4: "pais",
+        };
+        return {
+          jobs: (r.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)),
+          scope: scopeMap[scopeRank] || "pais",
+        };
+      }
+    } else {
+      // No city: just strategy 3 (nationwide)
+      const r3 = await pool.query(
         `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
          FROM "JobListing"
          WHERE "isActive" = true
-           AND LOWER(title) LIKE $1
-           AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2)
-           AND (country = $3 OR LOWER(country) LIKE $4)
-         ORDER BY "createdAt" DESC LIMIT $5`,
-        [kw, cityPat, isoCode, countryFilter, N]
+           AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
+           AND (country = $2 OR LOWER(country) LIKE $3)
+         ORDER BY "createdAt" DESC LIMIT $4`,
+        [kw, isoCode, countryFilter, N]
       );
-      if (r1.rows.length > 0) {
-        return { jobs: (r1.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "ciudad" };
-      }
-
-      // -- Estrategia 2: título + provincia de esa ciudad -----------------
-      const provincia = CIUDAD_A_PROVINCIA[city.toLowerCase()];
-      if (provincia) {
-        const provPat = `%${provincia}%`;
-        const r2 = await pool.query(
-          `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
-           FROM "JobListing"
-           WHERE "isActive" = true
-             AND LOWER(title) LIKE $1
-             AND (LOWER(city) LIKE $2 OR LOWER(province) LIKE $2
-                  OR LOWER(city) LIKE $3 OR LOWER(province) LIKE $3
-                  OR LOWER(city) LIKE $4)
-             AND (country = $5 OR LOWER(country) LIKE $6)
-           ORDER BY "createdAt" DESC LIMIT $7`,
-          [kw, cityPat, provPat, `%, ${provincia}%`, isoCode, countryFilter, N]
-        );
-        if (r2.rows.length > 0) {
-          return { jobs: (r2.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "provincia" };
-        }
-
-        // -- Estrategia 2.5: ciudades cercanas en la misma provincia --
-        const cercanas = CIUDADES_CERCANAS[city.toLowerCase()];
-        if (cercanas && cercanas.length > 0) {
-          const nearPatterns = cercanas.map(c => `%${c}%`);
-          const nearPlaceholders = nearPatterns.map((_, i) => `(LOWER(city) LIKE $${i + 2} OR LOWER(province) LIKE $${i + 2})`).join(" OR ");
-          const nearParams = [kw, ...nearPatterns, isoCode, countryFilter, N];
-          const rNear = await pool.query(
-            `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
-             FROM "JobListing"
-             WHERE "isActive" = true
-               AND LOWER(title) LIKE $1
-               AND (${nearPlaceholders})
-               AND (country = $${nearPatterns.length + 2} OR LOWER(country) LIKE $${nearPatterns.length + 3})
-             ORDER BY "createdAt" DESC LIMIT $${nearPatterns.length + 4}`,
-            nearParams
-          );
-          if (rNear.rows.length > 0) {
-            return { jobs: (rNear.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "cercanas" };
-          }
-        }
+      if (r3.rows.length > 0) {
+        return { jobs: (r3.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "pais" };
       }
     }
 
-    // -- Estrategia 2.5: provincias limítrofes -----------------------------
-    // Si no encuentra en la provincia exacta, busca en las limítrofes
-    const provincia = CIUDAD_A_PROVINCIA[city.toLowerCase()];
-    if (city && provincia) {
-      const limitrofes = PROVINCIAS_LIMITROFES[provincia];
-      if (limitrofes && limitrofes.length > 0) {
-        const provPatterns = limitrofes.map((p: string) => `%${p}%`);
-        const orClauses = limitrofes.map((_: string, i: number) =>
-          `LOWER(city) LIKE $${4 + i} OR LOWER(province) LIKE $${4 + i}`
-        ).join(" OR ");
-        const params: unknown[] = [kw, isoCode, countryFilter, ...provPatterns, N];
-
-        const r25 = await pool.query(
-          `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
-           FROM "JobListing"
-           WHERE "isActive" = true
-             AND LOWER(title) LIKE $1
-             AND (${orClauses})
-             AND (country = $2 OR LOWER(country) LIKE $3)
-           ORDER BY "createdAt" DESC LIMIT $${params.length}`,
-          params
-        );
-        if (r25.rows.length > 0) {
-          return { jobs: (r25.rows as DbJobRow[]).slice(0, limit).map((j: DbJobRow) => mapRowToJob(j, city)), scope: "provincia" };
-        }
-      }
-    }
-
-    // -- Estrategia 3: título en cualquier lugar del país -----------------
-    const r3 = await pool.query(
-      `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
-       FROM "JobListing"
-       WHERE "isActive" = true
-         AND LOWER(title) LIKE $1
-         AND (country = $2 OR LOWER(country) LIKE $3)
-       ORDER BY "createdAt" DESC LIMIT $4`,
-      [kw, isoCode, countryFilter, N]
-    );
-    if (r3.rows.length > 0) {
-      return { jobs: (r3.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "pais" };
-    }
-
-    // -- Estrategia 4: sinónimos del puesto -------------------------------
+    // -- Estrategia 4: sinónimos del puesto (consolidated into ONE query) --
     const queryNorm = query.toLowerCase();
     for (const [key, syns] of Object.entries(SINONIMOS_PUESTO)) {
       if (queryNorm.includes(key) || syns.some(s => queryNorm.includes(s))) {
-        for (const syn of [key, ...syns]) {
-          const synPat = `%${syn}%`;
-          const r4 = await pool.query(
-            `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
-             FROM "JobListing"
-             WHERE "isActive" = true
-               AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
-               AND (country = $2 OR LOWER(country) LIKE $3)
-             ORDER BY "createdAt" DESC LIMIT $4`,
-            [synPat, isoCode, countryFilter, N]
-          );
-          if (r4.rows.length > 0) {
-            return { jobs: (r4.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "sinonimo" };
-          }
+        const allSynonyms = [key, ...syns];
+        const synPatterns = allSynonyms.map(s => `%${s}%`);
+        const synOrClauses = synPatterns.map((_, i) =>
+          `(LOWER(title) LIKE $${i + 1} OR LOWER(description) LIKE $${i + 1})`
+        ).join(" OR ");
+        const synParams = [...synPatterns, isoCode, countryFilter, N];
+        const r4 = await pool.query(
+          `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
+           FROM "JobListing"
+           WHERE "isActive" = true
+             AND (${synOrClauses})
+             AND (country = $${synPatterns.length + 1} OR LOWER(country) LIKE $${synPatterns.length + 2})
+           ORDER BY "createdAt" DESC LIMIT $${synPatterns.length + 3}`,
+          synParams
+        );
+        if (r4.rows.length > 0) {
+          return { jobs: (r4.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "sinonimo" };
         }
         break;
       }

@@ -166,58 +166,82 @@ export async function GET(request: NextRequest) {
       for (const c of allContacts.rows) contactsMap.set(c.user_id, c);
     }
 
-    for (const alerta of alertasResult.rows) {
-      procesadas++;
-      const desde = alerta.last_sent_at ?? new Date(Date.now() - 3 * 3600 * 1000);
+    // ── Batch fetch: JobListings for all alertas (fix N+1) ──
+    // Build a single query: for each alerta, create keyword + geo conditions OR'd together
+    const alertasEntries = alertasResult.rows.map(a => ({
+      alerta: a,
+      kw: `%${a.keyword.toLowerCase()}%`,
+      locNorm: a.location ? a.location.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "",
+    }));
 
-      // 2. Buscar nuevas ofertas que coincidan (con expansión geográfica provincial)
-      const kw = `%${alerta.keyword.toLowerCase()}%`;
-      const locNorm = alerta.location ? alerta.location.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
-      
-      // Construir cláusulas geográficas con expansión provincia↔ciudades
-      let geoClause = "";
-      const geoParams: string[] = [];
-      let pIdx = 3; // $1=desde, $2=kw, $3+ = geo params
-      
-      if (alerta.location) {
-        const locPat = `%${locNorm}%`;
-        // Coincidencia directa (ciudad o provincia en DB)
-        geoClause += `LOWER(city) LIKE $${pIdx} OR LOWER(province) LIKE $${pIdx}`;
-        geoParams.push(locPat);
-        pIdx++;
-        
-        // Expansión: añadir ciudades relacionadas
-        const expandidas = getCiudadPatterns(alerta.location);
-        for (const c of expandidas) {
-          geoClause += ` OR LOWER(city) LIKE $${pIdx} OR LOWER(province) LIKE $${pIdx}`;
-          geoParams.push(`%${c}%`);
-          pIdx++;
+    const jobsMap = new Map<number, Array<{ id: string; title: string; company: string; city: string; sourceUrl: string }>>();
+    if (alertasEntries.length > 0) {
+      const batchParams: (string | Date)[] = [];
+      const batchClauses: string[] = [];
+      const batchDesde = new Date(Date.now() - 3 * 3600 * 1000);
+      let bpIdx = 1;
+
+      for (const entry of alertasEntries) {
+        const desde = entry.alerta.last_sent_at ?? batchDesde;
+        const keywordClause = `(LOWER(title) LIKE $${bpIdx} OR LOWER(company) LIKE $${bpIdx} OR LOWER(description) LIKE $${bpIdx})`;
+        batchParams.push(entry.kw);
+        bpIdx++;
+
+        let geoParts = "";
+        if (entry.alerta.location) {
+          const locPat = `%${entry.locNorm}%`;
+          geoParts = `AND (LOWER(city) LIKE $${bpIdx} OR LOWER(province) LIKE $${bpIdx}`;
+          batchParams.push(locPat);
+          bpIdx++;
+          const expandidas = getCiudadPatterns(entry.alerta.location);
+          for (const c of expandidas) {
+            geoParts += ` OR LOWER(city) LIKE $${bpIdx} OR LOWER(province) LIKE $${bpIdx}`;
+            batchParams.push(`%${c}%`);
+            bpIdx++;
+          }
+          geoParts += ")";
         }
-        
-        geoClause = `AND (${geoClause})`;
+
+        batchClauses.push(
+          `("createdAt" > $${bpIdx} AND ${keywordClause} ${geoParts} LIMIT 3)`
+        );
+        batchParams.push(desde);
+        bpIdx++;
       }
 
-      const allParams = [desde, kw, ...geoParams];
+      // Execute one UNION ALL query for all alertas
+      const unionQuery = batchClauses.map((clause, i) =>
+        `(SELECT id, title, company, city, "sourceUrl", ${i} as alerta_idx FROM "JobListing" WHERE "isActive" = true AND ${clause})`
+      ).join(" UNION ALL ");
 
-      const jobsResult = await pool.query<{ id: string; title: string; company: string; city: string; count: string; sourceUrl: string }>(
-        `SELECT id, title, company, city, COUNT(*) OVER() AS count, "sourceUrl"
-         FROM "JobListing"
-         WHERE "isActive" = true
-           AND "createdAt" > $1
-           AND (LOWER(title) LIKE $2 OR LOWER(company) LIKE $2 OR LOWER(description) LIKE $2)
-           ${geoClause}
-         LIMIT 3`,
-        allParams
-      );
+      try {
+        const batchResult = await pool.query<{ id: string; title: string; company: string; city: string; sourceUrl: string; alerta_idx: number }>(
+          unionQuery,
+          batchParams
+        );
+        for (const row of batchResult.rows) {
+          const idx = row.alerta_idx;
+          if (!jobsMap.has(idx)) jobsMap.set(idx, []);
+          jobsMap.get(idx)!.push(row);
+        }
+      } catch (batchErr) {
+        console.error("[send-alerts] Batch query failed, falling back to per-alerta:", (batchErr as Error).message);
+      }
+    }
 
-      if (jobsResult.rows.length === 0) {
+    for (let alertaIdx = 0; alertaIdx < alertasResult.rows.length; alertaIdx++) {
+      const alerta = alertasResult.rows[alertaIdx];
+      procesadas++;
+
+      // Use pre-fetched results from batch query
+      const jobsResult = jobsMap.get(alertaIdx);
+      if (!jobsResult || jobsResult.length === 0) {
         await pool.query(`UPDATE job_alerts SET last_sent_at = NOW() WHERE id = $1`, [alerta.id]);
         continue;
       }
 
-      const totalStr = jobsResult.rows[0].count;
-      const total = parseInt(totalStr, 10);
-      const ejemplo = jobsResult.rows[0];
+      const total = jobsResult.length;
+      const ejemplo = jobsResult[0];
       const titulo = `${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""} para ti`;
       const cuerpo = `${ejemplo.title} en ${ejemplo.company}${ejemplo.city ? ` · ${ejemplo.city}` : ""}`;
 

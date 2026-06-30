@@ -9,7 +9,7 @@ export function getPool(): Pool {
     if (process.env.DATABASE_URL && !process.env.PGPORT) {
       pool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        max: 5,
+        max: 10,
         idleTimeoutMillis: 30000,
       });
     } else {
@@ -18,8 +18,8 @@ export function getPool(): Pool {
         port: parseInt(process.env.PGPORT || "5432"),
         database: "buscaycurra",
         user: "buscaycurra",
-        password: process.env.DATABASE_PASSWORD || process.env.VPS_DB_PASSWORD || "",
-        max: 5,
+        password: process.env.DATABASE_PASSWORD || process.env.VPS_DB_PASSWORD,
+        max: 10,
         idleTimeoutMillis: 30000,
       });
     }

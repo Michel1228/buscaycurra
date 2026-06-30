@@ -111,12 +111,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filtro por pais (case-insensitive: DB tiene 'uk' y 'UK' mezclados)
-    if (country) {
-      conditions.push(`LOWER("country") = LOWER($${idx})`);
-      params.push(country);
-      idx++;
-    }
+   // Filtro por pais (case-insensitive: DB tiene 'uk' y 'UK' mezclados)
+   if (country) {
+      conditions.push(`"country" ILIKE $${idx}`);
+     params.push(country);
+     idx++;
+   }
 
     // Ciudad: extraer solo el nombre de ciudad, ignorando provincia/comunidad
     let cityParts = "";

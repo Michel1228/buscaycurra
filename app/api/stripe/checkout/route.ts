@@ -66,6 +66,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ⛔ Atomic anti-duplicate: upsert checkout lock to prevent race conditions
+    const { data: lockResult, error: lockError } = await supabaseAdmin
+      .from("checkout_locks")
+      .upsert(
+        { user_id: user.id, checkout_plan: plan, created_at: new Date().toISOString() },
+        { onConflict: "user_id", ignoreDuplicates: false }
+      )
+      .select("created_at")
+      .single();
+
+    if (lockError) {
+      // If the upsert fails because of constraint, it means another checkout is already in progress
+      if (lockError.code === "23505") {
+        return NextResponse.json(
+          { error: "Ya tienes un proceso de pago en curso. Espera unos segundos." },
+          { status: 409 }
+        );
+      }
+      console.error("[stripe/checkout] Error en checkout lock:", lockError.message);
+    }
+
     const priceId =
       plan === "basico" ? PLANES.BASICO :
       plan === "esencial" ? PLANES.ESENCIAL :

@@ -6,8 +6,64 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+// Dominios permitidos para peticiones API (CSRF protection)
+const ALLOWED_ORIGINS = [
+  process.env.NEXT_PUBLIC_SITE_URL,
+  "https://buscaycurra.es",
+  "https://www.buscaycurra.es",
+  "http://localhost:3000",
+].filter(Boolean) as string[];
+
+function isSameSiteRequest(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  const host = request.headers.get("host") || "";
+
+  // Si no hay Origin ni Referer, podría ser petición directa (curl, cron, etc.)
+  if (!origin && !referer) {
+    // Solo permitir sin Origin/Referer si es petición GET (crons, health checks)
+    // o si tiene un header de autorización interna
+    const isGet = request.method === "GET";
+    const hasInternalAuth = request.headers.get("x-internal-auth") || request.headers.get("authorization");
+    if (isGet || hasInternalAuth) return true;
+    // POST/PUT/DELETE sin Origin/Referer son sospechosos
+    return false;
+  }
+
+  // Validar Origin
+  if (origin) {
+    const isAllowed = ALLOWED_ORIGINS.some(allowed => origin === allowed || origin.startsWith(allowed + ":"));
+    if (!isAllowed) return false;
+  }
+
+  // Validar Referer
+  if (referer) {
+    try {
+      const refUrl = new URL(referer);
+      const refHost = refUrl.host;
+      if (refHost !== host && refHost !== new URL(ALLOWED_ORIGINS[0] || "https://buscaycurra.es").host) {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // CSRF protection para rutas API con estado (POST/PUT/PATCH/DELETE)
+  if (pathname.startsWith("/api/") && ["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) {
+    if (!isSameSiteRequest(request)) {
+      return NextResponse.json(
+        { error: "Cross-site request blocked (CSRF)" },
+        { status: 403 }
+      );
+    }
+  }
 
   // Validar sesión real con Supabase SSR
   let isAuthenticated = false;
