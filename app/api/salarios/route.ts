@@ -29,7 +29,7 @@ function getSalariosMinimos(): Record<string, SalarioMinimoPais> {
   } catch {
     _salariosMinimosCache = {};
   }
-  return _salariosMinimosCache;
+  return _salariosMinimosCache!;
 }
 
 interface SalarioRow {
