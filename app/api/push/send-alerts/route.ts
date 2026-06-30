@@ -203,7 +203,7 @@ export async function GET(request: NextRequest) {
         }
 
         batchClauses.push(
-          `("createdAt" > $${bpIdx} AND ${keywordClause} ${geoParts} LIMIT 3)`
+          `("createdAt" > $${bpIdx} AND ${keywordClause} ${geoParts})`
         );
         batchParams.push(desde);
         bpIdx++;
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
 
       // Execute one UNION ALL query for all alertas
       const unionQuery = batchClauses.map((clause, i) =>
-        `(SELECT id, title, company, city, "sourceUrl", ${i} as alerta_idx FROM "JobListing" WHERE "isActive" = true AND ${clause})`
+        `(SELECT id, title, company, city, "sourceUrl", ${i} as alerta_idx FROM "JobListing" WHERE "isActive" = true AND ${clause} LIMIT 3)`
       ).join(" UNION ALL ");
 
       try {
@@ -259,9 +259,13 @@ export async function GET(request: NextRequest) {
           enviadas++;
         } catch (pushErr) {
           const code = (pushErr as { statusCode?: number }).statusCode;
+          const msg = (pushErr as Error).message || String(pushErr);
           // Suscripción expirada — eliminarla
           if (code === 410 || code === 404) {
+            console.warn(`[send-alerts] Push sub expirada (${code}), eliminando: ${sub.endpoint.slice(0,60)}...`);
             await pool.query(`DELETE FROM push_subscriptions WHERE endpoint = $1`, [sub.endpoint]);
+          } else {
+            console.error(`[send-alerts] Push falló (${code || 'sin code'}): ${msg} | endpoint: ${sub.endpoint.slice(0,60)}...`);
           }
         }
       }
