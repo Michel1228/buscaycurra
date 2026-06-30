@@ -41,9 +41,7 @@ workflows:
       - name: Incrementar build number
         script: |
           cd ios/App
-          LATEST=$(app-store-connect get-latest-build-number $BUNDLE_ID 2>/dev/null || echo "0")
-          NEW=$((LATEST + 1))
-          agvtool new-version -all $NEW
+          agvtool new-version -all $BUILD_NUMBER
       - name: Construir IPA
         script: |
           xcode-project use-profiles
