@@ -242,12 +242,24 @@ export default function NotificationBell({ userId }: { userId: string }) {
             ) : (
               notifs.map((n) => (
                 <div key={n.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => {
                     if (!n.leida) marcarLeida(n.id);
                     const url = getNotifUrl(n);
                     if (!url) return;
                     setOpen(false);
                     router.push(url);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      if (!n.leida) marcarLeida(n.id);
+                      const url = getNotifUrl(n);
+                      if (!url) return;
+                      setOpen(false);
+                      router.push(url);
+                    }
                   }}
                   className="flex gap-3 px-4 py-3 cursor-pointer transition hover:bg-[#252836]"
                   style={{ borderBottom: "1px solid rgba(45,49,66,0.5)", opacity: n.leida ? 0.6 : 1 }}>

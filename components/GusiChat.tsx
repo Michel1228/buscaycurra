@@ -613,6 +613,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
 
           {/* ── Área de mensajes ── */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+            role="log" aria-live="polite"
             style={{ background: "#0f1117" }}>
             {mensajes.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} gap-2.5`}>

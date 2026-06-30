@@ -340,6 +340,7 @@ export default function SalariosPage() {
             <div className="flex-1">
               <label className="text-[11px] block mb-1" style={{ color: "#94a3b8" }}>Puesto</label>
               <input type="text" value={puesto} onChange={e => setPuesto(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { void buscar(); } }}
                 placeholder="Ej: camarero, electricista..." className="w-full text-sm" list="puestos-list" />
               <datalist id="puestos-list">
                 {PUESTOS_POPULARES.map(p => <option key={p} value={p} />)}

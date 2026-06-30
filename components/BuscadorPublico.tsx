@@ -49,6 +49,7 @@ export default function BuscadorPublico() {
         <input
           type="text"
           placeholder="¿Qué trabajo buscas?"
+          aria-label="¿Qué trabajo buscas?"
           value={puesto}
           onChange={e => setPuesto(e.target.value)}
           className="flex-1 px-4 py-3 rounded-xl text-sm outline-none"
@@ -57,6 +58,7 @@ export default function BuscadorPublico() {
         <input
           type="text"
           placeholder="Ciudad"
+          aria-label="Ciudad"
           value={ciudad}
           onChange={e => setCiudad(e.target.value)}
           className="w-full sm:w-40 px-4 py-3 rounded-xl text-sm outline-none"
