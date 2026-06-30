@@ -227,6 +227,7 @@ export default function AppNavWrapper() {
           className="fixed inset-0 z-40"
           style={{ background: "rgba(0,0,0,0.5)" }}
           onClick={() => setMobileOpen(false)}
+          onKeyDown={(e) => { if (e.key === 'Escape') setMobileOpen(false); }}
         >
           <div
             className="absolute top-14 left-4 right-4 rounded-xl p-3 overflow-y-auto"
