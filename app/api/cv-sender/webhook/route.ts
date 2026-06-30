@@ -9,7 +9,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendPushNotification } from "@/lib/web-push";
 import { enviarWhatsApp } from "@/lib/whatsapp";
-import type webpush from "web-push";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +27,16 @@ async function enviarPushAlUsuario(
   try {
     const { data } = await supabase
       .from("push_subscriptions")
-      .select("subscription")
+      .select("endpoint, p256dh, auth")
       .eq("user_id", userId)
       .single();
 
-    if (!data?.subscription) return;
+    if (!data?.endpoint) return;
 
-    const sub = JSON.parse(data.subscription) as webpush.PushSubscription;
+    const sub = {
+      endpoint: data.endpoint,
+      keys: { p256dh: data.p256dh, auth: data.auth },
+    };
     await sendPushNotification(sub, payload);
   } catch (err) {
     // Si la suscripción expiró, la borramos

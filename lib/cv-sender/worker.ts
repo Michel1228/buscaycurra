@@ -153,7 +153,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
     try {
       const personalizacion = await personalizeForCompany(
-        "",
+        cvSnapshot,
         { name: companyName, url: companyUrl },
         jobTitle
       );
@@ -204,7 +204,8 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
     },
     coverLetter,
     subjectLine,
-    companyName
+    companyName,
+    recordId ? { sendId: recordId, userId } : undefined
   );
 
   if (!emailResult.success) {
@@ -300,3 +301,37 @@ cvWorker.on("active", (job: Job<CVJobData>) => {
 });
 
 export { processCVJob };
+
+// ─── Graceful Shutdown ──────────────────────────────────────────────────────
+
+/**
+ * Cierra el worker limpiamente:
+ *   1. Deja de aceptar nuevos jobs
+ *   2. Espera a que termine el job actual (si hay alguno)
+ *   3. Cierra la conexión a Redis
+ */
+async function gracefulShutdown(signal: string): Promise<void> {
+  console.log(`[Worker] Recibida señal ${signal}. Cerrando limpiamente...`);
+  console.log("[Worker] Esperando a que termine el job actual (si hay alguno)...");
+
+  try {
+    await cvWorker.close();
+    console.log("[Worker] ✅ Worker cerrado correctamente");
+
+    try {
+      await getRedisConnection().quit();
+      console.log("[Worker] ✅ Conexión a Redis cerrada");
+    } catch {
+      // Redis ya puede estar cerrado
+    }
+
+    console.log("[Worker] 👋 Hasta luego!");
+    process.exit(0);
+  } catch (error) {
+    console.error("[Worker] Error durante el cierre:", (error as Error).message);
+    process.exit(1);
+  }
+}
+
+process.on("SIGTERM", () => void gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => void gracefulShutdown("SIGINT"));

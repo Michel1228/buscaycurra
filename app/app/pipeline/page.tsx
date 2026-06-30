@@ -107,7 +107,8 @@ export default function PipelinePage() {
     try {
       const session = (await getSupabaseBrowser().auth.getSession()).data.session;
       if (!session) return;
-      const currentEstado = candidaturaEdit.estado;
+      // Leer el estado actual de candidaturas, no el capturado al abrir el modal
+      const currentEstado = candidaturas.find(c => c.id === candidaturaEdit.id)?.estado || candidaturaEdit.estado;
       await getSupabaseBrowser().from("cv_sends").update({
         error_message: JSON.stringify({ pipeline_estado: currentEstado, notas: notasEdit, salario: salarioEdit, contacto: contactoEdit })
       }).eq("id", candidaturaEdit.id);
@@ -179,9 +180,25 @@ export default function PipelinePage() {
     try {
       const session = (await getSupabaseBrowser().auth.getSession()).data.session;
       if (!session) return;
+      // Leer el JSON actual de error_message para preservar salario y contacto
       const cand = candidaturas.find(c => c.id === id);
+      let existingData: Record<string, unknown> = {};
+      try {
+        const { data: row } = await getSupabaseBrowser()
+          .from("cv_sends")
+          .select("error_message")
+          .eq("id", id)
+          .single();
+        if (row?.error_message) {
+          existingData = JSON.parse(row.error_message);
+        }
+      } catch { /* si falla la lectura, usamos objeto vacío */ }
       await getSupabaseBrowser().from("cv_sends").update({
-        error_message: JSON.stringify({ pipeline_estado: nuevoEstado, notas: cand?.notas || "" })
+        error_message: JSON.stringify({
+          ...existingData,
+          pipeline_estado: nuevoEstado,
+          notas: cand?.notas || (existingData.notas as string) || "",
+        })
       }).eq("id", id);
       if (nuevoEstado === "oferta") {
         setCelebracion(true);

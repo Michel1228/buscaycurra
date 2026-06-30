@@ -24,7 +24,7 @@ export interface PlanLimits {
   apiAccess: boolean;              // Acceso a API externa
 }
 
-const LIMITS: Record<PlanTier, PlanLimits> = {
+export const LIMITS: Record<PlanTier, PlanLimits> = {
   free: {
     name: "Free",
     guzziModel: "deepseek-v4-pro",

@@ -7,14 +7,17 @@ const webpush = require("web-push") as {
   ) => Promise<void>;
 };
 
-const VAPID_PUBLIC = "BDy57EXay3f97rznP-2QOJOrs2KWYqgWAK-PtQ9oF8W9Yxpu9ri_kqbYKKVgHByP5wOnoEfyTLigsaLRuawblZo";
+// Usar variables de entorno (mismas que lib/web-push.ts) — sin hardcode
+const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+const VAPID_EMAIL = process.env.VAPID_EMAIL || "mailto:noreply@buscaycurra.es";
 
 let initialized = false;
 function initVapid() {
   if (initialized) return;
+  const pub = VAPID_PUBLIC;
   const priv = process.env.VAPID_PRIVATE_KEY;
-  if (!priv) throw new Error("VAPID_PRIVATE_KEY no configurado");
-  webpush.setVapidDetails("mailto:noreply@buscaycurra.es", VAPID_PUBLIC, priv);
+  if (!pub || !priv) throw new Error("VAPID keys no configuradas (NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)");
+  webpush.setVapidDetails(VAPID_EMAIL, pub, priv);
   initialized = true;
 }
 

@@ -70,7 +70,8 @@ export async function sendCVEmail(
   cvData: CVEmailData,
   coverLetter: string,
   subject: string,
-  companyName: string
+  companyName: string,
+  tracking?: { sendId: string; userId: string }
 ): Promise<EmailResult> {
   console.log(`[EmailSender] Enviando CV de ${cvData.userName} a ${to} (${companyName})...`);
 
@@ -80,7 +81,7 @@ export async function sendCVEmail(
       to: [to],
       reply_to: cvData.userEmail,
       subject: sanitizeEmailHeader(subject),
-      html: buildCVEmailHTML(cvData, coverLetter, companyName),
+      html: buildCVEmailHTML(cvData, coverLetter, companyName, tracking),
       ...(cvData.cvPdfBuffer?.length ? {
         attachments: [{
           filename: cvData.cvFileName ?? `CV_${cvData.userName.replace(/\s+/g, "_")}.pdf`,
@@ -146,7 +147,8 @@ export async function sendConfirmationToUser(
 function buildCVEmailHTML(
   cvData: CVEmailData,
   coverLetter: string,
-  companyName: string
+  companyName: string,
+  tracking?: { sendId: string; userId: string }
 ): string {
   // Convertimos los saltos de línea en párrafos HTML
   const coverLetterHtml = coverLetter
@@ -154,6 +156,11 @@ function buildCVEmailHTML(
     .filter((line) => line.trim())
     .map((line) => `<p style="margin:0 0 12px 0;line-height:1.6;">${line}</p>`)
     .join("");
+
+  // Tracking pixel: 1x1 GIF que detecta apertura del email
+  const trackingPixel = tracking
+    ? `<img src="${process.env.NEXT_PUBLIC_SITE_URL ?? "https://buscaycurra.es"}/api/cv-sender/webhook?track=${tracking.sendId}&uid=${tracking.userId}&wsecret=${process.env.WEBHOOK_SECRET ?? ""}" width="1" height="1" alt="" style="display:none;" />`
+    : "";
 
   return `
 <!DOCTYPE html>
@@ -223,6 +230,7 @@ function buildCVEmailHTML(
                 Enviado con <a href="https://buscaycurra.es" style="color:#F97316;text-decoration:none;font-weight:600;">BuscayCurra</a>
                 — Plataforma de búsqueda de empleo con IA
               </p>
+              ${trackingPixel}
             </td>
           </tr>
 
