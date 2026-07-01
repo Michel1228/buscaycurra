@@ -151,12 +151,12 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   const inicioSemana = new Date(semanaCopia.getFullYear(), semanaCopia.getMonth(), semanaCopia.getDate()).toISOString();
   const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
 
-  // Obtenemos todos los envíos del usuario (solo los enviados)
+  // Obtenemos todos los envíos completados del usuario (enviados, vistos, respondidos)
   const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("*")
     .eq("user_id", userId)
-    .eq("status", "enviado");
+    .in("status", ["enviado", "visto", "respondido"]);
 
   if (error || !data) {
     console.error("[Tracker] Error obteniendo estadísticas de usuario:", error?.message);
@@ -175,6 +175,8 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   const enviadosHoy = data.filter((r: CVSendRecord) => r.sent_at && r.sent_at >= inicioHoy).length;
   const enviadosEstaSemana = data.filter((r: CVSendRecord) => r.sent_at && r.sent_at >= inicioSemana).length;
   const enviadosEsteMes = data.filter((r: CVSendRecord) => r.sent_at && r.sent_at >= inicioMes).length;
+  const respondidos = data.filter((r: CVSendRecord) => r.status === "respondido").length;
+  const tasaRespuesta = data.length > 0 ? Math.round((respondidos / data.length) * 100) : 0;
 
   return {
     totalEnviados: data.length,
@@ -182,7 +184,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
     enviadosEstaSemana,
     enviadosEsteMes,
     enviadosHoy,
-    tasaRespuesta: 0, // TODO: implementar cuando tengamos tracking de respuestas
+    tasaRespuesta,
   };
 }
 

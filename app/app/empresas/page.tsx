@@ -23,6 +23,7 @@ interface EmpresaCompleta {
   emailRrhh: string | null;
   emailContacto: string | null;
   emailsExtraidos: string[];
+  emailConfianza?: "alta" | "baja";
   telefono: string | null;
   paginaEmpleo: string | null;
   descripcion: string | null;
@@ -684,9 +685,19 @@ export default function EmpresasPage() {
                 {/* Info extraída */}
                 <div className="space-y-2 text-xs">
                   {empresaSeleccionada.emailRrhh && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="flex items-center gap-1" style={{ color: "#64748b" }}><Mail size={12} /> Email:</span>
                       <span style={{ color: "#22c55e" }} className="font-medium">{empresaSeleccionada.emailRrhh}</span>
+                      {empresaSeleccionada.emailConfianza === "alta" && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                          Verificado
+                        </span>
+                      )}
+                      {empresaSeleccionada.emailConfianza === "baja" && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}>
+                          Estimado
+                        </span>
+                      )}
                     </div>
                   )}
 
@@ -974,9 +985,19 @@ export default function EmpresasPage() {
                 {/* Info extraída */}
                 <div className="space-y-2 text-xs">
                   {empresaSeleccionada.emailRrhh && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="flex items-center gap-1" style={{ color: "#64748b" }}><Mail size={12} /> Email:</span>
                       <span style={{ color: "#22c55e" }} className="font-medium">{empresaSeleccionada.emailRrhh}</span>
+                      {empresaSeleccionada.emailConfianza === "alta" && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                          Verificado
+                        </span>
+                      )}
+                      {empresaSeleccionada.emailConfianza === "baja" && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}>
+                          Estimado
+                        </span>
+                      )}
                     </div>
                   )}
 

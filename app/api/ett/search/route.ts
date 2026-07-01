@@ -25,6 +25,7 @@ interface EmpresaCompleta {
   emailRrhh: string | null;
   emailContacto: string | null;
   emailsExtraidos: string[];
+  emailConfianza: "alta" | "baja";
   telefono: string | null;
   paginaEmpleo: string | null;
   descripcion: string | null;
@@ -50,12 +51,12 @@ function extraerDominio(url: string): string {
 function generarEmails(dominio: string): string[] {
   if (!dominio) return [];
   return [
-    `empleo@${dominio}`,
-    `info@${dominio}`,
-    `talento@${dominio}`,
-    `seleccion@${dominio}`,
-    `jobs@${dominio}`,
     `rrhh@${dominio}`,
+    `seleccion@${dominio}`,
+    `empleo@${dominio}`,
+    `talento@${dominio}`,
+    `jobs@${dominio}`,
+    `info@${dominio}`,
     `contacto@${dominio}`,
   ];
 }
@@ -81,6 +82,7 @@ function construirEmpresaDesdeGoogle(gr: GooglePlaceResult): EmpresaCompleta {
     emailRrhh: emailsGenerados[0] || null,
     emailContacto: emailsGenerados.find(e => e.includes("info@") || e.includes("contacto@")) || null,
     emailsExtraidos: emailsGenerados,
+    emailConfianza: "baja",
     telefono: gr.formatted_phone_number || gr.international_phone_number || null,
     paginaEmpleo: gr.website ? `${gr.website.replace(/\/$/, "")}/empleo` : null,
     descripcion: null,
@@ -159,6 +161,7 @@ export async function POST(request: NextRequest) {
           const emailReal = await extraerEmailsDesdeWeb(empresa.urlWeb);
           if (emailReal) {
             empresa.emailRrhh = emailReal;
+            empresa.emailConfianza = "alta";
             if (!empresa.emailsExtraidos.includes(emailReal)) {
               empresa.emailsExtraidos.unshift(emailReal);
             }

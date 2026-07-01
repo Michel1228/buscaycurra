@@ -23,7 +23,6 @@ const defaultJobOptions = {
 let _redis: IORedis | null = null;
 let _cvSenderQueue: Queue | null = null;
 let _cvSenderRetryQueue: Queue | null = null;
-let _notificationsQueue: Queue | null = null;
 
 export function getRedisConnection(): IORedis {
   if (!_redis) {
@@ -65,24 +64,6 @@ export function getCvSenderRetryQueue(): Queue {
   return _cvSenderRetryQueue;
 }
 
-export function getNotificationsQueue(): Queue {
-  if (!_notificationsQueue) {
-    _notificationsQueue = new Queue("notifications-queue", {
-      connection: getRedisConnection(),
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: { type: "exponential" as const, delay: 1000 },
-        removeOnComplete: { count: 1000, age: 3 * 24 * 60 * 60 },
-        removeOnFail: { count: 100, age: 7 * 24 * 60 * 60 },
-      },
-    });
-    _notificationsQueue.on("error", (err: Error) =>
-      console.error("[BullMQ] notificationsQueue error:", err.message)
-    );
-  }
-  return _notificationsQueue;
-}
-
 // ─── Límites de plan (fuente única: lib/cv-sender/plans.ts) ─────────────────
 import { PLAN_LIMITS, type UserPlan } from "./plans";
 export { PLAN_LIMITS as RATE_LIMITS };
@@ -103,14 +84,6 @@ export interface CVJobData {
   frecuencia?: "unico" | "cada4dias";
 }
 
-export interface NotificationJobData {
-  userId: string;
-  type: "cv_sent" | "cv_failed" | "daily_summary";
-  message: string;
-  companyName?: string;
-  jobId?: string;
-}
-
 // ─── Funciones de Cola ────────────────────────────────────────────────────────
 
 export async function addCVJob(
@@ -125,10 +98,6 @@ export async function addCVJob(
   });
   console.log(`[Cola] Job añadido: ${job.id} | Usuario: ${data.userId} | Empresa: ${data.companyName}`);
   return job.id!;
-}
-
-export async function addNotificationJob(data: NotificationJobData): Promise<void> {
-  await getNotificationsQueue().add("notify-user", data, { priority: 5 });
 }
 
 export async function getQueueStats() {

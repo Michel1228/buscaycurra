@@ -178,7 +178,7 @@ function buildCVEmailHTML(
 
           <!-- Cabecera -->
           <tr>
-            <td style="background:linear-gradient(135deg,#2563EB,#1d4ed8);padding:32px 40px;text-align:center;">
+            <td style="background:linear-gradient(135deg,#16a34a,#15803d);padding:32px 40px;text-align:center;">
               <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">
                 Candidatura — ${companyName}
               </h1>
@@ -200,16 +200,16 @@ function buildCVEmailHTML(
           <!-- Datos de contacto -->
           <tr>
             <td style="padding:0 40px 32px;">
-              <div style="background:#f8fafc;border-left:4px solid #2563EB;border-radius:4px;padding:20px 24px;">
+              <div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:4px;padding:20px 24px;">
                 <p style="margin:0 0 4px;font-weight:700;color:#1e293b;font-size:14px;">
                   DATOS DE CONTACTO
                 </p>
                 <p style="margin:0;color:#64748b;font-size:14px;">${cvData.userName}</p>
-                <p style="margin:4px 0 0;color:#2563EB;font-size:14px;">
-                  <a href="mailto:${cvData.userEmail}" style="color:#2563EB;text-decoration:none;">${cvData.userEmail}</a>
+                <p style="margin:4px 0 0;color:#16a34a;font-size:14px;">
+                  <a href="mailto:${cvData.userEmail}" style="color:#16a34a;text-decoration:none;">${cvData.userEmail}</a>
                 </p>
                 ${cvData.userPhone ? `<p style="margin:4px 0 0;color:#64748b;font-size:14px;">📞 ${cvData.userPhone}</p>` : ""}
-                ${cvData.userLinkedIn && /^https:\/\/(www\.)?linkedin\.com\//.test(cvData.userLinkedIn) ? `<p style="margin:4px 0 0;font-size:14px;"><a href="${cvData.userLinkedIn}" style="color:#2563EB;text-decoration:none;">🔗 LinkedIn</a></p>` : ""}
+                ${cvData.userLinkedIn && /^https:\/\/(www\.)?linkedin\.com\//.test(cvData.userLinkedIn) ? `<p style="margin:4px 0 0;font-size:14px;"><a href="${cvData.userLinkedIn}" style="color:#16a34a;text-decoration:none;">🔗 LinkedIn</a></p>` : ""}
               </div>
             </td>
           </tr>
@@ -227,7 +227,7 @@ function buildCVEmailHTML(
           <tr>
             <td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
               <p style="color:#9ca3af;font-size:12px;margin:0;">
-                Enviado con <a href="https://buscaycurra.es" style="color:#F97316;text-decoration:none;font-weight:600;">BuscayCurra</a>
+                Enviado con <a href="https://buscaycurra.es" style="color:#22c55e;text-decoration:none;font-weight:600;">BuscayCurra</a>
                 — Plataforma de búsqueda de empleo con IA
               </p>
               ${trackingPixel}
@@ -274,7 +274,7 @@ function buildConfirmationEmailHTML(
 
           <!-- Cabecera con check verde -->
           <tr>
-            <td style="background:linear-gradient(135deg,#2563EB,#1d4ed8);padding:40px;text-align:center;">
+            <td style="background:linear-gradient(135deg,#16a34a,#15803d);padding:40px;text-align:center;">
               <div style="width:64px;height:64px;background:rgba(255,255,255,0.15);border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
                 <span style="font-size:32px;">✅</span>
               </div>
@@ -292,12 +292,12 @@ function buildConfirmationEmailHTML(
               </p>
               <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 24px;">
                 Tu CV ha sido enviado correctamente a
-                <strong style="color:#2563EB;">${companyName}</strong>
+                <strong style="color:#16a34a;">${companyName}</strong>
                 ${jobTitle ? `para el puesto de <strong>${jobTitle}</strong>` : ""}.
               </p>
 
               <!-- Tarjeta de detalles -->
-              <div style="background:#f0f7ff;border-radius:8px;padding:20px;margin:0 0 24px;text-align:left;">
+              <div style="background:#f0fdf4;border-radius:8px;padding:20px;margin:0 0 24px;text-align:left;">
                 <table width="100%">
                   <tr>
                     <td style="padding:4px 0;color:#6b7280;font-size:14px;">📅 Fecha de envío</td>
@@ -321,7 +321,7 @@ function buildConfirmationEmailHTML(
               </p>
 
               <a href="https://buscaycurra.es/app/envios"
-                style="background:#F97316;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;display:inline-block;">
+                style="background:#22c55e;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;display:inline-block;">
                 Ver mis envíos →
               </a>
             </td>
@@ -331,7 +331,7 @@ function buildConfirmationEmailHTML(
           <tr>
             <td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
               <p style="color:#9ca3af;font-size:12px;margin:0;">
-                <a href="https://buscaycurra.es" style="color:#F97316;text-decoration:none;font-weight:600;">BuscayCurra</a>
+                <a href="https://buscaycurra.es" style="color:#22c55e;text-decoration:none;font-weight:600;">BuscayCurra</a>
                 — Tu asistente de búsqueda de empleo con IA 🚀
               </p>
             </td>
