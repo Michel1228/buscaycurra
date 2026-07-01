@@ -44,6 +44,10 @@ workflows:
           /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'BuscayCurra necesita acceso a tu galería para añadir una foto a tu CV'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'BuscayCurra necesita acceso a tu cámara para hacer una foto para tu CV'" "$PLIST" 2>/dev/null || \
           /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'BuscayCurra necesita acceso a tu cámara para hacer una foto para tu CV'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'BuscayCurra necesita guardar tu foto de perfil en la galería'" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'BuscayCurra necesita guardar tu foto de perfil en la galería'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'BuscayCurra necesita acceso al micrófono para grabar vídeo'" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :NSMicrophoneUsageDescription 'BuscayCurra necesita acceso al micrófono para grabar vídeo'" "$PLIST"
       - name: Incrementar build number
         script: |
           cd ios/App
