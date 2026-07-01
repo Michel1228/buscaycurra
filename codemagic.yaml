@@ -29,6 +29,8 @@ workflows:
         script: |
           rm -rf ios
           npx cap add ios --packagemanager cocoapods
+      - name: Generar iconos nativos iOS
+        script: npx @capacitor/assets generate --ios
       - name: Instalar CocoaPods
         script: cd ios/App && pod install
       - name: Sincronizar Capacitor
