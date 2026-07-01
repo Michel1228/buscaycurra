@@ -6,7 +6,7 @@ import { getPool } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("x-admin-secret") ?? req.nextUrl.searchParams.get("secret");
+  const secret = req.headers.get("x-admin-secret");
   if (secret !== process.env.ADMIN_SECRET) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }

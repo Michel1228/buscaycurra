@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const secret = request.headers.get("x-admin-secret") ?? searchParams.get("secret");
+  const secret = request.headers.get("x-admin-secret");
   if (secret !== process.env.ADMIN_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -180,23 +180,15 @@ export async function POST(request: NextRequest) {
 
     let tieneCV = cvFiles && cvFiles.length > 0;
 
-    // Si no hay PDF en storage, verificar si el CV existe en la tabla CV (editor)
-    // ⚠️ La tabla CV puede usar userIds/emails diferentes a Supabase auth
-    // Buscamos por email de Supabase, email alternativo, o comprobamos si el plan es de pago
-    if (!tieneCV) {
-      const userPlanCheck = await getUserPlan(userId);
-      // Si el usuario tiene plan de pago, asumimos que tiene CV (ya pasó el onboarding)
-      if (userPlanCheck !== 'free') {
-        tieneCV = true;
-      } else if (userEmail) {
-        const { data: cvRows } = await supabaseAdmin
-          .from("CV")
-          .select("id")
-          .or(`email.eq.${userEmail},userId.eq.${userId}`)
-          .eq("isActive", true)
-          .limit(1);
-        tieneCV = cvRows && cvRows.length > 0;
-      }
+    // Si no hay PDF en storage, buscar en la tabla CV (editor guardado)
+    if (!tieneCV && userEmail) {
+      const { data: cvRows } = await supabaseAdmin
+        .from("CV")
+        .select("id")
+        .or(`email.eq.${userEmail},userId.eq.${userId}`)
+        .eq("isActive", true)
+        .limit(1);
+      tieneCV = cvRows != null && cvRows.length > 0;
     }
 
     if (!tieneCV) {
