@@ -44,8 +44,6 @@ function getNotifUrl(n: Notificacion): string {
     case "recordatorio":
       return "/app/envios?tab=envios";
     case "nuevo_empleo":
-      if (n.datos?.job_id) return `/app/ofertas/${encodeURIComponent(n.datos.job_id)}`;
-      return "/app/notificaciones";
     case "alerta_empleo":
     case "nuevas_ofertas":
       // La página de notificaciones expande las ofertas específicas inline

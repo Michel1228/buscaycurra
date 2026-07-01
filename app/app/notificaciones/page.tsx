@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
-import { Bell, Briefcase, Upload, Pin, BellOff, ClipboardList, ChevronDown, ChevronUp, ExternalLink, Send } from "lucide-react";
+import { Bell, Briefcase, Upload, Pin, BellOff, ClipboardList, ChevronDown, ChevronUp, ExternalLink, Send, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface Notif {
@@ -50,6 +50,7 @@ export default function NotificacionesPage() {
 
   // Envío de CV
   const [enviando, setEnviando] = useState<Set<string>>(new Set());
+  const [guardados, setGuardados] = useState<Set<string>>(new Set());
   const [enviadosHoy, setEnviadosHoy] = useState(0);
   const [limiteDiario, setLimiteDiario] = useState(3);
   const [toast, setToast] = useState("");
@@ -109,17 +110,11 @@ export default function NotificacionesPage() {
     } catch { /* ignore */ }
   }
 
-  const isAlerta = (n: Notif) => n.tipo === "alerta_empleo" || n.tipo === "nuevas_ofertas";
+  const isAlerta = (n: Notif) => n.tipo === "alerta_empleo" || n.tipo === "nuevas_ofertas" || n.tipo === "nuevo_empleo";
 
   function getNonAlertaUrl(n: Notif): string | null {
     const datos = n.datos || {};
     if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
-    if (n.tipo === "nuevo_empleo") {
-      const p = new URLSearchParams();
-      if (datos.keyword) p.set("keyword", datos.keyword);
-      if (datos.location) p.set("location", datos.location);
-      return `/app/buscar?${p.toString()}`;
-    }
     if (n.tipo === "cv_enviado") return "/app/envios";
     if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
     if (n.tipo === "recordatorio") return "/app/gusi";
@@ -225,6 +220,29 @@ export default function NotificacionesPage() {
       setTimeout(() => setToastError(""), 5000);
     } finally {
       setEnviando(prev => { const s = new Set(prev); s.delete(oferta.id); return s; });
+    }
+  }
+
+  async function toggleGuardar(oferta: Oferta) {
+    const isGuardado = guardados.has(oferta.id);
+    const url = isGuardado ? "/api/jobs/unsave" : "/api/jobs/save";
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenRef.current}` },
+        body: JSON.stringify({ jobId: oferta.id }),
+      });
+      if (!res.ok) throw new Error("Error al guardar");
+      setGuardados(prev => {
+        const s = new Set(prev);
+        isGuardado ? s.delete(oferta.id) : s.add(oferta.id);
+        return s;
+      });
+      setToast(isGuardado ? "Oferta eliminada de guardados" : "Oferta guardada");
+      setTimeout(() => setToast(""), 3000);
+    } catch {
+      setToastError("No se pudo guardar la oferta");
+      setTimeout(() => setToastError(""), 3000);
     }
   }
 
@@ -412,6 +430,18 @@ export default function NotificacionesPage() {
                                   )}
                                 </div>
                                 <div className="flex flex-col gap-1.5 shrink-0">
+                                  {/* Guardar */}
+                                  <button
+                                    onClick={() => toggleGuardar(o)}
+                                    className="text-[10px] px-2 py-1 rounded-lg font-medium flex items-center gap-1 transition"
+                                    style={{
+                                      background: guardados.has(o.id) ? "rgba(250,204,21,0.12)" : "rgba(255,255,255,0.05)",
+                                      border: `1px solid ${guardados.has(o.id) ? "rgba(250,204,21,0.3)" : "#2d3142"}`,
+                                      color: guardados.has(o.id) ? "#facc15" : "#94a3b8",
+                                    }}
+                                  >
+                                    <Star size={10} fill={guardados.has(o.id) ? "#facc15" : "none"} />
+                                  </button>
                                   {/* Ver oferta */}
                                   <button
                                     onClick={() => router.push(`/app/ofertas/${encodeURIComponent(o.id)}`)}
