@@ -44,9 +44,17 @@ function getNotifUrl(n: Notificacion): string {
     case "recordatorio":
       return "/app/envios?tab=envios";
     case "nuevo_empleo":
-      return n.datos?.keyword
-        ? `/app/buscar?keyword=${encodeURIComponent(n.datos.keyword)}`
-        : "/app/buscar";
+      if (n.datos?.job_id) return `/app/ofertas/${encodeURIComponent(n.datos.job_id)}`;
+      // fallthrough to buscar with keyword/location
+    // eslint-disable-next-line no-fallthrough
+    case "alerta_empleo":
+    case "nuevas_ofertas": {
+      const params = new URLSearchParams();
+      if (n.datos?.keyword) params.set("keyword", n.datos.keyword);
+      if (n.datos?.location) params.set("location", n.datos.location);
+      const qs = params.toString();
+      return qs ? `/app/buscar?${qs}` : "/app/buscar";
+    }
     default:
       return "/app";
   }

@@ -647,7 +647,7 @@ export default function CurriculumPage() {
   const previewHTML = mejoradoHTML || livePreviewHTML;
 
   return (
-    <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
+    <div className="min-h-screen pt-16" style={{ background: "#0f1117", overflowX: "hidden" }}>
       {/* Header */}
       <div className="px-4 py-6" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>
         <div className="max-w-[100rem] mx-auto flex items-center justify-between">
@@ -746,6 +746,9 @@ export default function CurriculumPage() {
         </div>
       </div>
 
+      {/* Impide el auto-zoom de iOS en inputs (font-size < 16px lo dispara) */}
+      <style>{`.cv-form-inputs input,.cv-form-inputs textarea,.cv-form-inputs select{font-size:16px!important}`}</style>
+
       {/* ── LAYOUT 2 COLUMNAS: formulario + previsualización EN VIVO ── */}
       <main className="max-w-[100rem] mx-auto px-4 py-6">
         {error && (
@@ -759,7 +762,7 @@ export default function CurriculumPage() {
 
         <div className="flex flex-col xl:flex-row gap-6">
           {/* ── COLUMNA IZQUIERDA: Formulario ── */}
-          <div className="flex-1 min-w-0 xl:max-w-[50%] space-y-5">
+          <div className="cv-form-inputs flex-1 min-w-0 xl:max-w-[50%] space-y-5">
             {/* Visibilidad para empresas */}
             <div className="rounded-xl p-5" style={{
               background: visibleEmpresas ? "rgba(34,197,94,0.07)" : "#161922",
@@ -1014,8 +1017,8 @@ export default function CurriculumPage() {
             </div>
           </div>
 
-          {/* ── COLUMNA DERECHA: Previsualización EN VIVO ── */}
-          <div className="flex-1 min-w-0 xl:sticky xl:top-20 xl:max-w-[50%]">
+          {/* ── COLUMNA DERECHA: Previsualización EN VIVO (solo escritorio) ── */}
+          <div className="hidden xl:block xl:flex-1 xl:min-w-0 xl:sticky xl:top-20 xl:max-w-[50%]">
             <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #22c55e40", background: "#fff" }}>
               {/* Cabecera de la preview */}
               <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "#161922", borderBottom: "1px solid #252836" }}>
