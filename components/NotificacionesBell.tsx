@@ -45,16 +45,11 @@ function getNotifUrl(n: Notificacion): string {
       return "/app/envios?tab=envios";
     case "nuevo_empleo":
       if (n.datos?.job_id) return `/app/ofertas/${encodeURIComponent(n.datos.job_id)}`;
-      // fallthrough to buscar with keyword/location
-    // eslint-disable-next-line no-fallthrough
+      return "/app/notificaciones";
     case "alerta_empleo":
-    case "nuevas_ofertas": {
-      const params = new URLSearchParams();
-      if (n.datos?.keyword) params.set("keyword", n.datos.keyword);
-      if (n.datos?.location) params.set("location", n.datos.location);
-      const qs = params.toString();
-      return qs ? `/app/buscar?${qs}` : "/app/buscar";
-    }
+    case "nuevas_ofertas":
+      // La página de notificaciones expande las ofertas específicas inline
+      return "/app/notificaciones";
     default:
       return "/app";
   }

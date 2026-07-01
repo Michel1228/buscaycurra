@@ -277,7 +277,14 @@ export async function GET(request: NextRequest) {
           tipo: "alerta_empleo",
           titulo,
           mensaje: cuerpo,
-          datos: { keyword: alerta.keyword, location: alerta.location, total, job_id: ejemplo.id, job_url: ejemplo.sourceUrl || "" },
+          datos: {
+            keyword: alerta.keyword,
+            location: alerta.location,
+            total: String(total),
+            job_id: ejemplo.id,
+            job_ids: jobsResult.map(j => j.id).join(","),
+            job_url: ejemplo.sourceUrl || "",
+          },
           leida: false,
         });
       } catch { /* Supabase puede no estar disponible */ }
