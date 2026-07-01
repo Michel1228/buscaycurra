@@ -38,6 +38,10 @@ workflows:
           PLIST="ios/App/App/Info.plist"
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
           /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'BuscayCurra necesita acceso a tu galería para añadir una foto a tu CV'" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'BuscayCurra necesita acceso a tu galería para añadir una foto a tu CV'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'BuscayCurra necesita acceso a tu cámara para hacer una foto para tu CV'" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'BuscayCurra necesita acceso a tu cámara para hacer una foto para tu CV'" "$PLIST"
       - name: Incrementar build number
         script: |
           cd ios/App
