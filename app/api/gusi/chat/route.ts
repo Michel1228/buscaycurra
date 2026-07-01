@@ -561,7 +561,7 @@ function localReply(intent: string, cv?: CVParsed | null): string {
     case "cv_mejorado":
       return "✨ **Mejora de CV no disponible ahora mismo.**\n\nPuedo ayudarte con estos consejos mientras tanto:\n• Usa verbos de acción (logré, implementé, coordiné)\n• Incluye logros cuantificables (\"aumenté ventas un 20%\")\n• Adapta las palabras clave al puesto que buscas\n• Mantén el CV en 1-2 páginas máximo\n\n¿Quieres que te dé más consejos personalizados? ";
     case "entrevista_prep":
-      return "🎯 **¡Vamos a preparar esa entrevista!**\\n\\nAquí tienes un guion rápido que funciona:\\n• Prepara 3 ejemplos con método STAR (Situación, Tarea, Acción, Resultado)\\n• Investiga la empresa: sector, tamaño, noticias recientes\\n• Prepara 2-3 preguntas inteligentes para hacer tú al final\\n• Ensaya tu presentación de 1 minuto en voz alta (marca la diferencia)\\n\\n¿Sobre qué puesto es la entrevista? Te ayudo a enfocarla al 100%. ";
+      return `🎯 **¡Vamos a preparar esa entrevista!**\n\nAquí tienes un guion rápido que funciona:\n• Prepara 3 ejemplos con método STAR (Situación, Tarea, Acción, Resultado)\n• Investiga la empresa: sector, tamaño, noticias recientes\n• Prepara 2-3 preguntas inteligentes para hacer tú al final\n• Ensaya tu presentación de 1 minuto en voz alta (marca la diferencia)\n\n¿Sobre qué puesto es la entrevista? Te ayudo a enfocarla al 100%. `;
     case "carta_recomendacion":
       return "✉️ **Carta de presentación no disponible en este momento.**\n\nMientras tanto, puedes estructurarla así:\n1. **Asunto**: Candidatura [Puesto] — [Tu Nombre]\n2. **Apertura**: por qué te interesa esa empresa en concreto\n3. **Cuerpo**: 2-3 logros que conecten con lo que buscan\n4. **Cierre**: disponibilidad para entrevista y despedida cordial\n\n¿Te ayudo a redactarla paso a paso? ";
     case "info_empresa":
@@ -869,9 +869,9 @@ El candidato tiene mucha experiencia.
     }
 
     // -- Respuesta a choose_size: "grande" o "pequeña" -------------------------
-    const isChooseSizeReply = /^(grande|pequeñ[oa]|pequen[oa]|local|negocio\\s+local|empresa\\s+grande|pequeñas?\\s+empresas?)$/i.test(message.trim());
+    const isChooseSizeReply = /^(grande|pequeñ[oa]|pequen[oa]|local|negocio\s+local|empresa\s+grande|pequeñas?\s+empresas?)$/i.test(message.trim());
     if (isChooseSizeReply) {
-      const wantSmall = /^(pequeñ[oa]|pequen[oa]|local|negocio\\s+local|pequeñas?\\s+empresas?)$/i.test(message.trim());
+      const wantSmall = /^(pequeñ[oa]|pequen[oa]|local|negocio\s+local|pequeñas?\s+empresas?)$/i.test(message.trim());
       // Extraer sector+ciudad del último mensaje de Guzzi en el historial
       let sector = "";
       let city = "";
@@ -1149,7 +1149,7 @@ El candidato tiene mucha experiencia.
     if (intent === "send_cv_local_confirm") {
       // Extraer contexto del historial: empresa, teléfono, puesto
       const histText = history.slice(-6).map((m: { text: string }) => m.text).join("\n");
-      const empresaMatch = histText.match(/(?:BAR|Bar|Restaurante|Cafeter[ií]a|Tienda|Hotel|Taller|Panader[ií]a|Farmacia|Cl[ií]nica|Peluquer[ií]a|Barber[ií]a|Centro\\s+de\\s+[Bb]elleza|Sal[oó]n|Est[eé]tica|SPA|Gimnasio|Lavander[ií]a|Supermercado|Fruter[ií]a|Carnicer[ií]a|Pescader[ií]a)\\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑa-záéíóúüñ\\s]+?)(?:\\n|\\||·|-|—|\\.|$)/);
+      const empresaMatch = histText.match(/(?:BAR|Bar|Restaurante|Cafeter[ií]a|Tienda|Hotel|Taller|Panader[ií]a|Farmacia|Cl[ií]nica|Peluquer[ií]a|Barber[ií]a|Centro\s+de\s+[Bb]elleza|Sal[oó]n|Est[eé]tica|SPA|Gimnasio|Lavander[ií]a|Supermercado|Fruter[ií]a|Carnicer[ií]a|Pescader[ií]a)\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑa-záéíóúüñ\s]+?)(?:\n|\|·|-|—|\.|$)/);
       const telefonoMatch = histText.match(/(?:tel[eé]fono|telf?|📞)\s*[:\s]*\+?(\(?\d{2,3}\)?[\s\-]?\d{2,3}[\s\-]?\d{2,3}[\s\-]?\d{2,3})/i);
       const puestoMatch = histText.match(/(?:puesto|trabajo|como|de)\s+(camarero[\/a]*|cocinero[\/a]*|ayudante[\s\w]*|repartidor[\/a]*|limpiador[\/a]*|dependiente[\/a]*|mozo[\/a]*)/i);
 
@@ -1314,7 +1314,7 @@ Responde en JSON exactamente así:
     const systemPrompt = buildSystemPrompt(cvData, pais, auPairProfile);
     const messages = [
       { role: "system" as const, content: systemPrompt },
-      ...history.slice(-8)
+      ...history.slice(-14)
         .filter((m: { role: string; text: string }) => m.text)
         .map((m: { role: string; text: string }) => ({
           role: (m.role === "gusi" ? "assistant" : "user") as "assistant" | "user",
@@ -1385,10 +1385,10 @@ Responde en JSON exactamente así:
     }
     let reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
 
-    // 🔒 ANTI-ALUCINACIÓN: detectar emails inventados en respuestas del chat general
+    // 🔒 ANTI-ALUCINACIÓN: detectar emails inventados en respuestas del chat
     const hasFakeEmails = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(reply);
-    const claimsSending = /(?:he\\s+enviado|estoy\\s+enviando|envi[ée]\\s+tu\\s+CV|CV\\s+enviado|te\\s+lo\\s+he\\s+enviado|les\\s+estoy\\s+enviando|les\\s+he\\s+enviado|ya\\s+est[aá]n?\\s+enviados|enviados?\\s+a\\s+\\d+\\s+empresas)/i.test(reply);
-    if (hasFakeEmails && claimsSending && intent === "chat") {
+    const claimsSending = /(?:he\s+enviado|estoy\s+enviando|envi[ée]\s+tu\s+CV|CV\s+enviado|te\s+lo\s+he\s+enviado|les\s+estoy\s+enviando|les\s+he\s+enviado|ya\s+est[aá]n?\s+enviados|enviados?\s+a\s+\d+\s+empresas)/i.test(reply);
+    if (hasFakeEmails && claimsSending) {
       console.error("[Guzzi] ANTI-ALUCINACIÓN: bloqueada respuesta con emails inventados + afirmación de envío");
       reply = "📧 Para enviar tu CV, usa el botón **Enviar CV** en cada oferta. Yo no puedo inventar emails ni hacer envíos masivos automáticos.\n\nSi quieres, dime el nombre de UNA empresa concreta y te busco su contacto real.";
     }
