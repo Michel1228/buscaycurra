@@ -12,6 +12,8 @@ import InfoTooltip from "@/components/InfoTooltip";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
 import WhatsAppSubscribeButton from "@/components/WhatsAppSubscribeButton";
 import { isNativeIOS } from "@/lib/utils/platform";
+import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
+import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 
 interface PerfilData {
   nombre: string;
@@ -46,6 +48,7 @@ export default function PerfilPage() {
   }, []);
   const [iosNativo, setIosNativo] = useState(false);
   const [planActual, setPlanActual] = useState<"free" | "basico" | "esencial" | "pro" | "empresa">("free");
+  const [planSource, setPlanSource] = useState<"stripe" | "revenuecat" | null>(null);
   const [cargandoPlan, setCargandoPlan] = useState(false);
   const [cargandoPortal, setCargandoPortal] = useState(false);
   const [errorPlan, setErrorPlan] = useState<string | null>(null);
@@ -67,7 +70,7 @@ export default function PerfilPage() {
       setEmail(session.user.email ?? "");
 
       const { data: p } = await getSupabaseBrowser().from("profiles")
-        .select("full_name, phone, ciudad, provincia, codigo_postal, sector, plan")
+        .select("full_name, phone, ciudad, provincia, codigo_postal, sector, plan, plan_source")
         .eq("id", session.user.id).single();
 
       // Fallback a metadatos de auth si el perfil no tiene nombre
@@ -86,6 +89,9 @@ export default function PerfilPage() {
       });
       if (p?.plan && ["basico", "esencial", "pro", "empresa"].includes(p.plan)) {
         setPlanActual(p.plan as "basico" | "esencial" | "pro" | "empresa");
+      }
+      if (p?.plan_source === "stripe" || p?.plan_source === "revenuecat") {
+        setPlanSource(p.plan_source);
       }
       setCargando(false);
     }
@@ -150,6 +156,46 @@ export default function PerfilPage() {
   async function cerrarTodasLasSesiones() {
     await getSupabaseBrowser().auth.signOut({ scope: "global" });
     router.push("/auth/login");
+  }
+
+  // Compras In-App de iOS (RevenueCat). En web estos valores no se usan.
+  const { comprarPlan, comprando: comprandoIAP } = useRevenueCat();
+
+  // Tras una compra IAP el plan lo activa el webhook server-side; reconsultamos
+  // el perfil con reintentos cortos para reflejar el nuevo plan en la UI.
+  async function recargarPlan() {
+    for (let intento = 0; intento < 4; intento++) {
+      await new Promise((r) => setTimeout(r, 1500));
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) return;
+      const { data: p } = await getSupabaseBrowser().from("profiles")
+        .select("plan, plan_source").eq("id", session.user.id).single();
+      if (p?.plan && ["basico", "esencial", "pro", "empresa"].includes(p.plan)) {
+        setPlanActual(p.plan as "basico" | "esencial" | "pro" | "empresa");
+        if (p.plan_source === "stripe" || p.plan_source === "revenuecat") setPlanSource(p.plan_source);
+        return;
+      }
+    }
+  }
+
+  async function comprarConIAP(plan: "esencial" | "pro" | "empresa") {
+    setErrorPlan(null);
+    const res = await comprarPlan(plan);
+    if (res.ok) {
+      await recargarPlan();
+    } else if (res.error) {
+      setErrorPlan(res.error);
+    }
+    // Si el usuario canceló (res.cancelado), no mostramos error.
+  }
+
+  // Gestionar la suscripción activa: Stripe → portal web; RevenueCat → Ajustes de Apple.
+  function gestionarSuscripcion() {
+    if (planSource === "revenuecat") {
+      window.location.href = "itms-apps://apps.apple.com/account/subscriptions";
+    } else {
+      void irAPortal();
+    }
   }
 
   async function irACheckout(plan: "esencial" | "pro" | "empresa") {
@@ -391,12 +437,12 @@ export default function PerfilPage() {
                 <p className="text-xs" style={{ color: "#94a3b8" }}>{info.desc}</p>
               </div>
 
-              {/* Botón portal Stripe — solo si no es plan free */}
+              {/* Gestionar suscripción — Stripe (web) o App Store (iOS) según origen */}
               {planActual !== "free" && (
                 <div className="mt-4">
                   <button
-                    onClick={() => void irAPortal()}
-                    disabled={cargandoPortal}
+                    onClick={() => gestionarSuscripcion()}
+                    disabled={cargandoPortal && planSource !== "revenuecat"}
                     className="w-full py-2.5 text-sm font-semibold rounded-lg transition disabled:opacity-50"
                     style={{
                       background: "rgba(59,130,246,0.1)",
@@ -404,7 +450,9 @@ export default function PerfilPage() {
                       border: "1px solid rgba(59,130,246,0.25)",
                     }}
                   >
-                    {cargandoPortal ? "Cargando..." : "Gestionar suscripción →"}
+                    {planSource === "revenuecat"
+                      ? "Gestionar en App Store →"
+                      : cargandoPortal ? "Cargando..." : "Gestionar suscripción →"}
                   </button>
                   <p className="text-[11px] text-center mt-1.5" style={{ color: "#6b7280" }}>
                     Cambiar plan, método de pago o cancelar
@@ -426,55 +474,55 @@ export default function PerfilPage() {
                     {!iosNativo && <InfoTooltip text="El pago se procesa con Stripe (seguro). Puedes cancelar en cualquier momento desde el portal de facturación. El cambio es inmediato." position="right" />}
                   </div>
                   {iosNativo && (
-                    <div className="rounded-xl p-4 text-center" style={{ background: "#161922", border: "1px solid #252836" }}>
-                      <p className="text-xs" style={{ color: "#64748b" }}>
-                        🍎 Para cambiar de plan, visita{" "}
-                        <span style={{ color: "#22c55e" }}>buscaycurra.es</span>
-                        {" "}desde Safari. Tu plan se actualizará en la app automáticamente.
-                      </p>
-                    </div>
+                    <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>
+                      🍎 El pago se realiza de forma segura con tu cuenta de Apple. La suscripción se renueva automáticamente; puedes cancelarla cuando quieras desde Ajustes.
+                    </p>
                   )}
-                  {!iosNativo && planActual === "free" && (
+                  {planActual === "free" && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🌱 Plan Esencial — 2,99€/mes</p>
                         <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>15 CVs/día · 100 CVs/semana · Buscador avanzado</p>
                       </div>
-                      <button onClick={() => void irACheckout("esencial")} disabled={cargandoPlan}
+                      <button onClick={() => iosNativo ? void comprarConIAP("esencial") : void irACheckout("esencial")}
+                        disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
                         className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
-                        {cargandoPlan ? "..." : "Contratar"}
+                        {(iosNativo ? comprandoIAP === "esencial" : cargandoPlan) ? "..." : "Contratar"}
                       </button>
                     </div>
                   )}
-                  {!iosNativo && (planActual === "free" || planActual === "esencial") && (
+                  {(planActual === "free" || planActual === "esencial") && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #252836" }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>⚡ Plan Pro — 9,99€/mes</p>
                         <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>50 CVs/día · IA avanzada · Estadísticas</p>
                       </div>
-                      <button onClick={() => void irACheckout("pro")} disabled={cargandoPlan}
+                      <button onClick={() => iosNativo ? void comprarConIAP("pro") : void irACheckout("pro")}
+                        disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
                         className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
-                        {cargandoPlan ? "..." : "Contratar"}
+                        {(iosNativo ? comprandoIAP === "pro" : cargandoPlan) ? "..." : "Contratar"}
                       </button>
                     </div>
                   )}
-                  {!iosNativo && (
-                    <div className="rounded-xl p-4 flex items-center justify-between"
-                      style={{ background: "#161922", border: "1px solid #252836" }}>
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🏢 Plan Empresa — 49,99€/mes</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
-                      </div>
-                      <button onClick={() => void irACheckout("empresa")} disabled={cargandoPlan}
-                        className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
-                        {cargandoPlan ? "..." : "Contratar"}
-                      </button>
+                  <div className="rounded-xl p-4 flex items-center justify-between"
+                    style={{ background: "#161922", border: "1px solid #252836" }}>
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🏢 Plan Empresa — 49,99€/mes</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
                     </div>
-                  )}
+                    <button onClick={() => iosNativo ? void comprarConIAP("empresa") : void irACheckout("empresa")}
+                      disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
+                      className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
+                      {(iosNativo ? comprandoIAP === "empresa" : cargandoPlan) ? "..." : "Contratar"}
+                    </button>
+                  </div>
+                  {iosNativo && <RestaurarComprasBoton className="pt-2" />}
                 </div>
               )}
+              {/* Restaurar compras también visible si ya tienes plan (iOS) */}
+              {iosNativo && planActual === "empresa" && <RestaurarComprasBoton className="pt-1" />}
 
               {/* Link a precios */}
               <p className="text-xs text-center" style={{ color: "#6b7280" }}>

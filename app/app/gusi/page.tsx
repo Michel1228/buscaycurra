@@ -106,15 +106,13 @@ export default function GusiPage() {
           </div>
         </div>
 
-        {/* CTA mejorar plan — oculto en iOS nativo (modelo Reader Apple) */}
-        {!iosNativo && (
-          <Link href="/precios"
-            className="block rounded-xl p-3 text-center transition hover:opacity-80"
-            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
-            <p className="text-xs font-bold">Ver planes de pago</p>
-            <p className="text-[10px] mt-0.5 opacity-80">Esencial · Pro · Empresa desde 2,99 €</p>
-          </Link>
-        )}
+        {/* CTA mejorar plan — en iOS lleva al perfil (compra In-App); en web a /precios */}
+        <Link href={iosNativo ? "/app/perfil?tab=plan" : "/precios"}
+          className="block rounded-xl p-3 text-center transition hover:opacity-80"
+          style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+          <p className="text-xs font-bold">Ver planes de pago</p>
+          <p className="text-[10px] mt-0.5 opacity-80">Esencial · Pro · Empresa desde 2,99 €</p>
+        </Link>
 
       </aside>
 

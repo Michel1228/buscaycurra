@@ -29,6 +29,27 @@ workflows:
         script: |
           rm -rf ios
           npx cap add ios --packagemanager cocoapods
+      - name: Habilitar gesto iOS de volver atras (swipe back)
+        script: |
+          # Guideline 4 de Apple: activar el gesto nativo de deslizar desde el borde
+          # izquierdo para volver atras. Se hace subclasificando CAPBridgeViewController
+          # y activando allowsBackForwardNavigationGestures en el WKWebView.
+          # El proyecto iOS se regenera en cada build (rm -rf ios), por eso se parchea aqui.
+          printf '%s\n' \
+            'import UIKit' \
+            'import Capacitor' \
+            '' \
+            'class MainViewController: CAPBridgeViewController {' \
+            '    override func viewDidLoad() {' \
+            '        super.viewDidLoad()' \
+            '        webView?.allowsBackForwardNavigationGestures = true' \
+            '    }' \
+            '}' \
+            > ios/App/App/MainViewController.swift
+          # Apuntar el view controller raiz del storyboard a nuestra subclase
+          perl -0pi -e 's/customClass="CAPBridgeViewController" customModule="Capacitor"/customClass="MainViewController" customModule="App" customModuleProvider="target"/' ios/App/App/Base.lproj/Main.storyboard
+          echo "— Verificacion del parche del storyboard —"
+          grep -n "MainViewController" ios/App/App/Base.lproj/Main.storyboard
       - name: Generar iconos nativos iOS
         script: npx @capacitor/assets generate --ios
       - name: Instalar CocoaPods

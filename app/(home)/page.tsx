@@ -933,6 +933,7 @@ export default async function LandingPage() {
                     { href: "/privacidad", label: "Privacidad" },
                     { href: "/terminos", label: "Términos" },
                     { href: "/cookies", label: "Cookies" },
+                    { href: "/soporte", label: "Soporte" },
                   ].map((l) => (
                     <Link
                       key={l.href}

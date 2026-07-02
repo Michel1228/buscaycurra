@@ -10,6 +10,8 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { PAISES, LISTA_PAISES } from "@/lib/paises";
 import { IDIOMAS, type IdiomaCode } from "@/lib/i18n/translations";
 import { useLanguage } from "@/components/LanguageProvider";
+import { isNativeIOS } from "@/lib/utils/platform";
+import { inicializarRevenueCat } from "@/lib/hooks/useRevenueCat";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 
@@ -146,6 +148,12 @@ export default function AppNavWrapper() {
       if (!user) return;
       setEsAdmin(user.email === ADMIN_EMAIL);
       setUserId(user.id);
+
+      // Inicializar RevenueCat (compras In-App) una sola vez por sesión en iOS nativo.
+      // Es el primer punto común por el que pasa cualquier usuario autenticado.
+      if (isNativeIOS()) {
+        void inicializarRevenueCat(user.id);
+      }
 
       // Intentar sacar inicial del nombre real del perfil, no del email
       const { data: profile } = await supabase

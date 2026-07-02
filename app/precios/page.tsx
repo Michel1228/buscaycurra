@@ -6,6 +6,8 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import { isNativeIOS } from "@/lib/utils/platform";
+import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
+import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 import { Bot, Zap, Building2, Sprout, Egg, Star, CreditCard, Check, X, Apple } from "lucide-react";
 
 const PLANES = [
@@ -85,8 +87,27 @@ export default function PreciosPage() {
   const [cargando, setCargando] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [iosNativo, setIosNativo] = useState(false);
+  const { comprarPlan, comprando: comprandoIAP } = useRevenueCat();
 
   useEffect(() => { setIosNativo(isNativeIOS()); }, []);
+
+  // Compra vía Apple In-App Purchase (RevenueCat) en la app nativa de iOS.
+  const handlePlanIAP = async (plan: typeof PLANES[0]) => {
+    setError("");
+    if (plan.accion === "registro") { router.push("/auth/registro"); return; }
+    const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+    if (!session) { router.push("/auth/login"); return; }
+    // Evitar doble suscripción si ya hay un plan activo (p. ej. comprado en web con Stripe).
+    const { data: perfil } = await getSupabaseBrowser().from("profiles")
+      .select("plan").eq("id", session.user.id).single();
+    if (perfil?.plan && perfil.plan !== "free") {
+      setError("Ya tienes un plan activo. Gestiónalo desde tu perfil.");
+      return;
+    }
+    const res = await comprarPlan(plan.accion as "esencial" | "pro" | "empresa");
+    if (res.ok) { router.push("/app/gusi"); }
+    else if (res.error) { setError(res.error); }
+  };
 
   const handlePlan = async (plan: typeof PLANES[0]) => {
     setError("");
@@ -139,11 +160,10 @@ export default function PreciosPage() {
             style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}>
             <Apple size={28} className="mx-auto mb-2" style={{ color: "#94a3b8" }} />
             <p className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>
-              Suscríbete desde la web
+              Pago seguro con tu cuenta de Apple
             </p>
             <p className="text-xs" style={{ color: "#64748b" }}>
-              Las suscripciones se gestionan en buscaycurra.es desde tu navegador.
-              Tu plan estará disponible en la app inmediatamente.
+              La suscripción se renueva automáticamente y puedes cancelarla cuando quieras desde Ajustes.
             </p>
           </div>
         )}
@@ -209,9 +229,11 @@ export default function PreciosPage() {
               </ul>
 
               {iosNativo ? (
-                <p className="text-xs text-center py-2" style={{ color: "#64748b" }}>
-                  Disponible en buscaycurra.es
-                </p>
+                <button onClick={() => void handlePlanIAP(plan)} disabled={comprandoIAP !== null}
+                  className={plan.dest ? "btn-game w-full" : "btn-game-outline w-full"}
+                  style={{ opacity: comprandoIAP !== null ? 0.6 : 1 }}>
+                  {comprandoIAP === plan.accion ? "Procesando..." : plan.btn}
+                </button>
               ) : (
                 <button onClick={() => void handlePlan(plan)} disabled={cargando === plan.id}
                   className={plan.dest ? "btn-game w-full" : "btn-game-outline w-full"}
@@ -228,6 +250,8 @@ export default function PreciosPage() {
             <CreditCard size={12} />Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
           </p>
         )}
+
+        {iosNativo && <RestaurarComprasBoton className="mt-10" />}
 
         <div className="text-center mt-6">
           <Link href="/" className="text-sm hover:underline" style={{ color: "#9a9378" }}>
