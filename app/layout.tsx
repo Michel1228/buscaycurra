@@ -102,6 +102,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Se resuelve en el SERVIDOR (aquí process.env sí existe) y se interpola como
+  // literal en el <script> inline de abajo. Si se dejara "process.env..." dentro
+  // del string del script, el navegador lo ejecutaría tal cual y lanzaría
+  // "process is not defined" en TODAS las páginas (process no existe en el cliente).
+  const BUILD_ID =
+    process.env.NEXT_PUBLIC_BUILD_ID ||
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
+    "dev";
   return (
     <html lang="es">
       <head>
@@ -185,7 +193,7 @@ export default function RootLayout({
         {/* ⚡ FORCE UPDATE: comparar BUILD_ID con localStorage antes de que el SW intervenga */}
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
-            var BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID || process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || 'dev';
+            var BUILD_ID = ${JSON.stringify(BUILD_ID)};
             var stored = localStorage.getItem('bc_build_id');
             if (stored && stored !== BUILD_ID) {
               // Nuevo deploy detectado — limpiar TODO y recargar
