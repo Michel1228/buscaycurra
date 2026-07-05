@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
           .from("profiles")
           .update({
             plan: planFinal,
+            plan_source: "stripe",
             subscription_status: "active",
             stripe_customer_id: session.customer as string,
             updated_at: new Date().toISOString(),

@@ -253,9 +253,17 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     setCargando(true);
 
     try {
+      // Incluir el token de sesión en el header para que Guzzi funcione también
+      // en la app nativa de iOS (WebView de Capacitor), donde las cookies pueden
+      // no viajar a las API routes. En web las cookies ya funcionan; esto solo suma robustez.
+      const { getSupabaseBrowser } = await import("@/lib/supabase-browser");
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       const res = await fetch("/api/gusi/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           message: texto,
           history: nuevosMensajes.slice(-12),

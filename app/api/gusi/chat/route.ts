@@ -1219,11 +1219,19 @@ Responde en JSON exactamente así:
         coverLetter = `Hola, equipo de ${empresaNombre}. Soy ${cvParsed?.nombre || "Michel"}, vivo en ${cvParsed?.ciudad || "Tudela"} y me encantaría trabajar con vosotros. Tengo muchas ganas de aprender y aportar mi energía al equipo. ¿Podemos hablar?`;
       }
 
-      // Llamar al endpoint de envío real
+      // Llamar al endpoint de envío real, REENVIANDO la autenticación del usuario.
+      // Sin esto, getUserId del endpoint interno devuelve 401 y el envío falla en
+      // silencio (el chat mostraba "¡Hecho! undefined" sin haber enviado nada).
       try {
+        const authHeader = req.headers.get("authorization");
+        const cookieHeader = req.headers.get("cookie");
         const sendRes = await fetch(`http://localhost:3000/api/gusi/send-cv-local`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(authHeader ? { authorization: authHeader } : {}),
+            ...(cookieHeader ? { cookie: cookieHeader } : {}),
+          },
           body: JSON.stringify({
             userId,
             companyName: empresaNombre,
@@ -1234,7 +1242,16 @@ Responde en JSON exactamente así:
             coverLetter,
           }),
         });
-        const sendData = await sendRes.json();
+        const sendData = await sendRes.json().catch(() => ({}));
+
+        // Si la llamada interna falló, ser honesto: no decir "¡Hecho!" sin haber enviado.
+        if (!sendRes.ok) {
+          console.error("[send_cv_local_confirm] send-cv-local respondió", sendRes.status, sendData);
+          return NextResponse.json({
+            reply: `No he podido completar el envío automático a **${empresaNombre}**. Tengo tu CV y la carta listos.\n\n📧 Ve a [la página de envíos](/app/envios) para enviarlo, o pásame un email de contacto de ${empresaNombre} y lo intento de nuevo.`,
+            action: "send_cv_flow",
+          });
+        }
 
         if (sendData.needsEmail) {
           // Sin email — pedir al usuario
