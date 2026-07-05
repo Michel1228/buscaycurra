@@ -157,9 +157,12 @@ function buildCVEmailHTML(
     .map((line) => `<p style="margin:0 0 12px 0;line-height:1.6;">${line}</p>`)
     .join("");
 
-  // Tracking pixel: 1x1 GIF que detecta apertura del email
+  // Tracking pixel: 1x1 GIF que detecta apertura del email.
+  // NO se incluye ningún secret en la URL: este HTML lo recibe la empresa destino
+  // y sería visible. La protección la da el propio endpoint validando que el uid
+  // sea el dueño del envío (track); marcar "visto" es una acción inocua.
   const trackingPixel = tracking
-    ? `<img src="${process.env.NEXT_PUBLIC_SITE_URL ?? "https://buscaycurra.es"}/api/cv-sender/webhook?track=${tracking.sendId}&uid=${tracking.userId}&wsecret=${process.env.WEBHOOK_SECRET ?? ""}" width="1" height="1" alt="" style="display:none;" />`
+    ? `<img src="${process.env.NEXT_PUBLIC_SITE_URL ?? "https://buscaycurra.es"}/api/cv-sender/webhook?track=${encodeURIComponent(tracking.sendId)}&uid=${encodeURIComponent(tracking.userId)}" width="1" height="1" alt="" style="display:none;" />`
     : "";
 
   return `

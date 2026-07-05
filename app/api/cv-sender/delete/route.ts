@@ -23,10 +23,14 @@ export async function DELETE(request: NextRequest) {
 
   const body = await request.json() as { id?: string; all?: boolean };
 
+  // Soft-delete: marcamos hidden=true en vez de borrar físicamente. Así el envío
+  // desaparece del historial del usuario PERO sigue contando para el límite de
+  // envíos y el anti-spam de 15 días (que cuentan todas las filas). Esto evita
+  // que un usuario resetee su cuota borrando el historial y reenviando sin tope.
   if (body.all) {
     const { error } = await serviceClient
       .from("cv_sends")
-      .delete()
+      .update({ hidden: true })
       .eq("user_id", user.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true, deleted: "all" });
@@ -38,7 +42,7 @@ export async function DELETE(request: NextRequest) {
 
   const { error } = await serviceClient
     .from("cv_sends")
-    .delete()
+    .update({ hidden: true })
     .eq("id", body.id)
     .eq("user_id", user.id);
 

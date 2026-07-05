@@ -22,7 +22,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getRedisConnection, CVJobData } from "./queue";
 import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
-import { recordSent, updateSendStatus } from "./tracker";
+import { recordSent, updateSendStatus, getSendIdByJobId } from "./tracker";
 import { getPool } from "../db";
 import { normalizar } from "../cv-generator/normalizar";
 import { generarCVHTML } from "../cv-generator/cv-template";
@@ -177,15 +177,23 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   await job.updateProgress(60);
 
-  // ── Paso 4: Registrar envío como pendiente en Supabase ──────────────────
-  console.log(`[Worker] Paso 4/6: Registrando envío en la base de datos...`);
+  // ── Paso 4: Localizar el registro que el scheduler ya creó ──────────────
+  console.log(`[Worker] Paso 4/6: Localizando el registro del envío...`);
 
-  const recordId = await recordSent(userId, companyEmail, "pendiente", {
-    company_name: companyName,
-    company_url: companyUrl,
-    job_title: jobTitle,
-    job_id: jobId,
-  });
+  // El scheduler ya insertó la fila "pendiente" (con este job_id) al encolar,
+  // para reservar el slot de rate-limit. La reutilizamos en vez de insertar
+  // otra: un segundo insert contaría el envío dos veces y gastaría el límite
+  // del usuario al doble de velocidad. Solo si no existiera (caso excepcional)
+  // la creamos aquí como red de seguridad.
+  let recordId = await getSendIdByJobId(jobId);
+  if (!recordId) {
+    recordId = await recordSent(userId, companyEmail, "pendiente", {
+      company_name: companyName,
+      company_url: companyUrl,
+      job_title: jobTitle,
+      job_id: jobId,
+    });
+  }
 
   await job.updateProgress(70);
 

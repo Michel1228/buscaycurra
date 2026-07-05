@@ -103,6 +103,27 @@ export async function recordSent(
 }
 
 /**
+ * Recupera el id de la fila cv_sends ya registrada para un job de la cola.
+ * El scheduler inserta la fila "pendiente" (con job_id) al encolar; el worker
+ * usa esta función para reutilizarla en vez de insertar una segunda fila, lo
+ * que duplicaría el conteo de envíos del usuario y gastaría su límite al doble.
+ *
+ * @param jobId - ID del job en BullMQ
+ * @returns id del registro existente, o null si no hay ninguno
+ */
+export async function getSendIdByJobId(jobId: string): Promise<string | null> {
+  const { data, error } = await getSupabase()
+    .from("cv_sends")
+    .select("id")
+    .eq("job_id", jobId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data.id as string;
+}
+
+/**
  * Actualiza el estado de un envío existente.
  * Por ejemplo: de "pendiente" a "enviado" o "fallido".
  *
@@ -286,6 +307,7 @@ export async function getUserSendHistory(
     .from("cv_sends")
     .select("*")
     .eq("user_id", userId)
+    .neq("hidden", true) // ocultar los que el usuario "borró" (soft-delete)
     .order("created_at", { ascending: false })
     .limit(limit);
 

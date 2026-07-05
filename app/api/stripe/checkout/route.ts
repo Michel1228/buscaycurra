@@ -66,27 +66,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ⛔ Atomic anti-duplicate: upsert checkout lock to prevent race conditions
-    const { data: lockResult, error: lockError } = await supabaseAdmin
-      .from("checkout_locks")
-      .upsert(
-        { user_id: user.id, checkout_plan: plan, created_at: new Date().toISOString() },
-        { onConflict: "user_id", ignoreDuplicates: false }
-      )
-      .select("created_at")
-      .single();
-
-    if (lockError) {
-      // If the upsert fails because of constraint, it means another checkout is already in progress
-      if (lockError.code === "23505") {
-        return NextResponse.json(
-          { error: "Ya tienes un proceso de pago en curso. Espera unos segundos." },
-          { status: 409 }
-        );
-      }
-      console.error("[stripe/checkout] Error en checkout lock:", lockError.message);
-    }
-
     const priceId =
       plan === "basico" ? PLANES.BASICO :
       plan === "esencial" ? PLANES.ESENCIAL :
@@ -104,7 +83,13 @@ export async function POST(request: NextRequest) {
       success_url: `${baseUrl}/app/pago-exitoso?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/precios`,
       metadata: { userId: user.id, plan },
-      ...(user.email ? { customer_email: user.email } : {}),
+      // Reutilizar el Customer existente si ya lo tenemos (evita duplicar clientes
+      // en Stripe en cada compra). Solo si no hay customer usamos customer_email.
+      ...(perfil?.stripe_customer_id
+        ? { customer: perfil.stripe_customer_id as string }
+        : user.email
+          ? { customer_email: user.email }
+          : {}),
       // 7 días gratis solo en Pro
       ...(plan === "pro" ? { subscription_data: { trial_period_days: 7 } } : {}),
     });

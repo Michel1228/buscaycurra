@@ -146,7 +146,9 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Resetear el plan a 'free'
+        // Resetear el plan a 'free' — SOLO si el plan vigente es de Stripe (o
+        // heredado sin origen). Si el usuario migró a Apple IAP (plan_source
+        // 'revenuecat'), un evento residual de Stripe no debe quitarle el acceso.
         const { error: errorUpdate } = await supabaseAdmin
           .from("profiles")
           .update({
@@ -154,7 +156,8 @@ export async function POST(request: NextRequest) {
             subscription_status: "canceled",
             updated_at: new Date().toISOString(),
           })
-          .eq("stripe_customer_id", customerId);
+          .eq("stripe_customer_id", customerId)
+          .or("plan_source.is.null,plan_source.eq.stripe");
 
         if (errorUpdate) {
           console.error("[stripe/webhook] Error al resetear plan:", errorUpdate.message);

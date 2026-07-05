@@ -138,15 +138,15 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET — Pixel de tracking para detectar apertura de emails
+// GET — Pixel de tracking para detectar apertura de emails.
+// Este endpoint es público (lo carga el cliente de correo de la empresa, sin
+// credenciales): por eso NO lleva secret en la URL. La seguridad la da validar
+// que el uid recibido sea realmente el dueño del envío antes de tocar nada.
 export async function GET(request: NextRequest) {
-  // Verificar secret interno
-  const secret = request.headers.get("x-webhook-secret") ?? request.nextUrl.searchParams.get("wsecret");
-  if (!secret || secret !== process.env.WEBHOOK_SECRET) {
-    // Para el pixel de tracking devolver el gif igualmente (no romper el email)
-    const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
-    return new NextResponse(pixel, { headers: { "Content-Type": "image/gif", "Cache-Control": "no-cache, no-store" } });
-  }
+  const pixelGif = () => new NextResponse(
+    Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64"),
+    { headers: { "Content-Type": "image/gif", "Cache-Control": "no-cache, no-store, must-revalidate" } }
+  );
 
   const supabase = getSupabase();
   const { searchParams } = new URL(request.url);
@@ -191,15 +191,5 @@ export async function GET(request: NextRequest) {
     } catch { /* opcional */ }
   }
 
-  const pixel = Buffer.from(
-    "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-    "base64"
-  );
-
-  return new NextResponse(pixel, {
-    headers: {
-      "Content-Type": "image/gif",
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-    },
-  });
+  return pixelGif();
 }

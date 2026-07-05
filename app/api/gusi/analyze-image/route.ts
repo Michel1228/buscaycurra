@@ -42,6 +42,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Imagen requerida" }, { status: 400 });
     }
 
+    // Límite de tamaño: evita que una imagen enorme dispare el coste de GPT-4o
+    // Vision o agote memoria. ~8 MB de base64 ≈ 6 MB de imagen, de sobra para una
+    // foto de móvil comprimida.
+    if (imageBase64.length > 8_000_000) {
+      return NextResponse.json(
+        { error: "La imagen es demasiado grande. Prueba con una foto de menor resolución." },
+        { status: 413 }
+      );
+    }
+
     // ─── Verificar límite de cámara según plan ────────────────────────
     if (userId) {
       try {
