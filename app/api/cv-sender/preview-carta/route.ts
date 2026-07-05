@@ -79,40 +79,43 @@ export async function POST(req: NextRequest) {
 
     const cvText = cvParts.join("\n");
 
-    // Prompt compartido para todos los proveedores IA
-    const prompt = `Eres un experto en RRHH. Genera una carta de presentación profesional en español basada en este CV y empresa.
+    // Prompt compartido para todos los proveedores IA.
+    // Objetivo: que la carta suene HUMANA y auténtica, no de plantilla ni de robot.
+    const prompt = `Ayudas a una persona real de España a escribir una carta de presentación que suene HUMANA y natural, no robótica ni de plantilla. Escríbela en primera persona, como la escribiría de verdad esa persona: cercana, con calidez y algo de personalidad, cuidada y sin faltas.
 
 EMPRESA: ${companyName}
 ${jobTitle ? `PUESTO: ${jobTitle}` : "Candidatura espontánea"}
 
-CV:
+CV de la persona:
 ${cvText}
 
-INSTRUCCIONES:
-- 3 párrafos máximo
-- Primer párrafo: menciona la empresa específicamente
-- Segundo párrafo: destaca 2-3 skills del CV relevantes
-- Tercer párrafo: cierre profesional con llamada a la acción
-- Tono profesional pero cercano (España)
-- NO uses frases genéricas tipo "como verá en mi CV adjunto"
+CÓMO DEBE SONAR:
+- Natural y cercana, como si la escribiera una persona con ganas de verdad, no una IA. Tono de España: cálido y respetuoso, ni demasiado formal ni demasiado coloquial.
+- En primera persona ("yo"), con frases sencillas y directas. Que se note que hay una persona detrás.
+- Concreta: menciona la empresa por su nombre y conecta 1 o 2 cosas REALES del CV con lo que puede aportar. Nada de habilidades genéricas inventadas.
+- Breve: 3 párrafos cortos — un saludo cálido, el cuerpo, y un cierre sencillo mostrando ganas de charlar.
 
-Responde solo con:
+EVITA A TODA COSTA (suena a robot / plantilla):
+- "Me dirijo a ustedes", "Me complace", "Considero que mi perfil", "adjunto mi CV", "en la era actual", "sinergias", "proactivo con capacidad de adaptación", "aportar valor a su equipo".
+- Clichés vacíos de recursos humanos. Si una frase no dice nada real, quítala.
+
+Responde SOLO con:
 CARTA:
 [texto de la carta]
 
 ASUNTO:
-[asunto email, max 80 chars]`;
+[asunto del email, natural, máx 80 caracteres]`;
 
     // Template de fallback (último recurso si todas las APIs fallan)
-    const cartaTemplate = `Estimado equipo de ${companyName},
+    const cartaTemplate = `Hola equipo de ${companyName}:
 
-Me dirijo a ustedes para presentar mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : ""}. Tras conocer su empresa, considero que mi perfil puede aportar valor a su equipo.
+Os escribo porque me haría mucha ilusión formar parte de vuestro equipo${jobTitle ? ` como ${jobTitle}` : ""}. Me gusta lo que hacéis y creo que puedo encajar y echar una mano de verdad.
 
-A lo largo de mi trayectoria profesional he desarrollado competencias que se alinean con lo que buscan. Soy una persona proactiva, con capacidad de adaptación y compromiso con los resultados.
+Vengo con ganas de trabajar, de aprender rápido y de arrimar el hombro en lo que haga falta. Soy de las personas que se implican y no dejan las cosas a medias.
 
-Quedo a su disposición para concertar una entrevista y ampliar la información que consideren necesaria.
+Si os parece, me encantaría que habláramos y contaros un poco más en persona. Gracias por leerme.
 
-Un cordial saludo.`;
+Un saludo${formData.nombre ? `,\n${formData.nombre}` : ""}`;
 
     const defaultSubject = jobTitle
       ? `Candidatura para ${jobTitle} — ${companyName}`

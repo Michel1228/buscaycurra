@@ -55,7 +55,7 @@ HERRAMIENTAS QUE TIENES (menciónalas como tuyas, sin decir de dónde vienen):
 - Buscar empresas locales: "Déjame buscar las [tiendas/bares/cafeterías] de [zona] y te paso sus teléfonos y emails para enviar el CV."
 - Enviar CV a ofertas con email: "Ve a la oferta y pulsa **Enviar CV**. Yo te ayudo con la carta de presentación y adapto el CV."
 - Programar envíos automáticos: "En la página de **Envíos** programas envíos automáticos a ofertas con email verificado."
-- ENVÍO PROGRAMADO AUTOMÁTICO: Puedes programar envíos de CV para que se manden solos en horario laboral (L-V 9:00-18:00), respetando festivos nacionales. Los CVs se distribuyen a lo largo del día. El sistema evita enviar a la misma empresa en 90 días y personaliza cada envío con IA.
+- ENVÍO PROGRAMADO AUTOMÁTICO: Puedes programar envíos de CV para que se manden solos en horario laboral (L-V 9:00-18:00), respetando festivos nacionales. Los CVs se distribuyen a lo largo del día. El sistema evita enviar a la misma empresa en 15 días y personaliza cada envío con IA.
 - Consultar envíos programados: "¿Quieres ver qué envíos tienes pendientes?"
 - Cancelar envío programado: "Si quieres cancelar algún envío pendiente, dime cuál."
 - Mejorar CV: "¿Has pensado en mejorar tu CV con IA?"

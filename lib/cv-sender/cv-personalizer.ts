@@ -78,11 +78,9 @@ export async function personalizeForCompany(
 ): Promise<PersonalizationResult> {
   console.log(`[Personalizador] Personalizando CV para ${companyInfo.name}...`);
 
-  // Construimos el prompt para OpenClaw
+  // Construimos el prompt. Objetivo: carta HUMANA y auténtica, no de plantilla.
   const prompt = `
-Eres un experto en recursos humanos y redacción de cartas de presentación en España.
-
-Analiza el siguiente CV y genera una carta de presentación personalizada para la empresa indicada.
+Ayudas a una persona real de España a escribir una carta de presentación que suene HUMANA y natural, no robótica ni de plantilla. Escríbela en primera persona, como la escribiría de verdad esa persona: cercana, con calidez y algo de personalidad, cuidada y sin faltas.
 
 EMPRESA:
 - Nombre: ${companyInfo.name}
@@ -91,16 +89,16 @@ EMPRESA:
 - Descripción: ${companyInfo.description ?? "No disponible"}
 ${jobTitle ? `- Puesto solicitado: ${jobTitle}` : "- Candidatura espontánea"}
 
-CV DEL CANDIDATO:
+CV DE LA PERSONA:
 ${cvText}
 
-INSTRUCCIONES:
-1. Escribe una carta de presentación profesional en español (máximo 3 párrafos)
-2. Personaliza el primer párrafo mencionando algo específico de la empresa
-3. En el segundo párrafo destaca las 3 skills más relevantes del CV para esta empresa
-4. El tercer párrafo debe ser un cierre profesional con llamada a la acción
-5. Tono: profesional pero cercano, adaptado a la cultura española
-6. NO uses frases genéricas como "me llamo" o "como verá en mi CV adjunto"
+CÓMO DEBE SONAR:
+- Natural y cercana, como si la escribiera una persona con ganas de verdad, no una IA. Tono de España: cálido y respetuoso, ni demasiado formal ni demasiado coloquial.
+- En primera persona ("yo"), frases sencillas y directas. Que se note que hay una persona detrás.
+- Concreta: menciona la empresa por su nombre y conecta 1 o 2 cosas REALES del CV con lo que puede aportar. Nada de habilidades genéricas inventadas.
+- Breve: 3 párrafos cortos — saludo cálido, cuerpo, y un cierre sencillo con ganas de charlar.
+
+EVITA A TODA COSTA (suena a robot / plantilla): "Me dirijo a ustedes", "Me complace", "Considero que mi perfil", "adjunto mi CV", "en la era actual", "sinergias", "proactivo con capacidad de adaptación", "aportar valor a su equipo". Si una frase no dice nada real, quítala.
 
 Responde SOLO con:
 CARTA:
@@ -179,15 +177,15 @@ function generateGenericLetter(
   jobTitle?: string
 ): PersonalizationResult {
   const coverLetter = `
-Estimado equipo de ${companyInfo.name},
+Hola equipo de ${companyInfo.name}:
 
-Me dirijo a ustedes para presentar mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"} en ${companyInfo.name}. Tras conocer su empresa${companyInfo.sector ? ` y su trayectoria en el sector de ${companyInfo.sector}` : ""}, considero que mis habilidades y experiencia pueden aportar valor a su equipo.
+Os escribo porque me haría mucha ilusión formar parte de vuestro equipo${jobTitle ? ` como ${jobTitle}` : ""}. Me gusta lo que hacéis${companyInfo.sector ? ` en el sector de ${companyInfo.sector}` : ""} y creo que puedo encajar y echar una mano de verdad.
 
-A lo largo de mi trayectoria profesional he desarrollado competencias técnicas y humanas que se alinean con los valores y necesidades de empresas como la suya. Soy una persona proactiva, comprometida y con capacidad de adaptación a diferentes entornos de trabajo.
+Vengo con ganas de trabajar, de aprender rápido y de arrimar el hombro en lo que haga falta. Soy de las personas que se implican y no dejan las cosas a medias.
 
-Quedaría encantado/a de tener la oportunidad de presentarme y conocer más sobre las posibilidades de colaboración. Quedo a su disposición para concertar una entrevista cuando estimen conveniente.
+Si os parece, me encantaría que habláramos y contaros un poco más en persona. Muchas gracias por leerme.
 
-Un cordial saludo,
+Un saludo,
 `.trim();
 
   const subjectLine = jobTitle

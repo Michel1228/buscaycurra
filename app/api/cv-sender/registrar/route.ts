@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 90-day check ──
+    // ── check de días mínimos entre envíos (15 días) ──
     const puedeEnviar = await canSendToCompany(userId, companyEmail);
     if (!puedeEnviar) {
       return NextResponse.json(
-        { error: `Ya enviaste tu CV a ${companyName} hace menos de 90 días.` },
+        { error: `Ya enviaste tu CV a ${companyName} hace menos de 15 días.` },
         { status: 429 }
       );
     }

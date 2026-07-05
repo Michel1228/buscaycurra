@@ -190,7 +190,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
 
 /**
  * Obtiene el historial de envíos a una empresa específica.
- * Se usa para respetar el periodo mínimo de 90 días entre envíos.
+ * Se usa para respetar el periodo mínimo de 15 días entre envíos.
  *
  * @param companyEmail - Email de RRHH de la empresa
  * @returns Lista de envíos ordenada por fecha descendente
@@ -212,24 +212,24 @@ export async function getCompanyHistory(companyEmail: string): Promise<CVSendRec
 
 /**
  * Verifica si ya se ha enviado un CV a esta empresa recientemente.
- * Respeta el mínimo de 90 días entre envíos a la misma empresa.
+ * Respeta el mínimo de 15 días entre envíos a la misma empresa.
  *
  * @param userId - ID del usuario
  * @param companyEmail - Email de la empresa
- * @param minDays - Días mínimos entre envíos (por defecto 90)
+ * @param minDays - Días mínimos entre envíos (por defecto 15)
  * @returns true si se puede enviar, false si hay que esperar
  */
 export async function canSendToCompany(
   userId: string,
   companyEmail: string,
-  minDays = 90
+  minDays = 15
 ): Promise<boolean> {
   const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("sent_at")
     .eq("user_id", userId)
     .eq("company_email", companyEmail)
-    .in("status", ["enviado", "visto", "respondido"]) // todos cuentan para el periodo de 90 días
+    .in("status", ["enviado", "visto", "respondido"]) // todos cuentan para el periodo de 15 días
     .order("sent_at", { ascending: false })
     .limit(1);
 

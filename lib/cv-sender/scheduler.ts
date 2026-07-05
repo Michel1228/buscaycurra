@@ -5,7 +5,7 @@
  *   - Horario laboral español: lunes-viernes 9:00-18:00
  *   - Festivos nacionales de España (hardcodeados)
  *   - Distribución de envíos a lo largo del día (no todos a la vez)
- *   - Respeto de los 90 días mínimos entre envíos a la misma empresa
+ *   - Respeto de los 15 días mínimos entre envíos a la misma empresa
  *
  * Arquitectura:
  *   scheduleCV     → programa un solo envío
@@ -185,7 +185,7 @@ export function getNextBusinessHour(desde?: Date): Date {
  *
  * Proceso:
  *   1. Verifica que el usuario puede enviar (rate limit)
- *   2. Verifica que no ha enviado a esta empresa en los últimos 90 días
+ *   2. Verifica que no ha enviado a esta empresa en los últimos 15 días
  *   3. Calcula el próximo momento laborable para enviar
  *   4. Añade el job a la cola de BullMQ con el retraso calculado
  *
@@ -214,7 +214,7 @@ export async function scheduleCV(
   const puedeEnviar = await canSendToCompany(userId, companyData.email);
   if (!puedeEnviar) {
     return {
-      error: `Ya enviaste tu CV a ${companyData.name} hace menos de 90 días. Por favor espera antes de volver a intentarlo.`,
+      error: `Ya enviaste tu CV a ${companyData.name} hace menos de 15 días. Por favor espera antes de volver a intentarlo.`,
     };
   }
 
@@ -337,7 +337,7 @@ export async function scheduleBulkCV(
       if (!puedeEnviar) {
         resultados.push({
           company: company.name,
-          result: { error: `CV ya enviado a ${company.name} recientemente (< 90 días)` },
+          result: { error: `CV ya enviado a ${company.name} recientemente (< 15 días)` },
         });
         continue;
       }
