@@ -1,8 +1,9 @@
 name: API Health Monitor
 
+# ⚠️ SCHEDULE DESACTIVADO — El VPS tiene watchdog-bc.sh cada 5 min.
 on:
-  schedule:
-    - cron: "0 */2 * * *"
+  # schedule:
+  #   - cron: "0 */2 * * *"
   workflow_dispatch:
 
 jobs:

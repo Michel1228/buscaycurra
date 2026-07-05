@@ -1,9 +1,10 @@
 name: Indexar ofertas de empleo
 
+# ⚠️ SCHEDULE DESACTIVADO — VPS tiene crons locales.
 on:
-  schedule:
-    - cron: "0 3 * * *"   # 03:00 UTC cada día
-  workflow_dispatch:        # también se puede lanzar manualmente
+  # schedule:
+  #   - cron: "0 3 * * *"
+  workflow_dispatch:
 
 jobs:
   index:

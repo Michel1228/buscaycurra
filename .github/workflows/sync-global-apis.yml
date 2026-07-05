@@ -1,8 +1,9 @@
 name: Sync Global APIs (USAJOBS + EURES + EU + Careerjet + Free)
 
+# ⚠️ SCHEDULE DESACTIVADO — VPS tiene crons locales.
 on:
-  schedule:
-    - cron: '0 0,6,12,18 * * *'
+  # schedule:
+  #   - cron: '0 0,6,12,18 * * *'
   workflow_dispatch:
 
 jobs:
