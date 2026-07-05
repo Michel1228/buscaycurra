@@ -1,9 +1,12 @@
 name: Sync Job Listings — Adzuna + Careerjet Global
 
+# ⚠️ SCHEDULE DESACTIVADO — El VPS ejecuta crons locales (sync-cron.sh cada 3h, sync-europa.sh cada 4h).
+#    GitHub Actions solo para ejecución manual (workflow_dispatch).
+#    Reactivar schedule si el VPS cae y se necesita backup remoto.
 on:
-  schedule:
-    - cron: '0 */2 * * 1-5'
-    - cron: '0 */4 * * 0,6'
+  # schedule:
+  #   - cron: '0 */2 * * 1-5'
+  #   - cron: '0 */4 * * 0,6'
   workflow_dispatch:
     inputs:
       country:
@@ -22,18 +25,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Tier 1 — máximo volumen (un solo job por país, batch razonable)
           - { country: uk, batch: 20 }
           - { country: us, batch: 20 }
           - { country: de, batch: 20 }
           - { country: au, batch: 20 }
           - { country: ca, batch: 20 }
           - { country: fr, batch: 20 }
-          # Tier 2 — mercados fuertes
           - { country: es, batch: 15 }
           - { country: ie, batch: 15 }
           - { country: nl, batch: 15 }
-          # Tier 3 — secundarios
           - { country: it, batch: 12 }
           - { country: se, batch: 12 }
           - { country: ch, batch: 12 }
@@ -43,7 +43,7 @@ jobs:
           RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-adzuna-global" \
             -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
             -H "Content-Type: application/json" \
-            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}}" \
+            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}" \
             --max-time 180)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
@@ -58,12 +58,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # English countries
           - { country: us, batch: 15 }
           - { country: uk, batch: 15 }
           - { country: au, batch: 15 }
           - { country: ca, batch: 15 }
-          # European
           - { country: de, batch: 15 }
           - { country: fr, batch: 15 }
           - { country: nl, batch: 12 }
@@ -86,7 +84,7 @@ jobs:
           RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/sync-careerjet-global" \
             -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
             -H "Content-Type: application/json" \
-            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}}" \
+            -d "{\"country\":\"${{ matrix.country }}\",\"batchSize\":${{ matrix.batch }}" \
             --max-time 180)
           HTTP_CODE=$(echo "$RESULT" | tail -1)
           BODY=$(echo "$RESULT" | head -1)
