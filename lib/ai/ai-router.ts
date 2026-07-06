@@ -11,8 +11,8 @@
  */
 
 import { get } from "../cache/redis-client";
-import { llamarGroq, mejorarCV, generarCartaPresentacion, analizarOfertaTrabajo, LIMITE_DIARIO_GROQ } from "./groq-client";
-import { llamarGemini, analizarCVLargo, extraerDatosEmpresa, LIMITE_DIARIO_GEMINI } from "./gemini-client";
+import { llamarGroq, generarCartaPresentacion, analizarOfertaTrabajo, LIMITE_DIARIO_GROQ } from "./groq-client";
+import { llamarGemini, extraerDatosEmpresa, LIMITE_DIARIO_GEMINI } from "./gemini-client";
 import { llamarDeepSeek, LIMITE_DIARIO_DEEPSEEK } from "./deepseek-client";
 import { TipoPeticionIA } from "../cache/ai-cache";
 
@@ -185,6 +185,24 @@ export async function enrutarPeticionIA(
 // EJECUTOR DE TAREAS
 // ==========================================
 
+/**
+ * Prompt ÚNICO de mejora de CV. Reescribe SOLO el Perfil Profesional, en primera
+ * persona y con tono humano — NUNCA devuelve análisis, listas de "puntos fuertes",
+ * recomendaciones ni puntuaciones (ese era el bug: la IA devolvía un informe/paso
+ * a paso en vez del texto del perfil listo para pegar en el CV).
+ */
+function promptMejoraCV(cvText: string, puesto: string): string {
+  return `Reescribe el "Perfil Profesional" de este CV${puesto ? ` para el puesto de "${puesto}"` : ""}. Eres esa misma persona, de España, contándolo con tus palabras.
+
+CV ACTUAL:
+${cvText}
+
+DEVUELVE ÚNICAMENTE el párrafo del Perfil Profesional reescrito, listo para pegar en el CV. NADA MÁS.
+- En PRIMERA PERSONA, natural y cercano, como habla una persona de verdad (no un robot, no un informe).
+- 3 a 5 líneas, concreto, apoyado en la experiencia y habilidades REALES del CV. No inventes nada.
+- PROHIBIDO: análisis, "puntos fuertes/débiles", consejos, recomendaciones, "aquí tienes", "te ofrezco", "podrías", puntuaciones, sectores sugeridos, encabezados en negrita, viñetas. Solo el párrafo del perfil.`;
+}
+
 async function ejecutarTareaConIA(
   ia: IA,
   tarea: TareaIA,
@@ -195,6 +213,16 @@ async function ejecutarTareaConIA(
     urlEmpresa?: string;
   }
 ): Promise<string> {
+  // Mejora de CV (corto o largo): SIEMPRE reescritura humana con el prompt único,
+  // sea cual sea la IA. Antes groq reescribía bien pero gemini "analizaba" y
+  // deepseek recibía el CV crudo → resultados incoherentes (informe/paso a paso).
+  if (tarea === "mejorar-cv" || tarea === "mejorar-cv-largo") {
+    const p = promptMejoraCV(contenido, extra?.puesto || "");
+    if (ia === "gemini") return await llamarGemini(p, "mejora-cv");
+    if (ia === "groq") return await llamarGroq(p, "mejora-cv", { maxTokens: 800 });
+    return await llamarDeepSeek(p, "mejora-cv");
+  }
+
   const tipoCache: Record<TareaIA, TipoPeticionIA> = {
     "mejorar-cv": "mejora-cv",
     "mejorar-cv-largo": "mejora-cv",
@@ -208,8 +236,6 @@ async function ejecutarTareaConIA(
   // === GROQ ===
   if (ia === "groq") {
     switch (tarea) {
-      case "mejorar-cv":
-        return await mejorarCV(contenido, extra?.puesto || "");
       case "carta-presentacion":
         return await generarCartaPresentacion(
           contenido,
@@ -226,8 +252,6 @@ async function ejecutarTareaConIA(
   // === GEMINI ===
   if (ia === "gemini") {
     switch (tarea) {
-      case "mejorar-cv-largo":
-        return await analizarCVLargo(contenido);
       case "analizar-empresa-web":
         return await extraerDatosEmpresa(contenido, extra?.urlEmpresa || "");
       default:
