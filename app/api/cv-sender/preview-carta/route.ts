@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { getUserId } from "@/lib/auth-server";
+import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,9 @@ export async function POST(req: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+    if (!(await checkUserRateLimit("preview-carta", userId, 20, 3600))) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
     }
 
     const { companyName, companyEmail, jobTitle, cvId } = await req.json() as {

@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import Groq from "groq-sdk";
 import { getUserId } from "@/lib/auth-server";
+import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,9 @@ export async function POST(req: NextRequest) {
     // Exigir sesión: antes era público → Groq + queries de BD sin límite.
     const userId = await getUserId(req);
     if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    if (!(await checkUserRateLimit("negociar", userId, 20, 3600))) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
 
     const body = await req.json();
     const puesto: string = String(body.puesto ?? "").slice(0, 120);

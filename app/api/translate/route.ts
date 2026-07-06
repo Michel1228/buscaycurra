@@ -7,6 +7,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth-server";
+import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,9 @@ export async function POST(req: NextRequest) {
     // Exigir sesión: antes era público → cualquiera podía quemar Groq en bucle.
     const userId = await getUserId(req);
     if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    if (!(await checkUserRateLimit("translate", userId, 60, 3600))) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
 
     const { text, from = "auto", to = "es" } = await req.json() as {
       text: string;

@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { enrutarMejoraCV, enrutarPeticionIA } from "@/lib/ai/ai-router";
+import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 
 // ─── Handler POST ─────────────────────────────────────────────────────────────
 
@@ -29,9 +30,13 @@ export async function POST(request: NextRequest) {
   if (!token) {
     return NextResponse.json({ error: "No autorizado. Por favor, inicia sesión." }, { status: 401 });
   }
-  const { error: authError } = await supabasePublico.auth.getUser(token);
-  if (authError) {
+  const { data: { user }, error: authError } = await supabasePublico.auth.getUser(token);
+  if (authError || !user) {
     return NextResponse.json({ error: "No autorizado. Por favor, inicia sesión." }, { status: 401 });
+  }
+  // Tope anti-abuso por usuario: cv/mejorar enruta a DeepSeek (de pago).
+  if (!(await checkUserRateLimit("cv-mejorar", user.id, 15, 3600))) {
+    return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
   // ── Leer y validar el cuerpo de la petición ───────────────────────────────

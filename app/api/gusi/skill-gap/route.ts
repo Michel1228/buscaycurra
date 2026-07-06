@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import Groq from "groq-sdk";
+import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,9 @@ export async function POST(req: NextRequest) {
     );
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    if (!(await checkUserRateLimit("skill-gap", user.id, 30, 3600))) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
 
     // 2. Obtener CV del usuario
     const { data: cv } = await supabase

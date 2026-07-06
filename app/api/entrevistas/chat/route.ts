@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth-server";
+import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,9 @@ export async function POST(req: NextRequest) {
     const userId = await getUserId(req);
     if (!userId) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+    if (!(await checkUserRateLimit("entrevista", userId, 40, 3600))) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
     }
 
     const body = await req.json() as {
@@ -46,9 +50,11 @@ Tu misión:
 ${inicio ? "Empieza con una bienvenida breve y la primera pregunta de presentación." : ""}
 Responde siempre en 3-5 frases máximo. Sé directo.`;
 
-    const historial = mensajes.map((m) => ({
+    // Limitar el historial: últimos 20 mensajes y cada uno truncado, para no
+    // enviar a Groq un payload sin techo (coste de tokens ilimitado).
+    const historial = (Array.isArray(mensajes) ? mensajes : []).slice(-20).map((m) => ({
       role: m.rol === "user" ? "user" : ("assistant" as const),
-      content: m.texto,
+      content: (m.texto || "").slice(0, 2000),
     }));
 
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {

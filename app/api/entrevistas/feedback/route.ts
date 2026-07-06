@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,9 @@ export async function POST(req: NextRequest) {
     );
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    if (!(await checkUserRateLimit("feedback", user.id, 40, 3600))) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
 
     const { pregunta, respuesta, sector } = await req.json() as {
       pregunta: string;
