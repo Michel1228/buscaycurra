@@ -6,12 +6,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import Groq from "groq-sdk";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { puesto, ciudad, experiencia, salarioOferta } = await req.json();
+    // Exigir sesión: antes era público → Groq + queries de BD sin límite.
+    const userId = await getUserId(req);
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+    const body = await req.json();
+    const puesto: string = String(body.puesto ?? "").slice(0, 120);
+    const ciudad: string = String(body.ciudad ?? "").slice(0, 80);
+    const experiencia: string = String(body.experiencia ?? "").slice(0, 300);
+    const salarioOferta: string = String(body.salarioOferta ?? "").slice(0, 40);
     if (!puesto) return NextResponse.json({ error: "puesto requerido" }, { status: 400 });
 
     const pool = getPool();

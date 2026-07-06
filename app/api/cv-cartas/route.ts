@@ -5,12 +5,16 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const userId = request.nextUrl.searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "userId requerido" }, { status: 400 });
+  // El userId SIEMPRE se deriva del token, nunca del query param. Antes se
+  // aceptaba ?userId= sin validar → cualquiera podía leer las cartas (con
+  // emails de empresa = PII) de otro usuario. IDOR crítico.
+  const userId = await getUserId(request);
+  if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const pool = getPool();
   try {
@@ -38,9 +42,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json() as { userId?: string; companyName?: string; companyEmail?: string; cartaTexto?: string };
-  const { userId, companyName, companyEmail, cartaTexto } = body;
-  if (!userId || !cartaTexto) return NextResponse.json({ error: "userId y cartaTexto requeridos" }, { status: 400 });
+  // userId del token, no del body (antes se inyectaba a nombre de cualquiera).
+  const userId = await getUserId(request);
+  if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+  const body = await request.json() as { companyName?: string; companyEmail?: string; cartaTexto?: string };
+  const { companyName, companyEmail, cartaTexto } = body;
+  if (!cartaTexto) return NextResponse.json({ error: "cartaTexto requerido" }, { status: 400 });
 
   const pool = getPool();
   try {

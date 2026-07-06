@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buscarEmpresaGooglePlaces, inferirSector, type GooglePlaceResult } from "@/lib/google-places";
 import { extraerInfoEmpresa } from "@/lib/company-extractor";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,15 @@ function construirEmpresaDesdeGoogle(gr: GooglePlaceResult): EmpresaCompleta {
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth: usuario autenticado O llamada interna de Guzzi con secret. Antes era
+    // público → Google Places de pago + scraping de webs disparables en bucle
+    // por un anónimo (factura real + tráfico saliente).
+    const internalSecret = request.headers.get("x-sync-secret");
+    const isInternal = !!internalSecret && !!process.env.ADMIN_SECRET && internalSecret === process.env.ADMIN_SECRET;
+    if (!isInternal && !(await getUserId(request))) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const body = await request.json() as { name?: string; url?: string; city?: string };
     const name = body.name?.trim();
     const city = body.city?.trim();

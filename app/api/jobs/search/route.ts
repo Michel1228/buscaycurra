@@ -59,7 +59,9 @@ export async function GET(request: NextRequest) {
   const location = (searchParams.get("location") || "").trim();
   const country  = (searchParams.get("country")  || "").trim();
   const categoria = (searchParams.get("categoria") || "").trim(); // au_pair | live_in_nanny
-  const page     = Math.max(1, parseInt(searchParams.get("page") || "1"));
+  // Tope de página: sin él, page=100000 → OFFSET gigante que Postgres materializa
+  // y descarta en cada request (DoS de BD barato). 200 páginas × 500 = 100k resultados.
+  const page     = Math.min(200, Math.max(1, parseInt(searchParams.get("page") || "1")));
   const jornada      = searchParams.get("jornada") || "";
   const experiencia  = searchParams.get("experiencia") || "";
   const salarioMin   = parseInt(searchParams.get("salarioMin") || "0");
@@ -177,20 +179,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Filtro de salario robusto: guard `salary ~ '[0-9]'` para no castear cadenas
+    // sin dígitos ("Ver en oferta" → '' → error), NULLIF para no castear '' y
+    // ::bigint para no desbordar int4 con salarios largos ("30000-45000" → 3000045000).
+    // Antes la rama `regexp_replace(...)::int` reventaba la query → caía al fallback
+    // que servía resultados SIN filtrar de salario, mintiendo al usuario.
     if (salarioMin > 0) {
-      conditions.push(`(
-        (salary ~ '^[0-9]+$' AND salary::int >= $${idx})
-        OR (regexp_replace(salary, '[^0-9]', '', 'g')::int >= $${idx})
-      )`);
+      conditions.push(`(salary ~ '[0-9]' AND NULLIF(regexp_replace(salary, '[^0-9]', '', 'g'), '')::bigint >= $${idx})`);
       params.push(salarioMin);
       idx++;
     }
 
     if (salarioMax > 0) {
-      conditions.push(`(
-        (salary ~ '^[0-9]+$' AND salary::int <= $${idx})
-        OR (regexp_replace(salary, '[^0-9]', '', 'g')::int <= $${idx})
-      )`);
+      conditions.push(`(salary ~ '[0-9]' AND NULLIF(regexp_replace(salary, '[^0-9]', '', 'g'), '')::bigint <= $${idx})`);
       params.push(salarioMax);
       idx++;
     }

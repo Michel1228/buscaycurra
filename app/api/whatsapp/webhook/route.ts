@@ -37,7 +37,15 @@ export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-hub-signature-256");
   const appSecret = process.env.WHATSAPP_APP_SECRET;
-  if (signature && appSecret) {
+  // Firma OBLIGATORIA. Antes se verificaba solo "si llegaba la firma", así que un
+  // tercero podía omitir el header y colar mensajes falsos sin verificación.
+  if (!appSecret) {
+    return NextResponse.json({ error: "Webhook no configurado" }, { status: 503 });
+  }
+  if (!signature) {
+    return NextResponse.json({ error: "Firma requerida" }, { status: 401 });
+  }
+  {
     const { createHmac, timingSafeEqual } = await import("crypto");
     const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
     try {

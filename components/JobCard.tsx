@@ -62,6 +62,11 @@ export default function JobCard({
   const fc = colorFuente(fuente);
   const matchColor = match !== undefined ? colorMatch(match) : "#9a9378";
 
+  // Las ofertas en vivo (Jooble/APIs) llevan id sintético con prefijo y NO existen
+  // en la BD → /app/ofertas/[id] mostraría "Oferta no encontrada". Para esas,
+  // "Ver oferta" abre su URL externa directamente.
+  const esSintetica = /^(jooble|adzuna|cj|li|arb|rem|indeed|tec|fb)-/.test(id);
+
   const [enviando, setEnviando] = useState(false);
   const [estadoEnvio, setEstadoEnvio] = useState<"idle" | "ok" | "sin-email">("idle");
 
@@ -183,11 +188,19 @@ export default function JobCard({
 
       {/* Actions */}
       <div className="flex gap-2 mt-auto">
-        <Link href={`/app/ofertas/${encodeURIComponent(id)}`}
-          className="flex-1 text-center py-2.5 text-xs font-medium rounded-xl transition hover:opacity-80"
-          style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#b0a890" }}>
-          Ver oferta
-        </Link>
+        {esSintetica && url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            className="flex-1 text-center py-2.5 text-xs font-medium rounded-xl transition hover:opacity-80"
+            style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#b0a890" }}>
+            Ver oferta
+          </a>
+        ) : (
+          <Link href={`/app/ofertas/${encodeURIComponent(id)}`}
+            className="flex-1 text-center py-2.5 text-xs font-medium rounded-xl transition hover:opacity-80"
+            style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#b0a890" }}>
+            Ver oferta
+          </Link>
+        )}
         <button
           onClick={enviarCV}
           disabled={enviando}

@@ -6,6 +6,7 @@
  * to: idioma destino (default: "es")
  */
 import { NextRequest, NextResponse } from "next/server";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,10 @@ function cacheKey(text: string, from: string, to: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Exigir sesión: antes era público → cualquiera podía quemar Groq en bucle.
+    const userId = await getUserId(req);
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { text, from = "auto", to = "es" } = await req.json() as {
       text: string;
       from?: string;
@@ -27,6 +32,9 @@ export async function POST(req: NextRequest) {
 
     if (!text || text.trim().length < 10) {
       return NextResponse.json({ error: "Texto muy corto para traducir" }, { status: 400 });
+    }
+    if (text.length > 5000) {
+      return NextResponse.json({ error: "Texto demasiado largo" }, { status: 413 });
     }
 
     const key = cacheKey(text, from, to);

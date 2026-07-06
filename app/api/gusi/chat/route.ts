@@ -813,7 +813,7 @@ El candidato tiene mucha experiencia.
         const searchCity = extractCity(message) || "";
         const extractRes = await fetch(`${siteUrl}/api/company/extract`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "x-sync-secret": process.env.ADMIN_SECRET || "" },
           body: JSON.stringify({ name: companyName, city: searchCity || undefined }),
           signal: AbortSignal.timeout(15000),
         });
@@ -894,7 +894,7 @@ El candidato tiene mucha experiencia.
           const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://buscaycurra.es";
           const extractRes = await fetch(`${siteUrl}/api/company/extract`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "x-sync-secret": process.env.ADMIN_SECRET || "" },
             body: JSON.stringify({ name: `${sector} ${city}`, city }),
             signal: AbortSignal.timeout(15000),
           });
