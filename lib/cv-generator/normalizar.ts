@@ -36,13 +36,16 @@ export function normalizar(raw: Record<string, unknown>): CVData {
   if (Array.isArray(raw.idiomas)) {
     idiomas = raw.idiomas as CVData["idiomas"];
   } else if (typeof raw.idiomas === "string" && raw.idiomas.trim()) {
+    // El editor guarda "Idioma:nivel" con nivel 0-100, y la plantilla usa width:{nivel}%.
+    // Antes se dividía /20 (escala 1-5) → las barras salían casi vacías en el PDF enviado
+    // (lo que veía el usuario en la preview no coincidía con lo que se mandaba).
     idiomas = raw.idiomas.split(/[,\n]/).filter(Boolean).map(l => {
       const parts = l.trim().split(":");
-      const nivel = parts[1] ? Math.round(parseInt(parts[1]) / 20) : 3;
-      return { nombre: parts[0].trim(), nivel: Math.max(1, Math.min(5, nivel)) };
+      const nivel = parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70;
+      return { nombre: parts[0].trim(), nivel };
     });
   } else {
-    idiomas = [{ nombre: "Español", nivel: 5 }];
+    idiomas = [{ nombre: "Español", nivel: 100 }];
   }
 
   const contacto = String(raw.contacto || "");

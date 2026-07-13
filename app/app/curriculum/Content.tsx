@@ -586,7 +586,7 @@ export default function CurriculumPage() {
     try {
       const res = await fetch("/api/cv/pdf-template", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ html: htmlToUse }),
       });
       if (!res.ok) throw new Error("Error generando PDF");

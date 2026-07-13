@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
 
     let tieneCV = cvFiles && cvFiles.length > 0;
 
-    // Si no hay PDF en storage, buscar en la tabla CV (editor guardado)
+    // Si no hay PDF en storage, buscar en la tabla CV (legacy Prisma)
     if (!tieneCV && userEmail) {
       const { data: cvRows } = await supabaseAdmin
         .from("CV")
@@ -189,6 +189,18 @@ export async function POST(request: NextRequest) {
         .eq("isActive", true)
         .limit(1);
       tieneCV = cvRows != null && cvRows.length > 0;
+    }
+
+    // Y sobre todo: el CV creado en el editor de currículum se guarda en user_cvs
+    // (el worker genera el PDF adjunto desde ahí). Antes se ignoraba, y un usuario
+    // con CV creado en el editor recibía "Debes subir tu CV" sin poder candidatearse.
+    if (!tieneCV) {
+      const { data: userCvRows } = await supabaseAdmin
+        .from("user_cvs")
+        .select("id")
+        .eq("user_id", userId)
+        .limit(1);
+      tieneCV = userCvRows != null && userCvRows.length > 0;
     }
 
     if (!tieneCV) {

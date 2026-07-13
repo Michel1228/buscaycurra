@@ -47,12 +47,13 @@ function escapeHtml(str: string | undefined | null): string {
     .replace(/'/g, "&#039;");
 }
 
-// Valida que accentColor sea un color CSS seguro (hex o rgb)
+// Valida que accentColor sea un color CSS seguro (hex o rgb).
+// Default = verde de marca #16a34a (antes era azul #3B5FE0, incoherente con la app).
 function sanitizeColor(color: string | undefined): string {
-  if (!color) return "#3B5FE0";
+  if (!color) return "#16a34a";
   const hex = /^#[0-9A-Fa-f]{3,8}$/.test(color.trim());
   const rgb = /^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/.test(color.trim());
-  return (hex || rgb) ? color.trim() : "#3B5FE0";
+  return (hex || rgb) ? color.trim() : "#16a34a";
 }
 
 export function generarCVHTML(data: CVData): string {

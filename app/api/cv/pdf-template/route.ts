@@ -5,12 +5,18 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { generateCVPdf } from "@/lib/cv-generator/generate-pdf";
+import { getUserId } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    // Exigir sesión: antes era público → cualquiera podía lanzar Chromium (hasta 60s)
+    // renderizando HTML arbitrario con carga de recursos externos (DoS/SSRF).
+    const userId = await getUserId(req);
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { html } = await req.json() as { html?: string };
 
     if (!html || html.length < 100) {
