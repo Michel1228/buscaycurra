@@ -71,8 +71,7 @@ export async function canQueryGuzzi(userId: string, plan?: string | null): Promi
   const limits = getPlanLimits(plan);
   if (limits.guzziMaxConsultasDia >= 999999) return true; // Ilimitado
 
-  const isTrial = plan === "free";
-  const dateKey = isTrial ? "trial" : todayKey();
+  const dateKey = todayKey(); // free también diario recargable (antes "trial" fija = total de por vida)
   const usage = await getOrCreateUsage(userId, dateKey);
   return usage.guzzi_consultas < limits.guzziMaxConsultasDia;
 }
@@ -81,9 +80,9 @@ export async function canQueryGuzzi(userId: string, plan?: string | null): Promi
 export async function trackGuzziQuery(userId: string, plan?: string | null): Promise<{ allowed: boolean; remaining: number }> {
   const limits = getPlanLimits(plan);
   const supabase = getSupabase();
-  // Para plan free: límite TOTAL (no diario) — usamos date_key fija "trial"
-  const isTrial = plan === "free";
-  const today = isTrial ? "trial" : todayKey();
+  // Todos los planes (incl. free) usan cuota DIARIA recargable que resetea a las 00:00 UTC.
+  // Antes el free usaba date_key fija "trial" = total de por vida (pésimo para retención).
+  const today = todayKey();
 
   if (limits.guzziMaxConsultasDia >= 999999) {
     return { allowed: true, remaining: 999999 };
@@ -106,7 +105,7 @@ export async function trackGuzziQuery(userId: string, plan?: string | null): Pro
   await supabase
     .from("usage_tracking")
     .upsert(
-      { user_id: userId, date_key: today, week_key: isTrial ? "trial" : weekKey(), guzzi_consultas: current + 1 },
+      { user_id: userId, date_key: today, week_key: weekKey(), guzzi_consultas: current + 1 },
       { onConflict: "user_id,date_key" }
     );
 

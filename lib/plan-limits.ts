@@ -28,10 +28,10 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   free: {
     name: "Free",
     guzziModel: "deepseek-v4-pro",
-    guzziMaxConsultasDia: 2,          // 2 consultas TOTAL (trial)
-    enviosCVDia: 3,                   // 3 envíos/día trial para probar
-    enviosCVSemana: 5,               // 5 envíos/semana trial
-    camaraMaxUsos: 3,                 // 3 búsquedas TOTAL — gancho de adquisición
+    guzziMaxConsultasDia: 5,          // 5 consultas/DÍA recargables (antes 2 total de por vida)
+    enviosCVDia: 3,                   // 3 envíos/día
+    enviosCVSemana: 7,               // 7 envíos/semana
+    camaraMaxUsos: 2,                 // 2 búsquedas/DÍA recargables (es la cara: GPT-4o Vision)
     cvsGuardados: 1,
     cvConIAGratis: 1,                 // 1 CV gratis con IA
     cartaPersonalizada: false,

@@ -68,20 +68,20 @@ export async function POST(req: NextRequest) {
         if (limits.camaraMaxUsos >= 999999) {
           // Ilimitado — no hacer nada
         } else {
-          const isTrial = plan === "free";
-          const dateKey = isTrial ? "trial" : new Date().toISOString().slice(0, 10);
+          // Cuota DIARIA recargable para todos (antes el free usaba "trial" = total de por vida).
+          const dateKey = new Date().toISOString().slice(0, 10);
           const { data: usage } = await sbAdmin.from("usage_tracking")
             .select("camara_usos").eq("user_id", userId).eq("date_key", dateKey).single();
           const usos = usage?.camara_usos ?? 0;
           if (usos >= limits.camaraMaxUsos) {
-            const msg = isTrial
-              ? `📸 ¡Has usado tus ${limits.camaraMaxUsos} búsquedas por cámara gratuitas! Contrata Esencial desde 2,99€/mes para seguir.`
+            const msg = plan === "free"
+              ? `📸 Has usado tus ${limits.camaraMaxUsos} búsquedas por cámara de hoy. Mañana se recargan. Con Esencial (2,99€/mes) tienes 10/día.`
               : `📸 Límite de ${limits.camaraMaxUsos} fotos/día alcanzado. Mañana se resetea. Sube a Pro para 30/día.`;
             return NextResponse.json({ error: msg }, { status: 429 });
           }
           // Registrar uso
           await sbAdmin.from("usage_tracking").upsert(
-            { user_id: userId, date_key: dateKey, week_key: isTrial ? "trial" : "", camara_usos: usos + 1 },
+            { user_id: userId, date_key: dateKey, week_key: "", camara_usos: usos + 1 },
             { onConflict: "user_id,date_key" }
           );
         }
