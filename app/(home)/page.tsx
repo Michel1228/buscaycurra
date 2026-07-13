@@ -10,7 +10,12 @@ import {
   DollarSign, Mail, Search, Lock, Check, X
 } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+// La landing se CACHEA y se regenera cada 30 min (ISR con stale-while-revalidate).
+// Antes era force-dynamic → ejecutaba la query pesada de getRealStats (GROUP BY sobre
+// 2,68M ofertas) en CADA carga → el servidor tardaba 5-16s en responder → en la app iOS
+// (WebView) eso se veía como una PANTALLA NEGRA al arrancar (rechazo Apple 2.1a). Ahora
+// el HTML se sirve al instante desde caché y el arranque es inmediato.
+export const revalidate = 1800;
 
 function formatOfertas(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} millones de`;
