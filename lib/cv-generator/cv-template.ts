@@ -97,8 +97,8 @@ export function generarCVHTML(data: CVData): string {
               </div>`)
     .join("");
 
-  // Validar foto URL — solo https
-  const fotoUrlSafe = data.fotoUrl && /^https?:\/\//.test(data.fotoUrl) ? data.fotoUrl : null;
+  // Validar foto URL — https o imagen embebida (data:image/, usada por el CV de ejemplo)
+  const fotoUrlSafe = data.fotoUrl && /^(https?:\/\/|data:image\/)/.test(data.fotoUrl) ? data.fotoUrl : null;
   const fotoSection = fotoUrlSafe
     ? `<img src="${escapeHtml(fotoUrlSafe)}" alt="Foto" />`
     : `<div class="photo-placeholder">📷<br>Foto</div>`;

@@ -15,7 +15,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
-import { generarCV, LISTA_PLANTILLAS, type TemplateId } from "@/lib/cv-generator/plantillas";
+import { generarCV, LISTA_PLANTILLAS, PLANTILLAS, type TemplateId } from "@/lib/cv-generator/plantillas";
+import { CV_EJEMPLO } from "@/lib/cv-generator/ejemplo";
 import type { CVData } from "@/lib/cv-generator/cv-template";
 import InfoTooltip from "@/components/InfoTooltip";
 
@@ -83,7 +84,16 @@ export default function CurriculumPage() {
   const [esPreviewIA, setEsPreviewIA] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [templateId, setTemplateId] = useState<TemplateId>("clasica");
+  const [ejemploVista, setEjemploVista] = useState<TemplateId | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // HTML de ejemplo por plantilla (mismos datos, distinto estilo) — se calcula una vez
+  const ejemplosHTML = useMemo(
+    () => Object.fromEntries(
+      LISTA_PLANTILLAS.map(p => [p.id, p.generar({ ...CV_EJEMPLO, templateId: p.id })])
+    ) as Record<TemplateId, string>,
+    []
+  );
 
   // ── Múltiples CVs ──
   const [listaCVs, setListaCVs] = useState<CVListItem[]>([]);
@@ -777,23 +787,43 @@ export default function CurriculumPage() {
                 {LISTA_PLANTILLAS.map(p => {
                   const activa = templateId === p.id;
                   return (
-                    <button
+                    <div
                       key={p.id}
                       onClick={() => setTemplateId(p.id)}
-                      className="text-left p-3 rounded-lg transition"
+                      className="text-left rounded-lg transition cursor-pointer overflow-hidden"
                       style={{
                         background: activa ? "rgba(34,197,94,0.08)" : "#0f1117",
                         border: `1.5px solid ${activa ? "#22c55e" : "#2d3142"}`,
                       }}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold" style={{ color: activa ? "#22c55e" : "#f1f5f9" }}>
-                          {p.nombre}
-                        </span>
-                        {activa && <span className="text-[10px]" style={{ color: "#22c55e" }}>✓ activa</span>}
+                      {/* Miniatura en vivo con datos de ejemplo */}
+                      <div className="relative" style={{ height: "180px", overflow: "hidden", background: "#fff" }}>
+                        <iframe
+                          srcDoc={ejemplosHTML[p.id]}
+                          title={`Ejemplo de la plantilla ${p.nombre}`}
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          scrolling="no"
+                          style={{ width: "794px", height: "1123px", border: "none", transformOrigin: "top left", transform: "scale(0.34)", pointerEvents: "none" }}
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEjemploVista(p.id); }}
+                          className="absolute bottom-2 right-2 text-[10px] px-2 py-1 rounded-md font-medium transition hover:scale-105"
+                          style={{ background: "rgba(15,17,23,0.85)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
+                        >
+                          🔍 Ver ejemplo
+                        </button>
                       </div>
-                      <p className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>{p.descripcion}</p>
-                    </button>
+                      <div className="p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-semibold" style={{ color: activa ? "#22c55e" : "#f1f5f9" }}>
+                            {p.nombre}
+                          </span>
+                          {activa && <span className="text-[10px]" style={{ color: "#22c55e" }}>✓ activa</span>}
+                        </div>
+                        <p className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>{p.descripcion}</p>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -1159,6 +1189,46 @@ export default function CurriculumPage() {
               className="bg-white shadow-2xl"
               style={{ width: "210mm", minHeight: "297mm", border: "none", maxWidth: "100%" }}
               title="CV en pantalla completa"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── EJEMPLO DE PLANTILLA (pantalla completa) ── */}
+      {ejemploVista && (
+        <div className="fixed inset-0 z-[9999] flex flex-col" style={{ background: "#0f1117" }}>
+          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#161922", borderBottom: "1px solid #252836" }}>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>
+                Ejemplo — {PLANTILLAS[ejemploVista].nombre}
+              </span>
+              <span className="text-[11px] hidden sm:inline" style={{ color: "#64748b" }}>
+                Datos de muestra · así quedará tu CV con esta plantilla
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setTemplateId(ejemploVista); setEjemploVista(null); }}
+                className="text-xs px-4 py-1.5 rounded-lg font-semibold transition hover:scale-105"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+              >
+                ✓ Usar esta plantilla
+              </button>
+              <button
+                onClick={() => setEjemploVista(null)}
+                className="text-xs px-3 py-1.5 rounded-lg font-medium transition hover:scale-105"
+                style={{ background: "rgba(255,255,255,0.06)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                ✕ Cerrar
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-auto flex justify-center bg-neutral-200 py-4">
+            <iframe
+              srcDoc={ejemplosHTML[ejemploVista]}
+              className="bg-white shadow-2xl"
+              style={{ width: "210mm", minHeight: "297mm", border: "none", maxWidth: "100%" }}
+              title={`Ejemplo de la plantilla ${PLANTILLAS[ejemploVista].nombre}`}
             />
           </div>
         </div>

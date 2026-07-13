@@ -30,7 +30,7 @@ export function generarCVHTML_ATS(data: CVData): string {
     .map((c) => escapeHtml(c))
     .join("&nbsp;&nbsp;•&nbsp;&nbsp;");
 
-  const fotoValida = data.fotoUrl && /^https?:\/\//.test(data.fotoUrl);
+  const fotoValida = data.fotoUrl && /^(https?:\/\/|data:image\/)/.test(data.fotoUrl);
   const fotoHTML = fotoValida
     ? `<img class="foto" src="${escapeHtml(data.fotoUrl)}" alt="" />`
     : "";
