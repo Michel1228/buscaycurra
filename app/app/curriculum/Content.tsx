@@ -15,7 +15,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
-import { generarCVHTML } from "@/lib/cv-generator/cv-template";
+import { generarCV, LISTA_PLANTILLAS, type TemplateId } from "@/lib/cv-generator/plantillas";
 import type { CVData } from "@/lib/cv-generator/cv-template";
 import InfoTooltip from "@/components/InfoTooltip";
 
@@ -82,6 +82,7 @@ export default function CurriculumPage() {
   const [descargando, setDescargando] = useState(false);
   const [esPreviewIA, setEsPreviewIA] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [templateId, setTemplateId] = useState<TemplateId>("clasica");
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // ── Múltiples CVs ──
@@ -91,10 +92,10 @@ export default function CurriculumPage() {
   // ── LIVE PREVIEW: genera HTML en tiempo real con cada cambio del formulario ──
   const livePreviewHTML = useMemo(() => {
     if (!form.nombre.trim()) return "";
-    return generarCVHTML(formToCVDataRaw());
+    return generarCV(formToCVDataRaw());
   }, [form.nombre, form.apellidos, form.subtitulo, form.telefono, form.email, form.ciudad,
       form.perfilProfesional, form.aptitudes, form.idiomas,
-      JSON.stringify(form.experiencia), JSON.stringify(form.formacion), fotoUrl]);
+      JSON.stringify(form.experiencia), JSON.stringify(form.formacion), fotoUrl, templateId]);
 
   // ⚠️ NO incluye useMemo como dependencia — necesitamos la función pura
   function formToCVDataRaw(): CVData {
@@ -113,6 +114,7 @@ export default function CurriculumPage() {
       email: form.email || undefined,
       ciudad: form.ciudad || undefined,
       fotoUrl: fotoUrl || undefined,
+      templateId,
       perfilProfesional: form.perfilProfesional || undefined,
       aptitudes: form.aptitudes
         ? form.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
@@ -249,7 +251,7 @@ export default function CurriculumPage() {
       guardarCV();
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [form, fotoUrl, userId]);
+  }, [form, fotoUrl, userId, templateId]);
 
   // ── Funciones auxiliares (sin cambios funcionales) ──
   async function toggleVisibilidad(value: boolean) {
@@ -313,6 +315,7 @@ export default function CurriculumPage() {
               : [{ titulo: "", centro: "", ubicacion: "" }],
           });
           if (fd.fotoUrl) setFotoUrl(String(fd.fotoUrl));
+          if (fd.templateId === "clasica" || fd.templateId === "ats") setTemplateId(fd.templateId);
         }
         setCvActivoId(cvId);
         setMejoradoHTML("");
@@ -327,8 +330,8 @@ export default function CurriculumPage() {
     if (!nombre) return;
     setGuardando(true);
     try {
-      const cvData = { ...form, fotoUrl: fotoUrl || undefined };
-      const html = generarCVHTML(formToCVDataRaw());
+      const cvData = { ...form, fotoUrl: fotoUrl || undefined, templateId };
+      const html = generarCV(formToCVDataRaw());
       const res = await fetch("/api/cv/guardar", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -367,7 +370,7 @@ export default function CurriculumPage() {
   async function guardarCV() {
     if (!userId) return;
     try {
-      const cvData = { ...form, fotoUrl: fotoUrl || undefined };
+      const cvData = { ...form, fotoUrl: fotoUrl || undefined, templateId };
       const res = await fetch("/api/gusi/cv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -504,6 +507,7 @@ export default function CurriculumPage() {
       email: form.email || undefined,
       ciudad: form.ciudad || undefined,
       fotoUrl: fotoUrl || undefined,
+      templateId,
       perfilProfesional: perfilMejorado || form.perfilProfesional || undefined,
       aptitudes: form.aptitudes
         ? form.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
@@ -572,7 +576,7 @@ export default function CurriculumPage() {
 
       setForm(prev => ({ ...prev, experiencia: experienciaMejorada }));
 
-      const html = generarCVHTML(formToCVData(perfilMejorado, experienciaMejorada));
+      const html = generarCV(formToCVData(perfilMejorado, experienciaMejorada));
       setMejoradoHTML(html);
       setEsPreviewIA(true);
     } catch { setError("Error al generar el CV"); }
@@ -763,6 +767,38 @@ export default function CurriculumPage() {
         <div className="flex flex-col xl:flex-row gap-6">
           {/* ── COLUMNA IZQUIERDA: Formulario ── */}
           <div className="cv-form-inputs flex-1 min-w-0 xl:max-w-[50%] space-y-5">
+            {/* Selector de plantilla */}
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎨 Plantilla del CV</h2>
+                <InfoTooltip text="La Clásica (dos columnas con foto) es visual e ideal para hostelería, comercio y trato con cliente. La Profesional ATS (una columna) está optimizada para pasar los filtros automáticos que usan la mayoría de empresas medianas y grandes." />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {LISTA_PLANTILLAS.map(p => {
+                  const activa = templateId === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setTemplateId(p.id)}
+                      className="text-left p-3 rounded-lg transition"
+                      style={{
+                        background: activa ? "rgba(34,197,94,0.08)" : "#0f1117",
+                        border: `1.5px solid ${activa ? "#22c55e" : "#2d3142"}`,
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-semibold" style={{ color: activa ? "#22c55e" : "#f1f5f9" }}>
+                          {p.nombre}
+                        </span>
+                        {activa && <span className="text-[10px]" style={{ color: "#22c55e" }}>✓ activa</span>}
+                      </div>
+                      <p className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>{p.descripcion}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Visibilidad para empresas */}
             <div className="rounded-xl p-5" style={{
               background: visibleEmpresas ? "rgba(34,197,94,0.07)" : "#161922",

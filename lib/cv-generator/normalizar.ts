@@ -59,6 +59,7 @@ export function normalizar(raw: Record<string, unknown>): CVData {
     email: String(raw.email || partes[1] || ""),
     ciudad: String(raw.ciudad || raw.location || ""),
     fotoUrl: raw.fotoUrl as string | undefined,
+    templateId: raw.templateId === "ats" ? "ats" : "clasica",
     perfilProfesional: String(raw.perfilProfesional || raw.perfil || raw.summary || ""),
     aptitudes,
     idiomas,

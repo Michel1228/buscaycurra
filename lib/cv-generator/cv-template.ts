@@ -34,10 +34,11 @@ export interface CVData {
     ubicacion?: string;
   }[];
   accentColor?: string;
+  templateId?: string; // "clasica" (default) | "ats"
 }
 
 // Escapa caracteres HTML especiales para prevenir XSS
-function escapeHtml(str: string | undefined | null): string {
+export function escapeHtml(str: string | undefined | null): string {
   if (!str) return "";
   return String(str)
     .replace(/&/g, "&amp;")
@@ -49,7 +50,7 @@ function escapeHtml(str: string | undefined | null): string {
 
 // Valida que accentColor sea un color CSS seguro (hex o rgb).
 // Default = verde de marca #16a34a (antes era azul #3B5FE0, incoherente con la app).
-function sanitizeColor(color: string | undefined): string {
+export function sanitizeColor(color: string | undefined): string {
   if (!color) return "#16a34a";
   const hex = /^#[0-9A-Fa-f]{3,8}$/.test(color.trim());
   const rgb = /^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/.test(color.trim());

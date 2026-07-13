@@ -6,7 +6,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { generarCVHTML, type CVData } from "@/lib/cv-generator/cv-template";
+import { type CVData } from "@/lib/cv-generator/cv-template";
+import { generarCV } from "@/lib/cv-generator/plantillas";
 
 export async function POST(request: NextRequest) {
   // Auth — requiere sesión válida para generar HTML del CV
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "El nombre es obligatorio" }, { status: 400 });
     }
 
-    const html = generarCVHTML(data);
+    const html = generarCV(data);
 
     return NextResponse.json({ html });
   } catch (err) {

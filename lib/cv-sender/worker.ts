@@ -25,7 +25,7 @@ import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
 import { recordSent, updateSendStatus, getSendIdByJobId } from "./tracker";
 import { getPool } from "../db";
 import { normalizar } from "../cv-generator/normalizar";
-import { generarCVHTML } from "../cv-generator/cv-template";
+import { generarCV } from "../cv-generator/plantillas";
 import { generateCVPdf } from "../cv-generator/generate-pdf";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
@@ -117,7 +117,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
     cvSnapshot = JSON.stringify(rawData);
 
     const cvData = normalizar(rawData);
-    const html = generarCVHTML(cvData);
+    const html = generarCV(cvData);
     cvBuffer = await generateCVPdf(html);
     console.log(`[Worker] ✅ PDF de plantilla generado para ${userId}`);
   } catch (templateErr) {

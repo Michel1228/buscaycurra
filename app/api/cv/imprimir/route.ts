@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { generarCVHTML } from "@/lib/cv-generator/cv-template";
+import { generarCV } from "@/lib/cv-generator/plantillas";
 import { normalizar } from "@/lib/cv-generator/normalizar";
 import { createServerClient } from "@supabase/ssr";
 
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       return new NextResponse("CV sin nombre", { status: 404 });
     }
 
-    const html = generarCVHTML(cvData);
+    const html = generarCV(cvData);
     const htmlConPrint = html.replace(
       "</head>",
       `<script>window.onload=function(){setTimeout(function(){window.print();},700);}</script></head>`
