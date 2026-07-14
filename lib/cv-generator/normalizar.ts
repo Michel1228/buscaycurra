@@ -13,7 +13,21 @@ export function normalizar(raw: Record<string, unknown>): CVData {
 
   let experiencia: CVData["experiencia"] = [];
   if (Array.isArray(raw.experiencia)) {
-    experiencia = raw.experiencia as CVData["experiencia"];
+    // El editor autoguarda descripcion como TEXTO multilínea; las plantillas esperan
+    // un array de viñetas. Sin esta conversión, generarCV lanzaba
+    // "(e.descripcion || []).filter is not a function" y el worker caía en silencio
+    // al CV subido antiguo (el email salía SIN la plantilla elegida).
+    experiencia = (raw.experiencia as Record<string, unknown>[]).map((e) => ({
+      fechas: String(e.fechas || ""),
+      puesto: String(e.puesto || ""),
+      empresa: String(e.empresa || ""),
+      ubicacion: e.ubicacion ? String(e.ubicacion) : undefined,
+      descripcion: Array.isArray(e.descripcion)
+        ? (e.descripcion as unknown[]).map(String).filter(Boolean)
+        : typeof e.descripcion === "string" && e.descripcion.trim()
+          ? e.descripcion.split("\n").map((s) => s.trim().replace(/^[-•]\s*/, "")).filter(Boolean)
+          : undefined,
+    }));
   } else if (typeof raw.experiencia === "string" && raw.experiencia.trim()) {
     experiencia = raw.experiencia.split("\n").filter(Boolean).map(line => {
       const m = line.match(/^([\d\s\-–]+)\s*[—–-]\s*(.+?)(?:\s+en\s+(.+?))?(?:\s*\((.+?)\))?$/);
@@ -25,7 +39,11 @@ export function normalizar(raw: Record<string, unknown>): CVData {
 
   let formacion: CVData["formacion"] = [];
   if (Array.isArray(raw.formacion)) {
-    formacion = raw.formacion as CVData["formacion"];
+    formacion = (raw.formacion as Record<string, unknown>[]).map((f) => ({
+      titulo: String(f.titulo || ""),
+      centro: String(f.centro || ""),
+      ubicacion: f.ubicacion ? String(f.ubicacion) : undefined,
+    })).filter((f) => f.titulo);
   } else if (typeof raw.formacion === "string" && raw.formacion.trim()) {
     formacion = raw.formacion.split("\n").filter(Boolean).map(line => {
       const m = line.match(/^(.+?)\s*[—–-]\s*(.+?)(?:\s*\((.+?)\))?$/);
@@ -37,7 +55,14 @@ export function normalizar(raw: Record<string, unknown>): CVData {
 
   let idiomas: CVData["idiomas"] = [];
   if (Array.isArray(raw.idiomas)) {
-    idiomas = raw.idiomas as CVData["idiomas"];
+    idiomas = (raw.idiomas as unknown[]).map((i) => {
+      if (typeof i === "string") {
+        const parts = i.split(":");
+        return { nombre: parts[0].trim(), nivel: parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70 };
+      }
+      const o = i as Record<string, unknown>;
+      return { nombre: String(o.nombre || ""), nivel: Math.min(100, Math.max(0, Number(o.nivel) || 70)) };
+    }).filter((i) => i.nombre);
   } else if (typeof raw.idiomas === "string" && raw.idiomas.trim()) {
     // El editor guarda "Idioma:nivel" con nivel 0-100, y la plantilla usa width:{nivel}%.
     // Antes se dividía /20 (escala 1-5) → las barras salían casi vacías en el PDF enviado
