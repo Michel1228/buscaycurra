@@ -30,10 +30,11 @@ docker build \
 echo "🚀 Deploy..."
 docker stop buscaycurra-nextjs 2>/dev/null || true
 docker rm buscaycurra-nextjs 2>/dev/null || true
+# REDIS_URL viene de .env.local (lleva la contraseña del Redis Swarm — NO hardcodear
+# aquí: este script está versionado y un -e sin password rompe el worker con NOAUTH)
 docker run -d --name buscaycurra-nextjs \
   --network busca-y-curra_default \
   --env-file .env.local \
-  -e REDIS_URL=redis://buscaycurra-redis:6379 \
   -e API_URL=http://buscaycurra-api:3001 \
   -p 8892:3000 \
   buscaycurra:latest
