@@ -864,7 +864,7 @@ export default function CurriculumPage() {
                     );
                   })}
                 </div>
-                <p className="text-[10px] mt-2" style={{ color: "#64748b" }}>Se aplica a la plantilla elegida. Las plantillas <b>Moderna</b> y <b>Elegante</b> son las que más lo lucen.</p>
+                <p className="text-[10px] mt-2" style={{ color: "#64748b" }}>Se aplica a la plantilla elegida. La <b>Ejecutiva</b> y la <b>Coqueta</b> son las que más lo lucen.</p>
               </div>
             </div>
 

@@ -78,13 +78,13 @@ export const PLANTILLAS: Record<TemplateId, PlantillaInfo> = {
 };
 
 // Orden de aparición en el selector (visuales primero, ATS al final)
+// Plantillas ofrecidas en el selector. Moderna/Elegante/Folio quedan fuera (el usuario
+// las descartó por parecerse a la Clásica con solo la barra de color cambiada); su código
+// sigue en PLANTILLAS para que cualquier CV ya guardado con ese templateId siga renderizando.
 export const LISTA_PLANTILLAS: PlantillaInfo[] = [
   PLANTILLAS.ejecutiva,
   PLANTILLAS.coqueta,
-  PLANTILLAS.elegante,
-  PLANTILLAS.moderna,
   PLANTILLAS.clasica,
-  PLANTILLAS.folio,
   PLANTILLAS.ats,
 ];
 
