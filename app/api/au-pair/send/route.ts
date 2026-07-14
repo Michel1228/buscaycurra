@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { generateCVPdf } from "@/lib/cv-generator/generate-pdf";
+import { generarAuPairHTML } from "@/lib/au-pair-cv-template";
 import type { AuPairProfile, AuPairReference } from "@/lib/au-pair";
 import { PAISES_AU_PAIR_LEGAL, calcularCosteFamilia } from "@/lib/au-pair-legal-data";
 
@@ -124,7 +125,7 @@ function generateAuPairProfileHTML(profile: AuPairProfile, coverLetter: string):
   </style>
 </head>
 <body>
-  <div style="width:210mm;min-height:297mm;background:white;">
+  <div class="cv-page" style="width:210mm;min-height:297mm;background:white;">
     <div style="background:linear-gradient(135deg,#1a3d34 0%,#2d5a4e 100%);padding:40px;">
       <h1 style="font-size:26px;font-weight:bold;color:white;margin:0 0 4px;">${nombre}</h1>
       <p style="font-size:10px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:2px;margin:0 0 16px;">Childcare Professional · Dear Family Letter</p>
@@ -512,7 +513,7 @@ Warm regards,
 ${userName}`;
 
     // ── Generar PDF con plantilla visual ─────────────────────────────────
-    const pdfBuffer = await generateCVPdf(generateAuPairProfileHTML(profile, coverLetter));
+    const pdfBuffer = await generateCVPdf(generarAuPairHTML(profile, coverLetter));
 
     // ── Generar HTML del email ────────────────────────────────────────────
     const htmlBody = buildAuPairEmailHTML(
