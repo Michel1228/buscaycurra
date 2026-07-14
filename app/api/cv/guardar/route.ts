@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
+import { getPlanLimits } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -17,24 +18,21 @@ export async function POST(req: NextRequest) {
 
   const pool = getPool();
 
-  // Limitar a 20 CVs por usuario (limpieza del más antiguo si se supera)
-  const countRes = await pool.query(`SELECT COUNT(*) FROM user_cvs WHERE user_id = $1`, [user.id]);
-  if (parseInt(countRes.rows[0].count) >= 20) {
-    await pool.query(
-      `DELETE FROM user_cvs WHERE id = (SELECT id FROM user_cvs WHERE user_id = $1 ORDER BY created_at ASC LIMIT 1)`,
-      [user.id]
-    );
+  // ── Límite de CVs guardados según plan (fuente única: lib/plan-limits.ts) ──
+  const { data: perfil } = await sb.from("profiles").select("plan").eq("id", user.id).single();
+  const limits = getPlanLimits(perfil?.plan);
+  const countRes = await pool.query(`SELECT COUNT(*)::int AS n FROM user_cvs WHERE user_id = $1`, [user.id]);
+  if (countRes.rows[0].n >= limits.cvsGuardados) {
+    return NextResponse.json({
+      error: `Tu plan ${limits.name} permite ${limits.cvsGuardados} ${limits.cvsGuardados === 1 ? "currículum guardado" : "currículums guardados"}. Elimina uno o mejora tu plan en /app/perfil para crear más.`,
+      limite: limits.cvsGuardados,
+      plan: limits.name,
+    }, { status: 403 });
   }
 
-  // user_cvs tiene UNIQUE(user_id) (1 CV por usuario), así que un INSERT plano chocaba
-  // con la fila que ya crea el autoguardado → error 500 "No se pudo guardar el CV".
-  // Upsert: actualiza la fila del usuario en vez de fallar.
   const res = await pool.query(
     `INSERT INTO user_cvs (user_id, nombre, html, form_data, created_at, updated_at)
      VALUES ($1, $2, $3, $4, NOW(), NOW())
-     ON CONFLICT (user_id) DO UPDATE SET
-       nombre = EXCLUDED.nombre, html = EXCLUDED.html,
-       form_data = EXCLUDED.form_data, updated_at = NOW()
      RETURNING id, nombre, created_at`,
     [user.id, (nombre || "Mi CV").slice(0, 80), html, formData ? JSON.stringify(formData) : null]
   );

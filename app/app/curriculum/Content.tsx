@@ -269,7 +269,7 @@ export default function CurriculumPage() {
       guardarCV();
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [form, fotoUrl, userId, templateId, accentColor]);
+  }, [form, fotoUrl, userId, templateId, accentColor, cvActivoId]);
 
   // ── Funciones auxiliares (sin cambios funcionales) ──
   async function toggleVisibilidad(value: boolean) {
@@ -363,7 +363,9 @@ export default function CurriculumPage() {
         setTimeout(() => setGuardado(false), 2000);
         await cargarListaCVs();
       } else {
-        setError("No se pudo guardar el CV");
+        // 403 = límite de CVs del plan alcanzado → mostrar el mensaje del servidor
+        const err = await res.json().catch(() => ({}));
+        setError((err as { error?: string }).error || "No se pudo guardar el CV");
       }
     } catch { setError("Error guardando CV"); }
     finally { setGuardando(false); }
@@ -393,7 +395,8 @@ export default function CurriculumPage() {
       const res = await fetch("/api/gusi/cv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, cvData, cvText: JSON.stringify(cvData) }),
+        // cvId: el autosave actualiza el CV que está abierto, no el último tocado
+        body: JSON.stringify({ userId, cvData, cvText: JSON.stringify(cvData), cvId: cvActivoId || undefined }),
       });
       if (!res.ok) {
         setError("No se pudo guardar el CV. Inténtalo de nuevo.");
@@ -594,8 +597,8 @@ export default function CurriculumPage() {
         } catch { /* mantiene descripción original si la IA falla */ }
       }
 
-      setForm(prev => ({ ...prev, experiencia: experienciaMejorada }));
-
+      // NO se muta el formulario: la mejora IA solo vive en la preview.
+      // "← Volver a vivo" recupera el CV original intacto (antes machacaba las viñetas).
       const html = generarCV(formToCVData(perfilMejorado, experienciaMejorada));
       setMejoradoHTML(html);
       setEsPreviewIA(true);

@@ -102,7 +102,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   try {
     const pool = getPool();
     const cvDataResult = await pool.query(
-      `SELECT form_data FROM user_cvs WHERE user_id = $1`,
+      `SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1`,
       [userId]
     );
 

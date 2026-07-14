@@ -649,7 +649,7 @@ export async function POST(req: NextRequest) {
         const pool = getPool();
         // 1. Buscar en user_cvs (CV subido a Guzzi)
         const row = await pool.query(
-          "SELECT form_data FROM user_cvs WHERE user_id = $1",
+          "SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1",
           [userId]
         );
         if (row.rows[0]?.form_data) {

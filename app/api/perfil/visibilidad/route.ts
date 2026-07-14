@@ -23,13 +23,19 @@ export async function POST(request: NextRequest) {
   const { visible } = await request.json() as { visible: boolean };
 
   const pool = getPool();
-  await pool.query(
-    `INSERT INTO user_cvs (user_id, nombre, html, form_data, visible_empresas, updated_at)
-     VALUES ($1, 'Mi CV', '', '{}', $2, NOW())
-     ON CONFLICT (user_id)
-     DO UPDATE SET visible_empresas = $2, updated_at = NOW()`,
+  // La visibilidad es del PERFIL (no de un CV concreto): se aplica a todas las filas.
+  // No se toca updated_at para no alterar cuál es el CV "activo" (el más reciente).
+  const upd = await pool.query(
+    `UPDATE user_cvs SET visible_empresas = $2 WHERE user_id = $1 RETURNING id`,
     [user.id, visible]
   );
+  if (upd.rows.length === 0) {
+    await pool.query(
+      `INSERT INTO user_cvs (user_id, nombre, html, form_data, visible_empresas, updated_at)
+       VALUES ($1, 'Mi CV', '', '{}', $2, NOW())`,
+      [user.id, visible]
+    );
+  }
 
   return NextResponse.json({ ok: true, visible });
 }

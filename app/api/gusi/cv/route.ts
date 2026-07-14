@@ -19,11 +19,13 @@ export async function GET(req: NextRequest) {
 
     const pool = getPool();
 
-    // 1. Buscar en user_cvs (Guzzi CV)
+    // 1. Buscar en user_cvs (Guzzi CV) — el más reciente = el CV "activo"
     const userCvResult = await pool.query(
       `SELECT form_data, html, visible_empresas, created_at, updated_at
        FROM user_cvs
-       WHERE user_id = $1`,
+       WHERE user_id = $1
+       ORDER BY updated_at DESC
+       LIMIT 1`,
       [userId]
     );
 
@@ -94,7 +96,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { cvData, cvText } = body;
+    const { cvData, cvText, cvId } = body;
 
     if (!cvData) {
       return NextResponse.json({ error: "cvData requerido" }, { status: 400 });
@@ -102,16 +104,32 @@ export async function POST(req: NextRequest) {
 
     const pool = getPool();
 
-    // Upsert: insertar o actualizar
-    await pool.query(
-      `INSERT INTO user_cvs (user_id, nombre, html, form_data, updated_at)
-       VALUES ($1, 'Mi CV', $2, $3, NOW())
-       ON CONFLICT (user_id)
-       DO UPDATE SET html = $2, form_data = $3, updated_at = NOW()`,
+    // Multi-CV: si llega cvId se actualiza ESE CV (el que el usuario tiene abierto);
+    // si no, se actualiza el más reciente; si no existe ninguno, se crea el primero.
+    if (cvId) {
+      const upd = await pool.query(
+        `UPDATE user_cvs SET html = $3, form_data = $4, updated_at = NOW()
+         WHERE id = $1 AND user_id = $2 RETURNING id`,
+        [cvId, userId, cvText || "", JSON.stringify(cvData)]
+      );
+      if (upd.rows.length > 0) return NextResponse.json({ success: true, id: upd.rows[0].id });
+      // cvId no encontrado (borrado en otra pestaña) → cae al flujo normal
+    }
+
+    const updUltimo = await pool.query(
+      `UPDATE user_cvs SET html = $2, form_data = $3, updated_at = NOW()
+       WHERE id = (SELECT id FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1)
+       RETURNING id`,
       [userId, cvText || "", JSON.stringify(cvData)]
     );
+    if (updUltimo.rows.length > 0) return NextResponse.json({ success: true, id: updUltimo.rows[0].id });
 
-    return NextResponse.json({ success: true });
+    const ins = await pool.query(
+      `INSERT INTO user_cvs (user_id, nombre, html, form_data, updated_at)
+       VALUES ($1, 'Mi CV', $2, $3, NOW()) RETURNING id`,
+      [userId, cvText || "", JSON.stringify(cvData)]
+    );
+    return NextResponse.json({ success: true, id: ins.rows[0].id });
   } catch (error) {
     console.error("Error POST cv:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });

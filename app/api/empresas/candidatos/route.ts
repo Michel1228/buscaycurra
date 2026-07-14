@@ -92,7 +92,10 @@ export async function GET(req: NextRequest) {
          uc.form_data->>'email'     AS email,
          uc.form_data->>'telefono'  AS telefono,
          uc.updated_at
-       FROM user_cvs uc
+       FROM (
+         SELECT DISTINCT ON (user_id) * FROM user_cvs
+         ORDER BY user_id, updated_at DESC
+       ) uc
        ${where}
        ORDER BY uc.updated_at DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,

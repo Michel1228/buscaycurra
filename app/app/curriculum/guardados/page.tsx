@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { FolderOpen, FileText, Eye, Pencil, Download, Trash2 } from "lucide-react";
+import { PLANTILLAS } from "@/lib/cv-generator/plantillas";
 
 interface CVGuardado {
   id: string;
@@ -179,7 +180,22 @@ export default function MisCurriculumsPage() {
                 {/* Cabecera de la tarjeta */}
                 <div className="p-5 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-base truncate" style={{ color: "#f0ebe0" }}>{cv.nombre}</h3>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h3 className="font-bold text-base truncate" style={{ color: "#f0ebe0" }}>{cv.nombre}</h3>
+                      {(() => {
+                        const tid = cv.form_data?.templateId;
+                        const nombrePlantilla = typeof tid === "string" && tid in PLANTILLAS
+                          ? PLANTILLAS[tid as keyof typeof PLANTILLAS].nombre : null;
+                        const color = typeof cv.form_data?.accentColor === "string" ? String(cv.form_data.accentColor) : "#22c55e";
+                        return nombrePlantilla ? (
+                          <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1.5"
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid #3d3c30", color: "#c9c2ae" }}>
+                            <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />
+                            {nombrePlantilla}
+                          </span>
+                        ) : null;
+                      })()}
+                    </div>
                     <p className="text-xs mt-1" style={{ color: "#9a9378" }}>
                       Guardado el {formatFecha(cv.created_at)}
                       {cv.updated_at !== cv.created_at && ` · Editado el ${formatFecha(cv.updated_at)}`}
