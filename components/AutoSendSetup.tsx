@@ -101,9 +101,12 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
         } catch { /* usa texto genérico */ }
       }
 
+      // /api/cv/mejorar exige sesión: sin el Bearer devolvía 401 y el modal de carta
+      // nunca aparecía (el envío salía directo sin que el usuario revisara la carta)
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       const res = await fetch("/api/cv/mejorar", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token || ""}` },
         body: JSON.stringify({
           cvText: cvTexto || "Candidato con experiencia profesional buscando nuevas oportunidades.",
           jobTitle: jobTitle || companyName,
