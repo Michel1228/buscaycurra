@@ -11,7 +11,7 @@
  */
 
 import { get } from "../cache/redis-client";
-import { llamarGroq, generarCartaPresentacion, analizarOfertaTrabajo, LIMITE_DIARIO_GROQ } from "./groq-client";
+import { llamarGroq, analizarOfertaTrabajo, LIMITE_DIARIO_GROQ } from "./groq-client";
 import { llamarGemini, extraerDatosEmpresa, LIMITE_DIARIO_GEMINI } from "./gemini-client";
 import { llamarDeepSeek, LIMITE_DIARIO_DEEPSEEK } from "./deepseek-client";
 import { TipoPeticionIA } from "../cache/ai-cache";
@@ -191,6 +191,24 @@ export async function enrutarPeticionIA(
  * recomendaciones ni puntuaciones (ese era el bug: la IA devolvía un informe/paso
  * a paso en vez del texto del perfil listo para pegar en el CV).
  */
+/**
+ * Prompt ÚNICO de carta de presentación (todas las IAs). Devuelve una CARTA lista
+ * para enviar — nunca análisis ni feedback del CV.
+ */
+function promptCartaPresentacion(cvText: string, empresa: string, puesto: string): string {
+  return `Escribe una carta de presentación profesional para aplicar${puesto ? ` al puesto de "${puesto}"` : ""}${empresa ? ` en "${empresa}"` : ""}. Eres el candidato, en primera persona.
+
+MI CV:
+${cvText}
+
+DEVUELVE ÚNICAMENTE la carta, lista para enviar. NADA MÁS.
+- En español, tono profesional pero cercano y humano (no robótico).
+- Máximo 3 párrafos + despedida con mi nombre si aparece en el CV.
+- Conecta mis habilidades y experiencia REALES con lo que necesita ${empresa || "la empresa"}. No inventes nada.
+- Termina proponiendo una entrevista o llamada.
+- PROHIBIDO: análisis del CV, "puntos fuertes/débiles", consejos, recomendaciones, encabezados, viñetas, markdown, frases hechas como "me dirijo a ustedes".`;
+}
+
 function promptMejoraCV(cvText: string, puesto: string): string {
   return `Reescribe el "Perfil Profesional" de este CV${puesto ? ` para el puesto de "${puesto}"` : ""}. Eres esa misma persona, de España, contándolo con tus palabras.
 
@@ -223,6 +241,17 @@ async function ejecutarTareaConIA(
     return await llamarDeepSeek(p, "mejora-cv");
   }
 
+  // Carta de presentación: MISMO bug que mejorar-cv — el prompt de carta solo
+  // existía en la rama de groq, pero iaPreferida elige deepseek, que recibía el
+  // CV crudo y devolvía un ANÁLISIS/feedback en vez de una carta. Prompt único
+  // para las tres IAs.
+  if (tarea === "carta-presentacion") {
+    const p = promptCartaPresentacion(contenido, extra?.empresa || "", extra?.puesto || "");
+    if (ia === "gemini") return await llamarGemini(p, "carta-presentacion");
+    if (ia === "groq") return await llamarGroq(p, "carta-presentacion", { maxTokens: 1500 });
+    return await llamarDeepSeek(p, "carta-presentacion");
+  }
+
   const tipoCache: Record<TareaIA, TipoPeticionIA> = {
     "mejorar-cv": "mejora-cv",
     "mejorar-cv-largo": "mejora-cv",
@@ -236,12 +265,6 @@ async function ejecutarTareaConIA(
   // === GROQ ===
   if (ia === "groq") {
     switch (tarea) {
-      case "carta-presentacion":
-        return await generarCartaPresentacion(
-          contenido,
-          extra?.empresa || "",
-          extra?.puesto || ""
-        );
       case "analizar-oferta":
         return await analizarOfertaTrabajo(contenido);
       default:

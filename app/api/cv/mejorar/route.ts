@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   // ── Leer y validar el cuerpo de la petición ───────────────────────────────
 
-  let body: { cvText?: string; jobTitle?: string; tipo?: string };
+  let body: { cvText?: string; jobTitle?: string; tipo?: string; empresa?: string };
   try {
     body = await request.json();
   } catch {
@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
       console.log(`✉️  Generando carta de presentación para puesto: ${jobTitle}`);
       resultado = await enrutarPeticionIA("carta-presentacion", cvText, {
         puesto: jobTitle,
+        empresa: body.empresa || "",
       });
     } else {
       // ── Mejorar CV (enruta automáticamente según longitud) ─────────────

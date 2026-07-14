@@ -25,15 +25,18 @@ export async function generateCVPdf(html: string): Promise<Buffer> {
     // ── Ajuste a UNA sola página A4 ──
     // Si el contenido desborda (típico tras "mejorar con IA"), se mide y se escala para
     // que quepa entero en un folio, en vez de partirse en una 2ª hoja o recortarse.
-    await page.evaluate(() => {
-      const A4_W = 794;              // 210mm @ 96dpi
-      const A4_H = 1122;             // 297mm @ 96dpi
-      const el = document.querySelector(".cv-page") as HTMLElement | null;
+    // OJO: el código va como STRING. Con función, el bundler de Next la envuelve con su
+    // helper __name, que no existe dentro del navegador → "ReferenceError: __name is not
+    // defined" y el worker caía al CV subido antiguo (sin plantilla).
+    await page.evaluate(`(() => {
+      var A4_W = 794;              // 210mm @ 96dpi
+      var A4_H = 1122;             // 297mm @ 96dpi
+      var el = document.querySelector(".cv-page");
       if (!el) return;
 
-      // Neutralizar las restricciones que las plantillas ponen para el modo combinado
+      // Neutralizar las restricciones que las plantillas ponen para impresión
       // (algunas fuerzan height:297mm !important en @media print → recortarían el CV).
-      const imp = (prop: string, val: string) => el.style.setProperty(prop, val, "important");
+      var imp = function (prop, val) { el.style.setProperty(prop, val, "important"); };
       imp("min-height", "0");
       imp("max-height", "none");
       imp("height", "auto");
@@ -46,31 +49,31 @@ export async function generateCVPdf(html: string): Promise<Buffer> {
       document.body.style.setProperty("background", "#fff", "important");
 
       // Envolver en un contenedor de tamaño A4 EXACTO → el layout ocupa 1 página
-      const wrap = document.createElement("div");
-      wrap.style.cssText = `width:${A4_W}px;height:${A4_H}px;overflow:hidden;background:#fff;`;
-      el.parentNode!.insertBefore(wrap, el);
+      var wrap = document.createElement("div");
+      wrap.style.cssText = "width:" + A4_W + "px;height:" + A4_H + "px;overflow:hidden;background:#fff;";
+      el.parentNode.insertBefore(wrap, el);
       wrap.appendChild(el);
 
       // Primera estimación de escala con el ancho natural
-      const h0 = el.getBoundingClientRect().height;
-      let escala = Math.min(1, (A4_H * 0.98) / h0);
+      var h0 = el.getBoundingClientRect().height;
+      var escala = Math.min(1, (A4_H * 0.98) / h0);
 
       if (escala < 1) {
         // Al ensanchar el contenido refluye (más corto): re-medimos para aprovechar
         // mejor el folio y que la letra no salga más pequeña de lo necesario.
-        imp("width", `${A4_W / escala}px`);
+        imp("width", (A4_W / escala) + "px");
         imp("max-width", "none");
-        const h1 = el.getBoundingClientRect().height;
+        var h1 = el.getBoundingClientRect().height;
         escala = Math.min(1, (A4_H * 0.98) / h1);
-        imp("width", `${A4_W / escala}px`);
+        imp("width", (A4_W / escala) + "px");
         el.style.transformOrigin = "top left";
-        el.style.transform = `scale(${escala})`;
+        el.style.transform = "scale(" + escala + ")";
       } else {
-        imp("width", `${A4_W}px`);
+        imp("width", A4_W + "px");
         imp("max-width", "none");
-        imp("min-height", `${A4_H}px`);
+        imp("min-height", A4_H + "px");
       }
-    });
+    })()`);
     await page.waitForTimeout(200);
 
     const pdfBuffer = await page.pdf({
