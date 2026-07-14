@@ -1,5 +1,7 @@
 import type { CVData } from "./cv-template";
 
+const PLANTILLAS_VALIDAS = ["clasica", "ats", "folio", "moderna", "elegante", "coqueta"];
+
 export function normalizar(raw: Record<string, unknown>): CVData {
   let aptitudes: string[] = [];
   if (Array.isArray(raw.aptitudes)) {
@@ -59,7 +61,8 @@ export function normalizar(raw: Record<string, unknown>): CVData {
     email: String(raw.email || partes[1] || ""),
     ciudad: String(raw.ciudad || raw.location || ""),
     fotoUrl: raw.fotoUrl as string | undefined,
-    templateId: raw.templateId === "ats" ? "ats" : "clasica",
+    templateId: typeof raw.templateId === "string" && PLANTILLAS_VALIDAS.includes(raw.templateId) ? raw.templateId : "clasica",
+    accentColor: typeof raw.accentColor === "string" ? raw.accentColor : undefined,
     perfilProfesional: String(raw.perfilProfesional || raw.perfil || raw.summary || ""),
     aptitudes,
     idiomas,

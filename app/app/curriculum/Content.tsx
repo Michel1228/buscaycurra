@@ -84,15 +84,16 @@ export default function CurriculumPage() {
   const [esPreviewIA, setEsPreviewIA] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [templateId, setTemplateId] = useState<TemplateId>("clasica");
+  const [accentColor, setAccentColor] = useState("#16a34a");
   const [ejemploVista, setEjemploVista] = useState<TemplateId | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // HTML de ejemplo por plantilla (mismos datos, distinto estilo) — se calcula una vez
+  // HTML de ejemplo por plantilla (mismos datos, distinto estilo) — refleja el color elegido
   const ejemplosHTML = useMemo(
     () => Object.fromEntries(
-      LISTA_PLANTILLAS.map(p => [p.id, p.generar({ ...CV_EJEMPLO, templateId: p.id })])
+      LISTA_PLANTILLAS.map(p => [p.id, p.generar({ ...CV_EJEMPLO, templateId: p.id, accentColor })])
     ) as Record<TemplateId, string>,
-    []
+    [accentColor]
   );
 
   // ── Múltiples CVs ──
@@ -105,7 +106,7 @@ export default function CurriculumPage() {
     return generarCV(formToCVDataRaw());
   }, [form.nombre, form.apellidos, form.subtitulo, form.telefono, form.email, form.ciudad,
       form.perfilProfesional, form.aptitudes, form.idiomas,
-      JSON.stringify(form.experiencia), JSON.stringify(form.formacion), fotoUrl, templateId]);
+      JSON.stringify(form.experiencia), JSON.stringify(form.formacion), fotoUrl, templateId, accentColor]);
 
   // ⚠️ NO incluye useMemo como dependencia — necesitamos la función pura
   function formToCVDataRaw(): CVData {
@@ -125,6 +126,7 @@ export default function CurriculumPage() {
       ciudad: form.ciudad || undefined,
       fotoUrl: fotoUrl || undefined,
       templateId,
+      accentColor,
       perfilProfesional: form.perfilProfesional || undefined,
       aptitudes: form.aptitudes
         ? form.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
@@ -261,7 +263,7 @@ export default function CurriculumPage() {
       guardarCV();
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [form, fotoUrl, userId, templateId]);
+  }, [form, fotoUrl, userId, templateId, accentColor]);
 
   // ── Funciones auxiliares (sin cambios funcionales) ──
   async function toggleVisibilidad(value: boolean) {
@@ -325,7 +327,8 @@ export default function CurriculumPage() {
               : [{ titulo: "", centro: "", ubicacion: "" }],
           });
           if (fd.fotoUrl) setFotoUrl(String(fd.fotoUrl));
-          if (fd.templateId === "clasica" || fd.templateId === "ats") setTemplateId(fd.templateId);
+          if (typeof fd.templateId === "string" && ["clasica", "ats", "folio", "moderna", "elegante", "coqueta"].includes(fd.templateId)) setTemplateId(fd.templateId as TemplateId);
+          if (typeof fd.accentColor === "string") setAccentColor(fd.accentColor);
         }
         setCvActivoId(cvId);
         setMejoradoHTML("");
@@ -340,7 +343,7 @@ export default function CurriculumPage() {
     if (!nombre) return;
     setGuardando(true);
     try {
-      const cvData = { ...form, fotoUrl: fotoUrl || undefined, templateId };
+      const cvData = { ...form, fotoUrl: fotoUrl || undefined, templateId, accentColor };
       const html = generarCV(formToCVDataRaw());
       const res = await fetch("/api/cv/guardar", {
         method: "POST",
@@ -380,7 +383,7 @@ export default function CurriculumPage() {
   async function guardarCV() {
     if (!userId) return;
     try {
-      const cvData = { ...form, fotoUrl: fotoUrl || undefined, templateId };
+      const cvData = { ...form, fotoUrl: fotoUrl || undefined, templateId, accentColor };
       const res = await fetch("/api/gusi/cv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -518,6 +521,7 @@ export default function CurriculumPage() {
       ciudad: form.ciudad || undefined,
       fotoUrl: fotoUrl || undefined,
       templateId,
+      accentColor,
       perfilProfesional: perfilMejorado || form.perfilProfesional || undefined,
       aptitudes: form.aptitudes
         ? form.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
@@ -826,6 +830,41 @@ export default function CurriculumPage() {
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Selector de color de acento */}
+              <div className="mt-4 pt-4" style={{ borderTop: "1px solid #252836" }}>
+                <p className="text-xs font-semibold mb-2.5" style={{ color: "#f1f5f9" }}>🎨 Color del CV</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { nombre: "Verde", valor: "#16a34a" },
+                    { nombre: "Azul", valor: "#2563eb" },
+                    { nombre: "Marino", valor: "#1e3a5f" },
+                    { nombre: "Rosa", valor: "#db2777" },
+                    { nombre: "Morado", valor: "#7c3aed" },
+                    { nombre: "Rojo", valor: "#dc2626" },
+                    { nombre: "Naranja", valor: "#ea580c" },
+                    { nombre: "Turquesa", valor: "#0d9488" },
+                  ].map(c => {
+                    const activo = accentColor.toLowerCase() === c.valor.toLowerCase();
+                    return (
+                      <button
+                        key={c.valor}
+                        onClick={() => setAccentColor(c.valor)}
+                        title={c.nombre}
+                        aria-label={`Color ${c.nombre}`}
+                        className="rounded-full transition"
+                        style={{
+                          width: "26px", height: "26px", background: c.valor,
+                          border: activo ? "2px solid #fff" : "2px solid transparent",
+                          boxShadow: activo ? `0 0 0 2px ${c.valor}` : "none",
+                          transform: activo ? "scale(1.12)" : "scale(1)",
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] mt-2" style={{ color: "#64748b" }}>Se aplica a la plantilla elegida. Las plantillas <b>Moderna</b> y <b>Elegante</b> son las que más lo lucen.</p>
               </div>
             </div>
 

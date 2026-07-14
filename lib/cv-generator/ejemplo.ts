@@ -9,7 +9,7 @@
 import type { CVData } from "./cv-template";
 
 const AVATAR_EJEMPLO =
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIj48cmVjdCB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgZmlsbD0iI2RjZmNlNyIvPjxjaXJjbGUgY3g9IjgwIiBjeT0iNjAiIHI9IjMwIiBmaWxsPSIjMTZhMzRhIi8+PHBhdGggZD0iTTI2IDE1MmMwLTMxIDI0LTUyIDU0LTUyczU0IDIxIDU0IDUyeiIgZmlsbD0iIzE2YTM0YSIvPjwvc3ZnPg==";
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIj48cmVjdCB3aWR0aD0iMTYwIiBoZWlnaHQ9IjE2MCIgZmlsbD0iI2U1ZTdlYiIvPjxjaXJjbGUgY3g9IjgwIiBjeT0iNjAiIHI9IjMwIiBmaWxsPSIjOWNhM2FmIi8+PHBhdGggZD0iTTI2IDE1MmMwLTMxIDI0LTUyIDU0LTUyczU0IDIxIDU0IDUyeiIgZmlsbD0iIzljYTNhZiIvPjwvc3ZnPg==";
 
 export const CV_EJEMPLO: CVData = {
   nombre: "Laura",
