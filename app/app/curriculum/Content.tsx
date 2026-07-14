@@ -212,6 +212,12 @@ export default function CurriculumPage() {
               setFotoUrl(cv.fotoUrl);
             }
 
+            // Restaurar la plantilla y el color elegidos (si no, el autosave los machaca)
+            if (typeof cv.templateId === "string" && ["clasica", "ats", "folio", "moderna", "elegante", "coqueta", "ejecutiva"].includes(cv.templateId)) {
+              setTemplateId(cv.templateId as TemplateId);
+            }
+            if (typeof cv.accentColor === "string") setAccentColor(cv.accentColor);
+
             setForm(prev => ({
               ...prev,
               nombre: String(cv.nombre || cv.full_name || prev.nombre),
