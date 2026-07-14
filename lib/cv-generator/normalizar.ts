@@ -1,6 +1,7 @@
 import type { CVData } from "./cv-template";
+import { TEMPLATE_IDS } from "./plantillas";
 
-const PLANTILLAS_VALIDAS = ["clasica", "ats", "folio", "moderna", "elegante", "coqueta", "ejecutiva"];
+const PLANTILLAS_VALIDAS: string[] = TEMPLATE_IDS;
 
 export function normalizar(raw: Record<string, unknown>): CVData {
   let aptitudes: string[] = [];

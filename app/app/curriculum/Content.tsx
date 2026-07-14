@@ -15,7 +15,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
-import { generarCV, LISTA_PLANTILLAS, PLANTILLAS, type TemplateId } from "@/lib/cv-generator/plantillas";
+import { generarCV, LISTA_PLANTILLAS, PLANTILLAS, TEMPLATE_IDS, type TemplateId } from "@/lib/cv-generator/plantillas";
 import { CV_EJEMPLO } from "@/lib/cv-generator/ejemplo";
 import type { CVData } from "@/lib/cv-generator/cv-template";
 import InfoTooltip from "@/components/InfoTooltip";
@@ -213,7 +213,7 @@ export default function CurriculumPage() {
             }
 
             // Restaurar la plantilla y el color elegidos (si no, el autosave los machaca)
-            if (typeof cv.templateId === "string" && ["clasica", "ats", "folio", "moderna", "elegante", "coqueta", "ejecutiva"].includes(cv.templateId)) {
+            if (typeof cv.templateId === "string" && (TEMPLATE_IDS as string[]).includes(cv.templateId)) {
               setTemplateId(cv.templateId as TemplateId);
             }
             if (typeof cv.accentColor === "string") setAccentColor(cv.accentColor);
@@ -333,7 +333,7 @@ export default function CurriculumPage() {
               : [{ titulo: "", centro: "", ubicacion: "" }],
           });
           if (fd.fotoUrl) setFotoUrl(String(fd.fotoUrl));
-          if (typeof fd.templateId === "string" && ["clasica", "ats", "folio", "moderna", "elegante", "coqueta", "ejecutiva"].includes(fd.templateId)) setTemplateId(fd.templateId as TemplateId);
+          if (typeof fd.templateId === "string" && (TEMPLATE_IDS as string[]).includes(fd.templateId)) setTemplateId(fd.templateId as TemplateId);
           if (typeof fd.accentColor === "string") setAccentColor(fd.accentColor);
         }
         setCvActivoId(cvId);

@@ -13,8 +13,13 @@ import { generarCVHTML_Moderna } from "./cv-template-moderna";
 import { generarCVHTML_Elegante } from "./cv-template-elegante";
 import { generarCVHTML_Coqueta } from "./cv-template-coqueta";
 import { generarCVHTML_Ejecutiva } from "./cv-template-ejecutiva";
+import { generarCVHTML_Minimalista } from "./cv-template-minimalista";
+import { generarCVHTML_Firma } from "./cv-template-firma";
+import { generarCVHTML_Oscura } from "./cv-template-oscura";
 
-export type TemplateId = "clasica" | "ats" | "folio" | "moderna" | "elegante" | "coqueta" | "ejecutiva";
+export type TemplateId =
+  | "clasica" | "ats" | "folio" | "moderna" | "elegante"
+  | "coqueta" | "ejecutiva" | "minimalista" | "firma" | "oscura";
 
 export interface PlantillaInfo {
   id: TemplateId;
@@ -75,18 +80,46 @@ export const PLANTILLAS: Record<TemplateId, PlantillaInfo> = {
     usaColor: false,
     generar: generarCVHTML_ATS,
   },
+  minimalista: {
+    id: "minimalista",
+    nombre: "Minimalista",
+    descripcion: "Blanco puro con tipografía fina espaciada y líneas delgadas. Sobria y actual, para cualquier sector.",
+    usaColor: false,
+    generar: generarCVHTML_Minimalista,
+  },
+  firma: {
+    id: "firma",
+    nombre: "Firma",
+    descripcion: "Tu nombre en caligrafía elegante como una firma, con lateral suave. Para comercial, marketing, moda y eventos.",
+    usaColor: true,
+    generar: generarCVHTML_Firma,
+  },
+  oscura: {
+    id: "oscura",
+    nombre: "Oscura",
+    descripcion: "Cabecera negra contundente con etiqueta de color. Con carácter, para finanzas, asesoría, seguridad y transporte.",
+    usaColor: true,
+    generar: generarCVHTML_Oscura,
+  },
 };
 
 // Orden de aparición en el selector (visuales primero, ATS al final)
-// Plantillas ofrecidas en el selector. Moderna/Elegante/Folio quedan fuera (el usuario
-// las descartó por parecerse a la Clásica con solo la barra de color cambiada); su código
-// sigue en PLANTILLAS para que cualquier CV ya guardado con ese templateId siga renderizando.
+// Orden del selector: editoriales/nuevas primero, ATS al final.
 export const LISTA_PLANTILLAS: PlantillaInfo[] = [
   PLANTILLAS.ejecutiva,
+  PLANTILLAS.firma,
   PLANTILLAS.coqueta,
+  PLANTILLAS.minimalista,
+  PLANTILLAS.oscura,
+  PLANTILLAS.elegante,
+  PLANTILLAS.moderna,
   PLANTILLAS.clasica,
+  PLANTILLAS.folio,
   PLANTILLAS.ats,
 ];
+
+/** Ids válidos — única fuente de verdad para validar templateId en APIs y editor. */
+export const TEMPLATE_IDS = Object.keys(PLANTILLAS) as TemplateId[];
 
 /** Genera el HTML del CV con la plantilla indicada en data.templateId (default: clasica). */
 export function generarCV(data: CVData): string {
