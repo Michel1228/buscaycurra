@@ -327,7 +327,7 @@ export default function CurriculumPage() {
               : [{ titulo: "", centro: "", ubicacion: "" }],
           });
           if (fd.fotoUrl) setFotoUrl(String(fd.fotoUrl));
-          if (typeof fd.templateId === "string" && ["clasica", "ats", "folio", "moderna", "elegante", "coqueta"].includes(fd.templateId)) setTemplateId(fd.templateId as TemplateId);
+          if (typeof fd.templateId === "string" && ["clasica", "ats", "folio", "moderna", "elegante", "coqueta", "ejecutiva"].includes(fd.templateId)) setTemplateId(fd.templateId as TemplateId);
           if (typeof fd.accentColor === "string") setAccentColor(fd.accentColor);
         }
         setCvActivoId(cvId);

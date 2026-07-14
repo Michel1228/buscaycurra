@@ -12,8 +12,9 @@ import { generarCVHTML_Folio } from "./cv-template-folio";
 import { generarCVHTML_Moderna } from "./cv-template-moderna";
 import { generarCVHTML_Elegante } from "./cv-template-elegante";
 import { generarCVHTML_Coqueta } from "./cv-template-coqueta";
+import { generarCVHTML_Ejecutiva } from "./cv-template-ejecutiva";
 
-export type TemplateId = "clasica" | "ats" | "folio" | "moderna" | "elegante" | "coqueta";
+export type TemplateId = "clasica" | "ats" | "folio" | "moderna" | "elegante" | "coqueta" | "ejecutiva";
 
 export interface PlantillaInfo {
   id: TemplateId;
@@ -25,6 +26,13 @@ export interface PlantillaInfo {
 }
 
 export const PLANTILLAS: Record<TemplateId, PlantillaInfo> = {
+  ejecutiva: {
+    id: "ejecutiva",
+    nombre: "Ejecutiva",
+    descripcion: "Estilo revista: foto en arco, nombre en serif elegante y tono pastel. Refinada, para marketing, comercial, administración y diseño.",
+    usaColor: true,
+    generar: generarCVHTML_Ejecutiva,
+  },
   clasica: {
     id: "clasica",
     nombre: "Clásica",
@@ -71,10 +79,11 @@ export const PLANTILLAS: Record<TemplateId, PlantillaInfo> = {
 
 // Orden de aparición en el selector (visuales primero, ATS al final)
 export const LISTA_PLANTILLAS: PlantillaInfo[] = [
-  PLANTILLAS.clasica,
-  PLANTILLAS.moderna,
-  PLANTILLAS.elegante,
+  PLANTILLAS.ejecutiva,
   PLANTILLAS.coqueta,
+  PLANTILLAS.elegante,
+  PLANTILLAS.moderna,
+  PLANTILLAS.clasica,
   PLANTILLAS.folio,
   PLANTILLAS.ats,
 ];
