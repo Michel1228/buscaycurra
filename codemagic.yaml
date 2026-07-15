@@ -31,25 +31,25 @@ workflows:
           npx cap add ios --packagemanager cocoapods
       - name: Habilitar gesto iOS de volver atras (swipe back)
         script: |
-          # Guideline 4 de Apple: activar el gesto nativo de deslizar desde el borde
-          # izquierdo para volver atras. Se hace subclasificando CAPBridgeViewController
-          # y activando allowsBackForwardNavigationGestures en el WKWebView.
-          # El proyecto iOS se regenera en cada build (rm -rf ios), por eso se parchea aqui.
-          printf '%s\n' \
-            'import UIKit' \
-            'import Capacitor' \
-            '' \
-            'class MainViewController: CAPBridgeViewController {' \
-            '    override func viewDidLoad() {' \
-            '        super.viewDidLoad()' \
-            '        webView?.allowsBackForwardNavigationGestures = true' \
-            '    }' \
-            '}' \
-            > ios/App/App/MainViewController.swift
-          # Apuntar el view controller raiz del storyboard a nuestra subclase
-          perl -0pi -e 's/customClass="CAPBridgeViewController" customModule="Capacitor"/customClass="MainViewController" customModule="App" customModuleProvider="target"/' ios/App/App/Base.lproj/Main.storyboard
-          echo "— Verificacion del parche del storyboard —"
-          grep -n "MainViewController" ios/App/App/Base.lproj/Main.storyboard
+          # Guideline 4 de Apple: activar el gesto de deslizar desde el borde para volver.
+          #
+          # ⚠️ LECCION (builds 18 y 19 rechazadas por pantalla en blanco): NO crear un
+          # MainViewController.swift nuevo + parche del storyboard. El .swift suelto no se
+          # registra en project.pbxproj, Xcode no lo compila, el storyboard apunta a una
+          # clase inexistente y el arranque queda SIN WebView → pantalla en blanco eterna
+          # (cero peticiones al servidor; verificado en los logs de Traefik: el iPad del
+          # revisor nunca pidio "/"). La build 17, sin este parche, arrancaba bien.
+          #
+          # Enfoque seguro: inyectar el gesto en AppDelegate.swift, que YA forma parte del
+          # proyecto Xcode. Si la inyeccion rompiera la sintaxis, la build FALLA visible en
+          # Codemagic (error de compilacion) en vez de empaquetar una app rota. En runtime
+          # es un encadenado opcional: si algo no casa, simplemente no activa el gesto.
+          AD="ios/App/App/AppDelegate.swift"
+          perl -0pi -e 's/(func application\(_ application: UIApplication, didFinishLaunchingWithOptions[^\{]*\{)/$1\n        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {\n            (self.window?.rootViewController as? CAPBridgeViewController)?.webView?.allowsBackForwardNavigationGestures = true\n        }/' "$AD"
+          echo "— Verificacion de la inyeccion en AppDelegate —"
+          grep -n "allowsBackForwardNavigationGestures" "$AD" || { echo "AVISO: no se pudo inyectar el gesto (se continua SIN gesto, la app arranca igual)"; }
+          echo "— El storyboard queda de serie (CAPBridgeViewController) —"
+          grep -n "CAPBridgeViewController" ios/App/App/Base.lproj/Main.storyboard
       - name: Generar iconos nativos iOS
         script: npx @capacitor/assets generate --ios
       - name: Instalar CocoaPods
