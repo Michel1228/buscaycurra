@@ -40,3 +40,6 @@ scripts/subir-cv-demo.mjs
 .env.local.bak
 .env.local.backup.*
 .env.local.bak*
+
+# Capturas y scripts de QA archivados
+qa-archivo/
