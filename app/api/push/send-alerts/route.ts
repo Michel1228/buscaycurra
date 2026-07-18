@@ -234,7 +234,56 @@ export async function GET(request: NextRequest) {
       procesadas++;
 
       // Use pre-fetched results from batch query
-      const jobsResult = jobsMap.get(alertaIdx);
+      let jobsResult = jobsMap.get(alertaIdx);
+      let esInventario = false;
+
+      // ── Fallback de INVENTARIO VIGENTE ──────────────────────────────────
+      // El filtro "solo ofertas nuevas desde la última pasada" casi nunca
+      // encontraba nada (ventana de 2-3h) mientras miles de ofertas ACTIVAS
+      // que encajan con la alerta dormían en la BD. Si no hay nuevas y la
+      // alerta lleva >24h sin recibir nada, se envían hasta 3 ofertas activas
+      // del inventario que el usuario NO haya recibido antes (alert_sent_jobs).
+      // Cadencia: máx. 1 aviso de inventario por alerta y día. Sin engaños:
+      // el texto dice "ofertas activas", no "nuevas".
+      if (!jobsResult || jobsResult.length === 0) {
+        const hace24h = Date.now() - 24 * 3600 * 1000;
+        const elegible = !alerta.last_sent_at || alerta.last_sent_at.getTime() < hace24h;
+        if (elegible) {
+          try {
+            const kw = `%${alerta.keyword.toLowerCase()}%`;
+            const invParams: string[] = [kw, alerta.user_id];
+            let invGeo = "";
+            if (alerta.location) {
+              const locNorm = alerta.location.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "");
+              const pats = [`%${locNorm}%`, ...getCiudadPatterns(alerta.location).map((c) => `%${c}%`)];
+              const partes: string[] = [];
+              for (const p of pats) {
+                invParams.push(p);
+                partes.push(`LOWER(city) LIKE $${invParams.length} OR LOWER(province) LIKE $${invParams.length}`);
+              }
+              invGeo = `AND (${partes.join(" OR ")})`;
+            }
+            const inv = await pool.query<{ id: string; title: string; company: string; city: string; sourceUrl: string }>(
+              `SELECT id, title, company, city, "sourceUrl"
+               FROM "JobListing"
+               WHERE "isActive" = true
+                 AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
+                 ${invGeo}
+                 AND id NOT IN (SELECT job_id FROM alert_sent_jobs WHERE user_id = $2)
+               ORDER BY "createdAt" DESC
+               LIMIT 3`,
+              invParams
+            );
+            if (inv.rows.length > 0) {
+              jobsResult = inv.rows;
+              esInventario = true;
+            }
+          } catch (invErr) {
+            console.error("[send-alerts] Fallback inventario falló:", (invErr as Error).message);
+          }
+        }
+      }
+
       if (!jobsResult || jobsResult.length === 0) {
         await pool.query(`UPDATE job_alerts SET last_sent_at = NOW() WHERE id = $1`, [alerta.id]);
         continue;
@@ -242,8 +291,22 @@ export async function GET(request: NextRequest) {
 
       const total = jobsResult.length;
       const ejemplo = jobsResult[0];
-      const titulo = `${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""} para ti`;
+      const titulo = esInventario
+        ? `${total} oferta${total > 1 ? "s" : ""} activa${total > 1 ? "s" : ""} que encaja${total > 1 ? "n" : ""} contigo`
+        : `${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""} para ti`;
       const cuerpo = `${ejemplo.title} en ${ejemplo.company}${ejemplo.city ? ` · ${ejemplo.city}` : ""}`;
+
+      // Registrar TODO lo enviado en la tabla de deduplicación (nuevas e inventario):
+      // garantiza que ninguna oferta se repite jamás para el mismo usuario.
+      try {
+        for (const j of jobsResult) {
+          await pool.query(
+            `INSERT INTO alert_sent_jobs (user_id, job_id) VALUES ($1, $2)
+             ON CONFLICT (user_id, job_id) DO NOTHING`,
+            [alerta.user_id, j.id]
+          );
+        }
+      } catch { /* la tabla puede no existir en entornos antiguos */ }
 
       // 3. Push notification (batched lookup)
       const userSubs = subsMap.get(alerta.user_id) || [];
