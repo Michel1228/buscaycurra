@@ -20,6 +20,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { getAdzunaKey, getJoobleKey, getCareerjetKey, reportFailure } from "./api-pool";
 
 export interface OfertaReal {
   id: string;
@@ -228,18 +229,24 @@ async function buscarEnDB(puesto: string, ciudad: string, limit = 100): Promise<
 // API 1: JOOBLE — 162.000+ ofertas, agrega InfoJobs + Indeed + locales
 // ═══════════════════════════════════════════════════════════════════════════
 async function buscarJooble(puesto: string, ubicacion: string, limit = 50): Promise<OfertaReal[]> {
-  const apiKey = process.env.JOOBLE_API_KEY;
-  if (!apiKey) { console.warn("[Jooble] No API key"); return []; }
+  // Pool con rotación de claves + circuit breaker: un 429/403 pausa esa clave 1h
+  // en vez de seguir machacando la API hasta el baneo.
+  const pooled = await getJoobleKey();
+  if (!pooled) { console.warn("[Jooble] Sin claves disponibles (pool agotado o sin configurar)"); return []; }
 
   try {
-    const res = await fetch(`https://jooble.org/api/${apiKey}`, {
+    const res = await fetch(`https://jooble.org/api/${pooled.key}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ keywords: puesto, location: ubicacion, page: 1 }),
       signal: AbortSignal.timeout(12000),
     });
 
-    if (!res.ok) { console.warn(`[Jooble] HTTP ${res.status}`); return []; }
+    if (!res.ok) {
+      console.warn(`[Jooble] HTTP ${res.status}`);
+      await reportFailure("jooble", pooled.idx, res.status);
+      return [];
+    }
 
     const data = await res.json();
     const jobs = data.jobs || [];
@@ -265,17 +272,20 @@ async function buscarJooble(puesto: string, ubicacion: string, limit = 50): Prom
 // API 2: ADZUNA — Agregador multi-bolsa
 // ═══════════════════════════════════════════════════════════════════════════
 async function buscarAdzuna(puesto: string, ubicacion: string, limit = 50): Promise<OfertaReal[]> {
-  const appId = process.env.ADZUNA_APP_ID;
-  const apiKey = process.env.ADZUNA_APP_KEY;
-  if (!appId || !apiKey) { console.warn("[Adzuna] No credentials"); return []; }
+  const pooled = await getAdzunaKey();
+  if (!pooled) { console.warn("[Adzuna] Sin claves disponibles (pool agotado o sin configurar)"); return []; }
 
   try {
     const where = encodeURIComponent(ubicacion);
     const what = encodeURIComponent(puesto);
-    const url = `https://api.adzuna.com/v1/api/jobs/es/search/1?app_id=${appId}&app_key=${apiKey}&results_per_page=${limit}&what=${what}&where=${where}&content-type=application/json`;
+    const url = `https://api.adzuna.com/v1/api/jobs/es/search/1?app_id=${pooled.id}&app_key=${pooled.key}&results_per_page=${limit}&what=${what}&where=${where}&content-type=application/json`;
 
     const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
-    if (!res.ok) { console.warn(`[Adzuna] HTTP ${res.status}`); return []; }
+    if (!res.ok) {
+      console.warn(`[Adzuna] HTTP ${res.status}`);
+      await reportFailure("adzuna", pooled.idx, res.status);
+      return [];
+    }
 
     const data = await res.json();
     const results = data.results || [];
@@ -311,11 +321,11 @@ async function buscarAdzuna(puesto: string, ubicacion: string, limit = 50): Prom
 // API 3: CAREERJET — Red global de empleo
 // ═══════════════════════════════════════════════════════════════════════════
 async function buscarCareerjet(puesto: string, ubicacion: string, limit = 50): Promise<OfertaReal[]> {
-  const apiKey = process.env.CAREERJET_API_KEY;
-  if (!apiKey) { console.warn("[Careerjet] No API key"); return []; }
+  const pooled = await getCareerjetKey();
+  if (!pooled) { console.warn("[Careerjet] Sin claves disponibles (pool agotado o sin configurar)"); return []; }
 
   try {
-    const auth = Buffer.from(`${apiKey}:`).toString("base64");
+    const auth = Buffer.from(`${pooled.key}:`).toString("base64");
     const url = `https://search.api.careerjet.net/v4/query?locale_code=es_ES&keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ubicacion)}&page_size=${limit}&page=1&sort=relevance&user_ip=187.124.37.183&user_agent=BuscayCurra/1.0`;
 
     const res = await fetch(url, {
@@ -323,7 +333,11 @@ async function buscarCareerjet(puesto: string, ubicacion: string, limit = 50): P
       signal: AbortSignal.timeout(12000),
     });
 
-    if (!res.ok) { console.warn(`[Careerjet] HTTP ${res.status}`); return []; }
+    if (!res.ok) {
+      console.warn(`[Careerjet] HTTP ${res.status}`);
+      await reportFailure("careerjet", pooled.idx, res.status);
+      return [];
+    }
 
     const data = await res.json();
     if (data.type === "ERROR") { console.warn(`[Careerjet] API Error: ${data.error}`); return []; }
