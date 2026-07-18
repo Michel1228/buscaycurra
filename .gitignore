@@ -43,3 +43,7 @@ scripts/subir-cv-demo.mjs
 
 # Capturas y scripts de QA archivados
 qa-archivo/
+
+# Grafo de conocimiento de graphify
+graphify-out/
+.graphify*
