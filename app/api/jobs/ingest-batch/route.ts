@@ -5,13 +5,14 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { upsertJobsForSync } from "@/lib/job-search/sync-worker";
+import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-sync-secret");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!secretIguales(secret, process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

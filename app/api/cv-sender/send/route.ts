@@ -22,6 +22,7 @@ import { scheduleCV, getNextBusinessHour } from "@/lib/cv-sender/scheduler";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { addCVJob } from "@/lib/cv-sender/queue";
 import { canSendToCompany } from "@/lib/cv-sender/tracker";
+import { secretIguales } from "@/lib/secret-compare";
 
 // ─── Programa empresas adicionales en background para "cada4días" ─────────────
 async function programarEmpresasAdicionales(opts: {
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
     let userEmail: string | undefined;
 
     // 🔒 Ruta A: Llamada interna desde agente/cron (x-sync-secret + x-user-id)
-    if (syncSecret && internalUserId && syncSecret === process.env.ADMIN_SECRET) {
+    if (syncSecret && internalUserId && secretIguales(syncSecret, process.env.ADMIN_SECRET)) {
       userId = internalUserId;
       // Obtener email desde BD para el lookup de CV
       const supabaseAdminLookup = createClient(

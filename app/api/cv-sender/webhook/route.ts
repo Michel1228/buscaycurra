@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendPushNotification } from "@/lib/web-push";
 import { enviarWhatsApp } from "@/lib/whatsapp";
+import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ async function enviarPushAlUsuario(
 export async function POST(request: NextRequest) {
   // Verificar secret interno (el worker lo envía en cada llamada)
   const secret = request.headers.get("x-webhook-secret");
-  if (!secret || secret !== process.env.WEBHOOK_SECRET) {
+  if (!secret || !secretIguales(secret, process.env.WEBHOOK_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { indexarOfertas } from "@/lib/job-search/db-indexer";
+import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as { secret?: string; maxCombinaciones?: number };
 
-    if (body.secret !== process.env.ADMIN_SECRET) {
+    if (!secretIguales(body.secret, process.env.ADMIN_SECRET)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
 // GET para ver cuántas ofertas hay en la BD
 export async function GET(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get("secret");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!secretIguales(secret, process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

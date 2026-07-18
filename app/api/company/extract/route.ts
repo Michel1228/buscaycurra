@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { buscarEmpresaGooglePlaces, inferirSector, type GooglePlaceResult } from "@/lib/google-places";
 import { extraerInfoEmpresa } from "@/lib/company-extractor";
 import { getUserId } from "@/lib/auth-server";
+import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
 
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
     // público → Google Places de pago + scraping de webs disparables en bucle
     // por un anónimo (factura real + tráfico saliente).
     const internalSecret = request.headers.get("x-sync-secret");
-    const isInternal = !!internalSecret && !!process.env.ADMIN_SECRET && internalSecret === process.env.ADMIN_SECRET;
+    const isInternal = !!internalSecret && !!process.env.ADMIN_SECRET && secretIguales(internalSecret, process.env.ADMIN_SECRET);
     if (!isInternal && !(await getUserId(request))) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }

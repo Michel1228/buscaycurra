@@ -29,6 +29,7 @@ import {
   TOTAL_COMBINACIONES,
 } from "@/lib/job-search/bulk-indexer";
 import { createClient } from "@supabase/supabase-js";
+import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
       limit?: number;
     };
 
-    if (body.secret !== process.env.ADMIN_SECRET) {
+    if (!secretIguales(body.secret, process.env.ADMIN_SECRET)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
 // GET: estado actual
 export async function GET(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get("secret");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!secretIguales(secret, process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

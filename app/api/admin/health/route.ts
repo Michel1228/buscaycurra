@@ -5,12 +5,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPoolStatus } from "@/lib/job-search/api-pool";
 import { getPool } from "@/lib/db";
+import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("x-admin-secret");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!secretIguales(secret, process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

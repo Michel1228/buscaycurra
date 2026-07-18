@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -29,7 +30,7 @@ function slugify(text: string): string {
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-sync-secret");
-  if (!secret || secret !== process.env.ADMIN_SECRET) {
+  if (!secret || !secretIguales(secret, process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

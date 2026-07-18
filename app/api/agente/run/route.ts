@@ -14,13 +14,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { buscarOfertasReales } from "@/lib/job-search/real-search";
 import type { OfertaReal } from "@/lib/job-search/real-search";
+import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-sync-secret");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!secretIguales(secret, process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

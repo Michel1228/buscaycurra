@@ -9,11 +9,12 @@
 
 import { NextResponse } from "next/server";
 import { syncArbeitsagentur } from "@/lib/job-search/arbeitsagentur";
+import { secretIguales } from "@/lib/secret-compare";
 
 export async function POST(req: Request) {
   const url = new URL(req.url);
   const secret = req.headers.get("x-sync-secret") ?? url.searchParams.get("secret");
-  if (secret !== process.env.ADMIN_SECRET) {
+  if (!secretIguales(secret, process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

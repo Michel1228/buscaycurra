@@ -949,6 +949,9 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
 /** Formatea **bold** y _italic_ en el texto de Guzzi */
 function formatGusiText(text: string): string {
   return text
+    // Títulos markdown (#, ##, ###...): el chat no los renderiza — convertir a negrita
+    // en vez de mostrar las almohadillas sueltas (detectado en QA integral)
+    .replace(/^#{1,4}\s*(.+)$/gm, '<strong style="color:#f1f5f9;font-weight:600">$1</strong>')
     .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#f1f5f9;font-weight:600">$1</strong>')
     .replace(/_(.+?)_/g, '<em>$1</em>')
     .replace(/\n/g, '<br/>');

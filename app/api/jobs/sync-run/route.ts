@@ -7,13 +7,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { indexarBulkJooble, indexarBulkCareerjet } from "@/lib/job-search/bulk-indexer";
+import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 90;
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-sync-secret");
-  if (!secret || secret !== process.env.ADMIN_SECRET) {
+  if (!secret || !secretIguales(secret, process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

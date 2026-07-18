@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
           console.error("[revenuecat/webhook] PRODUCT_CHANGE con producto no reconocido:", event.new_product_id);
           break;
         }
-        await supabaseAdmin
+        const { error: cambioError } = await supabaseAdmin
           .from("profiles")
           .update({
             plan: nuevoPlan,
@@ -151,6 +151,12 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           })
           .eq("id", userId);
+        if (cambioError) {
+          // 500 → RevenueCat reintenta: si no, el usuario pagó el upgrade pero
+          // se quedaría con el plan antiguo en nuestra BD.
+          console.error("[revenuecat/webhook] Error en PRODUCT_CHANGE:", cambioError.message);
+          return NextResponse.json({ error: "Error al cambiar el plan." }, { status: 500 });
+        }
         console.log(`[revenuecat/webhook] Plan cambiado a '${nuevoPlan}' para ${userId}`);
         break;
       }
@@ -162,7 +168,7 @@ export async function POST(request: NextRequest) {
       case "EXPIRATION": {
         // Solo resetear si el plan vigente proviene de Apple IAP. Si el usuario
         // migró a Stripe, un EXPIRATION residual de Apple no debe quitarle acceso.
-        await supabaseAdmin
+        const { error: expError } = await supabaseAdmin
           .from("profiles")
           .update({
             plan: "free",
@@ -171,6 +177,12 @@ export async function POST(request: NextRequest) {
           })
           .eq("id", userId)
           .eq("plan_source", "revenuecat");
+        if (expError) {
+          // 500 → reintento. Mientras tanto el usuario conserva acceso (dirección
+          // segura: mejor unos minutos de más que cobrar y cortar por error nuestro).
+          console.error("[revenuecat/webhook] Error en EXPIRATION:", expError.message);
+          return NextResponse.json({ error: "Error al expirar el plan." }, { status: 500 });
+        }
         console.log(`[revenuecat/webhook] Suscripción expirada — plan 'free' para ${userId}`);
         break;
       }
