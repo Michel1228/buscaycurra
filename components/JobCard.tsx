@@ -70,6 +70,41 @@ export default function JobCard({
   const [enviando, setEnviando] = useState(false);
   const [estadoEnvio, setEstadoEnvio] = useState<"idle" | "ok" | "sin-email">("idle");
 
+  // ── Score ATS (encaje profundo con IA) ──
+  const [ats, setAts] = useState<{ score: number; resumen: string; faltan: string[]; consejos: string[] } | null>(null);
+  const [atsCargando, setAtsCargando] = useState(false);
+  const [atsError, setAtsError] = useState("");
+
+  async function analizarEncaje(e: React.MouseEvent) {
+    e.preventDefault();
+    if (atsCargando) return;
+    if (ats) { setAts(null); return; } // segundo clic: plegar
+    setAtsCargando(true);
+    setAtsError("");
+    try {
+      const supabase = getSupabaseBrowser();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = "/auth/login"; return; }
+      const res = await fetch("/api/cv/ats-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+        body: JSON.stringify({ titulo, empresa, descripcion }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAts(data);
+      } else if (data.error === "sin-cv") {
+        setAtsError("Primero crea tu CV en la sección Currículum para analizar el encaje.");
+      } else {
+        setAtsError(data.error || "No se pudo analizar. Inténtalo de nuevo.");
+      }
+    } catch {
+      setAtsError("Error de conexión.");
+    } finally {
+      setAtsCargando(false);
+    }
+  }
+
   async function enviarCV(e: React.MouseEvent) {
     e.preventDefault();
     if (enviando || estadoEnvio === "ok") return;
@@ -178,6 +213,47 @@ export default function JobCard({
           <p className="text-[11px] mt-2 line-clamp-2 leading-relaxed" style={{ color: "#9a9378" }}>{descripcion}</p>
         )}
       </div>
+
+      {/* ── Panel Score ATS ── */}
+      <button onClick={analizarEncaje} disabled={atsCargando}
+        className="text-left text-[11px] font-semibold transition hover:opacity-80 disabled:opacity-50"
+        style={{ color: "#f0c040" }}>
+        {atsCargando ? "🎯 Analizando tu encaje..." : ats ? "🎯 Ocultar análisis" : "🎯 ¿Encajo en esta oferta? Análisis con IA"}
+      </button>
+      {atsError && (
+        <p className="text-[11px]" style={{ color: "#e07850" }}>{atsError}</p>
+      )}
+      {ats && (
+        <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(240,192,64,0.05)", border: "1px solid rgba(240,192,64,0.15)" }}>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold" style={{ color: colorMatch(ats.score) }}>{ats.score}%</span>
+            <span className="text-[11px] leading-snug" style={{ color: "#b0a890" }}>{ats.resumen}</span>
+          </div>
+          {ats.faltan.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold mb-1" style={{ color: "#e07850" }}>Le falta a tu CV:</p>
+              <div className="flex flex-wrap gap-1">
+                {ats.faltan.map((f, i) => (
+                  <span key={i} className="text-[10px] px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(224,120,80,0.1)", border: "1px solid rgba(224,120,80,0.25)", color: "#e07850" }}>{f}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {ats.consejos.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold mb-1" style={{ color: "#7ed56f" }}>Para mejorar tu encaje:</p>
+              <ul className="space-y-1">
+                {ats.consejos.map((c, i) => (
+                  <li key={i} className="text-[10px] leading-relaxed pl-3 relative" style={{ color: "#b0a890" }}>
+                    <span className="absolute left-0" style={{ color: "#7ed56f" }}>✓</span>{c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Aviso sin email */}
       {estadoEnvio === "sin-email" && (
