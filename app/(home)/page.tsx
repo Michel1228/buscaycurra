@@ -586,7 +586,7 @@ export default async function LandingPage() {
           <div className="max-w-2xl mx-auto">
             <div className="p-6 rounded-2xl" style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.12)" }}>
               <h2 className="text-lg font-bold mb-2 text-center" style={{ color: "#f1f5f9" }}>
-                InfoJobs y LinkedIn son del pasado
+                Los portales de empleo son del pasado
               </h2>
               <p className="text-center text-xs mb-5" style={{ color: "#64748b" }}>
                 Tablones de anuncios del 2005 vs. agente IA del 2025.
@@ -903,7 +903,7 @@ export default async function LandingPage() {
               </div>
               <p className="text-[11px] leading-relaxed max-w-xs" style={{ color: "#6b7280" }}>
                 El primer agente IA que busca trabajo por ti. {PAISES} países, 24/7, cero spam.
-                La alternativa real a InfoJobs, LinkedIn e Indeed.
+                Tu agente personal de búsqueda de empleo.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-8">

@@ -19,7 +19,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import type { PurchasesOfferings } from "@revenuecat/purchases-capacitor";
 import { isNativeIOS } from "@/lib/utils/platform";
-import { PACKAGE_IDS, type PlanIAP } from "@/lib/revenuecat";
+import { PACKAGE_IDS, PRODUCT_IDS, type PlanIAP } from "@/lib/revenuecat";
 
 export type { PlanIAP };
 
@@ -107,23 +107,36 @@ async function comprarPlanImpl(
   try {
     const { Purchases } = await import("@revenuecat/purchases-capacitor");
     const offerings = estado.offerings ?? (await Purchases.getOfferings());
-    const pkg = offerings.current?.availablePackages.find(
-      (p) => p.identifier === PACKAGE_IDS[plan]
-    );
+
+    // Buscar el package: primero en el offering "current", y si no, en CUALQUIER
+    // offering (por si el offering no está marcado como current en el dashboard) o
+    // por el Product ID directo. Evita el falso "no se pudo cargar el plan".
+    const productoId = PRODUCT_IDS[plan];
+    const todosPkgs = [
+      ...(offerings.current?.availablePackages ?? []),
+      ...Object.values(offerings.all ?? {}).flatMap((o) => o.availablePackages ?? []),
+    ];
+    const pkg =
+      todosPkgs.find((p) => p.identifier === PACKAGE_IDS[plan]) ??
+      todosPkgs.find((p) => p.product?.identifier === productoId);
+
     if (!pkg) {
-      setEstado({ comprando: null, error: "No se pudo cargar la información del plan. Inténtalo de nuevo." });
-      return { ok: false, error: "No se pudo cargar la información del plan." };
+      const msg = "Este plan no está disponible ahora mismo. Inténtalo de nuevo en unos minutos.";
+      setEstado({ comprando: null, error: msg });
+      return { ok: false, error: msg };
     }
 
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
-    const activo = !!customerInfo.entitlements.active[plan];
     setEstado({ comprando: null });
 
-    if (!activo) {
-      const msg = "La compra no se pudo verificar. Si se te cobró, usa 'Restaurar compras'.";
-      setEstado({ error: msg });
-      return { ok: false, error: msg };
-    }
+    // Si purchasePackage NO lanza excepción, StoreKit confirmó el pago. La activación
+    // del plan la hace el webhook server-side; NO bloqueamos con un error si el
+    // entitlement no casa exactamente (era la causa de "error al procesar la compra"
+    // aunque el cobro fuera bien — Apple 2.1b). Consideramos éxito y dejamos que el
+    // componente refresque el plan desde Supabase (polling).
+    const algunEntitlement = Object.keys(customerInfo.entitlements.active).length > 0;
+    const productoActivo = customerInfo.activeSubscriptions?.includes(productoId);
+    void algunEntitlement; void productoActivo; // señales informativas; no se usan para fallar
     return { ok: true };
   } catch (e) {
     // En el plugin de Capacitor, la cancelación del usuario llega como userCancelled.

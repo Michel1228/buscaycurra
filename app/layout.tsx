@@ -13,7 +13,7 @@ import { RefreshCw } from "lucide-react";
 export const metadata: Metadata = {
   title: `BuscayCurra — Agente IA que busca trabajo por ti | ${NUM_PAISES} países`,
   description:
-    `Deja de enviar CVs al vacío. Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7. Busca trabajo de au pair, live-in nanny, o cualquier sector. La alternativa real a InfoJobs, LinkedIn e Indeed.`,
+    `Deja de enviar CVs al vacío. Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7. Busca trabajo de au pair, live-in nanny, o cualquier sector. Tu agente personal de búsqueda de empleo.`,
   keywords: [
     "buscar trabajo",
     "empleo",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "BuscayCurra — El agente IA que busca trabajo por ti",
     description:
-      `Guzzi busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7. Deja de enviar CVs al vacío. La alternativa a InfoJobs y LinkedIn.`,
+      `Guzzi busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7. Deja de enviar CVs al vacío. Tu agente personal de búsqueda de empleo.`,
     url: "https://buscaycurra.es",
     locale: "es_ES",
     type: "website",
@@ -150,7 +150,7 @@ export default function RootLayout({
               name: "BuscayCurra",
               url: "https://buscaycurra.es",
               description:
-                `Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7. La alternativa real a InfoJobs, LinkedIn e Indeed.`,
+                `Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7. Tu agente personal de búsqueda de empleo.`,
               applicationCategory: "BusinessApplication",
               operatingSystem: "Web, Android, iOS",
               offers: {

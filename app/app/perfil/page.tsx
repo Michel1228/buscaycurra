@@ -190,10 +190,11 @@ export default function PerfilPage() {
   }
 
   // Gestionar la suscripción activa: Stripe → portal web; RevenueCat → Ajustes de Apple.
+  // En iOS nativo JAMÁS abrir el portal de Stripe (Apple 3.1.1: mecanismo externo).
   function gestionarSuscripcion() {
     if (planSource === "revenuecat") {
       window.location.href = "itms-apps://apps.apple.com/account/subscriptions";
-    } else {
+    } else if (!iosNativo) {
       void irAPortal();
     }
   }
@@ -437,8 +438,12 @@ export default function PerfilPage() {
                 <p className="text-xs" style={{ color: "#94a3b8" }}>{info.desc}</p>
               </div>
 
-              {/* Gestionar suscripción — Stripe (web) o App Store (iOS) según origen */}
-              {planActual !== "free" && (
+              {/* Gestionar suscripción — Stripe (web) o App Store (iOS) según origen.
+                  ⚠️ Apple 3.1.1 (rechazo build 20): en la app iOS NUNCA se puede enlazar
+                  al portal de Stripe (mecanismo de pago externo). En iOS nativo el botón
+                  solo aparece si la suscripción es de Apple (RevenueCat → itms-apps,
+                  permitido); las de Stripe se gestionan desde la web. */}
+              {planActual !== "free" && !(iosNativo && planSource !== "revenuecat") && (
                 <div className="mt-4">
                   <button
                     onClick={() => gestionarSuscripcion()}
