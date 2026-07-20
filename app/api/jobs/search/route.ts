@@ -91,7 +91,10 @@ export async function GET(request: NextRequest) {
   try {
     const pool = getPool();
     const params: (string | boolean | number)[] = [true];
-    const conditions: string[] = ['"isActive" = $1'];
+    // Solo ofertas vivas: isActive Y no caducadas. Sin este guard de expiresAt la
+    // búsqueda servía ~1,9M ofertas caducadas (expiresAt en el pasado) como si
+    // fueran válidas → la app parecía desfasada. NULL = sin fecha conocida, se deja pasar.
+    const conditions: string[] = ['"isActive" = $1', '("expiresAt" > NOW() OR "expiresAt" IS NULL)'];
     let idx = 2;
 
     // Keyword: si hay categoria, la categoria YA filtra — el keyword es redundante
@@ -240,7 +243,7 @@ export async function GET(request: NextRequest) {
     // Fallback ciudad: NO aplicar si hay categoria
     if (keyword && cityParts && dbResult.rows.length < 10 && !categoria) {
       const locCount = await pool.query(
-        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})`,
+        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})`,
         [`%${cityParts}%`]
       );
       const locTotal = parseInt(locCount.rows[0].count);
@@ -248,7 +251,7 @@ export async function GET(request: NextRequest) {
         const locOffset = (page - 1) * limit;
         const locResult = await pool.query(
           `SELECT id, title, company, city, province, salary, description, "sourceUrl", "sourceName", "scrapedAt"
-           FROM "JobListing" WHERE "isActive" = true AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
+           FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
            ORDER BY
              CASE WHEN title ILIKE $2 THEN 0 ELSE 1 END,
              CASE WHEN "scrapedAt" > NOW() - INTERVAL '7 days' THEN 0

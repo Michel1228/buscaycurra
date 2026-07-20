@@ -356,7 +356,14 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, count
       const result = await pool.query(
         `INSERT INTO "JobListing" (id, title, company, description, sector, city, salary, "sourceUrl", "sourceName", "isActive", "scrapedAt", "createdAt", "expiresAt", country, categoria)
          VALUES ($1, $2, $3, $4, $5::"JobSector", $6, $7, $8, $9, true, NOW(), NOW(), $10, $11, $12)
-         ON CONFLICT (id) DO UPDATE SET 
+         ON CONFLICT (id) DO UPDATE SET
+           "scrapedAt" = NOW(),
+           "expiresAt" = EXCLUDED."expiresAt",
+           "isActive" = true,
+           title = EXCLUDED.title,
+           company = EXCLUDED.company,
+           description = EXCLUDED.description,
+           salary = EXCLUDED.salary,
            country = COALESCE("JobListing".country, EXCLUDED.country),
            categoria = COALESCE("JobListing".categoria, EXCLUDED.categoria)`,
         [id, j.title, j.company, j.description, sector, j.city, j.salary, j.url, j.source, expiresAt, country || null, categoria]

@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
 
       // Execute one UNION ALL query for all alertas
       const unionQuery = batchClauses.map((clause, i) =>
-        `(SELECT id, title, company, city, "sourceUrl", ${i} as alerta_idx FROM "JobListing" WHERE "isActive" = true AND ${clause} LIMIT 3)`
+        `(SELECT id, title, company, city, "sourceUrl", ${i} as alerta_idx FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND ${clause} LIMIT 3)`
       ).join(" UNION ALL ");
 
       try {
@@ -267,6 +267,7 @@ export async function GET(request: NextRequest) {
               `SELECT id, title, company, city, "sourceUrl"
                FROM "JobListing"
                WHERE "isActive" = true
+                 AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
                  AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
                  ${invGeo}
                  AND id NOT IN (SELECT job_id FROM alert_sent_jobs WHERE user_id = $2)
