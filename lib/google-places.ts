@@ -104,6 +104,76 @@ export async function buscarEmpresaGooglePlaces(
 }
 
 /**
+ * Búsqueda por TEXTO (Text Search): devuelve hasta 20 sitios, frente a los ~1-5
+ * de Find Place. Es la adecuada cuando quieres MUCHOS resultados de una zona
+ * ("ETT en Madrid", "bares en Zaragoza"), no un sitio concreto.
+ *
+ * Text Search no trae web ni teléfono, así que se piden los detalles de los
+ * primeros `maxDetalles` (cada Details es una llamada de pago: no subir sin motivo).
+ */
+export async function buscarEmpresasTextSearch(
+  query: string,
+  maxDetalles = 12
+): Promise<GooglePlaceResult[]> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) {
+    console.warn("[GooglePlaces] GOOGLE_PLACES_API_KEY no configurada");
+    return [];
+  }
+
+  try {
+    const url = new URL(`${PLACES_API_BASE}/textsearch/json`);
+    url.searchParams.set("query", query);
+    url.searchParams.set("key", apiKey);
+
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(9000) });
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as {
+      results?: Array<{ place_id: string }>;
+      status: string;
+    };
+    if (data.status !== "OK" || !data.results?.length) return [];
+
+    const ids = data.results.slice(0, maxDetalles).map((r) => r.place_id);
+    const detalles = await Promise.all(ids.map((id) => obtenerDetallesPlace(id, apiKey)));
+    return detalles.filter((d): d is GooglePlaceResult => d !== null);
+  } catch (err) {
+    console.warn("[GooglePlaces] TextSearch error:", (err as Error).message);
+    return [];
+  }
+}
+
+/** Detalles completos de un place_id. */
+async function obtenerDetallesPlace(
+  placeId: string,
+  apiKey: string
+): Promise<GooglePlaceResult | null> {
+  try {
+    const detailUrl = new URL(`${PLACES_API_BASE}/details/json`);
+    detailUrl.searchParams.set("place_id", placeId);
+    detailUrl.searchParams.set(
+      "fields",
+      "place_id,name,formatted_address,formatted_phone_number," +
+        "international_phone_number,website,rating,user_ratings_total," +
+        "types,opening_hours,photos,url"
+    );
+    detailUrl.searchParams.set("key", apiKey);
+
+    const detailRes = await fetch(detailUrl.toString(), { signal: AbortSignal.timeout(8000) });
+    if (!detailRes.ok) return null;
+
+    const detailData = (await detailRes.json()) as {
+      result?: GooglePlaceResult;
+      status: string;
+    };
+    return detailData.status === "OK" ? detailData.result || null : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Obtiene una foto de Google Places para una referencia de foto
  */
 export function getPlacePhotoUrl(

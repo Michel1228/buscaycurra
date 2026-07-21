@@ -235,7 +235,7 @@ Responde en español. Máximo 3 líneas.`;
               action: "object_brand_found",
               company: marcaPlace ? {
                 name: marcaPlace.name, address: marcaPlace.address,
-                phone: marcaPlace.phone, email: marcaPlace.email,
+                phone: marcaPlace.phone, email: marcaPlace.email, emailConfianza: marcaPlace.emailConfianza,
                 website: marcaPlace.website, mapsUrl: marcaPlace.mapsUrl, rating: marcaPlace.rating,
               } : undefined,
             });
@@ -264,7 +264,7 @@ Responde en español. Máximo 3 líneas.`;
             action: "object_to_sector",
             company: {
               name: sectorResult.name, address: sectorResult.address,
-              phone: sectorResult.phone, email: sectorResult.email,
+              phone: sectorResult.phone, email: sectorResult.email, emailConfianza: sectorResult.emailConfianza,
               website: sectorResult.website, mapsUrl: sectorResult.mapsUrl, rating: sectorResult.rating,
             },
           });
@@ -295,6 +295,7 @@ Responde en español. Máximo 3 líneas.`;
             address: placesResult.address,
             phone: placesResult.phone,
             email: placesResult.email,
+            emailConfianza: placesResult.emailConfianza,
             website: placesResult.website,
             mapsUrl: placesResult.mapsUrl,
             rating: placesResult.rating,
@@ -339,6 +340,7 @@ Responde en español. Máximo 3 líneas.`;
           address: placesResult.address,
           phone: placesResult.phone,
           email: placesResult.email,
+          emailConfianza: placesResult.emailConfianza,
           website: placesResult.website,
           mapsUrl: placesResult.mapsUrl,
           rating: placesResult.rating,
@@ -434,6 +436,7 @@ interface PlacesResult {
   address: string;
   phone: string;
   email: string;
+  emailConfianza?: "alta" | "media" | "baja";
   website: string;
   mapsUrl: string;
   rating: number;
@@ -545,16 +548,30 @@ async function getPlaceDetails(placeId: string, apiKey: string): Promise<PlacesR
   const r = detailsData.result;
   if (!r) return null;
 
-  // Intentar extraer email de la web (opcional, no bloqueante)
+  // Email: usar el extractor bueno (prioriza RRHH, descarta CDNs/noreply y
+  // bloquea SSRF). Antes aquí había una regex que cogía el PRIMER email del
+  // HTML — a menudo el del diseñador de la web o uno de una librería.
   let email = "";
+  let emailConfianza: "alta" | "media" | "baja" = "baja";
   if (r.website) {
     try {
-      const webRes = await fetch(r.website, { signal: AbortSignal.timeout(5000) });
-      const html = await webRes.text();
-      const emailMatch = html.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/);
-      if (emailMatch) email = emailMatch[1];
+      const { extraerInfoEmpresa } = await import("@/lib/company-extractor");
+      const { extraerDominio, generarEmails, dominioAceptaCorreo } = await import("@/lib/empresa-datos");
+      const datos = await extraerInfoEmpresa(r.website);
+
+      if (datos?.emailRrhh && !datos.emailRrhh.includes("www.")) {
+        email = datos.emailRrhh;
+        emailConfianza = "alta";
+      } else {
+        // Sin email real: proponer patrón solo si el dominio recibe correo.
+        const dominio = extraerDominio(r.website);
+        if (dominio && (await dominioAceptaCorreo(dominio))) {
+          email = generarEmails(dominio, true)[0] || "";
+          emailConfianza = "media";
+        }
+      }
     } catch {
-      // No pasa nada si no podemos sacar el email
+      // Sin email: mejor no dar nada que dar una dirección que rebota.
     }
   }
 
@@ -563,6 +580,7 @@ async function getPlaceDetails(placeId: string, apiKey: string): Promise<PlacesR
     address: r.formatted_address,
     phone: r.formatted_phone_number || "",
     email,
+    emailConfianza,
     website: r.website || "",
     mapsUrl: r.url,
     rating: r.rating || 0,
@@ -584,7 +602,12 @@ function buildCompanyReply(
   }
 
   if (company.phone) parts.push(`📞 ${company.phone}`);
-  if (company.email) parts.push(`✉️ ${company.email}`);
+  if (company.email) {
+    // Ser honesto: si el email es un patrón deducido, decirlo. Así el usuario
+    // decide si gasta un envío o prefiere llamar por teléfono.
+    const sello = company.emailConfianza === "alta" ? " ✅ verificado en su web" : " ⚠️ estimado, puede rebotar";
+    parts.push(`✉️ ${company.email}${sello}`);
+  }
   if (company.website) parts.push(`🌐 ${company.website}`);
 
   parts.push(""); // línea vacía

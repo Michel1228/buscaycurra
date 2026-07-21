@@ -23,7 +23,7 @@ interface EmpresaCompleta {
   emailRrhh: string | null;
   emailContacto: string | null;
   emailsExtraidos: string[];
-  emailConfianza?: "alta" | "baja";
+  emailConfianza?: "alta" | "media" | "baja";
   telefono: string | null;
   paginaEmpleo: string | null;
   descripcion: string | null;
@@ -32,6 +32,9 @@ interface EmpresaCompleta {
   twitter: string | null;
   instagram: string | null;
   fuente: string;
+  fotos?: string[];
+  abiertoAhora?: boolean | null;
+  horario?: string[] | null;
   googleRating?: number | null;
   googleReviews?: number | null;
   googleAddress?: string | null;
@@ -682,6 +685,29 @@ export default function EmpresasPage() {
                   )}
                 </div>
 
+                {/* Fotos del local (proxy propio: la URL de Google lleva la API key) */}
+                {!!empresaSeleccionada.fotos?.length && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                    {empresaSeleccionada.fotos.slice(0, 6).map((src, i) => (
+                      <img key={i} src={src} alt={`${empresaSeleccionada.nombre} ${i + 1}`}
+                        loading="lazy"
+                        className="h-24 w-32 shrink-0 rounded-lg object-cover"
+                        style={{ border: "1px solid #2d3142" }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Abierto ahora — útil para presentarse en persona */}
+                {empresaSeleccionada.abiertoAhora !== null && empresaSeleccionada.abiertoAhora !== undefined && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold w-fit"
+                    style={empresaSeleccionada.abiertoAhora
+                      ? { background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }
+                      : { background: "rgba(100,116,139,0.12)", color: "#94a3b8", border: "1px solid rgba(100,116,139,0.2)" }}>
+                    {empresaSeleccionada.abiertoAhora ? "🟢 Abierto ahora" : "⚪ Cerrado ahora"}
+                  </span>
+                )}
+
                 {/* Info extraída */}
                 <div className="space-y-2 text-xs">
                   {empresaSeleccionada.emailRrhh && (
@@ -693,9 +719,16 @@ export default function EmpresasPage() {
                           Verificado
                         </span>
                       )}
+                      {empresaSeleccionada.emailConfianza === "media" && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" title="No encontramos el email en su web, pero el dominio sí recibe correo"
+                          style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}>
+                          Probable
+                        </span>
+                      )}
                       {empresaSeleccionada.emailConfianza === "baja" && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}>
-                          Estimado
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" title="Dirección estimada: el dominio no tiene servidor de correo, es muy probable que rebote"
+                          style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+                          Sin verificar
                         </span>
                       )}
                     </div>
@@ -982,6 +1015,29 @@ export default function EmpresasPage() {
                   )}
                 </div>
 
+                {/* Fotos del local (proxy propio: la URL de Google lleva la API key) */}
+                {!!empresaSeleccionada.fotos?.length && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                    {empresaSeleccionada.fotos.slice(0, 6).map((src, i) => (
+                      <img key={i} src={src} alt={`${empresaSeleccionada.nombre} ${i + 1}`}
+                        loading="lazy"
+                        className="h-24 w-32 shrink-0 rounded-lg object-cover"
+                        style={{ border: "1px solid #2d3142" }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Abierto ahora — útil para presentarse en persona */}
+                {empresaSeleccionada.abiertoAhora !== null && empresaSeleccionada.abiertoAhora !== undefined && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold w-fit"
+                    style={empresaSeleccionada.abiertoAhora
+                      ? { background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }
+                      : { background: "rgba(100,116,139,0.12)", color: "#94a3b8", border: "1px solid rgba(100,116,139,0.2)" }}>
+                    {empresaSeleccionada.abiertoAhora ? "🟢 Abierto ahora" : "⚪ Cerrado ahora"}
+                  </span>
+                )}
+
                 {/* Info extraída */}
                 <div className="space-y-2 text-xs">
                   {empresaSeleccionada.emailRrhh && (
@@ -993,9 +1049,16 @@ export default function EmpresasPage() {
                           Verificado
                         </span>
                       )}
+                      {empresaSeleccionada.emailConfianza === "media" && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" title="No encontramos el email en su web, pero el dominio sí recibe correo"
+                          style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}>
+                          Probable
+                        </span>
+                      )}
                       {empresaSeleccionada.emailConfianza === "baja" && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}>
-                          Estimado
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" title="Dirección estimada: el dominio no tiene servidor de correo, es muy probable que rebote"
+                          style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+                          Sin verificar
                         </span>
                       )}
                     </div>
