@@ -61,7 +61,10 @@ export async function POST(req: NextRequest) {
   for (const city of lote) {
     for (const keyword of KEYWORDS) {
       try {
-        const r = await syncBatch({ source: "careerjet", sector: "OTRO", keyword, city });
+        // source "eures" = fetchCareerjetGlobal: usa la ciudad tal cual. NO usar
+        // "careerjet", que hardcodea location = city + " Espana" (buscaría
+        // "London Espana" y devuelve 0).
+        const r = await syncBatch({ source: "eures", sector: "OTRO", keyword, city });
         inserted += r.inserted;
         fetched += r.fetched;
       } catch { /* seguir con la siguiente combinación */ }
