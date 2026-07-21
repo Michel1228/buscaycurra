@@ -338,8 +338,17 @@ function detectCategoria(title: string): string | null {
   if (/\b(operario|operador|pe[oó]n\b|carretillero|reponedor|empaquetador|manipulador|montador|mozo\s.*almac[eé]n|producci[oó]n\b|f[aá]brica|almac[eé]n\b|log[ií]stica)\b/i.test(t)) return 'oper';
   // Au pair
   if (/\b(au\s*pair|aupair|ni[ñn]era|canguro|babysitter)\b/i.test(t)) return 'au_pair';
-  // Live-in nanny
+  // Live-in nanny (patrones fuertes)
   if (/\b(live.in.nanny|nanny.*interna|governess|nanny.*household|nanny.*full.?time|nanny.*live)\b/i.test(t)) return 'live_in_nanny';
+  // Nanny genérica: cualquier "nanny" que NO sea un puesto de oficina/admin.
+  // Antes se quedaban SIN categoría (~900 ofertas invisibles en la sección nanny).
+  // Mismas exclusiones que usa el buscador (/api/jobs/search).
+  if (/\bnanny\b/i.test(t)) {
+    const EXCL = ["administrative", "assistant", "apprentice", "teacher", "support", "coordinator",
+      "substitute", "manager", "director", "supervisor", "specialist", "officer", "receptionist",
+      "sales", "marketing", "payroll", "accountant", "clerk", "secretary", "office", "reception"];
+    if (!EXCL.some((w) => t.includes(w))) return 'live_in_nanny';
+  }
   return null;
 }
 
