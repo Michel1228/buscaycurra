@@ -15,6 +15,7 @@ import AuPairPlantilla from "@/components/AuPairPlantilla";
 import AuPairComparativaLegal from "@/components/AuPairComparativaLegal";
 import AuPairCalculadoraCostes from "@/components/AuPairCalculadoraCostes";
 import AuPairOfertasRecientes from "@/components/AuPairOfertasRecientes";
+import AlojamientoOferta from "@/components/AlojamientoOferta";
 import {
   Users, Sparkles, User, Check, Globe, Camera, Star, ClipboardList,
   Mail, FileText, Eye, Upload, Save, X, CheckCircle2,
@@ -633,6 +634,11 @@ export default function AuPairProfilePage() {
 
       {/* ── Ofertas Au Pair en vivo ── */}
       <AuPairOfertasRecientes modo={modo} />
+
+      {/* ── Alojamiento en el país de destino elegido ── */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6">
+        <AlojamientoOferta country={paisDestino} />
+      </section>
 
       {/* Formulario */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-16 space-y-6">

@@ -215,11 +215,20 @@ export default function EmigrarPage() {
   const [paisCode, setPaisCode] = useState("UK");
   const [tab, setTab] = useState<Tab>("visado");
 
-  // Cargar país del localStorage al iniciar
+  // País: primero el ?pais= de la URL (viene desde una oferta), luego localStorage.
   useEffect(() => {
-    const saved = localStorage.getItem("bc_pais");
-    if (saved && PAISES[saved]) {
-      setPaisCode(saved);
+    const params = new URLSearchParams(window.location.search);
+    const paisUrl = params.get("pais")?.toUpperCase();
+    const tabUrl = params.get("tab") as Tab | null;
+    if (paisUrl && PAISES[paisUrl]) {
+      setPaisCode(paisUrl);
+      localStorage.setItem("bc_pais", paisUrl);
+    } else {
+      const saved = localStorage.getItem("bc_pais");
+      if (saved && PAISES[saved]) setPaisCode(saved);
+    }
+    if (tabUrl && ["au-pair", "alojamiento", "visado", "programas"].includes(tabUrl)) {
+      setTab(tabUrl);
     }
   }, []);
 

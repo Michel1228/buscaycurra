@@ -57,8 +57,8 @@ export default async function DetalleOfertaPage({
   
   // Buscar en la DB local (2M+ ofertas reales), no en Supabase (17K obsoletas)
   const result = await pool.query(
-    `SELECT "id", "title", "company", "city", "sourceUrl", "sourceName", 
-            "description", "salary", "sector", "createdAt"
+    `SELECT "id", "title", "company", "city", "sourceUrl", "sourceName",
+            "description", "salary", "sector", "createdAt", "country"
      FROM "JobListing" WHERE "id" = $1`,
     [id]
   );
@@ -97,6 +97,7 @@ export default async function DetalleOfertaPage({
     email_empresa: undefined,
     sector: row.sector || "OTRO",
     fecha: row.createdAt || new Date().toISOString(),
+    country: row.country || undefined,
   };
 
   const jobPostingSchema = generarJobPostingSchema(ofertaData);

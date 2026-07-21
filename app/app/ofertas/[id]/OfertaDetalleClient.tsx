@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { esOfertaAuPair } from "@/lib/au-pair";
+import AlojamientoOferta from "@/components/AlojamientoOferta";
 import { CheckCircle2, FileText, Users, ClipboardList, Bookmark } from "lucide-react";
 
 export interface OfertaDetalle {
@@ -19,6 +20,7 @@ export interface OfertaDetalle {
   email_empresa?: string;
   sector?: string;
   fecha?: string;
+  country?: string;
 }
 
 /** Limpia nombres de fuente: EURES_ESP → EURES España, ADZUNA_ES → Adzuna */
@@ -377,6 +379,9 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
             </div>
           </div>
         )}
+
+        {/* Alojamiento en el país de destino (solo si no es España) */}
+        <AlojamientoOferta country={oferta.country} />
 
         {(oferta.sector || oferta.email_empresa) && (
           <div className="mt-4 pt-4 flex flex-wrap gap-4 text-xs" style={{ borderTop: "1px solid #2d3142", color: "#6b7280" }}>

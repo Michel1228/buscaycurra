@@ -27,12 +27,14 @@ const KEYWORDS = [
 
 // Ciudades con demanda real de au pair / nanny (familias que contratan externo).
 const CITIES = [
-  "London", "Manchester", "Birmingham", "Edinburgh", "Dublin",
-  "Paris", "Lyon", "Berlin", "Munich", "Hamburg", "Frankfurt",
-  "Amsterdam", "Rotterdam", "Zurich", "Geneva", "Vienna",
-  "Rome", "Milan", "Madrid", "Barcelona", "Stockholm",
-  "Copenhagen", "Oslo", "Brussels", "New York", "Los Angeles",
-  "Sydney", "Melbourne", "Toronto", "Vancouver",
+  "London", "Manchester", "Birmingham", "Edinburgh", "Glasgow", "Bristol", "Leeds", "Dublin", "Cork",
+  "Paris", "Lyon", "Marseille", "Nice", "Berlin", "Munich", "Hamburg", "Frankfurt", "Cologne", "Stuttgart",
+  "Amsterdam", "Rotterdam", "The Hague", "Zurich", "Geneva", "Basel", "Vienna",
+  "Rome", "Milan", "Madrid", "Barcelona", "Valencia", "Lisbon", "Porto",
+  "Stockholm", "Gothenburg", "Copenhagen", "Oslo", "Brussels", "Luxembourg",
+  "New York", "Los Angeles", "Chicago", "Boston", "San Francisco", "Washington",
+  "Sydney", "Melbourne", "Brisbane", "Perth", "Auckland",
+  "Toronto", "Vancouver", "Montreal",
 ];
 
 export async function GET() {
@@ -56,18 +58,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ done: true, inserted: 0, nextOffset: 0, totalCities: CITIES.length });
   }
 
+  // Dos fuentes para maximizar cobertura del nicho: Careerjet (source "eures" =
+  // fetchCareerjetGlobal, usa la ciudad tal cual) + Jooble. NO usar source
+  // "careerjet", que hardcodea location = city + " Espana" (buscaría "London
+  // Espana" → 0). Si Jooble no tiene API key, su rama degrada suave (try/catch).
+  const FUENTES: Array<"eures" | "jooble"> = ["eures", "jooble"];
   let inserted = 0;
   let fetched = 0;
   for (const city of lote) {
     for (const keyword of KEYWORDS) {
-      try {
-        // source "eures" = fetchCareerjetGlobal: usa la ciudad tal cual. NO usar
-        // "careerjet", que hardcodea location = city + " Espana" (buscaría
-        // "London Espana" y devuelve 0).
-        const r = await syncBatch({ source: "eures", sector: "OTRO", keyword, city });
-        inserted += r.inserted;
-        fetched += r.fetched;
-      } catch { /* seguir con la siguiente combinación */ }
+      for (const source of FUENTES) {
+        try {
+          const r = await syncBatch({ source, sector: "OTRO", keyword, city });
+          inserted += r.inserted;
+          fetched += r.fetched;
+        } catch { /* seguir con la siguiente combinación */ }
+      }
     }
   }
 
