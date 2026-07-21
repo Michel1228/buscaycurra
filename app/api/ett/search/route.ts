@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buscarEmpresasTextSearch, type GooglePlaceResult } from "@/lib/google-places";
 import { construirEmpresaDesdeGoogle, enriquecerEmpresas, type EmpresaCompleta } from "@/lib/empresa-datos";
+import { guardarEnCache } from "@/lib/empresas-cache";
 import { getUserId } from "@/lib/auth-server";
 import { secretIguales } from "@/lib/secret-compare";
 
@@ -93,6 +94,9 @@ export async function POST(request: NextRequest) {
 
     // ── 3. Email real de la web y, si no, verificación MX ──────────────
     await enriquecerEmpresas(empresas);
+
+    // ── 4. A la caché: Places es de pago, no repetir la misma ciudad ────
+    await guardarEnCache(empresas, city);
 
     // Las que tienen email comprobado primero: es donde el CV tiene recorrido.
     const peso: Record<string, number> = { alta: 0, media: 1, baja: 2 };

@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buscarEmpresaGooglePlaces } from "@/lib/google-places";
 import { construirEmpresaDesdeGoogle, enriquecerEmpresas, type EmpresaCompleta } from "@/lib/empresa-datos";
+import { buscarEnCachePorNombre, guardarEnCache } from "@/lib/empresas-cache";
 import { getUserId } from "@/lib/auth-server";
 import { secretIguales } from "@/lib/secret-compare";
 
@@ -43,7 +44,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── 1. Google Places (fuente ÚNICA de datos de empresa) ────────────────
+    // ── 1. Caché primero: Places es de pago, no preguntar dos veces lo mismo ─
+    const enCache = await buscarEnCachePorNombre(name, city);
+    if (enCache.length) {
+      console.log(`💾 ${enCache.length} empresas servidas desde caché: "${name}"`);
+      return NextResponse.json({ success: true, empresas: enCache, desdeCache: true });
+    }
+
+    // ── 2. Google Places (fuente ÚNICA de datos de empresa) ────────────────
     if (!process.env.GOOGLE_PLACES_API_KEY) {
       return NextResponse.json(
         { error: "API de Google Places no configurada" },
@@ -71,6 +79,9 @@ export async function POST(request: NextRequest) {
     // Marca cada email con su confianza para que el usuario no gaste envíos en
     // direcciones inventadas creyendo que son reales.
     await enriquecerEmpresas(empresas);
+
+    // ── 4. Guardar en caché para no volver a pagar por esta búsqueda ───────
+    await guardarEnCache(empresas, city);
 
     console.log(`✅ ${empresas.length} empresas encontradas: ${empresas.map(e => e.nombre).join(", ")}`);
 

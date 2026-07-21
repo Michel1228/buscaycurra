@@ -21,6 +21,7 @@ import { inferirSector, getPlacePhotoUrl, type GooglePlaceResult } from "@/lib/g
 export type EmailConfianza = "alta" | "media" | "baja";
 
 export interface EmpresaCompleta {
+  placeId: string;
   nombre: string;
   dominio: string | null;
   urlWeb: string | null;
@@ -103,6 +104,7 @@ export function construirEmpresaDesdeGoogle(
     .map((p) => `/api/company/foto?ref=${encodeURIComponent(p.photo_reference)}`);
 
   return {
+    placeId: gr.place_id,
     nombre: gr.name,
     dominio: dominio || null,
     urlWeb: gr.website || null,

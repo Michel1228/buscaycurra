@@ -5,18 +5,34 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import AutoSendSetup from "@/components/AutoSendSetup";
 import CVSenderDashboard from "@/components/CVSenderDashboard";
-import { Search, Building2, Mail, ClipboardList, Upload, CheckCircle2, FileText, Check, Star, type LucideIcon } from "lucide-react";
+import { Search, Building2, Mail, ClipboardList, Upload, CheckCircle2, FileText, Check, Star, MapPin, type LucideIcon } from "lucide-react";
 
-type TabId = "buscar" | "ett" | "envio" | "historial";
+type TabId = "buscar" | "zona" | "ett" | "envio" | "historial";
 
 const TABS: { id: TabId; label: string; Icon: LucideIcon }[] = [
   { id: "buscar", label: "Buscar empresa", Icon: Search },
+  { id: "zona", label: "Por zona", Icon: MapPin },
   { id: "ett", label: "ETTs", Icon: Building2 },
   { id: "envio", label: "Envío personalizado", Icon: Mail },
   { id: "historial", label: "Historial", Icon: ClipboardList },
 ];
 
+/** Sectores del buscador por zona (mismos ids que /api/empresas/zona). */
+const SECTORES_ZONA: { id: string; etiqueta: string; emoji: string }[] = [
+  { id: "hosteleria", etiqueta: "Hostelería", emoji: "🍽️" },
+  { id: "comercio", etiqueta: "Comercio y tiendas", emoji: "🛍️" },
+  { id: "belleza", etiqueta: "Belleza y bienestar", emoji: "💇" },
+  { id: "automocion", etiqueta: "Automoción", emoji: "🔧" },
+  { id: "salud", etiqueta: "Salud", emoji: "🏥" },
+  { id: "construccion", etiqueta: "Construcción", emoji: "🏗️" },
+  { id: "logistica", etiqueta: "Transporte y logística", emoji: "🚚" },
+  { id: "educacion", etiqueta: "Educación", emoji: "📚" },
+  { id: "limpieza", etiqueta: "Limpieza", emoji: "🧹" },
+  { id: "ett", etiqueta: "ETT y agencias", emoji: "🏢" },
+];
+
 interface EmpresaCompleta {
+  placeId?: string;
   nombre: string;
   dominio: string | null;
   urlWeb: string | null;
@@ -95,6 +111,12 @@ export default function EmpresasPage() {
   const [ettCity, setEttCity] = useState("");
   const [ettBuscando, setEttBuscando] = useState(false);
   const ettInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Tab "Por zona" state ──
+  const [zonaCiudad, setZonaCiudad] = useState("");
+  const [zonaSector, setZonaSector] = useState("hosteleria");
+  const [zonaBuscando, setZonaBuscando] = useState(false);
+  const [zonaInfo, setZonaInfo] = useState<{ total: number; conEmailFiable: number } | null>(null);
 
   // ── Shared state ──
   const [userId, setUserId] = useState("");
@@ -208,10 +230,52 @@ export default function EmpresasPage() {
     }
   }
 
+  // ── Tab "Por zona": empresas de una ciudad+sector aunque NO tengan oferta ──
+  async function handleBuscarZona() {
+    const ciudad = zonaCiudad.trim();
+    if (ciudad.length < 2) {
+      setError("Escribe una ciudad");
+      return;
+    }
+
+    setError("");
+    setEmpresas([]);
+    setEmpresaSeleccionada(null);
+    setExito("");
+    setSendResult(null);
+    setZonaInfo(null);
+    setZonaBuscando(true);
+
+    try {
+      const res = await fetch("/api/empresas/zona", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ciudad, sector: zonaSector, limite: 40 }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error");
+
+      if (data.empresas?.length) {
+        setEmpresas(data.empresas);
+        setZonaInfo({ total: data.total, conEmailFiable: data.conEmailFiable });
+      } else {
+        setError(`No se encontraron empresas de ese sector en "${ciudad}". Prueba con otro sector o una ciudad mayor.`);
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setZonaBuscando(false);
+    }
+  }
+
   function seleccionarEmpresa(emp: EmpresaCompleta) {
     setEmpresaSeleccionada(emp);
     setExito("");
     setSendResult(null);
+    // La ficha de empresa (con envío de CV) vive en la pestaña "buscar". Desde
+    // "zona" saltamos allí en vez de duplicar 200 líneas de JSX por tercera vez.
+    if (activeTab === "zona") setActiveTab("buscar");
     // Scroll al detalle
     setTimeout(() => {
       document.getElementById("empresa-detalle")?.scrollIntoView({ behavior: "smooth" });
@@ -619,7 +683,7 @@ export default function EmpresasPage() {
             {empresas.length > 1 && !empresaSeleccionada && !buscando && (
               <div className="space-y-3">
                 <p className="text-xs font-semibold" style={{ color: "#94a3b8" }}>
-                  {empresas.length} resultados para "{nombre}" — selecciona la correcta:
+                  {empresas.length} resultados{nombre.trim() ? ` para "${nombre}"` : ""} — selecciona la correcta:
                 </p>
                 {empresas.map((emp, i) => (
                   <button
@@ -868,6 +932,136 @@ export default function EmpresasPage() {
         )}
 
         {/* ── TAB ETTs: Buscar ETTs por ciudad ── */}
+        {activeTab === "zona" && (
+          <div className="space-y-4">
+            {/* Buscador por zona: empresas SIN oferta publicada */}
+            <div className="card-game p-5">
+              <label className="block text-xs font-semibold mb-2" style={{ color: "#94a3b8" }}>
+                Empresas de tu zona
+              </label>
+              <p className="text-[10px] mb-3" style={{ color: "#6b7280" }}>
+                Encuentra negocios reales cerca de ti <strong>aunque no tengan ninguna oferta publicada</strong>.
+                La mayoría contrata sin publicar: llegar antes es la ventaja.
+              </p>
+
+              <input
+                type="text"
+                value={zonaCiudad}
+                onChange={e => setZonaCiudad(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleBuscarZona(); }}
+                placeholder="Ciudad — Ej: Zaragoza, Madrid, Sevilla..."
+                className="w-full text-sm mb-3"
+              />
+
+              <p className="text-[10px] mb-2" style={{ color: "#6b7280" }}>Sector:</p>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {SECTORES_ZONA.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setZonaSector(s.id)}
+                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition"
+                    style={zonaSector === s.id
+                      ? { background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.35)" }
+                      : { background: "#1e212b", color: "#94a3b8", border: "1px solid #2d3142" }}
+                  >
+                    {s.emoji} {s.etiqueta}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={handleBuscarZona}
+                disabled={zonaBuscando || zonaCiudad.trim().length < 2}
+                className="w-full px-4 py-2.5 rounded-lg text-xs font-semibold transition"
+                style={{
+                  background: zonaBuscando ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                  color: zonaBuscando ? "#64748b" : "#fff",
+                  opacity: zonaCiudad.trim().length < 2 ? 0.5 : 1,
+                }}
+              >
+                {zonaBuscando ? "Buscando empresas..." : "Buscar empresas de la zona"}
+              </button>
+            </div>
+
+            {zonaBuscando && (
+              <div className="card-game p-8 flex flex-col items-center gap-3">
+                <div className="animate-spin rounded-full h-8 w-8" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
+                <p className="text-[11px] text-center" style={{ color: "#64748b" }}>
+                  Buscando negocios y comprobando sus emails...<br />puede tardar unos segundos
+                </p>
+              </div>
+            )}
+
+            {error && !zonaBuscando && (
+              <div className="card-game p-4" style={{ borderColor: "rgba(239,68,68,0.3)" }}>
+                <p className="text-xs" style={{ color: "#ef4444" }}>{error}</p>
+              </div>
+            )}
+
+            {/* Resumen de resultados */}
+            {zonaInfo && !zonaBuscando && !empresaSeleccionada && (
+              <div className="card-game p-3">
+                <p className="text-xs" style={{ color: "#94a3b8" }}>
+                  <strong style={{ color: "#f1f5f9" }}>{zonaInfo.total} empresas</strong> encontradas ·{" "}
+                  <span style={{ color: "#22c55e" }}>{zonaInfo.conEmailFiable} con email verificado</span>
+                </p>
+                <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>
+                  Ordenadas por fiabilidad del email: las primeras son las que más posibilidades tienen de llegar.
+                </p>
+              </div>
+            )}
+
+            {/* Lista de empresas de la zona */}
+            {empresas.length > 0 && !empresaSeleccionada && !zonaBuscando && (
+              <div className="space-y-3">
+                {empresas.map((emp, i) => (
+                  <button
+                    key={emp.placeId || i}
+                    onClick={() => seleccionarEmpresa(emp)}
+                    className="card-game p-4 w-full text-left transition hover:scale-[1.01] cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>{emp.nombre}</h3>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {emp.emailConfianza === "alta" && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e" }}>
+                              Email verificado
+                            </span>
+                          )}
+                          {emp.emailConfianza === "media" && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24" }}>
+                              Email probable
+                            </span>
+                          )}
+                          {emp.emailConfianza === "baja" && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded font-bold" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                              Sin email fiable
+                            </span>
+                          )}
+                          {emp.googleAddress && (
+                            <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#64748b" }}>
+                              {emp.googleAddress}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {emp.googleRating && (
+                        <div className="text-right shrink-0 ml-3">
+                          <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{emp.googleRating}</span>
+                          {emp.googleReviews && (
+                            <p className="text-[10px]" style={{ color: "#64748b" }}>({emp.googleReviews})</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "ett" && (
           <div className="space-y-4">
             {/* Buscador de ETTs por ciudad */}
