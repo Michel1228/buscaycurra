@@ -345,7 +345,7 @@ export default function AuPairProfilePage() {
     setSaving(false);
 
     if (json.success) {
-      setMensaje("Perfil Au Pair guardado correctamente");
+      setMensaje(modo === "live_in_nanny" ? "Perfil Live-in Nanny guardado correctamente" : "Perfil Au Pair guardado correctamente");
       setTimeout(() => setMensaje(""), 4000);
     } else {
       setError(json.error || "Error al guardar");
@@ -353,13 +353,14 @@ export default function AuPairProfilePage() {
   }, [
     userId, nombre, letterText, age, nationality, ciudad, languages, childcareExperience,
     hasDrivingLicense, availableFrom, availableTo, dietaryInfo, hobbies,
-    nivelEducativo, fumador, primerosAuxilios, sabeNadar, duracionPreferida, photos, references,
+    nivelEducativo, fumador, primerosAuxilios, sabeNadar, duracionPreferida, photos, references, modo,
   ]);
 
   // ── Preview carta ──
   function verCarta() {
     if (!letterText.trim()) { setError("Escribe o genera tu carta antes de previsualizar."); return; }
     const pais = PAISES[paisDestino];
+    const rolCarta = modo === "live_in_nanny" ? "Live-in Nanny" : "Au Pair";
 
     // Construir galería de fotos para el preview
     const fotosHTML = photos.length > 0 ? `
@@ -385,7 +386,7 @@ export default function AuPairProfilePage() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Au Pair Letter — ${nombre || "Profile"}</title>
+<title>${rolCarta} Letter — ${nombre || "Profile"}</title>
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -420,7 +421,7 @@ export default function AuPairProfilePage() {
 <body>
 <div class="page">
   <div class="header">
-    <div class="name">${nombre || (age ? `Au Pair, ${age} años` : "Au Pair Profile")}</div>
+    <div class="name">${nombre || (age ? `${rolCarta}, ${age} años` : `${rolCarta} Profile`)}</div>
     <div class="tagline">Childcare Professional · Dear Family Letter</div>
     <div class="meta">
       ${PAISES[nationality] ? `<div class="meta-item">🌍 ${PAISES[nationality].bandera} ${PAISES[nationality].nombre}${ciudad ? ` · ${ciudad}` : ""}</div>` : ""}
@@ -467,7 +468,7 @@ export default function AuPairProfilePage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Carta_AuPair_${nombre || "BuscayCurra"}.pdf`;
+      a.download = modo === "live_in_nanny" ? `Carta_Nanny_${nombre || "BuscayCurra"}.pdf` : `Carta_AuPair_${nombre || "BuscayCurra"}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -489,8 +490,9 @@ export default function AuPairProfilePage() {
     setEnvioError("");
     setEnvioExito("");
 
-    // Generar asunto de preview
-    const subject = `Au Pair Application — ${nombre || "Candidato"} from ${PAISES[nationality] || nationality || "Spain"}`;
+    // Generar asunto de preview (según modo)
+    const rolEmail = modo === "live_in_nanny" ? "Live-in Nanny" : "Au Pair";
+    const subject = `${rolEmail} Application — ${nombre || "Candidato"} from ${PAISES[nationality]?.nombre || nationality || "Spain"}`;
     setPreviewSubject(subject);
     setShowPreview(true);
   }
@@ -531,6 +533,26 @@ export default function AuPairProfilePage() {
       setEnviandoPerfil(false);
     }
   }
+
+  // Textos según el modo. Antes toda la copy decía "Au Pair" fijo, así que en
+  // modo Live-in Nanny se veía "revuelto" al desplazar (perfil, envío, guardar,
+  // PDF y asunto seguían diciendo Au Pair).
+  const esNanny = modo === "live_in_nanny";
+  const T = {
+    rol: esNanny ? "Live-in Nanny" : "Au Pair",
+    perfil: esNanny ? "perfil Live-in Nanny" : "perfil Au Pair",
+    enviarPerfil: esNanny ? "Enviar perfil Live-in Nanny" : "Enviar perfil Au Pair",
+    guardarPerfil: esNanny ? "Guardar perfil Live-in Nanny" : "Guardar perfil Au Pair",
+    perfilCompleto: esNanny
+      ? "Perfil Live-in Nanny completo (foto, experiencia, referencias)"
+      : "Perfil Au Pair completo (foto, datos, experiencia, referencias)",
+    perfilEnviado: esNanny ? "¡Perfil Live-in Nanny enviado!" : "¡Perfil Au Pair enviado!",
+    guardado: esNanny ? "Perfil Live-in Nanny guardado correctamente" : "Perfil Au Pair guardado correctamente",
+    asuntoEmail: esNanny
+      ? `Live-in Nanny Application — ${nombre || "Candidato"} from ${PAISES[nationality]?.nombre || nationality || "Spain"}`
+      : `Au Pair Application — ${nombre || "Candidato"} from ${PAISES[nationality]?.nombre || nationality || "Spain"}`,
+    pdfNombre: esNanny ? `Carta_Nanny_${nombre || "BuscayCurra"}.pdf` : `Carta_AuPair_${nombre || "BuscayCurra"}.pdf`,
+  };
 
   if (loading) {
     return (
@@ -1072,7 +1094,7 @@ export default function AuPairProfilePage() {
             <Upload size={13} strokeWidth={1.8} /> Enviar perfil a una familia
           </h3>
           <p className="text-xs text-[#64748b] mb-4">
-            Introduce el email de la familia o agencia para enviarles tu perfil Au Pair completo.
+            Introduce el email de la familia o agencia para enviarles tu {T.perfil} completo.
           </p>
 
           {/* ── Agencias disponibles ── */}
@@ -1145,7 +1167,7 @@ export default function AuPairProfilePage() {
                 color: enviandoPerfil ? "#64748b" : "#fff",
               }}
             >
-              {enviandoPerfil ? "Enviando..." : <><Upload size={14} strokeWidth={1.8} className="inline mr-1.5" />Enviar perfil Au Pair</>}
+              {enviandoPerfil ? "Enviando..." : <><Upload size={14} strokeWidth={1.8} className="inline mr-1.5" />{T.enviarPerfil}</>}
             </button>
           </div>
         </div>
@@ -1154,16 +1176,20 @@ export default function AuPairProfilePage() {
         <div className="flex gap-3 justify-end">
           <button onClick={() => router.push("/app/emigrar")} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-[#2d3142] text-[#94a3b8] hover:bg-[#3d4152] transition-colors">Cancelar</button>
           <button onClick={guardar} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#22c55e] hover:bg-[#1ea34d] text-black transition-colors disabled:opacity-50">
-            {saving ? "Guardando..." : <><Save size={14} strokeWidth={1.8} className="inline mr-1.5" />Guardar perfil Au Pair</>}
+            {saving ? "Guardando..." : <><Save size={14} strokeWidth={1.8} className="inline mr-1.5" />{T.guardarPerfil}</>}
           </button>
         </div>
       </section>
 
-      {/* ── Comparativa legal Au Pair ── */}
-      <AuPairComparativaLegal />
-
-      {/* ── Calculadora de costes Au Pair ── */}
-      <AuPairCalculadoraCostes />
+      {/* Comparativa legal y calculadora de costes son específicas de Au Pair
+          (visado cultural, paga de bolsillo semanal). No aplican a Live-in Nanny,
+          que es empleo profesional con salario — por eso solo se muestran en Au Pair. */}
+      {!esNanny && (
+        <>
+          <AuPairComparativaLegal />
+          <AuPairCalculadoraCostes />
+        </>
+      )}
 
       {/* ── MODAL: Preview antes de enviar perfil Au Pair ── */}
       {showPreview && (
@@ -1191,7 +1217,7 @@ export default function AuPairProfilePage() {
               </div>
               <div className="flex items-center gap-2">
                 <span style={{ color: "#64748b" }}>Adjunto:</span>
-                <span style={{ color: "#94a3b8" }}>Perfil Au Pair completo (foto, datos, experiencia, referencias)</span>
+                <span style={{ color: "#94a3b8" }}>{T.perfilCompleto}</span>
               </div>
             </div>
 
@@ -1230,7 +1256,7 @@ export default function AuPairProfilePage() {
           <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #22c55e" }}>
             <div className="text-center">
               <CheckCircle2 size={32} strokeWidth={1.5} style={{ color: "#22c55e", margin: "0 auto" }} />
-              <h3 className="text-lg font-bold mt-2" style={{ color: "#22c55e" }}>¡Perfil Au Pair enviado!</h3>
+              <h3 className="text-lg font-bold mt-2" style={{ color: "#22c55e" }}>{T.perfilEnviado}</h3>
             </div>
 
             <div className="space-y-3">
