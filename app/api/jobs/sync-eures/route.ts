@@ -1,136 +1,171 @@
 /**
- * POST /api/jobs/sync-eures — Sincroniza ofertas del portal europeo EURES
+ * POST /api/jobs/sync-eures — Sincroniza ofertas del portal europeo EURES.
  *
- * EURES (European Employment Services) tiene una API REST pública sin autenticación.
- * Endpoint oficial: https://jobsearch.api.eures.europa.eu/
+ * Reescrito en jul 2026 por DOS motivos:
+ *  1. La API antigua (`jobsearch.api.eures.europa.eu`) fue retirada: el dominio
+ *     ya ni siquiera resuelve en DNS, así que el endpoint fallaba siempre con
+ *     "fetch failed". La actual es el buscador público de europa.eu.
+ *  2. Guardaba en la tabla `ofertas` de Supabase, que está obsoleta — la app
+ *     busca en `JobListing` (Postgres del VPS). Aunque hubiera funcionado, esas
+ *     ofertas nunca habrían aparecido en la búsqueda.
+ *
+ * EURES es enorme y oficial: ~76.000 vacantes solo para "nurse".
  *
  * Header: x-sync-secret = ADMIN_SECRET
- * Body: { batchSize?: number, keywords?: string, country?: string }
+ * Body: { keywords?: string[], startIdx?: number, batchSize?: number, pagesPorKeyword?: number }
  */
-
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { upsertJobsForSync } from "@/lib/job-search/sync-worker";
 import { secretIguales } from "@/lib/secret-compare";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
-const EURES_BASE = "https://jobsearch.api.eures.europa.eu/searchengine/adzuna/v1/jobs";
+const EURES_URL = "https://europa.eu/eures/api/jv-searchengine/public/jv-search/search";
+const RESULTADOS_POR_PAGINA = 50;
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+/** Términos amplios que cubren los sectores con más demanda en Europa. */
+const KEYWORDS = [
+  "nurse", "driver", "engineer", "chef", "waiter", "cleaner", "welder",
+  "electrician", "warehouse", "construction", "mechanic", "carpenter",
+  "hotel", "farm", "caregiver", "teacher", "developer", "sales",
+  "logistics", "plumber", "painter", "security", "cook", "housekeeping",
+];
+
+interface EuresJV {
+  id?: string;
+  title?: string;
+  description?: string;
+  employer?: { name?: string };
+  locationMap?: Record<string, string[]>;
+  creationDate?: number;
 }
 
-function slugify(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").slice(0, 60);
+function limpiarHtml(s: string): string {
+  return s
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** El locationMap es { "BE": ["BE211"] }: la clave es el país ISO. */
+function paisDe(jv: EuresJV): string {
+  const claves = Object.keys(jv.locationMap || {});
+  return claves[0]?.toLowerCase() || "";
+}
+
+async function buscarEures(keyword: string, page: number): Promise<EuresJV[]> {
+  const body = {
+    resultsPerPage: RESULTADOS_POR_PAGINA,
+    page,
+    sortSearch: "MOST_RECENT",
+    keywords: [{ keyword, specificSearchCode: "EVERYWHERE" }],
+    publicationPeriod: null,
+    occupationUris: [],
+    skillUris: [],
+    requiredExperienceCodes: [],
+    positionScheduleCodes: [],
+    sectorCodes: [],
+    educationAndQualificationLevelCodes: [],
+    positionOfferingCodes: [],
+    locationCodes: [],
+    euresFlagCodes: [],
+    otherBenefitsCodes: [],
+    requiredLanguages: [],
+    minNumberPost: null,
+    sessionId: "buscaycurra",
+    userPreferredLanguage: null,
+    requestLanguage: "en",
+  };
+
+  const res = await fetch(EURES_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": "BuscayCurra/1.0 (https://buscaycurra.es)",
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(25000),
+  });
+  if (!res.ok) return [];
+
+  const data = (await res.json()) as { jvs?: EuresJV[] };
+  return data.jvs || [];
+}
+
+export async function GET() {
+  return NextResponse.json({ keywords: KEYWORDS, total: KEYWORDS.length });
 }
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-sync-secret");
-  if (!secret || !secretIguales(secret, process.env.ADMIN_SECRET)) {
+  if (!secretIguales(secret, process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  let body: { batchSize?: number; keywords?: string; country?: string; page?: number } = {};
+  let body: { startIdx?: number; batchSize?: number; pagesPorKeyword?: number } = {};
   try { body = await req.json(); } catch { /* defaults */ }
 
-  const batchSize = Math.min(body.batchSize ?? 50, 100);
-  const keywords = body.keywords ?? "empleo trabajo";
-  const country = body.country ?? "ES";
-  const page = body.page ?? 1;
+  const startIdx = Math.max(body.startIdx ?? 0, 0);
+  const batchSize = Math.min(Math.max(body.batchSize ?? 4, 1), 8);
+  const pagesPorKeyword = Math.min(Math.max(body.pagesPorKeyword ?? 3, 1), 10);
+  const lote = KEYWORDS.slice(startIdx, startIdx + batchSize);
 
-  try {
-    // EURES API pública — no requiere API key
-    const params = new URLSearchParams({
-      what: keywords,
-      where: country,
-      results_per_page: String(batchSize),
-      page: String(page),
-      sort_by: "date",
-    });
-
-    const res = await fetch(`${EURES_BASE}?${params}`, {
-      headers: {
-        "Accept": "application/json",
-        "User-Agent": "BuscayCurra/1.0 (https://buscaycurra.es)",
-      },
-      signal: AbortSignal.timeout(20000),
-    });
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: `EURES API ${res.status}`, details: await res.text() },
-        { status: 502 }
-      );
-    }
-
-    const data = await res.json() as {
-      results?: Array<{
-        id?: string;
-        title?: string;
-        company?: { display_name?: string };
-        location?: { display_name?: string };
-        description?: string;
-        redirect_url?: string;
-        created?: string;
-        salary_min?: number;
-        salary_max?: number;
-        salary_is_predicted?: boolean;
-      }>;
-      count?: number;
-    };
-
-    const jobs = data.results ?? [];
-    if (jobs.length === 0) {
-      return NextResponse.json({ ok: true, insertados: 0, total: data.count ?? 0 });
-    }
-
-    const supabase = getSupabase();
-
-    const filas = jobs.map((j) => {
-      const id = `eures-${j.id ?? slugify((j.title ?? "") + (j.company?.display_name ?? ""))}`;
-      const salario = j.salary_min
-        ? `${j.salary_min}${j.salary_max ? `–${j.salary_max}` : ""}€/año`
-        : "";
-      return {
-        id,
-        titulo: (j.title ?? "").slice(0, 255),
-        empresa: (j.company?.display_name ?? "").slice(0, 255),
-        ubicacion: (j.location?.display_name ?? country).slice(0, 255),
-        provincia: country,
-        comunidad: "Europa",
-        salario: salario.slice(0, 100),
-        descripcion: (j.description ?? "").replace(/<[^>]+>/g, "").slice(0, 1000),
-        fuente: "EURES",
-        url: (j.redirect_url ?? "").slice(0, 500),
-        email_empresa: "",
-        sector: "otros",
-        keywords: [(j.title ?? "").toLowerCase()].filter(Boolean),
-        fecha: j.created ?? new Date().toISOString(),
-      };
-    });
-
-    const { error } = await supabase
-      .from("ofertas")
-      .upsert(filas, { onConflict: "id", ignoreDuplicates: true });
-
-    if (error) {
-      console.warn("[SyncEURES] upsert error:", error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      ok: true,
-      insertados: filas.length,
-      total: data.count ?? filas.length,
-      page,
-      source: "EURES",
-    });
-  } catch (e) {
-    console.error("[SyncEURES] Error:", (e as Error).message);
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+  if (!lote.length) {
+    return NextResponse.json({ ok: true, done: true, inserted: 0, nextIdx: 0, totalKeywords: KEYWORDS.length });
   }
+
+  let inserted = 0;
+  let fetched = 0;
+
+  for (const keyword of lote) {
+    for (let page = 1; page <= pagesPorKeyword; page++) {
+      try {
+        const jvs = await buscarEures(keyword, page);
+        if (!jvs.length) break;
+        fetched += jvs.length;
+
+        // Se agrupa por país porque upsertJobsForSync recibe un país por lote.
+        const porPais = new Map<string, ReturnType<typeof mapear>[]>();
+        for (const jv of jvs) {
+          if (!jv.title || !jv.id) continue;
+          const pais = paisDe(jv);
+          if (!porPais.has(pais)) porPais.set(pais, []);
+          porPais.get(pais)!.push(mapear(jv));
+        }
+
+        for (const [pais, jobs] of porPais) {
+          inserted += await upsertJobsForSync(jobs, "OTRO", pais || undefined);
+        }
+      } catch { /* siguiente página */ }
+    }
+  }
+
+  const nextIdx = startIdx + batchSize;
+  const done = nextIdx >= KEYWORDS.length;
+
+  return NextResponse.json({
+    ok: true,
+    source: "EURES",
+    keywords: lote,
+    inserted,
+    fetched,
+    nextIdx: done ? 0 : nextIdx,
+    done,
+    totalKeywords: KEYWORDS.length,
+  });
+}
+
+function mapear(jv: EuresJV) {
+  return {
+    source: "EURES",
+    url: `https://europa.eu/eures/portal/jv-se/jv-details/${jv.id}`,
+    title: (jv.title || "").slice(0, 300),
+    company: (jv.employer?.name || "").slice(0, 200),
+    city: paisDe(jv).toUpperCase(),
+    description: limpiarHtml(jv.description || "").slice(0, 2000),
+    salary: "",
+  };
 }
