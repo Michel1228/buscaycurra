@@ -44,7 +44,7 @@ interface AAJob {
 
 // Keywords relevantes para el mercado laboral alemán
 // 200 keywords cubriendo oficios, profesiones IT, salud, industria, comercio
-const GERMAN_KEYWORDS = [
+export const GERMAN_KEYWORDS = [
   // IT & Tech (Alemania tiene déficit enorme de IT)
   "Softwareentwickler", "IT-Spezialist", "Systemadministrator", "DevOps",
   "Frontend-Entwickler", "Backend-Entwickler", "Fullstack-Entwickler",
