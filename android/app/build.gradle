@@ -1,15 +1,19 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdk 35
+    // Android 16 (API 36). Google Play exige API 35+ para seguir distribuyendo
+    // apps existentes desde el 31 ago 2026, y API 36 para cualquier
+    // actualización enviada a partir de esa fecha. Vamos directos a 36 para no
+    // tener que repetir la subida dentro de unas semanas.
+    compileSdk 36
     namespace 'es.buscaycurra.app'
 
     defaultConfig {
         applicationId 'es.buscaycurra.app'
         minSdk 21
-        targetSdk 35
-        versionCode 4
-        versionName '1.0.3'
+        targetSdk 36
+        versionCode 5
+        versionName '1.0.4'
     }
 
     signingConfigs {
