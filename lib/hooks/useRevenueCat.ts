@@ -60,9 +60,25 @@ function getSnapshot(): EstadoRC {
   return estado;
 }
 
+// Último usuario conocido. Se persiste porque la app iOS es un wrapper remoto:
+// la WebView carga buscaycurra.es y CADA RECARGA reinicia este módulo. Sin esto
+// no podríamos reconfigurar el SDK tras una recarga y la compra quedaba muerta.
+const CLAVE_USER = "bc_rc_user";
+let ultimoUserId: string | null = null;
+
+function recordarUsuario(id: string) {
+  ultimoUserId = id;
+  try { localStorage.setItem(CLAVE_USER, id); } catch { /* modo privado */ }
+}
+function usuarioRecordado(): string | null {
+  if (ultimoUserId) return ultimoUserId;
+  try { return localStorage.getItem(CLAVE_USER); } catch { return null; }
+}
+
 // ─── Inicialización (idempotente, una vez por sesión) ─────────────────────────
 export async function inicializarRevenueCat(supabaseUserId: string): Promise<void> {
   if (!isNativeIOS()) return;
+  recordarUsuario(supabaseUserId);
   try {
     const { Purchases } = await import("@revenuecat/purchases-capacitor");
 
@@ -92,6 +108,45 @@ export async function inicializarRevenueCat(supabaseUserId: string): Promise<voi
   }
 }
 
+/**
+ * Garantiza que el SDK esté operativo JUSTO ANTES de comprar.
+ *
+ * Por qué existe: la variable `inicializado` vive en memoria del módulo JS, y
+ * la app iOS carga la web remota — cada recarga la ponía a false aunque el
+ * plugin nativo siguiera configurado. El revisor de Apple veía entonces
+ * "El sistema de pagos aún no está listo" y la compra era IMPOSIBLE de
+ * recuperar (rechazo 2.1). Ahora se consulta al plugin nativo, que es la
+ * fuente de verdad, y si hace falta se configura en el momento.
+ */
+async function asegurarListo(): Promise<boolean> {
+  if (!isNativeIOS()) return false;
+  try {
+    const { Purchases } = await import("@revenuecat/purchases-capacitor");
+    const { isConfigured } = await Purchases.isConfigured();
+
+    if (!isConfigured) {
+      const userId = usuarioRecordado();
+      const apiKey =
+        process.env.NEXT_PUBLIC_REVENUECAT_API_KEY_IOS || "appl_dMSLUryTHfCrKaLuVsdkVcCyoUR";
+      // Sin userId configuramos igualmente (RevenueCat crea un id anónimo): es
+      // preferible permitir la compra y que el webhook la reconcilie después
+      // que bloquear al usuario.
+      await Purchases.configure(userId ? { apiKey, appUserID: userId } : { apiKey });
+    }
+
+    inicializado = true;
+    if (!estado.offerings) {
+      try {
+        const offerings = await Purchases.getOfferings();
+        setEstado({ listo: true, offerings, error: null });
+      } catch { /* los offerings se reintentan al comprar */ }
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ─── Comprar un plan ──────────────────────────────────────────────────────────
 async function comprarPlanImpl(
   plan: PlanIAP
@@ -99,8 +154,8 @@ async function comprarPlanImpl(
   if (!isNativeIOS()) {
     return { ok: false, error: "Las compras solo están disponibles en la app de iOS." };
   }
-  if (!inicializado) {
-    return { ok: false, error: "El sistema de pagos aún no está listo. Inténtalo de nuevo en unos segundos." };
+  if (!(await asegurarListo())) {
+    return { ok: false, error: "No se pudo conectar con el sistema de pagos de Apple. Comprueba tu conexión e inténtalo de nuevo." };
   }
 
   setEstado({ comprando: plan, error: null });
@@ -156,8 +211,11 @@ async function restaurarComprasImpl(): Promise<{ ok: boolean; encontrado?: boole
   if (!isNativeIOS()) {
     return { ok: false, error: "Solo disponible en la app de iOS." };
   }
-  if (!inicializado) {
-    return { ok: false, error: "El sistema de pagos aún no está listo." };
+  // Mismo motivo que en la compra: tras una recarga de la web la variable de
+  // módulo se pierde y "Restaurar compras" (obligatorio por Apple) quedaba
+  // inutilizable. Se comprueba contra el plugin nativo.
+  if (!(await asegurarListo())) {
+    return { ok: false, error: "No se pudo conectar con el sistema de pagos de Apple. Inténtalo de nuevo." };
   }
 
   setEstado({ restaurando: true, error: null });
