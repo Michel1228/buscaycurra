@@ -10,8 +10,13 @@ import { secretIguales } from "@/lib/secret-compare";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-// Orden de países (rotativo)
-const COUNTRIES = ["es", "uk", "us", "de", "fr", "au"] as const;
+// Orden de países (rotativo). Los 19 que cubre Adzuna con nuestras claves,
+// ordenados por volumen: us 6M, fr 1,5M, de 1,2M, br 829k, gb 758k, it 316k...
+// Antes solo se recorrían 6 y quedaban ~2,3M de ofertas sin extraer.
+const COUNTRIES = [
+  "us", "fr", "de", "br", "uk", "it", "ca", "in", "au", "nl",
+  "mx", "pl", "es", "za", "ch", "be", "at", "sg", "nz",
+] as const;
 
 // Estado simple en memoria (se resetea en cada deploy)
 let currentCountryIdx = 0;

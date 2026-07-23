@@ -139,6 +139,11 @@ async function fetchJooble(keyword: string, city: string, page = 1): Promise<Raw
 
 // ─── Adzuna multi-país ───────────────────────────────────────────────────────
 
+// Países de Adzuna. Solo había 6 configurados, pero la API cubre 19 con
+// nuestras claves — verificado consultando el `count` de cada uno. Los 13 que
+// faltaban suman ~2,3M de ofertas que no se estaban extrayendo:
+// br 829k · it 316k · ca 239k · in 222k · nl 209k · mx 162k · pl 145k · za 86k
+// ch 74k · be 60k · at 51k · sg 43k · nz 7k
 const ADZUNA_COUNTRIES: Record<string, { code: string; cc: string; name: string }> = {
   es: { code: "es", cc: "ES", name: "España" },
   uk: { code: "gb", cc: "UK", name: "Reino Unido" },
@@ -146,6 +151,19 @@ const ADZUNA_COUNTRIES: Record<string, { code: string; cc: string; name: string 
   de: { code: "de", cc: "DE", name: "Alemania" },
   fr: { code: "fr", cc: "FR", name: "Francia" },
   au: { code: "au", cc: "AU", name: "Australia" },
+  br: { code: "br", cc: "BR", name: "Brasil" },
+  it: { code: "it", cc: "IT", name: "Italia" },
+  ca: { code: "ca", cc: "CA", name: "Canadá" },
+  in: { code: "in", cc: "IN", name: "India" },
+  nl: { code: "nl", cc: "NL", name: "Países Bajos" },
+  mx: { code: "mx", cc: "MX", name: "México" },
+  pl: { code: "pl", cc: "PL", name: "Polonia" },
+  za: { code: "za", cc: "ZA", name: "Sudáfrica" },
+  ch: { code: "ch", cc: "CH", name: "Suiza" },
+  be: { code: "be", cc: "BE", name: "Bélgica" },
+  at: { code: "at", cc: "AT", name: "Austria" },
+  sg: { code: "sg", cc: "SG", name: "Singapur" },
+  nz: { code: "nz", cc: "NZ", name: "Nueva Zelanda" },
 };
 
 // Keywords en inglés para países no hispanohablantes
@@ -207,6 +225,35 @@ async function fetchAdzuna(keyword: string, city: string, page = 1, countryCode 
 
 // ─── Sync masivo Adzuna multi-país ────────────────────────────────────────────
 
+// Keywords locales de los países añadidos. En Brasil, Italia o Polonia mucha
+// oferta no aparece buscando en inglés, así que se combinan con GLOBAL_KEYWORDS.
+const PT_KEYWORDS = [
+  "desenvolvedor", "enfermeiro", "motorista", "vendedor", "professor", "contador",
+  "engenheiro", "eletricista", "cozinheiro", "garcom", "seguranca", "recepcionista",
+  "auxiliar", "assistente", "analista", "gerente", "tecnico", "operador",
+  "atendente", "estoquista", "pedreiro", "mecanico", "soldador", "limpeza",
+];
+
+const IT_KEYWORDS = [
+  "sviluppatore", "infermiere", "autista", "commesso", "insegnante", "contabile",
+  "ingegnere", "elettricista", "cuoco", "cameriere", "sicurezza", "receptionist",
+  "magazziniere", "operaio", "tecnico", "impiegato", "addetto", "muratore",
+  "meccanico", "saldatore", "pulizie", "responsabile",
+];
+
+const PL_KEYWORDS = [
+  "programista", "pielegniarka", "kierowca", "sprzedawca", "nauczyciel", "ksiegowy",
+  "inzynier", "elektryk", "kucharz", "kelner", "ochrona", "recepcjonista",
+  "magazynier", "pracownik", "technik", "operator", "spawacz", "mechanik",
+  "sprzataczka", "kierownik",
+];
+
+const NL_KEYWORDS = [
+  "ontwikkelaar", "verpleegkundige", "chauffeur", "verkoper", "docent", "boekhouder",
+  "ingenieur", "elektricien", "kok", "ober", "beveiliging", "receptioniste",
+  "magazijnmedewerker", "monteur", "technicus", "medewerker", "lasser", "schoonmaak",
+];
+
 export interface AdzunaCountryConfig {
   code: string;
   keywords: string[];
@@ -221,6 +268,19 @@ export function getAdzunaCountryConfig(countryCode: string): AdzunaCountryConfig
     de: { code: "de", keywords: [...GLOBAL_KEYWORDS, ...DE_KEYWORDS], cities: ["Berlin","Munich","Hamburg","Frankfurt","Cologne","Stuttgart","Dusseldorf","Leipzig","Dortmund","Essen","Bremen","Dresden","Hannover","Nuremberg","Bonn","Mannheim","Karlsruhe","Augsburg","Wiesbaden","Munster"] },
     fr: { code: "fr", keywords: [...GLOBAL_KEYWORDS, ...FR_KEYWORDS], cities: ["Paris","Lyon","Marseille","Toulouse","Nice","Nantes","Strasbourg","Montpellier","Bordeaux","Lille","Rennes","Reims","Saint-Etienne","Le Havre","Toulon","Grenoble","Dijon","Angers","Nimes","Villeurbanne"] },
     au: { code: "au", keywords: GLOBAL_KEYWORDS, cities: ["Sydney","Melbourne","Brisbane","Perth","Adelaide","Gold Coast","Canberra","Newcastle","Hobart","Darwin","Cairns","Townsville","Geelong","Wollongong","Sunshine Coast"] },
+    br: { code: "br", keywords: [...GLOBAL_KEYWORDS, ...PT_KEYWORDS], cities: ["Sao Paulo","Rio de Janeiro","Brasilia","Salvador","Fortaleza","Belo Horizonte","Manaus","Curitiba","Recife","Porto Alegre","Belem","Goiania","Campinas","Sao Luis","Maceio","Natal","Campo Grande","Joao Pessoa","Florianopolis","Vitoria"] },
+    it: { code: "it", keywords: [...GLOBAL_KEYWORDS, ...IT_KEYWORDS], cities: ["Roma","Milano","Napoli","Torino","Palermo","Genova","Bologna","Firenze","Bari","Catania","Venezia","Verona","Messina","Padova","Trieste","Brescia","Parma","Modena","Cagliari","Perugia"] },
+    ca: { code: "ca", keywords: GLOBAL_KEYWORDS, cities: ["Toronto","Montreal","Vancouver","Calgary","Edmonton","Ottawa","Winnipeg","Quebec City","Hamilton","Kitchener","London","Victoria","Halifax","Saskatoon","Regina","Windsor"] },
+    in: { code: "in", keywords: GLOBAL_KEYWORDS, cities: ["Mumbai","Delhi","Bangalore","Hyderabad","Chennai","Kolkata","Pune","Ahmedabad","Jaipur","Surat","Lucknow","Kanpur","Nagpur","Indore","Bhopal","Coimbatore","Kochi","Chandigarh"] },
+    nl: { code: "nl", keywords: [...GLOBAL_KEYWORDS, ...NL_KEYWORDS], cities: ["Amsterdam","Rotterdam","The Hague","Utrecht","Eindhoven","Groningen","Tilburg","Almere","Breda","Nijmegen","Enschede","Haarlem","Arnhem","Amersfoort","Maastricht","Leiden"] },
+    mx: { code: "mx", keywords: SECTORES.flatMap(s => s.keywords).slice(0, 50), cities: ["Ciudad de Mexico","Guadalajara","Monterrey","Puebla","Tijuana","Leon","Juarez","Zapopan","Merida","Queretaro","Cancun","Toluca","Chihuahua","Aguascalientes","Morelia","Culiacan","Hermosillo","Veracruz"] },
+    pl: { code: "pl", keywords: [...GLOBAL_KEYWORDS, ...PL_KEYWORDS], cities: ["Warszawa","Krakow","Lodz","Wroclaw","Poznan","Gdansk","Szczecin","Bydgoszcz","Lublin","Katowice","Bialystok","Gdynia","Czestochowa","Radom","Torun","Kielce"] },
+    za: { code: "za", keywords: GLOBAL_KEYWORDS, cities: ["Johannesburg","Cape Town","Durban","Pretoria","Port Elizabeth","Bloemfontein","East London","Nelspruit","Kimberley","Polokwane"] },
+    ch: { code: "ch", keywords: [...GLOBAL_KEYWORDS, ...DE_KEYWORDS, ...FR_KEYWORDS], cities: ["Zurich","Geneva","Basel","Bern","Lausanne","Winterthur","Lucerne","St. Gallen","Lugano","Biel","Thun","Fribourg"] },
+    be: { code: "be", keywords: [...GLOBAL_KEYWORDS, ...NL_KEYWORDS, ...FR_KEYWORDS], cities: ["Brussels","Antwerp","Ghent","Charleroi","Liege","Bruges","Namur","Leuven","Mons","Aalst","Mechelen","Hasselt"] },
+    at: { code: "at", keywords: [...GLOBAL_KEYWORDS, ...DE_KEYWORDS], cities: ["Vienna","Graz","Linz","Salzburg","Innsbruck","Klagenfurt","Villach","Wels","St. Polten","Dornbirn"] },
+    sg: { code: "sg", keywords: GLOBAL_KEYWORDS, cities: ["Singapore","Jurong","Tampines","Woodlands","Punggol","Bedok","Sengkang","Yishun"] },
+    nz: { code: "nz", keywords: GLOBAL_KEYWORDS, cities: ["Auckland","Wellington","Christchurch","Hamilton","Tauranga","Dunedin","Palmerston North","Napier","Nelson","Rotorua"] },
   };
   return configs[countryCode] || configs.es;
 }
