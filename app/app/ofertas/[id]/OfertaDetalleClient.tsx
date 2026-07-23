@@ -18,6 +18,8 @@ export interface OfertaDetalle {
   fuente?: string;
   url: string;
   email_empresa?: string;
+  /** alta = hallado en la web de la empresa · media = patrón con MX válido */
+  email_confianza?: "alta" | "media" | "baja";
   sector?: string;
   fecha?: string;
   country?: string;
@@ -389,7 +391,25 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
               <span>Sector: <strong style={{ color: "#94a3b8" }}>{oferta.sector}</strong></span>
             )}
             {oferta.email_empresa && (
-              <span>Email: <strong style={{ color: "#94a3b8" }}>{oferta.email_empresa}</strong></span>
+              <span className="inline-flex items-center gap-1.5 flex-wrap">
+                Email: <strong style={{ color: "#94a3b8" }}>{oferta.email_empresa}</strong>
+                {/* Distinguir un email real de un patrón deducido: sin esto el
+                    usuario gasta envíos creyendo que la dirección es segura. */}
+                {oferta.email_confianza === "alta" && (
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                    title="Email encontrado en la web oficial de la empresa"
+                    style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                    Verificado
+                  </span>
+                )}
+                {oferta.email_confianza === "media" && (
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                    title="Dirección deducida del dominio. El dominio sí recibe correo, pero no hemos podido confirmar este buzón"
+                    style={{ background: "rgba(251,191,36,0.1)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}>
+                    Probable
+                  </span>
+                )}
+              </span>
             )}
           </div>
         )}
