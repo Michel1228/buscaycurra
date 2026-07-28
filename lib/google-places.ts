@@ -64,8 +64,10 @@ export async function buscarEmpresaGooglePlaces(
       return [];
     }
 
-    // 2. Obtener detalles de cada place_id (máx 5)
-    const candidates = findData.candidates.slice(0, 5);
+    // 2. Detalles de cada place_id. Cada Details es una llamada de PAGO a Google.
+    // Bajado de 5 a 2: el primer candidato es casi siempre el correcto y el 2º
+    // cubre la duda; pedir 5 multiplicaba el coste por búsqueda sin apenas valor.
+    const candidates = findData.candidates.slice(0, 2);
     const details = await Promise.all(
       candidates.map(async (c) => {
         try {
