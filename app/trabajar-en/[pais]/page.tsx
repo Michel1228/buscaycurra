@@ -62,8 +62,14 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
   let totalOfertas = 0;
   try {
     const pool = getPool();
+    // country en la BD está en minúsculas (ej: "de"); el código aquí viene en
+    // mayúsculas ("DE"). Con "=" exacto no casaba y mostraba ~0 ofertas aunque
+    // el país tuviera cientos de miles. Se compara en minúsculas y solo ofertas
+    // vivas (no caducadas), igual que el resto de la app.
     const countRes = await pool.query(
-      `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND "country" = $1`,
+      `SELECT COUNT(*) FROM "JobListing"
+       WHERE "isActive" = true AND ("expiresAt" > now() OR "expiresAt" IS NULL)
+         AND LOWER("country") = LOWER($1)`,
       [codigo]
     );
     totalOfertas = parseInt(countRes.rows[0].count);
