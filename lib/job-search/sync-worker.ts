@@ -306,7 +306,9 @@ export async function syncAdzunaCountry(
     const raw = await fetchAdzuna(keyword, city, 1, countryCode);
     totalFetched += raw.length;
     if (raw.length > 0) {
-      const inserted = await upsertJobsForSync(raw, "OTRO");
+      // Pasar el país: antes se insertaba sin él y ~92k ofertas de Adzuna
+      // quedaban con country vacío (invisibles al filtro por país).
+      const inserted = await upsertJobsForSync(raw, "OTRO", countryCode);
       totalInserted += inserted;
     }
     // Pequeña pausa para no saturar la API
