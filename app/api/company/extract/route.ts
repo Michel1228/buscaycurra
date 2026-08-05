@@ -33,9 +33,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const body = await request.json() as { name?: string; url?: string; city?: string };
+    const body = await request.json() as { name?: string; url?: string; city?: string; address?: string };
     const name = body.name?.trim();
     const city = body.city?.trim();
+    // Calle opcional: desambigua entre locales de la misma cadena en una ciudad.
+    const address = body.address?.trim();
 
     if (!name) {
       return NextResponse.json(
@@ -45,10 +47,14 @@ export async function POST(request: NextRequest) {
     }
 
     // ── 1. Caché primero: Places es de pago, no preguntar dos veces lo mismo ─
-    const enCache = await buscarEnCachePorNombre(name, city);
-    if (enCache.length) {
-      console.log(`💾 ${enCache.length} empresas servidas desde caché: "${name}"`);
-      return NextResponse.json({ success: true, empresas: enCache, desdeCache: true });
+    // Con dirección NO se usa caché: está indexada por nombre+ciudad, así que
+    // devolvería otro local de la misma cadena en vez del de esa calle.
+    if (!address) {
+      const enCache = await buscarEnCachePorNombre(name, city);
+      if (enCache.length) {
+        console.log(`💾 ${enCache.length} empresas servidas desde caché: "${name}"`);
+        return NextResponse.json({ success: true, empresas: enCache, desdeCache: true });
+      }
     }
 
     // ── 2. Google Places (fuente ÚNICA de datos de empresa) ────────────────
@@ -59,8 +65,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🗺️ Buscando en Google Places: "${name}"${city ? ` (${city})` : ""}`);
-    const places = await buscarEmpresaGooglePlaces(name, city);
+    console.log(`🗺️ Buscando en Google Places: "${name}"${address ? ` [${address}]` : ""}${city ? ` (${city})` : ""}`);
+    let places = await buscarEmpresaGooglePlaces(name, city, address);
+
+    // Si la calle no da resultados (mal escrita, local nuevo sin indexar),
+    // reintentar sin ella antes de rendirse: mejor el dato de la cadena que nada.
+    if (!places.length && address) {
+      console.log(`🗺️ Sin resultados con la calle, reintentando solo "${name}"`);
+      places = await buscarEmpresaGooglePlaces(name, city);
+    }
 
     if (!places.length) {
       return NextResponse.json({

@@ -29,7 +29,8 @@ export interface GooglePlaceResult {
  */
 export async function buscarEmpresaGooglePlaces(
   query: string,
-  city?: string
+  city?: string,
+  address?: string
 ): Promise<GooglePlaceResult[]> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
@@ -37,7 +38,10 @@ export async function buscarEmpresaGooglePlaces(
     return [];
   }
 
-  const searchQuery = city ? `${query} ${city}` : query;
+  // La dirección va ANTES de la ciudad para desambiguar locales de la misma
+  // cadena: sin ella, "Mercadona Tudela" devuelve cualquiera de los que haya
+  // en la ciudad, no el de la calle que pidió el usuario.
+  const searchQuery = [query, address, city].filter(Boolean).join(" ");
 
   try {
     // 1. Find Place from text → obtener place_id

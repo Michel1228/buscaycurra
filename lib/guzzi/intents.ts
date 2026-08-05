@@ -14,6 +14,16 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   if (/(?:busca|busco|info|información|hay|conoces|sabes)\s+(?:el\s+|la\s+|los\s+|las\s+|un\s+|una\s+)?(?:bar\s+|restaurante\s+|tienda\s+|hotel\s+|cafeter[ií]a\s+|empresa\s+|supermercado\s+|taller\s+|panader[ií]a\s+|farmacia\s+|cl[ií]nica\s+|peluquer[ií]a\s+)/i.test(t)) return "info_empresa";
   if (/empresas?\s+(?:de|del?)\s+\w+/i.test(t) && /\s+(?:en|por|cerca)\s+\w+/i.test(t)) return "info_empresa";
   if (/(?:qué|que)\s+(?:empresas?|f[áa]bricas?|negocios?|comercios?|tiendas?)\s+(?:hay|conoces|sabes)\s+(?:en|por|cerca|de)\s+\w+/i.test(t)) return "info_empresa";
+  // "manda un correo al Mercadona de la calle X" / "contacta con Bar Pepe" /
+  // "escribe a Leroy Merlin de Tudela". Antes esto caía en "chat" y Guzzi
+  // contestaba sin buscar nada: el usuario pedía el email de UNA empresa
+  // concreta y no recibía ni los datos ni la opción de enviar el CV.
+  // Va ANTES de las reglas de "buscar" (que se lo comían cuando la frase
+  // llevaba calle o tipo de negocio) y antes de "enviar", que exige pronombre
+  // (mándalo/envíaselo) y no cubre "manda un correo A <empresa>".
+  if (/(?:env[ií]a|m[aá]nda|escrib|contact|manda)\w*\s+(?:un\s+|el\s+|mi\s+)?(?:correo|email|e-mail|mail|cv|curr[ií]culum|candidatura)?\s*(?:a|al|con|para)\s+[a-záéíóúüñ0-9]/i.test(tn)) {
+    return "info_empresa";
+  }
   if (/(?:peluquer[ií]a|barber[ií]a|restaurante|bar\b|hotel|cafeter[ií]a|cl[ií]nica|farmacia|panader[ií]a|tienda|taller|supermercado|sal[oó]n|est[eé]tica|gimnasio|lavander[ií]a|fruter[ií]a|carnicer[ií]a|pescader[ií]a)\b.{3,}/i.test(t) && /(?:calle|plaza|avenida|avda|paseo|crta|carretera|c\/)\s/i.test(t)) return "buscar";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
   if (/\w{3,}\s+(?:en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios|trabajado|trabaj[éeáa]|trabajaba|experiencia|no\s+puedo|cargar\s+peso|espalda|dolor|lesi[oó]n|baja\s+m[ée]dica|salario|sueldo|m[ií]nimo|smi|cu[aá]nto|cuesta|vale|cobra|gana|derecho|paro|sepe|finiquito|vacaciones|despido|indemnizaci[oó]n|mercado\s+laboral|situaci[oó]n\s+laboral|perspectivas\s+laborales|c[oó]mo\s+est[aá]|hay\s+trabajo|posibilidades|emigrar|emigraci[oó]n)/i.test(t)) return "buscar";
@@ -28,6 +38,59 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   if (/(crear|hacer|nuevo).*(cv|curriculum)/.test(t)) return "crear_cv";
   if (/(info|informacion|datos|busca|conoce|saber|dime).*(sobre\s+)?(la\s+)?empresa\s+\w|(qué|quien)\s+(es|conoces)\s+\w+\s*(empresa)?/.test(t)) return "info_empresa";
   return "chat";
+}
+
+/**
+ * Extrae la calle/dirección del mensaje ("en la calle Yanguas y Miranda",
+ * "avenida de Zaragoza 12"). Sin esto, buscar "Mercadona Tudela" en Places
+ * devolvía CUALQUIERA de los Mercadonas de la ciudad, no el que pedía el
+ * usuario. Añadirla a la query desambigua el local exacto.
+ */
+export function extractAddress(text: string): string | null {
+  const m = text.match(
+    /\b(?:calle|c\/|avenida|avda\.?|av\.|plaza|pza\.?|paseo|carretera|crta\.?|ctra\.?|ronda|camino|travesia|traves[ií]a)\s+(?:de\s+(?:la\s+|los\s+|las\s+)?)?([\wáéíóúüñ'’.-]+(?:\s+[\wáéíóúüñ'’.-]+){0,4})/i
+  );
+  if (!m?.[1]) return null;
+  // Cortar en conectores que ya no forman parte del nombre de la vía.
+  const via = m[0].split(/\s+(?:de\s+)?(?:tudela|pamplona)\b|\s+para\b|\s+y\s+mand|\s+y\s+env/i)[0];
+  const limpio = via.replace(/\s+/g, " ").trim();
+  return limpio.length >= 6 && limpio.length <= 80 ? limpio : null;
+}
+
+/**
+ * Nombre de empresa cuando el usuario pide contactarla:
+ * "manda un correo al Mercadona de la calle X" → "Mercadona".
+ * Complementa a extractCompanyName() de chat/route.ts, que está pensado para
+ * frases tipo "info sobre la empresa X" y no cubre estos verbos.
+ */
+export function extractCompanyFromContact(text: string): string | null {
+  const m = text.match(
+    /(?:env[ií]a\w*|m[aá]nda\w*|escrib\w*|contact\w*)\s+(?:un\s+|el\s+|mi\s+)?(?:correo|email|e-mail|mail|cv|curr[ií]culum|candidatura)?\s*(?:a|al|con|para)\s+(?:la\s+|el\s+|los\s+|las\s+)?([A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9&'’.-]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9&'’.-]+){0,3})/i
+  );
+  if (!m?.[1]) return null;
+  let nombre = m[1].trim();
+  // Quitar adjetivos previos ("el nuevo Mercadona" → "Mercadona").
+  nombre = nombre.replace(/^(?:nuevo|nueva|nuevos|nuevas)\s+/i, "");
+  // Cortar en la coletilla de ubicación: "Mercadona de la calle X" → "Mercadona",
+  // "Bar Pepe en la avenida Y" → "Bar Pepe".
+  nombre = nombre.replace(
+    /\s+(?:de|en|del)\s+(?:la\s+|el\s+|los\s+|las\s+)?(?:calle|c\/|avenida|avda|av|plaza|pza|paseo|carretera|crta|ctra|ronda|camino|travesia|traves[ií]a).*$/i,
+    ""
+  );
+  // "Peluqueria Marisa calle Mayor 5" → sin conector, cortar igualmente.
+  nombre = nombre.replace(
+    /\s+(?:calle|c\/|avenida|avda|av|plaza|pza|paseo|carretera|crta|ctra|ronda|camino)\b.*$/i,
+    ""
+  );
+  nombre = nombre.replace(/\s+(?:de|en)\s+(?:tudela|pamplona|madrid|barcelona|zaragoza|sevilla|valencia|bilbao|malaga|m[áa]laga)\b.*$/i, "");
+  // Restos de conectores sueltos al final ("Bar Pepe en la" → "Bar Pepe").
+  // Se repite hasta 3 veces porque pueden encadenarse ("... en la").
+  for (let i = 0; i < 3; i++) {
+    nombre = nombre.replace(/\s+(?:de|en|del|con|para|la|el|los|las|un|una)$/i, "").trim();
+  }
+  // Descartar palabras vacías que no son un negocio.
+  if (/^(?:ellos|ellas|esa|ese|esta|este|eso|alguien|nadie|ver|saber)$/i.test(nombre)) return null;
+  return nombre.length >= 3 && nombre.length <= 60 ? nombre : null;
 }
 
 export function extractJobTerm(text: string): string | null {

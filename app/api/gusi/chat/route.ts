@@ -15,7 +15,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from "@/lib/guzzi/prompts";
-import { detectIntent, extractJobTerm } from "@/lib/guzzi/intents";
+import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
 import { callGroq, callDeepSeek } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 
@@ -781,8 +781,12 @@ El candidato tiene mucha experiencia.
     // -- Intent: info empresa (Google Places) ----------------------------------
     const preIntent = detectIntent(message, history);
     if (preIntent === "info_empresa") {
-      const companyName = extractCompanyName(message);
+      // extractCompanyFromContact cubre "manda un correo al Mercadona de la
+      // calle X"; extractCompanyName cubre "info sobre la empresa X". Se prueba
+      // primero el de contacto porque es el que limpia la coletilla de la vía.
+      const companyName = extractCompanyFromContact(message) || extractCompanyName(message);
       const searchCity = extractCity(message) || "";
+      const searchAddress = extractAddress(message) || "";
 
       // Si no es un nombre de empresa concreto, pero es búsqueda por sector+ciudad
       // (ej: "empresas de limpieza en Tudela", "bares en Corella")
@@ -810,12 +814,16 @@ El candidato tiene mucha experiencia.
 
       try {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://buscaycurra.es";
-        const searchCity = extractCity(message) || "";
         const extractRes = await fetch(`${siteUrl}/api/company/extract`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-sync-secret": process.env.ADMIN_SECRET || "" },
-          body: JSON.stringify({ name: companyName, city: searchCity || undefined }),
-          signal: AbortSignal.timeout(15000),
+          // La calle desambigua entre locales de la misma cadena en la ciudad.
+          body: JSON.stringify({
+            name: companyName,
+            city: searchCity || undefined,
+            address: searchAddress || undefined,
+          }),
+          signal: AbortSignal.timeout(20000),
         });
 
         if (!extractRes.ok) {
@@ -830,6 +838,7 @@ El candidato tiene mucha experiencia.
           empresas?: Array<{
             nombre?: string; dominio?: string; urlWeb?: string;
             emailRrhh?: string; emailContacto?: string; emailsExtraidos?: string[];
+            emailConfianza?: "alta" | "media" | "baja";
             telefono?: string; paginaEmpleo?: string; descripcion?: string;
             sector?: string; linkedin?: string; twitter?: string; instagram?: string;
             fuente?: string; googleRating?: number; googleReviews?: number;
@@ -850,10 +859,27 @@ El candidato tiene mucha experiencia.
         if (empresa.googleRating) reply += `⭐ **Valoración Google:** ${empresa.googleRating}/5 (${empresa.googleReviews || "?"} reseñas)\n`;
         if (empresa.googleAddress) reply += `📍 ${empresa.googleAddress}\n`;
         if (empresa.telefono) reply += `📞 ${empresa.telefono}\n`;
-        if (empresa.emailRrhh) reply += `📧 ${empresa.emailRrhh}\n`;
+        if (empresa.emailRrhh) {
+          // Ser honesto con el origen del email: uno hallado en su web no es lo
+          // mismo que un patrón deducido del dominio. Si no, el usuario gasta
+          // envíos creyendo que la dirección es segura.
+          const sello =
+            empresa.emailConfianza === "alta"
+              ? " ✅ *(verificado en su web)*"
+              : empresa.emailConfianza === "media"
+                ? " ⚠️ *(deducido del dominio; el dominio sí recibe correo)*"
+                : "";
+          reply += `📧 ${empresa.emailRrhh}${sello}\n`;
+        }
         if (empresa.urlWeb) reply += `🌐 [Web](${empresa.urlWeb})\n`;
         if (empresa.googleMapsUrl) reply += `🗺️ [Google Maps](${empresa.googleMapsUrl})\n`;
-        reply += `\n📧 **¿Envío tu CV a ${empresa.nombre}?** Responde \"sí\" y me encargo.`;
+
+        // Aviso para cadenas: una tienda concreta no tiene email propio, el que
+        // damos es el corporativo. Conviene decirlo y sugerir ir en persona.
+        if (empresa.emailConfianza !== "alta" && searchAddress) {
+          reply += `\n💡 Este parece el correo **general de la empresa**, no el de ese local en concreto. Para una tienda física, presentarte en persona con el CV suele funcionar mejor — pero puedo enviarlo igualmente.`;
+        }
+        reply += `\n\n📧 **¿Envío tu CV a ${empresa.nombre}?** Responde "sí" y me encargo.`;
 
         return NextResponse.json({
           reply,
