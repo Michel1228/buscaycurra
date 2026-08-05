@@ -326,6 +326,19 @@ export default function AppNavWrapper() {
               </Link>
             )}
             <div style={{ height: "1px", background: "#2d3142", margin: "4px 0" }} />
+            {/* Acceso a la descarga: en iPhone lleva a la App Store y en
+                Android a instalarla desde el navegador (mismas funciones,
+                mientras no esté en Google Play). */}
+            <Link href="/descargar" onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition"
+              style={{ color: "#94a3b8" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                <line x1="12" y1="18" x2="12.01" y2="18"/>
+              </svg>
+              <span>Descargar app</span>
+            </Link>
+            <div style={{ height: "1px", background: "#2d3142", margin: "4px 0" }} />
             <button
               onClick={() => { setMobileOpen(false); cerrarSesion(); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition"

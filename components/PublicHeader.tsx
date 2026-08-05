@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Building2, LogIn, Sparkles } from "lucide-react";
+import { Building2, LogIn, Sparkles, Smartphone } from "lucide-react";
 import LogoGusano from "@/components/LogoGusano";
 
 export default function PublicHeader() {
@@ -28,6 +28,15 @@ export default function PublicHeader() {
 
         {/* Desktop nav */}
         <div className="hidden sm:flex items-center gap-4">
+          {/* /descargar existía pero no la enlazaba nadie: era inalcanzable
+              salvo escribiendo la URL. Ahí está la app de iPhone y el QR. */}
+          <Link
+            href="/descargar"
+            className="text-sm font-medium transition hover:opacity-80"
+            style={{ color: "#64748b" }}
+          >
+            Descargar app
+          </Link>
           <Link
             href="/empresas"
             className="text-sm font-medium transition hover:opacity-80"
@@ -102,6 +111,14 @@ export default function PublicHeader() {
             onClick={(e) => e.stopPropagation()}
           >
             <nav className="flex flex-col gap-1">
+              <Link
+                href="/descargar"
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm transition"
+                style={{ color: "#94a3b8" }}
+              >
+                <Smartphone size={14} strokeWidth={1.8} className="inline mr-1.5" />Descargar app
+              </Link>
               <Link
                 href="/empresas"
                 onClick={() => setMenuOpen(false)}

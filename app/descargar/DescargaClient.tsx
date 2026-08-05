@@ -6,6 +6,9 @@ import { Mail, Search, BarChart2, Smartphone, Bot, Apple, type LucideIcon } from
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import LogoGusano from "@/components/LogoGusano";
 
+/** Ficha de la app en la App Store (publicada en agosto de 2026). */
+const APP_STORE_URL = "https://apps.apple.com/app/buscaycurra-empleo-con-ia/id6775232067";
+
 const FEATURES: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   {
     Icon: Mail,
@@ -102,6 +105,58 @@ export default function DescargaClient() {
             <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>Sin tarjeta. Sin compromisos. Solo resultados.</p>
           </div>
 
+          {/* ── Descarga desde la App Store + QR ──────────────────────────
+              La app ya está publicada en la App Store (ago 2026), así que
+              iPhone tiene descarga nativa. En Android aún no está en Google
+              Play: el QR lleva a esta misma página para instalarla como app
+              desde el navegador, que da las mismas funciones. */}
+          <div style={{ marginTop: "44px", display: "flex", flexWrap: "wrap", gap: "28px", justifyContent: "center", alignItems: "center" }}>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
+                Descárgala en tu móvil
+              </p>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
+                <a
+                  href={APP_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "9px", background: "#000", color: "#fff", fontWeight: 600, fontSize: "15px", padding: "13px 22px", borderRadius: "12px", textDecoration: "none", border: "1px solid #2d3142" }}
+                >
+                  <Apple size={20} strokeWidth={1.6} />
+                  <span style={{ textAlign: "left", lineHeight: 1.15 }}>
+                    <span style={{ display: "block", fontSize: "10px", opacity: 0.75 }}>Descárgala en la</span>
+                    App Store
+                  </span>
+                </a>
+                <a
+                  href="#instalar-movil"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "9px", background: "#1e212b", color: "#f1f5f9", fontWeight: 600, fontSize: "15px", padding: "13px 22px", borderRadius: "12px", textDecoration: "none", border: "1px solid #2d3142" }}
+                >
+                  <Smartphone size={20} strokeWidth={1.6} />
+                  <span style={{ textAlign: "left", lineHeight: 1.15 }}>
+                    <span style={{ display: "block", fontSize: "10px", opacity: 0.7 }}>Instálala en</span>
+                    Android
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            <div style={{ textAlign: "center" }}>
+              <div style={{ background: "#fff", padding: "10px", borderRadius: "14px", display: "inline-block", lineHeight: 0 }}>
+                <img
+                  src="/qr-buscaycurra.png"
+                  alt="Código QR para instalar BuscayCurra en el móvil"
+                  width={112}
+                  height={112}
+                  style={{ display: "block", width: "112px", height: "112px" }}
+                />
+              </div>
+              <p style={{ fontSize: "12px", color: "#64748b", margin: "10px 0 0", maxWidth: "150px" }}>
+                Escanéalo con la cámara del móvil
+              </p>
+            </div>
+          </div>
+
           {/* Stats */}
           <div style={{ display: "flex", justifyContent: "center", gap: "32px", marginTop: "52px", flexWrap: "wrap" }}>
             {[
@@ -164,12 +219,16 @@ export default function DescargaClient() {
       </section>
 
       {/* ── Cómo instalar ── */}
-      <section style={{ padding: "0 24px 100px", maxWidth: "800px", margin: "0 auto" }}>
+      <section id="instalar-movil" style={{ padding: "0 24px 100px", maxWidth: "800px", margin: "0 auto", scrollMarginTop: "80px" }}>
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
           <h2 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 10px", color: "#f1f5f9" }}>
             Instala en dos pasos
           </h2>
-          <p style={{ fontSize: "15px", color: "#64748b", margin: 0 }}>Sin App Store. Sin Google Play. Directo desde el navegador.</p>
+          {/* En Android todavía no está en Google Play: se instala desde el
+              navegador y funciona igual (mismas pantallas y funciones). */}
+          <p style={{ fontSize: "15px", color: "#64748b", margin: 0 }}>
+            En Android, directo desde el navegador: mismas funciones, sin pasar por Google Play.
+          </p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
 
