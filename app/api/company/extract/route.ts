@@ -14,7 +14,8 @@
  * Devuelve: { success: true, empresas: EmpresaCompleta[] }
  */
 import { NextRequest, NextResponse } from "next/server";
-import { buscarEmpresaGooglePlaces } from "@/lib/google-places";
+import { buscarEmpresaGooglePlaces, type GooglePlaceResult } from "@/lib/google-places";
+import { buscarEmpresaOSM } from "@/lib/osm-places";
 import { construirEmpresaDesdeGoogle, enriquecerEmpresas, type EmpresaCompleta } from "@/lib/empresa-datos";
 import { buscarEnCachePorNombre, guardarEnCache } from "@/lib/empresas-cache";
 import { getUserId } from "@/lib/auth-server";
@@ -57,22 +58,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── 2. Google Places (fuente ÚNICA de datos de empresa) ────────────────
-    if (!process.env.GOOGLE_PLACES_API_KEY) {
-      return NextResponse.json(
-        { error: "API de Google Places no configurada" },
-        { status: 500 }
-      );
+    // ── 2. Buscar el negocio: Google Places y, si falla, OpenStreetMap ──────
+    // OSM es gratis y sin API key: cubre el caso de que Google esté sin
+    // facturación, con la cuota agotada o de que su API legacy se retire.
+    let places: GooglePlaceResult[] = [];
+    let fuente = "google_places";
+
+    if (process.env.GOOGLE_PLACES_API_KEY) {
+      console.log(`🗺️ Google Places: "${name}"${address ? ` [${address}]` : ""}${city ? ` (${city})` : ""}`);
+      places = await buscarEmpresaGooglePlaces(name, city, address);
+      // Si la calle no da resultados (mal escrita, local sin indexar),
+      // reintentar sin ella antes de pasar al respaldo.
+      if (!places.length && address) {
+        places = await buscarEmpresaGooglePlaces(name, city);
+      }
     }
 
-    console.log(`🗺️ Buscando en Google Places: "${name}"${address ? ` [${address}]` : ""}${city ? ` (${city})` : ""}`);
-    let places = await buscarEmpresaGooglePlaces(name, city, address);
-
-    // Si la calle no da resultados (mal escrita, local nuevo sin indexar),
-    // reintentar sin ella antes de rendirse: mejor el dato de la cadena que nada.
-    if (!places.length && address) {
-      console.log(`🗺️ Sin resultados con la calle, reintentando solo "${name}"`);
-      places = await buscarEmpresaGooglePlaces(name, city);
+    if (!places.length) {
+      console.log(`🌍 Respaldo OpenStreetMap: "${name}"${address ? ` [${address}]` : ""}`);
+      places = await buscarEmpresaOSM(name, city, address);
+      if (places.length) fuente = "openstreetmap";
     }
 
     if (!places.length) {
@@ -83,9 +88,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // ── 2. Construir resultados ────────────────────────────────────────────
+    // ── 3. Construir resultados ────────────────────────────────────────────
     const empresas: EmpresaCompleta[] = places.map(gr =>
-      construirEmpresaDesdeGoogle(gr, { fuente: "google_places" })
+      construirEmpresaDesdeGoogle(gr, { fuente })
     );
 
     // ── 3. Enriquecer: email real de la web y, si no, verificación MX ──────

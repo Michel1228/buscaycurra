@@ -14,6 +14,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { buscarEmpresasTextSearch, type GooglePlaceResult } from "@/lib/google-places";
+import { buscarNegociosZonaOSM } from "@/lib/osm-places";
 import { construirEmpresaDesdeGoogle, enriquecerEmpresas, type EmpresaCompleta } from "@/lib/empresa-datos";
 import { buscarEnCachePorZona, guardarEnCache } from "@/lib/empresas-cache";
 import { getUserId } from "@/lib/auth-server";
@@ -120,30 +121,36 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (!process.env.GOOGLE_PLACES_API_KEY) {
-      // Sin API seguimos pudiendo servir lo ya conocido.
-      return NextResponse.json({
-        success: true,
-        empresas: cacheados,
-        total: cacheados.length,
-        conEmailFiable: cacheados.filter((e) => e.emailConfianza === "alta").length,
-        desdeCache: true,
-      });
-    }
-
-    // ── 2. Buscar en Google lo que falte ────────────────────────────────
+    // ── 2. Buscar lo que falte: Google Places y, si no hay, OpenStreetMap ──
     const consultas = (sector?.consultas ?? ["empresas en"]).map((c) => `${c} ${ciudad}`);
     const yaConocidos = new Set(cacheados.map((e) => e.placeId));
     const porId = new Map<string, GooglePlaceResult>();
 
-    const tandas = await Promise.all(
-      consultas.map((q) => buscarEmpresasTextSearch(q, 12).catch(() => [] as GooglePlaceResult[]))
-    );
-    for (const tanda of tandas) {
-      for (const place of tanda) {
-        if (!yaConocidos.has(place.place_id) && !porId.has(place.place_id)) {
-          porId.set(place.place_id, place);
+    if (process.env.GOOGLE_PLACES_API_KEY) {
+      const tandas = await Promise.all(
+        consultas.map((q) => buscarEmpresasTextSearch(q, 12).catch(() => [] as GooglePlaceResult[]))
+      );
+      for (const tanda of tandas) {
+        for (const place of tanda) {
+          if (!yaConocidos.has(place.place_id) && !porId.has(place.place_id)) {
+            porId.set(place.place_id, place);
+          }
         }
+      }
+    }
+
+    // Respaldo gratuito: cubre el caso de Google sin facturación o sin cuota.
+    // Nominatim exige 1 req/s, así que las consultas van en serie (no en paralelo).
+    if (!porId.size) {
+      const tipos = sector?.consultas?.map((c) => c.replace(/\s+en$/i, "").trim()) ?? ["empresas"];
+      for (const tipo of tipos.slice(0, 3)) {
+        const rs = await buscarNegociosZonaOSM(tipo, ciudad, 20).catch(() => [] as GooglePlaceResult[]);
+        for (const place of rs) {
+          if (!yaConocidos.has(place.place_id) && !porId.has(place.place_id)) {
+            porId.set(place.place_id, place);
+          }
+        }
+        if (porId.size >= limite) break;
       }
     }
 

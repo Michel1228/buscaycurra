@@ -1,19 +1,23 @@
 /**
  * POST /api/ett/search
  *
- * Busca ETTs (Empresas de Trabajo Temporal) por ciudad usando Google Places.
+ * Busca ETTs (Empresas de Trabajo Temporal) por ciudad.
  *
  * Flujo:
  *   1. Text Search con varias consultas ("ETT X", "agencia empleo temporal X"...)
  *      → hasta 20 sitios por consulta (Find Place solo daba ~1-5: se quedaba corto)
  *   2. Google Places Details → nombre, web, teléfono, dirección, rating, fotos
- *   3. Email: real de la web si se encuentra; si no, patrón + verificación MX
+ *   3. Si Google no responde (sin facturación o sin cuota) → respaldo GRATIS
+ *      con OpenStreetMap/Nominatim, que da nombre, dirección, web y teléfono
+ *      (sin valoraciones ni fotos, que OSM no tiene)
+ *   4. Email: real de la web si se encuentra; si no, patrón + verificación MX
  *
  * Acepta: { city: "Madrid" }
  * Devuelve: { success: true, empresas: EmpresaCompleta[] }
  */
 import { NextRequest, NextResponse } from "next/server";
 import { buscarEmpresasTextSearch, type GooglePlaceResult } from "@/lib/google-places";
+import { buscarNegociosZonaOSM } from "@/lib/osm-places";
 import { construirEmpresaDesdeGoogle, enriquecerEmpresas, type EmpresaCompleta } from "@/lib/empresa-datos";
 import { guardarEnCache } from "@/lib/empresas-cache";
 import { getUserId } from "@/lib/auth-server";
@@ -49,9 +53,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ciudad demasiado larga" }, { status: 400 });
     }
 
-    if (!process.env.GOOGLE_PLACES_API_KEY) {
-      return NextResponse.json({ error: "API de Google Places no configurada" }, { status: 500 });
-    }
+    // Sin clave de Google no se corta: más abajo hay respaldo con OpenStreetMap.
 
     // ── 1. Buscar ETTs en Google Places ─────────────────────────────────
     console.log(`🏢 Buscando ETTs en: "${city}"`);
@@ -64,12 +66,25 @@ export async function POST(request: NextRequest) {
 
     // Dedupe por place_id: las tres consultas se solapan mucho.
     const porId = new Map<string, GooglePlaceResult>();
-    const tandas = await Promise.all(
-      queries.map((q) => buscarEmpresasTextSearch(q, 10).catch(() => [] as GooglePlaceResult[]))
-    );
-    for (const tanda of tandas) {
-      for (const place of tanda) {
-        if (!porId.has(place.place_id)) porId.set(place.place_id, place);
+    if (process.env.GOOGLE_PLACES_API_KEY) {
+      const tandas = await Promise.all(
+        queries.map((q) => buscarEmpresasTextSearch(q, 10).catch(() => [] as GooglePlaceResult[]))
+      );
+      for (const tanda of tandas) {
+        for (const place of tanda) {
+          if (!porId.has(place.place_id)) porId.set(place.place_id, place);
+        }
+      }
+    }
+
+    // Respaldo gratuito si Google no responde (sin facturación o sin cuota).
+    if (!porId.size) {
+      for (const tipo of ["ETT empresa trabajo temporal", "agencia de empleo"]) {
+        const rs = await buscarNegociosZonaOSM(tipo, city, 15).catch(() => [] as GooglePlaceResult[]);
+        for (const place of rs) {
+          if (!porId.has(place.place_id)) porId.set(place.place_id, place);
+        }
+        if (porId.size >= 15) break;
       }
     }
 
