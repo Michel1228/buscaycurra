@@ -493,6 +493,14 @@ async function searchJobsBySector(sector: string, userId?: string): Promise<stri
   }
 }
 
+/**
+ * Localiza el negocio que ha reconocido la IA en la foto.
+ *
+ * OJO — son DOS servicios distintos: leer la imagen es OpenAI GPT-4o Vision
+ * (arriba); esto de aquí solo ubica el negocio. Si Google Places no responde
+ * (sin facturación, sin cuota o API legacy retirada), se cae al respaldo
+ * GRATUITO de OpenStreetMap para que la foto siga siendo útil.
+ */
 async function searchGooglePlaces(
   companyName: string,
   lat?: number,
@@ -500,7 +508,7 @@ async function searchGooglePlaces(
   city?: string
 ): Promise<PlacesResult | null> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) return await buscarConOSM(companyName, city);
 
   try {
     // Si tenemos ubicación GPS, usar Nearby Search para máxima precisión
@@ -523,9 +531,56 @@ async function searchGooglePlaces(
     };
 
     const placeId = searchData.candidates?.[0]?.place_id;
-    if (!placeId) return null;
+    if (!placeId) return await buscarConOSM(companyName, city);
 
     return await getPlaceDetails(placeId, apiKey);
+  } catch {
+    return await buscarConOSM(companyName, city);
+  }
+}
+
+/**
+ * Respaldo gratuito con OpenStreetMap. Da nombre, dirección, teléfono y web
+ * (no valoraciones ni fotos, que OSM no tiene). El email se saca luego de la
+ * web con el mismo extractor que usa el resto de la app.
+ */
+async function buscarConOSM(companyName: string, city?: string): Promise<PlacesResult | null> {
+  try {
+    const { buscarEmpresaOSM } = await import("@/lib/osm-places");
+    const rs = await buscarEmpresaOSM(companyName, city);
+    const r = rs[0];
+    if (!r) return null;
+
+    let email = "";
+    let emailConfianza: "alta" | "media" | "baja" = "baja";
+    if (r.website) {
+      try {
+        const { extraerInfoEmpresa } = await import("@/lib/company-extractor");
+        const { extraerDominio, generarEmails, dominioAceptaCorreo } = await import("@/lib/empresa-datos");
+        const datos = await extraerInfoEmpresa(r.website);
+        if (datos?.emailRrhh && !datos.emailRrhh.includes("www.")) {
+          email = datos.emailRrhh;
+          emailConfianza = "alta";
+        } else {
+          const dominio = extraerDominio(r.website);
+          if (dominio && (await dominioAceptaCorreo(dominio))) {
+            email = generarEmails(dominio, true)[0] || "";
+            emailConfianza = "media";
+          }
+        }
+      } catch { /* sin email es mejor que uno que rebota */ }
+    }
+
+    return {
+      name: r.name,
+      address: r.formatted_address || "",
+      phone: r.formatted_phone_number || "",
+      email,
+      emailConfianza,
+      website: r.website || "",
+      mapsUrl: r.url || "",
+      rating: 0, // OSM no tiene valoraciones: 0 = "sin dato", no se inventa
+    };
   } catch {
     return null;
   }
