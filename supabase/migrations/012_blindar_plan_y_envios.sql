@@ -17,68 +17,59 @@
 -- La política de cv_sends era FOR ALL, que incluye DELETE. El límite de envíos
 -- se calcula contando filas de cv_sends, así que bastaba con borrarlas para
 -- volver a tener envíos disponibles, en bucle e ilimitadamente.
--- PROBADO: el DELETE devolvió HTTP 204 (permitido).
+-- PROBADO: tras el DELETE, las filas del usuario pasaron de 1 a 0.
 -- Solución: el usuario solo puede LEER su historial. Insertar/actualizar/borrar
 -- es cosa del servidor (el service role se salta RLS).
+--
+-- El script es repetible: se puede ejecutar varias veces sin error.
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- 1. profiles: quitar el UPDATE general y conceder solo lo seguro
 -- ─────────────────────────────────────────────────────────────────────────
-REVOKE UPDATE ON public.profiles FROM authenticated, anon;
+REVOKE UPDATE ON public.profiles FROM authenticated;
+REVOKE UPDATE ON public.profiles FROM anon;
 
 -- Columnas que el usuario SÍ puede editar desde la app (su perfil).
--- Se conceden una a una: cualquier columna no listada queda protegida,
--- incluidas plan, plan_source, subscription_status, stripe_customer_id,
--- stripe_subscription_id, current_period_end y las de RevenueCat.
-GRANT UPDATE (
-  nombre,
-  full_name,
-  telefono,
-  phone,
-  ciudad,
-  provincia,
-  sector,
-  linkedin_url,
-  cv_url,
-  updated_at
-) ON public.profiles TO authenticated;
+-- Cualquier columna no listada queda protegida, incluidas plan, plan_source,
+-- subscription_status, stripe_customer_id y las de RevenueCat.
+GRANT UPDATE (nombre, full_name, telefono, phone, ciudad, provincia, sector, linkedin_url, cv_url, updated_at)
+  ON public.profiles TO authenticated;
 
 -- ─────────────────────────────────────────────────────────────────────────
--- 2. cv_sends: solo lectura para el usuario
+-- 2. cv_sends: el usuario solo puede LEER su historial
 -- ─────────────────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "cv_sends_own" ON public.cv_sends;
+DROP POLICY IF EXISTS "cv_sends_select_own" ON public.cv_sends;
 
 CREATE POLICY "cv_sends_select_own"
   ON public.cv_sends
   FOR SELECT
   USING (auth.uid() = user_id);
 
--- Cinturón y tirantes: aunque no quede ninguna política de escritura, se
--- revocan también los permisos de tabla para que un futuro cambio de RLS no
--- reabra el agujero.
-REVOKE INSERT, UPDATE, DELETE ON public.cv_sends FROM authenticated, anon;
+-- Cinturón y tirantes: sin permisos de tabla, aunque una futura política
+-- volviera a abrirlo, el borrado seguiría bloqueado.
+REVOKE INSERT, UPDATE, DELETE ON public.cv_sends FROM authenticated;
+REVOKE INSERT, UPDATE, DELETE ON public.cv_sends FROM anon;
 
 -- ─────────────────────────────────────────────────────────────────────────
--- 3. usage_tracking: mismo riesgo (resetear cuotas de IA a mano)
+-- 3. usage_tracking: mismo riesgo (poner a cero los contadores de IA)
 -- ─────────────────────────────────────────────────────────────────────────
--- Guarda los contadores de consultas a Guzzi y usos de cámara. Si el usuario
--- pudiera escribirla, se pondría los contadores a cero y tendría IA ilimitada.
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables
-             WHERE table_schema = 'public' AND table_name = 'usage_tracking') THEN
-    EXECUTE 'ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY';
-    EXECUTE 'DROP POLICY IF EXISTS "usage_tracking_own" ON public.usage_tracking';
-    EXECUTE 'DROP POLICY IF EXISTS "usage_tracking_select_own" ON public.usage_tracking';
-    EXECUTE 'CREATE POLICY "usage_tracking_select_own" ON public.usage_tracking
-             FOR SELECT USING (auth.uid() = user_id)';
-    EXECUTE 'REVOKE INSERT, UPDATE, DELETE ON public.usage_tracking FROM authenticated, anon';
-  END IF;
-END $$;
+ALTER TABLE IF EXISTS public.usage_tracking ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "usage_tracking_own" ON public.usage_tracking;
+DROP POLICY IF EXISTS "usage_tracking_select_own" ON public.usage_tracking;
+
+CREATE POLICY "usage_tracking_select_own"
+  ON public.usage_tracking
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+REVOKE INSERT, UPDATE, DELETE ON public.usage_tracking FROM authenticated;
+REVOKE INSERT, UPDATE, DELETE ON public.usage_tracking FROM anon;
 
 -- ─────────────────────────────────────────────────────────────────────────
--- 4. Comprobación: debe devolver 0 filas de UPDATE para authenticated
---    sobre las columnas de plan.
+-- 4. Comprobación final: DEBE DEVOLVER 0 FILAS.
+--    Si devuelve alguna, el usuario aún puede tocar su plan.
 -- ─────────────────────────────────────────────────────────────────────────
 SELECT column_name, privilege_type, grantee
 FROM information_schema.column_privileges
