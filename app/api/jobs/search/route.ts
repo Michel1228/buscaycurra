@@ -221,7 +221,7 @@ export async function GET(request: NextRequest) {
     
     const sql = `
       SELECT id, title, company, city, province, salary, description,
-             "sourceUrl", "sourceName", "scrapedAt", "contactEmail", "contactEmailConfianza"
+             "sourceUrl", "sourceName", "scrapedAt", "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza
       FROM "JobListing"
       WHERE ${whereClause}
       ORDER BY
@@ -255,7 +255,7 @@ export async function GET(request: NextRequest) {
       if (locTotal > dbResult.rows.length + 5) {
         const locOffset = (page - 1) * limit;
         const locResult = await pool.query(
-          `SELECT id, title, company, city, province, salary, description, "sourceUrl", "sourceName", "scrapedAt", "contactEmail", "contactEmailConfianza"
+          `SELECT id, title, company, city, province, salary, description, "sourceUrl", "sourceName", "scrapedAt", "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza
            FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
            ORDER BY
              CASE WHEN title ILIKE $2 THEN 0 ELSE 1 END,
