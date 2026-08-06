@@ -28,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/app/guardados",  label: "Guardados",  icon: "guardados", title: "Ofertas guardadas" },
   { href: "/app/reviews",    label: "Reviews",    icon: "reviews", title: "Reviews de empresas" },
   { href: "/app/empresas",   label: "Empresas",   icon: "empresas", title: "Enviar CV a empresas" },
+  { href: "/app/envios",     label: "Mis envíos", icon: "envios", title: "Estado de los CVs enviados" },
   { href: "/app/referidos",  label: "Invitar",    icon: "referidos", title: "Invitar amigos" },
   { href: "/app/ayuda",      label: "Ayuda",      icon: "ayuda", title: "Centro de ayuda" },
   { href: "/app/perfil?tab=plan",     label: "Mi Plan",    icon: "plan", title: "Mi plan y cuenta" },
@@ -46,6 +47,7 @@ const ICON_COLORS: Record<string, string> = {
   guardados: "#22c55e",
   reviews: "#fbbf24",
   empresas: "#3b82f6",
+  envios: "#06b6d4",
   referidos: "#a855f7",
   ayuda: "#94a3b8",
   plan: "#22c55e",
@@ -85,6 +87,8 @@ function NavIcon({ name, size = 22 }: { name: string; size?: number }) {
       return <svg {...base} fill={color + "20"}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
     case "empresas":
       return <svg {...base}><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>;
+    case "envios":
+      return <svg {...base}><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>;
     case "referidos":
       return <svg {...base}><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>;
     case "liveinnanny":

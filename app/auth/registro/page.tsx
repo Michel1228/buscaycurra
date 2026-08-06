@@ -24,6 +24,21 @@ function RegistroPageInner() {
   const [cargando, setCargando] = useState(false);
   const [registrado, setRegistrado] = useState(false);
   const [error, setError] = useState("");
+  const [reenvio, setReenvio] = useState<"" | "enviando" | "hecho" | "error">("");
+
+  /** Si el email de confirmación se pierde o cae en spam, sin esto el usuario
+   *  se quedaba atrapado: el registro no lo reenvía y el login solo dice
+   *  "confirma tu email" sin ofrecer ninguna salida. */
+  const reenviarConfirmacion = async () => {
+    setReenvio("enviando");
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+    const { error: rErr } = await getSupabaseBrowser().auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: `${siteUrl}/auth/callback` },
+    });
+    setReenvio(rErr ? "error" : "hecho");
+  };
 
   const validar = (): string => {
     if (!nombre.trim()) return "El nombre es obligatorio.";
@@ -52,6 +67,13 @@ function RegistroPageInner() {
         if (sErr.message.includes("already registered")) setError("Este email ya está registrado.");
         else if (sErr.message.includes("weak password")) setError("Contraseña demasiado débil.");
         else setError("No se pudo crear la cuenta.");
+        return;
+      }
+      // Con la confirmación por email activada, Supabase NO devuelve error si el
+      // email ya existe: responde OK pero con identities vacío. Sin esta
+      // comprobación mostrábamos "¡Cuenta creada!" y el email nunca llegaba.
+      if (data?.user && data.user.identities?.length === 0) {
+        setError("Este email ya está registrado. Entra con tu contraseña o recupérala.");
         return;
       }
       setRegistrado(true);
@@ -141,6 +163,32 @@ function RegistroPageInner() {
                   Hemos enviado un email a <strong style={{ color: "#f1f5f9" }}>{email}</strong>. Confírmalo para empezar.
                 </p>
                 <Link href="/auth/login" className="btn-game inline-block text-xs">Ir al login</Link>
+
+                <div className="mt-5 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
+                  {reenvio === "hecho" ? (
+                    <p className="text-xs" style={{ color: "#22c55e" }}>
+                      Te lo hemos reenviado. Mira también la carpeta de spam.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs mb-2" style={{ color: "#64748b" }}>¿No te ha llegado?</p>
+                      <button
+                        type="button"
+                        onClick={reenviarConfirmacion}
+                        disabled={reenvio === "enviando"}
+                        className="text-xs font-semibold underline disabled:opacity-50"
+                        style={{ color: "#22c55e" }}
+                      >
+                        {reenvio === "enviando" ? "Enviando…" : "Reenviar email de confirmación"}
+                      </button>
+                      {reenvio === "error" && (
+                        <p className="text-xs mt-2" style={{ color: "#ef4444" }}>
+                          No se pudo reenviar. Espera un minuto e inténtalo otra vez.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-3.5">

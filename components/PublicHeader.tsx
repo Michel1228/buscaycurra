@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Building2, LogIn, Sparkles, Smartphone } from "lucide-react";
+import { Building2, LogIn, Sparkles, Smartphone, Tag } from "lucide-react";
 import LogoGusano from "@/components/LogoGusano";
 
 export default function PublicHeader() {
@@ -36,6 +36,16 @@ export default function PublicHeader() {
             style={{ color: "#64748b" }}
           >
             Descargar app
+          </Link>
+          {/* /precios estaba en el sitemap con prioridad 0.9 pero no la
+              enlazaba ninguna navegación: solo se llegaba por el ancla #precios
+              de la home. */}
+          <Link
+            href="/precios"
+            className="text-sm font-medium transition hover:opacity-80"
+            style={{ color: "#64748b" }}
+          >
+            Precios
           </Link>
           <Link
             href="/empresas"
@@ -118,6 +128,14 @@ export default function PublicHeader() {
                 style={{ color: "#94a3b8" }}
               >
                 <Smartphone size={14} strokeWidth={1.8} className="inline mr-1.5" />Descargar app
+              </Link>
+              <Link
+                href="/precios"
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm transition"
+                style={{ color: "#94a3b8" }}
+              >
+                <Tag size={14} strokeWidth={1.8} className="inline mr-1.5" />Precios
               </Link>
               <Link
                 href="/empresas"

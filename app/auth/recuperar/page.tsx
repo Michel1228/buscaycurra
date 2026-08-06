@@ -64,12 +64,12 @@ export default function RecuperarPage() {
         <div className="text-center mb-8">
           <div
             className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white text-2xl font-bold mb-4"
-            style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
+            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}
           >
             B
           </div>
-          <h1 className="text-2xl font-bold text-[#f0ebe0]">¿Olvidaste tu contraseña?</h1>
-          <p className="text-[#9a9378] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[#f1f5f9]">¿Olvidaste tu contraseña?</h1>
+          <p className="text-[#94a3b8] text-sm mt-1">
             Te enviaremos un enlace para que puedas recuperar tu cuenta
           </p>
         </div>
@@ -83,13 +83,13 @@ export default function RecuperarPage() {
               {/* Icono de éxito */}
               <div
                 className="inline-flex items-center justify-center w-16 h-16 rounded-full text-white text-2xl mb-4"
-                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}
               >
                 <Check size={28} strokeWidth={2.5} />
               </div>
               {/* Mensaje principal */}
-              <h2 className="text-lg font-semibold text-[#f0ebe0] mb-2">Email enviado</h2>
-              <p className="text-gray-600 text-sm mb-6">
+              <h2 className="text-lg font-semibold text-[#f1f5f9] mb-2">Email enviado</h2>
+              <p className="text-[#94a3b8] text-sm mb-6">
                 Te hemos enviado un email con el enlace para recuperar tu cuenta.
                 Revisa también la carpeta de spam.
               </p>
@@ -97,7 +97,7 @@ export default function RecuperarPage() {
               <Link
                 href="/auth/login"
                 className="text-sm font-medium"
-                style={{ color: "#7ed56f" }}
+                style={{ color: "#22c55e" }}
               >
                 ← Volver al inicio de sesión
               </Link>
@@ -138,7 +138,7 @@ export default function RecuperarPage() {
                 type="submit"
                 disabled={cargando || !email.trim()}
                 className="w-full text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}
               >
                 {cargando ? "Enviando..." : "Enviar email de recuperación"}
               </button>
@@ -148,7 +148,7 @@ export default function RecuperarPage() {
                 <Link
                   href="/auth/login"
                   className="text-sm"
-                  style={{ color: "#7ed56f" }}
+                  style={{ color: "#22c55e" }}
                 >
                   ← Volver al inicio de sesión
                 </Link>

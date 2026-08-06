@@ -105,12 +105,12 @@ export default function NuevaContrasenaPage() {
         <div className="text-center mb-8">
           <div
             className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white text-2xl font-bold mb-4"
-            style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
+            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}
           >
             B
           </div>
-          <h1 className="text-2xl font-bold text-[#f0ebe0]">Nueva contraseña</h1>
-          <p className="text-[#9a9378] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[#f1f5f9]">Nueva contraseña</h1>
+          <p className="text-[#94a3b8] text-sm mt-1">
             Elige una contraseña segura para tu cuenta
           </p>
         </div>
@@ -123,14 +123,14 @@ export default function NuevaContrasenaPage() {
             <div className="text-center">
               <div
                 className="inline-flex items-center justify-center w-16 h-16 rounded-full text-white mb-4"
-                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}
               >
                 <Check size={28} strokeWidth={2.5} />
               </div>
-              <h2 className="text-lg font-semibold text-[#f0ebe0] mb-2">
+              <h2 className="text-lg font-semibold text-[#f1f5f9] mb-2">
                 ¡Contraseña actualizada!
               </h2>
-              <p className="text-[#9a9378] text-sm">Redirigiendo al panel de control...</p>
+              <p className="text-[#94a3b8] text-sm">Redirigiendo al panel de control...</p>
             </div>
           ) : (
             // Formulario para nueva contraseña
@@ -145,7 +145,7 @@ export default function NuevaContrasenaPage() {
                       <Link
                         href="/auth/recuperar"
                         className="font-medium underline"
-                        style={{ color: "#7ed56f" }}
+                        style={{ color: "#22c55e" }}
                       >
                         Solicitar nuevo enlace
                       </Link>
@@ -214,7 +214,7 @@ export default function NuevaContrasenaPage() {
                 type="submit"
                 disabled={cargando || !nuevaContrasena || !confirmarContrasena}
                 className="w-full text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}
               >
                 {cargando ? "Guardando..." : "Guardar nueva contraseña"}
               </button>

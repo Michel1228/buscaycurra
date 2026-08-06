@@ -1,19 +1,34 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Globe, Target, Clock } from "lucide-react";
+import { NUM_PAISES } from "@/lib/paises";
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [verContrasena, setVerContrasena] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [sinConfirmar, setSinConfirmar] = useState(false);
+  const [reenvio, setReenvio] = useState<"" | "enviando" | "hecho" | "error">("");
+
+  const reenviarConfirmacion = async () => {
+    setReenvio("enviando");
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+    const { error: rErr } = await getSupabaseBrowser().auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: `${siteUrl}/auth/callback` },
+    });
+    setReenvio(rErr ? "error" : "hecho");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +38,7 @@ export default function LoginPage() {
       return;
     }
     setCargando(true);
+    setSinConfirmar(false);
     try {
       const { error: err } = await getSupabaseBrowser().auth.signInWithPassword({
         email: email.trim(),
@@ -30,11 +46,18 @@ export default function LoginPage() {
       });
       if (err) {
         if (err.message.includes("Invalid login")) setError("Email o contraseña incorrectos.");
-        else if (err.message.includes("Email not confirmed")) setError("Confirma tu email antes de entrar.");
+        else if (err.message.includes("Email not confirmed")) {
+          setError("Confirma tu email antes de entrar.");
+          setSinConfirmar(true);
+        }
         else setError("Error al iniciar sesión. Inténtalo de nuevo.");
         return;
       }
-      router.push("/app/bienvenida");
+      // El middleware guarda en ?redirect= la página que el usuario quería ver
+      // antes de que le pidiéramos entrar. Ignorarlo perdía el destino de
+      // cualquier enlace profundo (una oferta, un email, una notificación).
+      const destino = searchParams.get("redirect");
+      router.push(destino && destino.startsWith("/app/") ? destino : "/app/bienvenida");
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
     } finally {
@@ -75,13 +98,13 @@ export default function LoginPage() {
             <span style={{ color: "#22c55e" }}>al vacío.</span>
           </h2>
           <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en 24 países. 24/7. Tú solo vas a la entrevista.
+            {`Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países. 24/7. Tú solo vas a la entrevista.`}
           </p>
 
           {/* 3 puntos fuertes — siempre visibles */}
           <div className="space-y-3 mb-6">
             {[
-              { Icon: Globe, titulo: "24 países, un solo agente", desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
+              { Icon: Globe, titulo: `${NUM_PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
               { Icon: Target, titulo: "CV único para cada oferta", desc: "Cada candidatura se adapta a la empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
               { Icon: Clock, titulo: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. La diferencia entre que te lean o te ignoren." },
             ].map(p => (
@@ -122,12 +145,12 @@ export default function LoginPage() {
 
           <div className="flex items-center gap-2 text-xs" style={{ color: "#6b7280" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-            Millones de ofertas · 24 países · 24/7 trabajando por ti
+            {`Millones de ofertas · ${NUM_PAISES} países · 24/7 trabajando por ti`}
           </div>
         </div>
 
         <div className="relative z-10 hidden lg:flex items-center justify-between mt-8">
-          <p className="text-xs" style={{ color: "#374151" }}>© 2026 BuscayCurra · Sin permanencia · 24 países</p>
+          <p className="text-xs" style={{ color: "#374151" }}>{`© 2026 BuscayCurra · Sin permanencia · ${NUM_PAISES} países`}</p>
           <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#6b7280" }}>
             ¿Eres empresa o recruiter? →
           </Link>
@@ -185,6 +208,19 @@ export default function LoginPage() {
               {error && (
                 <div className="rounded-lg px-3.5 py-2.5 text-xs" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
                   {error}
+                  {sinConfirmar && (
+                    <div className="mt-2">
+                      {reenvio === "hecho" ? (
+                        <span style={{ color: "#22c55e" }}>Te hemos reenviado el email. Mira también el spam.</span>
+                      ) : (
+                        <button type="button" onClick={reenviarConfirmacion} disabled={reenvio === "enviando"}
+                          className="font-semibold underline disabled:opacity-50" style={{ color: "#22c55e" }}>
+                          {reenvio === "enviando" ? "Enviando…" : "Reenviármelo ahora"}
+                        </button>
+                      )}
+                      {reenvio === "error" && <span className="block mt-1">No se pudo reenviar. Espera un minuto.</span>}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -202,5 +238,15 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  // useSearchParams necesita un límite de Suspense para no forzar el renderizado
+  // dinámico de toda la página.
+  return (
+    <Suspense fallback={<div className="min-h-screen" style={{ background: "#0f1117" }} />}>
+      <LoginPageInner />
+    </Suspense>
   );
 }
