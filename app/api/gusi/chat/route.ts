@@ -400,7 +400,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         FROM "JobListing"
         WHERE "isActive" = true
           AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
-          AND (country = $2 OR LOWER(country) LIKE $3)
+          AND (LOWER(country) = LOWER($2) OR LOWER(country) LIKE $3)
         ORDER BY scope_rank, "createdAt" DESC
         LIMIT $${pIdx}
       `;
@@ -424,7 +424,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
          FROM "JobListing"
          WHERE "isActive" = true
            AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
-           AND (country = $2 OR LOWER(country) LIKE $3)
+           AND (LOWER(country) = LOWER($2) OR LOWER(country) LIKE $3)
          ORDER BY "createdAt" DESC LIMIT $4`,
         [kw, isoCode, countryFilter, N]
       );
@@ -448,7 +448,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
            FROM "JobListing"
            WHERE "isActive" = true
              AND (${synOrClauses})
-             AND (country = $${synPatterns.length + 1} OR LOWER(country) LIKE $${synPatterns.length + 2})
+             AND (LOWER(country) = LOWER($${synPatterns.length + 1}) OR LOWER(country) LIKE $${synPatterns.length + 2})
            ORDER BY "createdAt" DESC LIMIT $${synPatterns.length + 3}`,
           synParams
         );
