@@ -47,3 +47,14 @@ qa-archivo/
 # Grafo de conocimiento de graphify
 graphify-out/
 .graphify*
+
+# Herramientas de agentes (estado local, no forma parte del proyecto)
+.claude-flow/
+.claude/
+.swarm/
+.mcp.json
+ruvector.db
+va-audit-report.json
+
+# Archivos con nombres corruptos creados por redirecciones de shell mal escapadas
+# (fragmentos de codigo que acabaron como nombre de fichero)
