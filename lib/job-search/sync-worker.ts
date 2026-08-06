@@ -349,6 +349,23 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
   } catch { return []; }
 }
 
+/**
+ * OJO CON EL NOMBRE DE LA FUENTE: estas ofertas vienen de la API de Careerjet
+ * (public.api.careerjet.net), NO de EURES, pero se guardan con `source`
+ * "EURES_XX" por un error histórico. Son el ~36% del inventario (unas 595.000
+ * ofertas vivas).
+ *
+ * Cómo distinguirlas del EURES de verdad, que sí existe y es otra cosa
+ * (app/api/jobs/sync-eures, contra europa.eu):
+ *   source = "EURES"      -> EURES real
+ *   source = "EURES_XX"   -> Careerjet (esta función)
+ *
+ * No se renombra a propósito: el id de cada oferta se calcula con
+ * makeId(title, company, city, source), así que cambiar la etiqueta generaría
+ * ids distintos y duplicaría todo el inventario en el siguiente sync. Para
+ * corregirlo haría falta renombrar en la base de datos y recalcular los ids a
+ * la vez, en una migración aparte.
+ */
 export async function fetchCareerjetGlobal(keyword: string, countryLocation: string, _page = 1): Promise<RawJob[]> {
   // 5 páginas para máximo volumen — de 20 resultados/pág = 100 por combo
   const keyInfo = await getCareerjetKey();
@@ -419,12 +436,13 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, count
   const pool = getPool();
   const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
   let inserted = 0;
+  let refrescadas = 0;
   for (const j of jobs) {
     if (!j.url || !j.title) continue;
     const id = makeId(j.title, j.company, j.city, j.source);
     const categoria = detectCategoria(j.title);
     try {
-      const result = await pool.query(
+      const result = await pool.query<{ es_nueva: boolean }>(
         `INSERT INTO "JobListing" (id, title, company, description, sector, city, salary, "sourceUrl", "sourceName", "isActive", "scrapedAt", "createdAt", "expiresAt", country, categoria)
          VALUES ($1, $2, $3, $4, $5::"JobSector", $6, $7, $8, $9, true, NOW(), NOW(), $10, $11, $12)
          ON CONFLICT (id) DO UPDATE SET
@@ -436,11 +454,21 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, count
            description = EXCLUDED.description,
            salary = EXCLUDED.salary,
            country = COALESCE("JobListing".country, EXCLUDED.country),
-           categoria = COALESCE("JobListing".categoria, EXCLUDED.categoria)`,
+           categoria = COALESCE("JobListing".categoria, EXCLUDED.categoria)
+         RETURNING (xmax = 0) AS es_nueva`,
         [id, j.title, j.company, j.description, sector, j.city, j.salary, j.url, j.source, expiresAt, country || null, categoria]
       );
-      if (result.rowCount && result.rowCount > 0) inserted++;
+      // Antes se contaba `rowCount > 0`, que en un ON CONFLICT DO UPDATE también
+      // vale 1 al refrescar una oferta que ya teníamos: los logs decían "8.034
+      // ofertas nuevas" cuando casi todas eran refrescos. Por eso pasó
+      // inadvertido que Arbeitsagentur llevaba 74 días devolviendo cero.
+      // xmax = 0 solo es cierto cuando la fila se ha insertado de verdad.
+      if (result.rows[0]?.es_nueva) inserted++;
+      else if (result.rowCount) refrescadas++;
     } catch { /* skip */ }
+  }
+  if (refrescadas > 0) {
+    console.log(`[upsert] ${inserted} nuevas, ${refrescadas} refrescadas (${jobs.length} recibidas)`);
   }
   return inserted;
 }

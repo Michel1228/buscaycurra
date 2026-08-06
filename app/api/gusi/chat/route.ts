@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from "@/lib/guzzi/prompts";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
-import { callGroq, callDeepSeek } from "@/lib/guzzi/llm";
+import { callGroq, callDeepSeek, callOpenAI } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -348,7 +348,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
 
       // Build scope CASE with dynamic location patterns
       const scopeParts: string[] = [];
-      const params: string[] = [kw, isoCode, countryFilter];
+      const params: (string | number)[] = [kw, isoCode, countryFilter];
       let pIdx = 4; // $1=kw, $2=iso, $3=countryName
 
       // Scope 0: city exact match
@@ -385,7 +385,10 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
 
       // Scope 4: anywhere in country (fallback)
       scopeParts.push("ELSE 4");
-      params.push(String(N));
+      // Se pasaba String(N): Postgres recibía el LIMIT como texto y abortaba con
+      // "argument of LIMIT must be type bigint, not type text", así que la
+      // búsqueda de Guzzi fallaba SIEMPRE que el usuario nombraba una ciudad.
+      params.push(N);
 
       const scopeCase = scopeParts.length > 0
         ? `CASE ${scopeParts.join(" ")} END`
@@ -399,7 +402,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
           AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
           AND (country = $2 OR LOWER(country) LIKE $3)
         ORDER BY scope_rank, "createdAt" DESC
-        LIMIT $${pIdx - 1}
+        LIMIT $${pIdx}
       `;
 
       const r = await pool.query(consolidatedQuery, params);
@@ -699,7 +702,9 @@ export async function POST(req: NextRequest) {
     if (mode === "prep_entrevista") {
       const ctx = cvData ? `Datos del candidato:\n${cvParsed?.resumenTexto || cvData.slice(0, 400)}` : "";
       const content = `Entrevista: "${message}". ${ctx}`;
-      const reply = await callGroq(PROMPT_ENTREVISTA, content, 800) || localReply("entrevista_prep");
+      const reply = await callGroq(PROMPT_ENTREVISTA, content, 800)
+        || await callOpenAI(PROMPT_ENTREVISTA, content, 800)
+        || localReply("entrevista_prep");
       return NextResponse.json({ reply });
     }
 
@@ -740,7 +745,9 @@ El candidato tiene mucha experiencia.
 
       const promptConDensidad = PROMPT_CV_MEJORADO + densityNote;
       const content = `Mejora este CV con los datos reales que te doy:\n\n${cvData}`;
-      const reply = await callGroq(promptConDensidad, content, maxTokens) || localReply("cv_mejorado");
+      const reply = await callGroq(promptConDensidad, content, maxTokens)
+        || await callOpenAI(promptConDensidad, content, maxTokens)
+        || localReply("cv_mejorado");
       return NextResponse.json({ reply, action: "cv_mejorado" });
     }
 
@@ -774,7 +781,10 @@ El candidato tiene mucha experiencia.
       const ctx = cvData ? `Datos del candidato: ${cvParsed?.resumenTexto || cvData.slice(0, 400)}` : "";
       const content = `Empresa: ${cartaEmpresa}. Puesto: ${cartaPuesto}. ${ctx}`;
       // DeepSeek primario (mejor español), Groq fallback
-      const reply = await callDeepSeek(PROMPT_CARTA, content, 800) || await callGroq(PROMPT_CARTA, content, 800) || localReply("carta_recomendacion");
+      const reply = await callDeepSeek(PROMPT_CARTA, content, 800)
+        || await callGroq(PROMPT_CARTA, content, 800)
+        || await callOpenAI(PROMPT_CARTA, content, 800)
+        || localReply("carta_recomendacion");
       return NextResponse.json({ reply, action: "carta_recomendacion", empresa: cartaEmpresa, puesto: cartaPuesto });
     }
 
@@ -1422,8 +1432,32 @@ Responde en JSON exactamente así:
       console.error("[Guzzi] Groq key MISSING or DeepSeek already succeeded");
     }
 
+    // Intento 3: OpenAI. Red de seguridad para cuando los otros dos caen a la
+    // vez, que ya ha pasado (DeepSeek 402 sin saldo + Groq 401 clave caducada).
+    // Sin esto Guzzi respondía con textos enlatados y parecía roto.
+    if (!rawReply && process.env.OPENAI_API_KEY) {
+      try {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ model: "gpt-4o-mini", messages, temperature: 0.5, max_tokens: 800 }),
+          signal: AbortSignal.timeout(30000),
+        });
+        if (res.ok) {
+          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+          rawReply = data.choices?.[0]?.message?.content || "";
+          if (rawReply) console.log("[Guzzi] respondido por OpenAI (DeepSeek y Groq caidos)");
+        } else {
+          console.error("[Guzzi] OpenAI HTTP", res.status);
+        }
+      } catch (e) { console.error("[Guzzi] OpenAI error:", (e as Error).message); }
+    }
+
     if (!rawReply) {
-      console.error("[Guzzi] AI call failed — both DeepSeek and Groq returned no reply. Falling back to localReply.");
+      console.error("[Guzzi] AI call failed — DeepSeek, Groq y OpenAI sin respuesta. Falling back to localReply.");
       return NextResponse.json({ reply: localReply(intent, cvParsed) });
     }
     let reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);

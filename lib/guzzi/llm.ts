@@ -1,6 +1,12 @@
 /**
  * lib/guzzi/llm.ts
- * LLM helpers: Groq (fallback rápido) y DeepSeek (primario, con streaming SSE)
+ * LLM helpers: DeepSeek (primario, con streaming SSE), Groq (respaldo rápido)
+ * y OpenAI (último recurso).
+ *
+ * El 6 ago 2026 se comprobó que DeepSeek devolvía 402 (saldo agotado) y Groq
+ * 401 (clave caducada) a la vez: con solo dos proveedores, Guzzi se quedaba sin
+ * IA y respondía con textos enlatados. OpenAI se añade como tercera red porque
+ * su clave ya está en el proyecto y funcionando (la usa la búsqueda por foto).
  */
 
 export async function callGroq(systemPrompt: string, userContent: string, maxTokens = 600): Promise<string | null> {
@@ -63,6 +69,47 @@ export async function callDeepSeek(systemPrompt: string, userContent: string, ma
         signal: AbortSignal.timeout(35000),
       });
       if (!res.ok) {
+        if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
+        return null;
+      }
+      const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+      return data.choices?.[0]?.message?.content?.trim() || null;
+    } catch {
+      if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Último recurso cuando DeepSeek y Groq fallan. Usa gpt-4o-mini, el modelo
+ * barato: es una red de seguridad, no el proveedor habitual.
+ */
+export async function callOpenAI(systemPrompt: string, userContent: string, maxTokens = 800): Promise<string | null> {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) return null;
+
+  const body = JSON.stringify({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ],
+    temperature: 0.5,
+    max_tokens: maxTokens,
+  });
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+        body,
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!res.ok) {
+        console.error("[Guzzi] OpenAI HTTP", res.status);
         if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
         return null;
       }
