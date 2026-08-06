@@ -627,12 +627,16 @@ export async function POST(req: NextRequest) {
     if (!message) return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
 
     // -- Verificar límites del plan --
+    // El plan se guarda para elegir despues el proveedor de IA: los usuarios
+    // gratuitos van por Groq (que no cuesta nada) y los de pago por DeepSeek.
+    let planUsuario = "free";
     if (userId) {
       const { checkGuzziAccess } = await import("@/lib/guzzi-limits");
       const access = await checkGuzziAccess(userId);
+      planUsuario = access.plan || "free";
       if (!access.allowed) {
         return NextResponse.json(
-          { 
+          {
             error: access.errorMessage,
             plan: access.plan,
             planName: access.planName,
@@ -642,6 +646,7 @@ export async function POST(req: NextRequest) {
         );
       }
     }
+    const esDePago = planUsuario !== "free";
 
     // Si hay userId, leer el CV fresco desde la BD (ignora el cvData del cliente)
     let cvData = cvDataFromClient;
@@ -1376,11 +1381,17 @@ Responde en JSON exactamente así:
       { role: "user" as const, content: message },
     ];
 
-    // Chat normal: DeepSeek primero (mejor español), Groq como fallback
+    // ── Reparto de proveedores segun el plan ──────────────────────────────
+    // Los usuarios GRATUITOS van por Groq, que no cuesta nada: asi pueden
+    // seguir hablando con Guzzi en vez de quedarse colgados, que es la mejor
+    // forma de que nunca lleguen a suscribirse. DeepSeek, que responde mejor en
+    // espanol, se reserva para quien paga. Si el proveedor asignado falla, se
+    // prueba el otro igualmente: nadie se queda sin respuesta por esto.
     let rawReply = "";
+    const usarDeepSeekPrimero = esDePago;
 
-    // Intento 1: DeepSeek (sin /no_think, no lo necesita)
-    if (deepseekKey) {
+    // Intento 1: DeepSeek — solo de entrada para los planes de pago
+    if (deepseekKey && usarDeepSeekPrimero) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const res = await fetch("https://api.deepseek.com/chat/completions", {
@@ -1399,12 +1410,13 @@ Responde en JSON exactamente así:
         } catch (e) { console.error("[Guzzi] DeepSeek error:", (e as Error).message); }
         if (attempt === 0) await new Promise(r => setTimeout(r, 600));
       }
-    } else {
+    } else if (!deepseekKey) {
       console.error("[Guzzi] DeepSeek key MISSING");
     }
 
-    // Intento 2: Groq. El prefijo "/no_think" que llevaba antes era un truco
-    // para qwen3, el modelo que Groq ha retirado; con llama-3.3-70b sobra.
+    // Intento 2: Groq. Es el proveedor de cabecera de los usuarios gratuitos.
+    // El prefijo "/no_think" que llevaba antes era un truco para qwen3, el
+    // modelo que Groq ha retirado; con llama-3.3-70b sobra.
     if (!rawReply && groqKey) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
@@ -1426,6 +1438,27 @@ Responde en JSON exactamente así:
       }
     } else if (!rawReply) {
       console.error("[Guzzi] Groq key MISSING or DeepSeek already succeeded");
+    }
+
+    // Intento 2b: DeepSeek para los usuarios gratuitos cuando Groq no responde
+    // (su plan libre corta a 1.000 peticiones al dia en toda la app). Preferimos
+    // pagar unas decimas de centimo antes que dejar a alguien a medias de una
+    // conversacion. Va despues de Groq, no antes: el orden es lo que reparte el
+    // coste, no un candado.
+    if (!rawReply && deepseekKey && !usarDeepSeekPrimero) {
+      try {
+        const res = await fetch("https://api.deepseek.com/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
+          body: JSON.stringify({ model: "deepseek-v4-flash", messages, max_tokens: 1024, temperature: 0.5 }),
+          signal: AbortSignal.timeout(35000),
+        });
+        if (res.ok) {
+          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+          rawReply = data.choices?.[0]?.message?.content || "";
+          if (rawReply) console.log("[Guzzi] usuario free atendido por DeepSeek (Groq no respondio)");
+        }
+      } catch (e) { console.error("[Guzzi] DeepSeek (respaldo free) error:", (e as Error).message); }
     }
 
     // Intento 3: OpenAI. Red de seguridad para cuando los otros dos caen a la

@@ -27,8 +27,13 @@ export interface PlanLimits {
 export const LIMITS: Record<PlanTier, PlanLimits> = {
   free: {
     name: "Free",
-    guzziModel: "deepseek-v4-flash",
-    guzziMaxConsultasDia: 5,          // 5 consultas/DÍA recargables (antes 2 total de por vida)
+    // Los gratuitos van por Groq, cuyo plan libre no cuesta nada. Por eso se
+    // pueden dar 15 consultas al dia en vez de 5: con 5 la gente ni se molesta
+    // en probarlo, y quien no prueba nunca se suscribe. Si Groq se agota
+    // (1.000/dia en toda la app), se cae a DeepSeek: 15 consultas cuestan
+    // menos de medio centimo.
+    guzziModel: "llama-3.3-70b-versatile (Groq)",
+    guzziMaxConsultasDia: 15,         // antes 5 — subido el 7 ago 2026
     enviosCVDia: 3,                   // 3 envíos/día
     enviosCVSemana: 7,               // 7 envíos/semana
     camaraMaxUsos: 2,                 // 2 búsquedas/DÍA recargables (es la cara: GPT-4o Vision)
@@ -42,7 +47,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   basico: {
     name: "Básico",
-    guzziModel: "deepseek-v4-flash",
+    guzziModel: "deepseek-v4-flash",   // los planes de pago van por DeepSeek
     guzziMaxConsultasDia: 30,
     enviosCVDia: 15,
     enviosCVSemana: 100,
@@ -57,7 +62,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   esencial: {
     name: "Esencial",
-    guzziModel: "deepseek-v4-flash",
+    guzziModel: "deepseek-v4-flash",   // los planes de pago van por DeepSeek
     guzziMaxConsultasDia: 30,
     enviosCVDia: 15,
     enviosCVSemana: 100,
