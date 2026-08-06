@@ -369,8 +369,12 @@ export default function PerfilPage() {
             {/* Notificaciones push */}
             <PushSubscribeButton />
 
-            {/* WhatsApp */}
-            <WhatsAppSubscribeButton />
+            {/* WhatsApp — oculto mientras las alertas por WhatsApp estén
+                desactivadas por coste (Meta cobra 0,0509 € por alerta en
+                España). Ofrecerlo activaría un aviso que nunca llegaría.
+                Se vuelve a mostrar poniendo NEXT_PUBLIC_WHATSAPP_ALERTAS=on,
+                el mismo interruptor que reactiva el envío en send-alerts. */}
+            {process.env.NEXT_PUBLIC_WHATSAPP_ALERTAS === "on" && <WhatsAppSubscribeButton />}
 
             {/* Mi Plan — acceso rápido destacado */}
             <div className="rounded-xl p-5 flex items-center gap-4 cursor-pointer hover:opacity-90 transition"

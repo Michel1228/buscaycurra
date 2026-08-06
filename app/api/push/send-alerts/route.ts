@@ -374,8 +374,19 @@ export async function GET(request: NextRequest) {
           });
         }
 
-        // WhatsApp: solo si el usuario tiene teléfono guardado
-        if (contact?.whatsapp_alertas && contact?.whatsapp_phone) {
+        // WhatsApp: DESACTIVADO por coste (decisión del 6 ago 2026).
+        //
+        // Meta cobra las alertas de empleo como mensajes de marketing: 0,0509 €
+        // cada una en España. Una alerta diaria por usuario son 1,53 €/mes,
+        // más de la mitad de lo que cuesta el plan Esencial (2,99 €), y pérdida
+        // pura en los usuarios del plan gratuito. El email por Resend cubre lo
+        // mismo con 3.000 envíos al mes gratis.
+        //
+        // El código se conserva entero y funcionando: para volver a activarlo
+        // basta con poner WHATSAPP_ALERTAS=on en el entorno, sin tocar nada más
+        // (y liquidar el saldo pendiente en el billing hub de Meta).
+        const whatsappActivo = process.env.WHATSAPP_ALERTAS === "on";
+        if (whatsappActivo && contact?.whatsapp_alertas && contact?.whatsapp_phone) {
           const { enviarAlertaWhatsApp } = await import("@/lib/whatsapp/sender");
           const result = await enviarAlertaWhatsApp(contact.whatsapp_phone, {
             nombre: contact.full_name?.split(" ")[0] || "Candidato",
@@ -395,8 +406,11 @@ export async function GET(request: NextRequest) {
           } else {
             console.error(`[send-alerts] WhatsApp FALLÓ a ...${contact.whatsapp_phone.slice(-4)}:`, result.error);
           }
-        } else if (contact?.whatsapp_phone && !contact.whatsapp_alertas) {
-          console.log(`[send-alerts] WhatsApp omitido: ...${contact.whatsapp_phone.slice(-4)} tiene teléfono pero las alertas están desactivadas`);
+        } else if (!whatsappActivo && contact?.whatsapp_alertas && contact?.whatsapp_phone) {
+          // El usuario lo tiene activado en su perfil, pero el canal está
+          // apagado a nivel de sistema. Se anota una sola vez por alerta para
+          // que quede claro que no es un fallo, sino la decisión de coste.
+          console.log(`[send-alerts] WhatsApp desactivado por coste — ...${contact.whatsapp_phone.slice(-4)} recibe solo el email`);
         }
       } catch (emailErr) {
         console.error("[send-alerts] Error enviando email/whatsapp:", (emailErr as Error).message);
