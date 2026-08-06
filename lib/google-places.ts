@@ -2,7 +2,13 @@
  * lib/google-places.ts
  * Búsqueda de empresas vía Google Places API
  * Datos REALES: teléfono, dirección, web, rating, horario
+ *
+ * Toda llamada de pago pasa antes por consumirCuotaPlaces(): ver
+ * lib/places-quota.ts para el porqué del tope y por qué está aquí y no en la
+ * consola de Google.
  */
+import { consumirCuotaPlaces } from "./places-quota";
+
 const PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place";
 
 export interface GooglePlaceResult {
@@ -37,6 +43,12 @@ export async function buscarEmpresaGooglePlaces(
     console.warn("[GooglePlaces] GOOGLE_PLACES_API_KEY no configurada");
     return [];
   }
+
+  // Tope diario propio: la consola de Google no deja fijar cuotas en cuentas de
+  // prueba, y sin tope fue como llego una factura de 100 EUR sin suscriptores.
+  // Si se agota, devolvemos vacio y quien llama cae a OpenStreetMap (gratis).
+  if (!(await consumirCuotaPlaces())) return [];
+
 
   // La dirección va ANTES de la ciudad para desambiguar locales de la misma
   // cadena: sin ella, "Mercadona Tudela" devuelve cualquiera de los que haya
@@ -126,6 +138,12 @@ export async function buscarEmpresasTextSearch(
     console.warn("[GooglePlaces] GOOGLE_PLACES_API_KEY no configurada");
     return [];
   }
+
+  // Tope diario propio: la consola de Google no deja fijar cuotas en cuentas de
+  // prueba, y sin tope fue como llego una factura de 100 EUR sin suscriptores.
+  // Si se agota, devolvemos vacio y quien llama cae a OpenStreetMap (gratis).
+  if (!(await consumirCuotaPlaces())) return [];
+
 
   try {
     const url = new URL(`${PLACES_API_BASE}/textsearch/json`);
