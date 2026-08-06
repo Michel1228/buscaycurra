@@ -66,8 +66,28 @@ export async function POST(req: NextRequest) {
     const changes = entry?.changes?.[0];
     const value = changes?.value;
 
+    // ── Estados de entrega ────────────────────────────────────────────────
+    // Meta avisa aquí de qué pasa con cada mensaje que enviamos: sent →
+    // delivered → read, o failed con el motivo. Antes se descartaban en
+    // silencio, y por eso era imposible saber por qué una alerta aceptada por
+    // Meta ("accepted") no llegaba nunca al teléfono del usuario.
+    if (value?.statuses?.length) {
+      for (const st of value.statuses) {
+        const destino = String(st.recipient_id || "");
+        const corto = destino.slice(-4);
+        if (st.status === "failed") {
+          const err = st.errors?.[0];
+          console.error(
+            `[WhatsApp] NO ENTREGADO a ...${corto} — ${err?.title || "sin titulo"} (codigo ${err?.code}): ${err?.error_data?.details || err?.message || "sin detalle"}`
+          );
+        } else {
+          console.log(`[WhatsApp] ${st.status} -> ...${corto} (id ${st.id})`);
+        }
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     if (!value?.messages?.length) {
-      // Puede ser una notificación de estado (entregado, leído) — ignorar silencioso
       return NextResponse.json({ ok: true });
     }
 

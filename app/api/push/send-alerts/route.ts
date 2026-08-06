@@ -286,6 +286,10 @@ export async function GET(request: NextRequest) {
       }
 
       if (!jobsResult || jobsResult.length === 0) {
+        // Se marca last_sent_at aunque no se envíe nada, para no reintentar en
+        // bucle. Se deja traza porque desde fuera esto era indistinguible de un
+        // envío correcto: la alerta quedaba con fecha reciente en ambos casos.
+        console.log(`[send-alerts] sin ofertas nuevas para "${alerta.keyword || "(sin palabra clave)"}" en ${alerta.location || "cualquier sitio"} — no se envía nada`);
         await pool.query(`UPDATE job_alerts SET last_sent_at = NOW() WHERE id = $1`, [alerta.id]);
         continue;
       }
@@ -382,9 +386,17 @@ export async function GET(request: NextRequest) {
               : undefined,
             keyword: alerta.keyword,
           });
-          if (!result.success) {
-            console.error("[send-alerts] WhatsApp falló:", result.error);
+          // Se registran TAMBIÉN los envíos correctos. Antes solo se anotaban
+          // los fallos, así que unos logs vacíos podían significar dos cosas
+          // opuestas —que todo iba bien o que este bloque no llegaba a
+          // ejecutarse— y no había forma de distinguirlas.
+          if (result.success) {
+            console.log(`[send-alerts] WhatsApp enviado a ...${contact.whatsapp_phone.slice(-4)} (id ${result.messageId}) · ${ejemplo.title}`);
+          } else {
+            console.error(`[send-alerts] WhatsApp FALLÓ a ...${contact.whatsapp_phone.slice(-4)}:`, result.error);
           }
+        } else if (contact?.whatsapp_phone && !contact.whatsapp_alertas) {
+          console.log(`[send-alerts] WhatsApp omitido: ...${contact.whatsapp_phone.slice(-4)} tiene teléfono pero las alertas están desactivadas`);
         }
       } catch (emailErr) {
         console.error("[send-alerts] Error enviando email/whatsapp:", (emailErr as Error).message);
