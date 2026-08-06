@@ -62,10 +62,10 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "qwen/qwen3-32b",
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: "You are a professional translator. Return ONLY the translated text, no explanations, no quotes around it." },
-          { role: "user", content: "/no_think " + prompt },
+          { role: "user", content: prompt },
         ],
         temperature: 0.3,
         max_tokens: 1500,

@@ -1403,19 +1403,15 @@ Responde en JSON exactamente así:
       console.error("[Guzzi] DeepSeek key MISSING");
     }
 
-    // Intento 2: Groq (fallback con /no_think)
+    // Intento 2: Groq. El prefijo "/no_think" que llevaba antes era un truco
+    // para qwen3, el modelo que Groq ha retirado; con llama-3.3-70b sobra.
     if (!rawReply && groqKey) {
-      const msgsConNoThink = messages.map((m, i) =>
-        i === messages.length - 1 && m.role === "user"
-          ? { ...m, content: "/no_think " + m.content }
-          : m
-      );
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
-            body: JSON.stringify({ model: "qwen/qwen3-32b", messages: msgsConNoThink, max_tokens: 1024, temperature: 0.7 }),
+            body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages, max_tokens: 1024, temperature: 0.7 }),
             signal: AbortSignal.timeout(20000),
           });
           if (res.ok) {

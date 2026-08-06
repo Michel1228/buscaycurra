@@ -13,11 +13,17 @@ export async function callGroq(systemPrompt: string, userContent: string, maxTok
   const groqKey = process.env.GROQ_API_KEY;
   if (!groqKey) return null;
 
+  // Antes se usaba qwen/qwen3-32b, que Groq ha retirado: devolvia
+  // "model_not_found" aunque la clave fuese valida. Su sucesor (qwen3.6-27b)
+  // tampoco sirve aqui: razona en ingles dentro de <think> y se come todos los
+  // tokens sin llegar a responder, que es justo lo que intentaba evitar el
+  // prefijo "/no_think". Medido el 6 ago 2026 con la misma pregunta en espanol,
+  // llama-3.3-70b responde bien y en 635 ms.
   const body = JSON.stringify({
-    model: "qwen/qwen3-32b",
+    model: "llama-3.3-70b-versatile",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: "/no_think " + userContent },
+      { role: "user", content: userContent },
     ],
     temperature: 0.6,
     max_tokens: maxTokens,
