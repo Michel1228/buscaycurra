@@ -15,6 +15,8 @@ import { syncGlobalFreeAPIs, fetchMusePage, fetchJobicy, fetchRemotive } from "@
 import fs from "fs";
 import path from "path";
 
+import { secretIguales } from "@/lib/secret-compare";
+
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
@@ -29,8 +31,11 @@ function saveMuseOffset(page: number) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!SYNC_SECRET) {
+    return NextResponse.json({ error: "ADMIN_SECRET no configurada" }, { status: 503 });
+  }
   const auth = request.headers.get("x-sync-secret");
-  if (auth !== SYNC_SECRET) {
+  if (!secretIguales(auth, SYNC_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -62,8 +67,11 @@ export async function POST(request: NextRequest) {
 
 // GET para health check rápido
 export async function GET(request: NextRequest) {
+  if (!SYNC_SECRET) {
+    return NextResponse.json({ error: "ADMIN_SECRET no configurada" }, { status: 503 });
+  }
   const auth = request.headers.get("x-sync-secret");
-  if (auth !== SYNC_SECRET) {
+  if (!secretIguales(auth, SYNC_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

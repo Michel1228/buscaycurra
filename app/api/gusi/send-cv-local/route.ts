@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { addCVJob } from "@/lib/cv-sender/queue";
 import { getUserId } from "@/lib/auth-server";
 import { findEmail } from "@/lib/email-finder";
+import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,31 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // ── Límite de envíos ──────────────────────────────────────────────────
+    // Esta ruta encolaba con userPlan "empresa" fijo y sin comprobar cuota, así
+    // que enviar desde el chat de Guzzi saltaba el límite del plan por completo
+    // (la cola tampoco lo comprueba). Mismo control que /api/cv-sender/send.
+    const userPlan = await getUserPlan(userId);
+    const rateLimitCheck = await checkRateLimit(userId, userPlan, companyEmail);
+
+    if (!rateLimitCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: rateLimitCheck.reason,
+          rateLimitInfo: {
+            enviadosHoy: rateLimitCheck.enviadosHoy,
+            limiteHoy: rateLimitCheck.limiteHoy,
+            enviadosEsteMes: rateLimitCheck.enviadosEsteMes,
+            limiteMes: rateLimitCheck.limiteMes,
+            cvsRestantesHoy: 0,
+          },
+          upgradeUrl: "/app/perfil?tab=plan",
+        },
+        { status: 429 }
+      );
+    }
+
     // Añadir job a la cola BullMQ
     const jobId = await addCVJob({
       userId,
@@ -69,7 +95,7 @@ export async function POST(req: NextRequest) {
       priority: "normal",
       useAIPersonalization: true,
       scheduledFor: Date.now(),
-      userPlan: "empresa",
+      userPlan,
       frecuencia: "unico",
     });
 

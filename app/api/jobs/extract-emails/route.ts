@@ -13,6 +13,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 
+import { secretIguales } from "@/lib/secret-compare";
+
 export const dynamic = "force-dynamic";
 
 const UA = "Mozilla/5.0 (compatible; BuscayCurraBot/1.0; +https://buscaycurra.es)";
@@ -96,8 +98,13 @@ async function googleSearch(company: string, city: string): Promise<string | nul
 // ── Handler ──────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  // Sin esta guarda, si SYNC_SECRET falta en el contenedor el secreto recibido
+  // tambien cae a "" y la comparacion daba por buena a cualquiera.
+  if (!SYNC_SECRET) {
+    return NextResponse.json({ error: "SYNC_SECRET no configurada" }, { status: 503 });
+  }
   const secret = req.headers.get("x-sync-secret") || req.nextUrl.searchParams.get("secret") || "";
-  if (secret !== SYNC_SECRET) {
+  if (!secretIguales(secret, SYNC_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

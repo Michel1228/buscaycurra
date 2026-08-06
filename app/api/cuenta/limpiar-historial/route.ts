@@ -1,12 +1,15 @@
 /**
  * app/api/cuenta/limpiar-historial/route.ts — API endpoint DELETE para limpiar historial
  *
- * Borra los registros de cv_sends del usuario donde el estado sea
- * 'completed', 'failed', 'enviado' o 'fallido' (registros terminados).
- * Los trabajos pendientes ('pendiente', 'processing') NO se borran.
+ * Oculta (hidden=true) los registros de cv_sends del usuario cuyo estado sea
+ * 'completed', 'failed', 'enviado', 'fallido' o 'cancelado' (terminados).
+ * Los trabajos pendientes ('pendiente', 'processing') NO se tocan.
+ *
+ * NO borra físicamente: la cuota de envíos se calcula contando filas, así que
+ * un borrado real permitiría resetear el límite del plan en bucle.
  *
  * Solo acepta peticiones DELETE autenticadas.
- * Devuelve el número de registros borrados.
+ * Devuelve el número de registros ocultados.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -62,10 +65,15 @@ export async function DELETE(request: NextRequest) {
       .eq("user_id", userId)
       .in("status", ESTADOS_BORRAR);
 
-    // ── Borrar los registros completados/fallidos del usuario ──────────────
+    // ── Ocultar los registros completados/fallidos del usuario ─────────────
+    // Soft-delete (hidden=true), NO borrado físico: el límite de envíos se
+    // calcula contando filas de cv_sends, así que borrarlas de verdad dejaba a
+    // cualquier usuario resetear su cuota a cero llamando aquí en bucle.
+    // Mismo criterio que /api/cv-sender/delete; el historial ya filtra hidden
+    // (lib/cv-sender/tracker.ts) así que el usuario los sigue sin ver.
     const { error: errorBorrar } = await supabaseAdmin
       .from("cv_sends")
-      .delete()
+      .update({ hidden: true })
       .eq("user_id", userId)
       .in("status", ESTADOS_BORRAR);
 

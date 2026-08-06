@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { sendPush, type PushSub } from "@/lib/push-sender";
 import { createClient } from "@supabase/supabase-js";
+import { secretIguales } from "@/lib/secret-compare";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "http://placeholder",
@@ -19,7 +20,8 @@ const supabase = createClient(
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const ALERTS_SECRET = process.env.ALERTS_SECRET || "bcv-alerts-2026";
+// Sin valor por defecto: estaba escrito en el repo, asi que no era un secreto.
+const ALERTS_SECRET = process.env.ALERTS_SECRET || "";
 
 // ─── Empresas con Greenhouse ──────────────────────────────────────────────────
 const GREENHOUSE = [
@@ -158,8 +160,11 @@ function extractLocation(raw?: string): { city: string; province: string } {
 }
 
 export async function GET(request: NextRequest) {
+  if (!ALERTS_SECRET) {
+    return NextResponse.json({ error: "ALERTS_SECRET no configurada" }, { status: 503 });
+  }
   const auth = request.headers.get("Authorization");
-  if (auth !== `Bearer ${ALERTS_SECRET}`) {
+  if (!secretIguales(auth, `Bearer ${ALERTS_SECRET}`)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
