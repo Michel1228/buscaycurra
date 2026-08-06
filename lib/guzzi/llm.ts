@@ -52,12 +52,19 @@ export async function callGroq(systemPrompt: string, userContent: string, maxTok
   return null;
 }
 
+/**
+ * DeepSeek. Se usa V4-Flash y no V4-Pro a proposito: medido el 6 ago 2026 con
+ * la misma pregunta, Pro gastaba 227 tokens de salida para dar 64 de respuesta
+ * (el 72% se le iba en razonar para si mismo) frente a 100 y 65 de Flash. Es
+ * 3,5 veces mas caro y en la prueba respondio igual de bien o peor: Pro llego a
+ * inventarse nombres de calles de Tudela.
+ */
 export async function callDeepSeek(systemPrompt: string, userContent: string, maxTokens = 800): Promise<string | null> {
   const deepseekKey = process.env.DEEPSEEK_API_KEY;
   if (!deepseekKey) return null;
 
   const body = JSON.stringify({
-    model: "deepseek-v4-pro",
+    model: "deepseek-v4-flash",
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userContent },
@@ -151,7 +158,7 @@ export function streamDeepSeek(systemPrompt: string, userContent: string, maxTok
             "Accept": "text/event-stream",
           },
           body: JSON.stringify({
-            model: "deepseek-v4-pro",
+            model: "deepseek-v4-flash",
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userContent },

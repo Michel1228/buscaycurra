@@ -1032,7 +1032,7 @@ El candidato tiene mucha experiencia.
             method: "POST",
             headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "deepseek-v4-pro",
+              model: "deepseek-v4-flash",
               messages: [{
                 role: "system",
                 content: `Eres experto en cartas "Dear Family" para au pairs. Escribe en INGLÉS (idioma estándar internacional para au pair). La carta debe ser cálida, personal y profesional. Máximo 300 palabras. NO uses placeholders — usa los datos reales proporcionados.`
@@ -1227,7 +1227,7 @@ Responde en JSON exactamente así:
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
             body: JSON.stringify({
-              model: "deepseek-v4-pro",
+              model: "deepseek-v4-flash",
               messages: [{ role: "user", content: promptAdaptacion }],
               max_tokens: 800,
               temperature: 0.5,
@@ -1386,7 +1386,7 @@ Responde en JSON exactamente así:
           const res = await fetch("https://api.deepseek.com/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
-            body: JSON.stringify({ model: "deepseek-v4-pro", messages, max_tokens: 1024, temperature: 0.5 }),
+            body: JSON.stringify({ model: "deepseek-v4-flash", messages, max_tokens: 1024, temperature: 0.5 }),
             signal: AbortSignal.timeout(35000),
           });
           if (res.ok) {

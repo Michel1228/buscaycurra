@@ -27,7 +27,7 @@ export interface PlanLimits {
 export const LIMITS: Record<PlanTier, PlanLimits> = {
   free: {
     name: "Free",
-    guzziModel: "deepseek-v4-pro",
+    guzziModel: "deepseek-v4-flash",
     guzziMaxConsultasDia: 5,          // 5 consultas/DÍA recargables (antes 2 total de por vida)
     enviosCVDia: 3,                   // 3 envíos/día
     enviosCVSemana: 7,               // 7 envíos/semana
@@ -42,7 +42,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   basico: {
     name: "Básico",
-    guzziModel: "deepseek-v4-pro",
+    guzziModel: "deepseek-v4-flash",
     guzziMaxConsultasDia: 30,
     enviosCVDia: 15,
     enviosCVSemana: 100,
@@ -57,7 +57,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   esencial: {
     name: "Esencial",
-    guzziModel: "deepseek-v4-pro",
+    guzziModel: "deepseek-v4-flash",
     guzziMaxConsultasDia: 30,
     enviosCVDia: 15,
     enviosCVSemana: 100,
@@ -72,7 +72,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   pro: {
     name: "Pro",
-    guzziModel: "deepseek-v4-pro",
+    guzziModel: "deepseek-v4-flash",
     guzziMaxConsultasDia: 100,
     enviosCVDia: 50,
     enviosCVSemana: 350,
@@ -87,7 +87,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   empresa: {
     name: "Empresa",
-    guzziModel: "deepseek-v4-pro",
+    guzziModel: "deepseek-v4-flash",
     guzziMaxConsultasDia: 999999,
     enviosCVDia: 200,
     enviosCVSemana: 1500,
