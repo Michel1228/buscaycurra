@@ -29,19 +29,32 @@ function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Devuelve la clave de la semana ISO (YYYY-Www) */
-function weekKey(): string {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  const weekNum = Math.ceil(((now.getTime() - start.getTime()) / 86400000 + start.getDay() + 1) / 7);
-  return `${now.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+/**
+ * Clave de la semana ISO-8601 (YYYY-Www) de la fecha indicada.
+ *
+ * El cálculo anterior partía del 1 de enero y sumaba getDay(), lo que daba
+ * números de semana equivocados según en qué día cayera el año: dos envíos de
+ * la misma semana real podían acabar en cubos distintos, o al revés. Este es el
+ * algoritmo ISO estándar: la semana 1 es la que contiene el primer jueves.
+ */
+function weekKey(fecha = new Date()): string {
+  const d = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()));
+  // Domingo (0) cuenta como día 7 en ISO
+  const diaISO = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - diaISO);          // jueves de esa semana
+  const inicioAnio = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const semana = Math.ceil(((d.getTime() - inicioAnio.getTime()) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(semana).padStart(2, "0")}`;
 }
 
 /** Obtiene o crea el registro de uso del usuario para una fecha (por defecto hoy) */
 async function getOrCreateUsage(userId: string, dateKeyOverride?: string): Promise<UsageRow> {
   const supabase = getSupabase();
   const today = dateKeyOverride || todayKey();
-  const week = dateKeyOverride || weekKey();
+  // Antes era `dateKeyOverride || weekKey()`, así que al pasar una fecha se
+  // guardaba esa FECHA en week_key en lugar de la semana: el tope semanal de
+  // envíos contaba mal. La semana se deriva siempre de la fecha que toca.
+  const week = weekKey(dateKeyOverride ? new Date(dateKeyOverride) : new Date());
 
   const { data } = await supabase
     .from("usage_tracking")

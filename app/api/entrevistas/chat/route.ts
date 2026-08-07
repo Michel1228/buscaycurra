@@ -20,6 +20,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
     }
 
+    // El simulador de entrevistas es de pago (prepararEntrevista en
+    // lib/plan-limits.ts). Estaba definido y se pintaba en la pantalla de
+    // planes, pero aqui solo se pedia sesion: un usuario del plan gratuito
+    // entraba llamando a la API directamente.
+    const { getPlanLimits } = await import("@/lib/plan-limits");
+    const { createClient } = await import("@supabase/supabase-js");
+    const sbPlan = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+    const { data: perfilPlan } = await sbPlan.from("profiles").select("plan").eq("id", userId).single();
+    if (!getPlanLimits(perfilPlan?.plan || "free").prepararEntrevista) {
+      return NextResponse.json(
+        { error: "El simulador de entrevistas está en los planes de pago. Desde 2,99 €/mes lo tienes disponible.", upgradeUrl: "/app/perfil?tab=plan" },
+        { status: 402 }
+      );
+    }
+
     const body = await req.json() as {
       puesto: string;
       mensajes: Mensaje[];

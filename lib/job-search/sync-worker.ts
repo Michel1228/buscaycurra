@@ -397,7 +397,12 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
       });
       if (!res.ok) { await reportFailure("careerjet", keyInfo.idx, res.status); continue; }
       const data = await res.json();
-      console.error("[CJ-DEBUG]", keyword, countryLocation, "page", page, "type:", data.type, "jobs:", data.jobs?.length ?? 0);
+      // Solo se registra cuando algo va mal: este log saltaba en cada
+      // combinacion de keyword, ciudad y pagina de cada sync, y llenaba el
+      // registro del contenedor de ruido.
+      if (data.type === "ERROR" || !(data.jobs?.length)) {
+        console.warn("[careerjet]", keyword, countryLocation, "pagina", page, "->", data.type, data.jobs?.length ?? 0);
+      }
       if (data.type === "ERROR") { console.error("[CJ-ERROR]", JSON.stringify(data).slice(0, 500)); continue; }
       const jobs = (data.jobs || []).map((j: Record<string, string>) => ({
         source: `EURES_${countryLocation.slice(0, 3).toUpperCase()}`,

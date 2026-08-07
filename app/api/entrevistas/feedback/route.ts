@@ -19,6 +19,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
     }
 
+    // Función de pago (prepararEntrevista en lib/plan-limits.ts). Estaba
+    // definida y anunciada en los planes, pero aquí solo se pedía sesión.
+    const { getPlanLimits } = await import("@/lib/plan-limits");
+    const { data: perfilPlan } = await supabase.from("profiles").select("plan").eq("id", user.id).single();
+    if (!getPlanLimits(perfilPlan?.plan || "free").prepararEntrevista) {
+      return NextResponse.json(
+        { error: "El simulador de entrevistas está en los planes de pago. Desde 2,99 €/mes lo tienes disponible.", upgradeUrl: "/app/perfil?tab=plan" },
+        { status: 402 }
+      );
+    }
+
     const { pregunta, respuesta, sector } = await req.json() as {
       pregunta: string;
       respuesta: string;
