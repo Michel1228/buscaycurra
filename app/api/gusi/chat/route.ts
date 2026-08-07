@@ -490,7 +490,7 @@ function fallbackMessage(puesto: string, ciudad: string): string {
   const sugerencias = syn
     ? `\n• 🔄 Prueba: "${syn[1][0]}" o "${syn[1][1]}"`
     : "\n• 🔄 Prueba con otro nombre del puesto";
-  return `🔍 No encontré ofertas activas para **${puesto}**${ciudad ? ` en **${ciudad}**` : ""}.\n${sugerencias}\n• 📍 Amplía la zona (provincia o comunidad)\n• 🔍 Usa el buscador avanzado con más filtros\n• 📧 Activa alertas y te aviso cuando lleguen\n• 🏢 ¿Es una empresa pequeña o local? Dime el nombre y te busco en Google Maps con teléfono, email y web para enviar el CV directamente.\n\n✨ ¡El mercado se mueve a diario, vuelvo a mirar mañana!`;
+  return `🔍 Con **${puesto}**${ciudad ? ` en **${ciudad}**` : ""} no me sale nada ahora mismo, pero tenemos varias vías:\n${sugerencias}\n• 📍 Amplía la zona (provincia o comunidad)\n• 🔍 Usa el buscador avanzado con más filtros\n• 📧 Activa alertas y te aviso cuando lleguen\n• 🏢 ¿Es una empresa pequeña o local? Dime el nombre y te busco en Google Maps con teléfono, email y web para enviar el CV directamente.\n\n✨ ¡El mercado se mueve a diario, vuelvo a mirar mañana!`;
 }
 
 function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope?: string): string {
@@ -1094,10 +1094,21 @@ El candidato tiene mucha experiencia.
       const isDissatisfied = /(est[áa]n?\s+(muy\s+)?lejos|no\s+me\s+sirve|demasiado\s+lejos|busca\s+otra?\s+cosa|algo\s+diferente|mejor\s+(salario|horario|sueldo)|no\s+es\s+lo\s+que\s+busco|cerca\s+de|m[áa]s\s+cerca)/i.test(message);
 
       // Lo que el usuario PIDE explícitamente tiene prioridad sobre el CV
-      const extractedJob = extractJobTerm(message);
+      const { detectarPais, limpiarTerminoBusqueda } = await import("@/lib/guzzi/paises-detect");
+
+      // "hay ofertas en Dublin" hacía que se buscara el puesto "hay ofertas" y
+      // no apareciera nada. Si al limpiar no queda una profesión de verdad, se
+      // busca sin filtrar por puesto en vez de inventarse uno.
+      const extractedJob = limpiarTerminoBusqueda(extractJobTerm(message));
       const puestoBusqueda = extractedJob || cvParsed?.ultimoPuesto || "";
       const extractedCity = extractCity(message);
-      const ciudadBusqueda = extractedCity || cvParsed?.ciudad || "";
+
+      // Un país es una ubicación válida. extractCity lo descartaba a propósito
+      // (llevaba 'irlanda', 'españa'... en su lista de "no ciudades"), así que
+      // "ofertas de trabajo en Irlanda" se quedaba sin sitio donde buscar y
+      // Guzzi respondía que no había ninguna, teniendo 13.604.
+      const paisPedido = detectarPais(message);
+      const ciudadBusqueda = extractedCity || (paisPedido ? "" : cvParsed?.ciudad || "");
 
       // Si el usuario está insatisfecho y no especifica nuevo puesto, pedir aclaración
       // en vez de repetir los mismos resultados
@@ -1106,6 +1117,26 @@ El candidato tiene mucha experiencia.
           reply: `Entendido, busquemos algo diferente. ¿Qué tipo de trabajo te interesa? Dime el puesto (ej: "camarero", "administrativo", "electricista") y te busco al instante.`,
           action: "need_keyword",
         });
+      }
+
+      // Si pide un país sin puesto, NO se le da largas: se cuenta lo que hay
+      // de verdad y se le pregunta por el puesto con datos en la mano. Antes
+      // esta rama respondía "necesito saber dónde", que con un país delante
+      // sonaba a que no teníamos nada.
+      if (paisPedido && !extractedJob) {
+        const total = await contarOfertasPais(paisPedido.codigo);
+        if (total > 0) {
+          const ciudades = await ciudadesTopPais(paisPedido.codigo, 6);
+          const listaCiudades = ciudades.length
+            ? `\n\n📍 Donde más hay ahora mismo: ${ciudades.join(" · ")}`
+            : "";
+          return NextResponse.json({
+            reply: `${paisPedido.bandera} En **${paisPedido.nombre}** tengo **${total.toLocaleString("es-ES")} ofertas** ahora mismo.${listaCiudades}\n\n¿De qué te gustaría trabajar? Dime el puesto (camarero, enfermera, soldador, lo que sea) o la ciudad, y te las saco al momento.`,
+            action: "need_keyword",
+            pais: paisPedido.codigo,
+            total,
+          });
+        }
       }
 
       // Si el usuario menciona una ciudad pero NO un puesto, no usar el puesto del CV
@@ -1117,7 +1148,7 @@ El candidato tiene mucha experiencia.
       }
 
       // Si no hay ciudad ni en mensaje ni en CV, preguntar ANTES de buscar
-      if (!ciudadBusqueda) {
+      if (!ciudadBusqueda && !paisPedido) {
         return NextResponse.json({
           reply: `🔍 Vale, busco ofertas de **${puestoBusqueda}**. Pero necesito saber dónde. ¿En qué ciudad o zona estás buscando?`,
           action: "need_city",
@@ -1125,7 +1156,10 @@ El candidato tiene mucha experiencia.
       }
 
       if (puestoBusqueda) {
-        const result = await searchJobsReal(puestoBusqueda, ciudadBusqueda, 5, pais || "ES");
+        // El pais que pide el usuario manda sobre el suyo del perfil: si dice
+        // "camarero en Irlanda", se busca en Irlanda aunque viva en Espana.
+        const paisBusqueda = paisPedido?.codigo?.toUpperCase() || pais || "ES";
+        const result = await searchJobsReal(puestoBusqueda, ciudadBusqueda, 5, paisBusqueda);
         if (!result || result.jobs.length === 0) {
           // Buscar negocios locales en Google Places como alternativa
           let googleReply = "";
@@ -1171,7 +1205,8 @@ El candidato tiene mucha experiencia.
           } catch { /* sin Google Places, solo mensaje normal */ }
 
           return NextResponse.json({
-            reply: `🔍 No encontré ofertas de **${puestoBusqueda}** en **${ciudadBusqueda}** ni en sus alrededores.${googleReply}\n\n¿Buscamos en **toda España**? Responde **"sí, busca en toda España"** y amplío.`,
+            // Nunca un "no" a secas: se dice lo que hay y se ofrecen salidas.
+            reply: `🔍 De **${puestoBusqueda}** no me salen ofertas justo en **${ciudadBusqueda}** en este momento.${googleReply}\n\n¿Ampliamos la búsqueda? Puedo mirar en toda la zona, probar con un puesto parecido, o buscarte empresas de ${ciudadBusqueda} a las que mandar tu CV directamente. Tú me dices.`,
             action: "search_scope_pais",
           });
         }
@@ -1507,6 +1542,49 @@ Responde en JSON exactamente así:
   }
 }
 
+
+/**
+ * Cuántas ofertas VIVAS hay en un país. Guzzi nunca debe decir "no hay ofertas
+ * en X" de memoria: o lo ha contado, o no lo dice.
+ */
+async function contarOfertasPais(codigoPais: string): Promise<number> {
+  try {
+    const { getPool } = await import("@/lib/db");
+    const r = await getPool().query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM "JobListing"
+        WHERE "isActive" = true
+          AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
+          AND LOWER(country) = LOWER($1)`,
+      [codigoPais]
+    );
+    return parseInt(r.rows[0]?.n || "0", 10);
+  } catch (e) {
+    console.error("[Guzzi] contarOfertasPais:", (e as Error).message);
+    return 0;
+  }
+}
+
+/** Ciudades con más ofertas vivas de un país, para sugerirlas al usuario. */
+async function ciudadesTopPais(codigoPais: string, limite = 6): Promise<string[]> {
+  try {
+    const { getPool } = await import("@/lib/db");
+    const r = await getPool().query<{ city: string }>(
+      `SELECT city FROM "JobListing"
+        WHERE "isActive" = true
+          AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
+          AND LOWER(country) = LOWER($1)
+          AND city IS NOT NULL AND city <> ''
+        GROUP BY city
+        ORDER BY count(*) DESC
+        LIMIT $2`,
+      [codigoPais, limite]
+    );
+    return r.rows.map(x => x.city);
+  } catch (e) {
+    console.error("[Guzzi] ciudadesTopPais:", (e as Error).message);
+    return [];
+  }
+}
 
 function extractCity(text: string): string {
   const cities = [
