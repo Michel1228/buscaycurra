@@ -85,7 +85,17 @@ export async function POST(req: NextRequest) {
             { onConflict: "user_id,date_key" }
           );
         }
-      } catch { /* Si falla el check de límites, permitir igual */ }
+      } catch (errLimite) {
+        // FALLA CERRADO a proposito. Antes se permitia igual "por si acaso",
+        // pero esto abre GPT-4o Vision (la llamada mas cara de la app, ~1
+        // centimo por foto) a barra libre en cuanto Supabase tenga un mal rato.
+        // Es preferible pedir al usuario que reintente que regalar la factura.
+        console.error("[analyze-image] no se pudo comprobar el limite:", (errLimite as Error).message);
+        return NextResponse.json(
+          { error: "No he podido comprobar tu límite de fotos ahora mismo. Inténtalo de nuevo en un momento." },
+          { status: 503 }
+        );
+      }
     }
 
     // Limpiar el prefijo data:image si viene
@@ -507,6 +517,11 @@ async function searchGooglePlaces(
   lng?: number,
   city?: string
 ): Promise<PlacesResult | null> {
+  // Pasa por el tope diario compartido (lib/places-quota.ts). Sin esto la
+  // llamada se salta el limite y el tope no sirve de nada: fue justo asi como
+  // llego una factura de 100 EUR de Google sin tener suscriptores.
+  const { consumirCuotaPlaces } = await import("@/lib/places-quota");
+  if (!(await consumirCuotaPlaces())) return null;
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) return await buscarConOSM(companyName, city);
 
@@ -587,6 +602,11 @@ async function buscarConOSM(companyName: string, city?: string): Promise<PlacesR
 }
 
 async function getPlaceDetails(placeId: string, apiKey: string): Promise<PlacesResult | null> {
+  // Pasa por el tope diario compartido (lib/places-quota.ts). Sin esto la
+  // llamada se salta el limite y el tope no sirve de nada: fue justo asi como
+  // llego una factura de 100 EUR de Google sin tener suscriptores.
+  const { consumirCuotaPlaces } = await import("@/lib/places-quota");
+  if (!(await consumirCuotaPlaces())) return null;
   const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,website,rating,url&key=${apiKey}`;
   const detailsRes = await fetch(detailsUrl, { signal: AbortSignal.timeout(8000) });
   const detailsData = await detailsRes.json() as {

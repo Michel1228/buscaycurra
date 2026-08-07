@@ -10,6 +10,19 @@ import Groq from "groq-sdk";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  // Era publico y por cada llamada lanzaba varias consultas con
+  // "description ILIKE '%...%'" sobre 3,5 millones de filas, ademas de una
+  // llamada a Groq. Un bucle desde fuera tumbaba el servidor (2 nucleos).
+  const { getUserId } = await import("@/lib/auth-server");
+  const userId = await getUserId(req);
+  if (!userId) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+  const { checkUserRateLimit } = await import("@/lib/rate-limit-user");
+  if (!(await checkUserRateLimit("semantic-search", userId, 20, 3600))) {
+    return NextResponse.json({ error: "Has hecho muchas búsquedas seguidas. Espera un momento." }, { status: 429 });
+  }
+
   const { searchParams } = new URL(req.url);
   const query = searchParams.get("q");
   const ciudad = searchParams.get("ciudad") || "";

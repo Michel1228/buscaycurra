@@ -16,6 +16,12 @@ async function getGooglePlaceData(companyName: string): Promise<{
 } | null> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) return null;
+
+  // Pasa por el tope diario compartido (lib/places-quota.ts). Sin esto la
+  // llamada se salta el limite y el tope no sirve de nada: este endpoint es un
+  // GET publico, asi que era una via directa a repetir la factura de 100 EUR.
+  const { consumirCuotaPlaces } = await import("@/lib/places-quota");
+  if (!(await consumirCuotaPlaces())) return null;
   try {
     // Find Place
     const findUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(companyName)}&inputtype=textquery&fields=place_id,formatted_address,rating,user_ratings_total&key=${apiKey}`;

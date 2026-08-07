@@ -113,8 +113,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // La misma guarda que el GET: sin ella, si falta SYNC_SECRET en el
+  // contenedor los dos lados de la comparacion son "" y entra cualquiera.
+  if (!SYNC_SECRET) {
+    return NextResponse.json({ error: "SYNC_SECRET no configurada" }, { status: 503 });
+  }
   const secret = req.headers.get("x-sync-secret") || "";
-  if (secret !== SYNC_SECRET) {
+  if (!secretIguales(secret, SYNC_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

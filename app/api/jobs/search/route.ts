@@ -104,21 +104,42 @@ export async function GET(request: NextRequest) {
 
     // Keyword: si hay categoria, la categoria YA filtra — el keyword es redundante
     // (evita que "au pair" no matchee ofertas con "nanny" en el titulo)
+    // Se guardan DOS versiones del filtro de palabra clave, ligera y completa.
+    //
+    // Buscar en `description` obliga a Postgres a recorrer los 3,5 millones de
+    // filas: hay indice trigram sobre title, city y province, pero NO sobre
+    // description (haria falta uno de 1-2 GB, solo el texto ya ocupa 1.100 MB).
+    // Medido en produccion con "camarero":
+    //    title + description -> Parallel Seq Scan, 11.566 ms
+    //    solo title          -> Bitmap Index Scan, milisegundos
+    //
+    // Asi que primero se busca por titulo y empresa, que va por indice, y solo
+    // si no salen resultados suficientes se repite ampliando a la descripcion.
+    // La inmensa mayoria de las busquedas se resuelven en la primera pasada.
+    let condicionKeywordLigera = "";
+    let condicionKeywordCompleta = "";
     if (keyword && !categoria) {
       const STOP_WORDS = new Set(["de", "la", "el", "en", "del", "las", "los", "un", "una", "y", "o", "a", "para", "por", "con", "sin", "que", "es", "se", "no", "al", "lo", "le", "the", "of", "in", "and", "to", "for", "a"]);
       const words = keyword.split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w.toLowerCase()));
       if (words.length > 1) {
-        const wordConditions = words.map(w => {
+        const ligeras: string[] = [];
+        const completas: string[] = [];
+        for (const w of words) {
           params.push(`%${w}%`);
           const i = idx++;
-          return `(title ILIKE $${i} OR description ILIKE $${i} OR company ILIKE $${i})`;
-        });
-        conditions.push(`(${wordConditions.join(" AND ")})`);
+          ligeras.push(`(title ILIKE $${i} OR company ILIKE $${i})`);
+          completas.push(`(title ILIKE $${i} OR description ILIKE $${i} OR company ILIKE $${i})`);
+        }
+        condicionKeywordLigera = `(${ligeras.join(" AND ")})`;
+        condicionKeywordCompleta = `(${completas.join(" AND ")})`;
       } else {
-        conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx} OR company ILIKE $${idx})`);
         params.push(`%${keyword}%`);
-        idx++;
+        const i = idx++;
+        condicionKeywordLigera = `(title ILIKE $${i} OR company ILIKE $${i})`;
+        condicionKeywordCompleta = `(title ILIKE $${i} OR description ILIKE $${i} OR company ILIKE $${i})`;
       }
+      // Se añade la ligera; más abajo se sustituye por la completa si hace falta.
+      conditions.push(condicionKeywordLigera);
     }
 
    // Filtro por pais (case-insensitive: DB tiene 'uk' y 'UK' mezclados)
@@ -216,14 +237,18 @@ export async function GET(request: NextRequest) {
     }
 
     const whereClause = conditions.join(" AND ");
-    const countRes = await pool.query(`SELECT COUNT(*) FROM "JobListing" WHERE ${whereClause}`, params);
-    const totalDB = parseInt(countRes.rows[0].count);
-    
-    const sql = `
+    params.push(limit, offset);
+
+    // El total va en la misma consulta con COUNT(*) OVER(). Antes se lanzaba un
+    // COUNT(*) aparte con el WHERE completo justo antes del SELECT: el mismo
+    // escaneo hecho dos veces, y sobre 3,5M filas eso es el doble de trabajo.
+    const construirSql = (where: string) => `
       SELECT id, title, company, city, province, salary, description,
-             "sourceUrl", "sourceName", "scrapedAt", "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza
+             "sourceUrl", "sourceName", "scrapedAt",
+             "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza,
+             COUNT(*) OVER() AS total_encontrado
       FROM "JobListing"
-      WHERE ${whereClause}
+      WHERE ${where}
       ORDER BY
         CASE WHEN "scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
              WHEN "scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
@@ -231,8 +256,21 @@ export async function GET(request: NextRequest) {
         md5(id::text || to_char(NOW(), 'YYYYDDD'))
       LIMIT $${idx} OFFSET $${idx + 1}
     `;
-    params.push(limit, offset);
-    const dbResult = await pool.query(sql, params);
+
+    let dbResult = await pool.query(construirSql(whereClause), params);
+
+    // Segunda pasada: si buscando por título y empresa no sale bastante, se
+    // amplía a la descripción. Es la consulta cara (recorre la tabla entera),
+    // así que solo se paga cuando de verdad hace falta.
+    if (condicionKeywordCompleta && dbResult.rows.length < Math.min(limit, 10)) {
+      const whereAmpliado = conditions
+        .map(c => (c === condicionKeywordLigera ? condicionKeywordCompleta : c))
+        .join(" AND ");
+      console.log(`[search] "${keyword}": ${dbResult.rows.length} por titulo, amplio a descripcion`);
+      dbResult = await pool.query(construirSql(whereAmpliado), params);
+    }
+
+    const totalDB = parseInt(String(dbResult.rows[0]?.total_encontrado || "0"), 10);
 
     function deduplicar(rows: Record<string, unknown>[]) {
       const seen = new Set<string>();
