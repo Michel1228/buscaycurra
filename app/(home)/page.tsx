@@ -116,7 +116,7 @@ export default async function LandingPage() {
         "📸 3 búsquedas por cámara",
         "🧠 2 consultas a Guzzi (total)",
         "📄 1 CV creado con IA",
-        "🔍 Búsqueda en 24 países",
+        `🔍 Búsqueda en ${NUM_PAISES} países`,
         "📊 Pipeline de candidaturas",
         "💰 Comparador de salarios",
         "💾 10 ofertas guardadas"
@@ -704,7 +704,7 @@ export default async function LandingPage() {
               ¿Quieres ser Au Pair o Live-in Nanny?
             </h2>
             <p className="text-sm mb-8 max-w-xl mx-auto" style={{ color: "#94a3b8" }}>
-              Miles de ofertas de au pair, nanny y live-in nanny en 24 países. 
+              {`Miles de ofertas de au pair, nanny y live-in nanny en ${NUM_PAISES} países. `}
               Crea tu carta &ldquo;Dear Family&rdquo;, compara requisitos legales por país 
               y envía tu perfil directamente a las familias.
             </p>
@@ -725,7 +725,7 @@ export default async function LandingPage() {
               </Link>
             </div>
             <p className="text-[10px] mt-4" style={{ color: "#64748b" }}>
-              +20.000 ofertas au pair/nanny · +19.500 con email · 24 países
+              {`+20.000 ofertas au pair/nanny · +19.500 con email · ${NUM_PAISES} países`}
             </p>
           </div>
         </section>

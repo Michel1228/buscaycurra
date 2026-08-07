@@ -366,16 +366,31 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
  * corregirlo haría falta renombrar en la base de datos y recalcular los ids a
  * la vez, en una migración aparte.
  */
-export async function fetchCareerjetGlobal(keyword: string, countryLocation: string, _page = 1): Promise<RawJob[]> {
+export async function fetchCareerjetGlobal(keyword: string, countryLocation: string, _page = 1, countryCode?: string): Promise<RawJob[]> {
   // 5 páginas para máximo volumen — de 20 resultados/pág = 100 por combo
   const keyInfo = await getCareerjetKey();
   if (!keyInfo) return [];
   const allJobs: RawJob[] = [];
   const seen = new Set<string>();
   
+  // El locale se elegía siempre es_ES, buscara en el país que buscara. Para los
+  // países europeos colaba, pero fuera del ámbito hispano recorta mucho lo que
+  // devuelve la API. En Japón se pide en_JP a propósito: son las ofertas
+  // abiertas a extranjeros (comprobado: "hotel" en Tokyo da 1.756), mientras
+  // que las japonesas puras exigen un nivel de idioma que la mayoría no tiene.
+  const LOCALES: Record<string, string> = {
+    jp: "en_JP", sg: "en_SG", us: "en_US", uk: "en_GB", au: "en_AU",
+    ca: "en_CA", ie: "en_IE", nz: "en_NZ", de: "de_DE", fr: "fr_FR",
+    it: "it_IT", nl: "nl_NL", pt: "pt_PT", pl: "pl_PL", se: "sv_SE",
+    no: "no_NO", dk: "da_DK", fi: "fi_FI", at: "de_AT", ch: "de_CH",
+    be: "fr_BE", cz: "cs_CZ", hu: "hu_HU", ro: "ro_RO", gr: "el_GR",
+  };
+  // countryLocation es la CIUDAD ("Tokyo"), por eso el pais llega aparte.
+  const locale = LOCALES[(countryCode || "").toLowerCase()] || "es_ES";
+
   for (const page of [1, 2, 3]) { // Reducido de 10→3 páginas para no exceder maxDuration=300s
     try {
-      const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F3.0&pagesize=50&page=${page}&sort=relevance`;
+      const url = `http://public.api.careerjet.net/search?locale_code=${locale}&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F3.0&pagesize=50&page=${page}&sort=relevance`;
       const res = await fetch(url, {
         headers: { "Referer": "https://buscaycurra.es" },
         signal: AbortSignal.timeout(15000),

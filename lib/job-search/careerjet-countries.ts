@@ -430,4 +430,43 @@ export const CAREERJET_COUNTRIES: Record<string, { name: string; keywords: strin
       "Brasov", "Craiova", "Galati", "Ploiesti", "Oradea", "Sibiu",
       "Arad", "Pitesti", "Bacau", "Targu Mures"],
   },
+  // Japón — añadido el 7 ago 2026. Las palabras clave están elegidas a
+  // propósito sobre los sectores del visado SSW (特定技能), que es la vía real
+  // para entrar a trabajar sin título universitario: cuidados a mayores,
+  // hostelería, limpieza, construcción, agricultura, alimentación y logística.
+  // Se buscan en inglés porque son las ofertas abiertas a extranjeros; las
+  // japonesas puras exigen nivel de idioma que la mayoría no tendrá.
+  // Comprobado contra la API: "hotel" en Tokyo devuelve 1.756 ofertas.
+  jp: {
+    name: "Japón",
+    keywords: [
+      "hotel", "housekeeping", "caregiver", "care worker", "nursing care",
+      "restaurant", "kitchen staff", "chef", "waiter", "food service",
+      "cleaning", "cleaner", "construction", "welder", "factory worker",
+      "warehouse", "logistics", "driver", "agriculture", "farm worker",
+      "english teacher", "hospitality", "front desk", "receptionist",
+      "software engineer", "developer", "IT engineer", "designer",
+      "sales", "customer support", "translator", "interpreter",
+      "au pair", "nanny", "babysitter", "childcare",
+    ],
+    cities: ["Tokyo", "Osaka", "Yokohama", "Nagoya", "Fukuoka", "Sapporo",
+      "Kyoto", "Kobe", "Hiroshima", "Sendai", "Chiba", "Saitama"],
+  },
+  // Singapur — ya llegaban ofertas por Adzuna (2.245 vivas sin buscarlas).
+  // Careerjet añade sobre todo hostelería y servicios, y aquí se trabaja en
+  // inglés, así que el idioma no es barrera.
+  sg: {
+    name: "Singapur",
+    keywords: [
+      "waiter", "waitress", "chef", "cook", "kitchen assistant", "bartender",
+      "hotel", "housekeeping", "front desk", "receptionist", "hospitality",
+      "cleaner", "cleaning", "security guard", "retail assistant", "cashier",
+      "nurse", "healthcare assistant", "caregiver", "childcare", "nanny",
+      "driver", "logistics", "warehouse", "construction", "electrician",
+      "engineer", "software engineer", "developer", "data analyst",
+      "administrative assistant", "customer service", "sales",
+    ],
+    cities: ["Singapore", "Jurong", "Tampines", "Woodlands", "Changi",
+      "Bedok", "Sengkang", "Punggol", "Yishun", "Clementi"],
+  },
 };

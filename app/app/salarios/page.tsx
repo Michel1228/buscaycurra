@@ -71,7 +71,7 @@ const PROVINCIAS = [
   "La Rioja", "Soria", "Teruel", "Ávila", "Almería", "Guadalajara",
 ];
 
-// 24 países con banderas, moneda y GDP per cápita relativo a España
+// Países con banderas, moneda y GDP per cápita relativo a España
 const PAISES: Array<{ code: string; name: string; flag: string; currency: string; gdpFactor: number; regiones: string[] }> = [
   { code: "ES", name: "España", flag: "🇪🇸", currency: "€", gdpFactor: 1.00, regiones: PROVINCIAS },
   { code: "PT", name: "Portugal", flag: "🇵🇹", currency: "€", gdpFactor: 0.72, regiones: [

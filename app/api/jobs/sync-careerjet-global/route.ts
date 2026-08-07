@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     const city = cfg.cities[cityIdx];
 
     try {
-      const jobs = await fetchCareerjetGlobal(kw, city);
+      const jobs = await fetchCareerjetGlobal(kw, city, 1, country);
       if (jobs.length > 0) {
         const inserted = await upsertJobsForSync(jobs, "OTRO", country);
         totalInserted += inserted;

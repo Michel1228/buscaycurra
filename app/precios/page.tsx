@@ -9,6 +9,7 @@ import { isNativeIOS } from "@/lib/utils/platform";
 import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
 import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 import { Bot, Zap, Building2, Sprout, Egg, Star, CreditCard, Check, X, Apple } from "lucide-react";
+import { NUM_PAISES } from "@/lib/paises";
 
 const PLANES = [
   {
@@ -19,7 +20,7 @@ const PLANES = [
       { t: "📸 3 búsquedas por cámara", ok: true, highlight: false },
       { t: "🧠 2 consultas a Guzzi (total)", ok: true, highlight: false },
       { t: "📄 1 CV creado con IA", ok: true, highlight: false },
-      { t: "🔍 Búsqueda en 24 países", ok: true, highlight: false },
+      { t: `🔍 Búsqueda en ${NUM_PAISES} países`, ok: true, highlight: false },
       { t: "📊 Pipeline kanban", ok: true, highlight: false },
       { t: "💰 Comparador salarios", ok: true, highlight: false },
       { t: "📤 Envíos de CV", ok: false, highlight: false },

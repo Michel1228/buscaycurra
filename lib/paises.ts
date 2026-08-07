@@ -239,6 +239,50 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["waiter", "developer", "administrator", "sales", "nurse"],
     slug: "irlanda",
   },
+  // Japón — añadido el 7 ago 2026. El visado SSW (特定技能) cubre 19 sectores
+  // con escasez de mano de obra (cuidados, hostelería, construcción, limpieza,
+  // agricultura, transporte) y NO exige título universitario: encaja de lleno
+  // con el perfil de la app. El gobierno se ha fijado 820.000 trabajadores
+  // extranjeros entre 2024 y 2028. Salarios del National Tax Agency 2026.
+  JP: {
+    codigo: "JP",
+    nombre: "Japón",
+    nombreLocal: "日本",
+    moneda: "JPY",
+    simboloMoneda: "¥",
+    posicionSimbolo: "antes",
+    idioma: "ja",
+    bandera: "🇯🇵",
+    salarioMinimo: 194000,   // 1.121 ¥/hora de media nacional × 40h × 4,33 semanas
+    salarioMedio: 398000,    // 4,78 M ¥/año
+    tasaCambioEUR: 165,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Tokyo", "Osaka", "Nagoya", "Yokohama", "Fukuoka", "Sapporo", "Kyoto"],
+    keywordsLaborales: ["caregiver", "hotel staff", "construction", "food service", "cleaning"],
+    slug: "japon",
+  },
+  // Singapur — se trabaja en inglés y ya teníamos 2.245 ofertas suyas sin
+  // haberlo buscado. No hay salario mínimo legal: se usa el "living wage"
+  // de referencia (2.906 S$) como suelo orientativo.
+  SG: {
+    codigo: "SG",
+    nombre: "Singapur",
+    nombreLocal: "Singapore",
+    moneda: "SGD",
+    simboloMoneda: "S$",
+    posicionSimbolo: "antes",
+    idioma: "en",
+    bandera: "🇸🇬",
+    salarioMinimo: 2906,
+    salarioMedio: 5800,
+    tasaCambioEUR: 1.42,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Singapore", "Jurong", "Tampines", "Woodlands", "Changi"],
+    keywordsLaborales: ["waiter", "nurse", "engineer", "sales", "logistics"],
+    slug: "singapur",
+  },
   BE: {
     codigo: "BE",
     nombre: "Bélgica",
@@ -474,6 +518,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.DK,  // Dinamarca — 42.000 DKK/mes
   PAISES.NZ,  // Nueva Zelanda — 5.500 NZD/mes (~3.040€)
   PAISES.DE,  // Alemania — 4.200 EUR/mes
+  PAISES.SG,  // Singapur — 5.800 SGD/mes (~4.085 €)
   PAISES.IE,  // Irlanda — 4.000 EUR/mes
   PAISES.SE,  // Suecia — 38.000 SEK/mes
   PAISES.NL,  // Países Bajos — 3.800 EUR/mes
@@ -483,6 +528,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.FI,  // Finlandia — 3.500 EUR/mes
   PAISES.UK,  // Reino Unido — 3.100 GBP/mes
   PAISES.IT,  // Italia — 2.500 EUR/mes
+  PAISES.JP,  // Japón — 398.000 JPY/mes (~2.412 €)
   PAISES.ES,  // España — 2.100 EUR/mes
   PAISES.GR,  // Grecia — 1.600 EUR/mes
   PAISES.PT,  // Portugal — 1.600 EUR/mes
