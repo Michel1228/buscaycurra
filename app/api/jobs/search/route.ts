@@ -71,7 +71,10 @@ export async function GET(request: NextRequest) {
   const experiencia  = searchParams.get("experiencia") || "";
   const salarioMin   = parseInt(searchParams.get("salarioMin") || "0");
   const salarioMax   = parseInt(searchParams.get("salarioMax") || "0");
-  const limit    = 500;
+  // Antes era 500 fijo y se ignoraba lo que pidiera el cliente: cada busqueda
+  // devolvia 500 filas aunque la pantalla mostrara 20. Ahora se respeta el
+  // parametro, con 100 por defecto y 200 de tope.
+  const limit    = Math.min(parseInt(searchParams.get("limit") || "100", 10) || 100, 200);
   const offset   = (page - 1) * limit;
 
   // Keywords especificas por categoria (mismas que en /api/au-pair/ofertas)
@@ -243,7 +246,11 @@ export async function GET(request: NextRequest) {
     // COUNT(*) aparte con el WHERE completo justo antes del SELECT: el mismo
     // escaneo hecho dos veces, y sobre 3,5M filas eso es el doble de trabajo.
     const construirSql = (where: string) => `
-      SELECT id, title, company, city, province, salary, description,
+      SELECT id, title, company, city, province, salary,
+             -- Solo el principio: mapJob() ya recorta a 200 caracteres, pero se
+             -- traian descripciones enteras de hasta 1.000 y con 500 filas por
+             -- busqueda eso son megabytes de JSON en cada peticion.
+             LEFT(description, 300) AS description,
              "sourceUrl", "sourceName", "scrapedAt",
              "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza,
              COUNT(*) OVER() AS total_encontrado
