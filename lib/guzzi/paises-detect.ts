@@ -105,7 +105,32 @@ const RELLENO = new Set([
   "que", "me", "te", "se", "lo", "la", "el", "un", "una", "unos", "unas",
   "busco", "buscar", "quiero", "necesito", "dame", "muestrame", "ensename",
   "disponible", "disponibles", "libre", "libres", "actuales", "nuevas",
+  // Verbos de petición: una usuaria escribió "quiero que me mandes ofertas de
+  // lo que sea en Irlanda" y Guzzi buscó literalmente el puesto
+  // "mandes ofertas de lo que sea", que no existe.
+  "manda", "mandas", "mandes", "mandame", "mandarme", "envia", "envias",
+  "envies", "enviame", "enviarme", "pasa", "pases", "pasame", "busca",
+  "buscame", "encuentra", "encuentrame", "sea", "cualquier", "cualquiera",
+  "todo", "todas", "todos", "toda", "mas", "otras", "otros", "porfa",
+  "favor", "gracias", "hola", "por",
 ]);
+
+/**
+ * Formas de decir "me vale cualquier cosa". Cuando el usuario lo dice, no hay
+ * que inventarse un puesto: hay que enseñarle lo que haya en esa zona.
+ */
+const SIN_PREFERENCIA = /\b(lo\s+que\s+sea|cualquier\s+(cosa|trabajo|puesto|oferta)|me\s+da\s+igual|no\s+me\s+importa|da\s+lo\s+mismo|lo\s+que\s+haya|de\s+todo)\b/i;
+
+/**
+ * ¿El usuario ha dicho que le vale cualquier trabajo?
+ *
+ * Importa distinguirlo de "no ha dicho puesto": si alguien escribe "no me
+ * importa de lo que trabajar", volver a preguntarle qué puesto quiere es
+ * ignorar lo que acaba de decir. En ese caso hay que enseñarle lo que haya.
+ */
+export function sinPreferenciaDePuesto(texto: string): boolean {
+  return SIN_PREFERENCIA.test(texto);
+}
 
 /**
  * Limpia el término de búsqueda. Devuelve null si no queda nada útil,
@@ -113,6 +138,11 @@ const RELLENO = new Set([
  */
 export function limpiarTerminoBusqueda(termino: string | null): string | null {
   if (!termino) return null;
+
+  // "lo que sea", "me da igual", "cualquier cosa"... no son un puesto: el
+  // usuario está diciendo justo lo contrario, que no tiene preferencia.
+  if (SIN_PREFERENCIA.test(termino)) return null;
+
   const palabras = normalizar(termino).split(/\s+/).filter(Boolean);
 
   // Se recorta SOLO por los extremos. Quitar el relleno también por dentro

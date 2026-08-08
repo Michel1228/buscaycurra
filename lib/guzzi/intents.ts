@@ -26,7 +26,27 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   }
   if (/(?:peluquer[ií]a|barber[ií]a|restaurante|bar\b|hotel|cafeter[ií]a|cl[ií]nica|farmacia|panader[ií]a|tienda|taller|supermercado|sal[oó]n|est[eé]tica|gimnasio|lavander[ií]a|fruter[ií]a|carnicer[ií]a|pescader[ií]a)\b.{3,}/i.test(t) && /(?:calle|plaza|avenida|avda|paseo|crta|carretera|c\/)\s/i.test(t)) return "buscar";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
-  if (/\w{3,}\s+(?:en|por)\s+\w{3,}/.test(t) && !/(carta|entrevista|mejorar|crear|subir|foto|ayuda|hola|gracias|adios|trabajado|trabaj[éeáa]|trabajaba|experiencia|no\s+puedo|cargar\s+peso|espalda|dolor|lesi[oó]n|baja\s+m[ée]dica|salario|sueldo|m[ií]nimo|smi|cu[aá]nto|cuesta|vale|cobra|gana|derecho|paro|sepe|finiquito|vacaciones|despido|indemnizaci[oó]n|mercado\s+laboral|situaci[oó]n\s+laboral|perspectivas\s+laborales|c[oó]mo\s+est[aá]|hay\s+trabajo|posibilidades|emigrar|emigraci[oó]n)/i.test(t)) return "buscar";
+  // "algo EN algún sitio" es una búsqueda, salvo que la frase sea de otro tema.
+  //
+  // OJO CON LOS LÍMITES DE PALABRA en las exclusiones. Sin ellos, un país se
+  // colaba dentro de otra palabra y la frase se iba a charla:
+  //   "ofertas en HOLAnda"      -> "hola"        -> lo tomaba por un saludo
+  //   "quiero TRABAJAr en ..."  -> "trabaj[éeáa]" -> lo tomaba por experiencia pasada
+  // Caso real: un cliente pidió ofertas en Holanda y Guzzi se puso a charlar en
+  // vez de buscar, y acabó mencionando sitios de España. Las exclusiones que son
+  // palabras sueltas cortas llevan \b; las de varias palabras no lo necesitan.
+  const OTRO_TEMA = new RegExp(
+    "(\\bcarta\\b|\\bentrevista\\b|\\bmejorar\\b|\\bcrear\\b|\\bsubir\\b|\\bfoto\\b|\\bayuda\\b" +
+    "|\\bhola\\b|\\bgracias\\b|\\badios\\b|\\btrabajado\\b|\\btrabaj[éeáa]\\b|\\btrabajaba\\b" +
+    "|\\bexperiencia\\b|no\\s+puedo|cargar\\s+peso|\\bespalda\\b|\\bdolor\\b|\\blesi[oó]n\\b" +
+    "|baja\\s+m[ée]dica|\\bsalario\\b|\\bsueldo\\b|\\bm[ií]nimo\\b|\\bsmi\\b|\\bcu[aá]nto\\b" +
+    "|\\bcuesta\\b|\\bvale\\b|\\bcobra\\b|\\bgana\\b|\\bderecho\\b|\\bparo\\b|\\bsepe\\b" +
+    "|\\bfiniquito\\b|\\bvacaciones\\b|\\bdespido\\b|\\bindemnizaci[oó]n\\b|mercado\\s+laboral" +
+    "|situaci[oó]n\\s+laboral|perspectivas\\s+laborales|c[oó]mo\\s+est[aá]" +
+    "|\\bposibilidades\\b|\\bemigrar\\b|\\bemigraci[oó]n\\b)",
+    "i"
+  );
+  if (/\w{3,}\s+(?:en|por)\s+\w{3,}/.test(t) && !OTRO_TEMA.test(t)) return "buscar";
   const confirmSend = /^(si|s[ií]i|dale|vale|ok|okey|okay|venga|adelante|perfecto|genial|fenomenal|claro|por\s+supuesto|obvio|pues\s+si|pues\s+venga|hazlo|env[ií]alo|m[aá]ndalo|tira|t[ií]ralo|p[áa]lante|a\s+por\s+ello|me\s+gusta|me\s+apunto|elijo\s+la?\s*\d|la\s+primera|la\s+\d|la\s+opci[oó]n\s+\d|opci[oó]n\s+\d)/i;
   const histText = (history as unknown as Array<{ text: string }>).slice(-4).map((m) => m.text).join(" ");
   if (confirmSend.test(t.trim()) && /bar|restaurante|cafeter[ií]a|negocio\s+local|pequeñ[oa]|Google\s+Maps|plaza\s+nueva|bar\s+diamante|tel[eé]fono\s*\d|948|local\s+pequeñ|🏢|⭐|📍|📞/i.test(histText)) {

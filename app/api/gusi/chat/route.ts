@@ -323,15 +323,26 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
   scope: "ciudad" | "provincia" | "cercanas" | "pais" | "sinonimo" | "api";
 } | null> {
   try {
+    // Nombre en inglés del país, para las ofertas antiguas que guardaban el
+    // nombre completo en `country` en vez del código ISO.
+    //
+    // OJO CON EL VALOR POR DEFECTO: antes era `|| "spain"`, así que cualquier
+    // país que no estuviera en esta lista se buscaba EN ESPAÑA sin avisar.
+    // Faltaban Japón y Singapur, entre otros: pedir trabajo en Tokio habría
+    // devuelto ofertas españolas. Ahora, si el país no se reconoce, se deja
+    // vacío y manda el código ISO, que es lo que lleva la columna hoy.
     const countryMap: Record<string, string> = {
       ES: "spain", DE: "germany", FR: "france", IT: "italy", PT: "portugal",
       GB: "united kingdom", UK: "united kingdom", US: "united states", CA: "canada",
       AU: "australia", NL: "netherlands", SE: "sweden", CH: "switzerland",
       BE: "belgium", IE: "ireland", NO: "norway", DK: "denmark", AT: "austria",
-      FI: "finland", NZ: "new zealand", PL: "poland",
+      FI: "finland", NZ: "new zealand", PL: "poland", JP: "japan", SG: "singapore",
+      GR: "greece", CZ: "czechia", HU: "hungary", RO: "romania", LU: "luxembourg",
+      BR: "brazil", MX: "mexico", IN: "india", AE: "united arab emirates",
     };
-    const countryName = countryMap[countryCode?.toUpperCase()] || "spain";
     const isoCode = countryCode?.toUpperCase() || "ES";
+    // Si no conocemos el nombre, se usa el propio código: nunca "spain".
+    const countryName = countryMap[isoCode] || isoCode.toLowerCase();
     const { getPool } = await import("@/lib/db");
     const pool = getPool();
     const kw = `%${query.toLowerCase()}%`;
@@ -1094,7 +1105,7 @@ El candidato tiene mucha experiencia.
       const isDissatisfied = /(est[áa]n?\s+(muy\s+)?lejos|no\s+me\s+sirve|demasiado\s+lejos|busca\s+otra?\s+cosa|algo\s+diferente|mejor\s+(salario|horario|sueldo)|no\s+es\s+lo\s+que\s+busco|cerca\s+de|m[áa]s\s+cerca)/i.test(message);
 
       // Lo que el usuario PIDE explícitamente tiene prioridad sobre el CV
-      const { detectarPais, limpiarTerminoBusqueda } = await import("@/lib/guzzi/paises-detect");
+      const { detectarPais, limpiarTerminoBusqueda, sinPreferenciaDePuesto } = await import("@/lib/guzzi/paises-detect");
 
       // "hay ofertas en Dublin" hacía que se buscara el puesto "hay ofertas" y
       // no apareciera nada. Si al limpiar no queda una profesión de verdad, se
@@ -1126,6 +1137,26 @@ El candidato tiene mucha experiencia.
       if (paisPedido && !extractedJob) {
         const total = await contarOfertasPais(paisPedido.codigo);
         if (total > 0) {
+          // Si ha dicho que le vale cualquier cosa ("lo que sea", "no me importa
+          // de qué trabajar"), NO se le pregunta otra vez: se le enseñan ofertas
+          // variadas de ese país. Una usuaria escribió justo eso para Irlanda y
+          // Guzzi le devolvió puestos de Logroño y Valladolid.
+          if (sinPreferenciaDePuesto(message)) {
+            const variadas = await ofertasVariadasPais(paisPedido.codigo, 6);
+            if (variadas.length > 0) {
+              const lista = variadas
+                .map((o, i) => `${i + 1}. **${o.title}**\n   📍 ${o.city || paisPedido.nombre}${o.company ? ` · ${o.company}` : ""}`)
+                .join("\n\n");
+              return NextResponse.json({
+                reply: `${paisPedido.bandera} Perfecto, en **${paisPedido.nombre}** hay **${total.toLocaleString("es-ES")} ofertas** y no hace falta que te cierres a nada. Te enseño una muestra de sectores distintos:\n\n${lista}\n\n¿Te encaja alguna? Dime cuál o cuéntame qué sabes hacer y afino la búsqueda.`,
+                jobs: variadas,
+                action: "search_results",
+                pais: paisPedido.codigo,
+                total,
+              });
+            }
+          }
+
           const ciudades = await ciudadesTopPais(paisPedido.codigo, 6);
           const listaCiudades = ciudades.length
             ? `\n\n📍 Donde más hay ahora mismo: ${ciudades.join(" · ")}`
@@ -1561,6 +1592,37 @@ async function contarOfertasPais(codigoPais: string): Promise<number> {
   } catch (e) {
     console.error("[Guzzi] contarOfertasPais:", (e as Error).message);
     return 0;
+  }
+}
+
+/**
+ * Muestra variada de ofertas de un país, para quien dice que le vale cualquier
+ * trabajo. Se reparte por ciudades (una por ciudad) para que no salgan seis
+ * puestos del mismo sitio, y el filtro de país es estricto: solo se devuelve lo
+ * que de verdad está en ese país.
+ */
+async function ofertasVariadasPais(
+  codigoPais: string,
+  limite = 6
+): Promise<Array<{ id: string; title: string; company: string; city: string; sourceUrl: string }>> {
+  try {
+    const { getPool } = await import("@/lib/db");
+    const r = await getPool().query<{ id: string; title: string; company: string; city: string; sourceUrl: string }>(
+      `SELECT DISTINCT ON (city) id, title, company, city, "sourceUrl"
+         FROM "JobListing"
+        WHERE "isActive" = true
+          AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
+          AND LOWER(country) = LOWER($1)
+          AND title IS NOT NULL AND title <> ''
+          AND city IS NOT NULL AND city <> ''
+        ORDER BY city, "scrapedAt" DESC
+        LIMIT $2`,
+      [codigoPais, limite]
+    );
+    return r.rows;
+  } catch (e) {
+    console.error("[Guzzi] ofertasVariadasPais:", (e as Error).message);
+    return [];
   }
 }
 
