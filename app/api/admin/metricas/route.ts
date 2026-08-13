@@ -18,12 +18,42 @@ function hace(dias: number): string {
   return new Date(Date.now() - dias * 86400000).toISOString();
 }
 
-export async function GET(req: NextRequest) {
-  if (!process.env.ADMIN_SECRET) {
-    return NextResponse.json({ error: "ADMIN_SECRET no configurada" }, { status: 503 });
-  }
+/**
+ * Dos formas de entrar, a propósito:
+ *  - Con la sesión normal, si el email está en ADMIN_EMAILS. Es la que usa el
+ *    panel: así Michel entra con su cuenta de siempre y no tiene que recordar
+ *    ninguna clave (y si le roban el móvil, basta con cerrar la sesión).
+ *  - Con la cabecera x-admin-secret, para scripts y comprobaciones desde el
+ *    servidor, donde no hay sesión.
+ */
+async function esAdministrador(req: NextRequest): Promise<boolean> {
+  // 1) Secreto de servidor (scripts)
   const secret = req.headers.get("x-admin-secret");
-  if (!secretIguales(secret, process.env.ADMIN_SECRET)) {
+  if (secret && process.env.ADMIN_SECRET && secretIguales(secret, process.env.ADMIN_SECRET)) {
+    return true;
+  }
+
+  // 2) Sesión de un email autorizado
+  const admins = (process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAIL || "")
+    .split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
+  if (admins.length === 0) return false;
+
+  const auth = req.headers.get("Authorization");
+  if (!auth?.startsWith("Bearer ")) return false;
+  try {
+    const pub = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user } } = await pub.auth.getUser(auth.slice(7));
+    return !!user?.email && admins.includes(user.email.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+export async function GET(req: NextRequest) {
+  if (!(await esAdministrador(req))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

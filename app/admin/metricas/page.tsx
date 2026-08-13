@@ -3,12 +3,15 @@
 /**
  * /admin/metricas — Contador en vivo de cómo va BuscayCurra.
  *
- * Pide la clave de administrador una sola vez y la guarda en el navegador, para
- * poder abrirlo desde el móvil sin teclearla cada día. Se refresca solo cada
- * 60 segundos.
+ * Entra con la sesión normal de la app: si tu email está en ADMIN_EMAILS, ves
+ * el panel. Antes pedía una clave escrita a mano, pero eso obliga a recordarla
+ * y a teclearla en el móvil; con la sesión ya sabemos quién eres.
+ * Se refresca solo cada 60 segundos.
  */
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 interface Metricas {
   generado: string;
@@ -19,8 +22,6 @@ interface Metricas {
   ofertas: { vivas: number; conEmail: number; paises: number; nuevas24h: number };
   cobros: { numero: number; importe: number; moneda: string; disponible: boolean };
 }
-
-const CLAVE_GUARDADA = "bc_admin_secret";
 
 function Tarjeta({ titulo, valor, pie, color = "#22c55e" }: {
   titulo: string; valor: string | number; pie?: string; color?: string;
@@ -65,26 +66,23 @@ function Barras({ datos }: { datos: Record<string, number> }) {
 }
 
 export default function PanelMetricas() {
-  const [clave, setClave] = useState("");
   const [datos, setDatos] = useState<Metricas | null>(null);
   const [error, setError] = useState("");
-  const [cargando, setCargando] = useState(false);
+  const [cargando, setCargando] = useState(true);
 
-  const cargar = useCallback(async (secreto: string) => {
-    if (!secreto) return;
+  const cargar = useCallback(async () => {
     setCargando(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/metricas", { headers: { "x-admin-secret": secreto } });
-      if (res.status === 401) {
-        setError("Clave incorrecta");
-        localStorage.removeItem(CLAVE_GUARDADA);
-        setDatos(null);
-        return;
-      }
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) { setError("sin-sesion"); return; }
+
+      const res = await fetch("/api/admin/metricas", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.status === 401) { setError("sin-permiso"); return; }
       if (!res.ok) { setError("No se pudieron cargar las métricas"); return; }
       setDatos(await res.json());
-      localStorage.setItem(CLAVE_GUARDADA, secreto);
     } catch {
       setError("Error de conexión");
     } finally {
@@ -92,41 +90,48 @@ export default function PanelMetricas() {
     }
   }, []);
 
-  useEffect(() => {
-    const guardada = localStorage.getItem(CLAVE_GUARDADA);
-    if (guardada) { setClave(guardada); cargar(guardada); }
-  }, [cargar]);
+  useEffect(() => { cargar(); }, [cargar]);
 
   // Refresco automático cada minuto, solo si ya hay datos
   useEffect(() => {
     if (!datos) return;
-    const t = setInterval(() => {
-      const g = localStorage.getItem(CLAVE_GUARDADA);
-      if (g) cargar(g);
-    }, 60000);
+    const t = setInterval(cargar, 60000);
     return () => clearInterval(t);
   }, [datos, cargar]);
 
   if (!datos) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#0f1117" }}>
-        <div className="w-full max-w-sm">
-          <h1 className="text-lg font-bold mb-1" style={{ color: "#f1f5f9" }}>Métricas de BuscayCurra</h1>
-          <p className="text-xs mb-5" style={{ color: "#64748b" }}>Introduce la clave de administrador</p>
-          <input
-            type="password"
-            value={clave}
-            onChange={e => setClave(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && cargar(clave)}
-            placeholder="ADMIN_SECRET"
-            className="w-full rounded-lg px-3.5 py-2.5 text-sm mb-3"
-            style={{ background: "#0f1117", border: "1.5px solid #2d3142", color: "#f1f5f9" }}
-          />
-          <button onClick={() => cargar(clave)} disabled={cargando || !clave}
-            className="btn-game w-full !py-2.5 text-sm disabled:opacity-50">
-            {cargando ? "Cargando…" : "Entrar"}
-          </button>
-          {error && <p className="text-xs mt-3 text-center" style={{ color: "#ef4444" }}>{error}</p>}
+        <div className="w-full max-w-sm text-center">
+          <h1 className="text-lg font-bold mb-2" style={{ color: "#f1f5f9" }}>Métricas de BuscayCurra</h1>
+
+          {cargando && (
+            <p className="text-xs" style={{ color: "#64748b" }}>Cargando…</p>
+          )}
+
+          {!cargando && error === "sin-sesion" && (
+            <>
+              <p className="text-xs mb-5" style={{ color: "#94a3b8" }}>
+                Entra con tu cuenta para ver el panel.
+              </p>
+              <Link href="/auth/login?redirect=/admin/metricas" className="btn-game inline-block text-sm">
+                Iniciar sesión
+              </Link>
+            </>
+          )}
+
+          {!cargando && error === "sin-permiso" && (
+            <p className="text-xs" style={{ color: "#94a3b8" }}>
+              Tu cuenta no tiene acceso a las métricas.
+            </p>
+          )}
+
+          {!cargando && error && !["sin-sesion", "sin-permiso"].includes(error) && (
+            <>
+              <p className="text-xs mb-4" style={{ color: "#ef4444" }}>{error}</p>
+              <button onClick={cargar} className="btn-game text-sm">Reintentar</button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -145,7 +150,7 @@ export default function PanelMetricas() {
               {new Date(d.generado).toLocaleString("es-ES")} · se actualiza solo cada minuto
             </p>
           </div>
-          <button onClick={() => cargar(clave)} disabled={cargando}
+          <button onClick={cargar} disabled={cargando}
             className="text-xs px-3 py-1.5 rounded-lg disabled:opacity-50"
             style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
             {cargando ? "…" : "Actualizar"}
