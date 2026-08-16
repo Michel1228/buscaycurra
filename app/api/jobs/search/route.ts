@@ -136,10 +136,22 @@ export async function GET(request: NextRequest) {
         condicionKeywordLigera = `(${ligeras.join(" AND ")})`;
         condicionKeywordCompleta = `(${completas.join(" AND ")})`;
       } else {
-        params.push(`%${keyword}%`);
-        const i = idx++;
-        condicionKeywordLigera = `(title ILIKE $${i} OR company ILIKE $${i})`;
-        condicionKeywordCompleta = `(title ILIKE $${i} OR description ILIKE $${i} OR company ILIKE $${i})`;
+        // Se busca el termino Y sus equivalentes en otros idiomas. Sin esto,
+        // "camarero en Paris" no encontraba nada (alli las ofertas dicen
+        // "serveur") y acababa cayendo en el respaldo por ciudad, que devolvia
+        // ingenieros y desarrolladores como si fueran camareros.
+        const { expandirPuesto } = await import("@/lib/job-search/sinonimos-puesto");
+        const variantes = expandirPuesto(keyword);
+        const orsLigeros: string[] = [];
+        const orsCompletos: string[] = [];
+        for (const v of variantes) {
+          params.push(`%${v}%`);
+          const i = idx++;
+          orsLigeros.push(`title ILIKE $${i} OR company ILIKE $${i}`);
+          orsCompletos.push(`title ILIKE $${i} OR description ILIKE $${i} OR company ILIKE $${i}`);
+        }
+        condicionKeywordLigera = `(${orsLigeros.join(" OR ")})`;
+        condicionKeywordCompleta = `(${orsCompletos.join(" OR ")})`;
       }
       // Se añade la ligera; más abajo se sustituye por la completa si hace falta.
       conditions.push(condicionKeywordLigera);
@@ -299,17 +311,42 @@ export async function GET(request: NextRequest) {
       const locTotal = parseInt(locCount.rows[0].count);
       if (locTotal > dbResult.rows.length + 5) {
         const locOffset = (page - 1) * limit;
+        // El respaldo amplia la ZONA, nunca el PUESTO.
+        //
+        // Antes la palabra buscada solo se usaba para ORDENAR: la consulta
+        // filtraba unicamente por ciudad y devolvia lo que hubiera, poniendo
+        // las coincidencias delante. Resultado real: "camarero en Paris"
+        // devolvia 8 ofertas y NINGUNA era de camarero (salian ingenieros,
+        // DevOps, recursos humanos). Es peor que no devolver nada, porque el
+        // usuario deja de fiarse del buscador.
+        const { expandirPuesto: expandir } = await import("@/lib/job-search/sinonimos-puesto");
+        const variantesLoc = expandir(keyword);
+        const locParams: (string | number)[] = [`%${cityParts}%`];
+        const orsLoc: string[] = [];
+        for (const v of variantesLoc) {
+          locParams.push(`%${v}%`);
+          const i = locParams.length;
+          orsLoc.push(`title ILIKE $${i} OR description ILIKE $${i}`);
+        }
+        locParams.push(limit, locOffset);
+        const iLimit = locParams.length - 1;
+        const iOffset = locParams.length;
+
         const locResult = await pool.query(
-          `SELECT id, title, company, city, province, salary, description, "sourceUrl", "sourceName", "scrapedAt", "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza
-           FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
-           ORDER BY
-             CASE WHEN title ILIKE $2 THEN 0 ELSE 1 END,
-             CASE WHEN "scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
-                  WHEN "scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
-                  ELSE 2 END,
-             md5(id::text || to_char(NOW(), 'YYYYDDD'))
-           LIMIT $3 OFFSET $4`,
-          [`%${cityParts}%`, `%${keyword}%`, limit, locOffset]
+          `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
+                  "sourceUrl", "sourceName", "scrapedAt",
+                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza
+             FROM "JobListing"
+            WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
+              AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
+              AND (${orsLoc.join(" OR ")})
+            ORDER BY
+              CASE WHEN "scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
+                   WHEN "scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
+                   ELSE 2 END,
+              md5(id::text || to_char(NOW(), 'YYYYDDD'))
+            LIMIT $${iLimit} OFFSET $${iOffset}`,
+          locParams
         );
         const locOfertas = deduplicar(locResult.rows).map(j => rowToOferta(j, location, userSkills));
         return NextResponse.json({ ofertas: locOfertas, total: locTotal, page, hasMore: locOffset + locOfertas.length < locTotal, keyword, location, source: "database-city-fallback" });
