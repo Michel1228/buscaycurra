@@ -6,6 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
 import InfoTooltip from "@/components/InfoTooltip";
 import CountrySelector from "@/components/CountrySelector";
+import { paisDeCiudad } from "@/lib/guzzi/ciudades-pais";
+import { PAISES } from "@/lib/paises";
+
+/** El nombre del pais tal y como lo lee la gente: "Francia", no "FR". */
+function nombrePais(codigo: string): string {
+  const p = PAISES[codigo];
+  return p ? `${p.bandera} ${p.nombre}` : codigo;
+}
 
 const opcionesJornada = [
   { valor: "", etiqueta: "Todas" },
@@ -47,6 +55,8 @@ function BuscarPageInner() {
   const [totalResultados, setTotalResultados] = useState(0);
   const [hayMas, setHayMas] = useState(false);
   const [fuenteResultados, setFuenteResultados] = useState<string>("");
+  // Explica en pantalla por que ha cambiado el pais de la busqueda.
+  const [avisoPais, setAvisoPais] = useState("");
 
   const [mostrarAlertaModal, setMostrarAlertaModal] = useState(false);
   const [alertaCreada, setAlertaCreada] = useState(false);
@@ -257,6 +267,26 @@ function BuscarPageInner() {
     
     if (!finalKeyword && !finalUbicacion) return;
 
+    // LA CIUDAD MANDA SOBRE LA BANDERA.
+    //
+    // El selector de país recuerda el último que usaste, así que se quedaba en
+    // España mientras escribías "París" en el "¿Dónde?". Resultado: cero
+    // ofertas y ni una pista de por qué — la bandera está en otra esquina de
+    // la pantalla y nadie la relaciona. Si la ciudad que escribes está en otro
+    // país, se cambia sola y se dice. Nunca se bloquea la búsqueda por esto.
+    let paisParaBuscar = paisSeleccionado;
+    setAvisoPais("");
+    if (finalUbicacion) {
+      const paisDeLaCiudad = paisDeCiudad(finalUbicacion);
+      if (paisDeLaCiudad && paisDeLaCiudad !== paisSeleccionado) {
+        paisParaBuscar = paisDeLaCiudad;
+        cambiarPais(paisDeLaCiudad);
+        setAvisoPais(
+          `${finalUbicacion.charAt(0).toUpperCase() + finalUbicacion.slice(1)} está en ${nombrePais(paisDeLaCiudad)}, así que he cambiado ahí la búsqueda.`
+        );
+      }
+    }
+
     setCargando(true);
     setError("");
     setBuscado(true);
@@ -267,8 +297,8 @@ function BuscarPageInner() {
       if (finalUbicacion) params.set("location", finalUbicacion);
       // Au Pair / Live-in Nanny: no filtrar por país si el usuario no lo cambió explícitamente
       // (ES tiene pocas ofertas au pair; la mayoría están en UK/US/etc)
-      if (paisSeleccionado && !(categoria && !paisCambiadoPorUsuario.current && paisSeleccionado === "ES")) {
-        params.set("country", paisSeleccionado);
+      if (paisParaBuscar && !(categoria && !paisCambiadoPorUsuario.current && paisParaBuscar === "ES")) {
+        params.set("country", paisParaBuscar);
       }
       if (categoria) params.set("categoria", categoria);
       if (jornada) params.set("jornada", jornada);
@@ -384,10 +414,21 @@ function BuscarPageInner() {
               style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
             <div className="relative w-full sm:w-56">
               <label className="sr-only" htmlFor="buscar-ubicacion">Ubicación</label>
-              <input id="buscar-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); }}
-                placeholder="¿Dónde?" className="w-full px-4 py-2.5 rounded-lg text-sm"
+              <input id="buscar-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); setAvisoPais(""); }}
+                placeholder="¿Dónde? (o déjalo vacío)" className="w-full px-4 py-2.5 rounded-lg text-sm"
                 style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
-              {geoDetected && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-70">📍 Auto</span>}
+              {/* El aviso de autorrelleno era un "📍 Auto" de 10 px que nadie
+                  veía: la gente buscaba sin darse cuenta de que el campo
+                  llevaba su ciudad puesta. Ahora se ve y se quita de un clic. */}
+              {geoDetected && ubicacion && (
+                <button type="button"
+                  onClick={() => { setUbicacion(""); setGeoDetected(false); }}
+                  title="Quitar mi ciudad y buscar en todas partes"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-semibold hover:opacity-80"
+                  style={{ background: "rgba(0,0,0,0.28)", color: "#fff" }}>
+                  tu ciudad ✕
+                </button>
+              )}
             </div>
             <button type="submit" disabled={cargando}
               className="px-6 py-2.5 bg-white font-semibold rounded-lg text-sm transition disabled:opacity-50"
@@ -395,9 +436,23 @@ function BuscarPageInner() {
               {cargando ? "Buscando..." : "Buscar"}
             </button>
           </form>
-          <div className="mt-2 flex justify-end">
+
+          {/* El país va aquí, pegado a los campos y con su etiqueta.
+              Suelto abajo a la derecha, nadie lo relacionaba con el "¿Dónde?":
+              escribías "París" con la bandera en España, salían cero ofertas y
+              no había forma de saber por qué. */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] opacity-90">Buscando en:</span>
             <CountrySelector paisActual={paisSeleccionado} onCambiarPais={cambiarPais} variant="buscar" />
+            <span className="text-[11px] opacity-75">· Si escribes una ciudad de otro país, lo cambio yo.</span>
           </div>
+
+          {avisoPais && (
+            <div className="mt-2 px-3 py-2 rounded-lg text-xs flex items-start gap-2"
+              style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}>
+              <span>💡</span><span>{avisoPais}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -497,10 +552,38 @@ function BuscarPageInner() {
             )}
 
             {!cargando && !error && buscado && ofertas.length === 0 && (
-              <div className="card-game p-10 text-center">
+              /* "Prueba con otras palabras clave" no ayuda a nadie: el motivo
+                 casi siempre es la ciudad o un filtro puesto, y arreglarlo son
+                 dos clics. Se dice qué se buscó exactamente y se ofrece la
+                 salida, en vez de dejar al usuario adivinando. */
+              <div className="card-game p-8 text-center">
                 <p className="text-4xl mb-3">🔍</p>
-                <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No se encontraron ofertas</p>
-                <p className="text-xs mt-1" style={{ color: "#64748b" }}>Prueba con otras palabras clave</p>
+                <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>
+                  Sin ofertas de {keyword ? <>«{keyword}»</> : "eso"}
+                  {ubicacion ? <> en {ubicacion}</> : null} ({nombrePais(paisSeleccionado)})
+                </p>
+                <p className="text-xs mt-2" style={{ color: "#94a3b8" }}>Prueba a quitar algo de la búsqueda:</p>
+                <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                  {ubicacion && (
+                    <button onClick={() => { setUbicacion(""); setGeoDetected(false); setTimeout(() => buscar(), 0); }}
+                      className="px-3 py-2 rounded-lg text-xs font-semibold"
+                      style={{ background: "#22c55e", color: "#0f1117" }}>
+                      Buscar en todo el país
+                    </button>
+                  )}
+                  {(jornada || experiencia || salarioMin || salarioMax) && (
+                    <button onClick={() => { setJornada(""); setExperiencia(""); setSalarioMin(""); setSalarioMax(""); setTimeout(() => buscar(), 0); }}
+                      className="px-3 py-2 rounded-lg text-xs font-semibold"
+                      style={{ background: "#1e212b", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+                      Quitar los filtros
+                    </button>
+                  )}
+                  <button onClick={() => router.push(`/app/gusi?q=${encodeURIComponent(`${keyword} en ${ubicacion}`.trim())}`)}
+                    className="px-3 py-2 rounded-lg text-xs font-semibold"
+                    style={{ background: "#1e212b", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+                    🐛 Que lo busque Guzzi
+                  </button>
+                </div>
               </div>
             )}
 
