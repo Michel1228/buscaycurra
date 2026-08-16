@@ -46,7 +46,12 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
     "|\\bposibilidades\\b|\\bemigrar\\b|\\bemigraci[oó]n\\b)",
     "i"
   );
-  if (/\w{3,}\s+(?:en|por)\s+\w{3,}/.test(t) && !OTRO_TEMA.test(t)) return "buscar";
+  // OJO CON LA Ñ Y LOS ACENTOS: en JavaScript, \w es solo [A-Za-z0-9_], así
+  // que "albañil en Manchester" NO casaba aquí — de "albañil" solo quedaba
+  // "il" pegado al " en ", y hacen falta tres letras. La frase se tomaba por
+  // charla y Guzzi contestaba con la IA en vez de buscar, teniendo 53
+  // albañiles en Manchester. Igual habría pasado con "diseño" o "logística".
+  if (/[\wáéíóúüñçàèìòù]{3,}\s+(?:en|por)\s+[\wáéíóúüñçàèìòù]{3,}/i.test(t) && !OTRO_TEMA.test(t)) return "buscar";
   const confirmSend = /^(si|s[ií]i|dale|vale|ok|okey|okay|venga|adelante|perfecto|genial|fenomenal|claro|por\s+supuesto|obvio|pues\s+si|pues\s+venga|hazlo|env[ií]alo|m[aá]ndalo|tira|t[ií]ralo|p[áa]lante|a\s+por\s+ello|me\s+gusta|me\s+apunto|elijo\s+la?\s*\d|la\s+primera|la\s+\d|la\s+opci[oó]n\s+\d|opci[oó]n\s+\d)/i;
   const histText = (history as unknown as Array<{ text: string }>).slice(-4).map((m) => m.text).join(" ");
   if (confirmSend.test(t.trim()) && /bar|restaurante|cafeter[ií]a|negocio\s+local|pequeñ[oa]|Google\s+Maps|plaza\s+nueva|bar\s+diamante|tel[eé]fono\s*\d|948|local\s+pequeñ|🏢|⭐|📍|📞/i.test(histText)) {
