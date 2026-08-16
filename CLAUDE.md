@@ -225,3 +225,28 @@ Antes de sugerir cualquier servicio externo de pago, indicar precio y URL de alt
 - **Resend:** gratuito hasta 3.000 emails/mes → https://resend.com/pricing
 - **Stripe:** comisión por transacción → https://stripe.com/es/pricing
 - **OpenAI GPT-4o-mini** para tareas rutinarias (barato), GPT-4o solo calidad máxima
+
+---
+
+## 📣 Marketing — carpeta [marketing/](./marketing/)
+
+Todo el trabajo de promoción está **dentro de este mismo proyecto**, para no tener que
+abrir otra carpeta. Si la conversación va de marketing, redes sociales, captación de
+usuarios, App Store o competencia, **lee [marketing/CLAUDE.md](./marketing/CLAUDE.md)
+antes de responder**.
+
+| Archivo | Qué contiene |
+|---|---|
+| [marketing/README.md](./marketing/README.md) | Resumen en 30 segundos y por dónde empezar |
+| [marketing/CLAUDE.md](./marketing/CLAUDE.md) | Contexto completo: quién es Michel, estado real del negocio |
+| [marketing/02-MARKETING/plan-de-marketing.md](./marketing/02-MARKETING/plan-de-marketing.md) | **EL PLAN**: canales, los 10 primeros vídeos, calendario 90 días |
+| [marketing/01-PRODUCTO/puntos-fuertes.md](./marketing/01-PRODUCTO/puntos-fuertes.md) | Qué vendemos, verificado contra el código |
+| [marketing/02-MARKETING/redes-sociales.md](./marketing/02-MARKETING/redes-sociales.md) | Investigación de ago 2026 con fuentes |
+| [marketing/02-MARKETING/aso-tiendas.md](./marketing/02-MARKETING/aso-tiendas.md) | Posicionamiento en App Store y Google Play |
+| [marketing/03-RECURSOS/mensajes-clave.md](./marketing/03-RECURSOS/mensajes-clave.md) | Guiones de vídeo y textos listos para usar |
+| [marketing/03-RECURSOS/competencia.md](./marketing/03-RECURSOS/competencia.md) | InfoJobs, LinkedIn, Indeed: por dónde se les gana |
+
+**Estado del negocio a 13 ago 2026** (números reales, no inflar): 22 usuarios
+registrados, 0 suscriptores de pago, 0 € de ingresos de terceros. La ficha de App Store
+convierte al 50%, muy por encima de lo normal — **el producto convence, lo que falta es
+que entre gente**. Panel en vivo: https://buscaycurra.es/admin/metricas
