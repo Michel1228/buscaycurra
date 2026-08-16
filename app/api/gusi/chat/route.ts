@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from "@/lib/guzzi/prompts";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
+import { anotarOficio } from "@/lib/job-search/sinonimos-puesto";
 import { callGroq, callDeepSeek, callOpenAI } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 
@@ -520,7 +521,11 @@ function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope
     .forEach((o, i) => {
       const em = ["🥇", "🥈", "🥉", "📌"][i] || "📌";
       const link = o.url ? ` — [Ver oferta](${o.url})` : "";
-      text += `${em} **${o.titulo}**\n   📍 ${o.ubicacion} · 💰 ${o.salario || "Ver en oferta"}${link}\n\n`;
+      // Las ofertas de fuera vienen en su idioma: "Kellner (m/w/d)" no le dice
+      // nada a alguien de aquí. Se le añade el oficio en español detrás, para
+      // que sepa de qué es sin tener que traducir nada.
+      const titulo = anotarOficio(o.titulo || "", puesto);
+      text += `${em} **${titulo}**\n   📍 ${o.ubicacion} · 💰 ${o.salario || "Ver en oferta"}${link}\n\n`;
     });
 
   if (scope && scope !== "ciudad") {

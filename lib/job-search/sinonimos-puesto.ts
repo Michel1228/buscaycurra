@@ -138,3 +138,28 @@ export function tituloCoincide(titulo: string, termino: string): boolean {
   const t = normalizar(titulo);
   return expandirPuesto(termino).some(v => t.includes(v));
 }
+
+/**
+ * Añade entre paréntesis el oficio en español cuando el título viene en otro
+ * idioma. "Kellner (m/w/d)" -> "Kellner (m/w/d) · camarero".
+ *
+ * Se hace con el diccionario, NO con la IA: es instantáneo y gratis. Traducir
+ * cada título con un modelo en cada búsqueda añadiría segundos de espera y
+ * coste por oferta mostrada, cuando lo único que necesita el usuario es saber
+ * de qué es el puesto. Para leer la oferta entera ya está el botón de traducir.
+ *
+ * Devuelve el título sin tocar si ya se entiende en español.
+ */
+export function anotarOficio(titulo: string, terminoBuscado: string): string {
+  if (!titulo || !terminoBuscado) return titulo;
+
+  const t = normalizar(titulo);
+  const buscado = normalizar(terminoBuscado);
+
+  // Si el título ya lleva la palabra en español, no hay nada que aclarar
+  if (t.includes(buscado)) return titulo;
+
+  // ¿Coincide por alguno de los equivalentes en otro idioma?
+  const coincide = expandirPuesto(terminoBuscado).some(v => v !== buscado && t.includes(v));
+  return coincide ? `${titulo} · ${terminoBuscado}` : titulo;
+}
