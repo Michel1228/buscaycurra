@@ -20,9 +20,13 @@ const SINONIMOS: Record<string, string[]> = {
   // ── Hostelería ──────────────────────────────────────────────────────
   camarero: ["waiter", "waitress", "serveur", "serveuse", "kellner", "cameriere",
              "empregado de mesa", "ober", "servitor", "bartender", "barista", "barman",
-             "wait staff", "food service", "runner", "bar staff"],
-  cocinero: ["cook", "chef", "cuisinier", "koch", "cuoco", "cozinheiro", "kok",
-             "commis", "chef de partie", "kitchen", "line cook"],
+             "wait staff", "food service", "runner", "bar staff",
+             "servitør", "servitör", "tarjoilija"],
+  // OJO: "chef" a secas NO vale. En francés "chef de projet" o "chef de
+  // produit" son jefes de proyecto, no cocineros: en París había 2.263 así.
+  cocinero: ["cook", "cuisinier", "koch", "cuoco", "cozinheiro", "kok", "kokk",
+             "commis", "chef de partie", "chef de cuisine", "sous chef", "head chef",
+             "line cook", "chefkoch", "cuisine"],
   ayudante_cocina: ["kitchen assistant", "kitchen porter", "commis de cuisine",
                     "küchenhilfe", "aiuto cuoco", "dishwasher", "plongeur"],
   recepcionista: ["receptionist", "réceptionniste", "rezeptionist", "receptionista",
@@ -41,13 +45,18 @@ const SINONIMOS: Record<string, string[]> = {
              "healthcare assistant", "personal care"],
   enfermera: ["nurse", "infirmier", "infirmière", "krankenschwester", "krankenpfleger",
               "pflegefachkraft", "infermiere", "enfermeiro", "verpleegkundige",
-              "registered nurse", "staff nurse"],
-  ninera: ["nanny", "babysitter", "au pair", "nounou", "kindermädchen", "tata",
-           "childminder", "childcare"],
+              "registered nurse", "staff nurse",
+              // Nórdicos: en Oslo había 882 "sykepleier" que no se encontraban
+              "sykepleier", "sjuksköterska", "sygeplejerske", "sairaanhoitaja"],
+  ninera: ["niñera", "nanny", "babysitter", "au pair", "nounou", "kindermädchen",
+           "tata", "childminder", "childcare", "barnepike"],
 
   // ── Construcción e industria ────────────────────────────────────────
-  albanil: ["bricklayer", "mason", "maçon", "maurer", "muratore", "construction worker",
-            "labourer", "builder"],
+  // La clave va sin ñ, pero en la base de datos pone "Albañil": se incluyen
+  // las dos formas o la búsqueda da cero (95 ofertas invisibles).
+  // "builder" se quita: casaba con "Product Builder" y "AI Builder".
+  albanil: ["albañil", "bricklayer", "mason", "maçon", "maurer", "muratore",
+            "construction worker", "obrero construccion", "peon de obra", "murer"],
   electricista: ["electrician", "électricien", "elektriker", "elettricista", "eletricista"],
   fontanero: ["plumber", "plombier", "klempner", "installateur", "idraulico", "canalizador"],
   soldador: ["welder", "soudeur", "schweisser", "schweißer", "saldatore", "soldador"],
@@ -59,7 +68,8 @@ const SINONIMOS: Record<string, string[]> = {
 
   // ── Transporte y almacén ────────────────────────────────────────────
   conductor: ["driver", "chauffeur", "fahrer", "autista", "motorista", "hgv driver",
-              "lkw fahrer", "delivery driver", "truck driver", "van driver"],
+              "lkw fahrer", "lkw-fahrer", "delivery driver", "truck driver", "van driver",
+              "sjåfør", "chaufför", "chauffør", "kuljettaja"],
   repartidor: ["delivery", "courier", "livreur", "zusteller", "corriere", "rider"],
   almacen: ["warehouse", "warehouse operative", "magasinier", "lagerarbeiter",
             "magazziniere", "picker", "packer", "forklift"],
@@ -92,11 +102,30 @@ function normalizar(s: string): string {
  * Siempre incluye lo que escribió el usuario en primer lugar: si busca
  * "waiter" directamente, eso es lo que más le importa.
  */
+
+/** Añade un término en sus dos formas: tal cual y sin acentos. */
+function anadirAmbas(destino: Set<string>, valor: string): void {
+  const original = valor.toLowerCase().trim();
+  if (!original) return;
+  destino.add(original);
+  const sinAcentos = normalizar(valor);
+  if (sinAcentos && sinAcentos !== original) destino.add(sinAcentos);
+}
+
 export function expandirPuesto(termino: string): string[] {
   const t = normalizar(termino);
   if (!t) return [];
 
+  // Se devuelven las DOS formas: con acentos y sin ellos.
+  //
+  // Solo con la normalizada, "albañil" se convertía en "albanil" y la búsqueda
+  // daba CERO, porque en la base de datos pone "Albañil" con ñ. Verificado:
+  // 95 ofertas con ñ, 0 sin ella. Lo mismo con "niñera" (327 invisibles).
+  // Lo natural sería normalizar también la columna con translate(), pero eso
+  // impide usar el índice trigram; añadir la variante al término lo conserva.
   const resultado = new Set<string>([t]);
+  const original = termino.toLowerCase().trim();
+  if (original && original !== t) resultado.add(original);
 
   for (const [clave, traducciones] of Object.entries(SINONIMOS)) {
     const claveNorm = clave.replace(/_/g, " ");
@@ -107,7 +136,7 @@ export function expandirPuesto(termino: string): string[] {
 
     if (coincideClave || coincideTraduccion) {
       resultado.add(claveNorm);
-      for (const v of traducciones) resultado.add(normalizar(v));
+      for (const v of traducciones) anadirAmbas(resultado, v);
     }
   }
 
@@ -126,7 +155,7 @@ export function expandirPuesto(termino: string): string[] {
     const traducciones = SINONIMOS[v];
     if (traducciones) {
       resultado.add(v);
-      for (const tr of traducciones) resultado.add(normalizar(tr));
+      for (const tr of traducciones) anadirAmbas(resultado, tr);
     }
   }
 

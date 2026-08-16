@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from "@/lib/guzzi/prompts";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
-import { anotarOficio } from "@/lib/job-search/sinonimos-puesto";
+import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { callGroq, callDeepSeek, callOpenAI } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 
@@ -446,10 +446,19 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     }
 
     // -- Estrategia 4: sinónimos del puesto (consolidated into ONE query) --
+    //
+    // Se combinan DOS diccionarios:
+    //  - SINONIMOS_PUESTO: variantes en español ("camarero" -> "sala", "barra")
+    //  - expandirPuesto: el mismo oficio en otros idiomas ("serveur", "kellner")
+    //
+    // Solo con el primero, Guzzi buscaba "%camarero%" en Francia y no encontraba
+    // nada, porque allí las ofertas dicen "Serveur". En las pruebas, 10 de 12
+    // búsquedas fuera de España respondían "no hay ofertas" habiendo cientos.
     const queryNorm = query.toLowerCase();
+    const enOtrosIdiomas = expandirPuesto(query);
     for (const [key, syns] of Object.entries(SINONIMOS_PUESTO)) {
-      if (queryNorm.includes(key) || syns.some(s => queryNorm.includes(s))) {
-        const allSynonyms = [key, ...syns];
+      if (queryNorm.includes(key) || syns.some(s => queryNorm.includes(s)) || enOtrosIdiomas.length > 1) {
+        const allSynonyms = [...new Set([key, ...syns, ...enOtrosIdiomas])];
         const synPatterns = allSynonyms.map(s => `%${s}%`);
         const synOrClauses = synPatterns.map((_, i) =>
           `(LOWER(title) LIKE $${i + 1} OR LOWER(description) LIKE $${i + 1})`
@@ -477,9 +486,16 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       buscarOfertasReales(query, city, Math.min(limit * 2, 20)),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
     ]);
-    if (extOfertas && extOfertas.length > 0) {
+    // Las APIs externas devuelven lo que les da la gana: preguntando por
+    // "cocinero en Berlín" contestaban con empleos remotos de Estados Unidos.
+    // Se filtra por oficio antes de enseñar nada; si no queda ninguno de
+    // verdad, es mejor decir que no hay que colocar cualquier cosa.
+    const extFiltradas = (extOfertas ?? []).filter(o =>
+      tituloCoincide(String(o.titulo ?? ""), query)
+    );
+    if (extFiltradas.length > 0) {
       return {
-        jobs: extOfertas.slice(0, limit).map(o => ({
+        jobs: extFiltradas.slice(0, limit).map(o => ({
           id: String(o.id), titulo: String(o.titulo), empresa: String(o.empresa),
           ubicacion: String(o.ubicacion), salario: String(o.salario ?? "Ver en oferta"),
           fuente: String(o.fuente), match: Number(o.match ?? 0), url: String(o.url ?? ""),
@@ -511,7 +527,9 @@ function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope
     : scope === "cercanas"
       ? ` (cerca de ${ciudad})`
       : scope === "pais"
-        ? ` (en toda España)`
+        // Antes ponia "(en toda Espana)" literal, aunque la busqueda fuera en
+        // Suiza o en Alemania.
+        ? ` (en todo el país)`
         : scope === "sinonimo"
           ? " (puestos relacionados)"
           : ciudad ? ` en **${ciudad}**` : "";
@@ -1240,6 +1258,20 @@ El candidato tiene mucha experiencia.
             }
           } catch { /* sin Google Places, solo mensaje normal */ }
 
+          // Si la búsqueda SÍ trajo ofertas (aunque sean de la provincia o de
+          // cerca), se enseñan. Antes se descartaban y se respondía "no me
+          // salen ofertas" teniendo resultados en la mano: en las pruebas,
+          // 10 de 12 búsquedas decían que no había trabajo cuando había entre
+          // 100 y 3.000 ofertas reales.
+          if (result.jobs.length > 0) {
+            return NextResponse.json({
+              reply: buildJobsText(puestoBusqueda, ciudadBusqueda, result.jobs, result.scope) +
+                (googleReply ? `\n${googleReply}` : ""),
+              jobs: result.jobs,
+              action: "search_results",
+            });
+          }
+
           return NextResponse.json({
             // Nunca un "no" a secas: se dice lo que hay y se ofrecen salidas.
             reply: `🔍 De **${puestoBusqueda}** no me salen ofertas justo en **${ciudadBusqueda}** en este momento.${googleReply}\n\n¿Ampliamos la búsqueda? Puedo mirar en toda la zona, probar con un puesto parecido, o buscarte empresas de ${ciudadBusqueda} a las que mandar tu CV directamente. Tú me dices.`,
@@ -1418,7 +1450,7 @@ Responde en JSON exactamente así:
           // Filtrar resultados no locales
           if (ciudadEnviar && enviarResult.scope && !["ciudad","provincia","cercanas"].includes(enviarResult.scope)) {
             return NextResponse.json({
-              reply: `📧 No encontré ofertas de **${puestoEnviar}** en **${ciudadEnviar}** ni cerca. ¿Busco en toda España?`,
+              reply: `📧 No encontré ofertas de **${puestoEnviar}** en **${ciudadEnviar}** ni cerca. ¿Amplío la búsqueda a todo el país?`,
               action: "search_scope_pais",
             });
           }
