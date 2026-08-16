@@ -537,8 +537,20 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     // "cocinero en Berlín" contestaban con empleos remotos de Estados Unidos.
     // Se filtra por oficio antes de enseñar nada; si no queda ninguno de
     // verdad, es mejor decir que no hay que colocar cualquier cosa.
+    //
+    // Y hay que filtrar por SITIO además de por oficio. Con el oficio solo,
+    // "cocinero en Londres" devolvía "Cocinero/a - Resort 3* Club Mac,
+    // Alcúdia": cocinero sí, Londres no. Estas ofertas no pasan por el filtro
+    // de país de la base de datos, así que el sitio se comprueba aquí.
+    const formasSitio = city ? aliasCiudad(city.toLowerCase()) : [];
+    const esDelSitio = (ubicacion: string): boolean => {
+      if (formasSitio.length === 0) return true;   // sin ciudad pedida, vale cualquiera
+      const u = ubicacion.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      return formasSitio.some(f => u.includes(f));
+    };
+
     const extFiltradas = (extOfertas ?? []).filter(o =>
-      tituloCoincide(String(o.titulo ?? ""), query)
+      tituloCoincide(String(o.titulo ?? ""), query) && esDelSitio(String(o.ubicacion ?? ""))
     );
     if (extFiltradas.length > 0) {
       return {
@@ -1361,8 +1373,14 @@ El candidato tiene mucha experiencia.
           // 10 de 12 búsquedas decían que no había trabajo cuando había entre
           // 100 y 3.000 ofertas reales.
           if (result.jobs.length > 0) {
+            // Las ofertas son de fuera de su ciudad, así que se acompañan del
+            // desglose de alrededores: a cuántos kilómetros está cada sitio y
+            // lo que costaría el gasóleo al mes. Enseñar ofertas de otra
+            // ciudad sin decir lo que cuesta llegar es media respuesta.
+            const alrededores = await mapaDeAlrededores(puestoBusqueda, ciudadBusqueda, paisBusqueda);
             return NextResponse.json({
               reply: buildJobsText(puestoBusqueda, ciudadBusqueda, result.jobs, result.scope) +
+                (alrededores ? `\n\n📊 **Lo que hay cerca de ${ciudadBusqueda}, con las cuentas hechas:**\n\n${alrededores}` : "") +
                 (googleReply ? `\n${googleReply}` : ""),
               jobs: result.jobs,
               action: "search_results",
