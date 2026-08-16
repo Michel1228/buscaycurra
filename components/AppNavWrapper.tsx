@@ -27,7 +27,10 @@ const NAV_ITEMS = [
   { href: "/app/salarios",   label: "Salarios",   icon: "salarios", title: "Comparador de salarios" },
   { href: "/app/guardados",  label: "Guardados",  icon: "guardados", title: "Ofertas guardadas" },
   { href: "/app/reviews",    label: "Reviews",    icon: "reviews", title: "Reviews de empresas" },
-  { href: "/app/empresas",   label: "Empresas",   icon: "empresas", title: "Enviar CV a empresas" },
+  // Se llamaba "Empresas", igual que la mitad de "Buscar", y nadie sabía cuál
+  // de los dos abrir. Buscar empresas ya está dentro del buscador; esto es lo
+  // que aquel apartado hace de verdad: mandarles el CV.
+  { href: "/app/empresas",   label: "Enviar CV",  icon: "empresas", title: "Enviar tu CV a empresas, ETTs y negocios locales" },
   { href: "/app/envios",     label: "Mis envíos", icon: "envios", title: "Estado de los CVs enviados" },
   { href: "/app/referidos",  label: "Invitar",    icon: "referidos", title: "Invitar amigos" },
   { href: "/app/ayuda",      label: "Ayuda",      icon: "ayuda", title: "Centro de ayuda" },
