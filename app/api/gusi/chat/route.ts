@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from "@/lib/guzzi/prompts";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
 import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
+import { aliasCiudad } from "@/lib/guzzi/ciudades-pais";
 import { callGroq, callDeepSeek, callOpenAI } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 
@@ -353,7 +354,6 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     // ── Consolidated query: strategies 1→2→2.5a→2.5b→3 in ONE query ──
     if (city) {
       const cityNorm = city.toLowerCase();
-      const cityPat = `%${cityNorm}%`;
       const provincia = CIUDAD_A_PROVINCIA[cityNorm];
       const cercanas = CIUDADES_CERCANAS[cityNorm];
       const limitrofes = provincia ? PROVINCIAS_LIMITROFES[provincia] : undefined;
@@ -363,10 +363,17 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       const params: (string | number)[] = [kw, isoCode, countryFilter];
       let pIdx = 4; // $1=kw, $2=iso, $3=countryName
 
-      // Scope 0: city exact match
-      scopeParts.push(`WHEN LOWER(city) LIKE $${pIdx} OR LOWER(province) LIKE $${pIdx} THEN 0`);
-      params.push(cityPat);
-      pIdx++;
+      // Scope 0: la ciudad, escrita de todas las maneras en que aparece.
+      // La base de datos guarda lo que manda cada portal: 16.263 ofertas en
+      // "München" y solo 2.025 en "Munich". Buscando una sola forma se pierden
+      // casi todas. Igual con Colonia, Viena, Praga o Copenhague.
+      const formasCiudad = aliasCiudad(cityNorm);
+      const ciudadClauses = formasCiudad.map((_, i) =>
+        `LOWER(city) LIKE $${pIdx + i} OR LOWER(province) LIKE $${pIdx + i}`
+      ).join(" OR ");
+      scopeParts.push(`WHEN (${ciudadClauses}) THEN 0`);
+      formasCiudad.forEach(f => params.push(`%${f}%`));
+      pIdx += formasCiudad.length;
 
       // Scope 1: provincia match
       if (provincia) {
@@ -463,14 +470,32 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         const synOrClauses = synPatterns.map((_, i) =>
           `(LOWER(title) LIKE $${i + 1} OR LOWER(description) LIKE $${i + 1})`
         ).join(" OR ");
-        const synParams = [...synPatterns, isoCode, countryFilter, N];
+        const synParams: (string | number)[] = [...synPatterns, isoCode, countryFilter];
+        let synIdx = synPatterns.length + 3;
+
+        // Esta consulta filtraba por país pero NO por ciudad: pidiendo
+        // "limpieza en Lisboa" contestaba con un "Jefe de Cocina (Barcelona)".
+        // Si el usuario dijo una ciudad, se ordena poniéndola delante; nunca se
+        // descarta el resto, porque en ciudades pequeñas dejaría cero.
+        let synOrden = `"createdAt" DESC`;
+        if (city) {
+          const formas = aliasCiudad(city.toLowerCase());
+          const ciudadOr = formas.map((_, i) =>
+            `LOWER(city) LIKE $${synIdx + i} OR LOWER(province) LIKE $${synIdx + i}`
+          ).join(" OR ");
+          formas.forEach(f => synParams.push(`%${f}%`));
+          synIdx += formas.length;
+          synOrden = `(CASE WHEN (${ciudadOr}) THEN 0 ELSE 1 END), "createdAt" DESC`;
+        }
+        synParams.push(N);
+
         const r4 = await pool.query(
           `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
            FROM "JobListing"
            WHERE "isActive" = true
              AND (${synOrClauses})
              AND (LOWER(country) = LOWER($${synPatterns.length + 1}) OR LOWER(country) LIKE $${synPatterns.length + 2})
-           ORDER BY "createdAt" DESC LIMIT $${synPatterns.length + 3}`,
+           ORDER BY ${synOrden} LIMIT $${synIdx}`,
           synParams
         );
         if (r4.rows.length > 0) {
@@ -1212,7 +1237,15 @@ El candidato tiene mucha experiencia.
       if (puestoBusqueda) {
         // El pais que pide el usuario manda sobre el suyo del perfil: si dice
         // "camarero en Irlanda", se busca en Irlanda aunque viva en Espana.
-        const paisBusqueda = paisPedido?.codigo?.toUpperCase() || pais || "ES";
+        //
+        // Y si nombra una ciudad, esa ciudad decide el pais. Antes solo se
+        // miraba si habia dicho el pais por su nombre: "camarero en Paris" no
+        // detectaba nada, caia al pais del perfil y devolvia camareros de
+        // Madrid. Le pasaba a las 11 busquedas de fuera de Espana.
+        const { paisDeCiudad } = await import("@/lib/guzzi/ciudades-pais");
+        const paisBusqueda = paisPedido?.codigo?.toUpperCase()
+          || (ciudadBusqueda ? paisDeCiudad(ciudadBusqueda) : null)?.toUpperCase()
+          || pais || "ES";
         const result = await searchJobsReal(puestoBusqueda, ciudadBusqueda, 5, paisBusqueda);
         if (!result || result.jobs.length === 0) {
           // Buscar negocios locales en Google Places como alternativa
