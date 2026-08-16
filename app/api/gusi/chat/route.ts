@@ -413,18 +413,33 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         ? `CASE ${scopeParts.join(" ")} END`
         : "4";
 
-      const consolidatedQuery = `
+      // Dos pasadas, igual que en el buscador web.
+      //
+      // La primera busca el oficio en el TÍTULO y como palabra entera. Buscar
+      // "%bar%" dentro de la descripción devolvía "Learning Architect" y
+      // "Senior Analytics Engineer" como camareros — comprobado en la base de
+      // datos. La descripción solo entra en la segunda pasada, si con el título
+      // no ha salido nada, para no dejar fuera anuncios de título vago tipo
+      // "Personal para restaurante".
+      const consulta = (dondeBuscar: string) => `
         SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl",
                ${scopeCase} as scope_rank
         FROM "JobListing"
         WHERE "isActive" = true
-          AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
+          AND (${dondeBuscar})
           AND (LOWER(country) = LOWER($2) OR LOWER(country) LIKE $3)
         ORDER BY scope_rank, "createdAt" DESC
         LIMIT $${pIdx}
       `;
 
-      const r = await pool.query(consolidatedQuery, params);
+      // $1 pasa de ser '%camarero%' a '\mcamarero\M': el mismo hueco, otra forma.
+      const paramsTitulo = [...params];
+      paramsTitulo[0] = "\\m" + query.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\M";
+
+      let r = await pool.query(consulta("title ~* $1"), paramsTitulo);
+      if (r.rows.length === 0) {
+        r = await pool.query(consulta("LOWER(title) LIKE $1 OR LOWER(description) LIKE $1"), params);
+      }
 
       if (r.rows.length > 0) {
         const scopeRank: number = (r.rows[0] as { scope_rank: number }).scope_rank;
@@ -466,10 +481,17 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     for (const [key, syns] of Object.entries(SINONIMOS_PUESTO)) {
       if (queryNorm.includes(key) || syns.some(s => queryNorm.includes(s)) || enOtrosIdiomas.length > 1) {
         const allSynonyms = [...new Set([key, ...syns, ...enOtrosIdiomas])];
-        const synPatterns = allSynonyms.map(s => `%${s}%`);
-        const synOrClauses = synPatterns.map((_, i) =>
-          `(LOWER(title) LIKE $${i + 1} OR LOWER(description) LIKE $${i + 1})`
-        ).join(" OR ");
+
+        // Se busca el oficio en el TÍTULO y como palabra entera.
+        //
+        // Antes se buscaba "%bar%" también dentro de la descripción, y eso casa
+        // con "Barcelona", "barrera" o "colaborar": pidiendo camarero en Berlín
+        // salía un "Freelance Full-Stack Developer" porque en su descripción
+        // aparecía la palabra. El título es donde está el oficio de verdad.
+        const synPatterns = allSynonyms.map(s =>
+          "\\m" + s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\M"
+        );
+        const synOrClauses = synPatterns.map((_, i) => `title ~* $${i + 1}`).join(" OR ");
         const synParams: (string | number)[] = [...synPatterns, isoCode, countryFilter];
         let synIdx = synPatterns.length + 3;
 
