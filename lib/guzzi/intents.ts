@@ -116,9 +116,19 @@ export function extractCompanyFromContact(text: string): string | null {
 export function extractJobTerm(text: string): string | null {
   const tn = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const patterns = [
-    /(?:busco|buscar|necesito|quiero|buscame|búscame)\s+(?:trabajo\s+(?:de|como)\s+)?([\w\sáéíóúüñ]{3,30}?)(?:\s+(?:en|por|cerca|alrededor|zona)\s+|$)/i,
+    // El rodeo con el que habla la gente de verdad: "quiero trabajar DE
+    // camarero", "busco empleos DE limpieza", "quiero currar DE cocinero".
+    // Con solo "trabajo de" se colaba el verbo dentro del puesto y se buscaba
+    // "trabajar de camarero", que no existe en ningún título de oferta.
+    // El conector es "de|como" a propósito: con "en" se tragaría la ciudad
+    // ("quiero trabajar en Madrid" daría el puesto "madrid").
+    /(?:busco|buscar|necesito|quiero|buscame|búscame)\s+(?:(?:trabajos?|trabajar|currar|curro|empleos?|ofertas?|puestos?|vacantes?)\s+(?:de|como)\s+)?([\w\sáéíóúüñ]{3,30}?)(?:\s+(?:en|por|cerca|alrededor|zona)\s+|$)/i,
     /(?:busco|buscar|necesito|quiero)\s+(?:un|una)\s+([\w\sáéíóúüñ]{3,30}?)(?:\s+(?:en|por|cerca|alrededor|zona)\s+|$)/i,
-    /(?:trabajo|empleo|oferta|puesto)\s+(?:de|como)\s+([\w\sáéíóúüñ]{3,30}?)(?:\s+(?:en|por|cerca)\s+|$)/i,
+    // El plural importa: con "oferta" a secas, "ofertas de albañil en
+    // Manchester" no casaba aquí, caía en el patrón genérico de abajo y se
+    // buscaba el puesto "ofertas de albanil" — cero resultados teniendo 53
+    // albañiles en Manchester.
+    /(?:trabajos?|empleos?|ofertas?|puestos?|vacantes?)\s+(?:de|como|para)\s+([\w\sáéíóúüñ]{3,30}?)(?:\s+(?:en|por|cerca)\s+|$)/i,
     /(?:^|\s)([a-záéíóúüñ][\sa-záéíóúüñ]+?)\s+(?:en|por)\s+[a-záéíóúüñ]{3,}/i,
   ];
   for (const p of patterns) {
