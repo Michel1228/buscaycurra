@@ -16,7 +16,14 @@
  * usando el país del perfil, que es como funcionaba antes.
  */
 
-/** Ciudad -> [código ISO del país, todas las formas de escribirla]. */
+/**
+ * Ciudad -> [código del país tal y como está en la base de datos, formas de escribirla].
+ *
+ * OJO CON EL CÓDIGO. Es el que usa la columna `country`, que no siempre es el
+ * ISO oficial: el Reino Unido está guardado como "uk", no como "gb". Poniendo
+ * el ISO correcto, las 248.339 ofertas británicas quedaban invisibles — pedir
+ * trabajo en Londres devolvía cero teniendo 43.579 ofertas allí.
+ */
 const CIUDADES: Record<string, [string, string[]]> = {
   // ── Francia ─────────────────────────────────────────────────────────
   paris: ["FR", ["paris", "parís"]],
@@ -51,19 +58,19 @@ const CIUDADES: Record<string, [string, string[]]> = {
   nuremberg: ["DE", ["nurnberg", "nürnberg", "nuremberg", "nuernberg"]],
 
   // ── Reino Unido ─────────────────────────────────────────────────────
-  londres: ["GB", ["london", "londres"]],
-  london: ["GB", ["london", "londres"]],
-  manchester: ["GB", ["manchester"]],
-  birmingham: ["GB", ["birmingham"]],
-  liverpool: ["GB", ["liverpool"]],
-  leeds: ["GB", ["leeds"]],
-  glasgow: ["GB", ["glasgow"]],
-  edimburgo: ["GB", ["edinburgh", "edimburgo"]],
-  edinburgh: ["GB", ["edinburgh", "edimburgo"]],
-  bristol: ["GB", ["bristol"]],
-  sheffield: ["GB", ["sheffield"]],
-  cardiff: ["GB", ["cardiff"]],
-  belfast: ["GB", ["belfast"]],
+  londres: ["UK", ["london", "londres"]],
+  london: ["UK", ["london", "londres"]],
+  manchester: ["UK", ["manchester"]],
+  birmingham: ["UK", ["birmingham"]],
+  liverpool: ["UK", ["liverpool"]],
+  leeds: ["UK", ["leeds"]],
+  glasgow: ["UK", ["glasgow"]],
+  edimburgo: ["UK", ["edinburgh", "edimburgo"]],
+  edinburgh: ["UK", ["edinburgh", "edimburgo"]],
+  bristol: ["UK", ["bristol"]],
+  sheffield: ["UK", ["sheffield"]],
+  cardiff: ["UK", ["cardiff"]],
+  belfast: ["UK", ["belfast"]],
 
   // ── Irlanda ─────────────────────────────────────────────────────────
   dublin: ["IE", ["dublin", "dublín", "baile atha cliath"]],
