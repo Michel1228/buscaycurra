@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { DATOS, GANCHOS } from "@/lib/datos-reales";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -130,7 +131,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex justify-center mb-5">
-              <span className="badge-game badge-verde text-xs"><Sprout className="w-3.5 h-3.5 inline" /> +2.400 personas ya evolucionando</span>
+              <span className="badge-game badge-verde text-xs"><Sprout className="w-3.5 h-3.5 inline" /> {DATOS.ofertasNuevasDiaTexto} ofertas nuevas hoy</span>
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-[1.1] mb-6">
               <span style={{ color: "#f0ebe0" }}>Tu trabajo </span>
@@ -153,10 +154,9 @@ export default function HomePage() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 max-w-3xl mx-auto">
               {[
-                { num: "2.400+", label: "personas en activo" },
-                { num: "3M+", label: `ofertas en ${NUM_PAISES} países` },
-                { num: "2,99€", label: "al mes para empezar" },
-                { num: "2,99€", label: "vs 39€/mes de InfoJobs Premium" },
+                // Cifras contadas contra la base de datos y redondeadas hacia
+                // abajo. Antes ponia "2.400+ personas en activo" habiendo 51.
+                ...GANCHOS.map(g => ({ num: g.numero, label: g.titulo })),
               ].map((s) => (
                 <div key={s.label} className="card-game p-4 text-center">
                   <p className="text-2xl font-black" style={{ color: "#7ed56f" }}>{s.num}</p>

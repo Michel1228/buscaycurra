@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { DATOS } from "@/lib/datos-reales";
 import Link from "next/link";
 import GusiChat from "@/components/GusiChat";
 import { isNativeIOS } from "@/lib/utils/platform";
@@ -33,8 +34,10 @@ export default function GusiPage() {
           </p>
           <div className="space-y-2">
             {[
-              { Icon: Users, stat: "2.400+", desc: "personas encontraron trabajo", color: "#22c55e" },
-              { Icon: Mail,  stat: "18.000+", desc: "CVs enviados este mes", color: "#3b82f6" },
+              // "2.400+ personas" y "18.000+ CVs este mes" eran inventados:
+              // habia 51 usuarios y 112 CVs en total. Estos estan contados.
+              { Icon: Users, stat: DATOS.ofertasActivasTexto, desc: "ofertas donde buscar", color: "#22c55e" },
+              { Icon: Mail,  stat: DATOS.conEmailTexto, desc: "traen email de la empresa", color: "#3b82f6" },
               { Icon: Rocket, stat: "3 min", desc: "para enviar tu primer CV", color: "#f59e0b" },
               { Icon: Trophy, stat: "x4", desc: "más respuestas que en portales", color: "#a855f7" },
             ].map(item => (

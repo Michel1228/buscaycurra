@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Para Empresas — BuscayCurra | Accede a talento activo",
   description:
-    "Accede a más de 2.400 candidatos activos en España. Todos con CV optimizado por IA. Filtra por sector, ciudad y perfil. Contacta directo sin intermediarios. 49,99€/mes, sin coste por oferta.",
+    "Publica tus ofertas gratis y llega a quien busca trabajo de verdad. Candidatos con CV optimizado por IA, contacto directo sin intermediarios. 49,99€/mes, sin coste por oferta.",
   openGraph: {
     title: "BuscayCurra para Empresas — Talento real, sin depender de InfoJobs",
     description:
@@ -135,7 +135,7 @@ export default function EmpresasLandingPage() {
               <span className="flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-medium"
                 style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", color: "#22c55e" }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-current inline-block animate-pulse" />
-                2.400+ candidatos activos en España
+                Publicar ofertas es gratis
               </span>
             </div>
 
@@ -145,9 +145,9 @@ export default function EmpresasLandingPage() {
             </h1>
 
             <p className="text-base md:text-lg mb-8 leading-relaxed max-w-2xl mx-auto" style={{ color: "#94a3b8" }}>
-              Accede directamente a nuestra bolsa de candidatos activos en España.
-              Todos con CV optimizado por IA, buscando trabajo <strong style={{ color: "#cbd5e1" }}>ahora mismo</strong>.
-              Filtra por sector, ciudad y perfil. Contacta directo, sin intermediarios.
+              Publica tus ofertas y llega a quien está buscando <strong style={{ color: "#cbd5e1" }}>ahora mismo</strong>.
+              Candidatos con el CV ya optimizado por IA. Filtra por sector, ciudad y perfil.
+              Contacta directo, sin intermediarios y sin coste por oferta.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
@@ -165,9 +165,11 @@ export default function EmpresasLandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
               {[
-                { num: "2.400+", label: "Candidatos activos", color: "#22c55e" },
+                // No se promete un numero de candidatos: seria mentir a
+                // quien va a pagar 49,99 EUR al mes por esto.
+                { num: "0€", label: "Publicar ofertas", color: "#22c55e" },
                 { num: "49,99€", label: "Al mes, todo incluido", color: "#f59e0b" },
-                { num: "0€", label: "Por publicar ofertas", color: "#a855f7" },
+                { num: "IA", label: "CVs ya optimizados", color: "#a855f7" },
               ].map(s => (
                 <div key={s.label} className="text-center">
                   <div className="text-2xl font-extrabold" style={{ color: s.color }}>{s.num}</div>
