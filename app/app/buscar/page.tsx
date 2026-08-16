@@ -11,6 +11,7 @@ import { PAISES } from "@/lib/paises";
 import { DATOS } from "@/lib/datos-reales";
 import { sectorDeOficio } from "@/lib/job-search/oficio-a-sector";
 import EmpresasDeLaZona from "@/components/EmpresasDeLaZona";
+import NavTrabajo from "@/components/NavTrabajo";
 
 /** El nombre del pais tal y como lo lee la gente: "Francia", no "FR". */
 function nombrePais(codigo: string): string {
@@ -498,9 +499,15 @@ function BuscarPageInner() {
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex gap-6">
 
-          {/* Filtros */}
-          <aside className="hidden md:block w-52 shrink-0">
-            <div className="card-game p-4 sticky top-20">
+          {/* La columna de la izquierda: primero DONDE estas y que mas hay, y
+              debajo los filtros de esta seccion. Antes solo habia filtros, y
+              nada en esta pantalla contaba que existiera la mitad de enviar el
+              CV a empresas: eran dos apartados sueltos del menu. */}
+          <aside className="hidden md:block w-56 shrink-0">
+            <div className="sticky top-20 space-y-4">
+              <NavTrabajo activa="ofertas" paginaActual="buscar" onCambiar={() => {}} />
+
+            <div className="card-game p-4">
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Filtros</h2>
                 <InfoTooltip text="Refina tu búsqueda por tipo de jornada, experiencia y rango salarial. Los filtros se aplican sobre los resultados actuales." position="right" />
@@ -528,6 +535,7 @@ function BuscarPageInner() {
                   placeholder="Ej: 50000" className="w-full text-sm" />
               </div>
               <button onClick={() => buscar()} className="btn-game w-full text-xs py-2">Aplicar filtros</button>
+            </div>
             </div>
           </aside>
 

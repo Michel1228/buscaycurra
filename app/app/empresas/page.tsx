@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
+import NavTrabajo, { type SeccionTrabajo } from "@/components/NavTrabajo";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import AutoSendSetup from "@/components/AutoSendSetup";
@@ -9,8 +10,10 @@ import { Search, Building2, Mail, ClipboardList, Upload, CheckCircle2, FileText,
 
 type TabId = "buscar" | "zona" | "ett" | "envio" | "historial";
 
+// Sin "Buscar empresa": ese buscador vive ahora en la cabecera verde, que es
+// la primera cosa que se ve al entrar. Sigue existiendo como activeTab
+// ("buscar") para pintar los resultados, pero ya no es una pestana mas.
 const TABS: { id: TabId; label: string; Icon: LucideIcon }[] = [
-  { id: "buscar", label: "Buscar empresa", Icon: Search },
   { id: "zona", label: "Por zona", Icon: MapPin },
   { id: "ett", label: "ETTs", Icon: Building2 },
   { id: "envio", label: "Envío personalizado", Icon: Mail },
@@ -80,7 +83,15 @@ interface RateLimitInfo {
 
 export default function EmpresasPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabId>("buscar");
+  // Se puede llegar desde la pagina de ofertas con ?seccion=ett, y entonces
+  // hay que abrir directamente esa: si no, el usuario pulsa "ETTs" y aterriza
+  // en el buscador de empresas sin entender por que.
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    if (typeof window === "undefined") return "buscar";
+    const s = new URLSearchParams(window.location.search).get("seccion");
+    const validas: TabId[] = ["buscar", "zona", "ett", "envio", "historial"];
+    return (validas as string[]).includes(s || "") ? (s as TabId) : "buscar";
+  });
   const [envioPrefillName, setEnvioPrefillName] = useState("");
   const [envioTabKey, setEnvioTabKey] = useState(0);
 
@@ -471,12 +482,45 @@ export default function EmpresasPage() {
         className="py-8 px-4"
         style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
       >
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h1 className="text-xl font-bold" style={{ color: "#fff" }}>
             Enviar CV a empresas
           </h1>
           <p className="text-xs mt-1 opacity-90" style={{ color: "#fff" }}>
-            Busca empresas reales con Google. Envía tu CV automáticamente con carta personalizada por IA.
+            Cualquier empresa vale: Mercadona, el taller del polígono o el bar de debajo de tu casa.
+            Buscamos su teléfono y su email, y le mandamos tu CV con una carta escrita por IA.
+          </p>
+
+          {/* EL BUSCADOR VA AQUÍ ARRIBA, no escondido en una pestaña.
+              Estaba dentro de la pestaña de la lupa, así que al entrar veías
+              cinco pestañas y tenías que adivinar cuál abrir para lo que es la
+              acción principal de toda la página: buscar una empresa. */}
+          <div className="mt-4 flex flex-col sm:flex-row gap-2">
+            <label className="sr-only" htmlFor="empresa-nombre">Nombre de la empresa</label>
+            <input
+              id="empresa-nombre"
+              ref={inputRef}
+              type="text"
+              value={nombre}
+              onChange={e => setNombre(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Nombre del bar, taller, tienda o empresa…"
+              className="flex-1 px-4 py-2.5 rounded-lg text-sm"
+              style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }}
+            />
+            <button
+              onClick={() => { setActiveTab("buscar"); handleBuscar(); }}
+              disabled={buscando || nombre.trim().length < 2}
+              className="px-6 py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50"
+              style={{ background: "#fff", color: "#16a34a" }}
+            >
+              {buscando ? "Buscando…" : "Buscar"}
+            </button>
+          </div>
+          <p className="text-[11px] mt-2 opacity-80" style={{ color: "#fff" }}>
+            Lo sacamos de Google Maps: dirección, teléfono, web y valoraciones.
+            ¿No sabes el nombre? Mira <button onClick={() => setActiveTab("zona")}
+              className="underline font-semibold">los negocios de tu zona</button>.
           </p>
 
           {/* Contador de envíos interactivo */}
@@ -579,64 +623,24 @@ export default function EmpresasPage() {
         </div>
       </div>
 
-      {/* ── Tabs ── */}
-      <div className="sticky top-14 z-10" style={{ background: "#0f1117", borderBottom: "1px solid #2d3142" }}>
-        <div className="max-w-2xl mx-auto px-4">
-          <nav className="flex">
-            {TABS.map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className="flex items-center gap-2 px-4 py-3 text-xs font-medium transition"
-                style={{
-                  borderBottom: activeTab === tab.id ? "2px solid #22c55e" : "2px solid transparent",
-                  color: activeTab === tab.id ? "#22c55e" : "#64748b",
-                }}>
-                <tab.Icon size={14} />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+      {/* ── Las secciones, al lado del contenido ──────────────────────────
+          Antes eran una fila de cinco pestañas centradas arriba, y debajo un
+          formulario pequeño con la pantalla entera vacía: todo separado y sin
+          relación aparente. En columna a la izquierda quedan pegadas a lo que
+          abren, se ve de un vistazo todo lo que hay, y el contenido tiene el
+          ancho que necesita. En el móvil siguen en fila, con scroll. */}
+      <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-5">
+        <NavTrabajo
+          activa={activeTab as SeccionTrabajo}
+          paginaActual="empresas"
+          onCambiar={(id) => setActiveTab(id as TabId)}
+        />
 
-      {/* ── Tab content ── */}
-      <main className="max-w-2xl mx-auto px-4 py-6">
+        <main className="flex-1 min-w-0">
 
         {/* ── TAB 1: Buscar empresa ── */}
         {activeTab === "buscar" && (
           <div className="space-y-4">
-            {/* Buscador */}
-            <div className="card-game p-5">
-              <label className="block text-xs font-semibold mb-2" style={{ color: "#94a3b8" }}>
-                Nombre de la empresa
-              </label>
-              <div className="flex gap-2">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={nombre}
-                  onChange={e => setNombre(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ej: Mercadona, Telefónica, Inditex..."
-                  className="flex-1 text-sm"
-                />
-                <button
-                  onClick={handleBuscar}
-                  disabled={buscando || nombre.trim().length < 2}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold transition"
-                  style={{
-                    background: buscando ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
-                    color: buscando ? "#64748b" : "#fff",
-                    opacity: nombre.trim().length < 2 ? 0.5 : 1,
-                  }}
-                >
-                  {buscando ? "Buscando..." : "Buscar"}
-                </button>
-              </div>
-              <p className="text-[10px] mt-2" style={{ color: "#6b7280" }}>
-                Buscamos en Google Places: web oficial, teléfono, dirección, Google Maps, rating y más.
-              </p>
-            </div>
-
             {/* Loading */}
             {buscando && (
               <div className="card-game p-8 flex justify-center">
@@ -1421,7 +1425,8 @@ export default function EmpresasPage() {
           <CVSenderDashboard userId={userId} userPlan={(stats?.plan as "free" | "basico" | "pro" | "empresa") || "free"} />
         )}
 
-      </main>
+        </main>
+      </div>
 
       {/* ── MODAL: Preview de la carta antes de enviar ── */}
       {showPreview && (
