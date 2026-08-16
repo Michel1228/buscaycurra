@@ -558,6 +558,48 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
   }
 }
 
+/**
+ * "En mi pueblo no hay nada" — pues mira lo que hay al lado, con los números.
+ *
+ * Devuelve el desglose de ciudades cercanas donde SÍ hay ese oficio, ordenadas
+ * por cercanía, con lo que costaría el gasóleo cada mes. La gente descarta
+ * buscar fuera porque "suena caro", sin haber echado nunca la cuenta; casi
+ * siempre compensa, y aquí lo ve en una tabla.
+ *
+ * Devuelve null si no se puede calcular (ciudad sin coordenadas, o nada cerca).
+ * En ese caso quien llama sigue con el mensaje de siempre: es mejor no decir
+ * nada que enseñar un número inventado.
+ */
+async function mapaDeAlrededores(
+  puesto: string, ciudad: string, pais: string
+): Promise<string | null> {
+  try {
+    const { ciudadesCercanasConOfertas, precioGasoleo } = await import("@/lib/guzzi/desplazamiento");
+    const cercanas = await ciudadesCercanasConOfertas(expandirPuesto(puesto), ciudad, pais);
+    if (cercanas.length === 0) return null;
+
+    const filas = cercanas.map(c => {
+      const coste = c.costeMes !== null
+        ? ` · ⛽ ${c.costeMes} €/mes${c.costeCompartido ? ` (${c.costeCompartido} € compartiendo coche)` : ""}`
+        : "";
+      return `**${c.ciudad}** — a ${c.km} km · ${c.ofertas} ${c.ofertas === 1 ? "oferta" : "ofertas"}${coste}`;
+    }).join("\n");
+
+    const precio = await precioGasoleo(pais);
+    // Se dice de dónde sale el número y qué NO incluye. Un cálculo que la
+    // gente va a usar para decidir si acepta un trabajo no puede ser una caja
+    // negra: si luego no le cuadra, pierde la confianza en todo lo demás.
+    const nota = precio
+      ? `\n\n_Cuentas con el gasóleo a ${precio.toFixed(3)} €/l (precio real de hoy, Ministerio), ida y vuelta 22 días al mes y un coche de 6,5 l/100 km. No incluye peajes ni el desgaste del coche, y los kilómetros son estimados._`
+      : "";
+
+    return `${filas}${nota}\n\n¿Te miro las ofertas de alguna de estas? Dime la ciudad y te las saco.`;
+  } catch (e) {
+    console.error("[Guzzi] mapaDeAlrededores:", (e as Error).message);
+    return null;
+  }
+}
+
 function fallbackMessage(puesto: string, ciudad: string): string {
   const syn = Object.entries(SINONIMOS_PUESTO).find(([k, v]) =>
     puesto.toLowerCase().includes(k) || v.some(s => puesto.toLowerCase().includes(s))
@@ -1324,6 +1366,19 @@ El candidato tiene mucha experiencia.
                 (googleReply ? `\n${googleReply}` : ""),
               jobs: result.jobs,
               action: "search_results",
+            });
+          }
+
+          // En su ciudad no hay. Antes se acababa ahí y la gente se rendía.
+          // Ahora se le enseña el mapa de alrededores con las cuentas hechas:
+          // dónde hay de lo suyo, a cuántos kilómetros, y lo que cuesta el
+          // gasóleo cada mes yendo solo o compartiendo coche. Casi nadie hace
+          // esas cuentas por su cuenta, y por eso descarta buscar fuera.
+          const alrededores = await mapaDeAlrededores(puestoBusqueda, ciudadBusqueda, paisBusqueda);
+          if (alrededores) {
+            return NextResponse.json({
+              reply: `🔍 De **${puestoBusqueda}** no me sale nada justo en **${ciudadBusqueda}**, pero cerca sí hay:\n\n${alrededores}${googleReply}`,
+              action: "search_cercanas",
             });
           }
 
