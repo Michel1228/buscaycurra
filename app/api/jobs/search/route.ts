@@ -20,6 +20,22 @@ function cityLike(col: string, idx: number): string {
   return `translate(${col}, '${ACCENT_FROM}', '${ACCENT_TO}') ILIKE $${idx}`;
 }
 
+
+/**
+ * Convierte un término en una expresión regular de Postgres con límite de
+ * palabra (\m = inicio, \M = fin).
+ *
+ * Con ILIKE '%conductor%' salían 255 ofertas de SEMIconductor: puestos de
+ * ingeniería en una búsqueda de chófer. Verificado que `~*` con límite de
+ * palabra SIGUE usando el índice trigram (Bitmap Index Scan), así que no
+ * cuesta rendimiento.
+ */
+function palabraExacta(termino: string): string {
+  // Escapar lo que Postgres interpretaría como sintaxis de expresión regular
+  const limpio = termino.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return "\\m" + limpio + "\\M";
+}
+
 function rowToOferta(j: Record<string, unknown>, location: string, userSkills: string[] = []) {
   let match = 0;
   const offerKeywords: string[] = Array.isArray(j.keywords) ? j.keywords as string[] : [];
@@ -145,10 +161,10 @@ export async function GET(request: NextRequest) {
         const orsLigeros: string[] = [];
         const orsCompletos: string[] = [];
         for (const v of variantes) {
-          params.push(`%${v}%`);
+          params.push(palabraExacta(v));
           const i = idx++;
-          orsLigeros.push(`title ILIKE $${i} OR company ILIKE $${i}`);
-          orsCompletos.push(`title ILIKE $${i} OR description ILIKE $${i} OR company ILIKE $${i}`);
+          orsLigeros.push(`title ~* $${i} OR company ~* $${i}`);
+          orsCompletos.push(`title ~* $${i} OR description ~* $${i} OR company ~* $${i}`);
         }
         condicionKeywordLigera = `(${orsLigeros.join(" OR ")})`;
         condicionKeywordCompleta = `(${orsCompletos.join(" OR ")})`;
@@ -303,7 +319,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Fallback ciudad: NO aplicar si hay categoria
-    if (keyword && cityParts && dbResult.rows.length < 10 && !categoria) {
+    // El umbral se compara con lo que se pidio, no con un 10 fijo: con limit=5
+    // una busqueda que devolvia sus 5 resultados correctos se consideraba
+    // "insuficiente" y saltaba al respaldo igualmente.
+    if (keyword && cityParts && dbResult.rows.length < Math.min(10, limit) && !categoria) {
       const locCount = await pool.query(
         `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})`,
         [`%${cityParts}%`]
@@ -324,9 +343,9 @@ export async function GET(request: NextRequest) {
         const locParams: (string | number)[] = [`%${cityParts}%`];
         const orsLoc: string[] = [];
         for (const v of variantesLoc) {
-          locParams.push(`%${v}%`);
+          locParams.push(palabraExacta(v));
           const i = locParams.length;
-          orsLoc.push(`title ILIKE $${i} OR description ILIKE $${i}`);
+          orsLoc.push(`title ~* $${i} OR description ~* $${i}`);
         }
         locParams.push(limit, locOffset);
         const iLimit = locParams.length - 1;
@@ -335,7 +354,8 @@ export async function GET(request: NextRequest) {
         const locResult = await pool.query(
           `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
                   "sourceUrl", "sourceName", "scrapedAt",
-                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza
+                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza,
+                  COUNT(*) OVER() AS total_encontrado
              FROM "JobListing"
             WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
               AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
@@ -349,7 +369,20 @@ export async function GET(request: NextRequest) {
           locParams
         );
         const locOfertas = deduplicar(locResult.rows).map(j => rowToOferta(j, location, userSkills));
-        return NextResponse.json({ ofertas: locOfertas, total: locTotal, page, hasMore: locOffset + locOfertas.length < locTotal, keyword, location, source: "database-city-fallback" });
+        // El total tiene que ser el de la consulta FILTRADA, no el de la ciudad.
+        // Antes se devolvia locTotal (todas las ofertas de la ciudad): la app
+        // anunciaba "20.543 ofertas de camarero en Paris" cuando no habia
+        // ninguna, y la paginacion prometia paginas que no existian.
+        const totalReal = parseInt(String(locResult.rows[0]?.total_encontrado || locOfertas.length), 10);
+        return NextResponse.json({
+          ofertas: locOfertas,
+          total: totalReal,
+          page,
+          hasMore: locOffset + locOfertas.length < totalReal,
+          keyword,
+          location,
+          source: "database-city-fallback",
+        });
       }
     }
 
