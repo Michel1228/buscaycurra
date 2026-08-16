@@ -32,6 +32,7 @@ CLAUDE.md                          Contexto completo para la sesión de trabajo
 
 03-RECURSOS/
   mensajes-clave.md                Textos y guiones listos para copiar
+  posts-canva.md                   Posts especificados al milimetro para montar en Canva
   competencia.md                   Contra quién competimos y por dónde ganar
 ```
 
