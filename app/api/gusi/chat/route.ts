@@ -612,6 +612,58 @@ async function mapaDeAlrededores(
   }
 }
 
+/**
+ * Las cuentas de las ofertas que se acaban de enseñar, cuando son de fuera.
+ *
+ * En una búsqueda desde un pueblo es normal que salgan dos ofertas de allí y
+ * tres de la capital. El usuario ve las de la capital y piensa "eso me pilla
+ * lejos" sin saber si son 20 km o 90, ni lo que costaría el gasóleo. Esto se lo
+ * dice de las ciudades que TIENE DELANTE, no de un listado teórico.
+ *
+ * Devuelve cadena vacía si todas son de su ciudad o si no se puede calcular.
+ */
+async function cuentasDeLasOfertas(
+  jobs: Array<{ ubicacion?: string; salario?: string }>,
+  ciudadPedida: string,
+  pais: string
+): Promise<string> {
+  try {
+    const { calcularCoste } = await import("@/lib/guzzi/desplazamiento");
+    const normaliza = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+    const pedida = normaliza(ciudadPedida);
+
+    // Las ciudades de fuera que aparecen, sin repetir. Solo las tres primeras:
+    // el objetivo es animar a mirar al lado, no soltarle una tabla enorme.
+    const deFuera = [...new Set(
+      jobs.map(j => (j.ubicacion || "").split(",")[0].trim())
+          .filter(c => c && !normaliza(c).includes(pedida) && !pedida.includes(normaliza(c)))
+    )].slice(0, 3);
+    if (deFuera.length === 0) return "";
+
+    const lineas: string[] = [];
+    for (const ciudad of deFuera) {
+      // Se pasa el salario de una oferta de esa ciudad, si lo trae: así el
+      // veredicto puede decir cuánto queda limpio en vez de solo el gasto.
+      const conSalario = jobs.find(j =>
+        normaliza(j.ubicacion || "").includes(normaliza(ciudad)) && j.salario && j.salario !== "Ver en oferta"
+      );
+      const c = await calcularCoste(ciudadPedida, ciudad, conSalario?.salario, pais);
+      if (!c) continue;
+      const limpio = c.quedaCompartido !== null
+        ? ` → te quedarían **${c.quedaCompartido} €** compartiendo coche`
+        : "";
+      lineas.push(`• **${ciudad}** está a ${c.km} km (unos ${c.minutos} min). Ida y vuelta todo el mes: **${c.costeSolo} €** de gasóleo, o **${c.costeCompartido2} €** si compartes coche${limpio}.`);
+    }
+    if (lineas.length === 0) return "";
+
+    return `\n\n🚗 **Por si te lo estás preguntando:**\n${lineas.join("\n")}\n\n_Con el gasóleo al precio real de hoy, 22 días de ida y vuelta y un coche de 6,5 l/100 km. Sin peajes ni desgaste, y los kilómetros son estimados._`;
+  } catch (e) {
+    console.error("[Guzzi] cuentasDeLasOfertas:", (e as Error).message);
+    return "";
+  }
+}
+
 function fallbackMessage(puesto: string, ciudad: string): string {
   const syn = Object.entries(SINONIMOS_PUESTO).find(([k, v]) =>
     puesto.toLowerCase().includes(k) || v.some(s => puesto.toLowerCase().includes(s))
@@ -1409,8 +1461,13 @@ El candidato tiene mucha experiencia.
         const prefix = cvParsed?.ultimoPuesto
           ? `Basándome en tu CV (último puesto: **${cvParsed.ultimoPuesto}**), aquí tienes lo mejor que encontré:\n\n`
           : "";
+        // Aunque la búsqueda haya acertado con la ciudad, entre los resultados
+        // suele haber alguno de la capital o del pueblo de al lado. Se dice lo
+        // que cuesta llegar a esos sitios: verlos sin saber si son 20 km o 90
+        // es lo que hace que la gente los descarte sin mirarlos.
+        const cuentas = await cuentasDeLasOfertas(result.jobs, ciudadBusqueda, paisBusqueda);
         return NextResponse.json({
-          reply: prefix + buildJobsText(puestoBusqueda, ciudadBusqueda, result.jobs, result.scope),
+          reply: prefix + buildJobsText(puestoBusqueda, ciudadBusqueda, result.jobs, result.scope) + cuentas,
           jobs: result.jobs,
           action: "search_results",
         });
