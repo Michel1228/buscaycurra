@@ -26,6 +26,7 @@ CLAUDE.md                          Contexto completo para la sesión de trabajo
 
 02-MARKETING/
   plan-de-marketing.md             EL PLAN. Canales, calendario 90 días, métricas
+  plan-videos-30-dias.md           LOS VÍDEOS. 12 guiones plano a plano, sin salir en cámara
   redes-sociales.md                Investigación de agosto 2026 con fuentes
   aso-tiendas.md                   Posicionamiento en App Store y Google Play
 

@@ -240,6 +240,7 @@ antes de responder**.
 | [marketing/README.md](./marketing/README.md) | Resumen en 30 segundos y por dónde empezar |
 | [marketing/CLAUDE.md](./marketing/CLAUDE.md) | Contexto completo: quién es Michel, estado real del negocio |
 | [marketing/02-MARKETING/plan-de-marketing.md](./marketing/02-MARKETING/plan-de-marketing.md) | **EL PLAN**: canales, los 10 primeros vídeos, calendario 90 días |
+| [marketing/02-MARKETING/plan-videos-30-dias.md](./marketing/02-MARKETING/plan-videos-30-dias.md) | **LOS VÍDEOS**: 12 guiones plano a plano, sin salir en cámara |
 | [marketing/01-PRODUCTO/puntos-fuertes.md](./marketing/01-PRODUCTO/puntos-fuertes.md) | Qué vendemos, verificado contra el código |
 | [marketing/02-MARKETING/redes-sociales.md](./marketing/02-MARKETING/redes-sociales.md) | Investigación de ago 2026 con fuentes |
 | [marketing/02-MARKETING/aso-tiendas.md](./marketing/02-MARKETING/aso-tiendas.md) | Posicionamiento en App Store y Google Play |
