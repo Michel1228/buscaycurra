@@ -9,6 +9,8 @@ import CountrySelector from "@/components/CountrySelector";
 import { paisDeCiudad } from "@/lib/guzzi/ciudades-pais";
 import { PAISES } from "@/lib/paises";
 import { DATOS } from "@/lib/datos-reales";
+import { sectorDeOficio } from "@/lib/job-search/oficio-a-sector";
+import EmpresasDeLaZona from "@/components/EmpresasDeLaZona";
 
 /** El nombre del pais tal y como lo lee la gente: "Francia", no "FR". */
 function nombrePais(codigo: string): string {
@@ -643,6 +645,19 @@ function BuscarPageInner() {
                   </div>
                 )}
               </>
+            )}
+
+            {/* Las empresas de la zona, en la misma pantalla que las ofertas.
+                Antes eran dos apartados distintos del menu y habia que saber
+                por tu cuenta que si buscas de camarero te interesan los bares.
+                Solo aparece si el oficio encaja en un sector con negocios de
+                calle: a un programador no se le ensenan bares. */}
+            {!cargando && buscado && ubicacion && keyword && sectorDeOficio(keyword) && (
+              <EmpresasDeLaZona
+                sector={sectorDeOficio(keyword) as string}
+                ciudad={ubicacion}
+                oficio={keyword}
+              />
             )}
           </div>
         </div>
