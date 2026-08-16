@@ -978,8 +978,12 @@ export default async function LandingPage() {
             className="flex flex-col md:flex-row items-center justify-between gap-3 pt-6"
             style={{ borderTop: "1px solid rgba(45,49,66,0.3)" }}
           >
+            {/* La marca escrita SEPARADA, en texto visible. Mucha gente busca
+                "busca y curra" con espacios, y si esa forma no aparece en
+                ninguna parte de la web, Google no la asocia con "buscaycurra"
+                y la página deja de salir para esa búsqueda. */}
             <span className="text-[10px]" style={{ color: "#334155" }}>
-              © 2026 BuscayCurra. Todos los derechos reservados.
+              © 2026 BuscayCurra (Busca y Curra). Todos los derechos reservados.
             </span>
             <span className="text-[10px]" style={{ color: "#334155" }}>
               Hecho con <span style={{color: "#22c55e"}}>♥</span> en España

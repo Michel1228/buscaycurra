@@ -11,7 +11,9 @@ import { NUM_PAISES } from "@/lib/paises";
 import { RefreshCw } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: `BuscayCurra — Agente IA que busca trabajo por ti | ${NUM_PAISES} países`,
+  // El titulo lleva las dos formas de la marca: mucha gente la busca separada
+  // ("busca y curra") y sin esa variante Google no relaciona las dos consultas.
+  title: `BuscayCurra (Busca y Curra) — Agente IA que busca trabajo por ti`,
   description:
     `Deja de enviar CVs al vacío. Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7. Busca trabajo de au pair, live-in nanny, o cualquier sector. Tu agente personal de búsqueda de empleo.`,
   keywords: [
@@ -25,6 +27,9 @@ export const metadata: Metadata = {
     "empleo internacional",
     "ofertas de trabajo",
     "BuscayCurra",
+    "Busca y Curra",
+    "busca y curra",
+    "buscaycurra app",
     "Guzzi",
     "España",
     "Alemania",
@@ -161,6 +166,10 @@ export default function RootLayout({
               author: {
                 "@type": "Organization",
                 name: "BuscayCurra",
+                // La gente busca la marca separada ("busca y curra") tanto o mas
+                // que junta. Sin alternateName, Google trata las dos formas como
+                // consultas distintas y la web deja de salir con la separada.
+                alternateName: ["Busca y Curra", "Busca y curra", "busca y curra", "Buscaycurra"],
                 url: "https://buscaycurra.es",
                 sameAs: [],
               },
@@ -175,6 +184,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebSite",
               name: "BuscayCurra",
+              alternateName: ["Busca y Curra", "Busca y curra", "busca y curra"],
               url: "https://buscaycurra.es",
               description:
                 `Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países, 24/7.`,
