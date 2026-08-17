@@ -55,7 +55,13 @@ export default async function LandingPage() {
     DE: { flag: "🇩🇪", nombre: "Alemania" },
     ES: { flag: "🇪🇸", nombre: "España" },
     FR: { flag: "🇫🇷", nombre: "Francia" },
+    // OJO: la columna country guarda "uk", NO el codigo ISO "gb". Con solo la
+    // clave GB, el Reino Unido —tercer mercado, 250.030 ofertas— no salia en la
+    // portada: la bandera aparecia CERO veces mientras Alemania salia dos.
+    // Se dejan las dos claves porque el filtro de abajo descarta lo que no este
+    // en este mapa.
     GB: { flag: "🇬🇧", nombre: "Reino Unido" },
+    UK: { flag: "🇬🇧", nombre: "Reino Unido" },
     CA: { flag: "🇨🇦", nombre: "Canadá" },
     AU: { flag: "🇦🇺", nombre: "Australia" },
     SE: { flag: "🇸🇪", nombre: "Suecia" },

@@ -67,7 +67,6 @@ export async function GET(request: NextRequest) {
 
     if (!puesto) {
       // Sin puesto: devolver top 5 ocupaciones con datos salariales precargados
-      await pool.query(`SET LOCAL statement_timeout = '8s'`);
       const topResult = await pool.query(
         `SELECT 
           LOWER(REGEXP_REPLACE(title, '(Senior|Junior|Jr\\.|Sr\\.|Lead|Trainee|Becario|Prácticas)', '', 'gi')) as ocupacion,
@@ -76,9 +75,20 @@ export async function GET(request: NextRequest) {
           MIN(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as min_salary,
           MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace(substring(salary from '.*([0-9][0-9.,]*[0-9])'), '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary
          FROM "JobListing"
+         -- SOLO ESPAÑA Y SOLO SUELDOS ANUALES.
+         --
+         -- Antes se promediaban las ofertas de los 49 paises con sus monedas y
+         -- periodos mezclados, cogiendo el primer numero del texto y quitandole
+         -- puntos y comas: "$23.50/hour" se convertia en 2350 y "£45,000" en
+         -- 45000, todo sumado y presentado en euros. Salia un camarero en
+         -- Madrid a 108.604 EUR de media, con un maximo de 96.
          WHERE "isActive" = true AND salary ~ '[0-9]'
+           AND LOWER(country) = 'es'
+           AND salary !~* '(hour|hora|/h|month|mes|mensual|week|semana|day|dia)'
+           AND salary !~ '[$£¥]'
          GROUP BY ocupacion
-         HAVING COUNT(*) >= 10 AND AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) > 10000
+         HAVING COUNT(*) >= 10
+           AND AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) BETWEEN 12000 AND 200000
          ORDER BY total DESC
          LIMIT 10`
       );
@@ -127,7 +137,9 @@ export async function GET(request: NextRequest) {
     const kw = `%${puestoClean}%`;
 
     // Evitar que queries lentas cuelguen la API
-    await pool.query(`SET LOCAL statement_timeout = '8s'`);
+    // Aqui habia un "SET LOCAL statement_timeout" que Postgres ignoraba: solo
+    // vale dentro de una transaccion, y ademas cada consulta del pool puede
+    // coger otra conexion. No protegia de nada.
 
     // Estadísticas generales — solo title (tiene índice GIN trigram, description no)
     const statsResult = await pool.query(

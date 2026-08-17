@@ -116,15 +116,21 @@ Rama activa: `unified-production` (GitHub: michelbatista/buscaycurra o similar)
 
 ---
 
-## Agente Telegram (OpenClaw)
+## Agente Telegram (OpenClaw) — EN PAUSA
 
-- **Bot:** @MichellBG_Bot (el token está en el fichero de credenciales local)
-- **Modelo:** Kimi K2.6 — SIEMPRE este modelo, nunca Opus, nunca Groq sin permiso explícito
-- **Config:** `/root/.openclaw/openclaw.json`
-- **Servicio:** `systemctl --user status openclaw-gateway`
-- **KIMI_API_KEY:** en el fichero de credenciales local
+**Desactivado el 17 de agosto de 2026.** Gastaba créditos del mismo pozo que
+Guzzi, que es lo que de verdad usan los usuarios, así que se apagó hasta
+ponerle un agente propio que no compita por esos recursos.
 
----
+- **Servicio:** `openclaw-gateway` (systemd de usuario) — parado y deshabilitado
+- **Kimi:** retirado. La clave se borró de `/root/.bashrc` del VPS y la
+  aplicación web no la usa en ningún sitio (comprobado con grep en todo el
+  código). Copia de seguridad del fichero en `/root/.bashrc.bak-20260817`
+- **Bot:** @MichellBG_Bot — el token conviene revocarlo en @BotFather: estuvo
+  publicado en este mismo fichero dentro de un repositorio público
+
+Para reactivarlo habrá que decidir primero qué modelo usa, y que no sea el
+mismo saldo que Guzzi.
 
 ## Credenciales (archivo completo)
 
