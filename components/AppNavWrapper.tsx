@@ -15,23 +15,30 @@ import { inicializarRevenueCat } from "@/lib/hooks/useRevenueCat";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 
+// "BUSCAR" Y "ENVIAR CV" SON UNA SOLA ENTRADA, no dos.
+//
+// Estaban separadas por nueve apartados: "Buscar" la segunda y "Enviar CV" la
+// duodecima, tan abajo que pasaba desapercibida. Y son las dos mitades de lo
+// mismo — encontrar el sitio y escribirle —, asi que quien entraba a buscar
+// trabajo no llegaba nunca a enterarse de que podia mandar el CV directamente
+// a la empresa, que es justo lo que nos diferencia de InfoJobs.
+//
+// Ahora es un unico apartado. Dentro, la barra de secciones (NavTrabajo) lleva
+// a las ofertas, a los negocios de la zona, a las ETTs y al envio del CV: todo
+// lo que antes estaba repartido entre las dos entradas del menu.
 const NAV_ITEMS = [
   { href: "/app/gusi",       label: "Guzzi",      icon: "guzzi", title: "Guzzi - Asistente IA" },
-  { href: "/app/buscar",     label: "Buscar",     icon: "buscar", title: "Buscar ofertas" },
+  { href: "/app/buscar",     label: "Buscar y enviar CV", icon: "buscar", title: "Buscar ofertas, encontrar empresas y enviarles tu CV" },
+  { href: "/app/envios",     label: "Mis envíos", icon: "envios", title: "Estado de los CVs enviados" },
   { href: "/app/curriculum", label: "Mi CV",      icon: "cv", title: "Mi currículum" },
   { href: "/app/pipeline",   label: "Pipeline",   icon: "pipeline", title: "Pipeline de candidaturas" },
   { href: "/app/entrevistas",label: "Entrevistas",icon: "entrevistas", title: "Simulador de entrevistas" },
+  { href: "/app/guardados",  label: "Guardados",  icon: "guardados", title: "Ofertas guardadas" },
   { href: "/app/emigrar",    label: "Emigrar",    icon: "emigrar", title: "Guía para emigrar" },
   { href: "/app/au-pair",    label: "Au Pair",    icon: "aupair", title: "Perfil y ofertas Au Pair" },
   { href: "/app/au-pair?modo=live_in_nanny", label: "Live-in Nanny", icon: "liveinnanny", title: "Perfil y ofertas Live-in Nanny" },
   { href: "/app/salarios",   label: "Salarios",   icon: "salarios", title: "Comparador de salarios" },
-  { href: "/app/guardados",  label: "Guardados",  icon: "guardados", title: "Ofertas guardadas" },
   { href: "/app/reviews",    label: "Reviews",    icon: "reviews", title: "Reviews de empresas" },
-  // Se llamaba "Empresas", igual que la mitad de "Buscar", y nadie sabía cuál
-  // de los dos abrir. Buscar empresas ya está dentro del buscador; esto es lo
-  // que aquel apartado hace de verdad: mandarles el CV.
-  { href: "/app/empresas",   label: "Enviar CV",  icon: "empresas", title: "Enviar tu CV a empresas, ETTs y negocios locales" },
-  { href: "/app/envios",     label: "Mis envíos", icon: "envios", title: "Estado de los CVs enviados" },
   { href: "/app/referidos",  label: "Invitar",    icon: "referidos", title: "Invitar amigos" },
   { href: "/app/ayuda",      label: "Ayuda",      icon: "ayuda", title: "Centro de ayuda" },
   { href: "/app/perfil?tab=plan",     label: "Mi Plan",    icon: "plan", title: "Mi plan y cuenta" },
@@ -303,7 +310,12 @@ export default function AppNavWrapper() {
             {NAV_ITEMS.map((item) => {
               const activo =
                 pathname === item.href ||
-                (item.href !== "/app" && pathname.startsWith(item.href + "/"));
+                (item.href !== "/app" && pathname.startsWith(item.href + "/")) ||
+                // "Buscar y enviar CV" es una entrada para dos paginas: las
+                // ofertas viven en /app/buscar y el envio del CV en
+                // /app/empresas. Sin esto, estando en la segunda no se
+                // iluminaba nada en el menu y parecias estar fuera de la app.
+                (item.href === "/app/buscar" && pathname.startsWith("/app/empresas"));
               return (
                 <Link
                   key={item.href}

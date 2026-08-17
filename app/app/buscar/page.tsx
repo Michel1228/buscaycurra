@@ -410,7 +410,14 @@ function BuscarPageInner() {
       {/* Cabecera de búsqueda */}
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}>
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-xl font-bold mb-4">Buscar ofertas de trabajo</h1>
+          {/* El titulo dice las DOS cosas que se hacen aquí. Poniendo solo
+              "Buscar ofertas", la mitad de enviar el CV a la empresa —que es
+              lo que nos diferencia— no se intuía por ninguna parte. */}
+          <h1 className="text-xl font-bold">Buscar trabajo y enviar tu CV</h1>
+          <p className="text-xs mb-4 mt-1 opacity-90">
+            Las ofertas publicadas y, además, las empresas de tu zona a las que
+            escribir aunque no hayan publicado nada.
+          </p>
           <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-2">
             <label className="sr-only" htmlFor="buscar-keyword">Palabra clave</label>
             <input id="buscar-keyword" type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
