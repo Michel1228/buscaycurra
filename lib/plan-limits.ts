@@ -114,6 +114,40 @@ export function getPlanLimits(plan?: string | null): PlanLimits {
   return LIMITS[tier] ?? LIMITS.free;
 }
 
+/**
+ * El plan que de verdad toca aplicar, mirando también si la suscripción está al
+ * corriente.
+ *
+ * POR QUÉ HACE FALTA. La columna `subscription_status` se leía en varios sitios
+ * y no se usaba en ninguno para decidir. Consecuencia comprobada en producción:
+ * hay cuentas con `plan = "empresa"` y `subscription_status = "inactive"`
+ * disfrutando de Guzzi ilimitado, cámara ilimitada y envíos ilimitados, mientras
+ * la pantalla de consumo les dice "free".
+ *
+ * Y lo mismo con quien deja de pagar: el webhook de Stripe marca `past_due` en
+ * `invoice.payment_failed` pero deja el plan intacto, así que un Pro moroso
+ * conservaba sus 100 consultas de IA al día hasta que Stripe borrase la
+ * suscripción — y si la configuración de Stripe es "dejar impagada" en vez de
+ * "cancelar", para siempre.
+ *
+ * Estados que SÍ dan derecho al plan: `active` y `trialing` (el periodo de
+ * prueba de 7 días de Pro es legítimo). También se acepta que el campo venga
+ * vacío o nulo: hay cuentas antiguas creadas antes de que existiera la columna,
+ * y cortarles el servicio por una migración no sería justo.
+ */
+export function getPlanEfectivo(
+  plan?: string | null,
+  subscriptionStatus?: string | null
+): string {
+  if (!plan || plan.toLowerCase() === "free") return "free";
+  // Sin dato, se respeta el plan: son cuentas anteriores a la columna.
+  if (subscriptionStatus === undefined || subscriptionStatus === null || subscriptionStatus === "") {
+    return plan;
+  }
+  const alCorriente = ["active", "trialing"].includes(subscriptionStatus.toLowerCase());
+  return alCorriente ? plan : "free";
+}
+
 /** Modelo real de IA que usará Guzzi según el plan */
 export function getGuzziModel(plan?: string | null): string {
   return getPlanLimits(plan).guzziModel;

@@ -9,7 +9,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { canUseGuzzi, getPlanLimits } from "./plan-limits";
+import { canUseGuzzi, getPlanLimits, getPlanEfectivo } from "./plan-limits";
 import { trackGuzziQuery } from "./usage-tracker";
 
 function getSupabase() {
@@ -47,7 +47,10 @@ export async function checkGuzziAccess(userId: string): Promise<GuzziCheckResult
       .insert({ id: userId, plan: "free" });
   }
 
-  const plan = profile?.plan || "free";
+  // El estado de la suscripcion MANDA sobre el plan guardado. Se leia desde
+  // siempre en la consulta de arriba y no se usaba para nada: habia cuentas
+  // con plan "empresa" y subscription_status "inactive" con Guzzi ilimitado.
+  const plan = getPlanEfectivo(profile?.plan, profile?.subscription_status);
   const limits = getPlanLimits(plan);
 
   // Verificar si el plan permite Guzzi

@@ -161,7 +161,6 @@ docker run -d --name buscaycurra-nextjs \
   --network busca-y-curra_default \
   -p 8892:3000 \
   -e REDIS_URL=redis://buscaycurra-redis:6379 \
-  -e API_URL=http://buscaycurra-api:3001 \
   -e SUPABASE_SERVICE_ROLE_KEY=<ver credenciales> \
   -e STRIPE_SECRET_KEY=<ver credenciales> \
   -e STRIPE_WEBHOOK_SECRET=<ver credenciales> \

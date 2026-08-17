@@ -77,7 +77,6 @@ Error:             #ef4444
 ```bash
 # Contenedores Docker activos
 buscaycurra-nextjs   → puerto 8892 (Next.js)
-buscaycurra-api      → puerto 3001 (Express/Prisma)
 buscaycurra-redis    → puerto 6379
 buscaycurra-db       → puerto 5433 (PostgreSQL)
 ```
@@ -85,8 +84,8 @@ buscaycurra-db       → puerto 5433 (PostgreSQL)
 **Red Docker:** `busca-y-curra_default`
 
 **Variables de entorno runtime (docker run -e):**
-- `REDIS_URL=redis://buscaycurra-redis:6379`
-- `API_URL=http://buscaycurra-api:3001`
+- `REDIS_URL` — OJO: lleva contraseña (`redis://:<contraseña>@buscaycurra-redis:6379`).
+  Copiarla del entorno del contenedor; sin ella, Redis rechaza la conexión.
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`
 - `SUPABASE_SERVICE_ROLE_KEY`
 

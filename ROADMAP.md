@@ -108,13 +108,11 @@ docker run -d --name buscaycurra-nextjs \
   --network busca-y-curra_default \
   --env-file /root/.openclaw/workspace/buscaycurra-unified/.env.local \
   -e REDIS_URL=redis://buscaycurra-redis:6379 \
-  -e API_URL=http://buscaycurra-api:3001 \
   -p 8892:3000 buscaycurra:latest
 ```
 
 ### Contenedores activos
 - `buscaycurra-nextjs` → :8892 (Next.js)
-- `buscaycurra-api` → :3001 (Express/Prisma)
 - `buscaycurra-redis` → :6379
 - `buscaycurra-db` → :5433 (PostgreSQL)
 - Red: `busca-y-curra_default`
