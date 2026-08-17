@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth-server";
 import { getPlacePhotoUrl } from "@/lib/google-places";
+import { consumirCuotaPlaces } from "@/lib/places-quota";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,21 @@ export async function GET(request: NextRequest) {
 
   if (!process.env.GOOGLE_PLACES_API_KEY) {
     return NextResponse.json({ error: "API de Google Places no configurada" }, { status: 503 });
+  }
+
+  // ESTA ERA LA ÚNICA LLAMADA DE PAGO A GOOGLE SIN TOPE.
+  //
+  // El comentario de lib/google-places.ts dice que "toda llamada de pago pasa
+  // antes por consumirCuotaPlaces()", y era verdad menos aquí. Place Photo se
+  // factura aparte, y un listado de empresas genera una URL de foto POR CADA
+  // una: cuarenta empresas en pantalla son cuarenta peticiones facturadas, y
+  // nada impedía pedirlas en bucle. No aparecían siquiera en el contador.
+  //
+  // Falla CERRADO, igual que el resto: si no hay cuota no se pide la foto y se
+  // devuelve 404, que el cliente ya sabe manejar enseñando el hueco vacío. Es
+  // preferible una tarjeta sin foto a una factura sorpresa.
+  if (!(await consumirCuotaPlaces())) {
+    return NextResponse.json({ error: "Sin cuota de fotos por hoy" }, { status: 404 });
   }
 
   try {

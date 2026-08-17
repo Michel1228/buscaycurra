@@ -29,14 +29,18 @@ const superpotencias = [
   { icon: <Zap className="w-6 h-6" />, titulo: "Enviamos tu CV cuando más probabilidades tienes", desc: "Analizamos el horario de actividad de cada empresa: cuándo abren el email, cuándo está el responsable de RRHH, si trabajan en turno de noche. Tu CV llega en el momento exacto en que hay alguien para leerlo.", acento: "#a070d0" },
 ];
 
-const testimonios = [
-  { nombre: "María G.", ciudad: "Madrid", puesto: "Diseñadora gráfica", empresa: "Agencia creativa", texto: "Llevaba 4 meses en InfoJobs sin respuesta. Con BuscayCurra en 3 semanas tenía 4 entrevistas. La diferencia es que aquí mi CV llegaba personalizado, no era uno más." },
-  { nombre: "Carlos R.", ciudad: "Barcelona", puesto: "Programador junior", empresa: "Startup tech", texto: "La función de entrevista con IA me salvó. Me preguntaron exactamente lo que había practicado con BuscayCurra. En LinkedIn no tenía ni idea de cómo prepararme." },
-  { nombre: "Ana M.", ciudad: "Valencia", puesto: "Administrativa", empresa: "Empresa logística", texto: "En Indeed mandé el mismo CV 60 veces y nadie me llamó. Aquí mandé a 200 empresas con CV adaptado y tuve respuesta de 47. No es magia, es personalización." },
-  { nombre: "Pedro L.", ciudad: "Sevilla", puesto: "Electricista", empresa: "Instalaciones industriales", texto: "Me sorprendió que encontrara empresas de mi sector que yo ni conocía. Y el CV adaptado a cada una marcó la diferencia. En Tecnoempleo no tenía ni esa opción." },
-  { nombre: "Laura T.", ciudad: "Bilbao", puesto: "Enfermera", empresa: "Clínica privada", texto: "El envío inteligente es real. Me llamaron a las 9:01 de la mañana, justo cuando el jefe de personal llegaba. InfoJobs no sabe ni qué hora es en esa empresa." },
-  { nombre: "Javi S.", ciudad: "Zaragoza", puesto: "Mecánico", empresa: "Taller oficial", texto: "En LinkedIn Premium pagaba 39€ al mes y nadie me veía. Con 9,99€ aquí, Guzzi mandaba mi CV cada día. Encontré trabajo en 3 semanas." },
-];
+// TESTIMONIOS RETIRADOS el 17 de agosto de 2026.
+//
+// Eran inventados: nombre, ciudad, oficio, cinco estrellas y cifras concretas
+// ("lo mandé a 200 empresas y tuve respuesta de 47"). Con 51 usuarios
+// registrados y ninguno de pago, no había de dónde sacarlos. Es el mismo
+// problema que el "2.400+ personas encontraron trabajo" que ya se limpió, pero
+// peor: aquello era una cifra, esto son personas que no existen.
+//
+// Se deja el array vacío a propósito, no se borra: cuando haya usuarios de
+// verdad que quieran contar su caso, se rellena aquí y la sección reaparece
+// sola. Lo que NO puede es volver a llenarse de invenciones.
+const testimonios: { nombre: string; ciudad?: string; puesto?: string; texto: string; empresa?: string; cargo?: string }[] = [];
 
 
 const particulas = [

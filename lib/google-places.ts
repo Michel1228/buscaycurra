@@ -169,10 +169,23 @@ export async function buscarEmpresasTextSearch(
 }
 
 /** Detalles completos de un place_id. */
+/**
+ * CADA DETALLE CUENTA COMO UNA LLAMADA, porque Google cobra por cada una.
+ *
+ * Antes la cuota se consumía UNA VEZ por búsqueda, y luego esa misma búsqueda
+ * pedía los detalles de hasta doce sitios en paralelo. Es decir, una unidad del
+ * contador podían ser trece peticiones facturadas, y el tope de 500 al día
+ * permitía en realidad varios miles. Ese desajuste es el que produjo la factura
+ * de 100 € de julio que documenta lib/places-quota.ts.
+ *
+ * Si se acaba la cuota a mitad de una búsqueda, los detalles que falten vuelven
+ * null y la empresa sale con menos datos. Es mejor eso que seguir gastando.
+ */
 async function obtenerDetallesPlace(
   placeId: string,
   apiKey: string
 ): Promise<GooglePlaceResult | null> {
+  if (!(await consumirCuotaPlaces())) return null;
   try {
     const detailUrl = new URL(`${PLACES_API_BASE}/details/json`);
     detailUrl.searchParams.set("place_id", placeId);

@@ -229,12 +229,18 @@ export default async function LandingPage() {
   ];
 
   // ── Testimonios ──
-  const testimonios = [
-    { nombre: "María G.", ciudad: "Madrid", puesto: "Diseñadora gráfica", texto: "En 3 semanas tenía 4 entrevistas. Con InfoJobs estuve 2 meses enviando CVs a mano sin respuesta." },
-    { nombre: "Carlos R.", ciudad: "Barcelona", puesto: "Programador junior", texto: "Me fui a Berlín. Guzzi me encontró ofertas que ni sabía que existían. En 10 días tenía contrato. Sin hablar alemán." },
-    { nombre: "Ana M.", ciudad: "Valencia", puesto: "Administrativa", texto: "Nunca pensé que un software podría mejorar tanto mi CV. Lo mandé a 200 empresas y tuve respuesta de 47." },
-    { nombre: "Pedro L.", ciudad: "Sevilla", puesto: "Electricista", texto: "Me sorprendió que encontrara empresas de mi sector que yo no conocía. Y el CV adaptado a cada una marcó la diferencia." },
-  ];
+  // TESTIMONIOS RETIRADOS el 17 de agosto de 2026.
+//
+// Eran inventados: nombre, ciudad, oficio, cinco estrellas y cifras concretas
+// ("lo mandé a 200 empresas y tuve respuesta de 47"). Con 51 usuarios
+// registrados y ninguno de pago, no había de dónde sacarlos. Es el mismo
+// problema que el "2.400+ personas encontraron trabajo" que ya se limpió, pero
+// peor: aquello era una cifra, esto son personas que no existen.
+//
+// Se deja el array vacío a propósito, no se borra: cuando haya usuarios de
+// verdad que quieran contar su caso, se rellena aquí y la sección reaparece
+// sola. Lo que NO puede es volver a llenarse de invenciones.
+const testimonios: { nombre: string; ciudad: string; puesto: string; texto: string }[] = [];
 
   // ── FAQ ──
   const faq = [

@@ -51,23 +51,18 @@ const VENTAJAS: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   },
 ];
 
-const TESTIMONIOS = [
-  {
-    texto: "En una semana encontré al perfil que llevaba 3 meses buscando en InfoJobs. Y sin pagar por publicar oferta.",
-    nombre: "Laura M.",
-    cargo: "Responsable RRHH · Empresa de logística, Madrid",
-  },
-  {
-    texto: "Gestiono 4 empresas clientes y BuscayCurra me ahorra fácil 2.000€/mes en publicaciones. Los candidatos están motivados de verdad.",
-    nombre: "Carlos T.",
-    cargo: "Consultor RRHH · ETT Navarra",
-  },
-  {
-    texto: "Los CVs que llegan ya están bien estructurados gracias a la IA. No tengo que leer PDFs horribles. Eso solo ya vale el precio.",
-    nombre: "Ana R.",
-    cargo: "Directora de selección · Hostelería, Barcelona",
-  },
-];
+// TESTIMONIOS RETIRADOS el 17 de agosto de 2026.
+//
+// Eran inventados: nombre, ciudad, oficio, cinco estrellas y cifras concretas
+// ("lo mandé a 200 empresas y tuve respuesta de 47"). Con 51 usuarios
+// registrados y ninguno de pago, no había de dónde sacarlos. Es el mismo
+// problema que el "2.400+ personas encontraron trabajo" que ya se limpió, pero
+// peor: aquello era una cifra, esto son personas que no existen.
+//
+// Se deja el array vacío a propósito, no se borra: cuando haya usuarios de
+// verdad que quieran contar su caso, se rellena aquí y la sección reaparece
+// sola. Lo que NO puede es volver a llenarse de invenciones.
+const TESTIMONIOS: { nombre: string; ciudad?: string; puesto?: string; texto: string; empresa?: string; cargo?: string }[] = [];
 
 const FAQ_EMPRESAS = [
   {

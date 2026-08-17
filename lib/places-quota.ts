@@ -20,8 +20,24 @@ import { Redis } from "ioredis";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://buscaycurra-redis:6379";
 
-/** Tope de llamadas al día. Ajustable con PLACES_MAX_DIA sin tocar código. */
-const MAX_DIA = parseInt(process.env.PLACES_MAX_DIA || "500", 10);
+/**
+ * Tope de llamadas al día. Ajustable con PLACES_MAX_DIA sin tocar código.
+ *
+ * BAJADO DE 500 A 300 el 17 de agosto de 2026, y el motivo importa: hasta hoy
+ * el contador sumaba UNA unidad por búsqueda, pero cada búsqueda disparaba
+ * hasta trece peticiones facturadas (un Text Search más los detalles de cada
+ * sitio). Con el fallo arreglado, cada petición real cuenta una, así que 500
+ * pasaban de ser ~6.500 llamadas a ser 500 exactas.
+ *
+ * Por qué 300 y no otra cifra: Google regala 200 $ al mes. A una media de
+ * ~0,02 $ por llamada (Text Search 32 $/1.000, Details 17 $/1.000, Photo
+ * 7 $/1.000), 300 al día son unas 9.000 al mes, alrededor de 180 $ — dentro
+ * del crédito, con margen. Con 500 se saldría de él y empezaría a pagarse.
+ *
+ * Si algún día hay usuarios de sobra para gastarlo, se sube con la variable de
+ * entorno; pero que sea una decisión, no un descuido.
+ */
+const MAX_DIA = parseInt(process.env.PLACES_MAX_DIA || "300", 10);
 
 let redis: Redis | null = null;
 function getRedis(): Redis | null {
