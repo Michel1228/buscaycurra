@@ -150,7 +150,9 @@ export async function GET(request: NextRequest) {
         MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace(substring(salary from '.*([0-9][0-9.,]*[0-9])'), '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary,
         COUNT(CASE WHEN salary ~ '[0-9]' THEN 1 END) as con_salario
        FROM "JobListing"
-       WHERE "isActive" = true AND title ILIKE $1`,
+       WHERE "isActive" = true AND title ILIKE $1 AND LOWER(country) = 'es'
+         AND salary !~* '(hour|hora|/h|month|mes|mensual|week|semana|day|dia)'
+         AND salary !~ '[$£¥]'`,
       [kw]
     );
 
@@ -175,7 +177,9 @@ export async function GET(request: NextRequest) {
         COUNT(*) as count,
         AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary
        FROM "JobListing"
-       WHERE "isActive" = true AND title ILIKE $1
+       WHERE "isActive" = true AND title ILIKE $1 AND LOWER(country) = 'es'
+         AND salary !~* '(hour|hora|/h|month|mes|mensual|week|semana|day|dia)'
+         AND salary !~ '[$£¥]'
        GROUP BY COALESCE(NULLIF(province, ''), city)
        HAVING COUNT(*) >= 3
        ORDER BY count DESC
@@ -200,7 +204,9 @@ export async function GET(request: NextRequest) {
           COUNT(*) as count,
           AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[,.]', '', 'g'), '')::numeric ELSE NULL END) as avg_salary
          FROM "JobListing"
-         WHERE "isActive" = true AND title ILIKE $1
+         WHERE "isActive" = true AND title ILIKE $1 AND LOWER(country) = 'es'
+         AND salary !~* '(hour|hora|/h|month|mes|mensual|week|semana|day|dia)'
+         AND salary !~ '[$£¥]'
            AND (province ILIKE $2 OR city ILIKE $2)`,
         [kw, loc]
       );

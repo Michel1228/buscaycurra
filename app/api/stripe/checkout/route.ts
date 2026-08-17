@@ -31,7 +31,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as { plan?: string };
     const plan = body.plan;
 
-    if (plan !== "basico" && plan !== "esencial" && plan !== "pro" && plan !== "empresa") {
+    // "basico" fuera: es un precio antiguo de 4,99 EUR que se retiro porque
+    // 2,99 funcionaba mucho mejor para vender. Seguia ACTIVO en Stripe
+    // (comprobado: price_1TPlRk... unit_amount 499, livemode true) y con los
+    // mismos limites que Esencial, asi que quien llegase por un enlace viejo
+    // pagaba dos euros de mas por lo mismo. Se deja de aceptar aqui; el precio
+    // hay que archivarlo tambien en el panel de Stripe.
+    if (plan !== "esencial" && plan !== "pro" && plan !== "empresa") {
       return NextResponse.json({ error: "Plan no válido." }, { status: 400 });
     }
 
@@ -66,8 +72,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Sin rama para "basico": ese precio ya no se acepta arriba.
     const priceId =
-      plan === "basico" ? PLANES.BASICO :
       plan === "esencial" ? PLANES.ESENCIAL :
       plan === "pro" ? PLANES.PRO :
       PLANES.EMPRESA;
