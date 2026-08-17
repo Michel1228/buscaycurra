@@ -48,7 +48,11 @@ export default function NavTrabajo({
   onCambiar: (id: SeccionTrabajo) => void;
 }) {
   return (
-    <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible md:w-56 md:shrink-0 pb-1 md:pb-0">
+    // En el móvil van en rejilla de dos columnas, no en una fila con scroll.
+    // Con scroll horizontal solo se ven las dos primeras y hay que adivinar
+    // que hay más arrastrando — que es exactamente cómo "Enviar CV" pasaba
+    // desapercibida. En rejilla se ve todo lo que hay sin tocar nada.
+    <nav className="grid grid-cols-2 md:flex md:flex-col gap-1.5 md:gap-1 md:w-56 md:shrink-0">
       {SECCIONES.map(s => {
         const esActiva = s.id === activa;
         const contenido = (
@@ -70,7 +74,7 @@ export default function NavTrabajo({
           border: `1px solid ${esActiva ? "rgba(34,197,94,0.35)" : "transparent"}`,
           color: esActiva ? "#22c55e" : "#94a3b8",
         };
-        const clases = "flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-xs transition whitespace-nowrap md:whitespace-normal text-left";
+        const clases = "flex items-start gap-2 md:gap-2.5 px-2.5 md:px-3 py-2.5 rounded-lg text-[11px] md:text-xs transition text-left leading-tight";
 
         // Las secciones de la otra página son enlaces de verdad: se navega,
         // no se duplica el codigo de una pantalla dentro de la otra.
@@ -91,7 +95,7 @@ export default function NavTrabajo({
 
       {/* Guzzi cierra la lista: es la otra forma de hacer todo esto, hablando. */}
       <Link href="/app/gusi"
-        className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-xs transition mt-1 md:mt-2 whitespace-nowrap md:whitespace-normal"
+        className="flex items-start gap-2 md:gap-2.5 px-2.5 md:px-3 py-2.5 rounded-lg text-[11px] md:text-xs transition col-span-2 md:col-span-1 md:mt-2 leading-tight"
         style={{ background: "rgba(34,197,94,0.06)", border: "1px dashed rgba(34,197,94,0.3)", color: "#22c55e" }}>
         <Bot size={15} className="mt-0.5 shrink-0" />
         <span className="min-w-0">

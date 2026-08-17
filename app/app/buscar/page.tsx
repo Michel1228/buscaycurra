@@ -61,6 +61,10 @@ function BuscarPageInner() {
   const [fuenteResultados, setFuenteResultados] = useState<string>("");
   // Explica en pantalla por que ha cambiado el pais de la busqueda.
   const [avisoPais, setAvisoPais] = useState("");
+  // Los filtros llevaban "hidden md:block" desde siempre: en el telefono no
+  // habia manera de llegar a ellos. En movil se abren con un boton; en
+  // escritorio siguen desplegados, como estaban.
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   const [mostrarAlertaModal, setMostrarAlertaModal] = useState(false);
   const [alertaCreada, setAlertaCreada] = useState(false);
@@ -504,18 +508,31 @@ function BuscarPageInner() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex gap-6">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
 
           {/* La columna de la izquierda: primero DONDE estas y que mas hay, y
-              debajo los filtros de esta seccion. Antes solo habia filtros, y
-              nada en esta pantalla contaba que existiera la mitad de enviar el
-              CV a empresas: eran dos apartados sueltos del menu. */}
-          <aside className="hidden md:block w-56 shrink-0">
-            <div className="sticky top-20 space-y-4">
+              debajo los filtros de esta seccion.
+
+              OJO CON EL MOVIL. Este bloque llevaba "hidden md:block", que lo
+              esconde en pantallas pequenas. Valia mientras solo eran filtros,
+              pero al meter aqui la barra de secciones el telefono se quedo sin
+              ninguna forma de llegar a enviar el CV, a las ETTs o a los
+              negocios de la zona: la barra estaba oculta y la entrada del menu
+              ya no existia. La navegacion NO puede esconderse en movil; los
+              filtros si, que es donde estaban antes. */}
+          <aside className="md:w-56 md:shrink-0">
+            <div className="md:sticky md:top-20 space-y-4">
               <NavTrabajo activa="ofertas" paginaActual="buscar" onCambiar={() => {}} />
 
-            <div className="card-game p-4">
-              <div className="flex items-center gap-2 mb-4">
+            <button onClick={() => setFiltrosAbiertos(v => !v)}
+              className="md:hidden w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium"
+              style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8" }}>
+              <span>Filtros{(jornada || experiencia || salarioMin || salarioMax) ? " · activos" : ""}</span>
+              <span>{filtrosAbiertos ? "▲" : "▼"}</span>
+            </button>
+
+            <div className={`card-game p-4 ${filtrosAbiertos ? "block" : "hidden"} md:block`}>
+              <div className="hidden md:flex items-center gap-2 mb-4">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Filtros</h2>
                 <InfoTooltip text="Refina tu búsqueda por tipo de jornada, experiencia y rango salarial. Los filtros se aplican sobre los resultados actuales." position="right" />
               </div>
