@@ -32,7 +32,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     // en probarlo, y quien no prueba nunca se suscribe. Si Groq se agota
     // (1.000/dia en toda la app), se cae a DeepSeek: 15 consultas cuestan
     // menos de medio centimo.
-    guzziModel: "llama-3.3-70b-versatile (Groq)",
+    guzziModel: "openai/gpt-oss-120b (Groq)",
     guzziMaxConsultasDia: 15,         // antes 5 — subido el 7 ago 2026
     enviosCVDia: 3,                   // 3 envíos/día
     enviosCVSemana: 7,               // 7 envíos/semana

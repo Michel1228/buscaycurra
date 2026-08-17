@@ -69,7 +69,10 @@ Sé directo pero motivador. Máximo 150 palabras.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
+        // Razona antes de contestar y ese razonamiento gasta tokens del
+        // mismo presupuesto: sin esto devolvia respuestas vacias.
+        reasoning_effort: "low",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300,

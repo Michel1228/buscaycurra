@@ -25,7 +25,7 @@ import { get, incrementar } from "../cache/redis-client";
 const LIMITE_DIARIO_GROQ = 14000; // Dejamos 400 de margen sobre los 14.400
 
 // Modelo a usar (el mejor disponible en Groq gratis)
-const MODELO_GROQ = "llama-3.3-70b-versatile";
+const MODELO_GROQ = "openai/gpt-oss-120b";
 
 // Temperatura por defecto (0.7 = balance creatividad/coherencia)
 const TEMPERATURA_DEFAULT = 0.7;
@@ -133,6 +133,10 @@ export async function llamarGroq(
     const respuesta = await cliente.chat.completions.create({
       messages: mensajes,
       model: MODELO_GROQ,
+      // gpt-oss razona antes de contestar y eso gasta del mismo presupuesto
+      // de tokens; sin esto devuelve respuestas vacias. El SDK no lo declara
+      // todavia, la API si lo acepta.
+      ...({ reasoning_effort: "low" } as Record<string, unknown>),
       temperature: opciones.temperatura ?? TEMPERATURA_DEFAULT,
       max_tokens: opciones.maxTokens ?? 2048,
     });

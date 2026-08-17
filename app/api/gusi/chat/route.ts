@@ -348,6 +348,9 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     const { getPool } = await import("@/lib/db");
     const pool = getPool();
     const kw = `%${query.toLowerCase()}%`;
+    // Lo que se encontro con la palabra española pero fuera de su ciudad. Se
+    // usa solo si el respaldo por sinonimos tampoco encuentra nada mejor.
+    let respaldoDelPais: ReturnType<typeof mapRowToJob>[] | null = null;
     const countryFilter = `%${countryName}%`;
     const N = Math.min(limit * 2, 30);
 
@@ -433,6 +436,16 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       `;
 
       // $1 pasa de ser '%camarero%' a '\mcamarero\M': el mismo hueco, otra forma.
+      //
+      // NO SE METEN AQUÍ LOS SINÓNIMOS, aunque sería lo lógico. Se probó a
+      // buscar el oficio en todos los idiomas de una vez, con un patrón
+      // "\m(driver|chofer|conductor|...)\M", y la consulta pasó de 86 ms a
+      // 176 SEGUNDOS: una alternancia así no puede usar el índice trigram y
+      // recorre los dos millones de filas una a una. En un servidor de dos
+      // núcleos eso tumba la aplicación entera.
+      //
+      // Los sinónimos se aplican más abajo, cuando hacen falta (ver el aviso
+      // sobre el respaldo por sinónimos justo después de esta consulta).
       const paramsTitulo = [...params];
       paramsTitulo[0] = "\\m" + query.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\M";
 
@@ -441,7 +454,23 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         r = await pool.query(consulta("LOWER(title) LIKE $1 OR LOWER(description) LIKE $1"), params);
       }
 
-      if (r.rows.length > 0) {
+      // SI LO ENCONTRADO NO ES DE SU CIUDAD, TODAVÍA NO VALE.
+      //
+      // La palabra española puede aparecer en algún título suelto del país y
+      // eso bastaba para dar la búsqueda por buena, sin llegar nunca a mirar
+      // el oficio en el idioma de allí. Comprobado: "conductor en Sídney"
+      // encontraba 14 "Funeral Conductor" y "Train Conductor" repartidos por
+      // Australia — que allí no es conducir — y se quedaba tan ancho, con 188
+      // "driver" en Sídney sin mirar. Igual con "electricista en Ámsterdam" y
+      // sus 135 "elektricien".
+      //
+      // Si no hay ni una de la ciudad pedida, se deja seguir hasta el respaldo
+      // por sinónimos de abajo, que sí busca en todos los idiomas. Solo se
+      // paga esa consulta extra en los casos que hoy salen mal; meter los
+      // sinónimos en la consulta de arriba costaba 176 segundos.
+      const hayDeLaCiudad = r.rows.some(f => (f as { scope_rank: number }).scope_rank === 0);
+
+      if (r.rows.length > 0 && (hayDeLaCiudad || !city)) {
         const scopeRank: number = (r.rows[0] as { scope_rank: number }).scope_rank;
         const scopeMap: Record<number, "ciudad" | "provincia" | "cercanas" | "pais"> = {
           0: "ciudad", 1: "provincia", 2: "cercanas", 3: "provincia", 4: "pais",
@@ -450,6 +479,12 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
           jobs: (r.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)),
           scope: scopeMap[scopeRank] || "pais",
         };
+      }
+
+      // Se guarda lo encontrado por si el respaldo por sinónimos tampoco da
+      // nada de la ciudad: mejor ofertas del país que ninguna.
+      if (r.rows.length > 0) {
+        respaldoDelPais = (r.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city));
       }
     } else {
       // No city: just strategy 3 (nationwide)
@@ -525,6 +560,13 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         }
         break;
       }
+    }
+
+    // Antes de salir a las APIs de fuera: si teniamos ofertas del pais
+    // guardadas, valen mas que nada. Se devuelven diciendo que el alcance es
+    // el pais, no la ciudad, para no enganar sobre donde estan.
+    if (respaldoDelPais && respaldoDelPais.length > 0) {
+      return { jobs: respaldoDelPais, scope: "pais" };
     }
 
     // -- Estrategia 5: APIs externas --------------------------------------
@@ -1704,14 +1746,17 @@ Responde en JSON exactamente así:
 
     // Intento 2: Groq. Es el proveedor de cabecera de los usuarios gratuitos.
     // El prefijo "/no_think" que llevaba antes era un truco para qwen3, el
-    // modelo que Groq ha retirado; con llama-3.3-70b sobra.
+    // modelo que Groq ha retirado; con gpt-oss-120b sobra.
     if (!rawReply && groqKey) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${groqKey}` },
-            body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages, max_tokens: 1024, temperature: 0.7 }),
+            body: JSON.stringify({ model: "openai/gpt-oss-120b",
+        // Razona antes de contestar y ese razonamiento gasta tokens del
+        // mismo presupuesto: sin esto devolvia respuestas vacias.
+        reasoning_effort: "low", messages, max_tokens: 1024, temperature: 0.7 }),
             signal: AbortSignal.timeout(20000),
           });
           if (res.ok) {

@@ -1,5 +1,12 @@
 # BuscayCurra — Contexto del Proyecto
 
+> ⚠️ **ESTE FICHERO ES PÚBLICO.** Está commiteado en GitHub y cualquiera puede
+> descargarlo sin credenciales. **NO escribas aquí tokens, claves ni contraseñas**,
+> ni siquiera "temporalmente". Las claves reales van en el fichero de credenciales
+> local, que no se sube. La clave anónima de Supabase y las `NEXT_PUBLIC_*` sí
+> pueden estar: son públicas por diseño y viajan en el JavaScript del navegador.
+
+
 > 🗺️ **ANTES DE TOCAR NADA:** Leer [ROADMAP.md](./ROADMAP.md) — mapa completo de bases de datos, contenedores, pitfalls y métricas.
 
 ## Qué es esta app
@@ -8,8 +15,8 @@
 El nombre del asistente IA es **Guzzi** (o Gusi) y tiene forma de gusano 🐛.
 
 **Dominio en producción:** https://buscaycurra.es
-**VPS (Hostinger):** 187.124.37.183
-**SSH:** `ssh -i "C:/Users/miche/.ssh/hostinger_openclaw" root@187.124.37.183`
+**VPS (Hostinger):** la IP está en el fichero de credenciales local.
+**SSH:** con la clave privada local (ver fichero de credenciales). No se anota aquí: este repositorio es público.
 
 ---
 
@@ -111,11 +118,11 @@ Rama activa: `unified-production` (GitHub: michelbatista/buscaycurra o similar)
 
 ## Agente Telegram (OpenClaw)
 
-- **Bot:** @MichellBG_Bot (token: `8312696057:AAHh4kNjCoD_E4YsIvAxdVXDPGRNttJOB74`)
+- **Bot:** @MichellBG_Bot (el token está en el fichero de credenciales local)
 - **Modelo:** Kimi K2.6 — SIEMPRE este modelo, nunca Opus, nunca Groq sin permiso explícito
 - **Config:** `/root/.openclaw/openclaw.json`
 - **Servicio:** `systemctl --user status openclaw-gateway`
-- **KIMI_API_KEY:** `sk-1V46gvX6EUOmVL4C4Lmrk7FsOmETkzlRhd0rmFpPYhHo5IbK`
+- **KIMI_API_KEY:** en el fichero de credenciales local
 
 ---
 

@@ -86,7 +86,11 @@ Responde con este JSON exacto:
 }`;
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
+        // Razona antes de contestar y ese razonamiento gasta tokens del
+        // mismo presupuesto: sin esto devolvia respuestas vacias. El SDK aun
+        // no lo declara en sus tipos, pero la API lo acepta.
+        ...({ reasoning_effort: "low" } as Record<string, unknown>),
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
       max_tokens: 800,

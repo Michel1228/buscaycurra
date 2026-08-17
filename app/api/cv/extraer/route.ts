@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
           method: "POST",
           headers: { Authorization: `Bearer ${groqKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
+            model: "openai/gpt-oss-120b",
+        // Razona antes de contestar y ese razonamiento gasta tokens del
+        // mismo presupuesto: sin esto devolvia respuestas vacias.
+        reasoning_effort: "low",
             messages: [
               {
                 role: "system",

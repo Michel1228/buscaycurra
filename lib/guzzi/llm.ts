@@ -18,9 +18,13 @@ export async function callGroq(systemPrompt: string, userContent: string, maxTok
   // tampoco sirve aqui: razona en ingles dentro de <think> y se come todos los
   // tokens sin llegar a responder, que es justo lo que intentaba evitar el
   // prefijo "/no_think". Medido el 6 ago 2026 con la misma pregunta en espanol,
-  // llama-3.3-70b responde bien y en 635 ms.
+  // Groq retiro llama-3.3-70b el 16 ago 2026: la API devolvia
+  // "model_not_found". gpt-oss-120b es el sustituto de su plan gratuito.
   const body = JSON.stringify({
-    model: "llama-3.3-70b-versatile",
+    model: "openai/gpt-oss-120b",
+        // Razona antes de contestar y ese razonamiento gasta tokens del
+        // mismo presupuesto: sin esto devolvia respuestas vacias.
+        reasoning_effort: "low",
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userContent },
