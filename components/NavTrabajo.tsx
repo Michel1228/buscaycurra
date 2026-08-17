@@ -60,8 +60,8 @@ export default function NavTrabajo({
             <s.Icon size={15} className="mt-0.5 shrink-0" />
             <span className="min-w-0">
               <span className="block font-medium">{s.label}</span>
-              {/* La frase de ayuda solo cabe en pantalla grande; en el móvil
-                  las secciones van en fila y solo se ve el nombre. */}
+              {/* La frase de ayuda solo cabe en pantalla grande. En el móvil,
+                  con dos columnas, solo entra el nombre. */}
               <span className="hidden md:block text-[10px] leading-tight mt-0.5"
                 style={{ color: esActiva ? "rgba(34,197,94,0.75)" : "#64748b" }}>
                 {s.ayuda}

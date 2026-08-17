@@ -86,12 +86,21 @@ export default function EmpresasPage() {
   // Se puede llegar desde la pagina de ofertas con ?seccion=ett, y entonces
   // hay que abrir directamente esa: si no, el usuario pulsa "ETTs" y aterriza
   // en el buscador de empresas sin entender por que.
-  const [activeTab, setActiveTab] = useState<TabId>(() => {
-    if (typeof window === "undefined") return "buscar";
-    const s = new URLSearchParams(window.location.search).get("seccion");
+  const [activeTab, setActiveTab] = useState<TabId>("buscar");
+
+  // Se puede llegar desde la pagina de ofertas con ?seccion=envio, y entonces
+  // hay que abrir esa seccion y no el buscador de empresas.
+  //
+  // VA EN UN EFECTO, NO EN EL ESTADO INICIAL. La funcion de useState se
+  // ejecuta tambien en el servidor, donde no existe window: devolvia "buscar",
+  // React hidrataba con ese valor y ya no volvia a mirar la URL. Comprobado en
+  // un movil de verdad: pulsabas "Enviar mi CV", la direccion decia
+  // ?seccion=envio y se abria igualmente el buscador de empresas.
+  useEffect(() => {
+    const pedida = new URLSearchParams(window.location.search).get("seccion");
     const validas: TabId[] = ["buscar", "zona", "ett", "envio", "historial"];
-    return (validas as string[]).includes(s || "") ? (s as TabId) : "buscar";
-  });
+    if (pedida && (validas as string[]).includes(pedida)) setActiveTab(pedida as TabId);
+  }, []);
   const [envioPrefillName, setEnvioPrefillName] = useState("");
   const [envioTabKey, setEnvioTabKey] = useState(0);
 
