@@ -9,6 +9,27 @@ import LogoGusano from "@/components/LogoGusano";
 /** Ficha de la app en la App Store (publicada en agosto de 2026). */
 const APP_STORE_URL = "https://apps.apple.com/app/buscaycurra-empleo-con-ia/id6775232067";
 
+/** Ficha en Google Play. El identificador es el appId de capacitor.config.ts. */
+const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=es.buscaycurra.app";
+
+/**
+ * EL INTERRUPTOR DE GOOGLE PLAY.
+ *
+ * El 18 de agosto de 2026 Google concedió el acceso a producción —el bloqueo de
+ * los 12 testers durante 14 días—, pero conceder el acceso no publica la app:
+ * hay que subir una versión al canal de producción y esperar la revisión.
+ * Mientras el panel de Play siga diciendo "Producción: Inactivo", esto se queda
+ * en false y la página sigue explicando cómo instalarla desde el navegador.
+ *
+ * EN CUANTO LA FICHA ESTÉ VISIBLE EN PLAY, pon esto a true: aparece el botón
+ * de Google Play y desaparecen los textos que dicen que no está. No hace falta
+ * tocar nada más.
+ *
+ * Se deja así, y no puesto ya a true, porque anunciar una descarga que todavía
+ * no existe manda al usuario a una página de error de Google.
+ */
+const YA_EN_GOOGLE_PLAY = false;
+
 const FEATURES: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   {
     Icon: Mail,
@@ -107,9 +128,10 @@ export default function DescargaClient() {
 
           {/* ── Descarga desde la App Store + QR ──────────────────────────
               La app ya está publicada en la App Store (ago 2026), así que
-              iPhone tiene descarga nativa. En Android aún no está en Google
-              Play: el QR lleva a esta misma página para instalarla como app
-              desde el navegador, que da las mismas funciones. */}
+              iPhone tiene descarga nativa. En Android depende de
+              YA_EN_GOOGLE_PLAY: hasta que la ficha esté publicada, el QR lleva
+              a esta misma página para instalarla desde el navegador, que da
+              exactamente las mismas funciones porque la app carga la web. */}
           <div style={{ marginTop: "44px", display: "flex", flexWrap: "wrap", gap: "28px", justifyContent: "center", alignItems: "center" }}>
             <div style={{ textAlign: "center" }}>
               <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
@@ -128,14 +150,19 @@ export default function DescargaClient() {
                     App Store
                   </span>
                 </a>
+                {/* Con la ficha publicada, el botón lleva a Google Play; hasta
+                    entonces, a las instrucciones de instalar desde el navegador. */}
                 <a
-                  href="#instalar-movil"
-                  style={{ display: "inline-flex", alignItems: "center", gap: "9px", background: "#1e212b", color: "#f1f5f9", fontWeight: 600, fontSize: "15px", padding: "13px 22px", borderRadius: "12px", textDecoration: "none", border: "1px solid #2d3142" }}
+                  href={YA_EN_GOOGLE_PLAY ? GOOGLE_PLAY_URL : "#instalar-movil"}
+                  {...(YA_EN_GOOGLE_PLAY ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "9px", background: YA_EN_GOOGLE_PLAY ? "#0f1117" : "#1e212b", color: "#f1f5f9", fontWeight: 600, fontSize: "15px", padding: "13px 22px", borderRadius: "12px", textDecoration: "none", border: "1px solid #2d3142" }}
                 >
                   <Smartphone size={20} strokeWidth={1.6} />
                   <span style={{ textAlign: "left", lineHeight: 1.15 }}>
-                    <span style={{ display: "block", fontSize: "10px", opacity: 0.7 }}>Instálala en</span>
-                    Android
+                    <span style={{ display: "block", fontSize: "10px", opacity: 0.7 }}>
+                      {YA_EN_GOOGLE_PLAY ? "Descárgala en" : "Instálala en"}
+                    </span>
+                    {YA_EN_GOOGLE_PLAY ? "Google Play" : "Android"}
                   </span>
                 </a>
               </div>
@@ -224,10 +251,13 @@ export default function DescargaClient() {
           <h2 style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 10px", color: "#f1f5f9" }}>
             Instala en dos pasos
           </h2>
-          {/* En Android todavía no está en Google Play: se instala desde el
-              navegador y funciona igual (mismas pantallas y funciones). */}
+          {/* El texto cambia solo cuando la ficha esté publicada. Instalar
+              desde el navegador seguirá siendo válido: la app es la misma web,
+              así que ambas vías dan exactamente las mismas funciones. */}
           <p style={{ fontSize: "15px", color: "#64748b", margin: 0 }}>
-            En Android, directo desde el navegador: mismas funciones, sin pasar por Google Play.
+            {YA_EN_GOOGLE_PLAY
+              ? "En Google Play, o directo desde el navegador si lo prefieres: las dos vías dan lo mismo."
+              : "En Android, directo desde el navegador: mismas funciones, sin pasar por Google Play."}
           </p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
