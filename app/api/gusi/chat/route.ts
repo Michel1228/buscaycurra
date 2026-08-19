@@ -730,10 +730,25 @@ function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope
           : ciudad ? ` en **${ciudad}**` : "";
 
   let text = `🔍 **${ofertas.length} oferta${ofertas.length !== 1 ? "s" : ""}** de **${puesto}**${scopeMsg}:\n\n`;
-  (ofertas as Array<{ titulo?: string; empresa?: string; ubicacion?: string; salario?: string; url?: string }>)
+  (ofertas as Array<{ id?: string; titulo?: string; empresa?: string; ubicacion?: string; salario?: string; url?: string }>)
     .forEach((o, i) => {
       const em = ["🥇", "🥈", "🥉", "📌"][i] || "📌";
-      const link = o.url ? ` — [Ver oferta](${o.url})` : "";
+
+      // SE ENLAZA A LA FICHA DE LA PROPIA APLICACIÓN, no al portal de fuera.
+      //
+      // Antes solo se ofrecía el enlace al portal original, y ahí el usuario o
+      // se encontraba la oferta ya retirada, o una web que le pedía registrarse
+      // otra vez. La ficha de /app/ofertas/[id] ya existía y tiene todo lo que
+      // hace falta —descripción completa, salario, empresa y hasta el email de
+      // contacto para mandar el CV—, pero Guzzi no la usaba.
+      //
+      // Las ofertas de la base de datos llegan con el id como "db-xxx"; las que
+      // vienen de las APIs de fuera no están guardadas y no tienen ficha, así
+      // que para esas se mantiene el enlace externo de siempre.
+      const idInterno = o.id?.startsWith("db-") ? o.id.slice(3) : null;
+      const link = idInterno
+        ? ` — [Ver detalles](/app/ofertas/${idInterno})`
+        : o.url ? ` — [Ver oferta](${o.url})` : "";
       // Las ofertas de fuera vienen en su idioma: "Kellner (m/w/d)" no le dice
       // nada a alguien de aquí. Se le añade el oficio en español detrás, para
       // que sepa de qué es sin tener que traducir nada.

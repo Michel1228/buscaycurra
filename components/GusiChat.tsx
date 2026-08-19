@@ -952,6 +952,22 @@ function formatGusiText(text: string): string {
     // Títulos markdown (#, ##, ###...): el chat no los renderiza — convertir a negrita
     // en vez de mostrar las almohadillas sueltas (detectado en QA integral)
     .replace(/^#{1,4}\s*(.+)$/gm, '<strong style="color:#f1f5f9;font-weight:600">$1</strong>')
+    // LOS ENLACES TIENEN QUE SER ENLACES.
+    //
+    // Esto faltaba, y era el motivo de que pulsar "Ver oferta" no hiciera nada:
+    // Guzzi escribe "[Ver oferta](https://…)" en markdown, pero aquí solo se
+    // convertían negritas, cursivas y saltos de línea. El resultado en pantalla
+    // era el texto literal "[Ver oferta](https://…)", sin nada que pulsar.
+    //
+    // Las rutas internas (/app/ofertas/…) se abren en la misma pantalla, para
+    // no sacar al usuario de la aplicación. Las externas, en otra pestaña.
+    // Solo se aceptan http, https y rutas que empiecen por "/": cualquier otra
+    // cosa se deja como texto, que es lo que impide colar un "javascript:".
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g, (_m, texto, url) => {
+      const interno = String(url).startsWith("/");
+      const extra = interno ? "" : ' target="_blank" rel="noopener noreferrer"';
+      return `<a href="${url}"${extra} style="color:#22c55e;text-decoration:underline;font-weight:600">${texto}</a>`;
+    })
     .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#f1f5f9;font-weight:600">$1</strong>')
     .replace(/_(.+?)_/g, '<em>$1</em>')
     .replace(/\n/g, '<br/>');
