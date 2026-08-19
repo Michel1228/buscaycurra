@@ -74,15 +74,36 @@ export async function POST(request: NextRequest) {
     { auth: { persistSession: false } }
   );
 
+  // UPSERT Y NO UPDATE, y esto importa: un `update` sobre una fila que no
+  // existe NO da error — Supabase responde que todo fue bien habiendo tocado
+  // cero filas. Se detectó probando con un usuario recién creado: el endpoint
+  // devolvía {ok:true} y en la tabla no había nada. Sería exactamente el mismo
+  // engaño que este endpoint viene a arreglar.
+  //
+  // Hay cuentas sin fila en `profiles` (se crea al usar la aplicación, no al
+  // registrarse), así que el upsert la crea la primera vez.
+  //
   // El id sale de la sesión, NUNCA del cuerpo de la petición: si viniera de
   // ahí, cualquiera podría editar el perfil de otro.
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
-    .update({ ...cambios, updated_at: new Date().toISOString() })
-    .eq("id", userId);
+    .upsert(
+      { id: userId, ...cambios, updated_at: new Date().toISOString() },
+      { onConflict: "id" }
+    )
+    .select("id");
 
   if (error) {
     console.error("[perfil/actualizar]", error.message);
+    return NextResponse.json(
+      { error: "No se ha podido guardar. Inténtalo de nuevo." },
+      { status: 500 }
+    );
+  }
+
+  // Y se comprueba que de verdad quedó algo escrito antes de decir que sí.
+  if (!data || data.length === 0) {
+    console.error("[perfil/actualizar] sin filas afectadas para", userId);
     return NextResponse.json(
       { error: "No se ha podido guardar. Inténtalo de nuevo." },
       { status: 500 }
