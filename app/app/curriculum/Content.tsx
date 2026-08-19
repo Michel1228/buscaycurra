@@ -13,6 +13,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import { isNativeIOS as esIOSNativo } from "@/lib/utils/platform";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { generarCV, LISTA_PLANTILLAS, PLANTILLAS, TEMPLATE_IDS, type TemplateId } from "@/lib/cv-generator/plantillas";
@@ -618,6 +619,29 @@ export default function CurriculumPage() {
       });
       if (!res.ok) throw new Error("Error generando PDF");
       const blob = await res.blob();
+
+      // EN EL IPHONE ESTO NO FUNCIONABA. Lo reportó un usuario: le daba a
+      // descargar y no pasaba nada.
+      //
+      // La app de iOS es un WKWebView, y ahí el atributo `download` de un
+      // enlace SE IGNORA: el clic no hace absolutamente nada, sin error ni
+      // aviso. Encima se revocaba la URL del blob justo después del clic, así
+      // que aunque el sistema hubiera empezado a procesarla, se le quitaba de
+      // debajo.
+      //
+      // En iOS se convierte el PDF a una URL de datos y se navega a ella: eso
+      // abre el visor de PDF del propio iPhone, desde donde se puede guardar en
+      // Archivos o compartir con el botón de siempre. Es la vía que funciona
+      // sin añadir plugins nativos ni volver a pasar por revisión de Apple.
+      if (esIOSNativo()) {
+        const lector = new FileReader();
+        lector.onloadend = () => {
+          if (typeof lector.result === "string") window.location.href = lector.result;
+        };
+        lector.readAsDataURL(blob);
+        return;
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -625,7 +649,9 @@ export default function CurriculumPage() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Se espera antes de revocar: en algunos navegadores, revocar de
+      // inmediato cancela la descarga que acaba de empezar.
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch {
       if (iframeRef.current?.contentWindow) {
         iframeRef.current.contentWindow.print();

@@ -36,6 +36,9 @@ export default function PerfilPage() {
   const [email, setEmail] = useState("");
   const [perfil, setPerfil] = useState<PerfilData>(emptyPerfil);
   const [guardado, setGuardado] = useState(false);
+  // Sin esto no había forma de enterarse de que el guardado fallaba.
+  const [guardando, setGuardando] = useState(false);
+  const [errorGuardar, setErrorGuardar] = useState("");
   const [cargando, setCargando] = useState(true);
   const [tab, setTab] = useState<"perfil" | "seguridad" | "plan">("perfil");
 
@@ -106,20 +109,53 @@ export default function PerfilPage() {
   }, [perfil, userId]);
 
   async function guardarPerfil() {
-    if (!userId) return;
+    if (!userId || guardando) return;
+    setGuardando(true);
+    setErrorGuardar("");
     try {
-      await getSupabaseBrowser().from("profiles").upsert({
-        id: userId,
-        full_name: `${perfil.nombre} ${perfil.apellidos}`.trim(),
-        phone: perfil.telefono,
-        ciudad: perfil.ciudad,
-        provincia: perfil.provincia,
-        codigo_postal: perfil.codigo_postal,
-        sector: perfil.sector,
-      }, { onConflict: "id" });
+      // EL GUARDADO PASA POR EL SERVIDOR, NO POR EL NAVEGADOR.
+      //
+      // Antes se escribía directamente en la tabla `profiles` con la clave
+      // anónima, y eso dejó de funcionar al blindar la tabla para que nadie
+      // pudiera cambiarse el plan desde el navegador. Devolvía
+      // "permission denied for table profiles" (HTTP 403).
+      //
+      // Y lo peor no era el fallo, era que NO SE MIRABA: Supabase no lanza
+      // excepción, devuelve { error }, así que el `catch` nunca saltaba y la
+      // pantalla ponía "Guardado" igualmente. Un usuario de iPhone escribía su
+      // nombre, veía el mensaje verde, salía, y no se había guardado nada.
+      const session = (await getSupabaseBrowser().auth.getSession()).data.session;
+      if (!session) { setErrorGuardar("Tu sesión ha caducado. Vuelve a entrar."); return; }
+
+      const res = await fetch("/api/perfil/actualizar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          full_name: `${perfil.nombre} ${perfil.apellidos}`.trim(),
+          phone: perfil.telefono,
+          ciudad: perfil.ciudad,
+          provincia: perfil.provincia,
+          codigo_postal: perfil.codigo_postal,
+          sector: perfil.sector,
+        }),
+      });
+
+      // Ahora sí se comprueba: solo se dice "guardado" cuando de verdad lo está.
+      if (!res.ok) {
+        const datos = await res.json().catch(() => ({}));
+        setErrorGuardar(datos.error || "No se ha podido guardar. Inténtalo de nuevo.");
+        return;
+      }
       setGuardado(true);
-      setTimeout(() => setGuardado(false), 2000);
-    } catch { /* ignore */ }
+      setTimeout(() => setGuardado(false), 2500);
+    } catch {
+      setErrorGuardar("Sin conexión. Comprueba tu internet e inténtalo otra vez.");
+    } finally {
+      setGuardando(false);
+    }
   }
 
   function updateField(field: keyof PerfilData, value: string) {
@@ -289,9 +325,22 @@ export default function PerfilPage() {
             </h1>
             <p className="text-sm" style={{ color: "#64748b" }}>{email}</p>
           </div>
-          {guardado && (
+          {guardando && !errorGuardar && (
+            <span className="ml-auto text-xs font-medium px-3 py-1 rounded-full" style={{ background: "rgba(148,163,184,0.12)", color: "#94a3b8" }}>
+              Guardando…
+            </span>
+          )}
+          {guardado && !guardando && (
             <span className="ml-auto text-xs font-medium px-3 py-1 rounded-full" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
               ✅ Guardado
+            </span>
+          )}
+          {/* El aviso rojo es la mitad que faltaba. Antes, si el guardado
+              fallaba, salía el verde igualmente y el usuario se iba creyendo
+              que sus datos estaban a salvo. */}
+          {errorGuardar && !guardando && (
+            <span className="ml-auto text-xs font-medium px-3 py-1 rounded-full" style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444" }}>
+              ⚠️ {errorGuardar}
             </span>
           )}
         </div>
