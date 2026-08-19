@@ -7,25 +7,43 @@
  */
 
 const BASE = process.env.BASE_URL || 'https://buscaycurra.es';
-const ALERTS_SECRET = process.env.ALERTS_SECRET || 'bcv-alerts-2026';
+// Sin valor por defecto A PROPOSITO. Antes habia uno escrito aqui, y este
+// fichero esta en un repositorio publico; ademas se rotó en la auditoria, asi
+// que el check fallaba haciendo creer que el endpoint estaba roto cuando lo
+// unico caducado era el secreto. Si no se define, la comprobacion se salta y
+// lo dice, en vez de dar un fallo que no es.
+const ALERTS_SECRET = process.env.ALERTS_SECRET || '';
 
 let passed = 0;
 let failed = 0;
 
+/**
+ * Ejecuta una comprobación. Devuelve una promesa siempre, para poder esperar
+ * a todas antes de dar el resultado.
+ *
+ * OJO: antes esto no hacía `await` de las funciones async, y una promesa
+ * siempre cuenta como verdadera. Resultado: todos los checks que hacían
+ * peticiones HTTP pasaban aunque el sitio estuviera caído. Eran decorativos.
+ */
+const pendientes = [];
 function test(name, fn) {
-  try {
-    const result = fn();
-    if (result) {
-      console.log(`  ✅ ${name}`);
-      passed++;
-    } else {
-      console.log(`  ❌ ${name} — FAIL`);
+  const p = (async () => {
+    try {
+      const result = await fn();
+      if (result) {
+        console.log(`  ✅ ${name}`);
+        passed++;
+      } else {
+        console.log(`  ❌ ${name} — FAIL`);
+        failed++;
+      }
+    } catch (e) {
+      console.log(`  💥 ${name} — ERROR: ${e.message}`);
       failed++;
     }
-  } catch (e) {
-    console.log(`  💥 ${name} — ERROR: ${e.message}`);
-    failed++;
-  }
+  })();
+  pendientes.push(p);
+  return p;
 }
 
 console.log('\n🔒 SELLO DE VERIFICACIÓN BuscayCurra\n');
@@ -79,6 +97,10 @@ test('extractJobTerm: "desarrollador React en Madrid" (compuesto)', () => {
 console.log('\n📋 BLOQUE 3: send-alerts endpoint');
 
 test('GET /api/push/send-alerts responde 200', async () => {
+  if (!ALERTS_SECRET) {
+    console.log('     ↳ se salta: define ALERTS_SECRET para comprobarlo');
+    return true;
+  }
   try {
     const r = await fetch(`${BASE}/api/push/send-alerts`, {
       headers: { Authorization: `Bearer ${ALERTS_SECRET}` }
@@ -113,12 +135,60 @@ test('Guzzi page HTTP 200', async () => {
   }
 });
 
+
+// ═══════════════════════════════════════════════════════════════
+// BLOQUE SEO: las cabeceras que deciden si Google te rastrea
+//
+// POR QUÉ EXISTE ESTE BLOQUE. El 26 de mayo de 2026 se metió
+// `Cache-Control: no-store` en todo el HTML para arreglar un problema de
+// caché en el móvil. Eso le dice a Google que el contenido es efímero, así
+// que bajó el rastreo y la web dejó de salir la primera al buscar
+// "busca y curra". Estuvo así hasta el 16 de agosto: casi TRES MESES, y
+// nadie se dio cuenta porque no había nada que lo vigilara.
+//
+// Estos cuatro checks son ese vigilante. Si alguien vuelve a poner
+// no-store en la home, o mete un noindex, el despliegue falla aquí.
+// ═══════════════════════════════════════════════════════════════
+console.log('\n🔍 BLOQUE SEO: cabeceras y rastreo');
+
+test('La home NO lleva no-store (si lo lleva, Google deja de rastrearla)', async () => {
+  const r = await fetch(BASE);
+  const cc = (r.headers.get('cache-control') || '').toLowerCase();
+  if (cc.includes('no-store')) {
+    console.log(`     ↳ cache-control recibido: ${cc}`);
+    return false;
+  }
+  return true;
+});
+
+test('La home se puede cachear (public / s-maxage)', async () => {
+  const r = await fetch(BASE);
+  const cc = (r.headers.get('cache-control') || '').toLowerCase();
+  return cc.includes('public') || cc.includes('s-maxage');
+});
+
+test('La home NO lleva noindex', async () => {
+  const r = await fetch(BASE);
+  const html = await r.text();
+  const m = html.match(/<meta[^>]+name=["\']robots["\'][^>]*>/i);
+  return !m || !/noindex/i.test(m[0]);
+});
+
+test('robots.txt permite el rastreo y declara el sitemap', async () => {
+  const r = await fetch(`${BASE}/robots.txt`);
+  const txt = await r.text();
+  return /allow:\s*\//i.test(txt) && /sitemap:/i.test(txt) && !/disallow:\s*\/\s*$/im.test(txt);
+});
+
 // ═══════════════════════════════════════════════════════════════
 // RESULTADO
 // ═══════════════════════════════════════════════════════════════
-setTimeout(() => {
-  console.log(`\n${'═'.repeat(50)}`);
-  console.log(`  ✅ Passed: ${passed}  ❌ Failed: ${failed}`);
-  console.log(`${'═'.repeat(50)}\n`);
-  process.exit(failed > 0 ? 1 : 0);
-}, 5000);
+// Se espera a que TODAS terminen. Antes había un setTimeout de 5 segundos a
+// ciegas, que podía cortar comprobaciones a medias y dar el visto bueno sin
+// haberlas hecho.
+await Promise.all(pendientes);
+
+console.log(`\n${'═'.repeat(50)}`);
+console.log(`  ✅ Passed: ${passed}  ❌ Failed: ${failed}`);
+console.log(`${'═'.repeat(50)}\n`);
+process.exit(failed > 0 ? 1 : 0);
