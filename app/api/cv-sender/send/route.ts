@@ -202,27 +202,53 @@ export async function POST(request: NextRequest) {
 
     let tieneCV = cvFiles && cvFiles.length > 0;
 
-    // Si no hay PDF en storage, buscar en la tabla CV (legacy Prisma)
-    if (!tieneCV && userEmail) {
-      const { data: cvRows } = await supabaseAdmin
-        .from("CV")
-        .select("id")
-        .or(`email.eq.${userEmail},userId.eq.${userId}`)
-        .eq("isActive", true)
-        .limit(1);
-      tieneCV = cvRows != null && cvRows.length > 0;
+    // LAS TABLAS DE CV NO ESTÁN EN SUPABASE. Están en la base de datos propia
+    // (buscaycurra-db), que es de donde las lee el worker con `pg`. Aquí se
+    // preguntaban a Supabase, donde `user_cvs` y `CV` devuelven un 404 seco, así
+    // que las dos comprobaciones daban siempre "no tiene CV" y solo salvaba la
+    // de Storage de arriba.
+    //
+    // El resultado era el peor posible: once de los veinticuatro usuarios tenían
+    // su CV hecho en el editor y la aplicación les contestaba "Debes subir tu CV
+    // antes de poder enviar candidaturas". No podían usar la función principal.
+    // Y lo llamativo es que ese fallo ya se había arreglado una vez —el
+    // comentario que había aquí lo contaba— pero contra la base equivocada, así
+    // que el arreglo no tocaba nada.
+    let baseCaida = false;
+    if (!tieneCV) {
+      try {
+        const { getPool } = await import("@/lib/db");
+        const pool = getPool();
+
+        // El CV del editor de currículum, que es el que usa casi todo el mundo.
+        const editor = await pool.query(
+          "SELECT 1 FROM user_cvs WHERE user_id = $1 LIMIT 1",
+          [userId]
+        );
+        tieneCV = editor.rows.length > 0;
+
+        // Y el histórico de Prisma, por si alguien viene de la versión vieja.
+        if (!tieneCV) {
+          const legacy = await pool.query(
+            'SELECT 1 FROM "CV" WHERE ("userId" = $1 OR email = $2) AND "isActive" = true LIMIT 1',
+            [userId, userEmail ?? ""]
+          );
+          tieneCV = legacy.rows.length > 0;
+        }
+      } catch (err) {
+        baseCaida = true;
+        console.error("[API send] No se pudo comprobar el CV en la base propia:", (err as Error).message);
+      }
     }
 
-    // Y sobre todo: el CV creado en el editor de currículum se guarda en user_cvs
-    // (el worker genera el PDF adjunto desde ahí). Antes se ignoraba, y un usuario
-    // con CV creado en el editor recibía "Debes subir tu CV" sin poder candidatearse.
-    if (!tieneCV) {
-      const { data: userCvRows } = await supabaseAdmin
-        .from("user_cvs")
-        .select("id")
-        .eq("user_id", userId)
-        .limit(1);
-      tieneCV = userCvRows != null && userCvRows.length > 0;
+    // Si la base no respondió, se dice lo que pasa. Mandar "Debes subir tu CV" a
+    // alguien que lo tiene subido es peor que un error: le hace perder el rato
+    // buscando un problema suyo que no existe.
+    if (!tieneCV && baseCaida) {
+      return NextResponse.json(
+        { error: "Ahora mismo no podemos comprobar tu CV. No es cosa tuya — vuelve a intentarlo en un minuto." },
+        { status: 503 }
+      );
     }
 
     if (!tieneCV) {

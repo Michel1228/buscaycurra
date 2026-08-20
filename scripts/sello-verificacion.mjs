@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 /**
  * 🔒 SELLO DE VERIFICACIÓN — BuscayCurra
  * 
@@ -243,6 +243,34 @@ test('"visto" y "respondido" gastan cuota (si no, se regenera sola)', () => {
   if (faltan.length) { console.log('     ↳ faltan estados: ' + faltan.join(', ')); return false; }
   // Y estos dos NO deben estar: lo que no salió no gasta cuota.
   return !m[1].includes('fallido') && !m[1].includes('cancelado');
+});
+
+test('Las tablas de CV se piden a la base propia, no a Supabase', () => {
+  // user_cvs y "CV" viven en buscaycurra-db, no en Supabase: alli devuelven un
+  // 404 seco. Preguntar por ellas con supabase.from(...) no da error, da lista
+  // vacia — y eso se traduce en "no tienes CV". Once de los veinticuatro
+  // usuarios tenian su CV hecho en el editor y la aplicacion les decia que lo
+  // subieran. Lo peor: ese fallo ya se habia arreglado una vez, contra la base
+  // equivocada, asi que el arreglo no tocaba nada.
+  const malas = [];
+  const dirs = ['app/api', 'lib'];
+  const recorrer = (d) => {
+    let entradas = [];
+    try { entradas = readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const e of entradas) {
+      const p = d + '/' + e.name;
+      if (e.isDirectory()) { recorrer(p); continue; }
+      if (!/\.tsx?$/.test(e.name)) continue;
+      for (const l of leerFuente(p).split('\n')) {
+        if (/\.from\(\s*["'](user_cvs|CV)["']\s*\)/.test(l) && !l.trim().startsWith('//')) {
+          malas.push(p + ': ' + l.trim().slice(0, 55));
+        }
+      }
+    }
+  };
+  dirs.forEach(recorrer);
+  if (malas.length) { malas.forEach(x => console.log('     ↳ ' + x)); return false; }
+  return true;
 });
 
 test('No se puede encolar dos veces a la misma empresa', () => {
