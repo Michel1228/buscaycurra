@@ -11,6 +11,7 @@ import { generarAuPairHTML } from "@/lib/au-pair-cv-template";
 import type { AuPairProfile, AuPairReference } from "@/lib/au-pair";
 import { PAISES_AU_PAIR_LEGAL, calcularCosteFamilia } from "@/lib/au-pair-legal-data";
 import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
+import { getPlanLimits, type PlanTier } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +20,20 @@ export const dynamic = "force-dynamic";
 const FROM_EMAIL = process.env.FROM_EMAIL ?? "noreply@buscaycurra.es";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-/** Límites de envío diarios según plan */
-const LIMITES: Record<string, number> = {
-  free: 2, esencial: 5, basico: 15, pro: 50, empresa: 9999,
-};
+/**
+ * LOS LÍMITES SON LOS DEL PLAN, no unos aparte.
+ *
+ * Aquí había una tabla escrita a mano que no coincidía con la de verdad: daba
+ * 2 al día en free (el plan da 3), 5 en esencial (da 15) y 9.999 en empresa
+ * (da 200). Y los dos envíos —el CV normal y el perfil de Au Pair— descuentan
+ * de la misma tabla cv_sends, así que el usuario tenía dos topes distintos
+ * sobre un único contador, según por qué puerta entrara.
+ *
+ * Al leerlos de plan-limits.ts, cambiar un plan ahí lo cambia en los dos sitios.
+ */
+function limiteDiario(plan: string): number {
+  return getPlanLimits(plan as PlanTier).enviosCVDia;
+}
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -477,7 +488,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     const plan: string = userProfile?.plan || "free";
-    const limiteHoy = LIMITES[plan] ?? 2;
+    const limiteHoy = limiteDiario(plan);
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -491,7 +502,9 @@ export async function POST(request: NextRequest) {
       .in("status", ESTADOS_QUE_GASTAN_CUOTA)
       .gte("created_at", hoy.toISOString());
 
-    if ((enviadosHoy || 0) >= limiteHoy && plan !== "empresa") {
+    // Sin excepcion para "empresa": ese plan tambien tiene tope (200/dia) y
+    // antes se lo saltaba entero.
+    if ((enviadosHoy || 0) >= limiteHoy) {
       return NextResponse.json(
         { error: `Límite diario de ${limiteHoy} envíos alcanzado` },
         { status: 429 }

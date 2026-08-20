@@ -271,10 +271,15 @@ export default function HomePage() {
             <p className="text-center mb-14" style={{ color: "#9a9378" }}>Empieza gratis. Evoluciona cuando quieras.</p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { nombre: "Gratis", precio: "0€", periodo: "", emoji: <Egg className="w-7 h-7" />, desc: "Para probar", items: ["2 CVs/día", "Buscador básico", "Sin tarjeta"], dest: false, badge: null },
-                { nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: <Sprout className="w-7 h-7" />, desc: "Menos que un café", items: ["5 CVs/día", "IA básica", "Historial completo"], dest: true, badge: <span><Flame className="w-3 h-3 inline" /> Más elegido</span> },
-                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: <Zap className="w-7 h-7" />, desc: "Para encontrar trabajo", items: ["10 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: false, badge: <span><Star className="w-3 h-3 inline" /> Popular</span> },
-                { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: <Rocket className="w-7 h-7" />, desc: "Sin límites", items: ["Envíos ilimitados", "Todo incluido", "Multi-usuarios", "API"], dest: false, badge: null },
+                // LAS CIFRAS SON LAS DE lib/plan-limits.ts, comprobadas una a una.
+                // Aquí ponía 2, 5 y 10 CVs al día cuando el sistema da 3, 15 y 50:
+                // se estaba vendiendo por debajo de lo que la aplicación entrega, y
+                // justo en la pantalla que ve quien ya está dentro y se plantea
+                // pagar. El plan Empresa tampoco es ilimitado — son 200 al día.
+                { nombre: "Gratis", precio: "0€", periodo: "", emoji: <Egg className="w-7 h-7" />, desc: "Para probar", items: ["3 CVs/día", "Buscador básico", "Sin tarjeta"], dest: false, badge: null },
+                { nombre: "Esencial", precio: "2,99€", periodo: "/mes", emoji: <Sprout className="w-7 h-7" />, desc: "Menos que un café", items: ["15 CVs/día", "IA básica", "Historial completo"], dest: true, badge: <span><Flame className="w-3 h-3 inline" /> Más elegido</span> },
+                { nombre: "Pro", precio: "9,99€", periodo: "/mes", emoji: <Zap className="w-7 h-7" />, desc: "Para encontrar trabajo", items: ["50 CVs/día", "IA avanzada", "Estadísticas", "Soporte"], dest: false, badge: <span><Star className="w-3 h-3 inline" /> Popular</span> },
+                { nombre: "Empresa", precio: "49,99€", periodo: "/mes", emoji: <Rocket className="w-7 h-7" />, desc: "Para equipos", items: ["200 CVs/día", "Todo incluido", "Multi-usuarios", "API"], dest: false, badge: null },
               ].map((plan) => (
                 <div key={plan.nombre} className={`card-game p-6 text-center relative ${plan.dest ? "scale-[1.03]" : ""}`}
                   style={plan.dest ? { borderColor: "#7ed56f", boxShadow: "0 0 40px rgba(126,213,111,0.12)" } : {}}>
