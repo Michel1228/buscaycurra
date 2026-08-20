@@ -28,7 +28,7 @@ const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=es.buscay
  * Se deja así, y no puesto ya a true, porque anunciar una descarga que todavía
  * no existe manda al usuario a una página de error de Google.
  */
-const YA_EN_GOOGLE_PLAY = false;
+const YA_EN_GOOGLE_PLAY = true;   // publicada el 20 de agosto de 2026
 
 const FEATURES: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   {
