@@ -612,6 +612,32 @@ export default function CurriculumPage() {
     if (!htmlToUse || descargando) return;
     setDescargando(true);
     try {
+      // EN EL IPHONE HAY QUE IR POR OTRO CAMINO.
+      //
+      // La app de iOS es un WKWebView y Apple bloquea ahí las dos vías
+      // normales: el atributo `download` de un enlace se ignora sin más, y
+      // navegar a una URL `data:` está prohibido desde 2018. Se probaron las
+      // dos y con ninguna pasaba nada — el usuario le daba a descargar y se
+      // quedaba mirando.
+      //
+      // Lo que sí funciona: el servidor guarda el PDF unos minutos y lo sirve
+      // desde una dirección normal con "inline". Al abrirla, iOS enseña el
+      // visor de PDF del propio teléfono, y desde ahí se guarda en Archivos o
+      // se comparte con el botón de siempre.
+      if (esIOSNativo()) {
+        const resVisor = await fetch("/api/cv/pdf-template", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ html: htmlToUse, paraVisor: true }),
+        });
+        if (!resVisor.ok) throw new Error("Error generando PDF");
+        const { id } = await resVisor.json() as { id?: string };
+        if (!id) throw new Error("Sin identificador");
+        // _blank: lo abre fuera del WebView, en el visor del sistema.
+        window.open(`/api/cv/pdf-template?id=${encodeURIComponent(id)}`, "_blank");
+        return;
+      }
+
       const res = await fetch("/api/cv/pdf-template", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -619,28 +645,6 @@ export default function CurriculumPage() {
       });
       if (!res.ok) throw new Error("Error generando PDF");
       const blob = await res.blob();
-
-      // EN EL IPHONE ESTO NO FUNCIONABA. Lo reportó un usuario: le daba a
-      // descargar y no pasaba nada.
-      //
-      // La app de iOS es un WKWebView, y ahí el atributo `download` de un
-      // enlace SE IGNORA: el clic no hace absolutamente nada, sin error ni
-      // aviso. Encima se revocaba la URL del blob justo después del clic, así
-      // que aunque el sistema hubiera empezado a procesarla, se le quitaba de
-      // debajo.
-      //
-      // En iOS se convierte el PDF a una URL de datos y se navega a ella: eso
-      // abre el visor de PDF del propio iPhone, desde donde se puede guardar en
-      // Archivos o compartir con el botón de siempre. Es la vía que funciona
-      // sin añadir plugins nativos ni volver a pasar por revisión de Apple.
-      if (esIOSNativo()) {
-        const lector = new FileReader();
-        lector.onloadend = () => {
-          if (typeof lector.result === "string") window.location.href = lector.result;
-        };
-        lector.readAsDataURL(blob);
-        return;
-      }
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -1158,7 +1162,13 @@ export default function CurriculumPage() {
           </div>
 
           {/* ── COLUMNA DERECHA: Previsualización EN VIVO (solo escritorio) ── */}
-          <div className="hidden xl:block xl:flex-1 xl:min-w-0 xl:sticky xl:top-20 xl:max-w-[50%]">
+          {/* LA VISTA PREVIA EN VIVO.
+              Estaba en "hidden xl:block", o sea que solo aparecia a partir
+              de 1280 pixeles de ancho. En un portatil normal, una tablet o
+              un movil NO se veia, y parecia que la funcion se habia perdido
+              al meter las diez plantillas. El codigo estaba, pero escondido.
+              Ahora entra desde 1024 px; por debajo esta el boton flotante. */}
+          <div className="hidden lg:block lg:flex-1 lg:min-w-0 lg:sticky lg:top-20 lg:max-w-[50%]">
             <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #22c55e40", background: "#fff" }}>
               {/* Cabecera de la preview */}
               <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "#161922", borderBottom: "1px solid #252836" }}>
@@ -1225,6 +1235,20 @@ export default function CurriculumPage() {
       </main>
 
       {/* ── FULLSCREEN CV ── */}
+      {/* En pantallas por debajo de 1024 px la vista previa lateral no cabe,
+          asi que se ofrece a pantalla completa con un boton flotante. Sin esto,
+          en el movil no habia NINGUNA forma de ver como iba quedando el CV: el
+          boton de pantalla completa estaba dentro del panel que se ocultaba. */}
+      {previewHTML && !fullscreen && (
+        <button
+          onClick={() => setFullscreen(true)}
+          className="lg:hidden fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm shadow-lg"
+          style={{ background: "#22c55e", color: "#0f1117", boxShadow: "0 8px 24px rgba(34,197,94,0.35)" }}
+        >
+          👁️ Ver mi CV
+        </button>
+      )}
+
       {fullscreen && previewHTML && (
         <div
           className="fixed inset-0 z-[9999] flex flex-col"
