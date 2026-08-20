@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
+import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
 
 export const dynamic = "force-dynamic";
 
@@ -53,13 +54,13 @@ export async function GET(request: NextRequest) {
       .from("cv_sends")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
-      .in("status", ["enviado", "pendiente"]);
+      .in("status", ESTADOS_QUE_GASTAN_CUOTA);
 
     const { count: cvsEnviadosHoy } = await supabaseAdmin
       .from("cv_sends")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
-      .in("status", ["enviado", "pendiente"])
+      .in("status", ESTADOS_QUE_GASTAN_CUOTA)
       .gte("created_at", hoy.toISOString());
 
     // Entrevistas pendientes (pipeline estado "entrevista") — filtrado en SQL

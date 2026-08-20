@@ -10,6 +10,7 @@ import { generateCVPdf } from "@/lib/cv-generator/generate-pdf";
 import { generarAuPairHTML } from "@/lib/au-pair-cv-template";
 import type { AuPairProfile, AuPairReference } from "@/lib/au-pair";
 import { PAISES_AU_PAIR_LEGAL, calcularCosteFamilia } from "@/lib/au-pair-legal-data";
+import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
 
 export const dynamic = "force-dynamic";
 
@@ -480,11 +481,14 @@ export async function POST(request: NextRequest) {
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
+    // Mismos estados que en lib/cv-sender/rate-limiter.ts, y por el mismo
+    // motivo: sin "visto" y "respondido", un envío que la familia abre deja de
+    // contar y le devuelve al usuario un hueco de su cuota diaria.
     const { count: enviadosHoy } = await adminClient
       .from("cv_sends")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
-      .in("status", ["enviado", "pendiente"])
+      .in("status", ESTADOS_QUE_GASTAN_CUOTA)
       .gte("created_at", hoy.toISOString());
 
     if ((enviadosHoy || 0) >= limiteHoy && plan !== "empresa") {

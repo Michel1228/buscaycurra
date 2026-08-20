@@ -31,6 +31,25 @@ function getSupabase(): any {
 
 export type { UserPlan };
 
+/**
+ * LOS ESTADOS QUE GASTAN CUOTA. Se exporta para que todo el mundo cuente igual.
+ *
+ * Faltaban "visto" y "respondido", y eso abría un agujero: el webhook pasa el
+ * envío de "enviado" a "visto" en cuanto la empresa abre el correo, así que ese
+ * envío desaparecía del recuento y el usuario recuperaba un hueco de su cuota.
+ * Dicho de otra forma: cuanto mejor te iba, más CVs podías mandar por encima de
+ * tu plan. En producción había ya diez filas en "visto" sin contar para nadie.
+ *
+ * Y hacía además que la app se contradijera sola: la pantalla calculaba los
+ * disponibles con una lista y el límite se aplicaba con otra, así que podías
+ * leer "te quedan 3" y recibir "límite alcanzado" al pulsar Enviar.
+ *
+ * "fallido" y "cancelado" quedan fuera a propósito: lo que no llegó a salir no
+ * debe gastar cuota. "pendiente" sí cuenta, para reservar el hueco mientras el
+ * envío está en la cola.
+ */
+export const ESTADOS_QUE_GASTAN_CUOTA = ["enviado", "pendiente", "visto", "respondido"] as const;
+
 /** Resultado de la verificación de límites */
 export interface RateLimitResult {
   allowed: boolean; // ¿Puede enviar?
@@ -101,14 +120,14 @@ export async function checkRateLimit(
     .from("cv_sends")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
-    .in("status", ["enviado", "pendiente"]) // Contamos también los pendientes
+    .in("status", ESTADOS_QUE_GASTAN_CUOTA)
     .gte("created_at", inicioHoy);
 
   const { count: enviadosEsteMes } = await getSupabase()
     .from("cv_sends")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
-    .in("status", ["enviado", "pendiente"])
+    .in("status", ESTADOS_QUE_GASTAN_CUOTA)
     .gte("created_at", inicioMes);
 
   const hoy = enviadosHoy ?? 0;

@@ -47,7 +47,8 @@ function getSupabase(): any {
 /** Datos del perfil de usuario que necesitamos */
 interface UserProfile {
   id: string;
-  full_name: string;
+  /** OJO: en la base de datos esto puede venir a null. 8 de 24 perfiles lo tenian. */
+  full_name: string | null;
   email: string;
   phone?: string;
   linkedin_url?: string;
@@ -91,12 +92,33 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   const userProfile = profileResult.data as UserProfile;
 
+  // EL NOMBRE, CON RED.
+  //
+  // Aqui se cayo un envio de verdad el 8 de agosto de 2026:
+  //
+  //     Cannot read properties of null (reading 'replace')
+  //
+  // El perfil no tenia `full_name`, y la linea que armaba el nombre del
+  // fichero hacia .replace() sobre null. Estaba ademas FUERA del try, asi que
+  // no habia fallback que valiera: el envio moria entero y el usuario se
+  // quedaba creyendo que su CV habia salido. Ocho de los veinticuatro perfiles
+  // de produccion no tenian nombre, o sea que le pasaba a uno de cada tres.
+  //
+  // Se calcula UNA vez y se usa en todas partes: si no, en la carta acababa
+  // saliendo "Un cordial saludo, null".
+  const nombre = (userProfile.full_name || "").trim()
+    || (userProfile.email || "").split("@")[0].replace(/[._-]+/g, " ").trim()
+    || "Candidato";
+
+  /** Para el adjunto: sin espacios ni caracteres que rompan la cabecera. */
+  const nombreFichero = nombre.replace(/\s+/g, "_").replace(/[^\p{L}\p{N}_-]/gu, "") || "Candidato";
+
   await job.updateProgress(25);
 
   // ── Paso 2: Generar PDF de plantilla (o descargar raw como fallback) ─────
   console.log(`[Worker] Paso 2/6: Generando PDF de plantilla para ${userId}...`);
   let cvBuffer: Buffer;
-  let cvFileName = `CV_BuscayCurra_${userProfile.full_name.replace(/\\s+/g, "_")}.pdf`;
+  let cvFileName = `CV_BuscayCurra_${nombreFichero}.pdf`;
   let cvSnapshot = "";
 
   try {
@@ -139,7 +161,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       throw new Error(`No se pudo descargar el CV: ${cvResponse.statusText}`);
     }
     cvBuffer = Buffer.from(await cvResponse.arrayBuffer());
-    cvFileName = `CV_${userProfile.full_name.replace(/\s+/g, "_")}.pdf`;
+    cvFileName = `CV_${nombreFichero}.pdf`;
   }
 
   await job.updateProgress(40);
@@ -161,18 +183,18 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       subjectLine = personalizacion.subjectLine;
     } catch (aiError) {
       console.warn(`[Worker] OpenClaw IA no disponible, usando carta genérica:`, (aiError as Error).message);
-      coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nQuedo a su disposición para cualquier consulta.\n\nUn cordial saludo,\n${userProfile.full_name}`;
+      coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nQuedo a su disposición para cualquier consulta.\n\nUn cordial saludo,\n${nombre}`;
       subjectLine = jobTitle
-        ? `Candidatura para ${jobTitle} — ${userProfile.full_name}`
-        : `Candidatura espontánea — ${userProfile.full_name}`;
+        ? `Candidatura para ${jobTitle} — ${nombre}`
+        : `Candidatura espontánea — ${nombre}`;
     }
   } else {
     // Sin personalización IA
     console.log(`[Worker] Paso 3/6: Usando carta genérica (sin IA)...`);
-    coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nAdjunto mi CV para su consideración.\n\nUn cordial saludo,\n${userProfile.full_name}`;
+    coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nAdjunto mi CV para su consideración.\n\nUn cordial saludo,\n${nombre}`;
     subjectLine = jobTitle
-      ? `Candidatura para ${jobTitle} — ${userProfile.full_name}`
-      : `Candidatura espontánea — ${userProfile.full_name}`;
+      ? `Candidatura para ${jobTitle} — ${nombre}`
+      : `Candidatura espontánea — ${nombre}`;
   }
 
   await job.updateProgress(60);
@@ -203,7 +225,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   const emailResult = await sendCVEmail(
     companyEmail,
     {
-      userName: userProfile.full_name,
+      userName: nombre,
       userEmail: userProfile.email,
       userPhone: userProfile.phone,
       userLinkedIn: userProfile.linkedin_url,
@@ -237,7 +259,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   // Enviar confirmación al usuario
   await sendConfirmationToUser(
     userProfile.email,
-    userProfile.full_name,
+    nombre,
     companyName,
     jobTitle
   );
@@ -258,7 +280,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   await job.updateProgress(100);
 
-  console.log(`[Worker] ✅ Job ${job.id} completado: CV de ${userProfile.full_name} enviado a ${companyName}`);
+  console.log(`[Worker] ✅ Job ${job.id} completado: CV de ${nombre} enviado a ${companyName}`);
 }
 
 // ─── Creación del Worker ─────────────────────────────────────────────────────

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { PLAN_LIMITS, type UserPlan } from "@/lib/cv-sender/plans";
+import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
       .from("cv_sends")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
-      .in("status", ["enviado", "pendiente"])
+      .in("status", ESTADOS_QUE_GASTAN_CUOTA)
       .gte("created_at", hoy.toISOString());
 
     const enviadosHoy = hoyCount || 0;
@@ -75,12 +76,12 @@ export async function GET(request: NextRequest) {
       supabase.from("cv_sends")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId)
-        .in("status", ["enviado", "pendiente"])
+        .in("status", ESTADOS_QUE_GASTAN_CUOTA)
         .gte("created_at", inicioSemana.toISOString()),
       supabase.from("cv_sends")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId)
-        .in("status", ["enviado", "pendiente"])
+        .in("status", ESTADOS_QUE_GASTAN_CUOTA)
         .gte("created_at", inicioMes.toISOString()),
     ]);
 

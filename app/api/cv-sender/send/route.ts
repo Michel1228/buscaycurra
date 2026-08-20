@@ -35,7 +35,28 @@ async function programarEmpresasAdicionales(opts: {
 }) {
   try {
     const { buscarOfertasReales } = await import("@/lib/job-search/real-search");
-    const ofertas = await buscarOfertasReales(opts.jobTitle, "España", 15);
+
+    // DÓNDE BUSCAR. Antes iba fijo a "España", y ahí había dos errores: el
+    // segundo parámetro es una CIUDAD, no un país (así que "España" no es un
+    // valor válido para ese hueco), y además la aplicación no es solo española
+    // — un usuario de Berlín que activaba el envío automático recibía empresas
+    // españolas durante dos semanas.
+    //
+    // Se usa la ciudad de su perfil. Si no la ha rellenado se deja vacío, que
+    // es lo que el buscador entiende como "en cualquier sitio": mejor eso que
+    // mandarle a un país donde no vive.
+    const supabaseCiudad = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { data: perfilUbicacion } = await supabaseCiudad
+      .from("profiles")
+      .select("ciudad")
+      .eq("id", opts.userId)
+      .maybeSingle();
+    const ciudadUsuario = (perfilUbicacion?.ciudad || "").trim();
+
+    const ofertas = await buscarOfertasReales(opts.jobTitle, ciudadUsuario, 15);
 
     // Filtrar: con email, no contactada recientemente, distinta a la ya programada
     const candidatas = ofertas.filter(o =>
