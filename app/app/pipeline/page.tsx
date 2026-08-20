@@ -109,9 +109,21 @@ export default function PipelinePage() {
       if (!session) return;
       // Leer el estado actual de candidaturas, no el capturado al abrir el modal
       const currentEstado = candidaturas.find(c => c.id === candidaturaEdit.id)?.estado || candidaturaEdit.estado;
-      await getSupabaseBrowser().from("cv_sends").update({
+      // SE COMPRUEBA EL ERROR. Supabase no lanza excepcion cuando falla:
+      // devuelve { error }, asi que el catch de abajo no salta nunca. Sin esto,
+      // la pantalla daba las notas por guardadas y al recargar habian
+      // desaparecido — paso de verdad cuando la migracion 013b dejo la tabla
+      // sin permisos para el rol de usuarios (403 permission denied).
+      const { error } = await getSupabaseBrowser().from("cv_sends").update({
         error_message: JSON.stringify({ pipeline_estado: currentEstado, notas: notasEdit, salario: salarioEdit, contacto: contactoEdit })
       }).eq("id", candidaturaEdit.id);
+
+      if (error) {
+        console.error("[pipeline] no se guardaron las notas:", error.message);
+        alert("No se han podido guardar las notas. Inténtalo de nuevo en un momento.");
+        return;
+      }
+
       setCandidaturas(prev => prev.map(c => c.id === candidaturaEdit.id ? { ...c, notas: notasEdit, salario: salarioEdit, contacto: contactoEdit } : c));
       setModalAbierto(false);
     } catch (e) {

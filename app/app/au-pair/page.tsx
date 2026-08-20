@@ -653,16 +653,22 @@ export default function AuPairProfilePage() {
 
 
       {/* ── Navegación por secciones ──────────────────────────────────
-          Cinco botones en vez de un scroll interminable. Se ve de un vistazo
-          todo lo que hay, y se entra directo a lo que se busca. */}
+          Los CUATRO PASOS del proceso van numerados y en orden, porque cada
+          uno depende del anterior: no se puede ver la plantilla sin datos, ni
+          enviarla sin plantilla.
+
+          "Costes y visado" va SEPARADO y sin número, a la derecha. No es un
+          paso: es material de consulta que se mira ANTES de decidir si te vas
+          de au pair. Puesto el quinto, quien llegaba nuevo tenía que pasar por
+          delante de cuatro pasos de trabajo para encontrar justo lo que le
+          ayuda a decidir. */}
       <nav className="max-w-3xl mx-auto px-4 sm:px-6 mb-5">
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 items-stretch">
           {([
             { id: "datos",     n: "1", label: "Mis datos",      desc: "Nombre, idiomas y fotos" },
             { id: "historia",  n: "2", label: "Mi historia",    desc: "Experiencia y carta" },
             { id: "plantilla", n: "3", label: "Mi plantilla",   desc: "Cómo queda el perfil" },
             { id: "enviar",    n: "4", label: "Enviar",         desc: "Mandarlo a una familia" },
-            ...(esNanny ? [] : [{ id: "costes", n: "5", label: "Costes y visado", desc: "Cuánto cuesta irse" }]),
           ] as const).map(s => {
             const activa = seccion === s.id;
             return (
@@ -684,6 +690,28 @@ export default function AuPairProfilePage() {
               </button>
             );
           })}
+
+          {/* Separado del proceso a propósito: esto se consulta, no se rellena. */}
+          {!esNanny && (
+            <>
+              <span className="flex-shrink-0 w-px my-1.5" style={{ background: "#252836" }} />
+              <button
+                onClick={() => { setSeccion("costes"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                className="flex-shrink-0 px-3 py-2.5 rounded-xl text-left transition"
+                style={{
+                  background: seccion === "costes" ? "rgba(245,158,11,0.12)" : "#161922",
+                  border: `1px solid ${seccion === "costes" ? "rgba(245,158,11,0.4)" : "#252836"}`,
+                  color: seccion === "costes" ? "#f59e0b" : "#94a3b8",
+                  minWidth: "142px",
+                }}
+              >
+                <span className="block text-xs font-semibold">💰 Costes y visado</span>
+                <span className="block text-[10px] mt-0.5 leading-tight" style={{ color: seccion === "costes" ? "rgba(245,158,11,0.7)" : "#64748b" }}>
+                  ¿Me compensa irme?
+                </span>
+              </button>
+            </>
+          )}
         </div>
       </nav>
 
