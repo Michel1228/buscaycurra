@@ -62,3 +62,10 @@ va-audit-report.json
 # Respaldo de la TWA de Android, anterior a migrar a Capacitor (20 ago 2026).
 # Se conserva en local por si hay que volver atrás; no tiene sentido en el repo.
 android-twa-respaldo/
+
+# Contrasenas de firma de Android: JAMAS al repositorio.
+android/keystore.properties
+*.jks
+*.keystore
+android/.idea/
+android/.kotlin/

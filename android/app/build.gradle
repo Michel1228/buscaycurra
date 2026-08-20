@@ -1,6 +1,29 @@
 apply plugin: 'com.android.application'
 
 android {
+    // LAS CONTRASENAS NO SE ESCRIBEN AQUI. Este fichero va al repositorio, que
+    // es publico: una clave de firma escrita aqui la puede coger cualquiera y
+    // publicar actualizaciones falsas de la aplicacion.
+    //
+    // Se leen de android/keystore.properties, que esta en .gitignore. Si ese
+    // fichero no existe (por ejemplo al clonar el repo en otro equipo), la
+    // compilacion de release simplemente no se firma, y se avisa.
+    signingConfigs {
+        release {
+            def propsFile = rootProject.file("keystore.properties")
+            if (propsFile.exists()) {
+                def props = new Properties()
+                props.load(new FileInputStream(propsFile))
+                storeFile file(props["storeFile"])
+                storePassword props["storePassword"]
+                keyAlias props["keyAlias"]
+                keyPassword props["keyPassword"]
+            } else {
+                println "AVISO: falta android/keystore.properties — la version de release no se firmara"
+            }
+        }
+    }
+
     namespace = "es.buscaycurra.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
@@ -18,6 +41,7 @@ android {
     }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
