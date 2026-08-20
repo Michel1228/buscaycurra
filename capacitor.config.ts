@@ -11,6 +11,25 @@ const config: CapacitorConfig = {
     url: "https://buscaycurra.es",
     cleartext: false,
   },
+  android: {
+    // ANDROID PASA DE TWA A CAPACITOR.
+    //
+    // Hasta la version 5 (1.0.4), la app de Android NO era Capacitor: era una
+    // TWA (Trusted Web Activity), es decir, Chrome sin barra de direcciones
+    // mostrando la web. Por eso se sentia como un navegador y no como una app,
+    // el APK pesaba 35 kB, y los plugins de camara, notificaciones y compartir
+    // NO funcionaban en Android — solo en iPhone.
+    //
+    // La TWA original queda guardada en android-twa-respaldo/ por si hay que
+    // volver atras.
+    backgroundColor: "#0f1117",
+    // El teclado no debe tapar los campos al escribir en el chat de Guzzi.
+    windowSoftInputMode: "adjustResize",
+    // Sin esto, en algunos moviles el WebView deja una franja blanca arriba.
+    allowMixedContent: false,
+    captureInput: true,
+    webContentsDebuggingEnabled: false,
+  },
   ios: {
     contentInset: "always",
     backgroundColor: "#0f1117",
