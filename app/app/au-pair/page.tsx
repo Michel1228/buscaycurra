@@ -23,6 +23,9 @@ import {
 
 const MAX_FOTOS = 6;
 
+/** Las cinco secciones en que se reparte la pagina. */
+type Seccion = "datos" | "historia" | "plantilla" | "enviar" | "costes";
+
 export default function AuPairProfilePage() {
   const router = useRouter();
   const supabase = getSupabaseBrowser();
@@ -56,6 +59,14 @@ export default function AuPairProfilePage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [references, setReferences] = useState<AuPairReference[]>([]);
+
+  // QUE SECCION SE ESTA VIENDO.
+  //
+  // Antes todo iba apilado en una sola columna: trece bloques seguidos, y la
+  // calculadora de costes quedaba en la linea 1196 de 1305 — habia que pasar
+  // por delante de doce secciones para llegar. Lo que no se ve, para la mitad
+  // de la gente no existe.
+  const [seccion, setSeccion] = useState<Seccion>("datos");
   const [paisDestino, setPaisDestino] = useState("UK");
   const [tipoPerfil, setTipoPerfil] = useState<"joven_estudiante" | "con_experiencia" | "profesional_cambio">("joven_estudiante");
   const [modo, setModo] = useState<"au_pair" | "live_in_nanny">("au_pair");
@@ -640,6 +651,42 @@ export default function AuPairProfilePage() {
         <AlojamientoOferta country={paisDestino} />
       </section>
 
+
+      {/* ── Navegación por secciones ──────────────────────────────────
+          Cinco botones en vez de un scroll interminable. Se ve de un vistazo
+          todo lo que hay, y se entra directo a lo que se busca. */}
+      <nav className="max-w-3xl mx-auto px-4 sm:px-6 mb-5">
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {([
+            { id: "datos",     n: "1", label: "Mis datos",      desc: "Nombre, idiomas y fotos" },
+            { id: "historia",  n: "2", label: "Mi historia",    desc: "Experiencia y carta" },
+            { id: "plantilla", n: "3", label: "Mi plantilla",   desc: "Cómo queda el perfil" },
+            { id: "enviar",    n: "4", label: "Enviar",         desc: "Mandarlo a una familia" },
+            ...(esNanny ? [] : [{ id: "costes", n: "5", label: "Costes y visado", desc: "Cuánto cuesta irse" }]),
+          ] as const).map(s => {
+            const activa = seccion === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => { setSeccion(s.id as Seccion); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                className="flex-shrink-0 px-3 py-2.5 rounded-xl text-left transition"
+                style={{
+                  background: activa ? "rgba(236,72,153,0.12)" : "#161922",
+                  border: `1px solid ${activa ? "rgba(236,72,153,0.4)" : "#252836"}`,
+                  color: activa ? "#ec4899" : "#94a3b8",
+                  minWidth: "132px",
+                }}
+              >
+                <span className="block text-xs font-semibold">{s.n}. {s.label}</span>
+                <span className="block text-[10px] mt-0.5 leading-tight" style={{ color: activa ? "rgba(236,72,153,0.7)" : "#64748b" }}>
+                  {s.desc}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
       {/* Formulario */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-16 space-y-6">
         {mensaje && (
@@ -649,6 +696,7 @@ export default function AuPairProfilePage() {
           <div className="bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-xl p-4 text-sm text-[#ef4444]">{error}</div>
         )}
 
+        {seccion === "datos" && (<>
         {/* ── Datos personales ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
@@ -918,6 +966,8 @@ export default function AuPairProfilePage() {
           )}
         </div>
 
+        </>)}
+        {seccion === "historia" && (<>
         {/* ── Experiencia con niños ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
@@ -1052,6 +1102,8 @@ export default function AuPairProfilePage() {
 
         {/* Vista previa */}
         {/* ── Plantilla en vivo ── */}
+        </>)}
+        {seccion === "plantilla" && (<>
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
@@ -1094,6 +1146,8 @@ export default function AuPairProfilePage() {
           )}
         </div>
 
+        </>)}
+        {seccion === "enviar" && (<>
         {/* ── Enviar perfil a familia ── */}
         <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
@@ -1185,12 +1239,13 @@ export default function AuPairProfilePage() {
             {saving ? "Guardando..." : <><Save size={14} strokeWidth={1.8} className="inline mr-1.5" />{T.guardarPerfil}</>}
           </button>
         </div>
+        </>)}
       </section>
 
       {/* Comparativa legal y calculadora de costes son específicas de Au Pair
           (visado cultural, paga de bolsillo semanal). No aplican a Live-in Nanny,
           que es empleo profesional con salario — por eso solo se muestran en Au Pair. */}
-      {!esNanny && (
+      {!esNanny && seccion === "costes" && (
         <>
           <AuPairComparativaLegal />
           <AuPairCalculadoraCostes />
