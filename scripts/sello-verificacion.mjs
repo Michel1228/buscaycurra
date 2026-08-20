@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { readFileSync } from 'fs';
 /**
  * 🔒 SELLO DE VERIFICACIÓN — BuscayCurra
  * 
@@ -178,6 +179,77 @@ test('robots.txt permite el rastreo y declara el sitemap', async () => {
   const r = await fetch(`${BASE}/robots.txt`);
   const txt = await r.text();
   return /allow:\s*\//i.test(txt) && /sitemap:/i.test(txt) && !/disallow:\s*\/\s*$/im.test(txt);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// BLOQUE ENVÍOS: los candados de la cadena de CV
+// ═══════════════════════════════════════════════════════════════
+// El 8 de agosto de 2026 un envío murió con "Cannot read properties of
+// null (reading 'replace')" y el usuario nunca se enteró: la pantalla le
+// había dicho que su CV salía. La causa era una línea que hacía
+// .replace() sobre profiles.full_name, que puede venir a null — y once
+// de los veinticuatro perfiles de producción lo tenían así.
+//
+// Estos candados leen el código fuente, no la web, porque el fallo vive
+// ahí. Si alguien vuelve a tocar el nombre sin red, o a contar la cuota
+// por su cuenta, el despliegue se para aquí.
+// ═══════════════════════════════════════════════════════════════
+console.log('\n📮 BLOQUE ENVÍOS: la cadena de CV');
+
+const leerFuente = (p) => { try { return readFileSync(p, 'utf-8'); } catch { return ''; } };
+
+test('El nombre del usuario nunca se usa a pelo en el worker', () => {
+  const src = leerFuente('lib/cv-sender/worker.ts');
+  if (!src) { console.log('     ↳ no se pudo leer lib/cv-sender/worker.ts'); return false; }
+  // Nada de full_name suelto fuera del tipo y del SELECT: para eso está `nombre`.
+  // Se exceptúa la línea que precisamente calcula `nombre`, que es el único
+  // sitio donde tocar full_name directamente es lo correcto — sin esta excusa,
+  // el candado saltaba contra el propio arreglo.
+  const crudos = src.split('\n').filter(l =>
+    l.includes('userProfile.full_name')
+    && !l.trim().startsWith('//')
+    && !l.includes('const nombre ='));
+  if (crudos.length) {
+    console.log('     ↳ ' + crudos.length + ' uso(s) directo(s) de userProfile.full_name; usa la variable nombre');
+    return false;
+  }
+  return src.includes('const nombre =') && src.includes('"Candidato"');
+});
+
+test('El tipo del perfil admite que full_name venga a null', () => {
+  return /full_name:\s*string\s*\|\s*null/.test(leerFuente('lib/cv-sender/worker.ts'));
+});
+
+test('La cuota se cuenta con una sola lista de estados', () => {
+  const ficheros = ['lib/cv-sender/rate-limiter.ts', 'app/api/user/stats/route.ts',
+                    'app/api/dashboard/route.ts', 'app/api/au-pair/send/route.ts'];
+  const sueltos = [];
+  for (const p of ficheros) {
+    for (const l of leerFuente(p).split('\n')) {
+      // Una lista escrita a mano se salta el criterio común: así fue como la
+      // pantalla decía "te quedan 3" y el envío contestaba "límite alcanzado".
+      if (/\.in\(\s*["']status["']\s*,\s*\[/.test(l)) sueltos.push(p + ': ' + l.trim().slice(0, 55));
+    }
+  }
+  if (sueltos.length) { sueltos.forEach(x => console.log('     ↳ ' + x)); return false; }
+  return true;
+});
+
+test('"visto" y "respondido" gastan cuota (si no, se regenera sola)', () => {
+  const src = leerFuente('lib/cv-sender/rate-limiter.ts');
+  const m = src.match(/ESTADOS_QUE_GASTAN_CUOTA\s*=\s*\[([^\]]+)\]/);
+  if (!m) { console.log('     ↳ no existe ESTADOS_QUE_GASTAN_CUOTA'); return false; }
+  const faltan = ['enviado', 'pendiente', 'visto', 'respondido'].filter(e => !m[1].includes(e));
+  if (faltan.length) { console.log('     ↳ faltan estados: ' + faltan.join(', ')); return false; }
+  // Y estos dos NO deben estar: lo que no salió no gasta cuota.
+  return !m[1].includes('fallido') && !m[1].includes('cancelado');
+});
+
+test('No se puede encolar dos veces a la misma empresa', () => {
+  const src = leerFuente('lib/cv-sender/tracker.ts');
+  // "pendiente" tiene que contar, y hay que tratarlo aparte: su sent_at es null,
+  // y la resta de fechas daba NaN, que en la comparación dejaba pasar el envío.
+  return /\.in\("status",\s*\["pendiente"/.test(src) && src.includes('status === "pendiente"');
 });
 
 // ═══════════════════════════════════════════════════════════════

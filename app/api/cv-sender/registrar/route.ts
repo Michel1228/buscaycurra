@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       .insert({
         user_id: userId,
         company_name: companyName.slice(0, 200),
-        company_email: companyEmail,
+        company_email: companyEmail.trim().toLowerCase(),
         company_url: (companyUrl || "").slice(0, 500),
         job_title: (jobTitle || "").slice(0, 200),
         status: "enviado",

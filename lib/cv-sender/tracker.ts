@@ -79,7 +79,9 @@ export async function recordSent(
 ): Promise<string | null> {
   const record: CVSendRecord = {
     user_id: userId,
-    company_email: companyEmail,
+    // Siempre en minusculas: es la clave con la que luego se compara para
+    // respetar los quince dias entre envios a la misma empresa.
+    company_email: companyEmail.trim().toLowerCase(),
     company_name: extras?.company_name ?? "Empresa desconocida",
     status,
     sent_at: status === "enviado" ? new Date().toISOString() : undefined,
@@ -220,7 +222,7 @@ export async function getCompanyHistory(companyEmail: string): Promise<CVSendRec
   const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("*")
-    .eq("company_email", companyEmail)
+    .eq("company_email", companyEmail.trim().toLowerCase())
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -245,25 +247,45 @@ export async function canSendToCompany(
   companyEmail: string,
   minDays = 15
 ): Promise<boolean> {
+  // El email, siempre en minúsculas. Se guarda normalizado en recordSent, y si
+  // aquí se buscara tal cual llega, un "RRHH@empresa.com" venido de Google
+  // Places no encontraría el "rrhh@empresa.com" del historial y se saltaría la
+  // espera de quince días.
+  const email = companyEmail.trim().toLowerCase();
+
+  // "pendiente" también cuenta, y esto faltaba: si el usuario ya tiene un envío
+  // encolado para esta empresa y todavía no ha salido, encolar otro le manda a
+  // la empresa dos CVs idénticos con minutos de diferencia. Es justo la clase de
+  // repetición que hace que a uno lo marquen como spam.
   const { data, error } = await getSupabase()
     .from("cv_sends")
-    .select("sent_at")
+    .select("sent_at, created_at, status")
     .eq("user_id", userId)
-    .eq("company_email", companyEmail)
-    .in("status", ["enviado", "visto", "respondido"]) // todos cuentan para el periodo de 15 días
-    .order("sent_at", { ascending: false })
+    .eq("company_email", email)
+    .in("status", ["pendiente", "enviado", "visto", "respondido"])
+    .order("created_at", { ascending: false })
     .limit(1);
 
   if (error || !data || data.length === 0) {
     return true; // No hay historial previo, se puede enviar
   }
 
-  const ultimoEnvio = new Date(data[0].sent_at);
+  const ultimo = data[0];
+
+  // Un envío aún en la cola bloquea sin más cuentas. Y hay que tratarlo aparte:
+  // los "pendiente" tienen sent_at a null, así que la resta de fechas daba NaN,
+  // NaN < minDays es false, y la función acababa devolviendo "sí, adelante".
+  if (ultimo.status === "pendiente") {
+    console.log(`[Tracker] Ya hay un envío en cola para ${email}. No se encola otro.`);
+    return false;
+  }
+
+  const ultimoEnvio = new Date(ultimo.sent_at ?? ultimo.created_at);
   const diasTranscurridos = (Date.now() - ultimoEnvio.getTime()) / (1000 * 60 * 60 * 24);
 
   if (diasTranscurridos < minDays) {
     console.log(
-      `[Tracker] Muy pronto para enviar a ${companyEmail}. Han pasado ${Math.floor(diasTranscurridos)} días (mínimo: ${minDays})`
+      `[Tracker] Muy pronto para enviar a ${email}. Han pasado ${Math.floor(diasTranscurridos)} días (mínimo: ${minDays})`
     );
     return false;
   }

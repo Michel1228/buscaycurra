@@ -533,7 +533,7 @@ ${userName}`;
     await adminClient.from("cv_sends").insert({
       user_id: userId,
       company_name: familyName || "Host Family",
-      company_email: familyEmail,
+      company_email: familyEmail.trim().toLowerCase(),
       job_title: "Au Pair",
       status: "pendiente",
       sent_at: null,
