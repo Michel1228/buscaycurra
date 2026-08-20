@@ -35,12 +35,17 @@ let redis: Redis | null = null;
 function getRedis(): Redis | null {
   if (redis) return redis;
   try {
+    // Misma configuracion que lib/places-quota.ts, que lleva tiempo
+    // funcionando. Con enableOfflineQueue en false fallaba con "Stream isn't
+    // writeable": rechazaba la peticion antes de que la conexion estuviera
+    // lista, en vez de esperarla.
     redis = new Redis(process.env.REDIS_URL || "redis://buscaycurra-redis:6379", {
       maxRetriesPerRequest: 2,
-      lazyConnect: false,
-      enableOfflineQueue: false,
+      connectTimeout: 3000,
+      lazyConnect: true,
     });
-    redis.on("error", () => { /* sin Redis se sigue por la vía normal */ });
+    redis.on("error", () => { /* sin Redis, quien llama devuelve 503 */ });
+    redis.connect().catch(() => { redis = null; });
     return redis;
   } catch {
     return null;
