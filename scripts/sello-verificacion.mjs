@@ -180,6 +180,37 @@ test('robots.txt permite el rastreo y declara el sitemap', async () => {
   const txt = await r.text();
   return /allow:\s*\//i.test(txt) && /sitemap:/i.test(txt) && !/disallow:\s*\/\s*$/im.test(txt);
 });
+test('robots.txt prohíbe /api/ a TODOS los bots, no solo a Google', async () => {
+  // Un grupo de robots.txt no termina con una línea en blanco ni con un
+  // comentario: termina con el siguiente "User-agent". Aquí los Disallow
+  // estaban escritos bajo el bloque de Googlebot, así que Bing, Yandex y el
+  // resto se quedaban con un "Allow: /" pelado y podían recorrer /api/ —
+  // consultas reales y PDFs con Chromium en un servidor de dos núcleos.
+  const r = await fetch(`${BASE}/robots.txt`);
+  const txt = await r.text();
+
+  // Trocear por grupos de User-agent, como hace un rastreador de verdad.
+  const grupos = {};
+  let actual = null;
+  for (const linea of txt.split('\n')) {
+    const l = linea.replace(/#.*$/, '').trim();
+    if (!l) continue;
+    const ua = l.match(/^user-agent:\s*(.+)$/i);
+    if (ua) { actual = ua[1].trim(); grupos[actual] = grupos[actual] || []; continue; }
+    if (actual) grupos[actual].push(l.toLowerCase());
+  }
+
+  const comodin = grupos['*'] || [];
+  const faltan = ['/api/', '/app/', '/auth/'].filter(
+    ruta => !comodin.some(l => l.startsWith('disallow:') && l.includes(ruta))
+  );
+  if (faltan.length) {
+    console.log(`     ↳ el grupo "*" no prohíbe: ${faltan.join(', ')}`);
+    return false;
+  }
+  return true;
+});
+
 
 // ═══════════════════════════════════════════════════════════════
 // BLOQUE ENVÍOS: los candados de la cadena de CV

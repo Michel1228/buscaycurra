@@ -1,15 +1,36 @@
+# robots.txt de BuscayCurra
+#
+# OJO CON LOS GRUPOS. Un grupo de reglas NO termina con una línea en blanco ni
+# con un comentario: termina cuando aparece el siguiente "User-agent". Aquí
+# había tres Disallow escritos debajo del bloque de Googlebot, así que
+# pertenecían solo a Googlebot — y todos los demás rastreadores (Bing, Yandex,
+# GPTBot y compañía) se quedaban con un "Allow: /" a secas y podían entrar en
+# /api/, /app/ y /auth/. Recorrer /api/ significa lanzar consultas de verdad y
+# generar PDFs con Chromium en un servidor de dos núcleos.
+#
+# Por eso ahora las prohibiciones van en el grupo "*", que vale para todos, y
+# el grupo de Googlebot solo añade lo que le interesa priorizar.
+#
+# Este fichero manda sobre app/robots.ts: en Next.js lo que está en public/ se
+# sirve tal cual y la ruta generada no llega a ejecutarse. Se dejó aquí, en un
+# fichero estático, porque un robots.txt que falla al generarse es un robots.txt
+# que no existe.
+
 User-agent: *
 Allow: /
-Sitemap: https://buscaycurra.es/sitemap.xml
-
-# Prioridad máxima para Google - páginas de ofertas y países
-User-agent: Googlebot
-Allow: /empleo/oferta/
-Allow: /trabajar-en/
-Allow: /empleo/
-Crawl-delay: 0
-
-# Bloquear rutas internas sin valor SEO
 Disallow: /app/
 Disallow: /auth/
 Disallow: /api/
+
+# Google, además, va directo a lo que de verdad posiciona: las páginas de país
+# y las ofertas. Sin Crawl-delay: no lo respeta, y ponerlo a 0 solo servía para
+# invitar al resto de bots a rastrear sin freno.
+User-agent: Googlebot
+Allow: /trabajar-en/
+Allow: /empleo/
+Allow: /empleo/oferta/
+Disallow: /app/
+Disallow: /auth/
+Disallow: /api/
+
+Sitemap: https://buscaycurra.es/sitemap.xml
