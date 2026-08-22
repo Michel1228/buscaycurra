@@ -370,6 +370,25 @@ test('Ninguna pantalla llama sin token a un endpoint que exige la cabecera', () 
   if (rotos.length) { rotos.forEach(r => console.log('     ↳ ' + r)); return false; }
   return true;
 });
+test('La subida de PDF no se fía solo de file.type (el iPhone lo manda vacío)', () => {
+  // Cuando el fichero se elige desde Archivos o iCloud Drive, iOS entrega
+  // file.type VACÍO. Comparar contra "application/pdf" a secas rechazaba el
+  // currículum antes de subirlo: el usuario de iPhone veía "Solo se aceptan
+  // archivos PDF" con un PDF válido, y no llegaba ni a la extracción de datos.
+  const malos = [];
+  for (const p of ['app/app/curriculum/Content.tsx', 'components/GusiChat.tsx']) {
+    const src = leerFuente(p);
+    if (/file\.type\s*!==\s*["']application\/pdf["']/.test(src)) {
+      malos.push(p + ': compara file.type a pelo, sin mirar la extensión');
+    }
+    if (!/\.pdf\$\/i\.test\(file\.name\)/.test(src)) {
+      malos.push(p + ': no acepta por extensión .pdf');
+    }
+  }
+  if (malos.length) { malos.forEach(m => console.log('     ↳ ' + m)); return false; }
+  return true;
+});
+
 
 
 // ═══════════════════════════════════════════════════════════════

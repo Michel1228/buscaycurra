@@ -412,7 +412,20 @@ export default function CurriculumPage() {
   }
 
   async function subirPDF(file: File) {
-    if (file.type !== "application/pdf") { setError("Solo se aceptan archivos PDF."); return; }
+    // EL IPHONE NO SIEMPRE DICE QUE ES UN PDF.
+    //
+    // Cuando el fichero se elige desde Archivos o iCloud Drive, iOS entrega
+    // `file.type` VACÍO. Comparar contra "application/pdf" a secas rechazaba
+    // el currículum antes de subirlo, así que el usuario de iPhone veía "Solo
+    // se aceptan archivos PDF" con un PDF perfectamente válido en la mano, y
+    // no llegaba ni a la parte que lee los datos.
+    //
+    // Se acepta por tipo O por extensión: basta con que una de las dos cosas
+    // diga que es un PDF.
+    const esPDF = file.type === "application/pdf"
+      || file.type === "application/x-pdf"
+      || /.pdf$/i.test(file.name);
+    if (!esPDF) { setError("Solo se aceptan archivos PDF."); return; }
     if (file.size > 5 * 1024 * 1024) { setError("El PDF no puede superar 5 MB."); return; }
     setSubiendoPDF(true);
     setError("");
@@ -976,7 +989,7 @@ export default function CurriculumPage() {
               <label className={`shrink-0 px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
                 style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }}>
                 {subiendoPDF ? "Procesando…" : "📎 Subir PDF"}
-                <input type="file" accept=".pdf" className="hidden"
+                <input type="file" accept="application/pdf,.pdf" className="hidden"
                   onChange={e => e.target.files?.[0] && subirPDF(e.target.files[0])}
                   disabled={subiendoPDF} />
               </label>

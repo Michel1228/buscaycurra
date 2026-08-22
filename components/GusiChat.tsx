@@ -293,7 +293,20 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     if (!file) return;
     e.target.value = "";
 
-    if (file.type !== "application/pdf") {
+    // EL IPHONE NO SIEMPRE DICE QUE ES UN PDF.
+    //
+    // Cuando el fichero se elige desde Archivos o iCloud Drive, iOS entrega
+    // `file.type` VACÍO. Comparar contra "application/pdf" a secas rechazaba
+    // el currículum antes de subirlo, así que el usuario de iPhone veía "Solo
+    // se aceptan archivos PDF" con un PDF perfectamente válido en la mano, y
+    // no llegaba ni a la parte que lee los datos.
+    //
+    // Se acepta por tipo O por extensión: basta con que una de las dos cosas
+    // diga que es un PDF.
+    const esPDF = file.type === "application/pdf"
+      || file.type === "application/x-pdf"
+      || /.pdf$/i.test(file.name);
+    if (!esPDF) {
       addMsg("gusi", "⚠️ Solo acepto PDFs. Por favor, selecciona un archivo .pdf");
       return;
     }
@@ -791,7 +804,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                 style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
                 <Paperclip className="w-5 h-5" />
               </button>
-              <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleFile} />
+              <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleFile} />
               <button onClick={() => imageRef.current?.click()} title="Foto de cartel/tienda (OCR)" aria-label="Hacer foto"
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
                 style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
