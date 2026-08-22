@@ -310,6 +310,67 @@ test('No se puede encolar dos veces a la misma empresa', () => {
   // y la resta de fechas daba NaN, que en la comparación dejaba pasar el envío.
   return /\.in\("status",\s*\["pendiente"/.test(src) && src.includes('status === "pendiente"');
 });
+test('Ninguna pantalla llama sin token a un endpoint que exige la cabecera', () => {
+  // EL FALLO QUE VIGILA. /api/cv/extraer exige "Authorization" y sin ella
+  // devuelve 401. El editor de currículum y Guzzi lo llamaban sin la cabecera,
+  // así que el autorrelleno no se ejecutaba nunca: el usuario subía su PDF,
+  // leía "✅ PDF procesado" y los campos seguían vacíos. Lo mismo pasaba con el
+  // perfil de Au Pair: guardar sí llevaba token, cargar no, o sea que se
+  // guardaba bien y al volver aparecía en blanco.
+  //
+  // OJO CON EL FALSO POSITIVO. Solo cuentan los endpoints que leen la cabecera
+  // A PELO. Los que usan getUserId() aceptan también la cookie de sesión, así
+  // que desde el navegador funcionan sin token — marcarlos sería ruido.
+  const soloCabecera = new Set();
+  const recorrer = (dir, fn) => {
+    let entradas = [];
+    try { entradas = readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entradas) {
+      const p = dir + '/' + e.name;
+      if (e.isDirectory()) recorrer(p, fn); else fn(p, e.name);
+    }
+  };
+
+  recorrer('app/api', (p, nombre) => {
+    if (nombre !== 'route.ts') return;
+    const src = leerFuente(p);
+    if (/headers\.get\(\s*["']Authorization["']\s*\)/.test(src)
+        && !/getUserId\s*\(/.test(src)
+        && /status:\s*401/.test(src)) {
+      soloCabecera.add(p.replace(/^app/, '').replace(/\/route\.ts$/, ''));
+    }
+  });
+
+  // Excepciones comprobadas contra producción, con su motivo.
+  const excusadas = new Set([
+    // El GET es público (devuelve 200 sin token, verificado); solo el POST de
+    // publicar reseña pide sesión, y ese sí la manda.
+    '/api/reviews',
+  ]);
+
+  const rotos = [];
+  for (const raiz of ['app', 'components']) {
+    recorrer(raiz, (p, nombre) => {
+      if (p.startsWith('app/api/') || !/\.tsx?$/.test(nombre)) return;
+      const src = leerFuente(p);
+      if (!src.includes('"use client"')) return;
+      const lineas = src.split('\n');
+      for (let i = 0; i < lineas.length; i++) {
+        const m = lineas[i].match(/fetch\(\s*[`"'](\/api\/[^`"'?]+)/);
+        if (!m) continue;
+        const ruta = m[1].replace(/\/$/, '');
+        if (!soloCabecera.has(ruta) || excusadas.has(ruta)) continue;
+        if (!/Authorization/.test(lineas.slice(i, i + 8).join(' '))) {
+          rotos.push(`${p}:${i + 1} → ${ruta}`);
+        }
+      }
+    });
+  }
+
+  if (rotos.length) { rotos.forEach(r => console.log('     ↳ ' + r)); return false; }
+  return true;
+});
+
 
 // ═══════════════════════════════════════════════════════════════
 // RESULTADO
@@ -322,4 +383,13 @@ await Promise.all(pendientes);
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`  ✅ Passed: ${passed}  ❌ Failed: ${failed}`);
 console.log(`${'═'.repeat(50)}\n`);
-process.exit(failed > 0 ? 1 : 0);
+// SIN process.exit(). En Windows, cortar el proceso mientras libuv todavía está
+// cerrando las conexiones de los fetch revienta con
+//
+//     Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\win\async.c
+//
+// y el sello acababa devolviendo un código 127 con CERO fallos. Un sello que
+// revienta al salir no protege: da un fallo que no existe y para el despliegue
+// por nada. Marcando exitCode, Node cierra lo que tenga pendiente y se va con
+// el código correcto.
+process.exitCode = failed > 0 ? 1 : 0;

@@ -435,7 +435,16 @@ export default function CurriculumPage() {
 
       const extractData = new FormData();
       extractData.append("file", file);
-      const extractRes = await fetch("/api/cv/extraer", { method: "POST", body: extractData });
+      // LA CABECERA HACE FALTA. /api/cv/extraer exige sesión y sin ella
+      // devuelve 401, así que el autorrelleno no llegaba a ejecutarse nunca:
+      // el usuario subía su PDF, veía "✅ PDF procesado" y los campos seguían
+      // vacíos. La sesión ya estaba cogida diez líneas más arriba, para subir
+      // el fichero; simplemente no se pasaba aquí.
+      const extractRes = await fetch("/api/cv/extraer", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: extractData,
+      });
 
       if (extractRes.ok) {
         const parsed = await extractRes.json();
@@ -480,8 +489,15 @@ export default function CurriculumPage() {
           }));
         }
       }
-      setError("✅ PDF procesado — revisa los campos");
-      setTimeout(() => setError(""), 3000);
+      if (!extractRes.ok) {
+        // Se dice lo que ha pasado. Antes salía "✅ PDF procesado" tanto si se
+        // habían rellenado los campos como si no se había leído nada.
+        setError("Tu PDF está guardado, pero no hemos podido leer los datos para rellenar los campos. Complétalos a mano.");
+        setTimeout(() => setError(""), 6000);
+      } else {
+        setError("✅ PDF procesado — revisa los campos");
+        setTimeout(() => setError(""), 3000);
+      }
     } catch {
       setError("Error al procesar el PDF.");
     } finally {

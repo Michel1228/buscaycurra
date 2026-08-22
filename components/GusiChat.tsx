@@ -336,8 +336,11 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       addMsg("gusi", "🔍 Leyendo tu CV con IA... un momento");
       const extractData = new FormData();
       extractData.append("file", file);
+      // Sin esta cabecera el endpoint responde 401 y Guzzi acababa diciendo
+      // "✅ ¡CV subido!" sin haber leído una sola línea del currículum.
       const extractRes = await fetch("/api/cv/extraer", {
         method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: extractData,
       });
 

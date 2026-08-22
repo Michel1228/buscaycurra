@@ -120,7 +120,17 @@ export default function AuPairProfilePage() {
       setUserId(user.id);
 
       try {
-        const res = await fetch(`/api/au-pair/profile?userId=${user.id}`);
+        // GUARDAR LLEVABA TOKEN; CARGAR, NO.
+        //
+        // /api/au-pair/profile exige la cabecera Authorization y sin ella
+        // responde 401, así que el perfil no se cargaba nunca: el usuario
+        // rellenaba sus datos, se guardaban bien, y al volver a entrar se los
+        // encontraba todos en blanco. El catch de más abajo se tragaba el
+        // fallo sin decir nada.
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`/api/au-pair/profile?userId=${user.id}`, {
+          headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
+        });
         const json = await res.json();
         if (json.profile) {
           const p = json.profile as AuPairProfile;

@@ -114,7 +114,12 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const res = await fetch(`/api/au-pair/profile?userId=${user.id}`);
+      // Con la cabecera: sin ella el endpoint devuelve 401 y aquí se
+      // interpretaba como "este usuario no tiene perfil de Au Pair".
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`/api/au-pair/profile?userId=${user.id}`, {
+        headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
+      });
       const json = await res.json() as { profile?: unknown };
       setPerfilAuPair(!!json.profile);
     } catch { /* ignorar */ }
