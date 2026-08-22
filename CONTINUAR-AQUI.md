@@ -177,3 +177,36 @@ arriba). Los otros cuatro murieron al agotarse el límite de sesión:
 - **Guzzi** — alcanzó a apuntar que `company ~*` no tiene índice de trigramas
 
 Al retomar, esas cuatro áreas siguen sin auditar.
+
+---
+
+## Último arreglo de la sesión (22 ago, 22:25) — el CV en iPhone
+
+El usuario de Apple avisó de que el autorrelleno **seguía** sin funcionar
+después del arreglo de la tarde. Tenía razón: el fallo estaba **antes**.
+
+```ts
+if (file.type !== "application/pdf") { ... }   // ← rechazaba el PDF
+```
+
+Cuando el fichero se elige desde **Archivos o iCloud Drive**, iOS entrega
+`file.type` **vacío**. Esa línea rechazaba el currículum antes de subirlo, así
+que no llegaba ni a la extracción que se arregló por la tarde: el usuario veía
+"Solo se aceptan archivos PDF" con un PDF válido en la mano.
+
+Ahora se acepta por tipo **o** por extensión, y el `accept` del input declara
+las dos formas. Desplegado y verificado dentro del bundle que recibe el móvil.
+
+**Antes de llegar ahí se descartaron cuatro cosas, todas con su prueba:**
+
+- El endpoint funciona: PDF real con token → HTTP 200 en 1,7 s, y la IA
+  devolvió nombre, teléfono, email, ciudad, 2 experiencias y 1 formación
+- El JavaScript servido sí lleva el token (comprobado en los bundles
+  compilados, no en el código fuente)
+- El service worker no cachea: solo tiene push, no tiene evento `fetch`
+- `/app/curriculum` va con `no-store`, así que no hay HTML viejo cacheado
+
+**Dile al usuario de Apple que lo pruebe otra vez.** Si sigue fallando, lo
+siguiente que hay que mirar es qué llega en `file.name` desde su iPhone.
+
+Sello: **29 de 29**. Servidor: carga 0,73, portada en 0,29 s.
