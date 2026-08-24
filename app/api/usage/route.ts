@@ -6,12 +6,6 @@ import { createClient } from "@supabase/supabase-js";
 import { getPlanLimits } from "@/lib/plan-limits";
 
 function todayKey() { return new Date().toISOString().slice(0, 10); }
-function weekKey() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  const weekNum = Math.ceil(((now.getTime() - start.getTime()) / 86400000 + start.getDay() + 1) / 7);
-  return `${now.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
-}
 
 export async function GET(request: NextRequest) {
   const supabase = createClient(
@@ -46,27 +40,42 @@ export async function GET(request: NextRequest) {
   const limits = getPlanLimits(plan);
 
   const today = todayKey();
-  const week = weekKey();
 
-  // Uso de hoy
+  // Uso de hoy (consultas Guzzi: usage_tracking sigue siendo la fuente para esto)
   const { data: todayUsage } = await supabaseAdmin
     .from("usage_tracking")
-    .select("guzzi_consultas, envios_cv")
+    .select("guzzi_consultas")
     .eq("user_id", user.id)
     .eq("date_key", today)
     .single();
 
-  // Uso de la semana
-  const { data: weekRows } = await supabaseAdmin
-    .from("usage_tracking")
-    .select("envios_cv")
-    .eq("user_id", user.id)
-    .eq("week_key", week);
+  // Envios: usage_tracking.envios_cv nunca se incrementaba (trackCVSend() no
+  // lo llamaba nadie), asi que este contador siempre marcaba 0 aunque el
+  // usuario ya hubiera gastado su cuota. El limite real de envios se aplica
+  // contando filas de cv_sends (ver /api/cv-sender/envios-hoy) — se cuenta
+  // de la misma tabla aqui para que lo que el usuario VE coincida con lo que
+  // de verdad se lo bloquea.
+  const inicioHoy = new Date();
+  inicioHoy.setHours(0, 0, 0, 0);
+  const inicioSemana = new Date();
+  inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+  inicioSemana.setHours(0, 0, 0, 0);
 
-  const enviosSemana = (weekRows ?? []).reduce((sum: number, r: { envios_cv: number }) => sum + r.envios_cv, 0);
+  const { count: enviosHoyCount } = await supabaseAdmin
+    .from("cv_sends")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", inicioHoy.toISOString());
+
+  const { count: enviosSemanaCount } = await supabaseAdmin
+    .from("cv_sends")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", inicioSemana.toISOString());
 
   const guzziUsadas = todayUsage?.guzzi_consultas ?? 0;
-  const enviosHoy = todayUsage?.envios_cv ?? 0;
+  const enviosHoy = enviosHoyCount ?? 0;
+  const enviosSemana = enviosSemanaCount ?? 0;
 
   return NextResponse.json({
     plan: plan === "basico" ? "esencial" : plan,

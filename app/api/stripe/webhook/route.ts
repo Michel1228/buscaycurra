@@ -55,12 +55,20 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Idempotencia: evitar procesar el mismo evento dos veces ─────────────
+    // El upsert con ignoreDuplicates nunca decia si el evento YA existia: se
+    // procesaba siempre, tabla o no. Con .select() sabemos si de verdad se
+    // inserto una fila nueva; si no hay fila (conflicto = evento repetido),
+    // se corta aqui y no se reprocesa.
     try {
-      const { error: insertError } = await supabaseAdmin
+      const { data: eventoInsertado, error: insertError } = await supabaseAdmin
         .from("stripe_events")
-        .upsert({ id: event.id }, { onConflict: "id", ignoreDuplicates: true });
+        .upsert({ id: event.id }, { onConflict: "id", ignoreDuplicates: true })
+        .select("id");
       if (insertError) {
         console.error("[stripe/webhook] Error en idempotencia:", insertError.message);
+      } else if (!eventoInsertado || eventoInsertado.length === 0) {
+        console.log(`[stripe/webhook] Evento ${event.id} ya procesado, se ignora`);
+        return NextResponse.json({ recibido: true, duplicado: true });
       }
     } catch {
       // La tabla puede no existir — continuar de todas formas
@@ -177,6 +185,46 @@ export async function POST(request: NextRequest) {
             .update({ subscription_status: "past_due", updated_at: new Date().toISOString() })
             .eq("stripe_customer_id", customerId);
           console.log(`[stripe/webhook] Pago fallido — subscription_status marcado como past_due para customer ${customerId}`);
+        }
+        break;
+      }
+
+      // ── Pago recuperado tras un fallo: volver a 'active' ──────────────────
+      // Sin esto, un cliente marcado past_due se quedaba asi para siempre
+      // aunque pagara despues, y perdia el acceso a Guzzi de por vida.
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as { id: string })?.id;
+        if (customerId) {
+          const { error: errorRecuperar } = await supabaseAdmin
+            .from("profiles")
+            .update({ subscription_status: "active", updated_at: new Date().toISOString() })
+            .eq("stripe_customer_id", customerId)
+            .eq("subscription_status", "past_due");
+          if (errorRecuperar) {
+            console.error("[stripe/webhook] Error al recuperar de past_due:", errorRecuperar.message);
+          } else {
+            console.log(`[stripe/webhook] Pago recuperado — subscription_status vuelve a 'active' para customer ${customerId}`);
+          }
+        }
+        break;
+      }
+
+      // ── Stripe reintenta el cobro en background y a veces recupera la
+      // suscripcion sin pasar por invoice.payment_succeeded — este evento
+      // es el que lo confirma cuando status vuelve a 'active'/'trialing'.
+      case "customer.subscription.updated": {
+        const suscripcion = event.data.object as Stripe.Subscription;
+        const customerId = suscripcion.customer as string;
+        if (suscripcion.status === "active" || suscripcion.status === "trialing") {
+          const { error: errorActualizar } = await supabaseAdmin
+            .from("profiles")
+            .update({ subscription_status: "active", updated_at: new Date().toISOString() })
+            .eq("stripe_customer_id", customerId)
+            .eq("subscription_status", "past_due");
+          if (errorActualizar) {
+            console.error("[stripe/webhook] Error al sincronizar subscription_status:", errorActualizar.message);
+          }
         }
         break;
       }
