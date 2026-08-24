@@ -360,9 +360,62 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       if (extractRes.ok) {
         const parsed = await extractRes.json();
         if (parsed.fuente && parsed.nombre) {
+          // Guzzi extraía los datos y los ENSEÑABA en el chat, pero nunca los
+          // guardaba: decía "los campos se han rellenado en la página de CV"
+          // y esa página, al no encontrar nada guardado, solo rellenaba el
+          // email (por defecto al del login). El resto se quedaba vacío.
+          let aptStr = "";
+          if (Array.isArray(parsed.aptitudes)) aptStr = parsed.aptitudes.join(", ");
+          else if (typeof parsed.aptitudes === "string") aptStr = parsed.aptitudes;
+
+          let idiomaStr = "";
+          if (Array.isArray(parsed.idiomas)) {
+            idiomaStr = parsed.idiomas.map((i: { nombre: string; nivel: number } | string) =>
+              typeof i === "string" ? i : `${i.nombre}:${i.nivel}`
+            ).join(", ");
+          } else if (typeof parsed.idiomas === "string") idiomaStr = parsed.idiomas;
+
+          const normExp = (parsed.experiencia || []).map((e: { fechas?: string; puesto?: string; empresa?: string; ubicacion?: string; descripcion?: string | string[] }) => ({
+            fechas: e.fechas || "",
+            puesto: e.puesto || "",
+            empresa: e.empresa || "",
+            ubicacion: e.ubicacion || "",
+            descripcion: Array.isArray(e.descripcion) ? e.descripcion.join("\n") : (e.descripcion || ""),
+          }));
+
+          const normEdu = (parsed.formacion || []).map((f: { titulo?: string; centro?: string; ubicacion?: string }) => ({
+            titulo: f.titulo || "",
+            centro: f.centro || "",
+            ubicacion: f.ubicacion || "",
+          }));
+
+          const cvData = {
+            nombre: parsed.nombre || "",
+            apellidos: parsed.apellidos || "",
+            subtitulo: parsed.subtitulo || "",
+            telefono: parsed.telefono || "",
+            email: parsed.email || "",
+            ciudad: parsed.ciudad || "",
+            perfilProfesional: parsed.perfilProfesional || "",
+            aptitudes: aptStr,
+            idiomas: idiomaStr,
+            experiencia: normExp,
+            formacion: normEdu,
+          };
+
+          const guardarRes = await fetch("/api/gusi/cv", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+            body: JSON.stringify({ userId: session.user.id, cvData, cvText: JSON.stringify(cvData) }),
+          });
+
           const exp = (parsed.experiencia || []).slice(0, 3);
           const expText = exp.map((e: {puesto?: string; empresa?: string}) => `  • ${e.puesto || "?"} en ${e.empresa || "?"}`).join("\n");
-          addMsg("gusi", `✅ **¡CV subido y analizado!** 🎉\n\n👤 **${parsed.nombre} ${parsed.apellidos || ""}**\n📞 ${parsed.telefono || "Sin teléfono"}\n📧 ${parsed.email || "Sin email"}\n📍 ${parsed.ciudad || "Sin ciudad"}\n${expText ? `\n💼 Experiencia:\n${expText}` : ""}\n\n✨ **Los campos se han rellenado** en la página de CV.\n\n¿Qué hacemos ahora?\n📧 **Enviar CV automáticamente**\n🔍 Buscar ofertas que encajen\n✨ Mejorar el CV con IA`);
+          if (guardarRes.ok) {
+            addMsg("gusi", `✅ **¡CV subido y analizado!** 🎉\n\n👤 **${parsed.nombre} ${parsed.apellidos || ""}**\n📞 ${parsed.telefono || "Sin teléfono"}\n📧 ${parsed.email || "Sin email"}\n📍 ${parsed.ciudad || "Sin ciudad"}\n${expText ? `\n💼 Experiencia:\n${expText}` : ""}\n\n✨ **Los campos se han rellenado** en la página de CV.\n\n¿Qué hacemos ahora?\n📧 **Enviar CV automáticamente**\n🔍 Buscar ofertas que encajen\n✨ Mejorar el CV con IA`);
+          } else {
+            addMsg("gusi", `📄 **¡Te leí el CV!** 🎉\n\n👤 **${parsed.nombre} ${parsed.apellidos || ""}**\n📞 ${parsed.telefono || "Sin teléfono"}\n📧 ${parsed.email || "Sin email"}\n📍 ${parsed.ciudad || "Sin ciudad"}\n\n⚠️ No pude guardar estos datos en tu perfil. Ve a 📄 **Currículum** y súbelo ahí directamente para que se rellene.`);
+          }
         } else {
           addMsg("gusi", "✅ **¡CV subido!** 🎉\n\nNo pude leer todos los datos automáticamente, pero tu PDF está guardado.\n\nVe a 📄 **Currículum** para rellenar los campos manualmente o mejorarlos con IA.");
         }
