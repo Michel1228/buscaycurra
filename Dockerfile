@@ -38,6 +38,13 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Chromium para generación de PDFs con Playwright (plantillas CV y Au Pair)
+# poppler-utils da el binario pdftotext que pide app/api/cv/extraer/route.ts.
+# Nunca estuvo instalado, asi que TODA extraccion de CV caia siempre al
+# fallback en JS (regex sobre los bytes crudos del PDF): con PDFs modernos
+# (streams comprimidos, fuentes con subconjunto de glifos, que es casi
+# cualquier PDF de Word/LibreOffice/Canva) ese fallback produce texto
+# corrupto: nombre y apellidos salian como basura binaria ilegible aunque el
+# telefono a veces sobrevivia por casualidad.
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -46,7 +53,8 @@ RUN apk add --no-cache \
     ca-certificates \
     ttf-freefont \
     font-noto \
-    font-noto-emoji
+    font-noto-emoji \
+    poppler-utils
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 
 # Standalone Next.js output
