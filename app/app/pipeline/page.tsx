@@ -263,7 +263,12 @@ export default function PipelinePage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Pipeline de candidaturas</h1>
-              <p className="text-xs mt-1" style={{ color: "#64748b" }}>Arrastra las tarjetas entre columnas para actualizar el estado</p>
+              {/* El drag nativo (draggable/onDragStart) no funciona con gestos tactiles en
+                  iOS/Android — solo es de raton. La app movil carga esta misma web, asi que
+                  para ese publico la unica via real es tocar la tarjeta y usar "Mover a
+                  columna" del modal. El texto lo menciona para que no se queden intentando
+                  arrastrar con el dedo sin saber que hay alternativa. */}
+              <p className="text-xs mt-1" style={{ color: "#64748b" }}>Arrastra las tarjetas entre columnas, o toca una tarjeta para moverla</p>
             </div>
             <button onClick={() => setModalNueva(true)}
               className="px-4 py-2 text-xs font-semibold rounded-xl transition hover:opacity-90"
