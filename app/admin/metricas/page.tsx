@@ -19,8 +19,18 @@ interface Metricas {
   planes: Record<string, number>;
   suscriptores: { activos: number; conOrigenPago: number };
   actividad: { cvTotal: number; cv7: number; cv30: number; conversaciones: number };
-  ofertas: { vivas: number; conEmail: number; paises: number; nuevas24h: number };
+  ofertas: { vivas: number; conEmail: number; paises: number; nuevas24h: number; error?: string };
+  descargas?: { apple: DescargasTienda; googlePlay: DescargasTienda };
   cobros: { numero: number; importe: number; moneda: string; disponible: boolean };
+}
+
+interface DescargasTienda {
+  configurado: boolean;
+  total: number;
+  ultimoDia: number;
+  fechaUltimoDia: string | null;
+  porDia: Record<string, number>;
+  aviso?: string;
 }
 
 function Tarjeta({ titulo, valor, pie, color = "#22c55e" }: {
@@ -31,6 +41,46 @@ function Tarjeta({ titulo, valor, pie, color = "#22c55e" }: {
       <p className="text-[11px] uppercase tracking-wide mb-1" style={{ color: "#64748b" }}>{titulo}</p>
       <p className="text-3xl font-bold leading-none" style={{ color }}>{valor}</p>
       {pie && <p className="text-[11px] mt-1.5" style={{ color: "#94a3b8" }}>{pie}</p>}
+    </div>
+  );
+}
+
+/**
+ * Descargas de una tienda. Cuando no hay credenciales dice qué falta y enlaza
+ * al panel de la tienda, en vez de pintar un cero que se leería como "nadie se
+ * la ha descargado".
+ */
+function TarjetaTienda({ nombre, datos, enlace }: {
+  nombre: string; datos?: DescargasTienda; enlace: string;
+}) {
+  const listo = datos?.configurado;
+  return (
+    <div className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+      <div className="flex items-baseline justify-between mb-1">
+        <p className="text-[11px] uppercase tracking-wide" style={{ color: "#64748b" }}>{nombre}</p>
+        <a href={enlace} target="_blank" rel="noopener noreferrer"
+           className="text-[10px] hover:underline" style={{ color: "#22c55e" }}>abrir panel →</a>
+      </div>
+
+      {listo ? (
+        <>
+          <p className="text-3xl font-bold leading-none" style={{ color: "#a855f7" }}>
+            {datos!.total.toLocaleString("es-ES")}
+          </p>
+          <p className="text-[11px] mt-1.5" style={{ color: "#94a3b8" }}>
+            {datos!.fechaUltimoDia
+              ? `+${datos!.ultimoDia} el ${new Date(datos!.fechaUltimoDia).toLocaleDateString("es-ES")}`
+              : "sin descargas registradas todavía"}
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="text-3xl font-bold leading-none" style={{ color: "#3a3f4d" }}>—</p>
+          <p className="text-[11px] mt-1.5" style={{ color: "#f59e0b" }}>
+            {datos?.aviso || "Sin configurar"}
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -192,19 +242,23 @@ export default function PanelMetricas() {
           <Tarjeta titulo="Nuevas hoy" valor={d.ofertas.nuevas24h.toLocaleString("es-ES")} color="#3b82f6" />
         </div>
 
-        <div className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-          <p className="text-[11px] uppercase tracking-wide mb-2" style={{ color: "#64748b" }}>Descargas de las tiendas</p>
-          <p className="text-xs mb-3" style={{ color: "#94a3b8" }}>
-            Apple y Google no dejan consultarlas desde aquí. Se miran en sus paneles:
-          </p>
-          <div className="flex flex-col gap-1.5">
-            <a href="https://appstoreconnect.apple.com/analytics/app/d30/6775232067/metrics"
-               target="_blank" rel="noopener noreferrer"
-               className="text-xs hover:underline" style={{ color: "#22c55e" }}>App Store Connect →</a>
-            <a href="https://play.google.com/console" target="_blank" rel="noopener noreferrer"
-               className="text-xs hover:underline" style={{ color: "#22c55e" }}>Google Play Console →</a>
-          </div>
+        <p className="text-[11px] uppercase tracking-wide mb-2" style={{ color: "#64748b" }}>Descargas de las tiendas</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <TarjetaTienda
+            nombre="App Store"
+            datos={d.descargas?.apple}
+            enlace="https://appstoreconnect.apple.com/analytics/app/d30/6775232067/overview"
+          />
+          <TarjetaTienda
+            nombre="Google Play"
+            datos={d.descargas?.googlePlay}
+            enlace="https://play.google.com/console/developers/app-list"
+          />
         </div>
+        <p className="text-[11px] mt-2" style={{ color: "#64748b" }}>
+          Las tiendas publican el dato de un día cuando ese día ya ha cerrado, así que van
+          con 24-48 h de retraso. El contador de usuarios de arriba sí es instantáneo.
+        </p>
       </div>
     </div>
   );
