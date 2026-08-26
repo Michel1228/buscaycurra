@@ -31,6 +31,15 @@ const vacio = (aviso: string): DescargasTienda => ({
 // dispararía decenas de llamadas por hora para recalcular siempre lo mismo.
 const cacheDias = new Map<string, number>();
 
+/**
+ * Tope de días que se piden a la tienda en un mismo arranque. La caché vive en
+ * memoria, así que al reiniciar el contenedor se pierde y habría que volver a
+ * pedirlo todo: sin tope, dentro de un año serían 365 llamadas seguidas
+ * bloqueando la primera carga del panel. Con 120 el barrido en frío tarda unos
+ * segundos y a partir de ahí solo se piden los días nuevos.
+ */
+const MAX_DIAS_POR_ARRANQUE = 120;
+
 function hoyISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -123,13 +132,18 @@ export async function descargasApple(): Promise<DescargasTienda> {
     const porDia: Record<string, number> = {};
 
     // Solo se piden los días que no estén ya cacheados. El de hoy nunca se
-    // cachea: su informe todavía no ha cerrado y cambiaría.
-    for (const dia of diasEntre(desde, hoyISO())) {
+    // cachea: su informe todavía no ha cerrado y cambiaría. Se recorre de más
+    // reciente a más antiguo para que, si se llega al tope, lo que falte sea
+    // lo más viejo y no lo de esta semana.
+    let pedidos = 0;
+    for (const dia of diasEntre(desde, hoyISO()).reverse()) {
       const clave = `apple:${dia}`;
       if (cacheDias.has(clave)) {
         porDia[dia] = cacheDias.get(clave)!;
         continue;
       }
+      if (pedidos >= MAX_DIAS_POR_ARRANQUE) break;
+      pedidos++;
       const n = await descargasAppleDia(jwt, vendorNumber, dia);
       if (n === null) continue;
       porDia[dia] = n;
