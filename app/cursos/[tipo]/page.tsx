@@ -15,6 +15,7 @@ import {
   AlertCircle, ArrowLeft, Clock, Euro, Globe, RefreshCw, Sparkles,
 } from "lucide-react";
 import PublicHeader from "@/components/PublicHeader";
+import PrepararSolicitud from "@/components/PrepararSolicitud";
 import {
   tipoPorSlug, tiposPorPais, NOMBRE_SECTOR, precioResumido, duracionResumida,
 } from "@/lib/cursos/tipos";
@@ -270,10 +271,13 @@ export default async function FichaCurso({ params }: { params: Promise<{ tipo: s
           </Seccion>
         )}
 
-        {/* ── Salida a la app ── */}
+        {/* ── Lo que nos mete dentro del proceso, no solo informando ── */}
+        <PrepararSolicitud slug={t.slug} nombre={t.nombre} />
+
+        {/* ── Y una vez lo tenga, el trabajo ── */}
         <div
           className="rounded-xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-3"
-          style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.04))", border: "1px solid rgba(34,197,94,0.2)" }}
+          style={{ background: "#1e212b", border: "1px solid #2d3142" }}
         >
           <Sparkles size={20} strokeWidth={1.8} className="shrink-0" style={{ color: "#22c55e" }} />
           <div className="flex-1">

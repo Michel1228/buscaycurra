@@ -73,6 +73,12 @@ export interface TipoCurso {
   opcionesGratuitas: OpcionGratuita[];
   /** Pasos concretos, en orden. */
   comoSacarlo: string[];
+  /**
+   * Papeles que pide ESTE curso además de los de siempre (DNI, demanda de
+   * empleo, CV). Se listan aparte porque es lo primero con lo que la gente se
+   * atasca: llegan a la matrícula y les falta algo que tardan días en pedir.
+   */
+  documentosExtra?: string[];
   /** Cómo se llama lo equivalente en otros países (para quien emigra). */
   equivalenteEn?: { pais: string; nombre: string; nota: string }[];
   fuentes: Fuente[];
@@ -234,6 +240,9 @@ export const TIPOS_CURSO: TipoCurso[] = [
       "Si lo pagas, comprueba que el certificado cite la UNE 58451. Sin esa referencia, muchas empresas no lo aceptan.",
       "Apúntate la fecha: a los 5 años toca reciclarlo.",
     ],
+    documentosExtra: [
+      "Certificado médico o declaración de aptitud — algunos centros lo piden porque hay parte práctica con máquina",
+    ],
     equivalenteEn: [
       { pais: "DE", nombre: "Staplerschein", nota: "Formación según DGUV Grundsatz 308-001. El español no se convalida automáticamente." },
       { pais: "UK", nombre: "Forklift licence (RTITB o ITSSAR)", nota: "Se pide la acreditación de uno de esos organismos." },
@@ -350,6 +359,10 @@ export const TIPOS_CURSO: TipoCurso[] = [
       "Haz la formación en prevención que te corresponda: las horas cambian según tu oficio y tu puesto.",
       "Solicita la tarjeta en la Fundación Laboral de la Construcción con la formación y la vida laboral.",
       "Consulta siempre en la Fundación qué formación exacta te toca: depende del convenio y del oficio.",
+    ],
+    documentosExtra: [
+      "Informe de vida laboral — hay que acreditar 30 días trabajados en el sector en los últimos 5 años. Se pide gratis en la Seguridad Social y tarda un rato en llegar: pídelo antes de nada.",
+      "Certificado de la formación en prevención que hayas hecho",
     ],
     equivalenteEn: [
       { pais: "UK", nombre: "CSCS Card", nota: "Se pide en casi todas las obras. Hay que pasar un test de salud y seguridad." },
