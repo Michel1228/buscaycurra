@@ -53,7 +53,19 @@ jobs:
   sync-careerjet:
     name: "Careerjet ${{ matrix.country }} × ${{ matrix.batch }} c"
     runs-on: ubuntu-latest
+    # `needs` se mantiene SOLO para que Careerjet vaya DESPUÉS de Adzuna y no
+    # se solapen dos sincronizaciones sobre un servidor de dos núcleos.
+    #
+    # El `if: always()` es lo importante: sin él, `needs` significa además
+    # "solo si Adzuna terminó BIEN", y como Adzuna vive al 95 % de su cuota
+    # diaria (2.500 de 2.640, 11 de sus 12 claves agotadas), basta con que UN
+    # país suyo falle para que se salten los 21 países de Careerjet.
+    #
+    # Eso es justo lo que estaba pasando: Careerjet llevaba 21 peticiones de
+    # las 20.000 que tiene al día — el 0,1 % — mientras Adzuna se ahogaba.
+    # La API con más margen de todas era la que no se estaba usando.
     needs: sync-adzuna
+    if: always()
     strategy:
       fail-fast: false
       matrix:
