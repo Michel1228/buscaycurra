@@ -1,12 +1,24 @@
 import { MetadataRoute } from "next";
 import { LISTA_PAISES } from "@/lib/paises";
+import { tiposPorPais } from "@/lib/cursos/tipos";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://buscaycurra.es";
 
+  // Las fichas de curso salen del catálogo: al añadir un tipo nuevo entra solo
+  // aquí, sin tener que acordarse de tocar esta lista.
+  const paginasCursos: MetadataRoute.Sitemap = tiposPorPais("ES").map(t => ({
+    url: `${baseUrl}/cursos/${t.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
     { url: `${baseUrl}/precios`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${baseUrl}/cursos`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    ...paginasCursos,
     { url: `${baseUrl}/trabajar-en`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/empleo`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
     { url: `${baseUrl}/empresas`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
