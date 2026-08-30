@@ -29,6 +29,7 @@ User-agent: Googlebot
 Allow: /trabajar-en/
 Allow: /empleo/
 Allow: /empleo/oferta/
+Allow: /cursos/
 Disallow: /app/
 Disallow: /auth/
 Disallow: /api/
