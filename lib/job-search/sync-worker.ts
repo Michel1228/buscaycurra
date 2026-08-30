@@ -434,7 +434,25 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
 function detectCategoria(title: string): string | null {
   const t = title.toLowerCase();
   // Oper / fábrica / almacén
+  //
+  // OJO: esto solo miraba títulos EN ESPAÑOL, y la base tiene 2,2 millones de
+  // ofertas repartidas por 26 países. Resultado: casi todo lo de fuera se
+  // quedaba sin categoría. Medido contra producción, solo en inglés había
+  // 5.252 ofertas que son de almacén de manual y no se clasificaban:
+  //   warehouse operative 2.177 · forklift operator 1.973
+  //   production operative  881 · picker packer       221
+  // Son justo los puestos que pide quien se saca el carné de carretillero.
   if (/\b(operario|operador|pe[oó]n\b|carretillero|reponedor|empaquetador|manipulador|montador|mozo\s.*almac[eé]n|producci[oó]n\b|f[aá]brica|almac[eé]n\b|log[ií]stica)\b/i.test(t)) return 'oper';
+  // Inglés (UK, IE, US, CA, AU, NZ, SG — y muchas ofertas europeas en inglés)
+  if (/\b(warehouse|forklift|fork\s?lift|order\s+picker|picker|packer|production\s+operative|machine\s+operator|assembly\s+(line|worker|operative)|factory\s+worker|logistics\s+operative|goods\s+in|stock\s+(handler|assistant))\b/i.test(t)) return 'oper';
+  // Alemán (DE, AT, CH)
+  if (/\b(lager(ist|arbeiter|helfer|mitarbeiter)?|stapler(fahrer)?|kommissionierer|produktionsmitarbeiter|produktionshelfer|montagehelfer|fabrikarbeiter)\b/i.test(t)) return 'oper';
+  // Francés (FR, BE, CH)
+  if (/\b(magasinier|cariste|manutentionnaire|pr[ée]parateur\s+de\s+commandes|op[ée]rateur\s+de\s+production|agent\s+de\s+production)\b/i.test(t)) return 'oper';
+  // Italiano y portugués
+  if (/\b(magazziniere|carrellista|operaio|addetto\s+al\s+magazzino|armaz[ée]m|empilhador|oper[áa]rio|operador\s+de\s+produ[çc][ãa]o)\b/i.test(t)) return 'oper';
+  // Neerlandés y polaco
+  if (/\b(magazijn(medewerker)?|heftruck(chauffeur)?|productiemedewerker|magazynier|operator\s+w[óo]zka|pakowacz|pracownik\s+produkcji)\b/i.test(t)) return 'oper';
   // Au pair
   if (/\b(au\s*pair|aupair|ni[ñn]era|canguro|babysitter)\b/i.test(t)) return 'au_pair';
   // Live-in nanny (patrones fuertes)
