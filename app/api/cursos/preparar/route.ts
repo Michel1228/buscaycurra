@@ -16,10 +16,10 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getPool } from "@/lib/db";
 import { getUserId } from "@/lib/auth-server";
 import { callGroq, callDeepSeek } from "@/lib/guzzi/llm";
 import { tipoPorSlug } from "@/lib/cursos/tipos";
+import { leerCVUsuario } from "@/lib/cv/leer-cv";
 
 export const dynamic = "force-dynamic";
 
@@ -67,21 +67,13 @@ export async function POST(request: NextRequest) {
   }
 
   // ── CV del usuario ────────────────────────────────────────────────────
-  // Vive en user_cvs de la base propia, NO en Supabase. Confundir las dos es
-  // el fallo que ya rompió el autorrelleno y probablemente sigue roto en
-  // skill-gap, así que aquí se lee de donde de verdad está.
-  let cv: Record<string, unknown> | null = null;
-  try {
-    const r = await getPool().query<{ form_data: Record<string, unknown> }>(
-      `SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1`,
-      [userId]
-    );
-    cv = r.rows[0]?.form_data ?? null;
-  } catch (e) {
-    console.error("[cursos/preparar] no se pudo leer el CV:", (e as Error).message);
-  }
+  // El CV puede estar en dos tablas distintas de la base propia (user_cvs o
+  // "CV"), así que se lee con el lector común en vez de escribir aquí otra
+  // consulta a mano: cada vez que alguien se ha escrito la suya, se ha dejado
+  // una de las dos tablas y ha aparecido un fallo nuevo.
+  const cv = await leerCVUsuario(userId);
 
-  if (!cv || !cv.nombre) {
+  if (!cv) {
     return NextResponse.json(
       {
         error: "sin-cv",
@@ -94,33 +86,31 @@ export async function POST(request: NextRequest) {
 
   // ── Ficha con sus datos, para copiar y pegar en el formulario ─────────
   const ficha = {
-    nombre: String(cv.nombre || ""),
-    apellidos: String(cv.apellidos || ""),
-    email: String(cv.email || ""),
-    telefono: String(cv.telefono || ""),
-    ciudad: String(cv.ciudad || ""),
+    nombre: cv.nombre,
+    apellidos: cv.apellidos,
+    email: cv.email,
+    telefono: cv.telefono,
+    ciudad: cv.ciudad,
   };
 
   // ── Papeles ───────────────────────────────────────────────────────────
   const documentos = [...DOCUMENTOS_BASE, ...(curso.documentosExtra ?? [])];
 
   // ── Carta ─────────────────────────────────────────────────────────────
-  const experiencia = Array.isArray(cv.experiencia)
-    ? (cv.experiencia as Record<string, unknown>[])
-        .slice(0, 4)
-        .map(e => `${e.puesto || "?"} en ${e.empresa || "?"} (${e.fechas || "?"})`)
-        .join("; ")
-    : "";
+  const experiencia = cv.experiencia
+    .slice(0, 4)
+    .map(e => `${e.puesto || "?"} en ${e.empresa || "?"}${e.fechas ? ` (${e.fechas})` : ""}`)
+    .join("; ");
 
   const contexto = [
     `CURSO: ${curso.nombre}`,
     `PARA QUÉ SIRVE: ${curso.paraQueSirve}`,
     `PUESTOS A LOS QUE DA ACCESO: ${curso.puestos.join(", ")}`,
     "",
-    `CANDIDATO: ${ficha.nombre} ${ficha.apellidos}`,
+    `CANDIDATO: ${ficha.nombre} ${ficha.apellidos}`.trim(),
     ficha.ciudad ? `CIUDAD: ${ficha.ciudad}` : "",
     experiencia ? `EXPERIENCIA: ${experiencia}` : "SIN EXPERIENCIA PREVIA REGISTRADA",
-    cv.perfilProfesional ? `PERFIL: ${cv.perfilProfesional}` : "",
+    cv.perfil ? `PERFIL: ${cv.perfil}` : "",
     cv.aptitudes ? `APTITUDES: ${cv.aptitudes}` : "",
   ].filter(Boolean).join("\n");
 

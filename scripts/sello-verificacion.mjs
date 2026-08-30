@@ -389,6 +389,65 @@ test('La subida de PDF no se fía solo de file.type (el iPhone lo manda vacío)'
   return true;
 });
 
+test('La intención de cursos va ANTES de la regla genérica de búsqueda', () => {
+  // La regla genérica ("algo EN algún sitio" → buscar) se traga casi todo. Si
+  // la de cursos va después, "curso de carretillero en Pamplona" acaba
+  // buscando OFERTAS de carretillero en vez de formación.
+  const src = leerFuente('lib/guzzi/intents.ts');
+  const iCursos = src.indexOf('return "buscar_cursos"');
+  const iGenerica = src.indexOf('return "buscar";', src.indexOf('OTRO_TEMA.test(t)'));
+  if (iCursos === -1) { console.log('     ↳ no existe la intención buscar_cursos'); return false; }
+  if (iGenerica === -1) { console.log('     ↳ no se encuentra la regla genérica'); return false; }
+  if (iCursos > iGenerica) {
+    console.log('     ↳ la regla de cursos está DESPUÉS de la genérica: se la come');
+    return false;
+  }
+  return true;
+});
+
+test('Hay forma de volver a Inicio desde cualquier pantalla', () => {
+  // /app/bienvenida no estaba en ningún menú: se entraba, se empezaba a
+  // navegar y esa pantalla se perdía sin retorno posible.
+  const src = leerFuente('components/AppNavWrapper.tsx');
+  const fallos = [];
+  if (!/href="\/app\/bienvenida"/.test(src)) {
+    fallos.push('no hay ningún enlace a /app/bienvenida en la navegación');
+  }
+  // Y no vale solo dentro del menú desplegable: tiene que verse sin abrir nada
+  const barra = src.slice(src.indexOf('height: "56px"'), src.indexOf('Menu overlay'));
+  if (!/\/app\/bienvenida/.test(barra)) {
+    fallos.push('el enlace a inicio no está en la barra superior, solo en el menú');
+  }
+  if (fallos.length) { fallos.forEach(f => console.log('     ↳ ' + f)); return false; }
+  return true;
+});
+
+test('El autoguardado del CV espera a que el CV esté cargado (si no, lo borra)', () => {
+  // El autoguardado arranca en cuanto hay userId, que se pone nada más
+  // recuperar la sesión — mucho antes de que llegue el CV guardado, que es
+  // otra petición. Sin el guard de cvCargado, el temporizador de 3 s disparaba
+  // con el formulario vacío y escribía ese vacío ENCIMA del CV bueno.
+  //
+  // Pasó de verdad: una cuenta real se quedó sin nombre ni teléfono, solo con
+  // el email. En un servidor con 85% de CPU robada, que una carga tarde más de
+  // 3 s es lo normal, no la excepción.
+  const src = leerFuente('app/app/curriculum/Content.tsx');
+  const fallos = [];
+  if (!/const \[cvCargado, setCvCargado\]/.test(src)) {
+    fallos.push('falta el estado cvCargado');
+  }
+  if (!/setCvCargado\(true\)/.test(src)) {
+    fallos.push('nunca se marca el CV como cargado');
+  }
+  // El efecto de autoguardado tiene que comprobarlo antes de programar el guardado
+  const efecto = src.match(/if \(!userId[^)]*\) return;[\s\S]{0,200}?guardarCV\(\)/);
+  if (!efecto || !/cvCargado/.test(efecto[0])) {
+    fallos.push('el autoguardado no comprueba cvCargado antes de guardar');
+  }
+  if (fallos.length) { fallos.forEach(f => console.log('     ↳ ' + f)); return false; }
+  return true;
+});
+
 
 
 // ═══════════════════════════════════════════════════════════════

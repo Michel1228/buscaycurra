@@ -51,6 +51,17 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   // "il" pegado al " en ", y hacen falta tres letras. La frase se tomaba por
   // charla y Guzzi contestaba con la IA en vez de buscar, teniendo 53
   // albañiles en Manchester. Igual habría pasado con "diseño" o "logística".
+  // CURSOS — tiene que ir ANTES de la regla genérica de abajo ("algo EN algún
+  // sitio" → buscar), que si no se traga "curso de carretillero en Pamplona" y
+  // se pone a buscar ofertas de empleo de carretillero en vez de formación.
+  //
+  // Se nombran también los carnets concretos porque la gente no dice "curso":
+  // dice "necesito el de manipulador" o "me piden la carretilla".
+  if (/\bcursos?\b|\bformaci[oó]n\b|\bformarme\b|\bcapacitaci[oó]n\b|\bcarn[eé]ts?\b/i.test(t)
+      || /manipulador\s+de\s+aliment|\bcarretiller[oa]s?\b|carretilla\s+elevadora|plataforma\s+elevadora/i.test(t)
+      || /certificad[oa]s?\s+de\s+profesionalidad|\btpc\b|tarjeta\s+profesional/i.test(t)) {
+    return "buscar_cursos";
+  }
   if (/[\wáéíóúüñçàèìòù]{3,}\s+(?:en|por)\s+[\wáéíóúüñçàèìòù]{3,}/i.test(t) && !OTRO_TEMA.test(t)) return "buscar";
   const confirmSend = /^(si|s[ií]i|dale|vale|ok|okey|okay|venga|adelante|perfecto|genial|fenomenal|claro|por\s+supuesto|obvio|pues\s+si|pues\s+venga|hazlo|env[ií]alo|m[aá]ndalo|tira|t[ií]ralo|p[áa]lante|a\s+por\s+ello|me\s+gusta|me\s+apunto|elijo\s+la?\s*\d|la\s+primera|la\s+\d|la\s+opci[oó]n\s+\d|opci[oó]n\s+\d)/i;
   const histText = (history as unknown as Array<{ text: string }>).slice(-4).map((m) => m.text).join(" ");

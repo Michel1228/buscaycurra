@@ -27,6 +27,11 @@ const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 // a las ofertas, a los negocios de la zona, a las ETTs y al envio del CV: todo
 // lo que antes estaba repartido entre las dos entradas del menu.
 const NAV_ITEMS = [
+  // Inicio va el primero y a propósito: /app/bienvenida no estaba en ningún
+  // menú, así que quien entraba y empezaba a navegar PERDÍA esa pantalla y no
+  // había manera de volver. Es el resumen del día (ofertas nuevas, envíos,
+  // atajos), o sea la pantalla a la que uno quiere regresar.
+  { href: "/app/bienvenida", label: "Inicio",     icon: "inicio", title: "Tu resumen del día" },
   { href: "/app/gusi",       label: "Guzzi",      icon: "guzzi", title: "Guzzi - Asistente IA" },
   { href: "/app/buscar",     label: "Buscar y enviar CV", icon: "buscar", title: "Buscar ofertas, encontrar empresas y enviarles tu CV" },
   { href: "/app/envios",     label: "Mis envíos", icon: "envios", title: "Estado de los CVs enviados" },
@@ -46,6 +51,7 @@ const NAV_ITEMS = [
 
 /** Iconos SVG premium con color — paleta BuscayCurra */
 const ICON_COLORS: Record<string, string> = {
+  inicio: "#22c55e",
   buscar: "#22c55e",
   cv: "#f59e0b",
   pipeline: "#3b82f6", 
@@ -77,6 +83,8 @@ function NavIcon({ name, size = 22 }: { name: string; size?: number }) {
   };
 
   switch (name) {
+    case "inicio":
+      return <svg {...base}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
     case "buscar":
       return <svg {...base}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>;
     case "cv":
@@ -207,6 +215,26 @@ export default function AppNavWrapper() {
             <span className="font-bold text-sm hidden sm:inline" style={{ color: "#22c55e" }}>
               BuscayCurra
             </span>
+          </Link>
+
+          {/* Casita — el retorno a la pantalla de inicio.
+              Va en la barra y no solo en el menú desplegable porque el problema
+              era justamente que la gente empezaba a navegar y no encontraba la
+              vuelta: si hay que abrir un menú para volver a casa, no está
+              resuelto. Se marca en verde cuando ya estás ahí. */}
+          <Link
+            href="/app/bienvenida"
+            className="flex items-center justify-center w-9 h-9 rounded-lg transition-opacity hover:opacity-80"
+            style={{ color: pathname === "/app/bienvenida" ? "#22c55e" : "#64748b" }}
+            title="Inicio"
+            aria-label="Ir a inicio"
+            aria-current={pathname === "/app/bienvenida" ? "page" : undefined}
+          >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
           </Link>
 
           {/* Campana de notificaciones */}

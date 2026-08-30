@@ -80,6 +80,8 @@ export default function CurriculumPage() {
   const [error, setError] = useState("");
   const [guardado, setGuardado] = useState(false);
   const [cargando, setCargando] = useState(true);
+  /** Si ya llegó el CV guardado. Hasta entonces NO se autoguarda (ver más abajo). */
+  const [cvCargado, setCvCargado] = useState(false);
   const [visibleEmpresas, setVisibleEmpresas] = useState(false);
   const [descargando, setDescargando] = useState(false);
   const [esPreviewIA, setEsPreviewIA] = useState(false);
@@ -253,6 +255,9 @@ export default function CurriculumPage() {
         }));
       }
 
+      // A partir de aquí el formulario ya tiene lo que había guardado, así que
+      // el autoguardado puede empezar sin peligro. Ver el comentario de abajo.
+      setCvCargado(true);
       setCargando(false);
     }
     init();
@@ -264,13 +269,26 @@ export default function CurriculumPage() {
   }, [token]);
 
   // Auto-guardar
+  //
+  // ⚠️ EL GUARD DE `cvCargado` NO SE PUEDE QUITAR: sin él se pierde el CV.
+  //
+  // Antes esto solo miraba `userId`, que se pone nada más recuperar la sesión,
+  // MUCHO antes de que llegue el CV guardado (son dos peticiones distintas).
+  // Resultado: arrancaba el temporizador de 3 s con el formulario todavía
+  // vacío, y si la carga del CV tardaba más de esos 3 s —cosa habitual, el
+  // servidor va con un 85 % de CPU robada por el hipervisor— el autoguardado
+  // disparaba primero y escribía el formulario VACÍO encima del CV bueno.
+  //
+  // No es hipotético: así se perdieron el nombre y el teléfono de una cuenta
+  // real, quedando solo el email. Ahora no se guarda nada hasta que lo que hay
+  // en pantalla es de verdad lo que estaba guardado.
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !cvCargado) return;
     const timeout = setTimeout(() => {
       guardarCV();
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [form, fotoUrl, userId, templateId, accentColor, cvActivoId]);
+  }, [form, fotoUrl, userId, cvCargado, templateId, accentColor, cvActivoId]);
 
   // ── Funciones auxiliares (sin cambios funcionales) ──
   async function toggleVisibilidad(value: boolean) {

@@ -817,6 +817,8 @@ function localReply(intent: string, cv?: CVParsed | null): string {
       return "👶 **Búsqueda Au Pair** — dime el país donde quieres ser au pair (ej: 'busca au pair en Alemania' o 'au pair en Reino Unido') y te busco ofertas con familias que necesitan cuidadores. También puedo ayudarte con tu carta 'Dear Family'. ";
     case "carta_au_pair":
       return "💌 **Carta 'Dear Family'** — primero completa tu perfil Au Pair en la sección 🧒 del menú. Luego vuelve y dime 'crea mi carta au pair' para generarla personalizada con tus datos, experiencia con niños y fotos. ";
+    case "buscar_cursos":
+      return "🎓 **Cursos para trabajar**\n\nTe digo lo que cuesta de verdad, lo que dura y dónde sacarlo gratis:\n\n• [Manipulador de alimentos](/cursos/manipulador-alimentos) — obligatorio en hostelería, se saca en una tarde\n• [Carné de carretillero](/cursos/carretillero) — el más pedido en almacén\n• [PRL](/cursos/prl-basico) y [TPC](/cursos/tpc-construccion) — para industria y obra\n\n👉 [Ver todos los cursos](/cursos)\n\nY si me dices cuál te interesa, te preparo la carta de solicitud con tu CV y te digo qué papeles te van a pedir.";
     default:
       return "¡Hola! Soy Guzzi, tu asistente de empleo. Puedo ayudarte con:\n\n🔍 Buscar ofertas de trabajo\n📝 Crear o mejorar tu CV\n🎯 Preparar entrevistas\n✉️ Cartas de presentación\n🌍 Información para emigrar\n💰 Comparar salarios\n\n¿En qué quieres que te ayude hoy?";
   }
