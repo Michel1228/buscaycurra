@@ -2,7 +2,7 @@
  * components/cursos/DetalleCurso.tsx — La ficha de un curso, sin envoltorio.
  *
  * Igual que ListaCursos: la misma ficha se pinta en /cursos/[tipo] (pública, la
- * que indexa Google) y en /app/cursos/[tipo] (dentro de la app, con el menú).
+ * que indexa Google) y en /app/formacion/[tipo] (dentro de la app, con el menú).
  * `base` decide a dónde vuelve el enlace de "Todos los cursos" y nada más.
  *
  * Devuelve null si el slug no existe; quien la llama decide si eso es un 404.

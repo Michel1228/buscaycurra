@@ -1,5 +1,5 @@
 /**
- * /app/cursos/[tipo] — La ficha del curso dentro de la aplicación.
+ * /app/formacion/[tipo] — La ficha del curso dentro de la aplicación.
  *
  * Misma ficha que la pública, pero conservando el menú (ver el comentario de
  * ../page.tsx). Aquí no hay JSON-LD ni canonical: /app está detrás del login y
@@ -30,7 +30,7 @@ export default async function FichaCursoApp({ params }: { params: Promise<{ tipo
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117", color: "#f1f5f9" }}>
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <DetalleCurso slug={t.slug} base="/app/cursos" />
+        <DetalleCurso slug={t.slug} base="/app/formacion" />
       </div>
     </div>
   );

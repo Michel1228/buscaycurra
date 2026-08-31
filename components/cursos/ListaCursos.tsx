@@ -3,7 +3,7 @@
  *
  * Vive aparte porque se pinta en DOS sitios con marcos distintos:
  *   /cursos      → página pública, con PublicHeader. Es la que ve Google.
- *   /app/cursos  → dentro de la app, con el menú de siempre.
+ *   /app/formacion  → dentro de la app, con el menú de siempre.
  *
  * Si fueran dos páginas copiadas, la segunda se quedaría atrás a la primera
  * que alguien tocara una. El prop `base` es lo único que cambia: a dónde

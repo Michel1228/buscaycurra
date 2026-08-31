@@ -53,7 +53,7 @@ function BotonCopiar({ texto, etiqueta }: { texto: string; etiqueta: string }) {
 
 export default function PrepararSolicitud({ slug, nombre }: { slug: string; nombre: string }) {
   // Volver aqui mismo tras el login: esta ficha se pinta en /cursos (publica)
-  // y en /app/cursos (dentro de la app), y mandar siempre a la publica sacaria
+  // y en /app/formacion (dentro de la app), y mandar siempre a la publica sacaria
   // al usuario de la aplicacion justo despues de entrar.
   const pathname = usePathname();
   const [estado, setEstado] = useState<"inicio" | "cargando" | "listo" | "sin-cv" | "sin-sesion" | "error">("inicio");

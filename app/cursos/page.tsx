@@ -2,7 +2,7 @@
  * /cursos — Página pública de formación. Es la que ve Google.
  *
  * El contenido vive en components/cursos/ListaCursos.tsx porque se pinta igual
- * dentro de la app (/app/cursos), donde el usuario ya está identificado y lleva
+ * dentro de la app (/app/formacion), donde el usuario ya está identificado y lleva
  * su menú. Aquí solo se le pone el marco público y los metadatos de SEO.
  */
 import type { Metadata } from "next";

@@ -8,7 +8,7 @@
  * ya le sirve.
  *
  * La ficha en sí está en components/cursos/DetalleCurso.tsx: la comparte con
- * /app/cursos/[tipo], que es la misma información con el menú de la app.
+ * /app/formacion/[tipo], que es la misma información con el menú de la app.
  */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";

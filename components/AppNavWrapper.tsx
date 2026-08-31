@@ -36,7 +36,7 @@ const NAV_ITEMS = [
   { href: "/app/buscar",     label: "Buscar y enviar CV", icon: "buscar", title: "Buscar ofertas, encontrar empresas y enviarles tu CV" },
   { href: "/app/envios",     label: "Mis envíos", icon: "envios", title: "Estado de los CVs enviados" },
   { href: "/app/curriculum", label: "Mi CV",      icon: "cv", title: "Mi currículum" },
-  { href: "/app/cursos",     label: "Cursos",     icon: "cursos", title: "Cursos y carnets: cuánto cuestan y dónde sacarlos gratis" },
+  { href: "/app/formacion",  label: "Cursos",     icon: "cursos", title: "Cursos y carnets: cuánto cuestan y dónde sacarlos gratis" },
   { href: "/app/pipeline",   label: "Pipeline",   icon: "pipeline", title: "Pipeline de candidaturas" },
   { href: "/app/entrevistas",label: "Entrevistas",icon: "entrevistas", title: "Simulador de entrevistas" },
   { href: "/app/guardados",  label: "Guardados",  icon: "guardados", title: "Ofertas guardadas" },
