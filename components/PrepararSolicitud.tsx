@@ -13,6 +13,7 @@
  */
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Check, Copy, FileText, Loader2, Sparkles } from "lucide-react";
 
@@ -51,6 +52,10 @@ function BotonCopiar({ texto, etiqueta }: { texto: string; etiqueta: string }) {
 }
 
 export default function PrepararSolicitud({ slug, nombre }: { slug: string; nombre: string }) {
+  // Volver aqui mismo tras el login: esta ficha se pinta en /cursos (publica)
+  // y en /app/cursos (dentro de la app), y mandar siempre a la publica sacaria
+  // al usuario de la aplicacion justo despues de entrar.
+  const pathname = usePathname();
   const [estado, setEstado] = useState<"inicio" | "cargando" | "listo" | "sin-cv" | "sin-sesion" | "error">("inicio");
   const [datos, setDatos] = useState<Preparado | null>(null);
   const [mensajeError, setMensajeError] = useState("");
@@ -192,11 +197,11 @@ export default function PrepararSolicitud({ slug, nombre }: { slug: string; nomb
           y te digo los papeles exactos que te van a pedir. Es gratis.
         </p>
         <div className="flex gap-2">
-          <Link href={`/auth/registro?redirect=/cursos/${slug}`} className="btn-game text-xs" style={{ textDecoration: "none" }}>
+          <Link href={`/auth/registro?redirect=${encodeURIComponent(pathname)}`} className="btn-game text-xs" style={{ textDecoration: "none" }}>
             Crear cuenta gratis
           </Link>
           <Link
-            href={`/auth/login?redirect=/cursos/${slug}`}
+            href={`/auth/login?redirect=${encodeURIComponent(pathname)}`}
             className="text-xs px-4 py-2 rounded-xl"
             style={{ border: "1px solid #2d3142", color: "#94a3b8", textDecoration: "none" }}
           >

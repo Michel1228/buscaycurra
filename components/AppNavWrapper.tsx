@@ -36,6 +36,7 @@ const NAV_ITEMS = [
   { href: "/app/buscar",     label: "Buscar y enviar CV", icon: "buscar", title: "Buscar ofertas, encontrar empresas y enviarles tu CV" },
   { href: "/app/envios",     label: "Mis envíos", icon: "envios", title: "Estado de los CVs enviados" },
   { href: "/app/curriculum", label: "Mi CV",      icon: "cv", title: "Mi currículum" },
+  { href: "/app/cursos",     label: "Cursos",     icon: "cursos", title: "Cursos y carnets: cuánto cuestan y dónde sacarlos gratis" },
   { href: "/app/pipeline",   label: "Pipeline",   icon: "pipeline", title: "Pipeline de candidaturas" },
   { href: "/app/entrevistas",label: "Entrevistas",icon: "entrevistas", title: "Simulador de entrevistas" },
   { href: "/app/guardados",  label: "Guardados",  icon: "guardados", title: "Ofertas guardadas" },
@@ -52,6 +53,7 @@ const NAV_ITEMS = [
 /** Iconos SVG premium con color — paleta BuscayCurra */
 const ICON_COLORS: Record<string, string> = {
   inicio: "#22c55e",
+  cursos: "#a855f7",
   buscar: "#22c55e",
   cv: "#f59e0b",
   pipeline: "#3b82f6", 
@@ -83,6 +85,8 @@ function NavIcon({ name, size = 22 }: { name: string; size?: number }) {
   };
 
   switch (name) {
+    case "cursos":
+      return <svg {...base}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
     case "inicio":
       return <svg {...base}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
     case "buscar":

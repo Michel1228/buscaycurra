@@ -62,6 +62,7 @@ const TRAD: Record<string, Record<string, string>> = {
   "Ofertas encontradas": { en: "Jobs found", fr: "Offres trouvées", de: "Jobs gefunden", it: "Offerte trovate", pt: "Ofertas encontradas", nl: "Vacatures gevonden", pl: "Znaleziono ofert", sv: "Jobb hittade", da: "Job fundet", fi: "Työpaikkoja löytyi", no: "Jobber funnet" },
 
   // ─── Nav extra ───────────────────────────────────────────
+  "Cursos":    { en: "Courses", fr: "Formations", de: "Kurse", it: "Corsi", pt: "Cursos", nl: "Cursussen", pl: "Kursy", sv: "Kurser", da: "Kurser", fi: "Kurssit", no: "Kurs" },
   "Guzzi":     { en: "Guzzi", fr: "Guzzi", de: "Guzzi", it: "Guzzi", pt: "Guzzi", nl: "Guzzi", pl: "Guzzi", sv: "Guzzi", da: "Guzzi", fi: "Guzzi", no: "Guzzi" },
   "Guardados": { en: "Saved", fr: "Sauvegardés", de: "Gespeichert", it: "Salvati", pt: "Guardados", nl: "Opgeslagen", pl: "Zapisane", sv: "Sparade", da: "Gemte", fi: "Tallennetut", no: "Lagrede" },
   "Pipeline":  { en: "Pipeline", fr: "Pipeline", de: "Pipeline", it: "Pipeline", pt: "Pipeline", nl: "Pipeline", pl: "Pipeline", sv: "Pipeline", da: "Pipeline", fi: "Pipeline", no: "Pipeline" },
