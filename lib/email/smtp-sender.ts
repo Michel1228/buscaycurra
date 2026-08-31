@@ -420,3 +420,71 @@ export function generarCartaHTML(
     </div>
   `;
 }
+
+/**
+ * Aviso a quien se interesó por un curso: hay trabajo que lo pide.
+ *
+ * Es la pieza que une las dos mitades de la aplicación. Alguien entra buscando
+ * "curso de carretillero", le preparamos la solicitud, y ahí se acababa todo:
+ * se iba a inscribir y no volvíamos a saber de él. Esto le devuelve semanas
+ * después el único motivo por el que se estaba formando — que hay empresas
+ * pidiéndolo ahora mismo, y cuántas.
+ *
+ * No es un boletín. Solo sale cuando hay ofertas de verdad que piden ese curso,
+ * y como mucho una vez cada dos semanas por curso y persona.
+ */
+export async function sendCursoAlertaEmail(params: {
+  userEmail: string;
+  cursoNombre: string;
+  cursoSlug: string;
+  total: number;
+  ejemploTitle: string;
+  ejemploCompany: string;
+  ejemploCity?: string;
+  obligatorio: boolean;
+}): Promise<void> {
+  const { userEmail, cursoNombre, cursoSlug, total, ejemploTitle, ejemploCompany, ejemploCity, obligatorio } = params;
+
+  const header = headerGradient(
+    "🎓",
+    `${total} oferta${total > 1 ? "s" : ""} que pide${total > 1 ? "n" : ""} tu curso`,
+    cursoNombre
+  );
+
+  const body = `
+    <p style="margin:0 0 20px;color:#94a3b8;font-size:15px;line-height:1.7;">
+      Te interesaste por <strong style="color:#f1f5f9;">${cursoNombre}</strong>.
+      Ahora mismo hay <strong style="color:#22c55e;">${total} oferta${total > 1 ? "s" : ""}</strong>
+      de puestos que lo piden.
+    </p>
+
+    ${obligatorio ? `
+    <p style="margin:0 0 20px;color:#f59e0b;font-size:13px;line-height:1.7;">
+      Recuerda que este es obligatorio: sin él no te pueden contratar para ese puesto.
+    </p>` : ""}
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1520;border:1px solid rgba(34,197,94,0.15);border-radius:14px;margin-bottom:24px;">
+      <tr><td style="padding:20px 24px;">
+        <p style="margin:0 0 4px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">Por ejemplo</p>
+        <p style="margin:0 0 4px;color:#f1f5f9;font-size:16px;font-weight:700;">${ejemploTitle}</p>
+        <p style="margin:0;color:#64748b;font-size:13px;">${ejemploCompany}${ejemploCity ? ` · ${ejemploCity}` : ""}</p>
+      </td></tr>
+    </table>
+
+    ${ctaButton("Ver las ofertas →", "https://buscaycurra.es/app/buscar")}
+
+    <p style="margin:20px 0 0;text-align:center;color:#374151;font-size:11px;">
+      ¿Aún no lo has sacado? <a href="https://buscaycurra.es/cursos/${cursoSlug}" style="color:#22c55e;text-decoration:none;">Vuelve a la ficha del curso</a>
+    </p>
+  `;
+
+  try {
+    await sendEmail(
+      userEmail,
+      `🎓 ${total} oferta${total > 1 ? "s" : ""} piden ${cursoNombre} — BuscayCurra`,
+      baseTemplate(header, body)
+    );
+  } catch (err) {
+    console.error("[Resend] Error en alerta de curso:", (err as Error).message);
+  }
+}

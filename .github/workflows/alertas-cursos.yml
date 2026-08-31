@@ -1,0 +1,34 @@
+name: Alertas de cursos
+
+# Avisa a quien se interesó por un curso de que hay ofertas que lo piden.
+#
+# Una vez al día y a media mañana de España: es cuando la gente mira el correo
+# de búsqueda de empleo. El propio endpoint no manda a nadie dos veces en menos
+# de catorce días, así que ejecutarlo de más no genera spam.
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # 09:00 UTC — 11:00 en España
+  workflow_dispatch:
+    inputs:
+      simular:
+        description: "Contar sin enviar correos"
+        type: boolean
+        default: false
+
+jobs:
+  avisar:
+    name: Avisar a los interesados
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar alertas
+        run: |
+          URL="https://buscaycurra.es/api/cursos/alertas"
+          if [ "${{ inputs.simular }}" = "true" ]; then URL="$URL?simular=1"; fi
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "$URL" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            --max-time 290)
+          HTTP_CODE=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" = "200" ] || exit 1
