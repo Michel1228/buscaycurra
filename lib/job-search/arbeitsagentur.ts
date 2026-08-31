@@ -299,29 +299,61 @@ export async function syncArbeitsagentur(
       keywordFetched += jobs.length;
       totalFetched += jobs.length;
 
-      // Batch insert con ON CONFLICT DO NOTHING
+      // INSERT COMPLETO, NO SOLO SIETE COLUMNAS.
+      //
+      // Antes insertaba id, title, company, city, sourceUrl, sourceName y
+      // sector, y nada más. Todo lo demás quedaba a NULL, y eso incluye
+      // isActive, que es por lo que filtran TODAS las búsquedas de la
+      // aplicación: las ofertas entraban invisibles. Se metían 136 y se veían
+      // cero. Tampoco ponía country, así que ninguna salía al filtrar por
+      // Alemania, ni createdAt, así que no se podían ordenar por recientes —
+      // y de paso el máximo de esa columna se quedaba clavado en mayo, que fue
+      // lo que hizo parecer que la fuente llevaba 99 días muerta.
+      //
+      // Y DO UPDATE en vez de DO NOTHING: si la oferta ya estaba hay que
+      // revivirla (isActive = true) y refrescarle la fecha. Con DO NOTHING,
+      // una oferta desactivada por antigüedad no volvía nunca aunque la
+      // empresa la siguiera publicando.
       try {
         const mapped = jobs.map(mapToDB);
-        
-        // Insertar en lotes pequeños para evitar timeouts
+        const COLS = 11;
+
         for (let i = 0; i < mapped.length; i += 25) {
           const batch = mapped.slice(i, i + 25);
-          const values = batch.map((j, idx) => {
-            const base = idx * 7;
-            return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`;
+          const values = batch.map((_, idx) => {
+            const b = idx * COLS;
+            const ph = Array.from({ length: COLS }, (_, n) => `$${b + n + 1}`).join(", ");
+            // isActive, updatedAt y scrapedAt son literales: iguales para todas.
+            return `(${ph}, true, NOW(), NOW())`;
           }).join(", ");
-          
+
           const params: any[] = [];
           for (const j of batch) {
-            params.push(j.id, j.titulo, j.empresa, j.ciudad, j.sourceUrl, j.sourceName, j.sector);
+            params.push(
+              j.id, j.titulo, j.empresa, j.ciudad, j.sourceUrl, j.sourceName,
+              j.sector, j.descripcion, j.salario, j.pais.toLowerCase(),
+              j.fechaPublicacion
+            );
           }
 
           const query = `
-            INSERT INTO "JobListing" ("id", "title", "company", "city", "sourceUrl", "sourceName", "sector")
+            INSERT INTO "JobListing" (
+              "id", "title", "company", "city", "sourceUrl", "sourceName",
+              "sector", "description", "salary", "country", "createdAt",
+              "isActive", "updatedAt", "scrapedAt"
+            )
             VALUES ${values}
-            ON CONFLICT ("id") DO NOTHING
+            ON CONFLICT ("id") DO UPDATE SET
+              "title"     = EXCLUDED."title",
+              "company"   = EXCLUDED."company",
+              "city"      = EXCLUDED."city",
+              "sourceUrl" = EXCLUDED."sourceUrl",
+              "country"   = EXCLUDED."country",
+              "isActive"  = true,
+              "updatedAt" = NOW(),
+              "scrapedAt" = NOW()
           `;
-          
+
           const result = await pool.query(query, params);
           totalInserted += result.rowCount || 0;
         }
