@@ -10,7 +10,18 @@
 
 import { getPool } from "@/lib/db";
 
-const BASE_URL = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/app/jobs";
+// v6, no v4.
+//
+// La v4 dejó de responder: devuelve 403 con cuerpo vacío desde el 24 de mayo de
+// 2026, que es exactamente la fecha del último alta alemana que teníamos. La
+// sincronización seguía ejecutándose y "terminando bien" todos los días, solo
+// que sin traer nada, así que nadie se enteró: 147.691 ofertas alemanas
+// congeladas durante 99 días, con Alemania entre los primeros destinos de quien
+// emigra desde España.
+//
+// La v6 responde 200 con las mismas cabeceras. Cambia toda la estructura de la
+// respuesta (ver AAJob más abajo), no solo la ruta.
+const BASE_URL = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v6/jobs";
 
 const HEADERS = {
   "User-Agent": "Jobsuche/2.9.16",
@@ -19,26 +30,32 @@ const HEADERS = {
 };
 
 interface AAResponse {
-  stellenangebote: AAJob[];
+  /** En la v4 se llamaba `stellenangebote`. */
+  ergebnisliste: AAJob[];
   maxErgebnisse: number;
   page: number;
   size: number;
 }
 
+/** Estructura de la v6. Todos los nombres cambiaron respecto a la v4. */
 interface AAJob {
-  titel: string;
-  refnr: string;
-  arbeitgeber: string;
-  beruf: string;
-  arbeitsort: {
-    plz: string;
-    ort: string;
-    region: string;
-    land: string;
-    koordinaten?: { lat: number; lon: number };
-  };
-  eintrittsdatum?: string;
-  modified?: string;
+  stellenangebotsTitel?: string;
+  referenznummer: string;
+  firma?: string;
+  /** Nombre del oficio, p. ej. "Koch/Köchin". */
+  hauptberuf?: string;
+  alleBerufe?: string[];
+  /** La v6 admite varias ubicaciones por oferta; usamos la primera. */
+  stellenlokationen?: Array<{
+    adresse?: { plz?: string; ort?: string; region?: string; land?: string };
+    breite?: number;
+    laenge?: number;
+  }>;
+  datumErsteVeroeffentlichung?: string;
+  aenderungsdatum?: string;
+  /** "KEINE_ANGABEN" cuando no dicen sueldo, que es lo habitual. */
+  verguetungsangabe?: string;
+  arbeitszeitVollzeit?: boolean;
   externeUrl?: string;
 }
 
@@ -207,7 +224,7 @@ export const GERMAN_KEYWORDS = [
 ] as const;
 
 async function fetchAAPI(keyword: string, page: number = 1, size: number = 50): Promise<AAResponse | null> {
-  const url = `${BASE_URL}?angebotsart=1&was=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
+  const url = `${BASE_URL}?was=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
   
   try {
     const res = await fetch(url, { headers: HEADERS });
@@ -224,24 +241,35 @@ async function fetchAAPI(keyword: string, page: number = 1, size: number = 50): 
 }
 
 function mapToDB(job: AAJob) {
-  const ort = job.arbeitsort?.ort || "Deutschland";
-  const plz = job.arbeitsort?.plz || "";
-  const region = job.arbeitsort?.region || "";
-  
+  const dir = job.stellenlokationen?.[0]?.adresse;
+  const ort = dir?.ort || "Deutschland";
+  const plz = dir?.plz || "";
+  const region = dir?.region || "";
+  const titulo = job.stellenangebotsTitel || job.hauptberuf || "Stellenangebot";
+  // "KEINE_ANGABEN" es literalmente "sin datos": no es un sueldo.
+  const sueldo =
+    job.verguetungsangabe && job.verguetungsangabe !== "KEINE_ANGABEN"
+      ? job.verguetungsangabe
+      : null;
+
   return {
-    id: `aa_${job.refnr}`,
-    titulo: job.titel,
-    empresa: job.arbeitgeber || "Unbekannt",
+    id: `aa_${job.referenznummer}`,
+    titulo,
+    empresa: job.firma || "Unbekannt",
     ciudad: plz ? `${plz} ${ort}` : ort,
-    region: region,
+    region,
     pais: "DE",
-    sourceUrl: job.externeUrl || `https://www.arbeitsagentur.de/jobsuche/suche?angebotsart=1&refnr=${job.refnr}`,
+    sourceUrl:
+      job.externeUrl ||
+      `https://www.arbeitsagentur.de/jobsuche/jobdetail/${encodeURIComponent(job.referenznummer)}`,
     sourceName: "Arbeitsagentur",
-    descripcion: `Beruf: ${job.beruf || job.titel}\nEintrittsdatum: ${job.eintrittsdatum || "Nicht angegeben"}`,
-    salario: null,
+    descripcion: `Beruf: ${job.hauptberuf || titulo}${job.arbeitszeitVollzeit ? " (Vollzeit)" : ""}`,
+    salario: sueldo,
     tipo: null,
     sector: "OTRO",
-    fechaPublicacion: job.eintrittsdatum ? new Date(job.eintrittsdatum) : new Date(),
+    fechaPublicacion: job.datumErsteVeroeffentlichung
+      ? new Date(job.datumErsteVeroeffentlichung)
+      : new Date(),
   };
 }
 
@@ -265,9 +293,9 @@ export async function syncArbeitsagentur(
     while (page <= maxPages) {
       const data = await fetchAAPI(keyword, page, batchSize);
       
-      if (!data || !data.stellenangebote?.length) break;
+      if (!data || !data.ergebnisliste?.length) break;
       
-      const jobs = data.stellenangebote;
+      const jobs = data.ergebnisliste;
       keywordFetched += jobs.length;
       totalFetched += jobs.length;
 

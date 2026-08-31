@@ -22,21 +22,32 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Tier 1 — máximo volumen (un solo job por país, batch razonable)
-          - { country: uk, batch: 20 }
-          - { country: us, batch: 20 }
+          # REPARTO POR MERCADO, NO POR VOLUMEN BRUTO DE LA API.
+          #
+          # Estaba ordenado por cuántas ofertas tiene cada país en Adzuna, y así
+          # Estados Unidos, Australia y Canadá se llevaban más cuota que España.
+          # Medido en producción: España tenía 30.058 ofertas activas y Estados
+          # Unidos 481.365 — dieciséis veces más en el país que no atendemos.
+          #
+          # La cuota de Adzuna está al 95 % (2.500 de 2.640), así que aquí no se
+          # puede subir el total: esto es un reparto. Lo que se le quita a
+          # ultramar se le da a España y a los destinos a los que emigra
+          # nuestra gente.
+          # España primero: es el mercado de la aplicación
+          - { country: es, batch: 25 }
+          # Destinos principales de la emigración española
           - { country: de, batch: 20 }
-          - { country: au, batch: 20 }
-          - { country: ca, batch: 20 }
           - { country: fr, batch: 20 }
-          # Tier 2 — mercados fuertes
-          - { country: es, batch: 15 }
-          - { country: ie, batch: 15 }
+          - { country: uk, batch: 15 }
+          - { country: it, batch: 15 }
           - { country: nl, batch: 15 }
-          # Tier 3 — secundarios
-          - { country: it, batch: 12 }
-          - { country: se, batch: 12 }
-          - { country: ch, batch: 12 }
+          - { country: ie, batch: 12 }
+          - { country: ch, batch: 10 }
+          - { country: se, batch: 10 }
+          # Ultramar: se mantienen, pero ya no por delante del mercado propio
+          - { country: us, batch: 12 }
+          - { country: ca, batch: 10 }
+          - { country: au, batch: 10 }
     steps:
       - name: Sync Adzuna ${{ matrix.country }}
         run: |
@@ -68,30 +79,42 @@ jobs:
     if: always()
     strategy:
       fail-fast: false
+      # El servidor tiene dos núcleos y un 85 % de CPU robada por el hipervisor.
+      # Veinte trabajos en paralelo lo tumban, así que van de cuatro en cuatro:
+      # tarda más, pero la web sigue respondiendo mientras tanto.
+      max-parallel: 4
       matrix:
         include:
-          # English countries
+          # AQUÍ SÍ HAY SITIO PARA SUBIR, Y ES DONDE MÁS SE GANA.
+          #
+          # Careerjet permite 20.000 peticiones al día y estábamos usando el
+          # 0,1 %. Cada combinación es una petición, así que estos números,
+          # multiplicados por las doce ejecuciones diarias, siguen quedándose
+          # muy por debajo del límite. Era la API con más margen de todas y la
+          # que menos se usaba.
+          # España al tope que admite el endpoint
+          - { country: es, batch: 50 }
+          # Destinos principales
+          - { country: de, batch: 40 }
+          - { country: fr, batch: 40 }
+          - { country: uk, batch: 30 }
+          - { country: it, batch: 30 }
+          - { country: nl, batch: 25 }
+          - { country: pt, batch: 25 }
+          - { country: be, batch: 20 }
+          - { country: ch, batch: 20 }
+          - { country: ie, batch: 20 }
+          - { country: at, batch: 15 }
+          - { country: se, batch: 15 }
+          - { country: no, batch: 15 }
+          - { country: dk, batch: 15 }
+          - { country: fi, batch: 15 }
+          - { country: pl, batch: 15 }
+          # Ultramar
           - { country: us, batch: 15 }
-          - { country: uk, batch: 15 }
-          - { country: au, batch: 15 }
-          - { country: ca, batch: 15 }
-          # European
-          - { country: de, batch: 15 }
-          - { country: fr, batch: 15 }
-          - { country: nl, batch: 12 }
-          - { country: it, batch: 12 }
-          - { country: es, batch: 12 }
-          - { country: se, batch: 12 }
-          - { country: ch, batch: 12 }
-          - { country: be, batch: 10 }
-          - { country: pt, batch: 10 }
-          - { country: ie, batch: 10 }
-          - { country: no, batch: 10 }
-          - { country: dk, batch: 10 }
-          - { country: at, batch: 10 }
-          - { country: fi, batch: 10 }
+          - { country: ca, batch: 12 }
+          - { country: au, batch: 12 }
           - { country: nz, batch: 10 }
-          - { country: pl, batch: 10 }
     steps:
       - name: Sync Careerjet ${{ matrix.country }}
         run: |

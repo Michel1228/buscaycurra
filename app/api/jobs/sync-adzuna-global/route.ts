@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { syncAdzunaCountry } from "@/lib/job-search/sync-worker";
 import { secretIguales } from "@/lib/secret-compare";
+import { leerOffset, guardarOffset, offsetsDe } from "@/lib/job-search/offsets";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -18,15 +19,22 @@ const COUNTRIES = [
   "mx", "pl", "es", "za", "ch", "be", "at", "sg", "nz",
 ] as const;
 
-// Estado simple en memoria (se resetea en cada deploy)
+// La posición de cada país vive en Redis, no en memoria. Estaba en una
+// variable del proceso y cada despliegue la devolvía a cero, así que se
+// repetían eternamente las primeras combinaciones y nunca se llegaba al
+// resto. Ver el comentario largo en lib/job-search/offsets.ts.
+const FUENTE = "adzuna";
+
+// El país solo rota cuando NO se pide uno concreto. Los workflows sí lo
+// piden, así que esto es solo para llamadas manuales y puede seguir en
+// memoria sin consecuencias.
 let currentCountryIdx = 0;
-let countryOffsets: Record<string, number> = {};
 
 export async function GET() {
   return NextResponse.json({
     countries: COUNTRIES,
     currentIdx: currentCountryIdx,
-    offsets: countryOffsets,
+    offsets: await offsetsDe(FUENTE, COUNTRIES),
   });
 }
 
@@ -43,12 +51,12 @@ export async function POST(req: NextRequest) {
   
   // Si se especifica país, usar ese; si no, rotar
   const country = body.country || COUNTRIES[currentCountryIdx % COUNTRIES.length];
-  const offset = body.offset ?? (countryOffsets[country] || 0);
+  const offset = body.offset ?? (await leerOffset(FUENTE, country));
 
   const result = await syncAdzunaCountry(country, batchSize, offset);
 
-  // Actualizar offset y rotar país para la siguiente llamada
-  countryOffsets[country] = result.done ? 0 : result.nextOffset;
+  // Guardar por dónde va y rotar país para la siguiente llamada
+  await guardarOffset(FUENTE, country, result.done ? 0 : result.nextOffset);
   if (!body.country) {
     currentCountryIdx++;
   }
@@ -56,6 +64,5 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ...result,
     nextCountry: COUNTRIES[currentCountryIdx % COUNTRIES.length],
-    offsets: countryOffsets,
   });
 }

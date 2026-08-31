@@ -375,6 +375,234 @@ export const TIPOS_CURSO: TipoCurso[] = [
     ],
     actualizado: "2026-08",
   },
+
+  // ─── Salud y cuidados ─────────────────────────────────────────────────────
+  //
+  // Este sector faltaba entero, y es donde está buena parte de nuestra gente.
+  // Con un dato que importa: aquí la cualificación NO es un "te viene bien", es
+  // requisito para poder trabajar. Y mucha gente lleva años cuidando sin saber
+  // que puede acreditar esa experiencia sin volver a estudiar.
+  {
+    slug: "atencion-sociosanitaria-instituciones",
+    pais: "ES",
+    sector: "SALUD",
+    familia: "obligatorio",
+    nombre: "Atención sociosanitaria en residencias (SSCS0208)",
+    resumen: "Sin esto no puedes trabajar de gerocultor en una residencia o centro de día.",
+    queEs:
+      "Certificado de profesionalidad oficial de 450 horas. Acredita que sabes atender a personas dependientes en residencias, centros de día y centros sociosanitarios: higiene, alimentación, movilizaciones y apoyo psicosocial.",
+    paraQueSirve:
+      "Es la titulación que la administración exige para trabajar como cuidador o gerocultor en centros acreditados. Sin ella o una equivalente, el centro no te puede contratar en esa categoría.",
+    obligatorioLegal: true,
+    normativa: "Orden PSO/52/2018 y Acuerdo del Consejo Territorial (BOE-A-2015-12394)",
+    duracionHoras: { min: 450, max: 450 },
+    precio: { min: 0, max: 1500, moneda: "EUR", nota: "Gratis si sale convocatoria en tu comunidad. En centro privado suele ir de 600 a 1.500 euros, y hay que hacer prácticas presenciales." },
+    puestos: ["gerocultor", "cuidador de residencia", "auxiliar de geriatría", "auxiliar sociosanitario"],
+    opcionesGratuitas: [SEPE_PRESENCIAL],
+    comoSacarlo: [
+      "ANTES DE PAGAR NADA: si ya llevas años cuidando, mira la habilitación excepcional. La Orden PSO/52/2018 permite acreditar la experiencia sin sacarte el certificado, y hay gente que ha pagado un curso que no necesitaba.",
+      "Si no tienes experiencia previa, apúntate como demandante de empleo y vigila el catálogo de tu comunidad: es de los certificados que más se programan.",
+      "Comprueba que el centro esté acreditado para impartirlo. Un curso que no sea certificado de profesionalidad oficial no te sirve para esto.",
+      "Cuenta con las prácticas: son obligatorias y presenciales, en un centro real.",
+    ],
+    documentosExtra: [
+      "Título de ESO o equivalente, o prueba de acceso (es formación de nivel 2)",
+      "Certificado de delitos de naturaleza sexual, que te van a pedir para trabajar con personas vulnerables",
+    ],
+    equivalenteEn: [
+      { pais: "DE", nombre: "Altenpflegehelfer", nota: "Auxiliar de geriatría, normalmente un año de formación. Piden nivel de alemán B1 o B2, que en la práctica es el filtro de verdad." },
+      { pais: "GB", nombre: "Care Certificate", nota: "No es un título como el español: son 15 estándares que te forma el propio empleador al entrar. Se empieza antes, pero acredita menos." },
+      { pais: "FR", nombre: "Titre professionnel ADVF", nota: "Assistant de vie aux familles. Es el equivalente para trabajo en domicilio y se gestiona por France Travail." },
+    ],
+    fuentes: [
+      { titulo: "Ficha oficial SEPE del certificado SSCS0208", url: "https://www.sepe.es/SiteSepe/contenidos/personas/formacion/certificados_de_profesionalidad/pdf/fichasCertificados/SSCS0208_ficha.pdf" },
+      { titulo: "Orden PSO/52/2018 — cualificaciones del personal de atención directa", url: "https://www.boe.es/buscar/doc.php?id=BOE-A-2018-11138" },
+      { titulo: "Acuerdo del Consejo Territorial de Dependencia (BOE-A-2015-12394)", url: "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2015-12394" },
+    ],
+    actualizado: "2026-08",
+  },
+  {
+    slug: "atencion-sociosanitaria-domicilio",
+    pais: "ES",
+    sector: "SALUD",
+    familia: "obligatorio",
+    nombre: "Atención sociosanitaria a domicilio (SSCS0108)",
+    resumen: "El que piden para trabajar de auxiliar de ayuda a domicilio.",
+    queEs:
+      "Certificado de profesionalidad oficial de 600 horas. Es el hermano del de residencias, pero para atender a la persona en su propia casa: higiene, alimentación, apoyo psicosocial y gestión del hogar.",
+    paraQueSirve:
+      "Es la titulación exigida para la categoría de auxiliar de ayuda a domicilio en los servicios acreditados. Las empresas que llevan el servicio municipal de ayuda a domicilio lo piden siempre.",
+    obligatorioLegal: true,
+    normativa: "Orden PSO/52/2018 y Acuerdo del Consejo Territorial (BOE-A-2015-12394)",
+    duracionHoras: { min: 600, max: 600 },
+    precio: { min: 0, max: 1800, moneda: "EUR", nota: "Gratis por convocatoria autonómica. Es más largo que el de residencias, así que en privado sale más caro." },
+    puestos: ["auxiliar de ayuda a domicilio", "cuidador a domicilio", "asistente personal"],
+    opcionesGratuitas: [SEPE_PRESENCIAL],
+    comoSacarlo: [
+      "Igual que en el de residencias: si ya tienes años de experiencia cuidando, mira primero la habilitación excepcional antes de pagar un curso.",
+      "Decide cuál te conviene: este es para domicilio y el SSCS0208 para residencias. No son intercambiables aunque se parezcan.",
+      "Busca convocatoria en tu comunidad estando apuntado al paro.",
+      "Reserva tiempo para las prácticas presenciales.",
+    ],
+    documentosExtra: [
+      "Título de ESO o equivalente, o prueba de acceso",
+      "Certificado de delitos de naturaleza sexual",
+      "Carnet de conducir en muchas ofertas: en domicilio te mueves entre casas",
+    ],
+    fuentes: [
+      { titulo: "Ficha oficial SEPE del certificado SSCS0108", url: "https://www.sepe.es/HomeSepe/dam/jcr:ef00e05b-1e2c-4c1f-8dbb-71c61584f558/SSCS0108_ficha.pdf" },
+      { titulo: "Orden PSO/52/2018 — cualificaciones del personal de atención directa", url: "https://www.boe.es/buscar/doc.php?id=BOE-A-2018-11138" },
+    ],
+    actualizado: "2026-08",
+  },
+
+  // ─── Limpieza ─────────────────────────────────────────────────────────────
+  {
+    slug: "limpieza-industrial",
+    pais: "ES",
+    sector: "OTRO",
+    familia: "mejora",
+    nombre: "Limpieza industrial y de espacios abiertos (SEAG0209)",
+    resumen: "Certificado oficial que se paga mejor que la limpieza corriente.",
+    queEs:
+      "Certificado de profesionalidad de 210 horas sobre limpieza de instalaciones industriales, maquinaria y espacios abiertos, incluido el manejo seguro de productos químicos.",
+    paraQueSirve:
+      "La limpieza industrial se paga mejor que la de oficinas y pide formación específica por los riesgos químicos. Tenerlo te separa del montón en un sector con muchísima rotación.",
+    obligatorioLegal: false,
+    duracionHoras: { min: 210, max: 210 },
+    precio: { min: 0, max: 700, moneda: "EUR", nota: "Se programa gratis con frecuencia en los catálogos autonómicos." },
+    puestos: ["limpiador industrial", "peón de limpieza", "operario de limpieza viaria", "limpieza hospitalaria"],
+    opcionesGratuitas: [SEPE_PRESENCIAL],
+    comoSacarlo: [
+      "Búscalo en el catálogo de tu comunidad estando inscrito como demandante de empleo.",
+      "Si vas a limpieza hospitalaria, pregunta por la parte de residuos sanitarios: es lo que más valoran ahí.",
+      "Combínalo con el PRL básico. Juntos son la pareja que piden las contratas grandes.",
+    ],
+    fuentes: [
+      { titulo: "Ficha oficial SEPE del certificado SEAG0209", url: "https://sepe.es/HomeSepe/dam/jcr:ba4004f0-3e3e-4cd7-927e-ca2922e3cd04/SEAG0209_ficha.pdf" },
+    ],
+    actualizado: "2026-08",
+  },
+
+  // ─── Oficina, comercio y digital ──────────────────────────────────────────
+  //
+  // Estos tres no los exige nadie y se pueden empezar hoy mismo, gratis y sin
+  // esperar convocatoria. Están aquí porque son la vía de salida de quien
+  // quiere dejar de estar doce horas de pie.
+  {
+    slug: "excel-ofimatica",
+    pais: "ES",
+    sector: "OFICINA",
+    familia: "mejora",
+    nombre: "Excel y ofimática",
+    resumen: "El filtro número uno de cualquier trabajo de oficina. Gratis y desde casa.",
+    queEs:
+      "Manejo de hojas de cálculo, procesador de textos y correo profesional. No hay un título oficial único: lo que cuenta es que sepas hacerlo y puedas demostrarlo.",
+    paraQueSirve:
+      "Es el requisito que más se repite en las ofertas de administración, atención al cliente y comercio. También es lo que permite pasar del almacén a la oficina del almacén.",
+    obligatorioLegal: false,
+    duracionHoras: { min: 10, max: 60 },
+    precio: { min: 0, max: 0, moneda: "EUR", nota: "Hay versiones gratuitas completas y en español. No hace falta pagar por esto." },
+    puestos: ["administrativo", "auxiliar administrativo", "recepcionista", "atención al cliente", "controlador de almacén"],
+    opcionesGratuitas: [
+      {
+        nombre: "Santander Open Academy",
+        url: "https://app.santanderopenacademy.com/program/search",
+        descripcion: "Más de mil cursos gratis, ofimática incluida. Abierto a cualquiera: no hay que ser cliente del banco.",
+        certificado: false,
+      },
+      {
+        nombre: "Google — competencias digitales",
+        url: "https://grow.google/intl/es/courses-and-tools/?category=career&type=online-courses",
+        descripcion: "Cursos gratis de productividad y competencias digitales, en español.",
+        certificado: false,
+      },
+    ],
+    comoSacarlo: [
+      "Empieza por lo que de verdad piden: tablas dinámicas, BUSCARV y filtros. Con eso pasas la mayoría de las pruebas.",
+      "Haz el curso gratis y, en paralelo, monta un archivo de ejemplo tuyo. En la entrevista, enseñar algo hecho vale más que decir que sabes.",
+      "Ponlo en el CV por lo que sabes hacer, no por el nombre del curso.",
+    ],
+    fuentes: [
+      { titulo: "Santander Open Academy — catálogo de cursos", url: "https://app.santanderopenacademy.com/program/search" },
+      { titulo: "Grow with Google — cursos gratuitos en español", url: "https://grow.google/intl/es/courses-and-tools/?category=career&type=online-courses" },
+    ],
+    actualizado: "2026-08",
+  },
+  {
+    slug: "competencias-digitales",
+    pais: "ES",
+    sector: "TECNOLOGIA",
+    familia: "mejora",
+    nombre: "Competencias digitales y marketing",
+    resumen: "La puerta más barata para cambiar de sector. Gratis y en español.",
+    queEs:
+      "Formación en lo digital básico y en marketing online: cómo funciona una web, redes para empresas, comercio electrónico, analítica y seguridad.",
+    paraQueSirve:
+      "Es el camino habitual de quien quiere salir de hostelería o almacén sin volver a estudiar años. También sirve para montar algo propio.",
+    obligatorioLegal: false,
+    duracionHoras: { min: 1, max: 40 },
+    precio: { min: 0, max: 0, moneda: "EUR" },
+    puestos: ["community manager", "auxiliar de marketing", "comercial online", "atención al cliente digital"],
+    opcionesGratuitas: [
+      {
+        nombre: "Google — Actívate / Grow with Google",
+        url: "https://grow.google/intl/es/courses-and-tools/?category=career&type=online-courses",
+        descripcion: "29 cursos gratuitos en español: marketing digital, programación, nube, comercio electrónico y ciberseguridad.",
+        certificado: false,
+      },
+      {
+        nombre: "EU Academy",
+        url: "https://academy.europa.eu/courses/",
+        descripcion: "Plataforma de la Unión Europea, gratis y en más de 30 idiomas. Útil si estás fuera de España.",
+        certificado: false,
+      },
+    ],
+    comoSacarlo: [
+      "Elige UNO y termínalo. El error clásico es apuntarse a seis y no acabar ninguno.",
+      "Comprueba en el propio curso qué acredita: Google reorganizó Actívate y no todos dan ya el mismo certificado.",
+      "Cuando lo acabes, pídele a Guzzi que te busque ofertas donde lo pidan.",
+    ],
+    fuentes: [
+      { titulo: "Grow with Google — cursos gratuitos en español", url: "https://grow.google/intl/es/courses-and-tools/?category=career&type=online-courses" },
+      { titulo: "EU Academy — plataforma oficial de la Unión Europea", url: "https://academy.europa.eu/" },
+    ],
+    actualizado: "2026-08",
+  },
+  {
+    slug: "atencion-cliente",
+    pais: "ES",
+    sector: "COMERCIO",
+    familia: "mejora",
+    nombre: "Atención al cliente y venta",
+    resumen: "Convierte la experiencia de cara al público en algo que se puede poner en el CV.",
+    queEs:
+      "Técnicas de trato con el cliente, gestión de quejas, cobro y venta. Es formación corta y hay opciones gratuitas online.",
+    paraQueSirve:
+      "Si ya has trabajado de cara al público, esto le pone nombre a lo que sabes hacer. En comercio y en centros de llamadas es de lo más valorado, porque la rotación es enorme y buscan a quien aguante bien el trato difícil.",
+    obligatorioLegal: false,
+    duracionHoras: { min: 8, max: 60 },
+    precio: { min: 0, max: 300, moneda: "EUR", nota: "Hay opciones gratuitas online, y los presenciales de las comunidades también salen gratis." },
+    puestos: ["dependiente", "cajero", "teleoperador", "azafata de eventos", "recepcionista"],
+    opcionesGratuitas: [
+      SEPE_PRESENCIAL,
+      {
+        nombre: "Santander Open Academy",
+        url: "https://app.santanderopenacademy.com/program/search",
+        descripcion: "Cursos gratis de habilidades profesionales y comunicación, abiertos a cualquiera.",
+        certificado: false,
+      },
+    ],
+    comoSacarlo: [
+      "Si vas a comercio de alimentación, sácate antes el manipulador de alimentos: ese sí es obligatorio.",
+      "Haz el curso gratis y añade en el CV a cuántos clientes atendías al día. El número convence más que el título.",
+    ],
+    fuentes: [
+      { titulo: "Catálogo de especialidades formativas del SEPE", url: "https://www.sepe.es/HomeSepe/Personas/formacion/catalogo-especialidades-formativas" },
+      { titulo: "Santander Open Academy — catálogo de cursos", url: "https://app.santanderopenacademy.com/program/search" },
+    ],
+    actualizado: "2026-08",
+  },
 ];
 
 // ─── Funciones de consulta ───────────────────────────────────────────────────
