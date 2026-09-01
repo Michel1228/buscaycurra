@@ -98,16 +98,21 @@ export async function POST(req: NextRequest) {
 
     if (!porCurso.has(aviso.curso_slug)) {
       const patrones = tipo.puestos.map(p => `%${p}%`);
+      // count(*) OVER () cuenta el total ANTES del LIMIT, así que sale el
+      // número de verdad con una sola consulta. Contar rows.length sobre un
+      // LIMIT 200 decía "200 ofertas" cuando había 696, y ese número va en el
+      // correo: si prometemos 200 y hay 696 quedamos cortos, y si algún día
+      // hay 30 y decimos 200, mentimos.
       const { rows } = await pool.query(
-        `SELECT title, company, city
+        `SELECT title, company, city, count(*) OVER ()::int AS total
            FROM "JobListing"
           WHERE "isActive" = true
             AND title ILIKE ANY($1::text[])
-          LIMIT 200`,
+          LIMIT 1`,
         [patrones]
       );
       porCurso.set(aviso.curso_slug, {
-        total: rows.length,
+        total: rows[0]?.total ?? 0,
         ejemplo: rows[0]
           ? { title: rows[0].title, company: rows[0].company, city: rows[0].city }
           : undefined,
