@@ -35,3 +35,7 @@ Disallow: /auth/
 Disallow: /api/
 
 Sitemap: https://buscaycurra.es/sitemap.xml
+# Las ofertas van aparte: son decenas de miles y no caben en el de arriba.
+# Se anadio suelto a proposito, para no tocar lo que Google ya tiene rastreado.
+# Si diera problemas, se quita ESTA linea y todo sigue como antes.
+Sitemap: https://buscaycurra.es/sitemap-ofertas.xml
