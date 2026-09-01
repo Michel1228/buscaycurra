@@ -97,19 +97,37 @@ export async function POST(req: NextRequest) {
     if (!tipo || tipo.puestos.length === 0) continue;
 
     if (!porCurso.has(aviso.curso_slug)) {
-      const patrones = tipo.puestos.map(p => `%${p}%`);
+      // PALABRA ENTERA Y SOLO EL PAÍS DEL CURSO. Las dos cosas hacen falta, y
+      // medido en producción las dos importan:
+      //
+      //   · ILIKE '%dependiente%' casa con "Agente comercial INDEPENDIENTE", y
+      //     '%cuidador%' con "Cuidador/a de Mascotas". Poner eso de ejemplo en
+      //     un correo sobre el certificado de gerocultor nos deja en ridículo.
+      //   · Sin filtrar por país contábamos las ofertas del mundo entero: la
+      //     alerta de atención al cliente decía 5.034 cuando en España hay
+      //     1.333, y la de carretillero metía 51 ofertas de Suecia.
+      //
+      // `\y` es el límite de palabra de Postgres. Los puestos salen de nuestro
+      // catálogo, pero se escapan igual: el día que alguien escriba un puesto
+      // con un paréntesis, esto no se puede convertir en una regex rota.
+      const patron =
+        "\\y(" +
+        tipo.puestos
+          .map(p => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+          .join("|") +
+        ")\\y";
+
       // count(*) OVER () cuenta el total ANTES del LIMIT, así que sale el
-      // número de verdad con una sola consulta. Contar rows.length sobre un
-      // LIMIT 200 decía "200 ofertas" cuando había 696, y ese número va en el
-      // correo: si prometemos 200 y hay 696 quedamos cortos, y si algún día
-      // hay 30 y decimos 200, mentimos.
+      // número real con una sola consulta. Contar rows.length sobre un LIMIT
+      // 200 decía "200 ofertas" cuando había 696, y ese número va en el correo.
       const { rows } = await pool.query(
         `SELECT title, company, city, count(*) OVER ()::int AS total
            FROM "JobListing"
           WHERE "isActive" = true
-            AND title ILIKE ANY($1::text[])
+            AND lower(country) = lower($2)
+            AND title ~* $1
           LIMIT 1`,
-        [patrones]
+        [patron, tipo.pais]
       );
       porCurso.set(aviso.curso_slug, {
         total: rows[0]?.total ?? 0,
