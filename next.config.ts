@@ -66,6 +66,17 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' },
         ],
       },
+      // Los sitemaps: los pide Google, no una persona, y generarlos cuesta una
+      // consulta sobre 2,2 millones de filas en un servidor de dos nucleos. La
+      // regla general de arriba les estaba poniendo no-store, asi que cada
+      // rastreo los recalculaba enteros. Una hora de cache es de sobra: las
+      // ofertas nuevas entran igual en el siguiente rastreo.
+      {
+        source: '/:mapa(sitemap.xml|sitemap-ofertas.xml)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' },
+        ],
+      },
     ];
   },
   // Paquetes server-only con módulos nativos o que conectan a Redis.
