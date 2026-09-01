@@ -142,6 +142,25 @@ export async function POST(request: NextRequest) {
       sector: curso.sector,
       accion: "preparado",
     });
+
+    // Y GUARDAR LA CARTA, que es lo suyo.
+    //
+    // Antes se generaba, se le enseñaba en pantalla y se perdía al cerrar la
+    // pestaña: había que volver a pedirla al modelo y salía distinta, porque
+    // esto no es determinista. Ahora vive en curso_progreso y la tiene en
+    // "Mis cursos" cuando la necesite, que suele ser el día de la matrícula.
+    await sb.from("curso_progreso").upsert(
+      {
+        user_id: userId,
+        curso_slug: curso.slug,
+        curso_nombre: curso.nombre,
+        estado: "preparado",
+        carta: carta.trim(),
+        documentos,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,curso_slug" }
+    );
   } catch (e) {
     console.error("[cursos/preparar] no se pudo registrar el interés:", (e as Error).message);
   }

@@ -10,7 +10,7 @@
  * el catálogo es estático, esto no toca la base de datos ni una vez.
  */
 import Link from "next/link";
-import { BadgeCheck, GraduationCap } from "lucide-react";
+import { BadgeCheck, FolderOpen, GraduationCap } from "lucide-react";
 import {
   tiposPorPais, ordenarPorUrgencia, sectoresConCursos, tiposPorSector,
 } from "@/lib/cursos/tipos";
@@ -43,6 +43,25 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
           Sin rodeos y con la fuente oficial de cada dato.
         </p>
       </div>
+
+      {/* Solo dentro de la app: en la pública no hay sesión que consultar, y
+          ofrecer "mis cursos" a quien no ha entrado es una puerta a un login
+          que no ha pedido. */}
+      {base.startsWith("/app") && (
+        <Link
+          href={`${base}/mis-cursos`}
+          className="rounded-xl p-3.5 mb-4 flex items-center gap-3 hover:opacity-90"
+          style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+        >
+          <FolderOpen size={17} strokeWidth={1.8} className="shrink-0" style={{ color: "#94a3b8" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Mis cursos</p>
+            <p className="text-xs" style={{ color: "#94a3b8" }}>
+              Tus cartas guardadas, los papeles que te faltan y por dónde vas.
+            </p>
+          </div>
+        </Link>
+      )}
 
       {/* ── Antes del catálogo, no después ──
           Para mucha de nuestra gente la respuesta correcta no es "haz un curso"

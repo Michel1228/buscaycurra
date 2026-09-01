@@ -17,6 +17,7 @@ import {
   type TipoCurso,
 } from "@/lib/cursos/tipos";
 import { PAISES } from "@/lib/paises";
+import { papelesDeCurso } from "@/lib/cursos/papeles";
 
 function Dato({ icono, etiqueta, valor, destacado }: {
   icono: React.ReactNode; etiqueta: string; valor: string; destacado?: boolean;
@@ -273,6 +274,56 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
           </div>
         </Seccion>
       )}
+
+      {/* ── DÓNDE SE SACAN LOS PAPELES ──
+          El curso es gratis y la plaza se pierde por un papel: por llegar el
+          último día de plazo sin el DARDE, o por pedir la vida laboral una
+          semana tarde. Decir "necesitas el informe de vida laboral" no
+          desatasca a nadie; decir que se saca por SMS al 638 444 444 sin
+          certificado digital, sí. */}
+      {(() => {
+        const papeles = papelesDeCurso({
+          obligatorioLegal: t.obligatorioLegal,
+          sector: t.sector,
+          documentosExtra: t.documentosExtra,
+        });
+        if (papeles.length === 0) return null;
+        return (
+          <Seccion titulo="Los papeles: dónde se sacan">
+            <p className="text-sm leading-relaxed mb-4" style={{ color: "#94a3b8" }}>
+              Aquí es donde se cae la gente. Todos estos se piden por internet y la mayoría son
+              gratis; empieza por ellos antes de que se abra el plazo.
+            </p>
+            <div className="flex flex-col gap-3">
+              {papeles.map(p => (
+                <a
+                  key={p.id}
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl p-4 block hover:opacity-90"
+                  style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>{p.nombre}</span>
+                    <span className="text-[10px] shrink-0 mt-0.5" style={{ color: "#64748b" }}>
+                      {p.gratuito ? "gratis" : p.tarda || ""}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed mb-1.5" style={{ color: "#94a3b8" }}>{p.paraQue}</p>
+                  <p className="text-[11px]" style={{ color: "#64748b" }}>{p.donde}</p>
+                  {p.truco && (
+                    <p className="text-[11px] leading-relaxed mt-2 pt-2"
+                       style={{ color: "#f59e0b", borderTop: "1px solid #2d3142" }}>
+                      {p.truco}
+                    </p>
+                  )}
+                </a>
+              ))}
+            </div>
+          </Seccion>
+        );
+      })()}
 
       {/* ── Lo barato primero: activar el aviso cuesta un clic ── */}
       <AvisoCurso slug={t.slug} nombre={t.nombre} />
