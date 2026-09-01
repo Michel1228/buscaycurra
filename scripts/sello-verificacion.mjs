@@ -495,6 +495,41 @@ test('la campana no tiene clics muertos', () => !/if \(!url\) return/.test(campa
 test('la página no tiene clics muertos', () => !/if \(url\) router\.push/.test(paginaSrc));
 
 
+// ═══════════════════════════════════════════════════════════════
+// BLOQUE INTENTS NUEVOS: que la pregunta llegue al modelo
+//
+// POR QUE EXISTE. Probado contra Guzzi en produccion: "cobro el paro y me voy
+// a Alemania, lo pierdo?" se clasificaba como busqueda de empleo y contestaba
+// "que puesto buscas?". Y "mando el CV a una empresa de Londres, le pongo
+// foto?" devolvia la ficha de una tienda de Covent Garden.
+//
+// Las instrucciones del prompt sobre el U2 y sobre la foto no llegaban a
+// usarse NUNCA en esas preguntas: el enrutador contestaba antes. Un prompt
+// puede estar perfecto y no servir de nada si la pregunta no llega hasta el.
+//
+// La primera version del arreglo TAMPOCO funciono, porque puse las reglas
+// nuevas por debajo de las genericas. Estas comprobaciones vigilan el ORDEN,
+// que es lo que fallaba.
+// ═══════════════════════════════════════════════════════════════
+console.log("");
+console.log("🧭 BLOQUE INTENTS: el enrutador no se traga las preguntas");
+
+const intentsSrc = leerFuente("lib/guzzi/intents.ts");
+const posParo = intentsSrc.indexOf('return "paro_europeo"');
+const posCv = intentsSrc.indexOf('return "cv_por_pais"');
+const posBuscarGenerico = intentsSrc.indexOf('(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)');
+const posInfoEmpresa = intentsSrc.indexOf('return "info_empresa"');
+
+test("existe el intent paro_europeo", () => posParo > 0);
+test("existe el intent cv_por_pais", () => posCv > 0);
+test("paro_europeo va ANTES de la regla generica de buscar", () =>
+  posParo > 0 && posBuscarGenerico > 0 && posParo < posBuscarGenerico);
+test("cv_por_pais va ANTES de info_empresa", () =>
+  posCv > 0 && posInfoEmpresa > 0 && posCv < posInfoEmpresa);
+test("el prompt aclara que el limite del tratado es DIARIO", () =>
+  leerFuente("lib/guzzi/prompts.ts").includes("el limite del tratado es DIARIO"));
+
+
 // Se espera a que TODAS terminen. Antes había un setTimeout de 5 segundos a
 // ciegas, que podía cortar comprobaciones a medias y dar el visto bueno sin
 // haberlas hecho.

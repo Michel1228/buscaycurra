@@ -11,6 +11,38 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   if (/(carta.*(recomendaci|presentaci|para\s+\w)|presentaci.*carta)/.test(t)) return "carta_recomendacion";
   if (/(crea|genera|haz|escrib).*(carta|dear family).*(au pair|aupair)/i.test(t) || /carta.*au.?pair/i.test(t) || /dear.?family/i.test(t)) return "carta_au_pair";
   if (/(busco|buscar|busca|necesito|quiero|buscame|búscame|encuentra|encuentrame).*(au pair|aupair|niñera|nanny|canguro|childcare)/i.test(tn)) return "buscar_au_pair";
+
+  // DERECHOS Y TRÁMITES — TAMBIÉN ANTES DE LA REGLA GENÉRICA.
+  //
+  // Probado contra Guzzi en producción: «estoy cobrando el paro y me quiero ir
+  // a Alemania a buscar trabajo, ¿lo pierdo?» se clasificaba como búsqueda de
+  // empleo y contestaba «¿qué puesto buscas?». Y «voy a mandar mi CV a una
+  // empresa de Londres, ¿le pongo foto?» se clasificaba como búsqueda de
+  // empresas y devolvía la ficha de una tienda de Covent Garden.
+  //
+  // O sea que las instrucciones del prompt sobre el formulario U2 y sobre la
+  // foto en el CV no llegaban a usarse NUNCA en esas preguntas: el enrutador
+  // contestaba antes de que el modelo las viera. Un prompt puede estar
+  // perfecto y no servir de nada si la pregunta no llega hasta él.
+  //
+  // Las dos frases tienen la forma «algo EN algún sitio», que es justo lo que
+  // captura la regla genérica de más abajo. Por eso van aquí arriba.
+
+  // El paro que te llevas fuera: U2, U1, exportar la prestación.
+  if (/\bu2\b|\bu1\b|export(ar|aci[oó]n)\s+(de\s+)?(la\s+)?(prestaci[oó]n|paro|desempleo)/i.test(t)
+      || (/(paro|prestaci[oó]n|desempleo|subsidio)/i.test(t)
+          && /(perder|pierdo|llevar|llevarme|mantener|seguir\s+cobrando|cobrar).{0,40}(fuera|extranjero|otro\s+pa[ií]s|alemania|francia|holanda|pa[ií]ses\s+bajos|b[eé]lgica|italia|portugal|suiza|irlanda|noruega|dinamarca|suecia)/i.test(t)
+          || /(irme|voy|marcho|emigrar|mudarme).{0,40}(paro|prestaci[oó]n|desempleo)/i.test(t))) {
+    return "paro_europeo";
+  }
+
+  // El CV según el país de destino: foto, extensión, datos personales.
+  if (/(foto|fotograf[ií]a).{0,30}(cv|curr[ií]culum|curriculum)/i.test(t)
+      || /(cv|curr[ií]culum|curriculum).{0,30}(foto|fotograf[ií]a)/i.test(t)
+      || /(cv|curr[ií]culum|curriculum).{0,50}(reino\s+unido|inglaterra|londres|alemania|estados\s+unidos|eeuu|holanda|pa[ií]ses\s+bajos|irlanda|suiza|austria)/i.test(t)) {
+    return "cv_por_pais";
+  }
+
   if (/(?:busca|busco|info|información|hay|conoces|sabes)\s+(?:el\s+|la\s+|los\s+|las\s+|un\s+|una\s+)?(?:bar\s+|restaurante\s+|tienda\s+|hotel\s+|cafeter[ií]a\s+|empresa\s+|supermercado\s+|taller\s+|panader[ií]a\s+|farmacia\s+|cl[ií]nica\s+|peluquer[ií]a\s+)/i.test(t)) return "info_empresa";
   if (/empresas?\s+(?:de|del?)\s+\w+/i.test(t) && /\s+(?:en|por|cerca)\s+\w+/i.test(t)) return "info_empresa";
   if (/(?:qué|que)\s+(?:empresas?|f[áa]bricas?|negocios?|comercios?|tiendas?)\s+(?:hay|conoces|sabes)\s+(?:en|por|cerca|de)\s+\w+/i.test(t)) return "info_empresa";
@@ -51,37 +83,6 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   // "il" pegado al " en ", y hacen falta tres letras. La frase se tomaba por
   // charla y Guzzi contestaba con la IA en vez de buscar, teniendo 53
   // albañiles en Manchester. Igual habría pasado con "diseño" o "logística".
-  // DERECHOS Y TRÁMITES — TAMBIÉN ANTES DE LA REGLA GENÉRICA.
-  //
-  // Probado contra Guzzi en producción: «estoy cobrando el paro y me quiero ir
-  // a Alemania a buscar trabajo, ¿lo pierdo?» se clasificaba como búsqueda de
-  // empleo y contestaba «¿qué puesto buscas?». Y «voy a mandar mi CV a una
-  // empresa de Londres, ¿le pongo foto?» se clasificaba como búsqueda de
-  // empresas y devolvía la ficha de una tienda de Covent Garden.
-  //
-  // O sea que las instrucciones del prompt sobre el formulario U2 y sobre la
-  // foto en el CV no llegaban a usarse NUNCA en esas preguntas: el enrutador
-  // contestaba antes de que el modelo las viera. Un prompt puede estar
-  // perfecto y no servir de nada si la pregunta no llega hasta él.
-  //
-  // Las dos frases tienen la forma «algo EN algún sitio», que es justo lo que
-  // captura la regla genérica de más abajo. Por eso van aquí arriba.
-
-  // El paro que te llevas fuera: U2, U1, exportar la prestación.
-  if (/\bu2\b|\bu1\b|export(ar|aci[oó]n)\s+(de\s+)?(la\s+)?(prestaci[oó]n|paro|desempleo)/i.test(t)
-      || (/(paro|prestaci[oó]n|desempleo|subsidio)/i.test(t)
-          && /(perder|pierdo|llevar|llevarme|mantener|seguir\s+cobrando|cobrar).{0,40}(fuera|extranjero|otro\s+pa[ií]s|alemania|francia|holanda|pa[ií]ses\s+bajos|b[eé]lgica|italia|portugal|suiza|irlanda|noruega|dinamarca|suecia)/i.test(t)
-          || /(irme|voy|marcho|emigrar|mudarme).{0,40}(paro|prestaci[oó]n|desempleo)/i.test(t))) {
-    return "paro_europeo";
-  }
-
-  // El CV según el país de destino: foto, extensión, datos personales.
-  if (/(foto|fotograf[ií]a).{0,30}(cv|curr[ií]culum|curriculum)/i.test(t)
-      || /(cv|curr[ií]culum|curriculum).{0,30}(foto|fotograf[ií]a)/i.test(t)
-      || /(cv|curr[ií]culum|curriculum).{0,50}(reino\s+unido|inglaterra|londres|alemania|estados\s+unidos|eeuu|holanda|pa[ií]ses\s+bajos|irlanda|suiza|austria)/i.test(t)) {
-    return "cv_por_pais";
-  }
-
   // CURSOS — tiene que ir ANTES de la regla genérica de abajo ("algo EN algún
   // sitio" → buscar), que si no se traga "curso de carretillero en Pamplona" y
   // se pone a buscar ofertas de empleo de carretillero en vez de formación.
