@@ -27,6 +27,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // "cobrar el paro en otro pais" lo busca gente que esta decidiendo si se
     // va, antes de registrarse en nada.
     { url: `${baseUrl}/llevarte-el-paro`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    // "se pone foto en el CV en Reino Unido" lo busca muchisima gente.
+    { url: `${baseUrl}/cv-por-pais`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     ...paginasCursos,
     { url: `${baseUrl}/trabajar-en`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/empleo`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },

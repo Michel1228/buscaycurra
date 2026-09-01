@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 /**
  * Curriculum — Generador de CV profesional con previsualización EN VIVO
  * Layout de 2 columnas: formulario (izq) + plantilla siempre visible (der)
@@ -1034,6 +1036,30 @@ export default function CurriculumPage() {
                   <p className="text-[10px] mt-1.5" style={{ color: "#64748b" }}>JPG/PNG, máx 3MB</p>
                 </div>
               </div>
+
+              {/* ── LA FOTO NO VALE EN TODAS PARTES ──
+                  Va aquí, pegado al botón de subirla, porque es donde se toma
+                  la decisión. En Alemania la foto se espera y no ponerla se
+                  nota; en Reino Unido, Irlanda, Países Bajos y Estados Unidos
+                  muchas empresas descartan los CV que la llevan para no
+                  exponerse a una reclamación por discriminación. Mandamos CVs
+                  a veintiséis países y el editor no lo decía en ningún sitio. */}
+              <Link
+                href="/app/curriculum/por-pais"
+                className="p-3 rounded-lg flex items-start gap-2.5 mb-3 hover:opacity-90"
+                style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", textDecoration: "none" }}
+              >
+                <span className="text-sm shrink-0">🌍</span>
+                <div>
+                  <p className="text-xs font-semibold mb-0.5" style={{ color: "#f59e0b" }}>
+                    ¿A qué país mandas el CV?
+                  </p>
+                  <p className="text-[11px] leading-relaxed" style={{ color: "#94a3b8" }}>
+                    En Alemania la foto se espera. En Reino Unido, Irlanda, Países Bajos y Estados
+                    Unidos puede hacer que ni lo lean. Mira qué cambiar antes de enviarlo.
+                  </p>
+                </div>
+              </Link>
 
               <div className="p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}>
                 <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>💡 Truco: Foto profesional gratis con IA</p>
