@@ -24,6 +24,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // "derechos au pair" lo busca gente que aun no se ha registrado, muchas
     // veces ya en el pais de acogida y con un problema encima.
     { url: `${baseUrl}/derechos-au-pair`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    // "cobrar el paro en otro pais" lo busca gente que esta decidiendo si se
+    // va, antes de registrarse en nada.
+    { url: `${baseUrl}/llevarte-el-paro`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     ...paginasCursos,
     { url: `${baseUrl}/trabajar-en`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/empleo`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },

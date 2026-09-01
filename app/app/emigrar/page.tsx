@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PAISES, LISTA_PAISES, formatearSalario } from "@/lib/paises";
 import { getPrimerosPasos, type PrimerosPasosInfo } from "@/lib/primeros-pasos";
-import { PenLine, Search, Home, Lightbulb, Globe, ClipboardList, GraduationCap, Star, Briefcase, Users, AlertTriangle, Mail, type LucideIcon } from "lucide-react";
+import { PenLine, Search, Home, Lightbulb, Globe, ClipboardList, GraduationCap, Star, Briefcase, Users, AlertTriangle, Mail, type LucideIcon, Wallet} from "lucide-react";
 
 type Tab = "au-pair" | "alojamiento" | "visado" | "programas";
 
@@ -261,6 +261,33 @@ export default function EmigrarPage() {
         <p className="text-[#94a3b8] max-w-xl mx-auto leading-relaxed">
           Toda la información que necesitas para trabajar fuera de España: visados, alojamiento, programas au pair y más. Guía completa por país.
         </p>
+      </section>
+
+      {/* ── EL PARO, ANTES QUE EL VISADO ──
+          Quien entra aquí muchas veces acaba de quedarse sin trabajo y está
+          cobrando prestación. Da por hecho que al irse la pierde, así que se va
+          sin nada o no se va. Con 1.000 euros de paro son entre 3.000 y 6.000
+          que se estaba dejando, justo cuando paga una mudanza a otro país.
+          Enseñárselo después del visado es tarde: los plazos empiezan a correr
+          cuatro semanas ANTES de salir. */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 mb-6">
+        <Link
+          href="/app/emigrar/paro"
+          className="rounded-xl p-4 flex items-start gap-3 hover:opacity-90"
+          style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)", textDecoration: "none" }}
+        >
+          <Wallet size={19} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
+          <div>
+            <p className="text-sm font-semibold mb-0.5" style={{ color: "#22c55e" }}>
+              ¿Estás cobrando el paro? Puedes llevártelo
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+              Hasta seis meses cobrando tu prestación española mientras buscas trabajo en otro país
+              de la UE. Pero hay dos plazos que lo tiran todo, y uno empieza cuatro semanas antes de
+              que te vayas.
+            </p>
+          </div>
+        </Link>
       </section>
 
       {/* Country selector */}
