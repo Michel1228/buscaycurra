@@ -21,6 +21,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Prioridad alta a propósito: "acreditar experiencia laboral" lo busca
     // mucha gente y no hay ningún portal de empleo contándolo bien.
     { url: `${baseUrl}/cursos/acreditar`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    // "derechos au pair" lo busca gente que aun no se ha registrado, muchas
+    // veces ya en el pais de acogida y con un problema encima.
+    { url: `${baseUrl}/derechos-au-pair`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     ...paginasCursos,
     { url: `${baseUrl}/trabajar-en`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/empleo`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -18,7 +20,7 @@ import AuPairOfertasRecientes from "@/components/AuPairOfertasRecientes";
 import AlojamientoOferta from "@/components/AlojamientoOferta";
 import {
   Users, Sparkles, User, Check, Globe, Camera, Star, ClipboardList,
-  Mail, FileText, Eye, Upload, Save, X, CheckCircle2,
+  Mail, FileText, Eye, Upload, Save, X, CheckCircle2, ShieldCheck,
 } from "lucide-react";
 
 const MAX_FOTOS = 6;
@@ -651,6 +653,32 @@ export default function AuPairProfilePage() {
             </p>
           </div>
         )}
+      </section>
+
+      {/* ── SUS DERECHOS, ANTES QUE LAS OFERTAS ──
+          Va arriba a propósito. Quien entra aquí se está planteando irse a
+          vivir a casa de unos desconocidos, en otro país, sin hablar bien el
+          idioma. Saber que existe un máximo de cinco horas al día y que si le
+          piden jornada completa eso ya es un empleo —con salario mínimo— le
+          protege más que cualquier oferta que le pongamos debajo. Enseñárselo
+          después de que haya elegido familia es tarde. */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 mb-6">
+        <Link
+          href="/app/au-pair/derechos"
+          className="rounded-xl p-4 flex items-start gap-3 hover:opacity-90"
+          style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)", textDecoration: "none" }}
+        >
+          <ShieldCheck size={19} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
+          <div>
+            <p className="text-sm font-semibold mb-0.5" style={{ color: "#22c55e" }}>
+              Antes de irte: lo que te corresponde
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+              Máximo cinco horas al día, un día libre entero y contrato por escrito. Y cómo saber si
+              lo que te piden ya no es ser au pair, sino un trabajo que se paga.
+            </p>
+          </div>
+        </Link>
       </section>
 
       {/* ── Ofertas Au Pair en vivo ── */}
