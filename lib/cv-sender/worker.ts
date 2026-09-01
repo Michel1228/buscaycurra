@@ -253,7 +253,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   // Actualizar estado en Supabase a "enviado"
   if (recordId) {
-    await updateSendStatus(jobId, "enviado", undefined, coverLetter, cvSnapshot);
+    await updateSendStatus(jobId, "enviado", undefined, coverLetter, cvSnapshot, emailResult.messageId);
   }
 
   // Enviar confirmación al usuario

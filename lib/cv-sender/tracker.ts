@@ -138,14 +138,20 @@ export async function updateSendStatus(
   status: SendStatus,
   errorMessage?: string,
   coverLetter?: string,
-  cvSnapshot?: string
+  cvSnapshot?: string,
+  // El identificador que devuelve Resend. Sin el no hay forma de casar un
+  // rebote con su envio, y hasta ahora no se guardaba: por eso "enviado"
+  // significaba "se lo dimos a Resend" y nunca "llego".
+  // Ver /api/cv-sender/entrega.
+  resendId?: string
 ): Promise<void> {
-  const updates: Partial<CVSendRecord> = {
+  const updates: Record<string, unknown> = {
     status,
     ...(status === "enviado" && { sent_at: new Date().toISOString() }),
     ...(errorMessage && { error_message: errorMessage }),
     ...(coverLetter && { cover_letter: coverLetter }),
     ...(cvSnapshot && { cv_snapshot: cvSnapshot }),
+    ...(resendId && { resend_id: resendId }),
   };
 
   const { error } = await getSupabase()
