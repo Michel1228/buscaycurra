@@ -5,10 +5,27 @@
  */
 
 // Palabras clave que identifican ofertas de tipo au pair / cuidado de niños
+// Mismos idiomas que el clasificador de lib/job-search/sync-worker.ts. Si se
+// tocan allí, hay que tocarlos aquí: son las dos mitades de lo mismo.
 const AU_PAIR_KEYWORDS = [
-  "au pair", "aupair", "nanny", "niñera", "nanny", "nanny live-in",
-  "childcare", "child care", "babysitter", "baby sitter", "canguro",
-  "live-in caregiver", "au-pair", "au pair live", "dem pair",
+  // Español e inglés
+  "au pair", "aupair", "au-pair", "au pair live", "dem pair",
+  "nanny", "nanny live-in", "live-in caregiver", "niñera", "canguro",
+  "childcare", "child care", "babysitter", "baby sitter",
+  // Alemán
+  "kindermädchen", "kinderfrau", "kinderbetreuung",
+  // Francés
+  "garde d'enfants", "garde d’enfants", "nounou", "assistante maternelle",
+  // Italiano
+  "bambinaia", "ragazza alla pari",
+  // Neerlandés
+  "kinderoppas", "gastouder",
+  // Portugués
+  "babá",
+  // Nórdicos
+  "barnvakt", "barnepike", "barnepasser",
+  // Polaco
+  "opiekunka do dziec", "niania",
 ];
 
 /**

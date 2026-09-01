@@ -14,8 +14,11 @@ import Link from "next/link";
 import { AlertTriangle, ArrowLeft, Check, Globe, Scale, ShieldCheck, X } from "lucide-react";
 import {
   DERECHOS_ACUERDO, SENALES_DE_ALARMA, SI_ES_TRABAJO, PAISES_CON_ACUERDO,
-  PAISES_SIN_ACUERDO, FUENTES, ACTUALIZADO, diferenciaAnual,
+  PAISES_SIN_ACUERDO, REINO_UNIDO_INTERNAS, FUENTES, ACTUALIZADO, diferenciaAnual,
 } from "@/lib/au-pair/derechos";
+import {
+  REALIDAD_POR_PAIS, ETIQUETA_DIFICULTAD, COLOR_DIFICULTAD,
+} from "@/lib/au-pair/puedes-ir";
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -121,6 +124,85 @@ export default function DerechosAuPair({ base }: { base: string }) {
               </li>
             ))}
           </ul>
+        </div>
+      </Seccion>
+
+      {/* ── ¿PUEDES IR SIQUIERA? ──
+          Va antes que los derechos a propósito. De poco sirve saber que tienes
+          derecho a cinco horas en un país al que no puedes entrar a trabajar.
+          Y es un problema NUESTRO: las ofertas de au pair que más tenemos son
+          del Reino Unido (1.155), Estados Unidos (648) y Canadá (411), tres
+          sitios donde una española no puede presentarse sin más. */}
+      <Seccion titulo="Antes de nada: ¿puedes ir a ese país?">
+        <p className="text-sm leading-relaxed mb-4" style={{ color: "#94a3b8" }}>
+          Muchas ofertas que verás son de países donde hace falta visado, y algunos ya no tienen
+          figura de au pair. Esto es lo que hay que tener para poder aceptarlas, con nacionalidad
+          española o de la UE.
+        </p>
+        <div className="flex flex-col gap-3">
+          {REALIDAD_POR_PAIS.map(p => (
+            <div key={p.codigo} className="rounded-xl p-4"
+                 style={{ background: "#1e212b", border: `1px solid ${p.dificultad === "dificil" ? "rgba(239,68,68,0.25)" : "#2d3142"}` }}>
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span className="text-base leading-none">{p.bandera}</span>
+                <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.nombre}</span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      style={{ background: `${COLOR_DIFICULTAD[p.dificultad]}1f`, color: COLOR_DIFICULTAD[p.dificultad] }}>
+                  {ETIQUETA_DIFICULTAD[p.dificultad]}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed mb-2" style={{ color: "#94a3b8" }}>{p.resumen}</p>
+              <ul className="flex flex-col gap-1 mb-2">
+                {p.comoSePuede.map(c => (
+                  <li key={c} className="text-[11px] leading-relaxed pl-3 relative" style={{ color: "#94a3b8" }}>
+                    <span className="absolute left-0" style={{ color: "#64748b" }}>·</span>{c}
+                  </li>
+                ))}
+              </ul>
+              {p.cuidadoCon && (
+                <p className="text-[11px] leading-relaxed pt-2" style={{ color: "#ef4444", borderTop: "1px solid #2d3142" }}>
+                  {p.cuidadoCon}
+                </p>
+              )}
+              {p.enlace && (
+                <a href={p.enlace.url} target="_blank" rel="noopener noreferrer"
+                   className="text-[11px] inline-block mt-2 hover:underline" style={{ color: "#22c55e" }}>
+                  {p.enlace.titulo} →
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      </Seccion>
+
+      {/* ── Reino Unido: la exención que ya no existe ── */}
+      <Seccion titulo="Si vas de interna al Reino Unido, esto cambió">
+        <div className="rounded-xl p-4" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)" }}>
+          <p className="text-sm font-semibold mb-2" style={{ color: "#22c55e" }}>
+            {REINO_UNIDO_INTERNAS.cambio}
+          </p>
+          <p className="text-xs leading-relaxed mb-3" style={{ color: "#94a3b8" }}>
+            Desde 1999 se podía pagar por debajo del mínimo a quien vivía en casa de la familia y era
+            «tratada como una más». Se creó pensando en las au pairs y acabó amparando jornadas
+            completas por doscientas libras al mes. Son veinticinco años de costumbre diciendo lo
+            contrario de lo que dice la ley hoy: muchas familias no se han enterado.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {REINO_UNIDO_INTERNAS.puntos.map(t => (
+              <li key={t} className="flex gap-2.5 items-start">
+                <Check size={13} strokeWidth={2.2} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
+                <span className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{t}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap gap-3 mt-3 pt-3" style={{ borderTop: "1px solid #2d3142" }}>
+            {REINO_UNIDO_INTERNAS.fuentes.map(f => (
+              <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer"
+                 className="text-[11px] hover:underline" style={{ color: "#64748b" }}>
+                {f.titulo}
+              </a>
+            ))}
+          </div>
         </div>
       </Seccion>
 

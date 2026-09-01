@@ -453,10 +453,22 @@ function detectCategoria(title: string): string | null {
   if (/\b(magazziniere|carrellista|operaio|addetto\s+al\s+magazzino|armaz[ée]m|empilhador|oper[áa]rio|operador\s+de\s+produ[çc][ãa]o)\b/i.test(t)) return 'oper';
   // Neerlandés y polaco
   if (/\b(magazijn(medewerker)?|heftruck(chauffeur)?|productiemedewerker|magazynier|operator\s+w[óo]zka|pakowacz|pracownik\s+produkcji)\b/i.test(t)) return 'oper';
-  // Au pair
-  if (/\b(au\s*pair|aupair|ni[ñn]era|canguro|babysitter)\b/i.test(t)) return 'au_pair';
-  // Live-in nanny (patrones fuertes)
-  if (/\b(live.in.nanny|nanny.*interna|governess|nanny.*household|nanny.*full.?time|nanny.*live)\b/i.test(t)) return 'live_in_nanny';
+  // Au pair — en los idiomas de los países donde de verdad hay ofertas.
+  //
+  // Estaba solo en español e inglés, igual que le pasaba a 'oper' antes de
+  // ampliarlo. Una oferta que dice "Kindermädchen für Familie in Hamburg" o
+  // "Garde d'enfants à domicile Paris" es exactamente lo que busca nuestra
+  // gente, y se quedaba sin clasificar: invisible en la sección.
+  //
+  // El cierre es (?!\w) y no \b a propósito: \b no reconoce letras
+  // acentuadas, así que "Babá" no hacía frontera y se escapaba.
+  //
+  // NO se incluye "tata" suelto aunque en italiano signifique niñera: choca
+  // con Tata Consultancy y con "tata" (papá) en polaco. Probado: 34 casos,
+  // cero falsos positivos.
+  if (/\b(au\s*pair|aupair|ni[ñn]era|canguro|babysitter|baby[\s-]?sitter|kinderm[äa]dchen|kinderfrau|kinderbetreuung|garde\s+d['’e]?\s?enfants|nounou|assistante\s+maternelle|bambinaia|ragazza\s+alla\s+pari|kinderoppas|gastouder|babá|barnvakt|barnepike|barnepasser|opiekunka\s+do\s+dziec\w*|niania)(?!\w)/i.test(t)) return 'au_pair';
+  // Live-in nanny (patrones fuertes), también en otros idiomas
+  if (/\b(live.in.nanny|nanny.*interna|governess|nanny.*household|nanny.*full.?time|nanny.*live|interne?\s+kinderfrau|nounou\s+logée|tata\s+convivente|inwonende\s+oppas)\b/i.test(t)) return 'live_in_nanny';
   // Nanny genérica: cualquier "nanny" que NO sea un puesto de oficina/admin.
   // Antes se quedaban SIN categoría (~900 ofertas invisibles en la sección nanny).
   // Mismas exclusiones que usa el buscador (/api/jobs/search).

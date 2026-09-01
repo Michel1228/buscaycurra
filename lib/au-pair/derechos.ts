@@ -180,6 +180,42 @@ export const SI_ES_TRABAJO = {
   ],
 };
 
+/**
+ * REINO UNIDO: LA EXENCIÓN QUE DEJÓ DE EXISTIR Y CASI NADIE SABE.
+ *
+ * Desde 1999 había una excepción en la ley británica del salario mínimo: si
+ * vivías en casa de tu empleador y te trataban «como uno más de la familia»,
+ * podían no pagarte el mínimo. Se creó pensando en las au pairs y acabó
+ * amparando a niñeras internas trabajando jornada completa por doscientas
+ * libras al mes.
+ *
+ * Se ELIMINÓ el 1 de abril de 2024. Desde entonces, quien trabaja de interna
+ * en el Reino Unido sin ser de la familia tiene derecho al salario mínimo
+ * nacional como cualquier otro trabajador.
+ *
+ * Son veinticinco años de costumbre diciendo lo contrario de lo que dice la ley
+ * hoy. Muchas familias no se han enterado, y muchas chicas tampoco.
+ */
+export const REINO_UNIDO_INTERNAS = {
+  cambio: "La exención de salario mínimo para trabajadoras internas se eliminó el 1 de abril de 2024.",
+  /** Libras por hora desde abril de 2026, gov.uk */
+  salarioHora21: 12.71,
+  salarioHora18a20: 10.85,
+  /** Tope de lo que te pueden descontar por el alojamiento. */
+  descuentoAlojamientoDia: 11.1,
+  descuentoAlojamientoSemana: 77.7,
+  puntos: [
+    "Si trabajas de interna en el Reino Unido y no eres de la familia, te corresponde el salario mínimo nacional. Ya no hay excepción.",
+    "Desde abril de 2026 son 12,71 £ la hora a partir de 21 años, y 10,85 £ entre 18 y 20.",
+    "Te pueden descontar por el alojamiento, pero con tope: 11,10 £ al día, 77,70 £ a la semana. Ni una libra más.",
+    "Si te descuentan más de ese tope, la diferencia sale de tu salario mínimo — y eso es incumplir la ley, no un acuerdo entre ustedes.",
+  ],
+  fuentes: [
+    { titulo: "Tarifas del salario mínimo nacional — GOV.UK", url: "https://www.gov.uk/national-minimum-wage-rates" },
+    { titulo: "Descuento por alojamiento — GOV.UK", url: "https://www.gov.uk/national-minimum-wage-accommodation" },
+  ],
+};
+
 export const FUENTES: FuenteDerecho[] = [
   {
     titulo: "Acuerdo Europeo sobre la Colocación Au Pair — texto ratificado por España (BOE)",
