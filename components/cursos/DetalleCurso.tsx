@@ -10,7 +10,12 @@
 import Link from "next/link";
 import { AlertCircle, ArrowLeft, Clock, Euro, Globe, RefreshCw, Sparkles } from "lucide-react";
 import PrepararSolicitud from "@/components/PrepararSolicitud";
-import { tipoPorSlug, NOMBRE_SECTOR, precioResumido, duracionResumida, type TipoCurso } from "@/lib/cursos/tipos";
+import AvisoCurso from "@/components/cursos/AvisoCurso";
+import {
+  tipoPorSlug, NOMBRE_SECTOR, duracionResumida, costeDetallado,
+  financiacionDe, NOMBRE_FINANCIACION, COLOR_FINANCIACION, EXPLICA_FINANCIACION,
+  type TipoCurso,
+} from "@/lib/cursos/tipos";
 import { PAISES } from "@/lib/paises";
 
 function Dato({ icono, etiqueta, valor, destacado }: {
@@ -98,12 +103,21 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
 
       {/* ── Los tres datos que todo el mundo busca primero ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
-        <Dato
-          icono={<Euro size={12} strokeWidth={1.9} />}
-          etiqueta="Cuánto cuesta"
-          valor={precioResumido(t)}
-          destacado={gratis}
-        />
+        {/* El coste va con las DOS cifras. "Gratis o hasta 1500 €" se lee
+            como "gratis" y se olvida el resto; aquí lo que puede costarte
+            está a la misma altura que lo que puede salirte gratis. */}
+        <div className="rounded-xl p-3" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+          <div className="flex items-center gap-1.5 mb-1" style={{ color: "#64748b" }}>
+            <Euro size={12} strokeWidth={1.9} />
+            <span className="text-[10px] uppercase tracking-wide font-semibold">Cuánto cuesta</span>
+          </div>
+          <p className="text-sm font-bold" style={{ color: COLOR_FINANCIACION[financiacionDe(t)] }}>
+            {costeDetallado(t).etiqueta}
+          </p>
+          {costeDetallado(t).detalle && (
+            <p className="text-[11px] mt-0.5" style={{ color: "#94a3b8" }}>{costeDetallado(t).detalle}</p>
+          )}
+        </div>
         <Dato
           icono={<Clock size={12} strokeWidth={1.9} />}
           etiqueta="Cuánto dura"
@@ -118,8 +132,15 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
         )}
       </div>
 
+      <p className="text-xs mb-2 -mt-4" style={{ color: "#64748b" }}>
+        <span style={{ color: COLOR_FINANCIACION[financiacionDe(t)], fontWeight: 600 }}>
+          {NOMBRE_FINANCIACION[financiacionDe(t)]}
+        </span>
+        {" · "}
+        {EXPLICA_FINANCIACION[financiacionDe(t)]}
+      </p>
       {t.precio.nota && (
-        <p className="text-xs mb-8 -mt-4" style={{ color: "#64748b" }}>{t.precio.nota}</p>
+        <p className="text-xs mb-8" style={{ color: "#64748b" }}>{t.precio.nota}</p>
       )}
 
       <Seccion titulo="Qué es">
@@ -227,6 +248,9 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
           </div>
         </Seccion>
       )}
+
+      {/* ── Lo barato primero: activar el aviso cuesta un clic ── */}
+      <AvisoCurso slug={t.slug} nombre={t.nombre} />
 
       {/* ── Lo que nos mete dentro del proceso, no solo informando ── */}
       <PrepararSolicitud slug={t.slug} nombre={t.nombre} />

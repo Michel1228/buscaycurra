@@ -635,6 +635,64 @@ export function ordenarPorUrgencia(tipos: TipoCurso[]): TipoCurso[] {
 }
 
 /** Texto corto de precio para las tarjetas. */
+/**
+ * Cómo se paga el curso. Es lo primero que quiere saber cualquiera, antes
+ * incluso de qué enseña: si cuesta dinero o no.
+ *
+ * Se deduce del precio en vez de guardarse a mano para que no puedan
+ * contradecirse. Tres casos y ya:
+ *
+ *   gratis         · no cuesta nada nunca. Online, se empieza hoy.
+ *   subvencionado  · gratis SI sale convocatoria en tu zona; si no, se paga.
+ *                    Es el caso de casi todos los oficiales españoles, y por
+ *                    eso importa decir las dos cifras y no solo "gratis": a
+ *                    quien no le salga convocatoria le va a costar dinero.
+ *   pago           · no hay via gratuita conocida.
+ */
+export type Financiacion = "gratis" | "subvencionado" | "pago";
+
+export const NOMBRE_FINANCIACION: Record<Financiacion, string> = {
+  gratis: "Gratis",
+  subvencionado: "Subvencionado",
+  pago: "De pago",
+};
+
+/** Explicación corta de qué significa cada grupo. Va bajo el filtro. */
+export const EXPLICA_FINANCIACION: Record<Financiacion, string> = {
+  gratis: "No cuesta nada. Online y puedes empezar hoy mismo.",
+  subvencionado: "Gratis si sale convocatoria en tu zona. Si no, lo pagas tú.",
+  pago: "No hemos encontrado forma de hacerlo gratis.",
+};
+
+export const COLOR_FINANCIACION: Record<Financiacion, string> = {
+  gratis: "#22c55e",
+  subvencionado: "#3b82f6",
+  pago: "#f59e0b",
+};
+
+export function financiacionDe(t: TipoCurso): Financiacion {
+  if (t.precio.max === 0) return "gratis";
+  if (t.precio.min === 0) return "subvencionado";
+  return "pago";
+}
+
+/**
+ * El coste, dicho entero y sin trampa.
+ *
+ * precioResumido() dice "Gratis o hasta 1500 €", que en una tarjeta se lee como
+ * "gratis" y se olvida el resto. Esto separa las dos mitades para poder
+ * enseñarlas con distinto peso: lo que puede costarte no puede ir en letra
+ * pequeña cuando hablamos de 1.500 euros.
+ */
+export function costeDetallado(t: TipoCurso): { etiqueta: string; detalle?: string } {
+  const f = financiacionDe(t);
+  if (f === "gratis") return { etiqueta: "Gratis" };
+  if (f === "subvencionado") {
+    return { etiqueta: "Gratis con plaza", detalle: `si no, hasta ${t.precio.max} €` };
+  }
+  return { etiqueta: `${t.precio.min}-${t.precio.max} €` };
+}
+
 export function precioResumido(t: TipoCurso): string {
   if (t.precio.min === 0 && t.precio.max === 0) return "Gratis";
   if (t.precio.min === 0) return `Gratis o hasta ${t.precio.max} €`;

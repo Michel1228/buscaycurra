@@ -1,13 +1,21 @@
 "use client";
 
 /**
- * components/cursos/CatalogoCursos.tsx — El catálogo con su buscador.
+ * components/cursos/CatalogoCursos.tsx — El catálogo, con buscador y filtro de coste.
  *
  * POR QUÉ HAY UN BUSCADOR Y NO SOLO LA LISTA ORDENADA. Ordenado por sectores
  * está bien para quien no sabe lo que quiere, pero quien llega buscando
  * "carretillero" o "excel" no viene a explorar: viene a por una cosa concreta y
  * cada scroll de más es una oportunidad de irse. La lupa atiende a ese, y la
  * lista de abajo sigue estando para el que va mirando.
+ *
+ * POR QUÉ EL FILTRO ES EL COSTE Y NO OTRA COSA. Porque es la primera pregunta
+ * de todo el mundo, antes incluso de qué enseña el curso. Y sobre todo porque
+ * "gratis" y "subvencionado" NO son lo mismo, aunque en las listas de por ahí
+ * se mezclen: gratis es gratis siempre; subvencionado es gratis SI sale
+ * convocatoria en tu zona, y si no sale te cuesta hasta 1.800 euros. Meter los
+ * dos en el mismo saco es lo que hace que la gente se lleve el disgusto en la
+ * matrícula, así que aquí van separados y con las dos cifras a la vista.
  *
  * Busca a la vez en los CURSOS (fichas nuestras, verificadas una a una) y en las
  * PLATAFORMAS (sitios con cientos de cursos ya montados). Son cosas distintas y
@@ -21,10 +29,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, Clock, Euro, ExternalLink, GraduationCap, Search, X } from "lucide-react";
+import { AlertCircle, Clock, ExternalLink, Search, X } from "lucide-react";
 import {
-  NOMBRE_SECTOR, precioResumido, duracionResumida,
-  type TipoCurso, type SectorCurso,
+  NOMBRE_SECTOR, duracionResumida, financiacionDe, costeDetallado,
+  NOMBRE_FINANCIACION, EXPLICA_FINANCIACION, COLOR_FINANCIACION,
+  type TipoCurso, type SectorCurso, type Financiacion,
 } from "@/lib/cursos/tipos";
 import type { PlataformaFormacion, ServicioEmpleo } from "@/lib/cursos/plataformas";
 
@@ -37,13 +46,26 @@ interface Props {
   base: string;
 }
 
+type Filtro = "todos" | Financiacion;
+
 /** Quita tildes y baja a minúsculas, para que "ingles" encuentre "inglés". */
 function normalizar(s: string) {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
+/** El coste, con las dos cifras cuando hay dos. */
+function Coste({ t }: { t: TipoCurso }) {
+  const { etiqueta, detalle } = costeDetallado(t);
+  const color = COLOR_FINANCIACION[financiacionDe(t)];
+  return (
+    <span className="flex items-baseline gap-1.5 min-w-0">
+      <span className="font-semibold whitespace-nowrap" style={{ color }}>{etiqueta}</span>
+      {detalle && <span className="truncate" style={{ color: "#64748b" }}>{detalle}</span>}
+    </span>
+  );
+}
+
 function TarjetaCurso({ t, base }: { t: TipoCurso; base: string }) {
-  const gratis = t.precio.min === 0;
   return (
     <Link href={`${base}/${t.slug}`} className="card-game p-4 flex flex-col gap-2" style={{ textDecoration: "none" }}>
       <div className="flex items-start justify-between gap-2">
@@ -56,12 +78,9 @@ function TarjetaCurso({ t, base }: { t: TipoCurso; base: string }) {
         )}
       </div>
       <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{t.resumen}</p>
-      <div className="flex items-center gap-3 mt-auto pt-1 text-[11px]" style={{ color: "#64748b" }}>
-        <span className="flex items-center gap-1">
-          <Euro size={11} strokeWidth={1.8} />
-          <span style={{ color: gratis ? "#22c55e" : "#64748b" }}>{precioResumido(t)}</span>
-        </span>
-        <span className="flex items-center gap-1">
+      <div className="flex items-center justify-between gap-3 mt-auto pt-1 text-[11px]">
+        <Coste t={t} />
+        <span className="flex items-center gap-1 shrink-0" style={{ color: "#64748b" }}>
           <Clock size={11} strokeWidth={1.8} />
           {duracionResumida(t)}
         </span>
@@ -79,23 +98,21 @@ function TarjetaPlataforma({ p }: { p: PlataformaFormacion }) {
         <ExternalLink size={13} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#64748b" }} />
       </div>
       <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{p.resumen}</p>
-      {p.volumen && (
-        <p className="text-[11px] font-medium" style={{ color: "#22c55e" }}>{p.volumen}</p>
-      )}
-      {p.aviso && (
-        <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>{p.aviso}</p>
-      )}
+      {p.volumen && <p className="text-[11px] font-medium" style={{ color: "#22c55e" }}>{p.volumen}</p>}
+      {p.aviso && <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>{p.aviso}</p>}
     </a>
   );
 }
 
 export default function CatalogoCursos({ obligatorios, porSector, plataformas, servicio, base }: Props) {
   const [q, setQ] = useState("");
+  const [filtro, setFiltro] = useState<Filtro>("todos");
+
   const consulta = normalizar(q.trim());
   const buscando = consulta.length >= 2;
 
   // Todo el texto de cada curso en una sola cadena, para no repetir el filtro.
-  const cursos = useMemo(() => {
+  const indexados = useMemo(() => {
     const todos = [...obligatorios, ...porSector.flatMap(s => s.cursos)];
     return todos.map(t => ({
       t,
@@ -114,23 +131,39 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
     [plataformas]
   );
 
-  const cursosEncontrados = buscando ? cursos.filter(c => c.texto.includes(consulta)).map(c => c.t) : [];
+  // Cuántos hay de cada tipo de coste. Va en la pastilla: un filtro que no dice
+  // cuántos resultados tiene obliga a probarlo para descubrir que está vacío.
+  const cuentas = useMemo(() => {
+    const c: Record<Filtro, number> = { todos: indexados.length, gratis: 0, subvencionado: 0, pago: 0 };
+    for (const { t } of indexados) c[financiacionDe(t)]++;
+    return c;
+  }, [indexados]);
+
+  const pasaFiltro = (t: TipoCurso) => filtro === "todos" || financiacionDe(t) === filtro;
+
+  const cursosEncontrados = buscando
+    ? indexados.filter(c => c.texto.includes(consulta) && pasaFiltro(c.t)).map(c => c.t)
+    : [];
   const plataformasEncontradas = buscando
     ? plataformasIndexadas.filter(p => p.texto.includes(consulta)).map(p => p.p)
     : [];
   const nadaEncontrado = buscando && cursosEncontrados.length === 0 && plataformasEncontradas.length === 0;
 
+  const obligatoriosVisibles = obligatorios.filter(pasaFiltro);
+  const sectoresVisibles = porSector
+    .map(s => ({ sector: s.sector, cursos: s.cursos.filter(pasaFiltro) }))
+    .filter(s => s.cursos.length > 0);
+
+  const FILTROS: Filtro[] = ["todos", "gratis", "subvencionado", "pago"];
+
   return (
     <>
       {/* ── La lupa ── */}
-      <div className="mb-8">
+      <div className="mb-4">
         <div className="relative">
-          <Search
-            size={16}
-            strokeWidth={1.9}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-            style={{ color: "#64748b" }}
-          />
+          <Search size={16} strokeWidth={1.9}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  style={{ color: "#64748b" }} />
           <input
             type="search"
             value={q}
@@ -141,17 +174,47 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
             style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
           />
           {q && (
-            <button
-              onClick={() => setQ("")}
-              aria-label="Borrar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full"
-              style={{ color: "#64748b" }}
-            >
+            <button onClick={() => setQ("")} aria-label="Borrar búsqueda"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full"
+                    style={{ color: "#64748b" }}>
               <X size={14} strokeWidth={2} />
             </button>
           )}
         </div>
       </div>
+
+      {/* ── Filtro por coste ── */}
+      <div className="mb-2 flex flex-wrap gap-2" role="group" aria-label="Filtrar por coste">
+        {FILTROS.map(f => {
+          const activo = filtro === f;
+          const color = f === "todos" ? "#94a3b8" : COLOR_FINANCIACION[f];
+          const etiqueta = f === "todos" ? "Todos" : NOMBRE_FINANCIACION[f];
+          return (
+            <button
+              key={f}
+              onClick={() => setFiltro(f)}
+              aria-pressed={activo}
+              className="text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+              style={{
+                background: activo ? `${color}1f` : "#1e212b",
+                border: `1px solid ${activo ? color : "#2d3142"}`,
+                color: activo ? color : "#94a3b8",
+              }}
+            >
+              {etiqueta}
+              <span className="ml-1.5" style={{ color: activo ? color : "#64748b" }}>{cuentas[f]}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* La diferencia entre gratis y subvencionado dicha con todas las letras:
+          es justo lo que la gente no sabe y donde se lleva el disgusto. */}
+      <p className="text-[11px] mb-8 leading-relaxed" style={{ color: "#64748b" }}>
+        {filtro === "todos"
+          ? "Gratis es gratis siempre. Subvencionado es gratis si sale convocatoria en tu zona; si no, lo pagas tú."
+          : EXPLICA_FINANCIACION[filtro]}
+      </p>
 
       {/* ── Resultados de búsqueda ── */}
       {buscando && (
@@ -199,7 +262,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
       {/* ── Catálogo completo (se oculta mientras se busca) ── */}
       {!buscando && (
         <>
-          {obligatorios.length > 0 && (
+          {obligatoriosVisibles.length > 0 && (
             <section className="mb-12">
               <div className="flex items-start gap-2.5 mb-1">
                 <AlertCircle size={17} strokeWidth={1.9} className="shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
@@ -211,29 +274,39 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-3 mt-4">
-                {obligatorios.map(t => <TarjetaCurso key={t.slug} t={t} base={base} />)}
+                {obligatoriosVisibles.map(t => <TarjetaCurso key={t.slug} t={t} base={base} />)}
               </div>
             </section>
           )}
 
-          <section className="mb-12">
-            <h2 className="text-base font-bold mb-1" style={{ color: "#f1f5f9" }}>
-              Para que te cojan a ti y no a otro
-            </h2>
-            <p className="text-xs mb-5" style={{ color: "#94a3b8" }}>
-              No son obligatorios, pero marcan la diferencia cuando hay varios candidatos.
-            </p>
-            {porSector.map(({ sector, cursos: delSector }) => (
-              <div key={sector} className="mb-7">
-                <h3 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#64748b" }}>
-                  {NOMBRE_SECTOR[sector]}
-                </h3>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {delSector.map(t => <TarjetaCurso key={t.slug} t={t} base={base} />)}
+          {sectoresVisibles.length > 0 && (
+            <section className="mb-12">
+              <h2 className="text-base font-bold mb-1" style={{ color: "#f1f5f9" }}>
+                Para que te cojan a ti y no a otro
+              </h2>
+              <p className="text-xs mb-5" style={{ color: "#94a3b8" }}>
+                No son obligatorios, pero marcan la diferencia cuando hay varios candidatos.
+              </p>
+              {sectoresVisibles.map(({ sector, cursos: delSector }) => (
+                <div key={sector} className="mb-7">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#64748b" }}>
+                    {NOMBRE_SECTOR[sector]}
+                  </h3>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {delSector.map(t => <TarjetaCurso key={t.slug} t={t} base={base} />)}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </section>
+              ))}
+            </section>
+          )}
+
+          {obligatoriosVisibles.length === 0 && sectoresVisibles.length === 0 && (
+            <div className="rounded-xl p-5 mb-10 text-center" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+              <p className="text-sm" style={{ color: "#94a3b8" }}>
+                Todavía no tenemos ninguna ficha de ese tipo. Prueba con otro filtro o mira las plataformas de abajo.
+              </p>
+            </div>
+          )}
 
           {/* ── Miles de cursos que no son nuestros pero son gratis ── */}
           <section className="mb-10">
