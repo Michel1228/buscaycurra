@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { destinoDeNotificacion, esAlertaDesplegable } from "@/lib/notificaciones/destino";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { Bell, Briefcase, Upload, Pin, BellOff, ClipboardList, ChevronDown, ChevronUp, ExternalLink, Send, Star } from "lucide-react";
@@ -110,15 +111,13 @@ export default function NotificacionesPage() {
     } catch { /* ignore */ }
   }
 
-  const isAlerta = (n: Notif) => n.tipo === "alerta_empleo" || n.tipo === "nuevas_ofertas" || n.tipo === "nuevo_empleo";
+  const isAlerta = (n: Notif) => esAlertaDesplegable(n.tipo);
 
-  function getNonAlertaUrl(n: Notif): string | null {
-    const datos = n.datos || {};
-    if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
-    if (n.tipo === "cv_enviado") return "/app/envios";
-    if (n.tipo === "respuesta_empresa" || n.tipo === "cv_visto") return "/app/pipeline";
-    if (n.tipo === "recordatorio") return "/app/gusi";
-    return null;
+  // Esta función era una copia recortada de la de la campana y conocía
+  // cinco tipos frente a los quince de aquella. Ahora las dos usan la
+  // misma, que además nunca devuelve null.
+  function getNonAlertaUrl(n: Notif): string {
+    return destinoDeNotificacion(n);
   }
 
   async function toggleExpand(n: Notif) {
@@ -252,8 +251,7 @@ export default function NotificacionesPage() {
       return;
     }
     if (!n.leida) await marcarLeida(n.id);
-    const url = getNonAlertaUrl(n);
-    if (url) router.push(url);
+    router.push(getNonAlertaUrl(n));
   }
 
   const filtradas = filtro === "no_leidas" ? notifs.filter(n => !n.leida) : notifs;

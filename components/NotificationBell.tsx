@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { destinoDeNotificacion } from "@/lib/notificaciones/destino";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
@@ -37,23 +38,8 @@ const TIPO_ICON: Record<string, string> = {
   default: "📢",
 };
 
-const TIPO_NAV: Record<string, string> = {
-  cv_enviado: "/app/envios",
-  cv_visto: "/app/pipeline",
-  cv_visto_por_empresa: "/app/pipeline",
-  en_revision: "/app/pipeline",
-  respuesta_empresa: "/app/pipeline",
-  movido_a_entrevista: "/app/pipeline",
-  oferta_recibida: "/app/pipeline",
-  contratado: "/app/pipeline",
-  rechazado: "/app/pipeline",
-  nuevas_ofertas: "/app/notificaciones",
-  alerta_empleo: "/app/notificaciones",
-  oferta_recomendada: "/app/notificaciones",
-  recordatorio: "/app/gusi",
-  bienvenida: "/app/bienvenida",
-  plan: "/app/perfil?tab=plan",
-};
+// El mapa de destinos vivía aquí y otra copia distinta en la página de
+// notificaciones. Ahora es uno solo, en lib/notificaciones/destino.ts.
 
 export default function NotificationBell({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
@@ -74,21 +60,10 @@ export default function NotificationBell({ userId }: { userId: string }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  function getNotifUrl(n: Notif): string | null {
-    const datos = n.datos || {};
-
-    // Alertas de empleo: SIEMPRE a la página de notificaciones (expansión inline)
-    if (n.tipo === "nuevas_ofertas" || n.tipo === "alerta_empleo") {
-      return "/app/notificaciones";
-    }
-
-    // Si hay job_id, ir al detalle de oferta (para otros tipos: cv_enviado, cv_visto...)
-    if (datos.job_id) return `/app/ofertas/${encodeURIComponent(datos.job_id)}`;
-
-    // Usar el mapa de tipos
-    if (TIPO_NAV[n.tipo]) return TIPO_NAV[n.tipo];
-
-    return null;
+  // destinoDeNotificacion SIEMPRE devuelve una ruta: un tipo que no
+  // conozcamos lleva al listado en vez de dejar el clic muerto.
+  function getNotifUrl(n: Notif): string {
+    return destinoDeNotificacion(n);
   }
 
   useEffect(() => {
@@ -243,19 +218,15 @@ export default function NotificationBell({ userId }: { userId: string }) {
                   tabIndex={0}
                   onClick={() => {
                     if (!n.leida) marcarLeida(n.id);
-                    const url = getNotifUrl(n);
-                    if (!url) return;
                     setOpen(false);
-                    router.push(url);
+                    router.push(getNotifUrl(n));
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       if (!n.leida) marcarLeida(n.id);
-                      const url = getNotifUrl(n);
-                      if (!url) return;
                       setOpen(false);
-                      router.push(url);
+                      router.push(getNotifUrl(n));
                     }
                   }}
                   className="flex gap-3 px-4 py-3 cursor-pointer transition hover:bg-[#252836]"

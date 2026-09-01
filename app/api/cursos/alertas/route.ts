@@ -174,7 +174,14 @@ export async function POST(req: NextRequest) {
       tipo: "curso",
       titulo: `${hallazgo.total} ofertas piden ${nombre}`,
       mensaje: `Por ejemplo: ${hallazgo.ejemplo.title}${hallazgo.ejemplo.city ? ` en ${hallazgo.ejemplo.city}` : ""}.`,
-      datos: { curso_slug: aviso.curso_slug, total: hallazgo.total, url: "/app/buscar" },
+      // El destino son LAS OFERTAS QUE ANUNCIA, no un listado cualquiera. Si el
+      // aviso dice "200 ofertas piden carretillero", al pulsarlo tienen que
+      // salir esas 200 y no la búsqueda vacía.
+      datos: {
+        curso_slug: aviso.curso_slug,
+        total: hallazgo.total,
+        url: `/app/buscar?keyword=${encodeURIComponent(tipo.puestos[0])}`,
+      },
     });
 
     await sb

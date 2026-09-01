@@ -453,6 +453,48 @@ test('El autoguardado del CV espera a que el CV esté cargado (si no, lo borra)'
 // ═══════════════════════════════════════════════════════════════
 // RESULTADO
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// BLOQUE NOTIFICACIONES: que pulsar una notificación haga algo
+//
+// POR QUÉ EXISTE. Las notificaciones tenían DOS resolvedores de destino
+// duplicados —uno en la campana y otro en la página— que fueron divergiendo, y
+// los dos devolvían null cuando no reconocían el tipo. El componente hacía
+// entonces `if (!url) return`: el usuario pulsaba y NO PASABA NADA. Sin error,
+// sin aviso, sin ir a ninguna parte.
+//
+// Lo sufrió el tipo "curso": guardaba su destino en datos.url y ninguno de los
+// dos resolvedores leía ese campo.
+//
+// Estas comprobaciones son sobre el código fuente a propósito: la invariante
+// que hay que proteger es "nunca un clic muerto", y eso se ve mejor en el
+// fuente que reimplementando aquí una copia de la lógica que volvería a
+// divergir, que es justo el fallo que estamos arreglando.
+// ═══════════════════════════════════════════════════════════════
+console.log('\n🔔 BLOQUE NOTIFICACIONES: ningún clic muerto');
+
+// leerFuente ya existe más arriba y devuelve '' si el fichero no está.
+const leer = leerFuente;
+
+const destinoSrc = leer('lib/notificaciones/destino.ts');
+const campanaSrc = leer('components/NotificationBell.tsx');
+const paginaSrc  = leer('app/app/notificaciones/page.tsx');
+
+test('existe el resolvedor compartido de destinos', () => destinoSrc.length > 0);
+test('el resolvedor devuelve string, nunca null', () =>
+  /export function destinoDeNotificacion\([^)]*\):\s*string/.test(destinoSrc));
+test('el resolvedor tiene red de seguridad final', () =>
+  destinoSrc.includes('return "/app/notificaciones"'));
+test('el resolvedor respeta datos.url', () => destinoSrc.includes('datos.url'));
+test('el resolvedor entiende job_id y jobId', () =>
+  destinoSrc.includes('datos.job_id') && destinoSrc.includes('datos.jobId'));
+test('la campana usa el resolvedor compartido', () =>
+  campanaSrc.includes('destinoDeNotificacion'));
+test('la página usa el resolvedor compartido', () =>
+  paginaSrc.includes('destinoDeNotificacion'));
+test('la campana no tiene clics muertos', () => !/if \(!url\) return/.test(campanaSrc));
+test('la página no tiene clics muertos', () => !/if \(url\) router\.push/.test(paginaSrc));
+
+
 // Se espera a que TODAS terminen. Antes había un setTimeout de 5 segundos a
 // ciegas, que podía cortar comprobaciones a medias y dar el visto bueno sin
 // haberlas hecho.
