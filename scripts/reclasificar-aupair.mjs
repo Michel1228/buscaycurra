@@ -61,10 +61,23 @@ const CONDICION = (patron) =>
   `categoria IS NULL AND "isActive" = true AND title ~* '${patron}' AND title !~* '${EXCLUIR}'`;
 
 async function reclasificar(patron, categoria) {
-  const { rows: [{ pendientes }] } = await pool.query(
-    `SELECT count(*)::int AS pendientes FROM "JobListing" WHERE ${CONDICION(patron)}`
-  );
-  console.log(`\n${categoria}: ${pendientes.toLocaleString("es-ES")} ofertas sin clasificar`);
+  // EL RECUENTO ES OPCIONAL A PROPOSITO. Contar exige recorrer los 2,2
+  // millones de filas aplicando la expresion regular, y con el servidor como
+  // esta eso se pasa del limite de tiempo. Pero el total solo sirve para
+  // ensenar el progreso: el trabajo lo hace el bucle de UPDATE, que va por
+  // lotes pequenos y no lo necesita. Antes, el recuento tumbaba el script
+  // entero sin haber reclasificado ni una sola oferta.
+  let pendientes = null;
+  try {
+    const { rows } = await pool.query(
+      `SELECT count(*)::int AS n FROM "JobListing" WHERE ${CONDICION(patron)}`
+    );
+    pendientes = rows[0].n;
+  } catch {
+    // Ni caso: seguimos sin total.
+  }
+  console.log("");
+  console.log(categoria + ": " + (pendientes === null ? "(sin contar: tarda demasiado)" : pendientes.toLocaleString("es-ES") + " sin clasificar"));
 
   if (SIMULAR) {
     const { rows } = await pool.query(
@@ -84,7 +97,7 @@ async function reclasificar(patron, categoria) {
     );
     if (r.rowCount === 0) break;
     total += r.rowCount;
-    console.log(`  ${total.toLocaleString("es-ES")} / ${pendientes.toLocaleString("es-ES")}`);
+    console.log("  " + total.toLocaleString("es-ES") + (pendientes === null ? "" : " / " + pendientes.toLocaleString("es-ES")));
     await new Promise(res => setTimeout(res, PAUSA_MS));
   }
   return total;
