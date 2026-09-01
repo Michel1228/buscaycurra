@@ -10,7 +10,7 @@
  * el catálogo es estático, esto no toca la base de datos ni una vez.
  */
 import Link from "next/link";
-import { GraduationCap } from "lucide-react";
+import { BadgeCheck, GraduationCap } from "lucide-react";
 import {
   tiposPorPais, ordenarPorUrgencia, sectoresConCursos, tiposPorSector,
 } from "@/lib/cursos/tipos";
@@ -43,6 +43,28 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
           Sin rodeos y con la fuente oficial de cada dato.
         </p>
       </div>
+
+      {/* ── Antes del catálogo, no después ──
+          Para mucha de nuestra gente la respuesta correcta no es "haz un curso"
+          sino "acredita lo que ya sabes". Ponerlo debajo de trece fichas de
+          cursos sería enterrarlo: quien lleva diez años cuidando o limpiando ya
+          se habría ido a mirar precios. */}
+      <Link
+        href={`${base}/acreditar`}
+        className="rounded-xl p-4 mb-8 flex items-start gap-3 hover:opacity-90"
+        style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)", textDecoration: "none" }}
+      >
+        <BadgeCheck size={19} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
+        <div>
+          <p className="text-sm font-semibold mb-0.5" style={{ color: "#22c55e" }}>
+            ¿Llevas años trabajando y no tienes el título?
+          </p>
+          <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+            Se puede acreditar oficialmente lo que ya sabes hacer, gratis y sin volver a clase.
+            Mira si cumples los requisitos antes de pagar ningún curso.
+          </p>
+        </div>
+      </Link>
 
       <CatalogoCursos
         obligatorios={obligatorios}

@@ -18,6 +18,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: baseUrl, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
     { url: `${baseUrl}/precios`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/cursos`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    // Prioridad alta a propósito: "acreditar experiencia laboral" lo busca
+    // mucha gente y no hay ningún portal de empleo contándolo bien.
+    { url: `${baseUrl}/cursos/acreditar`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     ...paginasCursos,
     { url: `${baseUrl}/trabajar-en`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/empleo`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },

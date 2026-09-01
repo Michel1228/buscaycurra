@@ -8,7 +8,7 @@
  * Devuelve null si el slug no existe; quien la llama decide si eso es un 404.
  */
 import Link from "next/link";
-import { AlertCircle, ArrowLeft, Clock, Euro, Globe, RefreshCw, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowLeft, BadgeCheck, Clock, Euro, Globe, RefreshCw, Sparkles } from "lucide-react";
 import PrepararSolicitud from "@/components/PrepararSolicitud";
 import AvisoCurso from "@/components/cursos/AvisoCurso";
 import {
@@ -100,6 +100,31 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
         <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">{t.nombre}</h1>
         <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>{t.resumen}</p>
       </div>
+
+      {/* ── ANTES DE NADA: puede que no necesite el curso ──
+          Va arriba del todo, antes del precio y de todo lo demás, porque para
+          quien lleva años en el oficio esto se lleva por delante el resto de la
+          página: son 1.500 euros y 450 horas que a lo mejor no hacen falta.
+          Enseñárselo al final, después de haberle convencido de matricularse,
+          sería quedarnos con su dinero a sabiendas. */}
+      {t.acreditablePorExperiencia && (
+        <Link
+          href={`${base}/acreditar`}
+          className="rounded-xl p-4 mb-6 flex items-start gap-3 hover:opacity-90"
+          style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)", textDecoration: "none" }}
+        >
+          <BadgeCheck size={18} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
+          <div>
+            <p className="text-sm font-semibold mb-0.5" style={{ color: "#22c55e" }}>
+              ¿Ya llevas años haciendo esto? A lo mejor no te hace falta el curso
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+              Con tres años de experiencia puedes acreditar el título sin volver a estudiar y sin
+              pagar nada. Mira cómo funciona antes de matricularte.
+            </p>
+          </div>
+        </Link>
+      )}
 
       {/* ── Los tres datos que todo el mundo busca primero ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">

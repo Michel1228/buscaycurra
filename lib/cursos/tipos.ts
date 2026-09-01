@@ -68,6 +68,17 @@ export interface TipoCurso {
   /** Años hasta tener que renovarlo, si aplica. */
   validezAnios?: number;
   notaValidez?: string;
+  /**
+   * Si este título se puede sacar acreditando la experiencia en vez de
+   * estudiándolo (procedimiento PEAC). Solo vale para lo que está en el
+   * Catálogo Nacional de Cualificaciones: los certificados profesionales sí,
+   * un carnet como el de carretillero no.
+   *
+   * Cuando es true, la ficha enseña arriba del todo el aviso de "a lo mejor no
+   * necesitas el curso" — que para quien lleva diez años trabajando es la
+   * diferencia entre pagar 1.500 euros o no pagar nada.
+   */
+  acreditablePorExperiencia?: boolean;
   /** Puestos que lo piden. Se cruzan con las ofertas de empleo. */
   puestos: string[];
   opcionesGratuitas: OpcionGratuita[];
@@ -384,13 +395,14 @@ export const TIPOS_CURSO: TipoCurso[] = [
   // que puede acreditar esa experiencia sin volver a estudiar.
   {
     slug: "atencion-sociosanitaria-instituciones",
+    acreditablePorExperiencia: true,
     pais: "ES",
     sector: "SALUD",
     familia: "obligatorio",
     nombre: "Atención sociosanitaria en residencias (SSCS0208)",
     resumen: "Sin esto no puedes trabajar de gerocultor en una residencia o centro de día.",
     queEs:
-      "Certificado de profesionalidad oficial de 450 horas. Acredita que sabes atender a personas dependientes en residencias, centros de día y centros sociosanitarios: higiene, alimentación, movilizaciones y apoyo psicosocial.",
+      "Certificado profesional oficial de 450 horas (antes se llamaba certificado de profesionalidad; con la reforma de la FP es Grado C, nivel 2). Acredita que sabes atender a personas dependientes en residencias, centros de día y centros sociosanitarios: higiene, alimentación, movilizaciones y apoyo psicosocial.",
     paraQueSirve:
       "Es la titulación que la administración exige para trabajar como cuidador o gerocultor en centros acreditados. Sin ella o una equivalente, el centro no te puede contratar en esa categoría.",
     obligatorioLegal: true,
@@ -423,13 +435,14 @@ export const TIPOS_CURSO: TipoCurso[] = [
   },
   {
     slug: "atencion-sociosanitaria-domicilio",
+    acreditablePorExperiencia: true,
     pais: "ES",
     sector: "SALUD",
     familia: "obligatorio",
     nombre: "Atención sociosanitaria a domicilio (SSCS0108)",
     resumen: "El que piden para trabajar de auxiliar de ayuda a domicilio.",
     queEs:
-      "Certificado de profesionalidad oficial de 600 horas. Es el hermano del de residencias, pero para atender a la persona en su propia casa: higiene, alimentación, apoyo psicosocial y gestión del hogar.",
+      "Certificado profesional oficial de 600 horas (antes certificado de profesionalidad; con la reforma de la FP es Grado C, nivel 2). Es el hermano del de residencias, pero para atender a la persona en su propia casa: higiene, alimentación, apoyo psicosocial y gestión del hogar.",
     paraQueSirve:
       "Es la titulación exigida para la categoría de auxiliar de ayuda a domicilio en los servicios acreditados. Las empresas que llevan el servicio municipal de ayuda a domicilio lo piden siempre.",
     obligatorioLegal: true,
@@ -459,13 +472,14 @@ export const TIPOS_CURSO: TipoCurso[] = [
   // ─── Limpieza ─────────────────────────────────────────────────────────────
   {
     slug: "limpieza-industrial",
+    acreditablePorExperiencia: true,
     pais: "ES",
     sector: "OTRO",
     familia: "mejora",
     nombre: "Limpieza industrial y de espacios abiertos (SEAG0209)",
     resumen: "Certificado oficial que se paga mejor que la limpieza corriente.",
     queEs:
-      "Certificado de profesionalidad de 210 horas sobre limpieza de instalaciones industriales, maquinaria y espacios abiertos, incluido el manejo seguro de productos químicos.",
+      "Certificado profesional de 210 horas (antes certificado de profesionalidad) sobre limpieza de instalaciones industriales, maquinaria y espacios abiertos, incluido el manejo seguro de productos químicos.",
     paraQueSirve:
       "La limpieza industrial se paga mejor que la de oficinas y pide formación específica por los riesgos químicos. Tenerlo te separa del montón en un sector con muchísima rotación.",
     obligatorioLegal: false,
