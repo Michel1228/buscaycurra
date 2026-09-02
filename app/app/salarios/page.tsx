@@ -8,6 +8,8 @@ interface SalarioData {
   puesto: string;
   provincia: string | null;
   fuente?: "ofertas" | "referencia";
+  /** true cuando no tenemos datos de ese país y la cifra va sin ajustar. */
+  sinDatos?: boolean;
   rangoGeneral: {
     min_salary: number;
     max_salary: number;
@@ -216,6 +218,10 @@ export default function SalariosPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [topCargando, setTopCargando] = useState(true);
   const [topOcupaciones, setTopOcupaciones] = useState<OcupacionCard[]>([]);
+  // La API devuelve ocho ocupaciones tanto si las ha contado como si las saca de
+  // su tabla de referencia. Contarlas no distingue una cosa de otra: hay que
+  // mirar lo que dice la propia respuesta.
+  const [topMedido, setTopMedido] = useState(false);
 
   // Precargar top ocupaciones al montar — NUNCA mostrar resultados hasta que el usuario busque
   useEffect(() => {
@@ -226,6 +232,7 @@ export default function SalariosPage() {
           const d = await res.json() as SalarioData;
           if (d.top && d.top.length > 0) {
             setTopOcupaciones(d.top as OcupacionCard[]);
+            setTopMedido(d.fuente === "ofertas");
           }
         }
       } catch (e) {
@@ -289,6 +296,12 @@ export default function SalariosPage() {
         {/* Top ocupaciones precargadas — siempre visibles (fallback si la API no devuelve top) */}
         {!topCargando && (
           (() => {
+            // Cuando no hay bastantes datos medidos se enseña la lista de
+            // referencia. Ahí el recuento de ofertas NO se puede pintar: esos
+            // números («8.540 ofertas» de camarero) nunca los hemos contado, son
+            // parte de la tabla de referencia. Enseñar una cifra inventada como
+            // si fuera nuestra medición es justo lo que no se puede hacer.
+            const medidos = topMedido && topOcupaciones.length >= 5;
             const cards = topOcupaciones.length >= 5 ? topOcupaciones : TOP_FALLBACK;
             return (
               <div className="mb-6">
@@ -306,7 +319,9 @@ export default function SalariosPage() {
                         <span className="text-[10px]" style={{ color: "#ef4444" }}>↓{formatMoney(o.min_salary)}</span>
                         <span className="text-[10px]" style={{ color: "#3b82f6" }}>↑{formatMoney(o.max_salary)}</span>
                       </div>
-                      <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>{o.total.toLocaleString("es-ES")} ofertas</p>
+                      <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>
+                        {medidos ? `${o.total.toLocaleString("es-ES")} ofertas` : "estimación"}
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -402,18 +417,31 @@ export default function SalariosPage() {
         {/* Resultados de la búsqueda */}
         {hasSearched && data?.rangoGeneral && !loading && (
           <div className="space-y-4">
+            {/* Decir de dónde sale el número, y decirlo bien.
+                Antes esto se etiquetaba «INE 2026» en todos los países. Para
+                Alemania o Japón eso era citar al Instituto Nacional de
+                Estadística español como fuente de sueldos que no publica, y que
+                además no salían de ahí: se calculan a partir de la referencia
+                española ajustada por el salario mínimo de cada país. Una
+                estimación así vale, pero hay que llamarla por su nombre. */}
             {data.fuente === "referencia" && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-[11px]"
+              <div className="flex items-start gap-2 px-3 py-2 rounded-lg text-[11px]"
                 style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", color: "#f59e0b" }}>
                 <span>ℹ️</span>
-                <span>Datos de referencia del mercado laboral {country.name} 2026. Se actualizarán cuando haya más ofertas activas con salario visible.</span>
+                <span>
+                  {isSpain
+                    ? "Estimación de referencia del mercado español, no medida sobre nuestras ofertas. Cambiará a datos reales cuando haya suficientes ofertas activas con el salario a la vista."
+                    : data.sinDatos
+                      ? `Todavía no tenemos el salario mínimo de ${country.name}, así que esta cifra es la referencia española SIN ajustar. Está aquí como punto de partida, pero no la tomes como el sueldo de allí.`
+                      : `Estimación, no un dato medido: partimos de la referencia del mercado español y la ajustamos por el salario mínimo de ${country.name}. Sirve para hacerse una idea del orden de magnitud, no para negociar una cifra.`}
+                </span>
               </div>
             )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[
                 data.fuente === "ofertas"
                   ? { label: "Ofertas", valor: (data.rangoGeneral?.total || 0), color: "#22c55e", badge: "Ofertas reales" }
-                  : { label: "Nacional", valor: formatMoney(data.rangoGeneral?.avg_salary), color: "#22c55e", badge: "INE 2026" },
+                  : { label: "Nacional", valor: formatMoney(data.rangoGeneral?.avg_salary), color: "#22c55e", badge: "Estimación" },
                 { label: "Medio", valor: formatMoney(data.rangoGeneral?.avg_salary), color: "#f59e0b" },
                 { label: "Mínimo", valor: formatMoney(data.rangoGeneral?.min_salary), color: "#ef4444" },
                 { label: "Máximo", valor: formatMoney(data.rangoGeneral?.max_salary), color: "#3b82f6" },
@@ -436,7 +464,7 @@ export default function SalariosPage() {
             {/* Indicador cuando es referencia: mostrar que provincia se ignora */}
             {data.fuente === "referencia" && provincia && isSpain && (
               <p className="text-[10px] text-center" style={{ color: "#64748b" }}>
-                {country.flag} Datos nacionales de referencia — el desglose por provincia usa índices INE, no ofertas filtradas por "{provincia}"
+                {country.flag} Estimación nacional — el desglose por provincia sale de un índice de coste de vida, no de ofertas filtradas por "{provincia}"
               </p>
             )}
 
@@ -448,7 +476,7 @@ export default function SalariosPage() {
                     background: data.fuente === "ofertas" ? "rgba(34,197,94,0.12)" : "rgba(59,130,246,0.12)",
                     color: data.fuente === "ofertas" ? "#22c55e" : "#3b82f6",
                   }}>
-                    {data.fuente === "ofertas" ? "Ofertas reales" : "INE 2026"}
+                    {data.fuente === "ofertas" ? "Ofertas reales" : "Estimación"}
                   </span>
                 </h2>
                 <div className="space-y-2">

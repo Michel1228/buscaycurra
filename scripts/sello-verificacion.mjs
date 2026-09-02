@@ -604,6 +604,40 @@ test("las fichas separan quien es de la UE de quien no", () =>
   requisitosSrc.includes("siEresDeLaUE") && requisitosSrc.includes("siNoEresDeLaUE"));
 
 
+// ═══════════════════════════════════════════════════════════════
+// BLOQUE SALARIOS: que no demos por medido lo que es una estimacion
+//
+// POR QUE EXISTE. La pantalla de salarios etiquetaba las estimaciones como
+// "INE 2026" en TODOS los paises. Para Alemania o Japon eso era citar al
+// Instituto Nacional de Estadistica espanol como fuente de sueldos que no
+// publica, y que ademas no salian de ahi: se calculan cogiendo la referencia
+// espanola y multiplicandola por la razon entre salarios minimos.
+//
+// Ademas se pintaba "8.540 ofertas" para camarero desde una tabla fija. Ese
+// recuento no lo hemos medido nunca.
+//
+// Y el codigo del Reino Unido otra vez: la pantalla manda "GB", el fichero de
+// salarios minimos tiene "UK". No encontraba el dato britanico, el factor salia
+// 1,00 y los sueldos de Londres se ensenaban identicos a los de Madrid.
+// ═══════════════════════════════════════════════════════════════
+console.log("");
+console.log("💶 BLOQUE SALARIOS: estimacion y medicion no son lo mismo");
+
+const salariosPage = leerFuente("app/app/salarios/page.tsx");
+const salariosApi = leerFuente("app/api/salarios/route.ts");
+
+test("no se atribuye al INE una cifra que no es del INE", () =>
+  !/badge: "INE 2026"/.test(salariosPage) && !/: "INE 2026"\}/.test(salariosPage));
+test("las estimaciones se llaman estimaciones", () =>
+  salariosPage.includes('"Estimación"'));
+test("el recuento de ofertas solo se ensena si de verdad se ha medido", () =>
+  salariosPage.includes("topMedido") && salariosPage.includes('d.fuente === "ofertas"'));
+test("el codigo de pais se normaliza (GB y UK son el mismo sitio)", () =>
+  salariosApi.includes("normalizarPais"));
+test("se avisa cuando no tenemos datos del pais en vez de ensenar los espanoles", () =>
+  salariosApi.includes("sinDatos") && salariosPage.includes("sinDatos"));
+
+
 // Se espera a que TODAS terminen. Antes había un setTimeout de 5 segundos a
 // ciegas, que podía cortar comprobaciones a medias y dar el visto bueno sin
 // haberlas hecho.

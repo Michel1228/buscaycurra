@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { PAISES } from "@/lib/paises";
+import { normalizarPais } from "@/lib/origen/movilidad";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -49,7 +50,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const puesto = (searchParams.get("puesto") || "").trim();
   const provincia = (searchParams.get("provincia") || "").trim();
-  const pais = (searchParams.get("pais") || "ES").toUpperCase().trim();
+  // normalizarPais convierte "GB" en "UK". La pantalla de salarios manda "GB"
+  // para el Reino Unido, pero el fichero de salarios minimos y lib/paises.ts
+  // usan "UK": sin esto no se encontraba el salario minimo britanico, el factor
+  // salia 1,00 y los sueldos de Londres se ensenaban identicos a los de Madrid.
+  const pais = normalizarPais(searchParams.get("pais") || "ES") || "ES";
 
   // Si es un país distinto de España, devolver datos de referencia con ajuste GDP
   if (pais && pais !== "ES") {
@@ -393,15 +398,23 @@ function obtenerDatosReferencia(puesto: string): {
 
 function obtenerDatosReferenciaPais(puesto: string, pais: string): {
   fuente: "referencia";
+  /** true cuando no tenemos salario mínimo de ese país y no hay con qué estimar. */
+  sinDatos: boolean;
   moneda: string;
   rangoGeneral: { min_salary: number; max_salary: number; avg_salary: number; total: number; fuente: string };
   porProvincia: Array<{ province: string; count: number; avg_salary: number }>;
 } {
   const paisConfig = PAISES[pais];
   const salariosMin = getSalariosMinimos();
-  const smiPais = salariosMin[pais]?.salarioMinimo || paisConfig?.salarioMinimo || 1184;
+  const smiConocido = salariosMin[pais]?.salarioMinimo || paisConfig?.salarioMinimo;
   const smiES = salariosMin["ES"]?.salarioMinimo || 1184;
-  // Factor salarial real: ratio SMI país vs SMI España
+  // Si no sabemos el salario mínimo del país no hay con qué ajustar, y el factor
+  // sale 1,00: es decir, se enseñarían los sueldos españoles con la bandera de
+  // otro país. Eso pasaba con Argentina, México, Colombia, Chile y Perú. Se
+  // marca y la pantalla lo dice, en vez de inventar.
+  const sinDatos = !smiConocido;
+  const smiPais = smiConocido || smiES;
+  // Factor salarial: razón entre el salario mínimo del país y el español.
   const factor = smiPais / smiES;
 
   // Usar ciudades de PAISES como regiones; fallback a ["Nacional"]
@@ -483,13 +496,16 @@ function obtenerDatosReferenciaPais(puesto: string, pais: string): {
 
   return {
     fuente: "referencia",
+    sinDatos,
     moneda,
     rangoGeneral: {
       min_salary: Math.max(Math.round(match.min * factor), smiAnualPais),
       max_salary: Math.round(match.max * factor),
       avg_salary: Math.round(match.avg * factor),
       total: 0,
-      fuente: `Referencia mercado laboral ${nombrePais} 2026 (basado en salario mínimo oficial)`,
+      fuente: sinDatos
+        ? `No tenemos el salario mínimo de ${nombrePais}: esta cifra es la referencia española sin ajustar, así que tómala solo como punto de partida.`
+        : `Estimación para ${nombrePais}: referencia del mercado español ajustada por el salario mínimo oficial del país.`,
     },
     porProvincia,
   };
