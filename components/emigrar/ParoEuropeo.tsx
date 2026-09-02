@@ -14,6 +14,7 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowLeft, ArrowRight, Clock, Globe, Wallet } from "lucide-react";
 import { U2, U1, FUENTES, ACTUALIZADO } from "@/lib/emigrar/paro-europeo";
+import AvisoNacionalidad from "@/components/origen/AvisoNacionalidad";
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -50,6 +51,10 @@ export default function ParoEuropeo({ base }: { base: string }) {
           trabajo en otro país. Pero hay dos plazos que, si se fallan, lo tiran todo.
         </p>
       </div>
+
+      <AvisoNacionalidad
+        queNoAplica="Llevarte el paro solo funciona si ya lo estabas cobrando en España o en otro país de la Unión Europea. Si nunca has cotizado aquí, no hay prestación que exportar."
+      />
 
       {/* ── Lo que se juega, en euros ── */}
       <div className="rounded-xl p-4 mb-8" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)" }}>

@@ -16,6 +16,7 @@ import {
 import {
   REQUISITOS, FASES, DOCUMENTOS, ADVERTENCIAS, ENLACES, FUENTES, ACTUALIZADO,
 } from "@/lib/cursos/acreditacion";
+import AvisoNacionalidad from "@/components/origen/AvisoNacionalidad";
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -52,6 +53,11 @@ export default function Acreditacion({ base }: { base: string }) {
           Se llama acreditación de competencias, la lleva el Ministerio y vale en toda España.
         </p>
       </div>
+
+      <AvisoNacionalidad
+        queNoAplica="El procedimiento pide nacionalidad española o de la Unión Europea, o permiso de residencia y trabajo en vigor en España. Si no lo tienes, esto todavía no te sirve."
+        destino="ES"
+      />
 
       {/* ── Los tres datos que deciden si sigues leyendo ── */}
       <div className="grid grid-cols-3 gap-3 mb-8">

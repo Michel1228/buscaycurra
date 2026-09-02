@@ -19,6 +19,7 @@ import {
 import {
   REALIDAD_POR_PAIS, ETIQUETA_DIFICULTAD, COLOR_DIFICULTAD,
 } from "@/lib/au-pair/puedes-ir";
+import AvisoNacionalidad from "@/components/origen/AvisoNacionalidad";
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -57,6 +58,10 @@ export default function DerechosAuPair({ base }: { base: string }) {
           completa, ya no es un intercambio: es un trabajo. Y un trabajo se paga.
         </p>
       </div>
+
+      <AvisoNacionalidad
+        queNoAplica="La tabla de países de más abajo dice quién puede ir sin visado, y está calculada para nacionalidad española o de la UE. Con otra nacionalidad casi todos esos destinos piden visado."
+      />
 
       {/* ── Lo primero: las señales ── */}
       <div className="rounded-xl p-4 mb-8"
