@@ -28,7 +28,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { secretIguales } from "@/lib/secret-compare";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -48,21 +48,74 @@ interface AvisoResend {
   };
 }
 
+/**
+ * Comprueba la firma de Resend.
+ *
+ * ⚠️ LA PRIMERA VERSIÓN DE ESTO ESTABA MAL Y HABRÍA ROTO EL WEBHOOK. Comparaba
+ * la cabecera `svix-signature` directamente con el secreto, y Resend NO manda
+ * el secreto: manda una firma HMAC calculada con él. Esa comparación no habría
+ * coincidido nunca, así que en cuanto se configurase RESEND_WEBHOOK_SECRET el
+ * endpoint habría empezado a devolver 401 a todos los avisos.
+ *
+ * Resend firma con Svix, que sigue la especificación Standard Webhooks:
+ *   · Se firma la cadena `${svix-id}.${svix-timestamp}.${cuerpo en crudo}`
+ *   · HMAC-SHA256, con el secreto SIN el prefijo `whsec_` y decodificado de
+ *     base64 — no el texto tal cual.
+ *   · La cabecera trae una o varias firmas separadas por espacios, cada una
+ *     con su versión: «v1,xxxx v1,yyyy». Basta con que coincida una.
+ *
+ * El cuerpo tiene que ser el CRUDO, sin pasar por JSON.parse y volver a
+ * serializar: un espacio de diferencia y la firma ya no cuadra.
+ */
+function firmaValida(cuerpoCrudo: string, cabeceras: Headers, secreto: string): boolean {
+  const id = cabeceras.get("svix-id");
+  const marca = cabeceras.get("svix-timestamp");
+  const firmas = cabeceras.get("svix-signature");
+  if (!id || !marca || !firmas) return false;
+
+  // Rechazar avisos viejos: sin esto, alguien que capture uno podría
+  // reenviarlo indefinidamente. Cinco minutos de margen.
+  const edad = Math.abs(Date.now() / 1000 - Number(marca));
+  if (!Number.isFinite(edad) || edad > 300) return false;
+
+  const clave = Buffer.from(secreto.replace(/^whsec_/, ""), "base64");
+  const esperada = createHmac("sha256", clave)
+    .update(`${id}.${marca}.${cuerpoCrudo}`)
+    .digest("base64");
+
+  const esperadaBuf = Buffer.from(esperada);
+  for (const parte of firmas.split(" ")) {
+    const recibida = parte.split(",")[1];
+    if (!recibida) continue;
+    const recibidaBuf = Buffer.from(recibida);
+    // timingSafeEqual exige la misma longitud, y compararla antes no filtra
+    // nada útil: la longitud de una firma base64 es siempre la misma.
+    if (recibidaBuf.length === esperadaBuf.length && timingSafeEqual(recibidaBuf, esperadaBuf)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export async function POST(req: NextRequest) {
-  // Si hay secreto configurado, se exige. Si no lo hay, se acepta pero se
-  // registra: es preferible recibir los avisos a perderlos mientras se
-  // configura, y esto solo cambia estados de envíos que ya existen.
+  // El cuerpo se lee UNA vez y en crudo: la firma se calcula sobre el texto
+  // exacto que mandó Resend.
+  const cuerpoCrudo = await req.text();
+
   const secreto = process.env.RESEND_WEBHOOK_SECRET;
   if (secreto) {
-    const cabecera = req.headers.get("x-webhook-secret") || req.headers.get("svix-signature") || "";
-    if (!secretIguales(cabecera, secreto)) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    if (!firmaValida(cuerpoCrudo, req.headers, secreto)) {
+      return NextResponse.json({ error: "Firma no válida" }, { status: 401 });
     }
   } else {
+    // Sin secreto se aceptan igual: es preferible recibir los avisos a
+    // perderlos mientras se configura, y esto solo cambia el estado de envíos
+    // que ya existen. Queda anotado en el registro para que no se olvide.
     console.warn("[cv-sender/entrega] RESEND_WEBHOOK_SECRET sin configurar: aviso aceptado sin verificar");
   }
 
-  const aviso = (await req.json().catch(() => ({}))) as AvisoResend;
+  let aviso: AvisoResend = {};
+  try { aviso = JSON.parse(cuerpoCrudo) as AvisoResend; } catch { /* aviso vacío */ }
   const tipo = aviso.type || "";
   const idCorreo = aviso.data?.email_id;
   const destinatario = Array.isArray(aviso.data?.to) ? aviso.data?.to[0] : aviso.data?.to;
