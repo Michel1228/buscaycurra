@@ -124,7 +124,8 @@ export async function llamarGemini(
  * @param textoCv - El texto completo del CV
  */
 export async function analizarCVLargo(textoCv: string): Promise<string> {
-  const prompt = `Eres un experto en recursos humanos en España. Analiza este CV en detalle.
+  const prompt = `Eres un experto en recursos humanos. Analiza este CV en detalle.
+OJO: las costumbres del CV cambian por país (la foto se espera en Alemania y resta en Reino Unido, Irlanda, Países Bajos y Estados Unidos), así que no des por hecho que se manda a España.
 
 CV:
 ${textoCv}

@@ -164,7 +164,7 @@ export async function mejorarCV(
   textoCv: string,
   tituloPuesto: string
 ): Promise<string> {
-  const prompt = `Eres un experto en recursos humanos en España. Mejora el texto del Perfil Profesional de este CV para el puesto de "${tituloPuesto}".
+  const prompt = `Eres un experto en recursos humanos. Mejora el texto del Perfil Profesional de este CV para el puesto de "${tituloPuesto}".
 
 CV ACTUAL:
 ${textoCv}
@@ -185,7 +185,7 @@ Instrucciones IMPORTANTES:
 Devuelve SOLO el texto mejorado del Perfil Profesional, sin comentarios adicionales.`;
 
   return await llamarGroq(prompt, "mejora-cv", {
-    sistemaPrompt: "Eres un experto en recursos humanos especializado en el mercado laboral español. Solo mejoras el texto del Perfil Profesional, manteniendo todo lo demás igual.",
+    sistemaPrompt: "Eres un experto en recursos humanos. Solo mejoras el texto del Perfil Profesional, manteniendo todo lo demas igual.",
     maxTokens: 1500,
   });
 }

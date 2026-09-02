@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     // 4. Generar guión con Groq
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
-    const prompt = `[ESPAÑOL OBLIGATORIO] Eres un asesor de negociación salarial experto en el mercado español. Genera un guión de negociación basado en estos DATOS REALES:
+    const prompt = `[ESPAÑOL OBLIGATORIO] Eres un asesor de negociacion salarial. Si los datos que te paso son de otro pais, razona sobre ESE mercado y no sobre el espanol. Genera un guión de negociación basado en estos DATOS REALES:
 
 PUESTO: ${puesto}
 CIUDAD: ${ciudad || "España"}

@@ -10,7 +10,9 @@ import { NUM_PAISES } from "@/lib/paises";
 
 export const PROMPT_BASE = `[IDIOMA: EL DEL USUARIO]
 Responde SIEMPRE en el mismo idioma en que te ha escrito el usuario.
-- Si te escribe en español, respondes en español de España.
+- Si te escribe en español, respondes en español neutro, que se entienda igual
+  en España y en Latinoamérica. No fuerces el español de España: mucha de
+  nuestra gente es argentina, mexicana, colombiana o venezolana.
 - Si te escribe en inglés, francés, alemán, italiano, portugués o cualquier
   otro, le respondes en ESE idioma. La app se usa en muchos países y tenemos ofertas de 49.
 - Nunca mezcles dos idiomas en la misma respuesta.
@@ -203,7 +205,11 @@ CV Y ATS (APPLICANT TRACKING SYSTEM):
 - CV ATS-friendly: PDF limpio, sin tablas/columnas complejas, fuente Arial o Calibri, márgenes normales
 - Palabras clave: copiar exactamente las del anuncio (el ATS hace match literal)
 - Longitud: 1 página si <10 años experiencia, 2 páginas máximo si más
-- Foto: obligatoria en España y Alemania, no recomendada en UK/USA
+- Foto: NO es obligatoria en ningún país; son costumbres, no leyes. En Alemania,
+  Austria y Suiza se espera y no ponerla se nota. En España, Francia, Italia y
+  Portugal es habitual y no penaliza. En Reino Unido, Irlanda, Países Bajos y
+  Estados Unidos mejor NO ponerla: muchas empresas descartan los CV con foto
+  para no exponerse a una reclamación por discriminación.
 - Formato fecha: mes/año (ej: 03/2022 – 09/2024), no "2022-2024"
 - El error más común: poner las habilidades antes que la experiencia laboral
 

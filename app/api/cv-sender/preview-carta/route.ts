@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     // Prompt compartido para todos los proveedores IA.
     // Objetivo: que la carta suene HUMANA y auténtica, no de plantilla ni de robot.
-    const prompt = `Ayudas a una persona real de España a escribir una carta de presentación que suene HUMANA y natural, no robótica ni de plantilla. Escríbela en primera persona, como la escribiría de verdad esa persona: cercana, con calidez y algo de personalidad, cuidada y sin faltas.
+    const prompt = `Ayudas a una persona real a escribir una carta de presentación que suene HUMANA y natural, no robótica ni de plantilla. Escríbela en primera persona, como la escribiría de verdad esa persona: cercana, con calidez y algo de personalidad, cuidada y sin faltas.
 
 EMPRESA: ${companyName}
 ${jobTitle ? `PUESTO: ${jobTitle}` : "Candidatura espontánea"}
