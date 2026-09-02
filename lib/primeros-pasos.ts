@@ -83,7 +83,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       consejo: "El orden correcto: 1) Anmeldung → 2) Abrir cuenta bancaria → 3) Contratar seguro médico → 4) Empezar a trabajar. Con N26 puedes saltar el paso 1 si estás en proceso.",
     },
     programasExtra: [
-      { nombre: "Bundesagentur für Arbeit", url: "https://www.arbeitsagentur.de/en", descripcion: "La agencia de empleo federal. Registro gratuito. También gestiona el subsidio de desempleo (ALG I)." },
+      { nombre: "Bundesagentur für Arbeit", url: "https://www.arbeitsagentur.de/", descripcion: "La agencia de empleo federal. Registro gratuito. También gestiona el subsidio de desempleo (ALG I)." },
       { nombre: "Make it in Germany", url: "https://www.make-it-in-germany.com/es", descripcion: "Portal oficial del gobierno alemán para extranjeros. Todo sobre visados, reconocimiento de títulos y vivir en Alemania." },
     ],
   },
@@ -142,7 +142,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
         { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/united-kingdom.php", descripcion: "Miles de familias británicas. Verificadas y con contratos estándar." },
         { nombre: "GreatAuPair", url: "https://www.greataupair.com/uk-au-pair.cfm", descripcion: "Opción alternativa con buenas reseñas. También gestiona el proceso de visado." },
       ],
-      requisitos: "18-30 años, inglés básico, sin antecedentes. POST-BREXIT: los españoles necesitan visado. Opciones: Youth Mobility Scheme (cupo limitado, solicitar antes de enero), o si la familia patrocina, Skilled Worker. Duración: 6-12 meses.",
+      requisitos: "POST-BREXIT el visado específico de au pair YA NO EXISTE, desapareció en enero de 2021. Y ojo con el Youth Mobility Scheme, que se cita mucho: NO incluye a España ni a ningún país de la UE, así que esa vía no está disponible (comprobado en gov.uk, septiembre de 2026). Queda el Skilled Worker, que exige una empresa con licencia de patrocinio: una familia particular no puede patrocinarte. Si una familia te propone ir sin papeles, quien se juega la expulsión eres tú.",
     },
     alojamiento: {
       plataformas: [
@@ -163,7 +163,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
     visado: {
       tipo: "visado-trabajo",
-      descripcion: "Post-Brexit, los españoles necesitan visado para trabajar en UK. Opciones: Youth Mobility Scheme (18-30 años, 2 años, sin oferta previa — cupo limitado para españoles, solicitar en enero), Skilled Worker Visa (necesitas oferta de empresa con licencia de patrocinio), Health & Care Worker Visa (sanidad, proceso acelerado).",
+      descripcion: "Post-Brexit ningún país de la UE tiene libre circulación aquí: hace falta visado, seas español, italiano o polaco. La vía normal es el Skilled Worker Visa, que exige oferta de una empresa con licencia de patrocinio; en sanidad y cuidados está el Health & Care Worker Visa, más rápido. IMPORTANTE: el Youth Mobility Scheme NO incluye a España ni a la UE — sí a Australia, Canadá, Nueva Zelanda, Corea del Sur, Andorra, Islandia, Japón, Mónaco, San Marino y Uruguay (comprobado en gov.uk, septiembre de 2026).",
       enlaceOficial: "https://www.gov.uk/browse/visas-immigration/work-visas",
     },
     papeleo: {
@@ -306,14 +306,14 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
     visado: {
       tipo: "working-holiday",
-      descripcion: "Working Holiday Visa (subclass 417) para españoles 18-35 años. Permite trabajar 12 meses en cualquier sector (prorrogable a 24-36 con trabajo regional). Sin oferta previa. Coste: ~635 AUD. Aprobación online en días/semanas. Es el visado más fácil de Australia.",
-      enlaceOficial: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/work-holiday-417",
+      descripcion: "OJO CON EL NÚMERO DEL VISADO, que no da igual. A España y a Latinoamérica les corresponde la subclase 462 (Work and Holiday), de 18 a 30 años, NO la 417, que es la de Francia, Alemania, Italia, Irlanda, Países Bajos o Reino Unido. La 462 pide, además del pasaporte, estudios superiores, acreditar nivel de inglés y unos ahorros mínimos, y tiene cupo anual por nacionalidad: cuando se agota no se conceden más hasta el 1 de julio siguiente. Permite trabajar 12 meses, prorrogables haciendo el trabajo especificado en zonas regionales. El importe y el cupo los publica el Departamento de Interior: míralos ahí, que cambian.",
+      enlaceOficial: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/work-holiday-462",
     },
     papeleo: {
       documentos: [
         { nombre: "TFN (Tax File Number)", descripcion: "Número fiscal australiano. Solicítalo en la ATO (Australian Tax Office) online antes incluso de llegar. Si no lo tienes, tu empleador te retendrá el 47% del sueldo.", tiempoObtener: "1-4 semanas (online)", obligatorio: true, enlaceOficial: "https://www.ato.gov.au/individuals-and-families/tax-file-number/apply-for-a-tfn" },
         { nombre: "Cuenta bancaria", descripcion: "Commonwealth Bank, ANZ, Westpac o NAB. Puedes abrirla ANTES de llegar a Australia (todo online con pasaporte). Muy recomendable para llegar con cuenta activa.", tiempoObtener: "Online, 1-3 días (antes de llegar)", obligatorio: true },
-        { nombre: "Superannuation (fondo de pensiones)", descripcion: "Tu empleador ingresa el 11,5% de tu sueldo en un fondo de pensiones. Al salir de Australia puedes recuperarlo todo (DASP - Departing Australia Superannuation Payment). No lo ignores.", tiempoObtener: "Automático al empezar a trabajar", obligatorio: false, enlaceOficial: "https://www.ato.gov.au/individuals-and-families/super-for-individuals-and-families/super/withdrawing-and-using-your-super/when-you-can-access-your-super/departing-australia-superannuation-payment" },
+        { nombre: "Superannuation (fondo de pensiones)", descripcion: "Tu empleador ingresa el 11,5% de tu sueldo en un fondo de pensiones. Al salir de Australia puedes recuperarlo todo (DASP - Departing Australia Superannuation Payment). No lo ignores.", tiempoObtener: "Automático al empezar a trabajar", obligatorio: false, enlaceOficial: "https://www.ato.gov.au/individuals-and-families/super-for-individuals-and-families" },
         { nombre: "Medicare", descripcion: "La sanidad pública australiana. Solo disponible para residentes permanentes y ciudadanos. Con Working Holiday Visa NO tienes acceso. Contrata seguro privado (desde 30-50 AUD/mes con Bupa o Medibank).", tiempoObtener: "No aplica para WHV", obligatorio: false },
       ],
       consejo: "Abre la cuenta bancaria antes de salir de España (todo online). Solicita el TFN en cuanto tengas dirección australiana. Estos dos pasos te ahorran semanas de bloqueos administrativos al llegar.",
@@ -399,7 +399,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     visado: {
       tipo: "ue-libre",
       descripcion: "Ciudadano UE: sin visado. Regístrate en el municipio para obtener el BSN (Burger Service Nummer). Lo necesitas para trabajar, abrir cuenta bancaria y alquilar.",
-      enlaceOficial: "https://www.government.nl/topics/identification-documents/bsn",
+      enlaceOficial: "https://www.government.nl/topics/personal-data/citizen-service-number-bsn",
     },
     papeleo: {
       documentos: [
@@ -526,14 +526,14 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     visado: {
       tipo: "ue-libre",
       descripcion: "España es UE — Noruega es EEE. Libre circulación total. Para estancias superiores a 3 meses, regístrate en la policía local (Politiet). Necesitarás D-number o personnummer para trabajar.",
-      enlaceOficial: "https://www.udi.no/en/want-to-apply/residence-under-the-eueeu-rules/",
+      enlaceOficial: "https://www.udi.no/en/",
     },
     papeleo: {
       documentos: [
-        { nombre: "D-number o Personnummer", descripcion: "El D-number es para estancias cortas (< 6 meses). El personnummer es para residentes permanentes. Solicítalo en Skateetaten con pasaporte + contrato de trabajo. Sin él no puedes cobrar ni abrir cuenta.", tiempoObtener: "2-4 semanas", obligatorio: true, enlaceOficial: "https://www.skatteetaten.no/en/person/foreign/d-number/" },
+        { nombre: "D-number o Personnummer", descripcion: "El D-number es para estancias cortas (< 6 meses). El personnummer es para residentes permanentes. Solicítalo en Skateetaten con pasaporte + contrato de trabajo. Sin él no puedes cobrar ni abrir cuenta.", tiempoObtener: "2-4 semanas", obligatorio: true, enlaceOficial: "https://www.skatteetaten.no/en/person/foreign/" },
         { nombre: "BankID", descripcion: "La identidad digital noruega. Necesita personnummer o D-number. Sin ella no puedes hacer prácticamente ningún trámite online en Noruega.", tiempoObtener: "1-2 semanas (tras personnummer)", obligatorio: false },
         { nombre: "Cuenta bancaria", descripcion: "DNB, Nordea NO o SpareBank 1. Necesitas D-number/personnummer. Sin él: Wise o N26 para empezar.", tiempoObtener: "1-7 días", obligatorio: true },
-        { nombre: "Registro en Helfo", descripcion: "El sistema de salud noruego. Regístrate en Helfo para tener acceso a médico de cabecera (fastlege). Cita en Helfo o online en helsenorge.no.", tiempoObtener: "1-2 semanas", obligatorio: false, enlaceOficial: "https://www.helsenorge.no/en/registration-of-foreign-nationals" },
+        { nombre: "Registro en Helfo", descripcion: "El sistema de salud noruego. Regístrate en Helfo para tener acceso a médico de cabecera (fastlege). Cita en Helfo o online en helsenorge.no.", tiempoObtener: "1-2 semanas", obligatorio: false, enlaceOficial: "https://www.helsenorge.no/en/foreigners-in-norway/" },
       ],
       consejo: "El invierno noruego es extremo. Cuando busques alojamiento, asegúrate de que la calefacción está incluida en el precio (varme inkludert) — si no, puede añadir 1.000-2.000 NOK adicionales al mes.",
     },
@@ -573,7 +573,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
     papeleo: {
       documentos: [
-        { nombre: "Codice Fiscale", descripcion: "El equivalente italiano al NIF español. Gratis y rápido. Solicítalo en la Agenzia delle Entrate más cercana con pasaporte. También puedes pedirlo en el consulado italiano en España antes de irte.", tiempoObtener: "El mismo día (presencial) o 1-2 semanas (correo)", obligatorio: true, enlaceOficial: "https://www.agenziaentrate.gov.it/portale/schede/istanze/richiesta-ts_cf/informazioni-cf-ts/richiedere-il-cf/" },
+        { nombre: "Codice Fiscale", descripcion: "El equivalente italiano al NIF español. Gratis y rápido. Solicítalo en la Agenzia delle Entrate más cercana con pasaporte. También puedes pedirlo en el consulado italiano en España antes de irte.", tiempoObtener: "El mismo día (presencial) o 1-2 semanas (correo)", obligatorio: true, enlaceOficial: "https://www.agenziaentrate.gov.it/portale/web/english" },
         { nombre: "Residenza (empadronamiento)", descripcion: "Registro en el Ufficio Anagrafe del Comune. Para estancias largas, obligatorio. Llevar pasaporte + contrato de alquiler.", tiempoObtener: "1-4 semanas (el municipio verifica la dirección)", obligatorio: false },
         { nombre: "Tessera Sanitaria", descripcion: "La tarjeta sanitaria italiana que da acceso al SSN (Servizio Sanitario Nazionale). Solicítala en la ASL local con Codice Fiscale + empadronamiento.", tiempoObtener: "1-4 semanas", obligatorio: false, enlaceOficial: "https://www.salute.gov.it" },
         { nombre: "Cuenta bancaria", descripcion: "Intesa Sanpaolo, UniCredit, Banca Sella. Para recién llegados sin residencia: N26, Revolut o Wise.", tiempoObtener: "1-7 días", obligatorio: true },
@@ -670,11 +670,11 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       consejo: "El empadronamiento es el primer paso para todo. Con él puedes solicitar la tarjeta sanitaria (TSI) en el Centro de Salud y acceder al sistema público de empleo (SEPE).",
     },
     programasExtra: [
-      { nombre: "Garantía Juvenil", url: "https://garantiajuvenil.sepe.es", descripcion: "Programa europeo para jóvenes 16-29 años. Formación gratuita, prácticas en empresas y ayudas a la contratación." },
+      { nombre: "Garantía Juvenil", url: "https://www.sepe.es/HomeSepe/Personas/encontrar-trabajo/Garantia-Juvenil.html", descripcion: "Programa europeo para jóvenes 16-29 años. Formación gratuita, prácticas en empresas y ayudas a la contratación." },
       { nombre: "Programa Vulcanus (UE-Japón)", url: "https://www.eu-japan.eu/vulcanus", descripcion: "Prácticas remuneradas en Japón para estudiantes de ingeniería y ciencia. Convocatoria anual." },
-      { nombre: "EURES España", url: "https://eures.sepe.es", descripcion: "Portal oficial de movilidad laboral europea. Ofertas verificadas con condiciones de trabajo transparentes." },
+      { nombre: "EURES España", url: "https://www.sepe.es/HomeSepe/Personas/encontrar-trabajo/empleo-europa.html", descripcion: "Portal oficial de movilidad laboral europea. Ofertas verificadas con condiciones de trabajo transparentes." },
       { nombre: "ICEX Vives", url: "https://www.icex.es/icex/vives", descripcion: "Becas de internacionalización. Prácticas remuneradas en empresas españolas con actividad internacional." },
-      { nombre: "Auxiliares de Conversación", url: "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/catalogo/profesorado/convocatorias/extranjeros/auxiliares-conversacion-espanoles-extranjero.html", descripcion: "Programa del Ministerio de Educación. Auxiliar de español en colegios de Francia, Alemania, Reino Unido, Italia y más. 700-1.000€/mes." },
+      { nombre: "Auxiliares de Conversación", url: "https://www.educacionfpydeportes.gob.es/", descripcion: "Programa del Ministerio de Educación. Auxiliar de español en colegios de Francia, Alemania, Reino Unido, Italia y más. 700-1.000€/mes." },
     ],
   },
 
@@ -754,7 +754,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
     papeleo: {
       documentos: [
-        { nombre: "Meldezettel (empadronamiento)", descripcion: "Registro de domicilio en el Magistrat o Gemeindeamt. OBLIGATORIO en los 3 primeros días. Llevar pasaporte + carta del casero (Wohnungsgeberbestätigung). Muy importante — sin él no puedes abrir cuenta ni trabajar.", tiempoObtener: "El mismo día", obligatorio: true, enlaceOficial: "https://www.wien.gv.at/amtshelfer/dokumente/statistik/bevoelkerung/meldezettel.html" },
+        { nombre: "Meldezettel (empadronamiento)", descripcion: "Registro de domicilio en el Magistrat o Gemeindeamt. OBLIGATORIO en los 3 primeros días. Llevar pasaporte + carta del casero (Wohnungsgeberbestätigung). Muy importante — sin él no puedes abrir cuenta ni trabajar.", tiempoObtener: "El mismo día", obligatorio: true, enlaceOficial: "https://www.wien.gv.at/english/" },
         { nombre: "SV-Nummer (Seguridad Social)", descripcion: "Tu número de seguridad social austriaco. Lo asigna automáticamente el Hauptverband der österreichischen Sozialversicherungsträger cuando tu empleador te da de alta.", tiempoObtener: "Automático al empezar a trabajar", obligatorio: true },
         { nombre: "E-card (tarjeta sanitaria)", descripcion: "Da acceso al sistema sanitario público (ÖGK). Llega por correo postal automáticamente tras el alta en Seguridad Social.", tiempoObtener: "2-4 semanas", obligatorio: false },
         { nombre: "Cuenta bancaria", descripcion: "Bank Austria, Raiffeisen, BAWAG o Erste Bank. Con pasaporte + Meldezettel. Para empezar: N26 o Revolut.", tiempoObtener: "1-7 días", obligatorio: true },
@@ -793,12 +793,12 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     visado: {
       tipo: "ue-libre",
       descripcion: "España es UE — Dinamarca también. Libre circulación total. Para estancias > 3 meses, regístrate en el EU Citizens Registration (borgerservice). Necesitas el CPR number para trabajar.",
-      enlaceOficial: "https://www.nyidanmark.dk/en-GB/You-want-to-apply/EU-EEA-and-Nordic-citizens/",
+      enlaceOficial: "https://www.nyidanmark.dk/en-GB",
     },
     papeleo: {
       documentos: [
-        { nombre: "CPR number (Det Centrale Personregister)", descripcion: "El número de identidad danés. Trámite en la oficina Borgerservice de tu municipio con pasaporte + contrato de trabajo o alquiler. IMPRESCINDIBLE para trabajar y acceder a servicios.", tiempoObtener: "1-3 días hábiles", obligatorio: true, enlaceOficial: "https://lifeindenmark.borger.dk/working-in-denmark/work-rights-and-conditions/cpr-number" },
-        { nombre: "MitID (identidad digital)", descripcion: "El sistema de identidad digital danés. Necesita CPR number. Imprescindible para trámites online con el gobierno, banco y casi todo.", tiempoObtener: "1-5 días (tras CPR number)", obligatorio: true, enlaceOficial: "https://www.mitid.dk/en" },
+        { nombre: "CPR number (Det Centrale Personregister)", descripcion: "El número de identidad danés. Trámite en la oficina Borgerservice de tu municipio con pasaporte + contrato de trabajo o alquiler. IMPRESCINDIBLE para trabajar y acceder a servicios.", tiempoObtener: "1-3 días hábiles", obligatorio: true, enlaceOficial: "https://lifeindenmark.borger.dk/" },
+        { nombre: "MitID (identidad digital)", descripcion: "El sistema de identidad digital danés. Necesita CPR number. Imprescindible para trámites online con el gobierno, banco y casi todo.", tiempoObtener: "1-5 días (tras CPR number)", obligatorio: true, enlaceOficial: "https://www.mitid.dk/" },
         { nombre: "Sundhedskort (tarjeta sanitaria amarilla)", descripcion: "La tarjeta sanitaria amarilla da acceso al médico de cabecera (læge). Se solicita automáticamente al registrarse en el sistema con el CPR number.", tiempoObtener: "2-4 semanas", obligatorio: false },
         { nombre: "Cuenta bancaria", descripcion: "Danske Bank, Nordea DK, Jyske Bank o Nykredit. Necesitas CPR number. Para empezar: N26 o Revolut.", tiempoObtener: "1-7 días", obligatorio: true },
       ],
@@ -837,11 +837,11 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     visado: {
       tipo: "ue-libre",
       descripcion: "Ciudadano UE: libre circulación. Para trabajar más de 3 meses, regístrate en el DVV (Digital and Population Data Services Agency) para obtener el número de identidad finlandés.",
-      enlaceOficial: "https://dvv.fi/en/persons-moving-to-finland",
+      enlaceOficial: "https://dvv.fi/en/moving-to-finland",
     },
     papeleo: {
       documentos: [
-        { nombre: "Finnish personal identity code (Henkilötunnus)", descripcion: "El número de identidad finlandés. Solicítalo en el DVV con pasaporte + contrato de trabajo o prueba de residencia. Sin él no puedes abrir cuenta ni trabajar legalmente.", tiempoObtener: "2-4 semanas", obligatorio: true, enlaceOficial: "https://dvv.fi/en/persons-moving-to-finland" },
+        { nombre: "Finnish personal identity code (Henkilötunnus)", descripcion: "El número de identidad finlandés. Solicítalo en el DVV con pasaporte + contrato de trabajo o prueba de residencia. Sin él no puedes abrir cuenta ni trabajar legalmente.", tiempoObtener: "2-4 semanas", obligatorio: true, enlaceOficial: "https://dvv.fi/en/moving-to-finland" },
         { nombre: "KELA card (Kansaneläkelaitos)", descripcion: "La tarjeta de la Seguridad Social finlandesa. Da acceso a prestaciones (sanidad, desempleo, familia). Regístrate en Kela en cuanto tengas el número de identidad.", tiempoObtener: "1-2 semanas", obligatorio: false, enlaceOficial: "https://www.kela.fi/web/en/moving-to-finland" },
         { nombre: "Cuenta bancaria", descripcion: "OP Financial, Nordea FI, Danske Bank FI o S-Pankki. Con pasaporte + número de identidad finlandés. Para empezar: N26 o Revolut.", tiempoObtener: "1-7 días", obligatorio: true },
         { nombre: "Terveyskeskus (médico público)", descripcion: "Registro en el centro de salud público más cercano (terveyskeskus). Con KELA card tienes acceso a consultas por 20-30€ (precio simbólico).", tiempoObtener: "1-2 semanas", obligatorio: false },
@@ -923,12 +923,12 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
     visado: {
       tipo: "working-holiday",
-      descripcion: "Working Holiday Visa para españoles 18-35 años. Coste: 215 NZD (~120€). Válida 12 meses (extensible a 23 meses si haces 3 meses de trabajo regional). Sin oferta previa. Tramítala en la web de Immigration New Zealand.",
-      enlaceOficial: "https://www.immigration.govt.nz/new-zealand-visas/apply-for-a-visa/about-visa/working-holiday-visa",
+      descripcion: "Working Holiday Visa para españoles de 18 a 30 años — no hasta los 35, que es la franja de otros países. Hay cupo anual para España y se agota. Válida 12 meses, ampliables a 23 si haces tres meses de trabajo regional. Sin oferta previa. El importe lo publica Immigration New Zealand: míralo ahí, que cambia.",
+      enlaceOficial: "https://www.immigration.govt.nz/work/working-holiday-visas/",
     },
     papeleo: {
       documentos: [
-        { nombre: "IRD Number (número fiscal)", descripcion: "El número tributario de Nueva Zelanda. Solicítalo en la Inland Revenue Department online. Sin él tu empleador te retiene el 45% del sueldo (rate máximo).", tiempoObtener: "1-2 semanas (online)", obligatorio: true, enlaceOficial: "https://www.ird.govt.nz/roles/individuals/apply-for-an-ird-number" },
+        { nombre: "IRD Number (número fiscal)", descripcion: "El número tributario de Nueva Zelanda. Solicítalo en la Inland Revenue Department online. Sin él tu empleador te retiene el 45% del sueldo (rate máximo).", tiempoObtener: "1-2 semanas (online)", obligatorio: true, enlaceOficial: "https://www.ird.govt.nz/managing-my-tax/ird-numbers" },
         { nombre: "Cuenta bancaria", descripcion: "ANZ NZ, ASB, BNZ o Westpac NZ. Puedes abrir la cuenta ANTES de llegar a Nueva Zelanda (todo online). Muy recomendable para llegar ya con cuenta activa.", tiempoObtener: "Online, 1-3 días (antes de llegar)", obligatorio: true },
         { nombre: "KiwiSaver", descripcion: "El fondo de pensiones voluntario neozelandés. Tu empleador contribuye un 3% adicional a tu sueldo. Al salir del país puedes recuperarlo todo.", tiempoObtener: "Automático al empezar a trabajar", obligatorio: false, enlaceOficial: "https://www.kiwisaver.govt.nz" },
         { nombre: "Seguro médico privado", descripcion: "Nueva Zelanda tiene el ACC (cubre accidentes) pero no cubre enfermedades generales para titulares de WHV. Contrata seguro privado (desde 30-50 NZD/mes con Southern Cross o NIB).", tiempoObtener: "Online, 1-2 días", obligatorio: false },

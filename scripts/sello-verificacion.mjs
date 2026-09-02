@@ -530,6 +530,80 @@ test("el prompt aclara que el limite del tratado es DIARIO", () =>
   leerFuente("lib/guzzi/prompts.ts").includes("el limite del tratado es DIARIO"));
 
 
+// ═══════════════════════════════════════════════════════════════
+// BLOQUE NACIONALIDAD: que la respuesta dependa de quién pregunta
+//
+// POR QUE EXISTE. Tres fallos distintos, y ninguno daba error en pantalla:
+//
+//  1. La aplicacion usa "UK" para el Reino Unido y yo escribi "GB" en los
+//     modulos nuevos. Resultado: el aviso de visado britanico no se disparaba
+//     NUNCA, justo en el pais con mas ofertas de au pair. Un codigo mal escrito
+//     no rompe nada visible; simplemente deja de aplicarse a alguien, en
+//     silencio y para siempre.
+//
+//  2. El desplegable de nacionalidad reutilizaba la lista de DESTINOS, asi que
+//     un argentino no encontraba Argentina y no podia decirnos de donde era.
+//     Justo la persona para la que se hizo la funcion era la que no podia
+//     usarla.
+//
+//  3. Se publicaba que un espanol puede pedir el Youth Mobility britanico
+//     "cupo limitado, solicitar en enero". Espana no esta en ese programa. Le
+//     daban hasta el mes para apuntarse a un visado que no existe para el.
+//
+// Estas comprobaciones no miran que la pagina cargue: miran que el dato sea el
+// correcto para quien lo lee.
+// ═══════════════════════════════════════════════════════════════
+console.log("");
+console.log("🌍 BLOQUE NACIONALIDAD: la respuesta depende de quien pregunta");
+
+const puedesIr = leerFuente("lib/au-pair/puedes-ir.ts");
+const movilidadSrc = leerFuente("lib/origen/movilidad.ts");
+const nacionalidadesSrc = leerFuente("lib/origen/nacionalidades.ts");
+const avisoSrc = leerFuente("components/origen/AvisoNacionalidad.tsx");
+const requisitosSrc = leerFuente("lib/destinos/requisitos.ts");
+const pasosSrc = leerFuente("lib/primeros-pasos.ts");
+
+// 1. El codigo del Reino Unido
+test('el Reino Unido se identifica como "UK", que es lo que usa la aplicacion', () =>
+  puedesIr.includes('codigo: "UK"') && !puedesIr.includes('codigo: "GB"'));
+test('realidadDe acepta tambien "GB" para que ninguna via se quede fuera', () =>
+  puedesIr.includes('"GB" ? "UK"'));
+test("movilidad.ts normaliza GB a UK", () =>
+  movilidadSrc.includes("normalizarPais") && movilidadSrc.includes('if (c === "GB") return "UK"'));
+test("el enlace oficial britanico esta indexado por UK, no por GB", () =>
+  movilidadSrc.includes("  UK: {") && !movilidadSrc.includes("OFICIAL_POR_DESTINO.GB"));
+
+// 2. Que cualquiera pueda decir de donde es
+test("Argentina se puede elegir como nacionalidad", () =>
+  nacionalidadesSrc.includes('codigo: "AR"'));
+test("hay bastantes mas nacionalidades que destinos", () =>
+  (nacionalidadesSrc.match(/codigo: "[A-Z]{2}"/g) || []).length >= 80);
+test("el desplegable usa la lista de NACIONALIDADES, no la de destinos", () =>
+  avisoSrc.includes("nacionalidadesAgrupadas") && !avisoSrc.includes("LISTA_PAISES"));
+
+// 3. Los datos que estaban mal
+test("ya no se dice que un espanol tenga cupo en el Youth Mobility britanico", () =>
+  !/cupo limitado para españoles/i.test(pasosSrc));
+test("se avisa de que el Youth Mobility NO incluye a Espana ni a la UE", () =>
+  /Youth Mobility Scheme NO incluye a España/.test(pasosSrc));
+test("a Espana le corresponde la subclase 462 australiana, no la 417", () =>
+  pasosSrc.includes("subclase 462") &&
+  pasosSrc.includes("work-holiday-462") &&
+  !pasosSrc.includes("work-holiday-417"));
+test("Nueva Zelanda es de 18 a 30 para espanoles, no hasta los 35", () =>
+  !/Working Holiday Visa para españoles 18-35/.test(pasosSrc));
+test("Canada ya no dice que Espana no tenga acuerdo de movilidad juvenil", () =>
+  !/España no tiene acuerdo de movilidad juvenil con Canadá/.test(puedesIr));
+
+// 4. Que exista ficha de los 26 destinos y se enseñe
+test("hay ficha de requisitos de los 26 destinos", () =>
+  new Set((requisitosSrc.match(/codigo: "([A-Z]{2})"|destinoUE\("([A-Z]{2})"/g) || [])).size === 26);
+test("la ficha de requisitos se pinta en la pagina publica del pais", () =>
+  leerFuente("app/trabajar-en/[pais]/page.tsx").includes("<RequisitosPais"));
+test("las fichas separan quien es de la UE de quien no", () =>
+  requisitosSrc.includes("siEresDeLaUE") && requisitosSrc.includes("siNoEresDeLaUE"));
+
+
 // Se espera a que TODAS terminen. Antes había un setTimeout de 5 segundos a
 // ciegas, que podía cortar comprobaciones a medias y dar el visto bueno sin
 // haberlas hecho.

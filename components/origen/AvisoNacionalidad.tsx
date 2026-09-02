@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, ArrowRight, Globe, Loader2 } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { esDeLaUE, movilidadDe } from "@/lib/origen/movilidad";
-import { LISTA_PAISES } from "@/lib/paises";
+import { nacionalidadesAgrupadas } from "@/lib/origen/nacionalidades";
 
 interface Props {
   /** Qué se pierde quien no sea de la UE en ESTA página. */
@@ -104,8 +104,12 @@ export default function AvisoNacionalidad({ queNoAplica, destino }: Props) {
           style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}
         >
           <option value="" disabled>Elige tu nacionalidad…</option>
-          {LISTA_PAISES.map(p => (
-            <option key={p.codigo} value={p.codigo}>{p.bandera} {p.nombre}</option>
+          {nacionalidadesAgrupadas().map(g => (
+            <optgroup key={g.grupo} label={g.etiqueta}>
+              {g.paises.map(n => (
+                <option key={n.codigo} value={n.codigo}>{n.bandera} {n.nombre}</option>
+              ))}
+            </optgroup>
           ))}
         </select>
         {guardando && (

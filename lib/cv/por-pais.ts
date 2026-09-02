@@ -103,7 +103,7 @@ export const ESTILOS: EstiloCV[] = [
     nota: "Se espera foto. Y ojo con el idioma del CV: depende del cantón y de la empresa.",
   },
   {
-    codigo: "GB",
+    codigo: "UK",
     pais: "Reino Unido",
     bandera: "🇬🇧",
     foto: "mejor_no",
@@ -246,7 +246,8 @@ export const ENLACE_EUROPASS = {
 export const ACTUALIZADO = "2026-09";
 
 export function estiloDe(codigo: string): EstiloCV | undefined {
-  return ESTILOS.find(e => e.codigo === codigo.toUpperCase());
+  const c = codigo.toUpperCase().trim();
+  return ESTILOS.find(e => e.codigo === (c === "GB" ? "UK" : c));
 }
 
 /** Países donde la foto juega en tu contra. Sirve para avisar en el editor. */

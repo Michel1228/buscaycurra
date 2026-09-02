@@ -47,6 +47,18 @@ export const LIBRE_CIRCULACION = new Set([
   "LU", "CY", "MT", "IS", "NO", "LI", "CH",
 ]);
 
+/**
+ * La aplicación usa "UK" para el Reino Unido; el código ISO es "GB". Yo escribí
+ * "GB" en estos módulos y el resultado fue que el aviso de visado británico no
+ * se disparaba NUNCA — justo en el país con más ofertas de au pair (1.155).
+ * Se aceptan los dos y se normaliza a "UK", que es lo que usa lib/paises.ts.
+ */
+export function normalizarPais(codigo: string | null | undefined): string {
+  const c = (codigo || "").toUpperCase().trim();
+  if (c === "GB") return "UK";
+  return c;
+}
+
 export type Regimen =
   | "libre_circulacion"
   | "movilidad_joven"
@@ -70,7 +82,7 @@ export interface Movilidad {
  */
 const ACUERDO_AUSTRALIA = new Set([
   "ES", "AR", "CL", "PE", "UY", "EC", "PT", "FR", "IT", "DE", "IE", "NL",
-  "BE", "AT", "DK", "SE", "NO", "FI", "PL", "HU", "CZ", "SI", "GB",
+  "BE", "AT", "DK", "SE", "NO", "FI", "PL", "HU", "CZ", "SI", "UK",
 ]);
 
 const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
@@ -78,7 +90,7 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
     url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-finder",
   },
-  GB: {
+  UK: {
     titulo: "Visados e inmigración — GOV.UK",
     url: "https://www.gov.uk/browse/visas-immigration",
   },
@@ -102,8 +114,8 @@ const OFICIAL_UE = {
  * interfaz se traduce en pedírselo, no en suponer que es español.
  */
 export function movilidadDe(origen: string | null | undefined, destino: string): Movilidad {
-  const o = (origen || "").toUpperCase();
-  const d = (destino || "").toUpperCase();
+  const o = normalizarPais(origen);
+  const d = normalizarPais(destino);
 
   if (!o) {
     return {
@@ -172,7 +184,7 @@ export function movilidadDe(origen: string | null | undefined, destino: string):
 
 /** Si esta persona puede usar lo que damos para España y la UE. */
 export function esDeLaUE(origen: string | null | undefined): boolean {
-  return !!origen && LIBRE_CIRCULACION.has(origen.toUpperCase());
+  return !!origen && LIBRE_CIRCULACION.has(normalizarPais(origen));
 }
 
 export const ACTUALIZADO = "2026-09";

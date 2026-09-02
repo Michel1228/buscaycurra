@@ -63,7 +63,7 @@ export const PAISES_SIN_ACUERDO = [
   { codigo: "CH", nombre: "Suiza", motivo: "Firmado en 1970, sin ratificar. Cada cantón tiene sus reglas." },
   { codigo: "GR", nombre: "Grecia", motivo: "Firmado en 1979, sin ratificar." },
   { codigo: "LU", nombre: "Luxemburgo", motivo: "Lo ratificó en 1990 y lo DENUNCIÓ en 2003. Ya no aplica." },
-  { codigo: "GB", nombre: "Reino Unido", motivo: "Nunca fue parte, y además tras el Brexit el visado específico de au pair desapareció." },
+  { codigo: "UK", nombre: "Reino Unido", motivo: "Nunca fue parte, y además tras el Brexit el visado específico de au pair desapareció." },
   { codigo: "NL", nombre: "Países Bajos", motivo: "No es parte. Se rige por el régimen nacional de intercambio cultural." },
   { codigo: "IE", nombre: "Irlanda", motivo: "No es parte. Ojo: los tribunales irlandeses han tratado a au pairs como empleadas con derecho a salario mínimo." },
   { codigo: "AT", nombre: "Austria", motivo: "No es parte. Allí la au pair se da de alta como trabajadora y cotiza." },

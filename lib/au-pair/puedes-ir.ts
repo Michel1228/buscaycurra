@@ -64,7 +64,7 @@ export const COLOR_DIFICULTAD: Record<Dificultad, string> = {
 
 export const REALIDAD_POR_PAIS: RealidadPais[] = [
   {
-    codigo: "GB",
+    codigo: "UK",
     nombre: "Reino Unido",
     bandera: "🇬🇧",
     dificultad: "dificil",
@@ -72,7 +72,7 @@ export const REALIDAD_POR_PAIS: RealidadPais[] = [
       "Es donde más ofertas hay, y donde menos fácil lo tienes. No existe visado de au pair desde el Brexit.",
     comoSePuede: [
       "El visado específico de au pair desapareció en enero de 2021. Ya no existe.",
-      "El Youth Mobility Scheme, que sería la vía natural, NO incluye a España. Solo Australia, Canadá, Japón, Mónaco, Nueva Zelanda, Taiwán, Hong Kong y Corea del Sur.",
+      "El Youth Mobility Scheme, que sería la vía natural, NO incluye a España ni a ningún país de la UE. Sí entran Australia, Canadá, Nueva Zelanda y Corea del Sur (hasta los 35 años), y Andorra, Islandia, Japón, Mónaco, San Marino y Uruguay (hasta los 30). Hong Kong y Taiwán, por sorteo.",
       "Queda el visado de trabajo cualificado, que exige que una empresa autorizada te patrocine. Una familia particular no puede hacerlo.",
       "O el visado de estudiante, que permite trabajar 20 horas semanales durante el curso.",
     ],
@@ -104,14 +104,18 @@ export const REALIDAD_POR_PAIS: RealidadPais[] = [
     codigo: "CA",
     nombre: "Canadá",
     bandera: "🇨🇦",
-    dificultad: "dificil",
-    resumen: "Hace falta permiso de trabajo. El antiguo programa de cuidadores internos ya no existe.",
+    dificultad: "con_tramite",
+    resumen: "No hay figura de au pair, pero España está en el programa de movilidad joven y ese permiso sí sirve.",
     comoSePuede: [
       "No hay figura de au pair como tal: se entra como trabajador y hace falta permiso de trabajo.",
       "El programa de cuidadores internos que había se cerró; las vías actuales piden oferta de empleo y trámite migratorio.",
-      "España no tiene acuerdo de movilidad juvenil con Canadá que cubra esto de forma directa.",
+      "España SÍ tiene acuerdo de movilidad juvenil con Canadá: el International Experience Canada, que da permiso de trabajo abierto. No es un visado de au pair, pero con él puedes trabajar en lo que quieras, cuidado de niños incluido.",
     ],
     cuidadoCon: "Si te piden dinero por «gestionarte el permiso» sin contrato ni número de expediente, desconfía.",
+    enlace: {
+      titulo: "International Experience Canada — Gobierno de Canadá",
+      url: "https://www.canada.ca/en/immigration-refugees-citizenship/services/work-canada/iec.html",
+    },
   },
   {
     codigo: "ES",
@@ -193,5 +197,10 @@ export const FUENTES_PUEDES_IR = [
 ];
 
 export function realidadDe(codigo: string): RealidadPais | undefined {
-  return REALIDAD_POR_PAIS.find(p => p.codigo === codigo.toUpperCase());
+  // "GB" y "UK" son el mismo país: la aplicación usa UK y el ISO es GB. Sin
+  // esto, realidadDe("uk") no encontraba nada y el aviso de visado britanico
+  // no salía en la lista de agencias, que es donde más falta hace.
+  const c = codigo.toUpperCase().trim();
+  const buscado = c === "GB" ? "UK" : c;
+  return REALIDAD_POR_PAIS.find(p => p.codigo === buscado);
 }

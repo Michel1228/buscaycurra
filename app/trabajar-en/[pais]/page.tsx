@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { PAISES, LISTA_PAISES, NUM_PAISES, SLUG_A_CODIGO, formatearSalario, convertirSalario } from "@/lib/paises";
 import { getPool } from "@/lib/db";
 import { getPrimerosPasos } from "@/lib/primeros-pasos";
+import RequisitosPais from "@/components/destinos/RequisitosPais";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -319,6 +320,11 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* Requisitos de entrada, para cualquier nacionalidad.
+          Va aquí y no dentro de «Primeros pasos» porque esa sección está escrita
+          para quien es de la UE, y esta es justamente la que cubre a los demás. */}
+      <RequisitosPais codigo={codigo} />
 
       {/* Otros países */}
       <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#2d3142]">
