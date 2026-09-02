@@ -28,12 +28,25 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   // Las dos frases tienen la forma «algo EN algún sitio», que es justo lo que
   // captura la regla genérica de más abajo. Por eso van aquí arriba.
 
-  // El paro que te llevas fuera: U2, U1, exportar la prestación.
-  if (/\bu2\b|\bu1\b|export(ar|aci[oó]n)\s+(de\s+)?(la\s+)?(prestaci[oó]n|paro|desempleo)/i.test(t)
-      || (/(paro|prestaci[oó]n|desempleo|subsidio)/i.test(t)
-          && /(perder|pierdo|llevar|llevarme|mantener|seguir\s+cobrando|cobrar).{0,40}(fuera|extranjero|otro\s+pa[ií]s|alemania|francia|holanda|pa[ií]ses\s+bajos|b[eé]lgica|italia|portugal|suiza|irlanda|noruega|dinamarca|suecia)/i.test(t)
-          || /(irme|voy|marcho|emigrar|mudarme).{0,40}(paro|prestaci[oó]n|desempleo)/i.test(t))) {
-    return "paro_europeo";
+  // El paro que te llevas fuera: U2, U1, exportar la prestacion.
+  //
+  // SIN EXIGIR ORDEN. La primera version usaba "cobrar...{0,40}pais", que
+  // obliga a que las palabras aparezcan en ese orden y a poca distancia. La
+  // frase real que fallo en produccion era "estoy cobrando el paro y me
+  // quiero ir a Alemania a buscar trabajo, lo pierdo?": ahi "paro" va antes
+  // que "Alemania" y "pierdo" va al final, asi que no casaba ninguna.
+  //
+  // Ahora son dos condiciones independientes: habla de prestacion Y habla de
+  // irse fuera. La gente no ordena las frases como uno espera.
+  {
+    const hablaDelParo = /(paro|prestaci[oó]n(es)?|desempleo|subsidio)/i.test(t)
+      || /u[12]/i.test(t);
+    const hablaDeIrse = /(fuera|extranjero|otro\s+pa[ií]s|emigrar|irme|mudarme|me\s+voy|marcharme)/i.test(t)
+      || /(alemania|francia|italia|portugal|b[eé]lgica|holanda|pa[ií]ses\s+bajos|suiza|austria|irlanda|reino\s+unido|noruega|suecia|dinamarca|finlandia|polonia)/i.test(t);
+    const esDuda = /(pierdo|perder|puedo|mantener|seguir|llevar|export|c[oó]mo|qu[eé]\s+pasa)/i.test(t);
+    if (hablaDelParo && (hablaDeIrse || /u[12]/i.test(t)) && esDuda) {
+      return "paro_europeo";
+    }
   }
 
   // El CV según el país de destino: foto, extensión, datos personales.

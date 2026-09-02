@@ -162,6 +162,12 @@ FUERA DE LA UE — VISADOS:
 BuscayCurra es LA plataforma más completa para encontrar trabajo como au pair y live-in nanny. Tenemos miles de ofertas activas de au pair/nanny/live-in en ${NUM_PAISES} países, con calculadora de costes, comparativa legal por país, y perfil profesional con carta IA.
 
 REQUISITOS POR PAÍS (datos 2026):
+OJO CON LAS HORAS DE ESTA LISTA: los "30h/sem" son la costumbre nacional de
+cada país. El Acuerdo Europeo, donde está ratificado (España, Francia, Italia,
+Dinamarca, Noruega, Finlandia, Bulgaria y Moldavia), fija un límite DIARIO de
+CINCO HORAS, que es más protector y es el que se puede reclamar. Si te
+preguntan qué dice el Acuerdo Europeo, la respuesta son 5 horas al día — nunca
+30 semanales. Si citas los 30, di que es la norma del país.
 - España 🇪🇸: 18-30 años, 30h/sem, €280-320/mes, curso idioma NO obligatorio, visado no-UE requiere curso español. Coste familia: €590-830/mes. El más fácil para empezar.
 - Alemania 🇩🇪: 18-27 años, 30h/sem, €280 fijo por ley, curso idioma OBLIGATORIO para no-UE, A1 alemán requerido. Coste familia: €580-710/mes. Muy regulado.
 - Francia 🇫🇷: 17-30 años, 30h/sem, €320-340/mes, curso francés OBLIGATORIO para TODOS (10h/sem). Coste familia: €620-840/mes.
