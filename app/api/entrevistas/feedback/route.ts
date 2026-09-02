@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
+import { promptDePais } from "@/lib/entrevistas/por-pais";
+import { normalizarPais } from "@/lib/origen/movilidad";
+import { PAISES } from "@/lib/paises";
 
 export const dynamic = "force-dynamic";
 
@@ -30,10 +33,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { pregunta, respuesta, sector } = await req.json() as {
+    const { pregunta, respuesta, sector, pais } = await req.json() as {
       pregunta: string;
       respuesta: string;
       sector?: string;
+      /** País para el que se prepara la entrevista. Por defecto España. */
+      pais?: string;
     };
 
     if (!pregunta || !respuesta) {
@@ -45,10 +50,19 @@ export async function POST(req: NextRequest) {
     const preguntaSafe = String(pregunta).replace(/[\r\n]/g, " ").slice(0, 300);
     const respuestaSafe = String(respuesta).replace(/[\r\n]{3,}/g, "\n\n").slice(0, 1500);
 
+    // El pais salia clavado a España aunque la oferta fuera de Berlin o de
+    // Londres, y las entrevistas no se parecen: en Alemania son formales y
+    // cronologicas, en Reino Unido y Paises Bajos van casi todas por
+    // competencias. Ensayar el estilo equivocado es prepararse mal.
+    const paisEntrevista = normalizarPais(pais) || "ES";
+    const nombrePais = PAISES[paisEntrevista]?.nombre || "España";
+
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "GROQ_API_KEY no configurada" }, { status: 500 });
 
-    const prompt = `[ESPAÑOL OBLIGATORIO] Eres un coach de entrevistas experto en el sector ${sectorSafe} en España. Analiza esta respuesta de entrevista y da feedback constructivo.
+    const prompt = `[ESPAÑOL OBLIGATORIO] Eres un coach de entrevistas experto en el sector ${sectorSafe}.
+${promptDePais(paisEntrevista, nombrePais)}
+Analiza esta respuesta de entrevista y da feedback constructivo.
 
 PREGUNTA: "${preguntaSafe}"
 

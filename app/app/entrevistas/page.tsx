@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { LISTA_PAISES } from "@/lib/paises";
 import VoiceRecorder from "@/components/VoiceInterview/VoiceRecorder";
 import InterviewFeedback from "@/components/VoiceInterview/InterviewFeedback";
 import { Mic, PartyPopper, Volume2, BarChart2 } from "lucide-react";
@@ -65,6 +66,9 @@ export default function EntrevistasPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [sector, setSector] = useState("general");
+  // Para qué país se prepara. La entrevista no es igual en Berlín que en Madrid,
+  // y hasta ahora el simulador ensayaba siempre la española.
+  const [paisEntrevista, setPaisEntrevista] = useState("ES");
   const [preguntas, setPreguntas] = useState(PREGUNTAS.general);
   const [idx, setIdx] = useState(0);
   const [texto, setTexto] = useState("");
@@ -107,6 +111,7 @@ export default function EntrevistasPage() {
             if (Array.isArray(data.historial)) setHistorial(data.historial);
             setSector(data.sector || sectorDetectado);
             setPreguntas(PREGUNTAS[data.sector || sectorDetectado]);
+            if (typeof data.paisEntrevista === "string") setPaisEntrevista(data.paisEntrevista);
           } else {
             setSector(sectorDetectado);
             setPreguntas(PREGUNTAS[sectorDetectado]);
@@ -135,9 +140,9 @@ export default function EntrevistasPage() {
   useEffect(() => {
     if (cargando) return;
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify({ sector, idx, historial }));
+      localStorage.setItem(LS_KEY, JSON.stringify({ sector, idx, historial, paisEntrevista }));
     } catch { /* localStorage puede no estar disponible */ }
-  }, [sector, idx, historial, cargando]);
+  }, [sector, idx, historial, paisEntrevista, cargando]);
 
   // Liberar síntesis de voz al desmontar
   useEffect(() => {
@@ -168,7 +173,7 @@ export default function EntrevistasPage() {
       const res = await fetch("/api/entrevistas/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ pregunta: preguntas[idx], respuesta: texto, sector }),
+        body: JSON.stringify({ pregunta: preguntas[idx], respuesta: texto, sector, pais: paisEntrevista }),
       });
       const data = await res.json();
       const fb = data.feedback || "No se pudo analizar.";
@@ -267,6 +272,24 @@ export default function EntrevistasPage() {
               {s.label}
             </button>
           ))}
+        </div>
+
+        {/* País de la entrevista */}
+        <div className="flex items-center justify-center gap-2">
+          <label htmlFor="pais-entrevista" className="text-xs" style={{ color: "#6b7280" }}>
+            Entrevista en
+          </label>
+          <select
+            id="pais-entrevista"
+            value={paisEntrevista}
+            onChange={e => setPaisEntrevista(e.target.value)}
+            className="rounded-lg px-2.5 py-1 text-xs outline-none"
+            style={{ background: "#1a1f2e", border: "1px solid #2d3748", color: "#f1f5f9" }}
+          >
+            {LISTA_PAISES.map(p => (
+              <option key={p.codigo} value={p.codigo}>{p.bandera} {p.nombre}</option>
+            ))}
+          </select>
         </div>
 
         {/* Progreso */}

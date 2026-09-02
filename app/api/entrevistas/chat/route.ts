@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth-server";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
+import { promptDePais } from "@/lib/entrevistas/por-pais";
+import { normalizarPais } from "@/lib/origen/movilidad";
+import { PAISES } from "@/lib/paises";
 
 export const dynamic = "force-dynamic";
 
@@ -39,9 +42,13 @@ export async function POST(req: NextRequest) {
       puesto: string;
       mensajes: Mensaje[];
       inicio?: boolean;
+      /** País para el que se prepara. Por defecto España. */
+      pais?: string;
     };
 
     const { puesto, mensajes, inicio } = body;
+    const paisEntrevista = normalizarPais(body.pais) || "ES";
+    const nombrePais = PAISES[paisEntrevista]?.nombre || "España";
 
     if (!puesto) {
       return NextResponse.json({ error: "puesto requerido" }, { status: 400 });
@@ -52,14 +59,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "GROQ_API_KEY no configurada" }, { status: 500 });
     }
 
-    const systemPrompt = `[ESPAÑOL OBLIGATORIO] Eres un entrevistador de recursos humanos profesional en España.
+    // El prompt decia "un entrevistador ... en España" y "usar español de
+    // España" para todo el mundo, aunque la oferta fuera de Berlin o Londres.
+    // Ensayar el estilo equivocado es prepararse mal, no dejar de prepararse.
+    const systemPrompt = `[ESPAÑOL OBLIGATORIO] Eres un entrevistador de recursos humanos profesional.
+${promptDePais(paisEntrevista, nombrePais)}
 Estás haciendo una entrevista de trabajo para el puesto de: ${puesto}.
 Tu misión:
 - Hacer preguntas realistas de entrevista, una a la vez
 - Evaluar brevemente cada respuesta del candidato (2-3 frases)
 - Dar feedback constructivo y hacer la siguiente pregunta
 - Mantener un tono profesional pero cercano
-- Usar español de España
 - Cubrir: motivación, experiencia, habilidades técnicas, trabajo en equipo, situaciones difíciles
 - Después de 6-8 intercambios, hacer un cierre con evaluación general
 ${inicio ? "Empieza con una bienvenida breve y la primera pregunta de presentación." : ""}
