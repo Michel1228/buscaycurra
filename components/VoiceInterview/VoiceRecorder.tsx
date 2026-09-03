@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { isNativeIOS } from "@/lib/utils/platform";
+import { isNativeIOS, isNative, plataforma } from "@/lib/utils/platform";
+import { SpeechRecognition as VozNativa } from "@capgo/capacitor-speech-recognition";
+import type { PluginListenerHandle } from "@capacitor/core";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionInstance = any;
@@ -20,20 +22,41 @@ export default function VoiceRecorder({
   placeholder = "Escribe tu respuesta aquí...",
 }: VoiceRecorderProps) {
   const [escuchando, setEscuchando] = useState(false);
-  const [soporteVoz, setSoporteVoz] = useState(false);
+
   const [bloqueado, setBloqueado] = useState(false);
   const [errorVoz, setErrorVoz] = useState("");
   const [esIOS, setEsIOS] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  /** "nativo" = plugin de Capacitor · "web" = API del navegador · "ninguno" = no hay dictado */
+  const [modoVoz, setModoVoz] = useState<"nativo" | "web" | "ninguno" | "cargando">("cargando");
+  const oyentesRef = useRef<PluginListenerHandle[]>([]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SR =
-        (window as any).SpeechRecognition ||
-        (window as any).webkitSpeechRecognition;
-      setSoporteVoz(!!SR);
-      setEsIOS(isNativeIOS() || /iPad|iPhone|iPod/.test(navigator.userAgent));
+    if (typeof window === "undefined") return;
+    setEsIOS(isNativeIOS() || /iPad|iPhone|iPod/.test(navigator.userAgent));
+
+    // AQUI ESTABA LA MENTIRA, Y ES LA RAIZ DE TODO EL PROBLEMA.
+    //
+    // Antes bastaba con que existiera `webkitSpeechRecognition` para dar el
+    // dictado por soportado. Y dentro del WebView de iOS ESA API EXISTE pero NO
+    // FUNCIONA: es el fallo 239816 de WebKit, "Web Speech API doesn't work in
+    // WKWebView, but webkitSpeechRecognition is still exposed".
+    //
+    // O sea que la aplicacion creia tener microfono, fallaba, y le decia al
+    // usuario que fuera a Ajustes a dar un permiso que NO iba a arreglar nada.
+    // La persona activaba el permiso, volvia, y seguia sin funcionar.
+    //
+    // Dentro de la app nativa se usa el plugin nativo; en el navegador, la API
+    // del navegador. Y si no hay ninguno, se dice, en vez de mandar a nadie a
+    // dar vueltas.
+    if (isNative()) {
+      VozNativa.available()
+        .then(r => { setModoVoz(r.available ? "nativo" : "ninguno"); })
+        .catch(() => setModoVoz("ninguno"));
+      return;
     }
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setModoVoz(SR ? "web" : "ninguno");
   }, []);
 
   // Liberar al desmontar
@@ -42,6 +65,11 @@ export default function VoiceRecorder({
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch { /* ok */ }
       }
+      // Los oyentes del plugin nativo no se van solos: si no se quitan, quedan
+      // vivos y siguen escribiendo en un componente que ya no existe.
+      for (const o of oyentesRef.current) { void o.remove().catch(() => { /* ok */ }); }
+      oyentesRef.current = [];
+      if (isNative()) { void VozNativa.stop().catch(() => { /* ok */ }); }
     };
   }, []);
 
@@ -98,12 +126,87 @@ export default function VoiceRecorder({
     }
   }, [onChange]);
 
+  /**
+   * Dictado con el plugin NATIVO (iOS y Android).
+   *
+   * Aqui el permiso se pide de verdad: `requestPermissions()` abre el dialogo
+   * del sistema. En Android mapea a RECORD_AUDIO —que hasta ahora ni siquiera
+   * estaba declarado en el manifiesto, asi que era imposible concederlo— y en
+   * iOS combina microfono y reconocimiento de voz, que son dos permisos
+   * distintos.
+   */
+  const iniciarNativo = useCallback(async () => {
+    setErrorVoz("");
+    setBloqueado(false);
+    try {
+      let permiso = await VozNativa.checkPermissions();
+      if (permiso.speechRecognition !== "granted") {
+        permiso = await VozNativa.requestPermissions();
+      }
+      if (permiso.speechRecognition !== "granted") {
+        setBloqueado(true);
+        setErrorVoz("Hace falta permiso de micrófono para dictar.");
+        return;
+      }
+
+      // Se limpian los oyentes de una sesion anterior antes de abrir otra.
+      for (const o of oyentesRef.current) { try { await o.remove(); } catch { /* ok */ } }
+      oyentesRef.current = [];
+
+      let texto = "";
+      oyentesRef.current.push(
+        await VozNativa.addListener("partialResults", (e) => {
+          const t = e.matches?.[0];
+          if (t) { texto = t; onChange(t); }
+        }),
+      );
+      oyentesRef.current.push(
+        await VozNativa.addListener("listeningState", (e) => {
+          if (e.status === "stopped") setEscuchando(false);
+        }),
+      );
+      oyentesRef.current.push(
+        await VozNativa.addListener("error", (e) => {
+          setErrorVoz(e.message || "No se pudo usar el micrófono. Escribe tu respuesta arriba.");
+          setEscuchando(false);
+        }),
+      );
+
+      setEscuchando(true);
+      const r = await VozNativa.start({
+        language: "es-ES",
+        partialResults: true,
+        popup: false,
+      });
+      // Con partialResults la promesa puede resolver al final con el texto
+      // definitivo; si trae algo mejor que lo ultimo parcial, se usa.
+      const definitivo = r?.matches?.[0];
+      if (definitivo && definitivo !== texto) onChange(definitivo);
+    } catch (e) {
+      const msg = String((e as Error)?.message || e);
+      // Si el usuario denegó el permiso, se dice claro y se ofrece Ajustes.
+      if (/permission|denied|not.?allowed/i.test(msg)) {
+        setBloqueado(true);
+        setErrorVoz("Micrófono bloqueado.");
+      } else {
+        setErrorVoz("No se pudo iniciar el dictado. Escribe tu respuesta arriba.");
+      }
+      setEscuchando(false);
+    }
+  }, [onChange]);
+
   const toggleVoz = useCallback(() => {
     if (escuchando) {
-      recognitionRef.current?.stop();
+      if (modoVoz === "nativo") {
+        VozNativa.stop().catch(() => { /* ya parado */ });
+      } else {
+        recognitionRef.current?.stop();
+      }
       setEscuchando(false);
       return;
     }
+
+    if (modoVoz === "nativo") { void iniciarNativo(); return; }
 
     const SR =
       (window as any).SpeechRecognition ||
@@ -114,7 +217,7 @@ export default function VoiceRecorder({
     // No usamos getUserMedia primero: en iOS son permisos separados y
     // llamar getUserMedia antes provoca el ciclo de bloqueo/desbloqueo.
     iniciarReconocimiento();
-  }, [escuchando, iniciarReconocimiento]);
+  }, [escuchando, modoVoz, iniciarNativo, iniciarReconocimiento]);
 
   const desbloquear = useCallback(() => {
     setBloqueado(false);
@@ -141,7 +244,7 @@ export default function VoiceRecorder({
       />
 
       {/* Botón de voz — solo si hay soporte y no está bloqueado */}
-      {soporteVoz && !bloqueado && (
+      {(modoVoz === "nativo" || modoVoz === "web") && !bloqueado && (
         <div className="space-y-2">
           <button
             onClick={toggleVoz}
@@ -176,7 +279,7 @@ export default function VoiceRecorder({
       )}
 
       {/* Estado bloqueado — instrucciones claras por plataforma */}
-      {soporteVoz && bloqueado && (
+      {modoVoz === "web" && bloqueado && (
         <div className="space-y-3 p-3 rounded-xl" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.18)" }}>
           <div className="flex items-center gap-2">
             <span style={{ fontSize: "16px" }}>🎙️</span>
@@ -220,9 +323,13 @@ export default function VoiceRecorder({
         </div>
       )}
 
-      {/* Sin soporte (Firefox, navegadores no compatibles) */}
-      {!soporteVoz && (
-        <p className="text-xs" style={{ color: "#6b7280" }}>Voz disponible en Chrome, Edge y Safari. Escribe tu respuesta en el recuadro de arriba.
+      {/* Sin dictado. Se dice la verdad y ya esta: antes se mandaba a la gente
+          a Ajustes a activar un permiso que no arreglaba nada. */}
+      {modoVoz === "ninguno" && (
+        <p className="text-xs" style={{ color: "#64748b" }}>
+          {isNative()
+            ? "El dictado no está disponible en este dispositivo. Escribe tu respuesta en el recuadro de arriba: se analiza igual."
+            : "El dictado funciona en Chrome, Edge y Safari. Escribe tu respuesta en el recuadro de arriba."}
         </p>
       )}
     </div>

@@ -774,6 +774,34 @@ for (const ruta of ["app/trabajar-en/[pais]/page.tsx", "app/trabajar-en/[pais]/[
 test("la portada sigue sirviendose de cache", () =>
   leerFuente("app/(home)/page.tsx").includes("export const revalidate"));
 
+// EL MICROFONO DE LAS ENTREVISTAS. La aplicacion daba el dictado por
+// soportado con solo ver que existia `webkitSpeechRecognition`. Dentro del
+// WebView de iOS esa API EXISTE pero NO FUNCIONA (fallo 239816 de WebKit), asi
+// que fallaba y mandaba al usuario a Ajustes a dar un permiso que no arreglaba
+// nada. Y en Android era imposible: RECORD_AUDIO ni siquiera estaba declarado.
+const vozSrc = leerFuente("components/VoiceInterview/VoiceRecorder.tsx");
+test("el dictado usa el plugin nativo dentro de la app", () =>
+  vozSrc.includes("@capgo/capacitor-speech-recognition") && vozSrc.includes("isNative()"));
+test("ya no se da por bueno el API del navegador dentro del WebView", () =>
+  vozSrc.includes('setModoVoz(SR ? "web" : "ninguno")') && !vozSrc.includes("setSoporteVoz(!!SR)"));
+test("se piden permisos de verdad, no se supone que estan", () =>
+  vozSrc.includes("requestPermissions"));
+test("Android declara el permiso de microfono", () =>
+  leerFuente("android/app/src/main/AndroidManifest.xml").includes("android.permission.RECORD_AUDIO"));
+
+// Las cabeceras eran bloques de verde macizo a pantalla completa. Michel pidio
+// el acabado suave de la tarjeta de "microfono bloqueado" para todo.
+for (const pantalla of [
+  "app/app/buscar/page.tsx",
+  "app/app/curriculum/Content.tsx",
+  "app/app/curriculum/guardados/page.tsx",
+  "app/app/notificaciones/page.tsx",
+]) {
+  test(`${pantalla.split("/").slice(2).join("/")} no lleva bloque de verde macizo`, () =>
+    !leerFuente(pantalla).includes('background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>') &&
+    !leerFuente(pantalla).includes('background: "linear-gradient(135deg, #22c55e, #5cb848)"'));
+}
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

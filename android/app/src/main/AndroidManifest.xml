@@ -38,4 +38,19 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- MICROFONO PARA EL SIMULADOR DE ENTREVISTAS.
+         No estaba declarado, asi que en Android el dictado no podia funcionar
+         de ninguna manera: sin RECORD_AUDIO el sistema ni siquiera ofrece
+         conceder el permiso. La aplicacion mostraba "Microfono bloqueado" y
+         mandaba a Ajustes, donde no habia nada que activar. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Android 11+ exige declarar con que apps se habla. El reconocimiento de
+         voz vive en otra app del sistema; sin esto, SpeechRecognizer no la ve. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 </manifest>

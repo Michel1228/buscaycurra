@@ -17,10 +17,7 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import GuzziAvatar from "@/components/GuzziAvatar";
 import ChatSendPanel from "@/components/ChatSendPanel";
-import {
-  Zap, Compass, Sparkles, Mic, Plane, Home, Image, Upload,
-  Pin, Mail, Inbox, ChartColumn, Gem, Paperclip, Camera, type LucideIcon
-} from "lucide-react";
+import { Zap, Compass, Sparkles, Mic, Plane, Home, Image, Upload, Pin, Mail, Inbox, ChartColumn, Gem, Paperclip, Camera, type LucideIcon, ChevronDown, ChevronUp } from "lucide-react";
 
 // Mapa de palabras clave → id de país en /app/emigrar
 const LOCATION_TO_PAIS: Record<string, string> = {
@@ -116,6 +113,21 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
   const [logueado, setLogueado] = useState<boolean | null>(null);
   const [userId, setUserId] = useState<string>("");
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
+  // Los atajos ocupan sitio fijo en una pantalla que es sobre todo
+  // conversacion. Se pueden plegar, y la eleccion se recuerda: quien ya sabe
+  // lo que hay no tiene que volver a esquivarlos cada vez que entra.
+  const [atajosVisibles, setAtajosVisibles] = useState(true);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("guzzi-atajos") === "ocultos") setAtajosVisibles(false);
+    } catch { /* navegador sin almacenamiento: se quedan visibles */ }
+  }, []);
+  function alternarAtajos() {
+    setAtajosVisibles(v => {
+      try { localStorage.setItem("guzzi-atajos", v ? "ocultos" : "visibles"); } catch { /* da igual */ }
+      return !v;
+    });
+  }
   const [authLoading, setAuthLoading] = useState(true);
 
   const inicializadoRef = useRef(false);
@@ -165,7 +177,9 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
           if (conv?.messages && Array.isArray(conv.messages) && conv.messages.length > 0) {
             setMensajes(conv.messages as Mensaje[]);
           } else {
-            setMensajes([{ role: "gusi", text: `¡Hola! Soy Guzzi, tu asistente de empleo. ¿Qué hacemos hoy?\n\nPuedo ayudarte con:\n⚡ **Enviar tu CV automático** a empresas\n✨ Crear o mejorar tu CV\n🧭 Buscar ofertas por puesto y ciudad\n🎙️ Prepararte para entrevistas` }]);
+            setMensajes([{ role: "gusi", text: `¡Hola! Soy Guzzi, tu asistente de empleo.
+
+Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
           }
         } else {
           setMensajes([{ role: "gusi", text: "¡Hola! Soy Guzzi, tu asistente de empleo de BuscayCurra.\n\n⚠️ **Primero necesitas una cuenta** para que pueda ayudarte.\n\nEs gratis y tarda 30 segundos:\n👉 **Regístrate** o **inicia sesión**" }]);
@@ -903,7 +917,17 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                 </div>
               ) : (
                 <div className="relative">
+                  <button
+                    onClick={alternarAtajos}
+                    className="flex items-center gap-1 mb-1.5 text-[10px] transition hover:opacity-80"
+                    style={{ color: "#64748b" }}
+                    aria-expanded={atajosVisibles}
+                  >
+                    {atajosVisibles ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+                    {atajosVisibles ? "Ocultar atajos" : "Ver atajos"}
+                  </button>
                   {/* Scroll horizontal de tarjetas */}
+                  {atajosVisibles && (<>
                   <div 
                     className="flex gap-2 overflow-x-auto pb-1"
                     style={{ 
@@ -912,18 +936,22 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                       WebkitOverflowScrolling: 'touch',
                     }}
                   >
+                    {/* TODOS CON EL MISMO ACABADO. Antes cada atajo llevaba su
+                        propio color y un glow de neon en el icono: seis colores
+                        que no significaban nada. Ahora todos usan el acabado
+                        suave de la aplicacion: fondo tenido al 6% y borde al 18%. */}
                     {SUGERENCIAS.map((s, i) => (
                       <button key={i} onClick={() => s.href ? router.push(s.href) : enviar(s.msg ?? "")}
-                        className="flex flex-col items-start shrink-0 w-[130px] px-3 py-2.5 rounded-lg text-left transition hover:opacity-80 active:scale-[0.98]"
+                        className="flex flex-col items-start shrink-0 w-[130px] px-3 py-2.5 rounded-xl text-left transition hover:opacity-80 active:scale-[0.98]"
                         style={{
-                          background: s.destacado ? "rgba(34,197,94,0.08)" : "#1e212b",
-                          border: `1px solid ${s.destacado ? "rgba(34,197,94,0.2)" : "#2d3142"}`,
+                          background: "rgba(34,197,94,0.06)",
+                          border: "1px solid rgba(34,197,94,0.18)",
                         }}>
-                        <s.Icon size={16} color={s.color} className="mb-1" style={{ filter: `drop-shadow(0 0 4px ${s.color}40)` }} />
-                        <p className="text-[10px] font-semibold leading-tight" style={{ color: s.destacado ? "#22c55e" : "#e2e8f0" }}>
+                        <s.Icon size={16} className="mb-1" style={{ color: "#22c55e" }} />
+                        <p className="text-[10px] font-semibold leading-tight" style={{ color: "#f1f5f9" }}>
                           {s.label}
                         </p>
-                        <p className="text-[9px] leading-tight mt-0.5" style={{ color: s.destacado ? "rgba(34,197,94,0.6)" : "#6b7280" }}>
+                        <p className="text-[9px] leading-tight mt-0.5" style={{ color: "#64748b" }}>
                           {s.desc}
                         </p>
                       </button>
@@ -931,9 +959,10 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                   </div>
                   {/* Degradado indicador "hay más" */}
                   <div 
-                    className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 rounded-r-lg"
-                    style={{ background: "linear-gradient(to right, transparent, #111827 70%)" }}
+                    className="pointer-events-none absolute right-0 bottom-0 w-10"
+                    style={{ top: 22, background: "linear-gradient(to right, transparent, #111827 70%)" }}
                   />
+                  </>)}
                 </div>
               )}
             </div>

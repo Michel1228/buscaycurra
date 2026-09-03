@@ -756,15 +756,18 @@ export default function CurriculumPage() {
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117", overflowX: "hidden" }}>
       {/* Header */}
-      <div className="px-4 py-6" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>
+      {/* Mismo acabado suave que el resto: fondo tenido, borde sutil y esquinas
+          redondeadas, en vez del bloque de verde macizo que habia antes. */}
+      <div className="px-4 py-5 mx-3 mt-3 rounded-2xl"
+           style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}>
         {/* En el movil el titulo y la barra de botones peleaban por el mismo
             hueco: "Mi Curriculum" se partia en tres lineas y el ultimo boton se
             salia de la pantalla, cortado por la derecha. Con flex-wrap la barra
             baja debajo del titulo cuando no cabe, en vez de desbordarse. */}
         <div className="max-w-[100rem] mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-white">Mi Currículum</h1>
-            <p className="text-xs mt-1 text-white/80">Completa tus datos — la plantilla se actualiza en vivo</p>
+            <h1 className="text-xl font-bold" style={{ color: "#22c55e" }}>Mi Currículum</h1>
+            <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Completa tus datos — la plantilla se actualiza en vivo</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* ── Selector de CVs ── */}
@@ -774,7 +777,7 @@ export default function CurriculumPage() {
                   value={cvActivoId}
                   onChange={(e) => { const id = e.target.value; if (id) cargarCVporId(id); }}
                   className="px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
-                  style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", maxWidth: "180px" }}
+                  style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9", maxWidth: "180px" }}
                 >
                   {listaCVs.map(cv => (
                     <option key={cv.id} value={cv.id} style={{ background: "#1e212b", color: "#f1f5f9" }}>
@@ -795,7 +798,7 @@ export default function CurriculumPage() {
               onClick={guardarComoNuevo}
               disabled={guardando}
               className="text-[10px] px-2 py-1.5 rounded-lg font-medium transition disabled:opacity-50"
-              style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
+              style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}
             >
               {guardando ? "..." : (
                 <span className="inline-flex items-center gap-1.5">
@@ -804,7 +807,7 @@ export default function CurriculumPage() {
               )}
             </button>
             {guardado && (
-              <span className="text-xs font-medium px-3 py-1 rounded-full bg-white/20 text-white inline-flex items-center gap-1.5">
+              <span className="text-xs font-medium px-3 py-1 rounded-full inline-flex items-center gap-1.5" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.25)" }}>
                 <Check size={12} strokeWidth={2.5} /> Guardado
               </span>
             )}

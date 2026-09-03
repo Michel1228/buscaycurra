@@ -413,13 +413,21 @@ function BuscarPageInner() {
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
 
       {/* Cabecera de búsqueda */}
-      <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}>
+      {/* ACABADO SUAVE, NO BLOQUE MACIZO.
+          Esto era un rectangulo de verde #22c55e a pantalla completa, que en
+          una aplicacion oscura pega un golpe de color y obliga a poner el texto
+          en blanco y los campos en blanco translucido. Michel pidio el acabado
+          de la tarjeta de "microfono bloqueado": fondo tenido al 6%, borde al
+          18% y esquinas redondeadas. Se lee mejor y el verde vuelve a ser un
+          acento en vez de una pared. */}
+      <div className="py-6 px-4 mx-3 mt-3 rounded-2xl"
+           style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)", color: "#f1f5f9" }}>
         <div className="max-w-4xl mx-auto">
           {/* El titulo dice las DOS cosas que se hacen aquí. Poniendo solo
               "Buscar ofertas", la mitad de enviar el CV a la empresa —que es
               lo que nos diferencia— no se intuía por ninguna parte. */}
-          <h1 className="text-xl font-bold">Buscar trabajo y enviar tu CV</h1>
-          <p className="text-xs mb-4 mt-1 opacity-90">
+          <h1 className="text-xl font-bold" style={{ color: "#22c55e" }}>Buscar trabajo y enviar tu CV</h1>
+          <p className="text-xs mb-4 mt-1" style={{ color: "#94a3b8" }}>
             Las ofertas publicadas y, además, las empresas de tu zona a las que
             escribir aunque no hayan publicado nada.
           </p>
@@ -427,12 +435,12 @@ function BuscarPageInner() {
             <label className="sr-only" htmlFor="buscar-keyword">Palabra clave</label>
             <input id="buscar-keyword" type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
               placeholder="¿Qué trabajo buscas?" className="flex-1 px-4 py-2.5 rounded-lg text-sm"
-              style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
+              style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
             <div className="relative w-full sm:w-56">
               <label className="sr-only" htmlFor="buscar-ubicacion">Ubicación</label>
               <input id="buscar-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); setAvisoPais(""); }}
                 placeholder="¿Dónde? (o déjalo vacío)" className="w-full px-4 py-2.5 rounded-lg text-sm"
-                style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
+                style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               {/* El aviso de autorrelleno era un "Auto" de 10 px que nadie
                   veía: la gente buscaba sin darse cuenta de que el campo
                   llevaba su ciudad puesta. Ahora se ve y se quita de un clic. */}
@@ -441,14 +449,14 @@ function BuscarPageInner() {
                   onClick={() => { setUbicacion(""); setGeoDetected(false); }}
                   title="Quitar mi ciudad y buscar en todas partes"
                   className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-semibold hover:opacity-80"
-                  style={{ background: "rgba(0,0,0,0.28)", color: "#fff" }}>
+                  style={{ background: "#0f1117", color: "#94a3b8", border: "1px solid #2d3142" }}>
                   tu ciudad
                 </button>
               )}
             </div>
             <button type="submit" disabled={cargando}
-              className="px-6 py-2.5 bg-white font-semibold rounded-lg text-sm transition disabled:opacity-50"
-              style={{ color: "#16a34a" }}>
+              className="px-6 py-2.5 font-semibold rounded-lg text-sm transition disabled:opacity-50"
+              style={{ background: "#22c55e", color: "#0f1117" }}>
               {cargando ? "Buscando..." : "Buscar"}
             </button>
           </form>
@@ -458,14 +466,14 @@ function BuscarPageInner() {
               escribías "París" con la bandera en España, salían cero ofertas y
               no había forma de saber por qué. */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-[11px] opacity-90">Buscando en:</span>
+            <span className="text-[11px]" style={{ color: "#94a3b8" }}>Buscando en:</span>
             <CountrySelector paisActual={paisSeleccionado} onCambiarPais={cambiarPais} variant="buscar" />
             <span className="text-[11px] opacity-75">· Si escribes una ciudad de otro país, lo cambio yo.</span>
           </div>
 
           {avisoPais && (
             <div className="mt-2 px-3 py-2 rounded-lg text-xs flex items-start gap-2"
-              style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}>
+              style={{ background: "#161922", border: "1px solid #2d3142", color: "#94a3b8" }}>
               <Info size={14} strokeWidth={2} className="shrink-0 mt-0.5" />
               <span>{avisoPais}</span>
             </div>

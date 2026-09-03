@@ -132,11 +132,13 @@ export default function MisCurriculumsPage() {
   return (
     <div className="min-h-screen pt-16">
       {/* Cabecera */}
-      <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}>
+      {/* Mismo acabado suave que el resto de la aplicacion. */}
+      <div className="py-6 px-4 mx-3 mt-3 rounded-2xl"
+           style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold"><FolderOpen size={22} strokeWidth={1.8} />Mis currículums</h1>
-            <p className="text-sm mt-1 opacity-75">Tus CVs guardados para distintos trabajos</p>
+            <h1 className="flex items-center gap-2 text-2xl font-bold" style={{ color: "#22c55e" }}><FolderOpen size={22} strokeWidth={1.8} />Mis currículums</h1>
+            <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>Tus CVs guardados para distintos trabajos</p>
           </div>
           <button onClick={() => router.push("/app/curriculum")}
             className="px-5 py-2.5 text-sm font-semibold rounded-xl transition"
