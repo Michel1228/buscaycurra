@@ -763,7 +763,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                             </div>
                             {job.match > 0 && (
                               <div className="mt-2 flex items-center gap-2">
-                                <div className="flex-1 h-1 rounded-full" style={{ background: "#2d3142" }}>
+                                <div className="flex-1 h-1 rounded-full" style={{ background: "#252836" }}>
                                   <div className="h-full rounded-full transition-all" style={{ width: `${job.match}%`, background: matchColor }} />
                                 </div>
                                 <span className="text-[10px] font-semibold" style={{ color: matchColor }}>{job.match}%</span>

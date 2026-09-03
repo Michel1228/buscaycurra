@@ -716,7 +716,7 @@ export default function AuPairProfilePage() {
                 className="flex-shrink-0 px-3 py-2.5 rounded-xl text-left transition"
                 style={{
                   background: activa ? "rgba(236,72,153,0.12)" : "#161922",
-                  border: `1px solid ${activa ? "rgba(236,72,153,0.4)" : "#252836"}`,
+                  border: `1px solid ${activa ? "rgba(236,72,153,0.4)" : "#2d3142"}`,
                   color: activa ? "#ec4899" : "#94a3b8",
                   minWidth: "132px",
                 }}
@@ -738,7 +738,7 @@ export default function AuPairProfilePage() {
                 className="flex-shrink-0 px-3 py-2.5 rounded-xl text-left transition"
                 style={{
                   background: seccion === "costes" ? "rgba(245,158,11,0.12)" : "#161922",
-                  border: `1px solid ${seccion === "costes" ? "rgba(245,158,11,0.4)" : "#252836"}`,
+                  border: `1px solid ${seccion === "costes" ? "rgba(245,158,11,0.4)" : "#2d3142"}`,
                   color: seccion === "costes" ? "#f59e0b" : "#94a3b8",
                   minWidth: "142px",
                 }}
@@ -764,7 +764,7 @@ export default function AuPairProfilePage() {
 
         {seccion === "datos" && (<>
         {/* ── Datos personales ── */}
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <User size={13} strokeWidth={1.8} /> Datos personales
           </h3>
@@ -906,7 +906,7 @@ export default function AuPairProfilePage() {
         </div>
 
         {/* ── Aptitudes (toggles) ── */}
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <Check size={13} strokeWidth={1.8} /> Aptitudes
           </h3>
@@ -946,7 +946,7 @@ export default function AuPairProfilePage() {
         </div>
 
         {/* ── Idiomas ── */}
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <Globe size={13} strokeWidth={1.8} /> Idiomas
           </h3>
@@ -977,7 +977,7 @@ export default function AuPairProfilePage() {
         </div>
 
         {/* ── Fotos ── */}
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <Camera size={13} strokeWidth={1.8} /> Fotos <span className="text-[10px] text-[#64748b] font-normal">({photos.length}/{MAX_FOTOS})</span>
           </h3>
@@ -1035,7 +1035,7 @@ export default function AuPairProfilePage() {
         </>)}
         {seccion === "historia" && (<>
         {/* ── Experiencia con niños ── */}
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <Users size={13} strokeWidth={1.8} /> Experiencia con niños
           </h3>
@@ -1049,7 +1049,7 @@ export default function AuPairProfilePage() {
         </div>
 
         {/* ── Hobbies ── */}
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <Star size={13} strokeWidth={1.8} /> Sobre ti
           </h3>
@@ -1070,7 +1070,7 @@ export default function AuPairProfilePage() {
         </div>
 
         {/* ── Referencias ── */}
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <ClipboardList size={13} strokeWidth={1.8} /> Referencias
           </h3>
@@ -1097,7 +1097,7 @@ export default function AuPairProfilePage() {
               <input type="text" value={refRelacion} onChange={(e) => setRefRelacion(e.target.value)} placeholder="Relación (ej: ex-empleadora, madre de niños que cuidé)" className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
               <div className="flex gap-2">
                 <button onClick={addReference} className="bg-[#22c55e] hover:bg-[#1ea34d] text-black font-medium px-4 py-2 rounded-lg text-sm transition-colors">Guardar referencia</button>
-                <button onClick={() => setShowRefForm(false)} className="bg-[#2d3142] hover:bg-[#3d4152] text-[#94a3b8] font-medium px-4 py-2 rounded-lg text-sm transition-colors">Cancelar</button>
+                <button onClick={() => setShowRefForm(false)} className="bg-[#252836] hover:bg-[#3d4152] text-[#94a3b8] font-medium px-4 py-2 rounded-lg text-sm transition-colors">Cancelar</button>
               </div>
             </div>
           ) : (
@@ -1106,13 +1106,13 @@ export default function AuPairProfilePage() {
         </div>
 
         {/* ── Dear Family Letter ── */}
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
           <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
               <Mail size={13} strokeWidth={1.8} /> Dear Family Letter
             </h3>
             <div className="flex gap-2 flex-wrap">
-              <button onClick={generarCarta} className="text-[11px] bg-[#252839] hover:bg-[#2d3142] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><FileText size={11} strokeWidth={1.8} /> Plantilla</button>
+              <button onClick={generarCarta} className="text-[11px] bg-[#252839] hover:bg-[#252836] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><FileText size={11} strokeWidth={1.8} /> Plantilla</button>
               <button
                 onClick={generarConIA}
                 disabled={generandoIA}
@@ -1170,7 +1170,7 @@ export default function AuPairProfilePage() {
         {/* ── Plantilla en vivo ── */}
         </>)}
         {seccion === "plantilla" && (<>
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-5">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
               <FileText size={13} strokeWidth={1.8} /> Plantilla profesional <span className="text-[10px] text-[#4ade80] font-normal">(vista previa en vivo)</span>
@@ -1185,7 +1185,7 @@ export default function AuPairProfilePage() {
             </div>
           </div>
           {showPlantilla && (
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #252836", maxHeight: "80vh", overflowY: "auto" }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #2d3142", maxHeight: "80vh", overflowY: "auto" }}>
               <AuPairPlantilla
                 nombre={nombre}
                 age={age}
@@ -1215,7 +1215,7 @@ export default function AuPairProfilePage() {
         </>)}
         {seccion === "enviar" && (<>
         {/* ── Enviar perfil a familia ── */}
-        <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
             <Upload size={13} strokeWidth={1.8} /> Enviar perfil a una familia
           </h3>
@@ -1289,7 +1289,7 @@ export default function AuPairProfilePage() {
               disabled={enviandoPerfil || !familyEmail}
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50"
               style={{
-                background: enviandoPerfil ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                background: enviandoPerfil ? "#2d3142" : "linear-gradient(135deg, #22c55e, #16a34a)",
                 color: enviandoPerfil ? "#64748b" : "#fff",
               }}
             >
@@ -1300,7 +1300,7 @@ export default function AuPairProfilePage() {
 
         {/* Guardar */}
         <div className="flex gap-3 justify-end">
-          <button onClick={() => router.push("/app/emigrar")} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-[#2d3142] text-[#94a3b8] hover:bg-[#3d4152] transition-colors">Cancelar</button>
+          <button onClick={() => router.push("/app/emigrar")} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-[#252836] text-[#94a3b8] hover:bg-[#3d4152] transition-colors">Cancelar</button>
           <button onClick={guardar} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#22c55e] hover:bg-[#1ea34d] text-black transition-colors disabled:opacity-50">
             {saving ? "Guardando..." : <><Save size={14} strokeWidth={1.8} className="inline mr-1.5" />{T.guardarPerfil}</>}
           </button>

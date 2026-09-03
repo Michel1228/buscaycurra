@@ -101,7 +101,7 @@ function generateAuPairProfileHTML(profile: AuPairProfile, coverLetter: string):
         ${infoCards.map(c => `
           <div style="flex:1;min-width:140px;background:#f8faf9;border-left:3px solid ${c.border};border-radius:8px;padding:12px;">
             <p style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#9ca3af;font-weight:bold;margin:0 0 4px;">${c.label}</p>
-            <p style="font-size:11px;color:#374151;margin:0;">${escapeHtml(c.value)}</p>
+            <p style="font-size:11px;color:#2d3142;margin:0;">${escapeHtml(c.value)}</p>
           </div>`).join("")}
       </div>`
     : "";
@@ -109,7 +109,7 @@ function generateAuPairProfileHTML(profile: AuPairProfile, coverLetter: string):
   const letterHtml = coverLetter
     ? `<div style="margin-bottom:28px;">
         <div style="width:48px;height:4px;border-radius:2px;background:linear-gradient(90deg,#2d5a4e,#4a9d84);margin-bottom:24px;"></div>
-        <div style="font-size:13px;line-height:1.8;color:#374151;font-family:Georgia,'Times New Roman',serif;white-space:pre-wrap;">${escapeHtml(coverLetter)}</div>
+        <div style="font-size:13px;line-height:1.8;color:#2d3142;font-family:Georgia,'Times New Roman',serif;white-space:pre-wrap;">${escapeHtml(coverLetter)}</div>
       </div>`
     : "";
 
@@ -217,7 +217,7 @@ function buildAuPairEmailHTML(
   const experienceHtml = profile.childcare_experience
     ? `<div style="margin-bottom:18px;">
         <p style="color:#2563EB;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">👶 Childcare Experience</p>
-        <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">${escapeHtml(profile.childcare_experience)}</p>
+        <p style="color:#2d3142;font-size:14px;line-height:1.6;margin:0;">${escapeHtml(profile.childcare_experience)}</p>
       </div>`
     : "";
 
@@ -225,7 +225,7 @@ function buildAuPairEmailHTML(
   const hobbiesHtml = profile.hobbies
     ? `<div style="margin-bottom:18px;">
         <p style="color:#2563EB;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">🎨 Hobbies & Interests</p>
-        <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">${escapeHtml(profile.hobbies)}</p>
+        <p style="color:#2d3142;font-size:14px;line-height:1.6;margin:0;">${escapeHtml(profile.hobbies)}</p>
       </div>`
     : "";
 
@@ -265,7 +265,7 @@ function buildAuPairEmailHTML(
   const letterParagraphs = letterText
     .split("\n")
     .filter(line => line.trim())
-    .map(line => `<p style="margin:0 0 8px;line-height:1.6;color:#374151;font-size:14px;">${escapeHtml(line)}</p>`)
+    .map(line => `<p style="margin:0 0 8px;line-height:1.6;color:#2d3142;font-size:14px;">${escapeHtml(line)}</p>`)
     .join("");
 
   // ── Mensaje personal ──────────────────────────────────────────────────
@@ -383,7 +383,7 @@ function buildAuPairEmailHTML(
                 <p style="color:#2d5a4e;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;">
                   ℹ️ Para la familia anfitriona — ${paisInfo.bandera} ${paisInfo.nombre}
                 </p>
-                <table cellpadding="0" cellspacing="0" style="width:100%;font-size:13px;color:#374151;">
+                <table cellpadding="0" cellspacing="0" style="width:100%;font-size:13px;color:#2d3142;">
                   <tr>
                     <td style="padding:4px 0;vertical-align:top;width:50%;">
                       <strong>💰 Coste estimado mensual:</strong> ~${costes.total}€<br/>

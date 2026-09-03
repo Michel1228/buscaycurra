@@ -29,7 +29,7 @@ export default function GusiPage() {
 
         {/* Stats */}
         <div className="rounded-xl p-3" style={{ background: "#161922", border: "1px solid #1e2130" }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#374151" }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#2d3142" }}>
             BuscayCurra en cifras
           </p>
           <div className="space-y-2">
@@ -64,7 +64,7 @@ export default function GusiPage() {
         {/* Comparativa */}
         <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1e2130" }}>
           <div className="px-3 py-2" style={{ background: "#161922" }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#374151" }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#2d3142" }}>
               Comparativa
             </p>
           </div>
@@ -90,7 +90,7 @@ export default function GusiPage() {
 
         {/* Diferenciadores clave */}
         <div className="rounded-xl p-3" style={{ background: "#161922", border: "1px solid #1e2130" }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#374151" }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#2d3142" }}>
             Por qué BuscayCurra
           </p>
           <div className="space-y-2">

@@ -153,7 +153,7 @@ export default function PublicHeader() {
               >
                 <LogIn size={14} strokeWidth={1.8} className="inline mr-1.5" />Entrar
               </Link>
-              <div style={{ height: "1px", background: "#2d3142", margin: "4px 0" }} />
+              <div style={{ height: "1px", background: "#252836", margin: "4px 0" }} />
               <Link
                 href="/auth/registro"
                 onClick={() => setMenuOpen(false)}

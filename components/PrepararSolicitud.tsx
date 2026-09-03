@@ -40,7 +40,7 @@ function BotonCopiar({ texto, etiqueta }: { texto: string; etiqueta: string }) {
       }}
       className="flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg transition"
       style={{
-        background: copiado ? "rgba(34,197,94,0.15)" : "#252836",
+        background: copiado ? "rgba(34,197,94,0.15)" : "#2d3142",
         color: copiado ? "#22c55e" : "#94a3b8",
         border: "1px solid #2d3142",
       }}

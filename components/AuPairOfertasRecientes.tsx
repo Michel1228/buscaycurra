@@ -128,11 +128,11 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
     return (
       <section className="card-game p-4 sm:p-6 mt-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-5 bg-[#2d3142] rounded w-48" />
-          <div className="h-3 bg-[#2d3142] rounded w-64" />
+          <div className="h-5 bg-[#252836] rounded w-48" />
+          <div className="h-3 bg-[#252836] rounded w-64" />
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 bg-[#2d3142] rounded" />
+              <div key={i} className="h-16 bg-[#252836] rounded" />
             ))}
           </div>
         </div>

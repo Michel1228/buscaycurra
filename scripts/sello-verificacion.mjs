@@ -638,6 +638,81 @@ test("se avisa cuando no tenemos datos del pais en vez de ensenar los espanoles"
   salariosApi.includes("sinDatos") && salariosPage.includes("sinDatos"));
 
 
+// ═══════════════════════════════════════════════════════════════
+// BLOQUE PALETA: que la aplicacion se parezca a si misma
+//
+// POR QUE EXISTE. Medido: 3.760 colores escritos a mano y 122 valores
+// distintos, con una paleta oficial de nueve. Lo peor eran CINCO grises casi
+// identicos para la misma tarjeta (#1e212b, #161922, #252836, #1a1d2e,
+// #1a1f2e) repartidos por 93 ficheros. La diferencia entre ellos no la ve
+// nadie, pero al cambiar de pantalla el fondo saltaba sin motivo: por eso cada
+// pagina parecia de una aplicacion distinta.
+//
+// Y el aviso de cookies —el elemento mas visible de la web, sale en todas las
+// paginas— estaba pintado de azul #2563EB y naranja #F97316, colores que la
+// cabecera del fichero llamaba "de marca" y no lo son.
+//
+// Ahora hay una escala de tres superficies con papeles distintos y un solo
+// color de borde. Esto vigila que siga asi: si aparece un gris nuevo, salta
+// aqui antes de que se reproduzca por veinte ficheros.
+// ═══════════════════════════════════════════════════════════════
+console.log("");
+console.log("🎨 BLOQUE PALETA: que no vuelvan los cinco grises");
+
+function contarEnFuentes(patron) {
+  let n = 0;
+  const raices = ["app", "components"];
+  const pila = [...raices];
+  while (pila.length) {
+    const dir = pila.pop();
+    let entradas;
+    try { entradas = readdirSync(dir, { withFileTypes: true }); } catch { continue; }
+    for (const e of entradas) {
+      const ruta = `${dir}/${e.name}`;
+      if (e.isDirectory()) { if (!/node_modules|\.next/.test(ruta)) pila.push(ruta); continue; }
+      if (!/\.tsx?$/.test(e.name)) continue;
+      try { n += (readFileSync(ruta, "utf8").match(patron) || []).length; } catch { /* ignorar */ }
+    }
+  }
+  return n;
+}
+
+// Los grises que se retiraron. Si vuelve alguno, es que alguien se invento otro
+// fondo de tarjeta en vez de usar el que hay.
+for (const gris of ["#1a1d2e", "#1a1f2e"]) {
+  test(`no ha vuelto el gris de tarjeta ${gris}`, () =>
+    contarEnFuentes(new RegExp(gris, "gi")) === 0);
+}
+// Los bordes sueltos.
+for (const borde of ["#2d3748", "#374151", "#334155"]) {
+  test(`no ha vuelto el borde suelto ${borde}`, () =>
+    contarEnFuentes(new RegExp(borde, "gi")) === 0);
+}
+// #252836 es una superficie (--color-superficie2), no un borde. Usarlo como
+// borde fue justo el error que se colo al limpiar esto la primera vez.
+test("#252836 no se usa como borde (es superficie, no linea)", () =>
+  contarEnFuentes(/solid\s+#252836/gi) === 0);
+
+// El aviso de cookies, con los colores de la marca y no con los de otra.
+//
+// Se quitan los comentarios antes de mirar: la cabecera del fichero NOMBRA los
+// colores que se retiraron para explicar por que, y sin esto la comprobacion se
+// pillaba a si misma y fallaba por un texto explicativo.
+function sinComentarios(fuente) {
+  return fuente.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+}
+const cookieSrc = sinComentarios(leerFuente("components/CookieBanner.tsx"));
+test("el aviso de cookies usa el verde de marca", () =>
+  cookieSrc.includes("#22c55e"));
+test("el aviso de cookies ya no usa el azul ni el naranja de fuera de paleta", () =>
+  !/#2563EB/i.test(cookieSrc) && !/#F97316/i.test(cookieSrc));
+
+// La portada: la misma cifra salia dos veces con etiquetas distintas.
+const homeSrc = leerFuente("app/(home)/page.tsx");
+test("la portada no repite la misma cifra dos veces", () =>
+  !homeSrc.includes("ofertas objetivo"));
+
+
 // Se espera a que TODAS terminen. Antes había un setTimeout de 5 segundos a
 // ciegas, que podía cortar comprobaciones a medias y dar el visto bueno sin
 // haberlas hecho.

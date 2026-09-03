@@ -128,7 +128,7 @@ export default function VoiceRecorder({
     : "En Chrome: toca el candado 🔒 en la barra de dirección → Permisos → Micrófono → Permitir. Recarga la página.";
 
   return (
-    <div className="rounded-2xl p-4 space-y-3" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+    <div className="rounded-2xl p-4 space-y-3" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
       {/* Textarea siempre visible */}
       <textarea
         value={value}

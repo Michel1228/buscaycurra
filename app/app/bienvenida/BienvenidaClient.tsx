@@ -264,7 +264,7 @@ export default function BienvenidaClient() {
                   key={oferta.id}
                   href={`/app/ofertas/${encodeURIComponent(oferta.id)}`}
                   className="rounded-xl p-4 transition-all hover:scale-[1.02] cursor-pointer"
-                  style={{ background: "#161922", border: "1px solid #252836" }}
+                  style={{ background: "#161922", border: "1px solid #2d3142" }}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
@@ -312,7 +312,7 @@ export default function BienvenidaClient() {
                 key={action.label}
                 href={action.href}
                 className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all hover:scale-[1.03]"
-                style={{ background: "#161922", border: "1px solid #252836" }}
+                style={{ background: "#161922", border: "1px solid #2d3142" }}
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
                   style={{ background: `${action.color}18`, border: `1px solid ${action.color}30` }}>

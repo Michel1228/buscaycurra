@@ -45,9 +45,11 @@ export default async function LandingPage() {
   // ── Datos reales desde la DB (con fallback a hardcoded) ──
   const stats = await getRealStats();
   
-  const OFERTAS = "millones de";
+  // A proposito NO ponemos la cifra exacta. Cambia cada dia y nos obligaria a ir
+  // detras de ella; "millones" es cierto (2,3 millones activas hoy) y no caduca.
+  // Se usa igual en los tres sitios donde aparece.
+  const OFERTAS = "Millones de";
   const PAISES = String(NUM_PAISES);
-  const OBJETIVO = "millones de";
 
   // Mapa flags + nombres para traducir códigos ISO
   const FLAG_MAP: Record<string, { flag: string; nombre: string }> = {
@@ -221,7 +223,7 @@ export default async function LandingPage() {
   const comparativa = [
     { ellos: "Tú buscas, filtras y envías a mano", nosotros: "Guzzi busca, filtra y envía por ti" },
     { ellos: "Mismo CV para 200 ofertas distintas", nosotros: "CV adaptado por IA a cada empresa" },
-    { ellos: "Ofertas caducadas y empresas fantasma", nosotros: `${OFERTAS} ofertas actualizadas a diario` },
+    { ellos: "Ofertas caducadas y empresas fantasma", nosotros: `${OFERTAS.toLowerCase()} ofertas actualizadas a diario` },
     { ellos: "Sin saber si tu CV fue leído", nosotros: "Pipeline visual: enviado → abierto → entrevista" },
     { ellos: "Solo España. Si quieres emigrar, busca tú.", nosotros: `${PAISES} países. Guzzi busca en todos a la vez.` },
     { ellos: "ATS descarta tu CV sin leerlo", nosotros: "IA que optimiza para pasar los filtros ATS" },
@@ -311,7 +313,10 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             {/* Subheadline */}
             <p
               className="text-base md:text-lg mb-4 leading-relaxed max-w-xl mx-auto"
-              style={{ color: "#94a3b8" }}
+              // textWrap balance reparte las lineas para que no caiga una
+              // palabra suelta al final. Sin esto, en escritorio quedaba
+              // "...candidaturas por / ti." con dos letras solas y centradas.
+              style={{ color: "#94a3b8", textWrap: "balance" }}
             >
               Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti.
               <br />
@@ -326,7 +331,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                 { num: OFERTAS, label: "ofertas activas" },
                 { num: PAISES, label: "países" },
                 { num: "24/7", label: "trabajando por ti" },
-                { num: OBJETIVO, label: "ofertas objetivo" },
+                { num: "12", label: "idiomas" },
               ].map((s) => (
                 <div key={s.label} className="text-center">
                   <div className="text-lg font-extrabold" style={{ color: "#22c55e" }}>
@@ -994,10 +999,10 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                 "busca y curra" con espacios, y si esa forma no aparece en
                 ninguna parte de la web, Google no la asocia con "buscaycurra"
                 y la página deja de salir para esa búsqueda. */}
-            <span className="text-[10px]" style={{ color: "#334155" }}>
+            <span className="text-[10px]" style={{ color: "#2d3142" }}>
               © 2026 BuscayCurra (Busca y Curra). Todos los derechos reservados.
             </span>
-            <span className="text-[10px]" style={{ color: "#334155" }}>
+            <span className="text-[10px]" style={{ color: "#2d3142" }}>
               Hecho con <span style={{color: "#22c55e"}}>♥</span> en España
             </span>
           </div>

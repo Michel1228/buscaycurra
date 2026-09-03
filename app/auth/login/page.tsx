@@ -120,7 +120,7 @@ function LoginPageInner() {
           </div>
 
           {/* Comparativa — solo en desktop */}
-          <div className="hidden lg:block rounded-xl overflow-hidden mb-6" style={{ border: "1px solid #252836" }}>
+          <div className="hidden lg:block rounded-xl overflow-hidden mb-6" style={{ border: "1px solid #2d3142" }}>
             <div className="px-4 py-2 text-[10px] font-bold grid grid-cols-3 gap-2"
               style={{ background: "#161922", color: "#6b7280" }}>
               <span></span>
@@ -150,7 +150,7 @@ function LoginPageInner() {
         </div>
 
         <div className="relative z-10 hidden lg:flex items-center justify-between mt-8">
-          <p className="text-xs" style={{ color: "#374151" }}>{`© 2026 BuscayCurra · Sin permanencia · ${NUM_PAISES} países`}</p>
+          <p className="text-xs" style={{ color: "#2d3142" }}>{`© 2026 BuscayCurra · Sin permanencia · ${NUM_PAISES} países`}</p>
           <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#6b7280" }}>
             ¿Eres empresa o recruiter? →
           </Link>

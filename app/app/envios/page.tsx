@@ -226,7 +226,7 @@ export default function EnviosPage() {
       {detalle && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}
           onClick={() => setDetalle(null)}>
-          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl p-6" style={{ background: "#1a1d2e", border: "1px solid #2d3142" }}
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl p-6" style={{ background: "#1e212b", border: "1px solid #2d3142" }}
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-white">{detalle.company_name}</h2>

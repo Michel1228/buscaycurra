@@ -17,7 +17,7 @@ interface EmigrarContentProps {
 function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosInfo }) {
   if (!info.auPair.disponible) {
     return (
-      <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 text-center">
+      <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6 text-center">
         <div className="flex justify-center mb-4"><Users size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">Programa Au Pair</h3>
         <p className="text-sm text-[#94a3b8]">
@@ -47,7 +47,7 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
         </Link>
       </div>
 
-      <div className="bg-gradient-to-br from-[#1a1d2e] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
+      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
           <Users size={18} strokeWidth={1.8} /> Programa Au Pair en {pais?.nombre || paisCode}
         </h3>
@@ -88,7 +88,7 @@ function AlojamientoTab({ paisCode, info }: { paisCode: string; info: PrimerosPa
   const pais = PAISES[paisCode];
   return (
     <div>
-      <div className="bg-gradient-to-br from-[#1a1d2e] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
+      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
           <Home size={18} strokeWidth={1.8} /> Alojamiento en {pais?.nombre || paisCode}
         </h3>
@@ -137,7 +137,7 @@ function VisadoTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
 
   return (
     <div>
-      <div className="bg-gradient-to-br from-[#1a1d2e] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
+      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
           <ClipboardList size={18} strokeWidth={1.8} /> Visado para {pais?.nombre || paisCode}
         </h3>
@@ -170,7 +170,7 @@ function ProgramasTab({ paisCode, info }: { paisCode: string; info: PrimerosPaso
   const pais = PAISES[paisCode];
   if (!info.programasExtra || info.programasExtra.length === 0) {
     return (
-      <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-6 text-center">
+      <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6 text-center">
         <div className="flex justify-center mb-4"><Star size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">Programas especiales</h3>
         <p className="text-sm text-[#94a3b8]">
@@ -182,7 +182,7 @@ function ProgramasTab({ paisCode, info }: { paisCode: string; info: PrimerosPaso
 
   return (
     <div>
-      <div className="bg-gradient-to-br from-[#1a1d2e] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
+      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
           <Star size={18} strokeWidth={1.8} /> Programas especiales en {pais?.nombre || paisCode}
         </h3>
@@ -313,7 +313,7 @@ export default function EmigrarPage() {
 
       {/* Tabs */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 mb-6">
-        <div className="flex gap-1 bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-1">
+        <div className="flex gap-1 bg-[#1e212b] border border-[#2d3142] rounded-xl p-1">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -334,7 +334,7 @@ export default function EmigrarPage() {
       {/* Content */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
         {!primerosPasos ? (
-          <div className="bg-[#1a1d2e] border border-[#2d3142] rounded-xl p-8 text-center">
+          <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-8 text-center">
             <div className="flex justify-center mb-4"><AlertTriangle size={40} strokeWidth={1.2} style={{ color: "#f59e0b" }} /></div>
             <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">Información en construcción</h3>
             <p className="text-sm text-[#94a3b8]">

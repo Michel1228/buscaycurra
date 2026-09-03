@@ -272,7 +272,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
             className="py-2.5 px-2 rounded-lg text-[10px] font-medium transition text-center"
             style={{
               background: modo === m.id ? "rgba(34,197,94,0.1)" : "#161922",
-              border: modo === m.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+              border: modo === m.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
               color: modo === m.id ? "#22c55e" : "#64748b",
             }}>
             <div className="font-semibold mb-0.5 text-[11px]">{m.titulo}</div>
@@ -303,7 +303,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
                 <button type="button" onClick={() => void buscarEmail()} disabled={buscandoEmail || !urlBusqueda.trim()}
                   className="px-3 py-2 rounded-lg text-xs font-medium transition flex-shrink-0"
                   style={{
-                    background: buscandoEmail ? "#252836" : "rgba(34,197,94,0.1)",
+                    background: buscandoEmail ? "#2d3142" : "rgba(34,197,94,0.1)",
                     border: "1px solid rgba(34,197,94,0.2)",
                     color: buscandoEmail ? "#64748b" : "#22c55e",
                   }}>
@@ -439,7 +439,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
                   className="py-2.5 px-3 rounded-lg text-left transition"
                   style={{
                     background: estrategia === s.id ? "rgba(34,197,94,0.1)" : "#161922",
-                    border: estrategia === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+                    border: estrategia === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
                   }}>
                   <div className="text-[11px] font-semibold" style={{ color: estrategia === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
                   <div className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>{s.sub}</div>
@@ -464,7 +464,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
                   onChange={e => setFechaPersonalizada(e.target.value)}
                   min={new Date().toISOString().slice(0, 16)}
                   className="w-full rounded-lg px-3 py-2 text-sm"
-                  style={{ background: "#161922", border: "1px solid #252836", color: "#f1f5f9" }}
+                  style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}
                 />
                 <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>
                   📅 El CV se enviará exactamente a la fecha y hora que elijas.
@@ -495,7 +495,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
         <button type="submit" disabled={loading || generandoPreview}
           className="w-full py-2.5 font-semibold rounded-lg transition text-xs"
           style={{
-            background: (loading || generandoPreview) ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+            background: (loading || generandoPreview) ? "#2d3142" : "linear-gradient(135deg, #22c55e, #16a34a)",
             color: (loading || generandoPreview) ? "#64748b" : "#fff",
           }}>
           {generandoPreview

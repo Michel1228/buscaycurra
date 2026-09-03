@@ -371,7 +371,7 @@ export default function PerfilPage() {
       <main className="max-w-2xl mx-auto px-4 py-8">
         {tab === "perfil" && (
           <div className="space-y-6">
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>👤 Datos personales</h2>
               <p className="text-xs mb-4" style={{ color: "#64748b" }}>
                 Estos datos se usan para personalizar tu experiencia. El CV completo (foto, experiencia, formación) está en <button onClick={() => router.push("/app/curriculum")} className="underline" style={{ color: "#22c55e" }}>Mi CV</button>.
@@ -446,7 +446,7 @@ export default function PerfilPage() {
             </div>
 
             {/* Link al CV */}
-            <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
                 style={{ background: "rgba(59,130,246,0.15)" }}>
                 📄
@@ -538,7 +538,7 @@ export default function PerfilPage() {
                   )}
                   {planActual === "free" && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
-                      style={{ background: "#161922", border: "1px solid #252836" }}>
+                      style={{ background: "#161922", border: "1px solid #2d3142" }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🌱 Plan Esencial — 2,99€/mes</p>
                         <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>15 CVs/día · 100 CVs/semana · Buscador avanzado</p>
@@ -552,7 +552,7 @@ export default function PerfilPage() {
                   )}
                   {(planActual === "free" || planActual === "esencial") && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
-                      style={{ background: "#161922", border: "1px solid #252836" }}>
+                      style={{ background: "#161922", border: "1px solid #2d3142" }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>⚡ Plan Pro — 9,99€/mes</p>
                         <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>50 CVs/día · IA avanzada · Estadísticas</p>
@@ -565,7 +565,7 @@ export default function PerfilPage() {
                     </div>
                   )}
                   <div className="rounded-xl p-4 flex items-center justify-between"
-                    style={{ background: "#161922", border: "1px solid #252836" }}>
+                    style={{ background: "#161922", border: "1px solid #2d3142" }}>
                     <div>
                       <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🏢 Plan Empresa — 49,99€/mes</p>
                       <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
@@ -595,7 +595,7 @@ export default function PerfilPage() {
         {tab === "seguridad" && (
           <div className="space-y-5">
             {/* Cambiar contraseña */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🔑 Cambiar contraseña</h2>
               <p className="text-xs mb-4" style={{ color: "#64748b" }}>Mínimo 8 caracteres.</p>
               <div className="space-y-3">
@@ -637,7 +637,7 @@ export default function PerfilPage() {
             </div>
 
             {/* Sesiones */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🚪 Cerrar sesión en todos los dispositivos</h2>
               <p className="text-xs mb-4" style={{ color: "#64748b" }}>Cierra sesión en todos los dispositivos donde hayas iniciado sesión.</p>
               <button
@@ -650,7 +650,7 @@ export default function PerfilPage() {
             </div>
 
             {/* Legal — Política de privacidad y términos */}
-            <div className="rounded-xl p-4 flex gap-4 text-xs" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-4 flex gap-4 text-xs" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <a href="/privacidad" target="_blank" rel="noopener noreferrer"
                 className="hover:underline" style={{ color: "#6b7280" }}>
                 Política de privacidad

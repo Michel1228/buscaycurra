@@ -205,7 +205,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
                   className="py-2 px-2 rounded-lg text-center transition"
                   style={{
                     background: strategy === s.id ? "rgba(34,197,94,0.1)" : "#1e212b",
-                    border: strategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+                    border: strategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
                   }}
                 >
                   <div className="text-[11px] font-semibold" style={{ color: strategy === s.id ? "#22c55e" : "#94a3b8" }}>{s.label}</div>
@@ -220,7 +220,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
                 onChange={e => setFechaPersonalizada(e.target.value)}
                 min={minDatetime}
                 className="w-full rounded-lg px-3 py-2 text-sm mt-2"
-                style={{ background: "#1e212b", border: "1px solid #252836", color: "#f1f5f9" }}
+                style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
               />
             )}
           </div>
@@ -237,7 +237,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
             disabled={enviando || generando || (strategy === "personalizada" && !fechaPersonalizada)}
             className="w-full py-3 rounded-xl text-sm font-semibold transition disabled:opacity-50"
             style={{
-              background: (enviando || generando) ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+              background: (enviando || generando) ? "#2d3142" : "linear-gradient(135deg, #22c55e, #16a34a)",
               color: (enviando || generando) ? "#64748b" : "#fff",
             }}
           >

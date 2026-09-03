@@ -1,15 +1,22 @@
 /**
- * components/CookieBanner.tsx — Banner de consentimiento de cookies (RGPD)
+ * components/CookieBanner.tsx — Aviso de cookies (RGPD)
  *
- * Aparece en la primera visita si el usuario no ha tomado una decisión
- * sobre las cookies. Se muestra en la parte inferior de la pantalla.
+ * Sale en la primera visita y desaparece en cuanto se elige. La decisión se
+ * guarda en localStorage, así que no vuelve a aparecer.
  *
- * Opciones:
- *   - "Aceptar": guarda cookie-consent=accepted en localStorage por 1 año.
- *   - "Solo necesarias": guarda cookie-consent=necessary en localStorage por 1 año.
+ * POR QUÉ SE REHIZO. Este es el elemento más visible de toda la web: sale en
+ * todas las páginas, fijo abajo, y es lo primero que ve quien llega. Y estaba
+ * pintado con #2563EB (azul) y #F97316 (naranja), que la cabecera del fichero
+ * llamaba «colores de marca». No lo son: la marca es verde #22c55e. El aviso
+ * parecía de otra aplicación.
  *
- * Una vez elegida una opción, el banner no vuelve a aparecer.
- * Colores de marca: azul #2563EB y naranja #F97316.
+ * Además ocupaba una quinta parte de la pantalla del móvil, porque los botones
+ * se apilaban debajo del texto. En la página de precios llegaba a tapar la lista
+ * de lo que incluye el plan, que es justo lo que se intenta vender.
+ *
+ * Ahora: colores de la paleta, una sola línea siempre que quepa, y bastante más
+ * bajo. Sigue cumpliendo lo mismo — se puede rechazar con un clic, y rechazar
+ * cuesta lo mismo que aceptar.
  */
 
 "use client";
@@ -17,84 +24,52 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-// ─── Banner de Cookies ────────────────────────────────────────────────────────
-
 export default function CookieBanner() {
-  // Estado que controla si el banner es visible
   const [visible, setVisible] = useState(false);
 
-  // Al montar el componente, comprobamos si el usuario ya tomó una decisión
   useEffect(() => {
-    const consentimiento = localStorage.getItem("cookie-consent");
-    // Si no hay consentimiento guardado, mostramos el banner
-    if (!consentimiento) {
-      setVisible(true);
-    }
+    if (!localStorage.getItem("cookie-consent")) setVisible(true);
   }, []);
 
-  // Función para aceptar todas las cookies
-  function aceptarCookies() {
-    localStorage.setItem("cookie-consent", "accepted");
+  function decidir(valor: "accepted" | "necessary") {
+    localStorage.setItem("cookie-consent", valor);
     setVisible(false);
   }
 
-  // Función para aceptar solo las cookies necesarias
-  function soloNecesarias() {
-    localStorage.setItem("cookie-consent", "necessary");
-    setVisible(false);
-  }
-
-  // Si no hay que mostrar el banner, no renderizamos nada
   if (!visible) return null;
 
   return (
-    // Banner fijo en la parte inferior de la pantalla, ancho completo
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t"
       style={{ background: "#1e212b", borderColor: "#2d3142" }}
       role="dialog"
       aria-live="polite"
-      aria-label="Banner de consentimiento de cookies"
+      aria-label="Aviso de cookies"
     >
-      <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs sm:text-[13px] leading-snug flex-1 min-w-[180px]" style={{ color: "#94a3b8" }}>
+          Solo usamos cookies necesarias para que el servicio funcione. Ninguna de publicidad.{" "}
+          <Link href="/cookies" className="underline hover:no-underline" style={{ color: "#22c55e" }}>
+            Más información
+          </Link>
+        </p>
 
-        {/* Texto del banner */}
-        <div className="flex-1 text-sm" style={{ color: "#94a3b8" }}>
-          <p>
-            Usamos cookies necesarias para el funcionamiento del servicio. No
-            usamos cookies publicitarias.{" "}
-            {/* Enlace a la política de cookies completa */}
-            <Link
-              href="/cookies"
-              className="font-medium underline hover:no-underline"
-              style={{ color: "#2563EB" }}
-            >
-              Más información
-            </Link>
-          </p>
-        </div>
-
-        {/* Botones de acción */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {/* Botón "Solo necesarias" — borde gris, texto oscuro */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
-            onClick={soloNecesarias}
-            className="px-4 py-2 text-sm font-medium rounded-lg transition"
+            onClick={() => decidir("necessary")}
+            className="px-3 py-1.5 text-xs font-medium rounded-lg transition hover:opacity-80"
             style={{ color: "#94a3b8", border: "1px solid #2d3142" }}
           >
             Solo necesarias
           </button>
-
-          {/* Botón "Aceptar" — fondo azul de marca */}
           <button
-            onClick={aceptarCookies}
-            className="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition"
-            style={{ backgroundColor: "#2563EB" }}
+            onClick={() => decidir("accepted")}
+            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition hover:opacity-90"
+            style={{ background: "#22c55e", color: "#0f1117" }}
           >
             Aceptar
           </button>
         </div>
-
       </div>
     </div>
   );

@@ -337,7 +337,7 @@ export default function AppNavWrapper() {
               </div>
             </div>
 
-            <div style={{ height: "1px", background: "#2d3142", margin: "8px 0" }} />
+            <div style={{ height: "1px", background: "#252836", margin: "8px 0" }} />
 
             {NAV_ITEMS.map((item) => {
               const activo =
@@ -376,7 +376,7 @@ export default function AppNavWrapper() {
                 <span>Admin</span>
               </Link>
             )}
-            <div style={{ height: "1px", background: "#2d3142", margin: "4px 0" }} />
+            <div style={{ height: "1px", background: "#252836", margin: "4px 0" }} />
             {/* Acceso a la descarga: en iPhone lleva a la App Store y en
                 Android a instalarla desde el navegador (mismas funciones,
                 mientras no esté en Google Play). */}
@@ -389,7 +389,7 @@ export default function AppNavWrapper() {
               </svg>
               <span>Descargar app</span>
             </Link>
-            <div style={{ height: "1px", background: "#2d3142", margin: "4px 0" }} />
+            <div style={{ height: "1px", background: "#252836", margin: "4px 0" }} />
             <button
               onClick={() => { setMobileOpen(false); cerrarSesion(); }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition"

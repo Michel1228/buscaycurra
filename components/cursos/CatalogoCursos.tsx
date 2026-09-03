@@ -168,7 +168,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
             type="search"
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder="Busca tu curso: carretillero, inglés, excel, limpieza…"
+            placeholder="Carretillero, inglés, limpieza…"
             aria-label="Buscar curso"
             className="w-full rounded-xl py-3 pl-10 pr-10 text-sm outline-none"
             style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
@@ -185,7 +185,10 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
 
       {/* ── Filtro por coste ── */}
       <div className="mb-2 flex flex-wrap gap-2" role="group" aria-label="Filtrar por coste">
-        {FILTROS.map(f => {
+        {FILTROS.filter(f => cuentas[f] > 0 || filtro === f).map(f => {
+          // Un filtro con cero resultados no se ensena: solo estorba y hace
+          // pensar que hay algo detras. Si esta activo si se ensena, para poder
+          // volver a salir de el.
           const activo = filtro === f;
           const color = f === "todos" ? "#94a3b8" : COLOR_FINANCIACION[f];
           const etiqueta = f === "todos" ? "Todos" : NOMBRE_FINANCIACION[f];

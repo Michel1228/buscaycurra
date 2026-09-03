@@ -140,7 +140,7 @@ function RegistroPageInner() {
           </div>
         </div>
 
-        <p className="relative z-10 hidden lg:block text-xs mt-8" style={{ color: "#374151" }}>
+        <p className="relative z-10 hidden lg:block text-xs mt-8" style={{ color: "#2d3142" }}>
           {`© 2026 BuscayCurra · Sin permanencia · ${NUM_PAISES} países · Cancela cuando quieras`}
         </p>
       </div>

@@ -355,7 +355,7 @@ export default function EmpresasLandingPage() {
       </main>
 
       <footer className="py-6 px-6 text-center" style={{ background: "#0a0c10", borderTop: "1px solid rgba(45,49,66,0.5)" }}>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-[11px]" style={{ color: "#334155" }}>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-[11px]" style={{ color: "#2d3142" }}>
           <Link href="/" className="hover:opacity-80">← Volver a BuscayCurra</Link>
           <span className="hidden sm:block">·</span>
           <Link href="/empresas/publicar" className="hover:opacity-80">Publicar oferta gratis</Link>

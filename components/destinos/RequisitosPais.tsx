@@ -18,7 +18,7 @@
 
 import { REQUISITOS, type RequisitosDestino } from "@/lib/destinos/requisitos";
 
-const CAJA = { background: "#1a1d2e", border: "1px solid #2d3142" };
+const CAJA = { background: "#1e212b", border: "1px solid #2d3142" };
 
 function Lista({ items, color }: { items: string[]; color: string }) {
   return (

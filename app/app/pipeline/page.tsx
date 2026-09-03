@@ -314,7 +314,7 @@ export default function PipelinePage() {
               <span className="text-xs" style={{ color: "#94a3b8" }}>
                 Filtrando: <strong style={{ color: "#22c55e" }}>{statCards.find(s => s.filtro === filtroActivo)?.label}</strong>
               </span>
-              <button onClick={() => setFiltroActivo(null)} className="text-[11px] px-2 py-0.5 rounded-lg" style={{ background: "#2d3142", color: "#94a3b8" }}>
+              <button onClick={() => setFiltroActivo(null)} className="text-[11px] px-2 py-0.5 rounded-lg" style={{ background: "#252836", color: "#94a3b8" }}>
                 × Quitar filtro
               </button>
             </div>

@@ -67,7 +67,7 @@ export default async function TalentoPage({ params }: Props) {
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         {/* Habilidades */}
         {habilidades.length > 0 && (
-          <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
+          <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #2d3142" }}>
             <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><Wrench size={13} strokeWidth={1.8} />Habilidades</h2>
             <div className="flex flex-wrap gap-2">
               {habilidades.map((h: string) => (
@@ -82,7 +82,7 @@ export default async function TalentoPage({ params }: Props) {
 
         {/* Experiencia */}
         {cv.experiencia && (
-          <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
+          <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #2d3142" }}>
             <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><Briefcase size={13} strokeWidth={1.8} />Experiencia</h2>
             <p className="text-sm whitespace-pre-wrap" style={{ color: "#94a3b8" }}>{cv.experiencia}</p>
           </div>
@@ -90,7 +90,7 @@ export default async function TalentoPage({ params }: Props) {
 
         {/* Educación */}
         {cv.educacion && (
-          <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
+          <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #2d3142" }}>
             <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><GraduationCap size={13} strokeWidth={1.8} />Formación</h2>
             <p className="text-sm whitespace-pre-wrap" style={{ color: "#94a3b8" }}>{cv.educacion}</p>
           </div>
@@ -98,7 +98,7 @@ export default async function TalentoPage({ params }: Props) {
 
         {/* Idiomas */}
         {cv.idiomas && (
-          <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #252836" }}>
+          <div className="p-5 rounded-xl" style={{ background: "#161922", border: "1px solid #2d3142" }}>
             <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><Globe size={13} strokeWidth={1.8} />Idiomas</h2>
             <p className="text-sm" style={{ color: "#94a3b8" }}>{cv.idiomas}</p>
           </div>

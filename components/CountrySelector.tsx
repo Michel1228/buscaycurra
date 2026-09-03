@@ -40,7 +40,7 @@ export default function CountrySelector({ paisActual, onCambiarPais, variant = "
         aria-expanded={abierto}
         className={`flex items-center gap-1.5 rounded-lg transition-colors
           ${isNavbar
-            ? "bg-[#1a1d2e] hover:bg-[#252839] px-2.5 py-1.5 text-sm"
+            ? "bg-[#1e212b] hover:bg-[#252839] px-2.5 py-1.5 text-sm"
             : "bg-[#1e212b] border border-[#2d3142] hover:border-[#3d4256] px-3 py-2 text-sm"
           }`}
         aria-label="Cambiar país"
@@ -54,7 +54,7 @@ export default function CountrySelector({ paisActual, onCambiarPais, variant = "
       </button>
 
       {abierto && (
-        <div role="listbox" className={`absolute z-50 mt-1.5 bg-[#1a1d2e] border border-[#2d3142] rounded-xl shadow-2xl overflow-hidden
+        <div role="listbox" className={`absolute z-50 mt-1.5 bg-[#1e212b] border border-[#2d3142] rounded-xl shadow-2xl overflow-hidden
           ${isNavbar ? "right-0 w-64" : "left-0 w-72"}`}
         >
           <div className="px-3 py-2 border-b border-[#2d3142]">

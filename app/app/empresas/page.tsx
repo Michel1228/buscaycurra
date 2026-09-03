@@ -903,7 +903,7 @@ export default function EmpresasPage() {
                             className="py-2.5 px-3 rounded-lg text-left transition"
                             style={{
                               background: sendStrategy === s.id ? "rgba(34,197,94,0.1)" : "#161922",
-                              border: sendStrategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+                              border: sendStrategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
                             }}>
                             <div className="text-[11px] font-semibold" style={{ color: sendStrategy === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
                             <div className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>{s.sub}</div>
@@ -922,7 +922,7 @@ export default function EmpresasPage() {
                       disabled={enviando}
                       className="w-full py-3 rounded-lg font-bold text-sm transition"
                       style={{
-                        background: enviando ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                        background: enviando ? "#2d3142" : "linear-gradient(135deg, #22c55e, #16a34a)",
                         color: enviando ? "#64748b" : "#fff",
                       }}
                     >
@@ -987,7 +987,7 @@ export default function EmpresasPage() {
                 disabled={zonaBuscando || zonaCiudad.trim().length < 2}
                 className="w-full px-4 py-2.5 rounded-lg text-xs font-semibold transition"
                 style={{
-                  background: zonaBuscando ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                  background: zonaBuscando ? "#2d3142" : "linear-gradient(135deg, #22c55e, #16a34a)",
                   color: zonaBuscando ? "#64748b" : "#fff",
                   opacity: zonaCiudad.trim().length < 2 ? 0.5 : 1,
                 }}
@@ -1100,7 +1100,7 @@ export default function EmpresasPage() {
                   disabled={ettBuscando || ettCity.trim().length < 2}
                   className="px-4 py-2 rounded-lg text-xs font-semibold transition"
                   style={{
-                    background: ettBuscando ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                    background: ettBuscando ? "#2d3142" : "linear-gradient(135deg, #22c55e, #16a34a)",
                     color: ettBuscando ? "#64748b" : "#fff",
                     opacity: ettCity.trim().length < 2 ? 0.5 : 1,
                   }}
@@ -1370,7 +1370,7 @@ export default function EmpresasPage() {
                             className="py-2.5 px-3 rounded-lg text-left transition"
                             style={{
                               background: sendStrategy === s.id ? "rgba(34,197,94,0.1)" : "#161922",
-                              border: sendStrategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #252836",
+                              border: sendStrategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
                             }}>
                             <div className="text-[11px] font-semibold" style={{ color: sendStrategy === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
                             <div className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>{s.sub}</div>
@@ -1389,7 +1389,7 @@ export default function EmpresasPage() {
                       disabled={enviando}
                       className="w-full py-3 rounded-lg font-bold text-sm transition"
                       style={{
-                        background: enviando ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)",
+                        background: enviando ? "#2d3142" : "linear-gradient(135deg, #22c55e, #16a34a)",
                         color: enviando ? "#64748b" : "#fff",
                       }}
                     >
@@ -1501,7 +1501,7 @@ export default function EmpresasPage() {
                 onClick={handleConfirmarEnvio}
                 disabled={previewLoading}
                 className="flex-1 py-2.5 rounded-lg text-xs font-bold transition"
-                style={{ background: previewLoading ? "#252836" : "linear-gradient(135deg, #22c55e, #16a34a)", color: previewLoading ? "#64748b" : "#fff" }}
+                style={{ background: previewLoading ? "#2d3142" : "linear-gradient(135deg, #22c55e, #16a34a)", color: previewLoading ? "#64748b" : "#fff" }}
               >
                 <span className="flex items-center justify-center gap-2"><Check size={14} /> Confirmar envío</span>
               </button>

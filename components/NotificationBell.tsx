@@ -207,7 +207,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
               <div className="py-10 text-center">
                 <p className="text-2xl mb-2">🔔</p>
                 <p className="text-xs" style={{ color: "#6b7280" }}>Sin notificaciones</p>
-                <p className="text-[10px] mt-1" style={{ color: "#334155" }}>
+                <p className="text-[10px] mt-1" style={{ color: "#2d3142" }}>
                   Te avisaremos cuando Guzzi envíe tu CV o haya nuevas ofertas.
                 </p>
               </div>
@@ -239,7 +239,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
                     {n.mensaje && (
                       <p className="text-[10px] mt-0.5 line-clamp-2" style={{ color: "#64748b" }}>{n.mensaje}</p>
                     )}
-                    <p className="text-[9px] mt-1" style={{ color: "#334155" }}>{timeAgo(n.created_at)}</p>
+                    <p className="text-[9px] mt-1" style={{ color: "#2d3142" }}>{timeAgo(n.created_at)}</p>
                   </div>
                   {!n.leida && (
                     <div className="flex-shrink-0 w-2 h-2 rounded-full mt-1.5" style={{ background: "#f59e0b" }} />

@@ -195,7 +195,7 @@ export default function SobreNosotrosPage() {
             <Link key={l.href} href={l.href} className="hover:underline">{l.label}</Link>
           ))}
         </div>
-        <p className="mt-4 text-xs" style={{ color: "#334155" }}>
+        <p className="mt-4 text-xs" style={{ color: "#2d3142" }}>
           © {new Date().getFullYear()} BuscayCurra. Todos los derechos reservados.
         </p>
       </footer>

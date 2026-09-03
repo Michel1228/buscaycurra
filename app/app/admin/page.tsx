@@ -138,7 +138,7 @@ export default function AdminPage() {
                   }} />
                 {/* Tooltip on hover */}
                 <div className="absolute bottom-full mb-1 text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10"
-                  style={{ background: "#2d3142", color: "#f1f5f9" }}>
+                  style={{ background: "#252836", color: "#f1f5f9" }}>
                   {d.fecha.slice(5)}: {d.count}
                 </div>
               </div>

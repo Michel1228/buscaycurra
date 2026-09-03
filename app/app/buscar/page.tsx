@@ -754,7 +754,7 @@ function AlertaModal({ keyword, location, onClose, onCreada }: {
               <button key={f} onClick={() => setFreq(f)}
                 className="flex-1 py-2 rounded-lg text-[11px] font-medium transition"
                 style={{
-                  background: freq === f ? "rgba(34,197,94,0.12)" : "#252836",
+                  background: freq === f ? "rgba(34,197,94,0.12)" : "#2d3142",
                   border: freq === f ? "1px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
                   color: freq === f ? "#22c55e" : "#64748b",
                 }}>

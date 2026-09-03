@@ -224,7 +224,7 @@ export default function EntrevistasPage() {
 
           <div className="space-y-4 mb-6">
             {historial.map((r, i) => (
-              <div key={i} className="rounded-2xl p-4" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+              <div key={i} className="rounded-2xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
                 <p className="text-xs font-semibold mb-1" style={{ color: "#10b981" }}>P{i + 1}. {r.pregunta}</p>
                 <p className="text-sm mb-3" style={{ color: "#9ca3af" }}>{r.respuesta}</p>
                 <div className="text-xs whitespace-pre-wrap" style={{ color: "#d1d5db" }}>{r.feedback}</div>
@@ -264,9 +264,9 @@ export default function EntrevistasPage() {
               onClick={() => cambiarSector(s.id)}
               className="px-4 py-1.5 rounded-full text-xs font-medium transition"
               style={{
-                background: sector === s.id ? "#10b981" : "#1a1f2e",
+                background: sector === s.id ? "#10b981" : "#1e212b",
                 color: sector === s.id ? "#fff" : "#6b7280",
-                border: `1px solid ${sector === s.id ? "#10b981" : "#2d3748"}`,
+                border: `1px solid ${sector === s.id ? "#10b981" : "#2d3142"}`,
               }}
             >
               {s.label}
@@ -284,7 +284,7 @@ export default function EntrevistasPage() {
             value={paisEntrevista}
             onChange={e => setPaisEntrevista(e.target.value)}
             className="rounded-lg px-2.5 py-1 text-xs outline-none"
-            style={{ background: "#1a1f2e", border: "1px solid #2d3748", color: "#f1f5f9" }}
+            style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
           >
             {LISTA_PAISES.map(p => (
               <option key={p.codigo} value={p.codigo}>{p.bandera} {p.nombre}</option>
@@ -298,7 +298,7 @@ export default function EntrevistasPage() {
             <span>Pregunta {idx + 1} de {preguntas.length}</span>
             <span>{Math.round((idx / preguntas.length) * 100)}%</span>
           </div>
-          <div className="h-1.5 rounded-full" style={{ background: "#1a1f2e" }}>
+          <div className="h-1.5 rounded-full" style={{ background: "#1e212b" }}>
             <div
               className="h-1.5 rounded-full transition-all"
               style={{ background: "#10b981", width: `${(idx / preguntas.length) * 100}%` }}
@@ -307,7 +307,7 @@ export default function EntrevistasPage() {
         </div>
 
         {/* Pregunta */}
-        <div className="rounded-2xl p-5" style={{ background: "#1a1f2e", border: "1px solid #2d3748" }}>
+        <div className="rounded-2xl p-5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
           <div className="flex items-start justify-between gap-3">
             <p className="text-base font-medium text-white leading-relaxed flex-1">
               {preguntas[idx]}
@@ -342,7 +342,7 @@ export default function EntrevistasPage() {
             disabled={!texto.trim() || analizando}
             className="flex-1 py-3 rounded-xl font-semibold text-sm transition"
             style={{
-              background: texto.trim() && !analizando ? "#10b981" : "#1a1f2e",
+              background: texto.trim() && !analizando ? "#10b981" : "#1e212b",
               color: texto.trim() && !analizando ? "#fff" : "#6b7280",
             }}
           >
@@ -353,9 +353,9 @@ export default function EntrevistasPage() {
             disabled={!feedback}
             className="flex-1 py-3 rounded-xl font-semibold text-sm transition"
             style={{
-              background: feedback ? "#1a1f2e" : "#0f1117",
-              color: feedback ? "#e5e7eb" : "#374151",
-              border: `1px solid ${feedback ? "#2d3748" : "#1a1f2e"}`,
+              background: feedback ? "#1e212b" : "#0f1117",
+              color: feedback ? "#e5e7eb" : "#2d3142",
+              border: `1px solid ${feedback ? "#2d3142" : "#1e212b"}`,
             }}
           >
             {idx < preguntas.length - 1 ? "Siguiente →" : "Finalizar"}

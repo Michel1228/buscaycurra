@@ -825,7 +825,7 @@ export default function CurriculumPage() {
 
       {/* Barra de completitud */}
       <div className="px-4 py-3 max-w-[100rem] mx-auto">
-        <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #252836" }}>
+        <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
               Completitud del CV
@@ -870,7 +870,7 @@ export default function CurriculumPage() {
           {/* ── COLUMNA IZQUIERDA: Formulario ── */}
           <div className="cv-form-inputs flex-1 min-w-0 xl:max-w-[50%] space-y-5">
             {/* Selector de plantilla */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎨 Plantilla del CV</h2>
                 <InfoTooltip text="La Clásica (dos columnas con foto) es visual e ideal para hostelería, comercio y trato con cliente. La Profesional ATS (una columna) está optimizada para pasar los filtros automáticos que usan la mayoría de empresas medianas y grandes." />
@@ -921,7 +921,7 @@ export default function CurriculumPage() {
               </div>
 
               {/* Selector de color de acento */}
-              <div className="mt-4 pt-4" style={{ borderTop: "1px solid #252836" }}>
+              <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
                 <p className="text-xs font-semibold mb-2.5" style={{ color: "#f1f5f9" }}>🎨 Color del CV</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   {[
@@ -959,7 +959,7 @@ export default function CurriculumPage() {
             {/* Visibilidad para empresas */}
             <div className="rounded-xl p-5" style={{
               background: visibleEmpresas ? "rgba(34,197,94,0.07)" : "#161922",
-              border: `1px solid ${visibleEmpresas ? "rgba(34,197,94,0.3)" : "#252836"}`,
+              border: `1px solid ${visibleEmpresas ? "rgba(34,197,94,0.3)" : "#2d3142"}`,
               transition: "all 0.2s",
             }}>
               <div className="flex items-center justify-between gap-4">
@@ -982,7 +982,7 @@ export default function CurriculumPage() {
                 <button
                   onClick={() => void toggleVisibilidad(!visibleEmpresas)}
                   className="relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200"
-                  style={{ background: visibleEmpresas ? "#22c55e" : "#374151" }}
+                  style={{ background: visibleEmpresas ? "#22c55e" : "#2d3142" }}
                   aria-label="Activar visibilidad para empresas"
                 >
                   <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
@@ -997,7 +997,7 @@ export default function CurriculumPage() {
             </div>
 
             {/* Subir PDF */}
-            <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
                 style={{ background: "rgba(59,130,246,0.15)" }}>
                 📎
@@ -1016,7 +1016,7 @@ export default function CurriculumPage() {
             </div>
 
             {/* Foto profesional */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>📸 Foto profesional para tu CV</h2>
               
               <div className="flex items-center gap-4 mb-4">
@@ -1089,7 +1089,7 @@ export default function CurriculumPage() {
             </div>
 
             {/* Datos personales */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>👤 Datos personales</h2>
                 <InfoTooltip text="Tu nombre, teléfono, email y ciudad aparecen en la cabecera del CV. El título profesional resume tu perfil (ej: 'Camarero con 5 años de experiencia')." />
@@ -1124,13 +1124,13 @@ export default function CurriculumPage() {
             </div>
 
             {/* Experiencia */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>💼 Experiencia laboral</h2>
                 <InfoTooltip text="Añade tus trabajos del más reciente al más antiguo. Incluye fechas, puesto, empresa y una descripción breve de tus tareas con verbos de acción (Gestioné, Coordiné...)." />
               </div>
               {form.experiencia.map((exp, i) => (
-                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid #252836" }}>
+                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid #2d3142" }}>
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] font-semibold" style={{ color: "#22c55e" }}>Experiencia {i + 1}</span>
                     {form.experiencia.length > 1 && (
@@ -1164,13 +1164,13 @@ export default function CurriculumPage() {
             </div>
 
             {/* Formación */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎓 Formación</h2>
                 <InfoTooltip text="Tus estudios y cursos relevantes. Incluye el título (ej: ESO, FP, Grado), el centro educativo y la ciudad." />
               </div>
               {form.formacion.map((edu, i) => (
-                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid #252836" }}>
+                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid #2d3142" }}>
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] font-semibold" style={{ color: "#f59e0b" }}>Formación {i + 1}</span>
                     {form.formacion.length > 1 && (
@@ -1198,7 +1198,7 @@ export default function CurriculumPage() {
 
             {/* Habilidades e idiomas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
                 <div className="flex items-center gap-2 mb-3">
                   <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎯 Habilidades</h2>
                   <InfoTooltip text="Tus puntos fuertes separados por comas. Ej: Trabajo en equipo, Excel, Liderazgo, Resolución de problemas." position="right" />
@@ -1208,7 +1208,7 @@ export default function CurriculumPage() {
                   onChange={e => f("aptitudes", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
               </div>
-              <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+              <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
                 <div className="flex items-center gap-2 mb-3">
                   <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🌍 Idiomas</h2>
                   <InfoTooltip text="Escribe cada idioma con un nivel del 0 al 100. Ej: Español:95, Inglés:60, Francés:40. El número controla la barra de progreso en el CV." position="left" />
@@ -1222,7 +1222,7 @@ export default function CurriculumPage() {
             </div>
 
             {/* Perfil profesional */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #252836" }}>
+            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>📝 Perfil profesional (opcional)</h2>
                 <InfoTooltip text="2-3 frases que resumen quién eres como profesional. Si lo dejas vacío, la IA lo generará automáticamente a partir de tu experiencia." />
@@ -1244,7 +1244,7 @@ export default function CurriculumPage() {
           <div className="hidden lg:block lg:flex-1 lg:min-w-0 lg:sticky lg:top-20 lg:max-w-[50%]">
             <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #22c55e40", background: "#fff" }}>
               {/* Cabecera de la preview */}
-              <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "#161922", borderBottom: "1px solid #252836" }}>
+              <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "#161922", borderBottom: "1px solid #2d3142" }}>
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
                   <span className="text-xs font-semibold" style={{ color: "#22c55e" }}>
@@ -1328,7 +1328,7 @@ export default function CurriculumPage() {
           style={{ background: "#0f1117" }}
         >
           {/* Toolbar */}
-          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#161922", borderBottom: "1px solid #252836" }}>
+          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#161922", borderBottom: "1px solid #2d3142" }}>
             <div className="flex items-center gap-3">
               <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
               <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>
@@ -1368,7 +1368,7 @@ export default function CurriculumPage() {
       {/* ── EJEMPLO DE PLANTILLA (pantalla completa) ── */}
       {ejemploVista && (
         <div className="fixed inset-0 z-[9999] flex flex-col" style={{ background: "#0f1117" }}>
-          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#161922", borderBottom: "1px solid #252836" }}>
+          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#161922", borderBottom: "1px solid #2d3142" }}>
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>
                 Ejemplo — {PLANTILLAS[ejemploVista].nombre}
