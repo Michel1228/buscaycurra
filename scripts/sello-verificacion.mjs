@@ -761,6 +761,19 @@ test("los botones de Mi CV usan iconos, no emoji", () => {
 test("el centinela de exito del CV sigue intacto (es logica, no adorno)", () =>
   leerFuente("app/app/curriculum/Content.tsx").includes('startsWith("✅")'));
 
+// LAS PAGINAS DE PAIS TARDABAN 15 SEGUNDOS. Eran force-dynamic, asi que cada
+// visita ejecutaba un COUNT sobre 2,3 millones de filas. Es la MISMA leccion que
+// la portada aprendio en su dia: alli force-dynamic daba 5-16 s y pantalla negra
+// al arrancar en iOS, que costo un rechazo de Apple. Son 52 paginas publicas de
+// las que llegan por Google, asi que esto no puede volver.
+for (const ruta of ["app/trabajar-en/[pais]/page.tsx", "app/trabajar-en/[pais]/[keyword]/page.tsx"]) {
+  const src = leerFuente(ruta);
+  test(`${ruta.split("/").slice(1, 3).join("/")} se sirve de cache, no en cada visita`, () =>
+    src.includes("export const revalidate") && !src.includes('dynamic = "force-dynamic"'));
+}
+test("la portada sigue sirviendose de cache", () =>
+  leerFuente("app/(home)/page.tsx").includes("export const revalidate"));
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

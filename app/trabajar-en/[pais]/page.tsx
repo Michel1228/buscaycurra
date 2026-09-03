@@ -5,7 +5,23 @@ import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import RequisitosPais from "@/components/destinos/RequisitosPais";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+// MISMA LECCION QUE LA PORTADA, QUE YA LA APRENDIO EN SU DIA.
+//
+// Esto era force-dynamic: cada visita ejecutaba un COUNT sobre "JobListing"
+// (2,3 millones de filas). Medido con EXPLAIN ANALYZE para Alemania: 1,5 s solo
+// la consulta, leyendo 177.559 buffers, con el bitmap desbordado a modo lossy y
+// recomprobando 1.098.986 filas para contar 397.616. Con el 85% de CPU robada
+// que tiene este servidor, la pagina tardaba 15 SEGUNDOS en responder en frio.
+//
+// Y son 52 paginas asi (26 paises por slug y por codigo), todas publicas y
+// todas de las que llegan por Google. La portada ya paso por esto: force-dynamic
+// le daba 5-16 s y pantalla negra al arrancar en iOS, que costo un rechazo de
+// Apple (2.1a).
+//
+// El recuento de ofertas de un pais no necesita estar al segundo: es una cifra
+// de escaparate. Con revalidate se sirve de cache y se recalcula solo una vez
+// por hora.
+export const revalidate = 3600;
 
 // Países con hreflang para inyectar en <head>
 function HreflangTags({ currentCode, path }: { currentCode: string; path: string }) {
