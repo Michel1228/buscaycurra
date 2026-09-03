@@ -807,6 +807,19 @@ for (const pantalla of [
       .test(leerFuente(pantalla)));
 }
 
+// LAS PAGINAS DE EMPLEO POR CIUDAD. Tardaban 8,5 s la primera vez que alguien
+// pedia una combinacion. Medido con EXPLAIN ANALYZE, la base de datos eran solo
+// 2 s: el resto era Next.js montando la pagina en un servidor con el 85% de la
+// CPU robada. Se pre-generan las 80 combinaciones que traen visitas, para que
+// ese coste lo pague la compilacion y no el usuario.
+const empleoSrc = leerFuente("app/empleo/[puesto]/[ciudad]/page.tsx");
+test("las combinaciones populares de empleo se pre-generan", () =>
+  empleoSrc.includes("PUESTOS_POPULARES.slice") && !/generateStaticParams\(\) \{\s*return \[\];/.test(empleoSrc));
+test("las consultas de empleo van en paralelo, no en fila", () =>
+  (empleoSrc.match(/await Promise\.all\(\[/g) || []).length >= 2);
+test("las paginas de empleo no se cachean para siempre", () =>
+  empleoSrc.includes("export const revalidate"));
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

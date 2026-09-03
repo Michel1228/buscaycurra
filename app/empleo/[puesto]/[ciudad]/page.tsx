@@ -28,17 +28,40 @@ const CIUDADES_POPULARES = [
   "sabadell", "mostoles", "alcalá", "pamplona", "fuenlabrada",
 ];
 
-// Páginas SEO generadas on-demand (ISR), no en build time.
+// POR QUE ESTA PAGINA TARDA, Y DONDE ESTA EL TIEMPO DE VERDAD.
 //
-// SIN revalidate, una vez generada la pagina se quedaba en cache HASTA EL
-// SIGUIENTE DESPLIEGUE: rapida, si, pero ensenando ofertas de hace meses y un
-// recuento que ya no era cierto. Con un dia se mantiene fresca sin pagar el
-// coste cada vez: la consulta lleva `description ILIKE`, que obliga a recorrer
-// la tabla entera, y generar una de estas cuesta unos 8 segundos.
+// Medido, no supuesto. Generar una de estas cuesta unos 8,5 segundos, y la
+// primera sospecha —el `description ILIKE`, que obliga a mirar el texto entero
+// del anuncio— resulto ser FALSA. Con EXPLAIN ANALYZE contra produccion:
+//
+//   contar con puesto y ciudad ......  492 ms
+//   listar 50 con puesto y ciudad ...  598 ms
+//   contar solo por ciudad ..........  526 ms   (respaldo)
+//   listar 50 solo por ciudad .......  475 ms   (respaldo)
+//
+// O sea unos 2 segundos de base de datos como mucho, y usando indices. Los
+// otros 6,5 son Next.js montando la pagina por primera vez, en un servidor con
+// el 85% de la CPU robada por el hipervisor. Un indice sobre `description` no
+// habria arreglado nada: el problema no estaba ahi.
+//
+// Asi que lo que se hace es quitar ese coste del camino del usuario:
+//
+//   · Las combinaciones que de verdad traen visitas se generan AL COMPILAR, de
+//     modo que quien llega se encuentra el HTML hecho. Son 80, no las 900
+//     posibles: 900 serian media hora de compilacion.
+//   · El resto se sigue generando bajo demanda la primera vez (dynamicParams).
+//   · Y una vez generada, un dia de cache. Sin revalidate se quedaban
+//     congeladas hasta el siguiente despliegue, ensenando ofertas de hace meses
+//     bajo un titulo que dice "N ofertas encontradas".
 export const revalidate = 86400;
 export const dynamicParams = true;
 export function generateStaticParams() {
-  return [];
+  // Producto cruzado de los diez puestos y las ocho ciudades con mas busquedas.
+  // El trafico de este tipo de paginas se concentra muchisimo en la cabeza, asi
+  // que cubrir ochenta combinaciones cubre casi todas las visitas reales.
+  const puestos = PUESTOS_POPULARES.slice(0, 10);
+  const ciudades = CIUDADES_POPULARES.slice(0, 8);
+  return puestos.flatMap(puesto => ciudades.map(ciudad => ({ puesto, ciudad })));
 }
 
 // ─── Metadata dinámica ──────────────────────────────────────────────────────
@@ -97,40 +120,44 @@ export default async function EmpleoPage({
     const kw = `%${puestoFmt}%`;
     const loc = `%${ciudadFmt}%`;
 
-    // Primero buscar con puesto + ciudad
-    const countRes = await pool.query(
-      `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1) AND (city ILIKE $2 OR province ILIKE $2)`,
-      [kw, loc]
-    );
+    // Contar y listar son independientes: no hace falta esperar a que termine
+    // una para lanzar la otra. Iban en fila y cada una tarda medio segundo, asi
+    // que solo por ponerlas en paralelo se ahorra medio segundo en cada
+    // generacion. Lo mismo abajo con las de respaldo.
+    const [countRes, result] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1) AND (city ILIKE $2 OR province ILIKE $2)`,
+        [kw, loc]
+      ),
+      pool.query(
+        `SELECT id, title, company, city, salary, description, "sourceUrl"
+         FROM "JobListing"
+         WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1) AND (city ILIKE $2 OR province ILIKE $2)
+         ORDER BY "scrapedAt" DESC
+         LIMIT 50`,
+        [kw, loc]
+      ),
+    ]);
     total = parseInt(countRes.rows[0].count);
-
-    const result = await pool.query(
-      `SELECT id, title, company, city, salary, description, "sourceUrl"
-       FROM "JobListing"
-       WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1) AND (city ILIKE $2 OR province ILIKE $2)
-       ORDER BY "scrapedAt" DESC
-       LIMIT 50`,
-      [kw, loc]
-    );
     ofertas = result.rows;
 
     // Si no hay resultados, mostrar todas las ofertas de esa ciudad
     if (ofertas.length === 0) {
-      const fallbackResult = await pool.query(
-        `SELECT id, title, company, city, salary, description, "sourceUrl"
-         FROM "JobListing"
-         WHERE "isActive" = true AND (city ILIKE $1 OR province ILIKE $1)
-         ORDER BY "scrapedAt" DESC
-         LIMIT 50`,
-        [loc]
-      );
+      const [fallbackResult, fallbackCount] = await Promise.all([
+        pool.query(
+          `SELECT id, title, company, city, salary, description, "sourceUrl"
+           FROM "JobListing"
+           WHERE "isActive" = true AND (city ILIKE $1 OR province ILIKE $1)
+           ORDER BY "scrapedAt" DESC
+           LIMIT 50`,
+          [loc]
+        ),
+        pool.query(
+          `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (city ILIKE $1 OR province ILIKE $1)`,
+          [loc]
+        ),
+      ]);
       ofertas = fallbackResult.rows;
-      
-      // Contar total de la ciudad
-      const fallbackCount = await pool.query(
-        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (city ILIKE $1 OR province ILIKE $1)`,
-        [loc]
-      );
       total = parseInt(fallbackCount.rows[0].count);
     }
   } catch (e) {
