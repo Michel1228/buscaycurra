@@ -306,8 +306,9 @@ export default function DescargaClient() {
 
       {/* ── Footer ── */}
       <footer style={{ borderTop: "1px solid #1e2334", padding: "28px 24px", textAlign: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "8px" }}>
-          <LogoGusano size={20} />
+        {/* Aqui habia otro Guzzi pequeno. En una pagina que ya tiene la mascota
+            grande de protagonista, repetirla en el pie no anade nada. Una sola. */}
+        <div style={{ marginBottom: "8px" }}>
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#22c55e" }}>BuscayCurra</span>
         </div>
         <p style={{ fontSize: "12px", color: "#2d3142", margin: 0 }}>

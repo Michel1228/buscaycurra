@@ -836,6 +836,21 @@ test("los fallos del sincronizador se cuentan en vez de perderse", () => {
   return w.includes("anotarFallo") && !w.includes("} catch { return []; }");
 });
 
+// NO SE PODIA CERRAR SESION EN EL MOVIL. El menu usaba max-height con 100vh, y
+// en el movil 100vh NO es lo que se ve: incluye la franja de las barras del
+// navegador y del sistema. El menu se creia mas alto de lo que cabe y lo ultimo
+// de la lista quedaba fuera de pantalla. "Cerrar sesion" es justo lo ultimo,
+// detras de veinte entradas.
+const cssGlobal = leerFuente("app/globals.css");
+test("el menu del movil mide con dvh, que es lo que de verdad se ve", () =>
+  cssGlobal.includes("max-height: calc(100dvh - 80px)"));
+test("y deja vh de respaldo, para no quedarse sin altura en navegadores viejos", () =>
+  cssGlobal.includes("max-height: calc(100vh - 80px)"));
+test("el menu respeta la barra inferior del iPhone", () =>
+  cssGlobal.includes("env(safe-area-inset-bottom"));
+test("con el menu abierto el fondo no se mueve", () =>
+  leerFuente("components/AppNavWrapper.tsx").includes('document.body.style.overflow = "hidden"'));
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

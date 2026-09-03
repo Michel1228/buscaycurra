@@ -273,3 +273,29 @@ label {
   75% { bottom: 75%; left: 25px; }
   100% { bottom: 90%; left: 10px; }
 }
+
+/* ── Menú desplegable del móvil ────────────────────────────────────────────
+ *
+ * POR QUE NO SE PODIA CERRAR SESION.
+ *
+ * Esto llevaba `max-height: calc(100vh - 80px)`, y en el móvil 100vh NO es lo
+ * que se ve: incluye la franja que tapan la barra de direcciones y la del
+ * sistema. El menú se creía más alto de lo que cabe, así que lo último de la
+ * lista quedaba por debajo del borde visible. Y "Cerrar sesión" es justo lo
+ * último, detrás de veinte entradas: no había manera de llegar.
+ *
+ * 100dvh es la unidad hecha para esto — mide lo que de verdad se ve ahora
+ * mismo, con las barras puestas. Se declara vh primero como respaldo: un
+ * navegador que no entienda dvh se queda con la segunda mejor opción en vez de
+ * quedarse sin altura ninguna.
+ *
+ * El padding de abajo es para la barra del iPhone, que si no se come el último
+ * botón. Y overscroll-behavior evita que al llegar al final del menú el tirón
+ * se lo lleve la página de detrás.
+ */
+.menu-movil {
+  max-height: calc(100vh - 80px);
+  max-height: calc(100dvh - 80px);
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  overscroll-behavior: contain;
+}

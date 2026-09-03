@@ -161,6 +161,19 @@ export default function AppNavWrapper() {
     window.scrollTo(0, 0);
   }, []);
 
+  // CON EL MENU ABIERTO, EL FONDO NO SE MUEVE.
+  //
+  // Sin esto, al arrastrar dentro del menu para llegar abajo se desplazaba
+  // tambien la pagina de detras, y el menu —que va posicionado sobre ella— se
+  // iba de sitio mientras lo mirabas. De ahi la sensacion de que "se desliza
+  // solo para abajo" y de que no da tiempo a pulsar lo ultimo.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = antes; };
+  }, [mobileOpen]);
+
   // Cargar país guardado
   useEffect(() => {
     const saved = localStorage.getItem("bc_pais");
@@ -304,8 +317,13 @@ export default function AppNavWrapper() {
           onKeyDown={(e) => { if (e.key === 'Escape') setMobileOpen(false); }}
         >
           <div
-            className="absolute top-14 left-4 right-4 rounded-xl p-3 overflow-y-auto"
-            style={{ background: "#1e212b", border: "1px solid #2d3142", maxHeight: "calc(100vh - 80px)" }}
+            className="menu-movil absolute top-14 left-4 right-4 rounded-xl p-3 overflow-y-auto"
+            // La altura va en globals.css (.menu-movil), NO aqui. En un objeto
+            // de JavaScript no se pueden poner dos veces la misma propiedad para
+            // hacer respaldo: la segunda pisa a la primera y ya esta. Si el
+            // navegador no entiende dvh, se quedaria SIN altura maxima. En CSS
+            // si funciona el respaldo, declarando vh y luego dvh.
+            style={{ background: "#1e212b", border: "1px solid #2d3142" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Región e idioma */}
