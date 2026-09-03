@@ -820,6 +820,22 @@ test("las consultas de empleo van en paralelo, no en fila", () =>
 test("las paginas de empleo no se cachean para siempre", () =>
   empleoSrc.includes("export const revalidate"));
 
+// LAS OFERTAS NO CADUCABAN NUNCA. La columna "expiresAt" se rellenaba y nadie
+// la miraba: sin trabajo que actuara sobre ella, y con solo 1 de las 33
+// consultas teniendola en cuenta, se acumulaban para siempre. Medido: 163.503
+// ofertas con mas de tres meses ensenandose como activas. Y ocho de los diez
+// extractores ni siquiera ponian la fecha.
+test("existe el endpoint que retira las ofertas caducadas", () =>
+  leerFuente("app/api/jobs/retirar-caducadas/route.ts").includes('"isActive" = false'));
+test("la limpieza esta programada, no depende de que alguien se acuerde", () =>
+  leerFuente(".github/workflows/sync-jobs.yml").includes("retirar-caducadas"));
+test("la columna de caducidad tiene valor por defecto", () =>
+  leerFuente("db/migrations/004_caducidad_por_defecto.sql").includes("SET DEFAULT"));
+test("los fallos del sincronizador se cuentan en vez de perderse", () => {
+  const w = leerFuente("lib/job-search/sync-worker.ts");
+  return w.includes("anotarFallo") && !w.includes("} catch { return []; }");
+});
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

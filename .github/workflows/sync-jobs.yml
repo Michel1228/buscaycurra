@@ -127,3 +127,36 @@ jobs:
           BODY=$(echo "$RESULT" | head -1)
           echo "${{ matrix.country }}: HTTP $HTTP_CODE — $BODY"
           [ "$HTTP_CODE" = "200" ] || exit 1
+
+  # ── Retirar lo caducado ──────────────────────────────────────────────────
+  #
+  # Va al final y una vez al dia, despues de que hayan entrado las nuevas.
+  #
+  # POR QUE HACE FALTA. Las ofertas no caducaban NUNCA: la columna "expiresAt"
+  # se rellenaba y nadie la miraba, y de las 33 consultas que leen JobListing
+  # solo una la tenia en cuenta. Se acumulaban para siempre. Medido antes de la
+  # primera limpieza: 163.503 ofertas con mas de tres meses ensenandose como
+  # activas. Se retiraron 195.217 y las de mas de dos meses pasaron del 7,1% al
+  # 0,7%.
+  #
+  # Sin esto, en tres meses volvemos a estar igual.
+  retirar-caducadas:
+    runs-on: ubuntu-latest
+    # Solo en la pasada de las 6:00, no en todas: es una limpieza diaria, no algo
+    # que haya que hacer cada dos horas.
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 */2 * * 1-5'
+    steps:
+      - name: Retirar ofertas caducadas
+        run: |
+          HORA=$(date -u +%H)
+          if [ "$HORA" != "06" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "No toca: la limpieza va a las 06:00 UTC (ahora son las $HORA)."
+            exit 0
+          fi
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/jobs/retirar-caducadas" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            --max-time 290)
+          HTTP_CODE=$(echo "$RESULT" | tail -1)
+          BODY=$(echo "$RESULT" | head -1)
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" = "200" ] || exit 1
