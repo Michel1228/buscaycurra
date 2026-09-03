@@ -113,6 +113,45 @@ interface RawJob {
   salary: string;
 }
 
+/**
+ * FALLOS QUE NO SE VEIAN.
+ *
+ * Las tres funciones que traen ofertas acababan en `catch { return []; }`. Los
+ * errores HTTP si se reportaban —hay cortacircuitos para el 429 y el 403— pero
+ * todo lo demas se perdia: tiempos de espera agotados, JSON roto, y errores que
+ * la propia API devuelve con un 200. Una fuente que agotara el tiempo parecia
+ * "sin resultados" para siempre.
+ *
+ * Y eso ya ha pasado aqui: una fuente estuvo 74 dias devolviendo cero sin que
+ * nadie se enterara, porque cero resultados y cero por estar rota se ven igual.
+ *
+ * Ahora se cuentan y se dicen. Las ofertas son el producto: si una fuente muere,
+ * la aplicacion se va vaciando sola y no hay ninguna senal.
+ */
+const fallosPorFuente: Record<string, { n: number; ultimo: string }> = {};
+
+function anotarFallo(fuente: string, e: unknown): [] {
+  const msg = String((e as Error)?.name === "TimeoutError"
+    ? "tiempo de espera agotado"
+    : (e as Error)?.message || e).slice(0, 120);
+  const r = (fallosPorFuente[fuente] ||= { n: 0, ultimo: "" });
+  r.n++;
+  r.ultimo = msg;
+  // Solo se escribe el primero de cada fuente y luego uno de cada veinte: si no,
+  // una fuente caida llena el log de miles de lineas identicas.
+  if (r.n === 1 || r.n % 20 === 0) {
+    console.warn(`[sync] ${fuente} ha fallado ${r.n} ${r.n === 1 ? "vez" : "veces"}: ${msg}`);
+  }
+  return [];
+}
+
+/** Resumen de fallos de esta pasada, para el log final. */
+export function resumenDeFallos(): string {
+  const e = Object.entries(fallosPorFuente);
+  if (e.length === 0) return "sin fallos";
+  return e.map(([f, r]) => `${f}: ${r.n} fallo${r.n === 1 ? "" : "s"} (${r.ultimo})`).join(" · ");
+}
+
 async function fetchJooble(keyword: string, city: string, page = 1): Promise<RawJob[]> {
   const keyInfo = await getJoobleKey();
   if (!keyInfo) return [];
@@ -134,7 +173,7 @@ async function fetchJooble(keyword: string, city: string, page = 1): Promise<Raw
       description: (j.snippet || "").replace(/<[^>]+>/g, "").slice(0, 1000),
       salary: (j.salary || "Ver en oferta").slice(0, 100),
     }));
-  } catch { return []; }
+  } catch (e) { return anotarFallo("Jooble", e); }
 }
 
 // ─── Adzuna multi-país ───────────────────────────────────────────────────────
@@ -220,7 +259,7 @@ async function fetchAdzuna(keyword: string, city: string, page = 1, countryCode 
         salary: salaryStr,
       };
     });
-  } catch { return []; }
+  } catch (e) { return anotarFallo("Adzuna", e); }
 }
 
 // ─── Sync masivo Adzuna multi-país ────────────────────────────────────────────
@@ -336,7 +375,9 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
     });
     if (!res.ok) { await reportFailure("careerjet", keyInfo.idx, res.status); return []; }
     const data = await res.json();
-    if (data.type === "ERROR") return [];
+    // La API de Careerjet devuelve sus errores con HTTP 200, asi que este
+    // caso no lo veia el cortacircuitos: parecia simplemente que no habia nada.
+    if (data.type === "ERROR") return anotarFallo("Careerjet", new Error(String(data.error || "la API devolvio ERROR")));
     return (data.jobs || []).map((j: Record<string, string>) => ({
       source: "Careerjet",
       url: j.url || "",
@@ -346,7 +387,7 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
       description: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 1000),
       salary: (j.salary || "Ver en oferta").slice(0, 100),
     }));
-  } catch { return []; }
+  } catch (e) { return anotarFallo("Careerjet", e); }
 }
 
 /**
@@ -517,8 +558,15 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, count
       else if (result.rowCount) refrescadas++;
     } catch { /* skip */ }
   }
-  if (refrescadas > 0) {
-    console.log(`[upsert] ${inserted} nuevas, ${refrescadas} refrescadas (${jobs.length} recibidas)`);
+  const fallos = resumenDeFallos();
+  if (refrescadas > 0 || inserted > 0 || fallos !== "sin fallos") {
+    // El log salia SOLO si habia refrescos. Una pasada que trae cero porque
+    // todas las fuentes estan caidas no decia absolutamente nada, que es como
+    // se pasan setenta y cuatro dias sin enterarse.
+    console.log(
+      `[upsert] ${inserted} nuevas, ${refrescadas} refrescadas (${jobs.length} recibidas)` +
+      (fallos !== "sin fallos" ? ` — ⚠ ${fallos}` : ""),
+    );
   }
   return inserted;
 }
