@@ -63,15 +63,19 @@ export default function DescargaClient() {
     <div style={{ background: "#0a0c10", minHeight: "100vh", color: "#f1f5f9", fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
 
       {/* ── Hero ── */}
-      <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px", overflow: "hidden" }}>
+      <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "88px 24px 40px", overflow: "hidden" }}>
 
         {/* Fondo: glow verde sutil */}
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34,197,94,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translateX(-50%)", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(34,197,94,0.04) 0%, transparent 70%)", pointerEvents: "none", borderRadius: "50%" }} />
 
-        {/* Logo */}
-        <div style={{ position: "absolute", top: "28px", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: "10px" }}>
-          <LogoGusano size={28} animated />
+        {/* Nombre de la marca. Aqui iba tambien un Guzzi pequeno, y como esta
+            cabecera va flotando (position absolute) mientras el contenido se
+            centra verticalmente, en el movil el contenido subia y los dos
+            gusanos se montaban uno encima del otro: el pequeno acababa tapando
+            el nombre y parte del grande. Con una mascota sobra, y la que manda
+            es la grande. */}
+        <div style={{ position: "absolute", top: "28px", left: "50%", transform: "translateX(-50%)" }}>
           <span style={{ fontSize: "16px", fontWeight: 700, color: "#22c55e", letterSpacing: "-0.02em" }}>BuscayCurra</span>
         </div>
 
