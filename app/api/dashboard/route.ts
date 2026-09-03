@@ -114,11 +114,24 @@ export async function GET(request: NextRequest) {
     }
 
     // ── Quick actions ──
+    // OJO CON EL NOMBRE DEL ICONO. Aqui iban emoji ("✨", "📄", "🔍", "📊"),
+    // pero el cliente los resuelve con un switch que espera nombres en
+    // mayusculas (SPARKLES, FILETEXT, SEARCH, BARCHART3) y cae en `default:
+    // <Zap/>` con cualquier otra cosa.
+    //
+    // Resultado: las cuatro acciones rapidas salian con EL MISMO RAYO, para
+    // cuatro cosas distintas —hablar con Guzzi, mejorar el CV, buscar ofertas y
+    // el pipeline—, asi que el icono no decia absolutamente nada. Michel lo vio
+    // a simple vista antes que nadie.
+    //
+    // Alguien migro el cliente de emoji a iconos y se dejo esta ruta. El
+    // respaldo escrito a mano dentro del componente SI tenia los nombres
+    // buenos, pero nunca se usaba: esta lista siempre gana.
     const quickActions = [
-      { icon: "✨", label: "Hablar con Guzzi", href: "/app/gusi", color: "#22c55e" },
-      { icon: "📄", label: "Mejorar mi CV", href: "/app/curriculum", color: "#f59e0b" },
-      { icon: "🔍", label: "Buscar ofertas", href: "/app/buscar", color: "#3b82f6" },
-      { icon: "📊", label: "Mi pipeline", href: "/app/pipeline", color: "#a855f7" },
+      { icon: "SPARKLES", label: "Hablar con Guzzi", href: "/app/gusi", color: "#22c55e" },
+      { icon: "FILETEXT", label: "Mejorar mi CV", href: "/app/curriculum", color: "#f59e0b" },
+      { icon: "SEARCH",   label: "Buscar ofertas", href: "/app/buscar", color: "#3b82f6" },
+      { icon: "BARCHART3", label: "Mi pipeline", href: "/app/pipeline", color: "#a855f7" },
     ];
 
     return NextResponse.json({

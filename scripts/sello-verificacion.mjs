@@ -717,6 +717,35 @@ for (const calido of ["#f0ebe0", "#b0a890", "#9a9378", "#504a3a", "#7ed56f"]) {
     contarEnFuentes(new RegExp(calido, "gi")) === 0);
 }
 
+// LOS CUATRO RAYOS. La API del panel mandaba EMOJI como nombre de icono
+// ("sparkles", "documento", "lupa", "grafico") y el cliente los resuelve con un
+// switch que espera nombres en mayusculas. Ninguno encajaba, asi que los cuatro
+// caian en `default: <Zap/>` y las cuatro acciones rapidas salian con el MISMO
+// RAYO, para cuatro cosas distintas. Michel lo vio a simple vista.
+const dashSrc = leerFuente("app/api/dashboard/route.ts");
+test("la API del panel manda nombres de icono, no emoji", () =>
+  /icon: "SPARKLES"/.test(dashSrc) &&
+  !/icon: "[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u.test(dashSrc));
+test("los cuatro atajos del panel llevan iconos distintos", () => {
+  const iconos = [...dashSrc.matchAll(/\{ icon: "([A-Z0-9]+)"/g)].map(m => m[1]);
+  return iconos.length >= 4 && new Set(iconos).size === iconos.length;
+});
+test("el respaldo de icono desconocido avisa en vez de callarse", () =>
+  leerFuente("app/app/bienvenida/BienvenidaClient.tsx").includes("icono desconocido"));
+
+// El menu era un arcoiris de nueve colores con glow de neon, y ninguno
+// significaba nada. Ahora el color dice si estas o no en esa seccion.
+const navSrc = leerFuente("components/AppNavWrapper.tsx");
+test("los iconos del menu ya no llevan glow de neon", () =>
+  !navSrc.includes("filter: `drop-shadow"));
+test("el color del icono del menu depende de si la seccion esta activa", () =>
+  navSrc.includes('const color = activo ? "#22c55e" : "#94a3b8"'));
+
+// Guzzi NO se toca: es la mascota. Lo que se cambio fue el marco.
+test("Guzzi sigue siendo la misma imagen de siempre", () =>
+  leerFuente("components/LogoGusano.tsx").includes("/icon-192.png") &&
+  leerFuente("components/GuzziAvatar.tsx").includes("/icon-192.png"));
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

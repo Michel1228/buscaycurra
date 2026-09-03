@@ -43,7 +43,14 @@ function renderIcon(name: string, size = 20, color?: string) {
     case "TARGET": return <Target {...s} />;
     case "FILETEXT": return <FileText {...s} />;
     case "SEARCH": return <Search {...s} />;
-    default: return <Zap {...s} />;
+    // El respaldo NO puede ser mudo. Este `default` se trago durante meses que
+    // la API mandaba emoji en vez de nombres: las cuatro acciones rapidas
+    // salian con el mismo rayo y nada avisaba. Ahora, en desarrollo, se queja.
+    default:
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(`[bienvenida] icono desconocido: ${JSON.stringify(name)} — se pinta un rayo por defecto. Los nombres validos son SPARKLES, MAIL, BARCHART3, TARGET, FILETEXT y SEARCH.`);
+      }
+      return <Zap {...s} />;
   }
 }
 

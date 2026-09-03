@@ -71,16 +71,36 @@ const ICON_COLORS: Record<string, string> = {
   plan: "#22c55e",
 };
 
-function NavIcon({ name, size = 22 }: { name: string; size?: number }) {
+/**
+ * POR QUE LOS ICONOS DEL MENU YA NO SON DE COLORES.
+ *
+ * Habia diecisiete entradas con nueve colores distintos —Emigrar cian, Au Pair
+ * rosa, Salarios naranja, Reviews amarillo— y ademas un glow de neon en cada
+ * una. Ninguno de esos colores significaba nada: no encodean categoria, ni
+ * estado, ni urgencia. Eran decoracion, y un menu arcoiris con neon es de las
+ * cosas que mas hacen que una aplicacion parezca generada.
+ *
+ * Peor todavia: como TODOS brillaban, el que estabas mirando no destacaba. El
+ * color no te decia donde estabas.
+ *
+ * Ahora el color dice una sola cosa, que es la unica que importa aqui: verde si
+ * estas en esa seccion, gris si no. El mismo gris que la etiqueta, para que
+ * icono y texto vayan juntos. Es lo que hacen las aplicaciones seri
+as, y de
+ * paso el estado activo por fin se ve.
+ *
+ * ICON_COLORS se queda por si algun dia hace falta un acento por seccion, pero
+ * hoy no lo usa el menu.
+ */
+function NavIcon({ name, size = 22, activo = false }: { name: string; size?: number; activo?: boolean }) {
   const s = size;
-  const color = ICON_COLORS[name] || "#22c55e";
-  const glow = name !== "ayuda" ? { filter: `drop-shadow(0 0 6px ${color}40)` } : {};
-  
+  const color = activo ? "#22c55e" : "#94a3b8";
+
   const base = {
     width: s, height: s, viewBox: "0 0 24 24",
     fill: "none", stroke: color, strokeWidth: "1.8",
     strokeLinecap: "round" as const, strokeLinejoin: "round" as const,
-    style: { ...glow, transition: "transform 0.2s ease" },
+    style: { transition: "transform 0.2s ease" },
     className: "nav-icon",
   };
 
@@ -116,7 +136,7 @@ function NavIcon({ name, size = 22 }: { name: string; size?: number }) {
     case "liveinnanny":
       return <svg {...base}><path d="M12 4a4 4 0 0 1 4 4v1h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2V8a4 4 0 0 1 4-4z"/><circle cx="10" cy="12" r="1.5"/><circle cx="14" cy="12" r="1.5"/><path d="M9 15c.83 1 1.83 1.5 3 1.5s2.17-.5 3-1.5"/></svg>;
     case "ayuda":
-      return <svg {...base} style={{...glow, transition: "transform 0.2s ease"}}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+      return <svg {...base}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
     case "plan":
       return <svg {...base}><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>;
     default:
@@ -362,7 +382,7 @@ export default function AppNavWrapper() {
                   {item.href === "/app/gusi" ? (
                     <GuzziAvatar size={22} />
                   ) : (
-                    <NavIcon name={item.icon} size={22} />
+                    <NavIcon name={item.icon} size={22} activo={activo} />
                   )}
                   <span>{navLabel(item.label)}</span>
                 </Link>
@@ -372,7 +392,7 @@ export default function AppNavWrapper() {
               <Link href="/app/admin" onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition"
                 style={{ background: pathname === "/app/admin" ? "rgba(245,158,11,0.08)" : "transparent", color: "#f59e0b" }}>
-                <NavIcon name="reviews" size={22} />
+                <NavIcon name="reviews" size={22} activo={pathname.startsWith("/app/reviews")} />
                 <span>Admin</span>
               </Link>
             )}

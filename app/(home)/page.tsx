@@ -271,15 +271,24 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
           <div className="max-w-3xl mx-auto text-center relative">
             {/* Mascota */}
             <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    boxShadow: "0 0 80px rgba(34,197,94,0.30)",
-                    background: "radial-gradient(circle, rgba(34,197,94,0.10) 0%, transparent 70%)",
-                  }}
-                />
-                <LogoGusano size={90} animated />
+              {/* GUZZI NO SE TOCA. Lo que cambia es el marco, no la mascota.
+                  Llevaba un glow difuso de 80px, que es el efecto de neon de
+                  cualquier portada generada, y encima dejaba el circulo crema
+                  de la imagen flotando sin borde sobre el fondo oscuro: parecia
+                  una pegatina pegada encima, no parte de la pagina.
+                  Ahora lleva un aro definido en el verde de la marca. El mismo
+                  gusano, presentado como un medallon: con borde, con intencion
+                  y sin neon. */}
+              <div
+                className="relative rounded-full p-[3px]"
+                style={{
+                  background: "linear-gradient(145deg, rgba(34,197,94,0.55), rgba(34,197,94,0.12))",
+                  boxShadow: "0 0 0 1px rgba(34,197,94,0.18), 0 10px 30px rgba(0,0,0,0.45)",
+                }}
+              >
+                <div className="rounded-full" style={{ background: "#0f1117", padding: 2 }}>
+                  <LogoGusano size={84} animated />
+                </div>
               </div>
             </div>
 
