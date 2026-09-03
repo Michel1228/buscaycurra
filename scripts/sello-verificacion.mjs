@@ -851,6 +851,26 @@ test("el menu respeta la barra inferior del iPhone", () =>
 test("con el menu abierto el fondo no se mueve", () =>
   leerFuente("components/AppNavWrapper.tsx").includes('document.body.style.overflow = "hidden"'));
 
+// LOS ENVIOS QUE REVENTABAN NO DEJABAN RASTRO. El manejador `failed` del worker
+// solo escribia en la consola: no marcaba la fila como fallida ni avisaba a
+// nadie. Como "pendiente" GASTA CUOTA, cada envio reventado le comia un hueco
+// del plan al usuario de forma permanente, por un CV que nunca salio. Medido al
+// encontrarlo: 3 de 119 envios llevaban mas de 24 horas atascados.
+const workerSrc = leerFuente("lib/cv-sender/worker.ts");
+test("un envio fallido se marca como fallido, no se queda en pendiente", () =>
+  workerSrc.includes('updateSendStatus(job.id as string, "fallido"'));
+test("y solo cuando se han agotado los reintentos, no en el primero", () =>
+  workerSrc.includes("job.attemptsMade < intentos"));
+test("al usuario se le avisa de que su CV no salio", () =>
+  workerSrc.includes('tipo: "cv_fallido"'));
+test("hay rescate de envios colgados al arrancar el worker", () =>
+  leerFuente("scripts/worker-entry.ts").includes("rescatarEnviosHuerfanos"));
+test("el rescate usa los nombres de columna reales de cv_sends", () => {
+  const r = leerFuente("lib/cv-sender/rescatar-huerfanos.ts");
+  return r.includes('.eq("status", "pendiente")') && r.includes('"company_name"') === false
+    && r.includes("company_name");
+});
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

@@ -316,8 +316,67 @@ cvWorker.on("completed", (job: Job<CVJobData>) => {
 });
 
 /** Se dispara cuando un job falla (después de todos los reintentos) */
+/**
+ * UN ENVIO QUE REVIENTA TIENE QUE DEJAR RASTRO.
+ *
+ * Esto solo escribia en la consola. Cuando el trabajo lanzaba una excepcion
+ * —el .replace() sobre null de arriba, un PDF que no se genera, la base que no
+ * responde— NO se llamaba a updateSendStatus, asi que la fila se quedaba en
+ * "pendiente" PARA SIEMPRE. Y ahi se juntaban tres cosas malas:
+ *
+ *   1. La persona veia su envio como en curso y esperaba una respuesta de una
+ *      empresa que nunca recibio nada.
+ *   2. "pendiente" GASTA CUOTA (ver rate-limiter.ts). O sea que cada envio
+ *      reventado le comia un hueco de su plan de forma permanente, por un CV
+ *      que no salio. En el plan Esencial son 15 al dia: unos cuantos fallos y
+ *      te quedas con menos capacidad para siempre.
+ *   3. Nadie se enteraba. Ni el usuario ni nosotros.
+ *
+ * Medido en produccion al encontrarlo: 3 envios llevaban mas de 24 horas
+ * atascados en "pendiente" de 119 totales.
+ *
+ * Ahora, cuando se agotan los reintentos, se marca "fallido" —que NO gasta
+ * cuota, asi que el hueco se devuelve— y se avisa a la persona para que pueda
+ * volver a intentarlo.
+ */
 cvWorker.on("failed", (job: Job<CVJobData> | undefined, error: Error) => {
   console.error(`[Worker] ❌ Job fallido: ${job?.id} | Empresa: ${job?.data?.companyName} | Error: ${error.message}`);
+  if (!job?.id) return;
+
+  // BullMQ dispara este evento en CADA intento. Solo es definitivo cuando se
+  // han agotado todos: marcar fallido en el primero seria mentir, porque el
+  // segundo intento puede salir bien.
+  const intentos = job.opts?.attempts ?? 1;
+  if (job.attemptsMade < intentos) {
+    console.log(`[Worker] Intento ${job.attemptsMade}/${intentos} de ${job.id}; aun queda reintento.`);
+    return;
+  }
+
+  void (async () => {
+    try {
+      await updateSendStatus(job.id as string, "fallido", error.message);
+      console.log(`[Worker] Envio ${job.id} marcado como fallido; la cuota se devuelve.`);
+    } catch (e) {
+      console.error("[Worker] No se pudo marcar el envio como fallido:", (e as Error).message);
+    }
+
+    // Y que la persona lo sepa. Creer que tu CV salio cuando no salio es peor
+    // que saber que fallo: al menos puedes volver a intentarlo.
+    try {
+      const { userId, companyName } = job.data || {};
+      if (!userId) return;
+      await getSupabase().from("notificaciones").insert({
+        user_id: userId,
+        tipo: "cv_fallido",
+        titulo: `No se pudo enviar tu CV${companyName ? ` a ${companyName}` : ""}`,
+        mensaje: "El envío falló y no ha llegado. No te ha gastado cuota: puedes volver a intentarlo cuando quieras.",
+        datos: { companyName, jobId: job.id, motivo: error.message?.slice(0, 200) },
+        leida: false,
+      });
+    } catch (e) {
+      console.warn("[Worker] No se pudo avisar del fallo:", (e as Error).message);
+    }
+  })();
 });
 
 /** Se dispara cuando el worker no puede procesar un job (error del propio worker) */
