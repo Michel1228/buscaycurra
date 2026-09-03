@@ -12,7 +12,7 @@ import { DATOS } from "@/lib/datos-reales";
 import { sectorDeOficio } from "@/lib/job-search/oficio-a-sector";
 import EmpresasDeLaZona from "@/components/EmpresasDeLaZona";
 import NavTrabajo from "@/components/NavTrabajo";
-import { TrendingUp, Send, Building2, Search as Lupa, Info, AlertTriangle } from "lucide-react";
+import { TrendingUp, Send, Building2, Info, AlertTriangle } from "lucide-react";
 
 /** El nombre del pais tal y como lo lee la gente: "Francia", no "FR". */
 function nombrePais(codigo: string): string {
@@ -507,13 +507,6 @@ function BuscarPageInner() {
               <p className="text-[10px]" style={{ color: "#64748b" }}>sin esperar a que alguien en un portal te encuentre</p>
             </div>
           </div>
-          <div className="flex items-center gap-2.5 ml-auto">
-            <a href="/app/gusi"
-              className="text-[11px] font-semibold px-4 py-2 rounded-lg transition"
-              style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e" }}>
-              Que Guzzi busque por mí
-            </a>
-          </div>
         </div>
       </div>
 
@@ -635,13 +628,6 @@ function BuscarPageInner() {
               </div>
             )}
 
-            {!cargando && !buscado && (
-              <div className="card-game p-10 text-center">
-                <Lupa size={30} strokeWidth={1.6} className="mx-auto mb-3" style={{ color: "#2d3142" }} />
-                <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¡Empieza tu búsqueda!</p>
-                <p className="text-xs mt-1" style={{ color: "#64748b" }}>Introduce el trabajo y la ciudad</p>
-              </div>
-            )}
 
             {!cargando && ofertas.length > 0 && (
               <>
