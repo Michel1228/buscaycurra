@@ -28,7 +28,14 @@ const CIUDADES_POPULARES = [
   "sabadell", "mostoles", "alcalá", "pamplona", "fuenlabrada",
 ];
 
-// Páginas SEO generadas on-demand (ISR), no en build time
+// Páginas SEO generadas on-demand (ISR), no en build time.
+//
+// SIN revalidate, una vez generada la pagina se quedaba en cache HASTA EL
+// SIGUIENTE DESPLIEGUE: rapida, si, pero ensenando ofertas de hace meses y un
+// recuento que ya no era cierto. Con un dia se mantiene fresca sin pagar el
+// coste cada vez: la consulta lleva `description ILIKE`, que obliga a recorrer
+// la tabla entera, y generar una de estas cuesta unos 8 segundos.
+export const revalidate = 86400;
 export const dynamicParams = true;
 export function generateStaticParams() {
   return [];

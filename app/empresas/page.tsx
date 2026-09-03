@@ -3,7 +3,10 @@ import LogoGusano from "@/components/LogoGusano";
 import { Target, Bot, MapPin, Banknote, Zap, RefreshCw, Star, Check, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+// Esta pagina no consulta la base de datos ni una sola vez: es una landing con
+// texto fijo. Estaba en force-dynamic, o sea que el servidor la renderizaba
+// entera en cada visita para no leer nada. Ahora se sirve de cache.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Para Empresas — BuscayCurra | Accede a talento activo",
