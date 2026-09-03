@@ -258,12 +258,12 @@ export default function EnviosPage() {
                 const cv = JSON.parse(detalle.cv_snapshot);
                 return (
                   <div>
-                    <h3 className="text-sm font-semibold text-green-400 mb-2">📄 CV enviado</h3>
+                    <h3 className="text-sm font-semibold text-green-400 mb-2">CV enviado</h3>
                     <div className="rounded-xl p-4 text-sm space-y-2" style={{ background: "#0f1117", border: "1px solid #2d3142" }}>
                       {cv.nombre && <p className="text-white font-semibold">{cv.nombre} {cv.apellidos || ""}</p>}
-                      {cv.ciudad && <p className="text-slate-400">📍 {cv.ciudad}{cv.provincia ? `, ${cv.provincia}` : ""}</p>}
+                      {cv.ciudad && <p className="text-slate-400">{cv.ciudad}{cv.provincia ? `, ${cv.provincia}` : ""}</p>}
                       {cv.telefono && <p className="text-slate-400">📞 {cv.telefono}</p>}
-                      {cv.email && <p className="text-slate-400">✉️ {cv.email}</p>}
+                      {cv.email && <p className="text-slate-400">{cv.email}</p>}
                       {cv.perfil && <p className="text-slate-300 mt-2 italic">"{cv.perfil}"</p>}
                     </div>
                   </div>

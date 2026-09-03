@@ -236,7 +236,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       {/* History */}
       <div className="card-game overflow-hidden">
         <div className="px-5 py-4" style={{ borderBottom: "1px solid #2d3142" }}>
-          <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>📋 Historial</h3>
+          <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>Historial</h3>
         </div>
         {history.length === 0 ? (
           <div className="px-5 py-8 text-center">
@@ -252,7 +252,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
                   <span className="text-lg">{statusEmoji(rec.status)}</span>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate" style={{ color: "#f1f5f9" }}>{rec.companyName}</p>
-                    {rec.jobTitle && <p className="text-[10px] truncate" style={{ color: "#94a3b8" }}>💼 {rec.jobTitle}</p>}
+                    {rec.jobTitle && <p className="text-[10px] truncate" style={{ color: "#94a3b8" }}>{rec.jobTitle}</p>}
                     {rec.sentAt && (
                       <p className="text-[10px]" style={{ color: "#64748b" }}>
                         {new Date(rec.sentAt).toLocaleDateString("es-ES", {

@@ -161,7 +161,7 @@ export default function VoiceRecorder({
                 Escuchando... (pulsa para parar)
               </>
             ) : (
-              <>🎤 Responder con voz</>
+              <>Responder con voz</>
             )}
           </button>
           {errorVoz && (
@@ -222,8 +222,7 @@ export default function VoiceRecorder({
 
       {/* Sin soporte (Firefox, navegadores no compatibles) */}
       {!soporteVoz && (
-        <p className="text-xs" style={{ color: "#6b7280" }}>
-          💡 Voz disponible en Chrome, Edge y Safari. Escribe tu respuesta en el recuadro de arriba.
+        <p className="text-xs" style={{ color: "#6b7280" }}>Voz disponible en Chrome, Edge y Safari. Escribe tu respuesta en el recuadro de arriba.
         </p>
       )}
     </div>

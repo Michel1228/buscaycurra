@@ -554,7 +554,7 @@ export default function PerfilPage() {
                     <div className="rounded-xl p-4 flex items-center justify-between"
                       style={{ background: "#161922", border: "1px solid #2d3142" }}>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>⚡ Plan Pro — 9,99€/mes</p>
+                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Plan Pro — 9,99€/mes</p>
                         <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>50 CVs/día · IA avanzada · Estadísticas</p>
                       </div>
                       <button onClick={() => iosNativo ? void comprarConIAP("pro") : void irACheckout("pro")}
@@ -567,7 +567,7 @@ export default function PerfilPage() {
                   <div className="rounded-xl p-4 flex items-center justify-between"
                     style={{ background: "#161922", border: "1px solid #2d3142" }}>
                     <div>
-                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🏢 Plan Empresa — 49,99€/mes</p>
+                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Plan Empresa — 49,99€/mes</p>
                       <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
                     </div>
                     <button onClick={() => iosNativo ? void comprarConIAP("empresa") : void irACheckout("empresa")}

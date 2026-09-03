@@ -248,8 +248,7 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
         <button
           onClick={irABuscador}
           className="text-sm text-[#22c55e] hover:underline"
-        >
-          🔍 Buscar ofertas {modo === "live_in_nanny" ? "live-in nanny" : "au pair"} por país, ciudad o salario →
+        >Buscar ofertas {modo === "live_in_nanny" ? "live-in nanny" : "au pair"} por país, ciudad o salario →
         </button>
       </div>
     </section>

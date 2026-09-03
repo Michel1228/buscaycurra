@@ -5,10 +5,7 @@ import PWAInstallButton from "@/components/PWAInstallButton";
 import PublicHeader from "@/components/PublicHeader";
 import { getPool } from "@/lib/db";
 import { NUM_PAISES } from "@/lib/paises";
-import {
-  Paperclip, Globe, Rocket, Target, Clock, Bot, BarChart3,
-  DollarSign, Mail, Search, Lock, Check, X
-} from "lucide-react";
+import { Bot, BarChart3, DollarSign, Mail, Lock, Check, X } from "lucide-react";
 
 // La landing se CACHEA y se regenera cada 30 min (ISR con stale-while-revalidate).
 // Antes era force-dynamic → ejecutaba la query pesada de getRealStats (GROUP BY sobre
@@ -124,9 +121,9 @@ export default async function LandingPage() {
         "📸 3 búsquedas por cámara",
         "🧠 2 consultas a Guzzi (total)",
         "📄 1 CV creado con IA",
-        `🔍 Búsqueda en ${NUM_PAISES} países`,
-        "📊 Pipeline de candidaturas",
-        "💰 Comparador de salarios",
+        `Búsqueda en ${NUM_PAISES} países`,
+        "Pipeline de candidaturas",
+        "Comparador de salarios",
         "💾 10 ofertas guardadas"
       ], 
       nota: "Sin tarjeta · Sin envíos de CV · Sin cartas IA", 
@@ -142,8 +139,8 @@ export default async function LandingPage() {
         "🧠 30 consultas/día a Guzzi",
         "📤 15 envíos de CV al día",
         "📤 100 envíos a la semana",
-        "✉️ Carta personalizada con IA",
-        "🎤 Preparación de entrevistas",
+        "Carta personalizada con IA",
+        "Preparación de entrevistas",
         "📄 3 CVs con IA",
         "💾 50 ofertas guardadas"
       ], 
@@ -160,12 +157,12 @@ export default async function LandingPage() {
         "🧠 100 consultas/día a Guzzi",
         "📤 50 envíos de CV al día",
         "📤 350 envíos a la semana",
-        "✉️ Carta personalizada premium",
-        "🎤 Preparación de entrevistas",
+        "Carta personalizada premium",
+        "Preparación de entrevistas",
         "📄 10 CVs con IA",
         "💾 200 ofertas guardadas",
-        "🔗 Códigos promocionales",
-        "⭐ Soporte prioritario"
+        "Códigos promocionales",
+        "Soporte prioritario"
       ], 
       nota: "Sin permanencia · Cancela cuando quieras", 
       destacado: false, 
@@ -175,18 +172,18 @@ export default async function LandingPage() {
       nombre: "Empresa", precio: "49,99", periodo: "/mes", 
       desc: "Para RRHH y reclutadores", 
       items: [
-        "📸 Búsquedas por cámara ilimitadas",
-        "🧠 Guzzi IA ilimitado",
+        "Búsquedas por cámara ilimitadas",
+        "Guzzi IA ilimitado",
         "📤 200 envíos de CV al día",
         "📤 1.500 envíos a la semana",
-        "✉️ Cartas IA ilimitadas",
-        "🎤 Entrevistas ilimitadas",
-        "📄 CVs ilimitados",
+        "Cartas IA ilimitadas",
+        "Entrevistas ilimitadas",
+        "CVs ilimitados",
         "💾 Ofertas ilimitadas",
         "🔌 API e integraciones",
-        "🔗 Códigos promocionales",
-        "📊 Dashboard de equipo",
-        "🛟 Soporte 24/7"
+        "Códigos promocionales",
+        "Dashboard de equipo",
+        "Soporte 24/7"
       ], 
       nota: "Sin permanencia · Facturación mensual", 
       destacado: false, 
@@ -196,19 +193,19 @@ export default async function LandingPage() {
 
   // ── Cómo funciona ──
   const pasos = [
-    { num: "1", icon: <Paperclip className="w-5 h-5" />, titulo: "Sube tu CV o cuéntaselo a Guzzi", desc: "En 2 minutos Guzzi analiza tu experiencia, la mejora con IA y la adapta al formato que esperan las empresas." },
-    { num: "2", icon: <Globe className="w-5 h-5" />, titulo: "Elige dónde quieres trabajar", desc: `España, Alemania, Irlanda... Guzzi escanea cientos de miles de ofertas en ${PAISES} países. Filtra por salario, sector y tipo de contrato.` },
-    { num: "3", icon: <Rocket className="w-5 h-5" />, titulo: "Guzzi envía. Tú solo vas a la entrevista.", desc: "Carta personalizada para cada empresa. Envío en el momento exacto en que el reclutador abre el email. Automático." },
+    { num: "1", titulo: "Sube tu CV o cuéntaselo a Guzzi", desc: "En 2 minutos Guzzi analiza tu experiencia, la mejora con IA y la adapta al formato que esperan las empresas." },
+    { num: "2", titulo: "Elige dónde quieres trabajar", desc: `España, Alemania, Irlanda... Guzzi escanea cientos de miles de ofertas en ${PAISES} países. Filtra por salario, sector y tipo de contrato.` },
+    { num: "3", titulo: "Guzzi envía. Tú solo vas a la entrevista.", desc: "Carta personalizada para cada empresa. Envío en el momento exacto en que el reclutador abre el email. Automático." },
   ];
 
   // ── Superpotencias ──
   const superpotencias = [
-    { icon: <Globe className="w-8 h-8" />, titulo: `${PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país. De España a Alemania, de Irlanda a Australia — sin mover un dedo.", acento: "#22c55e" },
-    { icon: <Target className="w-8 h-8" />, titulo: "CV único para cada oferta. Cero spam.", desc: "Tu CV no se dispara a lo loco. Guzzi lo adapta a cada empresa: palabras clave, formato, tono. Supera los filtros ATS que descartan al 75% de candidatos antes de que un humano lo vea.", acento: "#f59e0b" },
-    { icon: <Clock className="w-8 h-8" />, titulo: "Enviado cuando el reclutador está leyendo", desc: "Analizamos la hora de actividad de cada empresa. Tu candidatura llega a las 8:32am del martes — no a las 3am de un sábado. La diferencia entre abrirlo o borrarlo sin leer.", acento: "#a855f7" },
-    { icon: <Bot className="w-8 h-8" />, titulo: "24/7. No duerme. No se cansa. No se rinde.", desc: "Mientras tú vives tu vida, duermes o ves Netflix, Guzzi está escaneando ofertas, adaptando candidaturas y enviando. Como tener un comercial trabajando para ti a tiempo completo.", acento: "#e07850" },
-    { icon: <BarChart3 className="w-8 h-8" />, titulo: "Pipeline visual: sabes dónde está cada CV", desc: "Deja de preguntarte \"¿lo habrán leído?\". Ve en tiempo real el estado de cada candidatura: enviada, abierta, en revisión, entrevista, oferta. Sin agujeros negros.", acento: "#3b82f6" },
-    { icon: <DollarSign className="w-8 h-8" />, titulo: "Comparador de salarios reales", desc: "¿Cuánto pagan por tu puesto en Berlín vs Barcelona? ¿Merece la pena emigrar? Datos reales de cientos de miles de ofertas. Decide con números, no con intuición.", acento: "#f59e0b" },
+    { titulo: `${PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país. De España a Alemania, de Irlanda a Australia — sin mover un dedo.", acento: "#22c55e" },
+    { titulo: "CV único para cada oferta. Cero spam.", desc: "Tu CV no se dispara a lo loco. Guzzi lo adapta a cada empresa: palabras clave, formato, tono. Supera los filtros ATS que descartan al 75% de candidatos antes de que un humano lo vea.", acento: "#f59e0b" },
+    { titulo: "Enviado cuando el reclutador está leyendo", desc: "Analizamos la hora de actividad de cada empresa. Tu candidatura llega a las 8:32am del martes — no a las 3am de un sábado. La diferencia entre abrirlo o borrarlo sin leer.", acento: "#a855f7" },
+    { titulo: "24/7. No duerme. No se cansa. No se rinde.", desc: "Mientras tú vives tu vida, duermes o ves Netflix, Guzzi está escaneando ofertas, adaptando candidaturas y enviando. Como tener un comercial trabajando para ti a tiempo completo.", acento: "#e07850" },
+    { titulo: "Pipeline visual: sabes dónde está cada CV", desc: "Deja de preguntarte \"¿lo habrán leído?\". Ve en tiempo real el estado de cada candidatura: enviada, abierta, en revisión, entrevista, oferta. Sin agujeros negros.", acento: "#3b82f6" },
+    { titulo: "Comparador de salarios reales", desc: "¿Cuánto pagan por tu puesto en Berlín vs Barcelona? ¿Merece la pena emigrar? Datos reales de cientos de miles de ofertas. Decide con números, no con intuición.", acento: "#f59e0b" },
   ];
 
   // ── La verdad incómoda ──
@@ -350,7 +347,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
               <span style={{ color: "#2d3142" }}>·</span>
               <span><Mail className="w-3.5 h-3.5 inline" /> Envío automático 24/7</span>
               <span style={{ color: "#2d3142" }}>·</span>
-              <span><Globe className="w-3.5 h-3.5 inline" /> {PAISES} países</span>
+              <span>{PAISES} países</span>
               <span style={{ color: "#2d3142" }}>·</span>
               <span><BarChart3 className="w-3.5 h-3.5 inline" /> Pipeline visual</span>
               <span style={{ color: "#2d3142" }}>·</span>
@@ -396,7 +393,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
           }}
         >
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
+            <div className="mb-8">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
                 La verdad que nadie te cuenta sobre buscar trabajo
               </h2>
@@ -442,7 +439,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         {/* ═══════════ CÓMO FUNCIONA ═══════════ */}
         <section className="py-20 px-6">
           <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="mb-12">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
                 3 pasos. El resto lo hace Guzzi.
               </h2>
@@ -467,7 +464,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                       border: "1px solid rgba(34,197,94,0.2)",
                     }}
                   >
-                    {paso.icon}
+                    <span className="text-sm font-bold" style={{ color: "#22c55e" }}>{paso.num}</span>
                   </div>
                   <div className="flex-1 pt-0.5">
                     <h3 className="text-sm font-bold mb-1" style={{ color: "#f1f5f9" }}>
@@ -498,7 +495,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
           }}
         >
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="mb-12">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
                 No somos un portal de empleo.
                 <br />
@@ -511,7 +508,6 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             <div className="grid md:grid-cols-3 gap-5">
               {superpotencias.map((s) => (
                 <div key={s.titulo} className="card-game p-6">
-                  <div className="text-3xl mb-4">{s.icon}</div>
                   <h3 className="text-sm font-bold mb-3" style={{ color: s.acento }}>
                     {s.titulo}
                   </h3>
@@ -534,7 +530,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
           }}
         >
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-8">
+            <div className="mb-8">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
                 {OFERTAS} ofertas. {PAISES} países. Sin registrarte.
               </h2>
@@ -550,7 +546,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         {/* ═══════════ PAÍSES ═══════════ */}
         <section className="py-16 px-6">
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-10">
+            <div className="mb-10">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
                 Busca en España. O emigra.
                 <br />
@@ -586,7 +582,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                 className="inline-flex items-center gap-2 text-sm font-semibold transition hover:opacity-80"
                 style={{ color: "#22c55e" }}
               >
-                <Globe className="w-4 h-4 inline" /> Ver todos los países y salarios →
+                Ver todos los países y salarios →
               </Link>
             </div>
           </div>
@@ -663,7 +659,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
           }}
         >
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-10">
+            <div className="mb-10">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
                 Gente real. Resultados reales.
               </h2>
@@ -691,7 +687,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         {/* ═══════════ FAQ ═══════════ */}
         <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(45,49,66,0.4)" }}>
           <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-10">
+            <div className="mb-10">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
                 Preguntas frecuentes
               </h2>
@@ -757,7 +753,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
           }}
         >
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="mb-12">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
                 Sin letra pequeña
               </h2>

@@ -128,14 +128,13 @@ export default function EmpresasDeLaZona({
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-semibold text-xs" style={{ color: "#f1f5f9" }}>{e.nombre}</p>
                   {typeof e.googleRating === "number" && (
-                    <span className="text-[10px] whitespace-nowrap" style={{ color: "#f59e0b" }}>
-                      ⭐ {e.googleRating}
+                    <span className="text-[10px] whitespace-nowrap" style={{ color: "#f59e0b" }}>{e.googleRating}
                       {e.googleReviews ? <span style={{ color: "#64748b" }}> ({e.googleReviews})</span> : null}
                     </span>
                   )}
                 </div>
                 {e.googleAddress && (
-                  <p className="text-[10px] mt-1" style={{ color: "#64748b" }}>📍 {e.googleAddress}</p>
+                  <p className="text-[10px] mt-1" style={{ color: "#64748b" }}>{e.googleAddress}</p>
                 )}
                 {e.abiertoAhora === true && (
                   <p className="text-[10px] mt-1" style={{ color: "#22c55e" }}>● Abierto ahora</p>
@@ -150,8 +149,7 @@ export default function EmpresasDeLaZona({
                   {(e.emailRrhh || e.emailContacto) && (
                     <a href={`/app/empresas?empresa=${encodeURIComponent(e.nombre)}&ciudad=${encodeURIComponent(ciudad)}`}
                       className="text-[10px] px-2 py-1 rounded"
-                      style={{ background: "#1e212b", color: "#f1f5f9", border: "1px solid #2d3142" }}>
-                      ✉️ Enviar mi CV
+                      style={{ background: "#1e212b", color: "#f1f5f9", border: "1px solid #2d3142" }}>Enviar mi CV
                     </a>
                   )}
                   {e.googleMapsUrl && (

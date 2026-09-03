@@ -134,8 +134,8 @@ export default async function OfertaPublicaPage({
           </p>
 
           <div className="flex flex-wrap gap-4 mb-5 text-sm" style={{ color: "#94a3b8" }}>
-            <span>📍 {row.city}</span>
-            {row.salary && <span>💰 {row.salary}</span>}
+            <span>{row.city}</span>
+            {row.salary && <span>{row.salary}</span>}
             {row.createdAt && (
               <span>📅 {new Date(row.createdAt).toLocaleDateString("es-ES")}</span>
             )}
@@ -143,7 +143,7 @@ export default async function OfertaPublicaPage({
 
           {row.description && (
             <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
-              <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>📋 Descripción</h2>
+              <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>Descripción</h2>
               <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "#94a3b8" }}>
                 {row.description}
               </div>

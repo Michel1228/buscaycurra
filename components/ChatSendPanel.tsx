@@ -164,8 +164,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
         <div className="p-5 space-y-4">
           {/* Carta de presentación */}
           <div>
-            <label className="block text-xs font-medium mb-2" style={{ color: "#94a3b8" }}>
-              📄 Carta de presentación {generando ? "(generando...)" : "(editable)"}
+            <label className="block text-xs font-medium mb-2" style={{ color: "#94a3b8" }}>Carta de presentación {generando ? "(generando...)" : "(editable)"}
             </label>
             {generando ? (
               <div className="h-32 rounded-xl flex items-center justify-center" style={{ background: "#1e212b" }}>
@@ -193,8 +192,8 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
             </label>
             <div className="grid grid-cols-3 gap-2">
               {([
-                { id: "optimo" as const, label: "🎯 Óptimo", sub: "Mejor momento" },
-                { id: "ahora" as const, label: "⚡ Ya", sub: "1 minuto" },
+                { id: "optimo" as const, label: "Óptimo", sub: "Mejor momento" },
+                { id: "ahora" as const, label: "Ya", sub: "1 minuto" },
                 { id: "personalizada" as const, label: "📅 Elegir", sub: "Tú decides" },
               ]).map(s => (
                 <button

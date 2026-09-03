@@ -389,7 +389,7 @@ export default function AuPairProfilePage() {
     // Construir galería de fotos para el preview
     const fotosHTML = photos.length > 0 ? `
     <div class="photos-section">
-      <div class="photos-title">📸 Photo Gallery</div>
+      <div class="photos-title">Photo Gallery</div>
       <div class="photos-grid">
         ${photos.map(url => `
         <div class="photo-card">
@@ -743,7 +743,7 @@ export default function AuPairProfilePage() {
                   minWidth: "142px",
                 }}
               >
-                <span className="block text-xs font-semibold">💰 Costes y visado</span>
+                <span className="block text-xs font-semibold">Costes y visado</span>
                 <span className="block text-[10px] mt-0.5 leading-tight" style={{ color: seccion === "costes" ? "rgba(245,158,11,0.7)" : "#64748b" }}>
                   ¿Me compensa irme?
                 </span>

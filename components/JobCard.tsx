@@ -218,7 +218,7 @@ export default function JobCard({
       <button onClick={analizarEncaje} disabled={atsCargando}
         className="text-left text-[11px] font-semibold transition hover:opacity-80 disabled:opacity-50"
         style={{ color: "#f0c040" }}>
-        {atsCargando ? "🎯 Analizando tu encaje..." : ats ? "🎯 Ocultar análisis" : "🎯 ¿Encajo en esta oferta? Análisis con IA"}
+        {atsCargando ? "Analizando tu encaje..." : ats ? "Ocultar análisis" : "¿Encajo en esta oferta? Análisis con IA"}
       </button>
       {atsError && (
         <p className="text-[11px]" style={{ color: "#e07850" }}>{atsError}</p>

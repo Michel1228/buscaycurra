@@ -43,8 +43,7 @@ export default function TrabajarEnPage() {
       <div className="max-w-5xl mx-auto px-4 py-12">
         {/* Hero */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4">
-            🌍 Trabajar en el extranjero
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4">Trabajar en el extranjero
           </h1>
           <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
             {`Guías completas para trabajar fuera de España: requisitos de visado,
@@ -54,14 +53,12 @@ export default function TrabajarEnPage() {
             <Link
               href="/app/emigrar"
               className="inline-block bg-[#22c55e] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
-            >
-              🌍 Guía para emigrar →
+            >Guía para emigrar →
             </Link>
             <Link
               href="/app/buscar"
               className="inline-block bg-[#1e212b] border border-[#2d3142] text-white px-6 py-3 rounded-lg font-medium hover:border-[#22c55e]/30 transition-colors"
-            >
-              🔍 Buscar ofertas
+            >Buscar ofertas
             </Link>
           </div>
         </div>
@@ -81,8 +78,8 @@ export default function TrabajarEnPage() {
                 </h2>
               </div>
               <div className="flex gap-4 text-sm text-[#94a3b8]">
-                <span>💰 {pais.salario}/mes</span>
-                <span>📋 {pais.ofertas} ofertas</span>
+                <span>{pais.salario}/mes</span>
+                <span>{pais.ofertas} ofertas</span>
               </div>
             </Link>
           ))}

@@ -60,8 +60,7 @@ export default function AlojamientoOferta({ country }: { country?: string }) {
       </div>
 
       {info.alojamiento.consejo && (
-        <p className="text-[11px] mt-3 rounded-lg p-2.5" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)", color: "#94a3b8" }}>
-          💡 {info.alojamiento.consejo}
+        <p className="text-[11px] mt-3 rounded-lg p-2.5" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)", color: "#94a3b8" }}>{info.alojamiento.consejo}
         </p>
       )}
 

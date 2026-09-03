@@ -148,7 +148,7 @@ export default function AuPairCalculadoraCostes() {
 
       {/* Info adicional */}
       <div className="p-4 rounded-lg bg-[#111827] border border-[#2d3142]">
-        <h4 className="text-sm font-bold text-[#f1f5f9] mb-2">📋 Documentación necesaria</h4>
+        <h4 className="text-sm font-bold text-[#f1f5f9] mb-2">Documentación necesaria</h4>
         <p className="text-xs text-[#94a3b8]">{pais.documentacion}</p>
         <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#94a3b8]">
           <div><strong>Edad:</strong> {pais.edadMin}–{pais.edadMax} años</div>

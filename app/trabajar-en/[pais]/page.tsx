@@ -102,8 +102,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
         <Link
           href={`/app/buscar?pais=${codigo}`}
           className="inline-block mt-6 px-6 py-3 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl transition-colors"
-        >
-          🔍 Buscar ofertas en {pais.nombre}
+        >Buscar ofertas en {pais.nombre}
         </Link>
       </section>
 
@@ -138,8 +137,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
               key={ciudad}
               href={`/app/buscar?ubicacion=${encodeURIComponent(ciudad)}&pais=${codigo}`}
               className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg px-4 py-3 text-sm text-[#e2e8f0] transition-colors"
-            >
-              📍 {ciudad}
+            >{ciudad}
             </Link>
           ))}
         </div>
@@ -187,7 +185,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
       {/* Primeros pasos en el país */}
       {primerosPasos && (
         <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#2d3142]">
-          <h2 className="text-xl font-bold mb-2">📦 Primeros pasos en {pais.nombre}</h2>
+          <h2 className="text-xl font-bold mb-2">Primeros pasos en {pais.nombre}</h2>
           <p className="text-sm text-[#94a3b8] mb-8">Todo lo que necesitas saber para aterrizar: au pair, alojamiento y visados.</p>
 
           <div className="grid sm:grid-cols-2 gap-6">
@@ -227,7 +225,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
                   </a>
                 ))}
               </div>
-              <p className="text-xs text-[#64748b] mt-3 border-t border-[#2d3142] pt-3">💡 {primerosPasos.alojamiento.consejo}</p>
+              <p className="text-xs text-[#64748b] mt-3 border-t border-[#2d3142] pt-3">{primerosPasos.alojamiento.consejo}</p>
             </div>
 
             {/* Precios de alojamiento por ciudad */}
@@ -267,7 +265,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
                 <h3 className="font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
                   <span className="text-xl">📄</span> Documentos y trámites al llegar
                 </h3>
-                <p className="text-xs text-[#64748b] mb-4">💡 {primerosPasos.papeleo.consejo}</p>
+                <p className="text-xs text-[#64748b] mb-4">{primerosPasos.papeleo.consejo}</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {primerosPasos.papeleo.documentos.map((doc) => (
                     <div key={doc.nombre}
@@ -356,8 +354,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
           <Link
             href="/auth/registro"
             className="inline-block px-8 py-3 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-bold rounded-xl transition-colors"
-          >
-            🚀 Crear cuenta gratis
+          >Crear cuenta gratis
           </Link>
         </div>
       </section>

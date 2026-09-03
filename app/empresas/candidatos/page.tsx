@@ -195,13 +195,13 @@ export default function CandidatosPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate" style={{ color: "#f1f5f9" }}>{c.nombre}</p>
-                    <p className="text-[11px]" style={{ color: "#64748b" }}>📍 {c.ciudad}</p>
+                    <p className="text-[11px]" style={{ color: "#64748b" }}>{c.ciudad}</p>
                   </div>
                 </div>
 
                 {/* Puesto */}
                 {c.puesto && (
-                  <p className="text-[11px] font-medium" style={{ color: "#94a3b8" }}>💼 {c.puesto}</p>
+                  <p className="text-[11px] font-medium" style={{ color: "#94a3b8" }}>{c.puesto}</p>
                 )}
 
                 {/* Aptitudes */}
@@ -221,8 +221,7 @@ export default function CandidatosPage() {
                   <div className="mt-auto space-y-1 pt-2" style={{ borderTop: "1px solid rgba(45,49,66,0.5)" }}>
                     {c.email && (
                       <a href={`mailto:${c.email}`} className="flex items-center gap-2 text-[11px] hover:opacity-80 transition"
-                        style={{ color: "#22c55e" }}>
-                        ✉️ {c.email}
+                        style={{ color: "#22c55e" }}>{c.email}
                       </a>
                     )}
                     {c.telefono && (

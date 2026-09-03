@@ -232,7 +232,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
     // Acción especial: subir CV
     if (texto === "__SUBIR_CV__") {
       addMsg("user", "Quiero subir mi CV");
-      addMsg("gusi", "📄 ¡Perfecto! Tienes dos opciones:\n\n1. **Aquí abajo** → Pulsa el clip 📎 para subir tu PDF\n2. **En Perfil** → Ve a 👤 Perfil → Mi CV\n\n¿Tienes tu CV en PDF? ¡Súbelo y yo me encargo del resto!", "upload_hint");
+      addMsg("gusi", "¡Perfecto! Tienes dos opciones:\n\n1. **Aquí abajo** → Pulsa el clip 📎 para subir tu PDF\n2. **En Perfil** → Ve a 👤 Perfil → Mi CV\n\n¿Tienes tu CV en PDF? ¡Súbelo y yo me encargo del resto!", "upload_hint");
       setMostrarSugerencias(false);
       return;
     }
@@ -315,7 +315,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       return;
     }
 
-    addMsg("user", `📄 Subiendo: ${file.name}`);
+    addMsg("user", `Subiendo: ${file.name}`);
     setCargando(true);
 
     try {
@@ -346,7 +346,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       }
 
       // 2. Extraer datos con IA
-      addMsg("gusi", "🔍 Leyendo tu CV con IA... un momento");
+      addMsg("gusi", "Leyendo tu CV con IA... un momento");
       const extractData = new FormData();
       extractData.append("file", file);
       // Sin esta cabecera el endpoint responde 401 y Guzzi acababa diciendo
@@ -443,7 +443,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
       return;
     }
 
-    addMsg("user", "📸 Analizando imagen...");
+    addMsg("user", "Analizando imagen...");
     setCargando(true);
 
     try {
@@ -715,8 +715,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                   {m.action === "cv_complete" && (
                     <button onClick={() => router.push("/app/curriculum")}
                       className="w-full py-2.5 rounded-xl text-sm font-semibold transition hover:opacity-90"
-                      style={{ background: "#3b82f6", color: "white" }}>
-                      📄 Ver mi CV generado →
+                      style={{ background: "#3b82f6", color: "white" }}>Ver mi CV generado →
                     </button>
                   )}
                   {/* Acción: Ofertas */}
@@ -791,8 +790,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                       <div className="rounded-xl p-3" style={{ background: "#161922", border: "1px solid #2d3142" }}>
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <p className="text-[13px] font-semibold" style={{ color: "#f1f5f9" }}>
-                              🏢 {m.company.nombre || "Empresa"}
+                            <p className="text-[13px] font-semibold" style={{ color: "#f1f5f9" }}>{m.company.nombre || "Empresa"}
                             </p>
                             {m.company.sector && (
                               <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>
@@ -800,8 +798,7 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
                               </p>
                             )}
                             {m.company.googleRating && (
-                              <p className="text-[11px]" style={{ color: "#f59e0b" }}>
-                                ⭐ {m.company.googleRating}/5 ({m.company.googleReviews || "?"} reseñas)
+                              <p className="text-[11px]" style={{ color: "#f59e0b" }}>{m.company.googleRating}/5 ({m.company.googleReviews || "?"} reseñas)
                               </p>
                             )}
                             {m.company.emailRrhh && (

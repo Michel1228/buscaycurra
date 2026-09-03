@@ -431,8 +431,8 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
             </label>
             <div className="grid grid-cols-3 gap-2 mb-2">
               {([
-                { id: "optimo" as const, label: "🎯 Horario óptimo", sub: "Cuando lo van a leer" },
-                { id: "ahora" as const,  label: "⚡ Enviar ya",      sub: "Inmediato" },
+                { id: "optimo" as const, label: "Horario óptimo", sub: "Cuando lo van a leer" },
+                { id: "ahora" as const,  label: "Enviar ya",      sub: "Inmediato" },
                 { id: "personalizada" as const, label: "📅 Elegir hora", sub: "Tú decides cuándo" },
               ]).map(s => (
                 <button key={s.id} type="button" onClick={() => setEstrategia(s.id)}
@@ -447,8 +447,7 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
               ))}
             </div>
             {estrategia === "optimo" && (
-              <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>
-                🎯 BuscayCurra analiza la zona horaria de la empresa y envía tu CV en su ventana de máxima apertura (9-10:30am hora local). Detectamos el sector y ajustamos el momento ideal.
+              <p className="text-[10px] mt-1.5" style={{ color: "#4ade80" }}>BuscayCurra analiza la zona horaria de la empresa y envía tu CV en su ventana de máxima apertura (9-10:30am hora local). Detectamos el sector y ajustamos el momento ideal.
               </p>
             )}
             {estrategia === "ahora" && (

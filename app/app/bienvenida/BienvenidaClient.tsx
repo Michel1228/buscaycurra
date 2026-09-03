@@ -283,7 +283,7 @@ export default function BienvenidaClient() {
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-[10px]" style={{ color: "#6b7280" }}>
-                    <span>📍 {oferta.ubicacion || "Sin ubicación"}</span>
+                    <span>{oferta.ubicacion || "Sin ubicación"}</span>
                     <span>·</span>
                     <span>{oferta.fuente}</span>
                   </div>

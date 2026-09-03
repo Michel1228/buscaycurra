@@ -902,8 +902,7 @@ export default function CurriculumPage() {
                           onClick={(e) => { e.stopPropagation(); setEjemploVista(p.id); }}
                           className="absolute bottom-2 right-2 text-[10px] px-2 py-1 rounded-md font-medium transition hover:scale-105"
                           style={{ background: "rgba(15,17,23,0.85)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
-                        >
-                          🔍 Ver ejemplo
+                        >Ver ejemplo
                         </button>
                       </div>
                       <div className="p-3">
@@ -1017,7 +1016,7 @@ export default function CurriculumPage() {
 
             {/* Foto profesional */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>📸 Foto profesional para tu CV</h2>
+              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>Foto profesional para tu CV</h2>
               
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style={{ border: "2px solid rgba(34,197,94,0.3)" }}>
@@ -1062,7 +1061,7 @@ export default function CurriculumPage() {
               </Link>
 
               <div className="p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}>
-                <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>💡 Truco: Foto profesional gratis con IA</p>
+                <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>Truco: Foto profesional gratis con IA</p>
                 <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia el prompt y pégalo en ChatGPT con tu foto:</p>
                 <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
                   Utiliza personajes pero en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro
@@ -1126,7 +1125,7 @@ export default function CurriculumPage() {
             {/* Experiencia */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>💼 Experiencia laboral</h2>
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Experiencia laboral</h2>
                 <InfoTooltip text="Añade tus trabajos del más reciente al más antiguo. Incluye fechas, puesto, empresa y una descripción breve de tus tareas con verbos de acción (Gestioné, Coordiné...)." />
               </div>
               {form.experiencia.map((exp, i) => (
@@ -1200,7 +1199,7 @@ export default function CurriculumPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎯 Habilidades</h2>
+                  <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Habilidades</h2>
                   <InfoTooltip text="Tus puntos fuertes separados por comas. Ej: Trabajo en equipo, Excel, Liderazgo, Resolución de problemas." position="right" />
                 </div>
                 <label className="sr-only" htmlFor="cv-aptitudes">Habilidades</label>
@@ -1210,7 +1209,7 @@ export default function CurriculumPage() {
               </div>
               <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🌍 Idiomas</h2>
+                  <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Idiomas</h2>
                   <InfoTooltip text="Escribe cada idioma con un nivel del 0 al 100. Ej: Español:95, Inglés:60, Francés:40. El número controla la barra de progreso en el CV." position="left" />
                 </div>
                 <label className="sr-only" htmlFor="cv-idiomas">Idiomas</label>

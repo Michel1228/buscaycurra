@@ -432,7 +432,7 @@ function BuscarPageInner() {
               <input id="buscar-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); setAvisoPais(""); }}
                 placeholder="¿Dónde? (o déjalo vacío)" className="w-full px-4 py-2.5 rounded-lg text-sm"
                 style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#fff" }} />
-              {/* El aviso de autorrelleno era un "📍 Auto" de 10 px que nadie
+              {/* El aviso de autorrelleno era un "Auto" de 10 px que nadie
                   veía: la gente buscaba sin darse cuenta de que el campo
                   llevaba su ciudad puesta. Ahora se ve y se quita de un clic. */}
               {geoDetected && ubicacion && (
@@ -645,8 +645,7 @@ function BuscarPageInner() {
                     <div className="flex items-center gap-1">
                       <button onClick={() => setMostrarAlertaModal(true)}
                         className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
-                        style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
-                        🔔 Alerta
+                        style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>Alerta
                       </button>
                       <InfoTooltip text="Te avisamos por email cuando salgan nuevas ofertas que coincidan con esta búsqueda. Puedes elegir frecuencia diaria o semanal." position="bottom" />
                     </div>
@@ -742,7 +741,7 @@ function AlertaModal({ keyword, location, onClose, onCreada }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
       <div className="w-full max-w-sm rounded-xl p-5 space-y-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }} onClick={e => e.stopPropagation()}>
-        <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🔔 Crear alerta de empleo</h3>
+        <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Crear alerta de empleo</h3>
         <p className="text-xs" style={{ color: "#64748b" }}>Te avisaremos cuando haya nuevas ofertas para:</p>
         <div className="p-2.5 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
           <p className="text-xs font-medium" style={{ color: "#22c55e" }}>{keyword || "Cualquier puesto"} {location ? `en ${location}` : ""}</p>

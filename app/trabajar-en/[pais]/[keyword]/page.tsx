@@ -142,8 +142,7 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
           href={`/app/buscar?keyword=${encodeURIComponent(keywordFmt)}&pais=${codigo}`}
           className="inline-block mt-6 px-6 py-3 rounded-xl font-semibold transition-colors"
           style={{ background: "#22c55e", color: "#000" }}
-        >
-          🔍 Buscar ofertas de {keywordFmt} en {pais.nombre}
+        >Buscar ofertas de {keywordFmt} en {pais.nombre}
         </Link>
       </section>
 
@@ -171,8 +170,8 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-3 text-xs" style={{ color: "#94a3b8" }}>
-                    <span>📍 {oferta.city || pais.nombre}</span>
-                    {oferta.salary && <span>💰 {oferta.salary}</span>}
+                    <span>{oferta.city || pais.nombre}</span>
+                    {oferta.salary && <span>{oferta.salary}</span>}
                     {oferta.createdAt && (
                       <span>📅 {new Date(oferta.createdAt).toLocaleDateString("es-ES")}</span>
                     )}
