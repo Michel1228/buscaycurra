@@ -736,14 +736,14 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                 className="px-6 py-3 rounded-xl text-sm font-semibold transition-all"
                 style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
               >
-                🧒 Perfil Au Pair
+                Perfil Au Pair
               </Link>
               <Link
                 href="/auth/registro"
                 className="px-6 py-3 rounded-xl text-sm font-semibold transition-all"
                 style={{ background: "transparent", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}
               >
-                👩‍👧 Live-in Nanny
+                Live-in Nanny
               </Link>
             </div>
             <p className="text-[10px] mt-4" style={{ color: "#64748b" }}>

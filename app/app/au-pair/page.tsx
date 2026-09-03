@@ -602,7 +602,7 @@ export default function AuPairProfilePage() {
                 : "text-[#94a3b8] hover:text-[#f1f5f9]"
             }`}
           >
-            🧒 Au Pair
+            Au Pair
           </button>
           <button
             onClick={() => setModo("live_in_nanny")}
@@ -612,7 +612,7 @@ export default function AuPairProfilePage() {
                 : "text-[#94a3b8] hover:text-[#f1f5f9]"
             }`}
           >
-            👩‍👧 Live-in Nanny
+            Live-in Nanny
           </button>
         </div>
 

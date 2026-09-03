@@ -12,6 +12,7 @@ import { DATOS } from "@/lib/datos-reales";
 import { sectorDeOficio } from "@/lib/job-search/oficio-a-sector";
 import EmpresasDeLaZona from "@/components/EmpresasDeLaZona";
 import NavTrabajo from "@/components/NavTrabajo";
+import { TrendingUp, Send, Building2, Search as Lupa, Info, AlertTriangle } from "lucide-react";
 
 /** El nombre del pais tal y como lo lee la gente: "Francia", no "FR". */
 function nombrePais(codigo: string): string {
@@ -179,7 +180,7 @@ function BuscarPageInner() {
         fuente: "Jooble",
         url: j.link || `https://es.jooble.org/SearchResult?ukw=${encodeURIComponent(kw)}&loc=${encodeURIComponent(loc)}`,
         fecha: j.updated || new Date().toISOString(),
-        distancia: "🏠 Tu ciudad",
+        distancia: "Tu ciudad",
       }));
     } catch {
       return [];
@@ -441,7 +442,7 @@ function BuscarPageInner() {
                   title="Quitar mi ciudad y buscar en todas partes"
                   className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-semibold hover:opacity-80"
                   style={{ background: "rgba(0,0,0,0.28)", color: "#fff" }}>
-                  tu ciudad ✕
+                  tu ciudad
                 </button>
               )}
             </div>
@@ -465,7 +466,8 @@ function BuscarPageInner() {
           {avisoPais && (
             <div className="mt-2 px-3 py-2 rounded-lg text-xs flex items-start gap-2"
               style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}>
-              <span>💡</span><span>{avisoPais}</span>
+              <Info size={14} strokeWidth={2} className="shrink-0 mt-0.5" />
+              <span>{avisoPais}</span>
             </div>
           )}
         </div>
@@ -475,7 +477,7 @@ function BuscarPageInner() {
       <div className="border-b" style={{ background: "#111827", borderColor: "#1e212b" }}>
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-4 md:gap-8">
           <div className="flex items-center gap-2.5">
-            <span className="text-lg">👥</span>
+            <TrendingUp size={18} strokeWidth={1.9} className="shrink-0" style={{ color: "#94a3b8" }} />
             <div>
               {/* Decia "2.400+ personas ya encontraron trabajo" habiendo 51
                   usuarios. Esto esta contado contra la base de datos. */}
@@ -484,14 +486,14 @@ function BuscarPageInner() {
             </div>
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="text-lg">💸</span>
+            <Send size={18} strokeWidth={1.9} className="shrink-0" style={{ color: "#22c55e" }} />
             <div>
               <p className="text-xs font-bold" style={{ color: "#22c55e" }}>CV propio, no uno entre 2.000</p>
               <p className="text-[10px]" style={{ color: "#64748b" }}>InfoJobs te mete en una cola — aquí Guzzi te pone delante</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="text-lg">🎯</span>
+            <Building2 size={18} strokeWidth={1.9} className="shrink-0" style={{ color: "#94a3b8" }} />
             <div>
               <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>Contrato directo con la empresa</p>
               <p className="text-[10px]" style={{ color: "#64748b" }}>sin esperar a que alguien en un portal te encuentre</p>
@@ -583,8 +585,9 @@ function BuscarPageInner() {
             )}
 
             {!cargando && error && (
-              <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
-                ⚠️ {error}
+              <div className="rounded-xl px-4 py-3 text-sm flex items-start gap-2" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
+                <AlertTriangle size={15} strokeWidth={2} className="shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
             )}
 
@@ -594,7 +597,7 @@ function BuscarPageInner() {
                  dos clics. Se dice qué se buscó exactamente y se ofrece la
                  salida, en vez de dejar al usuario adivinando. */
               <div className="card-game p-8 text-center">
-                <p className="text-4xl mb-3">🔍</p>
+                <p className="text-4xl mb-3"></p>
                 <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>
                   Sin ofertas de {keyword ? <>«{keyword}»</> : "eso"}
                   {ubicacion ? <> en {ubicacion}</> : null} ({nombrePais(paisSeleccionado)})
@@ -618,7 +621,7 @@ function BuscarPageInner() {
                   <button onClick={() => router.push(`/app/gusi?q=${encodeURIComponent(`${keyword} en ${ubicacion}`.trim())}`)}
                     className="px-3 py-2 rounded-lg text-xs font-semibold"
                     style={{ background: "#1e212b", color: "#f1f5f9", border: "1px solid #2d3142" }}>
-                    🐛 Que lo busque Guzzi
+                    Que lo busque Guzzi
                   </button>
                 </div>
               </div>
@@ -626,7 +629,7 @@ function BuscarPageInner() {
 
             {!cargando && !buscado && (
               <div className="card-game p-10 text-center">
-                <p className="text-4xl mb-3">🚀</p>
+                <Lupa size={30} strokeWidth={1.6} className="mx-auto mb-3" style={{ color: "#2d3142" }} />
                 <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¡Empieza tu búsqueda!</p>
                 <p className="text-xs mt-1" style={{ color: "#64748b" }}>Introduce el trabajo y la ciudad</p>
               </div>
@@ -652,7 +655,7 @@ function BuscarPageInner() {
                     <a href="/app/guardados"
                       className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition"
                       style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
-                      ❤️ Guardados
+                      Guardados
                     </a>
                   </div>
                 </div>
@@ -703,7 +706,7 @@ function BuscarPageInner() {
       {alertaCreada && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-xl text-xs font-medium"
           style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}>
-          ✅ Alerta creada. Te avisaremos de nuevas ofertas.
+          Alerta creada. Te avisaremos de nuevas ofertas.
         </div>
       )}
     </div>
@@ -757,7 +760,7 @@ function AlertaModal({ keyword, location, onClose, onCreada }: {
                   border: freq === f ? "1px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
                   color: freq === f ? "#22c55e" : "#64748b",
                 }}>
-                {f === "daily" ? "📅 Diaria" : "📆 Semanal"}
+                {f === "daily" ? "Diaria" : "Semanal"}
               </button>
             ))}
           </div>

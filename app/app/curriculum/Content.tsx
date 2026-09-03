@@ -14,6 +14,7 @@ import Link from "next/link";
  * 6. Auto-guardado
  */
 
+import { Trash2, Save, Check, Palette } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { isNativeIOS as esIOSNativo } from "@/lib/utils/platform";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -756,12 +757,16 @@ export default function CurriculumPage() {
     <div className="min-h-screen pt-16" style={{ background: "#0f1117", overflowX: "hidden" }}>
       {/* Header */}
       <div className="px-4 py-6" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>
-        <div className="max-w-[100rem] mx-auto flex items-center justify-between">
-          <div>
+        {/* En el movil el titulo y la barra de botones peleaban por el mismo
+            hueco: "Mi Curriculum" se partia en tres lineas y el ultimo boton se
+            salia de la pantalla, cortado por la derecha. Con flex-wrap la barra
+            baja debajo del titulo cuando no cabe, en vez de desbordarse. */}
+        <div className="max-w-[100rem] mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <div className="min-w-0">
             <h1 className="text-xl font-bold text-white">Mi Currículum</h1>
             <p className="text-xs mt-1 text-white/80">Completa tus datos — la plantilla se actualiza en vivo</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* ── Selector de CVs ── */}
             {listaCVs.length > 0 && (
               <div className="flex items-center gap-1.5">
@@ -782,7 +787,8 @@ export default function CurriculumPage() {
                   className="text-[10px] px-1.5 py-1 rounded opacity-50 hover:opacity-100"
                   style={{ color: "#ef4444" }}
                   title="Eliminar esta versión"
-                >🗑</button>
+                  aria-label="Eliminar esta versión"
+                ><Trash2 size={13} strokeWidth={1.9} /></button>
               </div>
             )}
             <button
@@ -791,11 +797,15 @@ export default function CurriculumPage() {
               className="text-[10px] px-2 py-1.5 rounded-lg font-medium transition disabled:opacity-50"
               style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}
             >
-              {guardando ? "..." : "💾 Nueva versión"}
+              {guardando ? "..." : (
+                <span className="inline-flex items-center gap-1.5">
+                  <Save size={12} strokeWidth={2} /> Nueva versión
+                </span>
+              )}
             </button>
             {guardado && (
-              <span className="text-xs font-medium px-3 py-1 rounded-full bg-white/20 text-white">
-                ✅ Guardado
+              <span className="text-xs font-medium px-3 py-1 rounded-full bg-white/20 text-white inline-flex items-center gap-1.5">
+                <Check size={12} strokeWidth={2.5} /> Guardado
               </span>
             )}
             {!mejoradoHTML && (
@@ -872,7 +882,7 @@ export default function CurriculumPage() {
             {/* Selector de plantilla */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="flex items-center gap-2 mb-3">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎨 Plantilla del CV</h2>
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}><Palette size={14} strokeWidth={1.9} /> Plantilla del CV</h2>
                 <InfoTooltip text="La Clásica (dos columnas con foto) es visual e ideal para hostelería, comercio y trato con cliente. La Profesional ATS (una columna) está optimizada para pasar los filtros automáticos que usan la mayoría de empresas medianas y grandes." />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -921,7 +931,7 @@ export default function CurriculumPage() {
 
               {/* Selector de color de acento */}
               <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
-                <p className="text-xs font-semibold mb-2.5" style={{ color: "#f1f5f9" }}>🎨 Color del CV</p>
+                <p className="text-xs font-semibold mb-2.5" style={{ color: "#f1f5f9" }}>Color del CV</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   {[
                     { nombre: "Verde", valor: "#16a34a" },

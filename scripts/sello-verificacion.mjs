@@ -746,6 +746,21 @@ test("Guzzi sigue siendo la misma imagen de siempre", () =>
   leerFuente("components/LogoGusano.tsx").includes("/icon-192.png") &&
   leerFuente("components/GuzziAvatar.tsx").includes("/icon-192.png"));
 
+// LOS EMOJI QUE HACIAN DE ICONO. Michel mando capturas: en "Buscar y enviar
+// CV" habia un cohete de emoji en el estado vacio y tres emoji mas en la franja
+// (personas, billetes volando, diana). En "Mi CV", los botones eran un disquete,
+// un tick, una papelera y una paleta de pintor. Se pintan distinto en cada
+// telefono y no pegan con el resto, que usa iconos de trazo.
+const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+test("no queda ningun emoji en Buscar y enviar CV", () =>
+  !EMOJI.test(leerFuente("app/app/buscar/page.tsx")));
+test("los botones de Mi CV usan iconos, no emoji", () => {
+  const cv = leerFuente("app/app/curriculum/Content.tsx");
+  return cv.includes("<Trash2") && cv.includes("<Save") && !/>\s*🗑/.test(cv);
+});
+test("el centinela de exito del CV sigue intacto (es logica, no adorno)", () =>
+  leerFuente("app/app/curriculum/Content.tsx").includes('startsWith("✅")'));
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>
