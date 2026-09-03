@@ -480,7 +480,7 @@ function BuscarPageInner() {
               {/* Decia "2.400+ personas ya encontraron trabajo" habiendo 51
                   usuarios. Esto esta contado contra la base de datos. */}
               <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>{DATOS.ofertasNuevasDiaTexto} ofertas nuevas al día</p>
-              <p className="text-[10px]" style={{ color: "#64748b" }}>28 cada minuto, de 49 países</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>28 cada minuto, de medio mundo</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">

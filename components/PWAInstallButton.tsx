@@ -54,7 +54,7 @@ export default function PWAInstallButton() {
       style={{
         background: "rgba(126,213,111,0.12)",
         border: "1px solid rgba(126,213,111,0.35)",
-        color: "#7ed56f",
+        color: "#22c55e",
         backdropFilter: "blur(8px)",
       }}
       aria-label="Instalar aplicación"

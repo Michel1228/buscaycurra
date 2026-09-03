@@ -26,10 +26,10 @@ export interface PropiedadesJobCard {
 }
 
 function colorMatch(pct: number): string {
-  if (pct >= 80) return "#7ed56f";
+  if (pct >= 80) return "#22c55e";
   if (pct >= 60) return "#f0c040";
   if (pct >= 40) return "#e07850";
-  return "#9a9378";
+  return "#64748b";
 }
 
 function colorFuente(fuente: string): { bg: string; text: string } {
@@ -37,10 +37,10 @@ function colorFuente(fuente: string): { bg: string; text: string } {
     infojobs: { bg: "rgba(59,130,246,0.12)", text: "#60a5fa" },
     linkedin: { bg: "rgba(14,165,233,0.12)", text: "#38bdf8" },
     indeed: { bg: "rgba(168,85,247,0.12)", text: "#c084fc" },
-    tecnoempleo: { bg: "rgba(126,213,111,0.12)", text: "#7ed56f" },
+    tecnoempleo: { bg: "rgba(126,213,111,0.12)", text: "#22c55e" },
     sepe: { bg: "rgba(240,192,64,0.12)", text: "#f0c040" },
   };
-  return mapa[fuente.toLowerCase()] || { bg: "rgba(112,106,88,0.12)", text: "#b0a890" };
+  return mapa[fuente.toLowerCase()] || { bg: "rgba(112,106,88,0.12)", text: "#94a3b8" };
 }
 
 // Extrae dominio de la URL de la oferta para construir email fallback
@@ -60,7 +60,7 @@ export default function JobCard({
   url, modalidad, descripcion, match, distancia, emailEmpresa,
 }: PropiedadesJobCard) {
   const fc = colorFuente(fuente);
-  const matchColor = match !== undefined ? colorMatch(match) : "#9a9378";
+  const matchColor = match !== undefined ? colorMatch(match) : "#64748b";
 
   // Las ofertas en vivo (Jooble/APIs) llevan id sintético con prefijo y NO existen
   // en la BD → /app/ofertas/[id] mostraría "Oferta no encontrada". Para esas,
@@ -174,7 +174,7 @@ export default function JobCard({
             style={{ background: fc.bg, color: fc.text }}>{fuente}</span>
           {modalidad && (
             <span className="text-[11px] font-medium px-2.5 py-1 rounded-full capitalize"
-              style={{ background: "rgba(112,106,88,0.1)", color: "#b0a890" }}>{modalidad}</span>
+              style={{ background: "rgba(112,106,88,0.1)", color: "#94a3b8" }}>{modalidad}</span>
           )}
         </div>
         {match !== undefined && (
@@ -189,13 +189,13 @@ export default function JobCard({
 
       {/* Content */}
       <div>
-        <h3 className="font-bold text-sm leading-snug" style={{ color: "#f0ebe0" }}>{titulo}</h3>
-        <p className="text-xs mt-1" style={{ color: "#b0a890" }}>{empresa}</p>
-        <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: "#9a9378" }}>
+        <h3 className="font-bold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{titulo}</h3>
+        <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{empresa}</p>
+        <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: "#64748b" }}>
           <span>📍</span><span>{ubicacion}</span>
         </div>
         {salario && (
-          <div className="flex items-center gap-1 mt-1 text-xs font-semibold" style={{ color: "#7ed56f" }}>
+          <div className="flex items-center gap-1 mt-1 text-xs font-semibold" style={{ color: "#22c55e" }}>
             <span>💰</span><span>{salario}</span>
           </div>
         )}
@@ -210,7 +210,7 @@ export default function JobCard({
           </div>
         )}
         {descripcion && (
-          <p className="text-[11px] mt-2 line-clamp-2 leading-relaxed" style={{ color: "#9a9378" }}>{descripcion}</p>
+          <p className="text-[11px] mt-2 line-clamp-2 leading-relaxed" style={{ color: "#64748b" }}>{descripcion}</p>
         )}
       </div>
 
@@ -227,7 +227,7 @@ export default function JobCard({
         <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(240,192,64,0.05)", border: "1px solid rgba(240,192,64,0.15)" }}>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold" style={{ color: colorMatch(ats.score) }}>{ats.score}%</span>
-            <span className="text-[11px] leading-snug" style={{ color: "#b0a890" }}>{ats.resumen}</span>
+            <span className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>{ats.resumen}</span>
           </div>
           {ats.faltan.length > 0 && (
             <div>
@@ -242,11 +242,11 @@ export default function JobCard({
           )}
           {ats.consejos.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold mb-1" style={{ color: "#7ed56f" }}>Para mejorar tu encaje:</p>
+              <p className="text-[10px] font-semibold mb-1" style={{ color: "#22c55e" }}>Para mejorar tu encaje:</p>
               <ul className="space-y-1">
                 {ats.consejos.map((c, i) => (
-                  <li key={i} className="text-[10px] leading-relaxed pl-3 relative" style={{ color: "#b0a890" }}>
-                    <span className="absolute left-0" style={{ color: "#7ed56f" }}>✓</span>{c}
+                  <li key={i} className="text-[10px] leading-relaxed pl-3 relative" style={{ color: "#94a3b8" }}>
+                    <span className="absolute left-0" style={{ color: "#22c55e" }}>✓</span>{c}
                   </li>
                 ))}
               </ul>
@@ -267,13 +267,13 @@ export default function JobCard({
         {esSintetica && url ? (
           <a href={url} target="_blank" rel="noopener noreferrer"
             className="flex-1 text-center py-2.5 text-xs font-medium rounded-xl transition hover:opacity-80"
-            style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#b0a890" }}>
+            style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#94a3b8" }}>
             Ver oferta
           </a>
         ) : (
           <Link href={`/app/ofertas/${encodeURIComponent(id)}`}
             className="flex-1 text-center py-2.5 text-xs font-medium rounded-xl transition hover:opacity-80"
-            style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#b0a890" }}>
+            style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#94a3b8" }}>
             Ver oferta
           </Link>
         )}
@@ -284,7 +284,7 @@ export default function JobCard({
           style={{
             background: estadoEnvio === "ok"
               ? "linear-gradient(135deg, #22c55e, #16a34a)"
-              : "linear-gradient(135deg, #7ed56f, #5cb848)",
+              : "linear-gradient(135deg, #22c55e, #5cb848)",
             color: "#1a1a12",
           }}>
           {enviando

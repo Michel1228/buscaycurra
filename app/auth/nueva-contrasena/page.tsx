@@ -158,7 +158,7 @@ export default function NuevaContrasenaPage() {
               <div>
                 <label
                   htmlFor="nueva"
-                  className="block text-sm font-medium text-[#b0a890] mb-1.5"
+                  className="block text-sm font-medium text-[#94a3b8] mb-1.5"
                 >
                   Nueva contraseña
                 </label>
@@ -186,7 +186,7 @@ export default function NuevaContrasenaPage() {
               <div>
                 <label
                   htmlFor="confirmar"
-                  className="block text-sm font-medium text-[#b0a890] mb-1.5"
+                  className="block text-sm font-medium text-[#94a3b8] mb-1.5"
                 >
                   Confirmar contraseña
                 </label>

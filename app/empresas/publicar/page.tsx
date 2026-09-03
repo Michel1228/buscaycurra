@@ -71,10 +71,10 @@ export default function PublicarOfertaPage() {
       {/* Header */}
       <div className="py-12 px-4" style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.1), rgba(240,192,64,0.05))" }}>
         <div className="max-w-2xl mx-auto text-center">
-          <Building2 size={44} strokeWidth={1.3} className="mx-auto mb-3" style={{ color: "#7ed56f" }} />
-          <h1 className="text-2xl font-bold mb-2" style={{ color: "#f0ebe0" }}>Portal de Empresas</h1>
-          <p className="text-sm" style={{ color: "#b0a890" }}>
-            Publica tu oferta de trabajo y llega a miles de candidatos cualificados. <strong style={{ color: "#7ed56f" }}>¡100% gratis!</strong>
+          <Building2 size={44} strokeWidth={1.3} className="mx-auto mb-3" style={{ color: "#22c55e" }} />
+          <h1 className="text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Portal de Empresas</h1>
+          <p className="text-sm" style={{ color: "#94a3b8" }}>
+            Publica tu oferta de trabajo y llega a miles de candidatos cualificados. <strong style={{ color: "#22c55e" }}>¡100% gratis!</strong>
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-4">
             {[
@@ -84,7 +84,7 @@ export default function PublicarOfertaPage() {
               { Icon: Bot, label: "IA matching" },
             ].map(({ Icon, label }) => (
               <span key={label} className="text-xs px-3 py-1 rounded-full flex items-center gap-1"
-                style={{ background: "rgba(126,213,111,0.1)", color: "#7ed56f", border: "1px solid rgba(126,213,111,0.15)" }}>
+                style={{ background: "rgba(126,213,111,0.1)", color: "#22c55e", border: "1px solid rgba(126,213,111,0.15)" }}>
                 <Icon size={10} strokeWidth={2} />{label}
               </span>
             ))}
@@ -96,14 +96,14 @@ export default function PublicarOfertaPage() {
       <div className="max-w-2xl mx-auto px-4 py-8">
         {exito ? (
           <div className="card-game p-8 text-center">
-            <PartyPopper size={52} strokeWidth={1.3} className="mx-auto mb-4" style={{ color: "#7ed56f" }} />
-            <h2 className="text-xl font-bold mb-2" style={{ color: "#7ed56f" }}>¡Oferta publicada!</h2>
-            <p className="text-sm mb-6" style={{ color: "#b0a890" }}>
+            <PartyPopper size={52} strokeWidth={1.3} className="mx-auto mb-4" style={{ color: "#22c55e" }} />
+            <h2 className="text-xl font-bold mb-2" style={{ color: "#22c55e" }}>¡Oferta publicada!</h2>
+            <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
               Tu oferta será revisada y publicada en minutos. Los candidatos que encajen recibirán una notificación.
             </p>
             <button onClick={() => setExito(false)}
               className="px-6 py-3 rounded-xl font-bold text-sm"
-              style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+              style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}>
               <FileText size={13} className="inline mr-1" />Publicar otra oferta
             </button>
           </div>
@@ -114,22 +114,22 @@ export default function PublicarOfertaPage() {
               <h2 className="text-sm font-bold mb-4 flex items-center gap-1.5" style={{ color: "#f0c040" }}><Building2 size={14} strokeWidth={1.6} />Datos de tu empresa</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>
                     Nombre de la empresa <span style={{ color: "#f87171" }}>*</span>
                   </label>
                   <input type="text" value={empresa} onChange={e => setEmpresa(e.target.value)}
                     placeholder="ej: Mi Restaurante S.L." required className="w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>
                     Email de contacto <span style={{ color: "#f87171" }}>*</span>
                   </label>
                   <input type="email" value={emailEmpresa} onChange={e => setEmailEmpresa(e.target.value)}
                     placeholder="rrhh@empresa.com" required className="w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
-                    Web <span className="font-normal" style={{ color: "#504a3a" }}>(opcional)</span>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>
+                    Web <span className="font-normal" style={{ color: "#64748b" }}>(opcional)</span>
                   </label>
                   <input type="url" value={webEmpresa} onChange={e => setWebEmpresa(e.target.value)}
                     placeholder="https://www.miempresa.es" className="w-full" />
@@ -142,7 +142,7 @@ export default function PublicarOfertaPage() {
               <h2 className="text-sm font-bold mb-4 flex items-center gap-1.5" style={{ color: "#f0c040" }}><Briefcase size={14} strokeWidth={1.6} />Datos de la oferta</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>
                     Puesto <span style={{ color: "#f87171" }}>*</span>
                   </label>
                   <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)}
@@ -150,14 +150,14 @@ export default function PublicarOfertaPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>Sector</label>
+                    <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>Sector</label>
                     <select value={sector} onChange={e => setSector(e.target.value)} className="w-full">
                       <option value="">Seleccionar</option>
                       {SECTORES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>Jornada</label>
+                    <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>Jornada</label>
                     <select value={jornada} onChange={e => setJornada(e.target.value)} className="w-full">
                       <option value="">Seleccionar</option>
                       {JORNADAS.map(j => <option key={j} value={j}>{j}</option>)}
@@ -166,26 +166,26 @@ export default function PublicarOfertaPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>
+                    <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>
                       Ciudad <span style={{ color: "#f87171" }}>*</span>
                     </label>
                     <input type="text" value={ciudad} onChange={e => setCiudad(e.target.value)}
                       placeholder="Madrid, Tudela..." required className="w-full" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>Salario</label>
+                    <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>Salario</label>
                     <input type="text" value={salario} onChange={e => setSalario(e.target.value)}
                       placeholder="1.500€ - 2.000€/mes" className="w-full" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>Descripción</label>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>Descripción</label>
                   <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
                     placeholder="Describe el puesto, responsabilidades, horario..."
                     rows={4} className="w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#b0a890" }}>Requisitos</label>
+                  <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>Requisitos</label>
                   <textarea value={requisitos} onChange={e => setRequisitos(e.target.value)}
                     placeholder="Experiencia mínima, formación, idiomas..."
                     rows={3} className="w-full" />
@@ -202,14 +202,14 @@ export default function PublicarOfertaPage() {
             <button type="submit" disabled={enviando}
               className="w-full font-bold py-3.5 rounded-xl text-sm transition"
               style={{
-                background: enviando ? "#3d3c30" : "linear-gradient(135deg, #7ed56f, #5cb848)",
-                color: enviando ? "#9a9378" : "#1a1a12",
+                background: enviando ? "#3d3c30" : "linear-gradient(135deg, #22c55e, #5cb848)",
+                color: enviando ? "#64748b" : "#1a1a12",
                 boxShadow: enviando ? "none" : "0 4px 16px rgba(126,213,111,0.25)",
               }}>
               {enviando ? "Publicando..." : <><Rocket size={13} className="inline mr-1" />Publicar oferta gratis</>}
             </button>
 
-            <p className="text-xs text-center" style={{ color: "#504a3a" }}>
+            <p className="text-xs text-center" style={{ color: "#64748b" }}>
               Las ofertas son revisadas antes de publicarse. Sin spam, sin coste.
             </p>
           </form>
@@ -217,7 +217,7 @@ export default function PublicarOfertaPage() {
 
         {/* Link back */}
         <div className="text-center mt-8">
-          <Link href="/" className="text-sm" style={{ color: "#7ed56f" }}>← Volver a BuscayCurra</Link>
+          <Link href="/" className="text-sm" style={{ color: "#22c55e" }}>← Volver a BuscayCurra</Link>
         </div>
       </div>
     </div>

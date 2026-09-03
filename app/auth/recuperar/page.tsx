@@ -110,7 +110,7 @@ export default function RecuperarPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-[#b0a890] mb-1.5"
+                  className="block text-sm font-medium text-[#94a3b8] mb-1.5"
                 >
                   Tu email
                 </label>

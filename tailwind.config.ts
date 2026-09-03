@@ -9,6 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // ⚠️ TEMA ABANDONADO. Esta paleta cálida —marrones, oliva, dorados— no
+        // la usa NADIE: cero referencias en app/ y components/, comprobado.
+        // Es de una dirección visual anterior que se dejó a medias.
+        //
+        // No se borra por si estaba ahí a propósito, pero OJO: si escribes
+        // `text-marca-texto` te sale crema, y la aplicación va en gris frío
+        // (#f1f5f9 / #94a3b8 / #64748b / #22c55e), que es lo que documenta
+        // CLAUDE.md y lo que usan los 80 ficheros restantes. Usa esos.
         marca: {
           fondo: "#1a1a12",
           fondoAlt: "#22211a",

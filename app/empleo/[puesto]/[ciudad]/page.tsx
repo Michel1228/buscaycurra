@@ -145,7 +145,7 @@ export default async function EmpleoPage({
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #0f1a0a, #1a1a12)" }}>
       {/* Header SEO */}
-      <div className="py-12 px-4" style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+      <div className="py-12 px-4" style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}>
         <div className="max-w-4xl mx-auto">
           <nav className="text-xs mb-4 opacity-70">
             <Link href="/">Inicio</Link> → <Link href="/app/buscar">Empleo</Link> → {puestoFmt} → {ciudadFmt}
@@ -164,10 +164,10 @@ export default async function EmpleoPage({
         {/* CTA principal */}
         <div className="card-game p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <p className="font-bold text-lg" style={{ color: "#f0ebe0" }}>
+            <p className="font-bold text-lg" style={{ color: "#f1f5f9" }}>
               ¿Quieres que Guzzi busque por ti?
             </p>
-            <p className="text-sm" style={{ color: "#9a9378" }}>
+            <p className="text-sm" style={{ color: "#64748b" }}>
               Envía tu CV automáticamente a empresas de {ciudadFmt}
             </p>
           </div>
@@ -180,25 +180,25 @@ export default async function EmpleoPage({
         {/* Ofertas */}
         {ofertas.length > 0 ? (
           <div className="space-y-4 mb-10">
-            <h2 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>
+            <h2 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>
               Ofertas destacadas
             </h2>
             {ofertas.map((o) => (
               <div key={o.id} className="card-game p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm" style={{ color: "#f0ebe0" }}>{o.title}</h3>
-                    <p className="text-xs mt-1" style={{ color: "#b0a890" }}>{o.company || "Empresa"} · {o.city}</p>
+                    <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>{o.title}</h3>
+                    <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{o.company || "Empresa"} · {o.city}</p>
                     {o.salary && (
-                      <p className="text-xs font-semibold mt-1 flex items-center gap-1" style={{ color: "#7ed56f" }}><DollarSign size={11} />{o.salary}</p>
+                      <p className="text-xs font-semibold mt-1 flex items-center gap-1" style={{ color: "#22c55e" }}><DollarSign size={11} />{o.salary}</p>
                     )}
                     {o.description && (
-                      <p className="text-xs mt-2 line-clamp-2" style={{ color: "#9a9378" }}>{o.description.slice(0, 150)}...</p>
+                      <p className="text-xs mt-2 line-clamp-2" style={{ color: "#64748b" }}>{o.description.slice(0, 150)}...</p>
                     )}
                   </div>
                   <Link href={`/app/buscar?keyword=${encodeURIComponent(puestoFmt)}&location=${encodeURIComponent(ciudadFmt)}`}
                     className="shrink-0 px-4 py-2 rounded-xl text-xs font-semibold transition hover:opacity-80"
-                    style={{ background: "linear-gradient(135deg, #7ed56f, #5cb848)", color: "#1a1a12" }}>
+                    style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}>
                     Buscar ahora
                   </Link>
                 </div>
@@ -213,9 +213,9 @@ export default async function EmpleoPage({
           </div>
         ) : (
           <div className="card-game p-10 text-center mb-10">
-            <Search size={40} className="mx-auto mb-3" style={{ color: "#9a9378" }} />
-            <p className="font-semibold" style={{ color: "#f0ebe0" }}>No hay ofertas en este momento</p>
-            <p className="text-sm mt-1" style={{ color: "#9a9378" }}>
+            <Search size={40} className="mx-auto mb-3" style={{ color: "#64748b" }} />
+            <p className="font-semibold" style={{ color: "#f1f5f9" }}>No hay ofertas en este momento</p>
+            <p className="text-sm mt-1" style={{ color: "#64748b" }}>
               Prueba con términos similares o deja que Guzzi busque por ti
             </p>
             <Link href={`/app/buscar?keyword=${encodeURIComponent(puestoFmt)}&location=${encodeURIComponent(ciudadFmt)}`}
@@ -227,14 +227,14 @@ export default async function EmpleoPage({
 
         {/* Puestos relacionados */}
         <div className="mb-8">
-          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#9a9378" }}>
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>
             Empleos similares en {ciudadFmt}
           </h3>
           <div className="flex flex-wrap gap-2">
             {puestosRelacionados.map(p => (
               <Link key={p} href={`/empleo/${p}/${ciudad}`}
                 className="px-3 py-1.5 rounded-lg text-xs transition hover:opacity-80"
-                style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)", color: "#7ed56f" }}>
+                style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)", color: "#22c55e" }}>
                 {p} en {ciudadFmt}
               </Link>
             ))}
@@ -243,7 +243,7 @@ export default async function EmpleoPage({
 
         {/* Ciudades cercanas */}
         <div className="mb-8">
-          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#9a9378" }}>
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>
             {puestoFmt} en otras ciudades
           </h3>
           <div className="flex flex-wrap gap-2">

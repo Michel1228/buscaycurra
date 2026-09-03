@@ -707,6 +707,16 @@ test("el aviso de cookies usa el verde de marca", () =>
 test("el aviso de cookies ya no usa el azul ni el naranja de fuera de paleta", () =>
   !/#2563EB/i.test(cookieSrc) && !/#F97316/i.test(cookieSrc));
 
+// La paleta calida de texto. Habia DOS jerarquias de texto corriendo a la vez:
+// la fria (#f1f5f9/#94a3b8/#64748b), que documenta CLAUDE.md y usan 80
+// ficheros, y una calida sin documentar (#f0ebe0/#b0a890/#9a9378) que estaba
+// solo en trece pero incluia el panel principal y la tarjeta de oferta, o sea
+// lo que mas se ve al entrar. Se unifico a la fria.
+for (const calido of ["#f0ebe0", "#b0a890", "#9a9378", "#504a3a", "#7ed56f"]) {
+  test(`no ha vuelto el tono calido ${calido}`, () =>
+    contarEnFuentes(new RegExp(calido, "gi")) === 0);
+}
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

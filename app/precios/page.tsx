@@ -146,12 +146,12 @@ export default function PreciosPage() {
         <div className="text-center mb-14">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <LogoGusano size={36} animated />
-            <span className="font-bold" style={{ color: "#7ed56f" }}>BuscayCurra</span>
+            <span className="font-bold" style={{ color: "#22c55e" }}>BuscayCurra</span>
           </Link>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#f0ebe0" }}>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#f1f5f9" }}>
             Planes y precios
           </h1>
-          <p className="text-base" style={{ color: "#9a9378" }}>
+          <p className="text-base" style={{ color: "#64748b" }}>
             Sin permanencia. Cancela cuando quieras. Evoluciona a tu ritmo.
           </p>
         </div>
@@ -181,7 +181,7 @@ export default function PreciosPage() {
           {PLANES.map((plan) => (
             <div key={plan.id}
               className={`card-game p-7 text-center relative flex flex-col ${plan.dest ? "scale-[1.03]" : ""}`}
-              style={plan.dest ? { borderColor: "#7ed56f", boxShadow: "0 0 40px rgba(126,213,111,0.12)" } : {}}>
+              style={plan.dest ? { borderColor: "#22c55e", boxShadow: "0 0 40px rgba(126,213,111,0.12)" } : {}}>
 
               {plan.dest && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -199,28 +199,28 @@ export default function PreciosPage() {
               )}
 
               <div className="flex justify-center mb-3">
-                <plan.PlanIcon size={36} style={{ color: plan.dest ? "#7ed56f" : "#b0a890" }} />
+                <plan.PlanIcon size={36} style={{ color: plan.dest ? "#22c55e" : "#94a3b8" }} />
               </div>
-              <h2 className="text-xl font-bold" style={{ color: "#f0ebe0" }}>{plan.nombre}</h2>
-              <p className="text-xs mt-1 mb-4" style={{ color: "#9a9378" }}>{plan.desc}</p>
+              <h2 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>{plan.nombre}</h2>
+              <p className="text-xs mt-1 mb-4" style={{ color: "#64748b" }}>{plan.desc}</p>
 
               <div className="mb-5">
-                <span className="text-4xl font-black" style={{ color: plan.dest ? "#7ed56f" : "#f0ebe0" }}>
+                <span className="text-4xl font-black" style={{ color: plan.dest ? "#22c55e" : "#f1f5f9" }}>
                   {plan.precio}
                 </span>
-                <span className="text-sm ml-1" style={{ color: "#9a9378" }}>{plan.periodo}</span>
+                <span className="text-sm ml-1" style={{ color: "#64748b" }}>{plan.periodo}</span>
               </div>
 
               <ul className="space-y-2.5 mb-6 text-left flex-1">
                 {plan.items.map((item) => {
-                  const itemColor = item.highlight ? "#f0ebe0" : item.ok ? "#b0a890" : "#504a3a";
+                  const itemColor = item.highlight ? "#f1f5f9" : item.ok ? "#94a3b8" : "#64748b";
                   const itemWeight = item.highlight ? 600 : 400;
                   return (
                   <li key={item.t} className="flex items-start gap-2 text-sm">
                     <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{
                         background: item.ok ? "rgba(126,213,111,0.15)" : "rgba(80,74,58,0.3)",
-                        color: item.ok ? "#7ed56f" : "#504a3a",
+                        color: item.ok ? "#22c55e" : "#64748b",
                       }}>
                       {item.ok ? <Check size={10} strokeWidth={3} /> : <X size={10} strokeWidth={3} />}
                     </span>
@@ -247,7 +247,7 @@ export default function PreciosPage() {
         </div>
 
         {!iosNativo && (
-          <p className="text-center text-xs mt-10 flex items-center justify-center gap-1.5" style={{ color: "#504a3a" }}>
+          <p className="text-center text-xs mt-10 flex items-center justify-center gap-1.5" style={{ color: "#64748b" }}>
             <CreditCard size={12} />Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
           </p>
         )}
@@ -255,7 +255,7 @@ export default function PreciosPage() {
         {iosNativo && <RestaurarComprasBoton className="mt-10" />}
 
         <div className="text-center mt-6">
-          <Link href="/" className="text-sm hover:underline" style={{ color: "#9a9378" }}>
+          <Link href="/" className="text-sm hover:underline" style={{ color: "#64748b" }}>
             ← Volver a la landing
           </Link>
         </div>

@@ -55,7 +55,7 @@ export const GANCHOS = [
   {
     numero: DATOS.ofertasActivasTexto,
     titulo: "de ofertas, ahora mismo",
-    frase: "De 49 países. Las de tu barrio y las de Oslo, en el mismo sitio.",
+    frase: "De medio mundo. Las de tu barrio y las de Oslo, en el mismo sitio.",
   },
   {
     numero: DATOS.ofertasNuevasDiaTexto,

@@ -33,25 +33,25 @@ async function enviarEmail(
     <tr>
       <td style="padding:12px 0;border-bottom:1px solid #2a2a1f;">
         <a href="${href}" style="text-decoration:none;display:block;">
-          <div style="font-size:15px;font-weight:bold;color:#f0ebe0;">${o.titulo}</div>
-          <div style="font-size:13px;color:#7ed56f;margin-top:2px;">${o.empresa}
-            <span style="color:#504a3a;font-weight:normal;"> &middot; ${o.ubicacion}</span>
+          <div style="font-size:15px;font-weight:bold;color:#f1f5f9;">${o.titulo}</div>
+          <div style="font-size:13px;color:#22c55e;margin-top:2px;">${o.empresa}
+            <span style="color:#64748b;font-weight:normal;"> &middot; ${o.ubicacion}</span>
           </div>
-          <div style="font-size:11px;color:#504a3a;margin-top:4px;">Ver oferta →</div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;">Ver oferta →</div>
         </a>
       </td>
     </tr>`;
   }).join("");
 
   const html = `
-<div style="font-family:-apple-system,Arial,sans-serif;max-width:520px;margin:0 auto;background:#1a1a12;color:#f0ebe0;border-radius:16px;overflow:hidden;">
+<div style="font-family:-apple-system,Arial,sans-serif;max-width:520px;margin:0 auto;background:#1a1a12;color:#f1f5f9;border-radius:16px;overflow:hidden;">
   <div style="background:linear-gradient(135deg,#0a0f07,#1a1a12);padding:32px;text-align:center;">
     <div style="font-size:52px;line-height:1;">&#x1F40D;</div>
-    <h1 style="color:#7ed56f;margin:12px 0 6px;font-size:22px;letter-spacing:-0.5px;">
+    <h1 style="color:#22c55e;margin:12px 0 6px;font-size:22px;letter-spacing:-0.5px;">
       Guzzi encontro ${ofertas.length} nuevas ofertas para ti
     </h1>
-    <p style="color:#9a9378;margin:0;font-size:14px;">
-      Hola <strong style="color:#f0ebe0;">${nombre || "campeon"}</strong>,
+    <p style="color:#64748b;margin:0;font-size:14px;">
+      Hola <strong style="color:#f1f5f9;">${nombre || "campeon"}</strong>,
       hay ofertas nuevas de <strong style="color:#f0c040;">${puesto}</strong> desde ayer.
     </p>
   </div>
@@ -59,7 +59,7 @@ async function enviarEmail(
     <table style="width:100%;border-collapse:collapse;">${filas}</table>
     <div style="text-align:center;margin:28px 0 8px;">
       <a href="${APP_URL}/app/gusi"
-         style="display:inline-block;background:linear-gradient(135deg,#7ed56f,#5cb848);color:#0a0f07;font-weight:bold;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">
+         style="display:inline-block;background:linear-gradient(135deg,#22c55e,#5cb848);color:#0a0f07;font-weight:bold;font-size:15px;padding:14px 32px;border-radius:12px;text-decoration:none;">
         Ver todas con Guzzi &#x1F98B;
       </a>
     </div>

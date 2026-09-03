@@ -16,7 +16,7 @@
  */
 
 import Link from "next/link";
-import { Search, MapPin, Building2, Mail, ClipboardList, Bot } from "lucide-react";
+import { Search, MapPin, Building2, Users, Mail, ClipboardList, Bot } from "lucide-react";
 
 export type SeccionTrabajo =
   | "ofertas" | "zona" | "buscar" | "ett" | "envio" | "historial";
@@ -31,10 +31,10 @@ interface Seccion {
 }
 
 export const SECCIONES: Seccion[] = [
-  { id: "ofertas",   label: "Ofertas de trabajo", ayuda: "Puestos publicados, de 49 países",        Icon: Search,        pagina: "buscar" },
+  { id: "ofertas",   label: "Ofertas de trabajo", ayuda: "Publicados en medio mundo",        Icon: Search,        pagina: "buscar" },
   { id: "zona",      label: "Negocios de tu zona", ayuda: "Bares, talleres y tiendas cerca de ti",  Icon: MapPin,        pagina: "empresas" },
   { id: "buscar",    label: "Buscar una empresa",  ayuda: "Por su nombre, aunque sea el bar de al lado", Icon: Building2, pagina: "empresas" },
-  { id: "ett",       label: "ETTs y agencias",     ayuda: "Las que colocan gente en tu provincia",  Icon: Building2,     pagina: "empresas" },
+  { id: "ett",       label: "ETTs y agencias",     ayuda: "Las que colocan gente en tu provincia",  Icon: Users,         pagina: "empresas" },
   { id: "envio",     label: "Enviar mi CV",        ayuda: "Con carta escrita por IA para cada una", Icon: Mail,          pagina: "empresas" },
   { id: "historial", label: "Lo que he enviado",   ayuda: "A quién, cuándo y si han contestado",    Icon: ClipboardList, pagina: "empresas" },
 ];
@@ -69,12 +69,22 @@ export default function NavTrabajo({
             </span>
           </>
         );
+        // POR QUE LAS NO ACTIVAS LLEVAN CAJA. Antes eran `transparent` de fondo
+        // Y de borde: solo la seleccionada tenia forma, y las demas quedaban
+        // como texto gris suelto. No parecian pulsables porque visualmente no
+        // lo eran, y por eso "ETTs y agencias" o "Buscar una empresa" pasaban
+        // desapercibidas. Ahora cada una es una tarjeta con el mismo fondo y el
+        // mismo borde que el resto de la aplicacion, y la activa se distingue
+        // por el verde, no por ser la unica que se ve.
         const estilo = {
-          background: esActiva ? "rgba(34,197,94,0.12)" : "transparent",
-          border: `1px solid ${esActiva ? "rgba(34,197,94,0.35)" : "transparent"}`,
+          background: esActiva ? "rgba(34,197,94,0.12)" : "#1e212b",
+          border: `1px solid ${esActiva ? "rgba(34,197,94,0.35)" : "#2d3142"}`,
           color: esActiva ? "#22c55e" : "#94a3b8",
         };
-        const clases = "flex items-start gap-2 md:gap-2.5 px-2.5 md:px-3 py-2.5 rounded-lg text-[11px] md:text-xs transition text-left leading-tight";
+        const clases =
+          "flex items-start gap-2 md:gap-2.5 px-2.5 md:px-3 py-2.5 rounded-lg " +
+          "text-[11px] md:text-xs transition text-left leading-tight " +
+          (esActiva ? "" : "hover:border-[#22c55e]/40 hover:text-[#f1f5f9]");
 
         // Las secciones de la otra página son enlaces de verdad: se navega,
         // no se duplica el codigo de una pantalla dentro de la otra.
@@ -96,7 +106,7 @@ export default function NavTrabajo({
       {/* Guzzi cierra la lista: es la otra forma de hacer todo esto, hablando. */}
       <Link href="/app/gusi"
         className="flex items-start gap-2 md:gap-2.5 px-2.5 md:px-3 py-2.5 rounded-lg text-[11px] md:text-xs transition col-span-2 md:col-span-1 md:mt-2 leading-tight"
-        style={{ background: "rgba(34,197,94,0.06)", border: "1px dashed rgba(34,197,94,0.3)", color: "#22c55e" }}>
+        style={{ background: "rgba(34,197,94,0.07)", border: "1px dashed rgba(34,197,94,0.38)", color: "#22c55e" }}>
         <Bot size={15} className="mt-0.5 shrink-0" />
         <span className="min-w-0">
           <span className="block font-medium">Que lo haga Guzzi</span>
