@@ -489,13 +489,13 @@ export default function EmpresasPage() {
       {/* ── Header compartido ── */}
       <div
         className="py-8 px-4"
-        style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
+        style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}
       >
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-xl font-bold" style={{ color: "#fff" }}>
+          <h1 className="text-xl font-bold" style={{ color: "#22c55e" }}>
             Enviar CV a empresas
           </h1>
-          <p className="text-xs mt-1 opacity-90" style={{ color: "#fff" }}>
+          <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
             Cualquier empresa vale: Mercadona, el taller del polígono o el bar de debajo de tu casa.
             Buscamos su teléfono y su email, y le mandamos tu CV con una carta escrita por IA.
           </p>

@@ -145,15 +145,15 @@ export default async function EmpleoPage({
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #0f1a0a, #1a1a12)" }}>
       {/* Header SEO */}
-      <div className="py-12 px-4" style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}>
+      <div className="py-12 px-4" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}>
         <div className="max-w-4xl mx-auto">
-          <nav className="text-xs mb-4 opacity-70">
+          <nav className="text-xs mb-4" style={{ color: "#64748b" }}>
             <Link href="/">Inicio</Link> → <Link href="/app/buscar">Empleo</Link> → {puestoFmt} → {ciudadFmt}
           </nav>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#22c55e" }}>
             Trabajo de {puestoFmt} en {ciudadFmt}
           </h1>
-          <p className="text-base opacity-80">
+          <p className="text-base" style={{ color: "#94a3b8" }}>
             {total.toLocaleString("es-ES")} ofertas encontradas. 
             Encuentra tu próximo empleo con BuscayCurra.
           </p>

@@ -796,10 +796,15 @@ for (const pantalla of [
   "app/app/curriculum/Content.tsx",
   "app/app/curriculum/guardados/page.tsx",
   "app/app/notificaciones/page.tsx",
+  "app/app/empresas/page.tsx",
+  "app/empleo/[puesto]/[ciudad]/page.tsx",
 ]) {
-  test(`${pantalla.split("/").slice(2).join("/")} no lleva bloque de verde macizo`, () =>
-    !leerFuente(pantalla).includes('background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>') &&
-    !leerFuente(pantalla).includes('background: "linear-gradient(135deg, #22c55e, #5cb848)"'));
+  // Ojo: solo se vigilan las CABECERAS a pantalla completa. Un boton con
+  // degradado verde esta bien y no debe hacer fallar nada; el problema eran los
+  // bloques de color macizo ocupando todo el ancho.
+  test(`${pantalla.split("/").slice(2).join("/")} no lleva cabecera de verde macizo`, () =>
+    !/<div\s*\n?\s*className="(?:py-\d+ px-\d+|px-\d+ py-\d+)[^"]*"\s*\n?\s*style=\{\{ background: "linear-gradient\(135deg, #22c55e/m
+      .test(leerFuente(pantalla)));
 }
 
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
