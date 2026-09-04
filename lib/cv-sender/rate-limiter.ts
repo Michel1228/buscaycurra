@@ -11,6 +11,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { PLAN_LIMITS, type UserPlan } from "./plans";
+import { LIMITS } from "@/lib/plan-limits";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,10 +147,38 @@ export async function checkRateLimit(
     };
   }
 
+  // EL LIMITE SEMANAL NO SE COMPROBABA NUNCA. Estaba declarado en
+  // plan-limits.ts (enviosCVSemana) y solo se usaba para calcular el mensual
+  // como semana*4. Sin el, alguien podia gastarse el mes entero en nueve dias
+  // a base de rafagas diarias, que es justo lo que el limite semanal existe
+  // para evitar: repartir el envio en el tiempo en vez de bombardear.
+  const inicioSemana = new Date();
+  inicioSemana.setDate(inicioSemana.getDate() - 7);
+  const { count: enviadosSemana } = await getSupabase()
+    .from("cv_sends")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .in("status", ESTADOS_QUE_GASTAN_CUOTA)
+    .gte("created_at", inicioSemana.toISOString());
+
+  const semana = enviadosSemana ?? 0;
+  const limiteSemana = LIMITS[plan]?.enviosCVSemana ?? Infinity;
+  if (semana >= limiteSemana) {
+    return {
+      allowed: false,
+      reason: `Has enviado ${semana} CVs en los ultimos siete dias, el maximo de tu plan ${plan}. Se te van liberando segun pasan los dias.`,
+      enviadosHoy: hoy,
+      enviadosEsteMes: mes,
+      limiteHoy: limite.perDay,
+      limiteMes: limite.perMonth,
+      cvsRestantesHoy: 0,
+    };
+  }
+
   if (mes >= limite.perMonth) {
     return {
       allowed: false,
-      reason: `📦 ¡Vaya mes! Has alcanzado el tope mensual de ${limite.perMonth} CVs en el plan ${plan}. El plan Pro te da 500 envíos al mes para seguir a tope.`,
+      reason: `📦 ¡Vaya mes! Has alcanzado el tope mensual de ${limite.perMonth} CVs en el plan ${plan}. Con el plan Pro son ${PLAN_LIMITS.pro.perMonth} al mes.`,
       enviadosHoy: hoy,
       enviadosEsteMes: mes,
       limiteHoy: limite.perDay,

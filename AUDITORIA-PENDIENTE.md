@@ -36,7 +36,7 @@
 
 **En curso.** Es por donde se sigue.
 
-- [ ] **Cambiar de plan en el portal de Stripe no cambia el plan en la app.**
+- [x] ~~**Cambiar de plan en el portal de Stripe no cambia el plan en la app.**
   `app/api/stripe/webhook/route.ts:216-230` — `customer.subscription.updated`
   solo escribe `subscription_status`, y solo si venía de `past_due`. **Nunca
   toca la columna `plan`.** El checkout rechaza con 409 a quien ya tiene plan
@@ -48,7 +48,9 @@
 
 - [ ] **El plan gratuito regala el gancho de Esencial.** `app/precios/page.tsx`
   promete "Sin envíos de CV" con la cruz puesta; `lib/plan-limits.ts:37` da
-  `enviosCVDia: 3` → **~90 envíos al mes gratis**. Decidir qué gana: la promesa
+  `enviosCVDia: 3` con tope de **28 al mes** (`enviosCVSemana * 4`). OJO: el
+  informe del auditor decia ~90 y es FALSO — el tope mensual si se aplica.
+  Comprobado: free 3/dia y 28/mes; pro 50/dia y 1.400/mes. Decidir qué gana: la promesa
   o el código. Otras dos discrepancias en la misma tabla: cámara (dice 3, da 2)
   y consultas a Guzzi (dice "2 total", da 15 diarias).
 
@@ -71,8 +73,8 @@
   `analyze-image:69`): select-then-upsert no atómico. Diez peticiones a la vez
   gastan diez fotos de GPT-4o en vez de dos.
 
-- [ ] El límite **semanal** de envíos no se aplica nunca (`rate-limiter.ts`
-  comprueba día y mes). Y el mensaje de tope dice "500 al mes" cuando son 1.400.
+- [x] ~~El límite **semanal** de envíos no se aplica nunca. Y el mensaje de tope
+  dice "500 al mes" cuando son 1.400.~~ **ARREGLADO**.
 
 - [ ] El plan Empresa **se salta la lista negra** (`rate-limiter.ts:84-94`):
   el que más envía es el único que ignora a quien pidió no recibir CVs. Riesgo

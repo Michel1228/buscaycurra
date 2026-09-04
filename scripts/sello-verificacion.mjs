@@ -943,6 +943,27 @@ test("el candado antiduplicados se cierra cuando falla, no se abre", () =>
   trackerSrc.includes("Se bloquea el envio por precaucion") &&
   !trackerSrc.includes("if (error || !data || data.length === 0)"));
 
+// CAMBIAR DE PLAN EN STRIPE NO CAMBIABA EL PLAN. El evento
+// customer.subscription.updated solo escribia subscription_status, y solo si
+// venia de past_due: NUNCA tocaba la columna `plan`. Y como el checkout rechaza
+// a quien ya tiene plan activo, el portal es la UNICA via para cambiarlo. Bajar
+// de plan = pagar menos y conservar los limites de antes. Subir = pagar mas y
+// quedarse con los de antes.
+const stripeHook = leerFuente("app/api/stripe/webhook/route.ts");
+test("el webhook de Stripe actualiza el PLAN al cambiar de suscripcion", () =>
+  /customer\.subscription\.updated[\s\S]{0,2000}cambios\.plan = planActual/.test(stripeHook));
+test("y avisa si el precio de Stripe no esta en el mapa de planes", () =>
+  stripeHook.includes('planActual === "free"') && stripeHook.includes("Precio desconocido"));
+
+// EL LIMITE SEMANAL DE ENVIOS NO SE COMPROBABA NUNCA. Estaba declarado y solo
+// se usaba para calcular el mensual (semana*4). Y el mensaje del tope decia
+// "El plan Pro te da 500 envios al mes" cuando el real son 1.400.
+const rlSrc = leerFuente("lib/cv-sender/rate-limiter.ts");
+test("el limite semanal de envios se aplica de verdad", () =>
+  rlSrc.includes("limiteSemana") && rlSrc.includes("enviosCVSemana"));
+test("el mensaje del tope no promete una cifra inventada", () =>
+  !rlSrc.includes("te da 500 envíos al mes"));
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

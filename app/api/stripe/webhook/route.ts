@@ -210,21 +210,60 @@ export async function POST(request: NextRequest) {
         break;
       }
 
-      // ── Stripe reintenta el cobro en background y a veces recupera la
-      // suscripcion sin pasar por invoice.payment_succeeded — este evento
-      // es el que lo confirma cuando status vuelve a 'active'/'trialing'.
+      // ── CAMBIO DE PLAN. Este evento hacía media cosa y la otra media era la
+      // importante.
+      //
+      // Solo escribía `subscription_status`, y encima solo cuando el estado
+      // anterior era 'past_due'. NUNCA tocaba la columna `plan`. Y como el
+      // checkout rechaza con 409 a quien ya tiene un plan activo
+      // (checkout/route.ts), el portal de Stripe es la ÚNICA vía para cambiar
+      // de plan — y es la que le ofrecemos nosotros desde el perfil.
+      //
+      // Resultado: quien bajaba de Pro a Esencial pagaba 2,99 € y conservaba
+      // los límites de 9,99 €. Quien subía de Esencial a Pro pagaba 9,99 € y
+      // se quedaba con 30 consultas al día en vez de 100 — pagando más por lo
+      // mismo, que es como se pierde un cliente y se devuelve el dinero.
+      //
+      // Lo que lo remata: el webhook de RevenueCat SÍ lo hace bien, actualiza
+      // el plan en PRODUCT_CHANGE. La misma función, resuelta en Apple y
+      // olvidada en Stripe.
       case "customer.subscription.updated": {
         const suscripcion = event.data.object as Stripe.Subscription;
         const customerId = suscripcion.customer as string;
-        if (suscripcion.status === "active" || suscripcion.status === "trialing") {
-          const { error: errorActualizar } = await supabaseAdmin
-            .from("profiles")
-            .update({ subscription_status: "active", updated_at: new Date().toISOString() })
-            .eq("stripe_customer_id", customerId)
-            .eq("subscription_status", "past_due");
-          if (errorActualizar) {
-            console.error("[stripe/webhook] Error al sincronizar subscription_status:", errorActualizar.message);
-          }
+        const activa = suscripcion.status === "active" || suscripcion.status === "trialing";
+
+        // El plan que dice la suscripción AHORA, que es el que manda.
+        const priceId = suscripcion.items.data[0]?.price.id;
+        const planActual = priceId ? getPlanFromPriceId(priceId) : null;
+
+        const cambios: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        if (activa) cambios.subscription_status = "active";
+        // Solo se escribe el plan si se ha podido resolver de verdad y la
+        // suscripción está viva. Si Stripe manda un precio que no conocemos, es
+        // mejor dejar el plan como está que degradar a alguien que paga.
+        if (activa && planActual && planActual !== "free") {
+          cambios.plan = planActual;
+          cambios.plan_source = "stripe";
+        }
+
+        const { error: errorActualizar } = await supabaseAdmin
+          .from("profiles")
+          .update(cambios)
+          .eq("stripe_customer_id", customerId);
+
+        if (errorActualizar) {
+          console.error("[stripe/webhook] Error al sincronizar la suscripción:", errorActualizar.message);
+        } else if (cambios.plan) {
+          console.log(`[stripe/webhook] Plan actualizado a "${cambios.plan}" para el cliente ${customerId}`);
+        } else if (activa && priceId && planActual === "free") {
+          // OJO: getPlanFromPriceId devuelve "free" cuando NO conoce el precio,
+          // no null. Esta rama tiene que comprobar eso, no una ausencia de
+          // valor; escrita de la otra forma no se alcanzaría nunca, que es
+          // justo la clase de fallo mudo que este commit arregla.
+          //
+          // Si salta: alguien ha creado un producto nuevo en Stripe y no está
+          // en el mapa, así que quien lo contrate se quedará sin plan.
+          console.error(`[stripe/webhook] Precio desconocido ${priceId}: el plan NO se ha actualizado. Añádelo a PLANES en lib/stripe.ts.`);
         }
         break;
       }
