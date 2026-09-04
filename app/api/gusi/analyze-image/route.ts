@@ -73,20 +73,46 @@ export async function POST(req: NextRequest) {
         } else {
           // Cuota DIARIA recargable para todos (antes el free usaba "trial" = total de por vida).
           const dateKey = new Date().toISOString().slice(0, 10);
-          const { data: usage } = await sbAdmin.from("usage_tracking")
-            .select("camara_usos").eq("user_id", userId).eq("date_key", dateKey).single();
-          const usos = usage?.camara_usos ?? 0;
-          if (usos >= limits.camaraMaxUsos) {
-            const msg = plan === "free"
-              ? `📸 Has usado tus ${limits.camaraMaxUsos} búsquedas por cámara de hoy. Mañana se recargan. Con Esencial (2,99€/mes) tienes 10/día.`
-              : `📸 Límite de ${limits.camaraMaxUsos} fotos/día alcanzado. Mañana se resetea. Sube a Pro para 30/día.`;
-            return NextResponse.json({ error: msg }, { status: 429 });
+          const sinCuota = plan === "free"
+            ? `📸 Has usado tus ${limits.camaraMaxUsos} búsquedas por cámara de hoy. Mañana se recargan. Con Esencial (2,99€/mes) tienes 10/día.`
+            : `📸 Límite de ${limits.camaraMaxUsos} fotos/día alcanzado. Mañana se resetea. Sube a Pro para 30/día.`;
+
+          // SUMAR Y COMPROBAR EN LA MISMA OPERACION.
+          //
+          // Antes se leia el contador, se comparaba y luego se escribia. Entre
+          // la lectura y la escritura cabe otra peticion: diez a la vez leen el
+          // mismo valor, las diez pasan la comprobacion y las diez gastan una
+          // foto. Para alguien del plan gratuito —2 al dia— son diez llamadas a
+          // la vision de GPT-4o, que es la mas cara que tenemos y se paga por
+          // foto.
+          //
+          // La funcion de base de datos (migracion 005) suma con un WHERE dentro
+          // del ON CONFLICT: si ya no queda cuota no actualiza, no devuelve fila
+          // y aqui llega null. No queda hueco entre comprobar y escribir.
+          const { data: nuevoUso, error: errRpc } = await sbAdmin.rpc("consumir_uso_camara", {
+            p_user_id: userId,
+            p_date_key: dateKey,
+            p_limite: limits.camaraMaxUsos,
+          });
+
+          if (errRpc) {
+            // La funcion aun no existe en la base (migracion sin aplicar). Se
+            // usa el metodo de antes para no dejar la camara inservible, pero se
+            // dice en el log: por esta rama la carrera sigue abierta.
+            console.warn("[analyze-image] consumir_uso_camara no disponible, metodo antiguo:", errRpc.message);
+            const { data: usage } = await sbAdmin.from("usage_tracking")
+              .select("camara_usos").eq("user_id", userId).eq("date_key", dateKey).single();
+            const usos = usage?.camara_usos ?? 0;
+            if (usos >= limits.camaraMaxUsos) {
+              return NextResponse.json({ error: sinCuota }, { status: 429 });
+            }
+            await sbAdmin.from("usage_tracking").upsert(
+              { user_id: userId, date_key: dateKey, week_key: "", camara_usos: usos + 1 },
+              { onConflict: "user_id,date_key" }
+            );
+          } else if (nuevoUso === null) {
+            return NextResponse.json({ error: sinCuota }, { status: 429 });
           }
-          // Registrar uso
-          await sbAdmin.from("usage_tracking").upsert(
-            { user_id: userId, date_key: dateKey, week_key: "", camara_usos: usos + 1 },
-            { onConflict: "user_id,date_key" }
-          );
         }
       } catch (errLimite) {
         // FALLA CERRADO a proposito. Antes se permitia igual "por si acaso",

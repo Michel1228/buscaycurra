@@ -67,18 +67,28 @@
   pasan ya por el plan efectivo, con un ayudante compartido para que no haya que
   acordarse en cada endpoint nuevo.
 
-- [ ] **Dos funciones de pago accesibles gratis.**
+- [x] ~~**Dos funciones de pago accesibles gratis.**
   `/api/cv-sender/preview-carta` (carta con IA) solo pide sesión, no lee
   `cartaPersonalizada`. `/api/referidos` GET no lee `codigosPromocionales`.
-  Los dos flags existen y solo se usan para pintar el check en pantalla.
+  Los dos flags existen y solo se usan para pintar el check en pantalla.~~
+  **ARREGLADO**: los dos endpoints leen ahora el flag del plan efectivo y
+  devuelven 403 con el motivo, en vez de servir la función y no cobrarla.
 
 - [x] ~~**"API e integraciones" del plan Empresa (49,99 €) no existe.**~~ Ya no se
   vende como incluida: sale como "(proximamente)" y sin tick. **Pendiente de
   Michel**: construirla o quitarla de la lista.
 
-- [ ] Carrera en los contadores de cuota (`usage-tracker.ts:103`,
+- [x] ~~Carrera en los contadores de cuota (`usage-tracker.ts:103`,
   `analyze-image:69`): select-then-upsert no atómico. Diez peticiones a la vez
-  gastan diez fotos de GPT-4o en vez de dos.
+  gastan diez fotos de GPT-4o en vez de dos.~~ **ARREGLADO en el código**: la
+  cámara suma y comprueba en la misma operación, con la función
+  `consumir_uso_camara` de `db/migrations/005_consumir_cuota_atomico.sql`.
+  El `where` del `on conflict` es lo que lo hace atómico: si no queda cuota no
+  actualiza, no devuelve fila, y llega `null`. Si la función todavía no existe
+  en la base, se usa el método viejo y se avisa por el log, para no dejar la
+  cámara inservible mientras tanto.
+  ⚠️ **PENDIENTE DE MICHEL**: aplicar la migración 005 en Supabase. Hasta
+  entonces la carrera sigue abierta.
 
 - [x] ~~El límite **semanal** de envíos no se aplica nunca. Y el mensaje de tope
   dice "500 al mes" cuando son 1.400.~~ **ARREGLADO**.

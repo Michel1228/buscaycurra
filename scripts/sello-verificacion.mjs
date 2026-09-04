@@ -1049,11 +1049,45 @@ test("la portada no repite la misma cifra dos veces", () =>
 // Se espera a que TODAS terminen. Antes había un setTimeout de 5 segundos a
 // ciegas, que podía cortar comprobaciones a medias y dar el visto bueno sin
 // haberlas hecho.
+// ── NAVEGACION EN MOVIL ──────────────────────────────────────────────────────
+//
+// La barra de /app/* es `fixed top-0` y mide 56px, y no empuja el contenido:
+// cada pagina tiene que dejarle sitio ella misma. La de detalle de oferta se
+// quedo en py-6 (24px), asi que su primera fila —que era justo el boton de
+// volver— aparecia DEBAJO de la barra. En el navegador se disimula porque el
+// movil trae su propio boton de atras; dentro de la app del iPhone no hay
+// ninguno, y el usuario se quedaba encerrado en la oferta.
+const PAGINAS_APP = [
+  "app/app/ofertas/[id]/OfertaDetalleClient.tsx",
+  "app/app/au-pair/page.tsx",
+  "app/app/admin/page.tsx",
+  "app/app/emigrar/page.tsx",
+];
+for (const pagina of PAGINAS_APP) {
+  test(`${pagina} deja sitio a la barra fija de 56px`, () => {
+    const src = leerFuente(pagina);
+    // pt-16 = 64px, pt-20 = 80px, pt-24 = 96px. Cualquiera pasa de 56.
+    return src.includes("pt-16") || src.includes("pt-20") || src.includes("pt-24");
+  });
+}
+
+// El iPhone no tiene boton de atras: la vista de detalle necesita el suyo, y
+// tiene que poder pulsarse (Apple pide 44px) y funcionar aunque no haya
+// historial, que es lo que pasa al abrir la oferta desde una notificacion.
+const detalleSrc = leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx");
+test("el detalle de oferta lleva flecha de volver", () =>
+  detalleSrc.includes("<ArrowLeft") && detalleSrc.includes("router.back()"));
+test("la flecha de volver se puede tocar con el dedo (44px)", () =>
+  detalleSrc.includes('minHeight: "44px"'));
+test("volver funciona aunque no haya historial (llegada por notificacion)", () =>
+  detalleSrc.includes("window.history.length > 1"));
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);
 console.log(`  ✅ Passed: ${passed}  ❌ Failed: ${failed}`);
 console.log(`${'═'.repeat(50)}\n`);
+
 // SIN process.exit(). En Windows, cortar el proceso mientras libuv todavía está
 // cerrando las conexiones de los fetch revienta con
 //

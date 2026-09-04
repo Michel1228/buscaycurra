@@ -25,6 +25,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
     }
 
+    // FUNCION DE PAGO. Los codigos promocionales salen con la cruz en los planes
+    // gratuito y Esencial, pero aqui bastaba con tener sesion. El flag
+    // codigosPromocionales existia y solo se usaba para pintar el check.
+    const { getPlanLimits, planEfectivoDeUsuario } = await import("@/lib/plan-limits");
+    if (!getPlanLimits(await planEfectivoDeUsuario(supabaseAdmin, user.id)).codigosPromocionales) {
+      return NextResponse.json(
+        { error: "Los códigos de referido están en el plan Pro.", upgradeUrl: "/app/perfil?tab=plan" },
+        { status: 402 },
+      );
+    }
+
     // Obtener o generar código de referido
     const { data: perfil } = await supabaseAdmin
       .from("profiles")

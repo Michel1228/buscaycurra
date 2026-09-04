@@ -20,6 +20,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
     }
 
+    // FUNCION DE PAGO. La carta personalizada con IA sale con la cruz puesta en
+    // el plan gratuito de la pagina de precios, pero aqui solo se pedia sesion:
+    // cualquiera podia llamar al endpoint y gastarnos llamadas al modelo. El
+    // flag cartaPersonalizada existia en plan-limits desde el principio y solo
+    // se usaba para pintar el check en pantalla. Es el mismo fallo que tenia el
+    // simulador de entrevistas.
+    const { getPlanLimits, planEfectivoDeUsuario } = await import("@/lib/plan-limits");
+    const { createClient: crearSb } = await import("@supabase/supabase-js");
+    const sbPlan = crearSb(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+    if (!getPlanLimits(await planEfectivoDeUsuario(sbPlan, userId)).cartaPersonalizada) {
+      return NextResponse.json(
+        { error: "La carta personalizada con IA está en los planes de pago. Desde 2,99 €/mes la tienes.", upgradeUrl: "/app/perfil?tab=plan" },
+        { status: 402 },
+      );
+    }
+
     const { companyName, companyEmail, jobTitle, cvId } = await req.json() as {
       companyName?: string;
       companyEmail?: string;
