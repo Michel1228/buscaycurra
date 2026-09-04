@@ -46,13 +46,17 @@
   · **RevenueCat sí lo hace bien** (`revenuecat/webhook/route.ts:138-162`,
     `PRODUCT_CHANGE`). La misma función resuelta en Apple y olvidada en Stripe.
 
-- [ ] **El plan gratuito regala el gancho de Esencial.** `app/precios/page.tsx`
+- [x] ~~**El plan gratuito regala el gancho de Esencial.** `app/precios/page.tsx`
   promete "Sin envíos de CV" con la cruz puesta; `lib/plan-limits.ts:37` da
   `enviosCVDia: 3` con tope de **28 al mes** (`enviosCVSemana * 4`). OJO: el
   informe del auditor decia ~90 y es FALSO — el tope mensual si se aplica.
   Comprobado: free 3/dia y 28/mes; pro 50/dia y 1.400/mes. Decidir qué gana: la promesa
   o el código. Otras dos discrepancias en la misma tabla: cámara (dice 3, da 2)
-  y consultas a Guzzi (dice "2 total", da 15 diarias).
+  y consultas a Guzzi (dice "2 total", da 15 diarias).~~ **DECIDIDO Y ARREGLADO**:
+  Michel: el plan gratuito SI debe enviar CV, es lo que nos separa de InfoJobs.
+  Gana el codigo; la pagina se ha cuadrado con el y ahora saca los numeros de
+  LIMITS en vez de escribirlos. Los envios gratis se ANUNCIAN en vez de
+  esconderse.
 
 - [ ] **La morosidad solo protege a Guzzi.** `getPlanEfectivo`
   (`lib/plan-limits.ts:138`) es la única función que mira `subscription_status`
@@ -66,8 +70,9 @@
   `cartaPersonalizada`. `/api/referidos` GET no lee `codigosPromocionales`.
   Los dos flags existen y solo se usan para pintar el check en pantalla.
 
-- [ ] **"API e integraciones" del plan Empresa (49,99 €) no existe.** Prometido
-  en precios y con `apiAccess: true` en plan-limits. No hay endpoint ni claves.
+- [x] ~~**"API e integraciones" del plan Empresa (49,99 €) no existe.**~~ Ya no se
+  vende como incluida: sale como "(proximamente)" y sin tick. **Pendiente de
+  Michel**: construirla o quitarla de la lista.
 
 - [ ] Carrera en los contadores de cuota (`usage-tracker.ts:103`,
   `analyze-image:69`): select-then-upsert no atómico. Diez peticiones a la vez

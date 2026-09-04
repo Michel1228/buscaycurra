@@ -6,6 +6,14 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import { isNativeIOS } from "@/lib/utils/platform";
+// LOS NUMEROS SALEN DE AQUI, NO SE ESCRIBEN A MANO.
+//
+// Esta pagina tenia sus propias cifras y se habian separado del codigo: decia
+// "Sin envios de CV" en el plan gratuito cuando el codigo da 3 al dia, "3
+// busquedas por camara" cuando son 2, y "2 consultas a Guzzi (total)" cuando
+// son 15 diarias. Dos sitios escribiendo lo mismo por separado siempre acaban
+// diciendo cosas distintas.
+import { LIMITS } from "@/lib/plan-limits";
 import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
 import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 import { Bot, Zap, Building2, Sprout, Egg, Star, CreditCard, Check, X, Apple } from "lucide-react";
@@ -14,16 +22,20 @@ import { NUM_PAISES } from "@/lib/paises";
 const PLANES = [
   {
     id: "free", nombre: "Gratis", precio: "0€", periodo: "para siempre", PlanIcon: Egg,
-    desc: "Para probar la plataforma",
-    badge: "Sin envíos de CV",
+    desc: "Para buscar trabajo de verdad, sin pagar",
+    // El plan gratuito SI envia CV, y eso es lo que nos separa de InfoJobs: alli
+    // te apuntas gratis y luego buscas tu. Esconderlo detras de un "Sin envios
+    // de CV" era tirar el mejor argumento que tenemos, y ademas era falso.
+    badge: `${LIMITS.free.enviosCVDia} envíos de CV al día`,
     items: [
-      { t: "3 búsquedas por cámara", ok: true, highlight: false },
-      { t: "2 consultas a Guzzi (total)", ok: true, highlight: false },
-      { t: "1 CV creado con IA", ok: true, highlight: false },
+      { t: `${LIMITS.free.enviosCVDia} envíos de CV al día`, ok: true, highlight: true },
+      { t: `${LIMITS.free.guzziMaxConsultasDia} consultas a Guzzi al día`, ok: true, highlight: false },
+      { t: `${LIMITS.free.camaraMaxUsos} búsquedas por cámara al día`, ok: true, highlight: false },
+      { t: `${LIMITS.free.cvConIAGratis} CV creado con IA`, ok: true, highlight: false },
       { t: `Búsqueda en ${NUM_PAISES} países`, ok: true, highlight: false },
+      { t: `${LIMITS.free.ofertasGuardadas} ofertas guardadas`, ok: true, highlight: false },
       { t: "Pipeline kanban", ok: true, highlight: false },
       { t: "Comparador salarios", ok: true, highlight: false },
-      { t: "Envíos de CV", ok: false, highlight: false },
       { t: "Carta IA personalizada", ok: false, highlight: false },
       { t: "Preparar entrevista", ok: false, highlight: false },
     ],
@@ -76,7 +88,12 @@ const PLANES = [
       { t: "CVs ilimitados", ok: true, highlight: false },
       { t: "Ofertas ilimitadas", ok: true, highlight: false },
       { t: "Códigos promocionales", ok: true, highlight: false },
-      { t: "API e integraciones", ok: true, highlight: false },
+      // NO SE VENDE LO QUE NO EXISTE. Esto salia con el tick puesto en un plan
+      // de 49,99 EUR, y no hay ninguna API para clientes: ni ruta, ni claves,
+      // ni forma de darla de alta. Comprobado con grep en todo el proyecto —
+      // apiAccess solo aparece en plan-limits.ts y para pintar este check.
+      // Se marca como lo que es hasta que exista de verdad.
+      { t: "API e integraciones (próximamente)", ok: false, highlight: false },
       { t: "Soporte 24/7", ok: true, highlight: false },
     ],
     dest: false, btn: "Elegir Empresa", accion: "empresa" as const,

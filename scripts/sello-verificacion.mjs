@@ -964,6 +964,51 @@ test("el limite semanal de envios se aplica de verdad", () =>
 test("el mensaje del tope no promete una cifra inventada", () =>
   !rlSrc.includes("te da 500 envíos al mes"));
 
+// LA PAGINA DE PRECIOS PROMETIA UNA COSA Y EL CODIGO HACIA OTRA.
+//
+// Decia "Sin envios de CV" en el plan gratuito cuando el codigo da 3 al dia (28
+// al mes), "3 busquedas por camara" cuando son 2, y "2 consultas a Guzzi
+// (total)" cuando son 15 DIARIAS. Dos sitios escribiendo los mismos numeros por
+// separado siempre acaban diciendo cosas distintas.
+//
+// Michel decidio que el plan gratuito SI debe enviar CV —es lo que nos separa de
+// InfoJobs— asi que gana el codigo y la pagina se cuadra con el. Ahora ademas
+// saca los numeros de LIMITS en vez de escribirlos.
+const preciosSrc = leerFuente("app/precios/page.tsx");
+const limitsSrc = leerFuente("lib/plan-limits.ts");
+
+test("la pagina de precios saca los numeros del codigo, no a mano", () =>
+  preciosSrc.includes('from "@/lib/plan-limits"') && preciosSrc.includes("LIMITS.free.enviosCVDia"));
+test("el plan gratuito ya no dice que no puede enviar CV", () =>
+  !preciosSrc.includes('badge: "Sin envíos de CV"') &&
+  !/\{ t: "Envíos de CV", ok: false/.test(preciosSrc));
+test("no se vende una API que no existe", () =>
+  !/\{ t: "API e integraciones", ok: true/.test(preciosSrc));
+
+// Y que los numeros de los planes DE PAGO sigan cuadrando con plan-limits.
+// Hoy cuadran; esto es para que no se separen manana.
+function limiteDe(plan, campo) {
+  // OJO CON LAS PLANTILLAS DE JAVASCRIPT. La primera version construia la
+  // expresion con backticks, y ahi \s y \d se quedan en "s" y "d": acababa
+  // buscando "enviosCVDias*(d+)", que no casa con nada. Devolvia null y la
+  // comprobacion fallaba sin que el codigo tuviera ningun problema — o sea, una
+  // prueba que miente, que es peor que no tenerla. Con concatenacion normal los
+  // escapes sobreviven.
+  const bloque = limitsSrc.split(plan + ": {")[1] || "";
+  const m = bloque.match(new RegExp(campo + ":\\s*(\\d+)"));
+  return m ? m[1] : null;
+}
+for (const [plan, campo, texto] of [
+  ["esencial", "enviosCVDia", "envíos CV/día"],
+  ["esencial", "guzziMaxConsultasDia", "consultas/día a Guzzi"],
+  ["pro", "enviosCVDia", "envíos CV/día"],
+  ["pro", "guzziMaxConsultasDia", "consultas/día a Guzzi"],
+]) {
+  const n = limiteDe(plan, campo);
+  test(`precios cuadra con el codigo: ${plan} ${texto} = ${n}`, () =>
+    n !== null && preciosSrc.includes(`${n} ${texto}`));
+}
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>
