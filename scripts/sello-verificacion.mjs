@@ -526,6 +526,58 @@ test("paro_europeo va ANTES de la regla generica de buscar", () =>
   posParo > 0 && posBuscarGenerico > 0 && posParo < posBuscarGenerico);
 test("cv_por_pais va ANTES de info_empresa", () =>
   posCv > 0 && posInfoEmpresa > 0 && posCv < posInfoEmpresa);
+
+// ─────────────────────────────────────────────────────────────────────────
+// Y AHORA EJECUTANDO LA FUNCION DE VERDAD, QUE ES LA LECCION.
+//
+// Las cuatro comprobaciones de arriba solo miran POSICIONES DE TEXTO en el
+// fichero. Pasaron en verde durante dos dias mientras la regla del paro estaba
+// MUERTA: las expresiones llevaban el byte de retroceso (0x08) donde tenia que
+// ir la secuencia \b de limite de palabra. Ningun texto humano contiene ese
+// byte, asi que la condicion era siempre falsa. El texto estaba en su sitio y
+// el orden era el correcto; lo unico que no funcionaba era el codigo.
+//
+// Una comprobacion que no ejecuta lo que vigila no vigila nada. Estas si lo
+// ejecutan: se compila intents.ts con esbuild y se le pasan frases reales.
+// ─────────────────────────────────────────────────────────────────────────
+test("detectIntent CLASIFICA BIEN frases reales (no solo existe el texto)", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-intents.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/guzzi/intents.ts", "--bundle",
+      "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+      { stdio: "pipe", shell: true });
+    const { detectIntent } = await import(`../${salida}`);
+    const casos = [
+      // El caso exacto que estuvo roto: se iba a "buscar" y contestaba
+      // "¿que puesto buscas?" a quien preguntaba si pierde el paro.
+      ["estoy cobrando el paro y me quiero ir a Alemania a buscar trabajo, lo pierdo?", "paro_europeo"],
+      ["quiero buscar trabajo en Alemania sin perder el paro", "paro_europeo"],
+      ["puedo mantener la prestacion si busco empleo en Irlanda", "paro_europeo"],
+      ["necesito el U2 para buscar trabajo en Holanda", "paro_europeo"],
+      // Y que no se haya vuelto tan glotona que se coma las busquedas normales.
+      ["camarero en Madrid", "buscar"],
+      ["ingeniero de sonido en Barcelona", "buscar"],
+    ];
+    const fallos = casos.filter(([frase, esperado]) => detectIntent(frase) !== esperado);
+    if (fallos.length) {
+      for (const [frase, esperado] of fallos) {
+        console.log(`     ↳ "${frase.slice(0, 50)}" deberia ser ${esperado} y da ${detectIntent(frase)}`);
+      }
+    }
+    try { unlinkSync(salida); } catch { /* da igual */ }
+    return fallos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar intents.ts: ${e.message?.slice(0, 80)}`);
+    return false;
+  }
+});
+
+// El byte de retroceso es invisible al leer el codigo y rompe cualquier regex
+// donde se cuele. Ya paso una vez; que no vuelva a pasar sin avisar.
+test("no hay bytes de retroceso (0x08) escondidos en las expresiones", () =>
+  !intentsSrc.includes(""));
 test("el prompt aclara que el limite del tratado es DIARIO", () =>
   leerFuente("lib/guzzi/prompts.ts").includes("el limite del tratado es DIARIO"));
 

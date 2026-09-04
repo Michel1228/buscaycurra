@@ -39,12 +39,16 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   // Ahora son dos condiciones independientes: habla de prestacion Y habla de
   // irse fuera. La gente no ordena las frases como uno espera.
   {
-    const hablaDelParo = /(paro|prestaci[oó]n(es)?|desempleo|subsidio)/i.test(t)
-      || /u[12]/i.test(t);
+    const hablaDelParo = /\b(paro|prestaci[oó]n(es)?|desempleo|subsidio)\b/i.test(t)
+      || /\bu[12]\b/i.test(t);
     const hablaDeIrse = /(fuera|extranjero|otro\s+pa[ií]s|emigrar|irme|mudarme|me\s+voy|marcharme)/i.test(t)
-      || /(alemania|francia|italia|portugal|b[eé]lgica|holanda|pa[ií]ses\s+bajos|suiza|austria|irlanda|reino\s+unido|noruega|suecia|dinamarca|finlandia|polonia)/i.test(t);
-    const esDuda = /(pierdo|perder|puedo|mantener|seguir|llevar|export|c[oó]mo|qu[eé]\s+pasa)/i.test(t);
-    if (hablaDelParo && (hablaDeIrse || /u[12]/i.test(t)) && esDuda) {
+      || /\b(alemania|francia|italia|portugal|b[eé]lgica|holanda|pa[ií]ses\s+bajos|suiza|austria|irlanda|reino\s+unido|noruega|suecia|dinamarca|finlandia|polonia)\b/i.test(t);
+    const esDuda = /(pierdo|perder|puedo|mantener|seguir|llevar|export|c[oó]mo|qu[eé]\s+pasa|necesito|quiero|solicitar|tramitar|pedir|consigo)/i.test(t);
+    // Nombrar el U1 o el U2 ya es decir lo que quieres: no hace falta que
+    // ademas suene a pregunta. "Necesito el U2 para Holanda" se iba a la
+    // busqueda de ofertas porque no llevaba ninguna palabra de duda.
+    const nombraElFormulario = /\bu[12]\b/i.test(t);
+    if (nombraElFormulario || (hablaDelParo && hablaDeIrse && esDuda)) {
       return "paro_europeo";
     }
   }
