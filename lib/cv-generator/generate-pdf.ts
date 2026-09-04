@@ -82,7 +82,26 @@ export async function generateCVPdf(html: string): Promise<Buffer> {
       pageRanges: "1",   // red de seguridad: jamás una 2ª hoja
       margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
     });
-    return Buffer.from(pdfBuffer);
+    const pdf = Buffer.from(pdfBuffer);
+
+    // COMPROBAR LO QUE SE DEVUELVE, Y NO DAR POR HECHO QUE ESTA BIEN.
+    //
+    // Esto devolvia el buffer tal cual. Si la pagina no llegaba a pintarse,
+    // page.pdf() puede devolver algo vacio o corrupto SIN lanzar ningun error,
+    // y entonces pasaba lo peor: el correo se enviaba igual —el adjunto es
+    // condicional en email-sender.ts— y se contaba como exito. La empresa
+    // recibia "te mando mi CV" sin CV, y a la persona se le decia que habia
+    // salido bien.
+    //
+    // Un PDF de verdad empieza por "%PDF-" y no baja de unos cuantos kilobytes.
+    // Si no cumple, se lanza: el worker tiene respaldo (el PDF subido) y ahora
+    // ademas registra y avisa si tampoco hay.
+    if (pdf.length < 1024 || pdf.subarray(0, 5).toString() !== "%PDF-") {
+      throw new Error(
+        `El PDF generado no es valido (${pdf.length} bytes). No se envia un CV vacio.`,
+      );
+    }
+    return pdf;
   } finally {
     await browser.close();
   }

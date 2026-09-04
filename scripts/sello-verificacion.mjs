@@ -871,6 +871,16 @@ test("el rescate usa los nombres de columna reales de cv_sends", () => {
     && r.includes("company_name");
 });
 
+// UN CORREO DE CV SIN CV. El adjunto iba en un condicional: si el PDF venia
+// vacio, el correo salia IGUAL y se devolvia success:true. La empresa recibia
+// "te mando mi CV" sin nada dentro, la persona lo veia como enviado, y gastaba
+// cuota. Un fallo se reintenta; esto quema la oportunidad en silencio.
+const mailSrc = leerFuente("lib/cv-sender/email-sender.ts");
+test("no se manda un correo de CV sin el CV dentro", () =>
+  mailSrc.includes("SIN CV adjunto") && mailSrc.includes("if (!cvData.cvPdfBuffer?.length)"));
+test("el generador comprueba que lo que devuelve es un PDF de verdad", () =>
+  leerFuente("lib/cv-generator/generate-pdf.ts").includes('!== "%PDF-"'));
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

@@ -75,6 +75,22 @@ export async function sendCVEmail(
 ): Promise<EmailResult> {
   console.log(`[EmailSender] Enviando CV de ${cvData.userName} a ${to} (${companyName})...`);
 
+  // UN CORREO DE CV SIN CV NO SE MANDA.
+  //
+  // El adjunto va en un condicional mas abajo: si el buffer viene vacio, el
+  // correo salia IGUAL, sin adjunto, y se devolvia { success: true }. O sea que
+  // la empresa recibia un "te mando mi CV" sin nada dentro, la persona veia su
+  // envio como correcto, y encima gastaba cuota. Eso es peor que un fallo: un
+  // fallo se reintenta, esto quema la oportunidad sin que nadie lo sepa.
+  //
+  // Se comprueba aqui, en el punto donde se haria el dano, y no solo en quien
+  // llama: hoy el worker esta bien blindado, pero el proximo que use esta
+  // funcion no tiene por que saberlo.
+  if (!cvData.cvPdfBuffer?.length) {
+    console.error(`[EmailSender] Se ha intentado enviar a ${to} SIN CV adjunto. Cancelado.`);
+    return { success: false, error: "El CV venía vacío, así que no se ha enviado nada." };
+  }
+
   try {
     const { data, error } = await getResend().emails.send({
       from: `${sanitizeEmailHeader(cvData.userName)} via BuscayCurra <${FROM_EMAIL}>`,
