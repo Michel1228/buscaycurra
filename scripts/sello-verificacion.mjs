@@ -1009,6 +1009,37 @@ for (const [plan, campo, texto] of [
     n !== null && preciosSrc.includes(`${n} ${texto}`));
 }
 
+// LA MOROSIDAD SOLO PROTEGIA A GUZZI. getPlanEfectivo() existia y era correcta,
+// pero la llamaba UN solo sitio: el chat. Los otros ocho leian select("plan") a
+// secas. Resultado: alguien dejaba de pagar el plan Pro y conservaba 50 envios
+// de CV al dia, 30 fotos con GPT-4o —que se pagan a OpenAI— , entrevistas, 10
+// CVs y 200 ofertas guardadas. Lo unico que perdia era el chat, o sea que lo
+// unico protegido era justo lo mas caro y todo lo demas quedaba abierto.
+const gates = [
+  ["app/api/cv/guardar/route.ts", "planEfectivoDeUsuario"],
+  ["app/api/jobs/guardar/route.ts", "planEfectivoDeUsuario"],
+  ["app/api/entrevistas/chat/route.ts", "planEfectivoDeUsuario"],
+  ["app/api/entrevistas/feedback/route.ts", "planEfectivoDeUsuario"],
+  ["app/api/gusi/analyze-image/route.ts", "planEfectivoDeUsuario"],
+  ["app/api/cv-sender/envios-hoy/route.ts", "getPlanEfectivo"],
+  ["app/api/au-pair/send/route.ts", "getPlanEfectivo"],
+  ["app/api/user/stats/route.ts", "getPlanEfectivo"],
+  ["lib/cv-sender/rate-limiter.ts", "getPlanEfectivo"],
+];
+for (const [ruta, fn] of gates) {
+  const corto = ruta.replace("app/api/", "").replace("/route.ts", "");
+  test(`${corto} respeta el estado de la suscripcion`, () =>
+    leerFuente(ruta).includes(fn));
+}
+
+// El plan Empresa se saltaba la lista negra: el atajo de "ilimitado" retornaba
+// ANTES de comprobarla. El que mas envia era el unico que ignoraba a quien pidio
+// no recibir CVs. Eso no es cuota, es una peticion de la otra parte.
+test("la lista negra se comprueba ANTES del atajo del plan empresa", () => {
+  const src = leerFuente("lib/cv-sender/rate-limiter.ts");
+  return src.indexOf("isInBlacklist(companyEmail)") < src.indexOf('if (plan === "empresa")');
+});
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>

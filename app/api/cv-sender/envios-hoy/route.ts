@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { PLAN_LIMITS } from "@/lib/cv-sender/plans";
 import { getUserFromToken, extractToken } from "@/lib/auth-server";
+import { getPlanEfectivo } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -37,11 +38,13 @@ export async function GET(request: NextRequest) {
     // Obtener plan del usuario desde Supabase
     const { data: profile } = await supabase
       .from("profiles")
-      .select("plan")
+      .select("plan, subscription_status")
       .eq("id", userId)
       .single();
 
-    const plan = profile?.plan || "free";
+    // El estado de la suscripcion manda sobre el plan guardado: sin esto, quien
+    // dejaba de pagar conservaba los limites de su plan de pago.
+    const plan = getPlanEfectivo(profile?.plan, profile?.subscription_status);
 
     // Obtener envíos de hoy desde cv_sends en Supabase
     const hoy = new Date();

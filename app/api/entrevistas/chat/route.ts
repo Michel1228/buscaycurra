@@ -1,3 +1,4 @@
+import { planEfectivoDeUsuario } from "@/lib/plan-limits";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/auth-server";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
@@ -30,8 +31,8 @@ export async function POST(req: NextRequest) {
     const { getPlanLimits } = await import("@/lib/plan-limits");
     const { createClient } = await import("@supabase/supabase-js");
     const sbPlan = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-    const { data: perfilPlan } = await sbPlan.from("profiles").select("plan").eq("id", userId).single();
-    if (!getPlanLimits(perfilPlan?.plan || "free").prepararEntrevista) {
+    // El estado de la suscripcion manda sobre el plan guardado.
+    if (!getPlanLimits(await planEfectivoDeUsuario(sbPlan, userId)).prepararEntrevista) {
       return NextResponse.json(
         { error: "El simulador de entrevistas está en los planes de pago. Desde 2,99 €/mes lo tienes disponible.", upgradeUrl: "/app/perfil?tab=plan" },
         { status: 402 }

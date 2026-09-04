@@ -11,7 +11,7 @@ import { generarAuPairHTML } from "@/lib/au-pair-cv-template";
 import type { AuPairProfile, AuPairReference } from "@/lib/au-pair";
 import { PAISES_AU_PAIR_LEGAL, calcularCosteFamilia } from "@/lib/au-pair-legal-data";
 import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
-import { getPlanLimits, type PlanTier } from "@/lib/plan-limits";
+import { getPlanLimits, type PlanTier, getPlanEfectivo } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -483,11 +483,13 @@ export async function POST(request: NextRequest) {
     // ── Verificar rate limit ──────────────────────────────────────────────
     const { data: userProfile } = await adminClient
       .from("profiles")
-      .select("plan")
+      .select("plan, subscription_status")
       .eq("id", userId)
       .single();
 
-    const plan: string = userProfile?.plan || "free";
+    // El estado de la suscripcion manda sobre el plan guardado: sin esto, quien
+    // dejaba de pagar conservaba los limites de su plan de pago.
+    const plan: string = getPlanEfectivo(userProfile?.plan, userProfile?.subscription_status);
     const limiteHoy = limiteDiario(plan);
 
     const hoy = new Date();

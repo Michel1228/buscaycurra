@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
-import { getPlanLimits } from "@/lib/plan-limits";
+import { getPlanLimits, planEfectivoDeUsuario } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +19,9 @@ export async function POST(req: NextRequest) {
   const pool = getPool();
 
   // ── Límite de CVs guardados según plan (fuente única: lib/plan-limits.ts) ──
-  const { data: perfil } = await sb.from("profiles").select("plan").eq("id", user.id).single();
-  const limits = getPlanLimits(perfil?.plan);
+  // El estado de la suscripcion manda sobre el plan guardado: sin esto, quien
+  // dejaba de pagar conservaba los limites de su plan de pago.
+  const limits = getPlanLimits(await planEfectivoDeUsuario(sb, user.id));
   const countRes = await pool.query(`SELECT COUNT(*)::int AS n FROM user_cvs WHERE user_id = $1`, [user.id]);
   if (countRes.rows[0].n >= limits.cvsGuardados) {
     return NextResponse.json({

@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { getUserId } from "@/lib/auth-server";
+import { planEfectivoDeUsuario } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -44,8 +45,8 @@ export async function POST(request: NextRequest) {
     const { getPlanLimits } = await import("@/lib/plan-limits");
     const { createClient } = await import("@supabase/supabase-js");
     const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-    const { data: perfil } = await sb.from("profiles").select("plan").eq("id", userId).single();
-    const limites = getPlanLimits(perfil?.plan || "free");
+    // El estado de la suscripcion manda sobre el plan guardado.
+    const limites = getPlanLimits(await planEfectivoDeUsuario(sb, userId));
 
     if (limites.ofertasGuardadas < 999999) {
       const yaGuardada = await pool.query(

@@ -148,6 +148,42 @@ export function getPlanEfectivo(
   return alCorriente ? plan : "free";
 }
 
+/**
+ * El plan efectivo de un usuario, LEYENDO LAS DOS COLUMNAS que hacen falta.
+ *
+ * POR QUE EXISTE. getPlanEfectivo() es correcta, pero solo la usaba UN sitio:
+ * Guzzi. Los otros siete leian `select("plan")` a secas y se creian el plan
+ * guardado sin mirar si la suscripcion seguia viva. Resultado: alguien dejaba de
+ * pagar el plan Pro y conservaba 50 envios de CV al dia, 30 fotos con GPT-4o
+ * —que se pagan a OpenAI— , las entrevistas, 10 CVs y 200 ofertas guardadas.
+ * Lo unico que perdia era el chat.
+ *
+ * O sea que lo unico protegido era justo lo que mas nos cuesta, y todo lo demas
+ * quedaba abierto. Con esto se lee bien desde un solo sitio y no hay que
+ * acordarse en cada endpoint nuevo.
+ *
+ * Falla CERRADO a proposito: si no se puede leer el perfil se devuelve "free".
+ * Regalar un plan de pago por un fallo de lectura es peor que pedirle a alguien
+ * que recargue.
+ */
+export async function planEfectivoDeUsuario(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  userId: string,
+): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("plan, subscription_status")
+      .eq("id", userId)
+      .single();
+    if (error || !data) return "free";
+    return getPlanEfectivo(data.plan, data.subscription_status);
+  } catch {
+    return "free";
+  }
+}
+
 /** Modelo real de IA que usará Guzzi según el plan */
 export function getGuzziModel(plan?: string | null): string {
   return getPlanLimits(plan).guzziModel;

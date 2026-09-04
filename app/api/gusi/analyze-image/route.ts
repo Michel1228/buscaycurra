@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { createClient } from "@supabase/supabase-js";
+import { planEfectivoDeUsuario } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -61,8 +62,10 @@ export async function POST(req: NextRequest) {
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
-        const { data: profile } = await sbAdmin.from("profiles").select("plan").eq("id", userId).single();
-        const plan = profile?.plan || "free";
+        // La suscripcion manda sobre el plan guardado. Esta es la funcion mas
+        // cara de la aplicacion —vision de GPT-4o, se paga por cada foto— asi
+        // que no puede quedar abierta a quien ha dejado de pagar.
+        const plan = await planEfectivoDeUsuario(sbAdmin, userId);
         const limits = getPlanLimits(plan);
 
         if (limits.camaraMaxUsos >= 999999) {

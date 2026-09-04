@@ -58,12 +58,14 @@
   LIMITS en vez de escribirlos. Los envios gratis se ANUNCIAN en vez de
   esconderse.
 
-- [ ] **La morosidad solo protege a Guzzi.** `getPlanEfectivo`
+- [x] ~~**La morosidad solo protege a Guzzi.** `getPlanEfectivo`
   (`lib/plan-limits.ts:138`) es la única función que mira `subscription_status`
   y la llama **un solo sitio** (`lib/guzzi-limits.ts:53`). Todo lo demás lee el
   plan crudo: entrevistas, analyze-image, cv/guardar, jobs/guardar y
   `getUserPlan` de `rate-limiter.ts:265`. Un Pro impagado conserva 50 envíos al
-  día y las fotos con GPT-4o; solo pierde el chat.
+  día y las fotos con GPT-4o; solo pierde el chat.~~ **ARREGLADO**: nueve sitios
+  pasan ya por el plan efectivo, con un ayudante compartido para que no haya que
+  acordarse en cada endpoint nuevo.
 
 - [ ] **Dos funciones de pago accesibles gratis.**
   `/api/cv-sender/preview-carta` (carta con IA) solo pide sesión, no lee
@@ -81,9 +83,9 @@
 - [x] ~~El límite **semanal** de envíos no se aplica nunca. Y el mensaje de tope
   dice "500 al mes" cuando son 1.400.~~ **ARREGLADO**.
 
-- [ ] El plan Empresa **se salta la lista negra** (`rate-limiter.ts:84-94`):
-  el que más envía es el único que ignora a quien pidió no recibir CVs. Riesgo
-  legal.
+- [x] ~~El plan Empresa **se salta la lista negra**: el que más envía es el único
+  que ignora a quien pidió no recibir CVs.~~ **ARREGLADO**: la lista negra se
+  comprueba ahora ANTES del atajo de "ilimitado".
 
 ---
 

@@ -11,7 +11,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { PLAN_LIMITS, type UserPlan } from "./plans";
-import { LIMITS } from "@/lib/plan-limits";
+import { LIMITS, getPlanEfectivo } from "@/lib/plan-limits";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,7 +84,33 @@ export async function checkRateLimit(
 ): Promise<RateLimitResult> {
   const limite = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
 
-  // Si el plan es "empresa", siempre puede enviar (ilimitado)
+  // ── LA LISTA NEGRA SE COMPRUEBA SIEMPRE, Y VA LA PRIMERA ─────────────────
+  //
+  // Estaba DEBAJO del atajo del plan "empresa", que retorna antes. O sea que el
+  // plan que mas envia —200 CVs al dia— era el UNICO que se saltaba la lista de
+  // empresas que pidieron expresamente no recibir candidaturas espontaneas.
+  //
+  // Esto no es una cuestion de cuota: es una peticion de la otra parte, y no
+  // depende de lo que pague quien envia. Ademas es justo el plan que mas
+  // volumen mueve, o sea el que mas quemaria nuestro dominio y el que mas
+  // papeletas tiene de acabar en una reclamacion.
+  if (companyEmail) {
+    const enBlacklist = await isInBlacklist(companyEmail);
+    if (enBlacklist) {
+      return {
+        allowed: false,
+        reason: `La empresa ${companyEmail} pidió no recibir CVs espontáneos, así que no se le envía.`,
+        enviadosHoy: 0,
+        enviadosEsteMes: 0,
+        limiteHoy: limite.perDay,
+        limiteMes: limite.perMonth,
+        cvsRestantesHoy: 0,
+      };
+    }
+  }
+
+  // Si el plan es "empresa", no hay tope de cantidad (pero la lista negra de
+  // arriba ya se ha respetado).
   if (plan === "empresa") {
     return {
       allowed: true,
@@ -94,22 +120,6 @@ export async function checkRateLimit(
       limiteMes: Infinity,
       cvsRestantesHoy: Infinity,
     } satisfies RateLimitResult;
-  }
-
-  // ── Verificar blacklist ──────────────────────────────────────────────────
-  if (companyEmail) {
-    const enBlacklist = await isInBlacklist(companyEmail);
-    if (enBlacklist) {
-      return {
-        allowed: false,
-        reason: `La empresa ${companyEmail} está en la blacklist y no acepta CVs espontáneos.`,
-        enviadosHoy: 0,
-        enviadosEsteMes: 0,
-        limiteHoy: limite.perDay,
-        limiteMes: limite.perMonth,
-        cvsRestantesHoy: 0,
-      };
-    }
   }
 
   // ── Contar envíos del usuario hoy y este mes ─────────────────────────────
@@ -292,9 +302,18 @@ export async function getBlacklist(): Promise<Array<{ company_email: string; rea
  * @param userId - ID del usuario
  */
 export async function getUserPlan(userId: string): Promise<UserPlan> {
+  // SE LEEN LAS DOS COLUMNAS, NO SOLO EL PLAN.
+  //
+  // Antes esto pedia solo `plan` y se creia el valor guardado sin mirar si la
+  // suscripcion seguia viva. Quien dejaba de pagar el plan Pro conservaba sus
+  // 50 envios de CV al dia — que es la funcion mas cara que tenemos despues de
+  // la camara, porque cada uno manda un correo de verdad.
+  //
+  // La comprobacion existia (getPlanEfectivo) y la usaba UN solo sitio: Guzzi.
+  // O sea que lo unico protegido era el chat.
   const { data, error } = await getSupabase()
     .from("profiles")
-    .select("plan")
+    .select("plan, subscription_status")
     .eq("id", userId)
     .single();
 
@@ -303,6 +322,6 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
     return "free";
   }
 
-  const plan = data.plan as UserPlan;
+  const plan = getPlanEfectivo(data.plan, data.subscription_status) as UserPlan;
   return ["free", "basico", "esencial", "pro", "empresa"].includes(plan) ? plan : "free";
 }
