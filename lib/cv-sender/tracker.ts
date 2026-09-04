@@ -272,7 +272,25 @@ export async function canSendToCompany(
     .order("created_at", { ascending: false })
     .limit(1);
 
-  if (error || !data || data.length === 0) {
+  // UN CANDADO NO PUEDE ABRIRSE SOLO CUANDO FALLA.
+  //
+  // Aqui el error de consulta se metia en el mismo saco que "no hay historial",
+  // y las dos cosas devolvian `true`. O sea que si Supabase daba un fallo
+  // pasajero, la proteccion antiduplicados DESAPARECIA sin que nadie se
+  // enterara, y la persona podia mandar dos CV identicos a la misma empresa con
+  // minutos de diferencia. Eso es justo lo que hace que a uno lo marquen como
+  // spam, y el dano se lo lleva su direccion de correo, no la nuestra.
+  //
+  // Ante la duda, no se envia. Perder un envio se recupera; que te marquen como
+  // spam, no.
+  if (error) {
+    console.error(
+      `[Tracker] No se pudo comprobar el historial de ${email}: ${error.message}. Se bloquea el envio por precaucion.`,
+    );
+    return false;
+  }
+
+  if (!data || data.length === 0) {
     return true; // No hay historial previo, se puede enviar
   }
 

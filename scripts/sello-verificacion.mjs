@@ -881,6 +881,16 @@ test("no se manda un correo de CV sin el CV dentro", () =>
 test("el generador comprueba que lo que devuelve es un PDF de verdad", () =>
   leerFuente("lib/cv-generator/generate-pdf.ts").includes('!== "%PDF-"'));
 
+// EL CANDADO ANTIDUPLICADOS SE ABRIA AL FALLAR. canSendToCompany metia el error
+// de consulta en el mismo saco que "no hay historial": las dos cosas devolvian
+// true. Un fallo pasajero de Supabase y la proteccion desaparecia, dejando
+// mandar dos CV identicos a la misma empresa con minutos de diferencia. Eso es
+// lo que hace que marquen a alguien como spam, y el dano se lo lleva su correo.
+const trackerSrc = leerFuente("lib/cv-sender/tracker.ts");
+test("el candado antiduplicados se cierra cuando falla, no se abre", () =>
+  trackerSrc.includes("Se bloquea el envio por precaucion") &&
+  !trackerSrc.includes("if (error || !data || data.length === 0)"));
+
 // La portada: la misma cifra salia dos veces con etiquetas distintas.
 const homeSrc = leerFuente("app/(home)/page.tsx");
 test("la portada no repite la misma cifra dos veces", () =>
