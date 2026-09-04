@@ -1082,6 +1082,41 @@ test("la flecha de volver se puede tocar con el dedo (44px)", () =>
 test("volver funciona aunque no haya historial (llegada por notificacion)", () =>
   detalleSrc.includes("window.history.length > 1"));
 
+
+// ── ADZUNA: SOLO LOS PAISES QUE EXISTEN ──────────────────────────────────────
+//
+// Adzuna publica 19 paises. El calendario de sincronizacion pedia ademas
+// Irlanda y Suecia, que no estan. El codigo no fallaba: caia a España por tres
+// sitios a la vez -consultaba la API española, buscaba en ciudades españolas y
+// etiquetaba el resultado con el pais pedido-, asi que guardaba ofertas de
+// A Coruña, Vigo y Toledo como suecas. 6.820 en produccion. Quien filtraba por
+// Suecia veia Galicia; quien filtraba por España no las veia.
+//
+// Esta comprobacion compara las dos listas. Es la que habria cazado aquello.
+const syncSrc = leerFuente("lib/job-search/sync-worker.ts");
+const wfSrc = leerFuente(".github/workflows/sync-jobs.yml");
+
+// Los paises de ADZUNA_COUNTRIES, tal cual estan escritos en el fuente.
+const tablaAdzuna = syncSrc.split("const ADZUNA_COUNTRIES")[1] || "";
+const cierre = tablaAdzuna.indexOf("};");
+const paisesAdzuna = [...tablaAdzuna.slice(0, cierre).matchAll(/^  ([a-z]{2}):/gm)].map(m => m[1]);
+
+// Los del bloque de Adzuna del calendario, que acaba donde empieza Careerjet.
+const bloqueAdzuna = wfSrc.split('name: "Careerjet')[0];
+const paisesCalendario = [...bloqueAdzuna.matchAll(/country: ([a-z]{2}),/g)].map(m => m[1]);
+
+test("la tabla de Adzuna tiene los 19 paises que publica", () =>
+  paisesAdzuna.length === 19);
+
+test("el calendario no pide a Adzuna paises que no existen", () => {
+  const sobran = paisesCalendario.filter(p => !paisesAdzuna.includes(p));
+  if (sobran.length) console.log("      sobran: " + sobran.join(", "));
+  return sobran.length === 0 && paisesCalendario.length > 0;
+});
+
+test("el sincronizador se planta si el pais no esta en Adzuna", () =>
+  syncSrc.includes("adzunaCubrePais") && syncSrc.includes("Adzuna no cubre"));
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

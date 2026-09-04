@@ -12,6 +12,16 @@
 
 ## YA ARREGLADO (no volver a mirarlo)
 
+- **6.820 ofertas españolas estaban guardadas como suecas.** Adzuna publica 19
+  países y el calendario de sincronización pedía además Irlanda y Suecia, que no
+  están. El código no fallaba: caía a España por tres sitios a la vez —
+  consultaba la API española, buscaba en ciudades españolas y etiquetaba el
+  resultado con el país pedido. Quien filtraba por Suecia veía Galicia; quien
+  filtraba por España no las veía. Arreglado en las tres capas: el sincronizador
+  se planta ante un país que Adzuna no cubre, el calendario ya no los pide (su
+  presupuesto pasa a Bélgica y Austria, que sí existen) y las filas se han
+  reetiquetado. España: 29.599 → 36.372 ofertas activas.
+
 - Envíos que reventaban no dejaban rastro y gastaban cuota para siempre → se
   marcan fallidos y se avisa. Y hay rescate de huérfanos al arrancar el worker.
 - Un correo de CV **sin el CV dentro** salía igual y contaba como éxito → ahora

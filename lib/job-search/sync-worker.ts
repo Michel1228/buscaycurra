@@ -205,6 +205,24 @@ const ADZUNA_COUNTRIES: Record<string, { code: string; cc: string; name: string 
   nz: { code: "nz", cc: "NZ", name: "Nueva Zelanda" },
 };
 
+/**
+ * ¿Tiene Adzuna este país?
+ *
+ * Adzuna solo publica 19 países. La lista de arriba es esa lista. Si se pide
+ * cualquier otro —Irlanda y Suecia estaban en el calendario de sincronización—
+ * el código caía a España por tres sitios a la vez: consultaba la API
+ * española, buscaba en ciudades españolas y etiquetaba el resultado con el
+ * país pedido. El resultado en producción eran 6.760 ofertas de A Coruña,
+ * Vigo o Sevilla guardadas como suecas: quien filtraba por Suecia veía
+ * Galicia, y quien filtraba por España no las veía.
+ *
+ * No fallaba nada. Devolvía ofertas, las guardaba y el registro decía que
+ * había ido bien.
+ */
+export function adzunaCubrePais(codigo: string): boolean {
+  return codigo in ADZUNA_COUNTRIES;
+}
+
 // Keywords en inglés para países no hispanohablantes
 const GLOBAL_KEYWORDS = [
   "developer", "nurse", "driver", "cleaner", "teacher", "accountant", "sales",
@@ -328,7 +346,15 @@ export async function syncAdzunaCountry(
   countryCode: string,
   batchSize: number = 30,
   offset: number = 0
-): Promise<{ inserted: number; fetched: number; nextOffset: number; done: boolean; country: string }> {
+): Promise<{ inserted: number; fetched: number; nextOffset: number; done: boolean; country: string; noSoportado?: boolean }> {
+  // Antes que nada: si Adzuna no cubre este pais, no hay nada que sincronizar.
+  // Seguir adelante significaba guardar ofertas españolas con la bandera de
+  // otro pais, que es peor que no traer ninguna.
+  if (!adzunaCubrePais(countryCode)) {
+    console.error(`[syncAdzuna] Adzuna no cubre "${countryCode}". Sin sincronizar: seguir habria guardado ofertas españolas con esa bandera.`);
+    return { inserted: 0, fetched: 0, nextOffset: offset, done: true, country: countryCode, noSoportado: true };
+  }
+
   const config = getAdzunaCountryConfig(countryCode);
   const combos: Array<{ keyword: string; city: string }> = [];
   for (const kw of config.keywords) {
