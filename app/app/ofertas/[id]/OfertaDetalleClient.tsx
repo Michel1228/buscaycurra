@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { esOfertaAuPair } from "@/lib/au-pair";
 import AlojamientoOferta from "@/components/AlojamientoOferta";
-import { CheckCircle2, FileText, Users, ClipboardList, Bookmark } from "lucide-react";
+import { CheckCircle2, FileText, Users, ClipboardList, Bookmark, ArrowLeft } from "lucide-react";
 
 export interface OfertaDetalle {
   id: string;
@@ -244,7 +244,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   const fuenteStyle = colorFuente(oferta.fuente || "");
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
+    <div className="max-w-3xl mx-auto px-4 pt-20 pb-6">
       {/* Toast notification */}
       {toast && (
         <div className={`fixed top-16 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-xl text-sm font-medium shadow-lg transition-all ${
@@ -254,11 +254,30 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         </div>
       )}
 
+      {/* VOLVER ATRAS.
+          En el iPhone no hay boton de atras del sistema ni gesto dentro de la
+          app nativa: si esta pantalla no trae su propia flecha, el usuario se
+          queda encerrado. En Android el gesto si existe, pero la flecha se pone
+          igual para que las dos plataformas se comporten igual.
+
+          El tamano no es capricho: 44px es el minimo que pide Apple para algo
+          que se toca con el dedo. Antes era texto gris de 12px, imposible de
+          acertar — y ademas quedaba TAPADO por la barra de navegacion fija,
+          que es de 56px mientras esta pagina solo dejaba 24px de margen.
+
+          El respaldo del history: si se llega aqui desde una notificacion o un
+          enlace compartido no hay historial al que volver y back() no hace
+          nada, dejando al usuario encerrado igual. */}
       <button
-        onClick={() => router.back()}
-        className="text-xs mb-4 inline-flex items-center gap-1 hover:underline"
-        style={{ color: "#64748b" }}>
-        ← Volver
+        onClick={() => {
+          if (window.history.length > 1) router.back();
+          else router.push("/app/buscar");
+        }}
+        aria-label="Volver"
+        className="mb-4 inline-flex items-center gap-2 rounded-xl px-3 text-sm font-medium transition hover:opacity-80"
+        style={{ color: "#94a3b8", minHeight: "44px", background: "#1e212b", border: "1px solid #2d3142" }}>
+        <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
+        Volver
       </button>
 
       <div className="rounded-xl p-6" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>

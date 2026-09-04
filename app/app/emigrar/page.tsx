@@ -253,7 +253,7 @@ export default function EmigrarPage() {
   return (
     <main className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
       {/* Hero */}
-      <section className="relative py-12 px-4 sm:px-6 max-w-4xl mx-auto text-center">
+      <section className="relative pt-20 pb-12 px-4 sm:px-6 max-w-4xl mx-auto text-center">
         <div className="flex justify-center mb-4"><Globe size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         <h1 className="text-3xl sm:text-4xl font-bold mb-3">
           Emigrar al extranjero

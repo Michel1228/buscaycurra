@@ -589,7 +589,7 @@ export default function AuPairProfilePage() {
   return (
     <main className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
       {/* Hero con pestañas Au Pair / Live-in Nanny */}
-      <section className="py-10 px-4 sm:px-6 max-w-3xl mx-auto text-center">
+      <section className="pt-20 pb-10 px-4 sm:px-6 max-w-3xl mx-auto text-center">
         <div className="flex justify-center mb-4"><Users size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         
         {/* Pestañas */}

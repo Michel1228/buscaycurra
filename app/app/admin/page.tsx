@@ -66,7 +66,7 @@ export default function AdminPage() {
   const maxTendencia = Math.max(...stats.tendencia.map(d => d.count), 1);
 
   return (
-    <div className="min-h-screen px-4 py-8" style={{ background: "#0f1117" }}>
+    <div className="min-h-screen px-4 pt-20 pb-8" style={{ background: "#0f1117" }}>
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Header */}
