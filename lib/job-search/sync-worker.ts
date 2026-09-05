@@ -261,22 +261,76 @@ async function fetchAdzuna(keyword: string, city: string, page = 1, countryCode 
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) { await reportFailure("adzuna", keyInfo.idx, res.status); return []; }
     const data = await res.json();
-    return (data.results || []).map((j: Record<string, unknown>) => {
-      const company = j.company as Record<string, string> | undefined;
-      const location = j.location as Record<string, unknown> | undefined;
-      const salMin = j.salary_min ? Math.round(j.salary_min as number) : 0;
-      const salMax = j.salary_max ? Math.round(j.salary_max as number) : 0;
-      const salaryStr = salMin && salMax ? `${salMin} - ${salMax}` : "Ver en oferta";
-      return {
-        source: `ADZUNA_${ADZUNA_COUNTRIES[countryCode]?.cc || "ES"}`,
-        url: (j.redirect_url as string) || "",
-        title: ((j.title as string) || keyword).replace(/<[^>]+>/g, "").slice(0, 200),
-        company: (company?.display_name || "Ver en oferta").slice(0, 200),
-        city: ((location?.display_name as string) || city).slice(0, 100),
-        description: ((j.description as string) || "").replace(/<[^>]+>/g, "").slice(0, 1000),
-        salary: salaryStr,
-      };
-    });
+    return (data.results || []).map((j: Record<string, unknown>) =>
+      mapearOfertaAdzuna(j, countryCode, keyword, city));
+  } catch (e) { return anotarFallo("Adzuna", e); }
+}
+
+/**
+ * Convierte una oferta cruda de Adzuna a la forma que guardamos.
+ *
+ * Estaba escrito dentro de fetchAdzuna. Se saca fuera porque el barrido
+ * completo usa el mismo formato pero no tiene palabra clave ni ciudad con las
+ * que rellenar los huecos: ahi los respaldos son otros.
+ */
+function mapearOfertaAdzuna(
+  j: Record<string, unknown>,
+  countryCode: string,
+  tituloPorDefecto: string,
+  ciudadPorDefecto: string
+): RawJob {
+  const company = j.company as Record<string, string> | undefined;
+  const location = j.location as Record<string, unknown> | undefined;
+  const salMin = j.salary_min ? Math.round(j.salary_min as number) : 0;
+  const salMax = j.salary_max ? Math.round(j.salary_max as number) : 0;
+  return {
+    source: `ADZUNA_${ADZUNA_COUNTRIES[countryCode]?.cc || "ES"}`,
+    url: (j.redirect_url as string) || "",
+    title: ((j.title as string) || tituloPorDefecto).replace(/<[^>]+>/g, "").slice(0, 200),
+    company: (company?.display_name || "Ver en oferta").slice(0, 200),
+    city: ((location?.display_name as string) || ciudadPorDefecto).slice(0, 100),
+    description: ((j.description as string) || "").replace(/<[^>]+>/g, "").slice(0, 1000),
+    salary: salMin && salMax ? `${salMin} - ${salMax}` : "Ver en oferta",
+  };
+}
+
+/**
+ * Pide una pagina entera del catalogo, SIN palabra clave ni ciudad.
+ *
+ * POR QUE EXISTE. El sincronizador de siempre recorre combinaciones de palabra
+ * clave por ciudad y de cada una pide solo la pagina 1. Cada pasada vuelve a
+ * bajarse esas mismas primeras paginas: de las ~104.000 ofertas que traemos al
+ * dia, solo 16.000 son nuevas. El 85% es descargar lo mismo otra vez.
+ *
+ * Medido contra la API el 5 de septiembre de 2026:
+ *   - results_per_page se queda en 50 aunque pidas 100.
+ *   - La pagina 1.000 SIGUE devolviendo 50 ofertas. No hay tope de paginacion.
+ *   - Espana tiene 123.888 ofertas en Adzuna. El catalogo entero cabe en 2.478
+ *     peticiones sin filtrar por nada.
+ *   - Con max_days_old=1 son 3.897 ofertas: 78 peticiones para TODO lo de hoy.
+ *
+ * Asi que sin palabras clave se trae mas con menos.
+ */
+export async function fetchAdzunaPagina(
+  countryCode: string,
+  page: number,
+  maxDaysOld?: number
+): Promise<RawJob[]> {
+  if (!adzunaCubrePais(countryCode)) return [];
+  const keyInfo = await getAdzunaKey();
+  if (!keyInfo) return [];
+  const cc = ADZUNA_COUNTRIES[countryCode].code;
+  try {
+    // sort_by=date solo en el modo incremental: al barrer el catalogo entero,
+    // ordenar por fecha hace que las nuevas empujen a las demas hacia abajo y
+    // paginar en profundidad se descoloca.
+    const extra = maxDaysOld ? `&max_days_old=${maxDaysOld}&sort_by=date` : "";
+    const url = `https://api.adzuna.com/v1/api/jobs/${cc}/search/${page}?app_id=${keyInfo.id}&app_key=${keyInfo.key}&results_per_page=50${extra}&content-type=application/json`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!res.ok) { await reportFailure("adzuna", keyInfo.idx, res.status); return []; }
+    const data = await res.json();
+    return (data.results || []).map((j: Record<string, unknown>) =>
+      mapearOfertaAdzuna(j, countryCode, "Sin titulo", ""));
   } catch (e) { return anotarFallo("Adzuna", e); }
 }
 
@@ -340,6 +394,67 @@ export function getAdzunaCountryConfig(countryCode: string): AdzunaCountryConfig
     nz: { code: "nz", keywords: GLOBAL_KEYWORDS, cities: ["Auckland","Wellington","Christchurch","Hamilton","Tauranga","Dunedin","Palmerston North","Napier","Nelson","Rotorua"] },
   };
   return configs[countryCode] || configs.es;
+}
+
+/**
+ * Barre el catalogo de un pais pagina a pagina.
+ *
+ * Dos modos:
+ *
+ *   maxDaysOld = 1  → solo lo publicado hoy. Es el modo de todos los dias.
+ *                     Espana son 78 peticiones para TODO lo nuevo, frente a las
+ *                     ~300 de ahora que solo traen una muestra.
+ *
+ *   maxDaysOld = 0  → el catalogo entero, para llenar el hueco de una vez.
+ *                     Espana son 2.478 peticiones. Se hace una vez por pais.
+ *
+ * Reanudable a proposito: guarda por que pagina va, y si la cuota se agota a
+ * mitad la siguiente pasada sigue donde lo dejo. No hace falta saber cual es el
+ * limite exacto de Adzuna —no lo publican y no manda cabeceras de cuota— porque
+ * el cortacircuitos que ya existe corta solo al primer 429 y aqui se para.
+ *
+ * Cuando una pagina vuelve vacia se ha llegado al final: se vuelve a la 1.
+ */
+export async function barrerAdzuna(
+  countryCode: string,
+  paginas: number = 20,
+  desdePagina: number = 1,
+  maxDaysOld: number = 1
+): Promise<{ insertadas: number; traidas: number; siguientePagina: number; agotado: boolean; country: string; noSoportado?: boolean }> {
+  if (!adzunaCubrePais(countryCode)) {
+    console.error(`[barrerAdzuna] Adzuna no cubre "${countryCode}".`);
+    return { insertadas: 0, traidas: 0, siguientePagina: desdePagina, agotado: true, country: countryCode, noSoportado: true };
+  }
+
+  let insertadas = 0;
+  let traidas = 0;
+  let pagina = Math.max(1, desdePagina);
+  let agotado = false;
+
+  for (let i = 0; i < paginas; i++) {
+    const lote = await fetchAdzunaPagina(countryCode, pagina, maxDaysOld > 0 ? maxDaysOld : undefined);
+    traidas += lote.length;
+
+    if (lote.length === 0) {
+      // Vacia = fin del catalogo, o la cuota se acabo y fetchAdzunaPagina
+      // devolvio []. En los dos casos lo que toca es parar: si es el final se
+      // vuelve a empezar, y si fue la cuota se reanuda aqui la proxima vez.
+      agotado = true;
+      break;
+    }
+
+    insertadas += await upsertJobsForSync(lote, "OTRO", countryCode);
+    pagina++;
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  return {
+    insertadas,
+    traidas,
+    siguientePagina: agotado ? 1 : pagina,
+    agotado,
+    country: countryCode,
+  };
 }
 
 export async function syncAdzunaCountry(
