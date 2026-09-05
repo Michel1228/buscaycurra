@@ -26,9 +26,16 @@
  * con el sello, que daba por bueno un fichero roto porque solo comparaba texto.
  */
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { secretIguales } from "@/lib/secret-compare";
 import { LISTA_PAISES } from "@/lib/paises";
+
+const supabaseAdmin = () =>
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -224,6 +231,147 @@ export async function GET(req: NextRequest) {
     );
   } catch (e) {
     anota("el filtro de salario no pega los numeros del rango", false, `no se pudo comprobar: ${(e as Error).message}`, "");
+  }
+
+  // ══ ENVIOS ═════════════════════════════════════════════════════════════════
+  //
+  // Es lo unico que de verdad hace la aplicacion. Un envio que falla en
+  // silencio es un usuario que cree que ha echado el curriculum y no lo ha
+  // echado, y no se entera nunca.
+  const sb = supabaseAdmin();
+
+  // ── 8. Ningun envio se queda colgado ───────────────────────────────────────
+  // Los envios que reventaban se quedaban en "pendiente" para siempre, gastando
+  // cuota del usuario sin haber enviado nada. Hay un rescate al arrancar el
+  // worker; esto comprueba que sigue haciendo su trabajo.
+  try {
+    const hace6h = new Date(Date.now() - 6 * 3600e3).toISOString();
+    const { count, error } = await sb
+      .from("cv_sends")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["pendiente", "procesando"])
+      .lt("created_at", hace6h);
+    if (error) throw new Error(error.message);
+    anota(
+      "ningun envio se queda colgado",
+      (count ?? 0) === 0,
+      `${count ?? 0} envios llevan mas de 6 horas sin resolverse`,
+      "los envios que reventaban se quedaban pendientes para siempre, gastando cuota"
+    );
+  } catch (e) {
+    anota("ningun envio se queda colgado", false, `no se pudo comprobar: ${(e as Error).message}`, "");
+  }
+
+  // ── 9. Los envios no se estan cayendo en masa ──────────────────────────────
+  // Solo los ultimos 7 dias: interesa saber si algo se ha roto AHORA, no
+  // arrastrar el historico. Ahora mismo el fallo historico es del 2,5%.
+  try {
+    const hace7d = new Date(Date.now() - 7 * 86400e3).toISOString();
+    const pedir = (extra?: (q: any) => any) => {
+      let q = sb.from("cv_sends").select("id", { count: "exact", head: true }).gte("created_at", hace7d);
+      return extra ? extra(q) : q;
+    };
+    const [{ count: total }, { count: fallidos }] = await Promise.all([
+      pedir(),
+      pedir(q => q.eq("status", "fallido")),
+    ]);
+    const pct = total ? (100 * (fallidos ?? 0)) / total : 0;
+    // Con pocos envios el porcentaje salta mucho, asi que por debajo de 10 no
+    // se juzga: dos fallos de tres serian un 66% que no significa nada.
+    anota(
+      "los envios no se estan cayendo en masa",
+      (total ?? 0) < 10 || pct < 25,
+      `${fallidos ?? 0} fallidos de ${total ?? 0} en 7 dias (${pct.toFixed(1)}%, limite 25%)`,
+      "un CV que reventaba al enviarse no dejaba rastro y encima gastaba cuota"
+    );
+  } catch (e) {
+    anota("los envios no se estan cayendo en masa", false, `no se pudo comprobar: ${(e as Error).message}`, "");
+  }
+
+  // ══ CURRICULUMS ════════════════════════════════════════════════════════════
+
+  // ── 10. Los CV que se guardan tienen contenido ─────────────────────────────
+  // Hay tres caminos por los que el CV llegaba a guardarse con casi nada: en
+  // produccion aparecieron filas que solo tenian el email. Se mira lo guardado
+  // en los ultimos 30 dias, no el historico: interesa saber si SIGUE pasando.
+  try {
+    const { rows } = await pool.query(
+      `SELECT count(*)::int AS total,
+              count(*) FILTER (WHERE html IS NULL OR length(html) < 200)::int AS vacios
+         FROM user_cvs WHERE created_at > now() - interval '30 days'`
+    );
+    const { total, vacios } = rows[0] || { total: 0, vacios: 0 };
+    const pct = total ? (100 * vacios) / total : 0;
+    anota(
+      "los CV que se guardan tienen contenido",
+      total < 5 || pct < 20,
+      `${vacios} de ${total} guardados en 30 dias estan practicamente vacios (${pct.toFixed(0)}%, limite 20%)`,
+      "aparecieron CV guardados en produccion que solo tenian el email"
+    );
+  } catch (e) {
+    anota("los CV que se guardan tienen contenido", false, `no se pudo comprobar: ${(e as Error).message}`, "");
+  }
+
+  // ══ DINERO ═════════════════════════════════════════════════════════════════
+
+  // ── 11. Todo plan de pago viene de un pago ─────────────────────────────────
+  // Hay tres cuentas con plan "empresa" (49,99 €/mes) sin identificador de
+  // Stripe: se pusieron a mano. Mientras sean las de prueba no pasa nada, pero
+  // si aparecen mas es que algo esta regalando planes.
+  try {
+    const { data, error } = await sb
+      .from("profiles")
+      .select("plan, stripe_customer_id")
+      .neq("plan", "free");
+    if (error) throw new Error(error.message);
+    const sinPago = (data || []).filter((p: { stripe_customer_id: string | null }) => !p.stripe_customer_id);
+    const CONOCIDAS = 3;  // las de prueba que ya existian el 5 de septiembre
+    anota(
+      "todo plan de pago viene de un pago",
+      sinPago.length <= CONOCIDAS,
+      `${sinPago.length} cuentas con plan de pago y sin Stripe (conocidas: ${CONOCIDAS})`,
+      "el webhook de Stripe no escribia el plan al renovar la suscripcion"
+    );
+  } catch (e) {
+    anota("todo plan de pago viene de un pago", false, `no se pudo comprobar: ${(e as Error).message}`, "");
+  }
+
+  // ══ NOTIFICACIONES ═════════════════════════════════════════════════════════
+
+  // ── 12. Las notificaciones no llevan a ofertas que no existen ──────────────
+  // El worker guardaba el identificador de la COLA donde se esperaba el de una
+  // oferta, y la notificacion de "CV enviado" acababa en "Oferta no encontrada"
+  // en 76 de cada 78 casos.
+  try {
+    const hace30d = new Date(Date.now() - 30 * 86400e3).toISOString();
+    const { data, error } = await sb
+      .from("notificaciones")
+      .select("datos")
+      .gte("created_at", hace30d)
+      .limit(500);
+    if (error) throw new Error(error.message);
+    const ids = (data || [])
+      .map((n: { datos: Record<string, unknown> | null }) => n.datos?.job_id ?? n.datos?.jobId)
+      .filter((x: unknown): x is string => typeof x === "string" && x.length > 0);
+    let rotos = 0;
+    if (ids.length) {
+      const { rows } = await pool.query(
+        `SELECT id FROM "JobListing" WHERE id = ANY($1::text[])`,
+        [[...new Set(ids)]]
+      );
+      const existen = new Set(rows.map((x: { id: string }) => x.id));
+      rotos = [...new Set(ids)].filter(id => !existen.has(id)).length;
+    }
+    anota(
+      "las notificaciones no llevan a ofertas que no existen",
+      rotos === 0,
+      ids.length
+        ? `${rotos} de ${new Set(ids).size} ofertas enlazadas no existen`
+        : "ninguna notificacion reciente enlaza una oferta",
+      'la notificacion de "CV enviado" daba error en 76 de cada 78 casos'
+    );
+  } catch (e) {
+    anota("las notificaciones no llevan a ofertas que no existen", false, `no se pudo comprobar: ${(e as Error).message}`, "");
   }
 
   const fallos = r.filter(x => !x.bien);
