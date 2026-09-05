@@ -139,13 +139,24 @@
   con mayúsculas. **Arreglo de tres alias.**~~ **ARREGLADO**: aliaseados en las dos consultas. Rompía el badge de fuente y dejaba
   muerta la vía de email de respaldo del botón Enviar CV.
 
-- [ ] **El filtro de salario mínimo no filtra.** `route.ts:248` hace
+- [x] ~~**El filtro de salario mínimo no filtra.** `route.ts:248` hace
   `regexp_replace(salary,'[^0-9]','')`: `"15600 - 18000"` → `1560018000`.
-  ~3 de cada 4 salarios producen un número inflado.
+  ~3 de cada 4 salarios producen un número inflado.~~ **ARREGLADO**: se toma el
+  primer número (el mínimo del rango), quitando antes los separadores de miles
+  o `£100,000` se quedaba en 100. Comprobado contra producción con los ocho
+  formatos reales, millones incluidos.
+  **Queda fuera**: los 94.217 salarios por hora (`13.9 per hour`) dan 13 y no
+  casan con un filtro anual. Convertirlos exigiría inventarse las horas
+  semanales de cada oferta, así que no se hace.
 
-- [ ] **Los respaldos tiran el filtro de país.** El respaldo por ciudad no lleva
+- [x] ~~**Los respaldos tiran el filtro de país.** El respaldo por ciudad no lleva
   `country` en el WHERE, y `buscarOfertasReales` no lo recibe. Pedir Alemania
-  devuelve España; un país inexistente devuelve ofertas españolas.
+  devuelve España; un país inexistente devuelve ofertas españolas.~~
+  **ARREGLADO en el respaldo por ciudad**: lo llevan ya la consulta y su
+  recuento, que tenían que filtrar por lo mismo. Importa porque hay ciudades
+  homónimas: Toledo está en Castilla-La Mancha y en Ohio, Valencia en España y
+  en Venezuela.
+  **Pendiente**: `buscarOfertasReales` sigue sin recibir el país.
 
 - [ ] **El modo entrevista de Guzzi nunca se ha activado.** `GusiChat.tsx:284`
   manda `"entrevista"`, `chat/route.ts:953` espera `"prep_entrevista"`.

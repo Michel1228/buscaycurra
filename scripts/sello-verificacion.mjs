@@ -1244,6 +1244,39 @@ for (const nombre of readdirSync(".github/workflows").filter(n => n.endsWith(".y
     return raros.length === 0;
   });
 }
+
+// ── EL FILTRO DE SALARIO NO PEGA NUMEROS ─────────────────────────────
+//
+// Borraba todo lo que no fuera digito y pegaba lo que quedaba:
+//
+//     "30000 - 30000"  ->  3000030000    pasaba cualquier filtro
+//     "12 - 12"        ->  1212          no pasaba ninguno
+//
+// El salario se guarda casi siempre como rango: 488.699 ofertas vivas tienen
+// esa forma. El filtro no filtraba, devolvia de todo, y el usuario se lo creia.
+//
+// Lo correcto es el PRIMER numero (el minimo del rango), quitando antes los
+// separadores de miles o "£100,000" se queda en 100. Comprobado contra la base
+// de produccion con los ocho formatos reales, millones incluidos.
+const salarioSrc = leerFuente("app/api/jobs/search/route.ts");
+
+test("el filtro de salario no concatena los numeros del rango", () =>
+  !salarioSrc.includes("regexp_replace(salary, '[^0-9]'"));
+
+test("el filtro de salario se queda con el primer numero", () =>
+  salarioSrc.includes("SALARIO_MINIMO_SQL") && salarioSrc.includes("from '[0-9]+'"));
+
+test("el filtro de salario quita los separadores de miles antes", () =>
+  salarioSrc.includes("([0-9])[.,]([0-9]{3})"));
+
+// ── LOS RESPALDOS NO SE SALTAN EL PAIS ───────────────────────────────
+//
+// El respaldo por ciudad filtraba solo por ciudad, y hay ciudades que se llaman
+// igual en sitios distintos: Toledo esta en Castilla-La Mancha y en Ohio,
+// Valencia en España y en Venezuela. Con Espana elegida podian llegar ofertas
+// de Estados Unidos mientras el filtro seguia marcado en pantalla.
+test("el respaldo por ciudad respeta el pais elegido", () =>
+  salarioSrc.includes("condPais") && salarioSrc.includes("condPaisCuenta"));
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

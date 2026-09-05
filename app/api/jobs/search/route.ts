@@ -239,19 +239,39 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filtro de salario robusto: guard `salary ~ '[0-9]'` para no castear cadenas
-    // sin dígitos ("Ver en oferta" → '' → error), NULLIF para no castear '' y
-    // ::bigint para no desbordar int4 con salarios largos ("30000-45000" → 3000045000).
-    // Antes la rama `regexp_replace(...)::int` reventaba la query → caía al fallback
-    // que servía resultados SIN filtrar de salario, mintiendo al usuario.
+    // EL FILTRO DE SALARIO.
+    //
+    // Antes borraba TODO lo que no fuera un digito y pegaba lo que quedaba:
+    //
+    //     "30000 - 30000"  →  3000030000     pasa cualquier filtro
+    //     "12 - 12"        →  1212           no pasa ninguno
+    //     "£100,000"       →  100000         este por casualidad salia bien
+    //
+    // El salario se guarda casi siempre como rango ("30000 - 30000" son 488.699
+    // ofertas vivas), asi que tres de cada cuatro numeros salian inflados. El
+    // filtro no filtraba: devolvia de todo y el usuario se lo creia.
+    //
+    // Lo correcto es quedarse con el PRIMER numero, que es el minimo del rango.
+    // Pero antes hay que quitar los separadores de miles, o "£100,000 - 100,000"
+    // se convierte en 100. Se pasa dos veces para cubrir millones (1.234.567).
+    //
+    // Lo que sigue sin resolver: los 94.217 salarios por hora ("13.9 per hour")
+    // dan 13 y no casan con un filtro anual. Convertirlos exigiria inventarse
+    // las horas semanales de cada oferta, asi que quedan fuera del filtro, igual
+    // que antes. Esta anotado en AUDITORIA-PENDIENTE.md.
+    const SALARIO_MINIMO_SQL = `NULLIF(substring(
+      regexp_replace(regexp_replace(salary, '([0-9])[.,]([0-9]{3})', '\\1\\2', 'g'),
+                     '([0-9])[.,]([0-9]{3})', '\\1\\2', 'g')
+      from '[0-9]+'), '')::bigint`;
+
     if (salarioMin > 0) {
-      conditions.push(`(salary ~ '[0-9]' AND NULLIF(regexp_replace(salary, '[^0-9]', '', 'g'), '')::bigint >= $${idx})`);
+      conditions.push(`(salary ~ '[0-9]' AND ${SALARIO_MINIMO_SQL} >= $${idx})`);
       params.push(salarioMin);
       idx++;
     }
 
     if (salarioMax > 0) {
-      conditions.push(`(salary ~ '[0-9]' AND NULLIF(regexp_replace(salary, '[^0-9]', '', 'g'), '')::bigint <= $${idx})`);
+      conditions.push(`(salary ~ '[0-9]' AND ${SALARIO_MINIMO_SQL} <= $${idx})`);
       params.push(salarioMax);
       idx++;
     }
@@ -323,9 +343,18 @@ export async function GET(request: NextRequest) {
     // una busqueda que devolvia sus 5 resultados correctos se consideraba
     // "insuficiente" y saltaba al respaldo igualmente.
     if (keyword && cityParts && dbResult.rows.length < Math.min(10, limit) && !categoria) {
+      // El recuento tiene que filtrar por lo mismo que la consulta de abajo. Si
+      // cuenta sin el pais, cuenta los Toledo de Ohio y decide que hay material
+      // de sobra para lanzar el respaldo cuando en realidad no lo hay.
+      const paramsCuenta: string[] = [`%${cityParts}%`];
+      let condPaisCuenta = "";
+      if (country) {
+        paramsCuenta.push(country);
+        condPaisCuenta = ` AND "country" ILIKE $${paramsCuenta.length}`;
+      }
       const locCount = await pool.query(
-        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})`,
-        [`%${cityParts}%`]
+        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})${condPaisCuenta}`,
+        paramsCuenta
       );
       const locTotal = parseInt(locCount.rows[0].count);
       if (locTotal > dbResult.rows.length + 5) {
@@ -341,6 +370,21 @@ export async function GET(request: NextRequest) {
         const { expandirPuesto: expandir } = await import("@/lib/job-search/sinonimos-puesto");
         const variantesLoc = expandir(keyword);
         const locParams: (string | number)[] = [`%${cityParts}%`];
+
+        // EL RESPALDO AMPLIA LA ZONA, PERO NO SE SALTA EL PAIS.
+        //
+        // Esta consulta filtraba solo por ciudad. Y hay ciudades que se llaman
+        // igual en sitios distintos: Toledo esta en Castilla-La Mancha y en
+        // Ohio, Valencia en España y en Venezuela, Cordoba en Andalucia y en
+        // Argentina. Quien buscaba "camarero en Toledo" con Espana elegida
+        // podia recibir ofertas de Estados Unidos, y el filtro de pais seguia
+        // marcado en pantalla como si se estuviera aplicando.
+        let condPais = "";
+        if (country) {
+          locParams.push(country);
+          condPais = ` AND "country" ILIKE $${locParams.length}`;
+        }
+
         const orsLoc: string[] = [];
         for (const v of variantesLoc) {
           locParams.push(palabraExacta(v));
@@ -359,7 +403,7 @@ export async function GET(request: NextRequest) {
              FROM "JobListing"
             WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
               AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
-              AND (${orsLoc.join(" OR ")})
+              AND (${orsLoc.join(" OR ")})${condPais}
             ORDER BY
               CASE WHEN "scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
                    WHEN "scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
