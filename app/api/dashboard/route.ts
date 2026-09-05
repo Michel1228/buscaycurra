@@ -85,32 +85,63 @@ export async function GET(request: NextRequest) {
       .eq("id", userId)
       .single();
 
+    // LAS SEIS OFERTAS DE LA PORTADA.
+    //
+    // Esto leia la tabla `ofertas` de Supabase, que lleva congelada desde el 5
+    // de julio. Pero la tarjeta enlaza a /app/ofertas/<id>, y esa pagina
+    // consulta JobListing en la base propia. Son dos espacios de identificador
+    // distintos: ninguno de los seis enlaces llevaba a ninguna parte.
+    //
+    // No daba error. Salian seis ofertas con buena pinta, con su titulo y su
+    // empresa, y al pulsar cualquiera aparecia "Oferta no encontrada". Es lo
+    // primero que ve alguien al entrar en la aplicacion.
+    //
+    // Ahora se leen de la misma tabla a la que apunta el enlace.
     let ofertasRecomendadas: any[] = [];
+    try {
+      const pool = getPool();
+      // Se piden por ciudad si la sabemos, y si no hay suficientes se
+      // completan con las mas recientes. En una sola consulta, ordenando por
+      // "las de tu ciudad primero", en vez de dos viajes a la base.
+      const { rows } = await pool.query(
+        `SELECT id, title, company, city, salary, "sourceName", sector
+           FROM "JobListing"
+          WHERE "isActive"
+            AND ($1::text IS NULL OR city ILIKE '%' || $1 || '%')
+          ORDER BY "createdAt" DESC
+          LIMIT 6`,
+        [profile?.ciudad || null]
+      );
 
-    // Intentar obtener ofertas con criterio de ubicación/sector
-    let query = supabaseAdmin
-      .from("ofertas")
-      .select("id, titulo, empresa, ubicacion, salario, fuente, url, sector")
-      .order("created_at", { ascending: false })
-      .limit(12);
+      let filas = rows;
+      // Si su ciudad no tiene seis, se rellena con lo mas reciente de donde sea:
+      // una portada con dos tarjetas se ve rota.
+      if (filas.length < 6) {
+        const { rows: extra } = await pool.query(
+          `SELECT id, title, company, city, salary, "sourceName", sector
+             FROM "JobListing"
+            WHERE "isActive" AND id <> ALL($1::text[])
+            ORDER BY "createdAt" DESC
+            LIMIT $2`,
+          [filas.map((r: any) => r.id), 6 - filas.length]
+        );
+        filas = [...filas, ...extra];
+      }
 
-    if (profile?.ciudad) {
-      query = query.ilike("ubicacion", `%${profile.ciudad}%`);
-    }
-
-    const { data: ofertas } = await query;
-
-    if (ofertas && ofertas.length > 0) {
-      ofertasRecomendadas = ofertas.slice(0, 6);
-    } else {
-      // Fallback: ofertas recientes sin filtro
-      const { data: recientes } = await supabaseAdmin
-        .from("ofertas")
-        .select("id, titulo, empresa, ubicacion, salario, fuente, url, sector")
-        .order("created_at", { ascending: false })
-        .limit(6);
-
-      ofertasRecomendadas = recientes || [];
+      ofertasRecomendadas = filas.map((r: any) => ({
+        id: r.id,
+        titulo: r.title,
+        empresa: r.company,
+        ubicacion: r.city,
+        salario: r.salary,
+        fuente: r.sourceName,
+        sector: r.sector,
+      }));
+    } catch (e) {
+      // Sin ofertas la portada sigue en pie: quedan las estadisticas y los
+      // accesos rapidos. Pero que se vea en el registro, que antes un fallo
+      // aqui era indistinguible de "no hay ofertas".
+      console.error("[dashboard] No se pudieron leer las ofertas recomendadas:", e);
     }
 
     // ── Quick actions ──

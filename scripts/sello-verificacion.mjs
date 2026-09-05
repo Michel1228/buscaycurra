@@ -1117,6 +1117,133 @@ test("el calendario no pide a Adzuna paises que no existen", () => {
 test("el sincronizador se planta si el pais no esta en Adzuna", () =>
   syncSrc.includes("adzunaCubrePais") && syncSrc.includes("Adzuna no cubre"));
 
+
+// ── LOS ENLACES A OFERTAS APUNTAN DONDE ESTAN LAS OFERTAS ────────────────────
+//
+// La portada leia sus seis ofertas de la tabla `ofertas` de Supabase, que lleva
+// congelada desde el 5 de julio, pero la tarjeta enlaza a /app/ofertas/<id> y
+// esa pagina consulta JobListing en la base propia. Dos espacios de
+// identificador distintos: los seis enlaces estaban muertos.
+//
+// No daba error. Salian seis ofertas con su titulo y su empresa, y al pulsar
+// cualquiera aparecia "Oferta no encontrada". Es lo primero que se ve al entrar.
+const panelSrc = leerFuente("app/api/dashboard/route.ts");
+
+test("la portada lee las ofertas de JobListing, no de Supabase", () =>
+  panelSrc.includes('FROM "JobListing"') && !panelSrc.includes('.from("ofertas")'));
+
+test("un fallo leyendo las ofertas de la portada se ve en el registro", () =>
+  panelSrc.includes("[dashboard] No se pudieron leer las ofertas"));
+
+// ── EL BARRIDO DE ADZUNA ─────────────────────────────────────────────────────
+//
+// El sincronizador de siempre pide solo la pagina 1 de cada combinacion, asi
+// que cada pasada vuelve a bajarse lo mismo: de 104.000 ofertas al dia solo
+// 16.000 son nuevas. El barrido pagina el catalogo sin palabras clave.
+const barridoSrc = leerFuente("app/api/jobs/sync-adzuna-barrido/route.ts");
+
+test("el barrido de Adzuna existe y esta protegido por el secreto", () =>
+  barridoSrc.includes("secretIguales") && barridoSrc.includes("barrerAdzuna"));
+
+test("el barrido se reanuda por donde iba (guarda la pagina)", () =>
+  barridoSrc.includes("guardarOffset") && barridoSrc.includes("leerOffset"));
+
+test("el barrido no pide palabra clave ni ciudad", () => {
+  const s2 = leerFuente("lib/job-search/sync-worker.ts");
+  const fn = s2.split("export async function fetchAdzunaPagina")[1] || "";
+  const cuerpo = fn.slice(0, fn.indexOf("anotarFallo"));
+  return cuerpo.length > 0 && !cuerpo.includes("what=") && !cuerpo.includes("where=");
+});
+
+
+// ── LA NOTIFICACION DE "CV ENVIADO" NO LLEVA A UN ERROR ──────────────────────
+//
+// queue.ts genera el identificador de la COLA como "cv-<usuario>-<fecha>". El
+// worker lo guardaba en datos.jobId, y destinoDeNotificacion prioriza ese campo
+// sobre el mapa por tipo: montaba /app/ofertas/cv-8f3a...-1757, que no existe.
+// La notificacion del envio —la accion mas importante que tenemos— acababa en
+// "Oferta no encontrada" en 76 de cada 78 casos.
+//
+// Esta comprobacion EJECUTA la funcion en vez de mirar si el texto esta. Ya nos
+// paso con el detector de intenciones de Guzzi: el sello daba por bueno un
+// fichero con bytes de retroceso dentro porque solo comparaba posiciones.
+test("destinoDeNotificacion no manda a una oferta inventada", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-destino.cjs";
+  execFileSync("npx", ["esbuild", "lib/notificaciones/destino.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  const { destinoDeNotificacion } = await import(`../${salida}`);
+
+  const casos = [
+    // Lo que rompia: identificador de la cola, no de una oferta.
+    [{ tipo: "cv_enviado", datos: { companyName: "Acme", colaJobId: "cv-8f3a-1757" } }, "/app/envios"],
+    // Y las que ya estan guardadas con el nombre viejo, que tambien se reparan.
+    [{ tipo: "cv_enviado", datos: { companyName: "Acme", jobId: "cv-8f3a-1757" } }, "/app/envios"],
+    // Una oferta de verdad si tiene que llevar a la oferta.
+    [{ tipo: "cv_enviado", datos: { jobId: "d92fd96823e08edc626d0c07" } }, "/app/ofertas/d92fd96823e08edc626d0c07"],
+    // Y el destino explicito manda por encima de todo.
+    [{ tipo: "cv_enviado", datos: { url: "/app/pipeline" } }, "/app/pipeline"],
+  ];
+
+  let bien = true;
+  for (const [n, esperado] of casos) {
+    const r = destinoDeNotificacion(n);
+    if (r !== esperado) { console.log(`      ${JSON.stringify(n.datos)} -> ${r} (se esperaba ${esperado})`); bien = false; }
+  }
+  try { unlinkSync(salida); } catch {}
+  return bien;
+});
+
+
+// ── LO QUE PIDE EL SQL Y LO QUE LEE EL JAVASCRIPT SE LLAMAN IGUAL ────────────
+//
+// Postgres devuelve los identificadores entrecomillados tal cual: "sourceUrl"
+// vuelve como sourceUrl, no como sourceurl. El mapeo del buscador los leia en
+// minusculas, asi que url, fecha y fuente llegaban vacias en TODAS las ofertas.
+// No fallaba: las tarjetas salian, solo que sin enlace, sin fecha y sin origen.
+//
+// El de contactEmail ya se aliaseaba bien. Quien lo añadio no vio que los tres
+// de arriba estaban rotos, y por eso esta comprobacion mira los cuatro.
+const buscaSrc = leerFuente("app/api/jobs/search/route.ts");
+
+for (const campo of ["sourceurl", "sourcename", "scrapedat", "contactemail"]) {
+  test(`el buscador devuelve ${campo} (alias en el SQL, no camelCase)`, () => {
+    // Si el JavaScript lo lee en minusculas, el SQL tiene que aliasearlo.
+    if (!buscaSrc.includes("j." + campo)) return true;  // no se lee, nada que comprobar
+    return buscaSrc.includes("AS " + campo);
+  });
+}
+
+// ── LA CAMPANA CUENTA TODAS, NO SOLO LA PRIMERA PAGINA ───────────────────────
+//
+// Se pedian 50 notificaciones y se contaban las no leidas DE ESAS 50. Hay
+// usuarios con 262: si sus 50 mas recientes estaban leidas, la campana marcaba
+// cero teniendo 200 sin leer detras.
+const rutaCampanaSrc = leerFuente("app/api/notifications/route.ts");
+
+test("la campana cuenta las no leidas sobre todas las filas", () =>
+  rutaCampanaSrc.includes('count: "exact", head: true'));
+
+
+// ── LOS CALENDARIOS USAN UN SECRETO QUE EXISTE ─────────────────────────
+//
+// Al escribir el barrido puse secrets.SYNC_SECRET, que no existe: el que hay
+// configurado es ADMIN_SECRET. Habria dado 401 todos los dias a las cinco de la
+// mañana sin que nadie se enterase, porque un workflow que recibe 401 y sigue
+// adelante termina en verde igual.
+const SECRETOS_QUE_EXISTEN = ["ADMIN_SECRET", "GITHUB_TOKEN"];
+for (const nombre of readdirSync(".github/workflows").filter(n => n.endsWith(".yml"))) {
+  const src = leerFuente(".github/workflows/" + nombre);
+  if (!src.includes("x-sync-secret")) continue;
+  test(nombre + " usa un secreto que existe", () => {
+    const usados = [...src.matchAll(/secrets[.]([A-Z_]+)/g)].map(m => m[1]);
+    const raros = [...new Set(usados)].filter(u => !SECRETOS_QUE_EXISTEN.includes(u));
+    if (raros.length) console.log("      secreto desconocido: " + raros.join(", "));
+    return raros.length === 0;
+  });
+}
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

@@ -111,25 +111,32 @@
 
 ## 2. ROTO DE CARA AL USUARIO
 
-- [ ] **Las 6 ofertas del panel de inicio son enlaces muertos.**
+- [x] ~~**Las 6 ofertas del panel de inicio son enlaces muertos.**
   `app/api/dashboard/route.ts:92` lee la tabla Supabase `ofertas` (congelada
   desde el 5 de julio); el enlace va a `/app/ofertas/<id>`, que consulta
   `JobListing` de la base propia. Espacios de ID distintos: 0 de 20 coinciden.
-  Es lo primero que ve alguien al entrar.
+  Es lo primero que ve alguien al entrar.~~ **ARREGLADO**: la portada lee
+  ahora de `JobListing`, que es la tabla a la que apunta el enlace.
 
-- [ ] **La notificación "CV enviado" lleva a error en 76 de 78 casos.**
+- [x] ~~**La notificación "CV enviado" lleva a error en 76 de 78 casos.**
   `worker.ts:273` guarda un `jobId` sintético (`cv-<uuid>-<ts>`) y
   `lib/notificaciones/destino.ts:77` lo prioriza sobre el mapa por tipo.
-  Arreglo: validar que el id existe en `JobListing` antes de construir la ruta.
+  Arreglo: validar que el id existe en `JobListing` antes de construir la ruta.~~
+  **ARREGLADO**: ese id no era de una oferta, era el de la COLA (`queue.ts`
+  lo genera como `cv-<usuario>-<fecha>`). Dos cosas distintas llamadas `jobId`.
+  El worker lo guarda ahora como `colaJobId` y el destino descarta los que
+  empiezan por `cv-`, lo que repara también las que ya estaban guardadas.
 
-- [ ] **La campana está topada a 50.** `app/api/notifications/route.ts:46` hace
+- [x] ~~**La campana está topada a 50.** `app/api/notifications/route.ts:46` hace
   `.limit(50)` y cuenta las no leídas **sobre esa página**. Hay usuarios con
-  262. El "99+" de `NotificationBell.tsx:184` es código inalcanzable.
+  262. El "99+" de `NotificationBell.tsx:184` es código inalcanzable.~~
+  **ARREGLADO**: la cuenta se pide aparte con `count: exact, head: true`, sobre
+  todas las filas y sin traérselas. La lista sigue topada, que es un desplegable.
 
-- [ ] **Toda oferta de búsqueda llega sin URL, sin fecha y sin fuente.**
+- [x] ~~**Toda oferta de búsqueda llega sin URL, sin fecha y sin fuente.**
   `app/api/jobs/search/route.ts:64-66` lee `sourceurl`/`sourcename`/`scrapedat`
   en minúsculas, pero el SELECT los pide entrecomillados y Postgres los devuelve
-  con mayúsculas. **Arreglo de tres alias.** Rompe el badge de fuente y deja
+  con mayúsculas. **Arreglo de tres alias.**~~ **ARREGLADO**: aliaseados en las dos consultas. Rompía el badge de fuente y dejaba
   muerta la vía de email de respaldo del botón Enviar CV.
 
 - [ ] **El filtro de salario mínimo no filtra.** `route.ts:248` hace

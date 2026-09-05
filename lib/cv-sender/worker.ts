@@ -271,7 +271,21 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       tipo: "cv_enviado",
       titulo: `📧 CV enviado a ${companyName}`,
       mensaje: `Tu CV fue enviado correctamente a ${companyName}${jobTitle ? ` para el puesto de ${jobTitle}` : ""}.`,
-      datos: { companyName, jobId },
+      // OJO CON EL NOMBRE. Aqui iba `jobId`, pero ese no es el
+      // identificador de una oferta: es el de la COLA, que queue.ts genera como
+      // "cv-<usuario>-<fecha>". Dos cosas distintas llamadas igual.
+      //
+      // destinoDeNotificacion prioriza `jobId` sobre el mapa por tipo, asi que
+      // construia /app/ofertas/cv-8f3a...-1757 y esa pagina no existe. La
+      // notificacion de "CV enviado" llevaba a "Oferta no encontrada" en 76 de
+      // cada 78 casos, justo despues de la accion mas importante que tenemos.
+      //
+      // El envio no sabe de que oferta viene —CVJobData no trae ninguna, solo
+      // la empresa— asi que no hay id de oferta que poner. Se guarda con su
+      // nombre real, que ademas sirve para rastrear el envio con
+      // getSendIdByJobId(), y el destino lo decide el mapa por tipo:
+      // cv_enviado -> /app/envios.
+      datos: { companyName, colaJobId: jobId },
       leida: false,
     });
   } catch (notifErr) {
@@ -370,7 +384,7 @@ cvWorker.on("failed", (job: Job<CVJobData> | undefined, error: Error) => {
         tipo: "cv_fallido",
         titulo: `No se pudo enviar tu CV${companyName ? ` a ${companyName}` : ""}`,
         mensaje: "El envío falló y no ha llegado. No te ha gastado cuota: puedes volver a intentarlo cuando quieras.",
-        datos: { companyName, jobId: job.id, motivo: error.message?.slice(0, 200) },
+        datos: { companyName, colaJobId: job.id, motivo: error.message?.slice(0, 200) },
         leida: false,
       });
     } catch (e) {

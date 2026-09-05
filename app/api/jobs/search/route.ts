@@ -279,7 +279,7 @@ export async function GET(request: NextRequest) {
              -- traian descripciones enteras de hasta 1.000 y con 500 filas por
              -- busqueda eso son megabytes de JSON en cada peticion.
              LEFT(description, 300) AS description,
-             "sourceUrl", "sourceName", "scrapedAt",
+             "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
              "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza,
              COUNT(*) OVER() AS total_encontrado
       FROM "JobListing"
@@ -353,7 +353,7 @@ export async function GET(request: NextRequest) {
 
         const locResult = await pool.query(
           `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
-                  "sourceUrl", "sourceName", "scrapedAt",
+                  "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
                   "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza,
                   COUNT(*) OVER() AS total_encontrado
              FROM "JobListing"

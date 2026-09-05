@@ -72,10 +72,20 @@ export function destinoDeNotificacion(n: NotifDestino): string {
   // 1. Destino explícito de quien la creó.
   if (typeof datos.url === "string" && datos.url.startsWith("/")) return datos.url;
 
-  // 2. Una oferta concreta. `jobId` en camelCase también: las notificaciones de
-  //    CV enviado lo guardan así y llevaban desde siempre sin reconocerse.
+  // 2. Una oferta concreta.
+  //
+  //    El prefijo "cv-" NO es una oferta: es el identificador de la cola de
+  //    envios, que queue.ts genera como "cv-<usuario>-<fecha>". El worker lo
+  //    guardaba en `jobId` y esta regla, que va por delante del mapa por tipo,
+  //    montaba /app/ofertas/cv-8f3a...-1757. Esa pagina no existe, asi que la
+  //    notificacion de "CV enviado" acababa en "Oferta no encontrada".
+  //
+  //    El worker ya no lo guarda ahi, pero las notificaciones que hay en la
+  //    base se escribieron antes: este descarte es lo que las repara.
   const idOferta = datos.job_id || datos.jobId;
-  if (idOferta) return `/app/ofertas/${encodeURIComponent(idOferta)}`;
+  if (idOferta && !String(idOferta).startsWith("cv-")) {
+    return `/app/ofertas/${encodeURIComponent(idOferta)}`;
+  }
 
   // 3. Un curso concreto.
   if (datos.curso_slug) return `/app/formacion/${encodeURIComponent(datos.curso_slug)}`;
