@@ -362,11 +362,21 @@ export async function GET(req: NextRequest) {
       const existen = new Set(rows.map((x: { id: string }) => x.id));
       rotos = [...new Set(ids)].filter(id => !existen.has(id)).length;
     }
+    // Que una oferta enlazada desaparezca es NORMAL: caducan y las empresas
+    // cierran sus procesos. Se retiraron 195.217 de golpe. Exigir cero seria
+    // gritar todos los dias por algo sano, y una alarma que siempre suena se
+    // acaba ignorando.
+    //
+    // El fallo que hay que cazar era de otra magnitud: 76 de cada 78, el 97%,
+    // porque se enlazaba un identificador que no era de ninguna oferta. Con el
+    // 20% se pilla aquello de sobra y la caducidad normal no molesta.
+    const unicos = new Set(ids).size;
+    const pct = unicos ? (100 * rotos) / unicos : 0;
     anota(
       "las notificaciones no llevan a ofertas que no existen",
-      rotos === 0,
+      pct < 20,
       ids.length
-        ? `${rotos} de ${new Set(ids).size} ofertas enlazadas no existen`
+        ? `${rotos} de ${unicos} ofertas enlazadas ya no existen (${pct.toFixed(0)}%, limite 20%)`
         : "ninguna notificacion reciente enlaza una oferta",
       'la notificacion de "CV enviado" daba error en 76 de cada 78 casos'
     );

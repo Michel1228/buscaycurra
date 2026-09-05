@@ -67,20 +67,65 @@ export default async function DetalleOfertaPage({
   const row = result.rows[0];
 
   if (!row) {
+    // NO ES UN CALLEJON SIN SALIDA.
+    //
+    // Que una oferta desaparezca es normal y va a seguir pasando: retiramos
+    // 195.217 caducadas y las empresas cierran sus procesos. El centinela midio
+    // que 8 de cada 142 ofertas enlazadas desde notificaciones ya no existen.
+    //
+    // Pero llegar aqui desde una notificacion tuya y encontrarte un "no
+    // encontrada" con un boton de volver es lo mismo que perder al usuario. Se
+    // aprovecha para enseñarle algo que si puede usar.
+    const alternativas = await pool.query(
+      `SELECT id, title, company, city
+         FROM "JobListing"
+        WHERE "isActive" AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
+        ORDER BY "createdAt" DESC
+        LIMIT 4`
+    ).catch(() => ({ rows: [] as Array<{ id: string; title: string; company: string; city: string }> }));
+
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <div className="flex justify-center mb-4"><Search size={48} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
-        <p className="text-lg font-semibold" style={{ color: "#f1f5f9" }}>
-          Oferta no encontrada
-        </p>
-        <p className="text-sm mt-2" style={{ color: "#64748b" }}>
-          Esta oferta ya no está disponible o el enlace no es válido.
-        </p>
-        <a
-          href="/app/buscar"
-          className="mt-6 inline-block btn-game text-sm px-5 py-2.5 rounded-lg">
-          ← Volver a buscar
-        </a>
+      <div className="max-w-3xl mx-auto px-4 pt-20 pb-10">
+        <div className="text-center">
+          <div className="flex justify-center mb-4"><Search size={48} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
+          <p className="text-lg font-semibold" style={{ color: "#f1f5f9" }}>
+            Esta oferta ya no está
+          </p>
+          <p className="text-sm mt-2" style={{ color: "#64748b" }}>
+            La empresa la ha retirado o ha caducado. Pasa a menudo: las ofertas
+            duran poco.
+          </p>
+        </div>
+
+        {alternativas.rows.length > 0 && (
+          <div className="mt-8">
+            <p className="text-sm font-medium mb-3" style={{ color: "#94a3b8" }}>
+              Ofertas recién publicadas
+            </p>
+            <div className="grid gap-2">
+              {alternativas.rows.map((o) => (
+                <a
+                  key={o.id}
+                  href={`/app/ofertas/${encodeURIComponent(o.id)}`}
+                  className="rounded-xl p-4 transition hover:opacity-80"
+                  style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+                  <p className="text-sm font-medium" style={{ color: "#f1f5f9" }}>{o.title}</p>
+                  <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                    {o.company}{o.city ? ` · ${o.city}` : ""}
+                  </p>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="text-center">
+          <a
+            href="/app/buscar"
+            className="mt-8 inline-block btn-game text-sm px-5 py-2.5 rounded-lg">
+            Buscar otras ofertas
+          </a>
+        </div>
       </div>
     );
   }
