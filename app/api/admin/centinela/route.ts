@@ -57,9 +57,14 @@ export async function GET(req: NextRequest) {
   // lo elegía abría la aplicación y no había nada, sin ningún aviso.
   try {
     const codigos = LISTA_PAISES.map(p => p.codigo.toLowerCase());
+    // Sin lower() en la columna. `country` ya se guarda en minusculas, y
+    // envolverla en una funcion impide usar el indice: la primera vez que corrio
+    // esto, la consulta murio por statement timeout recorriendo 2,1 millones de
+    // filas. Un centinela que no puede mirar no es un aprobado, asi que se
+    // apunta como fallo — pero mejor que pueda mirar.
     const { rows } = await pool.query(
-      `SELECT lower(country) AS pais, count(*)::int AS n
-         FROM "JobListing" WHERE "isActive" AND lower(country) = ANY($1::text[])
+      `SELECT country AS pais, count(*)::int AS n
+         FROM "JobListing" WHERE "isActive" AND country = ANY($1::text[])
         GROUP BY 1`,
       [codigos]
     );
@@ -84,21 +89,26 @@ export async function GET(req: NextRequest) {
   // Una fuente estuvo 74 días devolviendo cero y nadie se enteró, porque el
   // registro decía "8.034 nuevas" contando refrescos como altas.
   try {
+    // Siete dias, no tres. Las fuentes por ciudad (EURES_MAD, EURES_LON...)
+    // rotan despacio y pueden pasar varios dias sin tocarles el turno: con tres
+    // dias el centinela gritaba por fuentes que estaban bien. Siete separa
+    // "rota despacio" de "esta muerta" — y sigue cazando de sobra los 74 dias
+    // que estuvo callada una fuente sin que nadie se enterara.
     const { rows } = await pool.query(
       `SELECT "sourceName" AS fuente,
-              count(*) FILTER (WHERE "createdAt" > now() - interval '3 days')::int AS recientes,
-              count(*)::int AS vivas
-         FROM "JobListing" WHERE "isActive"
-        GROUP BY 1 HAVING count(*) > 5000
-        ORDER BY 3 DESC`
+              (now()::date - max("createdAt")::date)::int AS dias_callada,
+              count(*) FILTER (WHERE "isActive")::int AS vivas
+         FROM "JobListing"
+        GROUP BY 1 HAVING count(*) FILTER (WHERE "isActive") > 5000
+        ORDER BY 2 DESC`
     );
-    const mudas = rows.filter((x: { recientes: number }) => x.recientes === 0);
+    const mudas = rows.filter((x: { dias_callada: number }) => x.dias_callada > 7);
     anota(
       "las fuentes grandes siguen trayendo ofertas",
       mudas.length === 0,
       mudas.length
-        ? `sin altas en 3 dias: ${mudas.map((x: { fuente: string; vivas: number }) => `${x.fuente} (${x.vivas} vivas)`).join(", ")}`
-        : `las ${rows.length} fuentes grandes han insertado algo en 3 dias`,
+        ? `calladas mas de 7 dias: ${mudas.map((x: { fuente: string; dias_callada: number; vivas: number }) => `${x.fuente} (${x.dias_callada}d, ${x.vivas} vivas)`).join(", ")}`
+        : `las ${rows.length} fuentes grandes han insertado algo en 7 dias`,
       "una fuente estuvo 74 dias devolviendo cero sin que nada avisara"
     );
   } catch (e) {
