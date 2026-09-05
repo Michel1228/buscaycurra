@@ -12,6 +12,16 @@
 
 ## YA ARREGLADO (no volver a mirarlo)
 
+- **Seis de los 26 países no se sincronizaban nunca.** Japón, Singapur, Grecia,
+  Chequia, Hungría y Rumanía no estaban en ningún calendario. Su configuración
+  llevaba tiempo escrita en `careerjet-countries.ts` —entre 330 y 600
+  combinaciones de palabra y ciudad cada uno— y nadie la llamaba. Japón acabó
+  con **19 ofertas en total**: quien lo elegía entre los destinos abría la
+  aplicación, no encontraba nada, y no había ningún aviso que lo explicara.
+  Añadidos al calendario. Comprobado contra la API primero (Tokio 1.719 con
+  "hotel") y luego en producción: 8 combinaciones trajeron **477 ofertas**.
+  Japón pasa de 19 a 496.
+
 - **6.820 ofertas españolas estaban guardadas como suecas.** Adzuna publica 19
   países y el calendario de sincronización pedía además Irlanda y Suecia, que no
   están. El código no fallaba: caía a España por tres sitios a la vez —

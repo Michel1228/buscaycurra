@@ -118,6 +118,24 @@ jobs:
           - { country: ca, batch: 12 }
           - { country: au, batch: 12 }
           - { country: nz, batch: 10 }
+          # Estos seis son de los 26 paises de la aplicacion y NUNCA se han
+          # sincronizado: no estaban en esta lista. Su configuracion lleva
+          # tiempo escrita en careerjet-countries.ts —entre 330 y 600
+          # combinaciones de palabra y ciudad cada uno— pero nadie la llamaba.
+          #
+          # Se ve en la base: Japon tiene 19 ofertas en total. Diecinueve. Quien
+          # lo elige entre los destinos abre la aplicacion, no encuentra nada, y
+          # no hay ningun aviso que lo explique.
+          #
+          # Comprobado contra la API antes de añadirlos, buscando "hotel":
+          # Tokio 1.719 · Singapur 592 · Atenas 639 · Praga 262 ·
+          # Budapest 118 · Bucarest 51.
+          - { country: jp, batch: 15 }
+          - { country: gr, batch: 12 }
+          - { country: cz, batch: 10 }
+          - { country: ro, batch: 10 }
+          - { country: hu, batch: 10 }
+          - { country: sg, batch: 10 }
     steps:
       - name: Sync Careerjet ${{ matrix.country }}
         run: |

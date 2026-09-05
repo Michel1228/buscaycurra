@@ -1277,6 +1277,29 @@ test("el filtro de salario quita los separadores de miles antes", () =>
 // de Estados Unidos mientras el filtro seguia marcado en pantalla.
 test("el respaldo por ciudad respeta el pais elegido", () =>
   salarioSrc.includes("condPais") && salarioSrc.includes("condPaisCuenta"));
+
+// ── NINGUN PAIS DE LA APP SE QUEDA SIN SINCRONIZAR ─────────────────────
+//
+// La aplicacion ofrece 26 paises. Seis de ellos —Japon, Singapur, Grecia,
+// Chequia, Hungria y Rumania— no estaban en ningun calendario, asi que nunca
+// se sincronizaron. Su configuracion llevaba tiempo escrita en
+// careerjet-countries.ts, entre 330 y 600 combinaciones cada uno, y nadie la
+// llamaba.
+//
+// Japon acabo con 19 ofertas. Quien lo elegia entre los destinos abria la
+// aplicacion y no encontraba nada, sin ningun aviso que lo explicara.
+const paisesApp = [...leerFuente("lib/paises.ts").matchAll(/^  ([A-Z][A-Z]): \{/gm)].map(m => m[1].toLowerCase());
+const todosLosCalendarios = readdirSync(".github/workflows")
+  .filter(n => n.endsWith(".yml"))
+  .map(n => leerFuente(".github/workflows/" + n))
+  .join(" | ");
+
+test("los 26 paises de la app estan en algun calendario de sincronizacion", () => {
+  const sinCubrir = paisesApp.filter(p => !todosLosCalendarios.includes("country: " + p + ",")
+                                       && !todosLosCalendarios.includes("pais: " + p + ","));
+  if (sinCubrir.length) console.log("      sin sincronizar: " + sinCubrir.join(", "));
+  return paisesApp.length === 26 && sinCubrir.length === 0;
+});
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);
