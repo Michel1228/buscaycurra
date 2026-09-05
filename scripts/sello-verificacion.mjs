@@ -1300,6 +1300,33 @@ test("los 26 paises de la app estan en algun calendario de sincronizacion", () =
   if (sinCubrir.length) console.log("      sin sincronizar: " + sinCubrir.join(", "));
   return paisesApp.length === 26 && sinCubrir.length === 0;
 });
+
+// ── TOCAR UNA NOTIFICACION HACE ALGO AL MOMENTO ───────────────────────
+//
+// La pagina de notificaciones esperaba a marcar la notificacion como leida
+// ANTES de desplegarla o de navegar:
+//
+//     if (!n.leida) await marcarLeida(n.id);
+//     router.push(...)
+//
+// Asi que al tocar una notificacion no pasaba nada hasta que volvia la
+// peticion. En el movil eso es tocar y que la aplicacion parezca rota: tocas
+// otra vez, y otra. La campana no lo esperaba; las dos pantallas hacian lo
+// mismo de forma distinta.
+//
+// Marcar como leida es un efecto secundario y no tiene que bloquear nada.
+const notifPagSrc = leerFuente("app/app/notificaciones/page.tsx");
+
+test("tocar una notificacion no espera a la red para abrirse", () =>
+  !notifPagSrc.includes("await marcarLeida"));
+
+test("marcar todas no va de una en una esperando cada respuesta", () =>
+  notifPagSrc.includes("Promise.allSettled"));
+
+// El boton de la campana solo tenia title, que en el movil no vale como nombre
+// accesible: el lector de pantalla no lo anuncia.
+test("el boton de la campana tiene nombre accesible", () =>
+  leerFuente("components/NotificationBell.tsx").includes("aria-label="));
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

@@ -87,28 +87,42 @@ export default function NotificacionesPage() {
     }
   }
 
-  async function marcarLeida(id: string) {
-    try {
-      await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenRef.current}` },
-        body: JSON.stringify({ notifId: id }),
-      });
-      setNotifs(prev => prev.map(n => n.id === id ? { ...n, leida: true } : n));
-    } catch { /* ignore */ }
+  /**
+   * Marca una notificación como leída SIN hacer esperar a nadie.
+   *
+   * Antes esto se hacía con `await` justo antes de desplegar o de navegar, así
+   * que al tocar una notificación no pasaba nada hasta que volvía la petición.
+   * En el móvil, con la red del metro, eso es tocar y que la aplicación parezca
+   * rota: tocas otra vez, y otra.
+   *
+   * Marcar como leída es un efecto secundario. Se pinta el cambio al momento y
+   * la petición va por detrás; si falla, la notificación se queda sin leer, que
+   * es lo de menos.
+   */
+  function marcarLeida(id: string) {
+    setNotifs(prev => prev.map(n => n.id === id ? { ...n, leida: true } : n));
+    fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenRef.current}` },
+      body: JSON.stringify({ notifId: id }),
+    }).catch(() => { /* que no se marque es lo de menos: lo importante ya se abrio */ });
   }
 
   async function marcarTodas() {
-    try {
-      for (const n of notifs.filter(n => !n.leida)) {
-        await fetch("/api/notifications", {
+    const pendientes = notifs.filter(n => !n.leida);
+    // Se pinta primero. El bucle de antes iba de una en una ESPERANDO cada
+    // respuesta y solo entonces actualizaba la pantalla: con 75 sin leer eran
+    // 75 idas y vueltas seguidas, y hasta la ultima no se veia nada.
+    setNotifs(prev => prev.map(n => ({ ...n, leida: true })));
+    await Promise.allSettled(
+      pendientes.map(n =>
+        fetch("/api/notifications", {
           method: "PATCH",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenRef.current}` },
           body: JSON.stringify({ notifId: n.id }),
-        });
-      }
-      setNotifs(prev => prev.map(n => ({ ...n, leida: true })));
-    } catch { /* ignore */ }
+        })
+      )
+    );
   }
 
   const isAlerta = (n: Notif) => esAlertaDesplegable(n.tipo);
@@ -121,7 +135,8 @@ export default function NotificacionesPage() {
   }
 
   async function toggleExpand(n: Notif) {
-    if (!n.leida) await marcarLeida(n.id);
+    // Sin await: el desplegable se abre YA y lo de marcarla va por detras.
+    if (!n.leida) marcarLeida(n.id);
 
     if (expandedIds.has(n.id)) {
       setExpandedIds(prev => { const s = new Set(prev); s.delete(n.id); return s; });
@@ -250,7 +265,9 @@ export default function NotificacionesPage() {
       await toggleExpand(n);
       return;
     }
-    if (!n.leida) await marcarLeida(n.id);
+    // Sin await: se navega YA. Antes la pantalla se quedaba quieta hasta que
+    // volvia la peticion de marcarla como leida.
+    if (!n.leida) marcarLeida(n.id);
     router.push(getNonAlertaUrl(n));
   }
 
@@ -405,9 +422,21 @@ export default function NotificacionesPage() {
                           <span className="text-[11px]" style={{ color: "#64748b" }}>Cargando ofertas...</span>
                         </div>
                       ) : ofertas.length === 0 ? (
-                        <p className="text-[11px] py-3" style={{ color: "#64748b" }}>
-                          Las ofertas ya no están disponibles. Prueba a buscar en el buscador.
-                        </p>
+                        // Decia "prueba a buscar en el buscador" sin nada que
+                        // pulsar. El usuario ha llegado hasta aqui desde su
+                        // notificacion: dejarlo con un consejo y ninguna salida
+                        // es perderlo en el ultimo paso.
+                        <div className="py-3">
+                          <p className="text-[11px]" style={{ color: "#64748b" }}>
+                            Estas ofertas ya se han cerrado. Pasa a menudo: duran poco.
+                          </p>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); router.push("/app/buscar"); }}
+                            className="mt-2 text-[11px] font-medium px-3 py-2 rounded-lg"
+                            style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#22c55e" }}>
+                            Buscar ofertas parecidas
+                          </button>
+                        </div>
                       ) : (
                         ofertas.map(o => {
                           const sending = enviando.has(o.id);

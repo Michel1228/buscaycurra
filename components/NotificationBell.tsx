@@ -171,6 +171,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
       <button
         onClick={() => setOpen(!open)}
         title="Notificaciones"
+        // title no vale como nombre accesible en el movil: el lector de pantalla
+        // no lo anuncia. Con 75 sin leer, el boton se llamaba "" para quien
+        // navega a ciegas.
+        aria-label={sinLeer > 0 ? `Notificaciones, ${sinLeer} sin leer` : "Notificaciones"}
+        aria-expanded={open}
         className="relative flex items-center justify-center w-9 h-9 rounded-lg transition"
         style={{ color: sinLeer > 0 ? badgeColor : "#64748b" }}
       >
