@@ -165,9 +165,14 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   `COALESCE`), y al ser `SECURITY DEFINER` con los permisos por defecto de
   Supabase, cualquiera con la clave pública podía gastar la cuota de otro
   usuario (ahora solo `service_role`, con `search_path` fijo).
-  **Queda:** `lib/usage-tracker.ts` sigue contando las consultas a Guzzi con
-  leer-comprobar-escribir; `consumir_consulta_guzzi` está creada pero ningún
-  código la llama todavía.
+  **Guzzi también, desde el 15 sep 2026:** `trackGuzziQuery`
+  (`lib/usage-tracker.ts`) usa `consumir_consulta_guzzi` en vez de leer,
+  comprobar y escribir; el método antiguo solo queda de respaldo, con aviso en el
+  log. Probado ANTES de desplegar, con el código nuevo dentro del contenedor de
+  producción, sobre un día inventado (2099-01-01) y la cuenta de administración:
+  **25 mensajes a la vez con el límite gratuito de 15 → exactamente 15 permitidos
+  y 10 denegados**, restantes 0-14 sin repetir ninguno, contador final 15 y
+  ninguna caída al método antiguo. La fila de prueba se borró.
 
 - [x] ~~El límite **semanal** de envíos no se aplica nunca. Y el mensaje de tope
   dice "500 al mes" cuando son 1.400.~~ **ARREGLADO**.

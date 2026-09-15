@@ -101,7 +101,36 @@ export async function trackGuzziQuery(userId: string, plan?: string | null): Pro
     return { allowed: true, remaining: 999999 };
   }
 
-  // Incrementar contador
+  // SUMAR Y COMPROBAR EN LA MISMA OPERACION.
+  //
+  // Antes se leia el contador, se comparaba con el limite y despues se escribia
+  // contador + 1. Entre la lectura y la escritura cabe otro mensaje: diez a la
+  // vez leen el mismo numero, los diez pasan la comprobacion y los diez llegan
+  // al modelo. El limite diario solo valia si el usuario escribia despacio.
+  //
+  // consumir_consulta_guzzi (migracion 005, aplicada en Supabase el 15 sep 2026)
+  // suma dentro del ON CONFLICT con un WHERE: si ya no queda cuota no actualiza,
+  // no devuelve fila y llega null. No queda hueco entre comprobar y escribir.
+  //
+  // Se descuenta ANTES de responder, igual que antes: checkGuzziAccess se llama
+  // antes de procesar el mensaje. Para el usuario no cambia que se cobra.
+  const { data: nuevo, error: errRpc } = await supabase.rpc("consumir_consulta_guzzi", {
+    p_user_id: userId,
+    p_date_key: today,
+    p_limite: limits.guzziMaxConsultasDia,
+  });
+
+  if (!errRpc) {
+    // null = el WHERE del ON CONFLICT no se cumplio = ya no quedaba cuota.
+    if (nuevo === null) return { allowed: false, remaining: 0 };
+    return { allowed: true, remaining: Math.max(0, limits.guzziMaxConsultasDia - Number(nuevo)) };
+  }
+
+  // Si la funcion no responde (por ejemplo, porque alguien la borre), se sigue
+  // con el metodo de antes para no dejar a Guzzi sin servicio. Pero que conste en
+  // el log: por este camino la carrera vuelve a estar abierta.
+  console.warn("[usage-tracker] consumir_consulta_guzzi no disponible, metodo antiguo:", errRpc.message);
+
   const { data } = await supabase
     .from("usage_tracking")
     .select("guzzi_consultas")

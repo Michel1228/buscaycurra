@@ -1344,6 +1344,22 @@ test("el centinela avisa por correo, no solo en un log", () => {
 test("el centinela se identifica ante Resend (sin eso, 403 de Cloudflare)", () =>
   /"User-Agent"\s*:\s*"[^"]+"/.test(leerFuente("scripts/vps/centinela.sh")));
 
+// ── GUZZI DESCUENTA SUS CONSULTAS DE UNA VEZ ──────────────────────────────
+//
+// trackGuzziQuery leia el contador, comparaba y escribia contador + 1. Entre la
+// lectura y la escritura cabia otro mensaje: diez a la vez pasaban los diez el
+// limite diario y llegaban al modelo. Ahora suma y comprueba en la base de
+// datos en una sola operacion (consumir_consulta_guzzi, migracion 005). El
+// metodo antiguo solo queda como respaldo si la funcion no responde, y tiene
+// que ir DESPUES de intentarla.
+test("Guzzi descuenta la consulta con la funcion atomica antes que leyendo y escribiendo", () => {
+  const u = leerFuente("lib/usage-tracker.ts");
+  const cuerpo = (u.split("export async function trackGuzziQuery")[1] || "").split("export async function")[0];
+  const rpc = cuerpo.indexOf('rpc("consumir_consulta_guzzi"');
+  const lectura = cuerpo.indexOf('.select("guzzi_consultas")');
+  return rpc > -1 && cuerpo.includes("nuevo === null") && (lectura === -1 || rpc < lectura);
+});
+
 // El repositorio es publico. Seis scripts del crontab llevaban la clave de
 // administracion escrita dentro; ahora la leen de .env.local en el servidor.
 test("los scripts del VPS no llevan claves escritas", () => {
