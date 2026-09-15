@@ -149,15 +149,25 @@ de abajo sobre Japón y Suecia están corregidas por eso.
 
 - [x] ~~Carrera en los contadores de cuota (`usage-tracker.ts:103`,
   `analyze-image:69`): select-then-upsert no atómico. Diez peticiones a la vez
-  gastan diez fotos de GPT-4o en vez de dos.~~ **ARREGLADO en el código**: la
-  cámara suma y comprueba en la misma operación, con la función
-  `consumir_uso_camara` de `db/migrations/005_consumir_cuota_atomico.sql`.
-  El `where` del `on conflict` es lo que lo hace atómico: si no queda cuota no
-  actualiza, no devuelve fila, y llega `null`. Si la función todavía no existe
-  en la base, se usa el método viejo y se avisa por el log, para no dejar la
-  cámara inservible mientras tanto.
-  ⚠️ **PENDIENTE DE MICHEL**: aplicar la migración 005 en Supabase. Hasta
-  entonces la carrera sigue abierta.
+  gastan diez fotos de GPT-4o en vez de dos.~~ **ARREGLADO**: la cámara suma y
+  comprueba en la misma operación, con la función `consumir_uso_camara` de
+  `db/migrations/005_consumir_cuota_atomico.sql`. El `where` del `on conflict`
+  es lo que lo hace atómico: si no queda cuota no actualiza, no devuelve fila, y
+  llega `null`. Si la función faltara, el código usa el método viejo y lo avisa
+  por el log.
+  **Migración aplicada en Supabase el 15 sep 2026** por Michel, y comprobada
+  desde el servidor sin escribir datos: la clave pública recibe
+  `42501 permission denied`; el servidor la ejecuta (límite 0 → `null`); y
+  `consumir_consulta_guzzi` sobre un contador ya por encima del límite responde
+  `null` y lo deja igual (2 → 2).
+  Antes de aplicarla se corrigieron dos fallos de la primera versión: con
+  `camara_usos` a NULL habría respondido "sin cuota" para siempre (ahora
+  `COALESCE`), y al ser `SECURITY DEFINER` con los permisos por defecto de
+  Supabase, cualquiera con la clave pública podía gastar la cuota de otro
+  usuario (ahora solo `service_role`, con `search_path` fijo).
+  **Queda:** `lib/usage-tracker.ts` sigue contando las consultas a Guzzi con
+  leer-comprobar-escribir; `consumir_consulta_guzzi` está creada pero ningún
+  código la llama todavía.
 
 - [x] ~~El límite **semanal** de envíos no se aplica nunca. Y el mensaje de tope
   dice "500 al mes" cuando son 1.400.~~ **ARREGLADO**.
