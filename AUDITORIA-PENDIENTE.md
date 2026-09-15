@@ -10,7 +10,50 @@
 
 ---
 
+## ⚠️ ANTES DE TOCAR CUALQUIER TAREA PROGRAMADA (15 sep 2026)
+
+**Ninguna tarea programada corre en GitHub Actions.** GitHub solo lanza los
+calendarios `schedule` desde la rama por defecto (`main`), y allí se desactivaron
+el 5 de julio de 2026 (commit `553719a`). Todo lo que sincroniza, limpia, copia o
+avisa vive en el **crontab de root del VPS**. Copia versionada y reglas:
+[`scripts/vps/README.md`](./scripts/vps/README.md).
+
+Entre el 3 y el 5 de septiembre se cambió `.github/workflows/sync-jobs.yml`
+creyendo que se ejecutaba. **Esos cambios no tuvieron efecto**: las dos entradas
+de abajo sobre Japón y Suecia están corregidas por eso.
+
+## ABIERTO (encontrado el 15 sep 2026)
+
+- [ ] **Arbeitnow lleva parado desde el 19 de agosto.** 6.295 ofertas vivas y
+  ninguna alta en 27 días. Solo lo sincronizaban `sync-fuentes-extra.sh` y
+  `sync-nocturno.sh`, y ninguno está en el crontab. El centinela lo marca, con
+  razón. **Decisión de Michel:** volver a programarlo o retirarlo.
+- [ ] **`/root/candados.sh` lleva escrita una contraseña real** de la cuenta con
+  la que prueba el inicio de sesión. Quedó a la vista durante la revisión del
+  15 sep: **hay que cambiarla** y hacer que el script la lea de `.env.local`.
+  Hasta entonces no se versiona. **Requiere a Michel.**
+- [ ] **Las copias de seguridad están en el mismo servidor.** `backup-bc.sh`
+  (04:00 UTC, 7 días) guarda la base propia, `.env.local` y el crontab en
+  `/root/backups`: si se pierde el VPS, se pierden con él. **Supabase no se copia**
+  (usuarios, envíos, notificaciones). Falta una copia fuera del VPS.
+- [ ] **`sync-adzuna-19.sh` sigue pidiendo Brasil, India, México y Sudáfrica**, que
+  no son de los 26 países de la aplicación: gasta cuota en ofertas que no ve
+  nadie. **Decisión de Michel.**
+- [ ] **El vigilante `watchdog-bc.sh` no está en el crontab**, y sus avisos solo
+  iban a `/tmp/watchdog-alerts.log`.
+
 ## YA ARREGLADO (no volver a mirarlo)
+
+- **Las tareas programadas nuevas no se ejecutaban nunca (15 sep 2026).** El
+  centinela y el barrido de Adzuna se escribieron como workflows de GitHub. Ahora
+  están en el crontab del VPS (centinela 07:30 UTC, barrido 11:00 UTC) y el
+  centinela **avisa por correo** cuando cambia el resultado, y los lunes si siguen
+  los fallos: antes no existía ningún canal de avisos. Además: Japón y Singapur
+  añadidos al script real de Careerjet (Singapur probado: 7 de 7), Suecia fuera
+  de `sync-adzuna-loop.sh`, seis scripts dejan de llevar la clave de
+  administración escrita, y los 14 scripts del crontab quedan versionados. El
+  centinela deja de dar falsas alarmas por nombres de fuente retirados
+  (`careerjet_*`) y por ciudades de Careerjet que esperan su turno (`EURES_*`).
 
 - **Seis de los 26 países no se sincronizaban nunca.** Japón, Singapur, Grecia,
   Chequia, Hungría y Rumanía no estaban en ningún calendario. Su configuración
@@ -18,9 +61,11 @@
   combinaciones de palabra y ciudad cada uno— y nadie la llamaba. Japón acabó
   con **19 ofertas en total**: quien lo elegía entre los destinos abría la
   aplicación, no encontraba nada, y no había ningún aviso que lo explicara.
-  Añadidos al calendario. Comprobado contra la API primero (Tokio 1.719 con
-  "hotel") y luego en producción: 8 combinaciones trajeron **477 ofertas**.
-  Japón pasa de 19 a 496.
+  ~~Añadidos al calendario.~~ **Corregido el 15 sep:** se añadieron a
+  `sync-jobs.yml`, que no se ejecuta. Grecia, Chequia, Hungría y Rumanía ya los
+  pedía el script real del VPS; **Japón y Singapur no, hasta el 15 sep.** Lo que
+  creció Japón (477 y luego 1.278 ofertas) salió de tandas lanzadas a mano el
+  5 sep. Comprobado antes contra la API: Tokio 1.719 con "hotel".
 
 - **6.820 ofertas españolas estaban guardadas como suecas.** Adzuna publica 19
   países y el calendario de sincronización pedía además Irlanda y Suecia, que no
@@ -31,6 +76,10 @@
   se planta ante un país que Adzuna no cubre, el calendario ya no los pide (su
   presupuesto pasa a Bélgica y Austria, que sí existen) y las filas se han
   reetiquetado. España: 29.599 → 36.372 ofertas activas.
+  **Corregido el 15 sep:** quitar Suecia del calendario no tuvo efecto, porque no
+  se ejecuta. Quien la seguía pidiendo tres veces al día era
+  `/root/sync-adzuna-loop.sh`, y se quitó de ahí el 15 sep. Lo que sí protegía
+  desde el 4 sep era el freno del propio sincronizador.
 
 - Envíos que reventaban no dejaban rastro y gastaban cuota para siempre → se
   marcan fallidos y se avisa. Y hay rescate de huérfanos al arrancar el worker.

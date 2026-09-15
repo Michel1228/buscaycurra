@@ -879,8 +879,12 @@ test("las paginas de empleo no se cachean para siempre", () =>
 // extractores ni siquiera ponian la fecha.
 test("existe el endpoint que retira las ofertas caducadas", () =>
   leerFuente("app/api/jobs/retirar-caducadas/route.ts").includes('"isActive" = false'));
+// Programada en el crontab del VPS (limpiar-caducadas.sh, 05:30 UTC). Antes
+// esta prueba leia .github/workflows/sync-jobs.yml, que no se ejecuta: GitHub
+// solo lanza los calendarios programados desde main, y alli se desactivaron el
+// 5 jul 2026. Daba por buena una programacion que no existia.
 test("la limpieza esta programada, no depende de que alguien se acuerde", () =>
-  leerFuente(".github/workflows/sync-jobs.yml").includes("retirar-caducadas"));
+  /^[^#].*limpiar-caducadas\.sh/m.test(leerFuente("scripts/vps/crontab.txt")));
 test("la columna de caducidad tiene valor por defecto", () =>
   leerFuente("db/migrations/004_caducidad_por_defecto.sql").includes("SET DEFAULT"));
 test("los fallos del sincronizador se cuentan en vez de perderse", () => {
@@ -1094,21 +1098,27 @@ test("volver funciona aunque no haya historial (llegada por notificacion)", () =
 //
 // Esta comprobacion compara las dos listas. Es la que habria cazado aquello.
 const syncSrc = leerFuente("lib/job-search/sync-worker.ts");
-const wfSrc = leerFuente(".github/workflows/sync-jobs.yml");
 
 // Los paises de ADZUNA_COUNTRIES, tal cual estan escritos en el fuente.
 const tablaAdzuna = syncSrc.split("const ADZUNA_COUNTRIES")[1] || "";
 const cierre = tablaAdzuna.indexOf("};");
 const paisesAdzuna = [...tablaAdzuna.slice(0, cierre).matchAll(/^  ([a-z]{2}):/gm)].map(m => m[1]);
 
-// Los del bloque de Adzuna del calendario, que acaba donde empieza Careerjet.
-const bloqueAdzuna = wfSrc.split('name: "Careerjet')[0];
-const paisesCalendario = [...bloqueAdzuna.matchAll(/country: ([a-z]{2}),/g)].map(m => m[1]);
+// Los que piden DE VERDAD los scripts de Adzuna del crontab del VPS. Antes se
+// leia el calendario de GitHub sync-jobs.yml, que no se ejecuta desde el 5 jul
+// 2026: de alli se quito Suecia el 4 de septiembre y esta prueba se puso en
+// verde, mientras /root/sync-adzuna-loop.sh la seguia pidiendo tres veces al dia.
+const loopAdzuna = leerFuente("scripts/vps/sync-adzuna-loop.sh");
+const plan19 = (leerFuente("scripts/vps/sync-adzuna-19.sh").match(/^PLAN="([^"]+)"/m) || [])[1] || "";
+const paisesCalendario = [
+  ...((loopAdzuna.match(/^for p in ([a-z ]+); do/m) || [])[1] || "").split(" "),
+  ...plan19.split(" ").map(e => e.split(":")[0]),
+].filter(Boolean);
 
 test("la tabla de Adzuna tiene los 19 paises que publica", () =>
   paisesAdzuna.length === 19);
 
-test("el calendario no pide a Adzuna paises que no existen", () => {
+test("los scripts del VPS no piden a Adzuna paises que no existen", () => {
   const sobran = paisesCalendario.filter(p => !paisesAdzuna.includes(p));
   if (sobran.length) console.log("      sobran: " + sobran.join(", "));
   return sobran.length === 0 && paisesCalendario.length > 0;
@@ -1289,16 +1299,64 @@ test("el respaldo por ciudad respeta el pais elegido", () =>
 // Japon acabo con 19 ofertas. Quien lo elegia entre los destinos abria la
 // aplicacion y no encontraba nada, sin ningun aviso que lo explicara.
 const paisesApp = [...leerFuente("lib/paises.ts").matchAll(/^  ([A-Z][A-Z]): \{/gm)].map(m => m[1].toLowerCase());
-const todosLosCalendarios = readdirSync(".github/workflows")
-  .filter(n => n.endsWith(".yml"))
-  .map(n => leerFuente(".github/workflows/" + n))
-  .join(" | ");
+//
+// Se cruzan con los paises que piden DE VERDAD los scripts del crontab del VPS.
+// Antes se cruzaban con los calendarios de GitHub, y ahi Japon y Singapur ya
+// "estaban" desde el 5 de septiembre... en un calendario que no se ejecuta: el
+// script real de Careerjet seguia sin ellos. La prueba pasaba y Japon no crecia.
+const scriptCareerjet = leerFuente("scripts/vps/sync-careerjet-parallel.sh");
+const paisesSincronizados = new Set([
+  ...((scriptCareerjet.match(/^countries="([a-z ]+)"/m) || [])[1] || "").split(" "),
+  ...paisesCalendario,
+].filter(Boolean));
 
-test("los 26 paises de la app estan en algun calendario de sincronizacion", () => {
-  const sinCubrir = paisesApp.filter(p => !todosLosCalendarios.includes("country: " + p + ",")
-                                       && !todosLosCalendarios.includes("pais: " + p + ","));
+test("los 26 paises de la app estan en algun script de sincronizacion del VPS", () => {
+  const sinCubrir = paisesApp.filter(p => !paisesSincronizados.has(p));
   if (sinCubrir.length) console.log("      sin sincronizar: " + sinCubrir.join(", "));
   return paisesApp.length === 26 && sinCubrir.length === 0;
+});
+
+// ── LAS TAREAS PROGRAMADAS VIVEN EN EL CRONTAB DEL VPS ─────────────────
+//
+// GitHub solo lanza calendarios programados desde la rama por defecto (main), y
+// alli se desactivaron el 5 jul 2026. El centinela y el barrido de Adzuna se
+// escribieron como workflows y no llegaron a ejecutarse nunca. Ahora son
+// scripts del crontab, y su copia versionada tiene que decir que lo estan.
+const crontabVps = leerFuente("scripts/vps/crontab.txt");
+test("el centinela esta programado en el crontab del VPS", () =>
+  crontabVps.includes("/root/centinela.sh"));
+test("el barrido de Adzuna esta programado en el crontab del VPS", () =>
+  crontabVps.includes("/root/sync-adzuna-barrido.sh"));
+test("no vuelven los workflows que fingian tareas programadas", () =>
+  !readdirSync(".github/workflows").some(n => n === "centinela.yml" || n === "sync-adzuna-barrido.yml"));
+
+// Un centinela sin canal no avisa a nadie: el vigilante que ya habia solo
+// escribia en /tmp/watchdog-alerts.log. Este tiene que mandar correo.
+test("el centinela avisa por correo, no solo en un log", () => {
+  const c = leerFuente("scripts/vps/centinela.sh");
+  return c.includes("api.resend.com") && c.includes("ADMIN_EMAILS");
+});
+
+// El repositorio es publico. Seis scripts del crontab llevaban la clave de
+// administracion escrita dentro; ahora la leen de .env.local en el servidor.
+test("los scripts del VPS no llevan claves escritas", () => {
+  const nombres = readdirSync("scripts/vps");
+  const malos = nombres.filter(n => {
+    const s = leerFuente("scripts/vps/" + n);
+    return /^[A-Z_]*(SECRET|TOKEN|PASSWORD|API_KEY)=["']?[A-Za-z0-9_./+=-]{12,}/m.test(s)
+        || /"(password|pass|secret|token)"\s*:\s*"[^"]+/i.test(s)
+        || /x-(sync|admin)-secret:\s*[A-Za-z0-9_-]{12,}/i.test(s);
+  });
+  if (malos.length) console.log("      con clave escrita: " + malos.join(", "));
+  return nombres.length > 0 && malos.length === 0;
+});
+
+// Sin agrupar, el centinela gritaba cada dia por nombres de fuente retirados
+// (careerjet_US...) y por ciudades de Careerjet que esperan turno (EURES_SEA...).
+// Una alarma que siempre suena se ignora, y entonces tampoco se ve la de verdad.
+test("el centinela agrupa Careerjet y descarta nombres de fuente retirados", () => {
+  const c = leerFuente("app/api/admin/centinela/route.ts");
+  return c.includes("Careerjet (EURES_ciudad)") && c.includes("NOT LIKE 'careerjet!_%'");
 });
 
 // ── TOCAR UNA NOTIFICACION HACE ALGO AL MOMENTO ───────────────────────

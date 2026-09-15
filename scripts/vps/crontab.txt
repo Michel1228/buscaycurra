@@ -1,0 +1,26 @@
+# Extract emails every 2 hours (v15, 100 companies)
+0 1,5,9,13,17,21 * * * bash /root/sync-adzuna-19.sh >> /tmp/sync-adzuna-19-cron.log 2>&1
+
+# === EXTRACCION BUSCAYCURRA ===
+# Adzuna 10 países paginado — cada 8h (00:00, 08:00, 16:00)
+0 0,8,16 * * * bash /root/sync-adzuna-loop.sh >> /tmp/sync-adzuna-loop.log 2>&1
+# EURES barrido completo — cada 12h (02:00, 14:00)  
+0 2,14 * * * bash /root/sync-eures-loop.sh >> /tmp/sync-eures-loop.log 2>&1
+# USAJobs barrido — cada 6h (03:00, 09:00, 15:00, 21:00)
+0 3,9,15,21 * * * bash /root/sync-usajobs-loop.sh >> /tmp/sync-usajobs-loop.log 2>&1
+# Careerjet 20 países — cada 6h (04:00, 10:00, 16:00, 22:00)  
+0 4,10,16,22 * * * bash /root/sync-europa.sh >> /root/sync-europa.log 2>&1
+# Adzuna 19 países — cada 4h (offset 1h de careerjet)
+# Extract emails — cada 2h
+0 */2 * * * bash /root/extract-emails-fast.sh 300 >> /tmp/extract-emails-cron.log 2>&1
+0 */3 * * * bash /root/enviar-alertas.sh >> /tmp/send-alerts.log 2>&1
+0 2,8,14,20 * * * bash /root/sync-careerjet-parallel.sh >> /tmp/sync-careerjet.log 2>&1
+0 6,18 * * * bash /root/sync-arbeitsagentur.sh >> /tmp/sync-arbeitsagentur-cron.log 2>&1
+0 4 * * * bash /root/backup-bc.sh >> /root/backup-bc.log 2>&1
+15 1,7,13,19 * * * bash /root/sync-fuentes-recuperadas.sh >> /root/sync-fuentes.log 2>&1
+40 */6 * * * /usr/bin/flock -n /root/.emails.lock bash /root/mantenimiento-emails.sh >> /root/emails.log 2>&1
+30 5 * * * /usr/bin/flock -n /tmp/limpiar-caducadas.lock nice -n 19 /root/limpiar-caducadas.sh >> /root/limpiar-caducadas.log 2>&1
+# Centinela: 12 comprobaciones contra los datos reales; correo si cambia el resultado (scripts/vps/centinela.sh)
+30 7 * * * /usr/bin/flock -n /tmp/centinela.lock bash /root/centinela.sh >> /root/centinela.log 2>&1
+# Barrido diario de Adzuna: lo publicado en 24 h, paginando sin palabras clave (scripts/vps/sync-adzuna-barrido.sh)
+0 11 * * * /usr/bin/flock -n /tmp/barrido-adzuna.lock bash /root/sync-adzuna-barrido.sh >> /root/sync-adzuna-barrido.log 2>&1

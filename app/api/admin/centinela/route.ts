@@ -19,7 +19,11 @@
  * de un fallo que pasó de verdad, no de una lista imaginada: si alguna vuelve a
  * suceder, esto lo dice antes de que lo note un usuario.
  *
- * Sale una vez al día desde .github/workflows/centinela.yml y avisa en rojo.
+ * Sale una vez al día desde el crontab del VPS (scripts/vps/centinela.sh), que
+ * manda un correo cuando el resultado cambia respecto a la vez anterior, y los
+ * lunes mientras sigan los fallos. Se escribió primero como workflow de GitHub y
+ * nunca llegó a ejecutarse: GitHub solo lanza calendarios programados desde la
+ * rama main, y allí se desactivaron el 5 de julio de 2026.
  *
  * REGLA AL AÑADIR COMPROBACIONES: cada una tiene que poder fallar. Una que no
  * hayas visto fallar no sirve de nada — es exactamente el error que ya cometimos
@@ -96,16 +100,36 @@ export async function GET(req: NextRequest) {
   // Una fuente estuvo 74 días devolviendo cero y nadie se enteró, porque el
   // registro decía "8.034 nuevas" contando refrescos como altas.
   try {
-    // Siete dias, no tres. Las fuentes por ciudad (EURES_MAD, EURES_LON...)
-    // rotan despacio y pueden pasar varios dias sin tocarles el turno: con tres
-    // dias el centinela gritaba por fuentes que estaban bien. Siete separa
-    // "rota despacio" de "esta muerta" — y sigue cazando de sobra los 74 dias
-    // que estuvo callada una fuente sin que nadie se enterara.
+    // Siete dias, no tres: una fuente puede pasar varios dias sin turno. Siete
+    // separa "rota despacio" de "esta muerta" y sigue cazando de sobra los 74
+    // dias que estuvo callada una fuente sin que nadie se enterara.
+    //
+    // DOS TRAMPAS DE NOMBRE que daban falsas alarmas todos los dias:
+    //
+    //  - "EURES_MAD", "EURES_SEA"... NO son EURES: son Careerjet, que guarda la
+    //    fuente como EURES_ + tres letras de la ciudad (error historico,
+    //    explicado en sync-worker.ts). Por ciudad, cada una espera semanas su
+    //    turno en la rotacion, asi que se juzgan juntas: si la familia entera
+    //    ha insertado algo, Careerjet funciona.
+    //
+    //  - "careerjet_US", "careerjet_UK"... (minusculas) son nombres RETIRADOS
+    //    de una version antigua. El codigo actual ya no escribe con ellos, se
+    //    van vaciando solos al caducar, y no volveran a tener altas nunca.
+    //
+    // Se usa LIKE y no expresiones regulares: la consulta recorre la tabla
+    // entera y con el VPS al 85% de robo de CPU conviene la comparacion barata.
     const { rows } = await pool.query(
-      `SELECT "sourceName" AS fuente,
+      `WITH f AS (
+         SELECT CASE WHEN "sourceName" LIKE 'EURES!_%' ESCAPE '!'
+                     THEN 'Careerjet (EURES_ciudad)' ELSE "sourceName" END AS fuente,
+                "createdAt", "isActive"
+           FROM "JobListing"
+          WHERE "sourceName" NOT LIKE 'careerjet!_%' ESCAPE '!'
+       )
+       SELECT fuente,
               (now()::date - max("createdAt")::date)::int AS dias_callada,
               count(*) FILTER (WHERE "isActive")::int AS vivas
-         FROM "JobListing"
+         FROM f
         GROUP BY 1 HAVING count(*) FILTER (WHERE "isActive") > 5000
         ORDER BY 2 DESC`
     );

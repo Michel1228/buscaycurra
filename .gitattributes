@@ -1,0 +1,7 @@
+# Lo que se ejecuta en el VPS (Linux) tiene que llevar fin de linea LF.
+#
+# En este equipo git tiene core.autocrlf=true: sin esta regla sacaria estos
+# ficheros con CRLF en la copia de trabajo, y un script con CRLF copiado al
+# servidor revienta sin explicar por que (bash lee "do\r" y "then\r" como
+# ordenes que no existen, y crontab ignora lineas).
+scripts/vps/** text eol=lf
