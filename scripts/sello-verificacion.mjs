@@ -1337,6 +1337,13 @@ test("el centinela avisa por correo, no solo en un log", () => {
   return c.includes("api.resend.com") && c.includes("ADMIN_EMAILS");
 });
 
+// Cloudflare, delante de la API de Resend, rechaza la identificacion por defecto
+// de Python con un 403 "error code: 1010". El primer aviso del centinela no salio
+// por eso: el canal de alertas existia, con clave buena y dominio verificado, y
+// no funcionaba.
+test("el centinela se identifica ante Resend (sin eso, 403 de Cloudflare)", () =>
+  /"User-Agent"\s*:\s*"[^"]+"/.test(leerFuente("scripts/vps/centinela.sh")));
+
 // El repositorio es publico. Seis scripts del crontab llevaban la clave de
 // administracion escrita dentro; ahora la leen de .env.local en el servidor.
 test("los scripts del VPS no llevan claves escritas", () => {

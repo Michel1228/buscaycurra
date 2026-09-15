@@ -130,11 +130,20 @@ cuerpo = json.dumps({
     "subject": asunto,
     "text": "\n".join(lineas),
 }).encode("utf-8")
+# User-Agent propio: OBLIGATORIO. La API de Resend esta detras de Cloudflare,
+# que rechaza la identificacion por defecto de Python ("Python-urllib/3.x") con
+# un 403 "error code: 1010". Comprobado el 15 sep 2026 con la misma clave: sin
+# esta cabecera 403, con ella 200. El primer aviso del centinela no salio por
+# esto, con la clave buena y el dominio verificado.
 peticion = urllib.request.Request(
     "https://api.resend.com/emails",
     data=cuerpo,
     method="POST",
-    headers={"Authorization": f"Bearer {clave}", "Content-Type": "application/json"},
+    headers={
+        "Authorization": f"Bearer {clave}",
+        "Content-Type": "application/json",
+        "User-Agent": "buscaycurra-centinela/1.0",
+    },
 )
 try:
     with urllib.request.urlopen(peticion, timeout=30) as r:
@@ -144,6 +153,14 @@ except Exception as e:
     # para que la proxima ejecucion vea "cambio" y lo vuelva a intentar.
     with open(estado, "w", encoding="utf-8") as fh:
         fh.write("__aviso_no_enviado__")
-    print(f"  ERROR enviando el correo: {e}")
+    # El cuerpo de la respuesta dice el motivo. Sin el, el primer fallo solo
+    # decia "403 Forbidden" y hubo que ir a buscar la causa a mano.
+    motivo_error = ""
+    if hasattr(e, "read"):
+        try:
+            motivo_error = " · " + e.read().decode("utf-8", "replace")[:300]
+        except Exception:
+            pass
+    print(f"  ERROR enviando el correo: {e}{motivo_error}")
     sys.exit(1)
 PY
