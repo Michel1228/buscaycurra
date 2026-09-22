@@ -327,11 +327,20 @@ export async function GET(request: NextRequest) {
 
     const totalDB = parseInt(String(dbResult.rows[0]?.total_encontrado || "0"), 10);
 
+    // Se agrupa por PUESTO+EMPRESA+CIUDAD, no por enlace. La misma oferta llega
+    // por varias fuentes y cada una le pone su URL, asi que agrupar por enlace no
+    // quitaba ni una: el 22 sep 2026 habia 23.237 grupos repetidos en la base, y
+    // una ETT alemana salia 72 veces seguidas con el mismo puesto en el mismo
+    // pueblo. Se queda la primera, que por el orden de la consulta es la mas
+    // reciente.
     function deduplicar(rows: Record<string, unknown>[]) {
       const seen = new Set<string>();
+      const limpiar = (v: unknown) =>
+        String(v || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
       return rows.filter(j => {
-        const url = String(j.sourceurl || "").trim();
-        const key = url || `${String(j.title || "").toLowerCase()}|${String(j.company || "").toLowerCase()}`;
+        const key = `${limpiar(j.title)}|${limpiar(j.company)}|${limpiar(j.city)}`;
+        // Sin puesto y sin empresa no hay forma de comparar: se deja pasar.
+        if (key === "||") return true;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;

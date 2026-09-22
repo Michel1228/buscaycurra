@@ -1376,6 +1376,29 @@ test("el centinela vigila que la aplicacion llega a Redis", () => {
   return c.includes("la aplicacion llega a Redis") && c.includes("redis.ping()");
 });
 
+// ── FECHAS DEL FUTURO Y OFERTAS REPETIDAS ──────────────────────────────────
+//
+// Auditoria del 22 sep 2026: 5.511 ofertas fechadas hasta diciembre (el feed de
+// DEVITJOBS las mandaba asi) se ponian las primeras en el buscador, que ordena
+// por fecha. Y 23.237 grupos de ofertas repetidas pasaban enteros porque el
+// filtro de duplicados comparaba el ENLACE, y cada fuente le pone el suyo: una
+// ETT alemana salia 72 veces seguidas con el mismo puesto en el mismo pueblo.
+test("las fechas de las fuentes nunca son del futuro", () => {
+  const f = leerFuente("lib/job-search/free-global-apis.ts");
+  return f.includes("export function fechaNoFutura") &&
+    f.includes("fecha.getTime() > ahora.getTime()") &&
+    f.includes("fechaNoFutura(o.fecha)");
+});
+test("el centinela vigila las fechas del futuro", () => {
+  const c = leerFuente("app/api/admin/centinela/route.ts");
+  return c.includes("ninguna oferta esta fechada en el futuro") &&
+    c.includes(`"createdAt" > now() + interval '1 day'`);
+});
+test("el buscador no enseña la misma oferta varias veces", () => {
+  const s = leerFuente("app/api/jobs/search/route.ts");
+  return s.includes("${limpiar(j.title)}|${limpiar(j.company)}|${limpiar(j.city)}");
+});
+
 // ── NINGUN MODELO RETIRADO EN EL CODIGO ────────────────────────────────────
 //
 // Los proveedores retiran modelos y la API responde 404, pero nuestras llamadas

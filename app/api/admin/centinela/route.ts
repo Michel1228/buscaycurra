@@ -413,6 +413,30 @@ export async function GET(req: NextRequest) {
     anota("las notificaciones no llevan a ofertas que no existen", false, `no se pudo comprobar: ${(e as Error).message}`, "");
   }
 
+  // ── 14. Ninguna oferta esta fechada en el futuro ───────────────────────────
+  // El 22 sep 2026 habia 5.511 ofertas fechadas hasta el 9 de diciembre, todas
+  // de la misma fuente (DEVITJOBS), porque su feed venia asi y se guardaba tal
+  // cual. Como el buscador ordena por fecha, esas se ponian siempre las primeras
+  // y tapaban al resto. Nada fallaba: simplemente salian las ofertas que no eran.
+  try {
+    const { rows } = await getPool().query<{ n: string; fuente: string | null }>(
+      `SELECT count(*)::text AS n, max("sourceName") AS fuente
+         FROM "JobListing"
+        WHERE "isActive" = true AND "createdAt" > now() + interval '1 day'`
+    );
+    const futuras = parseInt(rows[0]?.n || "0", 10);
+    anota(
+      "ninguna oferta esta fechada en el futuro",
+      futuras === 0,
+      futuras === 0
+        ? "ninguna oferta viva tiene fecha posterior a hoy"
+        : `${futuras} ofertas fechadas en el futuro (por ejemplo ${rows[0]?.fuente})`,
+      "5.511 ofertas fechadas hasta diciembre se ponian las primeras en el buscador"
+    );
+  } catch (e) {
+    anota("ninguna oferta esta fechada en el futuro", false, `no se pudo comprobar: ${(e as Error).message}`, "");
+  }
+
   // ══ INFRAESTRUCTURA ═══════════════════════════════════════════════════════
 
   // ── 13. La aplicacion llega a Redis ────────────────────────────────────────

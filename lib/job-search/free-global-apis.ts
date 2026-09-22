@@ -210,7 +210,9 @@ async function guardarOfertas(ofertas: RawJob[]): Promise<number> {
           o.salario || "Ver en oferta",
           o.descripcion?.slice(0, 5000) || "",
           o.url, o.fuente, "OTRO", country,
-          o.fecha ? (() => { try { const d = new Date(o.fecha); if (isNaN(d.getTime())) return new Date().toISOString(); return d.toISOString(); } catch { return new Date().toISOString(); } })() : new Date().toISOString(),
+          // Aquí entra la fecha de TODAS las fuentes de este fichero, así que es
+          // el sitio donde parar las fechas del futuro pase lo que pase arriba.
+          fechaNoFutura(o.fecha),
         ]
       );
       guardadas++;
@@ -461,7 +463,11 @@ function parseXMLJobs(xml: string): RawJob[] {
         salario: salary || '',
         descripcion: description?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 5000) || '',
         url: url || '',
-        fecha: pubdate || new Date().toISOString(),
+        // La fecha del feed puede venir en el FUTURO: el 22 sep 2026 había 3.637
+        // ofertas de DEVITJOBS fechadas hasta el 9 de diciembre. Como el buscador
+        // ordena por fecha, esas se ponían siempre las primeras y tapaban a todas
+        // las demás. Una fecha futura no significa nada: se usa la de hoy.
+        fecha: fechaNoFutura(pubdate),
         fuente: `DEVITJOBS`,
         country: countryCode,
       });
@@ -470,6 +476,22 @@ function parseXMLJobs(xml: string): RawJob[] {
     }
   }
   return jobs;
+}
+
+/**
+ * La fecha de publicación, nunca en el futuro.
+ *
+ * Los feeds ajenos ponen lo que quieren: si una oferta llega fechada dentro de
+ * tres meses, en el buscador sale por delante de todo lo demás para siempre.
+ * Ante una fecha ilegible o futura, se usa la de ahora, que es lo único que
+ * sabemos seguro: la hemos visto hoy.
+ */
+export function fechaNoFutura(valor?: string): string {
+  const ahora = new Date();
+  if (!valor) return ahora.toISOString();
+  const fecha = new Date(valor);
+  if (isNaN(fecha.getTime()) || fecha.getTime() > ahora.getTime()) return ahora.toISOString();
+  return fecha.toISOString();
 }
 
 async function fetchDevITJobs(countryCode: string, feedUrl: string): Promise<RawJob[]> {
