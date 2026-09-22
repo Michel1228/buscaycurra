@@ -46,6 +46,31 @@ const RADIO_LEJOS_KM = 120;
 /** Tope de detalles por búsqueda: cada uno es una llamada de pago a Google. */
 const MAX_DETALLES = 12;
 
+/**
+ * ¿El nombre dice que es una agencia de empleo?
+ *
+ * Las palabras salen de los propios términos del país, así que vale para los 26
+ * sin listas aparte: en España "trabajo", "temporal", "empleo", "ETT"; en
+ * Alemania "zeitarbeitsfirma", "personalvermittlung". Se añaden las marcas
+ * internacionales, que se llaman igual en todas partes y no llevan ninguna de
+ * esas palabras en el rótulo (Adecco, Randstad, Manpower...).
+ */
+const MARCAS_ETT = ["adecco", "randstad", "manpower", "eurofirms", "synergie", "gi group",
+  "iman", "marlex", "nortempo", "proman", "temps", "crit", "hays", "robert half",
+  "page personnel", "staffmatch", "ananda", "temporing", "navarwork"];
+
+function nombreDeAgencia(nombre: string, terminos: string[]): boolean {
+  const limpio = nombre.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const palabras = terminos
+    .join(" ")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((p) => p.length >= 3 && !["empresa", "que", "del", "las", "los", "para"].includes(p));
+  return palabras.some((p) => limpio.includes(p)) || MARCAS_ETT.some((m) => limpio.includes(m));
+}
+
 export async function POST(request: NextRequest) {
   let kmPorId = new Map<string, number>();
   try {
@@ -99,7 +124,14 @@ export async function POST(request: NextRequest) {
     const terminos = terminosEtt(zona?.paisCodigo);
     const queries = terminos.map((t) => `${t} ${city}`);
 
+    // El primer término es el específico ("ETT empresa de trabajo temporal",
+    // "Zeitarbeitsfirma"): lo que devuelve son ETTs de verdad. El segundo es
+    // genérico ("agencia de empleo") y en un pueblo pequeño Google rellena con
+    // lo que sea: buscando en Fustiñana colaba el ayuntamiento, una empresa de
+    // congelados y una de renovables. De ese segundo solo se aceptan las que se
+    // llaman como lo que son.
     const porId = new Map<string, SitioBasico>();
+    const esAgencia = new Map<string, boolean>();
     if (process.env.GOOGLE_PLACES_API_KEY) {
       const tandas = await Promise.all(
         queries.map((q) =>
@@ -107,11 +139,17 @@ export async function POST(request: NextRequest) {
             .catch(() => [] as SitioBasico[])
         )
       );
-      for (const tanda of tandas) {
+      tandas.forEach((tanda, indice) => {
         for (const sitio of tanda) {
-          if (!porId.has(sitio.place_id)) porId.set(sitio.place_id, sitio);
+          const segura = indice === 0 || nombreDeAgencia(sitio.name, terminos);
+          if (!porId.has(sitio.place_id)) {
+            porId.set(sitio.place_id, sitio);
+            esAgencia.set(sitio.place_id, segura);
+          } else if (segura) {
+            esAgencia.set(sitio.place_id, true);
+          }
         }
-      }
+      });
     }
 
     // ── 4. Fuera las que no están donde ha pedido el usuario ────────────
@@ -134,6 +172,12 @@ export async function POST(request: NextRequest) {
       kmPorId = new Map(elegidos.map((c) => [c.sitio.place_id, c.km]));
       candidatos = elegidos.map((c) => c.sitio);
     }
+
+    // Delante las que son agencias seguras; las dudosas solo se enseñan si sin
+    // ellas quedaría casi vacío, y siempre detrás.
+    const seguras = candidatos.filter((c) => esAgencia.get(c.place_id));
+    const dudosas = candidatos.filter((c) => !esAgencia.get(c.place_id));
+    candidatos = seguras.length >= 5 ? seguras : [...seguras, ...dudosas];
 
     // ── 5. Detalles solo de las que se van a enseñar (cada uno se paga) ──
     const yaEnCache = new Set(cacheados.map((e) => e.placeId));

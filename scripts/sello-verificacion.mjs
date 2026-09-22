@@ -1438,6 +1438,14 @@ test("el buscador de ETTs situa la zona y descarta las lejanas", () =>
   ettSrc.includes("await situarZona(city)") &&
   ettSrc.includes("distanciaKm(zona") &&
   ettSrc.includes("c.km <= RADIO_CERCA_KM"));
+// En un pueblo pequeño la consulta generica ("agencia de empleo Fustiñana")
+// devuelve lo que sea: el ayuntamiento, una empresa de congelados, una de
+// renovables. Solo la consulta especifica se acepta a ciegas.
+test("el buscador de ETTs no cuela el ayuntamiento del pueblo", () =>
+  ettSrc.includes("function nombreDeAgencia") &&
+  ettSrc.includes("indice === 0 || nombreDeAgencia(sitio.name, terminos)") &&
+  ettSrc.includes("seguras.length >= 5 ? seguras"));
+
 // Situar el pueblo se hace con OpenStreetMap, que es gratis. La geocodificacion
 // de Google no esta activada en el proyecto (REQUEST_DENIED el 22 sep 2026) y se
 // paga aparte: si alguien invierte el orden, cada busqueda empieza pagando.
