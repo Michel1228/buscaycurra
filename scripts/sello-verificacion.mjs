@@ -1376,6 +1376,33 @@ test("el centinela vigila que la aplicacion llega a Redis", () => {
   return c.includes("la aplicacion llega a Redis") && c.includes("redis.ping()");
 });
 
+// ── NINGUN MODELO RETIRADO EN EL CODIGO ────────────────────────────────────
+//
+// Los proveedores retiran modelos y la API responde 404, pero nuestras llamadas
+// devuelven null al fallar, asi que nada lo dice: el usuario recibe una respuesta
+// peor o ninguna. Ya han caido: llama-3.3-70b-versatile (Groq, 16 ago),
+// llama-3.1-8b-instant (Groq, busqueda semantica), gemini-1.5-flash y
+// gemini-2.5-flash-lite (Google), y deepseek-chat (DeepSeek lo retiro el 24 jul
+// 2026). Esta lista crece cada vez que cae otro. Solo mira los valores de
+// model / MODELO_*, no los comentarios que cuentan la historia.
+const MODELOS_RETIRADOS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemini-1.5-flash", "gemini-2.5-flash-lite", "deepseek-chat"];
+test("ninguna llamada usa un modelo que el proveedor ya ha retirado", () => {
+  const usos = [];
+  for (const raiz of ["app", "lib"]) {
+    for (const rel of readdirSync(raiz, { recursive: true })) {
+      const ruta = raiz + "/" + String(rel).split("\\").join("/");
+      if (!/\.(ts|tsx)$/.test(ruta)) continue;
+      const src = leerFuente(ruta);
+      for (const m of MODELOS_RETIRADOS) {
+        const patron = new RegExp("(model\\s*:\\s*|MODELO[A-Z_]*\\s*=\\s*)[\"'`]" + m.replace(/\./g, "\\.") + "[\"'`]");
+        if (patron.test(src)) usos.push(ruta + " -> " + m);
+      }
+    }
+  }
+  if (usos.length) console.log("      modelo retirado en: " + usos.join(", "));
+  return usos.length === 0;
+});
+
 // El repositorio es publico. Seis scripts del crontab llevaban la clave de
 // administracion escrita dentro; ahora la leen de .env.local en el servidor.
 test("los scripts del VPS no llevan claves escritas", () => {

@@ -38,14 +38,22 @@ export async function GET(req: NextRequest) {
     // 1. Usar Groq para extraer keywords de la query en lenguaje natural
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
+    // Era llama-3.1-8b-instant, que Groq retiro: respondia 404 y el catch de abajo
+    // convertia toda la busqueda en un 500. (A 22 sep 2026 ninguna pantalla llama a
+    // este endpoint, por eso nadie lo noto.)
+    // gpt-oss razona antes de contestar y ese razonamiento gasta max_tokens: con
+    // los 60 de antes devolvia "" en las tres frases probadas el 22 sep 2026.
+    // Con reasoning_effort "low" y 300 contesta en ~0,3 s con 30-60 tokens.
     const kwCompletion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
       messages: [{
         role: "user",
         content: `Extrae 3-5 palabras clave de búsqueda de empleo de esta frase: "${query}". Responde SOLO las keywords separadas por coma, sin texto adicional. Ejemplo: "Python, backend, desarrollo software, Django"`,
       }],
       temperature: 0.1,
-      max_tokens: 60,
+      max_tokens: 300,
+      // groq-sdk 0.12 no lo tiene en sus tipos, pero envia el cuerpo tal cual
+      ...({ reasoning_effort: "low" } as object),
     });
 
     const keywords = kwCompletion.choices[0]?.message?.content?.trim() || query;

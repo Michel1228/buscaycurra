@@ -1,5 +1,5 @@
 /**
- * Cliente para Google Gemini 1.5 Flash
+ * Cliente para Google Gemini (modelo en MODELO_GEMINI)
  *
  * Gemini es perfecto para:
  * - CVs muy largos (soporta hasta 1 millón de tokens)
@@ -20,8 +20,15 @@ import { get, incrementar } from "../cache/redis-client";
 // CONFIGURACIÓN
 // ==========================================
 
-// Modelo a usar (Flash es rápido y gratuito)
-const MODELO_GEMINI = "gemini-1.5-flash";
+// Modelo a usar.
+//
+// Era gemini-1.5-flash, que Google ya ha retirado: la API respondia 404 ("is not
+// found for API version v1beta") y todo lo que pasaba por aqui —mejorar el CV,
+// la carta, analizar la web de una empresa— fallaba sin avisar. El sucesor
+// natural, gemini-2.5-flash-lite, tampoco vale: "no longer available to new
+// users". Comprobado el 22 sep 2026 con nuestra clave: gemini-3.5-flash-lite
+// responde, y es el que la propia Google indica como reemplazo.
+const MODELO_GEMINI = "gemini-3.5-flash-lite";
 
 // Límite diario aproximado (15 req/min × 60 min × 24h)
 // En la práctica limitamos menos porque el caché reduce muchas llamadas

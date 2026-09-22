@@ -166,7 +166,8 @@ Un saludo${formData.nombre ? `,\n${formData.nombre}` : ""}`;
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "deepseek-chat",
+            // deepseek-chat: retirado por DeepSeek el 24 jul 2026 (ver lib/ai/deepseek-client.ts)
+            model: "deepseek-v4-flash",
             messages: [{ role: "user", content: prompt }],
             temperature: 0.7,
             max_tokens: 1200,

@@ -8,7 +8,7 @@
  * - Respuestas conversacionales naturales
  *
  * API OpenAI-compatible: https://api.deepseek.com/chat/completions
- * Modelo: deepseek-chat (DeepSeek-V3)
+ * Modelo: el de MODELO_DEEPSEEK
  *
  * Incluye:
  * - Caché automático (Redis)
@@ -22,7 +22,12 @@ import { get, incrementar } from "../cache/redis-client";
 // CONFIGURACIÓN
 // ==========================================
 
-const MODELO_DEEPSEEK = "deepseek-chat";
+// Era deepseek-chat. DeepSeek anuncio el 24 abr 2026 que ese nombre se retiraba el
+// 24 jul 2026 (api-docs.deepseek.com/updates). deepseek-v4-flash es el mismo que usa
+// Guzzi en lib/guzzi/llm.ts, y la documentacion lo sigue aceptando: lo sirve
+// DeepSeek-V4.1-Flash. No se pudo probar en vivo: la cuenta esta sin saldo (402)
+// y con 402 la API ni siquiera mira el nombre del modelo.
+const MODELO_DEEPSEEK = "deepseek-v4-flash";
 const TEMPERATURA_DEFAULT = 0.7;
 const LIMITE_DIARIO_DEEPSEEK = 10000; // DeepSeek es más generoso que Groq
 
