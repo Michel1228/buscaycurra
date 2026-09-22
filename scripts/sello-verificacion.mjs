@@ -1403,6 +1403,27 @@ test("ninguna llamada usa un modelo que el proveedor ya ha retirado", () => {
   return usos.length === 0;
 });
 
+// ── ioredis SE IMPORTA ARRIBA, NO DENTRO DE LA FUNCION ─────────────────────
+//
+// Con `await import("ioredis")` dentro de un route, el paquete compilado devuelve
+// un objeto sin constructor ("a is not a constructor"): el control de Redis del
+// centinela daba fallo el 22 sep 2026 con Redis perfectamente vivo. En su forma
+// normal (arriba del fichero) funciona, como en lib/places-quota.ts.
+test("nadie carga ioredis dentro de una funcion", () => {
+  const culpables = [];
+  for (const raiz of ["app", "lib"]) {
+    for (const rel of readdirSync(raiz, { recursive: true })) {
+      const ruta = raiz + "/" + String(rel).split("\\").join("/");
+      if (!/\.(ts|tsx)$/.test(ruta)) continue;
+      // Solo codigo: los comentarios que cuentan este fallo mencionan la forma mala.
+      const lineas = leerFuente(ruta).split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l));
+      if (/import\s*\(\s*["'`]ioredis["'`]\s*\)/.test(lineas.join("\n"))) culpables.push(ruta);
+    }
+  }
+  if (culpables.length) console.log("      import dinamico de ioredis en: " + culpables.join(", "));
+  return culpables.length === 0;
+});
+
 // El repositorio es publico. Seis scripts del crontab llevaban la clave de
 // administracion escrita dentro; ahora la leen de .env.local en el servidor.
 test("los scripts del VPS no llevan claves escritas", () => {

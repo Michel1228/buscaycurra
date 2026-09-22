@@ -34,6 +34,11 @@ import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { secretIguales } from "@/lib/secret-compare";
 import { LISTA_PAISES } from "@/lib/paises";
+// Importacion normal, como en lib/places-quota.ts. Con `await import("ioredis")`
+// dentro de la funcion, el paquete compilado devolvia un objeto sin constructor
+// ("a is not a constructor") y el control 13 daba fallo aunque Redis estuviera
+// perfecto. Lo cazo el propio centinela en su primera ejecucion (22 sep 2026).
+import { Redis } from "ioredis";
 
 const supabaseAdmin = () =>
   createClient(
@@ -419,7 +424,6 @@ export async function GET(req: NextRequest) {
   // Redis, asi que todo acababa en OpenStreetMap) y los limites anti-abuso.
   // Ninguna pantalla daba error: solo resultados vacios.
   try {
-    const { Redis } = await import("ioredis");
     const redis = new Redis(process.env.REDIS_URL || "redis://buscaycurra-redis:6379", {
       maxRetriesPerRequest: 1,
       connectTimeout: 3000,
