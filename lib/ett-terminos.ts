@@ -43,7 +43,15 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   SG: ["employment agency", "recruitment agency"],
 };
 
-const PREDETERMINADO = ["employment agency", "staffing agency"];
+/**
+ * Cuando no se ha podido situar el sitio (OpenStreetMap caido, por ejemplo) no
+ * se sabe el pais. Se pregunta en español y en ingles a la vez: la mayoria de
+ * quien busca esta en España, y el ingles lo entiende Google en todas partes.
+ * Preguntar SOLO en español fue lo que trajo ETTs de Barcelona buscando en
+ * Berlin, y preguntar solo en ingles trajo la panaderia del pueblo buscando en
+ * Fustiñana. Comprobado el 22 sep 2026 con las dos formas.
+ */
+const PREDETERMINADO = ["ETT empresa de trabajo temporal", "employment agency"];
 
 export function terminosEtt(paisCodigo?: string): string[] {
   return (paisCodigo && TERMINOS_ETT[paisCodigo.toUpperCase()]) || PREDETERMINADO;

@@ -139,6 +139,40 @@ async function consultar(q: string, limit: number): Promise<NominatimResult[]> {
 }
 
 /**
+ * Situa un pueblo o ciudad: coordenadas, pais y como se llama de verdad.
+ *
+ * Se usa esto y no la geocodificacion de Google porque esa API NO esta activada
+ * en el proyecto ("This API is not activated on your API project", comprobado el
+ * 22 sep 2026) y ademas se paga aparte. Nominatim es gratis y para situar un
+ * pueblo va sobrado: es la misma fuente que ya usamos de respaldo.
+ */
+export async function situarZonaOSM(texto: string): Promise<{
+  descripcion: string;
+  lat: number;
+  lng: number;
+  paisCodigo: string;
+} | null> {
+  try {
+    const [r] = await consultar(texto, 1);
+    if (!r?.lat || !r?.lon) return null;
+    const a = r.address || {};
+    const sitio = a.city || a.town || a.village || a.municipality || (r.display_name || "").split(",")[0];
+    const provincia = a.province || a.state || a.county;
+    const pais = (a.country_code || "").toUpperCase();
+    return {
+      descripcion: [sitio, provincia, a.country].filter(Boolean).join(", "),
+      lat: parseFloat(r.lat),
+      lng: parseFloat(r.lon),
+      // Nuestra lista de paises llama UK al Reino Unido; el codigo ISO es GB.
+      paisCodigo: pais === "GB" ? "UK" : pais,
+    };
+  } catch (e) {
+    console.warn("[OSM] situarZonaOSM:", (e as Error).message);
+    return null;
+  }
+}
+
+/**
  * Busca un negocio por nombre, con calle y/o ciudad opcionales.
  * Equivalente a buscarEmpresaGooglePlaces().
  */

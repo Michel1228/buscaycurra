@@ -1438,6 +1438,16 @@ test("el buscador de ETTs situa la zona y descarta las lejanas", () =>
   ettSrc.includes("await situarZona(city)") &&
   ettSrc.includes("distanciaKm(zona") &&
   ettSrc.includes("c.km <= RADIO_CERCA_KM"));
+// Situar el pueblo se hace con OpenStreetMap, que es gratis. La geocodificacion
+// de Google no esta activada en el proyecto (REQUEST_DENIED el 22 sep 2026) y se
+// paga aparte: si alguien invierte el orden, cada busqueda empieza pagando.
+test("situar la zona empieza por OpenStreetMap, que no cuesta", () => {
+  const g = leerFuente("lib/google-places.ts");
+  const i = g.indexOf("export async function situarZona(");
+  const cuerpo = g.slice(i, i + 900);
+  return cuerpo.indexOf("situarZonaOSM(texto)") > -1 &&
+    cuerpo.indexOf("situarZonaOSM(texto)") < cuerpo.indexOf("consumirCuotaPlaces");
+});
 test("el buscador de ETTs pregunta en el idioma del pais", () => {
   const t = leerFuente("lib/ett-terminos.ts");
   // Los 26 paises de la app tienen que estar: si se añade uno nuevo a

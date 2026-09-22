@@ -8,6 +8,7 @@
  * consola de Google.
  */
 import { consumirCuotaPlaces } from "./places-quota";
+import { situarZonaOSM } from "./osm-places";
 
 const PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place";
 
@@ -187,8 +188,19 @@ export interface ZonaSituada {
   paisCodigo: string;    // ES, DE, UK...
 }
 
-/** Situa un texto libre ("Buñuel", "Cabanillas, Navarra") en el mapa. */
+/**
+ * Situa un texto libre ("Buñuel", "Cabanillas, Navarra") en el mapa.
+ *
+ * Primero con OpenStreetMap, que es GRATIS y para situar un pueblo va sobrado.
+ * La geocodificacion de Google queda detras porque, ademas de pagarse aparte,
+ * NO esta activada en nuestro proyecto: el 22 sep 2026 respondia REQUEST_DENIED
+ * ("This API is not activated on your API project"). Si algun dia se activa en
+ * la consola de Google, esta rama entra sola sin tocar codigo.
+ */
 export async function situarZona(texto: string): Promise<ZonaSituada | null> {
+  const porOsm = await situarZonaOSM(texto).catch(() => null);
+  if (porOsm) return porOsm;
+
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) return null;
   if (!(await consumirCuotaPlaces())) return null;
