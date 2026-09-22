@@ -58,6 +58,8 @@ interface EmpresaCompleta {
   googleReviews?: number | null;
   googleAddress?: string | null;
   googleMapsUrl?: string | null;
+  /** Kilómetros desde el sitio que escribió el usuario (solo en ETTs). */
+  distanciaKm?: number | null;
 }
 
 interface EmpresaGuardada {
@@ -130,6 +132,8 @@ export default function EmpresasPage() {
   // ── Tab "ETTs" state ──
   const [ettCity, setEttCity] = useState("");
   const [ettBuscando, setEttBuscando] = useState(false);
+  /** Sitio que ha entendido Google ("Cabanillas del Campo, Guadalajara"). */
+  const [ettZona, setEttZona] = useState("");
   const ettInputRef = useRef<HTMLInputElement>(null);
 
   // ── Tab "Por zona" state ──
@@ -453,6 +457,7 @@ export default function EmpresasPage() {
     setEmpresaSeleccionada(null);
     setExito("");
     setSendResult(null);
+    setEttZona("");
     setEttBuscando(true);
 
     try {
@@ -465,6 +470,7 @@ export default function EmpresasPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
 
+      if (data.zona) setEttZona(data.zona);
       if (data.empresas?.length) {
         setEmpresas(data.empresas);
         if (data.empresas.length === 1) {
@@ -1084,6 +1090,8 @@ export default function EmpresasPage() {
               </label>
               <p className="text-[10px] mb-3" style={{ color: "#6b7280" }}>
                 Encuentra agencias de empleo temporal (ETTs) cerca de ti. Envíales tu CV con carta adaptada.
+                Vale tu pueblo aunque sea pequeño: se buscan también las de al lado. Si el nombre se repite
+                en España, añade la provincia (&quot;Cabanillas, Navarra&quot;).
               </p>
               <div className="flex gap-2">
                 <input
@@ -1158,6 +1166,12 @@ export default function EmpresasPage() {
                 <p className="text-xs font-semibold" style={{ color: "#94a3b8" }}>
                   {empresas.length} ETTs en {ettCity} — selecciona una:
                 </p>
+                {/* Qué sitio se ha entendido: hay dos Cabanillas, dos Villanueva... */}
+                {ettZona && (
+                  <p className="text-[10px] -mt-2" style={{ color: "#64748b" }}>
+                    Buscando cerca de {ettZona}. ¿No es ese sitio? Escribe también la provincia.
+                  </p>
+                )}
                 {empresas.map((emp, i) => (
                   <button
                     key={i}
@@ -1171,6 +1185,11 @@ export default function EmpresasPage() {
                           {emp.sector && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e" }}>
                               {emp.sector}
+                            </span>
+                          )}
+                          {typeof emp.distanciaKm === "number" && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(148,163,184,0.10)", color: "#94a3b8" }}>
+                              a {emp.distanciaKm} km
                             </span>
                           )}
                           {emp.googleAddress && (

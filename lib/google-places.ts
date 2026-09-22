@@ -168,6 +168,148 @@ export async function buscarEmpresasTextSearch(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SITUAR LA ZONA ANTES DE BUSCAR
+//
+// El 22 sep 2026 se comprobo que buscar ETTs solo por el nombre del sitio falla
+// de dos maneras: "Cabanillas" devolvia ETTs de Guadalajara (hay dos Cabanillas
+// y nadie avisaba de cual se habia entendido), y "Berlin" devolvia tres de cinco
+// resultados en Barcelona, porque la consulta iba en español y Google mezclaba
+// paises. Situar la zona primero resuelve las dos: sabemos el pais (para buscar
+// con las palabras de su idioma), tenemos coordenadas (para descartar por
+// distancia real) y podemos decirle al usuario que sitio hemos entendido.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ZonaSituada {
+  descripcion: string;   // "Cabanillas del Campo, Guadalajara, España"
+  lat: number;
+  lng: number;
+  paisCodigo: string;    // ES, DE, UK...
+}
+
+/** Situa un texto libre ("Buñuel", "Cabanillas, Navarra") en el mapa. */
+export async function situarZona(texto: string): Promise<ZonaSituada | null> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return null;
+  if (!(await consumirCuotaPlaces())) return null;
+
+  try {
+    const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+    url.searchParams.set("address", texto);
+    url.searchParams.set("language", "es");
+    url.searchParams.set("key", apiKey);
+
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      status: string;
+      results?: Array<{
+        formatted_address: string;
+        geometry: { location: { lat: number; lng: number } };
+        address_components: Array<{ short_name: string; types: string[] }>;
+      }>;
+    };
+    const r = data.status === "OK" ? data.results?.[0] : null;
+    if (!r) return null;
+
+    const pais = r.address_components.find((c) => c.types.includes("country"))?.short_name || "";
+    return {
+      descripcion: r.formatted_address,
+      lat: r.geometry.location.lat,
+      lng: r.geometry.location.lng,
+      // Nuestra lista de paises llama UK al Reino Unido; Google lo llama GB.
+      paisCodigo: pais === "GB" ? "UK" : pais,
+    };
+  } catch (err) {
+    console.warn("[GooglePlaces] situarZona:", (err as Error).message);
+    return null;
+  }
+}
+
+/** Resultado de Text Search sin pedir detalles: lo justo para elegir a cuales. */
+export interface SitioBasico {
+  place_id: string;
+  name: string;
+  formatted_address?: string;
+  types?: string[];
+  lat?: number;
+  lng?: number;
+}
+
+/**
+ * Text Search SIN detalles. Existe para no pagar detalles de sitios que luego se
+ * descartan: antes cada consulta pedia los detalles de sus diez primeros, y como
+ * las tres consultas de ETTs se solapan mucho, la misma empresa se pagaba varias
+ * veces. Ahora se juntan, se descartan los lejanos y solo entonces se piden.
+ */
+export async function buscarTextoSinDetalles(
+  query: string,
+  zona?: { lat: number; lng: number; radioMetros: number }
+): Promise<SitioBasico[]> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return [];
+  if (!(await consumirCuotaPlaces())) return [];
+
+  try {
+    const url = new URL(`${PLACES_API_BASE}/textsearch/json`);
+    url.searchParams.set("query", query);
+    if (zona) {
+      url.searchParams.set("location", `${zona.lat},${zona.lng}`);
+      url.searchParams.set("radius", String(zona.radioMetros));
+    }
+    url.searchParams.set("key", apiKey);
+
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(9000) });
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      status: string;
+      results?: Array<{
+        place_id: string;
+        name: string;
+        formatted_address?: string;
+        types?: string[];
+        geometry?: { location?: { lat: number; lng: number } };
+      }>;
+    };
+    if (data.status !== "OK" || !data.results?.length) return [];
+
+    return data.results.map((r) => ({
+      place_id: r.place_id,
+      name: r.name,
+      formatted_address: r.formatted_address,
+      types: r.types,
+      lat: r.geometry?.location?.lat,
+      lng: r.geometry?.location?.lng,
+    }));
+  } catch (err) {
+    console.warn("[GooglePlaces] buscarTextoSinDetalles:", (err as Error).message);
+    return [];
+  }
+}
+
+/** Detalles de varios sitios ya elegidos. Cada uno es una llamada de pago. */
+export async function detallesDeSitios(placeIds: string[]): Promise<GooglePlaceResult[]> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return [];
+  const detalles = await Promise.all(placeIds.map((id) => obtenerDetallesPlace(id, apiKey)));
+  return detalles.filter((d): d is GooglePlaceResult => d !== null);
+}
+
+/** Distancia en kilometros entre dos puntos (formula del semiverseno). */
+export function distanciaKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): number {
+  const R = 6371;
+  const rad = (g: number) => (g * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const x =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(x)) * 10) / 10;
+}
+
 /** Detalles completos de un place_id. */
 /**
  * CADA DETALLE CUENTA COMO UNA LLAMADA, porque Google cobra por cada una.

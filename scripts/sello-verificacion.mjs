@@ -1424,6 +1424,31 @@ test("nadie carga ioredis dentro de una funcion", () => {
   return culpables.length === 0;
 });
 
+// ── BUSCADOR DE ETTs ───────────────────────────────────────────────────────
+//
+// Probado el 22 sep 2026 contra Google: "Cabanillas" devolvia ETTs de Guadalajara
+// (hay dos Cabanillas) y "Berlin" tres de cinco resultados en Barcelona, porque se
+// preguntaba siempre en español. Ademas se guardaba en cache pero no se leia: cada
+// busqueda de la misma ciudad volvia a pagar ~33 llamadas.
+const ettSrc = leerFuente("app/api/ett/search/route.ts");
+test("el buscador de ETTs mira la cache antes de pagar a Google", () =>
+  ettSrc.indexOf("buscarEnCachePorZona(city") > -1 &&
+  ettSrc.indexOf("buscarEnCachePorZona(city") < ettSrc.indexOf("buscarTextoSinDetalles(q"));
+test("el buscador de ETTs situa la zona y descarta las lejanas", () =>
+  ettSrc.includes("await situarZona(city)") &&
+  ettSrc.includes("distanciaKm(zona") &&
+  ettSrc.includes("c.km <= RADIO_CERCA_KM"));
+test("el buscador de ETTs pregunta en el idioma del pais", () => {
+  const t = leerFuente("lib/ett-terminos.ts");
+  // Los 26 paises de la app tienen que estar: si se añade uno nuevo a
+  // lib/paises.ts y no se le ponen sus palabras, esto lo dice.
+  const codigos = [...leerFuente("lib/paises.ts").matchAll(/codigo: "([A-Z]{2})"/g)].map((m) => m[1]);
+  const faltan = codigos.filter((c) => !new RegExp("^\\s*" + c + ":", "m").test(t));
+  if (faltan.length) console.log("      paises sin terminos de ETT: " + faltan.join(", "));
+  return ettSrc.includes("terminosEtt(zona?.paisCodigo)") &&
+    t.includes("Zeitarbeitsfirma") && t.includes("uitzendbureau") && faltan.length === 0;
+});
+
 // El repositorio es publico. Seis scripts del crontab llevaban la clave de
 // administracion escrita dentro; ahora la leen de .env.local en el servidor.
 test("los scripts del VPS no llevan claves escritas", () => {
