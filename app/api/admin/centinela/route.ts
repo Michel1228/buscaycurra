@@ -408,6 +408,46 @@ export async function GET(req: NextRequest) {
     anota("las notificaciones no llevan a ofertas que no existen", false, `no se pudo comprobar: ${(e as Error).message}`, "");
   }
 
+  // ══ INFRAESTRUCTURA ═══════════════════════════════════════════════════════
+
+  // ── 13. La aplicacion llega a Redis ────────────────────────────────────────
+  // El 22 sep 2026 la aplicacion perdio Redis sin que nada lo dijera. Easypanel
+  // recreo su contenedor y le dio otra IP; la aplicacion vivia en otra red de
+  // Docker y lo encontraba por una linea fija en /etc/hosts del servidor, que
+  // siguio apuntando a la IP vieja. Cayeron a la vez la cola de envios de CV, la
+  // busqueda de empresas y de ETTs (el tope de Google Places falla cerrado sin
+  // Redis, asi que todo acababa en OpenStreetMap) y los limites anti-abuso.
+  // Ninguna pantalla daba error: solo resultados vacios.
+  try {
+    const { Redis } = await import("ioredis");
+    const redis = new Redis(process.env.REDIS_URL || "redis://buscaycurra-redis:6379", {
+      maxRetriesPerRequest: 1,
+      connectTimeout: 3000,
+      lazyConnect: true,
+    });
+    redis.on("error", () => { /* el resultado se anota abajo */ });
+    let respuesta = "";
+    try {
+      await redis.connect();
+      respuesta = await redis.ping();
+    } finally {
+      redis.disconnect();
+    }
+    anota(
+      "la aplicacion llega a Redis",
+      respuesta === "PONG",
+      respuesta === "PONG" ? "PING -> PONG" : `respuesta inesperada: ${respuesta}`,
+      "el 22 sep 2026 la app perdio Redis: sin envios de CV ni busqueda de empresas"
+    );
+  } catch (e) {
+    anota(
+      "la aplicacion llega a Redis",
+      false,
+      `no conecta: ${(e as Error).message}`,
+      "el 22 sep 2026 la app perdio Redis: sin envios de CV ni busqueda de empresas"
+    );
+  }
+
   const fallos = r.filter(x => !x.bien);
   return NextResponse.json(
     {

@@ -1360,6 +1360,22 @@ test("Guzzi descuenta la consulta con la funcion atomica antes que leyendo y esc
   return rpc > -1 && cuerpo.includes("nuevo === null") && (lectura === -1 || rpc < lectura);
 });
 
+// ── LA APLICACION TIENE QUE LLEGAR A REDIS ────────────────────────────────
+//
+// El 22 sep 2026 Easypanel recreo Redis con otra IP. La aplicacion vivia en otra
+// red de Docker y lo encontraba por una linea fija en /etc/hosts, que siguio
+// apuntando a la IP vieja: cayeron a la vez la cola de envios de CV, la busqueda
+// de empresas y de ETTs y los limites anti-abuso, sin ningun error visible.
+const deploySrc = leerFuente("build-deploy.sh");
+test("el despliegue conecta la aplicacion a la red de Redis", () =>
+  /^docker network connect easypanel-buscaycurra buscaycurra-nextjs/m.test(deploySrc));
+test("el despliegue comprueba que la aplicacion llega a Redis", () =>
+  deploySrc.includes("r.ping()") && deploySrc.includes("NO LLEGA A REDIS"));
+test("el centinela vigila que la aplicacion llega a Redis", () => {
+  const c = leerFuente("app/api/admin/centinela/route.ts");
+  return c.includes("la aplicacion llega a Redis") && c.includes("redis.ping()");
+});
+
 // El repositorio es publico. Seis scripts del crontab llevaban la clave de
 // administracion escrita dentro; ahora la leen de .env.local en el servidor.
 test("los scripts del VPS no llevan claves escritas", () => {
