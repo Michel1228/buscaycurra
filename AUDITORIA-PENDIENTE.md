@@ -61,6 +61,19 @@ de abajo sobre Japón y Suecia están corregidas por eso.
 
 ## YA ARREGLADO (no volver a mirarlo)
 
+- **Guardar una oferta desde una notificación fallaba siempre (22 sep 2026).**
+  La pantalla llamaba a `/api/jobs/save` y `/api/jobs/unsave`, que **no
+  existen** (es `/api/jobs/guardar`, con la acción en el cuerpo): 404 y un
+  "No se pudo guardar la oferta" sin explicación. Y en la ficha de la oferta se
+  leía el motivo real del servidor y luego se tiraba, así que el tope de
+  guardadas del plan salía como un error genérico. Un test del sello comprueba
+  ahora que **ninguna pantalla llama a una ruta de API que no existe**.
+
+- **La cuenta de Michel (`michelkm11batista@gmail.com`) está en plan `empresa`
+  por decisión suya, no por un pago** (22 sep 2026). Tiene `stripe_customer_id`
+  de una suscripción cancelada, así que el control 11 del centinela no la cuenta
+  como plan regalado. Si algún día cuadra ingresos, esta cuenta no es un cliente.
+
 - **La aplicación perdió Redis (22 sep 2026, 10:48 UTC).** Easypanel recreó
   Redis con otra IP y la aplicación seguía usando la vieja, fijada en
   `/etc/hosts` del servidor. Sin Redis no arrancaba el envío de CV, la cuota de

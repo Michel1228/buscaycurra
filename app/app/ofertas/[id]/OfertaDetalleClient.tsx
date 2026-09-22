@@ -234,8 +234,11 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
       setGuardado(true);
       showToast("Oferta guardada", "success");
       setTimeout(() => setGuardado(false), 3000);
-    } catch {
-      showToast("Error al guardar la oferta");
+    } catch (err) {
+      // Se leia el motivo de la respuesta y luego se tiraba: el usuario veia
+      // "Error al guardar la oferta" aunque el servidor dijera exactamente que
+      // pasaba (por ejemplo, haber llegado al tope de guardadas de su plan).
+      showToast((err as Error).message || "Error al guardar la oferta");
     } finally {
       setGuardando(false);
     }

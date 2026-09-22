@@ -1376,6 +1376,41 @@ test("el centinela vigila que la aplicacion llega a Redis", () => {
   return c.includes("la aplicacion llega a Redis") && c.includes("redis.ping()");
 });
 
+// ── NINGUNA PANTALLA LLAMA A UNA RUTA QUE NO EXISTE ────────────────────────
+//
+// El 22 sep 2026, guardar una oferta desde una notificacion siempre fallaba: la
+// pantalla llamaba a /api/jobs/save y /api/jobs/unsave, que no existen (es
+// /api/jobs/guardar, con la accion en el cuerpo). Se comia un 404 y enseñaba un
+// "No se pudo guardar la oferta" sin mas. Un fallo asi no lo ve ningun tipo ni
+// ninguna compilacion: solo lo ve quien lo usa.
+test("ninguna pantalla llama a una ruta de API que no existe", () => {
+  const rutasApi = new Set();
+  for (const rel of readdirSync("app/api", { recursive: true })) {
+    const ruta = "app/api/" + String(rel).split("\\").join("/");
+    if (ruta.endsWith("/route.ts")) rutasApi.add(ruta.replace(/^app/, "").replace(/\/route\.ts$/, ""));
+  }
+  const conParametro = [...rutasApi].filter((r) => r.includes("["));
+  const existe = (r) =>
+    rutasApi.has(r) ||
+    conParametro.some((d) => new RegExp("^" + d.replace(/\[[^\]]+\]/g, "[^/]+") + "$").test(r));
+
+  const fantasmas = [];
+  for (const raiz of ["app", "components", "lib"]) {
+    for (const rel of readdirSync(raiz, { recursive: true })) {
+      const fichero = raiz + "/" + String(rel).split("\\").join("/");
+      if (!/\.(ts|tsx)$/.test(fichero) || fichero.includes("/api/")) continue;
+      for (const m of leerFuente(fichero).matchAll(/["'`](\/api\/[a-zA-Z0-9/_\-[\]$.{}]*)["'`]/g)) {
+        const ruta = m[1].replace(/\/$/, "");
+        // Las rutas que se arman con variables no se pueden comprobar aqui.
+        if (ruta.includes("${") || ruta.includes("[")) continue;
+        if (!existe(ruta)) fantasmas.push(ruta + " (en " + fichero + ")");
+      }
+    }
+  }
+  if (fantasmas.length) console.log("      rutas que no existen: " + [...new Set(fantasmas)].join(", "));
+  return fantasmas.length === 0;
+});
+
 // ── FECHAS DEL FUTURO Y OFERTAS REPETIDAS ──────────────────────────────────
 //
 // Auditoria del 22 sep 2026: 5.511 ofertas fechadas hasta diciembre (el feed de

@@ -239,14 +239,22 @@ export default function NotificacionesPage() {
 
   async function toggleGuardar(oferta: Oferta) {
     const isGuardado = guardados.has(oferta.id);
-    const url = isGuardado ? "/api/jobs/unsave" : "/api/jobs/save";
     try {
-      const res = await fetch(url, {
+      // Esto llamaba a /api/jobs/save y /api/jobs/unsave, que NO EXISTEN: el
+      // endpoint es /api/jobs/guardar y la accion va en el cuerpo. Cada intento
+      // se comia un 404 y el usuario veia "No se pudo guardar la oferta" al
+      // guardar desde una notificacion, sin ninguna pista de por que.
+      const res = await fetch("/api/jobs/guardar", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenRef.current}` },
-        body: JSON.stringify({ jobId: oferta.id }),
+        body: JSON.stringify({ jobId: oferta.id, action: isGuardado ? "unsave" : "save" }),
       });
-      if (!res.ok) throw new Error("Error al guardar");
+      if (!res.ok) {
+        // El motivo de verdad (por ejemplo, haber llegado al tope del plan) sale
+        // en el cuerpo de la respuesta: tirarlo deja al usuario sin saber que hacer.
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error || "No se pudo guardar la oferta");
+      }
       setGuardados(prev => {
         const s = new Set(prev);
         isGuardado ? s.delete(oferta.id) : s.add(oferta.id);
@@ -254,9 +262,9 @@ export default function NotificacionesPage() {
       });
       setToast(isGuardado ? "Oferta eliminada de guardados" : "Oferta guardada");
       setTimeout(() => setToast(""), 3000);
-    } catch {
-      setToastError("No se pudo guardar la oferta");
-      setTimeout(() => setToastError(""), 3000);
+    } catch (err) {
+      setToastError((err as Error).message);
+      setTimeout(() => setToastError(""), 5000);
     }
   }
 
