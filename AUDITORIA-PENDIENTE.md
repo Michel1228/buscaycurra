@@ -83,6 +83,15 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   distancia real (35 km, hasta 120 en pueblos) y se piden 12 detalles como mucho
   → de ~33 llamadas de pago por búsqueda a 16.
 
+- **La caché de empresas se vaciaba sola (22 sep 2026).** Al guardar, la ciudad
+  de cada ficha se sobrescribía con lo último buscado: buscar en Fustiñana
+  reetiquetaba las ETTs de Tudela y la caché de Tudela bajó de 14 fichas a 5.
+  Migración **006 aplicada en producción** (lat/lon + índice en `empresas`): la
+  caché ya es geográfica, a 35 km del sitio, se llame como se llame el pueblo.
+  Comprobado: Fustiñana y Cabanillas devuelven las ETTs de Tudela **gratis**
+  (7-11 km), Berlín devuelve agencias alemanas (Randstad Cityhaus, Orizon,
+  DIS AG) y Tudela 12 ETTs con email.
+
 - **Guzzi perdía casi un segundo por mensaje llamando a DeepSeek sin saldo
   (22 sep 2026).** El primer 402 ahora apaga DeepSeek seis horas y se reintenta
   solo: el día que se recargue vuelve a entrar sin desplegar nada.
