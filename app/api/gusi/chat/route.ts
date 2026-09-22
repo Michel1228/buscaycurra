@@ -18,7 +18,7 @@ import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
 import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { aliasCiudad } from "@/lib/guzzi/ciudades-pais";
-import { callGroq, callDeepSeek, callOpenAI } from "@/lib/guzzi/llm";
+import { callGroq, callDeepSeek, callOpenAI, deepseekApagado, apagarDeepSeek } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -1737,8 +1737,10 @@ Responde en JSON exactamente así:
     let rawReply = "";
     const usarDeepSeekPrimero = esDePago;
 
-    // Intento 1: DeepSeek — solo de entrada para los planes de pago
-    if (deepseekKey && usarDeepSeekPrimero) {
+    // Intento 1: DeepSeek — solo de entrada para los planes de pago.
+    // deepseekApagado(): si la cuenta se quedo sin saldo, no se le llama durante
+    // unas horas. Ver lib/guzzi/llm.ts.
+    if (deepseekKey && usarDeepSeekPrimero && !deepseekApagado()) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const res = await fetch("https://api.deepseek.com/chat/completions", {
@@ -1753,6 +1755,7 @@ Responde en JSON exactamente así:
             if (rawReply) break;
           } else {
             console.error("[Guzzi] DeepSeek HTTP", res.status, await res.text().catch(()=>""));
+            if (res.status === 402) { apagarDeepSeek(); break; }
           }
         } catch (e) { console.error("[Guzzi] DeepSeek error:", (e as Error).message); }
         if (attempt === 0) await new Promise(r => setTimeout(r, 600));
@@ -1795,7 +1798,7 @@ Responde en JSON exactamente así:
     // pagar unas decimas de centimo antes que dejar a alguien a medias de una
     // conversacion. Va despues de Groq, no antes: el orden es lo que reparte el
     // coste, no un candado.
-    if (!rawReply && deepseekKey && !usarDeepSeekPrimero) {
+    if (!rawReply && deepseekKey && !usarDeepSeekPrimero && !deepseekApagado()) {
       try {
         const res = await fetch("https://api.deepseek.com/chat/completions", {
           method: "POST",
@@ -1803,6 +1806,7 @@ Responde en JSON exactamente así:
           body: JSON.stringify({ model: "deepseek-v4-flash", messages, max_tokens: 1024, temperature: 0.5 }),
           signal: AbortSignal.timeout(35000),
         });
+        if (res.status === 402) apagarDeepSeek();
         if (res.ok) {
           const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
           rawReply = data.choices?.[0]?.message?.content || "";

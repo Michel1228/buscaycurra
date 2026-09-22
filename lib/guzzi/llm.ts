@@ -9,6 +9,31 @@
  * su clave ya está en el proyecto y funcionando (la usa la búsqueda por foto).
  */
 
+/**
+ * DEEPSEEK SIN SALDO: se deja de llamar durante unas horas.
+ *
+ * El 22 sep 2026 la cuenta de DeepSeek estaba a -0,01 USD y la API respondia 402
+ * a todo. Guzzi seguia funcionando (cae a Groq), pero cada mensaje gastaba antes
+ * dos intentos y casi un segundo en una llamada condenada a fallar. Con esto, el
+ * primer 402 apaga DeepSeek un rato y Guzzi va directo al que si responde.
+ *
+ * Se reintenta solo al cabo de 6 horas: el dia que se recargue el saldo, DeepSeek
+ * vuelve a entrar sin tocar nada ni desplegar.
+ */
+const HORAS_SIN_SALDO = 6;
+let deepseekSinSaldoHasta = 0;
+
+export function deepseekApagado(): boolean {
+  return Date.now() < deepseekSinSaldoHasta;
+}
+
+export function apagarDeepSeek(): void {
+  if (!deepseekApagado()) {
+    console.warn(`[Guzzi] DeepSeek sin saldo (402): no se le llama en ${HORAS_SIN_SALDO} h. Se usa Groq.`);
+  }
+  deepseekSinSaldoHasta = Date.now() + HORAS_SIN_SALDO * 3600_000;
+}
+
 export async function callGroq(systemPrompt: string, userContent: string, maxTokens = 600): Promise<string | null> {
   const groqKey = process.env.GROQ_API_KEY;
   if (!groqKey) return null;
@@ -65,7 +90,7 @@ export async function callGroq(systemPrompt: string, userContent: string, maxTok
  */
 export async function callDeepSeek(systemPrompt: string, userContent: string, maxTokens = 800): Promise<string | null> {
   const deepseekKey = process.env.DEEPSEEK_API_KEY;
-  if (!deepseekKey) return null;
+  if (!deepseekKey || deepseekApagado()) return null;
 
   const body = JSON.stringify({
     model: "deepseek-v4-flash",
@@ -86,6 +111,8 @@ export async function callDeepSeek(systemPrompt: string, userContent: string, ma
         signal: AbortSignal.timeout(35000),
       });
       if (!res.ok) {
+        // 402 es "sin saldo": reintentar no arregla nada y retrasa la respuesta.
+        if (res.status === 402) { apagarDeepSeek(); return null; }
         if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
         return null;
       }
@@ -146,7 +173,7 @@ export async function callOpenAI(systemPrompt: string, userContent: string, maxT
  */
 export function streamDeepSeek(systemPrompt: string, userContent: string, maxTokens = 800): ReadableStream | null {
   const deepseekKey = process.env.DEEPSEEK_API_KEY;
-  if (!deepseekKey) return null;
+  if (!deepseekKey || deepseekApagado()) return null;
 
   const encoder = new TextEncoder();
   let aborted = false;
@@ -175,6 +202,7 @@ export function streamDeepSeek(systemPrompt: string, userContent: string, maxTok
         });
 
         if (!res.ok || !res.body) {
+          if (res.status === 402) apagarDeepSeek();
           controller.close();
           return;
         }

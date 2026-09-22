@@ -1449,6 +1449,19 @@ test("el buscador de ETTs pregunta en el idioma del pais", () => {
     t.includes("Zeitarbeitsfirma") && t.includes("uitzendbureau") && faltan.length === 0;
 });
 
+// ── DEEPSEEK SIN SALDO ─────────────────────────────────────────────────────
+//
+// El 22 sep 2026 la cuenta estaba a -0,01 USD y respondia 402 a todo. Guzzi seguia
+// contestando (cae a Groq), pero gastaba dos intentos y casi un segundo por mensaje
+// en una llamada condenada a fallar.
+test("Guzzi deja de llamar a DeepSeek cuando se queda sin saldo", () => {
+  const llm = leerFuente("lib/guzzi/llm.ts");
+  const chat = leerFuente("app/api/gusi/chat/route.ts");
+  return /if\s*\(!deepseekKey \|\| deepseekApagado\(\)\) return null;/.test(llm) &&
+    llm.includes("if (res.status === 402) { apagarDeepSeek(); return null; }") &&
+    chat.includes("!deepseekApagado()") && chat.includes("apagarDeepSeek()");
+});
+
 // El repositorio es publico. Seis scripts del crontab llevaban la clave de
 // administracion escrita dentro; ahora la leen de .env.local en el servidor.
 test("los scripts del VPS no llevan claves escritas", () => {
