@@ -34,6 +34,8 @@ const COLUMNAS: Array<{ titulo: string; enlaces: Array<{ texto: string; href: st
     titulo: "BuscayCurra",
     enlaces: [
       { texto: "Qué es y para quién", href: "/sobre-nosotros" },
+      { texto: "Todo lo que hace", href: "/funciones" },
+      { texto: "Novedades", href: "/novedades" },
       { texto: "Precios", href: "/precios" },
       { texto: "Descargar la app", href: "/descargar" },
       { texto: "Para empresas", href: "/empresas" },

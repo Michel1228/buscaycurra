@@ -21,7 +21,14 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), geolocation=()' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://ojesordjedovnpyxspxi.supabase.co https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://api.revenuecat.com; frame-src 'self' https://js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self';" },
+          // frame-src incluye youtube-nocookie para poder enseñar los vídeos de
+          // las campañas en /novedades. Solo ese dominio y solo marcos: NO se
+          // deja cargar scripts de YouTube ni de ninguna otra red, así que la
+          // web sigue sin tener rastreadores de terceros. Es la versión sin
+          // cookies: no pone ninguna hasta que el visitante le da al play.
+          // TikTok e Instagram se quedan fuera a propósito; sus vídeos se
+          // enlazan en vez de incrustarse (ver components/novedades/VideoNovedad).
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://ojesordjedovnpyxspxi.supabase.co https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://api.revenuecat.com; frame-src 'self' https://js.stripe.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self';" },
         ],
       },
       // El resto de páginas HTML — nunca cachear; evita interfaz obsoleta en móvil/PWA

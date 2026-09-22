@@ -2,6 +2,7 @@ import { MetadataRoute } from "next";
 import { LISTA_PAISES } from "@/lib/paises";
 import { tiposPorPais } from "@/lib/cursos/tipos";
 import { GUIAS } from "@/lib/guias/contenido";
+import { NOVEDADES } from "@/lib/novedades/contenido";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://buscaycurra.es";
@@ -23,12 +24,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
+  // Novedades y campañas: entran solas al añadir una a lib/novedades/contenido.ts.
+  const paginasNovedades: MetadataRoute.Sitemap = NOVEDADES.map((n) => ({
+    url: `${baseUrl}/novedades/${n.slug}`,
+    lastModified: new Date(n.fecha),
+    changeFrequency: "yearly" as const,
+    priority: 0.6,
+  }));
+
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
     // "cómo mandar el currículum a una empresa" lo busca gente que aún no tiene
     // cuenta: es la puerta de entrada de la web.
     { url: `${baseUrl}/guias`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
     ...paginasGuias,
+    { url: `${baseUrl}/funciones`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+    { url: `${baseUrl}/novedades`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
+    ...paginasNovedades,
     { url: `${baseUrl}/precios`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/cursos`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
     // Prioridad alta a propósito: "acreditar experiencia laboral" lo busca

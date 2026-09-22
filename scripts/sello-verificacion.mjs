@@ -1507,6 +1507,33 @@ for (const fichero of ["lib/guias/contenido.ts", "components/CentroAyuda.tsx"]) 
   });
 }
 
+// Si se incrusta un video y la politica de seguridad no lo permite, el navegador
+// no enseña ningun error: sale un hueco en blanco. Por eso se comprueba que lo
+// que se incrusta (youtube-nocookie) es exactamente lo que la cabecera permite.
+test("los videos de las campañas se pueden ver de verdad", () => {
+  const csp = leerFuente("next.config.ts");
+  const video = leerFuente("components/novedades/VideoNovedad.tsx");
+  const permitido = /frame-src[^;]*https:\/\/www\.youtube-nocookie\.com/.test(csp);
+  const usado = video.includes("https://www.youtube-nocookie.com/embed/");
+  return permitido && usado;
+});
+
+test("las novedades estan en el mapa del sitio y tienen su RSS", () => {
+  const s = leerFuente("app/sitemap.ts");
+  const rss = leerFuente("app/novedades/rss.xml/route.ts");
+  return s.includes('from "@/lib/novedades/contenido"') &&
+    s.includes("/novedades/${n.slug}") &&
+    rss.includes("application/rss+xml") &&
+    rss.includes("novedadesOrdenadas");
+});
+
+test("la web publica enlaza las funciones y las novedades", () => {
+  const pie = leerFuente("components/PublicFooter.tsx");
+  const cabecera = leerFuente("components/PublicHeader.tsx");
+  return pie.includes('href: "/novedades"') && pie.includes('href: "/funciones"') &&
+    cabecera.includes('href="/funciones"') && cabecera.includes('href="/guias"');
+});
+
 test("las guias de uso estan en el mapa del sitio", () => {
   const s = leerFuente("app/sitemap.ts");
   return s.includes('from "@/lib/guias/contenido"') && s.includes("/guias/${g.slug}");

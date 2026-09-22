@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Building2, BookOpen, LogIn, Sparkles, Smartphone, Tag } from "lucide-react";
+import { Building2, BookOpen, LayoutGrid, LogIn, Megaphone, Sparkles, Smartphone, Tag } from "lucide-react";
 import LogoGusano from "@/components/LogoGusano";
 
 export default function PublicHeader() {
@@ -42,6 +42,13 @@ export default function PublicHeader() {
               de la home. */}
           {/* Las guías son la puerta de entrada de quien llega desde Google sin
               conocernos: si no se enlazan desde arriba, no las ve nadie. */}
+          <Link
+            href="/funciones"
+            className="text-sm font-medium transition hover:opacity-80"
+            style={{ color: "#64748b" }}
+          >
+            Funciones
+          </Link>
           <Link
             href="/guias"
             className="text-sm font-medium transition hover:opacity-80"
@@ -139,12 +146,28 @@ export default function PublicHeader() {
                 <Smartphone size={14} strokeWidth={1.8} className="inline mr-1.5" />Descargar app
               </Link>
               <Link
+                href="/funciones"
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm transition"
+                style={{ color: "#94a3b8" }}
+              >
+                <LayoutGrid size={14} strokeWidth={1.8} className="inline mr-1.5" />Todo lo que hace
+              </Link>
+              <Link
                 href="/guias"
                 onClick={() => setMenuOpen(false)}
                 className="px-4 py-3 rounded-lg text-sm transition"
                 style={{ color: "#94a3b8" }}
               >
                 <BookOpen size={14} strokeWidth={1.8} className="inline mr-1.5" />Guías de uso
+              </Link>
+              <Link
+                href="/novedades"
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm transition"
+                style={{ color: "#94a3b8" }}
+              >
+                <Megaphone size={14} strokeWidth={1.8} className="inline mr-1.5" />Novedades
               </Link>
               <Link
                 href="/precios"
