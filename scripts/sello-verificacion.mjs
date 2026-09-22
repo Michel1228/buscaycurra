@@ -1432,8 +1432,16 @@ test("nadie carga ioredis dentro de una funcion", () => {
 // busqueda de la misma ciudad volvia a pagar ~33 llamadas.
 const ettSrc = leerFuente("app/api/ett/search/route.ts");
 test("el buscador de ETTs mira la cache antes de pagar a Google", () =>
-  ettSrc.indexOf("buscarEnCachePorZona(city") > -1 &&
-  ettSrc.indexOf("buscarEnCachePorZona(city") < ettSrc.indexOf("buscarTextoSinDetalles(q"));
+  ettSrc.indexOf("buscarEnCacheCerca(zona.lat") > -1 &&
+  ettSrc.indexOf("buscarEnCacheCerca(zona.lat") < ettSrc.indexOf("buscarTextoSinDetalles(q"));
+// La caché por cercanía necesita que cada ficha lleve dónde está; si se guardan
+// sin coordenadas, la caché queda inservible y todo vuelve a pagarse.
+test("las empresas se guardan con sus coordenadas", () => {
+  const c = leerFuente("lib/empresas-cache.ts");
+  return c.includes("lat = COALESCE(EXCLUDED.lat, empresas.lat)") &&
+    c.includes("e.lat ?? null, e.lon ?? null") &&
+    ettSrc.includes("lat: coordsPorId.get(gr.place_id)?.lat ?? null");
+});
 test("el buscador de ETTs situa la zona y descarta las lejanas", () =>
   ettSrc.includes("await situarZona(city)") &&
   ettSrc.includes("distanciaKm(zona") &&

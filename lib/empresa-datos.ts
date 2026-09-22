@@ -44,6 +44,11 @@ export interface EmpresaCompleta {
   googleReviews?: number | null;
   googleAddress?: string | null;
   googleMapsUrl?: string | null;
+  /** Dónde está. Permite buscar en la caché por cercanía (migración 006). */
+  lat?: number | null;
+  lon?: number | null;
+  /** Kilómetros hasta el sitio que buscó el usuario, cuando se sabe. */
+  distanciaKm?: number | null;
 }
 
 export function extraerDominio(url: string): string {

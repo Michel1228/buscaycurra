@@ -42,6 +42,8 @@ interface FilaEmpresa {
   google_maps_url: string | null;
   fotos: string[] | null;
   horario: string[] | null;
+  lat: number | null;
+  lon: number | null;
 }
 
 function filaAEmpresa(f: FilaEmpresa): EmpresaCompleta {
@@ -70,12 +72,14 @@ function filaAEmpresa(f: FilaEmpresa): EmpresaCompleta {
     googleReviews: f.google_reviews,
     googleAddress: f.direccion,
     googleMapsUrl: f.google_maps_url,
+    lat: f.lat,
+    lon: f.lon,
   };
 }
 
 const COLUMNAS = `place_id, nombre, dominio, url_web, email_rrhh, email_confianza,
   emails_extraidos, telefono, pagina_empleo, sector, direccion, ciudad,
-  google_rating, google_reviews, google_maps_url, fotos, horario`;
+  google_rating, google_reviews, google_maps_url, fotos, horario, lat, lon`;
 
 /** Busca por nombre (y ciudad si se da). Solo devuelve entradas frescas. */
 export async function buscarEnCachePorNombre(
@@ -99,6 +103,59 @@ export async function buscarEnCachePorNombre(
     return rows.map(filaAEmpresa);
   } catch (e) {
     console.warn("[empresas-cache] Error al leer:", (e as Error).message);
+    return [];
+  }
+}
+
+/**
+ * Empresas ya conocidas A MENOS DE `km` de un punto (+ sector opcional).
+ *
+ * Existe porque buscar por el texto de la ciudad no aguanta la realidad: quien
+ * vive en Fustiñana quiere las ETTs de Tudela, y al guardarlas quedaban
+ * etiquetadas como de Fustiñana, vaciando la caché de Tudela. Con las
+ * coordenadas (migración 006) la caché es geográfica y eso deja de pasar.
+ *
+ * El recorte por caja va primero a propósito: usa el índice y deja el cálculo
+ * de distancias para las pocas filas que quedan.
+ */
+export async function buscarEnCacheCerca(
+  lat: number,
+  lon: number,
+  km: number,
+  sector?: string,
+  limite = 30
+): Promise<Array<EmpresaCompleta & { distanciaKm: number }>> {
+  try {
+    const pool = getPool();
+    const grados = km / 111; // 1 grado de latitud ≈ 111 km
+    const params: (string | number)[] = [lat, lon, grados, km];
+    let sql = `SELECT ${COLUMNAS},
+        (6371 * 2 * asin(sqrt(
+          power(sin(radians(lat - $1) / 2), 2) +
+          cos(radians($1)) * cos(radians(lat)) *
+          power(sin(radians(lon - $2) / 2), 2)
+        ))) AS km
+      FROM empresas
+      WHERE lat IS NOT NULL AND lon IS NOT NULL
+        AND lat BETWEEN $1 - $3 AND $1 + $3
+        AND lon BETWEEN $2 - $3 AND $2 + $3
+        AND actualizado_at > now() - interval '${FRESCURA_DIAS} days'`;
+    if (sector) {
+      params.push(sector);
+      sql += ` AND sector = $${params.length}`;
+    }
+    params.push(Math.min(limite, 200));
+    sql += ` AND (6371 * 2 * asin(sqrt(
+          power(sin(radians(lat - $1) / 2), 2) +
+          cos(radians($1)) * cos(radians(lat)) *
+          power(sin(radians(lon - $2) / 2), 2)
+        ))) <= $4
+      ORDER BY CASE email_confianza WHEN 'alta' THEN 0 WHEN 'media' THEN 1 ELSE 2 END, km
+      LIMIT $${params.length}`;
+    const { rows } = await pool.query<FilaEmpresa & { km: number }>(sql, params);
+    return rows.map((f) => ({ ...filaAEmpresa(f), distanciaKm: Math.round(f.km * 10) / 10 }));
+  } catch (e) {
+    console.warn("[empresas-cache] Error al leer por cercania:", (e as Error).message);
     return [];
   }
 }
@@ -148,8 +205,8 @@ export async function guardarEnCache(empresas: EmpresaCompleta[], ciudad?: strin
         `INSERT INTO empresas (
            place_id, nombre, nombre_norm, dominio, url_web, email_rrhh, email_confianza,
            emails_extraidos, telefono, pagina_empleo, sector, direccion, ciudad, ciudad_norm,
-           google_rating, google_reviews, google_maps_url, fotos, horario, actualizado_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19, now())
+           google_rating, google_reviews, google_maps_url, fotos, horario, lat, lon, actualizado_at
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21, now())
          ON CONFLICT (place_id) DO UPDATE SET
            nombre = EXCLUDED.nombre,
            nombre_norm = EXCLUDED.nombre_norm,
@@ -172,12 +229,16 @@ export async function guardarEnCache(empresas: EmpresaCompleta[], ciudad?: strin
            google_maps_url = EXCLUDED.google_maps_url,
            fotos = EXCLUDED.fotos,
            horario = EXCLUDED.horario,
+           -- Una búsqueda sin coordenadas no borra las que ya teníamos.
+           lat = COALESCE(EXCLUDED.lat, empresas.lat),
+           lon = COALESCE(EXCLUDED.lon, empresas.lon),
            actualizado_at = now()`,
         [
           e.placeId, e.nombre, normalizarTexto(e.nombre), e.dominio, e.urlWeb,
           e.emailRrhh, e.emailConfianza, e.emailsExtraidos, e.telefono, e.paginaEmpleo,
           e.sector, e.googleAddress, ciudadFinal, ciudadFinal ? normalizarTexto(ciudadFinal) : null,
           e.googleRating, e.googleReviews, e.googleMapsUrl, e.fotos, e.horario,
+          e.lat ?? null, e.lon ?? null,
         ]
       );
     }

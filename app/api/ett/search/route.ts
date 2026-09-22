@@ -4,9 +4,11 @@
  * Busca ETTs (Empresas de Trabajo Temporal) por ciudad.
  *
  * Flujo:
- *   1. Caché: si ya se buscó esa zona hace menos de 30 días, sale de ahí (gratis)
- *   2. Se sitúa la zona en el mapa: país (para buscar con sus palabras) y
- *      coordenadas (para descartar lo que esté lejos)
+ *   1. Se sitúa la zona en el mapa (OpenStreetMap, gratis): país, para buscar con
+ *      sus palabras, y coordenadas, para descartar lo que esté lejos
+ *   2. Caché: si ya hay ETTs guardadas a menos de 35 km de ahí, salen de ahí
+ *      (gratis). Es por cercanía y no por el nombre del pueblo a propósito: quien
+ *      busca en Fustiñana quiere las de Tudela
  *   3. Text Search con los términos del país ("ETT" aquí, "Zeitarbeitsfirma" en
  *      Alemania), sin pedir detalles todavía
  *   4. Se descartan las lejanas y se piden los detalles SOLO de las que quedan
@@ -30,7 +32,7 @@ import {
 import { terminosEtt } from "@/lib/ett-terminos";
 import { buscarNegociosZonaOSM } from "@/lib/osm-places";
 import { construirEmpresaDesdeGoogle, enriquecerEmpresas, type EmpresaCompleta } from "@/lib/empresa-datos";
-import { buscarEnCachePorZona, guardarEnCache } from "@/lib/empresas-cache";
+import { buscarEnCacheCerca, buscarEnCachePorZona, guardarEnCache } from "@/lib/empresas-cache";
 import { getUserId } from "@/lib/auth-server";
 import { secretIguales } from "@/lib/secret-compare";
 
@@ -103,21 +105,27 @@ export async function POST(request: NextRequest) {
 
     console.log(`🏢 Buscando ETTs en: "${city}"`);
 
-    // ── 1. La caché primero ─────────────────────────────────────────────
+    // ── 1. Situar la zona: de qué país es y dónde cae exactamente ───────
+    // Va antes que la caché porque la caché ahora es geográfica: quien busca en
+    // Fustiñana quiere las ETTs de Tudela, y guardarlas como "de Fustiñana"
+    // vaciaba la caché de Tudela.
+    const zona = await situarZona(city);
+
+    // ── 2. La caché ─────────────────────────────────────────────────────
     // Se guardaban los resultados "para no repetir la misma ciudad", pero nunca
     // se leían: cada búsqueda de Tudela volvía a pagar ~33 llamadas a Google por
     // las mismas once ETTs. Las entradas caducan solas a los 30 días.
-    const cacheados = await buscarEnCachePorZona(city, SECTOR_ETT, 30);
+    const cacheados: EmpresaCompleta[] = zona
+      ? await buscarEnCacheCerca(zona.lat, zona.lng, RADIO_CERCA_KM, SECTOR_ETT, 30)
+      : await buscarEnCachePorZona(city, SECTOR_ETT, 30);
     if (cacheados.length >= 8) {
       return NextResponse.json({
         success: true,
         empresas: cacheados,
+        zona: zona?.descripcion,
         desdeCache: true,
       });
     }
-
-    // ── 2. Situar la zona: de qué país es y dónde cae exactamente ───────
-    const zona = await situarZona(city);
 
     // ── 3. Buscar con las palabras del país (aquí "ETT", en Alemania
     //       "Zeitarbeitsfirma") y cerca de esas coordenadas ──────────────
@@ -209,13 +217,22 @@ export async function POST(request: NextRequest) {
     }
 
     // ── 6. Construir resultados ────────────────────────────────────────
-    const nuevas: EmpresaCompleta[] = places.map((gr) =>
-      construirEmpresaDesdeGoogle(gr, {
+    // Las coordenadas vienen de la búsqueda de texto (los detalles no las
+    // traen): son las que hacen que la caché funcione por cercanía.
+    const coordsPorId = new Map(
+      Array.from(porId.values())
+        .filter((s) => s.lat != null && s.lng != null)
+        .map((s) => [s.place_id, { lat: s.lat as number, lon: s.lng as number }])
+    );
+    const nuevas: EmpresaCompleta[] = places.map((gr) => ({
+      ...construirEmpresaDesdeGoogle(gr, {
         fuente: "google_places_ett",
         sector: SECTOR_ETT,
         prioridadRrhh: true, // en una ETT, rrhh@/seleccion@ es lo más probable
-      })
-    );
+      }),
+      lat: coordsPorId.get(gr.place_id)?.lat ?? null,
+      lon: coordsPorId.get(gr.place_id)?.lon ?? null,
+    }));
 
     // ── 7. Email real de la web y, si no, verificación MX ──────────────
     await enriquecerEmpresas(nuevas);
