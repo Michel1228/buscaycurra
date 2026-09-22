@@ -22,6 +22,23 @@ Entre el 3 y el 5 de septiembre se cambió `.github/workflows/sync-jobs.yml`
 creyendo que se ejecutaba. **Esos cambios no tuvieron efecto**: las dos entradas
 de abajo sobre Japón y Suecia están corregidas por eso.
 
+## ABIERTO (encontrado el 22 sep 2026)
+
+- [ ] **DeepSeek sin saldo** (-0,01 USD, la API responde 402). Es el primer
+  modelo de Guzzi para usuarios de pago, de la vista previa de la carta y del
+  router de `lib/ai`. Todo cae a Groq u OpenAI, así que funciona, pero no con el
+  modelo elegido. **Decisión de Michel:** recargar
+  (https://platform.deepseek.com/top_up) o cambiar de primer modelo.
+- [ ] **`deepseek-v4-flash` es ya un nombre antiguo.** La cuenta solo lista
+  `deepseek-flash` (V4.1) y `deepseek-v4-pro`; la documentación dice que el
+  nombre viejo se sigue aceptando. Pasar a `deepseek-flash` cuando haya saldo
+  para probarlo: por defecto razona (`effort` high) y puede cambiar tiempos.
+- [ ] **Tope de Google Places: 500 al día en `PLACES_MAX_DIA`**, cuando el
+  comentario de `lib/places-quota.ts` razona 300 para no pasar del crédito
+  gratuito de Google. **Decisión de Michel.**
+- [ ] **`/api/jobs/semantic-search` no lo llama ninguna pantalla.** Se arregló
+  su modelo, pero es código muerto: decidir si se conecta o se borra.
+
 ## ABIERTO (encontrado el 15 sep 2026)
 
 - [ ] **Arbeitnow lleva parado desde el 19 de agosto.** 6.295 ofertas vivas y
@@ -43,6 +60,37 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   iban a `/tmp/watchdog-alerts.log`.
 
 ## YA ARREGLADO (no volver a mirarlo)
+
+- **La aplicación perdió Redis (22 sep 2026, 10:48 UTC).** Easypanel recreó
+  Redis con otra IP y la aplicación seguía usando la vieja, fijada en
+  `/etc/hosts` del servidor. Sin Redis no arrancaba el envío de CV, la cuota de
+  Google Places fallaba cerrada y **toda búsqueda de empresas y de ETTs caía a
+  OpenStreetMap**: por eso "La Papelera de Buñuel" no aparecía y Tudela daba 0
+  ETTs. Arreglado conectando la aplicación a la red de Redis
+  (`easypanel-buscaycurra`) y quitando la línea vieja (copia en
+  `/etc/hosts.bak-20260922`). Ahora `build-deploy.sh` hace esa conexión y un PING
+  a Redis en cada despliegue, y el centinela lo vigila a diario (control 13).
+  Comprobado después: La Papelera → Sofidel Tudela (Pol. Ind. de Buñuel); Tudela
+  → 11 ETTs.
+
+- **El buscador de ETTs daba agencias de otra provincia o de otro país
+  (22 sep 2026).** "Cabanillas" devolvía ETTs de Guadalajara (hay dos Cabanillas
+  y no se avisaba de cuál se había entendido) y "Berlin" tres de cinco
+  resultados en Barcelona, porque siempre se preguntaba en español. Además se
+  guardaba en caché pero no se leía: cada búsqueda repetida volvía a pagar ~33
+  llamadas. Ahora: caché primero, se sitúa el sitio en el mapa, se pregunta con
+  las palabras de cada país (26 en `lib/ett-terminos.ts`), se descarta por
+  distancia real (35 km, hasta 120 en pueblos) y se piden 12 detalles como mucho
+  → de ~33 llamadas de pago por búsqueda a 16.
+
+- **Guzzi perdía casi un segundo por mensaje llamando a DeepSeek sin saldo
+  (22 sep 2026).** El primer 402 ahora apaga DeepSeek seis horas y se reintenta
+  solo: el día que se recargue vuelve a entrar sin desplegar nada.
+
+- **Cuatro llamadas a IA con modelos retirados (22 sep 2026).** `gemini-1.5-flash`
+  (mejorar CV, carta) → `gemini-3.5-flash-lite`; `llama-3.1-8b-instant` (búsqueda
+  semántica) → `openai/gpt-oss-20b`; `deepseek-chat` (retirado el 24 jul) →
+  `deepseek-v4-flash`. El sello falla si vuelve a aparecer un nombre retirado.
 
 - **Las tareas programadas nuevas no se ejecutaban nunca (15 sep 2026).** El
   centinela y el barrido de Adzuna se escribieron como workflows de GitHub. Ahora
