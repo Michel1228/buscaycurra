@@ -18,6 +18,7 @@ import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
 import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 import { Bot, Zap, Building2, Sprout, Egg, Star, CreditCard, Check, X, Apple } from "lucide-react";
 import { NUM_PAISES } from "@/lib/paises";
+import PublicFooter from "@/components/PublicFooter";
 
 const PLANES = [
   {
@@ -277,6 +278,7 @@ export default function PreciosPage() {
           </Link>
         </div>
       </div>
+      <PublicFooter />
     </div>
   );
 }

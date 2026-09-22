@@ -8,6 +8,7 @@
 import type { Metadata } from "next";
 import PublicHeader from "@/components/PublicHeader";
 import ListaCursos from "@/components/cursos/ListaCursos";
+import PublicFooter from "@/components/PublicFooter";
 
 export const metadata: Metadata = {
   title: "Cursos para trabajar: gratis, subvencionados y obligatorios | BuscayCurra",
@@ -33,6 +34,7 @@ export default function CursosPublico() {
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
         <ListaCursos base="/cursos" />
       </div>
+      <PublicFooter />
     </div>
   );
 }

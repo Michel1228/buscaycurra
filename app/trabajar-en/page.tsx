@@ -4,6 +4,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { LISTA_PAISES, NUM_PAISES } from "@/lib/paises";
+import PublicFooter from "@/components/PublicFooter";
 
 export const metadata: Metadata = {
   title: "Trabajar en el extranjero — Guías por país | BuscayCurra",
@@ -123,6 +124,7 @@ export default function TrabajarEnPage() {
           </div>
         </div>
       </div>
+      <PublicFooter />
     </div>
   );
 }

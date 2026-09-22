@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Building2, LogIn, Sparkles, Smartphone, Tag } from "lucide-react";
+import { Building2, BookOpen, LogIn, Sparkles, Smartphone, Tag } from "lucide-react";
 import LogoGusano from "@/components/LogoGusano";
 
 export default function PublicHeader() {
@@ -40,6 +40,15 @@ export default function PublicHeader() {
           {/* /precios estaba en el sitemap con prioridad 0.9 pero no la
               enlazaba ninguna navegación: solo se llegaba por el ancla #precios
               de la home. */}
+          {/* Las guías son la puerta de entrada de quien llega desde Google sin
+              conocernos: si no se enlazan desde arriba, no las ve nadie. */}
+          <Link
+            href="/guias"
+            className="text-sm font-medium transition hover:opacity-80"
+            style={{ color: "#64748b" }}
+          >
+            Guías
+          </Link>
           <Link
             href="/precios"
             className="text-sm font-medium transition hover:opacity-80"
@@ -128,6 +137,14 @@ export default function PublicHeader() {
                 style={{ color: "#94a3b8" }}
               >
                 <Smartphone size={14} strokeWidth={1.8} className="inline mr-1.5" />Descargar app
+              </Link>
+              <Link
+                href="/guias"
+                onClick={() => setMenuOpen(false)}
+                className="px-4 py-3 rounded-lg text-sm transition"
+                style={{ color: "#94a3b8" }}
+              >
+                <BookOpen size={14} strokeWidth={1.8} className="inline mr-1.5" />Guías de uso
               </Link>
               <Link
                 href="/precios"

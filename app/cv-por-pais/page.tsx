@@ -10,6 +10,7 @@
 import type { Metadata } from "next";
 import PublicHeader from "@/components/PublicHeader";
 import CVPorPais from "@/components/cv/PorPais";
+import PublicFooter from "@/components/PublicFooter";
 
 export const metadata: Metadata = {
   title: "¿Foto en el CV? Cómo cambia el currículum en cada país | BuscayCurra",
@@ -35,6 +36,7 @@ export default function CVPorPaisPublico() {
       <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
         <CVPorPais base="/app/curriculum" />
       </div>
+      <PublicFooter />
     </div>
   );
 }

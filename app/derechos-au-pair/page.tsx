@@ -13,6 +13,7 @@
 import type { Metadata } from "next";
 import PublicHeader from "@/components/PublicHeader";
 import DerechosAuPair from "@/components/aupair/Derechos";
+import PublicFooter from "@/components/PublicFooter";
 
 export const metadata: Metadata = {
   title: "Derechos de una au pair: horas, contrato y cuándo es un trabajo | BuscayCurra",
@@ -38,6 +39,7 @@ export default function DerechosAuPairPublico() {
       <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
         <DerechosAuPair base="/app/au-pair" />
       </div>
+      <PublicFooter />
     </div>
   );
 }

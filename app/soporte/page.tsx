@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import CentroAyuda from "@/components/CentroAyuda";
+import PublicFooter from "@/components/PublicFooter";
 
 /**
  * /soporte — Página PÚBLICA de soporte (sin autenticación).
@@ -43,6 +44,7 @@ export default function SoportePage() {
       </header>
 
       <CentroAyuda />
+      <PublicFooter />
     </div>
   );
 }

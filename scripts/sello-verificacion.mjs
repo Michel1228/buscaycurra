@@ -1488,6 +1488,41 @@ test("Guzzi deja de llamar a DeepSeek cuando se queda sin saldo", () => {
     chat.includes("!deepseekApagado()") && chat.includes("apagarDeepSeek()");
 });
 
+// ── LA WEB PUBLICA NO PUEDE MENTIR ─────────────────────────────────────────
+//
+// El 22 sep 2026 el centro de ayuda decia "2 envios de CV al dia" en el plan
+// gratuito y "5" en Esencial, cuando de verdad eran 3 y 15, y hablaba de un plan
+// Basico que ya no se vende; tambien decia 90 dias para repetir empresa cuando el
+// codigo usa 15. Las cifras se sacan de lib/plan-limits.ts, no se escriben a mano.
+for (const fichero of ["lib/guias/contenido.ts", "components/CentroAyuda.tsx"]) {
+  test(`las cifras de ${fichero.split("/").pop()} salen del codigo, no a mano`, () => {
+    const src = leerFuente(fichero);
+    if (!src.includes('from "@/lib/plan-limits"')) return false;
+    // Solo el codigo: los comentarios que cuentan este fallo citan las cifras malas.
+    const codigo = src.split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
+    // Un numero pegado a "envios ... dia" es una cifra escrita a mano.
+    const aMano = /\b\d+\s*(envios|env[ií]os)\s*(de CV\s*)?(al|por)\s*d[ií]a/i.test(codigo);
+    if (aMano) console.log("      hay un limite escrito a mano en " + fichero);
+    return !aMano;
+  });
+}
+
+test("las guias de uso estan en el mapa del sitio", () => {
+  const s = leerFuente("app/sitemap.ts");
+  return s.includes('from "@/lib/guias/contenido"') && s.includes("/guias/${g.slug}");
+});
+
+// Una pagina publica sin enlaces internos no la encuentra nadie: /descargar y
+// /precios ya estuvieron meses sin que las enlazara ninguna navegacion.
+test("las paginas publicas enlazan con el resto de la web", () => {
+  const sinPie = ["app/guias/page.tsx", "app/precios/page.tsx", "app/soporte/page.tsx",
+    "app/cursos/page.tsx", "app/trabajar-en/page.tsx", "app/cv-por-pais/page.tsx",
+    "app/llevarte-el-paro/page.tsx", "app/derechos-au-pair/page.tsx"]
+    .filter((f) => !leerFuente(f).includes("<PublicFooter />"));
+  if (sinPie.length) console.log("      sin pie de pagina: " + sinPie.join(", "));
+  return sinPie.length === 0;
+});
+
 // El repositorio es publico. Seis scripts del crontab llevaban la clave de
 // administracion escrita dentro; ahora la leen de .env.local en el servidor.
 test("los scripts del VPS no llevan claves escritas", () => {

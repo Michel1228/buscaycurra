@@ -937,7 +937,10 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                   {[
                     { href: "/auth/registro", label: "Empezar gratis" },
                     { href: "#precios", label: "Precios" },
-                    { href: "/app/emigrar", label: "Emigrar" },
+                    { href: "/guias", label: "Guías de uso" },
+                    // Antes apuntaba a /app/emigrar, que pide sesión: quien
+                    // llegaba sin cuenta acababa en el login. La pública es esta.
+                    { href: "/trabajar-en", label: "Trabajar fuera" },
                   ].map((l) => (
                     <Link
                       key={l.href}

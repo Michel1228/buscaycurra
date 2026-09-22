@@ -11,6 +11,7 @@
 import type { Metadata } from "next";
 import PublicHeader from "@/components/PublicHeader";
 import ParoEuropeo from "@/components/emigrar/ParoEuropeo";
+import PublicFooter from "@/components/PublicFooter";
 
 export const metadata: Metadata = {
   title: "Cobrar el paro español en otro país de la UE: formulario U2 | BuscayCurra",
@@ -36,6 +37,7 @@ export default function LlevarteElParoPublico() {
       <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
         <ParoEuropeo base="/app/emigrar" />
       </div>
+      <PublicFooter />
     </div>
   );
 }
