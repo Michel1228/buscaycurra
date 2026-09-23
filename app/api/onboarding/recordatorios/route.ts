@@ -40,7 +40,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const soloProbar = new URL(request.url).searchParams.get("probar") === "1";
+  const parametros = new URL(request.url).searchParams;
+  const soloProbar = parametros.get("probar") === "1";
+
+  // ?muestra=correo@ejemplo.com — manda UNA copia de cortesía a esa dirección
+  // para poder leer el texto antes de que lo reciba nadie más. No toca a ningún
+  // usuario, no deja marca y no cuenta como aviso.
+  const muestra = parametros.get("muestra");
+  if (muestra) {
+    const salio = await sendPrimerDiaEmail({
+      email: muestra,
+      nombre: "",
+      paso: {
+        titulo: "Sube tu CV",
+        porQue:
+          "Se guarda una vez y ya se usa en todos los envíos. Si no tienes uno, Guzzi te lo monta con lo que le cuentes.",
+        ruta: "/app/curriculum",
+        textoBoton: "Subir mi CV",
+      },
+      pasosHechos: 1,
+      pasosTotales: 3,
+    });
+    return NextResponse.json({ ok: salio, muestra: true, enviadoA: muestra });
+  }
 
   try {
     const sb = createClient(

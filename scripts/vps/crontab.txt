@@ -24,3 +24,7 @@
 30 7 * * * /usr/bin/flock -n /tmp/centinela.lock bash /root/centinela.sh >> /root/centinela.log 2>&1
 # Barrido diario de Adzuna: lo publicado en 24 h, paginando sin palabras clave (scripts/vps/sync-adzuna-barrido.sh)
 0 11 * * * /usr/bin/flock -n /tmp/barrido-adzuna.lock bash /root/sync-adzuna-barrido.sh >> /root/sync-adzuna-barrido.log 2>&1
+# Recordatorio del primer dia: UNA vez por persona, a quien se registro y se quedo
+# a medias (scripts/vps/recordatorios-primer-dia.sh). A las 10:00 UTC, que en
+# España son las 11 o las 12: un correo a las tres de la manana no lo abre nadie.
+0 10 * * * /usr/bin/flock -n /tmp/recordatorios.lock bash /root/recordatorios-primer-dia.sh >> /root/recordatorios.log 2>&1
