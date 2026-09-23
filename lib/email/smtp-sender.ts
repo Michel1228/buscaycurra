@@ -1,3 +1,5 @@
+import { frasePromesaOfertas } from "@/lib/promesas";
+
 const RESEND_API_URL = "https://api.resend.com/emails";
 const FROM_ADDRESS = "BuscayCurra <noreply@buscaycurra.es>";
 
@@ -190,7 +192,7 @@ export async function sendWelcomeEmail(userEmail: string, userName: string): Pro
     <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.1);border-radius:12px;margin-bottom:8px;">
       <tr><td style="padding:16px 20px;text-align:center;">
         <p style="margin:0;color:#64748b;font-size:13px;line-height:1.6;">
-          Tenemos <strong style="color:#22c55e;">más de 148.000 ofertas activas</strong> en España esperándote.
+          Tenemos <strong style="color:#22c55e;">${frasePromesaOfertas()}</strong> esperándote.
         </p>
       </td></tr>
     </table>

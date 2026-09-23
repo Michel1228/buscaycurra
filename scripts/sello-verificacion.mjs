@@ -1395,6 +1395,23 @@ test("los pasos del primer dia se miden con datos reales", () => {
     !/onboarding_completado|primer_dia_hecho/.test(codigo);
 });
 
+// El correo de bienvenida prometia "mas de 148.000 ofertas activas en España"
+// cuando habia 38.576: el numero se escribio a mano cuando era cierto y se quedo
+// ahi. Ahora las cifras viven en lib/promesas.ts y el centinela las comprueba
+// contra la base cada mañana.
+test("los correos no prometen cifras escritas a mano", () => {
+  const e = leerFuente("lib/email/smtp-sender.ts");
+  const codigo = e.split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
+  const inventadas = codigo.match(/[0-9]{1,3}[.][0-9]{3}\s*ofertas/gi) || [];
+  if (inventadas.length) console.log("      cifra escrita a mano: " + inventadas.join(", "));
+  return codigo.includes("frasePromesaOfertas()") && inventadas.length === 0;
+});
+test("el centinela comprueba lo que prometemos", () => {
+  const c = leerFuente("app/api/admin/centinela/route.ts");
+  return c.includes("lo que prometemos por correo sigue siendo verdad") &&
+    c.includes("reales >= OFERTAS_ESPANA");
+});
+
 // El formulario de registro pide la ciudad, y hasta el 23 sep 2026 se guardaba
 // en user_contacts y en la alerta de empleo pero NUNCA en profiles.ciudad, que es
 // de donde la leen el perfil, las recomendaciones y los pasos del principio. De

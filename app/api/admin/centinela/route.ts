@@ -34,6 +34,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { secretIguales } from "@/lib/secret-compare";
 import { LISTA_PAISES } from "@/lib/paises";
+import { OFERTAS_ESPANA } from "@/lib/promesas";
 // Importacion normal, como en lib/places-quota.ts. Con `await import("ioredis")`
 // dentro de la funcion, el paquete compilado devolvia un objeto sin constructor
 // ("a is not a constructor") y el control 13 daba fallo aunque Redis estuviera
@@ -198,10 +199,15 @@ export async function GET(req: NextRequest) {
   // Sin email de contacto no hay envío, que es lo único que de verdad hace la
   // aplicación. Si esto se desploma, los envíos se paran sin dar la cara.
   try {
+    // Sobre una MUESTRA del 2%, no sobre los 2,3 millones de filas: el 23 sep
+    // 2026 la consulta entera empezo a pasarse del tiempo maximo con la base
+    // ocupada sincronizando, y un control que no puede mirar es un fallo mas.
+    // Para saber si el porcentaje ronda el 75% o se ha desplomado por debajo del
+    // 50%, con unas 47.000 filas sobra.
     const { rows } = await pool.query(
       `SELECT round(100.0 * count(*) FILTER (WHERE "contactEmail" IS NOT NULL)
                     / greatest(count(*), 1), 1)::float AS pct
-         FROM "JobListing" WHERE "isActive"`
+         FROM "JobListing" TABLESAMPLE SYSTEM (2) WHERE "isActive"`
     );
     const pct = rows[0]?.pct ?? 0;
     anota(
@@ -411,6 +417,27 @@ export async function GET(req: NextRequest) {
     );
   } catch (e) {
     anota("las notificaciones no llevan a ofertas que no existen", false, `no se pudo comprobar: ${(e as Error).message}`, "");
+  }
+
+  // ── 15. Lo que prometemos por ahi fuera sigue siendo verdad ────────────────
+  // El correo de bienvenida decia "mas de 148.000 ofertas activas en España".
+  // El 23 sep 2026 habia 38.576: el numero se escribio a mano cuando era cierto
+  // y se quedo ahi mientras la realidad cambiaba. Lo recibia cada persona que se
+  // registraba. Ahora la cifra vive en lib/promesas.ts y esto la comprueba.
+  try {
+    const { rows } = await getPool().query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM "JobListing"
+        WHERE "isActive" = true AND lower(country) = 'es'`
+    );
+    const reales = parseInt(rows[0]?.n || "0", 10);
+    anota(
+      "lo que prometemos por correo sigue siendo verdad",
+      reales >= OFERTAS_ESPANA,
+      `prometemos ${OFERTAS_ESPANA.toLocaleString("es-ES")} ofertas en España y hay ${reales.toLocaleString("es-ES")}`,
+      'el correo de bienvenida prometia 148.000 ofertas en España cuando habia 38.576'
+    );
+  } catch (e) {
+    anota("lo que prometemos por correo sigue siendo verdad", false, `no se pudo comprobar: ${(e as Error).message}`, "");
   }
 
   // ── 14. Ninguna oferta esta fechada en el futuro ───────────────────────────
