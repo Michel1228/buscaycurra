@@ -26,6 +26,46 @@ export async function POST(req: NextRequest) {
 
     // 2. Si hay ciudad, guardar en user_contacts + crear alerta
     if (ciudad) {
+      // LA CIUDAD TAMBIEN AL PERFIL. El formulario de registro la pide, se
+      // guardaba en user_contacts y en la alerta, pero NUNCA en profiles.ciudad,
+      // que es de donde la leen el perfil, las recomendaciones y los tres pasos
+      // del principio. Resultado a 23 sep 2026: de 50 personas registradas en el
+      // ultimo mes, 49 figuraban "sin ciudad" aunque la hubieran escrito. El
+      // dato se pedia, se perdia, y luego se le volvia a pedir.
+      try {
+        const supabasePerfil = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        // Solo si esta vacia: nunca se pisa lo que la persona haya puesto ya.
+        const { data: perfilActual } = await supabasePerfil
+          .from("profiles")
+          .select("id, ciudad")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (!perfilActual) {
+          // NI SIQUIERA HABIA FICHA. A 23 sep 2026 habia 122 cuentas y 54
+          // perfiles: a 68 personas no se les habia creado nunca, asi que su
+          // ciudad no tenia ni donde guardarse y la aplicacion las trataba como
+          // desconocidas. Se crea aqui, que es el unico sitio por el que pasan
+          // todos los registros.
+          await supabasePerfil.from("profiles").insert({
+            id: userId,
+            email,
+            full_name: nombre,
+            ciudad: ciudad.trim(),
+          });
+        } else if (!perfilActual.ciudad?.trim()) {
+          await supabasePerfil
+            .from("profiles")
+            .update({ ciudad: ciudad.trim() })
+            .eq("id", userId);
+        }
+      } catch (perfilErr) {
+        console.error("[welcome] Error guardando la ciudad en el perfil:", (perfilErr as Error).message);
+      }
+
       const pool = getPool();
       try {
         // Guardar datos de contacto para futuras notificaciones (email/WhatsApp)

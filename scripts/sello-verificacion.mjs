@@ -1395,6 +1395,19 @@ test("los pasos del primer dia se miden con datos reales", () => {
     !/onboarding_completado|primer_dia_hecho/.test(codigo);
 });
 
+// El formulario de registro pide la ciudad, y hasta el 23 sep 2026 se guardaba
+// en user_contacts y en la alerta de empleo pero NUNCA en profiles.ciudad, que es
+// de donde la leen el perfil, las recomendaciones y los pasos del principio. De
+// 50 registros del ultimo mes, 49 figuraban "sin ciudad" habiendola escrito. Y a
+// 69 de 123 cuentas no se les habia creado ni la ficha del perfil.
+test("la ciudad del registro llega al perfil", () => {
+  const w = leerFuente("app/api/auth/welcome/route.ts");
+  return w.includes('.from("profiles")') &&
+    w.includes("ciudad: ciudad.trim()") &&
+    w.includes(".insert({") &&        // crea la ficha si no existia
+    w.includes("maybeSingle()");      // y no falla cuando no hay fila
+});
+
 // Un recordatorio que se repite acaba en la carpeta de spam de todo el mundo, y
 // uno que se da por enviado sin salir deja a esa persona sin recibirlo nunca,
 // porque solo se manda una vez.
