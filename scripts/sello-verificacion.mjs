@@ -1376,6 +1376,46 @@ test("el centinela vigila que la aplicacion llega a Redis", () => {
   return c.includes("la aplicacion llega a Redis") && c.includes("redis.ping()");
 });
 
+// ── EL PRIMER DIA DEL USUARIO ──────────────────────────────────────────────
+//
+// A 23 sep 2026: 122 registrados, 36 con CV subido y solo 6 personas habian
+// mandado un CV en 30 dias. Los tres pasos del principio se calculan contra los
+// datos de verdad (perfil, user_cvs, cv_sends) y NO contra una columna del tipo
+// "onboarding_completado": una banderita se desincroniza del mundo real —borras
+// tu CV y sigues "completado"— y acaba mintiendo en la pantalla que dice
+// justamente lo que te falta.
+test("los pasos del primer dia se miden con datos reales", () => {
+  const p = leerFuente("lib/onboarding/primer-dia.ts");
+  // Solo el codigo: el comentario de arriba nombra la banderita para explicar
+  // por que NO se usa.
+  const codigo = p.split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
+  return codigo.includes("FROM user_cvs WHERE user_id") &&
+    codigo.includes('from("cv_sends")') &&
+    codigo.includes('select("ciudad")') &&
+    !/onboarding_completado|primer_dia_hecho/.test(codigo);
+});
+
+// Un recordatorio que se repite acaba en la carpeta de spam de todo el mundo, y
+// uno que se da por enviado sin salir deja a esa persona sin recibirlo nunca,
+// porque solo se manda una vez.
+test("el recordatorio del primer dia se manda una sola vez y solo si sale", () => {
+  const r = leerFuente("app/api/onboarding/recordatorios/route.ts");
+  const e = leerFuente("lib/email/smtp-sender.ts");
+  const posicionFallo = r.indexOf("if (!salio)");
+  const posicionInsert = r.indexOf(".insert({");
+  // Entre el fallo y el apunte tiene que haber un `continue`: si no, se anota
+  // como avisado a quien no recibio el correo, y como solo se manda una vez,
+  // esa persona se queda sin el para siempre.
+  const entreMedias = posicionFallo > -1 && posicionInsert > posicionFallo
+    ? r.slice(posicionFallo, posicionInsert)
+    : "";
+  return r.includes('const TIPO = "recordatorio_primer_dia"') &&
+    r.includes('.eq("tipo", TIPO)') &&
+    entreMedias.includes("continue;") &&
+    e.includes("async function enviarCorreo") &&
+    e.includes("return enviarCorreo(params.email");
+});
+
 // ── NINGUNA PANTALLA LLAMA A UNA RUTA QUE NO EXISTE ────────────────────────
 //
 // El 22 sep 2026, guardar una oferta desde una notificacion siempre fallaba: la

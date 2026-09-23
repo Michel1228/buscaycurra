@@ -26,6 +26,37 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
   }
 }
 
+/**
+ * Igual que sendEmail, pero DICE SI SALIÓ.
+ *
+ * sendEmail se traga los fallos (registra en el log y sigue), que está bien
+ * para un aviso suelto pero no para una tanda: sin esto, el recordatorio del
+ * primer día daría por avisada a gente a la que no le llegó nada, y como solo
+ * se manda una vez, se quedaría sin recibirlo para siempre.
+ */
+async function enviarCorreo(to: string, subject: string, html: string): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || apiKey === "placeholder") {
+    console.warn("[Resend] API key no configurada, email no enviado");
+    return false;
+  }
+  try {
+    const res = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: FROM_ADDRESS, to: [to], subject, html }),
+    });
+    if (!res.ok) {
+      console.error("[Resend] Error al enviar email:", (await res.text()).slice(0, 200));
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[Resend] Error de red al enviar email:", (err as Error).message);
+    return false;
+  }
+}
+
 // ─── Plantilla base ───────────────────────────────────────────────────────────
 
 function baseTemplate(headerContent: string, bodyContent: string): string {
@@ -172,6 +203,60 @@ export async function sendWelcomeEmail(userEmail: string, userName: string): Pro
   } catch (err) {
     console.error("[Resend] Error en bienvenida:", (err as Error).message);
   }
+}
+
+// ─── Recordatorio del primer día ─────────────────────────────────────────────
+
+/**
+ * A quien se registró y se quedó a medias.
+ *
+ * POR QUÉ: de 122 registrados, 36 habían subido CV y solo 6 habían mandado
+ * alguno en 30 días. El correo no vende nada: recuerda EL PASO QUE LE FALTA a
+ * esa persona concreta, con su enlace. Se manda UNA VEZ (ver
+ * /api/onboarding/recordatorios), porque insistir a quien no quiere es la forma
+ * más rápida de acabar en la carpeta de spam de todo el mundo.
+ */
+export async function sendPrimerDiaEmail(params: {
+  email: string;
+  nombre: string;
+  paso: { titulo: string; porQue: string; ruta: string; textoBoton: string };
+  pasosHechos: number;
+  pasosTotales: number;
+}): Promise<boolean> {
+  const primerNombre = (params.nombre || "").split(" ")[0];
+  const saludo = primerNombre ? `${primerNombre}, ` : "";
+
+  const header = headerGradient(
+    "🐛",
+    "Te queda un paso",
+    `${params.pasosHechos} de ${params.pasosTotales} hechos`
+  );
+
+  const body = `
+    <p style="margin:0 0 20px;color:#94a3b8;font-size:15px;line-height:1.7;">
+      ${saludo}empezaste a usar BuscayCurra y te quedó algo a medias. Es esto:
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1520;border:1px solid #1e2538;border-radius:14px;margin-bottom:24px;">
+      <tr><td style="padding:22px 24px;">
+        <p style="margin:0 0 8px;color:#f1f5f9;font-size:16px;font-weight:700;">${params.paso.titulo}</p>
+        <p style="margin:0;color:#94a3b8;font-size:13px;line-height:1.7;">${params.paso.porQue}</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0;color:#64748b;font-size:13px;line-height:1.7;">
+      La mayoría de los puestos de un pueblo no se publican en ningún portal: se cubren
+      porque alguien dejó el currículum antes. Se tarda un minuto.
+    </p>
+
+    ${ctaButton(params.paso.textoBoton + " →", "https://buscaycurra.es" + params.paso.ruta)}
+
+    <p style="margin:24px 0 0;color:#374151;font-size:11px;line-height:1.7;text-align:center;">
+      Este aviso se manda una sola vez. Si no te interesa, no tienes que hacer nada.
+    </p>
+  `;
+
+  return enviarCorreo(params.email, `${saludo}te queda un paso en BuscayCurra`, baseTemplate(header, body));
 }
 
 // ─── Email de confirmación de pago ───────────────────────────────────────────

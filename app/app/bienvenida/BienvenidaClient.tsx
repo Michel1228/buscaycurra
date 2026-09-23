@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import GuzziAvatar from "@/components/GuzziAvatar";
+import PrimerDia from "@/components/PrimerDia";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { Sparkles, FileText, Search, BarChart3, Target, Mail, Zap, Briefcase, Check } from "lucide-react";
 
@@ -167,6 +168,11 @@ export default function BienvenidaClient() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">
+        {/* Los tres pasos del principio. Va ANTES que las estadisticas porque a
+            quien acaba de llegar cuatro ceros no le dicen nada: lo que necesita
+            es saber por donde se empieza. Desaparece sola al completarlos. */}
+        <PrimerDia />
+
         {/* ── Stats row ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {statCards.map((s) => (
