@@ -1415,7 +1415,7 @@ test("una tienda que vende la marca no se presenta como suya", () =>
 test("la fachada solo se da por buena si el nombre coincide", () =>
   camaraSrc.includes("function nombreCoincide") &&
   camaraSrc.includes("nearbyData.results?.find((r) => nombreCoincide(companyName") &&
-  camaraSrc.includes("searchData.candidates?.find((c) => nombreCoincide(companyName"));
+  camaraSrc.includes("sitios.filter((s) => nombreCoincide(companyName, s.name))"));
 
 test("despues de una foto aparece el boton de enviar el CV", () =>
   chatSrc.includes("addMsg(\"gusi\", data.reply, data.action, data.company)") &&

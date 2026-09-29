@@ -254,10 +254,21 @@ Reglas:
       const zona = await zonaEnCamino;
       const nombre = limpio(foto.negocio)!;
       const ciudadBusqueda = limpio(foto.ciudad_visible) || zona.ciudad || ciudadUsuario;
-      const lugar = await searchGooglePlaces(nombre, lat, lng, ciudadBusqueda);
+      // A la vez: el local en el mapa y, por si es una cadena, su portal de
+      // empleo. En una tienda de Zara, "rrhh@zara.com" es un correo deducido que
+      // puede rebotar; donde de verdad se contrata es en el portal de Inditex.
+      // Para un bar de barrio la ficha sale vacía y no se enseña nada.
+      const [lugar, ficha] = await Promise.all([
+        searchGooglePlaces(nombre, lat, lng, ciudadBusqueda, zona.coords),
+        investigarMarca(nombre, "negocio").catch(() => null),
+      ]);
       if (lugar) {
+        let reply = buildCompanyReply(lugar);
+        if (ficha?.empresa && ficha.portalEmpleo) {
+          reply += `\n\n💼 **${nombre}** es de **${ficha.empresa}**${ficha.grupo ? ` (grupo ${ficha.grupo})` : ""}, que contrata por su portal: ${ficha.portalEmpleo}`;
+        }
         return NextResponse.json({
-          reply: buildCompanyReply(lugar),
+          reply,
           action: "company_info",
           company: lugarAEmpresaDelChat(lugar),
         });
@@ -555,7 +566,9 @@ async function searchGooglePlaces(
   companyName: string,
   lat?: number,
   lng?: number,
-  city?: string
+  city?: string,
+  /** Dónde está la persona (GPS o su ciudad), para elegir el más cercano. */
+  cerca?: { lat: number; lng: number } | null
 ): Promise<PlacesResult | null> {
   // Pasa por el tope diario compartido (lib/places-quota.ts). Sin esto la
   // llamada se salta el limite y el tope no sirve de nada: fue justo asi como
@@ -580,19 +593,24 @@ async function searchGooglePlaces(
       if (bueno) return await getPlaceDetails(bueno.place_id, apiKey);
     }
 
-    // Fallback: búsqueda por texto, con la ciudad si se sabe (sin ella, "Zara"
-    // devolvía la tienda que Google considerase principal, en cualquier sitio).
-    const entrada = city ? `${companyName} ${city}` : companyName;
-    const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(entrada)}&inputtype=textquery&fields=place_id,name&key=${apiKey}`;
-    const searchRes = await fetch(searchUrl, { signal: AbortSignal.timeout(8000) });
-    const searchData = await searchRes.json() as {
-      candidates?: Array<{ place_id: string; name?: string }>;
-    };
+    // Fallback: búsqueda por texto con la LISTA entera (hasta 20), quedándose
+    // con el que se llame igual y esté más cerca. La versión anterior pedía un
+    // único candidato: para "ZARA Tudela" Google a veces daba el Stradivarius, se
+    // rechazaba por el nombre y la respuesta era "no lo encuentro", habiendo un
+    // Zara en Pamplona.
+    const { buscarTextoSinDetalles, distanciaKm } = await import("@/lib/google-places");
+    const consulta = cerca ? companyName : (city ? `${companyName} ${city}` : companyName);
+    const sitios = await buscarTextoSinDetalles(consulta, cerca ? { ...cerca, radioMetros: 50000 } : undefined);
+    const iguales = sitios.filter((s) => nombreCoincide(companyName, s.name));
+    if (!iguales.length) return await buscarConOSM(companyName, city);
 
-    const candidato = searchData.candidates?.find((c) => nombreCoincide(companyName, c.name || ""));
-    if (!candidato) return await buscarConOSM(companyName, city);
+    const conSitio = iguales.filter((s) => s.lat != null && s.lng != null);
+    const elegido = cerca && conSitio.length
+      ? conSitio.sort((a, b) =>
+          distanciaKm(cerca, { lat: a.lat!, lng: a.lng! }) - distanciaKm(cerca, { lat: b.lat!, lng: b.lng! }))[0]
+      : iguales[0];
 
-    return await getPlaceDetails(candidato.place_id, apiKey);
+    return await getPlaceDetails(elegido.place_id, apiKey);
   } catch {
     return await buscarConOSM(companyName, city);
   }
