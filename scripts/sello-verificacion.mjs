@@ -1376,6 +1376,44 @@ test("el centinela vigila que la aplicacion llega a Redis", () => {
   return c.includes("la aplicacion llega a Redis") && c.includes("redis.ping()");
 });
 
+// ── LA CAMARA ──────────────────────────────────────────────────────────────
+//
+// Probado el 29 sep 2026 con fotos reales: el reconocimiento de la imagen
+// acertaba siempre (Nike Air Max, Adidas, Font Vella, Zara), pero lo de despues
+// estaba roto. Nike devolvia una tienda de deportes de Tudela, Font Vella una
+// fuente de Girona, las "ofertas cerca de Tudela" eran de Berlin y Plymouth, las
+// instrucciones obligaban al modelo a adivinar marcas, y el boton de "Enviar mi
+// CV" no aparecia nunca despues de una foto.
+const camaraSrc = leerFuente("app/api/gusi/analyze-image/route.ts");
+const fichaSrc = leerFuente("lib/camara/ficha-marca.ts");
+const chatSrc = leerFuente("components/GusiChat.tsx");
+
+test("la camara no obliga a adivinar marcas", () => {
+  const codigo = camaraSrc.split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
+  return codigo.includes("NO adivines marcas") &&
+    !/NUNCA pongas "MARCA: generico"|Prefiere estimar a rendirte/.test(codigo);
+});
+
+test("la camara no anuncia como cercanas ofertas de otro pais", () =>
+  !camaraSrc.includes("async function searchJobsBySector") &&
+  !camaraSrc.includes("async function searchJobsByCompanyOrSector") &&
+  camaraSrc.includes("country = $1") &&
+  fichaSrc.includes("(country = $2) AS en_pais"));
+
+test("la ficha de la marca solo enseña webs que existen", () =>
+  fichaSrc.includes("webExiste(texto(bruto.web_oficial))") &&
+  fichaSrc.includes("webExiste(texto(bruto.portal_empleo))") &&
+  fichaSrc.includes("res.status === 404"));
+
+test("despues de una foto aparece el boton de enviar el CV", () =>
+  chatSrc.includes("addMsg(\"gusi\", data.reply, data.action, data.company)") &&
+  camaraSrc.includes("emailRrhh: p.email") &&
+  camaraSrc.includes("company: lugarAEmpresaDelChat(lugar)"));
+
+test("la app reduce la foto antes de mandarla", () =>
+  chatSrc.includes("async function reducirFoto") &&
+  chatSrc.includes("await reducirFoto(file, 1280"));
+
 // ── EL PRIMER DIA DEL USUARIO ──────────────────────────────────────────────
 //
 // A 23 sep 2026: 122 registrados, 36 con CV subido y solo 6 personas habian

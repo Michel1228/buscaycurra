@@ -1,18 +1,36 @@
 /**
- * /api/gusi/analyze-image — OCR de imagen + Google Places (Gemini Vision)
+ * /api/gusi/analyze-image — La cámara: de una foto a la empresa y cómo trabajar allí.
  *
  * Flujo:
- * 1. Recibe imagen en base64 + ubicación GPS opcional (lat, lng)
- * 2. Gemini Vision (flash-lite) extrae texto y contexto (OCR)
- * 3. Detecta nombre de empresa/objeto/marca en el texto
- * 4. Busca en Google Places con ubicación GPS para precisión milimétrica
- * 5. Devuelve info de empresa + sugerencia de enviar CV
+ * 1. Recibe la imagen (la app ya la reduce a 1280 px) + GPS opcional
+ * 2. GPT-4o Vision dice qué hay: fachada de un negocio, cartel de "se busca" o
+ *    un producto, y de qué marca SOLO si se ve (antes se le obligaba a adivinar)
+ * 3. Se sitúa a quien hace la foto: GPS, o la ciudad de su perfil
+ * 4. Fachada → el local en el mapa, con su correo si lo tiene en la web
+ *    Producto de marca → lib/camara/ficha-marca.ts: la empresa de verdad (Nike,
+ *    Inc.; Aguas Danone para Font Vella), su web y portal de empleo COMPROBADOS,
+ *    sus tiendas propias cerca, sus ofertas reales en el país, y queda guardada
+ * 5. Si hay a quién mandar el CV, sale la tarjeta con el botón de enviarlo
+ *
+ * Probado el 29 sep 2026 con fotos reales: el reconocimiento acertaba siempre,
+ * pero Nike devolvía una tienda de deportes, Font Vella una fuente de Girona y
+ * las "ofertas cerca de Tudela" eran de Berlín y Plymouth.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { createClient } from "@supabase/supabase-js";
 import { planEfectivoDeUsuario } from "@/lib/plan-limits";
+import { LISTA_PAISES } from "@/lib/paises";
+import {
+  guardarLoCapturado,
+  investigarMarca,
+  ofertasDeLaMarca,
+  tiendasDeLaMarca,
+  type FichaMarca,
+  type OfertaMarca,
+  type TiendaCerca,
+} from "@/lib/camara/ficha-marca";
 
 export const dynamic = "force-dynamic";
 
@@ -143,215 +161,111 @@ export async function POST(req: NextRequest) {
       } catch { /* sin perfil, sin problema */ }
     }
 
-    // ─── Paso 1: OCR con GPT-4o Vision ────────────────────────────────
+    // ─── Paso 1: qué hay en la foto (GPT-4o Vision) ───────────────────
     const openaiKey = process.env.OPENAI_API_KEY;
     if (!openaiKey) {
       return NextResponse.json({ error: "Servicio no disponible" }, { status: 503 });
     }
 
-    const ocrPrompt = `Analiza esta imagen para ayudar a buscar trabajo. Eres un asistente de empleo ESPECIALISTA en identificar marcas, productos y negocios.
+    // Antes el modelo devolvía texto libre ("OBJETO: … | MARCA: …") que se
+    // recortaba con expresiones regulares, y las instrucciones le OBLIGABAN a
+    // adivinar una marca ("NUNCA pongas genérico", "prefiere estimar a
+    // rendirte", "botella azul → Bezoya"). Una marca adivinada lleva a mandar el
+    // CV a una empresa que no tiene nada que ver. Ahora devuelve JSON y, si no ve
+    // la marca, la deja vacía.
+    const promptVision = `Mira esta foto. La hace alguien que busca trabajo: quiere saber qué empresa hay detrás de lo que fotografía para mandarle su currículum.
 
-INSTRUCCIONES — ORDEN DE PRIORIDAD (de más cerca a más lejos):
-1. PRIMERO: ¿Hay texto visible? Si ves un nombre de tienda/bar/restaurante/empresa, escribe: "NEGOCIO: [nombre] | CIUDAD: [ciudad si visible]"
-2. Si ves un cartel de "se busca" o "se necesita", escribe: "CARTEL: [texto del cartel]"
-3. Si ves un OBJETO o PRODUCTO reconocible, IDENTIFICA LA MARCA con MÁXIMO DETALLE:
-   - Mira etiquetas, logos, tipografía, colores corporativos, forma del envase
-   - PARA BOTELLAS DE AGUA: Fíjate en la etiqueta — Bezoya (azul), Font Vella (verde), Solán de Cabras (azul oscuro), Aquabona, Lanjarón, Viladrau, Evian, etc.
-   - PARA ROPA/ZAPATILLAS: Busca el logo (Nike, Adidas, Zara, Puma, etc.)
-   - PARA HERRAMIENTAS: Busca la marca en el cuerpo (Bosch, Makita, DeWalt, Milwaukee, etc.)
-   - PARA COMIDA/ENVASES: Identifica la marca del producto o supermercado
-   - SI NO HAY MARCA VISIBLE pero el objeto es reconocible, usa el sector
+Devuelve SOLO un JSON:
+{
+  "tipo": "negocio" | "cartel" | "objeto" | "borrosa" | "nada",
+  "negocio": nombre del negocio si la foto es una fachada, un rótulo o el interior de un local; si no, null,
+  "ciudad_visible": ciudad si aparece escrita en la foto, o null,
+  "cartel": texto literal si es un cartel de "se busca" o "se necesita personal"; si no, null,
+  "objeto": qué es el producto u objeto principal (por ejemplo "zapatilla deportiva"), o null,
+  "marca": la marca del objeto SOLO si se ve el logo o el nombre, o si el diseño es inequívoco; si dudas, null,
+  "modelo": el modelo si se reconoce (por ejemplo "Air Max 90"), o null,
+  "sector": el sector laboral que fabrica o vende esto (por ejemplo "calzado deportivo"), o null
+}
 
-   Responde EXACTAMENTE: "OBJETO: [qué es] | MARCA: [marca específica si visible, la mejor estimación possible, NUNCA 'generico' a menos que sea imposible] | SECTOR: [sector laboral que fabrica/vende esto]"
-   
-   EJEMPLOS CORRECTOS:
-   - Botella agua con etiqueta azul → "OBJETO: botella de agua | MARCA: Bezoya | SECTOR: agua mineral/embotelladoras/bebidas"
-   - Zapatilla con logo Nike → "OBJETO: zapatilla deportiva | MARCA: Nike | SECTOR: calzado/textil deportivo"
-   - Una herramienta roja → "OBJETO: taladro percutor | MARCA: Milwaukee | SECTOR: ferretería/herramientas/construcción"
-   - Camiseta básica sin logo → "OBJETO: camiseta | MARCA: generico | SECTOR: moda/textil/confección"
-   - Botella de cristal verde → "OBJETO: botella de vidrio | MARCA: generico | SECTOR: fabricación de envases/vidrio"
+Reglas:
+- Si la foto es de un PRODUCTO, tipo = "objeto" aunque lleve la marca escrita. "negocio" es solo para fachadas, rótulos o locales.
+- NO adivines marcas. Una marca inventada lleva a mandar el currículum a una empresa que no tiene nada que ver. Si no estás seguro, null.
+- "borrosa" si no se distingue nada; "nada" si no hay ni negocio, ni cartel, ni producto.`;
 
-4. Si la imagen está demasiado borrosa/oscura, escribe: "BORROSA"
-5. Si no ves nada útil para buscar trabajo, escribe: "NO_UTIL"
-
-IMPORTANTE: NUNCA pongas "MARCA: generico" si puedes identificar la marca. Prefiere estimar a rendirte.
-Responde en español. Máximo 3 líneas.`;
-
-    const ocrRes = await fetch("https://api.openai.com/v1/chat/completions", {
+    const visionRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${openaiKey}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
       body: JSON.stringify({
         model: "gpt-4o",
         messages: [
           {
             role: "user",
             content: [
-              { type: "text", text: ocrPrompt },
+              { type: "text", text: promptVision },
               { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Data}` } },
             ],
           },
         ],
-        max_tokens: 150,
-        temperature: 0.1,
+        response_format: { type: "json_object" },
+        max_tokens: 300,
+        temperature: 0,
       }),
-      signal: AbortSignal.timeout(15000),
+      // Una foto de móvil sin reducir tardaba cerca del límite de 15 s. La app ya
+      // la reduce antes de mandarla, pero se deja margen para las que no.
+      signal: AbortSignal.timeout(25000),
     });
 
-    if (!ocrRes.ok) {
-      const errText = await ocrRes.text();
-      console.error("GPT-4o Vision error:", ocrRes.status, errText);
+    if (!visionRes.ok) {
+      console.error("GPT-4o Vision error:", visionRes.status, (await visionRes.text()).slice(0, 300));
       return NextResponse.json(
         { error: "No se pudo leer la imagen. Prueba con más luz o más cerca." },
         { status: 500 }
       );
     }
 
-    const ocrData = await ocrRes.json() as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const ocrText = ocrData.choices?.[0]?.message?.content?.trim() || "";
-    console.log("OCR GPT-4o:", ocrText);
-
-    if (!ocrText || ocrText.length < 3) {
-      return NextResponse.json({
-        reply:
-          "🔍 No pude leer texto en la imagen. Prueba a hacer la foto más de cerca al cartel o con mejor luz.",
-        action: "ocr_failed",
-      });
+    const visionData = (await visionRes.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    let foto: LecturaFoto;
+    try {
+      foto = JSON.parse(visionData.choices?.[0]?.message?.content || "{}") as LecturaFoto;
+    } catch {
+      foto = { tipo: "nada" };
     }
+    console.log("[camara] lectura:", JSON.stringify(foto));
 
-    // ─── Manejar respuestas especiales del modelo ──────────────────────
-    if (ocrText.includes("NO_UTIL")) {
+    if (foto.tipo === "borrosa") {
       return NextResponse.json({
-        reply:
-          "😅 No veo ninguna tienda, cartel de empleo ni objeto que me dé pistas.\n\n📸 **Prueba con:** la fachada de un bar, tienda o empresa. O una foto de algún producto relacionado con el sector donde quieres trabajar (ropa, herramientas, comida...).",
-        action: "ocr_not_useful",
-      });
-    }
-
-    if (ocrText.includes("BORROSA")) {
-      return NextResponse.json({
-        reply:
-          "🔍 La imagen está demasiado borrosa u oscura. Prueba con mejor luz y más cerca.",
+        reply: "🔍 La imagen está demasiado borrosa u oscura. Prueba con mejor luz y más cerca.",
         action: "ocr_blurry",
       });
     }
 
-    // ─── Detectar OBJETO → búsqueda en cascada (marca → sector → general) ──
-    const objetoMatch = ocrText.match(/OBJETO:\s*(.+?)\s*\|\s*MARCA:\s*(.+?)\s*\|\s*SECTOR:\s*(.+)/i);
-    if (objetoMatch) {
-      const objeto = objetoMatch[1].trim();
-      const marca = objetoMatch[2].trim();
-      const sector = objetoMatch[3].trim();
-      const tieneMarca = marca.toLowerCase() !== "generico" && marca.length > 1;
+    // ─── Paso 2: dónde está quien hace la foto ────────────────────────
+    // GPS del móvil si lo hay; si no, la ciudad de su perfil. Sin esto no se
+    // puede decir "cerca de ti" con verdad.
+    const zona = await situarQuienFotografia(lat, lng, ciudadUsuario);
 
-      console.log("Objeto:", objeto, "| Marca:", marca, "| Sector:", sector);
-
-      // Nivel 1: Buscar la marca específica en Google Places + ofertas del sector
-      if (tieneMarca) {
-        try {
-          const [marcaResult, ofertasMarca] = await Promise.allSettled([
-            searchGooglePlaces(marca, lat, lng, ciudadUsuario),
-            searchJobsByCompanyOrSector(marca, sector, ciudadUsuario),
-          ]);
-          
-          const marcaPlace = marcaResult.status === 'fulfilled' ? marcaResult.value : null;
-          const ofertas = ofertasMarca.status === 'fulfilled' ? ofertasMarca.value : '';
-
-          if (marcaPlace || ofertas) {
-            let reply = `📸 He visto **${objeto}** de **${marca}** → sector **${sector}**`;
-            if (marcaPlace) {
-              reply += `\n\n🏢 **${marcaPlace.name}**\n📍 ${marcaPlace.address}${marcaPlace.phone ? `\n📞 ${marcaPlace.phone}` : ''}${marcaPlace.website ? `\n🌐 ${marcaPlace.website}` : ''}`;
-            }
-            if (ofertas) reply += ofertas;
-            else reply += `\n\n💡 Dime tu ciudad y busco todas las ofertas de **${sector}** cerca de ti.`;
-            
-            return NextResponse.json({
-              reply,
-              action: "object_brand_found",
-              company: marcaPlace ? {
-                name: marcaPlace.name, address: marcaPlace.address,
-                phone: marcaPlace.phone, email: marcaPlace.email, emailConfianza: marcaPlace.emailConfianza,
-                website: marcaPlace.website, mapsUrl: marcaPlace.mapsUrl, rating: marcaPlace.rating,
-              } : undefined,
-            });
-          }
-        } catch { /* continuar cascada */ }
-      }
-
-      // Nivel 2: Buscar ofertas por sector en DB
-      try {
-        const ofertasReales = await searchJobsBySector(sector, userId);
-        if (ofertasReales) {
-          return NextResponse.json({
-            reply: `📸 He visto **${objeto}**${tieneMarca ? ` de **${marca}**` : ''} → sector **${sector}**${ofertasReales}`,
-            action: "object_to_sector",
-            suggestedSector: sector,
-          });
-        }
-      } catch { /* continuar */ }
-
-      // Nivel 3: Google Places por sector (búsqueda local)
-      try {
-        const sectorResult = await searchGooglePlaces(sector, lat, lng, ciudadUsuario);
-        if (sectorResult) {
-          return NextResponse.json({
-            reply: `📸 He visto **${objeto}** → sector **${sector}**\n\n🏢 **${sectorResult.name}**\n📍 ${sectorResult.address}${sectorResult.phone ? `\n📞 ${sectorResult.phone}` : ''}${sectorResult.website ? `\n🌐 ${sectorResult.website}` : ''}\n\n💡 Dime tu ciudad y busco todas las empresas de **${sector}** cerca de ti.`,
-            action: "object_to_sector",
-            company: {
-              name: sectorResult.name, address: sectorResult.address,
-              phone: sectorResult.phone, email: sectorResult.email, emailConfianza: sectorResult.emailConfianza,
-              website: sectorResult.website, mapsUrl: sectorResult.mapsUrl, rating: sectorResult.rating,
-            },
-          });
-        }
-      } catch { /* continuar */ }
-
-      // Nivel 4: Sin resultados — sugerir búsqueda
-      return NextResponse.json({
-        reply: `📸 He visto **${objeto}**${tieneMarca ? ` de **${marca}**` : ''} → sector **${sector}**\n\n🔍 Dime tu ciudad y busco todas las empresas de **${sector}** cerca de ti para enviarles el CV.`,
-        action: "object_to_sector_no_results",
-        suggestedSector: sector,
-        suggestedBrand: tieneMarca ? marca : undefined,
-      });
-    }
-
-    // ─── Negocio detectado ────────────────────────────────────────────
-    const negocioMatch = ocrText.match(/NEGOCIO:\s*(.+)/i);
-    if (negocioMatch) {
-      const companyName = negocioMatch[1].trim();
-      console.log("Negocio detectado:", companyName);
-      const placesResult = await searchGooglePlaces(companyName, lat, lng, ciudadUsuario);
-      if (placesResult) {
+    // ─── Negocio: fachada, rótulo o local ─────────────────────────────
+    if (foto.tipo === "negocio" && limpio(foto.negocio)) {
+      const nombre = limpio(foto.negocio)!;
+      const ciudadBusqueda = limpio(foto.ciudad_visible) || zona.ciudad || ciudadUsuario;
+      const lugar = await searchGooglePlaces(nombre, lat, lng, ciudadBusqueda);
+      if (lugar) {
         return NextResponse.json({
-          reply: buildCompanyReply(ocrText, placesResult, companyName),
+          reply: buildCompanyReply(lugar),
           action: "company_info",
-          company: {
-            name: placesResult.name,
-            address: placesResult.address,
-            phone: placesResult.phone,
-            email: placesResult.email,
-            emailConfianza: placesResult.emailConfianza,
-            website: placesResult.website,
-            mapsUrl: placesResult.mapsUrl,
-            rating: placesResult.rating,
-          },
+          company: lugarAEmpresaDelChat(lugar),
         });
       }
       return NextResponse.json({
-        reply: `📸 He visto **${companyName}** pero no lo encontré en Google Maps. ¿Me dices la ciudad?`,
+        reply: `📸 He visto **${nombre}** pero no lo encuentro en el mapa. ¿Me dices la ciudad?`,
         action: "business_not_found",
-        suggestedCompany: companyName,
+        suggestedCompany: nombre,
       });
     }
 
-    // ─── Cartel de empleo detectado ───────────────────────────────────
-    const cartelMatch = ocrText.match(/CARTEL:\s*(.+)/i);
-    if (cartelMatch) {
-      const cartelText = cartelMatch[1].trim();
+    // ─── Cartel de "se busca" ─────────────────────────────────────────
+    if (foto.tipo === "cartel" && limpio(foto.cartel)) {
+      const cartelText = limpio(foto.cartel)!;
       return NextResponse.json({
         reply: `📸 He visto un cartel: **"${cartelText}"**\n\nParece que están buscando a alguien. ¿Quieres que te ayude a enviar el CV? Dime el nombre de la empresa o la dirección y lo gestiono.`,
         action: "job_sign_detected",
@@ -359,45 +273,55 @@ Responde en español. Máximo 3 líneas.`;
       });
     }
 
-    // ─── Fallback: intentar extraer empresa del texto OCR ─────────────
-    const companyName = extractCompanyName(ocrText);
-    console.log("Empresa detectada:", companyName);
+    // ─── Producto de una marca: quién lo hace y cómo se trabaja allí ───
+    const marca = limpio(foto.marca);
+    const objeto = limpio(foto.objeto) || "producto";
+    const sector = limpio(foto.sector) || "";
+    if (foto.tipo === "objeto" && marca) {
+      const ficha = await investigarMarca(marca, objeto);
 
-    // ─── Paso 3: Buscar en Google Places (con ubicación si disponible) ─
-    let placesResult: PlacesResult | null = null;
-    if (companyName) {
-      placesResult = await searchGooglePlaces(companyName, lat, lng, ciudadUsuario);
-    }
+      const nombresEmpresa = [marca, ficha?.empresa, ficha?.grupo].filter((n): n is string => !!n);
+      const [ofertas, tiendas] = await Promise.all([
+        ofertasDeLaMarca(nombresEmpresa, zona.paisCodigo),
+        ficha?.tieneTiendasPropias && ficha.busquedaTiendas && zona.coords
+          ? tiendasDeLaMarca(ficha.busquedaTiendas, zona.coords)
+          : Promise.resolve([] as TiendaCerca[]),
+      ]);
 
-    // ─── Paso 4: Construir respuesta ────────────────────────────────
-    if (placesResult && companyName) {
+      if (ficha) await guardarLoCapturado(ficha, sector, tiendas, zona.ciudad);
+
+      // La tarjeta con "Enviar mi CV" solo si hay a quién mandárselo: la tienda
+      // más cercana con correo. Un botón que abre un envío sin destinatario no
+      // sirve de nada.
+      const conCorreo = tiendas.find((t) => t.empresa.emailRrhh);
+
       return NextResponse.json({
-        reply: buildCompanyReply(ocrText, placesResult, companyName),
-        action: "company_info",
-        company: {
-          name: placesResult.name,
-          address: placesResult.address,
-          phone: placesResult.phone,
-          email: placesResult.email,
-          emailConfianza: placesResult.emailConfianza,
-          website: placesResult.website,
-          mapsUrl: placesResult.mapsUrl,
-          rating: placesResult.rating,
-        },
-        ocrText,
+        reply: respuestaMarca({ objeto, modelo: limpio(foto.modelo), marca, ficha, tiendas, ofertas, zona }),
+        action: conCorreo ? "company_info" : "object_brand_found",
+        company: conCorreo?.empresa,
+        brand: ficha ?? undefined,
       });
     }
 
-    // Sin resultado de Google Places → responder con el OCR básico
+    // ─── Objeto sin marca: el sector, y solo lo que haya cerca ────────
+    if (foto.tipo === "objeto") {
+      const ofertasCerca = sector ? await ofertasDelSectorCerca(sector, zona) : [];
+      let reply = `📸 He visto **${objeto}**, pero no se ve de qué marca es.`;
+      if (sector) reply += ` Es del sector **${sector}**.`;
+      if (ofertasCerca.length) {
+        reply += `\n\n📋 **Ofertas de ${sector} cerca de ${zona.ciudad || "ti"}:**`;
+        ofertasCerca.forEach((o, i) => { reply += `\n${i + 1}. **${o.titulo}** — ${o.empresa}${o.ciudad ? ` · 📍 ${o.ciudad}` : ""}`; });
+      } else if (sector) {
+        reply += `\n\nAhora mismo no tengo ofertas de ese sector publicadas cerca de ${zona.ciudad || "ti"}.`;
+      }
+      reply += `\n\n💡 Si haces la foto donde se vea la etiqueta o el logo, te digo qué empresa lo fabrica y cómo trabajar allí. Y en **Empresas → Por zona** tienes todas las de tu ciudad, aunque no tengan ofertas.`;
+      return NextResponse.json({ reply, action: "object_to_sector", suggestedSector: sector || undefined });
+    }
+
     return NextResponse.json({
-      reply: `📸 **Texto detectado:** "${ocrText}"\n\n${
-        companyName
-          ? `Parece que es "${companyName}" pero no lo encontré en Google Maps. ¿Me dices la ciudad y lo busco manualmente?`
-          : "No identifiqué una empresa clara. ¿Puedes decirme el nombre y la ciudad?"
-      }`,
-      action: "ocr_partial",
-      ocrText,
-      suggestedCompany: companyName,
+      reply:
+        "😅 No veo ninguna tienda, cartel de empleo ni producto que me dé pistas.\n\n📸 **Prueba con:** la fachada de un bar, tienda o empresa, o un producto donde se vea la marca (unas zapatillas, una botella, una herramienta).",
+      action: "ocr_not_useful",
     });
   } catch (error) {
     console.error("analyze-image error:", error);
@@ -410,64 +334,161 @@ Responde en español. Máximo 3 líneas.`;
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function extractCompanyName(text: string): string | null {
-  const patterns = [
-    /(?:bar|restaurante|cafeter[ií]a|hotel|tienda|panader[ií]a|farmacia|cl[ií]nica|taller|peluquer[ií]a)\s+(?:de\s+)?[""]?([A-ZÁÉÍÓÚÜÑ][A-Za-záéíóúüñ\s]{2,40})[""]?(?:,|\.|\n|$)/i,
-    /(?:busca|necesita|precisa)\s+\w+(?:\s+\w+){0,5}\s+en\s+[""]?([A-ZÁÉÍÓÚÜÑ][A-Za-záéíóúüñ\s]{2,40})[""]?(?:,|\.|\n|$)/i,
-    /([A-ZÁÉÍÓÚÜÑ][A-Za-záéíóúüñ]+(?:\s+[A-ZÁÉÍÓÚÜÑa-záéíóúüñ]+){1,4})/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match?.[1]?.trim()) {
-      const name = match[1].trim();
-      const generics = ["se", "necesita", "busca", "precisa", "personal", "urgente"];
-      if (!generics.includes(name.toLowerCase())) {
-        return name;
-      }
-    }
-  }
-
-  return null;
+interface LecturaFoto {
+  tipo?: "negocio" | "cartel" | "objeto" | "borrosa" | "nada";
+  negocio?: string | null;
+  ciudad_visible?: string | null;
+  cartel?: string | null;
+  objeto?: string | null;
+  marca?: string | null;
+  modelo?: string | null;
+  sector?: string | null;
 }
 
-// Búsqueda combinada: marca/empresa + sector, con ciudad del usuario
-async function searchJobsByCompanyOrSector(marca: string, sector: string, ciudadUsuario: string): Promise<string> {
-  try {
-    const pool = getPool();
+/** Texto útil o null. El modelo a veces devuelve "null" o "desconocido" como texto. */
+function limpio(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  if (!t || ["null", "desconocido", "desconocida", "generico", "genérico", "n/a"].includes(t.toLowerCase())) return null;
+  return t;
+}
 
-    // Buscar ofertas que mencionen la marca O el sector
-    const keywords = sector.split(/[/,\s]+/).filter(k => k.length > 2).join("|");
-    const marcaClean = marca.replace(/[^a-zA-Z0-9áéíóúüñ\s]/g, '').trim();
-    
-    const { rows } = await pool.query(
-      `SELECT title, company, city, province, country, \"sourceUrl\", id
-       FROM \"JobListing\"
-       WHERE \"isActive\" = true
-         AND (LOWER(company) LIKE LOWER(\$1)
-              OR LOWER(title) ~ LOWER(\$2))
-       ORDER BY 
-         CASE WHEN LOWER(city) = LOWER(\$3) THEN 0 ELSE 1 END,
-         \"scrapedAt\" DESC
-       LIMIT 5`,
-      [`%${marcaClean}%`, keywords, ciudadUsuario]
-    );
+interface ZonaFoto {
+  coords: { lat: number; lng: number } | null;
+  ciudad: string;
+  paisCodigo: string;
+}
 
-    if (!rows.length) return "";
-
-    const ciudadStr = ciudadUsuario ? ` cerca de **${ciudadUsuario}**` : "";
-    let result = `\n\n📋 **${rows.length} ofertas de ${marca} / ${sector}${ciudadStr}:**\n`;
-    rows.forEach((r: any, i: number) => {
-      const loc = r.city || r.province || "";
-      result += `\n${i+1}. **${r.title}** — ${r.company}${loc ? ` · 📍 ${loc}` : ""}`;
-    });
-    result += `\n\n💡 ¿Quieres que envíe tu CV a estas empresas?`;
-
-    return result;
-  } catch (e) {
-    console.error("searchJobsByCompanyOrSector error:", e);
-    return "";
+/** Dónde está quien hace la foto: GPS primero, la ciudad del perfil después. */
+async function situarQuienFotografia(lat?: number, lng?: number, ciudadPerfil?: string): Promise<ZonaFoto> {
+  if (typeof lat === "number" && typeof lng === "number") {
+    const { situarPorCoordenadasOSM } = await import("@/lib/osm-places");
+    const lugar = await situarPorCoordenadasOSM(lat, lng);
+    return {
+      coords: { lat, lng },
+      ciudad: lugar?.ciudad || ciudadPerfil || "",
+      paisCodigo: lugar?.paisCodigo || "ES",
+    };
   }
+  if (ciudadPerfil) {
+    const { situarZona } = await import("@/lib/google-places");
+    const z = await situarZona(ciudadPerfil);
+    if (z) return { coords: { lat: z.lat, lng: z.lng }, ciudad: ciudadPerfil, paisCodigo: z.paisCodigo };
+  }
+  // Sin GPS ni ciudad no se sabe dónde está: se asume España, que es donde está
+  // casi todo el que usa la aplicación, y no se dice "cerca de ti".
+  return { coords: null, ciudad: "", paisCodigo: "ES" };
+}
+
+function nombrePais(codigo: string): string {
+  return LISTA_PAISES.find((p) => p.codigo === codigo.toUpperCase())?.nombre || codigo;
+}
+
+function respuestaMarca(d: {
+  objeto: string;
+  modelo: string | null;
+  marca: string;
+  ficha: FichaMarca | null;
+  tiendas: TiendaCerca[];
+  ofertas: { enPais: OfertaMarca[]; totalPais: number; totalFuera: number };
+  zona: ZonaFoto;
+}): string {
+  const l: string[] = [];
+  const pais = nombrePais(d.zona.paisCodigo);
+  l.push(`📸 **${d.objeto}${d.modelo ? ` ${d.modelo}` : ""}** de **${d.marca}**`);
+
+  const f = d.ficha;
+  if (f?.empresa) {
+    l.push("");
+    l.push(`🏢 La marca es de **${f.empresa}**${f.grupo ? ` (grupo ${f.grupo})` : ""}${f.paisOrigen ? ` · ${f.paisOrigen}` : ""}`);
+    if (f.presenciaEspana) l.push(`🇪🇸 En España: ${f.presenciaEspana}`);
+    if (f.webOficial) l.push(`🌐 ${f.webOficial}`);
+    if (f.portalEmpleo) l.push(`💼 **Trabaja con ellos:** ${f.portalEmpleo} — ahí se presentan las candidaturas`);
+    if (f.puestosHabituales.length) l.push(`👔 Suele contratar: ${f.puestosHabituales.join(", ")}`);
+  } else {
+    l.push("");
+    l.push(`🏢 No he podido averiguar con seguridad qué empresa hay detrás de ${d.marca}.`);
+  }
+
+  if (d.tiendas.length) {
+    l.push("");
+    l.push(`🛍️ **Sus tiendas más cerca de ti**`);
+    d.tiendas.forEach((t, i) => {
+      const correo = t.empresa.emailRrhh ? ` · ✉️ ${t.empresa.emailRrhh}` : "";
+      l.push(`${i + 1}. **${t.empresa.nombre}** — a ${t.km} km${t.empresa.googleAddress ? ` · ${t.empresa.googleAddress}` : ""}${correo}`);
+    });
+  } else if (f?.tieneTiendasPropias && d.zona.coords) {
+    l.push("");
+    l.push(`🛍️ No tiene tiendas propias a menos de 60 km de ti.`);
+  }
+
+  l.push("");
+  if (d.ofertas.enPais.length) {
+    l.push(`📋 **Ofertas de ${d.marca} en ${pais} (${d.ofertas.totalPais})**`);
+    d.ofertas.enPais.forEach((o, i) => {
+      l.push(`${i + 1}. **${o.titulo}** — ${o.empresa}${o.ciudad ? ` · 📍 ${o.ciudad}` : ""}`);
+    });
+    if (d.ofertas.totalFuera) l.push(`…y ${d.ofertas.totalFuera.toLocaleString("es-ES")} más en otros países.`);
+  } else if (d.ofertas.totalFuera) {
+    l.push(`📋 Ahora mismo no tiene ofertas publicadas en ${pais}; sí ${d.ofertas.totalFuera.toLocaleString("es-ES")} en otros países.`);
+  } else {
+    l.push(`📋 No tenemos ofertas suyas publicadas ahora mismo.`);
+  }
+
+  if (f?.empresa) {
+    l.push("");
+    l.push(`✅ He guardado **${f.empresa}** en el buscador de empresas: ya no hace falta volver a hacer la foto.`);
+  }
+  return l.join("\n");
+}
+
+/**
+ * Ofertas del sector de un objeto sin marca, SOLO del país y la ciudad de quien
+ * hace la foto. Antes se buscaba la palabra en títulos de todo el mundo y se
+ * anunciaba "cerca de Tudela" un puesto en Belfast.
+ */
+async function ofertasDelSectorCerca(
+  sector: string,
+  zona: ZonaFoto
+): Promise<Array<{ titulo: string; empresa: string; ciudad: string }>> {
+  if (!zona.ciudad) return [];
+  const palabras = sector
+    .toLowerCase()
+    .split(/[^a-záéíóúüñ]+/i)
+    .filter((p) => p.length >= 5)
+    .slice(0, 3);
+  if (!palabras.length) return [];
+  try {
+    const { rows } = await getPool().query<{ title: string; company: string; city: string | null }>(
+      `SELECT title, company, city FROM "JobListing"
+        WHERE "isActive" = true AND country = $1
+          AND (city ILIKE $2 OR province ILIKE $2)
+          AND title ILIKE ANY($3)
+        ORDER BY "scrapedAt" DESC LIMIT 5`,
+      [zona.paisCodigo.toLowerCase(), `%${zona.ciudad}%`, palabras.map((p) => `%${p}%`)]
+    );
+    return rows.map((r) => ({ titulo: r.title, empresa: r.company, ciudad: r.city || "" }));
+  } catch (e) {
+    console.warn("[camara] ofertas del sector:", (e as Error).message);
+    return [];
+  }
+}
+
+/**
+ * La tarjeta de "Enviar mi CV" del chat lee los campos de EmpresaCompleta
+ * (nombre, emailRrhh, telefono…). La cámara devolvía otros nombres (name,
+ * email, phone…), así que la tarjeta nunca aparecía después de una foto.
+ */
+function lugarAEmpresaDelChat(p: PlacesResult) {
+  return {
+    nombre: p.name,
+    emailRrhh: p.email || undefined,
+    telefono: p.phone || undefined,
+    urlWeb: p.website || undefined,
+    googleAddress: p.address || undefined,
+    googleRating: p.rating || undefined,
+    googleMapsUrl: p.mapsUrl || undefined,
+  };
 }
 
 interface PlacesResult {
@@ -479,57 +500,6 @@ interface PlacesResult {
   website: string;
   mapsUrl: string;
   rating: number;
-}
-
-async function searchJobsBySector(sector: string, userId?: string): Promise<string> {
-  try {
-    // 1. Obtener ubicación del perfil del usuario
-    let ciudadUsuario = "";
-    if (userId) {
-      try {
-        const sb = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-        const { data: profile } = await sb.from("profiles").select("ciudad").eq("id", userId).single();
-        ciudadUsuario = profile?.ciudad || "";
-      } catch { /* sin perfil, sin problema */ }
-    }
-
-    // 2. Buscar ofertas por sector en DB VPS
-    const pool = getPool();
-
-    // Extraer palabras clave del sector
-    const keywords = sector.split(/[/,\s]+/).filter(k => k.length > 2).join("|");
-    
-    const { rows } = await pool.query(
-      `SELECT title, company, city, province, country, "sourceUrl", id
-       FROM "JobListing"
-       WHERE "isActive" = true
-         AND (LOWER(title) ~ LOWER($1) OR LOWER(company) ~ LOWER($1))
-       ORDER BY 
-         CASE WHEN LOWER(city) = LOWER($2) THEN 0 ELSE 1 END,
-         "scrapedAt" DESC
-       LIMIT 5`,
-      [keywords, ciudadUsuario]
-    );
-
-    if (!rows.length) return "";
-
-    // 3. Formatear ofertas
-    const ciudadStr = ciudadUsuario ? ` cerca de **${ciudadUsuario}**` : "";
-    let result = `\n\n📋 **${rows.length} ofertas de ${sector}${ciudadStr}:**\n`;
-    rows.forEach((r: any, i: number) => {
-      const loc = r.city || r.province || "";
-      result += `\n${i+1}. **${r.title}** — ${r.company}${loc ? ` · 📍 ${loc}` : ""}`;
-    });
-    result += `\n\n💡 ¿Quieres que envíe tu CV a estas empresas?`;
-
-    return result;
-  } catch (e) {
-    console.error("searchJobsBySector error:", e);
-    return "";
-  }
 }
 
 /**
@@ -691,11 +661,7 @@ async function getPlaceDetails(placeId: string, apiKey: string): Promise<PlacesR
   };
 }
 
-function buildCompanyReply(
-  ocrText: string,
-  company: PlacesResult,
-  companyName: string
-): string {
+function buildCompanyReply(company: PlacesResult): string {
   const parts: string[] = [];
 
   parts.push(`📸 **${company.name}**`);
@@ -715,9 +681,12 @@ function buildCompanyReply(
   if (company.website) parts.push(`🌐 ${company.website}`);
 
   parts.push(""); // línea vacía
-  parts.push(`📝 Texto detectado: "${ocrText}"`);
+  // Antes se añadía aquí 'Texto detectado: "NEGOCIO: ZARA | CIUDAD: Madrid"',
+  // la salida en bruto del modelo, que al usuario no le dice nada.
   parts.push(
-    `💡 ¿Quieres que te ayude a enviar el CV a esta empresa? Usa el botón "📧 Enviar mi CV" y lo mando ahora.`
+    company.email
+      ? `💡 Usa el botón "📧 Enviar mi CV" y lo mando ahora.`
+      : `💡 No encuentro su correo en la web. Puedes llamar o pasarte por allí con el CV.`
   );
 
   return parts.join("\n");

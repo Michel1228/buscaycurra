@@ -173,6 +173,48 @@ export async function situarZonaOSM(texto: string): Promise<{
 }
 
 /**
+ * Al revés que situarZonaOSM: de unas coordenadas GPS a "Tudela, Navarra, ES".
+ *
+ * La cámara manda el GPS del móvil. Sin saber el país, las ofertas de una marca
+ * se enseñaban de cualquier sitio del mundo y se anunciaban "cerca de ti": en la
+ * prueba del 29 sep 2026, unas zapatillas fotografiadas en Tudela devolvían un
+ * solador de Berlín y un profesor de Plymouth.
+ */
+export async function situarPorCoordenadasOSM(lat: number, lng: number): Promise<{
+  descripcion: string;
+  ciudad: string;
+  paisCodigo: string;
+} | null> {
+  try {
+    await esperarTurno();
+    const url = new URL("https://nominatim.openstreetmap.org/reverse");
+    url.searchParams.set("lat", String(lat));
+    url.searchParams.set("lon", String(lng));
+    url.searchParams.set("format", "json");
+    url.searchParams.set("zoom", "10");
+    url.searchParams.set("addressdetails", "1");
+    const res = await fetch(url.toString(), {
+      headers: { "User-Agent": UA, Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const r = (await res.json()) as NominatimResult;
+    const a = r.address || {};
+    const ciudad = a.city || a.town || a.village || a.municipality || "";
+    const pais = (a.country_code || "").toUpperCase();
+    if (!pais) return null;
+    return {
+      descripcion: [ciudad, a.province || a.state, a.country].filter(Boolean).join(", "),
+      ciudad,
+      paisCodigo: pais === "GB" ? "UK" : pais,
+    };
+  } catch (e) {
+    console.warn("[OSM] situarPorCoordenadasOSM:", (e as Error).message);
+    return null;
+  }
+}
+
+/**
  * Busca un negocio por nombre, con calle y/o ciudad opcionales.
  * Equivalente a buscarEmpresaGooglePlaces().
  */

@@ -108,6 +108,40 @@ function sanitizeGusiHtml(html: string): string {
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "");
 }
 
+/**
+ * La foto, reducida a `ladoMax` píxeles por el lado largo y en JPEG.
+ *
+ * Si el navegador no sabe dibujarla (un formato raro), se devuelve el original:
+ * mejor una foto pesada que ninguna.
+ */
+async function reducirFoto(file: File, ladoMax: number, calidad: number): Promise<string> {
+  const original = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Error leyendo imagen"));
+    reader.readAsDataURL(file);
+  });
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      // createElement y no `new Image()`: en este fichero "Image" es un icono importado.
+      const i = document.createElement("img");
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("no se puede dibujar"));
+      i.src = original;
+    });
+    const escala = Math.min(1, ladoMax / Math.max(img.naturalWidth, img.naturalHeight));
+    const lienzo = document.createElement("canvas");
+    lienzo.width = Math.round(img.naturalWidth * escala);
+    lienzo.height = Math.round(img.naturalHeight * escala);
+    const ctx = lienzo.getContext("2d");
+    if (!ctx) return original;
+    ctx.drawImage(img, 0, 0, lienzo.width, lienzo.height);
+    return lienzo.toDataURL("image/jpeg", calidad);
+  } catch {
+    return original;
+  }
+}
+
 export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean } = {}) {
   const [abierto, setAbierto] = useState(!!modoIncrustado);
   const [logueado, setLogueado] = useState<boolean | null>(null);
@@ -236,8 +270,8 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
     return () => clearTimeout(t);
   }, []);
 
-  const addMsg = (role: "user" | "gusi", text: string, action?: string) => {
-    setMensajes(prev => [...prev, { role, text, action }]);
+  const addMsg = (role: "user" | "gusi", text: string, action?: string, company?: Mensaje["company"]) => {
+    setMensajes(prev => [...prev, { role, text, action, company }]);
   };
 
   const enviar = async (texto: string) => {
@@ -461,13 +495,12 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
     setCargando(true);
 
     try {
-      // Convertir a base64
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error("Error leyendo imagen"));
-        reader.readAsDataURL(file);
-      });
+      // Reducir la foto antes de mandarla. Una foto de móvil pesa 3-5 MB y el
+      // reconocimiento tardaba cerca de su límite de tiempo; a 1280 px se lee
+      // igual de bien, sube en un momento y cuesta menos. Además sale siempre en
+      // JPEG, que es lo que espera el servidor (las de iPhone pueden venir en
+      // HEIC). Si el navegador no puede dibujarla, se manda tal cual.
+      const base64 = await reducirFoto(file, 1280, 0.82);
 
       // Capturar ubicación GPS (si el usuario lo permite)
       let lat: number | undefined;
@@ -487,15 +520,23 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
         // Sin GPS — no pasa nada, la búsqueda será menos precisa
       }
 
+      // La sesión también en la cabecera: con las cookies suele bastar, pero en
+      // la app nativa no siempre viajan, y sin sesión el servidor responde 401.
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       const res = await fetch("/api/gusi/analyze-image", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ imageBase64: base64, userId, lat, lng }),
       });
 
       const data = await res.json();
       if (data.reply) {
-        addMsg("gusi", data.reply, data.action);
+        // La empresa viaja con el mensaje: sin ella la tarjeta de "Enviar mi CV"
+        // no se pintaba nunca después de una foto.
+        addMsg("gusi", data.reply, data.action, data.company);
       } else {
         addMsg("gusi", data.error || "No pude analizar la imagen. Prueba de nuevo.");
       }
