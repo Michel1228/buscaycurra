@@ -238,6 +238,17 @@ export async function POST(request: NextRequest) {
 
         const cambios: Record<string, unknown> = { updated_at: new Date().toISOString() };
         if (activa) cambios.subscription_status = "active";
+        // PAGO FALLIDO. Lo iba a marcar el caso "invoice.payment_failed", pero
+        // el webhook de Stripe no tiene ese evento activado (comprobado el
+        // 30 sep 2026: solo checkout.session.completed y subscription.deleted
+        // y .updated). Así que una renovación fallida no se anotaba y la
+        // persona seguía con el plan de pago hasta que Stripe cancelaba del
+        // todo, semanas después. Este evento sí llega cuando la suscripción
+        // pasa a past_due, y cuando se paga vuelve a "active" por la línea
+        // de arriba.
+        else if (suscripcion.status === "past_due" || suscripcion.status === "unpaid") {
+          cambios.subscription_status = "past_due";
+        }
         // Solo se escribe el plan si se ha podido resolver de verdad y la
         // suscripción está viva. Si Stripe manda un precio que no conocemos, es
         // mejor dejar el plan como está que degradar a alguien que paga.

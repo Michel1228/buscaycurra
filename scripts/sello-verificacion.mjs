@@ -964,6 +964,10 @@ test("el webhook de Stripe actualiza el PLAN al cambiar de suscripcion", () =>
   /customer\.subscription\.updated[\s\S]{0,2000}cambios\.plan = planActual/.test(stripeHook));
 test("y avisa si el precio de Stripe no esta en el mapa de planes", () =>
   stripeHook.includes('planActual === "free"') && stripeHook.includes("Precio desconocido"));
+// El webhook de Stripe no tiene activado invoice.payment_failed (30 sep 2026):
+// el impago tiene que anotarse con el evento que si llega.
+test("un impago en Stripe se anota aunque no llegue invoice.payment_failed", () =>
+  /customer\.subscription\.updated[\s\S]{0,2500}suscripcion\.status === "past_due"[\s\S]{0,120}cambios\.subscription_status = "past_due"/.test(stripeHook));
 
 // EL LIMITE SEMANAL DE ENVIOS NO SE COMPROBABA NUNCA. Estaba declarado y solo
 // se usaba para calcular el mensual (semana*4). Y el mensaje del tope decia
