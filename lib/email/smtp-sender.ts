@@ -436,6 +436,16 @@ export async function sendCVEmailSMTP(payload: CVEmailPayload): Promise<SendResu
 
 // ─── Email de alerta de empleo ────────────────────────────────────────────────
 
+/**
+ * El correo de las alertas de empleo.
+ *
+ * Revisado el 29 sep 2026: casi todas las alertas se crean al registrarse con la
+ * ciudad y SIN palabra clave, así que el asunto llegaba como
+ * `🔔 3 nuevas ofertas: "" — BuscayCurra` y el texto decía "tu alerta """. Además
+ * decía "nuevas" también cuando eran ofertas activas de días anteriores (la
+ * campanita ya lo distinguía) y metía prisa con "los mejores puestos se cubren
+ * en horas", que no es un dato. Ahora dice lo que es y cuenta si salió.
+ */
 export async function sendJobAlertEmail(params: {
   userEmail: string;
   keyword: string;
@@ -444,20 +454,27 @@ export async function sendJobAlertEmail(params: {
   ejemploTitle: string;
   ejemploCompany: string;
   ejemploCity?: string;
-}): Promise<void> {
-  const { userEmail, keyword, location, total, ejemploTitle, ejemploCompany, ejemploCity } = params;
+  /** true si no son nuevas sino ofertas activas que aún no había visto. */
+  esInventario?: boolean;
+}): Promise<boolean> {
+  const { userEmail, keyword, location, total, ejemploTitle, ejemploCompany, ejemploCity, esInventario } = params;
   const searchUrl = `https://buscaycurra.es/app/notificaciones`;
+
+  const plural = total > 1;
+  const clase = esInventario ? `activa${plural ? "s" : ""}` : `nueva${plural ? "s" : ""}`;
+  const palabra = keyword?.trim();
+  // "3 ofertas nuevas de camarero en Tudela" · "3 ofertas activas en Tudela"
+  const queEs = `${total} oferta${plural ? "s" : ""} ${clase}${palabra ? ` de "${palabra}"` : ""}${location ? ` en ${location}` : ""}`;
 
   const header = headerGradient(
     "🔔",
-    `${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""} para ti`,
-    `Alerta: ${keyword}${location ? ` · ${location}` : ""}`
+    `${total} oferta${plural ? "s" : ""} ${clase} para ti`,
+    [palabra ? `"${palabra}"` : "", location || ""].filter(Boolean).join(" · ") || "Tu alerta de empleo"
   );
 
   const body = `
     <p style="margin:0 0 20px;color:#94a3b8;font-size:15px;line-height:1.7;">
-      Guzzi ha encontrado <strong style="color:#22c55e;">${total} oferta${total > 1 ? "s" : ""}</strong>
-      que coinciden con tu alerta <strong style="color:#f1f5f9;">"${keyword}"</strong>${location ? ` en <strong style="color:#f1f5f9;">${location}</strong>` : ""}.
+      Guzzi ha encontrado <strong style="color:#22c55e;">${queEs}</strong>${esInventario ? " que todavía no habías visto" : ""}.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1520;border:1px solid rgba(34,197,94,0.15);border-radius:14px;margin-bottom:24px;">
@@ -468,9 +485,7 @@ export async function sendJobAlertEmail(params: {
       </td></tr>
     </table>
 
-    <p style="margin:0 0 20px;color:#64748b;font-size:13px;line-height:1.7;">
-      Y ${total > 1 ? `otras ${total - 1} ofertas esperando` : "esta oferta te espera"}. Actúa rápido — los mejores puestos se cubren en horas.
-    </p>
+    ${total > 1 ? `<p style="margin:0 0 20px;color:#64748b;font-size:13px;line-height:1.7;">Y ${total - 1} más en tus avisos.</p>` : ""}
 
     ${ctaButton("Ver todas las ofertas →", searchUrl)}
 
@@ -479,11 +494,7 @@ export async function sendJobAlertEmail(params: {
     </p>
   `;
 
-  try {
-    await sendEmail(userEmail, `🔔 ${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""}: "${keyword}" — BuscayCurra`, baseTemplate(header, body));
-  } catch (err) {
-    console.error("[Resend] Error en alerta empleo:", (err as Error).message);
-  }
+  return enviarCorreo(userEmail, `🔔 ${queEs} — BuscayCurra`, baseTemplate(header, body));
 }
 
 export function generarCartaHTML(

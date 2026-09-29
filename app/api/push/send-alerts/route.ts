@@ -120,7 +120,13 @@ export async function GET(request: NextRequest) {
 
   const pool = getPool();
   let procesadas = 0;
+  // "enviadas" solo cuenta las notificaciones push del navegador. Durante
+  // semanas el registro decía "procesadas 11, enviadas 0" cada 3 horas y parecía
+  // roto, cuando en realidad llegaban 24-78 ofertas al día por la campanita y el
+  // correo. Ahora se cuentan los tres canales por separado.
   let enviadas = 0;
+  let avisosCampanita = 0;
+  let correos = 0;
 
   try {
     // 1. Alertas pendientes: no enviadas nunca o hace más de 2h
@@ -340,7 +346,7 @@ export async function GET(request: NextRequest) {
 
       // 4. Notificación en Supabase (campana) — no bloquea si falla
       try {
-        await supabase.from("notificaciones").insert({
+        const { error: errAviso } = await supabase.from("notificaciones").insert({
           user_id: alerta.user_id,
           tipo: "alerta_empleo",
           titulo,
@@ -355,6 +361,7 @@ export async function GET(request: NextRequest) {
           },
           leida: false,
         });
+        if (!errAviso) avisosCampanita++;
       } catch { /* Supabase puede no estar disponible */ }
 
       // 4b. Email + WhatsApp de alerta (datos desde batch lookup)
@@ -363,7 +370,7 @@ export async function GET(request: NextRequest) {
 
         // Email
         if (contact?.email) {
-          await sendJobAlertEmail({
+          const salio = await sendJobAlertEmail({
             userEmail: contact.email,
             keyword: alerta.keyword,
             location: alerta.location || undefined,
@@ -371,7 +378,9 @@ export async function GET(request: NextRequest) {
             ejemploTitle: ejemplo.title,
             ejemploCompany: ejemplo.company,
             ejemploCity: ejemplo.city || undefined,
+            esInventario,
           });
+          if (salio) correos++;
         }
 
         // WhatsApp: DESACTIVADO por coste (decisión del 6 ago 2026).
@@ -420,7 +429,7 @@ export async function GET(request: NextRequest) {
       await pool.query(`UPDATE job_alerts SET last_sent_at = NOW() WHERE id = $1`, [alerta.id]);
     }
 
-    return NextResponse.json({ ok: true, procesadas, enviadas });
+    return NextResponse.json({ ok: true, procesadas, enviadas, avisosCampanita, correos });
   } catch (error) {
     console.error("[send-alerts] Error:", (error as Error).message);
     return NextResponse.json({ error: 'Error en alertas' }, { status: 500 });
