@@ -49,22 +49,6 @@ const POPULAR_KEYWORDS: Record<string, string[]> = {
   FI: ["programador", "enfermero", "ingeniero", "camarero", "mecanico", "conductor", "electricista", "dependiente"],
 };
 
-// ─── Construir cláusula WHERE por país ─────────────────────────────────────
-function buildCountryFilter(codigo: string): { sourceFilter: string; cityFilter: string; params: string[] } {
-  const pais = PAISES[codigo];
-  if (!pais) return { sourceFilter: "FALSE", cityFilter: "FALSE", params: [] };
-
-  const sourceParam = `EURES_${codigo}`;
-  const cityParams = pais.ciudades.slice(0, 10);
-  const placeholders = cityParams.map((_, i) => `$${i + 2}`);
-
-  return {
-    sourceFilter: `"sourceName" = $1`,
-    cityFilter: `"city" ILIKE ANY(ARRAY[${placeholders.map(p => `${p} || '%'`).join(", ")}])`,
-    params: [sourceParam, ...cityParams],
-  };
-}
-
 // ─── Metadata ──────────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { pais: paisParam, keyword } = await params;
@@ -110,23 +94,32 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
   const keywordFmt = decodeURIComponent(keyword).replace(/-/g, " ");
   const keywordCapitalized = keywordFmt.charAt(0).toUpperCase() + keywordFmt.slice(1);
 
-  const pool = getPool();
-  const { sourceFilter, cityFilter, params: filterParams } = buildCountryFilter(codigo);
-
-  // Buscar ofertas reales filtrando por país (EURES + ciudades) y keyword
-  const query = `
-    SELECT "id", "title", "company", "city", "salary", "sourceUrl", "sourceName", "createdAt"
-    FROM "JobListing"
-    WHERE "isActive" = true
-      AND (${sourceFilter} OR ${cityFilter})
-      AND ("title" ILIKE $${filterParams.length + 1} OR "description" ILIKE $${filterParams.length + 1})
-    ORDER BY "createdAt" DESC
-    LIMIT 20
-  `;
-
-  const allParams = [...filterParams, `%${keywordFmt}%`];
-  const result = await pool.query(query, allParams);
-  const ofertas = result.rows;
+  // OFERTAS DEL PAÍS POR TÍTULO, CON ÍNDICE.
+  //
+  // Antes el país se deducía con "fuente EURES del país O alguna de sus diez
+  // ciudades" y el oficio se buscaba también en la descripción. Con esos OR
+  // ningún índice servía: se recorría la tabla hasta los 15 s del límite y la
+  // página daba error 500. Comprobado el 30 sep 2026 en 11 de 60 URLs del mapa
+  // del sitio, y son 156 de sus 196 URLs: lo que Google venía a rastrear se
+  // encontraba roto. Ahora la columna country (con índice) y el título (índice
+  // trigram): entre 0,1 y 0,7 s. Y si la base falla, la página sale sin
+  // ofertas en vez de con un error.
+  let ofertas: Array<{ id: string; title: string; company: string; city: string; salary: string; sourceUrl: string; sourceName: string; createdAt: Date }> = [];
+  try {
+    const result = await getPool().query(
+      `SELECT "id", "title", "company", "city", "salary", "sourceUrl", "sourceName", "createdAt"
+       FROM "JobListing"
+       WHERE "isActive" = true
+         AND LOWER(country) = $1
+         AND "title" ILIKE $2
+       ORDER BY "createdAt" DESC
+       LIMIT 20`,
+      [codigo.toLowerCase(), `%${keywordFmt}%`]
+    );
+    ofertas = result.rows;
+  } catch (e) {
+    console.error(`[trabajar-en] ${codigo}/${keywordFmt}:`, (e as Error).message);
+  }
 
   // Países alternativos para hreflang
   const hreflangTags = LISTA_PAISES.map((p) => ({

@@ -1730,6 +1730,18 @@ test("la bienvenida se hace al confirmar el correo, con sesion y una sola vez", 
     /ref: referralCode/.test(reg.slice(reg.indexOf("auth.signUp"), reg.indexOf("auth.signUp") + 600));
 });
 
+// ── LAS PAGINAS QUE RASTREA GOOGLE NO PUEDEN DAR ERROR ─────────────────────
+//
+// /trabajar-en/{pais}/{oficio} son 156 de las 196 URLs del mapa del sitio y
+// daban error 500 (30 sep 2026): OR entre fuente y ciudades, y el oficio buscado
+// tambien en la descripcion, sin indice posible. Se agotaban los 15 s.
+test("las paginas trabajar-en/pais/oficio usan indice y no revientan", () => {
+  const p = leerFuente("app/trabajar-en/[pais]/[keyword]/page.tsx");
+  return /LOWER\(country\) = \$1/.test(p) && /"title" ILIKE \$2/.test(p) &&
+    !/"description" ILIKE/.test(p) &&
+    /\} catch \(e\) \{\s*console\.error\(`\[trabajar-en\]/.test(p);
+});
+
 // ── LOS SUELDOS SE LEEN BIEN Y NO LOS MUEVE LA BASURA ──────────────────────
 //
 // El 30 sep 2026 "camarero" en Espana daba minimo 144 € y maximo 95 €: la
