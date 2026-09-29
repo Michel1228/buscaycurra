@@ -47,7 +47,7 @@ TOTAL=0
 for entrada in $PLAN; do
   pais=${entrada%%:*}
   tope=${entrada##*:}
-  desde=1; nuevas=0; traidas=0
+  desde=1; nuevas=0; traidas=0; motivo=""
 
   # De 60 en 60 paginas (el tope por llamada) hasta agotar lo del dia o llegar
   # al limite del pais. "agotado" llega a true cuando una pagina vuelve vacia,
@@ -66,6 +66,10 @@ for entrada in $PLAN; do
     n=$(echo "$r" | grep -oE '"insertadas":[0-9]+' | cut -d: -f2)
     t=$(echo "$r" | grep -oE '"traidas":[0-9]+' | cut -d: -f2)
     a=$(echo "$r" | grep -oE '"agotado":(true|false)' | cut -d: -f2)
+    # El motivo real cuando no llega nada (HTTP 429, sin claves...). Antes se
+    # escribia "cuota o clave" a ojo y no se sabia cual de las dos era.
+    m=$(echo "$r" | grep -oE '"motivoFallo":"[^"]*"' | cut -d'"' -f4)
+    if [ -n "$m" ]; then motivo="$m"; fi
 
     # Respuesta ilegible (caida, 502, tiempo agotado): parar en vez de seguir
     # pidiendo a ciegas.
@@ -87,7 +91,7 @@ for entrada in $PLAN; do
   # Esto solo queda en el log; quien avisa de verdad es el centinela, que mira
   # cada dia si las fuentes de Adzuna siguen insertando.
   if [ "$traidas" -eq 0 ]; then
-    echo "  AVISO $pais: el barrido no trajo NINGUNA oferta (cuota de Adzuna o clave)"
+    echo "  AVISO $pais: el barrido no trajo NINGUNA oferta. Motivo: ${motivo:-Adzuna no dio ninguno}"
   fi
   TOTAL=$((TOTAL + nuevas))
 done

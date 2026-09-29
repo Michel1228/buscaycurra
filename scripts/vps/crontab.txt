@@ -2,8 +2,9 @@
 0 1,5,9,13,17,21 * * * bash /root/sync-adzuna-19.sh >> /tmp/sync-adzuna-19-cron.log 2>&1
 
 # === EXTRACCION BUSCAYCURRA ===
-# Adzuna 10 países paginado — cada 8h (00:00, 08:00, 16:00)
-0 0,8,16 * * * bash /root/sync-adzuna-loop.sh >> /tmp/sync-adzuna-loop.log 2>&1
+# Adzuna 10 países paginado — cada 8h (00:40, 08:40, 16:40). Empieza a las 00:40 y no
+# a las 00:00 para dejar paso al barrido, que va el primero (ver abajo).
+40 0,8,16 * * * bash /root/sync-adzuna-loop.sh >> /tmp/sync-adzuna-loop.log 2>&1
 # EURES barrido completo — cada 12h (02:00, 14:00)  
 0 2,14 * * * bash /root/sync-eures-loop.sh >> /tmp/sync-eures-loop.log 2>&1
 # USAJobs barrido — cada 6h (03:00, 09:00, 15:00, 21:00)
@@ -23,7 +24,11 @@
 # Centinela: 12 comprobaciones contra los datos reales; correo si cambia el resultado (scripts/vps/centinela.sh)
 30 7 * * * /usr/bin/flock -n /tmp/centinela.lock bash /root/centinela.sh >> /root/centinela.log 2>&1
 # Barrido diario de Adzuna: lo publicado en 24 h, paginando sin palabras clave (scripts/vps/sync-adzuna-barrido.sh)
-0 11 * * * /usr/bin/flock -n /tmp/barrido-adzuna.lock bash /root/sync-adzuna-barrido.sh >> /root/sync-adzuna-barrido.log 2>&1
+# A las 00:05 UTC, EL PRIMERO DEL DIA: los contadores de las 12 claves se reinician
+# a las 00:00 UTC. Hasta el 29 sep 2026 iba a las 11:00, despues de que los otros dos
+# sincronizadores de Adzuna gastaran media cuota, y fallo 3 de 7 dias con 0 ofertas.
+# Es el que mas rinde: 39 ofertas nuevas por peticion frente a 7,7 de los otros.
+5 0 * * * /usr/bin/flock -n /tmp/barrido-adzuna.lock bash /root/sync-adzuna-barrido.sh >> /root/sync-adzuna-barrido.log 2>&1
 # Recordatorio del primer dia: UNA vez por persona, a quien se registro y se quedo
 # a medias (scripts/vps/recordatorios-primer-dia.sh). A las 10:00 UTC, que en
 # España son las 11 o las 12: un correo a las tres de la manana no lo abre nadie.

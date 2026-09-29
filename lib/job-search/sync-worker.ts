@@ -318,7 +318,10 @@ export async function fetchAdzunaPagina(
 ): Promise<RawJob[]> {
   if (!adzunaCubrePais(countryCode)) return [];
   const keyInfo = await getAdzunaKey();
-  if (!keyInfo) return [];
+  if (!keyInfo) {
+    ultimoFalloAdzuna = "no queda ninguna clave de Adzuna disponible (todas gastadas o en pausa)";
+    return [];
+  }
   const cc = ADZUNA_COUNTRIES[countryCode].code;
   try {
     // sort_by=date solo en el modo incremental: al barrer el catalogo entero,
@@ -327,12 +330,28 @@ export async function fetchAdzunaPagina(
     const extra = maxDaysOld ? `&max_days_old=${maxDaysOld}&sort_by=date` : "";
     const url = `https://api.adzuna.com/v1/api/jobs/${cc}/search/${page}?app_id=${keyInfo.id}&app_key=${keyInfo.key}&results_per_page=50${extra}&content-type=application/json`;
     const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
-    if (!res.ok) { await reportFailure("adzuna", keyInfo.idx, res.status); return []; }
+    if (!res.ok) {
+      ultimoFalloAdzuna = `Adzuna respondio HTTP ${res.status} con la clave ${keyInfo.idx}`;
+      await reportFailure("adzuna", keyInfo.idx, res.status);
+      return [];
+    }
     const data = await res.json();
     return (data.results || []).map((j: Record<string, unknown>) =>
       mapearOfertaAdzuna(j, countryCode, "Sin titulo", ""));
-  } catch (e) { return anotarFallo("Adzuna", e); }
+  } catch (e) {
+    ultimoFalloAdzuna = `error de red: ${(e as Error)?.message || e}`.slice(0, 160);
+    return anotarFallo("Adzuna", e);
+  }
 }
+
+/**
+ * Por qué ha fallado Adzuna la última vez, para decirlo en vez de adivinarlo.
+ *
+ * El barrido diario falló 3 de 7 días a finales de septiembre de 2026 con el
+ * aviso "cuota de Adzuna o clave": el motivo real se tragaba aquí dentro, y los
+ * registros de esas horas se perdieron con un reinicio del contenedor.
+ */
+let ultimoFalloAdzuna: string | null = null;
 
 // ─── Sync masivo Adzuna multi-país ────────────────────────────────────────────
 
@@ -420,7 +439,7 @@ export async function barrerAdzuna(
   paginas: number = 20,
   desdePagina: number = 1,
   maxDaysOld: number = 1
-): Promise<{ insertadas: number; traidas: number; siguientePagina: number; agotado: boolean; country: string; noSoportado?: boolean }> {
+): Promise<{ insertadas: number; traidas: number; siguientePagina: number; agotado: boolean; country: string; noSoportado?: boolean; motivoFallo?: string }> {
   if (!adzunaCubrePais(countryCode)) {
     console.error(`[barrerAdzuna] Adzuna no cubre "${countryCode}".`);
     return { insertadas: 0, traidas: 0, siguientePagina: desdePagina, agotado: true, country: countryCode, noSoportado: true };
@@ -430,6 +449,7 @@ export async function barrerAdzuna(
   let traidas = 0;
   let pagina = Math.max(1, desdePagina);
   let agotado = false;
+  ultimoFalloAdzuna = null;
 
   for (let i = 0; i < paginas; i++) {
     const lote = await fetchAdzunaPagina(countryCode, pagina, maxDaysOld > 0 ? maxDaysOld : undefined);
@@ -454,6 +474,8 @@ export async function barrerAdzuna(
     siguientePagina: agotado ? 1 : pagina,
     agotado,
     country: countryCode,
+    // Solo si no ha traído nada: una página vacía al final es lo normal.
+    ...(traidas === 0 && ultimoFalloAdzuna ? { motivoFallo: ultimoFalloAdzuna } : {}),
   };
 }
 
