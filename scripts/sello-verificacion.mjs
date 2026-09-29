@@ -1410,6 +1410,13 @@ test("una tienda que vende la marca no se presenta como suya", () =>
   fichaSrc.includes("propias: todas.filter((t) => slug(t.empresa.nombre).includes(marcaNorm))") &&
   camaraSrc.includes("Tiendas cerca que venden"));
 
+// Una foto de un Zara devolvia el Stradivarius de al lado: se cogia el primer
+// resultado de "negocios cerca" sin mirar el nombre.
+test("la fachada solo se da por buena si el nombre coincide", () =>
+  camaraSrc.includes("function nombreCoincide") &&
+  camaraSrc.includes("nearbyData.results?.find((r) => nombreCoincide(companyName") &&
+  camaraSrc.includes("searchData.candidates?.find((c) => nombreCoincide(companyName"));
+
 test("despues de una foto aparece el boton de enviar el CV", () =>
   chatSrc.includes("addMsg(\"gusi\", data.reply, data.action, data.company)") &&
   camaraSrc.includes("emailRrhh: p.email") &&

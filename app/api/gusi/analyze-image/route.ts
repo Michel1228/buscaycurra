@@ -571,27 +571,52 @@ async function searchGooglePlaces(
       const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=500&keyword=${encodeURIComponent(companyName)}&key=${apiKey}`;
       const nearbyRes = await fetch(nearbyUrl, { signal: AbortSignal.timeout(8000) });
       const nearbyData = await nearbyRes.json() as {
-        results?: Array<{ place_id: string }>;
+        results?: Array<{ place_id: string; name?: string }>;
       };
-      if (nearbyData.results?.[0]) {
-        return await getPlaceDetails(nearbyData.results[0].place_id, apiKey);
-      }
+      // NO vale el primero de la lista: Google mezcla por parecido, y el 29 sep
+      // 2026 una foto de un Zara devolvió el Stradivarius de al lado. En la calle
+      // eso es mandar el CV a la tienda equivocada. Tiene que llamarse igual.
+      const bueno = nearbyData.results?.find((r) => nombreCoincide(companyName, r.name || ""));
+      if (bueno) return await getPlaceDetails(bueno.place_id, apiKey);
     }
 
-    // Fallback: búsqueda por texto
-    const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(companyName)}&inputtype=textquery&fields=place_id&key=${apiKey}`;
+    // Fallback: búsqueda por texto, con la ciudad si se sabe (sin ella, "Zara"
+    // devolvía la tienda que Google considerase principal, en cualquier sitio).
+    const entrada = city ? `${companyName} ${city}` : companyName;
+    const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(entrada)}&inputtype=textquery&fields=place_id,name&key=${apiKey}`;
     const searchRes = await fetch(searchUrl, { signal: AbortSignal.timeout(8000) });
     const searchData = await searchRes.json() as {
-      candidates?: Array<{ place_id: string }>;
+      candidates?: Array<{ place_id: string; name?: string }>;
     };
 
-    const placeId = searchData.candidates?.[0]?.place_id;
-    if (!placeId) return await buscarConOSM(companyName, city);
+    const candidato = searchData.candidates?.find((c) => nombreCoincide(companyName, c.name || ""));
+    if (!candidato) return await buscarConOSM(companyName, city);
 
-    return await getPlaceDetails(placeId, apiKey);
+    return await getPlaceDetails(candidato.place_id, apiKey);
   } catch {
     return await buscarConOSM(companyName, city);
   }
+}
+
+/**
+ * ¿El sitio encontrado es el negocio de la foto?
+ *
+ * Coincide si un nombre contiene al otro ("Zara" en "ZARA Gran Vía") o si
+ * comparten una palabra con sustancia ("Bar Casa Pepe" y "Casa Pepe"). "Zara" y
+ * "Stradivarius" no coinciden, aunque Google los devuelva juntos.
+ */
+function nombreCoincide(buscado: string, encontrado: string): boolean {
+  const norm = (s: string) =>
+    s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const a = norm(buscado);
+  const b = norm(encontrado);
+  if (!a || !b) return false;
+  const juntoA = a.replace(/ /g, "");
+  const juntoB = b.replace(/ /g, "");
+  if (juntoB.includes(juntoA) || juntoA.includes(juntoB)) return true;
+  const VACIAS = new Set(["bar", "restaurante", "tienda", "cafeteria", "hotel", "calle", "plaza", "the", "los", "las", "del"]);
+  const palabrasB = new Set(b.split(" "));
+  return a.split(" ").some((p) => p.length >= 4 && !VACIAS.has(p) && palabrasB.has(p));
 }
 
 /**
