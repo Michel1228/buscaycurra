@@ -1405,6 +1405,11 @@ test("la ficha de la marca solo enseña webs que existen", () =>
   fichaSrc.includes("webExiste(texto(bruto.portal_empleo))") &&
   fichaSrc.includes("res.status === 404"));
 
+// Nike en Tudela devolvia Intersport y dos tiendas de deportes como "sus tiendas".
+test("una tienda que vende la marca no se presenta como suya", () =>
+  fichaSrc.includes("propias: todas.filter((t) => slug(t.empresa.nombre).includes(marcaNorm))") &&
+  camaraSrc.includes("Tiendas cerca que venden"));
+
 test("despues de una foto aparece el boton de enviar el CV", () =>
   chatSrc.includes("addMsg(\"gusi\", data.reply, data.action, data.company)") &&
   camaraSrc.includes("emailRrhh: p.email") &&

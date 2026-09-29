@@ -223,11 +223,15 @@ export async function ofertasDeLaMarca(
   const pais = (paisCodigo || "es").toLowerCase();
   try {
     const pool = getPool();
+    // DISTINCT ON: la misma oferta llega a veces por dos fuentes, y "NIKE UNITE
+    // ZARAGOZA" salía dos veces seguidas en la lista.
     const { rows } = await pool.query<{ id: string; title: string; company: string; city: string | null; en_pais: boolean; total_pais: string; total: string }>(
       `WITH m AS (
-         SELECT id, title, company, city, (country = $2) AS en_pais, "scrapedAt"
+         SELECT DISTINCT ON (lower(title), lower(company), lower(coalesce(city, '')))
+                id, title, company, city, (country = $2) AS en_pais, "scrapedAt"
            FROM "JobListing"
           WHERE "isActive" = true AND company ILIKE ANY($1)
+          ORDER BY lower(title), lower(company), lower(coalesce(city, '')), "scrapedAt" DESC
        )
        SELECT id, title, company, city, en_pais,
               count(*) FILTER (WHERE en_pais) OVER ()::text AS total_pais,
@@ -252,21 +256,32 @@ export async function ofertasDeLaMarca(
   }
 }
 
-/** Sus tiendas propias más cercanas, con la distancia. Máximo 3. */
+/**
+ * Tiendas cerca de quien hace la foto, en DOS grupos que no se mezclan:
+ *
+ *  - propias: llevan la marca en el nombre (Nike Store, Nike Factory Store).
+ *  - queLaVenden: las demás (Intersport, la zapatería del centro).
+ *
+ * En la primera versión salían todas como "sus tiendas", y para Nike en Tudela
+ * eran Intersport y dos tiendas de deportes. Eso no es Nike; pero sí son sitios
+ * cercanos que venden la marca y contratan, así que se enseñan con su nombre.
+ * Máximo 3 en total, las más cercanas.
+ */
 export async function tiendasDeLaMarca(
-  busqueda: string,
+  marca: string,
   zona: { lat: number; lng: number }
-): Promise<TiendaCerca[]> {
+): Promise<{ propias: TiendaCerca[]; queLaVenden: TiendaCerca[] }> {
+  const vacio = { propias: [] as TiendaCerca[], queLaVenden: [] as TiendaCerca[] };
   const RADIO_KM = 60;
   try {
-    const sitios = await buscarTextoSinDetalles(busqueda, { ...zona, radioMetros: RADIO_KM * 1000 });
+    const sitios = await buscarTextoSinDetalles(`${marca} tienda`, { ...zona, radioMetros: RADIO_KM * 1000 });
     const conKm = sitios
       .filter((s): s is SitioBasico & { lat: number; lng: number } => s.lat != null && s.lng != null)
       .map((s) => ({ sitio: s, km: distanciaKm(zona, { lat: s.lat, lng: s.lng }) }))
       .filter((c) => c.km <= RADIO_KM)
       .sort((a, b) => a.km - b.km)
       .slice(0, 3);
-    if (!conKm.length) return [];
+    if (!conKm.length) return vacio;
 
     const detalles = await detallesDeSitios(conKm.map((c) => c.sitio.place_id));
     const empresas = detalles.map((d) =>
@@ -275,12 +290,17 @@ export async function tiendasDeLaMarca(
     await enriquecerEmpresas(empresas);
 
     const km = new Map(conKm.map((c) => [c.sitio.place_id, c.km]));
-    return empresas
+    const marcaNorm = slug(marca);
+    const todas = empresas
       .map((e) => ({ empresa: e, km: km.get(e.placeId ?? "") ?? 999 }))
       .sort((a, b) => a.km - b.km);
+    return {
+      propias: todas.filter((t) => slug(t.empresa.nombre).includes(marcaNorm)),
+      queLaVenden: todas.filter((t) => !slug(t.empresa.nombre).includes(marcaNorm)),
+    };
   } catch (e) {
     console.warn("[ficha-marca] tiendas:", (e as Error).message);
-    return [];
+    return vacio;
   }
 }
 

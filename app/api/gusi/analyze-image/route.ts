@@ -182,14 +182,16 @@ Devuelve SOLO un JSON:
   "ciudad_visible": ciudad si aparece escrita en la foto, o null,
   "cartel": texto literal si es un cartel de "se busca" o "se necesita personal"; si no, null,
   "objeto": qué es el producto u objeto principal (por ejemplo "zapatilla deportiva"), o null,
-  "marca": la marca del objeto SOLO si se ve el logo o el nombre, o si el diseño es inequívoco; si dudas, null,
+  "marca": la marca del objeto si la reconoces por el logo, el nombre o un diseño característico de esa marca; si no, null,
+  "confianza_marca": "alta" si se ve el logo o el nombre escrito, "media" si la reconoces por un diseño característico (las tres bandas de Adidas, el swoosh de Nike, la estrella de Converse, la forma de una botella conocida), o null,
+  "pista_marca": en pocas palabras, qué has visto para decir esa marca (por ejemplo "las tres bandas laterales"), o null,
   "modelo": el modelo si se reconoce (por ejemplo "Air Max 90"), o null,
   "sector": el sector laboral que fabrica o vende esto (por ejemplo "calzado deportivo"), o null
 }
 
 Reglas:
 - Si la foto es de un PRODUCTO, tipo = "objeto" aunque lleve la marca escrita. "negocio" es solo para fachadas, rótulos o locales.
-- NO adivines marcas. Una marca inventada lleva a mandar el currículum a una empresa que no tiene nada que ver. Si no estás seguro, null.
+- NO adivines marcas por el color o por ser "lo típico": una botella azul no es Bezoya por ser azul. Una marca inventada lleva a mandar el currículum a una empresa que no tiene nada que ver. Si no hay logo, nombre ni diseño característico, null.
 - "borrosa" si no se distingue nada; "nada" si no hay ni negocio, ni cartel, ni producto.`;
 
     const visionRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -241,11 +243,15 @@ Reglas:
 
     // ─── Paso 2: dónde está quien hace la foto ────────────────────────
     // GPS del móvil si lo hay; si no, la ciudad de su perfil. Sin esto no se
-    // puede decir "cerca de ti" con verdad.
-    const zona = await situarQuienFotografia(lat, lng, ciudadUsuario);
+    // puede decir "cerca de ti" con verdad. Se lanza ya y se espera donde haga
+    // falta: en una foto de marca va a la vez que la investigación de la
+    // empresa, que es lo que más tarda (la primera versión tardaba 20 s).
+    const zonaEnCamino = situarQuienFotografia(lat, lng, ciudadUsuario)
+      .catch((): ZonaFoto => ({ coords: null, ciudad: "", paisCodigo: "ES" }));
 
     // ─── Negocio: fachada, rótulo o local ─────────────────────────────
     if (foto.tipo === "negocio" && limpio(foto.negocio)) {
+      const zona = await zonaEnCamino;
       const nombre = limpio(foto.negocio)!;
       const ciudadBusqueda = limpio(foto.ciudad_visible) || zona.ciudad || ciudadUsuario;
       const lugar = await searchGooglePlaces(nombre, lat, lng, ciudadBusqueda);
@@ -278,25 +284,37 @@ Reglas:
     const objeto = limpio(foto.objeto) || "producto";
     const sector = limpio(foto.sector) || "";
     if (foto.tipo === "objeto" && marca) {
-      const ficha = await investigarMarca(marca, objeto);
+      const [zona, ficha] = await Promise.all([zonaEnCamino, investigarMarca(marca, objeto)]);
 
       const nombresEmpresa = [marca, ficha?.empresa, ficha?.grupo].filter((n): n is string => !!n);
       const [ofertas, tiendas] = await Promise.all([
         ofertasDeLaMarca(nombresEmpresa, zona.paisCodigo),
-        ficha?.tieneTiendasPropias && ficha.busquedaTiendas && zona.coords
-          ? tiendasDeLaMarca(ficha.busquedaTiendas, zona.coords)
-          : Promise.resolve([] as TiendaCerca[]),
+        // Solo marcas con tiendas: para Font Vella saldrían supermercados.
+        ficha?.tieneTiendasPropias && zona.coords
+          ? tiendasDeLaMarca(marca, zona.coords)
+          : Promise.resolve({ propias: [] as TiendaCerca[], queLaVenden: [] as TiendaCerca[] }),
       ]);
 
-      if (ficha) await guardarLoCapturado(ficha, sector, tiendas, zona.ciudad);
+      const todasLasTiendas = [...tiendas.propias, ...tiendas.queLaVenden];
+      if (ficha) await guardarLoCapturado(ficha, sector, todasLasTiendas, zona.ciudad);
 
       // La tarjeta con "Enviar mi CV" solo si hay a quién mandárselo: la tienda
       // más cercana con correo. Un botón que abre un envío sin destinatario no
       // sirve de nada.
-      const conCorreo = tiendas.find((t) => t.empresa.emailRrhh);
+      const conCorreo = todasLasTiendas.sort((a, b) => a.km - b.km).find((t) => t.empresa.emailRrhh);
 
       return NextResponse.json({
-        reply: respuestaMarca({ objeto, modelo: limpio(foto.modelo), marca, ficha, tiendas, ofertas, zona }),
+        reply: respuestaMarca({
+          objeto,
+          modelo: limpio(foto.modelo),
+          marca,
+          confianza: foto.confianza_marca === "media" ? "media" : "alta",
+          pista: limpio(foto.pista_marca),
+          ficha,
+          tiendas,
+          ofertas,
+          zona,
+        }),
         action: conCorreo ? "company_info" : "object_brand_found",
         company: conCorreo?.empresa,
         brand: ficha ?? undefined,
@@ -305,6 +323,7 @@ Reglas:
 
     // ─── Objeto sin marca: el sector, y solo lo que haya cerca ────────
     if (foto.tipo === "objeto") {
+      const zona = await zonaEnCamino;
       const ofertasCerca = sector ? await ofertasDelSectorCerca(sector, zona) : [];
       let reply = `📸 He visto **${objeto}**, pero no se ve de qué marca es.`;
       if (sector) reply += ` Es del sector **${sector}**.`;
@@ -341,6 +360,8 @@ interface LecturaFoto {
   cartel?: string | null;
   objeto?: string | null;
   marca?: string | null;
+  confianza_marca?: "alta" | "media" | null;
+  pista_marca?: string | null;
   modelo?: string | null;
   sector?: string | null;
 }
@@ -388,14 +409,24 @@ function respuestaMarca(d: {
   objeto: string;
   modelo: string | null;
   marca: string;
+  /** "media" = reconocida por el diseño, no por un logo o un nombre escrito. */
+  confianza: "alta" | "media";
+  pista: string | null;
   ficha: FichaMarca | null;
-  tiendas: TiendaCerca[];
+  tiendas: { propias: TiendaCerca[]; queLaVenden: TiendaCerca[] };
   ofertas: { enPais: OfertaMarca[]; totalPais: number; totalFuera: number };
   zona: ZonaFoto;
 }): string {
   const l: string[] = [];
   const pais = nombrePais(d.zona.paisCodigo);
-  l.push(`📸 **${d.objeto}${d.modelo ? ` ${d.modelo}` : ""}** de **${d.marca}**`);
+  const queEs = `${d.objeto}${d.modelo ? ` ${d.modelo}` : ""}`;
+  // Si la marca sale del diseño y no de un logo, se dice así: es lo más
+  // probable, no algo que se haya leído.
+  l.push(
+    d.confianza === "media"
+      ? `📸 Parece **${queEs}** de **${d.marca}**${d.pista ? ` (por ${d.pista})` : ""}. Si no lo es, haz la foto donde se vea la etiqueta.`
+      : `📸 **${queEs}** de **${d.marca}**`
+  );
 
   const f = d.ficha;
   if (f?.empresa) {
@@ -410,21 +441,31 @@ function respuestaMarca(d: {
     l.push(`🏢 No he podido averiguar con seguridad qué empresa hay detrás de ${d.marca}.`);
   }
 
-  if (d.tiendas.length) {
+  const linea = (t: TiendaCerca, i: number) => {
+    const correo = t.empresa.emailRrhh ? ` · ✉️ ${t.empresa.emailRrhh}` : "";
+    return `${i + 1}. **${t.empresa.nombre}** — a ${t.km} km${t.empresa.googleAddress ? ` · ${t.empresa.googleAddress}` : ""}${correo}`;
+  };
+  if (d.tiendas.propias.length) {
     l.push("");
-    l.push(`🛍️ **Sus tiendas más cerca de ti**`);
-    d.tiendas.forEach((t, i) => {
-      const correo = t.empresa.emailRrhh ? ` · ✉️ ${t.empresa.emailRrhh}` : "";
-      l.push(`${i + 1}. **${t.empresa.nombre}** — a ${t.km} km${t.empresa.googleAddress ? ` · ${t.empresa.googleAddress}` : ""}${correo}`);
-    });
+    l.push(`🛍️ **Tiendas de ${d.marca} cerca de ti**`);
+    d.tiendas.propias.forEach((t, i) => l.push(linea(t, i)));
   } else if (f?.tieneTiendasPropias && d.zona.coords) {
     l.push("");
-    l.push(`🛍️ No tiene tiendas propias a menos de 60 km de ti.`);
+    l.push(`🛍️ ${d.marca} no tiene tiendas propias a menos de 60 km de ti.`);
+  }
+  if (d.tiendas.queLaVenden.length) {
+    l.push("");
+    // No son de la marca, pero la venden y contratan: también son sitio para el CV.
+    l.push(`🏪 **Tiendas cerca que venden ${d.marca}** (también contratan)`);
+    d.tiendas.queLaVenden.forEach((t, i) => l.push(linea(t, i)));
   }
 
+  // En las ofertas se nombra el grupo cuando lo hay: las de Font Vella están
+  // publicadas a nombre de Danone, y decir "ofertas de Font Vella" confundía.
+  const quienOferta = f?.grupo ? `${d.marca} y el grupo ${f.grupo}` : (f?.empresa || d.marca);
   l.push("");
   if (d.ofertas.enPais.length) {
-    l.push(`📋 **Ofertas de ${d.marca} en ${pais} (${d.ofertas.totalPais})**`);
+    l.push(`📋 **Ofertas de ${quienOferta} en ${pais} (${d.ofertas.totalPais})**`);
     d.ofertas.enPais.forEach((o, i) => {
       l.push(`${i + 1}. **${o.titulo}** — ${o.empresa}${o.ciudad ? ` · 📍 ${o.ciudad}` : ""}`);
     });
