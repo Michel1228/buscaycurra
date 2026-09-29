@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { resumirSalarios, salarioAnualEuros } from "@/lib/salarios/anual";
 import Groq from "groq-sdk";
 import { getUserId } from "@/lib/auth-server";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
@@ -31,43 +32,42 @@ export async function POST(req: NextRequest) {
     const puestoClean = puesto.toLowerCase().trim();
     const kw = `%${puestoClean}%`;
 
-    // 1. Buscar estadísticas salariales REALES en la BD
-    const statsResult = await pool.query(
-      `SELECT 
-        COUNT(*) as total,
-        COUNT(CASE WHEN salary ~ '[0-9]' THEN 1 END) as con_salario,
-        AVG(CASE WHEN salary ~ '[0-9]+' THEN (regexp_match(salary, '[0-9]+(?:[.,][0-9]+)?'))[1]::numeric ELSE NULL END) as media,
-        MIN(CASE WHEN salary ~ '[0-9]+' THEN (regexp_match(salary, '[0-9]+(?:[.,][0-9]+)?'))[1]::numeric ELSE NULL END) as minima,
-        MAX(CASE WHEN salary ~ '[0-9]+' THEN (regexp_match(salary, '[0-9]+(?:[.,][0-9]+)?'))[1]::numeric ELSE NULL END) as maxima
-       FROM "JobListing"
-       WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1)`,
+    // 1. Sueldos REALES de España para ese puesto.
+    //
+    // Antes buscaba el puesto también en la DESCRIPCIÓN de 2,4 millones de
+    // ofertas, sin índice: se pasaba de los 15 s del límite de la base y la
+    // pantalla daba error 500 a todo el mundo (comprobado el 30 sep 2026). Y
+    // cogía el primer número del texto como sueldo, mezclando horas, meses y
+    // monedas de 26 países. Ahora solo el título (índice trigram), solo España
+    // y el mismo intérprete que la pantalla de salarios.
+    const { rows } = await pool.query(
+      `SELECT title, company, city, province, salary FROM "JobListing"
+       WHERE "isActive" = true AND title ILIKE $1 AND LOWER(country) = 'es'
+         AND salary ~ '[0-9]'
+       ORDER BY "scrapedAt" DESC
+       LIMIT 3000`,
       [kw]
     );
+    const filas = rows as Array<{ title: string; company: string; city: string | null; province: string | null; salary: string }>;
+    const resumen = resumirSalarios(filas.map((r) => r.salary));
 
-    const stats = statsResult.rows[0];
-
-    // 2. Buscar salarios con ciudad
-    let statsCiudad = null;
+    // 2. En su ciudad, si hay suficientes
+    let resumenCiudad = null;
     if (ciudad) {
-      const loc = `%${ciudad.toLowerCase().trim()}%`;
-      const cityResult = await pool.query(
-        `SELECT 
-          COUNT(*) as total,
-          AVG(CASE WHEN salary ~ '[0-9]+' THEN (regexp_match(salary, '[0-9]+(?:[.,][0-9]+)?'))[1]::numeric ELSE NULL END) as media_local
-         FROM "JobListing"
-         WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1) AND city ILIKE $2`,
-        [kw, loc]
+      const buscada = ciudad.toLowerCase().trim();
+      resumenCiudad = resumirSalarios(
+        filas
+          .filter((r) => (r.city || "").toLowerCase().includes(buscada) || (r.province || "").toLowerCase().includes(buscada))
+          .map((r) => r.salary)
       );
-      statsCiudad = cityResult.rows[0];
+      if (resumenCiudad && resumenCiudad.conSalario < 3) resumenCiudad = null;
     }
 
-    // 3. Buscar ofertas de ejemplo con salario
-    const ejemplos = await pool.query(
-      `SELECT title, company, city, salary FROM "JobListing"
-       WHERE "isActive" = true AND salary ~ '[0-9]' AND (title ILIKE $1 OR description ILIKE $1)
-       ORDER BY "scrapedAt" DESC LIMIT 6`,
-      [kw]
-    );
+    // 3. Ofertas de ejemplo con un sueldo anual legible
+    const ejemplos = filas
+      .filter((r) => salarioAnualEuros(r.salary))
+      .slice(0, 6)
+      .map((r) => ({ ...r, salary: r.salary.replace(/&euro;/gi, "€") }));
 
     // 4. Generar guión con Groq
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
@@ -80,14 +80,13 @@ EXPERIENCIA DEL CANDIDATO: ${experiencia || "No especificada"}
 SALARIO OFRECIDO: ${salarioOferta || "No especificado"}
 
 ESTADÍSTICAS DEL MERCADO (DATOS REALES):
-- Total ofertas analizadas: ${stats.total}
-- Media salarial España: ${stats.media ? Math.round(Number(stats.media)) + "€" : "No disponible"}
-- Rango: ${stats.minima ? Math.round(Number(stats.minima)) + "€" : "?"} - ${stats.maxima ? Math.round(Number(stats.maxima)) + "€" : "?"}
-${statsCiudad ? "- Media en " + ciudad + ": " + Math.round(Number(statsCiudad.media_local)) + "€" : ""}
-- Ofertas con salario público: ${stats.con_salario} de ${stats.total}
+- Ofertas de España con sueldo anual publicado: ${resumen?.conSalario ?? 0}
+- Sueldo típico en España (mediana, bruto anual): ${resumen ? resumen.tipico + "€" : "No disponible"}
+- Mitad central de las ofertas: ${resumen ? resumen.bajo + "€ - " + resumen.alto + "€" : "No disponible"}
+${resumenCiudad ? "- Sueldo típico en " + ciudad + ": " + resumenCiudad.tipico + "€ (" + resumenCiudad.conSalario + " ofertas)" : ""}
 
 EJEMPLOS REALES:
-${ejemplos.rows.map((e: any) => `- ${e.title} en ${e.company} (${e.city}): ${e.salary}`).join("\n")}
+${ejemplos.map((e) => `- ${e.title} en ${e.company} (${e.city}): ${e.salary}`).join("\n") || "Ninguna con sueldo anual publicado."}
 
 Genera una respuesta EN ESPAÑOL con este formato exacto:
 ## 📊 Análisis de Mercado
@@ -125,12 +124,13 @@ Genera una respuesta EN ESPAÑOL con este formato exacto:
     return NextResponse.json({
       guion: text,
       datosMercado: {
-        totalOfertas: parseInt(stats.total),
-        mediaNacional: stats.media ? Math.round(Number(stats.media)) : null,
-        minima: stats.minima ? Math.round(Number(stats.minima)) : null,
-        maxima: stats.maxima ? Math.round(Number(stats.maxima)) : null,
-        mediaCiudad: statsCiudad?.media_local ? Math.round(Number(statsCiudad.media_local)) : null,
-        ejemplos: ejemplos.rows.map((e: any) => ({
+        // "media" es la mediana y "minima"/"maxima" la mitad central (p25-p75).
+        totalOfertas: resumen?.conSalario ?? 0,
+        mediaNacional: resumen?.tipico ?? null,
+        minima: resumen?.bajo ?? null,
+        maxima: resumen?.alto ?? null,
+        mediaCiudad: resumenCiudad?.tipico ?? null,
+        ejemplos: ejemplos.map((e) => ({
           titulo: e.title,
           empresa: e.company,
           ciudad: e.city,

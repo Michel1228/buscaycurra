@@ -6,6 +6,7 @@ import { getPool } from "@/lib/db";
 import { PAISES } from "@/lib/paises";
 import { normalizarPais } from "@/lib/origen/movilidad";
 import { readFileSync } from "fs";
+import { resumirSalarios } from "@/lib/salarios/anual";
 import { join } from "path";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,49 @@ interface ProvinciaRow {
   avg_salary: number;
 }
 
+// ─── Ocupaciones con sueldo (lista de arriba de la pantalla) ───
+//
+// Recorre TODAS las ofertas activas de España con sueldo (unas 6.200 de 2,4
+// millones, sin índice que ayude: unos 10 s). Cambia poco, así que se guarda
+// seis horas en memoria en vez de repetir la consulta en cada visita.
+interface Ocupacion {
+  puesto: string;
+  total: number;
+  avg_salary: number;
+  min_salary: number;
+  max_salary: number;
+}
+let _ocupacionesCache: { ts: number; datos: Ocupacion[] } | null = null;
+
+async function ocupacionesConSueldo(pool: ReturnType<typeof getPool>): Promise<Ocupacion[]> {
+  if (_ocupacionesCache && Date.now() - _ocupacionesCache.ts < 6 * 60 * 60 * 1000) {
+    return _ocupacionesCache.datos;
+  }
+  const { rows } = await pool.query(
+    `SELECT LOWER(TRIM(REGEXP_REPLACE(title, '(Senior|Junior|Jr\\.|Sr\\.|Lead|Trainee|Becario|Prácticas)', '', 'gi'))) AS ocupacion,
+            salary
+     FROM "JobListing"
+     WHERE "isActive" = true AND salary ~ '[0-9]' AND LOWER(country) = 'es'`
+  );
+  const grupos = new Map<string, string[]>();
+  for (const r of rows as Array<{ ocupacion: string | null; salary: string }>) {
+    const o = (r.ocupacion || "").trim();
+    if (o.length <= 2) continue;
+    if (!grupos.has(o)) grupos.set(o, []);
+    grupos.get(o)!.push(r.salary);
+  }
+  const datos: Ocupacion[] = [];
+  for (const [puesto, sueldos] of grupos) {
+    const r = resumirSalarios(sueldos);
+    if (r && r.conSalario >= 10 && r.tipico >= 12000) {
+      datos.push({ puesto, total: r.conSalario, avg_salary: r.tipico, min_salary: r.bajo, max_salary: r.alto });
+    }
+  }
+  datos.sort((a, b) => b.total - a.total).splice(10);
+  _ocupacionesCache = { ts: Date.now(), datos };
+  return datos;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const puesto = (searchParams.get("puesto") || "").trim();
@@ -71,40 +115,8 @@ export async function GET(request: NextRequest) {
     const pool = getPool();
 
     if (!puesto) {
-      // Sin puesto: devolver top 5 ocupaciones con datos salariales precargados
-      const topResult = await pool.query(
-        `SELECT 
-          LOWER(REGEXP_REPLACE(title, '(Senior|Junior|Jr\\.|Sr\\.|Lead|Trainee|Becario|Prácticas)', '', 'gi')) as ocupacion,
-          COUNT(*) as total,
-          AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(LEAST(GREATEST(NULLIF(regexp_replace(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[.,][0-9]{1,2}$', ''), '[,.]', '', 'g'), '')::numeric, 0), 999999), 0) ELSE NULL END) as avg_salary,
-          MIN(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(LEAST(GREATEST(NULLIF(regexp_replace(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[.,][0-9]{1,2}$', ''), '[,.]', '', 'g'), '')::numeric, 0), 999999), 0) ELSE NULL END) as min_salary,
-          MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace(regexp_replace(substring(salary from '.*([0-9][0-9.,]*[0-9])'), '[.,][0-9]{1,2}$', ''), '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary
-         FROM "JobListing"
-         -- SOLO ESPAÑA Y SOLO SUELDOS ANUALES.
-         --
-         -- Antes se promediaban las ofertas de los 49 paises con sus monedas y
-         -- periodos mezclados, cogiendo el primer numero del texto y quitandole
-         -- puntos y comas: "$23.50/hour" se convertia en 2350 y "£45,000" en
-         -- 45000, todo sumado y presentado en euros. Salia un camarero en
-         -- Madrid a 108.604 EUR de media, con un maximo de 96.
-         WHERE "isActive" = true AND salary ~ '[0-9]'
-           AND LOWER(country) = 'es'
-           AND salary !~* '(hour|hora|/h|month|mes|mensual|week|semana|day|dia)'
-           AND salary !~ '[$£¥]'
-         GROUP BY ocupacion
-         HAVING COUNT(*) >= 10
-           AND AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(LEAST(GREATEST(NULLIF(regexp_replace(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[.,][0-9]{1,2}$', ''), '[,.]', '', 'g'), '')::numeric, 0), 999999), 0) ELSE NULL END) BETWEEN 12000 AND 200000
-         ORDER BY total DESC
-         LIMIT 10`
-      );
-
-      const ocupaciones = topResult.rows.map((r: any) => ({
-        puesto: (r.ocupacion || "").trim(),
-        total: parseInt(r.total),
-        avg_salary: Math.round(Number(r.avg_salary) || 0),
-        min_salary: Math.round(Number(r.min_salary) || 0),
-        max_salary: Math.round(Number(r.max_salary) || 0),
-      })).filter((o: any) => o.puesto.length > 2 && o.avg_salary > 0);
+      // Sin puesto: las ocupaciones con más ofertas con sueldo publicado.
+      const ocupaciones = await ocupacionesConSueldo(pool);
 
       // Si no hay suficientes datos reales, devolver datos de referencia del mercado español 2026
       if (ocupaciones.length < 5) {
@@ -141,93 +153,22 @@ export async function GET(request: NextRequest) {
     const puestoClean = puesto.toLowerCase().trim();
     const kw = `%${puestoClean}%`;
 
-    // Evitar que queries lentas cuelguen la API
-    // Aqui habia un "SET LOCAL statement_timeout" que Postgres ignoraba: solo
-    // vale dentro de una transaccion, y ademas cada consulta del pool puede
-    // coger otra conexion. No protegia de nada.
-
-    // Estadísticas generales — solo title (tiene índice GIN trigram, description no)
-    const statsResult = await pool.query(
-      `SELECT 
-        COUNT(*) as total,
-        AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(LEAST(GREATEST(NULLIF(regexp_replace(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[.,][0-9]{1,2}$', ''), '[,.]', '', 'g'), '')::numeric, 0), 999999), 0) ELSE NULL END) as avg_salary,
-        MIN(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(LEAST(GREATEST(NULLIF(regexp_replace(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[.,][0-9]{1,2}$', ''), '[,.]', '', 'g'), '')::numeric, 0), 999999), 0) ELSE NULL END) as min_salary,
-        MAX(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(regexp_replace(regexp_replace(substring(salary from '.*([0-9][0-9.,]*[0-9])'), '[.,][0-9]{1,2}$', ''), '[,.]', '', 'g'), '')::numeric ELSE NULL END) as max_salary,
-        COUNT(CASE WHEN salary ~ '[0-9]' THEN 1 END) as con_salario
-       FROM "JobListing"
+    // UNA consulta, solo por título (tiene índice GIN trigram; la descripción
+    // no) y solo España, y el resumen se hace aquí con lib/salarios/anual.ts.
+    // Antes eran tres consultas con expresiones regulares en SQL que leían mal
+    // los sueldos: camarero salía con mínimo 144 € y máximo 95 €.
+    const { rows } = await pool.query(
+      `SELECT salary, province, city FROM "JobListing"
        WHERE "isActive" = true AND title ILIKE $1 AND LOWER(country) = 'es'
-         AND salary !~* '(hour|hora|/h|month|mes|mensual|week|semana|day|dia)'
-         AND salary !~ '[$£¥]'`,
+         AND salary ~ '[0-9]'
+       LIMIT 5000`,
       [kw]
     );
-
-    const stats = statsResult.rows[0] as any;
-    const total = parseInt(stats.total) || 0;
-    const conSalario = parseInt(stats.con_salario) || 0;
-
-    let rangoGeneral = null;
-    if (total > 0) {
-      rangoGeneral = {
-        total: conSalario,
-        avg_salary: Math.round(Number(stats.avg_salary) || 0),
-        min_salary: Math.round(Number(stats.min_salary) || 0),
-        max_salary: Math.round(Number(stats.max_salary) || 0),
-      };
-    }
-
-    // Por provincia — solo title (tiene índice GIN trigram)
-    const provResult = await pool.query(
-      `SELECT 
-        COALESCE(NULLIF(province, ''), city) as province,
-        COUNT(*) as count,
-        AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(LEAST(GREATEST(NULLIF(regexp_replace(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[.,][0-9]{1,2}$', ''), '[,.]', '', 'g'), '')::numeric, 0), 999999), 0) ELSE NULL END) as avg_salary
-       FROM "JobListing"
-       WHERE "isActive" = true AND title ILIKE $1 AND LOWER(country) = 'es'
-         AND salary !~* '(hour|hora|/h|month|mes|mensual|week|semana|day|dia)'
-         AND salary !~ '[$£¥]'
-       GROUP BY COALESCE(NULLIF(province, ''), city)
-       HAVING COUNT(*) >= 3
-       ORDER BY count DESC
-       LIMIT 15`,
-      [kw]
-    );
-
-    const porProvincia: ProvinciaRow[] = provResult.rows
-      .filter((r: any) => r.province && r.avg_salary > 0)
-      .map((r: any) => ({
-        province: r.province,
-        count: parseInt(r.count),
-        avg_salary: Math.round(Number(r.avg_salary) || 0),
-      }));
-
-    // Detalle por provincia si se especificó
-    let provinciaDetalle = null;
-    if (provincia) {
-      const loc = `%${provincia.toLowerCase().trim()}%`;
-      const detResult = await pool.query(
-        `SELECT 
-          COUNT(*) as count,
-          AVG(CASE WHEN salary ~ '[0-9]+' THEN NULLIF(LEAST(GREATEST(NULLIF(regexp_replace(regexp_replace((regexp_match(salary, '([0-9][0-9.,]*[0-9])'))[1], '[.,][0-9]{1,2}$', ''), '[,.]', '', 'g'), '')::numeric, 0), 999999), 0) ELSE NULL END) as avg_salary
-         FROM "JobListing"
-         WHERE "isActive" = true AND title ILIKE $1 AND LOWER(country) = 'es'
-         AND salary !~* '(hour|hora|/h|month|mes|mensual|week|semana|day|dia)'
-         AND salary !~ '[$£¥]'
-           AND (province ILIKE $2 OR city ILIKE $2)`,
-        [kw, loc]
-      );
-      const det = detResult.rows[0] as any;
-      if (parseInt(det.count) > 0) {
-        provinciaDetalle = {
-          count: parseInt(det.count),
-          avg_salary: Math.round(Number(det.avg_salary) || 0),
-        };
-      }
-    }
+    const filas = rows as Array<{ salary: string | null; province: string | null; city: string | null }>;
+    const resumen = resumirSalarios(filas.map((r) => r.salary));
 
     // Si no hay datos reales, usar datos de referencia
-    const esReferencia = total === 0 || conSalario < 3;
-
-    if (esReferencia) {
+    if (!resumen || resumen.conSalario < 3) {
       const refData = obtenerDatosReferencia(puestoClean);
       return NextResponse.json({
         ...refData,
@@ -235,6 +176,42 @@ export async function GET(request: NextRequest) {
         provincia: provincia || null,
         provinciaDetalle: null,
       });
+    }
+
+    // Los nombres de campo se mantienen por la pantalla: "avg" es la mediana y
+    // "min"/"max" la mitad central de las ofertas (percentiles 25 y 75).
+    const rangoGeneral = {
+      total: resumen.conSalario,
+      avg_salary: resumen.tipico,
+      min_salary: resumen.bajo,
+      max_salary: resumen.alto,
+    };
+
+    // Por provincia (o ciudad si la oferta no trae provincia)
+    const porZona = new Map<string, string[]>();
+    for (const r of filas) {
+      const zona = (r.province || "").trim() || (r.city || "").trim();
+      if (!zona || !r.salary) continue;
+      if (!porZona.has(zona)) porZona.set(zona, []);
+      porZona.get(zona)!.push(r.salary);
+    }
+    const porProvincia: ProvinciaRow[] = [];
+    for (const [province, sueldos] of porZona) {
+      const z = resumirSalarios(sueldos);
+      if (z && z.conSalario >= 3) porProvincia.push({ province, count: z.conSalario, avg_salary: z.tipico });
+    }
+    porProvincia.sort((a, b) => b.count - a.count).splice(15);
+
+    // Detalle de la provincia pedida
+    let provinciaDetalle = null;
+    if (provincia) {
+      const buscada = provincia.toLowerCase().trim();
+      const z = resumirSalarios(
+        filas
+          .filter((r) => (r.province || "").toLowerCase().includes(buscada) || (r.city || "").toLowerCase().includes(buscada))
+          .map((r) => r.salary)
+      );
+      if (z) provinciaDetalle = { count: z.conSalario, avg_salary: z.tipico };
     }
 
     return NextResponse.json({

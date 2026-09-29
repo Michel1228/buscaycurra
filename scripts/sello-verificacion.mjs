@@ -1725,6 +1725,40 @@ test("la bienvenida se hace al confirmar el correo, con sesion y una sola vez", 
     /ref: referralCode/.test(reg.slice(reg.indexOf("auth.signUp"), reg.indexOf("auth.signUp") + 600));
 });
 
+// ── LOS SUELDOS SE LEEN BIEN Y NO LOS MUEVE LA BASURA ──────────────────────
+//
+// El 30 sep 2026 "camarero" en Espana daba minimo 144 € y maximo 95 €: la
+// expresion SQL del maximo solo dejaba las dos ultimas cifras. Y la media la
+// subian a 30.481 € anuncios de "camarero de barra" a 72.000-90.000 €, cuando
+// la mediana real era 20.500 €. "Negociar salario" daba ademas error 500 por
+// buscar en la descripcion de 2,4 millones de ofertas.
+test("los sueldos se interpretan bien y el resumen usa la mediana", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-salarios.cjs";
+  execFileSync("npx", ["esbuild", "lib/salarios/anual.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  const { salarioAnualEuros, resumirSalarios } = await import(`../${salida}`);
+  try { unlinkSync(salida); } catch {}
+  const r = (t) => JSON.stringify(salarioAnualEuros(t));
+  const bien =
+    r("18.000 - 22.095 €") === JSON.stringify({ min: 18000, max: 22095 }) &&
+    r("&euro;24000 per year") === JSON.stringify({ min: 24000, max: 24000 }) &&
+    r("24,000 - 28,000") === JSON.stringify({ min: 24000, max: 28000 }) &&
+    r("&euro;1802 per month") === "null" &&        // mensual: 12 o 14 pagas, no se adivina
+    r("&euro;11.85 per hour") === "null" &&
+    r("$45,000 per year") === "null";
+  // Diez sueldos normales y tres absurdos: la mediana no se mueve.
+  const textos = ["18000", "19000", "19500", "20000", "20500", "21000", "21500", "22000", "23000", "24000",
+    "72000 - 90000", "72000 - 90000", "72000 - 90000"];
+  const res = resumirSalarios(textos);
+  const negociar = leerFuente("app/api/salarios/negociar/route.ts");
+  return bien && res.tipico === 21500 && res.conSalario === 13 &&
+    !/description ILIKE/.test(negociar) &&
+    !leerFuente("app/api/salarios/route.ts").includes("substring(salary from '.*(");
+});
+
 // ── NO MANDAR CVs A DIRECCIONES QUE SE SABE QUE NO LLEGAN ──────────────────
 //
 // Del 1 al 29 sep 2026 rebotaron 9 de 25 envios (36 %): direcciones deducidas

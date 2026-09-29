@@ -442,9 +442,12 @@ export default function SalariosPage() {
                 data.fuente === "ofertas"
                   ? { label: "Ofertas", valor: (data.rangoGeneral?.total || 0), color: "#22c55e", badge: "Ofertas reales" }
                   : { label: "Nacional", valor: formatMoney(data.rangoGeneral?.avg_salary), color: "#22c55e", badge: "Estimación" },
-                { label: "Medio", valor: formatMoney(data.rangoGeneral?.avg_salary), color: "#f59e0b" },
-                { label: "Mínimo", valor: formatMoney(data.rangoGeneral?.min_salary), color: "#ef4444" },
-                { label: "Máximo", valor: formatMoney(data.rangoGeneral?.max_salary), color: "#3b82f6" },
+                // Con ofertas reales, "típico" es la mediana y bajo/alto la mitad
+                // central (percentiles 25 y 75): un mínimo y un máximo de verdad
+                // se los come cualquier sueldo mal publicado por un portal.
+                { label: "Típico", valor: formatMoney(data.rangoGeneral?.avg_salary), color: "#f59e0b" },
+                { label: "Bajo", valor: formatMoney(data.rangoGeneral?.min_salary), color: "#ef4444" },
+                { label: "Alto", valor: formatMoney(data.rangoGeneral?.max_salary), color: "#3b82f6" },
               ].map((s, i) => (
                 <div key={s.label} className="card-game p-3 text-center relative">
                   <p className="text-lg font-bold" style={{ color: s.color }}>{s.valor}</p>
@@ -460,6 +463,11 @@ export default function SalariosPage() {
                 </div>
               ))}
             </div>
+            {data.fuente === "ofertas" && (
+              <p className="text-[10px] text-center" style={{ color: "#64748b" }}>
+                Sueldo bruto anual de las ofertas que lo publican. La mitad cobra menos que el típico y la otra mitad más; entre bajo y alto está la mitad de las ofertas.
+              </p>
+            )}
 
             {/* Indicador cuando es referencia: mostrar que provincia se ignora */}
             {data.fuente === "referencia" && provincia && isSpain && (
