@@ -59,7 +59,9 @@ function RegistroPageInner() {
         email: email.trim(),
         password: contrasena,
         options: {
-          data: { full_name: nombre.trim(), ciudad: ciudad.trim() },
+          // El código de referido va también en la cuenta: la bienvenida se hace
+          // al confirmar el correo, y entonces el formulario ya no está.
+          data: { full_name: nombre.trim(), ciudad: ciudad.trim(), ...(referralCode ? { ref: referralCode } : {}) },
           emailRedirectTo: `${siteUrl}/auth/callback`,
         },
       });

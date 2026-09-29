@@ -128,7 +128,7 @@ export async function enrutarPeticionIA(
       for (const alt of alternativas) {
         if (await iaDisponible(alt)) {
           iaUsada = alt;
-          console.log(`🔄 Router: ${iaPreferidaParaTarea} lleno, usando ${alt}`);
+          console.log(`🔄 Router: ${iaPreferidaParaTarea} no disponible, usando ${alt}`);
           encontrada = true;
           break;
         }

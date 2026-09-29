@@ -69,6 +69,21 @@ export default function AuthCallbackPage() {
           }
         }
 
+        // LA BIENVENIDA, AQUÍ: es el primer momento con sesión. El formulario de
+        // registro también la pide, pero con la confirmación por correo aún no
+        // hay sesión y se quedaba en un 401: sin ficha, sin ciudad, sin alerta y
+        // sin correo de bienvenida (29 sep 2026). El servidor la hace una sola
+        // vez por cuenta, así que da igual que llegue dos veces.
+        const { data: { session: sesion } } = await supabase.auth.getSession();
+        if (sesion) {
+          fetch("/api/auth/welcome", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${sesion.access_token}` },
+            body: "{}",
+            keepalive: true,
+          }).catch(() => {});
+        }
+
         if (!mountedRef.current) return;
         setEstado("ok");
 

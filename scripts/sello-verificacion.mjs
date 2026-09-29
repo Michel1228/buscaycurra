@@ -1491,7 +1491,8 @@ test("el centinela comprueba lo que prometemos", () => {
 test("la ciudad del registro llega al perfil", () => {
   const w = leerFuente("app/api/auth/welcome/route.ts");
   return w.includes('.from("profiles")') &&
-    w.includes("ciudad: ciudad.trim()") &&
+    w.includes("...(ciudad ? { ciudad } : {})") &&                          // ficha nueva, con ciudad
+    w.includes("if (ciudad && !perfilActual.ciudad?.trim()) faltan.ciudad = ciudad") && // ficha vieja sin ciudad
     w.includes(".insert({") &&        // crea la ficha si no existia
     w.includes("maybeSingle()");      // y no falla cuando no hay fila
 });
@@ -1699,6 +1700,25 @@ test("el enrutador de IA cae a Groq/Gemini si DeepSeek falla por cualquier motiv
     /for \(const fallback of alternativas\)[\s\S]*?ejecutarTareaConIA\(fallback/.test(bloqueCatch) &&
     /DEEPSEEK[\s\S]{0,40}402[\s\S]{0,20}apagarDeepSeek\(\)/.test(bloqueCatch) &&
     /preferidaOk = await iaDisponible\(iaPreferidaParaTarea\)\s*&& !\(iaPreferidaParaTarea === "deepseek" && deepseekApagado\(\)\)/.test(r);
+});
+
+// ── EL REGISTRO NO PUEDE PERDER LO QUE ESCRIBE LA PERSONA ─────────────────
+//
+// El formulario llamaba a /api/auth/welcome sin sesion (con la confirmacion por
+// correo aun no la hay) y se quedaba en un 401. A 29 sep 2026: de 14 registros
+// desde el 23 sep, 12 habian escrito su ciudad, 2 la tenian guardada, y ninguno
+// tenia alerta ni correo de bienvenida. Ahora la llama la pagina de
+// confirmacion con la sesion ya abierta, y el servidor lee los datos de la
+// cuenta y la hace una sola vez.
+test("la bienvenida se hace al confirmar el correo, con sesion y una sola vez", () => {
+  const cb = leerFuente("app/auth/callback/page.tsx");
+  const w = leerFuente("app/api/auth/welcome/route.ts");
+  const reg = leerFuente("app/auth/registro/page.tsx");
+  return /fetch\("\/api\/auth\/welcome"[\s\S]{0,200}Authorization: `Bearer \$\{sesion\.access_token\}`/.test(cb) &&
+    !w.includes("email y nombre requeridos") &&
+    /cuerpo\.ciudad \|\| meta\.ciudad/.test(w) &&
+    /if \(cuenta\.app_metadata\?\.bienvenida_en\)/.test(w) &&
+    /ref: referralCode/.test(reg.slice(reg.indexOf("auth.signUp"), reg.indexOf("auth.signUp") + 600));
 });
 
 // ── LA WEB PUBLICA NO PUEDE MENTIR ─────────────────────────────────────────
