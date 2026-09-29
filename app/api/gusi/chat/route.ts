@@ -881,7 +881,8 @@ async function respuestaDesplazamiento(texto: string, ciudadCv: string): Promise
   l.push(`🚗 **De ${mayus(origen)} a ${mayus(destino)}:** ${c.km} km, unos ${c.minutos} min por trayecto.`);
   l.push("");
   l.push(`⛽ Con el gasóleo a **${c.precioLitro.toFixed(3)} €/l** (precio oficial de hoy), ir y volver cada día laborable son **${c.costeSolo} € al mes** yendo solo, **${c.costeCompartido2} €** compartiendo coche entre dos y **${c.costeCompartido3} €** entre tres.`);
-  if (c.veredicto) { l.push(""); l.push(c.veredicto); }
+  // Sin sueldo, el "veredicto" de calcularCoste repite estas mismas cifras y la
+  // misma coletilla del sueldo: en la primera prueba salía dos veces seguidas.
   l.push("");
   l.push("💡 Si me dices lo que pagan en la oferta, te digo cuánto te quedaría limpio.");
   return l.join("\n");
