@@ -37,53 +37,64 @@ export async function GET(request: NextRequest) {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    // Ofertas nuevas hoy desde la BD local (JobListing PostgreSQL)
-    let ofertasHoy = 0;
-    try {
-      const pool = getPool();
-      const res = await pool.query<{ count: string }>(
-        `SELECT COUNT(*)::int AS count FROM "JobListing"
-         WHERE "isActive" = true AND "createdAt" >= $1`,
-        [hoy.toISOString()]
-      );
-      ofertasHoy = parseInt(res.rows[0]?.count || "0", 10);
-    } catch { /* fallback a 0 si la BD local no está disponible */ }
+    // TODO A LA VEZ. Eran seis consultas seguidas (cinco a Supabase, que está
+    // fuera del servidor, y una a la base propia) y el panel —lo primero que
+    // se ve al entrar— tardaba 6,8 s (medido el 30 sep 2026). Ninguna depende
+    // de otra, así que se lanzan juntas y se espera solo a la más lenta.
+    const [
+      ofertasHoy,
+      { count: cvsEnviadosTotal },
+      { count: cvsEnviadosHoy },
+      { count: entrevistasPendientes },
+      { count: pipelineActivo },
+      { data: profile },
+    ] = await Promise.all([
+      // Ofertas nuevas hoy desde la BD local (JobListing PostgreSQL)
+      getPool()
+        .query<{ count: string }>(
+          `SELECT COUNT(*)::int AS count FROM "JobListing"
+           WHERE "isActive" = true AND "createdAt" >= $1`,
+          [hoy.toISOString()]
+        )
+        .then((res) => parseInt(res.rows[0]?.count || "0", 10))
+        .catch(() => 0), // fallback a 0 si la BD local no está disponible
 
-    // CVs enviados (total y hoy)
-    const { count: cvsEnviadosTotal } = await supabaseAdmin
-      .from("cv_sends")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .in("status", ESTADOS_QUE_GASTAN_CUOTA);
+      // CVs enviados (total y hoy)
+      supabaseAdmin
+        .from("cv_sends")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .in("status", ESTADOS_QUE_GASTAN_CUOTA),
 
-    const { count: cvsEnviadosHoy } = await supabaseAdmin
-      .from("cv_sends")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .in("status", ESTADOS_QUE_GASTAN_CUOTA)
-      .gte("created_at", hoy.toISOString());
+      supabaseAdmin
+        .from("cv_sends")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .in("status", ESTADOS_QUE_GASTAN_CUOTA)
+        .gte("created_at", hoy.toISOString()),
 
-    // Entrevistas pendientes (pipeline estado "entrevista") — filtrado en SQL
-    const { count: entrevistasPendientes } = await supabaseAdmin
-      .from("cv_sends")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .not("error_message", "is", null)
-      .like("error_message", '%"pipeline_estado":"entrevista"%');
+      // Entrevistas pendientes (pipeline estado "entrevista") — filtrado en SQL
+      supabaseAdmin
+        .from("cv_sends")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .not("error_message", "is", null)
+        .like("error_message", '%"pipeline_estado":"entrevista"%'),
 
-    // Ofertas en pipeline activas
-    const { count: pipelineActivo } = await supabaseAdmin
-      .from("cv_sends")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .not("status", "is", null);
+      // Ofertas en pipeline activas
+      supabaseAdmin
+        .from("cv_sends")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .not("status", "is", null),
 
-    // ── Ofertas recomendadas (basadas en ubicación/sector del perfil) ──
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("ciudad, sector")
-      .eq("id", userId)
-      .single();
+      // Perfil, para las ofertas recomendadas (ubicación/sector)
+      supabaseAdmin
+        .from("profiles")
+        .select("ciudad, sector")
+        .eq("id", userId)
+        .single(),
+    ]);
 
     // LAS SEIS OFERTAS DE LA PORTADA.
     //

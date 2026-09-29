@@ -788,6 +788,11 @@ test("los cuatro atajos del panel llevan iconos distintos", () => {
   const iconos = [...dashSrc.matchAll(/\{ icon: "([A-Z0-9]+)"/g)].map(m => m[1]);
   return iconos.length >= 4 && new Set(iconos).size === iconos.length;
 });
+// El panel es lo primero que se ve al entrar y tardaba 6,8 s (30 sep 2026):
+// seis consultas independientes, una detras de otra, cinco de ellas a Supabase.
+test("el panel lanza sus consultas a la vez, no en fila", () =>
+  /await Promise\.all\(\[[\s\S]{0,300}getPool\(\)/.test(dashSrc) &&
+  !/await supabaseAdmin\s*\.from\("cv_sends"\)/.test(dashSrc));
 test("el respaldo de icono desconocido avisa en vez de callarse", () =>
   leerFuente("app/app/bienvenida/BienvenidaClient.tsx").includes("icono desconocido"));
 
