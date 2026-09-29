@@ -22,6 +22,7 @@ import { scheduleCV, getNextBusinessHour } from "@/lib/cv-sender/scheduler";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { addCVJob } from "@/lib/cv-sender/queue";
 import { canSendToCompany } from "@/lib/cv-sender/tracker";
+import { motivoParaNoEnviar } from "@/lib/cv-sender/direccion-segura";
 import { secretIguales } from "@/lib/secret-compare";
 
 // ─── Programa empresas adicionales en background para "cada4días" ─────────────
@@ -73,6 +74,7 @@ async function programarEmpresasAdicionales(opts: {
 
       const puedeEnviar = await canSendToCompany(opts.userId, oferta.emailEmpresa);
       if (!puedeEnviar) continue;
+      if (await motivoParaNoEnviar(oferta.emailEmpresa)) continue;
 
       const rateLimitOk = await checkRateLimit(opts.userId, opts.userPlan, oferta.emailEmpresa);
       if (!rateLimitOk.allowed) continue;
@@ -188,6 +190,12 @@ export async function POST(request: NextRequest) {
         { error: "El email de la empresa no tiene un formato válido" },
         { status: 400 }
       );
+    }
+
+    // Direcciones que se sabe que no van a llegar (ver lib/cv-sender/direccion-segura.ts)
+    const motivoNoEnviar = await motivoParaNoEnviar(companyEmail);
+    if (motivoNoEnviar) {
+      return NextResponse.json({ error: motivoNoEnviar }, { status: 400 });
     }
 
     // ── Verificar que el usuario tiene CV ───────────────────────────

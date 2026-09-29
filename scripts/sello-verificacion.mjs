@@ -1721,6 +1721,38 @@ test("la bienvenida se hace al confirmar el correo, con sesion y una sola vez", 
     /ref: referralCode/.test(reg.slice(reg.indexOf("auth.signUp"), reg.indexOf("auth.signUp") + 600));
 });
 
+// ── NO MANDAR CVs A DIRECCIONES QUE SE SABE QUE NO LLEGAN ──────────────────
+//
+// Del 1 al 29 sep 2026 rebotaron 9 de 25 envios (36 %): direcciones deducidas
+// que no existian y una "ejemplo@domain.com" sacada de una plantilla. Todos
+// nuestros correos salen por la misma cuenta de Resend, asi que cada rebote
+// resta entrega a las bienvenidas y a las alertas.
+test("los envios de CV se paran en direcciones de relleno o que ya rebotaron", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-direccion.cjs";
+  execFileSync("npx", ["esbuild", "lib/cv-sender/direccion-segura.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  const { esDireccionDeRelleno } = await import(`../${salida}`);
+  const casos = [
+    ["ejemplo@domain.com", true], ["rrhh@domain.com", true], ["tu@example.com", true], ["tuemail@gmail.com", true],
+    ["rrhh@mercadona.es", false], ["info@grupo-jorge.com", false], ["seleccion@user.es", false],
+  ];
+  let bien = true;
+  for (const [email, esperado] of casos) {
+    if (esDireccionDeRelleno(email) !== esperado) { console.log(`      ${email} -> ${!esperado}`); bien = false; }
+  }
+  try { unlinkSync(salida); } catch {}
+  // Y las dos puertas por las que entra un envio lo comprueban.
+  const send = leerFuente("app/api/cv-sender/send/route.ts");
+  const ds = leerFuente("lib/cv-sender/direccion-segura.ts");
+  return bien &&
+    /const motivoNoEnviar = await motivoParaNoEnviar\(companyEmail\);\s*if \(motivoNoEnviar\)/.test(send) &&
+    send.includes("if (await motivoParaNoEnviar(oferta.emailEmpresa)) continue;") &&
+    /\.eq\("status", "rebotado"\)/.test(ds) && /hard bounce\|spam/.test(ds);
+});
+
 // ── LA WEB PUBLICA NO PUEDE MENTIR ─────────────────────────────────────────
 //
 // El 22 sep 2026 el centro de ayuda decia "2 envios de CV al dia" en el plan
