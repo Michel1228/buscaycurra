@@ -1759,9 +1759,12 @@ test("los sueldos se interpretan bien y el resumen usa la mediana", async () => 
     "72000 - 90000", "72000 - 90000", "72000 - 90000"];
   const res = resumirSalarios(textos);
   const negociar = leerFuente("app/api/salarios/negociar/route.ts");
+  const api = leerFuente("app/api/salarios/route.ts");
   return bien && res.tipico === 21500 && res.conSalario === 13 &&
     !/description ILIKE/.test(negociar) &&
-    !leerFuente("app/api/salarios/route.ts").includes("substring(salary from '.*(");
+    !api.includes("substring(salary from '.*(") &&
+    // La lista de arriba: oficios comunes, no titulos exactos de una agencia.
+    api.includes("OCUPACIONES_COMUNES.map") && !/GROUP BY ocupacion/.test(api);
 });
 
 // ── NO MANDAR CVs A DIRECCIONES QUE SE SABE QUE NO LLEGAN ──────────────────

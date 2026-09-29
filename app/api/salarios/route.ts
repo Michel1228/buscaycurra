@@ -49,9 +49,17 @@ interface ProvinciaRow {
 
 // ─── Ocupaciones con sueldo (lista de arriba de la pantalla) ───
 //
-// Recorre TODAS las ofertas activas de España con sueldo (unas 6.200 de 2,4
-// millones, sin índice que ayude: unos 10 s). Cambia poco, así que se guarda
-// seis horas en memoria en vez de repetir la consulta en cada visita.
+// Antes se agrupaba por TÍTULO EXACTO de todas las ofertas con sueldo, y la
+// lista la llenaban anuncios repetidos de una agencia: "operario/a almacén pvh
+// (tommy hilfiger & calvin klein) con alojamiento incluido", a 150.000 €
+// (sueldos por hora que Adzuna publica multiplicados). Ahora son los oficios
+// más comunes, cada uno medido igual que cuando se busca a mano: al pulsarlo
+// sale la misma cifra. Se guarda seis horas en memoria.
+const OCUPACIONES_COMUNES = [
+  "camarero", "dependiente", "administrativo", "programador", "enfermero",
+  "electricista", "conductor", "cocinero", "limpieza", "carretillero",
+];
+
 interface Ocupacion {
   puesto: string;
   total: number;
@@ -65,27 +73,22 @@ async function ocupacionesConSueldo(pool: ReturnType<typeof getPool>): Promise<O
   if (_ocupacionesCache && Date.now() - _ocupacionesCache.ts < 6 * 60 * 60 * 1000) {
     return _ocupacionesCache.datos;
   }
-  const { rows } = await pool.query(
-    `SELECT LOWER(TRIM(REGEXP_REPLACE(title, '(Senior|Junior|Jr\\.|Sr\\.|Lead|Trainee|Becario|Prácticas)', '', 'gi'))) AS ocupacion,
-            salary
-     FROM "JobListing"
-     WHERE "isActive" = true AND salary ~ '[0-9]' AND LOWER(country) = 'es'`
+  const medidas = await Promise.all(
+    OCUPACIONES_COMUNES.map(async (puesto): Promise<Ocupacion | null> => {
+      const { rows } = await pool.query(
+        `SELECT salary FROM "JobListing"
+         WHERE "isActive" = true AND title ILIKE $1 AND LOWER(country) = 'es'
+           AND salary ~ '[0-9]'
+         LIMIT 5000`,
+        [`%${puesto}%`]
+      );
+      const r = resumirSalarios((rows as Array<{ salary: string }>).map((f) => f.salary));
+      return r && r.conSalario >= 5
+        ? { puesto, total: r.conSalario, avg_salary: r.tipico, min_salary: r.bajo, max_salary: r.alto }
+        : null;
+    })
   );
-  const grupos = new Map<string, string[]>();
-  for (const r of rows as Array<{ ocupacion: string | null; salary: string }>) {
-    const o = (r.ocupacion || "").trim();
-    if (o.length <= 2) continue;
-    if (!grupos.has(o)) grupos.set(o, []);
-    grupos.get(o)!.push(r.salary);
-  }
-  const datos: Ocupacion[] = [];
-  for (const [puesto, sueldos] of grupos) {
-    const r = resumirSalarios(sueldos);
-    if (r && r.conSalario >= 10 && r.tipico >= 12000) {
-      datos.push({ puesto, total: r.conSalario, avg_salary: r.tipico, min_salary: r.bajo, max_salary: r.alto });
-    }
-  }
-  datos.sort((a, b) => b.total - a.total).splice(10);
+  const datos = medidas.filter((o): o is Ocupacion => o !== null).sort((a, b) => b.total - a.total);
   _ocupacionesCache = { ts: Date.now(), datos };
   return datos;
 }
