@@ -39,6 +39,12 @@ async function askGroq(prompt: string): Promise<string> {
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: GROQ_MODEL,
+        // gpt-oss razona antes de contestar y ese razonamiento sale del mismo
+        // max_tokens: sin esto, una carta larga puede quedarse en blanco y el
+        // envío sale con la carta genérica. Todas las demás llamadas a gpt-oss
+        // de la aplicación ya lo llevaban; esta, que es la de los envíos de CV,
+        // no (auditoría del 29 sep 2026).
+        reasoning_effort: "low",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 1200,
@@ -61,8 +67,8 @@ async function askGroq(prompt: string): Promise<string> {
  * Personaliza el CV y genera una carta de presentación para una empresa concreta.
  *
  * El proceso:
- *   1. Envía el CV y la info de la empresa a OpenClaw
- *   2. OpenClaw analiza el sector, tamaño y cultura de la empresa
+ *   1. Envía el CV y la info de la empresa a la IA (Groq)
+ *   2. La IA analiza el sector, tamaño y cultura de la empresa
  *   3. Genera una carta personalizada destacando las skills más relevantes
  *   4. Devuelve la carta + el asunto del email
  *
@@ -97,6 +103,7 @@ CÓMO DEBE SONAR:
 - En primera persona ("yo"), frases sencillas y directas. Que se note que hay una persona detrás.
 - Concreta: menciona la empresa por su nombre y conecta 1 o 2 cosas REALES del CV con lo que puede aportar. Nada de habilidades genéricas inventadas.
 - Breve: 3 párrafos cortos — saludo cálido, cuerpo, y un cierre sencillo con ganas de charlar.
+- Trata a la empresa SIEMPRE igual, de "vosotros" ("os escribo", "vuestro equipo", "quedo a vuestra disposición"). Nunca mezcles con "tú" ("tu tiempo", "a tu disposición"): en una carta a una empresa suena descuidado.
 
 EVITA A TODA COSTA (suena a robot / plantilla): "Me dirijo a ustedes", "Me complace", "Considero que mi perfil", "adjunto mi CV", "en la era actual", "sinergias", "proactivo con capacidad de adaptación", "aportar valor a su equipo". Si una frase no dice nada real, quítala.
 
@@ -143,8 +150,8 @@ export async function generateSubjectLine(
 // ─── Funciones Auxiliares ─────────────────────────────────────────────────────
 
 /**
- * Parsea la respuesta estructurada de OpenClaw.
- * OpenClaw devuelve la carta, el asunto y las skills en formato texto.
+ * Parsea la respuesta estructurada de la IA (Groq).
+ * La IA devuelve la carta, el asunto y las skills en formato texto.
  */
 function parseOpenClawResponse(
   response: string,
@@ -156,9 +163,12 @@ function parseOpenClawResponse(
   const asuntoMatch = response.match(/ASUNTO:\s*(.*?)(?=SKILLS_DESTACADAS:|$)/i);
   const skillsMatch = response.match(/SKILLS_DESTACADAS:\s*(.*?)$/im);
 
-  const coverLetter = cartaMatch?.[1]?.trim() ?? generateGenericLetter(companyInfo, jobTitle).coverLetter;
+  // `||` y no `??`: si la IA devuelve "CARTA:" sin nada detrás, el texto es ""
+  // (no null) y con `??` el CV salía con la carta VACÍA. Una carta en blanco a
+  // una empresa es peor que la genérica.
+  const coverLetter = cartaMatch?.[1]?.trim() || generateGenericLetter(companyInfo, jobTitle).coverLetter;
   const subjectLine =
-    asuntoMatch?.[1]?.trim() ??
+    asuntoMatch?.[1]?.trim() ||
     `Candidatura ${jobTitle ? `para ${jobTitle}` : "espontánea"} — ${companyInfo.name}`;
   const cvHighlights = skillsMatch?.[1]
     ?.split(",")
@@ -169,7 +179,7 @@ function parseOpenClawResponse(
 }
 
 /**
- * Genera una carta de presentación genérica cuando OpenClaw no está disponible.
+ * Genera una carta de presentación genérica cuando la IA no está disponible.
  * Es una carta profesional pero no personalizada para la empresa específica.
  */
 function generateGenericLetter(

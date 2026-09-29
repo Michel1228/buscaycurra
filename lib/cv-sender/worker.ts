@@ -6,7 +6,7 @@
  *
  * Proceso completo por cada job:
  *   1. Obtiene el CV del usuario de Supabase
- *   2. Personaliza la carta con OpenClaw IA
+ *   2. Personaliza la carta con IA (Groq, gpt-oss-120b; OpenClaw se retiró el 17 ago 2026)
  *   3. Busca el email de RRHH de la empresa
  *   4. Envía el CV por email (usando Resend)
  *   5. Registra el envío en Supabase
@@ -166,12 +166,12 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
 
   await job.updateProgress(40);
 
-  // ── Paso 3: Personalizar con OpenClaw IA ────────────────────────────────
+  // ── Paso 3: Personalizar la carta con IA (Groq) ────────────────────────────────
   let coverLetter: string;
   let subjectLine: string;
 
   if (useAIPersonalization) {
-    console.log(`[Worker] Paso 3/6: Personalizando carta con OpenClaw IA para ${companyName}...`);
+    console.log(`[Worker] Paso 3/6: Personalizando carta con IA (Groq) para ${companyName}...`);
 
     try {
       const personalizacion = await personalizeForCompany(
@@ -182,7 +182,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       coverLetter = personalizacion.coverLetter;
       subjectLine = personalizacion.subjectLine;
     } catch (aiError) {
-      console.warn(`[Worker] OpenClaw IA no disponible, usando carta genérica:`, (aiError as Error).message);
+      console.warn(`[Worker] IA de cartas no disponible, usando carta genérica:`, (aiError as Error).message);
       coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nQuedo a su disposición para cualquier consulta.\n\nUn cordial saludo,\n${nombre}`;
       subjectLine = jobTitle
         ? `Candidatura para ${jobTitle} — ${nombre}`

@@ -106,7 +106,7 @@ export async function estadoPrimerDia(
     }),
     sinRomperse(async () => {
       const r = await getPool().query("SELECT 1 FROM user_cvs WHERE user_id = $1 LIMIT 1", [userId]);
-      return (r.rowCount ?? 0) > 0;
+      return (r.rowCount ?? 0) > 0 || (await tienePdfSubido(supabase, userId));
     }),
     sinRomperse(async () => {
       const r = await supabase.from("cv_sends").select("id", { count: "exact", head: true }).eq("user_id", userId);
@@ -115,6 +115,28 @@ export async function estadoPrimerDia(
   ]);
 
   return construirPasos({ tieneZona: zona, tieneCv: cv, tieneEnvio: envio });
+}
+
+/**
+ * ¿Ha subido su CV en PDF?
+ *
+ * Hay DOS formas de tener CV: hacerlo en el editor (tabla user_cvs de la base
+ * propia) o subir el PDF que ya tenías (bucket "cvs" de Supabase). Al principio
+ * el paso "Sube tu CV" solo miraba la primera, y el 29 sep 2026 se vio que a una
+ * persona le había llegado el recordatorio "Sube tu CV" teniéndolo subido. El
+ * envío de CVs ya contaba con las dos (lib/cv-sender/worker.ts).
+ */
+async function tienePdfSubido(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any, any, any>,
+  userId: string
+): Promise<boolean> {
+  try {
+    const { data } = await supabase.storage.from("cvs").list(userId, { limit: 5, search: "cv.pdf" });
+    return !!data?.some((f) => f.name === "cv.pdf");
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -143,6 +165,10 @@ export async function usuariosAMedias(
     (perfiles.data || []).filter((p: { ciudad: string | null }) => p.ciudad?.trim()).map((p: { id: string }) => p.id)
   );
   const conCv = new Set((cvs.rows || []).map((r) => r.user_id));
+  // Quien no está en el editor puede haber subido su PDF: se mira solo a esos.
+  for (const id of userIds) {
+    if (!conCv.has(id) && (await tienePdfSubido(supabase, id))) conCv.add(id);
+  }
   const conEnvio = new Set((envios.data || []).map((e: { user_id: string }) => e.user_id));
 
   for (const id of userIds) {

@@ -1376,6 +1376,19 @@ test("el centinela vigila que la aplicacion llega a Redis", () => {
   return c.includes("la aplicacion llega a Redis") && c.includes("redis.ping()");
 });
 
+// ── LA CARTA DE LOS ENVIOS ─────────────────────────────────────────────────
+//
+// Auditoria del 29 sep 2026 sobre lo mas importante de la app, el envio de CV:
+// la llamada que escribe la carta era la unica a gpt-oss sin reasoning_effort
+// (puede devolver vacio), y si la IA devolvia "CARTA:" sin texto, `??` no lo
+// sustituia y el CV salia con la carta en blanco.
+test("la carta del envio no puede salir en blanco", () => {
+  const p = leerFuente("lib/cv-sender/cv-personalizer.ts");
+  return p.includes('reasoning_effort: "low"') &&
+    p.includes("cartaMatch?.[1]?.trim() || generateGenericLetter") &&
+    !p.includes("cartaMatch?.[1]?.trim() ?? generateGenericLetter");
+});
+
 // ── LA CAMARA ──────────────────────────────────────────────────────────────
 //
 // Probado el 29 sep 2026 con fotos reales: el reconocimiento de la imagen
@@ -1442,6 +1455,8 @@ test("los pasos del primer dia se miden con datos reales", () => {
   return codigo.includes("FROM user_cvs WHERE user_id") &&
     codigo.includes('from("cv_sends")') &&
     codigo.includes('select("ciudad")') &&
+    // El CV puede estar en el editor o subido como PDF: se cuentan las dos.
+    codigo.includes('storage.from("cvs")') &&
     !/onboarding_completado|primer_dia_hecho/.test(codigo);
 });
 
