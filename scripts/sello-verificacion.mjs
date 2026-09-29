@@ -559,6 +559,12 @@ test("detectIntent CLASIFICA BIEN frases reales (no solo existe el texto)", asyn
       // Y que no se haya vuelto tan glotona que se coma las busquedas normales.
       ["camarero en Madrid", "buscar"],
       ["ingeniero de sonido en Barcelona", "buscar"],
+      // Auditoria del 29 sep 2026: las tres se iban a "buscar ofertas" o a
+      // charla vaga. La primera es la frase exacta que le fallo a Michel.
+      ["quiero echar el curriculum en la papelera de buñuel", "info_empresa"],
+      ["¿qué papeles necesito para trabajar en Alemania?", "papeles_pais"],
+      ["¿me compensa ir a trabajar a Zaragoza desde Tudela?", "desplazamiento"],
+      ["hola, busco trabajo de camarero en Tudela", "buscar"],
     ];
     const fallos = casos.filter(([frase, esperado]) => detectIntent(frase) !== esperado);
     if (fallos.length) {

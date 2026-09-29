@@ -18,6 +18,8 @@ import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
 import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { aliasCiudad } from "@/lib/guzzi/ciudades-pais";
+import { LISTA_PAISES } from "@/lib/paises";
+import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import { callGroq, callDeepSeek, callOpenAI, deepseekApagado, apagarDeepSeek } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 
@@ -790,6 +792,101 @@ function extractCompanyName(text: string): string | null {
   return null;
 }
 
+function sinTildes(s: string): string {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+}
+
+/**
+ * Papeles para trabajar en un país, desde lib/primeros-pasos.ts.
+ *
+ * Cada documento lleva su plazo y, cuando lo hay, el enlace oficial: es lo que
+ * se puede comprobar. null si el país no tiene ficha (entonces contesta la IA).
+ */
+function respuestaPapelesPais(texto: string): string | null {
+  const tn = sinTildes(texto);
+  const ALIAS: Record<string, string> = {
+    inglaterra: "UK", londres: "UK", "reino unido": "UK", eeuu: "US", "estados unidos": "US",
+    holanda: "NL", chequia: "CZ", "republica checa": "CZ",
+  };
+  let codigo: string | undefined;
+  for (const [alias, cod] of Object.entries(ALIAS)) {
+    if (new RegExp(`\\b${alias}\\b`).test(tn)) { codigo = cod; break; }
+  }
+  if (!codigo) {
+    codigo = LISTA_PAISES.find((p) =>
+      [p.nombre, p.nombreLocal].some((n) => n && new RegExp(`\\b${sinTildes(n)}\\b`).test(tn))
+    )?.codigo;
+  }
+  if (!codigo) return null;
+  const info = getPrimerosPasos(codigo);
+  const pais = LISTA_PAISES.find((p) => p.codigo === codigo);
+  if (!info || !pais) return null;
+
+  const l: string[] = [];
+  l.push(`🌍 **Papeles para trabajar en ${pais.nombre}**`);
+  l.push("");
+  l.push(`🛂 ${info.visado.descripcion}${info.visado.enlaceOficial ? ` · [Fuente oficial](${info.visado.enlaceOficial})` : ""}`);
+  if (info.papeleo.documentos.length) {
+    l.push("");
+    l.push("📄 **Lo que vas a necesitar:**");
+    for (const d of info.papeleo.documentos.slice(0, 6)) {
+      l.push(`• **${d.nombre}**${d.obligatorio ? "" : " (recomendable)"} — ${d.descripcion} _(${d.tiempoObtener})_${d.enlaceOficial ? ` · [Dónde](${d.enlaceOficial})` : ""}`);
+    }
+  }
+  if (info.papeleo.consejo) {
+    l.push("");
+    l.push(`💡 ${info.papeleo.consejo}`);
+  }
+  l.push("");
+  l.push(`👉 [Guía completa para trabajar en ${pais.nombre}](/trabajar-en/${codigo.toLowerCase()}): ofertas, alojamiento y salarios.`);
+  return l.join("\n");
+}
+
+/**
+ * "¿Me compensa ir a trabajar a Zaragoza desde Tudela?" → la cuenta de verdad.
+ *
+ * Saca el origen ("desde X", "de X a Y") y el destino ("a Y", "hasta Y"); si no
+ * hay origen, usa la ciudad del CV. Kilómetros, minutos y gasóleo al mes con el
+ * precio oficial del Ministerio (lib/guzzi/desplazamiento.ts). null si no se
+ * entiende el trayecto: entonces contesta la IA.
+ */
+async function respuestaDesplazamiento(texto: string, ciudadCv: string): Promise<string | null> {
+  const tn = sinTildes(texto).replace(/[¿?¡!.,;:]/g, " ");
+  const CORTE = /\s(?:a|hasta|desde|de|para|y|todos|cada|al|en|me|si|compensa|merece|trabajar|ir)\s/;
+  const lugar = (s: string | undefined) => {
+    if (!s) return "";
+    const limpio = (" " + s + " ").split(CORTE)[0].trim().split(/\s+/).slice(0, 3).join(" ");
+    return limpio.length >= 3 ? limpio : "";
+  };
+  let origen = "";
+  let destino = "";
+  const deA = tn.match(/\bde\s+([a-z\s]{3,40}?)\s+(?:a|hasta)\s+([a-z\s]{3,40})/);
+  if (deA) { origen = lugar(deA[1]); destino = lugar(deA[2]); }
+  const desde = tn.match(/\bdesde\s+([a-z\s]{3,40})/);
+  if (desde) origen = lugar(desde[1]);
+  if (!destino) {
+    const hacia = tn.match(/\b(?:ir(?:me)?|trabajar|moverme|viajar|currar)\s+(?:a\s+trabajar\s+)?(?:a|hasta|en)\s+([a-z\s]{3,40})/);
+    destino = lugar(hacia?.[1]);
+  }
+  if (!origen) origen = sinTildes(ciudadCv);
+  if (!origen || !destino || origen === destino) return null;
+
+  const mayus = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+  const { calcularCoste } = await import("@/lib/guzzi/desplazamiento");
+  const c = await calcularCoste(mayus(origen), mayus(destino), undefined, "ES");
+  if (!c) {
+    return `🚗 No encuentro **${mayus(origen)}** o **${mayus(destino)}** en el mapa. Escríbemelo así: "¿me compensa ir de Tudela a Zaragoza?"`;
+  }
+  const l: string[] = [];
+  l.push(`🚗 **De ${mayus(origen)} a ${mayus(destino)}:** ${c.km} km, unos ${c.minutos} min por trayecto.`);
+  l.push("");
+  l.push(`⛽ Con el gasóleo a **${c.precioLitro.toFixed(3)} €/l** (precio oficial de hoy), ir y volver cada día laborable son **${c.costeSolo} € al mes** yendo solo, **${c.costeCompartido2} €** compartiendo coche entre dos y **${c.costeCompartido3} €** entre tres.`);
+  if (c.veredicto) { l.push(""); l.push(c.veredicto); }
+  l.push("");
+  l.push("💡 Si me dices lo que pagan en la oferta, te digo cuánto te quedaría limpio.");
+  return l.join("\n");
+}
+
 function localReply(intent: string, cv?: CVParsed | null): string {
   switch (intent) {
     case "foto":
@@ -1039,14 +1136,35 @@ El candidato tiene mucha experiencia.
       return NextResponse.json({ reply, action: "carta_recomendacion", empresa: cartaEmpresa, puesto: cartaPuesto });
     }
 
-    // -- Intent: info empresa (Google Places) ----------------------------------
     const preIntent = detectIntent(message, history);
+
+    // -- Intent: papeles para trabajar en otro país (datos verificados) --------
+    // La respuesta sale de lib/primeros-pasos.ts, con los enlaces oficiales, y
+    // no de la memoria del modelo gratuito, que en una prueba dijo que el carné
+    // español de manipulador de alimentos vale en Alemania (no vale).
+    if (preIntent === "papeles_pais") {
+      const respuesta = respuestaPapelesPais(message);
+      if (respuesta) return NextResponse.json({ reply: respuesta, action: "papeles_pais" });
+      // Sin ficha de ese país, sigue el flujo normal y contesta la IA.
+    }
+
+    // -- Intent: ¿me compensa ir a trabajar a otro sitio? (la cuenta real) -----
+    if (preIntent === "desplazamiento") {
+      const respuesta = await respuestaDesplazamiento(message, cvParsed?.ciudad || "");
+      if (respuesta) return NextResponse.json({ reply: respuesta, action: "desplazamiento" });
+    }
+
+    // -- Intent: info empresa (Google Places) ----------------------------------
     if (preIntent === "info_empresa") {
       // extractCompanyFromContact cubre "manda un correo al Mercadona de la
       // calle X"; extractCompanyName cubre "info sobre la empresa X". Se prueba
       // primero el de contacto porque es el que limpia la coletilla de la vía.
-      const companyName = extractCompanyFromContact(message) || extractCompanyName(message);
       const searchCity = extractCity(message) || "";
+      let companyName = extractCompanyFromContact(message) || extractCompanyName(message);
+      // "Echar el currículum en Tudela" no es una empresa: es un pueblo. Si lo
+      // que queda es la propia ciudad, se pregunta a qué empresa en vez de
+      // buscar un negocio que se llame "Tudela".
+      if (companyName && searchCity && sinTildes(companyName) === sinTildes(searchCity)) companyName = null;
       const searchAddress = extractAddress(message) || "";
 
       // Si no es un nombre de empresa concreto, pero es búsqueda por sector+ciudad

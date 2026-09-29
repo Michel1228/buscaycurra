@@ -60,6 +60,39 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
     return "cv_por_pais";
   }
 
+  // PAPELES PARA TRABAJAR EN OTRO PAÍS. "¿Qué papeles necesito para trabajar en
+  // Alemania?" caía en la regla genérica "algo EN algún sitio" y Guzzi buscaba
+  // OFERTAS en Alemania (y no encontraba), en vez de contestar la pregunta.
+  // Comprobado el 29 sep 2026. La respuesta sale de lib/primeros-pasos.ts, que
+  // tiene los documentos con su enlace oficial, y no de la memoria del modelo:
+  // el gratuito dijo en una prueba que el carné español de manipulador vale en
+  // Alemania, y no vale.
+  {
+    const hablaDePapeles = /(papeles|documentos?|documentaci[oó]n|visados?|\bvisa\b|permiso\s+de\s+(trabajo|residencia)|requisitos|tr[aá]mites?|\bnie\b|empadron|seguridad\s+social|homolog)/i.test(tn);
+    const nombraPais = /\b(alemania|francia|italia|portugal|b[eé]lgica|holanda|pa[ií]ses\s+bajos|suiza|austria|irlanda|reino\s+unido|inglaterra|londres|noruega|suecia|dinamarca|finlandia|polonia|grecia|chequia|rep[uú]blica\s+checa|hungr[ií]a|ruman[ií]a|estados\s+unidos|eeuu|canad[aá]|australia|nueva\s+zelanda|jap[oó]n|singapur)\b/i.test(tn);
+    if (hablaDePapeles && nombraPais) return "papeles_pais";
+  }
+
+  // ¿ME COMPENSA IR A TRABAJAR A OTRO SITIO? "¿Me compensa ir a trabajar a
+  // Zaragoza desde Tudela?" acababa en charla y el modelo contestaba
+  // vaguedades ("depende de varios factores"), cuando la aplicación SÍ sabe
+  // calcularlo: kilómetros, minutos y gasóleo al mes con el precio oficial de
+  // hoy (lib/guzzi/desplazamiento.ts). Hace falta hablar de coste o distancia Y
+  // de un trayecto ("desde X", "de X a Y").
+  {
+    const hablaDeCoste = /(compensa|merece\s+la\s+pena|cu[aá]nto\s+(?:me\s+)?(?:cuesta|gasto|gastar[ií]a|sale|saldr[ií]a)|gasolina|gasoil|gas[oó]leo|kil[oó]metros|\bkms?\b|desplaz|ir\s+y\s+venir|a\s+diario|todos\s+los\s+d[ií]as)/i.test(tn);
+    const hayTrayecto = /\bdesde\s+[a-z]{3,}/i.test(tn) || /\bde\s+[a-z]{3,}(?:\s+[a-z]{3,})?\s+(?:a|hasta)\s+[a-z]{3,}/i.test(tn);
+    if (hablaDeCoste && hayTrayecto) return "desplazamiento";
+  }
+
+  // "Quiero echar el currículum en La Papelera de Buñuel", "dejar el CV en el
+  // Mercadona". Es un envío a UNA empresa concreta; antes la regla genérica
+  // "algo EN algún sitio" lo convertía en búsqueda de ofertas en Buñuel. Es
+  // justo lo que le pasó a Michel el 22 sep 2026 y seguía pasando el 29.
+  if (/(?:echar|echo|dejar|dejo|llevar|llevo|entregar|entrego|presentar|meter)\w*\s+(?:el\s+|mi\s+|un\s+)?(?:cv|curr[ií]culum|curriculum|curr[ií]culo)\s+(?:en|a|al|para)\s+[a-z0-9]/i.test(tn)) {
+    return "info_empresa";
+  }
+
   if (/(?:busca|busco|info|información|hay|conoces|sabes)\s+(?:el\s+|la\s+|los\s+|las\s+|un\s+|una\s+)?(?:bar\s+|restaurante\s+|tienda\s+|hotel\s+|cafeter[ií]a\s+|empresa\s+|supermercado\s+|taller\s+|panader[ií]a\s+|farmacia\s+|cl[ií]nica\s+|peluquer[ií]a\s+)/i.test(t)) return "info_empresa";
   if (/empresas?\s+(?:de|del?)\s+\w+/i.test(t) && /\s+(?:en|por|cerca)\s+\w+/i.test(t)) return "info_empresa";
   if (/(?:qué|que)\s+(?:empresas?|f[áa]bricas?|negocios?|comercios?|tiendas?)\s+(?:hay|conoces|sabes)\s+(?:en|por|cerca|de)\s+\w+/i.test(t)) return "info_empresa";
@@ -149,8 +182,10 @@ export function extractAddress(text: string): string | null {
  * frases tipo "info sobre la empresa X" y no cubre estos verbos.
  */
 export function extractCompanyFromContact(text: string): string | null {
+  // "echar/dejar/llevar el currículum EN la Papelera de Buñuel" también: es como
+  // lo dice la gente cuando quiere trabajar en un sitio concreto.
   const m = text.match(
-    /(?:env[ií]a\w*|m[aá]nda\w*|escrib\w*|contact\w*)\s+(?:un\s+|el\s+|mi\s+)?(?:correo|email|e-mail|mail|cv|curr[ií]culum|candidatura)?\s*(?:a|al|con|para)\s+(?:la\s+|el\s+|los\s+|las\s+)?([A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9&'’.-]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9&'’.-]+){0,3})/i
+    /(?:env[ií]a\w*|m[aá]nda\w*|escrib\w*|contact\w*|echar|echo|dejar|dejo|llevar|llevo|entregar|entrego|presentar|meter)\s+(?:un\s+|el\s+|mi\s+)?(?:correo|email|e-mail|mail|cv|curr[ií]culum|curriculum|curr[ií]culo|candidatura)?\s*(?:a|al|con|para|en)\s+(?:la\s+|el\s+|los\s+|las\s+)?([A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9&'’.-]+(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9&'’.-]+){0,3})/i
   );
   if (!m?.[1]) return null;
   let nombre = m[1].trim();
