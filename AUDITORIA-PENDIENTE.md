@@ -61,6 +61,18 @@ de abajo sobre Japón y Suecia están corregidas por eso.
 
 ## YA ARREGLADO (no volver a mirarlo)
 
+- **La cámara reconocía la marca y luego devolvía cualquier cosa (29 sep 2026).**
+  Probado con fotos reales: el reconocimiento acertaba (Nike Air Max, Adidas,
+  Font Vella, Zara), pero Nike devolvía una tienda de deportes, Font Vella una
+  fuente de Girona, las "ofertas cerca de Tudela" eran de Berlín y Plymouth, el
+  modelo tenía orden de adivinar marcas, una fachada de Zara devolvía el
+  Stradivarius de al lado y el botón de enviar CV no salía nunca tras una foto.
+  Ahora (`lib/camara/ficha-marca.ts`): la empresa de verdad (Nike, Inc.; Aguas
+  Danone; Inditex), su web y portal de empleo **comprobados**, sus tiendas y las
+  que la venden por separado, sus ofertas reales en España (Nike 8, Adidas 14),
+  y queda guardada. Nueve tests del sello. **Pendiente de Michel: probarlo desde
+  el móvil**, que es lo único que no se ha podido comprobar desde el servidor.
+
 - **Guardar una oferta desde una notificación fallaba siempre (22 sep 2026).**
   La pantalla llamaba a `/api/jobs/save` y `/api/jobs/unsave`, que **no
   existen** (es `/api/jobs/guardar`, con la acción en el cuerpo): 404 y un
