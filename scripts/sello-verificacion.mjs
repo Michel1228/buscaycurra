@@ -1687,6 +1687,20 @@ test("Guzzi deja de llamar a DeepSeek cuando se queda sin saldo", () => {
     chat.includes("!deepseekApagado()") && chat.includes("apagarDeepSeek()");
 });
 
+// El enrutador de IA ("Mejorar mi CV", carta y nota ATS) elegia DeepSeek por
+// defecto y, si fallaba por algo que no fuera "limite diario", relanzaba el
+// error. Con el 402 de falta de saldo, esas dos pantallas daban error 500 a
+// todos los usuarios (comprobado en produccion el 29 sep 2026).
+test("el enrutador de IA cae a Groq/Gemini si DeepSeek falla por cualquier motivo", () => {
+  const r = leerFuente("lib/ai/ai-router.ts");
+  const bloqueCatch = r.slice(r.indexOf("} catch (error) {"), r.indexOf("// EJECUTOR DE TAREAS"));
+  const soloLimites = /if\s*\(\s*mensaje === "GROQ_LIMIT_REACHED"/.test(bloqueCatch);
+  return !soloLimites &&
+    /for \(const fallback of alternativas\)[\s\S]*?ejecutarTareaConIA\(fallback/.test(bloqueCatch) &&
+    /DEEPSEEK[\s\S]{0,40}402[\s\S]{0,20}apagarDeepSeek\(\)/.test(bloqueCatch) &&
+    /preferidaOk = await iaDisponible\(iaPreferidaParaTarea\)\s*&& !\(iaPreferidaParaTarea === "deepseek" && deepseekApagado\(\)\)/.test(r);
+});
+
 // ── LA WEB PUBLICA NO PUEDE MENTIR ─────────────────────────────────────────
 //
 // El 22 sep 2026 el centro de ayuda decia "2 envios de CV al dia" en el plan

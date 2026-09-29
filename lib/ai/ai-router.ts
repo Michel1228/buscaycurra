@@ -14,6 +14,7 @@ import { get } from "../cache/redis-client";
 import { llamarGroq, analizarOfertaTrabajo, LIMITE_DIARIO_GROQ } from "./groq-client";
 import { llamarGemini, extraerDatosEmpresa, LIMITE_DIARIO_GEMINI } from "./gemini-client";
 import { llamarDeepSeek, LIMITE_DIARIO_DEEPSEEK } from "./deepseek-client";
+import { deepseekApagado, apagarDeepSeek } from "@/lib/guzzi/llm";
 import { TipoPeticionIA } from "../cache/ai-cache";
 
 // ==========================================
@@ -102,22 +103,26 @@ export async function enrutarPeticionIA(
 ): Promise<RespuestaRouter> {
   const inicio = Date.now();
   let iaUsada: IA | "cola" = "groq";
+  let iaIntentada: IA | null = null; // la que estaba respondiendo si algo falla
   let respuesta = "";
 
   try {
     const iaPreferidaParaTarea = iaPreferida(tarea);
 
-    // Comprobar disponibilidad de las 3 IAs
-    const preferidaOk = await iaDisponible(iaPreferidaParaTarea);
+    // Comprobar disponibilidad de las 3 IAs. DeepSeek cuenta como no disponible
+    // mientras esté apagado por falta de saldo (ver lib/guzzi/llm.ts).
+    const preferidaOk = await iaDisponible(iaPreferidaParaTarea)
+      && !(iaPreferidaParaTarea === "deepseek" && deepseekApagado());
 
     if (preferidaOk) {
       iaUsada = iaPreferidaParaTarea;
       console.log(`🎯 Router: usando ${iaUsada} (preferida para ${tarea})`);
     } else {
-      // Fallback: probar las otras dos en orden
-      const alternativas: IA[] = ["deepseek", "groq", "gemini"].filter(
-        (ia) => ia !== iaPreferidaParaTarea
-      ) as IA[];
+      // Fallback: Groq primero (gratis y rápido); Gemini después, que responde
+      // pero tardó hasta 84 s en la prueba del 22 sep 2026.
+      const alternativas: IA[] = (["groq", "gemini", "deepseek"] as IA[]).filter(
+        (ia) => ia !== iaPreferidaParaTarea && !(ia === "deepseek" && deepseekApagado())
+      );
 
       let encontrada = false;
       for (const alt of alternativas) {
@@ -142,6 +147,7 @@ export async function enrutarPeticionIA(
     }
 
     // Ejecutar con la IA seleccionada
+    iaIntentada = iaUsada;
     respuesta = await ejecutarTareaConIA(iaUsada, tarea, contenido, extra);
 
     const tiempoMs = Date.now() - inicio;
@@ -151,28 +157,32 @@ export async function enrutarPeticionIA(
   } catch (error) {
     const mensaje = (error as Error).message;
 
-    // Si una IA da error de límite, intentar con otra
-    if (
-      mensaje === "GROQ_LIMIT_REACHED" ||
-      mensaje === "GEMINI_LIMIT_REACHED" ||
-      mensaje === "DEEPSEEK_LIMIT_REACHED"
-    ) {
-      const iaFallida = mensaje.split("_")[0].toLowerCase() as IA;
-      const alternativas: IA[] = ["deepseek", "groq", "gemini"].filter(
-        (ia) => ia !== iaFallida
-      ) as IA[];
+    // SI FALLA LA ELEGIDA, SE PRUEBAN LAS OTRAS, sea cual sea el error.
+    //
+    // Antes solo se hacía con los errores de "límite diario". Con DeepSeek sin
+    // saldo (HTTP 402) el error era otro, se relanzaba, y "Mejorar mi CV" y la
+    // nota ATS daban error 500 a TODO el mundo. Comprobado en producción el
+    // 29 sep 2026: llevaba así desde que se acabó el saldo, con Groq gratis y
+    // funcionando al lado.
+    if (/DEEPSEEK/i.test(mensaje) && /402/.test(mensaje)) apagarDeepSeek();
+    const iaFallida = iaIntentada;
+    const alternativas: IA[] = (["groq", "gemini", "deepseek"] as IA[]).filter(
+      (ia) => ia !== iaFallida && !(ia === "deepseek" && deepseekApagado())
+    );
 
-      for (const fallback of alternativas) {
-        if (await iaDisponible(fallback)) {
-          console.log(`🔄 Router: error en ${iaFallida}, usando ${fallback}`);
-          respuesta = await ejecutarTareaConIA(fallback, tarea, contenido, extra);
-          return {
-            respuesta,
-            iaUsada: fallback,
-            desdecache: false,
-            tiempoMs: Date.now() - inicio,
-          };
-        }
+    for (const fallback of alternativas) {
+      if (!(await iaDisponible(fallback))) continue;
+      try {
+        console.log(`🔄 Router: ${iaFallida} falló (${mensaje.slice(0, 60)}), usando ${fallback}`);
+        respuesta = await ejecutarTareaConIA(fallback, tarea, contenido, extra);
+        return {
+          respuesta,
+          iaUsada: fallback,
+          desdecache: false,
+          tiempoMs: Date.now() - inicio,
+        };
+      } catch (otroError) {
+        console.warn(`⚠️  Router: ${fallback} también falló:`, (otroError as Error).message.slice(0, 120));
       }
     }
 
