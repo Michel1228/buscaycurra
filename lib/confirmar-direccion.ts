@@ -64,7 +64,7 @@ export function confirmarEnvioADireccion(opciones: {
     texto.append(`No hemos encontrado el correo ${empresa}publicado. Vamos a probar con `);
     const dir = document.createElement("strong");
     dir.textContent = opciones.email;
-    dir.style.cssText = "color:#f1f5f9;word-break:break-all;";
+    dir.style.cssText = "color:#f1f5f9;overflow-wrap:anywhere;";
     texto.append(dir, ", que es el más habitual, pero puede que no exista.");
 
     const nota = document.createElement("p");
