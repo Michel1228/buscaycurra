@@ -58,17 +58,33 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   (`061bd51`), Next.js con 15 vulnerabilidades (`5c904eb`), tres
   malentendidos de Guzzi (`0025c27`, `66e90dc`).
 
+### Decidido por Michel el 30 sep y hecho
+
+- [x] **Recordatorio del primer día** (`dd238aa`, `2ed11fb`): correo sencillo
+  con ofertas reales de su ciudad y asunto con la cifra ("Lucía, hay 8 ofertas
+  nuevas en Tudela esta semana"). Solo afecta a registros nuevos; a los 78 que
+  ya recibieron el antiguo no se les ha vuelto a escribir. **Medir en dos
+  semanas** si alguien hace su primer CV tras recibirlo.
+- [x] **Bienvenida atrasada** a las 13 personas confirmadas del 23-29 sep que
+  se quedaron sin ella: enviada el 30 sep (13 de 13, entregadas), con perdón,
+  sus ofertas y el paso que les falta. 10 alertas creadas (las otras 3 pusieron
+  un país o nada). 4 cuentas sin confirmar el correo no reciben nada.
+- [x] **Aviso antes de enviar a una dirección deducida** (`e38d4ad`):
+  probado en producción en móvil (sale, y "Cancelar" no envía).
+- [x] **Baja de alertas con un clic** (`dd238aa`): no había forma de quitarlas.
+- [x] **392 alertas rebotadas en septiembre** a dos cuentas de prueba
+  (`4fb023a`): cortadas, y tabla `correos_rebotados` para no volver a escribir
+  a una dirección que rebota.
+- [x] **Un CV entregado dejaba de contar para el cupo** (`5ced701`).
+
 ### Abierto: decisiones de Michel
 
-- [ ] **Los recordatorios del primer día no mueven a nadie.** 78 personas
-  avisadas desde el 23 sep: 0 hicieron su primer CV y 1 envió alguno. Decidir si
-  se cambia el mensaje, el canal o se paran.
-- [ ] **12 personas registradas del 23 al 29 sep no recibieron bienvenida ni
-  alerta** (sus datos ya están rellenados). ¿Se les manda ahora? Crear la
-  alerta significa un correo diario.
-- [ ] **Direcciones deducidas** (`empleo@dominio`) se siguen probando la
-  primera vez. Ya no se repite una que rebotó, pero la primera sí sale.
-  Decidir si se avisa a la persona antes de enviar a una dirección deducida.
+- [ ] **buscaycurra.es no recibe correo** (no tiene registro MX). La web
+  publica soporte@, privacidad@, contacto@ y hola@, y todo lo que se escriba
+  ahí se pierde. La de privacidad la exige la ley. Crear buzones o reenvíos en
+  Hostinger (hPanel → Correos).
+- [ ] **~29 cuentas de prueba** (audit*, qa-*, prueba*, test*...) cuentan como
+  usuarios en las cifras.
 - [ ] **Webhook de Stripe:** activar `invoice.payment_failed` e
   `invoice.payment_succeeded` en https://dashboard.stripe.com/webhooks (no es
   imprescindible: el código ya lo cubre con `subscription.updated`).
