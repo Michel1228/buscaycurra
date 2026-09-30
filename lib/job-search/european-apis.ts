@@ -9,6 +9,18 @@
 
 import { getPool } from "@/lib/db";
 
+/**
+ * LAS OFERTAS TIENEN QUE ENTRAR VISIBLES.
+ *
+ * Estos tres insertores guardaban sin "isActive", sin "scrapedAt" y sin país, y
+ * con ON CONFLICT DO NOTHING. El buscador solo enseña isActive = true, así que
+ * a 30 sep 2026 había 70.732 ofertas de Suecia y 9.972 de Polonia que nadie
+ * podía ver (20.195 y 2.333 del último mes), y como nunca se refrescaban, la
+ * limpieza por caducidad tampoco sabía cuándo se vieron por última vez.
+ * Al volver a verlas se refrescan como hace sync-worker.
+ */
+const REFRESCAR = `"isActive" = true, "scrapedAt" = NOW(), "expiresAt" = NOW() + INTERVAL '60 days'`;
+
 export interface EuropeanJob {
   titulo: string;
   empresa: string;
@@ -61,9 +73,9 @@ export async function fetchSwedenJobs(keywords: string[]): Promise<{ fetched: nu
           const descripcion = hit.description?.text?.slice(0, 500) || null;
 
           await pool.query(
-            `INSERT INTO "JobListing" ("id", "title", "company", "city", "sourceUrl", "sourceName", "sector", "salary", "description", "createdAt")
-             VALUES ($1, $2, $3, $4, $5, 'JobTech_SE', 'TECNOLOGIA', $6, $7, NOW())
-             ON CONFLICT ("id") DO NOTHING`,
+            `INSERT INTO "JobListing" ("id", "title", "company", "city", "sourceUrl", "sourceName", "sector", "salary", "description", "createdAt", "isActive", "scrapedAt", "country")
+             VALUES ($1, $2, $3, $4, $5, 'JobTech_SE', 'TECNOLOGIA', $6, $7, NOW(), true, NOW(), 'se')
+             ON CONFLICT ("id") DO UPDATE SET ${REFRESCAR}`,
             [id, titulo, empresa, ubicacion, url, salario, descripcion]
           );
           inserted++;
@@ -113,9 +125,9 @@ export async function fetchPolandJJITJobs(): Promise<{ fetched: number; inserted
         const descripcion = o.body?.slice(0, 500) || null;
 
         await pool.query(
-          `INSERT INTO "JobListing" ("id", "title", "company", "city", "sourceUrl", "sourceName", "sector", "salary", "description", "createdAt")
-           VALUES ($1, $2, $3, $4, $5, 'JJIT_PL', 'TECNOLOGIA', $6, $7, NOW())
-           ON CONFLICT ("id") DO NOTHING`,
+          `INSERT INTO "JobListing" ("id", "title", "company", "city", "sourceUrl", "sourceName", "sector", "salary", "description", "createdAt", "isActive", "scrapedAt", "country")
+           VALUES ($1, $2, $3, $4, $5, 'JJIT_PL', 'TECNOLOGIA', $6, $7, NOW(), true, NOW(), 'pl')
+           ON CONFLICT ("id") DO UPDATE SET ${REFRESCAR}`,
           [id, titulo, empresa, ubicacion, url, salario, descripcion]
         );
         inserted++;
@@ -164,7 +176,7 @@ export async function fetchPolandNFJJobs(): Promise<{ fetched: number; inserted:
       
       batch.forEach((o, idx) => {
         const base = idx * 9;
-        values.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9})`);
+        values.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, true, NOW(), 'pl')`);
         params.push(
           `nfj_${o.id || Math.random().toString(36).slice(2)}`,
           o.title || "Sin título",
@@ -180,9 +192,9 @@ export async function fetchPolandNFJJobs(): Promise<{ fetched: number; inserted:
 
       try {
         const result = await pool.query(
-          `INSERT INTO "JobListing" ("id", "title", "company", "city", "sourceUrl", "sourceName", "sector", "salary", "createdAt")
+          `INSERT INTO "JobListing" ("id", "title", "company", "city", "sourceUrl", "sourceName", "sector", "salary", "createdAt", "isActive", "scrapedAt", "country")
            VALUES ${values.join(", ")}
-           ON CONFLICT ("id") DO NOTHING`,
+           ON CONFLICT ("id") DO UPDATE SET ${REFRESCAR}`,
           params
         );
         inserted += result.rowCount || 0;

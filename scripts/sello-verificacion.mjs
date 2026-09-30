@@ -1753,6 +1753,21 @@ test("el barrido de Adzuna reintenta los fallos pasajeros (5xx, red)", () => {
     /lote = await fetchAdzunaPagina\(countryCode, pagina/.test(barrer.slice(barrer.indexOf("intento++"))) ;
 });
 
+// ── NINGUNA OFERTA ENTRA INVISIBLE ─────────────────────────────────────────
+//
+// El 30 sep 2026 habia 290.707 ofertas con isActive vacio: el buscador solo
+// ensena isActive = true, asi que nadie veia 70.732 de Suecia y 9.972 de
+// Polonia. Venian de european-apis.ts, que insertaba sin isActive.
+test("los insertores europeos guardan las ofertas activas y con pais", () => {
+  const e = leerFuente("lib/job-search/european-apis.ts");
+  const inserts = e.match(/INSERT INTO "JobListing" \([^)]*\)/g) || [];
+  const mig = leerFuente("db/migrations/008_ofertas_visibles_por_defecto.sql");
+  return inserts.length === 3 &&
+    inserts.every((i) => i.includes('"isActive"') && i.includes('"scrapedAt"') && i.includes('"country"')) &&
+    !/ON CONFLICT \("id"\) DO NOTHING/.test(e) &&
+    /ALTER COLUMN "isActive" SET DEFAULT true/.test(mig);
+});
+
 // ── LAS OFERTAS NO ENSEÑAN "&euro;" ────────────────────────────────────────
 //
 // Careerjet manda el texto con entidades HTML y se guardaba tal cual: 68.425
