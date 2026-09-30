@@ -180,12 +180,13 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   const inicioSemana = new Date(semanaCopia.getFullYear(), semanaCopia.getMonth(), semanaCopia.getDate()).toISOString();
   const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
 
-  // Obtenemos todos los envíos completados del usuario (enviados, vistos, respondidos)
+  // Los envíos que ya salieron. Faltaba "entregado" (lo pone el aviso de
+  // Resend al llegar) y un CV que llegaba desaparecía de las estadísticas.
   const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("*")
     .eq("user_id", userId)
-    .in("status", ["enviado", "visto", "respondido"]);
+    .in("status", ["enviado", "entregado", "visto", "respondido"]);
 
   if (error || !data) {
     console.error("[Tracker] Error obteniendo estadísticas de usuario:", error?.message);

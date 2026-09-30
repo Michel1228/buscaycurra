@@ -47,9 +47,14 @@ export type { UserPlan };
  *
  * "fallido" y "cancelado" quedan fuera a propósito: lo que no llegó a salir no
  * debe gastar cuota. "pendiente" sí cuenta, para reservar el hueco mientras el
- * envío está en la cola.
+ * envío está en la cola. "rebotado" tampoco cuenta: no llegó.
+ *
+ * "entregado" faltaba (30 sep 2026): lo pone el aviso de Resend
+ * (/api/cv-sender/entrega) cuando el correo llega, así que el mismo fallo de
+ * "visto" volvió por otra puerta. Un CV que llegaba dejaba de contar para el
+ * cupo y desaparecía de las cifras del panel de la persona.
  */
-export const ESTADOS_QUE_GASTAN_CUOTA = ["enviado", "pendiente", "visto", "respondido"] as const;
+export const ESTADOS_QUE_GASTAN_CUOTA = ["enviado", "pendiente", "entregado", "visto", "respondido"] as const;
 
 /** Resultado de la verificación de límites */
 export interface RateLimitResult {

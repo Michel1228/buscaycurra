@@ -270,10 +270,12 @@ test('"visto" y "respondido" gastan cuota (si no, se regenera sola)', () => {
   const src = leerFuente('lib/cv-sender/rate-limiter.ts');
   const m = src.match(/ESTADOS_QUE_GASTAN_CUOTA\s*=\s*\[([^\]]+)\]/);
   if (!m) { console.log('     ↳ no existe ESTADOS_QUE_GASTAN_CUOTA'); return false; }
-  const faltan = ['enviado', 'pendiente', 'visto', 'respondido'].filter(e => !m[1].includes(e));
+  // "entregado" lo pone el aviso de Resend al llegar el correo: faltaba y un CV
+  // entregado dejaba de contar (30 sep 2026).
+  const faltan = ['enviado', 'pendiente', 'entregado', 'visto', 'respondido'].filter(e => !m[1].includes(e));
   if (faltan.length) { console.log('     ↳ faltan estados: ' + faltan.join(', ')); return false; }
-  // Y estos dos NO deben estar: lo que no salió no gasta cuota.
-  return !m[1].includes('fallido') && !m[1].includes('cancelado');
+  // Y estos NO deben estar: lo que no salió o no llegó no gasta cuota.
+  return !m[1].includes('fallido') && !m[1].includes('cancelado') && !m[1].includes('rebotado');
 });
 
 test('Las tablas de CV se piden a la base propia, no a Supabase', () => {
@@ -1813,6 +1815,70 @@ test("los sueldos se interpretan bien y el resumen usa la mediana", async () => 
     !api.includes("substring(salary from '.*(") &&
     // La lista de arriba: oficios comunes, no titulos exactos de una agencia.
     api.includes("OCUPACIONES_COMUNES.map") && !/GROUP BY ocupacion/.test(api);
+});
+
+// ── AVISAR ANTES DE MANDAR UN CV A UNA DIRECCION DEDUCIDA ──────────────────
+//
+// 1.050.269 ofertas tienen un correo deducido ("probable") y 25.956 uno
+// verificado (30 sep 2026); 9 de 25 envios de septiembre rebotaron. Michel
+// decidio que se avise antes de enviar. Cada pantalla que envia y puede usar
+// una direccion deducida tiene que pasar por confirmarEnvioADireccion.
+test("todas las pantallas que envian CV avisan si la direccion es deducida", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-confirmar.cjs";
+  execFileSync("npx", ["esbuild", "lib/confirmar-direccion.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  const { esDireccionDeducida } = await import(`../${salida}`);
+  try { unlinkSync(salida); } catch {}
+  const reglas = esDireccionDeducida("media") && esDireccionDeducida("baja") &&
+    esDireccionDeducida(undefined, true) && !esDireccionDeducida("alta") && !esDireccionDeducida(undefined);
+  // AutoSendSetup queda fuera: ahi el correo lo escribe la persona.
+  const sitios = ["components/JobCard.tsx", "app/app/ofertas/[id]/OfertaDetalleClient.tsx",
+    "app/app/notificaciones/page.tsx", "components/ChatSendPanel.tsx", "app/app/empresas/page.tsx",
+    "components/AuPairOfertasRecientes.tsx"];
+  const sinAviso = sitios.filter((f) => !leerFuente(f).includes("confirmarEnvioADireccion({"));
+  if (sinAviso.length) console.log("      sin aviso: " + sinAviso.join(", "));
+  const guzzi = (leerFuente("components/GusiChat.tsx").match(/confirmarEnvioADireccion\(\{/g) || []).length;
+  return reglas && sinAviso.length === 0 && guzzi >= 2;
+});
+
+// ── LAS ALERTAS SE QUITAN CON UN CLIC ──────────────────────────────────────
+//
+// Mandan un correo al dia, se crean solas al registrarse con ciudad y no habia
+// forma de quitarlas: ni pantalla ni enlace (30 sep 2026).
+test("las alertas llevan un enlace de baja firmado que funciona", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-baja.cjs";
+  execFileSync("npx", ["esbuild", "lib/alertas/baja.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  process.env.ALERTS_SECRET = "secreto-de-prueba";
+  const { firmaBaja, firmaBajaValida, enlaceBaja } = await import(`../${salida}`);
+  try { unlinkSync(salida); } catch {}
+  const f = firmaBaja("usuario-1");
+  const firma = f && firmaBajaValida("usuario-1", f) && !firmaBajaValida("usuario-2", f) &&
+    !firmaBajaValida("usuario-1", "inventada") && /\/api\/alertas\/baja\?u=usuario-1&t=/.test(enlaceBaja("usuario-1"));
+  delete process.env.ALERTS_SECRET;
+  const envio = leerFuente("app/api/push/send-alerts/route.ts");
+  const correo = leerFuente("lib/email/smtp-sender.ts");
+  const ruta = leerFuente("app/api/alertas/baja/route.ts");
+  return firma && envio.includes("bajaUrl: enlaceBaja(alerta.user_id)") &&
+    correo.includes("Dejar de recibir estas alertas") && correo.includes('"List-Unsubscribe-Post": "List-Unsubscribe=One-Click"') &&
+    /UPDATE job_alerts SET active = false WHERE user_id = \$1/.test(ruta) && ruta.includes("export async function POST");
+});
+
+// El recordatorio del primer dia: 78 avisados, 0 primeros CV (23-29 sep 2026).
+// Ahora lleva ofertas reales de su ciudad y el asunto con la cifra.
+test("el recordatorio del primer dia lleva ofertas reales de su ciudad", () => {
+  const ruta = leerFuente("app/api/onboarding/recordatorios/route.ts");
+  const correo = leerFuente("lib/email/smtp-sender.ts");
+  const primerDia = correo.slice(correo.indexOf("export async function sendPrimerDiaEmail"), correo.indexOf("export async function sendBienvenidaAtrasadaEmail"));
+  return /ofertas: await ofertasRecientesEn\(ciudad\)/.test(ruta) &&
+    primerDia.includes("plantillaSencilla(") && primerDia.includes("listaOfertas(") &&
+    !primerDia.includes("headerGradient(");
 });
 
 // ── NUESTROS CORREOS NO INSISTEN EN DIRECCIONES QUE REBOTAN ────────────────
