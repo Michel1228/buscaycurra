@@ -22,12 +22,70 @@ Entre el 3 y el 5 de septiembre se cambió `.github/workflows/sync-jobs.yml`
 creyendo que se ejecutaba. **Esos cambios no tuvieron efecto**: las dos entradas
 de abajo sobre Japón y Suecia están corregidas por eso.
 
+## SÚPER AUDITORÍA (29-30 sep 2026)
+
+### Arreglado, desplegado y comprobado en producción
+
+- [x] **"Mejorar mi CV" y "Nota ATS" daban error 500 a todos** (`805d4d5`). El
+  router de `lib/ai` elegía DeepSeek (sin saldo, 402) y solo caía a otra IA con
+  errores de "límite diario". Ahora cae a Groq/Gemini con cualquier error.
+  Comprobado: 200 en 1,6 s y 0,6 s.
+- [x] **Registro: la bienvenida se quedaba en un 401** (`ad6d2ae`). Con la
+  confirmación por correo no hay sesión al registrarse: de 14 registros desde
+  el 23 sep, 12 escribieron ciudad y solo 2 la tenían; 0 alertas; 0 correos de
+  bienvenida; referidos perdidos. Ahora la hace la página de confirmación.
+  Probado con una cuenta de prueba (9/9) y rellenadas 3 fichas, 7 ciudades y
+  20 nombres, sin mandar correos.
+- [x] **Envíos a direcciones de relleno o que ya rebotaron** (`be738fb`). 9 de
+  25 envíos de septiembre rebotaron (36 %), uno a `ejemplo@domain.com`.
+- [x] **Stripe: un impago no se anotaba** (`16d176d`): el webhook no tiene
+  activado `invoice.payment_failed`. Ahora lo anota `subscription.updated`.
+  No se puede probar en vivo sin un impago real; cubierto por el sello.
+- [x] **Salarios: camarero con mínimo 144 € y máximo 95 €** (`f76f7e4`,
+  `9b3845c`). Intérprete nuevo `lib/salarios/anual.ts`, mediana y mitad
+  central. "Negociar salario" daba 500 (no lo llama ninguna pantalla).
+- [x] **Panel de 6,8 s a 0,5 s** (`b6e9281`): consultas en paralelo.
+- [x] **SEO: 156 de las 196 URLs del mapa del sitio daban 500** (`19b8770`):
+  `/trabajar-en/{pais}/{oficio}`. Ahora 196/196 responden 200.
+- [x] **Búsqueda de correos de empresas repetía las mismas 300 cada 2 h**
+  (`e8e82fb`): de 0-3 correos por pasada a 40-42.
+- [x] **Sueldos con "&euro;" y "&pound;" literales** (`b913057`): arreglado en
+  la sincronización y limpiadas 97.068 ofertas + 11.023 textos.
+- [x] **Adzuna: un 503 suelto dejó a España a 0 en el barrido** (`70458e7`):
+  ahora reintenta los 5xx y cortes de red.
+- [x] Antes, en la misma auditoría: barrido de Adzuna sin motivo de fallo
+  (`2505e56`), asunto roto del correo de alertas (`5a4f6f5`), carta en blanco
+  (`061bd51`), Next.js con 15 vulnerabilidades (`5c904eb`), tres
+  malentendidos de Guzzi (`0025c27`, `66e90dc`).
+
+### Abierto: decisiones de Michel
+
+- [ ] **Los recordatorios del primer día no mueven a nadie.** 78 personas
+  avisadas desde el 23 sep: 0 hicieron su primer CV y 1 envió alguno. Decidir si
+  se cambia el mensaje, el canal o se paran.
+- [ ] **12 personas registradas del 23 al 29 sep no recibieron bienvenida ni
+  alerta** (sus datos ya están rellenados). ¿Se les manda ahora? Crear la
+  alerta significa un correo diario.
+- [ ] **Direcciones deducidas** (`empleo@dominio`) se siguen probando la
+  primera vez. Ya no se repite una que rebotó, pero la primera sí sale.
+  Decidir si se avisa a la persona antes de enviar a una dirección deducida.
+- [ ] **Webhook de Stripe:** activar `invoice.payment_failed` e
+  `invoice.payment_succeeded` en https://dashboard.stripe.com/webhooks (no es
+  imprescindible: el código ya lo cubre con `subscription.updated`).
+- [ ] **Adzuna publica sueldos por hora multiplicados** ("72000 - 90000" para
+  camarero de barra). Las estadísticas ya los aguantan, pero la ficha de la
+  oferta los enseña tal cual.
+- [ ] **Careerjet se guarda como `EURES_BER`, `EURES_LON`...** Es un nombre
+  engañoso (no es EURES). Cambiarlo afecta a los identificadores: no tocar sin
+  plan.
+
 ## ABIERTO (encontrado el 22 sep 2026)
 
 - [ ] **DeepSeek sin saldo** (-0,01 USD, la API responde 402). Es el primer
   modelo de Guzzi para usuarios de pago, de la vista previa de la carta y del
   router de `lib/ai`. Todo cae a Groq u OpenAI, así que funciona, pero no con el
-  modelo elegido. **Decisión de Michel:** recargar
+  modelo elegido. (Corrección del 30 sep: el router de `lib/ai` NO caía, y
+  "Mejorar mi CV" y la nota ATS daban 500; arreglado en `805d4d5`.) **Decisión de Michel:** recargar
   (https://platform.deepseek.com/top_up) o cambiar de primer modelo.
 - [ ] **`deepseek-v4-flash` es ya un nombre antiguo.** La cuenta solo lista
   `deepseek-flash` (V4.1) y `deepseek-v4-pro`; la documentación dice que el
