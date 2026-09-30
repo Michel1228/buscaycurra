@@ -29,6 +29,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { getPool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -148,6 +149,30 @@ export async function POST(req: NextRequest) {
     // Los demás eventos no nos dicen nada útil. Se contesta 200 igualmente:
     // devolver error haría que Resend reintentara sin sentido.
     return NextResponse.json({ ok: true, ignorado: tipo });
+  }
+
+  // CUALQUIER REBOTE SE ANOTA, no solo los de CV. Las alertas, bienvenidas y
+  // recordatorios también rebotan (392 alertas a dos cuentas de prueba del 1
+  // al 29 sep 2026) y lib/email/smtp-sender.ts no vuelve a escribir a una
+  // dirección que rebota en firme, se queja de spam o rebota dos veces.
+  if (rebote && destinatario) {
+    const permanente = tipo === "email.complained" ||
+      /permanent/i.test(aviso.data?.bounce?.type || "") ||
+      /hard bounce/i.test(aviso.data?.bounce?.message || "");
+    try {
+      await getPool().query(
+        `INSERT INTO correos_rebotados (email, permanente, motivo)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (email) DO UPDATE SET
+           veces = correos_rebotados.veces + 1,
+           permanente = correos_rebotados.permanente OR EXCLUDED.permanente,
+           motivo = EXCLUDED.motivo,
+           ultimo = NOW()`,
+        [destinatario.trim().toLowerCase(), permanente, (cambios.motivo_rebote as string) || null]
+      );
+    } catch (e) {
+      console.error("[cv-sender/entrega] No se pudo anotar el rebote:", (e as Error).message);
+    }
   }
 
   // Correlacionar. Lo preferido es el identificador de Resend; si el envío es

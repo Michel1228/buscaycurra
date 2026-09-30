@@ -1815,6 +1815,21 @@ test("los sueldos se interpretan bien y el resumen usa la mediana", async () => 
     api.includes("OCUPACIONES_COMUNES.map") && !/GROUP BY ocupacion/.test(api);
 });
 
+// ── NUESTROS CORREOS NO INSISTEN EN DIRECCIONES QUE REBOTAN ────────────────
+//
+// Del 1 al 29 sep 2026 rebotaron 392 alertas (mas que las 218 que llegaron),
+// todas a dos cuentas de prueba sin buzon. Eso hunde la entrega de todo lo que
+// sale de noreply@, recordatorios y bienvenidas incluidos.
+test("los correos propios no se mandan a direcciones que rebotan", () => {
+  const s = leerFuente("lib/email/smtp-sender.ts");
+  const w = leerFuente("app/api/cv-sender/entrega/route.ts");
+  const cuerpo = (nombre) => s.slice(s.indexOf(`async function ${nombre}(`), s.indexOf(`async function ${nombre}(`) + 400);
+  return /if \(await direccionQueRebota\(to\)\) return;/.test(cuerpo("sendEmail")) &&
+    /if \(await direccionQueRebota\(to\)\) return false;/.test(cuerpo("enviarCorreo")) &&
+    /WHERE email = \$1 AND \(permanente OR veces >= 2\)/.test(s) &&
+    /if \(rebote && destinatario\)[\s\S]{0,600}INSERT INTO correos_rebotados/.test(w);
+});
+
 // ── NO MANDAR CVs A DIRECCIONES QUE SE SABE QUE NO LLEGAN ──────────────────
 //
 // Del 1 al 29 sep 2026 rebotaron 9 de 25 envios (36 %): direcciones deducidas

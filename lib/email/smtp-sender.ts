@@ -1,7 +1,32 @@
 import { frasePromesaOfertas } from "@/lib/promesas";
+import { getPool } from "@/lib/db";
 
 const RESEND_API_URL = "https://api.resend.com/emails";
 const FROM_ADDRESS = "BuscayCurra <noreply@buscaycurra.es>";
+
+/**
+ * ¿Esta dirección rebota? Entonces no se le escribe.
+ *
+ * Del 1 al 29 sep 2026 rebotaron 392 alertas a dos cuentas de prueba sin buzón,
+ * más que las 218 que llegaron. Una tasa de rebote así hunde la entrega de todo
+ * lo que sale de noreply@ (bienvenidas y recordatorios incluidos). Los rebotes
+ * los anota el aviso de Resend en correos_rebotados (/api/cv-sender/entrega).
+ *
+ * Solo cuenta un rebote en firme, una queja de spam o dos rebotes cualesquiera.
+ * Si la base no responde se envía igual: mejor un rebote que un aviso perdido.
+ */
+async function direccionQueRebota(to: string): Promise<boolean> {
+  try {
+    const { rows } = await getPool().query(
+      `SELECT 1 FROM correos_rebotados WHERE email = $1 AND (permanente OR veces >= 2)`,
+      [to.trim().toLowerCase()]
+    );
+    if (rows.length) console.warn(`[Resend] No se envía a ${to}: esa dirección rebota.`);
+    return rows.length > 0;
+  } catch {
+    return false;
+  }
+}
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -9,6 +34,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
     console.warn("[Resend] API key no configurada, email no enviado");
     return;
   }
+  if (await direccionQueRebota(to)) return;
 
   const res = await fetch(RESEND_API_URL, {
     method: "POST",
@@ -42,6 +68,7 @@ async function enviarCorreo(to: string, subject: string, html: string): Promise<
     console.warn("[Resend] API key no configurada, email no enviado");
     return false;
   }
+  if (await direccionQueRebota(to)) return false;
   try {
     const res = await fetch(RESEND_API_URL, {
       method: "POST",
