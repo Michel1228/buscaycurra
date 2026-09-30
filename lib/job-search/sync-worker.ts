@@ -6,6 +6,7 @@
 import { createHash } from "crypto";
 import { getPool } from "@/lib/db";
 import { getAdzunaKey, getJoobleKey, getCareerjetKey, reportFailure } from "./api-pool";
+import { sinEntidades } from "./entidades";
 
 export const SECTORES = [
   { sector: "HOSTELERIA", keywords: ["camarero", "cocinero", "chef", "hosteleria", "barman", "recepcionista hotel", "ayudante cocina", "pizzero", "panadero", "jefe cocina", "maitre", "sommelier", "pastelero", "cocinero colectividades", "encargado bar", "animador turistico", "guia turismo", "fregaplatos", "limpieza cocina", "mozo almacen hosteleria"] },
@@ -710,7 +711,11 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, count
            country = COALESCE("JobListing".country, EXCLUDED.country),
            categoria = COALESCE("JobListing".categoria, EXCLUDED.categoria)
          RETURNING (xmax = 0) AS es_nueva`,
-        [id, j.title, j.company, j.description, sector, j.city, j.salary, j.url, j.source, expiresAt, country || null, categoria]
+        // El id se calcula arriba con el texto TAL CUAL llega: si se calculara
+        // ya limpio, cada oferta que traía entidades cambiaría de id y saldría
+        // repetida. Lo que se guarda (y se ve) va sin entidades.
+        [id, sinEntidades(j.title), sinEntidades(j.company), sinEntidades(j.description), sector,
+         sinEntidades(j.city), sinEntidades(j.salary), j.url, j.source, expiresAt, country || null, categoria]
       );
       // Antes se contaba `rowCount > 0`, que en un ON CONFLICT DO UPDATE también
       // vale 1 al refrescar una oferta que ya teníamos: los logs decían "8.034

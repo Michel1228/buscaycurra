@@ -1742,6 +1742,33 @@ test("las paginas trabajar-en/pais/oficio usan indice y no revientan", () => {
     /\} catch \(e\) \{\s*console\.error\(`\[trabajar-en\]/.test(p);
 });
 
+// ── LAS OFERTAS NO ENSEÑAN "&euro;" ────────────────────────────────────────
+//
+// Careerjet manda el texto con entidades HTML y se guardaba tal cual: 68.425
+// sueldos con "&euro;" y 30.499 con "&pound;" en ofertas vivas (30 sep 2026),
+// y la pagina de /trabajar-en/es/camarero ensenaba "&euro;1450 - 1500 per month".
+test("las ofertas se guardan sin entidades HTML y sin cambiar de id", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-entidades.cjs";
+  execFileSync("npx", ["esbuild", "lib/job-search/entidades.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  const { sinEntidades } = await import(`../${salida}`);
+  try { unlinkSync(salida); } catch {}
+  const bien =
+    sinEntidades("&euro;1450 - 1500 per month") === "€1450 - 1500 per month" &&
+    sinEntidades("Johnson &amp; Johnson") === "Johnson & Johnson" &&
+    sinEntidades("Cocinero/a &#8211; Tudela") === "Cocinero/a – Tudela" &&
+    sinEntidades("&pound;25,000 a year") === "£25,000 a year" &&
+    sinEntidades("R&D &raro;") === "R&D &raro;";           // lo desconocido se deja
+  const w = leerFuente("lib/job-search/sync-worker.ts");
+  return bien &&
+    /const id = makeId\(j\.title, j\.company, j\.city, j\.source\)/.test(w) &&  // id con el texto original
+    /sinEntidades\(j\.title\), sinEntidades\(j\.company\)/.test(w) &&
+    /sinEntidades\(j\.salary\)/.test(w);
+});
+
 // ── LOS SUELDOS SE LEEN BIEN Y NO LOS MUEVE LA BASURA ──────────────────────
 //
 // El 30 sep 2026 "camarero" en Espana daba minimo 144 € y maximo 95 €: la
