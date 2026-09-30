@@ -65,4 +65,9 @@ fi
 echo "🔐 CANDADOS post-deploy..."
 bash /root/candados.sh build 2>/dev/null && echo "  ✅ BUILD OK"
 bash /root/candados.sh db 2>/dev/null && echo "  ✅ DB OK"
+
+# 🧹 La imagen anterior se queda sin etiqueta al construir la nueva (~2 GB cada
+# vez). El 30 sep 2026 había 10 así y el disco iba por el 73 %. Solo se borran
+# las que no usa ningún contenedor, así que la que está en marcha no se toca.
+docker image prune -f > /dev/null 2>&1 && echo "🧹 Imágenes viejas borradas"
 echo "✅ Deploy completo."
