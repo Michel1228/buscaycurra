@@ -92,9 +92,14 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   gratuita para un dominio sin plan de correo: el más barato, Starter, cuesta
   0,39 $/mes a 48 meses (renueva a 1,59 $/mes), un buzón con alias. Se contrata
   en hPanel → Correos; como el DNS está en Hostinger, se configura solo.
-- [ ] **2,04 millones de ofertas caducadas hace más de 90 días** siguen en la
-  tabla (la mitad de sus 5 millones de filas). Borrarlas haría más pequeños los
-  índices, pero no tiene vuelta atrás salvo por la copia de 7 días.
+- [x] **2.040.749 ofertas caducadas hace más de 90 días borradas** (30 sep,
+  decisión de Michel). Se respetaron las guardadas, en candidaturas o en el
+  historial de envíos. La limpieza diaria ya las borra sola (`e12d814`).
+  La tabla pasa de 5,25 a 3,21 millones de filas; el fichero no encoge (haría
+  falta VACUUM FULL con la tabla bloqueada), pero el hueco lo reutilizan las
+  ofertas nuevas y el disco deja de crecer.
+- [x] **290.707 ofertas invisibles** con isActive vacío (`f49d892`, migración
+  008): 39.143 de Suecia y 4.049 de Polonia pasan a verse.
 - [ ] **La base tiene 64 MB de memoria compartida** (valor por defecto de
   Docker): el VACUUM en paralelo falló por eso el 30 sep. No hay rastro de que
   afecte a la app, pero al recrear el contenedor conviene darle `--shm-size=256m`.
