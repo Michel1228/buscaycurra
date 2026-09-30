@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import GuzziAvatar from "@/components/GuzziAvatar";
 import ChatSendPanel from "@/components/ChatSendPanel";
+import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { Zap, Compass, Sparkles, Mic, Plane, Home, Image, Upload, Pin, Mail, Inbox, ChartColumn, Gem, Paperclip, Camera, type LucideIcon, ChevronDown, ChevronUp } from "lucide-react";
 
 // Mapa de palabras clave → id de país en /app/emigrar
@@ -77,6 +78,7 @@ interface Mensaje {
   jobs?: Oferta[];
   company?: {
     nombre?: string; emailRrhh?: string; emailContacto?: string;
+    emailConfianza?: string;
     telefono?: string; urlWeb?: string; sector?: string;
     googleAddress?: string; googleRating?: number; googleReviews?: number;
     googleMapsUrl?: string;
@@ -252,7 +254,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
   const [pulso, setPulso] = useState(true);
   const [notif, setNotif] = useState(false);
   const [enviandoATodas, setEnviandoATodas] = useState(false);
-  const [sendTarget, setSendTarget] = useState<{ empresa: string; titulo: string; url: string; email?: string } | null>(null);
+  const [sendTarget, setSendTarget] = useState<{ empresa: string; titulo: string; url: string; email?: string; emailConfianza?: string } | null>(null);
   const [sessionToken, setSessionToken] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -567,6 +569,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
 
     for (const job of jobs) {
       let emailDestino = "";
+      let confianzaDestino: string | undefined;
 
       try {
         const exRes = await fetch("/api/company/extract", {
@@ -576,8 +579,11 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
         });
         if (exRes.ok) {
           const exData = await exRes.json();
-          const primera = (exData.empresas as { emailRrhh?: string }[])?.[0];
-          if (primera?.emailRrhh) emailDestino = primera.emailRrhh;
+          const primera = (exData.empresas as { emailRrhh?: string; emailConfianza?: string }[])?.[0];
+          if (primera?.emailRrhh) {
+            emailDestino = primera.emailRrhh;
+            confianzaDestino = primera.emailConfianza;
+          }
         }
       } catch { /* ignorar */ }
 
@@ -585,6 +591,11 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
         // No hay email real — NO inventar emails falsos
         errores++;
         errList.push(`Sin email para ${job.empresa}`);
+        continue;
+      }
+      if (!(await confirmarEnvioADireccion({ email: emailDestino, empresa: job.empresa, confianza: confianzaDestino }))) {
+        errores++;
+        errList.push(`No enviado a ${job.empresa}: lo cancelaste`);
         continue;
       }
 
@@ -639,6 +650,12 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
     const email = company.emailRrhh || company.emailContacto || "";
     if (!email) {
       addMsg("gusi", `⚠️ No tengo un email para **${company.nombre}**. Prueba con el nombre completo de la empresa o busca una oferta activa en el buscador.`);
+      setEnviandoATodas(false);
+      return;
+    }
+
+    const confianza = company.emailRrhh ? company.emailConfianza : undefined;
+    if (!(await confirmarEnvioADireccion({ email, empresa: company.nombre, confianza }))) {
       setEnviandoATodas(false);
       return;
     }
@@ -871,7 +888,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                             onClick={async () => {
                               const { data: { session } } = await getSupabaseBrowser().auth.getSession();
                               setSessionToken(session?.access_token || "");
-                              setSendTarget({ empresa: m.company!.nombre || "", titulo: "", url: m.company!.urlWeb || "", email: m.company!.emailRrhh || "" });
+                              setSendTarget({ empresa: m.company!.nombre || "", titulo: "", url: m.company!.urlWeb || "", email: m.company!.emailRrhh || "", emailConfianza: m.company!.emailConfianza });
                             }}
                             disabled={enviandoATodas}
                             className="px-4 py-2 rounded-lg text-[12px] font-semibold transition hover:opacity-90 disabled:opacity-50 shrink-0"

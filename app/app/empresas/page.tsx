@@ -6,6 +6,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import AutoSendSetup from "@/components/AutoSendSetup";
 import CVSenderDashboard from "@/components/CVSenderDashboard";
+import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { Search, Building2, Mail, ClipboardList, Upload, CheckCircle2, FileText, Check, Star, MapPin, type LucideIcon } from "lucide-react";
 
 type TabId = "buscar" | "zona" | "ett" | "envio" | "historial";
@@ -369,6 +370,10 @@ export default function EmpresasPage() {
   async function handleConfirmarEnvio() {
     const emp = empresaSeleccionada;
     if (!emp || !userId) return;
+
+    // Si la persona ha escrito otro correo a mano, es suyo: no se le pregunta.
+    const esElNuestro = previewEmail.trim().toLowerCase() === (emp.emailRrhh || "").trim().toLowerCase();
+    if (!(await confirmarEnvioADireccion({ email: previewEmail, empresa: emp.nombre, confianza: esElNuestro ? emp.emailConfianza : undefined }))) return;
 
     setShowPreview(false);
     setEnviando(true);

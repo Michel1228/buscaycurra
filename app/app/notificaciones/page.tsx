@@ -6,6 +6,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { Bell, Briefcase, Upload, Pin, BellOff, ClipboardList, ChevronDown, ChevronUp, ExternalLink, Send, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 
 interface Notif {
   id: string;
@@ -208,6 +209,8 @@ export default function NotificacionesPage() {
       setTimeout(() => setToastError(""), 4000);
       return;
     }
+    // Aquí la dirección siempre se construye con el dominio de la oferta.
+    if (!(await confirmarEnvioADireccion({ email, empresa: oferta.empresa, construidaAqui: true }))) return;
 
     setEnviando(prev => new Set([...prev, oferta.id]));
     try {

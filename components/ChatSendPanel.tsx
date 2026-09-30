@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 
 interface SendTarget {
   empresa: string;
   titulo: string;
   url: string;
   email?: string;
+  emailConfianza?: string;
 }
 
 interface ChatSendPanelProps {
@@ -61,6 +63,8 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
     try {
       // Si no hay email en el target, intentar extraerlo
       let email = target.email || "";
+      let confianza: string | undefined = target.email ? target.emailConfianza : undefined;
+      let construida = false;
       if (!email) {
         setError("Buscando email de la empresa...");
         try {
@@ -71,8 +75,11 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
           });
           if (exRes.ok) {
             const exData = await exRes.json();
-            const primera = (exData.empresas as { emailRrhh?: string }[])?.[0];
-            if (primera?.emailRrhh) email = primera.emailRrhh;
+            const primera = (exData.empresas as { emailRrhh?: string; emailConfianza?: string }[])?.[0];
+            if (primera?.emailRrhh) {
+              email = primera.emailRrhh;
+              confianza = primera.emailConfianza;
+            }
           }
         } catch { /* ignorar */ }
 
@@ -83,6 +90,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
             const jobBoards = ["adzuna", "jooble", "careerjet", "infojobs", "jobviewtrack", "indeed", "linkedin", "monster", "tecnoempleo"];
             if (!jobBoards.some(b => domain.includes(b))) {
               email = `empleo@${domain}`;
+              construida = true;
             }
           } catch { /* ignorar */ }
         }
@@ -93,6 +101,11 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
           return;
         }
         setError("");
+      }
+
+      if (!(await confirmarEnvioADireccion({ email, empresa: target.empresa, confianza, construidaAqui: construida }))) {
+        setEnviando(false);
+        return;
       }
 
       let scheduledFor: string | undefined;

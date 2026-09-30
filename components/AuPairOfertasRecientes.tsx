@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { Briefcase, MapPin, Send, Banknote, ArrowRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 
 interface OfertaAuPair {
   title: string;
@@ -74,6 +75,7 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
       }
 
       let email = oferta.email;
+      let confianza: string | undefined;
 
       // Si no hay email, intentar extraerlo
       if (!email || email === "Ver en oferta") {
@@ -81,15 +83,25 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
           const extractRes = await fetch("/api/company/extract", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-            body: JSON.stringify({ companyName: oferta.company }),
+            // El campo es "name": con "companyName" la API respondía 400 y esta
+            // búsqueda no encontraba nunca nada (30 sep 2026).
+            body: JSON.stringify({ name: oferta.company }),
           });
-          const extractData = await extractRes.json();
-          if (extractData.email) email = extractData.email;
+          const extractData = await extractRes.json() as { empresas?: Array<{ emailRrhh?: string; emailConfianza?: string }> };
+          const primera = extractData.empresas?.[0];
+          if (primera?.emailRrhh) {
+            email = primera.emailRrhh;
+            confianza = primera.emailConfianza;
+          }
         } catch {}
       }
 
       if (!email || email === "Ver en oferta") {
         setErroresIdx(prev => ({ ...prev, [idx]: "No se pudo obtener el email de contacto" }));
+        setEnviandoIdx(null);
+        return;
+      }
+      if (!(await confirmarEnvioADireccion({ email, empresa: oferta.company, confianza }))) {
         setEnviandoIdx(null);
         return;
       }

@@ -9,6 +9,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 
 export interface PropiedadesJobCard {
   id: string;
@@ -23,6 +24,7 @@ export interface PropiedadesJobCard {
   match?: number; // 0-100 % de compatibilidad
   distancia?: string; // "🏠 Tu ciudad" | "📍 15km" etc.
   emailEmpresa?: string; // email RRHH si disponible
+  emailConfianza?: string; // "alta" | "media" | "baja" (ver lib/confirmar-direccion.ts)
 }
 
 function colorMatch(pct: number): string {
@@ -57,7 +59,7 @@ function buildFallbackEmail(url: string): string {
 
 export default function JobCard({
   id, titulo, empresa, ubicacion, salario, fuente = "Otro",
-  url, modalidad, descripcion, match, distancia, emailEmpresa,
+  url, modalidad, descripcion, match, distancia, emailEmpresa, emailConfianza,
 }: PropiedadesJobCard) {
   const fc = colorFuente(fuente);
   const matchColor = match !== undefined ? colorMatch(match) : "#64748b";
@@ -117,6 +119,8 @@ export default function JobCard({
 
       // Resolver email: prop → extract API → fallback de dominio
       let email = emailEmpresa || "";
+      let confianza: string | undefined = emailEmpresa ? emailConfianza : undefined;
+      let construida = false;
       if (!email) {
         try {
           const r = await fetch("/api/company/extract", {
@@ -125,17 +129,23 @@ export default function JobCard({
             body: JSON.stringify({ name: empresa }),
             signal: AbortSignal.timeout(6000),
           });
-          const d = await r.json() as { empresas?: Array<{ emailRrhh?: string }>; emailRrhh?: string };
+          const d = await r.json() as { empresas?: Array<{ emailRrhh?: string; emailConfianza?: string }>; emailRrhh?: string };
           email = d.empresas?.[0]?.emailRrhh || d.emailRrhh || "";
+          confianza = d.empresas?.[0]?.emailConfianza;
         } catch { /* ignorar */ }
       }
-      if (!email) email = buildFallbackEmail(url);
+      if (!email) {
+        email = buildFallbackEmail(url);
+        construida = !!email;
+      }
 
       if (!email) {
         setEstadoEnvio("sin-email");
         setTimeout(() => setEstadoEnvio("idle"), 4000);
         return;
       }
+
+      if (!(await confirmarEnvioADireccion({ email, empresa, confianza, construidaAqui: construida }))) return;
 
       const res = await fetch("/api/cv-sender/send", {
         method: "POST",

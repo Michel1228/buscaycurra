@@ -6,6 +6,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { esOfertaAuPair } from "@/lib/au-pair";
 import AlojamientoOferta from "@/components/AlojamientoOferta";
 import { CheckCircle2, FileText, Users, ClipboardList, Bookmark, ArrowLeft } from "lucide-react";
+import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 
 export interface OfertaDetalle {
   id: string;
@@ -135,6 +136,8 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
 
       // Buscar email de la empresa: campo en BD → Google Places → fallback de dominio
       let email = oferta.email_empresa || "";
+      let confianza: string | undefined = oferta.email_empresa ? oferta.email_confianza : undefined;
+      let construida = false;
       if (!email && oferta.empresa) {
         try {
           const r = await fetch("/api/company/extract", {
@@ -143,8 +146,9 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
             body: JSON.stringify({ name: oferta.empresa }),
             signal: AbortSignal.timeout(8000),
           });
-          const d = await r.json() as { empresas?: Array<{ emailRrhh?: string; emailsExtraidos?: string[] }>; emailRrhh?: string };
+          const d = await r.json() as { empresas?: Array<{ emailRrhh?: string; emailsExtraidos?: string[]; emailConfianza?: string }>; emailRrhh?: string };
           email = d.empresas?.[0]?.emailRrhh || d.empresas?.[0]?.emailsExtraidos?.[0] || d.emailRrhh || "";
+          confianza = d.empresas?.[0]?.emailConfianza;
         } catch { /* continuar */ }
       }
 
@@ -155,6 +159,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
           const jobBoards = ["adzuna", "jooble", "careerjet", "infojobs", "jobviewtrack", "indeed", "linkedin", "monster", "tecnoempleo"];
           if (!jobBoards.some(b => domain.includes(b))) {
             email = `empleo@${domain}`;
+            construida = true;
           }
         } catch { /* ignorar */ }
       }
@@ -164,6 +169,9 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         setEnviando(false);
         return;
       }
+
+      // El finally de abajo quita el "enviando" también al cancelar.
+      if (!(await confirmarEnvioADireccion({ email, empresa: oferta.empresa, confianza, construidaAqui: construida }))) return;
 
       const res = await fetch("/api/cv-sender/send", {
         method: "POST",
