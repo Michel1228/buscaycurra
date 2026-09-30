@@ -23,6 +23,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { secretIguales } from "@/lib/secret-compare";
 import { sendPrimerDiaEmail } from "@/lib/email/smtp-sender";
+import { ofertasRecientesEn } from "@/lib/email/ofertas-para-correo";
 import { usuariosAMedias } from "@/lib/onboarding/primer-dia";
 
 export const dynamic = "force-dynamic";
@@ -48,9 +49,12 @@ export async function POST(request: NextRequest) {
   // usuario, no deja marca y no cuenta como aviso.
   const muestra = parametros.get("muestra");
   if (muestra) {
+    const ciudadMuestra = parametros.get("ciudad") || "";
     const salio = await sendPrimerDiaEmail({
       email: muestra,
-      nombre: "",
+      nombre: parametros.get("nombre") || "",
+      ciudad: ciudadMuestra,
+      ofertas: await ofertasRecientesEn(ciudadMuestra),
       paso: {
         titulo: "Sube tu CV",
         porQue:
@@ -108,13 +112,16 @@ export async function POST(request: NextRequest) {
     const estados = await usuariosAMedias(sb, pendientes.map((p) => p.id));
     const { data: perfiles } = await sb
       .from("profiles")
-      .select("id, full_name, nombre")
+      .select("id, full_name, nombre, ciudad")
       .in("id", pendientes.map((p) => p.id));
     const nombres = new Map(
       (perfiles || []).map((p: { id: string; full_name: string | null; nombre: string | null }) => [
         p.id,
         p.full_name || p.nombre || "",
       ])
+    );
+    const ciudades = new Map(
+      (perfiles || []).map((p: { id: string; ciudad: string | null }) => [p.id, (p.ciudad || "").trim()])
     );
 
     const aAvisar = pendientes
@@ -145,12 +152,15 @@ export async function POST(request: NextRequest) {
     for (const persona of aAvisar) {
       const estado = estados.get(persona.id)!;
       const paso = estado.siguiente!;
+      const ciudad = ciudades.get(persona.id) || "";
       const salio = await sendPrimerDiaEmail({
         email: persona.email,
         nombre: nombres.get(persona.id) || "",
         paso,
         pasosHechos: estado.hechos,
         pasosTotales: estado.pasos.length,
+        ciudad,
+        ofertas: await ofertasRecientesEn(ciudad),
       });
 
       if (!salio) {

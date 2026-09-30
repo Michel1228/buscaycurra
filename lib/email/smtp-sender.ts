@@ -1,5 +1,6 @@
 import { frasePromesaOfertas } from "@/lib/promesas";
 import { getPool } from "@/lib/db";
+import type { OfertasCiudad } from "@/lib/email/ofertas-para-correo";
 
 const RESEND_API_URL = "https://api.resend.com/emails";
 const FROM_ADDRESS = "BuscayCurra <noreply@buscaycurra.es>";
@@ -62,18 +63,28 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
  * primer día daría por avisada a gente a la que no le llegó nada, y como solo
  * se manda una vez, se quedaría sin recibirlo para siempre.
  */
-async function enviarCorreo(to: string, subject: string, html: string): Promise<boolean> {
+async function enviarCorreo(
+  to: string,
+  subject: string,
+  html: string,
+  opciones: { bajaUrl?: string | null } = {}
+): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey || apiKey === "placeholder") {
     console.warn("[Resend] API key no configurada, email no enviado");
     return false;
   }
   if (await direccionQueRebota(to)) return false;
+  // Con enlace de baja, las cabeceras estándar: Gmail y los demás enseñan un
+  // botón "Cancelar suscripción" que da de baja con un clic (POST al enlace).
+  const headers = opciones.bajaUrl
+    ? { "List-Unsubscribe": `<${opciones.bajaUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+    : undefined;
   try {
     const res = await fetch(RESEND_API_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM_ADDRESS, to: [to], subject, html }),
+      body: JSON.stringify({ from: FROM_ADDRESS, to: [to], subject, html, ...(headers ? { headers } : {}) }),
     });
     if (!res.ok) {
       console.error("[Resend] Error al enviar email:", (await res.text()).slice(0, 200));
@@ -234,14 +245,68 @@ export async function sendWelcomeEmail(userEmail: string, userName: string): Pro
   }
 }
 
+// ─── Correos con aspecto de correo personal ──────────────────────────────────
+//
+// El recordatorio del primer día iba con la plantilla oscura de marca y un
+// asunto genérico ("te queda un paso en BuscayCurra"). Resultado medido del 23
+// al 29 sep 2026: 78 personas avisadas, 76 entregados, 0 primeros CV, 1 envío.
+// Los estudios de correo coinciden en que un correo sencillo, que parece
+// escrito por una persona, consigue bastantes más clics que uno muy diseñado
+// (HubSpot, Stripo), y en los portales de empleo gana el asunto concreto
+// ("12 ofertas nuevas en tu ciudad"). Así que estos dos van en blanco, con
+// texto corto, ofertas reales de su ciudad y un único enlace.
+
+function esc(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function plantillaSencilla(cuerpo: string, pie: string): string {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#ffffff;">
+<div style="max-width:560px;margin:0 auto;padding:28px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f2937;">
+${cuerpo}
+<p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.6;color:#6b7280;">${pie}</p>
+</div>
+</body>
+</html>`;
+}
+
+const P = `style="margin:0 0 16px;"`;
+const ENLACE = `style="color:#15803d;font-weight:600;"`;
+
+function listaOfertas(o: OfertasCiudad): string {
+  return `<ul style="margin:0 0 16px;padding-left:20px;">${o.ofertas
+    .map((x) => `<li style="margin:0 0 6px;"><a href="${x.url}" ${ENLACE}>${esc(x.titulo)}</a>${x.empresa ? ` — ${esc(x.empresa)}` : ""}</li>`)
+    .join("")}</ul>`;
+}
+
+function frasesOfertas(ciudad: string, o: OfertasCiudad): { asunto: string; texto: string } {
+  const plural = o.total !== 1;
+  const cuantas = `${o.total} oferta${plural ? "s" : ""} nueva${plural ? "s" : ""}`;
+  return {
+    asunto: `hay ${cuantas} en ${ciudad} esta semana`,
+    texto: `Esta semana ha${plural ? "n" : ""} salido ${cuantas} en ${esc(ciudad)}. ${o.ofertas.length > 1 ? "Las últimas" : "La última"}:`,
+  };
+}
+
+/** "Sube tu CV" → "sube tu CV": solo la primera letra, que "CV" no pase a "cv". */
+function enFrase(titulo: string): string {
+  return titulo ? titulo.charAt(0).toLowerCase() + titulo.slice(1) : titulo;
+}
+
+function capitalizar(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
 // ─── Recordatorio del primer día ─────────────────────────────────────────────
 
 /**
  * A quien se registró y se quedó a medias.
  *
- * POR QUÉ: de 122 registrados, 36 habían subido CV y solo 6 habían mandado
- * alguno en 30 días. El correo no vende nada: recuerda EL PASO QUE LE FALTA a
- * esa persona concreta, con su enlace. Se manda UNA VEZ (ver
+ * Recuerda EL PASO QUE LE FALTA a esa persona, con su enlace, y le enseña las
+ * ofertas nuevas de su ciudad como motivo para volver. Se manda UNA VEZ (ver
  * /api/onboarding/recordatorios), porque insistir a quien no quiere es la forma
  * más rápida de acabar en la carpeta de spam de todo el mundo.
  */
@@ -251,41 +316,77 @@ export async function sendPrimerDiaEmail(params: {
   paso: { titulo: string; porQue: string; ruta: string; textoBoton: string };
   pasosHechos: number;
   pasosTotales: number;
+  ciudad?: string | null;
+  ofertas?: OfertasCiudad | null;
 }): Promise<boolean> {
-  const primerNombre = (params.nombre || "").split(" ")[0];
-  const saludo = primerNombre ? `${primerNombre}, ` : "";
+  const primerNombre = esc((params.nombre || "").trim().split(" ")[0]);
+  const ciudad = capitalizar((params.ciudad || "").trim());
+  const conOfertas = !!(ciudad && params.ofertas && params.ofertas.total > 0 && params.ofertas.ofertas.length);
+  const o = conOfertas ? frasesOfertas(ciudad, params.ofertas!) : null;
 
-  const header = headerGradient(
-    "🐛",
-    "Te queda un paso",
-    `${params.pasosHechos} de ${params.pasosTotales} hechos`
+  const asunto = o
+    ? `${primerNombre ? `${primerNombre}, ` : ""}${o.asunto}`
+    : `${primerNombre ? `${primerNombre}, te` : "Te"} falta un paso para empezar a mandar tu CV`;
+
+  const cuerpo = `
+<p ${P}>Hola${primerNombre ? ` ${primerNombre}` : ""}:</p>
+<p ${P}>Te registraste en BuscayCurra hace unos días y se te quedó un paso a medias: <strong>${esc(enFrase(params.paso.titulo))}</strong>. ${esc(params.paso.porQue)}</p>
+${o ? `<p ${P}>${o.texto}</p>${listaOfertas(params.ofertas!)}` : ""}
+<p ${P}><a href="https://buscaycurra.es${params.paso.ruta}" ${ENLACE}>${esc(params.paso.textoBoton)} →</a> Se tarda un minuto.</p>
+<p style="margin:0;">Un saludo,<br>Guzzi 🐛 y el equipo de BuscayCurra</p>`;
+
+  return enviarCorreo(
+    params.email,
+    asunto,
+    plantillaSencilla(cuerpo, "Solo te escribimos esto una vez. Si no te interesa, no tienes que hacer nada.")
   );
+}
 
-  const body = `
-    <p style="margin:0 0 20px;color:#94a3b8;font-size:15px;line-height:1.7;">
-      ${saludo}empezaste a usar BuscayCurra y te quedó algo a medias. Es esto:
-    </p>
+// ─── Bienvenida que llegó tarde ──────────────────────────────────────────────
 
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1520;border:1px solid #1e2538;border-radius:14px;margin-bottom:24px;">
-      <tr><td style="padding:22px 24px;">
-        <p style="margin:0 0 8px;color:#f1f5f9;font-size:16px;font-weight:700;">${params.paso.titulo}</p>
-        <p style="margin:0;color:#94a3b8;font-size:13px;line-height:1.7;">${params.paso.porQue}</p>
-      </td></tr>
-    </table>
+/**
+ * Para quien se registró entre el 23 y el 29 sep 2026, cuando la bienvenida se
+ * quedaba en un 401 (ver /api/auth/welcome): no recibieron este correo ni se
+ * les activó el aviso de ofertas de su ciudad. Se les pide perdón, se les dice
+ * qué se ha activado y cómo quitarlo, y se les da el paso que les falta.
+ */
+export async function sendBienvenidaAtrasadaEmail(params: {
+  email: string;
+  nombre: string;
+  fechaAlta: string; // "25 de septiembre"
+  ciudad?: string | null;
+  alertaActivada: boolean;
+  ofertas?: OfertasCiudad | null;
+  paso?: { titulo: string; porQue: string; ruta: string; textoBoton: string } | null;
+  bajaUrl?: string | null;
+}): Promise<boolean> {
+  const primerNombre = esc((params.nombre || "").trim().split(" ")[0]);
+  const ciudad = capitalizar((params.ciudad || "").trim());
+  const conOfertas = !!(ciudad && params.ofertas && params.ofertas.total > 0 && params.ofertas.ofertas.length);
+  const o = conOfertas ? frasesOfertas(ciudad, params.ofertas!) : null;
 
-    <p style="margin:0;color:#64748b;font-size:13px;line-height:1.7;">
-      La mayoría de los puestos de un pueblo no se publican en ningún portal: se cubren
-      porque alguien dejó el currículum antes. Se tarda un minuto.
-    </p>
+  const asunto = `${primerNombre ? `${primerNombre}, perdona` : "Perdona"} el retraso: ${
+    params.alertaActivada && ciudad ? `ya tienes tus avisos de ofertas en ${ciudad}` : "tu bienvenida a BuscayCurra"
+  }`;
 
-    ${ctaButton(params.paso.textoBoton + " →", "https://buscaycurra.es" + params.paso.ruta)}
+  const cuerpo = `
+<p ${P}>Hola${primerNombre ? ` ${primerNombre}` : ""}:</p>
+<p ${P}>Te registraste en BuscayCurra el ${esc(params.fechaAlta)} y, por un fallo nuestro, no te llegó el correo de bienvenida${
+    params.alertaActivada && ciudad ? ` ni se activó tu aviso de ofertas de ${esc(ciudad)}` : ""
+  }. Ya está arreglado. Perdona.</p>
+${params.alertaActivada && ciudad ? `<p ${P}>Desde mañana te llegará un correo al día con las ofertas nuevas de ${esc(ciudad)}. Si no lo quieres, lo quitas con el enlace del final.</p>` : ""}
+${o ? `<p ${P}>${o.texto}</p>${listaOfertas(params.ofertas!)}` : ""}
+${params.paso
+    ? `<p ${P}>Lo que te falta ahora: <strong>${esc(enFrase(params.paso.titulo))}</strong>. ${esc(params.paso.porQue)}</p>
+<p ${P}><a href="https://buscaycurra.es${params.paso.ruta}" ${ENLACE}>${esc(params.paso.textoBoton)} →</a></p>`
+    : `<p ${P}><a href="https://buscaycurra.es/app/bienvenida" ${ENLACE}>Entrar en BuscayCurra →</a></p>`}
+<p style="margin:0;">Un saludo,<br>Guzzi 🐛 y el equipo de BuscayCurra</p>`;
 
-    <p style="margin:24px 0 0;color:#374151;font-size:11px;line-height:1.7;text-align:center;">
-      Este aviso se manda una sola vez. Si no te interesa, no tienes que hacer nada.
-    </p>
-  `;
+  const pie = params.bajaUrl && params.alertaActivada
+    ? `Te escribimos por tu cuenta en BuscayCurra. <a href="${params.bajaUrl}" style="color:#6b7280;">No quiero el aviso diario de ofertas</a>.`
+    : "Te escribimos por tu cuenta en BuscayCurra.";
 
-  return enviarCorreo(params.email, `${saludo}te queda un paso en BuscayCurra`, baseTemplate(header, body));
+  return enviarCorreo(params.email, asunto, plantillaSencilla(cuerpo, pie), { bajaUrl: params.alertaActivada ? params.bajaUrl : null });
 }
 
 // ─── Email de confirmación de pago ───────────────────────────────────────────
@@ -483,8 +584,10 @@ export async function sendJobAlertEmail(params: {
   ejemploCity?: string;
   /** true si no son nuevas sino ofertas activas que aún no había visto. */
   esInventario?: boolean;
+  /** Enlace de baja de un clic (lib/alertas/baja.ts). */
+  bajaUrl?: string | null;
 }): Promise<boolean> {
-  const { userEmail, keyword, location, total, ejemploTitle, ejemploCompany, ejemploCity, esInventario } = params;
+  const { userEmail, keyword, location, total, ejemploTitle, ejemploCompany, ejemploCity, esInventario, bajaUrl } = params;
   const searchUrl = `https://buscaycurra.es/app/notificaciones`;
 
   const plural = total > 1;
@@ -516,12 +619,13 @@ export async function sendJobAlertEmail(params: {
 
     ${ctaButton("Ver todas las ofertas →", searchUrl)}
 
-    <p style="margin:20px 0 0;text-align:center;color:#374151;font-size:11px;">
-      Gestiona tus alertas en <a href="https://buscaycurra.es/app/gusi" style="color:#22c55e;text-decoration:none;">Guzzi</a>
+    <p style="margin:20px 0 0;text-align:center;color:#64748b;font-size:11px;line-height:1.7;">
+      Te llega porque tienes una alerta de ofertas en BuscayCurra.
+      ${bajaUrl ? `<br><a href="${bajaUrl}" style="color:#94a3b8;text-decoration:underline;">Dejar de recibir estas alertas</a>` : ""}
     </p>
   `;
 
-  return enviarCorreo(userEmail, `🔔 ${queEs} — BuscayCurra`, baseTemplate(header, body));
+  return enviarCorreo(userEmail, `🔔 ${queEs} — BuscayCurra`, baseTemplate(header, body), { bajaUrl });
 }
 
 export function generarCartaHTML(

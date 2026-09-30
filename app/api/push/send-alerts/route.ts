@@ -11,6 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { sendPush, type PushSub } from "@/lib/push-sender";
 import { sendJobAlertEmail } from "@/lib/email/smtp-sender";
+import { enlaceBaja } from "@/lib/alertas/baja";
 
 export const dynamic = "force-dynamic";
 
@@ -379,6 +380,7 @@ export async function GET(request: NextRequest) {
             ejemploCompany: ejemplo.company,
             ejemploCity: ejemplo.city || undefined,
             esInventario,
+            bajaUrl: enlaceBaja(alerta.user_id),
           });
           if (salio) correos++;
         }
