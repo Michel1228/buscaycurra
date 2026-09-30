@@ -1742,6 +1742,15 @@ test("las paginas trabajar-en/pais/oficio usan indice y no revientan", () => {
     /\} catch \(e\) \{\s*console\.error\(`\[trabajar-en\]/.test(p);
 });
 
+// El 30 sep 2026 un 503 suelto de Adzuna en la primera pagina dejo a Espana
+// con 0 ofertas en el barrido diario (los otros 14 paises trajeron 33.385).
+test("el barrido de Adzuna reintenta los fallos pasajeros (5xx, red)", () => {
+  const w = leerFuente("lib/job-search/sync-worker.ts");
+  const barrer = w.slice(w.indexOf("export async function barrerAdzuna"), w.indexOf("export async function syncAdzunaCountry"));
+  return /for \(let intento = 1; lote\.length === 0 && intento <= 2 && \/HTTP 5\\d\\d\|error de red\/\.test/.test(barrer) &&
+    /lote = await fetchAdzunaPagina\(countryCode, pagina/.test(barrer.slice(barrer.indexOf("intento++"))) ;
+});
+
 // ── LAS OFERTAS NO ENSEÑAN "&euro;" ────────────────────────────────────────
 //
 // Careerjet manda el texto con entidades HTML y se guardaba tal cual: 68.425

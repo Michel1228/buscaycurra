@@ -453,7 +453,20 @@ export async function barrerAdzuna(
   ultimoFalloAdzuna = null;
 
   for (let i = 0; i < paginas; i++) {
-    const lote = await fetchAdzunaPagina(countryCode, pagina, maxDaysOld > 0 ? maxDaysOld : undefined);
+    ultimoFalloAdzuna = null;
+    let lote = await fetchAdzunaPagina(countryCode, pagina, maxDaysOld > 0 ? maxDaysOld : undefined);
+
+    // UN FALLO PASAJERO NO PUEDE DEJAR UN PAÍS A CERO. El 30 sep 2026 Adzuna
+    // respondió 503 a la primera página de España y el barrido dio el país por
+    // terminado: 0 ofertas españolas ese día, mientras los otros 14 países
+    // traían 33.385. Un 5xx o un corte de red se reintentan dos veces con
+    // espera; la cuota o una clave mala (4xx) no, porque no se arreglan solos.
+    for (let intento = 1; lote.length === 0 && intento <= 2 && /HTTP 5\d\d|error de red/.test(ultimoFalloAdzuna || ""); intento++) {
+      console.warn(`[barrerAdzuna] ${countryCode} página ${pagina}: ${ultimoFalloAdzuna}. Reintento ${intento}/2.`);
+      await new Promise(r => setTimeout(r, intento * 10_000));
+      ultimoFalloAdzuna = null;
+      lote = await fetchAdzunaPagina(countryCode, pagina, maxDaysOld > 0 ? maxDaysOld : undefined);
+    }
     traidas += lote.length;
 
     if (lote.length === 0) {
