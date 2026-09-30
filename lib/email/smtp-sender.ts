@@ -320,7 +320,8 @@ export async function sendPrimerDiaEmail(params: {
   ofertas?: OfertasCiudad | null;
 }): Promise<boolean> {
   const primerNombre = esc((params.nombre || "").trim().split(" ")[0]);
-  const ciudad = capitalizar((params.ciudad || "").trim());
+  // El nombre limpio del sitio ("Tudela" aunque escribiera "Tudela navarra").
+  const ciudad = params.ofertas?.lugar || capitalizar((params.ciudad || "").trim());
   const conOfertas = !!(ciudad && params.ofertas && params.ofertas.total > 0 && params.ofertas.ofertas.length);
   const o = conOfertas ? frasesOfertas(ciudad, params.ofertas!) : null;
 
@@ -361,7 +362,8 @@ export async function sendBienvenidaAtrasadaEmail(params: {
   bajaUrl?: string | null;
 }): Promise<boolean> {
   const primerNombre = esc((params.nombre || "").trim().split(" ")[0]);
-  const ciudad = capitalizar((params.ciudad || "").trim());
+  // El nombre limpio del sitio ("Tudela" aunque escribiera "Tudela navarra").
+  const ciudad = params.ofertas?.lugar || capitalizar((params.ciudad || "").trim());
   const conOfertas = !!(ciudad && params.ofertas && params.ofertas.total > 0 && params.ofertas.ofertas.length);
   const o = conOfertas ? frasesOfertas(ciudad, params.ofertas!) : null;
 
@@ -374,7 +376,11 @@ export async function sendBienvenidaAtrasadaEmail(params: {
 <p ${P}>Te registraste en BuscayCurra el ${esc(params.fechaAlta)} y, por un fallo nuestro, no te llegó el correo de bienvenida${
     params.alertaActivada && ciudad ? ` ni se activó tu aviso de ofertas de ${esc(ciudad)}` : ""
   }. Ya está arreglado. Perdona.</p>
-${params.alertaActivada && ciudad ? `<p ${P}>Desde mañana te llegará un correo al día con las ofertas nuevas de ${esc(ciudad)}. Si no lo quieres, lo quitas con el enlace del final.</p>` : ""}
+${params.alertaActivada && ciudad
+    ? `<p ${P}>${conOfertas
+        ? `Desde mañana te llegará un correo al día con las ofertas nuevas de ${esc(ciudad)}.`
+        : `Esta semana no ha salido ninguna oferta en ${esc(ciudad)}: te escribiremos en cuanto salga alguna.`} Si no lo quieres, lo quitas con el enlace del final.</p>`
+    : ""}
 ${o ? `<p ${P}>${o.texto}</p>${listaOfertas(params.ofertas!)}` : ""}
 ${params.paso
     ? `<p ${P}>Lo que te falta ahora: <strong>${esc(enFrase(params.paso.titulo))}</strong>. ${esc(params.paso.porQue)}</p>

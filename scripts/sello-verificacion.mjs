@@ -1881,6 +1881,26 @@ test("el recordatorio del primer dia lleva ofertas reales de su ciudad", () => {
     !primerDia.includes("headerGradient(");
 });
 
+// La gente escribe la ciudad como quiere: "Tudela navarra" no encontraba nada,
+// "Portugal" encontraba Portugalete y "Santo domingo, republica dominicana"
+// sin la coma encontraba Santo Domingo de la Calzada (30 sep 2026).
+test("las ofertas del correo entienden como escribe la gente su ciudad", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-lugar.cjs";
+  execFileSync("npx", ["esbuild", "lib/email/ofertas-para-correo.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  const { candidatos } = await import(`../${salida}`);
+  try { unlinkSync(salida); } catch {}
+  const src = leerFuente("lib/email/ofertas-para-correo.ts");
+  const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  return igual(candidatos("Tudela navarra"), ["Tudela navarra", "Tudela"]) &&
+    igual(candidatos("Logroño, La Rioja"), ["Logroño, La Rioja", "Logroño"]) &&
+    igual(candidatos("Santo domingo, república dominicana"), ["Santo domingo, república dominicana"]) &&
+    /LISTA_PAISES\.find/.test(src) && /LOWER\(country\) = \$1/.test(src);
+});
+
 // ── NUESTROS CORREOS NO INSISTEN EN DIRECCIONES QUE REBOTAN ────────────────
 //
 // Del 1 al 29 sep 2026 rebotaron 392 alertas (mas que las 218 que llegaron),
