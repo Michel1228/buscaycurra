@@ -77,12 +77,27 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   a una dirección que rebota.
 - [x] **Un CV entregado dejaba de contar para el cupo** (`5ced701`).
 
+- [x] **Recordatorio nuevo a los 78 del antiguo** (30 sep): enviado a 63
+  (fuera: 11 con bienvenida atrasada ese día, 2 que ya habían completado los
+  pasos, 2 de prueba). Marcados con `recordatorio_primer_dia_2`.
+- [x] **Disco del VPS del 73 % al 59 %** (30 sep): imágenes de Docker viejas,
+  caché de npm y de Python. `build-deploy.sh` borra ya la imagen vieja en cada
+  despliegue (`4d928f6`). Las copias de seguridad (7 días, 14 GB) no se tocan.
+
 ### Abierto: decisiones de Michel
 
 - [ ] **buscaycurra.es no recibe correo** (no tiene registro MX). La web
   publica soporte@, privacidad@, contacto@ y hola@, y todo lo que se escriba
-  ahí se pierde. La de privacidad la exige la ley. Crear buzones o reenvíos en
-  Hostinger (hPanel → Correos).
+  ahí se pierde. La de privacidad la exige la ley. Hostinger no tiene opción
+  gratuita para un dominio sin plan de correo: el más barato, Starter, cuesta
+  0,39 $/mes a 48 meses (renueva a 1,59 $/mes), un buzón con alias. Se contrata
+  en hPanel → Correos; como el DNS está en Hostinger, se configura solo.
+- [ ] **2,04 millones de ofertas caducadas hace más de 90 días** siguen en la
+  tabla (la mitad de sus 5 millones de filas). Borrarlas haría más pequeños los
+  índices, pero no tiene vuelta atrás salvo por la copia de 7 días.
+- [ ] **La base tiene 64 MB de memoria compartida** (valor por defecto de
+  Docker): el VACUUM en paralelo falló por eso el 30 sep. No hay rastro de que
+  afecte a la app, pero al recrear el contenedor conviene darle `--shm-size=256m`.
 - [ ] **~29 cuentas de prueba** (audit*, qa-*, prueba*, test*...) cuentan como
   usuarios en las cifras.
 - [ ] **Webhook de Stripe:** activar `invoice.payment_failed` e
