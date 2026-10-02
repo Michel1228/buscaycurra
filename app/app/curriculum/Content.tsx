@@ -16,7 +16,7 @@ import Link from "next/link";
 
 import { Trash2, Save, Check, Palette } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { isNative as esNativo } from "@/lib/utils/platform";
+import { descargarCVComoPDF } from "@/lib/cv-generator/descargar-pdf";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { generarCV, LISTA_PLANTILLAS, PLANTILLAS, TEMPLATE_IDS, type TemplateId } from "@/lib/cv-generator/plantillas";
@@ -719,60 +719,14 @@ export default function CurriculumPage() {
     const htmlToUse = mejoradoHTML || livePreviewHTML;
     if (!htmlToUse || descargando) return;
     setDescargando(true);
-    try {
-      // EN EL MÓVIL (iOS Y ANDROID) HAY QUE IR POR OTRO CAMINO.
-      //
-      // Dentro del WebView de la app, las dos vías normales fallan: el atributo
-      // `download` de un enlace se ignora y navegar a una URL `data:` está
-      // prohibido. El usuario le daba a descargar y se quedaba mirando.
-      //
-      // Lo que sí funciona: el servidor guarda el PDF unos minutos y lo sirve
-      // desde una dirección normal con "inline". Al abrirla, el teléfono enseña
-      // su propio visor de PDF, y desde ahí se guarda o se comparte.
-      //
-      // Antes esto era solo para iOS, pero el WebView de Android tiene el mismo
-      // problema con `download` y una URL `blob:`, así que va para los dos.
-      if (esNativo()) {
-        const resVisor = await fetch("/api/cv/pdf-template", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ html: htmlToUse, paraVisor: true }),
-        });
-        if (!resVisor.ok) throw new Error("Error generando PDF");
-        const { id } = await resVisor.json() as { id?: string };
-        if (!id) throw new Error("Sin identificador");
-        // _blank: lo abre fuera del WebView, en el visor del sistema. Por eso
-        // ese enlace NO puede exigir sesión (ver app/api/cv/pdf-template).
-        window.open(`/api/cv/pdf-template?id=${encodeURIComponent(id)}`, "_blank");
-        return;
-      }
-
-      const res = await fetch("/api/cv/pdf-template", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ html: htmlToUse }),
-      });
-      if (!res.ok) throw new Error("Error generando PDF");
-      const blob = await res.blob();
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "CV_BuscayCurra.pdf";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      // Se espera antes de revocar: en algunos navegadores, revocar de
-      // inmediato cancela la descarga que acaba de empezar.
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-    } catch {
-      if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.print();
-      }
-    } finally {
-      setDescargando(false);
-    }
+    setError("");
+    // Todo el lío de bajarse el PDF está en un solo sitio, que lo comparte con
+    // la pantalla de CVs guardados: lib/cv-generator/descargar-pdf.ts.
+    const fallo = await descargarCVComoPDF(htmlToUse, token);
+    if (fallo) setError(fallo);
+    setDescargando(false);
   }
+
 
   function f(field: keyof CVForm, val: string) {
     setForm(p => ({ ...p, [field]: val }));

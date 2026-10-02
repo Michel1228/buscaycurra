@@ -1156,6 +1156,20 @@ El candidato tiene mucha experiencia.
     // no existe, y nunca mencionaba el editor, que es donde se hace de verdad.
     // Comprobado en producción el 2 oct 2026.
     if (preIntent === "editar_cv") {
+      // Si ya le hemos mandado el enlace en esta conversación, no se le suelta
+      // otra vez el mismo párrafo: eso es lo que hace que parezca una máquina.
+      // Se pasa a lo único útil que queda, que es redactarle el texto.
+      const yaLeDijimosDondeEs = history.slice(-6).some(
+        (m) => m.role !== "user" && /Abrir el editor de CV/.test(m.text || "")
+      );
+      if (yaLeDijimosDondeEs) {
+        return NextResponse.json({
+          reply: "Dímelo con tus palabras y te lo dejo redactado para que lo pegues en [el editor](/app/curriculum).\n\n"
+            + "Por ejemplo: «carretillero en Logística Ribera, de 2022 a 2025, cargaba camiones y preparaba pedidos» "
+            + "y te lo devuelvo escrito para el currículum.",
+          action: "editar_cv",
+        });
+      }
       return NextResponse.json({
         reply: "Tu currículum se edita tú mismo en **Mi Currículum**, y se guarda solo mientras escribes.\n\n"
           + "👉 [Abrir el editor de CV](/app/curriculum)\n\n"

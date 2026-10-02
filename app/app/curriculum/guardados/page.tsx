@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { FolderOpen, FileText, Eye, Pencil, Download, Trash2 } from "lucide-react";
 import { PLANTILLAS } from "@/lib/cv-generator/plantillas";
+import { descargarCVComoPDF } from "@/lib/cv-generator/descargar-pdf";
 
 interface CVGuardado {
   id: string;
@@ -68,19 +69,23 @@ export default function MisCurriculumsPage() {
     finally { setCargandoVista(false); }
   }
 
-  function descargar(html: string, nombre: string) {
-    const banner = `
-    <div id="cv-banner" style="position:fixed;top:0;left:0;right:0;background:#1B2845;color:#fff;padding:12px 20px;font-family:sans-serif;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
-      <span style="flex:1"><strong>Para guardar con los colores:</strong> activa <strong>"Gráficos de fondo"</strong> en la ventana de impresión</span>
-      <button onclick="document.getElementById('cv-banner').style.display='none';window.print();" style="background:#22c55e;color:#1a1a12;border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer;">Guardar PDF</button>
-    </div>
-    <div style="height:56px"></div>
-    <style>@media print{#cv-banner,div[style*="height:56px"]{display:none!important}}</style>`;
-    const win = window.open("", "_blank");
-    if (win) {
-      win.document.write(html.replace("</body>", banner + "</body>"));
-      win.document.close();
-    }
+  /**
+   * Bajarse un CV guardado.
+   *
+   * Antes abría una ventana en blanco y le escribía el HTML dentro, con un
+   * aviso de "activa Gráficos de fondo" para que la gente lo imprimiera a mano.
+   * En el móvil esa ventana no se abre: el botón no hacía nada y no decía por
+   * qué. Ahora va por el mismo sitio que el editor y sale un PDF de verdad.
+   */
+  const [descargandoId, setDescargandoId] = useState("");
+
+  async function descargar(html: string, nombre: string, id: string) {
+    if (descargandoId) return;
+    setDescargandoId(id);
+    setError("");
+    const fallo = await descargarCVComoPDF(html, token, nombre);
+    if (fallo) setError(fallo);
+    setDescargandoId("");
   }
 
   async function editarCV(cv: CVGuardado) {
@@ -220,10 +225,11 @@ export default function MisCurriculumsPage() {
                     </button>
                     {viendoId === cv.id && htmlVista && (
                       <button
-                        onClick={() => descargar(htmlVista, cv.nombre)}
+                        onClick={() => descargar(htmlVista, cv.nombre, cv.id)}
+                        disabled={descargandoId === cv.id}
                         className="px-4 py-2 text-xs font-semibold rounded-xl transition"
                         style={{ background: "rgba(126,213,111,0.15)", border: "1px solid rgba(126,213,111,0.4)", color: "#22c55e" }}>
-                        <Download size={12} strokeWidth={1.8} className="inline mr-1" />PDF
+                        <Download size={12} strokeWidth={1.8} className="inline mr-1" />{descargandoId === cv.id ? "Generando..." : "PDF"}
                       </button>
                     )}
                     <button
