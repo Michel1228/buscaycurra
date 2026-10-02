@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { getUserId } from "@/lib/auth-server";
+import { htmlDelCV } from "@/lib/cv-generator/html-guardado";
 
 export const dynamic = "force-dynamic";
 
@@ -96,13 +97,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { cvData, cvText, cvId } = body;
+    const { cvData, cvId } = body;
 
     if (!cvData) {
       return NextResponse.json({ error: "cvData requerido" }, { status: 400 });
     }
 
     const pool = getPool();
+    // La columna "html" la monta el servidor desde los datos: lo que mande la
+    // pantalla en cvText no se usa (ver lib/cv-generator/html-guardado.ts).
+    const html = htmlDelCV(cvData);
 
     // Multi-CV: si llega cvId se actualiza ESE CV (el que el usuario tiene abierto);
     // si no, se actualiza el más reciente; si no existe ninguno, se crea el primero.
@@ -110,7 +114,7 @@ export async function POST(req: NextRequest) {
       const upd = await pool.query(
         `UPDATE user_cvs SET html = $3, form_data = $4, updated_at = NOW()
          WHERE id = $1 AND user_id = $2 RETURNING id`,
-        [cvId, userId, cvText || "", JSON.stringify(cvData)]
+        [cvId, userId, html, JSON.stringify(cvData)]
       );
       if (upd.rows.length > 0) return NextResponse.json({ success: true, id: upd.rows[0].id });
       // cvId no encontrado (borrado en otra pestaña) → cae al flujo normal
@@ -120,14 +124,14 @@ export async function POST(req: NextRequest) {
       `UPDATE user_cvs SET html = $2, form_data = $3, updated_at = NOW()
        WHERE id = (SELECT id FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1)
        RETURNING id`,
-      [userId, cvText || "", JSON.stringify(cvData)]
+      [userId, html, JSON.stringify(cvData)]
     );
     if (updUltimo.rows.length > 0) return NextResponse.json({ success: true, id: updUltimo.rows[0].id });
 
     const ins = await pool.query(
       `INSERT INTO user_cvs (user_id, nombre, html, form_data, updated_at)
        VALUES ($1, 'Mi CV', $2, $3, NOW()) RETURNING id`,
-      [userId, cvText || "", JSON.stringify(cvData)]
+      [userId, html, JSON.stringify(cvData)]
     );
     return NextResponse.json({ success: true, id: ins.rows[0].id });
   } catch (error) {

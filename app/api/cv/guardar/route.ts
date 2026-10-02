@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { getPlanLimits, planEfectivoDeUsuario } from "@/lib/plan-limits";
+import { htmlDelCV } from "@/lib/cv-generator/html-guardado";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,10 @@ export async function POST(req: NextRequest) {
   const { data: { user }, error } = await sb.auth.getUser(token);
   if (error || !user) return NextResponse.json({ error: "Sesión inválida" }, { status: 401 });
 
-  const { nombre, html, formData } = await req.json();
+  const { nombre, html: htmlDeLaPantalla, formData } = await req.json();
+  // Con datos, el CV lo monta el servidor (lib/cv-generator/html-guardado.ts);
+  // el HTML de la pantalla solo se usa si no llegan datos.
+  const html = formData ? htmlDelCV(formData) || htmlDeLaPantalla : htmlDeLaPantalla;
   if (!html?.trim()) return NextResponse.json({ error: "Sin HTML" }, { status: 400 });
 
   const pool = getPool();

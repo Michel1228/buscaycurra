@@ -1799,6 +1799,28 @@ test("una sola conversion del formulario al CV, en todas partes", () => {
     !/cvText: JSON\.stringify\(cvData\)/.test(editor) && /cvText: generarCV\(formToCVDataRaw\(\)\)/.test(editor);
 });
 
+// Y la columna "html" la monta EL SERVIDOR: la subida del CV por Guzzi tambien
+// mandaba JSON.stringify(datos), el mismo fallo por otra puerta. Asi ninguna
+// pantalla, de ahora o futura, puede volver a guardar texto en bruto.
+test("el CV guardado lo monta el servidor desde los datos", async () => {
+  const gusiCv = leerFuente("app/api/gusi/cv/route.ts");
+  const guardar = leerFuente("app/api/cv/guardar/route.ts");
+  const post = gusiCv.slice(gusiCv.indexOf("export async function POST"), gusiCv.indexOf("export async function DELETE"));
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-htmlcv.cjs";
+  execFileSync("npx", ["esbuild", "lib/cv-generator/html-guardado.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  const { htmlDelCV } = await import(`../${salida}`);
+  try { unlinkSync(salida); } catch {}
+  const html = htmlDelCV({ nombre: "Ana", experiencia: [{ puesto: "Camarera", fechas: "2024" }] });
+  return /const html = htmlDelCV\(cvData\)/.test(post) && !/cvText \|\| ""/.test(post) &&
+    /htmlDelCV\(formData\)/.test(guardar) &&
+    /cv-page/.test(html) && html.includes("Ana") && !html.trim().startsWith("{") &&
+    htmlDelCV(null) === "";
+});
+
 test("normalizar ordena, quita filas vacias y no se inventa idiomas", async () => {
   const { execFileSync } = await import("node:child_process");
   const { unlinkSync } = await import("node:fs");
@@ -1862,6 +1884,23 @@ test("mejorar el CV con IA escribe en el formulario y se puede deshacer", () => 
     // y si la IA falla, se dice; antes se tragaba el error y parecia que no hacia nada
     /setError\(/.test(fn) && !/catch \{ \/\* usa el perfil original/.test(fn) &&
     /if \(formAntesDeMejorar\) setForm\(formAntesDeMejorar\)/.test(c);
+});
+
+// ── EL CENTINELA RECORRE LA APP COMO UN USUARIO CADA MAÑANA ────────────────
+//
+// Los fallos de la semana (Mejorar que no cambiaba nada, el PDF del movil,
+// Guzzi hablando de cursos, la bienvenida en 401) respondian 200 por separado:
+// solo se veian haciendo el camino entero. El recorrido lo hace cada dia.
+test("el centinela hace el recorrido de usuario cada dia", () => {
+  const c = leerFuente("app/api/admin/centinela/route.ts");
+  const rec = leerFuente("lib/centinela/recorrido.ts");
+  const comprobaciones = (rec.match(/anota\("/g) || []).length;
+  return /await recorridoDeUsuario\(anota\)/.test(c) &&
+    // los seis caminos, cada uno con el fallo del que nace
+    ["/api/cv/mejorar", "/api/cv/ats-score", "/api/gusi/chat", "/api/cv/pdf-template"].every((r) => rec.includes(r)) &&
+    /LIKE '\{%'/.test(rec) && /bienvenida_en/.test(rec) && comprobaciones >= 6 &&
+    // la cuenta de comprobacion no es de las que borra el kit de auditoria
+    /delivered\+recorrido@resend\.dev/.test(rec);
 });
 
 // ── NINGUNA OFERTA ENTRA INVISIBLE ─────────────────────────────────────────

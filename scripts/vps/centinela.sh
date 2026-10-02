@@ -44,7 +44,7 @@ ESTADO=/root/.centinela-ultimo-estado
 RESPUESTA=$(mktemp)
 trap 'rm -f "$RESPUESTA"' EXIT
 
-CODIGO=$(curl -s -o "$RESPUESTA" -w '%{http_code}' --max-time 150 \
+CODIGO=$(curl -s -o "$RESPUESTA" -w '%{http_code}' --max-time 270 \
   "http://localhost:8892/api/admin/centinela" -H "x-admin-secret: $SECRET")
 
 # La clave de Resend viaja en el entorno del proceso y no como argumento: los

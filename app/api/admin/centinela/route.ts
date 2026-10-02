@@ -40,6 +40,7 @@ import { OFERTAS_ESPANA } from "@/lib/promesas";
 // ("a is not a constructor") y el control 13 daba fallo aunque Redis estuviera
 // perfecto. Lo cazo el propio centinela en su primera ejecucion (22 sep 2026).
 import { Redis } from "ioredis";
+import { recorridoDeUsuario } from "@/lib/centinela/recorrido";
 
 const supabaseAdmin = () =>
   createClient(
@@ -48,7 +49,7 @@ const supabaseAdmin = () =>
   );
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 240; // el recorrido de usuario genera un PDF y llama a la IA
 
 type Resultado = {
   nombre: string;
@@ -502,6 +503,10 @@ export async function GET(req: NextRequest) {
       "el 22 sep 2026 la app perdio Redis: sin envios de CV ni busqueda de empresas"
     );
   }
+
+  // ── 16-21. Recorrido de usuario: los caminos que se rompieron esta semana ──
+  // Ver lib/centinela/recorrido.ts.
+  await recorridoDeUsuario(anota);
 
   const fallos = r.filter(x => !x.bien);
   return NextResponse.json(
