@@ -1765,12 +1765,61 @@ test("el enlace del PDF del movil no exige sesion (la abre el navegador del sist
   // el CV lo usan: antes cada una tenia el suyo y las dos fallaban.
   const ayuda = leerFuente("lib/cv-generator/descargar-pdf.ts");
   const pantallas = ["app/app/curriculum/Content.tsx", "app/app/curriculum/guardados/page.tsx"];
+  const vida = Number((r.match(/const SEGUNDOS_VIDA = (\d+)/) || [])[1] || 0);
   return !/getUserId/.test(get) &&                              // window.open no lleva sesion
     /\^\[\\w-\]\+:\[a-f0-9\]\{32\}\$/.test(get) &&              // el azar del enlace es lo que protege
-    /await r\.del\(`cv:pdf:\$\{id\}`\)/.test(get) &&            // un solo uso
+    // NO de un solo uso: el telefono pide el mismo PDF mas de una vez (gestor
+    // de descargas de Android, "Guardar en Archivos" del iPhone) y la segunda
+    // peticion se llevaba un error con nombre de PDF que se abria vacio.
+    !/r\.del\(/.test(get) && vida >= 600 &&
+    // y si caduca, una pagina que se entienda, no {"error":...}
+    !/NextResponse\.json\(/.test(get) && /paginaDeAviso\(/.test(get) &&
     ayuda.includes("if (esNativo()) {") &&                      // y vale para iOS y Android
     pantallas.every((f) => leerFuente(f).includes("await descargarCVComoPDF(")) &&
     pantallas.every((f) => /if \(fallo\) setError\(fallo\)/.test(leerFuente(f)));
+});
+
+// ── EL CV QUE SE VE ES EL QUE SE DESCARGA, SE GUARDA Y SE ENVIA ────────────
+//
+// Habia tres conversiones distintas de los datos del formulario al CV, y el
+// autoguardado metia los datos en bruto en la columna "html": la pantalla de
+// CVs guardados descargaba un PDF con {"nombre":...} (los 52 CV guardados
+// estaban asi), y el CV que recibia la empresa salia en otro orden, con la
+// fila en blanco del formulario y un "Espanol 100 %" que nadie habia puesto.
+test("una sola conversion del formulario al CV, en todas partes", () => {
+  const editor = leerFuente("app/app/curriculum/Content.tsx");
+  const guardados = leerFuente("app/app/curriculum/guardados/page.tsx");
+  const worker = leerFuente("lib/cv-sender/worker.ts");
+  const fnEditor = editor.slice(editor.indexOf("function formToCVDataDe"), editor.indexOf("function formToCVDataDe") + 300);
+  return /return normalizar\(/.test(fnEditor) &&
+    /function formToCVDataRaw\(\): CVData \{\s*return formToCVDataDe\(form\);/.test(editor) &&
+    /generarCV\(normalizar\(datos\)\)/.test(guardados) &&
+    /normalizar\(rawData\)/.test(worker) &&
+    // el autoguardado guarda el CV montado, no los datos en bruto
+    !/cvText: JSON\.stringify\(cvData\)/.test(editor) && /cvText: generarCV\(formToCVDataRaw\(\)\)/.test(editor);
+});
+
+test("normalizar ordena, quita filas vacias y no se inventa idiomas", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-normalizar.cjs";
+  execFileSync("npx", ["esbuild", "lib/cv-generator/normalizar.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  const { normalizar } = await import(`../${salida}`);
+  try { unlinkSync(salida); } catch {}
+  const cv = normalizar({
+    nombre: "Ana", idiomas: "",
+    experiencia: [
+      { fechas: "2015 - 2018", puesto: "Dependienta", empresa: "A", descripcion: "" },
+      { fechas: "", puesto: "", empresa: "", descripcion: "" },              // la fila en blanco del formulario
+      { fechas: "2021 - 2024", puesto: "Camarera", empresa: "B", descripcion: "servir\n- cobrar" },
+    ],
+  });
+  return cv.experiencia.length === 2 &&
+    cv.experiencia[0].puesto === "Camarera" &&                              // la mas reciente primero
+    JSON.stringify(cv.experiencia[0].descripcion) === JSON.stringify(["servir", "cobrar"]) &&
+    cv.idiomas.length === 0;                                                // nada de "Espanol 100 %"
 });
 
 test("Guzzi manda al editor de CV en vez de hablar de carretilleros", async () => {

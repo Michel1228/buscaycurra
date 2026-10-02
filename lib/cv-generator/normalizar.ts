@@ -3,6 +3,12 @@ import { TEMPLATE_IDS } from "./plantillas";
 
 const PLANTILLAS_VALIDAS: string[] = TEMPLATE_IDS;
 
+/** El último año que aparece en "2019 - 2022" (o 0), para ordenar las experiencias. */
+function anioFinal(fechas: string): number {
+  const m = String(fechas || "").match(/(\d{4})/g);
+  return m ? parseInt(m[m.length - 1]) : 0;
+}
+
 export function normalizar(raw: Record<string, unknown>): CVData {
   let aptitudes: string[] = [];
   if (Array.isArray(raw.aptitudes)) {
@@ -27,7 +33,13 @@ export function normalizar(raw: Record<string, unknown>): CVData {
         : typeof e.descripcion === "string" && e.descripcion.trim()
           ? e.descripcion.split("\n").map((s) => s.trim().replace(/^[-•]\s*/, "")).filter(Boolean)
           : undefined,
-    }));
+    }))
+      // IGUAL QUE LA VISTA PREVIA DEL EDITOR: sin filas vacías y de la más
+      // reciente a la más antigua. Antes el CV que recibía la empresa salía en
+      // el orden en que se habían escrito y con la fila en blanco que trae el
+      // formulario, mientras la persona veía otro orden en su pantalla.
+      .filter((e) => e.puesto.trim())
+      .sort((a, b) => anioFinal(b.fechas) - anioFinal(a.fechas));
   } else if (typeof raw.experiencia === "string" && raw.experiencia.trim()) {
     experiencia = raw.experiencia.split("\n").filter(Boolean).map(line => {
       const m = line.match(/^([\d\s\-–]+)\s*[—–-]\s*(.+?)(?:\s+en\s+(.+?))?(?:\s*\((.+?)\))?$/);
@@ -72,9 +84,10 @@ export function normalizar(raw: Record<string, unknown>): CVData {
       const nivel = parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70;
       return { nombre: parts[0].trim(), nivel };
     });
-  } else {
-    idiomas = [{ nombre: "Español", nivel: 100 }];
   }
+  // Si la persona no ha puesto idiomas, no se le inventa ninguno. Aquí se
+  // añadía "Español 100 %": la vista previa no lo enseñaba, pero el CV que
+  // llegaba a la empresa sí. Lo que se envía tiene que ser lo que se ve.
 
   const contacto = String(raw.contacto || "");
   const partes = contacto.split(",").map(s => s.trim());

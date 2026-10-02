@@ -20,6 +20,7 @@ import { descargarCVComoPDF } from "@/lib/cv-generator/descargar-pdf";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { generarCV, LISTA_PLANTILLAS, PLANTILLAS, TEMPLATE_IDS, type TemplateId } from "@/lib/cv-generator/plantillas";
+import { normalizar } from "@/lib/cv-generator/normalizar";
 import { CV_EJEMPLO } from "@/lib/cv-generator/ejemplo";
 import type { CVData } from "@/lib/cv-generator/cv-template";
 import InfoTooltip from "@/components/InfoTooltip";
@@ -118,48 +119,18 @@ export default function CurriculumPage() {
       form.perfilProfesional, form.aptitudes, form.idiomas,
       JSON.stringify(form.experiencia), JSON.stringify(form.formacion), fotoUrl, templateId, accentColor]);
 
-  // ⚠️ NO incluye useMemo como dependencia — necesitamos la función pura
+  /**
+   * El CV que se pinta, se descarga, se guarda y se ENVÍA sale de UNA sola
+   * conversión: normalizar(), la misma que usa el envío a empresas.
+   *
+   * Había tres copias (la vista previa, la mejora con IA y el envío) y no
+   * coincidían: el CV que recibía la empresa salía en otro orden, con la fila
+   * en blanco del formulario y con un "Español 100 %" que la persona no había
+   * puesto. Comprobado el 2 oct 2026 con los 40 CV guardados que se pueden
+   * pintar: con normalizar() ya salen idénticos, byte a byte.
+   */
   function formToCVDataRaw(): CVData {
-    const expOrdenada = [...form.experiencia]
-      .filter(e => e.puesto)
-      .sort((a, b) => {
-        const getYear = (f: string) => { const m = f.match(/(\d{4})/g); return m ? parseInt(m[m.length - 1]) : 0; };
-        return getYear(b.fechas) - getYear(a.fechas);
-      });
-
-    return {
-      nombre: form.nombre,
-      apellidos: form.apellidos || undefined,
-      subtitulo: form.subtitulo || undefined,
-      telefono: form.telefono || undefined,
-      email: form.email || undefined,
-      ciudad: form.ciudad || undefined,
-      fotoUrl: fotoUrl || undefined,
-      templateId,
-      accentColor,
-      perfilProfesional: form.perfilProfesional || undefined,
-      aptitudes: form.aptitudes
-        ? form.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
-        : undefined,
-      idiomas: form.idiomas
-        ? form.idiomas.split(",").map(i => {
-            const parts = i.trim().split(":");
-            return { nombre: parts[0].trim(), nivel: parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70 };
-          }).filter(i => i.nombre)
-        : undefined,
-      experiencia: expOrdenada.map(e => ({
-        fechas: e.fechas,
-        puesto: e.puesto,
-        empresa: e.empresa,
-        ubicacion: e.ubicacion || undefined,
-        descripcion: e.descripcion ? e.descripcion.split("\n").filter(d => d.trim()).map(d => d.trim().replace(/^[-•]\s*/, "")) : undefined,
-      })),
-      formacion: form.formacion.filter(f => f.titulo).map(f => ({
-        titulo: f.titulo,
-        centro: f.centro,
-        ubicacion: f.ubicacion || undefined,
-      })),
-    };
+    return formToCVDataDe(form);
   }
 
   useEffect(() => {
@@ -424,7 +395,11 @@ export default function CurriculumPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // cvId: el autosave actualiza el CV que está abierto, no el último tocado
-        body: JSON.stringify({ userId, cvData, cvText: JSON.stringify(cvData), cvId: cvActivoId || undefined }),
+        // cvText es la columna "html": va el CV montado. Aquí iba
+        // JSON.stringify(cvData), y la pantalla de CVs guardados enseñaba y
+        // descargaba ese texto en bruto en vez del CV (los 52 CV guardados
+        // estaban así el 2 oct 2026).
+        body: JSON.stringify({ userId, cvData, cvText: generarCV(formToCVDataRaw()), cvId: cvActivoId || undefined }),
       });
       if (!res.ok) {
         setError("No se pudo guardar el CV. Inténtalo de nuevo.");
@@ -569,48 +544,9 @@ export default function CurriculumPage() {
     finally { setSubiendoFoto(false); }
   }
 
-  /** Igual que formToCVDataRaw, pero para un formulario concreto (el recién mejorado). */
+  /** El CV de un formulario concreto (el actual o el recién mejorado). */
   function formToCVDataDe(datos: CVForm): CVData {
-    const expOrdenada = [...datos.experiencia]
-      .filter(e => e.puesto)
-      .sort((a, b) => {
-        const getYear = (f: string) => { const m = f.match(/(\d{4})/g); return m ? parseInt(m[m.length - 1]) : 0; };
-        return getYear(b.fechas) - getYear(a.fechas);
-      });
-
-    return {
-      nombre: datos.nombre,
-      apellidos: datos.apellidos || undefined,
-      subtitulo: datos.subtitulo || undefined,
-      telefono: datos.telefono || undefined,
-      email: datos.email || undefined,
-      ciudad: datos.ciudad || undefined,
-      fotoUrl: fotoUrl || undefined,
-      templateId,
-      accentColor,
-      perfilProfesional: datos.perfilProfesional || undefined,
-      aptitudes: datos.aptitudes
-        ? datos.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
-        : undefined,
-      idiomas: datos.idiomas
-        ? datos.idiomas.split(",").map(i => {
-            const parts = i.trim().split(":");
-            return { nombre: parts[0].trim(), nivel: parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70 };
-          }).filter(i => i.nombre)
-        : undefined,
-      experiencia: expOrdenada.map(e => ({
-        fechas: e.fechas,
-        puesto: e.puesto,
-        empresa: e.empresa,
-        ubicacion: e.ubicacion || undefined,
-        descripcion: e.descripcion ? e.descripcion.split("\n").filter(d => d.trim()).map(d => d.trim().replace(/^[-•]\s*/, "")) : undefined,
-      })),
-      formacion: datos.formacion.filter(f => f.titulo).map(f => ({
-        titulo: f.titulo,
-        centro: f.centro,
-        ubicacion: f.ubicacion || undefined,
-      })),
-    };
+    return normalizar({ ...datos, fotoUrl: fotoUrl || undefined, templateId, accentColor } as unknown as Record<string, unknown>);
   }
 
   /**

@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { FolderOpen, FileText, Eye, Pencil, Download, Trash2 } from "lucide-react";
-import { PLANTILLAS } from "@/lib/cv-generator/plantillas";
+import { PLANTILLAS, generarCV } from "@/lib/cv-generator/plantillas";
 import { descargarCVComoPDF } from "@/lib/cv-generator/descargar-pdf";
+import { normalizar } from "@/lib/cv-generator/normalizar";
 
 interface CVGuardado {
   id: string;
@@ -62,10 +63,24 @@ export default function MisCurriculumsPage() {
         body: JSON.stringify({ id }),
       });
       if (res.ok) {
-        const data = await res.json();
-        setHtmlVista(data.html || "");
+        const data = await res.json() as { html?: string; form_data?: Record<string, unknown> | string | null };
+        // EL CV SE MONTA DESDE LOS DATOS, con la misma conversión que el editor y
+        // que el envío a empresas. Antes se enseñaba la columna "html" tal cual,
+        // y el autoguardado metía ahí los datos en bruto: la vista previa y el
+        // PDF de esta pantalla salían con texto tipo {"nombre":"..."} en vez del
+        // CV. Michel, 2 oct 2026: "el PDF sale sin datos".
+        const datos = typeof data.form_data === "string" ? JSON.parse(data.form_data) : data.form_data;
+        if (datos && typeof datos === "object") {
+          setHtmlVista(generarCV(normalizar(datos)));
+        } else if (data.html && /<[a-z]/i.test(data.html)) {
+          setHtmlVista(data.html);
+        } else {
+          setError("Este CV no tiene datos que enseñar. Ábrelo con Editar y vuelve a guardarlo.");
+        }
+      } else {
+        setError("No se ha podido abrir este CV. Inténtalo otra vez.");
       }
-    } catch { /* silencioso */ }
+    } catch { setError("Sin conexión para abrir el CV. Inténtalo otra vez."); }
     finally { setCargandoVista(false); }
   }
 

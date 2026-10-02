@@ -15,9 +15,9 @@
  * puede; con `inline` abre el visor del propio teléfono, y desde ahí el usuario
  * lo guarda en Archivos o lo comparte con el botón de siempre.
  *
- * El PDF se guarda cinco minutos en Redis y se borra al servirlo: no es
- * almacenamiento, es un pañuelo de usar y tirar. Y solo lo puede recoger quien
- * lo generó, porque el identificador lleva dentro el id del usuario.
+ * El PDF se guarda diez minutos en Redis y luego caduca: no es
+ * almacenamiento, es un pañuelo de usar y tirar. Lo protege el azar del enlace
+ * (ver GET más abajo).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { generateCVPdf } from "@/lib/cv-generator/generate-pdf";
@@ -28,8 +28,25 @@ import { randomBytes } from "crypto";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-/** Cuánto vive el PDF guardado. Lo justo para abrirlo. */
-const SEGUNDOS_VIDA = 300;
+/** Cuánto vive el PDF guardado: lo justo para abrirlo, guardarlo y compartirlo. */
+const SEGUNDOS_VIDA = 600;
+
+/**
+ * Lo que ve la persona si el enlace falla. Esta dirección se abre en el
+ * navegador del teléfono, fuera de la app: un {"error":...} ahí parece que la
+ * aplicación se ha roto. Mejor una frase que diga qué hacer.
+ */
+function paginaDeAviso(titulo: string, texto: string, status: number): NextResponse {
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${titulo} — BuscayCurra</title></head>
+<body style="margin:0;background:#0f1117;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<main style="max-width:460px;margin:0 auto;padding:64px 20px;text-align:center;">
+<p style="font-size:40px;margin:0 0 12px;">🐛</p>
+<h1 style="font-size:21px;margin:0 0 12px;">${titulo}</h1>
+<p style="color:#94a3b8;font-size:15px;line-height:1.6;margin:0;">${texto}</p>
+</main></body></html>`;
+  return new NextResponse(html, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+}
 
 let redis: Redis | null = null;
 function getRedis(): Redis | null {
@@ -106,24 +123,36 @@ export async function POST(req: NextRequest) {
  * móvil. Michel: "intento descargar, abre una página y da error".
  *
  * Lo que protege el PDF es el propio enlace: lleva 32 caracteres al azar (128
- * bits) que solo conoce quien acaba de generarlo, se borra en cuanto se sirve y
- * caduca a los cinco minutos. Adivinarlo no es posible y reutilizarlo tampoco.
+ * bits) que solo conoce quien acaba de generarlo, y caduca a los diez minutos.
+ * Adivinarlo no es posible.
  */
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id") || "";
   if (!/^[\w-]+:[a-f0-9]{32}$/.test(id)) {
-    return NextResponse.json({ error: "Identificador no válido" }, { status: 400 });
+    return paginaDeAviso("Este enlace no es válido", "Vuelve a la aplicación y pulsa otra vez el botón del PDF.", 400);
   }
 
   const r = getRedis();
-  if (!r) return NextResponse.json({ error: "Visor no disponible" }, { status: 503 });
+  if (!r) return paginaDeAviso("Ahora mismo no se puede abrir el PDF", "Vuelve a la aplicación y prueba dentro de un momento.", 503);
 
   const guardado = await r.get(`cv:pdf:${id}`);
+  // Cada petición queda anotada: si un teléfono vuelve a enseñar un PDF vacío,
+  // aquí se ve quién lo pidió, cuántas veces y si lo encontró.
+  console.log(`[pdf-template] GET ${guardado ? "servido" : "NO ENCONTRADO"} · ${(req.headers.get("user-agent") || "").slice(0, 90)}`);
   if (!guardado) {
-    return NextResponse.json({ error: "El PDF ha caducado. Vuelve a generarlo." }, { status: 404 });
+    return paginaDeAviso("Este PDF ya ha caducado", "Vuelve a la aplicación y pulsa otra vez el botón del PDF: se genera uno nuevo al momento.", 404);
   }
-  // Un solo uso: se borra al servirlo.
-  await r.del(`cv:pdf:${id}`);
+
+  // NO SE BORRA AL SERVIRLO, y eso era el segundo fallo.
+  //
+  // Antes era de un solo uso. Pero el teléfono pide el mismo PDF más de una
+  // vez: Android le pasa la descarga a su gestor de descargas, que lo vuelve a
+  // pedir por su cuenta, y en el iPhone "Guardar en Archivos" o "Compartir"
+  // también lo vuelven a pedir. La primera petición lo borraba y la segunda se
+  // llevaba un error con nombre de PDF: un "CV_BuscayCurra.pdf" que se abría
+  // vacío. Michel, 2 oct 2026: "ahora hay un PDF, pero sale sin datos".
+  // Caduca solo a los diez minutos; el azar del enlace sigue siendo lo que lo
+  // protege, como cualquier enlace de descarga firmado.
 
   return new NextResponse(new Uint8Array(Buffer.from(guardado, "base64")), {
     headers: {
