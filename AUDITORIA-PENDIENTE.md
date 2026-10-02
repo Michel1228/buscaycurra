@@ -84,6 +84,30 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   caché de npm y de Python. `build-deploy.sh` borra ya la imagen vieja en cada
   despliegue (`4d928f6`). Las copias de seguridad (7 días, 14 GB) no se tocan.
 
+## LOS TRES FALLOS DEL CV (2 oct 2026)
+
+Contados por Michel, reproducidos en producción y arreglados.
+
+- [x] **No se podía descargar el CV** (`b848c84`, `e3a264e`). En el móvil el
+  botón abría una página con `{"error":"No autorizado"}`: el enlace del PDF lo
+  abre `window.open` FUERA del WebView y allí no hay sesión, pero el servidor
+  la exigía. Lo protege su propio azar (128 bits, un uso, 5 minutos). De paso,
+  el botón "PDF" de **CVs guardados** tampoco funcionaba en el móvil —abría una
+  ventana en blanco para imprimir a mano— y ahora los dos usan
+  `lib/cv-generator/descargar-pdf.ts`. Verificado: PDF real de 2 MB.
+- [x] **Guzzi se iba por las ramas** (`b848c84`). "Cambiar mi experiencia de
+  carretillero" acababa en BUSCAR CURSOS (la regla de cursos nombra los carnés)
+  y "cambiar el puesto de mi cv" en buscar ofertas. Y cuando no, prometía
+  "súbeme tu CV en PDF y te lo actualizo", que no existe. Intent `editar_cv`
+  nuevo que lleva al editor de verdad y ofrece redactar el texto.
+- [x] **"Mejorar con IA" no mejoraba nada** (`b848c84`, `ff6a2e8`). La IA
+  respondía bien, pero el texto solo vivía en la vista previa: el formulario se
+  quedaba igual, al guardar se guardaba lo de antes y por debajo de 1024 px la
+  vista previa está oculta, así que en el móvil no cambiaba nada a la vista.
+  Ahora entra en los campos, se avisa de qué se ha reescrito y hay "Deshacer".
+  Además una pulsación gastaba 4 del tope de 15/hora y se cortaba a medias con
+  un mensaje confuso: el tope sube a 40 y, si se alcanza, se dice una sola vez.
+
 ### Abierto: decisiones de Michel
 
 - [ ] **buscaycurra.es no recibe correo** (no tiene registro MX). La web
@@ -105,6 +129,12 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   afecte a la app, pero al recrear el contenedor conviene darle `--shm-size=256m`.
 - [ ] **~29 cuentas de prueba** (audit*, qa-*, prueba*, test*...) cuentan como
   usuarios en las cifras.
+- [ ] **Hay un `git stash` antiguo sin aplicar** (`WIP on unified-production:
+  2ddb1e9`). Solo cambia un texto de `/api/jobs/bulk-index` y está obsoleto: ese
+  fichero ya no tiene la variable que usa. Borrarlo con `git stash drop` cuando
+  Michel confirme.
+- [ ] **`/api/jobs/bulk-index` dice "400.000 ofertas"** cuando hay 2,5 millones.
+  Es un dato de mantenimiento, no lo ve ningún usuario, pero engaña al mirarlo.
 - [ ] **Webhook de Stripe:** activar `invoice.payment_failed` e
   `invoice.payment_succeeded` en https://dashboard.stripe.com/webhooks (no es
   imprescindible: el código ya lo cubre con `subscription.updated`).
