@@ -1149,6 +1149,24 @@ El candidato tiene mucha experiencia.
       // Sin ficha de ese país, sigue el flujo normal y contesta la IA.
     }
 
+    // -- Intent: editar el CV -------------------------------------------------
+    //
+    // Guzzi NO puede tocar el currículum: no tiene con qué. Lo que hacía era
+    // peor que decirlo — prometía "súbeme tu CV en PDF y te lo actualizo", que
+    // no existe, y nunca mencionaba el editor, que es donde se hace de verdad.
+    // Comprobado en producción el 2 oct 2026.
+    if (preIntent === "editar_cv") {
+      return NextResponse.json({
+        reply: "Tu currículum se edita tú mismo en **Mi Currículum**, y se guarda solo mientras escribes.\n\n"
+          + "👉 [Abrir el editor de CV](/app/curriculum)\n\n"
+          + "Ahí cambias lo que quieras —experiencia, estudios, teléfono, foto— y lo ves al momento en la vista previa. "
+          + "Con el botón **✨ Mejorar con IA** te reescribo el perfil y lo que hacías en cada trabajo, para que se entienda mejor; "
+          + "si no te convence, lo deshaces.\n\n"
+          + "Yo no puedo escribir dentro de tu CV, pero dime qué quieres poner y te lo redacto para que lo copies.",
+        action: "editar_cv",
+      });
+    }
+
     // -- Intent: ¿me compensa ir a trabajar a otro sitio? (la cuenta real) -----
     if (preIntent === "desplazamiento") {
       const respuesta = await respuestaDesplazamiento(message, cvParsed?.ciudad || "");

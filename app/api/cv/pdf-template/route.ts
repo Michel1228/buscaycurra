@@ -97,15 +97,21 @@ export async function POST(req: NextRequest) {
  *
  * Va con `inline` a propósito, no con `attachment`: es justo lo que permite que
  * iOS lo abra en vez de intentar (y no poder) descargarlo.
+ *
+ * AQUÍ NO SE PUEDE EXIGIR SESIÓN, y eso era el fallo. Esta dirección la abre
+ * `window.open(..., "_blank")`, que en la app nativa sale FUERA del WebView: el
+ * navegador del sistema no lleva ni la cabecera de sesión ni las cookies de la
+ * aplicación. Resultado, comprobado en producción el 2 oct 2026: la página se
+ * abría con {"error":"No autorizado"} y nadie podía bajarse su CV desde el
+ * móvil. Michel: "intento descargar, abre una página y da error".
+ *
+ * Lo que protege el PDF es el propio enlace: lleva 32 caracteres al azar (128
+ * bits) que solo conoce quien acaba de generarlo, se borra en cuanto se sirve y
+ * caduca a los cinco minutos. Adivinarlo no es posible y reutilizarlo tampoco.
  */
 export async function GET(req: NextRequest) {
-  const userId = await getUserId(req);
-  if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-
   const id = req.nextUrl.searchParams.get("id") || "";
-  // El identificador tiene que empezar por el id de quien pide: así nadie
-  // recoge el CV de otro aunque adivine el resto.
-  if (!id.startsWith(`${userId}:`) || !/^[\w-]+:[a-f0-9]{32}$/.test(id)) {
+  if (!/^[\w-]+:[a-f0-9]{32}$/.test(id)) {
     return NextResponse.json({ error: "Identificador no válido" }, { status: 400 });
   }
 

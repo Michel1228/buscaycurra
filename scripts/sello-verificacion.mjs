@@ -1753,6 +1753,61 @@ test("el barrido de Adzuna reintenta los fallos pasajeros (5xx, red)", () => {
     /lote = await fetchAdzunaPagina\(countryCode, pagina/.test(barrer.slice(barrer.indexOf("intento++"))) ;
 });
 
+// ── LOS TRES FALLOS DEL CV QUE CONTO MICHEL (2 oct 2026) ───────────────────
+//
+// 1. Descargar el CV abria una pagina con {"error":"No autorizado"}.
+// 2. Pedirle a Guzzi editar el CV acababa hablando de ofertas de carretillero.
+// 3. "Mejorar con IA" no cambiaba nada a la vista y no se guardaba.
+test("el enlace del PDF del movil no exige sesion (la abre el navegador del sistema)", () => {
+  const r = leerFuente("app/api/cv/pdf-template/route.ts");
+  const get = r.slice(r.indexOf("export async function GET"));
+  const cliente = leerFuente("app/app/curriculum/Content.tsx");
+  return !/getUserId/.test(get) &&                              // window.open no lleva sesion
+    /\^\[\\w-\]\+:\[a-f0-9\]\{32\}\$/.test(get) &&              // el azar del enlace es lo que protege
+    /await r\.del\(`cv:pdf:\$\{id\}`\)/.test(get) &&            // un solo uso
+    cliente.includes("if (esNativo()) {");                      // y vale para iOS y Android
+});
+
+test("Guzzi manda al editor de CV en vez de hablar de carretilleros", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-editarcv.cjs";
+  execFileSync("npx", ["esbuild", "lib/guzzi/intents.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
+  const { detectIntent } = await import(`../${salida}`);
+  try { unlinkSync(salida); } catch {}
+  const casos = [
+    ["cambiar mi experiencia de carretillero", "editar_cv"],   // antes: buscar_cursos
+    ["quiero cambiar el puesto de mi cv", "editar_cv"],        // antes: buscar
+    ["quita el trabajo de carretillero del cv", "editar_cv"],
+    ["¿puedo editar mi curriculum?", "editar_cv"],
+    // Y lo que NO debe cambiar:
+    ["quiero un curso de carretillero en Pamplona", "buscar_cursos"],
+    ["busco trabajo de carretillero en Tudela", "buscar"],
+    ["quiero cambiar de trabajo", "buscar"],
+    ["mejorar mi cv", "cv_mejorado"],
+  ];
+  let bien = true;
+  for (const [frase, esperado] of casos) {
+    const r = detectIntent(frase);
+    if (r !== esperado) { console.log(`      "${frase}" -> ${r} (se esperaba ${esperado})`); bien = false; }
+  }
+  // Y la respuesta no promete lo que no puede hacer.
+  const chat = leerFuente("app/api/gusi/chat/route.ts");
+  const bloque = chat.slice(chat.indexOf('preIntent === "editar_cv"'), chat.indexOf('preIntent === "editar_cv"') + 1200);
+  return bien && bloque.includes("/app/curriculum") && /Yo no puedo escribir dentro de tu CV/.test(bloque);
+});
+
+test("mejorar el CV con IA escribe en el formulario y se puede deshacer", () => {
+  const c = leerFuente("app/app/curriculum/Content.tsx");
+  const fn = c.slice(c.indexOf("async function generarYMejorar"), c.indexOf("function deshacerMejora"));
+  return /setFormAntesDeMejorar\(antes\)/.test(fn) && /setForm\(nuevo\)/.test(fn) &&
+    // y si la IA falla, se dice; antes se tragaba el error y parecia que no hacia nada
+    /setError\(/.test(fn) && !/catch \{ \/\* usa el perfil original/.test(fn) &&
+    /if \(formAntesDeMejorar\) setForm\(formAntesDeMejorar\)/.test(c);
+});
+
 // ── NINGUNA OFERTA ENTRA INVISIBLE ─────────────────────────────────────────
 //
 // El 30 sep 2026 habia 290.707 ofertas con isActive vacio: el buscador solo

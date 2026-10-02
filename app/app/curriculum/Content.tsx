@@ -16,7 +16,7 @@ import Link from "next/link";
 
 import { Trash2, Save, Check, Palette } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { isNativeIOS as esIOSNativo } from "@/lib/utils/platform";
+import { isNative as esNativo } from "@/lib/utils/platform";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { generarCV, LISTA_PLANTILLAS, PLANTILLAS, TEMPLATE_IDS, type TemplateId } from "@/lib/cv-generator/plantillas";
@@ -88,6 +88,10 @@ export default function CurriculumPage() {
   const [visibleEmpresas, setVisibleEmpresas] = useState(false);
   const [descargando, setDescargando] = useState(false);
   const [esPreviewIA, setEsPreviewIA] = useState(false);
+  /** Copia del CV de antes de pulsar "Mejorar con IA", para poder deshacer. */
+  const [formAntesDeMejorar, setFormAntesDeMejorar] = useState<CVForm | null>(null);
+  /** Qué ha reescrito la IA. Hace falta en el móvil, donde la vista previa no se ve. */
+  const [avisoMejora, setAvisoMejora] = useState("");
   const [fullscreen, setFullscreen] = useState(false);
   const [templateId, setTemplateId] = useState<TemplateId>("clasica");
   const [accentColor, setAccentColor] = useState("#16a34a");
@@ -361,6 +365,8 @@ export default function CurriculumPage() {
         setCvActivoId(cvId);
         setMejoradoHTML("");
         setEsPreviewIA(false);
+        setFormAntesDeMejorar(null);
+        setAvisoMejora("");
       }
     } catch { setError("Error cargando CV"); }
   }
@@ -563,9 +569,9 @@ export default function CurriculumPage() {
     finally { setSubiendoFoto(false); }
   }
 
-  function formToCVData(perfilMejorado?: string, experienciaOverride?: Exp[]): CVData {
-    const expBase = experienciaOverride ?? form.experiencia;
-    const expOrdenada = [...expBase]
+  /** Igual que formToCVDataRaw, pero para un formulario concreto (el recién mejorado). */
+  function formToCVDataDe(datos: CVForm): CVData {
+    const expOrdenada = [...datos.experiencia]
       .filter(e => e.puesto)
       .sort((a, b) => {
         const getYear = (f: string) => { const m = f.match(/(\d{4})/g); return m ? parseInt(m[m.length - 1]) : 0; };
@@ -573,21 +579,21 @@ export default function CurriculumPage() {
       });
 
     return {
-      nombre: form.nombre,
-      apellidos: form.apellidos || undefined,
-      subtitulo: form.subtitulo || undefined,
-      telefono: form.telefono || undefined,
-      email: form.email || undefined,
-      ciudad: form.ciudad || undefined,
+      nombre: datos.nombre,
+      apellidos: datos.apellidos || undefined,
+      subtitulo: datos.subtitulo || undefined,
+      telefono: datos.telefono || undefined,
+      email: datos.email || undefined,
+      ciudad: datos.ciudad || undefined,
       fotoUrl: fotoUrl || undefined,
       templateId,
       accentColor,
-      perfilProfesional: perfilMejorado || form.perfilProfesional || undefined,
-      aptitudes: form.aptitudes
-        ? form.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
+      perfilProfesional: datos.perfilProfesional || undefined,
+      aptitudes: datos.aptitudes
+        ? datos.aptitudes.split(",").map(a => a.trim()).filter(Boolean)
         : undefined,
-      idiomas: form.idiomas
-        ? form.idiomas.split(",").map(i => {
+      idiomas: datos.idiomas
+        ? datos.idiomas.split(",").map(i => {
             const parts = i.trim().split(":");
             return { nombre: parts[0].trim(), nivel: parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70 };
           }).filter(i => i.nombre)
@@ -599,7 +605,7 @@ export default function CurriculumPage() {
         ubicacion: e.ubicacion || undefined,
         descripcion: e.descripcion ? e.descripcion.split("\n").filter(d => d.trim()).map(d => d.trim().replace(/^[-•]\s*/, "")) : undefined,
       })),
-      formacion: form.formacion.filter(f => f.titulo).map(f => ({
+      formacion: datos.formacion.filter(f => f.titulo).map(f => ({
         titulo: f.titulo,
         centro: f.centro,
         ubicacion: f.ubicacion || undefined,
@@ -607,54 +613,106 @@ export default function CurriculumPage() {
     };
   }
 
+  /**
+   * LA MEJORA SE ESCRIBE EN EL FORMULARIO, no solo en la vista previa.
+   *
+   * Antes el texto mejorado vivía únicamente en `mejoradoHTML`: el formulario
+   * se quedaba con lo que había escrito la persona y al guardar se guardaba lo
+   * de antes, así que la mejora se perdía al salir. Y por debajo de 1024 px la
+   * vista previa está oculta, así que en el móvil pulsar "Mejorar con IA" no
+   * cambiaba NADA a la vista. Michel lo contó el 2 oct 2026: "le das al botón
+   * de mejorar y no mejora nada, lo deja tal cual".
+   *
+   * Ahora el texto mejorado entra en los campos —se ve, se puede retocar y se
+   * guarda— y "Deshacer la mejora" devuelve el original.
+   */
   async function generarYMejorar() {
     if (!form.nombre.trim()) { setError("Escribe tu nombre para continuar"); return; }
     setProcesando(true);
     setError("");
+    setAvisoMejora("");
     try {
-      const cvText = form.perfilProfesional || "Profesional con experiencia en diversos sectores. Actitud dinámica y proactiva.";
-      let perfilMejorado: string | undefined;
-      try {
-        const mejorarRes = await fetch("/api/cv/mejorar", {
+      const pedirMejora = async (cvText: string, jobTitle: string): Promise<string | null> => {
+        const res = await fetch("/api/cv/mejorar", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ cvText, jobTitle: form.subtitulo }),
+          body: JSON.stringify({ cvText, jobTitle }),
         });
-        if (mejorarRes.ok) {
-          const data = await mejorarRes.json();
-          perfilMejorado = data.cvMejorado || undefined;
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({})) as { error?: string };
+          throw new Error(err.error || "La IA no ha podido con este texto.");
         }
-      } catch { /* usa el perfil original si la IA falla */ }
+        const data = await res.json() as { cvMejorado?: string };
+        const texto = (data.cvMejorado || "").trim();
+        return texto || null;
+      };
 
-      const experienciaMejorada = [...form.experiencia];
-      for (let i = 0; i < Math.min(form.experiencia.length, 3); i++) {
-        const exp = form.experiencia[i];
-        if (!exp.descripcion.trim() || !exp.puesto.trim()) continue;
-        try {
-          const expRes = await fetch("/api/cv/mejorar", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({
-              cvText: `Puesto: ${exp.puesto}${exp.empresa ? ` en ${exp.empresa}` : ""}.\nFunciones realizadas:\n${exp.descripcion}`,
-              jobTitle: exp.puesto,
-            }),
-          });
-          if (expRes.ok) {
-            const expData = await expRes.json();
-            if (expData.cvMejorado) {
-              experienciaMejorada[i] = { ...exp, descripcion: expData.cvMejorado };
-            }
-          }
-        } catch { /* mantiene descripción original si la IA falla */ }
+      // Sin perfil escrito no hay nada que mejorar: se dice, en vez de
+      // "mejorar" un texto de relleno que la persona no ha escrito.
+      const hayPerfil = !!form.perfilProfesional.trim();
+      const experienciasAMejorar = form.experiencia
+        .map((e, i) => ({ e, i }))
+        .filter(({ e }) => e.descripcion.trim() && e.puesto.trim())
+        .slice(0, 3);
+
+      if (!hayPerfil && experienciasAMejorar.length === 0) {
+        setError("Escribe tu perfil profesional o lo que hacías en algún trabajo, y vuelvo a intentarlo.");
+        return;
       }
 
-      // NO se muta el formulario: la mejora IA solo vive en la preview.
-      // "← Volver a vivo" recupera el CV original intacto (antes machacaba las viñetas).
-      const html = generarCV(formToCVData(perfilMejorado, experienciaMejorada));
-      setMejoradoHTML(html);
+      const antes = form;
+      let perfilMejorado: string | null = null;
+      const fallos: string[] = [];
+
+      if (hayPerfil) {
+        try {
+          perfilMejorado = await pedirMejora(form.perfilProfesional, form.subtitulo);
+        } catch (e) { fallos.push(`el perfil (${(e as Error).message})`); }
+      }
+
+      const experienciaMejorada = [...form.experiencia];
+      for (const { e: exp, i } of experienciasAMejorar) {
+        try {
+          const mejor = await pedirMejora(
+            `Puesto: ${exp.puesto}${exp.empresa ? ` en ${exp.empresa}` : ""}.\nFunciones realizadas:\n${exp.descripcion}`,
+            exp.puesto
+          );
+          if (mejor) experienciaMejorada[i] = { ...exp, descripcion: mejor };
+        } catch (e) { fallos.push(`${exp.puesto} (${(e as Error).message})`); }
+      }
+
+      const cambios = (perfilMejorado ? 1 : 0)
+        + experienciaMejorada.filter((e, i) => e.descripcion !== form.experiencia[i].descripcion).length;
+
+      if (cambios === 0) {
+        setError(fallos.length ? `No se ha podido mejorar: ${fallos[0]}` : "La IA ha devuelto el mismo texto. Inténtalo otra vez.");
+        return;
+      }
+
+      const nuevo: CVForm = {
+        ...form,
+        perfilProfesional: perfilMejorado || form.perfilProfesional,
+        experiencia: experienciaMejorada,
+      };
+      setFormAntesDeMejorar(antes);
+      setForm(nuevo);
+      setMejoradoHTML(generarCV(formToCVDataDe(nuevo)));
       setEsPreviewIA(true);
+      setAvisoMejora(
+        `✨ Reescrito: ${cambios === 1 ? "1 apartado" : `${cambios} apartados`}. Está en tus campos, puedes retocarlo.`
+        + (fallos.length ? ` No se pudo con ${fallos.length === 1 ? fallos[0] : `${fallos.length} apartados`}.` : "")
+      );
     } catch { setError("Error al generar el CV"); }
     finally { setProcesando(false); }
+  }
+
+  /** Devuelve el CV a como estaba antes de pulsar "Mejorar con IA". */
+  function deshacerMejora() {
+    if (formAntesDeMejorar) setForm(formAntesDeMejorar);
+    setFormAntesDeMejorar(null);
+    setMejoradoHTML("");
+    setEsPreviewIA(false);
+    setAvisoMejora("");
   }
 
   async function descargarPDF() {
@@ -662,19 +720,19 @@ export default function CurriculumPage() {
     if (!htmlToUse || descargando) return;
     setDescargando(true);
     try {
-      // EN EL IPHONE HAY QUE IR POR OTRO CAMINO.
+      // EN EL MÓVIL (iOS Y ANDROID) HAY QUE IR POR OTRO CAMINO.
       //
-      // La app de iOS es un WKWebView y Apple bloquea ahí las dos vías
-      // normales: el atributo `download` de un enlace se ignora sin más, y
-      // navegar a una URL `data:` está prohibido desde 2018. Se probaron las
-      // dos y con ninguna pasaba nada — el usuario le daba a descargar y se
-      // quedaba mirando.
+      // Dentro del WebView de la app, las dos vías normales fallan: el atributo
+      // `download` de un enlace se ignora y navegar a una URL `data:` está
+      // prohibido. El usuario le daba a descargar y se quedaba mirando.
       //
       // Lo que sí funciona: el servidor guarda el PDF unos minutos y lo sirve
-      // desde una dirección normal con "inline". Al abrirla, iOS enseña el
-      // visor de PDF del propio teléfono, y desde ahí se guarda en Archivos o
-      // se comparte con el botón de siempre.
-      if (esIOSNativo()) {
+      // desde una dirección normal con "inline". Al abrirla, el teléfono enseña
+      // su propio visor de PDF, y desde ahí se guarda o se comparte.
+      //
+      // Antes esto era solo para iOS, pero el WebView de Android tiene el mismo
+      // problema con `download` y una URL `blob:`, así que va para los dos.
+      if (esNativo()) {
         const resVisor = await fetch("/api/cv/pdf-template", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -683,7 +741,8 @@ export default function CurriculumPage() {
         if (!resVisor.ok) throw new Error("Error generando PDF");
         const { id } = await resVisor.json() as { id?: string };
         if (!id) throw new Error("Sin identificador");
-        // _blank: lo abre fuera del WebView, en el visor del sistema.
+        // _blank: lo abre fuera del WebView, en el visor del sistema. Por eso
+        // ese enlace NO puede exigir sesión (ver app/api/cv/pdf-template).
         window.open(`/api/cv/pdf-template?id=${encodeURIComponent(id)}`, "_blank");
         return;
       }
@@ -826,10 +885,10 @@ export default function CurriculumPage() {
               </button>
             )}
             {mejoradoHTML && (
-              <button onClick={() => { setMejoradoHTML(""); setEsPreviewIA(false); }}
+              <button onClick={deshacerMejora}
                 className="px-3 py-2 text-xs rounded-xl"
                 style={{ border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}>
-                ← Volver a vivo
+                ↶ Deshacer la mejora
               </button>
             )}
           </div>
@@ -870,6 +929,16 @@ export default function CurriculumPage() {
 
       {/* ── LAYOUT 2 COLUMNAS: formulario + previsualización EN VIVO ── */}
       <main className="max-w-[100rem] mx-auto px-4 py-6">
+        {avisoMejora && (
+          <div className="mb-4 p-3 rounded-lg text-xs flex items-start justify-between gap-3"
+            style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.15)" }}>
+            <span>{avisoMejora}</span>
+            <button onClick={deshacerMejora} className="shrink-0 underline" style={{ color: "#94a3b8" }}>
+              Deshacer
+            </button>
+          </div>
+        )}
+
         {error && (
           <div className={`mb-4 p-3 rounded-lg text-xs ${error.startsWith("✅") ? "" : ""}`}
             style={{ background: error.startsWith("✅") ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", 

@@ -106,6 +106,35 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   if (/(?:env[ií]a|m[aá]nda|escrib|contact|manda)\w*\s+(?:un\s+|el\s+|mi\s+)?(?:correo|email|e-mail|mail|cv|curr[ií]culum|candidatura)?\s*(?:a|al|con|para)\s+[a-záéíóúüñ0-9]/i.test(tn)) {
     return "info_empresa";
   }
+  // EDITAR EL CV: cambiar, quitar o añadir datos del currículum.
+  //
+  // No existía, y estas frases se iban a cualquier otro sitio. "Cambiar mi
+  // experiencia de carretillero" acababa en BUSCAR CURSOS —la regla de cursos
+  // nombra los carnés, y "carretillero" es uno— y "quiero cambiar el puesto de
+  // mi cv" en buscar ofertas, porque lleva "quiero" y "puesto". Michel lo contó
+  // el 2 oct 2026: preguntó si podía editar su CV, Guzzi dijo que sí, y al
+  // darle los datos se puso a hablar de ofertas de carretillero.
+  //
+  // Va aquí arriba a propósito: después de "echar el cv en <empresa>" y de
+  // "manda mi cv a <empresa>", que son otra cosa, y antes de las reglas de
+  // cursos y de búsqueda, que se lo tragaban.
+  {
+    const quiereCambiar = /\b(edita|edito|editar|modifica|modifico|modificar|cambia|cambio|cambiar|actualiza|actualizo|actualizar|corrige|corrijo|corregir|arregla|arreglar|quita|quito|quitar|borra|borro|borrar|elimina|elimino|eliminar|a[ñn]ade|a[ñn]ado|a[ñn]adir|agrega|agrego|agregar|pon|pongo|poner|rellena|rellenar|completa|completar|retoca|retocar|rehacer)\b/i.test(tn);
+    const nombraElCv = /\b(cv|curriculum|curriculo)\b/i.test(tn);
+    // Un apartado SUYO: hace falta porque, dentro de la conversación, la gente
+    // ya no repite "cv" ("cambiar mi experiencia de carretillero").
+    const nombraUnApartado = /\bmis?\s+(experiencias?|perfil|aptitudes|idiomas|formaci[oó]n|estudios|datos|tel[eé]fono|email|correo|foto|puesto|trabajos?)\b/i.test(tn);
+    // "Cambiar DE trabajo" queda fuera: eso es querer otro empleo, no tocar el CV.
+    const esCambiarDeTrabajo = /\bcambiar\s+de\s+(trabajo|empleo|curro|sector|aires)\b/i.test(tn);
+    // Y la continuación: si acabamos de hablar de editar el CV, "sí, quiero
+    // cambiar unos datos" también es esto aunque ya no nombre el currículum.
+    const veniamosDelCv = /editor de CV|edita(r|s)?\s+(tu|mi|el)\s+(cv|curr[ií]culum)|\/app\/curriculum/i
+      .test((history || []).slice(-3).map((m) => m.text || "").join(" "));
+    if (quiereCambiar && !esCambiarDeTrabajo && (nombraElCv || nombraUnApartado || veniamosDelCv)) {
+      return "editar_cv";
+    }
+  }
+
   if (/(?:peluquer[ií]a|barber[ií]a|restaurante|bar\b|hotel|cafeter[ií]a|cl[ií]nica|farmacia|panader[ií]a|tienda|taller|supermercado|sal[oó]n|est[eé]tica|gimnasio|lavander[ií]a|fruter[ií]a|carnicer[ií]a|pescader[ií]a)\b.{3,}/i.test(t) && /(?:calle|plaza|avenida|avda|paseo|crta|carretera|c\/)\s/i.test(t)) return "buscar";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
   // "algo EN algún sitio" es una búsqueda, salvo que la frase sea de otro tema.
