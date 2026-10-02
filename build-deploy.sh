@@ -15,6 +15,23 @@ else
   echo "⚠️  /root/candados.sh no encontrado — saltando verificación"
 fi
 
+# 🧪 SELLO — las pruebas de cada fallo que ya pasó. Si alguna falla, NO se despliega.
+#
+# Hasta el 2 oct 2026 el sello solo se ejecutaba si alguien se acordaba de
+# hacerlo en su ordenador: el despliegue no lo comprobaba. Ese día se subió un
+# cambio con dos pruebas en rojo y nada lo paró. Aquí tarda unos 6 segundos.
+# Sin ALERTS_SECRET ni ADMIN_SECRET a propósito: así la prueba que llama al
+# envío de alertas se salta y el sello nunca manda nada a nadie.
+echo "🧪 SELLO pre-deploy..."
+if env -u ALERTS_SECRET -u ADMIN_SECRET node scripts/sello-verificacion.mjs > /tmp/sello-deploy.log 2>&1; then
+  grep "Passed" /tmp/sello-deploy.log
+else
+  grep -E "FAIL" /tmp/sello-deploy.log | head -20
+  grep "Passed" /tmp/sello-deploy.log
+  echo "❌ EL SELLO HA FALLADO — deploy cancelado. Arregla las pruebas en rojo de arriba."
+  exit 1
+fi
+
 # Cargar vars de .env.local
 source <(grep -E '^NEXT_PUBLIC_SUPABASE_URL=|^NEXT_PUBLIC_SUPABASE_ANON_KEY=|^NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=|^VAPID_PUBLIC_KEY=|^STRIPE_SECRET_KEY=' .env.local)
 
