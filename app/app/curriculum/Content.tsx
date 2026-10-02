@@ -664,28 +664,41 @@ export default function CurriculumPage() {
       let perfilMejorado: string | null = null;
       const fallos: string[] = [];
 
+      // El tope por hora se cuenta por petición, y una pulsación son hasta
+      // cuatro. Si se alcanza, se para y se dice UNA vez, en vez de repetir el
+      // aviso con el nombre de cada puesto delante.
+      let topeAlcanzado = "";
+      const anotar = (e: unknown, donde: string) => {
+        const err = e as Error & { parar?: boolean };
+        if (err.parar) topeAlcanzado = err.message;
+        else fallos.push(donde);
+      };
+
       if (hayPerfil) {
         try {
           perfilMejorado = await pedirMejora(form.perfilProfesional, form.subtitulo);
-        } catch (e) { fallos.push(`el perfil (${(e as Error).message})`); }
+        } catch (e) { anotar(e, "el perfil"); }
       }
 
       const experienciaMejorada = [...form.experiencia];
       for (const { e: exp, i } of experienciasAMejorar) {
+        if (topeAlcanzado) break;
         try {
           const mejor = await pedirMejora(
             `Puesto: ${exp.puesto}${exp.empresa ? ` en ${exp.empresa}` : ""}.\nFunciones realizadas:\n${exp.descripcion}`,
             exp.puesto
           );
           if (mejor) experienciaMejorada[i] = { ...exp, descripcion: mejor };
-        } catch (e) { fallos.push(`${exp.puesto} (${(e as Error).message})`); }
+        } catch (e) { anotar(e, exp.puesto); }
       }
 
       const cambios = (perfilMejorado ? 1 : 0)
         + experienciaMejorada.filter((e, i) => e.descripcion !== form.experiencia[i].descripcion).length;
 
       if (cambios === 0) {
-        setError(fallos.length ? `No se ha podido mejorar: ${fallos[0]}` : "La IA ha devuelto el mismo texto. Inténtalo otra vez.");
+        setError(topeAlcanzado || (fallos.length
+          ? `No se ha podido mejorar ${fallos[0]}. Inténtalo otra vez.`
+          : "La IA ha devuelto el mismo texto. Inténtalo otra vez."));
         return;
       }
 
@@ -700,6 +713,7 @@ export default function CurriculumPage() {
       setEsPreviewIA(true);
       setAvisoMejora(
         `✨ Reescrito: ${cambios === 1 ? "1 apartado" : `${cambios} apartados`}. Está en tus campos, puedes retocarlo.`
+        + (topeAlcanzado ? ` ${topeAlcanzado} Vuelve a darle para el resto.` : "")
         + (fallos.length ? ` No se pudo con ${fallos.length === 1 ? fallos[0] : `${fallos.length} apartados`}.` : "")
       );
     } catch { setError("Error al generar el CV"); }

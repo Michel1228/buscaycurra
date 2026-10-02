@@ -34,8 +34,13 @@ export async function POST(request: NextRequest) {
   if (authError || !user) {
     return NextResponse.json({ error: "No autorizado. Por favor, inicia sesión." }, { status: 401 });
   }
-  // Tope anti-abuso por usuario: cv/mejorar enruta a DeepSeek (de pago).
-  if (!(await checkUserRateLimit("cv-mejorar", user.id, 15, 3600))) {
+  // Tope anti-abuso por usuario.
+  //
+  // Eran 15 a la hora, pero UNA pulsación de "Mejorar con IA" gasta hasta 4
+  // (el perfil y tres experiencias): daban para tres clics y el cuarto se
+  // cortaba a medias. 40 son diez pulsaciones completas, que es de sobra para
+  // alguien montando su CV y sigue siendo un tope.
+  if (!(await checkUserRateLimit("cv-mejorar", user.id, 40, 3600))) {
     return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
