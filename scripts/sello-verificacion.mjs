@@ -1761,11 +1761,16 @@ test("el barrido de Adzuna reintenta los fallos pasajeros (5xx, red)", () => {
 test("el enlace del PDF del movil no exige sesion (la abre el navegador del sistema)", () => {
   const r = leerFuente("app/api/cv/pdf-template/route.ts");
   const get = r.slice(r.indexOf("export async function GET"));
-  const cliente = leerFuente("app/app/curriculum/Content.tsx");
+  // El camino del movil vive en UN solo sitio, y las dos pantallas que bajan
+  // el CV lo usan: antes cada una tenia el suyo y las dos fallaban.
+  const ayuda = leerFuente("lib/cv-generator/descargar-pdf.ts");
+  const pantallas = ["app/app/curriculum/Content.tsx", "app/app/curriculum/guardados/page.tsx"];
   return !/getUserId/.test(get) &&                              // window.open no lleva sesion
     /\^\[\\w-\]\+:\[a-f0-9\]\{32\}\$/.test(get) &&              // el azar del enlace es lo que protege
     /await r\.del\(`cv:pdf:\$\{id\}`\)/.test(get) &&            // un solo uso
-    cliente.includes("if (esNativo()) {");                      // y vale para iOS y Android
+    ayuda.includes("if (esNativo()) {") &&                      // y vale para iOS y Android
+    pantallas.every((f) => leerFuente(f).includes("await descargarCVComoPDF(")) &&
+    pantallas.every((f) => /if \(fallo\) setError\(fallo\)/.test(leerFuente(f)));
 });
 
 test("Guzzi manda al editor de CV en vez de hablar de carretilleros", async () => {
@@ -1795,8 +1800,10 @@ test("Guzzi manda al editor de CV en vez de hablar de carretilleros", async () =
   }
   // Y la respuesta no promete lo que no puede hacer.
   const chat = leerFuente("app/api/gusi/chat/route.ts");
-  const bloque = chat.slice(chat.indexOf('preIntent === "editar_cv"'), chat.indexOf('preIntent === "editar_cv"') + 1200);
-  return bien && bloque.includes("/app/curriculum") && /Yo no puedo escribir dentro de tu CV/.test(bloque);
+  const bloque = chat.slice(chat.indexOf('preIntent === "editar_cv"'), chat.indexOf('preIntent === "editar_cv"') + 2600);
+  return bien && bloque.includes("/app/curriculum") && /Yo no puedo escribir dentro de tu CV/.test(bloque) &&
+    // y no suelta el mismo parrafo cada vez que se lo piden
+    /yaLeDijimosDondeEs/.test(bloque);
 });
 
 test("mejorar el CV con IA escribe en el formulario y se puede deshacer", () => {
