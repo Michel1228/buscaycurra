@@ -242,6 +242,30 @@ export async function recorridoDeUsuario(anota: Anota): Promise<void> {
     anota("he olvidado mi contraseña: llega el correo y el enlace funciona", false, (e as Error).message, nacioR8);
   }
 
+  // ── R9. Con la clave pública ninguna tabla con datos de personas devuelve filas ──
+  // La clave pública va en el JavaScript de la web: cualquiera la tiene. Las
+  // tablas se crean a mano en el panel de Supabase, y una tabla nueva sin RLS
+  // quedaría abierta sin que nadie se enterase. Comprobado el 3 oct 2026: de 22,
+  // solo "ofertas" (pública a propósito) devuelve filas.
+  const nacioR9 = "3 oct 2026: la auditoría de seguridad no podía saber desde el código qué tablas tenían RLS";
+  try {
+    const URL_SB = process.env.NEXT_PUBLIC_SUPABASE_URL!, SR = process.env.SUPABASE_SERVICE_ROLE_KEY!, ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const PUBLICAS = new Set(["ofertas"]);
+    const spec = await (await fetch(`${URL_SB}/rest/v1/`, { headers: { apikey: SR, Authorization: `Bearer ${SR}` } })).json() as
+      { definitions?: Record<string, unknown> };
+    const abiertas: string[] = [];
+    for (const t of Object.keys(spec.definitions || {}).filter((x) => !PUBLICAS.has(x))) {
+      const r = await fetch(`${URL_SB}/rest/v1/${t}?select=*&limit=1`, { headers: { apikey: ANON, Authorization: `Bearer ${ANON}` } });
+      const filas = await r.json().catch(() => null);
+      if (r.ok && Array.isArray(filas) && filas.length) abiertas.push(t);
+    }
+    anota("con la clave pública no se lee ninguna tabla con datos de personas", abiertas.length === 0,
+      abiertas.length ? `se pueden leer sin sesión: ${abiertas.join(", ")}` : `${Object.keys(spec.definitions || {}).length} tablas, todas cerradas salvo las públicas`,
+      nacioR9);
+  } catch (e) {
+    anota("con la clave pública no se lee ninguna tabla con datos de personas", false, (e as Error).message, nacioR9);
+  }
+
   await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/logout?scope=local`, {
     method: "POST", headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${sesion.token}` },
   }).catch(() => {});

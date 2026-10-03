@@ -694,6 +694,20 @@ test("Guzzi entiende oficio, cuenta, au pair, articulos y el texto para el CV", 
     try { unlinkSync(salida); } catch { /* da igual */ }
   }
 });
+// Auditoria del 3 oct 2026: /api/reviews (sin sesion) gastaba Google Places de
+// pago con cada empresa nueva; un anonimo podia agotar el tope del dia.
+test("las reseñas solo piden Google Places con sesion y lo guardan 7 dias", () => {
+  const s = leerFuente("app/api/reviews/route.ts");
+  return s.includes("google: (await getUserId(request).catch(() => null)) ? await getGooglePlaceData(company) : null")
+    && s.includes("await cacheSet(clave, datos, 7 * 24 * 3600)");
+});
+// Y el centinela comprueba cada mañana que, con la clave publica, ninguna
+// tabla de Supabase con datos de personas devuelva filas.
+test("el centinela vigila que ninguna tabla de Supabase quede abierta", () => {
+  const r = leerFuente("lib/centinela/recorrido.ts");
+  return r.includes("R9. Con la clave pública") && r.includes('const PUBLICAS = new Set(["ofertas"])');
+});
+
 // gpt-oss escribe guiones U+2011: se ven igual pero el correo de la firma o una
 // fecha copiados al CV dejan de ser texto normal (auditoria del 3 oct 2026).
 test("las respuestas de la IA gratuita salen con guiones normales", () =>

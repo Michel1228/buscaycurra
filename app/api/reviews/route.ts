@@ -6,7 +6,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getUserFromToken, extractToken } from "@/lib/auth-server";
+import { getUserFromToken, extractToken, getUserId } from "@/lib/auth-server";
+import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,14 @@ async function getGooglePlaceData(companyName: string): Promise<{
   // Pasa por el tope diario compartido (lib/places-quota.ts). Sin esto la
   // llamada se salta el limite y el tope no sirve de nada: este endpoint es un
   // GET publico, asi que era una via directa a repetir la factura de 100 EUR.
+  //
+  // Y se guarda 7 días por empresa (auditoría del 3 oct 2026): el tope evita la
+  // factura, pero un anónimo variando el nombre podía gastarse el tope del día
+  // y dejar sin datos de Google a los usuarios de verdad. Con caché, mirar la
+  // misma empresa otra vez no cuesta nada.
+  const clave = `reviews-places:${companyName.trim().toLowerCase()}`;
+  const enCache = await cacheGet(clave).catch(() => null);
+  if (enCache) { try { return JSON.parse(enCache); } catch { /* se vuelve a pedir */ } }
   const { consumirCuotaPlaces } = await import("@/lib/places-quota");
   if (!(await consumirCuotaPlaces())) return null;
   try {
@@ -29,12 +38,14 @@ async function getGooglePlaceData(companyName: string): Promise<{
     const findData = await findRes.json() as any;
     if (findData.status !== "OK" || !findData.candidates?.length) return null;
     const place = findData.candidates[0];
-    return {
+    const datos = {
       rating: place.rating || null,
       totalRatings: place.user_ratings_total || null,
       address: place.formatted_address || null,
       mapsUrl: place.place_id ? `https://www.google.com/maps/place/?q=place_id:${place.place_id}` : null,
     };
+    await cacheSet(clave, datos, 7 * 24 * 3600).catch(() => false);
+    return datos;
   } catch {
     return null;
   }
@@ -87,8 +98,9 @@ export async function GET(request: NextRequest) {
           1: allReviews.filter(r => r.rating === 1).length,
         },
       },
-      // Datos de Google Places (rating real, reviews, dirección, maps)
-      google: await getGooglePlaceData(company),
+      // Datos de Google Places (rating real, reviews, dirección, maps). Solo con
+      // sesión: es de pago y la única pantalla que los pide está dentro de la app.
+      google: (await getUserId(request).catch(() => null)) ? await getGooglePlaceData(company) : null,
     });
   } catch (error) {
     console.error("[reviews] Error GET:", (error as Error).message);
