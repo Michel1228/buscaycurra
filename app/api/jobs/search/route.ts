@@ -4,6 +4,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { buscarOfertasReales } from "@/lib/job-search/real-search";
+import { tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
+
+/**
+ * Ofertas de las APIs externas, solo cuando la base no tiene nada.
+ *
+ * Auditoría del 3 oct 2026: se devolvía lo que llegara, sin mirar el puesto.
+ * "albañil en Buñuel" daba 50 ofertas como "Regional Sales Director" en Múnich,
+ * y una palabra inventada también daba 50. Además tardaba hasta 25 s y la
+ * pantalla corta a los 15, así que la persona esperaba para nada. Ahora solo
+ * pasan las que son del puesto, y si las APIs tardan más de 8 s no se espera.
+ */
+async function ofertasExternasDelPuesto(keyword: string, location: string) {
+  const tope = new Promise<Awaited<ReturnType<typeof buscarOfertasReales>>>((ok) => setTimeout(() => ok([]), 8000));
+  const todas = await Promise.race([buscarOfertasReales(keyword, location, 50).catch(() => []), tope]);
+  return keyword ? todas.filter((o) => tituloCoincide(o.titulo || "", keyword)) : todas;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -40,9 +56,12 @@ function rowToOferta(j: Record<string, unknown>, location: string, userSkills: s
   let match = 0;
   const offerKeywords: string[] = Array.isArray(j.keywords) ? j.keywords as string[] : [];
   const title = (j.title as string) || "";
-  const description = ((j.description as string) || "").toLowerCase();
-  const company = ((j.company as string) || "").toLowerCase();
-  const fullText = `${title} ${description} ${company}`.toLowerCase();
+  // Para enseñar, el texto tal cual: la tarjeta sacaba la empresa y la
+  // descripción en minúsculas ("hyatt hotel", "grupo ole"), porque se devolvían
+  // las versiones pasadas a minúsculas que solo sirven para comparar.
+  const descripcionOriginal = ((j.description as string) || "").replace(/^\s*description:\s*/i, "");
+  const empresaOriginal = ((j.company as string) || "").trim();
+  const fullText = `${title} ${descripcionOriginal} ${empresaOriginal}`.toLowerCase();
 
   if (userSkills.length > 0 && offerKeywords.length > 0) {
     const matched = offerKeywords.filter(kw =>
@@ -57,10 +76,10 @@ function rowToOferta(j: Record<string, unknown>, location: string, userSkills: s
   return {
     id: j.id,
     titulo: title,
-    empresa: company || "Ver en oferta",
+    empresa: empresaOriginal || "Ver en oferta",
     ubicacion: (j.city as string) || (j.province as string) || location,
     salario: (j.salary as string) && (j.salary as string) !== "Ver en oferta" ? (j.salary as string) : "",
-    descripcion: description.slice(0, 200),
+    descripcion: descripcionOriginal.slice(0, 200),
     fuente: j.sourcename,
     url: j.sourceurl,
     fecha: j.scrapedat,
@@ -351,7 +370,9 @@ export async function GET(request: NextRequest) {
     // El umbral se compara con lo que se pidio, no con un 10 fijo: con limit=5
     // una busqueda que devolvia sus 5 resultados correctos se consideraba
     // "insuficiente" y saltaba al respaldo igualmente.
-    if (keyword && cityParts && dbResult.rows.length < Math.min(10, limit) && !categoria) {
+    // Con filtro de jornada o experiencia tampoco: el respaldo no los aplica, y
+    // "jornada parcial" devolvía las mismas ofertas que sin filtro.
+    if (keyword && cityParts && dbResult.rows.length < Math.min(10, limit) && !categoria && !jornada && !experiencia) {
       // El recuento tiene que filtrar por lo mismo que la consulta de abajo. Si
       // cuenta sin el pais, cuenta los Toledo de Ohio y decide que hay material
       // de sobra para lanzar el respaldo cuando en realidad no lo hay.
@@ -441,9 +462,10 @@ export async function GET(request: NextRequest) {
 
     if (dbResult.rows.length >= 1 || page > 1) {
       const deduped = deduplicar(dbResult.rows);
-      let ofertas = deduped.map(j => rowToOferta(j, location, userSkills));
-      if (jornada === "remoto") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("remoto") || (o.titulo as string).toLowerCase().includes("teletrabajo"));
-      else if (jornada === "parcial") ofertas = ofertas.filter(o => (o.titulo as string).toLowerCase().includes("parcial"));
+      // La jornada ya la filtra la consulta (título o descripción). Aquí se
+      // volvía a filtrar solo por título y DESPUÉS de paginar: quitaba ofertas
+      // buenas y el total dejaba de cuadrar con lo que se veía.
+      const ofertas = deduped.map(j => rowToOferta(j, location, userSkills));
       return NextResponse.json({ ofertas, total: totalDB, page, hasMore: offset + ofertas.length < totalDB, keyword, location, source: "database" });
     }
 
@@ -451,8 +473,12 @@ export async function GET(request: NextRequest) {
     if (categoria) {
       return NextResponse.json({ ofertas: [], total: 0, page, hasMore: false, keyword, location, source: "database-category-noresults" });
     }
+    // Con filtros que las APIs externas no entienden, mejor "no hay" que ofertas que no los cumplen.
+    if (jornada || experiencia) {
+      return NextResponse.json({ ofertas: [], total: 0, page, hasMore: false, keyword, location, source: "database-filtro-noresults" });
+    }
     console.log("[Search] BD: 0 -> APIs en tiempo real");
-    const apiOfertas = await buscarOfertasReales(keyword, location, 50);
+    const apiOfertas = await ofertasExternasDelPuesto(keyword, location);
     return NextResponse.json({ ofertas: apiOfertas, total: apiOfertas.length, page: 1, hasMore: false, keyword, location, source: "live-api" });
 
   } catch (error) {
@@ -461,7 +487,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ofertas: [], total: 0, page: 1, hasMore: false, source: "database-category-error" });
     }
     try {
-      const apiOfertas = await buscarOfertasReales(keyword, location, 50);
+      const apiOfertas = await ofertasExternasDelPuesto(keyword, location);
       return NextResponse.json({ ofertas: apiOfertas, total: apiOfertas.length, page: 1, hasMore: false, keyword, location, source: "live-api-fallback" });
     } catch {
       return NextResponse.json({ error: "Error al buscar ofertas" }, { status: 500 });

@@ -202,46 +202,43 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
     }
   }
 
+  // Al abrir la ficha se mira si ya está guardada. Antes el botón empezaba
+  // siempre en "Guardar", decía "Guardada" tres segundos y volvía a "Guardar",
+  // y no había forma de quitarla (auditoría del 3 oct 2026).
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) return;
+      const res = await fetch("/api/jobs/guardar", { headers: { Authorization: `Bearer ${session.access_token}` } });
+      if (!res.ok) return;
+      const data = await res.json() as { guardados?: Array<{ job_id: string }> };
+      setGuardado(!!data.guardados?.some((g) => String(g.job_id) === String(oferta.id)));
+    })().catch(() => {});
+  }, [oferta.id]);
+
+  // El botón alterna: guardar si no lo está, quitar si ya lo está.
   async function guardarOferta() {
-    if (guardando || guardado) return;
+    if (guardando) return;
     setGuardando(true);
     try {
       const supabase = getSupabaseBrowser();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { showToast("Inicia sesión para guardar ofertas"); setGuardando(false); return; }
 
-      const authHeaders = { Authorization: `Bearer ${session.access_token}` };
-
-      // Verificar si ya está guardada (consulta API PostgreSQL)
-      const checkRes = await fetch("/api/jobs/guardar", { headers: authHeaders });
-
-      if (checkRes.ok) {
-        const data = await checkRes.json() as { guardados?: Array<{ job_id: string }> };
-        const yaGuardada = data.guardados?.some((g) => g.job_id === oferta.id);
-        if (yaGuardada) {
-          setGuardado(true);
-          showToast("Ya tienes esta oferta guardada", "success");
-          setTimeout(() => setGuardado(false), 3000);
-          setGuardando(false);
-          return;
-        }
-      }
-
-      // Guardar oferta vía API PostgreSQL
+      const quitar = guardado;
       const res = await fetch("/api/jobs/guardar", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify({ jobId: oferta.id, action: "save" }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ jobId: oferta.id, action: quitar ? "unsave" : "save" }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(err.error || "Error al guardar");
+        throw new Error(err.error || (quitar ? "Error al quitar la oferta" : "Error al guardar"));
       }
 
-      setGuardado(true);
-      showToast("Oferta guardada", "success");
-      setTimeout(() => setGuardado(false), 3000);
+      setGuardado(!quitar);
+      showToast(quitar ? "Quitada de tus ofertas guardadas" : "Oferta guardada. La tienes en Guardados; pulsa otra vez para quitarla.", "success");
     } catch (err) {
       // Se leia el motivo de la respuesta y luego se tiraba: el usuario veia
       // "Error al guardar la oferta" aunque el servidor dijera exactamente que
@@ -389,6 +386,8 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
           <button
             onClick={guardarOferta}
             disabled={guardando}
+            aria-label={guardado ? "Quitar de guardadas" : "Guardar oferta"}
+            title={guardado ? "Pulsa para quitarla de tus guardadas" : undefined}
             className="text-sm font-medium px-5 py-2.5 rounded-lg transition flex items-center gap-2 disabled:opacity-50"
             style={guardado
               ? { background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }

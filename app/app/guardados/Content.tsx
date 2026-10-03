@@ -13,7 +13,12 @@ interface Guardado {
 export default function GuardadosPage() {
   const router = useRouter();
   const [guardados, setGuardados] = useState<Guardado[]>([]);
-  const [ofertas, setOfertas] = useState<PropiedadesJobCard[]>([]);
+  // Cada oferta con el id con el que se guardó (para poder quitarla).
+  const [ofertas, setOfertas] = useState<Array<{ jobId: string; oferta: PropiedadesJobCard }>>([]);
+  // Guardadas que ya no existen (la oferta caducó y se borró). Antes contaban
+  // para el tope del plan sin verse ni poder quitarse (auditoría del 3 oct 2026).
+  const [perdidas, setPerdidas] = useState<string[]>([]);
+  const [quitando, setQuitando] = useState<string | null>(null);
   const [recomendaciones, setRecomendaciones] = useState<PropiedadesJobCard[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -71,15 +76,18 @@ export default function GuardadosPage() {
         }
 
         // Cargar detalles de cada oferta
-        const ofertasDetalle: PropiedadesJobCard[] = [];
+        const ofertasDetalle: Array<{ jobId: string; oferta: PropiedadesJobCard }> = [];
+        const noEstan: string[] = [];
         
         for (const g of listaGuardados) {
           try {
             const jobRes = await fetch(`/api/jobs/detail?id=${encodeURIComponent(g.job_id)}`);
             if (jobRes.ok) {
-              const jobData = await jobRes.json() as { oferta?: PropiedadesJobCard };
+              const jobData = await jobRes.json() as { oferta?: PropiedadesJobCard; notFound?: boolean };
               if (jobData.oferta) {
-                ofertasDetalle.push(jobData.oferta);
+                ofertasDetalle.push({ jobId: String(g.job_id), oferta: jobData.oferta });
+              } else if (jobData.notFound) {
+                noEstan.push(String(g.job_id));
               }
             }
           } catch { 
@@ -88,6 +96,7 @@ export default function GuardadosPage() {
         }
         
         setOfertas(ofertasDetalle);
+        setPerdidas(noEstan);
       } catch (error) {
         console.error("Error cargando guardados:", error);
         setError((error as Error).message);
@@ -98,6 +107,31 @@ export default function GuardadosPage() {
     cargar();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // No había forma de quitar una oferta guardada (y el aviso del tope del plan
+  // decía "borra alguna").
+  async function quitar(ids: string[]) {
+    setQuitando(ids[0]);
+    setError("");
+    try {
+      const session = (await getSupabaseBrowser().auth.getSession()).data.session;
+      for (const jobId of ids) {
+        const r = await fetch("/api/jobs/guardar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+          body: JSON.stringify({ jobId, action: "unsave" }),
+        });
+        if (!r.ok) throw new Error();
+      }
+      setOfertas((o) => o.filter((x) => !ids.includes(x.jobId)));
+      setPerdidas((p) => p.filter((x) => !ids.includes(x)));
+      setGuardados((g) => g.filter((x) => !ids.includes(String(x.job_id))));
+    } catch {
+      setError("No se ha podido quitar. Inténtalo otra vez en un momento.");
+    } finally {
+      setQuitando(null);
+    }
+  }
 
   if (cargando) {
     return (
@@ -125,7 +159,23 @@ export default function GuardadosPage() {
           </div>
         )}
         
-        {ofertas.length === 0 && recomendaciones.length === 0 ? (
+        {perdidas.length > 0 && (
+          <div className="card-game p-4 mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <p className="text-xs flex-1" style={{ color: "#94a3b8" }}>
+              {perdidas.length === 1
+                ? "1 oferta que guardaste ya no está publicada: la empresa la retiró o caducó."
+                : `${perdidas.length} ofertas que guardaste ya no están publicadas: las empresas las retiraron o caducaron.`}
+            </p>
+            <button onClick={() => quitar(perdidas)} disabled={quitando !== null}
+              className="text-xs font-medium px-3 py-2 rounded-lg disabled:opacity-50"
+              style={{ color: "#f1f5f9", border: "1px solid #2d3142" }}>
+              {perdidas.length === 1 ? "Quitarla" : "Quitarlas"}
+            </button>
+          </div>
+        )}
+
+        {ofertas.length === 0 && recomendaciones.length === 0 && perdidas.length > 0 ? null
+        : ofertas.length === 0 && recomendaciones.length === 0 ? (
           <div className="card-game p-10 text-center">
             <p className="text-4xl mb-3">🤍</p>
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No tienes ofertas guardadas</p>
@@ -157,8 +207,16 @@ export default function GuardadosPage() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
-            {ofertas.map((oferta) => (
-              <JobCard key={oferta.id} {...oferta} />
+            {ofertas.map(({ jobId, oferta }) => (
+              <div key={jobId} className="flex flex-col gap-1.5">
+                <JobCard {...oferta} />
+                <button onClick={() => quitar([jobId])} disabled={quitando !== null}
+                  className="self-end text-xs px-3 py-1.5 rounded-lg disabled:opacity-50"
+                  style={{ color: "#94a3b8", border: "1px solid #2d3142" }}
+                  aria-label={`Quitar de guardadas: ${oferta.titulo}`}>
+                  {quitando === jobId ? "Quitando..." : "Quitar de guardadas"}
+                </button>
+              </div>
             ))}
           </div>
         )}

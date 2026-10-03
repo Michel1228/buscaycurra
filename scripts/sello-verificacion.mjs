@@ -2309,6 +2309,39 @@ test("recuperar la contraseña: correo propio y enlace que vale en cualquier nav
   return fallos.length === 0;
 });
 
+// Auditoria del 3 oct 2026, ofertas guardadas: la ficha decia "Guardada" tres
+// segundos y volvia a "Guardar", no habia forma de quitar una (y el aviso del
+// tope del plan decia "borra alguna"), y las guardadas que ya no existen
+// contaban para el tope sin verse.
+test("las ofertas guardadas se pueden quitar y la ficha recuerda si lo estan", () => {
+  const ficha = leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx");
+  const lista = leerFuente("app/app/guardados/Content.tsx");
+  const fallos = [];
+  if (/setTimeout\(\(\) => setGuardado\(false\)/.test(ficha)) fallos.push("la ficha vuelve sola a 'Guardar'");
+  if (!ficha.includes('action: quitar ? "unsave" : "save"')) fallos.push("el boton de la ficha no quita");
+  if (!/setGuardado\(!!data\.guardados\?\.some/.test(ficha)) fallos.push("la ficha no mira si ya esta guardada");
+  if (!lista.includes('action: "unsave"') || !lista.includes("Quitar de guardadas")) fallos.push("guardados no tiene boton de quitar");
+  if (!lista.includes("jobData.notFound")) fallos.push("las guardadas que ya no existen no se avisan");
+  fallos.forEach((f) => console.log(`     ↳ ${f}`));
+  return fallos.length === 0;
+});
+
+// Auditoria del 3 oct 2026, buscador: empresa y descripcion en minusculas en
+// todas las tarjetas; sin resultados devolvia 50 ofertas de cualquier cosa de
+// las APIs externas (y tardaba hasta 25 s); y "jornada parcial" o "remoto"
+// devolvian lo mismo que sin filtro porque el respaldo por ciudad lo ignoraba.
+test("el buscador no inventa resultados ni se salta los filtros", () => {
+  const s = leerFuente("app/api/jobs/search/route.ts");
+  const fallos = [];
+  if (/const company = \([^;]*\)\.toLowerCase\(\)/.test(s) || !s.includes("empresa: empresaOriginal")) fallos.push("la empresa sale en minusculas");
+  if (/descripcion: description\.slice/.test(s)) fallos.push("la descripcion sale en minusculas");
+  if (/await buscarOfertasReales\(keyword, location, 50\);\s*return NextResponse/.test(s)) fallos.push("las ofertas externas no se filtran por puesto");
+  if (!/tituloCoincide\(o\.titulo/.test(s) || !/setTimeout\(\(\) => ok\(\[\]\), 8000\)/.test(s)) fallos.push("sin filtro por titulo o sin tope de tiempo");
+  if (!/!categoria && !jornada && !experiencia\)/.test(s)) fallos.push("el respaldo por ciudad se salta la jornada");
+  fallos.forEach((f) => console.log(`     ↳ ${f}`));
+  return fallos.length === 0;
+});
+
 // Auditoria del 3 oct 2026: a una camarera que pedia un puesto de mecanico la
 // carta le inventaba "cambios de aceite al coche familiar". Probado contra la
 // IA: con la regla, 0 de 3 cartas inventan; sin ella, 3 de 3. La carta sale a
