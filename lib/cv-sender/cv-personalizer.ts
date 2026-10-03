@@ -55,7 +55,9 @@ async function askGroq(prompt: string): Promise<string> {
     if (!res.ok) throw new Error(`Groq error ${res.status}`);
     const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
     const raw = data.choices?.[0]?.message?.content ?? "";
-    return raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+    // Los guiones "no separables" (U+2011) de gpt-oss rompían el correo de la
+    // firma al copiarlo (auditoría del 3 oct 2026): se dejan como guion normal.
+    return raw.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/[\u2010\u2011]/g, "-").trim();
   } finally {
     clearTimeout(timeout);
   }

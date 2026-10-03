@@ -694,6 +694,11 @@ test("Guzzi entiende oficio, cuenta, au pair, articulos y el texto para el CV", 
     try { unlinkSync(salida); } catch { /* da igual */ }
   }
 });
+// gpt-oss escribe guiones U+2011: se ven igual pero el correo de la firma o una
+// fecha copiados al CV dejan de ser texto normal (auditoria del 3 oct 2026).
+test("las respuestas de la IA gratuita salen con guiones normales", () =>
+  ["lib/guzzi/llm.ts", "lib/cv-sender/cv-personalizer.ts"].every((p) =>
+    leerFuente(p).includes(".replace(/[\\u2010\\u2011]/g, \"-\")")));
 test("la ficha de una oferta no se inventa un porcentaje de compatibilidad", () =>
   !/match:\s*85/.test(leerFuente("app/api/jobs/detail/route.ts")));
 

@@ -72,7 +72,10 @@ export async function callGroq(systemPrompt: string, userContent: string, maxTok
       }
       const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
       const raw = data.choices?.[0]?.message?.content || null;
-      return raw ? raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() : null;
+      // gpt-oss escribe guiones "no separables" (U+2011) en fechas, teléfonos y
+      // correos: se ven igual, pero al copiarlos ya no son un guion y un correo
+      // así no se puede usar (auditoría del 3 oct 2026).
+      return raw ? raw.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/[\u2010\u2011]/g, "-").trim() : null;
     } catch {
       if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
       return null;
