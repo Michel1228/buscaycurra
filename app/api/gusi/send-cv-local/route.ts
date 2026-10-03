@@ -1,7 +1,8 @@
 /**
  * /api/gusi/send-cv-local — Envío real de CV a negocio local (Google Places)
  * 
- * POST { userId, companyName, companyPhone, companyEmail, puesto, adaptedCv, coverLetter, website?, city? }
+ * POST { companyName, companyPhone, companyEmail?, puesto, website?, city? }
+ * La carta la escribe la cola con el CV de verdad (useAIPersonalization).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { addCVJob } from "@/lib/cv-sender/queue";
@@ -34,16 +35,19 @@ export async function POST(req: NextRequest) {
     let companyEmail = body.companyEmail || "";
     const jobTitle = body.puesto || "Candidatura espontánea";
 
-    // Si no hay email, intentar encontrarlo automáticamente
+    // Si no hay email, intentar encontrarlo automáticamente. Solo vale el que
+    // sale en la web del propio negocio ("high"): los de buscadores y
+    // directorios pueden ser de OTRO negocio de la misma página, y lo que se
+    // manda es el CV de una persona, con sus datos.
     if (!companyEmail) {
       const result = await findEmail(
         companyName,
-        body.city || "Tudela",
+        body.city || "",
         body.website,
         body.companyPhone
       );
 
-      if (result.email) {
+      if (result.email && result.confidence === "high") {
         companyEmail = result.email;
         console.log(`[send-cv-local] Email encontrado para ${companyName}: ${companyEmail} (fuente: ${result.source}, confianza: ${result.confidence})`);
       }

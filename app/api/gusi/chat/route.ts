@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from "@/lib/guzzi/prompts";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
+import { textoNegociosLocales, propuestaPendiente, negocioElegido } from "@/lib/guzzi/envio-local";
 import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { aliasCiudad } from "@/lib/guzzi/ciudades-pais";
 import { LISTA_PAISES } from "@/lib/paises";
@@ -305,6 +306,13 @@ async function buscarNegociosLocales(puesto: string, ciudad: string): Promise<Ar
   }
   
   return results;
+}
+
+/** Los negocios tal como los enseña Guzzi, con la pregunta de si mandarles el CV. */
+function listaDeNegocios(negocios: Awaited<ReturnType<typeof buscarNegociosLocales>>, ciudad: string, puesto: string): string {
+  return "\n\n" + textoNegociosLocales(negocios.slice(0, 4).map((n) => ({
+    nombre: n.name, direccion: n.formatted_address, telefono: n.formatted_phone_number, web: n.website, rating: n.rating,
+  })), ciudad, puesto);
 }
 
 type DbJobRow = { id: unknown; title: unknown; company: unknown; city: unknown; province: unknown; salary: unknown; sourceName: unknown; sourceUrl: unknown };
@@ -1592,14 +1600,7 @@ El candidato tiene mucha experiencia.
             try {
               const negocios = await buscarNegociosLocales(puestoBusqueda, ciudadBusqueda);
               if (negocios.length > 0) {
-                googleReply = `\n\nPero he buscado negocios locales en **${ciudadBusqueda}** que podrían necesitar a alguien como tú:\n\n`;
-                for (const n of negocios.slice(0, 4)) {
-                  const ratingStr = n.rating ? ` ⭐ ${n.rating}/5` : "";
-                  const addrStr = n.formatted_address ? `\n   📍 ${n.formatted_address}` : "";
-                  const phoneStr = n.formatted_phone_number ? `\n   📞 ${n.formatted_phone_number}` : "";
-                  googleReply += `🏢 **${n.name}**${ratingStr}${addrStr}${phoneStr}\n\n`;
-                }
-                googleReply += `📧 ¿Quieres que envíe tu CV a alguno de estos? Responde **"sí"** y elige cuál.`;
+                googleReply = listaDeNegocios(negocios, ciudadBusqueda, puestoBusqueda);
               }
             } catch { /* sin Google Places, solo mensaje normal */ }
           }
@@ -1618,14 +1619,7 @@ El candidato tiene mucha experiencia.
           try {
             const negocios = await buscarNegociosLocales(puestoBusqueda, ciudadBusqueda);
             if (negocios.length > 0) {
-              googleReply = `\n\nPero he buscado negocios locales en **${ciudadBusqueda}** que podrían necesitar a alguien como tú:\n\n`;
-              for (const n of negocios.slice(0, 4)) {
-                const ratingStr = n.rating ? ` ⭐ ${n.rating}/5` : "";
-                const addrStr = n.formatted_address ? `\n   📍 ${n.formatted_address}` : "";
-                const phoneStr = n.formatted_phone_number ? `\n   📞 ${n.formatted_phone_number}` : "";
-                googleReply += `🏢 **${n.name}**${ratingStr}${addrStr}${phoneStr}\n\n`;
-              }
-              googleReply += `📧 ¿Quieres que envíe tu CV a alguno de estos? Responde **"sí"** y elige cuál.`;
+              googleReply = listaDeNegocios(negocios, ciudadBusqueda, puestoBusqueda);
             }
           } catch { /* sin Google Places, solo mensaje normal */ }
 
@@ -1686,81 +1680,31 @@ El candidato tiene mucha experiencia.
 
     // -- Intent: enviar CV a negocio local (GOOGLE PLACES - REAL SEND) --------
     if (intent === "send_cv_local_confirm") {
-      // Extraer contexto del historial: empresa, teléfono, puesto
-      const histText = history.slice(-6).map((m: { text: string }) => m.text).join("\n");
-      const empresaMatch = histText.match(/(?:BAR|Bar|Restaurante|Cafeter[ií]a|Tienda|Hotel|Taller|Panader[ií]a|Farmacia|Cl[ií]nica|Peluquer[ií]a|Barber[ií]a|Centro\s+de\s+[Bb]elleza|Sal[oó]n|Est[eé]tica|SPA|Gimnasio|Lavander[ií]a|Supermercado|Fruter[ií]a|Carnicer[ií]a|Pescader[ií]a)\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑa-záéíóúüñ\s]+?)(?:\n|\|·|-|—|\.|$)/);
-      const telefonoMatch = histText.match(/(?:tel[eé]fono|telf?|📞)\s*[:\s]*\+?(\(?\d{2,3}\)?[\s\-]?\d{2,3}[\s\-]?\d{2,3}[\s\-]?\d{2,3})/i);
-      const puestoMatch = histText.match(/(?:puesto|trabajo|como|de)\s+(camarero[\/a]*|cocinero[\/a]*|ayudante[\s\w]*|repartidor[\/a]*|limpiador[\/a]*|dependiente[\/a]*|mozo[\/a]*)/i);
+      // detectIntent ya ha comprobado que el último mensaje de Guzzi es la lista
+      // de negocios y que la persona dice que sí o elige uno.
+      const propuesta = propuestaPendiente(history);
+      if (!propuesta) return NextResponse.json({ reply: "¿A qué negocio quieres mandar el CV?", action: "send_cv_flow" });
+      const ciudad = propuesta.ciudad || cvParsed?.ciudad || "";
+      const puesto = propuesta.puesto || cvParsed?.ultimoPuesto || "Candidatura espontánea";
+      const pos = negocioElegido(message, propuesta.negocios);
+      const elegido = pos !== null ? propuesta.negocios[pos] : propuesta.negocios.length === 1 ? propuesta.negocios[0] : null;
 
-      const empresaNombre = empresaMatch?.[1]?.trim() || "Empresa local";
-      const telefono = telefonoMatch?.[1]?.replace(/[\s\-\(\)]/g, "") || "";
-      const puesto = puestoMatch?.[1]?.trim() || cvParsed?.ultimoPuesto || "Candidatura espontánea";
-
-      // Construir datos reales del CV para la carta
-      const cvResumen = cvData ? JSON.stringify(cvData).slice(0, 800) : (
-        cvParsed ? [
-          cvParsed.nombre ? `Nombre: ${cvParsed.nombre}` : "",
-          cvParsed.ultimoPuesto ? `Último puesto: ${cvParsed.ultimoPuesto}` : "",
-          cvParsed.resumenTexto ? `Experiencia: ${cvParsed.resumenTexto}` : "",
-          cvParsed.ciudad ? `Ciudad: ${cvParsed.ciudad}` : "",
-        ].filter(Boolean).join(". ") : "Sin datos de CV"
-      );
-
-      // Generar carta adaptada y CV usando DeepSeek
-      const deepseekKey = process.env.DEEPSEEK_API_KEY || "";
-      let adaptedCv = "";
-      let coverLetter = "";
-
-      if (deepseekKey) {
-        const promptAdaptacion = `Eres un experto en recruiting. Adapta un CV para el puesto de "${puesto}" en "${empresaNombre}". 
-
-Datos del candidato (CV real):
-- Puesto: ${cvParsed?.ultimoPuesto || "No especificado"}
-- Experiencia: ${cvResumen}
-- Ciudad: ${cvParsed?.ciudad || "Tudela"}
-
-El negocio es local/pequeño (hostelería, comercio, etc.). 
-IMPORTANTE: NO inventes experiencia que no existe. Usa SOLO los datos proporcionados arriba. Si no hay suficiente información, sé honesto y sugiere un CV genérico con habilidades transferibles.
-
-Responde en JSON exactamente así:
-{"carta":"<carta breve 2-3 frases, personal, cálida, directa al dueño/encargado>","cv":"<CV adaptado: perfil profesional + experiencia relevante + habilidades, máximo 200 palabras>"}`;
-
-        try {
-          const dsRes = await fetch("https://api.deepseek.com/chat/completions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
-            body: JSON.stringify({
-              model: "deepseek-v4-flash",
-              messages: [{ role: "user", content: promptAdaptacion }],
-              max_tokens: 800,
-              temperature: 0.5,
-              extra_body: { thinking: { type: "disabled" } },
-            }),
-            signal: AbortSignal.timeout(30000),
-          });
-          if (dsRes.ok) {
-            const dsData = await dsRes.json() as { choices?: Array<{ message?: { content?: string } }> };
-            const content = dsData.choices?.[0]?.message?.content || "";
-            const jsonMatch = content.match(/\{[^}]*"carta"[\s\S]*\}/);
-            if (jsonMatch) {
-              const parsed = JSON.parse(jsonMatch[0]);
-              coverLetter = parsed.carta || "";
-              adaptedCv = parsed.cv || "";
-            }
-          }
-        } catch (e) { console.error("[send_cv_local_confirm] DeepSeek error:", (e as Error).message); }
+      // Con varios negocios y un "sí" a secas no se elige por la persona.
+      if (!elegido) {
+        return NextResponse.json({
+          reply: textoNegociosLocales(propuesta.negocios, ciudad, puesto, "¿A cuál se lo mando? Estos son los negocios"),
+          action: "search_results",
+        });
+      }
+      if (!cvData) {
+        return NextResponse.json({
+          reply: "📧 Para enviar tu CV necesito que lo subas primero.\n\nUsa el clip 📎 de abajo para subir tu CV en PDF o escribe **'crear cv'** y te lo hago paso a paso.",
+          action: "send_cv_flow",
+        });
       }
 
-      if (!adaptedCv) {
-        adaptedCv = `Profesional con experiencia en ${cvParsed?.ultimoPuesto || "atención al público"} buscando oportunidad en hostelería. Destaco por mi capacidad de aprendizaje rápido, trabajo en equipo y actitud proactiva.`;
-      }
-      if (!coverLetter) {
-        coverLetter = `Hola, equipo de ${empresaNombre}. Soy ${cvParsed?.nombre || "Michel"}, vivo en ${cvParsed?.ciudad || "Tudela"} y me encantaría trabajar con vosotros. Tengo muchas ganas de aprender y aportar mi energía al equipo. ¿Podemos hablar?`;
-      }
-
-      // Llamar al endpoint de envío real, REENVIANDO la autenticación del usuario.
-      // Sin esto, getUserId del endpoint interno devuelve 401 y el envío falla en
-      // silencio (el chat mostraba "¡Hecho! undefined" sin haber enviado nada).
+      // La carta la escribe la cola de envíos con el CV de verdad
+      // (useAIPersonalization), igual que en la página de envíos.
       try {
         const authHeader = req.headers.get("authorization");
         const cookieHeader = req.headers.get("cookie");
@@ -1773,41 +1717,44 @@ Responde en JSON exactamente así:
           },
           body: JSON.stringify({
             userId,
-            companyName: empresaNombre,
-            companyPhone: telefono,
-            companyEmail: "",
+            companyName: elegido.nombre,
+            companyPhone: elegido.telefono || "",
+            website: elegido.web,
+            city: ciudad,
             puesto,
-            adaptedCv,
-            coverLetter,
           }),
         });
         const sendData = await sendRes.json().catch(() => ({}));
 
-        // Si la llamada interna falló, ser honesto: no decir "¡Hecho!" sin haber enviado.
+        if (sendRes.status === 429) {
+          return NextResponse.json({
+            reply: `${sendData.error || "Has llegado al límite de envíos de tu plan."}\n\n👉 [Ver planes](/app/perfil?tab=plan)`,
+            action: "send_cv_flow",
+          });
+        }
         if (!sendRes.ok) {
           console.error("[send_cv_local_confirm] send-cv-local respondió", sendRes.status, sendData);
           return NextResponse.json({
-            reply: `No he podido completar el envío automático a **${empresaNombre}**. Tengo tu CV y la carta listos.\n\n📧 Ve a [la página de envíos](/app/envios) para enviarlo, o pásame un email de contacto de ${empresaNombre} y lo intento de nuevo.`,
+            reply: `No he podido mandar tu CV a **${elegido.nombre}**. Prueba desde [la página de envíos](/app/envios).`,
             action: "send_cv_flow",
           });
         }
 
         if (sendData.needsEmail) {
-          // Sin email — pedir al usuario
           return NextResponse.json({
-            reply: `No tengo el email de **${sendData.companyName || empresaNombre}**${sendData.companyPhone ? ` (📞 ${sendData.companyPhone})` : ""}.\n\n📧 ¿Me lo puedes pasar? Así lo envío ahora mismo.\n\nTambién puedes:\n- Pasarte en persona con el CV (causa mejor impresión)\n- Llamar y preguntar por el email de RRHH`,
+            reply: `No he encontrado un correo fiable de **${elegido.nombre}**, y no quiero mandar tu CV a una dirección que igual no es suya.\n\nPuedes:\n${elegido.telefono ? `- Llamar al 📞 ${elegido.telefono} y preguntar a qué correo mandarlo\n` : ""}- Pasarte en persona con el CV (causa mejor impresión)\n- Si consigues el correo, mándalo desde [la página de envíos](/app/envios)`,
             action: "send_cv_flow",
           });
         }
 
         return NextResponse.json({
-          reply: `✅ **¡Hecho!**\n\nHe generado tu CV adaptado con la plantilla profesional y la carta de presentación para **${empresaNombre}**.\n\n${sendData.message}\n\n📄 ${sendData.pdfUrl ? `[Ver CV generado](${sendData.pdfUrl})` : ""}\n\n💡 **Recomendación**: Pásate mañana a media mañana por ${empresaNombre} y refuerza la candidatura en persona. ¡Así te recuerdan!`,
+          reply: `📤 **Hecho.** Tu CV va de camino a **${elegido.nombre}** (${sendData.companyEmail}). Lo verás en [tus envíos](/app/envios).\n\n💡 Si puedes, pásate mañana a media mañana y preséntate en persona: así se acuerdan de ti.`,
           action: "cv_sent_local",
         });
       } catch (sendErr) {
         console.error("[send_cv_local_confirm] Send error:", (sendErr as Error).message);
         return NextResponse.json({
-          reply: `Lo siento, ha fallado el envío automático. Pero tengo tu CV y la carta listos.\n\n📧 Ve a [la página de envíos](/app/envios) o dime un email de ${empresaNombre} y lo intentamos de nuevo.`,
+          reply: `No he podido mandar tu CV a **${elegido.nombre}**. Prueba desde [la página de envíos](/app/envios).`,
           action: "send_cv_flow",
         });
       }

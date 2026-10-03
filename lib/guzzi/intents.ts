@@ -3,10 +3,16 @@
  * 🔒 SELLO GUZZI detectIntent + extractJobTerm — BuscayCurra
  * NO TOCAR sin ejecutar tests: sello-verificacion.mjs bloques 1 y 2 (12 tests de regex)
  */
+import { aceptaEnvioLocal } from "./envio-local";
 
 export function detectIntent(text: string, history: Array<{ role: string; text: string }> = []): string {
   const t = text.toLowerCase();
   const tn = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // Mandar el CV a un negocio de la lista: solo si Guzzi lo acaba de proponer
+  // y contesta que sí o elige uno. Antes un "vale" o un "ok gracias" con un 📍
+  // en el historial mandaba el CV a una empresa que nadie había elegido.
+  // Va la primera: es muy estricta y, si no, "mándalo a Delicias" se lo come info_empresa.
+  if (aceptaEnvioLocal(text, history)) return "send_cv_local_confirm";
   if (/(mejorar|mejora|optimizar|reescrib).*(cv|curriculum)|(cv|curriculum).*(mejorar|mejorado|profesional|limpio)/.test(t)) return "cv_mejorado";
   if (/(carta.*(recomendaci|presentaci|para\s+\w)|presentaci.*carta)/.test(t)) return "carta_recomendacion";
   if (/(crea|genera|haz|escrib).*(carta|dear family).*(au pair|aupair)/i.test(t) || /carta.*au.?pair/i.test(t) || /dear.?family/i.test(t)) return "carta_au_pair";
@@ -174,11 +180,6 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
     return "buscar_cursos";
   }
   if (/[\wáéíóúüñçàèìòù]{3,}\s+(?:en|por)\s+[\wáéíóúüñçàèìòù]{3,}/i.test(t) && !OTRO_TEMA.test(t)) return "buscar";
-  const confirmSend = /^(si|s[ií]i|dale|vale|ok|okey|okay|venga|adelante|perfecto|genial|fenomenal|claro|por\s+supuesto|obvio|pues\s+si|pues\s+venga|hazlo|env[ií]alo|m[aá]ndalo|tira|t[ií]ralo|p[áa]lante|a\s+por\s+ello|me\s+gusta|me\s+apunto|elijo\s+la?\s*\d|la\s+primera|la\s+\d|la\s+opci[oó]n\s+\d|opci[oó]n\s+\d)/i;
-  const histText = (history as unknown as Array<{ text: string }>).slice(-4).map((m) => m.text).join(" ");
-  if (confirmSend.test(t.trim()) && /bar|restaurante|cafeter[ií]a|negocio\s+local|pequeñ[oa]|Google\s+Maps|plaza\s+nueva|bar\s+diamante|tel[eé]fono\s*\d|948|local\s+pequeñ|🏢|⭐|📍|📞/i.test(histText)) {
-    return "send_cv_local_confirm";
-  }
   if (/(?:env[ií]a|m[aá]nda|t[ií]ra)\s*(?:se\s*(?:lo|la|los|las|me|te|nos)|lo|la|los|las|le|les|me|te|nos)\b/i.test(t)) return "enviar";
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
   if (/(prep[aá]r|practicar|simul).*(entrevista)|entrevista.*(prep[aá]r|practica)/.test(t)) return "entrevista_prep";

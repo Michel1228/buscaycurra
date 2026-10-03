@@ -588,10 +588,72 @@ test("detectIntent CLASIFICA BIEN frases reales (no solo existe el texto)", asyn
   }
 });
 
+// Auditoria del 3 oct 2026: un "vale", "ok gracias" o "si, pero luego" con un
+// 📍 o la palabra "bar" (dentro de "Barcelona") en el historial mandaba el CV
+// a una empresa que nadie habia elegido. Solo vale un si a la propuesta que
+// Guzzi acaba de hacer, y con varios negocios tiene que decir cual.
+test("Guzzi solo manda el CV a un negocio si se lo acaba de proponer y elige cual", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salidas = [".sello-intents2.cjs", ".sello-envio-local.cjs"];
+  try {
+    for (const [entrada, salida] of [["lib/guzzi/intents.ts", salidas[0]], ["lib/guzzi/envio-local.ts", salidas[1]]]) {
+      execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node",
+        `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    }
+    const { detectIntent } = await import(`../${salidas[0]}?${Date.now()}`);
+    const local = await import(`../${salidas[1]}?${Date.now()}`);
+    const fallos = [];
+    const MANDA = "send_cv_local_confirm";
+    // 1. Sin propuesta (un listado de ofertas normal): nada manda el CV.
+    const ofertas = [{ role: "user", text: "camarero en barcelona" },
+      { role: "gusi", text: "5 ofertas de camarero en Barcelona:\n🏢 Bar Centro\n📍 Barcelona\n⭐ 92%\nSin embargo hay mas." }];
+    for (const f of ["vale", "ok gracias", "perfecto", "si pero luego", "ok no lo mandes", "la primera", "opcion 2", "sí"]) {
+      if (detectIntent(f, [...ofertas, { role: "user", text: f }]) === MANDA) fallos.push(`sin propuesta "${f}" manda el CV`);
+    }
+    // 2. Con la propuesta de verdad, justo antes.
+    const texto = local.textoNegociosLocales([{ nombre: "Bar Diamante", web: "https://www.bardiamante.es/" },
+      { nombre: "Restaurante El Choko" }, { nombre: "Cafetería Delicias" }], "Tudela", "camarero");
+    const conPropuesta = [{ role: "user", text: "camarero en tudela" }, { role: "gusi", text: texto }];
+    const casos = [["la 2", 1], ["sí, al Diamante", 0], ["mándalo a delicias", 2], ["sí", null], ["vale", null],
+      ["ok gracias", "no"], ["si pero luego", "no"], ["no, mejor no", "no"], ["vale, ahora busca de cocinero en tudela", "no"]];
+    for (const [f, esperado] of casos) {
+      const h = [...conPropuesta, { role: "user", text: f }];
+      const intent = detectIntent(f, h);
+      if (esperado === "no") { if (intent === MANDA) fallos.push(`"${f}" manda el CV`); continue; }
+      if (intent !== MANDA) { fallos.push(`"${f}" deberia contestar a la propuesta y da ${intent}`); continue; }
+      const elegido = local.negocioElegido(f, local.propuestaPendiente(h).negocios);
+      if (elegido !== esperado) fallos.push(`"${f}" elige ${elegido} y deberia ser ${esperado}`);
+    }
+    // 3. Una propuesta de hace dos turnos ya no cuenta.
+    if (detectIntent("la 2", [...conPropuesta, { role: "user", text: "y de cocinero?" }, { role: "user", text: "la 2" }]) === MANDA) {
+      fallos.push("una propuesta antigua todavia manda el CV");
+    }
+    // 4. Se lee de vuelta lo que se enseña: ciudad, puesto y web del negocio.
+    const leida = local.propuestaPendiente(conPropuesta);
+    if (leida?.ciudad !== "Tudela" || leida?.puesto !== "camarero" || leida?.negocios[0].web !== "http://www.bardiamante.es") {
+      fallos.push(`la lista no se lee bien: ${JSON.stringify(leida).slice(0, 80)}`);
+    }
+    fallos.forEach((f) => console.log(`     ↳ ${f}`));
+    return fallos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    for (const s of salidas) { try { unlinkSync(s); } catch { /* da igual */ } }
+  }
+});
+test("el envio a un negocio no usa correos de buscadores ni ciudad fija", () => {
+  const ruta = leerFuente("app/api/gusi/send-cv-local/route.ts");
+  const chat = leerFuente("app/api/gusi/chat/route.ts");
+  return ruta.includes(`result.confidence === "high"`) && !ruta.includes(`"Tudela"`)
+    && !/cvParsed\?\.nombre \|\| "Michel"/.test(chat) && !chat.includes(`|| "Empresa local"`);
+});
+
 // El byte de retroceso es invisible al leer el codigo y rompe cualquier regex
 // donde se cuele. Ya paso una vez; que no vuelva a pasar sin avisar.
 test("no hay bytes de retroceso (0x08) escondidos en las expresiones", () =>
-  !intentsSrc.includes(""));
+  ![intentsSrc, leerFuente("lib/guzzi/envio-local.ts")].some((src) => src.includes(String.fromCharCode(8))));
 test("el prompt aclara que el limite del tratado es DIARIO", () =>
   leerFuente("lib/guzzi/prompts.ts").includes("el limite del tratado es DIARIO"));
 
