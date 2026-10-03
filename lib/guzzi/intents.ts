@@ -13,9 +13,39 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   // en el historial mandaba el CV a una empresa que nadie había elegido.
   // Va la primera: es muy estricta y, si no, "mándalo a Delicias" se lo come info_empresa.
   if (aceptaEnvioLocal(text, history)) return "send_cv_local_confirm";
-  if (/(mejorar|mejora|optimizar|reescrib).*(cv|curriculum)|(cv|curriculum).*(mejorar|mejorado|profesional|limpio)/.test(t)) return "cv_mejorado";
+
+  // LO QUE CUENTA DESPUÉS DE "DIME QUÉ QUIERES PONER Y TE LO REDACTO".
+  // Guzzi lo ofrecía y no había nada que lo redactara: la persona obedecía
+  // ("carretillero en Logística Ribera, de 2022 a 2025...") y le buscaba
+  // CURSOS de carretillero (auditoría del 3 oct 2026; le pasó a Michel el 1
+  // oct). Si el último mensaje de Guzzi fue esa oferta y no cambia de tema ni
+  // se despide, es el texto para su CV.
+  {
+    const ultimoDeGuzzi = [...(history || [])].reverse().find((m) => m.role !== "user")?.text || "";
+    const ofrecioRedactar = /Abrir el editor de CV|D[ií]melo con tus palabras/.test(ultimoDeGuzzi)
+      && [...(history || [])].slice(-2).some((m) => m.role !== "user");
+    const cambiaDeTema = /\b(busco|buscar|buscame|ofertas?|vacantes?|quiero\s+trabajar|hola|cursos?|cuanto|salario|sueldo|precio|plan)\b/.test(tn);
+    const seDespide = tn.trim().length < 30 && /^(vale|ok|okey|gracias|perfecto|genial|de\s+acuerdo|entendido|no\b|nada|listo|ya\s+esta)/.test(tn.trim());
+    const pregunta = /\?|^(como|donde|que|cual|cuando|por\s*que|puedo|se\s+puede|y\s+(como|si|donde))\b/.test(tn.trim());
+    if (ofrecioRedactar && !cambiaDeTema && !seDespide && !pregunta && tn.trim().length >= 8) return "redactar_cv";
+  }
+
+  // LA CUENTA (no el CV): borrar la cuenta o los datos, darse de baja, la
+  // suscripción, la contraseña. "Borrar mis datos" (derecho RGPD) se mandaba al
+  // editor del CV, y el resto iba al modelo, que no sabe cómo se hace aquí.
+  if ((/(borra|elimina|cierra|cerrar|dar\s+de\s+baja|darme\s+de\s+baja)\w*\s+(?:toda\s+)?(?:mi|la|mis|los)?\s*(cuenta|datos)\b/.test(tn)
+        && !/\b(cv|curriculum|curriculo)\b/.test(tn))
+      || /\bbaja\s+de\s+(la\s+)?(app|aplicacion|buscaycurra|cuenta)\b/.test(tn)
+      || /(cancela|cancelar|anula|anular|cambia|cambiar|bajar|subir|quitar)\w*\s+(?:mi\s+|la\s+|el\s+|de\s+)?(suscripcion|plan\b)/.test(tn)
+      || /(cambia|cambiar|olvide|olvidado|recuperar|no\s+recuerdo|restablecer)\w*\s+(?:mi\s+|la\s+)?contrasena/.test(tn)) {
+    return "cuenta";
+  }
+  if (/(mejorar|mejora|optimiz|reescrib).*(cv|curriculum)|(cv|curriculum).*(mejorar|mejorado|profesional|limpio)/.test(t)) return "cv_mejorado";
+  // La de au pair va antes que la genérica: "carta para au pair en Alemania"
+  // casaba con "carta para X" y Guzzi pedía "nombre de la empresa y puesto"
+  // (auditoría del 3 oct 2026). También la familia de acogida.
+  if (/(crea|genera|haz|escrib).*(carta|dear family).*(au pair|aupair)/i.test(t) || /carta.*(au.?pair|familia\s+de\s+acogida|host\s+family)/i.test(t) || /dear.?family/i.test(t)) return "carta_au_pair";
   if (/(carta.*(recomendaci|presentaci|para\s+\w)|presentaci.*carta)/.test(t)) return "carta_recomendacion";
-  if (/(crea|genera|haz|escrib).*(carta|dear family).*(au pair|aupair)/i.test(t) || /carta.*au.?pair/i.test(t) || /dear.?family/i.test(t)) return "carta_au_pair";
   if (/(busco|buscar|busca|necesito|quiero|buscame|búscame|encuentra|encuentrame).*(au pair|aupair|niñera|nanny|canguro|childcare)/i.test(tn)) return "buscar_au_pair";
 
   // DERECHOS Y TRÁMITES — TAMBIÉN ANTES DE LA REGLA GENÉRICA.
@@ -60,9 +90,13 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   }
 
   // El CV según el país de destino: foto, extensión, datos personales.
-  if (/(foto|fotograf[ií]a).{0,30}(cv|curr[ií]culum|curriculum)/i.test(t)
-      || /(cv|curr[ií]culum|curriculum).{0,30}(foto|fotograf[ií]a)/i.test(t)
-      || /(cv|curr[ií]culum|curriculum).{0,50}(reino\s+unido|inglaterra|londres|alemania|estados\s+unidos|eeuu|holanda|pa[ií]ses\s+bajos|irlanda|suiza|austria)/i.test(t)) {
+  // "Quita mi foto del CV" o "subir foto al CV" no son esa pregunta: son
+  // tocar el CV, y sin nombrar un país siguen hacia el editor o la foto.
+  const cvConPais = /(cv|curr[ií]culum|curriculum).{0,50}(reino\s+unido|inglaterra|londres|alemania|estados\s+unidos|eeuu|holanda|pa[ií]ses\s+bajos|irlanda|suiza|austria)/i.test(t);
+  const tocaLaFoto = /\b(quit|borr|elimin|cambi|actualiz|sub[eiao])\w*/.test(tn);
+  if (cvConPais
+      || (!tocaLaFoto && (/(foto|fotograf[ií]a).{0,30}(cv|curr[ií]culum|curriculum)/i.test(t)
+        || /(cv|curr[ií]culum|curriculum).{0,30}(foto|fotograf[ií]a)/i.test(t)))) {
     return "cv_por_pais";
   }
 
@@ -125,7 +159,10 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   // "manda mi cv a <empresa>", que son otra cosa, y antes de las reglas de
   // cursos y de búsqueda, que se lo tragaban.
   {
-    const quiereCambiar = /\b(edita|edito|editar|modifica|modifico|modificar|cambia|cambio|cambiar|actualiza|actualizo|actualizar|corrige|corrijo|corregir|arregla|arreglar|quita|quito|quitar|borra|borro|borrar|elimina|elimino|eliminar|a[ñn]ade|a[ñn]ado|a[ñn]adir|agrega|agrego|agregar|pon|pongo|poner|rellena|rellenar|completa|completar|retoca|retocar|rehacer)\b/i.test(tn);
+    // Con los pronombres pegados: "añádelo", "ponla", "bórrame", "rehaz". Antes
+    // solo casaban los verbos sueltos y "tengo curso de carretillero, añádelo a
+    // mi currículum" acababa buscando cursos (auditoría del 3 oct 2026).
+    const quiereCambiar = /\b(edit[ao]\w*|modific\w*|cambi[ao]\w*|cambiar\w*|actualiz\w*|corrig\w*|corrij\w*|arregl\w*|quit[ao]\w*|quitar\w*|borr[ao]\w*|borrar\w*|elimin\w*|a[ñn]ad\w*|agreg\w*|pon(lo|la|los|las|le|me)?|pong[oa]\w*|poner\w*|rellen\w*|complet[ao]\w*|completar\w*|retoc\w*|rehacer\w*|rehaz\w*)\b/i.test(tn);
     const nombraElCv = /\b(cv|curriculum|curriculo)\b/i.test(tn);
     // Un apartado SUYO: hace falta porque, dentro de la conversación, la gente
     // ya no repite "cv" ("cambiar mi experiencia de carretillero").
@@ -141,6 +178,29 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
     }
   }
 
+  // CURSOS — tiene que ir ANTES de las reglas de búsqueda de abajo ("busco X", "algo EN algún
+  // sitio" → buscar), que si no se traga "curso de carretillero en Pamplona" y
+  // se pone a buscar ofertas de empleo de carretillero en vez de formación.
+  //
+  // Los carnets cuentan cuando se quieren SACAR: la gente no dice "curso", dice
+  // "necesito el de manipulador" o "me piden la carretilla".
+  //
+  // PERO NO POR LA SOLA PALABRA (auditoría del 3 oct 2026). Antes bastaba con
+  // nombrar "carretillero", "carnet" o "manipulador": "ofertas de carretillero
+  // en Pamplona", "cuánto cobra un carretillero", "soy carretillero" o "mi
+  // carnet de conducir está caducado" acababan en cursos. Ahora hace falta
+  // pedir formación, o querer sacar un carnet; y contar lo que uno ya es o ya
+  // tiene ("soy...", "tengo el curso de...") no es pedir un curso.
+  {
+    const pideCurso = /(busco|buscar|busca|quiero|necesito|hay|donde|me\s+interesa|apuntarme|hacer|sacarme|sacar)\W+(?:\w+\W+){0,2}(cursos?|formacion|capacitacion)\b/.test(tn)
+      || /\bformarme\b|certificad[oa]s?\s+de\s+profesionalidad|\btpc\b|tarjeta\s+profesional/.test(tn);
+    const nombraCurso = /\b(cursos?|formacion|capacitacion)\b/.test(tn);
+    const sacarCarnet = /(sacar(me)?|obtener|conseguir|necesito|me\s+piden|piden|donde|como)\W+(?:\w+\W+){0,3}(carnet|carretilla|manipulador|plataforma\s+elevadora)/.test(tn);
+    const cuentaLoQueEs = /\b(soy|fui|he\s+sido|era|trabaje|trabajaba|he\s+trabajado|llevo\s+\d+|tengo\s+(?:el|un|los|mi)\s+(?:curso|carnet)|ya\s+(?:hice|tengo|saque)|hice\s+el\s+curso)\b/.test(tn);
+    // "Busco trabajo de profesor de cursos de inglés" es buscar empleo, no formarse.
+    const hablaDeEmpleo = /\b(trabajo|empleo|ofertas?|puesto|vacantes?|curro)\b/.test(tn);
+    if (pideCurso || sacarCarnet || (nombraCurso && !cuentaLoQueEs && !hablaDeEmpleo)) return "buscar_cursos";
+  }
   if (/(?:peluquer[ií]a|barber[ií]a|restaurante|bar\b|hotel|cafeter[ií]a|cl[ií]nica|farmacia|panader[ií]a|tienda|taller|supermercado|sal[oó]n|est[eé]tica|gimnasio|lavander[ií]a|fruter[ií]a|carnicer[ií]a|pescader[ií]a)\b.{3,}/i.test(t) && /(?:calle|plaza|avenida|avda|paseo|crta|carretera|c\/)\s/i.test(t)) return "buscar";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
   // "algo EN algún sitio" es una búsqueda, salvo que la frase sea de otro tema.
@@ -168,18 +228,10 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   // "il" pegado al " en ", y hacen falta tres letras. La frase se tomaba por
   // charla y Guzzi contestaba con la IA en vez de buscar, teniendo 53
   // albañiles en Manchester. Igual habría pasado con "diseño" o "logística".
-  // CURSOS — tiene que ir ANTES de la regla genérica de abajo ("algo EN algún
-  // sitio" → buscar), que si no se traga "curso de carretillero en Pamplona" y
-  // se pone a buscar ofertas de empleo de carretillero en vez de formación.
-  //
-  // Se nombran también los carnets concretos porque la gente no dice "curso":
-  // dice "necesito el de manipulador" o "me piden la carretilla".
-  if (/\bcursos?\b|\bformaci[oó]n\b|\bformarme\b|\bcapacitaci[oó]n\b|\bcarn[eé]ts?\b/i.test(t)
-      || /manipulador\s+de\s+aliment|\bcarretiller[oa]s?\b|carretilla\s+elevadora|plataforma\s+elevadora/i.test(t)
-      || /certificad[oa]s?\s+de\s+profesionalidad|\btpc\b|tarjeta\s+profesional/i.test(t)) {
-    return "buscar_cursos";
-  }
-  if (/[\wáéíóúüñçàèìòù]{3,}\s+(?:en|por)\s+[\wáéíóúüñçàèìòù]{3,}/i.test(t) && !OTRO_TEMA.test(t)) return "buscar";
+  // Con artículo también: "vendimia en la Rioja", "trabajo en el Prat". Pedía
+  // tres letras justo después de "en" y "la"/"el" tienen dos.
+  // Y una palabra corta en medio: "camionero con carnet C en Zaragoza".
+  if (/[\wáéíóúüñçàèìòù]{3,}(?:\s+[\wáéíóúüñçàèìòù]{1,2})?\s+(?:en|por)\s+(?:(?:la|el|los|las)\s+)?[\wáéíóúüñçàèìòù]{3,}/i.test(t) && !OTRO_TEMA.test(t)) return "buscar";
   if (/(?:env[ií]a|m[aá]nda|t[ií]ra)\s*(?:se\s*(?:lo|la|los|las|me|te|nos)|lo|la|los|las|le|les|me|te|nos)\b/i.test(t)) return "enviar";
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
   if (/(prep[aá]r|practicar|simul).*(entrevista)|entrevista.*(prep[aá]r|practica)/.test(t)) return "entrevista_prep";

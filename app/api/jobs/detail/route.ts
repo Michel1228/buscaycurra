@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
         descripcion: j.description || "",
         fuente: j.sourceName || "BuscayCurra",
         url: j.sourceUrl || "#",
-        match: 85,
+        // Sin match: aqui no hay CV con que compararla. Antes iba un 85 fijo y
+        // todas las guardadas salian con un 85% de compatibilidad inventado.
       },
     });
   } catch (error) {

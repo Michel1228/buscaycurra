@@ -62,6 +62,8 @@ export default function JobCard({
   url, modalidad, descripcion, match, distancia, emailEmpresa, emailConfianza,
 }: PropiedadesJobCard) {
   const fc = colorFuente(fuente);
+  // "ADZUNA_ES" o "EURES_MAD" son nombres internos: se enseña solo la fuente.
+  const fuenteVisible = (() => { const base = fuente.split("_")[0]; return base === "ADZUNA" ? "Adzuna" : base; })();
   const matchColor = match !== undefined ? colorMatch(match) : "#64748b";
 
   // Las ofertas en vivo (Jooble/APIs) llevan id sintético con prefijo y NO existen
@@ -181,7 +183,7 @@ export default function JobCard({
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: fc.bg, color: fc.text }}>{fuente}</span>
+            style={{ background: fc.bg, color: fc.text }}>{fuenteVisible}</span>
           {modalidad && (
             <span className="text-[11px] font-medium px-2.5 py-1 rounded-full capitalize"
               style={{ background: "rgba(112,106,88,0.1)", color: "#94a3b8" }}>{modalidad}</span>

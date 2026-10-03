@@ -646,6 +646,57 @@ test("Guzzi solo manda el CV a un negocio si se lo acaba de proponer y elige cua
     for (const s of salidas) { try { unlinkSync(s); } catch { /* da igual */ } }
   }
 });
+// Auditoria del 3 oct 2026: la regla de cursos se tragaba a quien hablaba de su
+// oficio ("carretillero en Tudela", "cuanto cobra un carretillero", "soy
+// carretillero"), "borrar mis datos" iba al editor del CV, las cartas de au
+// pair a la carta generica, "en la Rioja" no buscaba, y lo que la persona
+// contaba despues de "dime que quieres poner y te lo redacto" acababa en cursos.
+test("Guzzi entiende oficio, cuenta, au pair, articulos y el texto para el CV", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-intents3.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/guzzi/intents.ts", "--bundle", "--format=cjs", "--platform=node",
+      `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const { detectIntent } = await import(`../${salida}?${Date.now()}`);
+    const NO = (x) => "!" + x;
+    const casos = [
+      ["ofertas de carretillero en pamplona", "buscar"], ["carretillero en tudela", "buscar"],
+      ["camionero con carnet c en zaragoza", "buscar"], ["cuanto cobra un carretillero", NO("buscar_cursos")],
+      ["soy carretillero", NO("buscar_cursos")], ["tengo el curso de carretillero", NO("buscar_cursos")],
+      ["mi carnet de conducir esta caducado", NO("buscar_cursos")],
+      ["curso de carretillero en Pamplona", "buscar_cursos"], ["necesito el de manipulador", "buscar_cursos"],
+      ["busco formacion de soldador", "buscar_cursos"], ["busco trabajo de profesor de cursos de ingles", "buscar"],
+      ["tengo curso de carretillero, añadelo a mi curriculum", "editar_cv"], ["quita mi foto del cv", "editar_cv"],
+      ["borrar mis datos", "cuenta"], ["cancelar suscripcion", "cuenta"], ["cambiar mi contraseña", "cuenta"],
+      ["carta para au pair en alemania", "carta_au_pair"], ["vendimia en la rioja", "buscar"],
+      ["voy a mandar mi CV a una empresa de Londres, le pongo foto?", "cv_por_pais"],
+    ];
+    const editor = { role: "gusi", text: "👉 [Abrir el editor de CV](/app/curriculum)\n\nDime qué quieres poner y te lo redacto." };
+    const tras = [
+      ["carretillero en Logística Ribera, de 2022 a 2025, cargaba camiones y preparaba pedidos", "redactar_cv"],
+      ["vale gracias", NO("redactar_cv")], ["busco trabajo de camarero en Tudela", "buscar"],
+    ];
+    const fallos = [];
+    const mira = (f, esperado, r) => {
+      const ok = esperado.startsWith("!") ? r !== esperado.slice(1) : r === esperado;
+      if (!ok) fallos.push(`"${f.slice(0, 45)}" da ${r} (esperado ${esperado})`);
+    };
+    for (const [f, e] of casos) mira(f, e, detectIntent(f, [{ role: "user", text: f }]));
+    for (const [f, e] of tras) mira(f, e, detectIntent(f, [{ role: "user", text: "cambiar mi cv" }, editor, { role: "user", text: f }]));
+    fallos.forEach((f) => console.log(`     ↳ ${f}`));
+    const chat = leerFuente("app/api/gusi/chat/route.ts");
+    return fallos.length === 0 && chat.includes('preIntent === "redactar_cv"') && chat.includes('preIntent === "cuenta"');
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+});
+test("la ficha de una oferta no se inventa un porcentaje de compatibilidad", () =>
+  !/match:\s*85/.test(leerFuente("app/api/jobs/detail/route.ts")));
+
 test("el envio a un negocio no usa correos de buscadores ni ciudad fija", () => {
   const ruta = leerFuente("app/api/gusi/send-cv-local/route.ts");
   const chat = leerFuente("app/api/gusi/chat/route.ts");

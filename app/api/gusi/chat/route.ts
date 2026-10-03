@@ -1157,6 +1157,63 @@ El candidato tiene mucha experiencia.
       // Sin ficha de ese país, sigue el flujo normal y contesta la IA.
     }
 
+    // -- Intent: la cuenta (no el CV) ------------------------------------------
+    // "Borrar mis datos" se contestaba con el editor del CV, y la baja, el plan o
+    // la contraseña iban al modelo, que no sabe dónde está cada cosa aquí y podía
+    // inventarse los pasos (auditoría del 3 oct 2026). Respuesta fija y cierta.
+    if (preIntent === "cuenta") {
+      const m = message.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      if (/contrasena/.test(m)) {
+        return NextResponse.json({
+          reply: "Si estás dentro de tu cuenta, la cambias en **Perfil → Seguridad → Cambiar contraseña**.\n\n"
+            + "👉 [Ir a Seguridad](/app/perfil?tab=seguridad)\n\n"
+            + "Si no la recuerdas, pide un enlace aquí y te llega al correo: [He olvidado mi contraseña](/auth/recuperar).",
+          action: "cuenta",
+        });
+      }
+      if (/suscripcion|plan\b/.test(m)) {
+        return NextResponse.json({
+          reply: "Tu plan lo ves y lo cambias o cancelas en **Perfil → Mi Plan**.\n\n"
+            + "👉 [Ver mi plan](/app/perfil?tab=plan)\n\n"
+            + "Si lo pagaste desde el iPhone, la suscripción la gestiona Apple: se cancela en **Ajustes → tu nombre → Suscripciones**.",
+          action: "cuenta",
+        });
+      }
+      return NextResponse.json({
+        reply: "Puedes borrar tu cuenta tú mismo en **Perfil → Seguridad → Eliminar mi cuenta**. Se borra todo: tu CV, tus envíos, las conversaciones conmigo y tus fotos.\n\n"
+          + "👉 [Ir a Seguridad](/app/perfil?tab=seguridad)\n\n"
+          + "Si tienes un plan de pago con tarjeta, se cancela al borrar la cuenta. Si lo pagas desde el iPhone, cancélalo también en Ajustes de Apple, porque ese cobro lo lleva Apple.",
+        action: "cuenta",
+      });
+    }
+
+    // -- Intent: redactar lo que quiere poner en el CV --------------------------
+    // Guzzi ofrecía "dime qué quieres poner y te lo redacto" y no había nada que
+    // lo hiciera: la persona contaba su experiencia y acababa en cursos u
+    // ofertas (auditoría del 3 oct 2026). La IA gratuita lo deja listo para
+    // pegar, sin inventar nada.
+    if (preIntent === "redactar_cv") {
+      const sistema = "Ayudas a una persona a escribir una línea de su currículum. Te cuenta con sus palabras algo que quiere poner en el CV: un trabajo, unos estudios, un curso, un idioma o un dato de contacto.\n"
+        + "Devuélvelo redactado para pegarlo en el CV, en español y sin hablar en primera persona:\n"
+        + "- Si es un trabajo: una línea «Puesto — Empresa (fechas)» y debajo de 2 a 4 viñetas que empiecen por «• » con lo que hacía.\n"
+        + "- Si es otra cosa: la línea tal como iría en el CV.\n"
+        + "NO INVENTES NADA: ni tareas, ni fechas, ni empresas, ni cifras, ni logros que no diga. Si falta un dato, déjalo sin poner.\n"
+        + "Responde solo con el texto para el CV, sin explicaciones. Si el mensaje no trae ningún dato para el CV, responde exactamente: NADA";
+      const texto = (await callGroq(sistema, message, 500).catch(() => null))?.trim() || "";
+      if (texto && !/^NADA\b/i.test(texto)) {
+        return NextResponse.json({
+          reply: `Así quedaría en tu currículum:\n\n${texto}\n\nCópialo y pégalo en [el editor](/app/curriculum), en su apartado. Si quieres que cambie algo, dímelo.`,
+          action: "redactar_cv",
+        });
+      }
+      return NextResponse.json({
+        reply: texto
+          ? "Dime qué quieres poner —por ejemplo «camarero en Bar Pepe, de 2019 a 2021, atendía la barra y cobraba»— y te lo dejo redactado para pegarlo en [el editor](/app/curriculum)."
+          : "Ahora mismo no puedo redactarlo. Pégalo tal cual en [el editor](/app/curriculum) y pulsa **✨ Mejorar con IA**: te lo deja bien escrito.",
+        action: "redactar_cv",
+      });
+    }
+
     // -- Intent: editar el CV -------------------------------------------------
     //
     // Guzzi NO puede tocar el currículum: no tiene con qué. Lo que hacía era
