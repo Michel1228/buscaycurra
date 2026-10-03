@@ -9,7 +9,6 @@
  */
 
 import { useState } from "react";
-import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import { Check } from "lucide-react";
 
@@ -33,17 +32,16 @@ export default function RecuperarPage() {
     setCargando(true);
 
     try {
-      // Llamada a Supabase: enviar email de recuperación
-      const { error: supabaseError } = await getSupabaseBrowser().auth.resetPasswordForEmail(
-        email.trim(),
-        {
-          // URL a la que redirigirá el enlace del email
-          redirectTo: `${window.location.origin}/auth/nueva-contrasena`,
-        }
-      );
-
-      if (supabaseError) {
-        setError("No hemos podido enviar el email. Comprueba que el email es correcto.");
+      // El correo lo mandamos nosotros (ver /api/auth/recuperar): el de
+      // Supabase salía en inglés y su enlace no funcionaba abierto desde Gmail.
+      const res = await fetch("/api/auth/recuperar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (!res.ok) {
+        const datos = await res.json().catch(() => ({})) as { error?: string };
+        setError(datos.error || "No hemos podido enviar el email. Inténtalo de nuevo en unos minutos.");
         return;
       }
 
@@ -88,10 +86,13 @@ export default function RecuperarPage() {
                 <Check size={28} strokeWidth={2.5} />
               </div>
               {/* Mensaje principal */}
-              <h2 className="text-lg font-semibold text-[#f1f5f9] mb-2">Email enviado</h2>
+              <h2 className="text-lg font-semibold text-[#f1f5f9] mb-2">Mira tu correo</h2>
+              <p className="text-[#94a3b8] text-sm mb-3">
+                Si hay una cuenta con <strong className="text-[#f1f5f9] break-all">{email.trim()}</strong>, en un minuto
+                te llega un correo de BuscayCurra con el asunto «Cambia tu contraseña de BuscayCurra».
+              </p>
               <p className="text-[#94a3b8] text-sm mb-6">
-                Te hemos enviado un email con el enlace para recuperar tu cuenta.
-                Revisa también la carpeta de spam.
+                Mira también en spam y en promociones. Si no llega, comprueba que es el mismo correo con el que te registraste.
               </p>
               {/* Enlace de vuelta al login */}
               <Link

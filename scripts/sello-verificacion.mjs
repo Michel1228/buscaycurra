@@ -2285,6 +2285,30 @@ test("la espera de 15 dias por empresa cuenta los mismos estados que la cuota", 
     && local.includes("canSendToCompany(userId, companyEmail)") && local.includes("motivoParaNoEnviar(companyEmail)");
 });
 
+// Auditoria del 3 oct 2026: "He olvidado mi contraseña" lo mandaba Supabase en
+// ingles ("Reset Your Password") y su enlace solo valia en el navegador donde se
+// pidio: abierto desde Gmail en el movil decia "no es valido". De once personas
+// que lo pidieron, cuatro no han entrado nunca. Ahora el correo es nuestro y el
+// enlace lleva token_hash, que se verifica en cualquier navegador.
+test("recuperar la contraseña: correo propio y enlace que vale en cualquier navegador", () => {
+  const pagina = leerFuente("app/auth/recuperar/page.tsx");
+  const api = leerFuente("app/api/auth/recuperar/route.ts");
+  const nueva = leerFuente("app/auth/nueva-contrasena/page.tsx");
+  const mw = leerFuente("middleware.ts");
+  const correo = leerFuente("lib/email/smtp-sender.ts");
+  const fallos = [];
+  if (pagina.includes("resetPasswordForEmail") || !pagina.includes('"/api/auth/recuperar"')) fallos.push("la pagina no usa /api/auth/recuperar");
+  if (!/generateLink\(\{ type: "recovery"/.test(api) || !api.includes("token_hash=")) fallos.push("el endpoint no genera el enlace con token_hash");
+  // Haya cuenta o no, la misma respuesta: si no, sirve para saber quien esta registrado.
+  if (!/if \(error \|\| !tokenHash\) \{[\s\S]{0,400}return NextResponse\.json\(\{ ok: true \}\);/.test(api)) fallos.push("sin cuenta no contesta igual que con cuenta");
+  if (!api.includes('checkUserRateLimit("recuperar-1min"') || !api.includes('checkUserRateLimit("recuperar-ip"')) fallos.push("sin topes contra el abuso");
+  if (!/verifyOtp\(\{ token_hash: tokenHash, type: "recovery" \}\)/.test(nueva)) fallos.push("nueva-contrasena no verifica el token_hash");
+  if (!mw.includes('pathname !== "/auth/nueva-contrasena"')) fallos.push("con sesion abierta, el middleware saca de nueva-contrasena");
+  if (!correo.includes('"Cambia tu contraseña de BuscayCurra"')) fallos.push("el correo no esta en español");
+  fallos.forEach((f) => console.log(`     ↳ ${f}`));
+  return fallos.length === 0;
+});
+
 // Auditoria del 3 oct 2026: a una camarera que pedia un puesto de mecanico la
 // carta le inventaba "cambios de aceite al coche familiar". Probado contra la
 // IA: con la regla, 0 de 3 cartas inventan; sin ella, 3 de 3. La carta sale a

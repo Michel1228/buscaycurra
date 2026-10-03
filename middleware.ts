@@ -93,8 +93,10 @@ export async function middleware(request: NextRequest) {
     isAuthenticated = false;
   }
 
-  // Usuario autenticado en la raíz o en páginas de auth → ir al app
-  if (pathname === "/" || pathname.startsWith("/auth/")) {
+  // Usuario autenticado en la raíz o en páginas de auth → ir al app.
+  // Menos "nueva contraseña": quien abre el enlace del correo con la sesión ya
+  // abierta (o recarga tras abrirlo) tiene que poder cambiarla, no acabar en Guzzi.
+  if (pathname === "/" || (pathname.startsWith("/auth/") && pathname !== "/auth/nueva-contrasena")) {
     if (isAuthenticated) {
       return NextResponse.redirect(new URL("/app/gusi", request.url));
     }

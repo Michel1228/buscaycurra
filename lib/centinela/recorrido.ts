@@ -199,6 +199,49 @@ export async function recorridoDeUsuario(anota: Anota): Promise<void> {
       "3 oct 2026: borrar la cuenta dejaba datos personales");
   }
 
+  // ── R8. "He olvidado mi contraseña": llega el correo y el enlace vale en OTRO navegador ──
+  // Se pide como lo pide la página, se espera el correo en Resend y se abre el
+  // enlace desde un cliente nuevo, sin nada guardado (como Gmail en el móvil).
+  const nacioR8 = "3 oct 2026: el correo salía en inglés y su enlace solo valía en el navegador donde se pidió";
+  try {
+    const r = await fetch(BASE + "/api/auth/recuperar", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: CUENTA }), signal: AbortSignal.timeout(30000),
+    });
+    let bien = false;
+    let detalle = `la página de recuperar respondió HTTP ${r.status}`;
+    if (r.ok) {
+      const HR = { Authorization: `Bearer ${process.env.RESEND_API_KEY}` };
+      const fecha = (s: string) => new Date(s.replace(" ", "T").replace(/\+00$/, "Z")).getTime();
+      let enlace = "";
+      for (let i = 0; i < 8 && !enlace; i++) {
+        await new Promise((ok) => setTimeout(ok, 5000));
+        const lista = await (await fetch("https://api.resend.com/emails?limit=20", { headers: HR })).json() as
+          { data?: Array<{ id: string; to?: string[]; subject?: string; created_at: string }> };
+        const correo = (lista.data || []).find((e) => e.to?.[0] === CUENTA
+          && e.subject === "Cambia tu contraseña de BuscayCurra" && Date.now() - fecha(e.created_at) < 300000);
+        if (correo) {
+          const d = await (await fetch(`https://api.resend.com/emails/${correo.id}`, { headers: HR })).json() as { html?: string };
+          enlace = (d.html || "").match(/href="([^"]*token_hash=[^"]*)"/)?.[1]?.replace(/&amp;/g, "&") || "sin-enlace";
+        }
+      }
+      const tokenHash = enlace && enlace !== "sin-enlace" ? new URL(enlace).searchParams.get("token_hash") : null;
+      if (!enlace) detalle = "el correo no ha llegado a Resend en 40 segundos";
+      else if (!tokenHash) detalle = "el correo ha llegado sin enlace para cambiar la contraseña";
+      else {
+        const limpio = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          { auth: { persistSession: false, autoRefreshToken: false } });
+        const v = await limpio.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+        bien = !v.error && !!v.data.session;
+        detalle = bien ? "el correo llega y su enlace abre la cuenta en un navegador nuevo" : `el enlace no vale: ${v.error?.message}`;
+        if (v.data.session) await limpio.auth.signOut({ scope: "local" }).catch(() => {});
+      }
+    }
+    anota("he olvidado mi contraseña: llega el correo y el enlace funciona", bien, detalle, nacioR8);
+  } catch (e) {
+    anota("he olvidado mi contraseña: llega el correo y el enlace funciona", false, (e as Error).message, nacioR8);
+  }
+
   await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/logout?scope=local`, {
     method: "POST", headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${sesion.token}` },
   }).catch(() => {});

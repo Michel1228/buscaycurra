@@ -395,6 +395,28 @@ ${params.paso
   return enviarCorreo(params.email, asunto, plantillaSencilla(cuerpo, pie), { bajaUrl: params.alertaActivada ? params.bajaUrl : null });
 }
 
+// ─── Email para cambiar la contraseña ────────────────────────────────────────
+
+/**
+ * Lo mandamos nosotros, no Supabase: el de Supabase salía en inglés ("Reset
+ * Your Password") y su enlace solo funcionaba en el mismo navegador donde se
+ * pidió, así que abierto desde Gmail en el móvil decía "el enlace no es válido"
+ * (auditoría del 3 oct 2026). `enlace` lleva el token_hash y vale en cualquier
+ * navegador.
+ */
+export async function sendRecuperarContrasenaEmail(params: { email: string; nombre?: string | null; enlace: string }): Promise<boolean> {
+  const primerNombre = esc((params.nombre || "").trim().split(" ")[0]);
+  const cuerpo = `
+<p ${P}>Hola${primerNombre ? ` ${primerNombre}` : ""}:</p>
+<p ${P}>Has pedido cambiar la contraseña de tu cuenta de BuscayCurra. Pulsa aquí para elegir una nueva:</p>
+<p style="margin:0 0 20px;"><a href="${params.enlace}" style="display:inline-block;background:#16a34a;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:10px;">Cambiar mi contraseña</a></p>
+<p ${P}>El enlace sirve una vez y caduca en una hora. Puedes abrirlo en el móvil o en el ordenador, donde te venga mejor.</p>
+<p ${P}>Si no lo has pedido tú, no hagas nada: tu contraseña sigue siendo la misma.</p>
+<p style="margin:0;">Un saludo,<br>Guzzi 🐛 y el equipo de BuscayCurra</p>`;
+  const pie = "Te escribimos porque alguien pidió cambiar la contraseña de esta cuenta en buscaycurra.es.";
+  return enviarCorreo(params.email, "Cambia tu contraseña de BuscayCurra", plantillaSencilla(cuerpo, pie));
+}
+
 // ─── Email de confirmación de pago ───────────────────────────────────────────
 
 export async function sendPaymentConfirmationEmail(userEmail: string, plan: string, nombrePlan: string): Promise<void> {

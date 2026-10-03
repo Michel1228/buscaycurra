@@ -4,12 +4,12 @@
  * app/auth/nueva-contrasena/page.tsx — Página para establecer una nueva contraseña
  *
  * El usuario llega aquí desde el email de recuperación enviado por Supabase.
- * Supabase gestiona automáticamente el token en la URL.
+ * El enlace trae ?token_hash=... (ver /api/auth/recuperar) y se verifica al guardar.
  * Valida que las dos contraseñas coincidan y tienen mínimo 8 caracteres.
  * Colores de marca: azul #2563EB y naranja #F97316.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -27,17 +27,30 @@ export default function NuevaContrasenaPage() {
   const [cargando, setCargando] = useState(false);
   const [exito, setExito] = useState(false);
   const [error, setError] = useState("");
+  const [pedirOtro, setPedirOtro] = useState(false);
+  // El enlace de nuestro correo (/api/auth/recuperar) trae ?token_hash=...: se
+  // verifica al guardar y vale en CUALQUIER navegador. Antes el enlace era el de
+  // Supabase, que solo funcionaba en el navegador donde se pidió: abierto desde
+  // Gmail en el móvil decía "no es válido" (auditoría del 3 oct 2026).
+  const [tokenHash, setTokenHash] = useState<string | null>(null);
+  const verificadoRef = useRef(false);
 
-  // Supabase detecta el token de recuperación en la URL automáticamente
-  // al inicializar el cliente, por eso no necesitamos procesarlo manualmente.
   useEffect(() => {
-    // Verificar que hay una sesión activa (el token de Supabase es válido)
+    const enlaceCaducado = () => {
+      setError("Este enlace ya se ha usado o ha caducado (dura una hora). Pide uno nuevo y ábrelo en cuanto te llegue.");
+      setPedirOtro(true);
+    };
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    if (hash.get("error") || hash.get("error_code")) { enlaceCaducado(); return; }
+    const th = query.get("token_hash");
+    if (th && query.get("type") === "recovery") { setTokenHash(th); return; }
+
+    // Enlaces antiguos de Supabase (?code=...): el cliente los canjea solo si se
+    // abren en el mismo navegador. Si no hay sesión, no se puede cambiar nada.
     const comprobarSesion = async () => {
       const { data } = await getSupabaseBrowser().auth.getSession();
-      if (!data.session) {
-        // Si no hay sesión, el enlace puede haber expirado
-        setError("El enlace de recuperación no es válido o ha expirado. Solicita uno nuevo.");
-      }
+      if (!data.session) enlaceCaducado();
     };
     void comprobarSesion();
   }, []);
@@ -73,23 +86,41 @@ export default function NuevaContrasenaPage() {
 
     setCargando(true);
     try {
-      // Actualizar contraseña en Supabase
-      const { error: supabaseError } = await getSupabaseBrowser().auth.updateUser({
+      const supabase = getSupabaseBrowser();
+      // Primero el enlace (una sola vez: si luego falla la contraseña, se
+      // reintenta sin volver a gastarlo).
+      if (tokenHash && !verificadoRef.current) {
+        const { error: errorEnlace } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+        if (errorEnlace) {
+          setError("Este enlace ya se ha usado o ha caducado (dura una hora). Pide uno nuevo y ábrelo en cuanto te llegue.");
+          setPedirOtro(true);
+          return;
+        }
+        verificadoRef.current = true;
+      }
+
+      const { error: supabaseError } = await supabase.auth.updateUser({
         password: nuevaContrasena,
       });
 
       if (supabaseError) {
-        setError("No se pudo cambiar la contraseña. El enlace puede haber expirado.");
+        const codigo = (supabaseError as { code?: string }).code;
+        setError(
+          codigo === "same_password" ? "Esa es la contraseña que ya tienes. Elige una distinta."
+          : codigo === "weak_password" ? "Esa contraseña es demasiado fácil. Mezcla letras, números y algún símbolo."
+          : "No se pudo cambiar la contraseña. Inténtalo otra vez en un momento."
+        );
         return;
       }
 
-      // Contraseña cambiada correctamente
+      // Contraseña cambiada correctamente. El enlace ya no sirve: fuera de la barra.
+      window.history.replaceState(null, "", "/auth/nueva-contrasena");
       setExito(true);
 
       // Redirigir al dashboard tras 2 segundos
       setTimeout(() => {
         router.push("/app/gusi");
-      }, 2000);
+      }, 4000);
     } catch {
       setError("Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.");
     } finally {
@@ -130,7 +161,7 @@ export default function NuevaContrasenaPage() {
               <h2 className="text-lg font-semibold text-[#f1f5f9] mb-2">
                 ¡Contraseña actualizada!
               </h2>
-              <p className="text-[#94a3b8] text-sm">Redirigiendo al panel de control...</p>
+              <p className="text-[#94a3b8] text-sm">Te llevamos a BuscayCurra... Si usas la app, entra en ella con tu correo y la contraseña nueva.</p>
             </div>
           ) : (
             // Formulario para nueva contraseña
@@ -140,7 +171,7 @@ export default function NuevaContrasenaPage() {
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
                   {error}
-                  {error.includes("expirado") && (
+                  {pedirOtro && (
                     <div className="mt-2">
                       <Link
                         href="/auth/recuperar"
