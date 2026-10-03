@@ -310,7 +310,10 @@ test('No se puede encolar dos veces a la misma empresa', () => {
   const src = leerFuente('lib/cv-sender/tracker.ts');
   // "pendiente" tiene que contar, y hay que tratarlo aparte: su sent_at es null,
   // y la resta de fechas daba NaN, que en la comparación dejaba pasar el envío.
-  return /\.in\("status",\s*\["pendiente"/.test(src) && src.includes('status === "pendiente"');
+  // Desde el 3 oct 2026 usa ESTADOS_QUE_GASTAN_CUOTA, que incluye "pendiente"
+  // (lo vigila la prueba de la cuota).
+  return (/\.in\("status",\s*\["pendiente"/.test(src) || src.includes('.in("status", ESTADOS_QUE_GASTAN_CUOTA)'))
+    && src.includes('status === "pendiente"');
 });
 test('Ninguna pantalla llama sin token a un endpoint que exige la cabecera', () => {
   // EL FALLO QUE VIGILA. /api/cv/extraer exige "Authorization" y sin ella
@@ -2240,6 +2243,56 @@ test("los envios de CV se paran en direcciones de relleno o que ya rebotaron", a
     /const motivoNoEnviar = await motivoParaNoEnviar\(companyEmail\);\s*if \(motivoNoEnviar\)/.test(send) &&
     send.includes("if (await motivoParaNoEnviar(oferta.emailEmpresa)) continue;") &&
     /\.eq\("status", "rebotado"\)/.test(ds) && /hard bounce\|spam/.test(ds);
+});
+
+// Auditoria del 3 oct 2026: el correo que recibe la empresa sale de
+// noreply@buscaycurra.es y pintaba como HTML el nombre de la empresa, el
+// puesto, el nombre de la persona y la carta. Con una cuenta gratis se podian
+// meter enlaces o imagenes propios desde la direccion oficial.
+test("los correos de envio de CV escapan todo lo que escribe la persona", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-email-sender.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/cv-sender/email-sender.ts", "--bundle",
+      "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+      { stdio: "pipe", shell: true });
+    const { buildCVEmailHTML, buildConfirmationEmailHTML } = await import(`../${salida}`);
+    const malo = (campo) => `${campo}<script>x()</script><a href="https://malo.example">pulsa</a><img src=x>`;
+    const html = buildCVEmailHTML(
+      { userName: malo("Ana"), userEmail: "ana@correo.es", userPhone: malo("600"), cvPdfBuffer: Buffer.from("") },
+      `Hola\n${malo("linea")}`, malo("Empresa"), { sendId: "s1", userId: "u1" })
+      + buildConfirmationEmailHTML(malo("Ana"), malo("Empresa"), malo("Chef"));
+    const colados = html.match(/<script|<a href="https:\/\/malo|<img src=x/g) || [];
+    if (colados.length) console.log(`     ↳ ${colados.length} etiqueta(s) sin escapar`);
+    return colados.length === 0 && html.includes("&lt;script&gt;");
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    try { unlinkSync(salida); } catch {}
+  }
+});
+
+// Auditoria del 3 oct 2026: se podia mandar el mismo CV a la misma empresa al
+// minuto, porque la espera de 15 dias no contaba "entregado" (el estado en que
+// acaba casi todo envio). Ahora usa la misma lista que la cuota del plan. Y el
+// envio desde Guzzi a un negocio se la saltaba entera.
+test("la espera de 15 dias por empresa cuenta los mismos estados que la cuota", () => {
+  const f = trackerSrc.match(/export async function canSendToCompany[\s\S]*?\r?\n}\r?\n/)?.[0] || "";
+  const local = leerFuente("app/api/gusi/send-cv-local/route.ts");
+  return f.includes('.in("status", ESTADOS_QUE_GASTAN_CUOTA)') && !/\.in\(\s*"status"\s*,\s*\[/.test(f)
+    && local.includes("canSendToCompany(userId, companyEmail)") && local.includes("motivoParaNoEnviar(companyEmail)");
+});
+
+// Auditoria del 3 oct 2026: a una camarera que pedia un puesto de mecanico la
+// carta le inventaba "cambios de aceite al coche familiar". Probado contra la
+// IA: con la regla, 0 de 3 cartas inventan; sin ella, 3 de 3. La carta sale a
+// nombre de la persona y le pueden preguntar por ello en la entrevista.
+test("la carta de los envios prohibe inventar experiencia y datos de contacto", () => {
+  const p = leerFuente("lib/cv-sender/cv-personalizer.ts");
+  return p.includes("NO INVENTES NADA") && p.includes("NO le inventes relación con el oficio")
+    && p.includes("Firma SOLO con el nombre");
 });
 
 // ── LA WEB PUBLICA NO PUEDE MENTIR ─────────────────────────────────────────

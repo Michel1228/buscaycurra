@@ -1726,7 +1726,7 @@ El candidato tiene mucha experiencia.
         });
         const sendData = await sendRes.json().catch(() => ({}));
 
-        if (sendRes.status === 429) {
+        if (sendRes.status === 429 || sendRes.status === 409) {
           return NextResponse.json({
             reply: `${sendData.error || "Has llegado al límite de envíos de tu plan."}\n\n👉 [Ver planes](/app/perfil?tab=plan)`,
             action: "send_cv_flow",

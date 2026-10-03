@@ -98,6 +98,13 @@ ${jobTitle ? `- Puesto solicitado: ${jobTitle}` : "- Candidatura espontánea"}
 CV DE LA PERSONA:
 ${cvText}
 
+LO MÁS IMPORTANTE: NO INVENTES NADA. La carta sale a nombre de esta persona y la empresa le puede preguntar por cualquier cosa en la entrevista.
+- Usa SOLO lo que aparece en el CV: empresas, puestos, tareas, estudios, carnets e idiomas. Nada de anécdotas, aficiones, cosas hechas "en casa" o "por mi cuenta", cifras ni logros que no estén escritos ahí.
+- Si el puesto no tiene que ver con su experiencia, NO le inventes relación con el oficio. Dilo con naturalidad: viene de otro sector, estas cosas reales del CV le sirven (por ejemplo el trato con clientes o la responsabilidad) y tiene ganas de aprender.
+- No le añadas a un dato más de lo que dice: si el CV pone "carnet de manipulador de alimentos", no cuentes qué le enseñó ni lo relaciones con otro oficio.
+- No le atribuyas destrezas del oficio que el CV no nombra: manejo de herramientas o maquinaria, normas de seguridad, conocimientos técnicos, control de stock...
+- Firma SOLO con el nombre. Ni correo, ni teléfono, ni dirección: el correo ya los lleva debajo de la carta, y unos inventados harían que la empresa no pudiera localizarle.
+
 CÓMO DEBE SONAR:
 - Natural y cercana, como si la escribiera una persona con ganas de verdad, no una IA. Tono de España: cálido y respetuoso, ni demasiado formal ni demasiado coloquial.
 - En primera persona ("yo"), frases sencillas y directas. Que se note que hay una persona detrás.

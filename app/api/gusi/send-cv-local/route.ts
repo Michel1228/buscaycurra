@@ -9,6 +9,8 @@ import { addCVJob } from "@/lib/cv-sender/queue";
 import { getUserId } from "@/lib/auth-server";
 import { findEmail } from "@/lib/email-finder";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
+import { canSendToCompany } from "@/lib/cv-sender/tracker";
+import { motivoParaNoEnviar } from "@/lib/cv-sender/direccion-segura";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +89,17 @@ export async function POST(req: NextRequest) {
         },
         { status: 429 }
       );
+    }
+
+    // La misma espera de 15 días por empresa que el envío normal: esta ruta
+    // encolaba directamente y se la saltaba.
+    const motivo = await motivoParaNoEnviar(companyEmail);
+    if (motivo) return NextResponse.json({ success: false, needsEmail: true, error: motivo, companyName });
+    if (!(await canSendToCompany(userId, companyEmail))) {
+      return NextResponse.json({
+        success: false,
+        error: `Ya le enviaste tu CV a ${companyName} hace menos de 15 días.`,
+      }, { status: 409 });
     }
 
     // Añadir job a la cola BullMQ

@@ -9,6 +9,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { ESTADOS_QUE_GASTAN_CUOTA } from "./rate-limiter";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // Usamos la clave de servicio (service role) para operaciones del servidor.
@@ -264,12 +265,17 @@ export async function canSendToCompany(
   // encolado para esta empresa y todavía no ha salido, encolar otro le manda a
   // la empresa dos CVs idénticos con minutos de diferencia. Es justo la clase de
   // repetición que hace que a uno lo marquen como spam.
+  //
+  // Y "entregado" también (auditoría del 3 oct 2026): es el estado en que
+  // acaba casi todo envío cuando Resend avisa de que llegó, y como no estaba en
+  // la lista, al minuto de llegar se podía mandar el mismo CV otra vez. Se usa
+  // la misma lista que el límite del plan para que no vuelvan a separarse.
   const { data, error } = await getSupabase()
     .from("cv_sends")
     .select("sent_at, created_at, status")
     .eq("user_id", userId)
     .eq("company_email", email)
-    .in("status", ["pendiente", "enviado", "visto", "respondido"])
+    .in("status", ESTADOS_QUE_GASTAN_CUOTA)
     .order("created_at", { ascending: false })
     .limit(1);
 

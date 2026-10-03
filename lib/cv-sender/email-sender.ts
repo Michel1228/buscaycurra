@@ -13,6 +13,7 @@
  */
 
 import { Resend } from "resend";
+import { escapeHtml } from "../cv-generator/cv-template";
 
 // ─── Cliente Resend (inicialización lazy para no crashear el worker si falta la key) ──
 let _resend: Resend | null = null;
@@ -160,17 +161,25 @@ export async function sendConfirmationToUser(
  * Genera el HTML del email del CV.
  * Diseño profesional con los colores de BuscayCurra (azul #2563EB, naranja #F97316).
  */
-function buildCVEmailHTML(
+export function buildCVEmailHTML(
   cvData: CVEmailData,
   coverLetter: string,
   companyName: string,
   tracking?: { sendId: string; userId: string }
 ): string {
+  // Todo lo que escribe la persona (o la IA) va escapado. Sin esto, un nombre
+  // de empresa o un puesto con etiquetas se pintaba como HTML en un correo que
+  // sale de noreply@buscaycurra.es: se podían meter enlaces o imágenes propios
+  // desde la dirección oficial (auditoría del 3 oct 2026).
+  const nombre = escapeHtml(cvData.userName);
+  const empresa = escapeHtml(companyName);
+  const correo = escapeHtml(cvData.userEmail);
+
   // Convertimos los saltos de línea en párrafos HTML
   const coverLetterHtml = coverLetter
     .split("\n")
     .filter((line) => line.trim())
-    .map((line) => `<p style="margin:0 0 12px 0;line-height:1.6;">${line}</p>`)
+    .map((line) => `<p style="margin:0 0 12px 0;line-height:1.6;">${escapeHtml(line)}</p>`)
     .join("");
 
   // Tracking pixel: 1x1 GIF que detecta apertura del email.
@@ -187,7 +196,7 @@ function buildCVEmailHTML(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Candidatura de ${cvData.userName}</title>
+  <title>Candidatura de ${nombre}</title>
 </head>
 <body style="margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif;background:#f4f4f5;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 0;">
@@ -199,7 +208,7 @@ function buildCVEmailHTML(
           <tr>
             <td style="background:linear-gradient(135deg,#16a34a,#15803d);padding:32px 40px;text-align:center;">
               <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">
-                Candidatura — ${companyName}
+                Candidatura — ${empresa}
               </h1>
               <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">
                 Enviado a través de BuscayCurra
@@ -223,12 +232,12 @@ function buildCVEmailHTML(
                 <p style="margin:0 0 4px;font-weight:700;color:#1e293b;font-size:14px;">
                   DATOS DE CONTACTO
                 </p>
-                <p style="margin:0;color:#64748b;font-size:14px;">${cvData.userName}</p>
+                <p style="margin:0;color:#64748b;font-size:14px;">${nombre}</p>
                 <p style="margin:4px 0 0;color:#16a34a;font-size:14px;">
-                  <a href="mailto:${cvData.userEmail}" style="color:#16a34a;text-decoration:none;">${cvData.userEmail}</a>
+                  <a href="mailto:${correo}" style="color:#16a34a;text-decoration:none;">${correo}</a>
                 </p>
-                ${cvData.userPhone ? `<p style="margin:4px 0 0;color:#64748b;font-size:14px;">📞 ${cvData.userPhone}</p>` : ""}
-                ${cvData.userLinkedIn && /^https:\/\/(www\.)?linkedin\.com\//.test(cvData.userLinkedIn) ? `<p style="margin:4px 0 0;font-size:14px;"><a href="${cvData.userLinkedIn}" style="color:#16a34a;text-decoration:none;">🔗 LinkedIn</a></p>` : ""}
+                ${cvData.userPhone ? `<p style="margin:4px 0 0;color:#64748b;font-size:14px;">📞 ${escapeHtml(cvData.userPhone)}</p>` : ""}
+                ${cvData.userLinkedIn && /^https:\/\/(www\.)?linkedin\.com\//.test(cvData.userLinkedIn) ? `<p style="margin:4px 0 0;font-size:14px;"><a href="${escapeHtml(cvData.userLinkedIn)}" style="color:#16a34a;text-decoration:none;">🔗 LinkedIn</a></p>` : ""}
               </div>
             </td>
           </tr>
@@ -266,7 +275,7 @@ function buildCVEmailHTML(
  * Genera el HTML del email de confirmación al usuario.
  * Notifica que el CV fue enviado correctamente.
  */
-function buildConfirmationEmailHTML(
+export function buildConfirmationEmailHTML(
   userName: string,
   companyName: string,
   jobTitle?: string
@@ -307,12 +316,12 @@ function buildConfirmationEmailHTML(
           <tr>
             <td style="padding:40px;text-align:center;">
               <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 20px;">
-                Hola <strong>${userName}</strong>,
+                Hola <strong>${escapeHtml(userName)}</strong>,
               </p>
               <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 24px;">
                 Tu CV ha sido enviado correctamente a
-                <strong style="color:#16a34a;">${companyName}</strong>
-                ${jobTitle ? `para el puesto de <strong>${jobTitle}</strong>` : ""}.
+                <strong style="color:#16a34a;">${escapeHtml(companyName)}</strong>
+                ${jobTitle ? `para el puesto de <strong>${escapeHtml(jobTitle)}</strong>` : ""}.
               </p>
 
               <!-- Tarjeta de detalles -->
@@ -324,12 +333,12 @@ function buildConfirmationEmailHTML(
                   </tr>
                   <tr>
                     <td style="padding:4px 0;color:#6b7280;font-size:14px;">🏢 Empresa</td>
-                    <td style="padding:4px 0;color:#1e293b;font-size:14px;text-align:right;">${companyName}</td>
+                    <td style="padding:4px 0;color:#1e293b;font-size:14px;text-align:right;">${escapeHtml(companyName)}</td>
                   </tr>
                   ${jobTitle ? `
                   <tr>
                     <td style="padding:4px 0;color:#6b7280;font-size:14px;">💼 Puesto</td>
-                    <td style="padding:4px 0;color:#1e293b;font-size:14px;text-align:right;">${jobTitle}</td>
+                    <td style="padding:4px 0;color:#1e293b;font-size:14px;text-align:right;">${escapeHtml(jobTitle)}</td>
                   </tr>` : ""}
                 </table>
               </div>
