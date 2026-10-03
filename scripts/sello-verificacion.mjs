@@ -1725,11 +1725,29 @@ test("la bienvenida se hace al confirmar el correo, con sesion y una sola vez", 
   const cb = leerFuente("app/auth/callback/page.tsx");
   const w = leerFuente("app/api/auth/welcome/route.ts");
   const reg = leerFuente("app/auth/registro/page.tsx");
-  return /fetch\("\/api\/auth\/welcome"[\s\S]{0,200}Authorization: `Bearer \$\{sesion\.access_token\}`/.test(cb) &&
+  const ayuda = leerFuente("lib/onboarding/pedir-bienvenida.ts");
+  return /pedirBienvenida\(sesion\?\.access_token\)/.test(cb) &&
+    /fetch\("\/api\/auth\/welcome"[\s\S]{0,200}Authorization: `Bearer \$\{accessToken\}`/.test(ayuda) &&
     !w.includes("email y nombre requeridos") &&
     /cuerpo\.ciudad \|\| meta\.ciudad/.test(w) &&
     /if \(cuenta\.app_metadata\?\.bienvenida_en\)/.test(w) &&
     /ref: referralCode/.test(reg.slice(reg.indexOf("auth.signUp"), reg.indexOf("auth.signUp") + 600));
+});
+
+// El enlace de confirmacion es PKCE y solo funciona en el navegador donde te
+// registraste. Registrarse en la app y abrir el correo en Gmail (otro
+// navegador) daba "Algo no fue bien: el enlace no es valido" con la cuenta YA
+// confirmada, y sin bienvenida: 2 de las 10 cuentas de la semana (3 oct 2026,
+// reproducido con un registro real). Ahora se dice que esta confirmada, y la
+// bienvenida se pide tambien al entrar con la contrasena.
+test("confirmar el correo en otro navegador no da error y la bienvenida llega al entrar", () => {
+  const cb = leerFuente("app/auth/callback/page.tsx");
+  const login = leerFuente("app/auth/login/page.tsx");
+  const trasCanje = cb.slice(cb.indexOf("exchangeCodeForSession(code)"), cb.indexOf("exchangeCodeForSession(code)") + 1500);
+  return /if \(error\) \{[\s\S]*?setEstado\("confirmada"\)/.test(trasCanje) &&
+    !/setEstado\("error"\);\s*setMensaje\("El enlace de confirmación no es válido o ha expirado\."\);\s*return;\s*\}\s*\/\/ Flujo implícito/.test(cb) &&
+    /supabase\.auth\.setSession\(\{/.test(cb) &&                               // el hash #access_token se recoge
+    /pedirBienvenida\(entrada\.session\?\.access_token\)/.test(login);
 });
 
 // ── LAS PAGINAS QUE RASTREA GOOGLE NO PUEDEN DAR ERROR ─────────────────────

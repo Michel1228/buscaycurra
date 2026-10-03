@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { pedirBienvenida } from "@/lib/onboarding/pedir-bienvenida";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const [estado, setEstado] = useState<"cargando" | "ok" | "error">("cargando");
+  const [estado, setEstado] = useState<"cargando" | "ok" | "confirmada" | "error">("cargando");
   const [mensaje, setMensaje] = useState("");
   const mountedRef = useRef(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -33,13 +34,49 @@ export default function AuthCallbackPage() {
           return;
         }
 
+        // Error que Supabase manda en el hash (#error=...&error_code=otp_expired)
+        const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        if (hash.get("error")) {
+          if (!mountedRef.current) return;
+          setEstado("error");
+          setMensaje(hash.get("error_code") === "otp_expired"
+            ? "Este enlace ya ha caducado. Entra con tu correo y contraseña; si no te deja, pide otro correo de confirmación."
+            : (hash.get("error_description") || "El enlace de confirmación no es válido o ha expirado."));
+          return;
+        }
+
         // Flujo PKCE: ?code=...
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
+            // EL CORREO YA ESTÁ CONFIRMADO, aunque aquí no haya sesión.
+            //
+            // Supabase solo manda aquí con ?code= DESPUÉS de comprobar el enlace
+            // y confirmar la cuenta. Lo que falla es canjear el código, porque
+            // la otra mitad (el code_verifier) se quedó en el navegador donde la
+            // persona se registró. Es el caso normal del móvil: te registras en
+            // la app y abres el correo en Gmail, que lo abre en otro navegador.
+            // Antes salía "Algo no fue bien: el enlace no es válido", con la
+            // cuenta confirmada, y la persona creía que el registro había fallado
+            // (comprobado con un registro real el 3 oct 2026).
             if (!mountedRef.current) return;
-            setEstado("error");
-            setMensaje("El enlace de confirmación no es válido o ha expirado.");
+            setEstado("confirmada");
+            return;
+          }
+
+        // Flujo implícito: la sesión viene en el hash (#access_token=...). El
+        // cliente está en modo PKCE y NO lo recoge solo: había que esperar un
+        // segundo y la sesión no llegaba nunca. Se recoge a mano.
+        } else if (hash.get("access_token") && hash.get("refresh_token")) {
+          const { error } = await supabase.auth.setSession({
+            access_token: hash.get("access_token")!,
+            refresh_token: hash.get("refresh_token")!,
+          });
+          // Que el token no se quede en la barra de direcciones ni en el historial.
+          window.history.replaceState(null, "", window.location.pathname);
+          if (error) {
+            if (!mountedRef.current) return;
+            setEstado("confirmada");
             return;
           }
 
@@ -56,15 +93,13 @@ export default function AuthCallbackPage() {
             return;
           }
 
-        // Flujo implícito (hash fragment): Supabase lo procesa automáticamente
+        // Sin nada en la dirección: si ya hay sesión (vuelve a esta página), adelante.
         } else {
-          // Dar tiempo a que Supabase procese el hash fragment
-          await new Promise(r => setTimeout(r, 1000));
-          if (!mountedRef.current) return;
           const { data: { session } } = await supabase.auth.getSession();
+          if (!mountedRef.current) return;
           if (!session) {
             setEstado("error");
-            setMensaje("No se pudo confirmar la cuenta. El enlace puede haber expirado. Intenta iniciar sesión directamente.");
+            setMensaje("Este enlace no trae nada que confirmar. Entra con tu correo y contraseña.");
             return;
           }
         }
@@ -75,14 +110,7 @@ export default function AuthCallbackPage() {
         // sin correo de bienvenida (29 sep 2026). El servidor la hace una sola
         // vez por cuenta, así que da igual que llegue dos veces.
         const { data: { session: sesion } } = await supabase.auth.getSession();
-        if (sesion) {
-          fetch("/api/auth/welcome", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${sesion.access_token}` },
-            body: "{}",
-            keepalive: true,
-          }).catch(() => {});
-        }
+        pedirBienvenida(sesion?.access_token);
 
         if (!mountedRef.current) return;
         setEstado("ok");
@@ -130,6 +158,24 @@ export default function AuthCallbackPage() {
               <h2 className="text-lg font-bold mb-2" style={{ color: "#22c55e" }}>¡Cuenta confirmada!</h2>
               <p className="text-sm mb-1" style={{ color: "#f1f5f9" }}>Ya puedes usar BuscayCurra.</p>
               <p className="text-xs mt-3 animate-pulse" style={{ color: "#64748b" }}>Entrando a tu panel...</p>
+            </>
+          )}
+
+          {estado === "confirmada" && (
+            <>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: "rgba(34,197,94,0.15)", border: "2px solid rgba(34,197,94,0.4)" }}>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <path d="M6 16l7 7 13-13" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold mb-2" style={{ color: "#22c55e" }}>¡Correo confirmado!</h2>
+              <p className="text-sm mb-5" style={{ color: "#94a3b8" }}>
+                Ya está todo listo. Entra con tu correo y la contraseña que elegiste para empezar.
+              </p>
+              <Link href="/auth/login?confirmada=1" className="btn-game text-sm">
+                Entrar
+              </Link>
             </>
           )}
 

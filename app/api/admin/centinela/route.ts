@@ -41,6 +41,7 @@ import { OFERTAS_ESPANA } from "@/lib/promesas";
 // perfecto. Lo cazo el propio centinela en su primera ejecucion (22 sep 2026).
 import { Redis } from "ioredis";
 import { recorridoDeUsuario } from "@/lib/centinela/recorrido";
+import { getCvSenderQueue } from "@/lib/cv-sender/queue";
 
 const supabaseAdmin = () =>
   createClient(
@@ -280,18 +281,32 @@ export async function GET(req: NextRequest) {
   // Los envios que reventaban se quedaban en "pendiente" para siempre, gastando
   // cuota del usuario sin haber enviado nada. Hay un rescate al arrancar el
   // worker; esto comprueba que sigue haciendo su trabajo.
+  //
+  // UN ENVÍO PROGRAMADO NO ESTÁ COLGADO. Con la estrategia "óptimo" un CV
+  // pedido un sábado de madrugada sale el lunes a las 9: lleva más de 6 horas
+  // "pendiente" porque tiene que ser así. El 3 oct 2026 este control dio esa
+  // falsa alarma. Ahora solo cuenta como colgado el envío que NO tiene su
+  // trabajo esperando en la cola (mismo usuario y misma dirección).
   try {
     const hace6h = new Date(Date.now() - 6 * 3600e3).toISOString();
-    const { count, error } = await sb
+    const { data: viejos, error } = await sb
       .from("cv_sends")
-      .select("id", { count: "exact", head: true })
+      .select("user_id, company_email")
       .in("status", ["pendiente", "procesando"])
-      .lt("created_at", hace6h);
+      .lt("created_at", hace6h)
+      .limit(500);
     if (error) throw new Error(error.message);
+    const enCola = new Set<string>();
+    if (viejos?.length) {
+      const trabajos = await getCvSenderQueue().getJobs(["waiting", "delayed", "active", "prioritized"], 0, 500);
+      for (const t of trabajos) enCola.add(`${t.data?.userId}|${String(t.data?.companyEmail || "").toLowerCase()}`);
+    }
+    const colgados = (viejos || []).filter((v) => !enCola.has(`${v.user_id}|${String(v.company_email || "").toLowerCase()}`)).length;
     anota(
       "ningun envio se queda colgado",
-      (count ?? 0) === 0,
-      `${count ?? 0} envios llevan mas de 6 horas sin resolverse`,
+      colgados === 0,
+      `${colgados} envios llevan mas de 6 horas sin resolverse y sin trabajo en la cola` +
+        ((viejos?.length || 0) > colgados ? ` (${(viejos?.length || 0) - colgados} programados para más tarde, bien)` : ""),
       "los envios que reventaban se quedaban pendientes para siempre, gastando cuota"
     );
   } catch (e) {
@@ -357,10 +372,14 @@ export async function GET(req: NextRequest) {
   try {
     const { data, error } = await sb
       .from("profiles")
-      .select("plan, stripe_customer_id")
+      .select("plan, stripe_customer_id, email")
       .neq("plan", "free");
     if (error) throw new Error(error.message);
-    const sinPago = (data || []).filter((p: { stripe_customer_id: string | null }) => !p.stripe_customer_id);
+    // Las cuentas de prueba (@resend.dev, del kit de auditoría y del recorrido
+    // diario) se crean con el plan que haga falta probar: no son planes regalados.
+    // Una de ellas dio una falsa alarma el 3 oct 2026.
+    const sinPago = (data || []).filter((p: { stripe_customer_id: string | null; email: string | null }) =>
+      !p.stripe_customer_id && !/@resend\.dev$/i.test(p.email || ""));
     const CONOCIDAS = 3;  // las de prueba que ya existian el 5 de septiembre
     anota(
       "todo plan de pago viene de un pago",

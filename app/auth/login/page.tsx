@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Globe, Target, Clock } from "lucide-react";
 import { NUM_PAISES } from "@/lib/paises";
+import { pedirBienvenida } from "@/lib/onboarding/pedir-bienvenida";
 
 function LoginPageInner() {
   const router = useRouter();
@@ -40,7 +41,7 @@ function LoginPageInner() {
     setCargando(true);
     setSinConfirmar(false);
     try {
-      const { error: err } = await getSupabaseBrowser().auth.signInWithPassword({
+      const { data: entrada, error: err } = await getSupabaseBrowser().auth.signInWithPassword({
         email: email.trim(),
         password: contrasena,
       });
@@ -53,6 +54,11 @@ function LoginPageInner() {
         else setError("Error al iniciar sesión. Inténtalo de nuevo.");
         return;
       }
+      // La bienvenida también al entrar: si la confirmación del correo se abrió
+      // en otro navegador, este es el primer momento con sesión (ver
+      // lib/onboarding/pedir-bienvenida.ts). El servidor solo la hace una vez.
+      pedirBienvenida(entrada.session?.access_token);
+
       // El middleware guarda en ?redirect= la página que el usuario quería ver
       // antes de que le pidiéramos entrar. Ignorarlo perdía el destino de
       // cualquier enlace profundo (una oferta, un email, una notificación).
@@ -204,6 +210,12 @@ function LoginPageInner() {
                   </button>
                 </div>
               </div>
+
+              {searchParams.get("confirmada") === "1" && !error && (
+                <div className="rounded-lg px-3.5 py-2.5 text-xs" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e" }}>
+                  ✅ Tu correo está confirmado. Entra con tu correo y contraseña para empezar.
+                </div>
+              )}
 
               {error && (
                 <div className="rounded-lg px-3.5 py-2.5 text-xs" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
