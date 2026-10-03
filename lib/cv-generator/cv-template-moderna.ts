@@ -111,7 +111,7 @@ export function generarCVHTML_Moderna(data: CVData): string {
     <main class="main">
       <div class="nombre">${escapeHtml([data.nombre, data.apellidos].filter(Boolean).join(" ")) || "Tu Nombre"}</div>
       ${data.subtitulo ? `<div class="rol">${escapeHtml(data.subtitulo)}</div>` : ""}
-      ${data.perfilProfesional ? `<div class="sec-titulo">Sobre mí</div><p class="perfil">${escapeHtml(data.perfilProfesional)}</p>` : ""}
+      ${data.perfilProfesional ? `<div class="sec-titulo">Sobre mí</div><p class="perfil">${escapeHtml(data.perfilProfesional).replace(/\n+/g, "<br>")}</p>` : ""}
       ${experienciaHTML ? `<div class="sec-titulo">Experiencia</div><div class="tl">${experienciaHTML}</div>` : ""}
       ${formacionHTML ? `<div class="sec-titulo">Formación</div><div class="tl">${formacionHTML}</div>` : ""}
     </main>

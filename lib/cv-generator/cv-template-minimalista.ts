@@ -99,7 +99,7 @@ export function generarCVHTML_Minimalista(data: CVData): string {
         ${contacto ? `<div class="contacto">${contacto}</div>` : ""}
       </div>
     </header>
-    ${fila("Sobre mí", data.perfilProfesional ? `<span>${escapeHtml(data.perfilProfesional)}</span>` : "")}
+    ${fila("Sobre mí", data.perfilProfesional ? `<span>${escapeHtml(data.perfilProfesional).replace(/\n+/g, "<br>")}</span>` : "")}
     ${fila("Experiencia", experienciaHTML)}
     ${fila("Formación", formacionHTML)}
     ${fila("Habilidades", aptitudesHTML)}

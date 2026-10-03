@@ -116,7 +116,7 @@ export function generarCVHTML_Ejecutiva(data: CVData): string {
       <div class="nombre">${escapeHtml(data.nombre) || "Tu Nombre"}</div>
       ${data.apellidos ? `<div class="apellido">${escapeHtml(data.apellidos)}</div>` : ""}
       ${data.subtitulo ? `<div class="rol">${escapeHtml(data.subtitulo)}</div>` : ""}
-      ${data.perfilProfesional ? `<div class="sec">Sobre mí</div><p class="perfil">${escapeHtml(data.perfilProfesional)}</p>` : ""}
+      ${data.perfilProfesional ? `<div class="sec">Sobre mí</div><p class="perfil">${escapeHtml(data.perfilProfesional).replace(/\n+/g, "<br>")}</p>` : ""}
       ${experienciaHTML ? `<div class="sec">Experiencia</div>${experienciaHTML}` : ""}
       ${formacionHTML ? `<div class="sec">Formación</div>${formacionHTML}` : ""}
     </main>

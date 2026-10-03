@@ -107,7 +107,7 @@ export function generarCVHTML_Oscura(data: CVData): string {
     ${contacto ? `<div class="contacto-bar">${contacto}</div>` : ""}
     <div class="cuerpo">
       <div class="principal">
-        ${data.perfilProfesional ? `<div class="sec">Mi perfil</div><p class="perfil">${escapeHtml(data.perfilProfesional)}</p>` : ""}
+        ${data.perfilProfesional ? `<div class="sec">Mi perfil</div><p class="perfil">${escapeHtml(data.perfilProfesional).replace(/\n+/g, "<br>")}</p>` : ""}
         ${experienciaHTML ? `<div class="sec">Experiencia</div>${experienciaHTML}` : ""}
         ${formacionHTML ? `<div class="sec">Formación</div>${formacionHTML}` : ""}
       </div>

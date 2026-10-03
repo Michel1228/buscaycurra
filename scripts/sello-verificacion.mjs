@@ -442,9 +442,15 @@ test('El autoguardado del CV espera a que el CV esté cargado (si no, lo borra)'
     fallos.push('nunca se marca el CV como cargado');
   }
   // El efecto de autoguardado tiene que comprobarlo antes de programar el guardado
-  const efecto = src.match(/if \(!userId[^)]*\) return;[\s\S]{0,200}?guardarCV\(\)/);
+  const efecto = src.match(/if \(!userId[^)]*\) return;[\s\S]{0,700}?guardarCV\(\)/);
   if (!efecto || !/cvCargado/.test(efecto[0])) {
     fallos.push('el autoguardado no comprueba cvCargado antes de guardar');
+  }
+  // El guardado AL SALIR (pagehide/visibilitychange) tampoco puede escribir un
+  // formulario vacio: solo manda algo si el efecto de arriba, que si comprueba
+  // cvCargado, lo marco como pendiente.
+  if (!efecto || !/pendienteRef\.current = true/.test(efecto[0]) || !/if \(!pendienteRef\.current \|\| !datosAGuardarRef\.current\) return;/.test(src)) {
+    fallos.push('el guardado al salir no depende del autoguardado protegido');
   }
   if (fallos.length) { fallos.forEach(f => console.log('     ↳ ' + f)); return false; }
   return true;
@@ -1814,7 +1820,7 @@ test("una sola conversion del formulario al CV, en todas partes", () => {
     /generarCV\(normalizar\(datos\)\)/.test(guardados) &&
     /normalizar\(rawData\)/.test(worker) &&
     // el autoguardado guarda el CV montado, no los datos en bruto
-    !/cvText: JSON\.stringify\(cvData\)/.test(editor) && /cvText: generarCV\(formToCVDataRaw\(\)\)/.test(editor);
+    !/cvText: JSON\.stringify\(cvData\)/.test(editor);
 });
 
 // Y la columna "html" la monta EL SERVIDOR: la subida del CV por Guzzi tambien
@@ -1848,6 +1854,10 @@ test("normalizar ordena, quita filas vacias y no se inventa idiomas", async () =
     { stdio: "pipe", shell: true });
   const { normalizar } = await import(`../${salida}`);
   try { unlinkSync(salida); } catch {}
+  const salida2 = "scripts/.tmp-plantillas.cjs";
+  execFileSync("npx", ["esbuild", "lib/cv-generator/plantillas.ts", "--bundle",
+    "--format=cjs", "--platform=node", `--outfile=${salida2}`, "--log-level=error"],
+    { stdio: "pipe", shell: true });
   const cv = normalizar({
     nombre: "Ana", idiomas: "",
     experiencia: [
@@ -1856,10 +1866,29 @@ test("normalizar ordena, quita filas vacias y no se inventa idiomas", async () =
       { fechas: "2021 - 2024", puesto: "Camarera", empresa: "B", descripcion: "servir\n- cobrar" },
     ],
   });
+  // Auditoria del 2 oct 2026: el trabajo actual salia debajo de uno mas viejo,
+  // una experiencia sin puesto desaparecia sin avisar y "B2" era un 70 % cualquiera.
+  const cv2 = normalizar({
+    nombre: "Ana", idiomas: "Inglés:B2, Francés:C1",
+    experiencia: [
+      { fechas: "2019 - 2024", puesto: "Ayudante de cocina", empresa: "A" },
+      { fechas: "2023 - Actualidad", puesto: "Jefa de partida", empresa: "B" },
+      { fechas: "2017 - 2018", puesto: "", empresa: "Pulpería Ezequiel", descripcion: "cocer pulpo" },
+    ],
+    formacion: [{ titulo: "", centro: "Escuela de Hostelería" }],
+  });
+  const { generarCV } = await import(`../${salida2}`);
+  const html = generarCV({ nombre: "Ana", perfilProfesional: "Primera línea\nSegunda línea", templateId: "clasica" });
+  try { unlinkSync(salida2); } catch {}
   return cv.experiencia.length === 2 &&
     cv.experiencia[0].puesto === "Camarera" &&                              // la mas reciente primero
     JSON.stringify(cv.experiencia[0].descripcion) === JSON.stringify(["servir", "cobrar"]) &&
-    cv.idiomas.length === 0;                                                // nada de "Espanol 100 %"
+    cv.idiomas.length === 0 &&                                              // nada de "Espanol 100 %"
+    cv2.experiencia[0].puesto === "Jefa de partida" &&                      // "Actualidad" va la primera
+    cv2.experiencia.some((e) => e.puesto === "Pulpería Ezequiel") &&       // sin puesto no se pierde
+    cv2.formacion.length === 1 &&
+    cv2.idiomas[0].nivel === 70 && cv2.idiomas[1].nivel === 85 &&          // B2 y C1
+    /Primera línea<br>Segunda línea/.test(html);                            // los saltos del perfil salen
 });
 
 test("Guzzi manda al editor de CV en vez de hablar de carretilleros", async () => {

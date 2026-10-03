@@ -93,6 +93,11 @@ export default function CurriculumPage() {
   const [formAntesDeMejorar, setFormAntesDeMejorar] = useState<CVForm | null>(null);
   /** Qué ha reescrito la IA. Hace falta en el móvil, donde la vista previa no se ve. */
   const [avisoMejora, setAvisoMejora] = useState("");
+  /** En el móvil, si se enseñan todas las plantillas o solo la elegida. */
+  const [verPlantillas, setVerPlantillas] = useState(false);
+  /** Lo último del formulario sin guardar todavía (ver el guardado al salir). */
+  const datosAGuardarRef = useRef("");
+  const pendienteRef = useRef(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [templateId, setTemplateId] = useState<TemplateId>("clasica");
   const [accentColor, setAccentColor] = useState("#16a34a");
@@ -262,11 +267,47 @@ export default function CurriculumPage() {
   // en pantalla es de verdad lo que estaba guardado.
   useEffect(() => {
     if (!userId || !cvCargado) return;
+    // Lo último que hay en pantalla, listo para mandarse aunque se salga ya.
+    datosAGuardarRef.current = JSON.stringify({
+      userId,
+      cvData: { ...form, fotoUrl: fotoUrl || undefined, templateId, accentColor },
+      cvId: cvActivoId || undefined,
+    });
+    pendienteRef.current = true;
     const timeout = setTimeout(() => {
       guardarCV();
     }, 3000);
     return () => clearTimeout(timeout);
   }, [form, fotoUrl, userId, cvCargado, templateId, accentColor, cvActivoId]);
+
+  // LO ÚLTIMO QUE SE ESCRIBE NO SE PIERDE AL SALIR.
+  //
+  // El autoguardado espera 3 s, y si en ese tiempo la persona cambiaba de
+  // pantalla, recargaba o cerraba la app, el temporizador se cancelaba y el
+  // cambio se perdía: el teléfono que acababa de corregir volvía a ser el viejo
+  // (auditoría del 2 oct 2026). Ahora, si queda algo sin guardar, se manda al
+  // salir de la pantalla, al ocultarse la app o al cerrarse la página.
+  // `keepalive` hace que la petición termine aunque la página ya no esté.
+  useEffect(() => {
+    const guardarYa = () => {
+      if (!pendienteRef.current || !datosAGuardarRef.current) return;
+      pendienteRef.current = false;
+      fetch("/api/gusi/cv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: datosAGuardarRef.current,
+        keepalive: true,
+      }).catch(() => { /* se volverá a guardar al volver */ });
+    };
+    const alOcultarse = () => { if (document.visibilityState === "hidden") guardarYa(); };
+    document.addEventListener("visibilitychange", alOcultarse);
+    window.addEventListener("pagehide", guardarYa);
+    return () => {
+      document.removeEventListener("visibilitychange", alOcultarse);
+      window.removeEventListener("pagehide", guardarYa);
+      guardarYa(); // cambiar de pantalla dentro de la app también desmonta esto
+    };
+  }, []);
 
   // ── Funciones auxiliares (sin cambios funcionales) ──
   async function toggleVisibilidad(value: boolean) {
@@ -390,17 +431,22 @@ export default function CurriculumPage() {
   async function guardarCV() {
     if (!userId) return;
     try {
-      const cvData = { ...form, fotoUrl: fotoUrl || undefined, templateId, accentColor };
+      // cvId: el autosave actualiza el CV que está abierto, no el último tocado.
+      // El CV montado (columna "html") ya no lo manda la pantalla: lo monta el
+      // servidor desde los datos (lib/cv-generator/html-guardado.ts). Aquí iba
+      // JSON.stringify(cvData), y "CVs guardados" descargaba ese texto en bruto.
+      const enviado = datosAGuardarRef.current || JSON.stringify({
+        userId,
+        cvData: { ...form, fotoUrl: fotoUrl || undefined, templateId, accentColor },
+        cvId: cvActivoId || undefined,
+      });
       const res = await fetch("/api/gusi/cv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // cvId: el autosave actualiza el CV que está abierto, no el último tocado
-        // cvText es la columna "html": va el CV montado. Aquí iba
-        // JSON.stringify(cvData), y la pantalla de CVs guardados enseñaba y
-        // descargaba ese texto en bruto en vez del CV (los 52 CV guardados
-        // estaban así el 2 oct 2026).
-        body: JSON.stringify({ userId, cvData, cvText: generarCV(formToCVDataRaw()), cvId: cvActivoId || undefined }),
+        body: enviado,
       });
+      // Solo se da por guardado si nadie ha escrito nada nuevo mientras tanto.
+      if (res.ok && datosAGuardarRef.current === enviado) pendienteRef.current = false;
       if (!res.ok) {
         setError("No se pudo guardar el CV. Inténtalo de nuevo.");
         return;
@@ -868,7 +914,8 @@ export default function CurriculumPage() {
                     <div
                       key={p.id}
                       onClick={() => setTemplateId(p.id)}
-                      className="text-left rounded-lg transition cursor-pointer overflow-hidden"
+                      // En el móvil, plegadas salvo la elegida (ver más abajo).
+                      className={`text-left rounded-lg transition cursor-pointer overflow-hidden ${!activa && !verPlantillas ? "hidden sm:block" : ""}`}
                       style={{
                         background: activa ? "rgba(34,197,94,0.08)" : "#0f1117",
                         border: `1.5px solid ${activa ? "#22c55e" : "#2d3142"}`,
@@ -904,6 +951,18 @@ export default function CurriculumPage() {
                   );
                 })}
               </div>
+              {/* EN EL MÓVIL LAS PLANTILLAS VAN PLEGADAS. Eran diez miniaturas de
+                  unos 300 px en una columna, y el primer campo del formulario
+                  quedaba a 4.200 px: cinco pantallas de desplazamiento antes de
+                  poder escribir tu nombre (auditoría del 2 oct 2026). Ahora se ve
+                  la elegida y un botón para ver las demás. */}
+              <button
+                onClick={() => setVerPlantillas(v => !v)}
+                className="sm:hidden mt-3 w-full py-2.5 rounded-lg text-xs font-semibold"
+                style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.25)" }}
+              >
+                {verPlantillas ? "Ocultar las demás plantillas" : `Cambiar de plantilla (${LISTA_PLANTILLAS.length} para elegir)`}
+              </button>
 
               {/* Selector de color de acento */}
               <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>

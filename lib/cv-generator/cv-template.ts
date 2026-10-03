@@ -211,7 +211,7 @@ export function generarCVHTML(data: CVData): string {
     <div class="right-column">
       ${data.perfilProfesional ? `
       <h2 class="section-title">Perfil Profesional</h2>
-      <p class="profile-text">${escapeHtml(data.perfilProfesional)}</p>` : ""}
+      <p class="profile-text">${escapeHtml(data.perfilProfesional).replace(/\n+/g, "<br>")}</p>` : ""}
 
       ${(data.experiencia || []).length > 0 ? `
       <h2 class="section-title">Experiencia Laboral</h2>

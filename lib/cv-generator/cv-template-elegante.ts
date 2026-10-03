@@ -110,7 +110,7 @@ export function generarCVHTML_Elegante(data: CVData): string {
     ${contacto ? `<div class="contacto-bar">${contacto}</div>` : ""}
     <div class="cuerpo">
       <div class="principal">
-        ${data.perfilProfesional ? `<div class="sec">Perfil</div><p class="perfil">${escapeHtml(data.perfilProfesional)}</p>` : ""}
+        ${data.perfilProfesional ? `<div class="sec">Perfil</div><p class="perfil">${escapeHtml(data.perfilProfesional).replace(/\n+/g, "<br>")}</p>` : ""}
         ${experienciaHTML ? `<div class="sec">Experiencia</div>${experienciaHTML}` : ""}
         ${formacionHTML ? `<div class="sec">Formación</div>${formacionHTML}` : ""}
       </div>

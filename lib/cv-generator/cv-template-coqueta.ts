@@ -126,7 +126,7 @@ export function generarCVHTML_Coqueta(data: CVData): string {
       <div class="nombre">${escapeHtml([data.nombre, data.apellidos].filter(Boolean).join(" ")) || "Tu Nombre"}</div>
       ${data.subtitulo ? `<div class="rol">${escapeHtml(data.subtitulo)}</div>` : ""}
       <div class="divisor"><span></span></div>
-      ${data.perfilProfesional ? `<div class="sec">Sobre mí</div><p class="perfil">${escapeHtml(data.perfilProfesional)}</p>` : ""}
+      ${data.perfilProfesional ? `<div class="sec">Sobre mí</div><p class="perfil">${escapeHtml(data.perfilProfesional).replace(/\n+/g, "<br>")}</p>` : ""}
       ${experienciaHTML ? `<div class="sec">Experiencia</div>${experienciaHTML}` : ""}
       ${formacionHTML ? `<div class="sec">Formación</div>${formacionHTML}` : ""}
     </main>

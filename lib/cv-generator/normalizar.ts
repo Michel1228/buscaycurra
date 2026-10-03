@@ -3,10 +3,33 @@ import { TEMPLATE_IDS } from "./plantillas";
 
 const PLANTILLAS_VALIDAS: string[] = TEMPLATE_IDS;
 
-/** El último año que aparece en "2019 - 2022" (o 0), para ordenar las experiencias. */
+/**
+ * Hasta qué año dura una experiencia, para ordenarlas de la más reciente a la
+ * más antigua. "Actualidad", "actualmente", "presente", "hoy" o "ahora" es el
+ * trabajo de ahora y va el primero: antes solo se miraba el último número de
+ * cuatro cifras, y "2023 - Actualidad" salía DEBAJO de "2019 - 2024" (dos
+ * empleos a la vez, normal en hostelería) y "Actualmente" sin año se iba al
+ * final (encontrado en la auditoría del 2 oct 2026). Sin ningún año, -1.
+ */
 function anioFinal(fechas: string): number {
-  const m = String(fechas || "").match(/(\d{4})/g);
-  return m ? parseInt(m[m.length - 1]) : 0;
+  const f = String(fechas || "");
+  if (/actual|presente|hoy|ahora|la fecha|en curso/i.test(f)) return 9999;
+  const m = f.match(/(\d{4})/g);
+  return m ? parseInt(m[m.length - 1]) : -1;
+}
+
+/**
+ * Nivel de idioma en tanto por cien. Además del número (el editor guarda
+ * "Inglés:70"), entiende el Marco Común Europeo, que es como se escribe en
+ * España: "Inglés:B2" se pintaba como un 70 % cualquiera.
+ */
+function nivelIdioma(texto: string | undefined): number {
+  const t = String(texto || "").trim().toUpperCase();
+  const MCER: Record<string, number> = { A1: 20, A2: 35, B1: 50, B2: 70, C1: 85, C2: 100 };
+  if (MCER[t]) return MCER[t];
+  if (/NATIV|BILING/.test(t)) return 100;
+  const n = parseInt(t);
+  return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 70;
 }
 
 export function normalizar(raw: Record<string, unknown>): CVData {
@@ -38,8 +61,14 @@ export function normalizar(raw: Record<string, unknown>): CVData {
       // reciente a la más antigua. Antes el CV que recibía la empresa salía en
       // el orden en que se habían escrito y con la fila en blanco que trae el
       // formulario, mientras la persona veía otro orden en su pantalla.
-      .filter((e) => e.puesto.trim())
-      .sort((a, b) => anioFinal(b.fechas) - anioFinal(a.fechas));
+      // Sin puesto pero con empresa o tareas, NO se tira: antes desaparecía del
+      // CV sin avisar (auditoría del 2 oct 2026). Se usa la empresa como título.
+      .map((e) => (!e.puesto.trim() && e.empresa.trim() ? { ...e, puesto: e.empresa, empresa: "" } : e))
+      .filter((e) => e.puesto.trim() || (e.descripcion && e.descripcion.length))
+      // Orden estable: las que empatan (o no llevan año) siguen como se escribieron.
+      .map((e, i) => ({ e, i }))
+      .sort((a, b) => (anioFinal(b.e.fechas) - anioFinal(a.e.fechas)) || (a.i - b.i))
+      .map(({ e }) => e);
   } else if (typeof raw.experiencia === "string" && raw.experiencia.trim()) {
     experiencia = raw.experiencia.split("\n").filter(Boolean).map(line => {
       const m = line.match(/^([\d\s\-–]+)\s*[—–-]\s*(.+?)(?:\s+en\s+(.+?))?(?:\s*\((.+?)\))?$/);
@@ -55,7 +84,10 @@ export function normalizar(raw: Record<string, unknown>): CVData {
       titulo: String(f.titulo || ""),
       centro: String(f.centro || ""),
       ubicacion: f.ubicacion ? String(f.ubicacion) : undefined,
-    })).filter((f) => f.titulo);
+    }))
+      // Igual que con las experiencias: sin título pero con centro, se usa el centro.
+      .map((f) => (!f.titulo.trim() && f.centro.trim() ? { ...f, titulo: f.centro, centro: "" } : f))
+      .filter((f) => f.titulo.trim());
   } else if (typeof raw.formacion === "string" && raw.formacion.trim()) {
     formacion = raw.formacion.split("\n").filter(Boolean).map(line => {
       const m = line.match(/^(.+?)\s*[—–-]\s*(.+?)(?:\s*\((.+?)\))?$/);
@@ -70,7 +102,7 @@ export function normalizar(raw: Record<string, unknown>): CVData {
     idiomas = (raw.idiomas as unknown[]).map((i) => {
       if (typeof i === "string") {
         const parts = i.split(":");
-        return { nombre: parts[0].trim(), nivel: parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70 };
+        return { nombre: parts[0].trim(), nivel: nivelIdioma(parts[1]) };
       }
       const o = i as Record<string, unknown>;
       return { nombre: String(o.nombre || ""), nivel: Math.min(100, Math.max(0, Number(o.nivel) || 70)) };
@@ -81,7 +113,7 @@ export function normalizar(raw: Record<string, unknown>): CVData {
     // (lo que veía el usuario en la preview no coincidía con lo que se mandaba).
     idiomas = raw.idiomas.split(/[,\n]/).filter(Boolean).map(l => {
       const parts = l.trim().split(":");
-      const nivel = parts[1] ? Math.min(100, Math.max(0, parseInt(parts[1]) || 70)) : 70;
+      const nivel = nivelIdioma(parts[1]);
       return { nombre: parts[0].trim(), nivel };
     });
   }

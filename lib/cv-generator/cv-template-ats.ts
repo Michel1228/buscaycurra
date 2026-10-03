@@ -38,7 +38,7 @@ export function generarCVHTML_ATS(data: CVData): string {
   const perfilHTML = data.perfilProfesional
     ? `<section class="seccion">
          <h2>Perfil profesional</h2>
-         <p class="perfil">${escapeHtml(data.perfilProfesional)}</p>
+         <p class="perfil">${escapeHtml(data.perfilProfesional).replace(/\n+/g, "<br>")}</p>
        </section>`
     : "";
 
