@@ -22,6 +22,7 @@ import { writeFileSync, unlinkSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { getPool } from "@/lib/db";
 import { htmlDelCV } from "@/lib/cv-generator/html-guardado";
+import { TABLAS_VPS, TABLAS_SUPABASE } from "@/lib/cuenta/borrar-datos";
 
 type Anota = (nombre: string, bien: boolean, detalle: string, nacioDe: string) => void;
 
@@ -172,6 +173,30 @@ export async function recorridoDeUsuario(anota: Anota): Promise<void> {
       "29 sep 2026: la bienvenida se quedaba en 401 y 12 personas se quedaron sin ficha, ciudad, alerta ni correo");
   } catch (e) {
     anota("quien confirma su cuenta recibe la bienvenida", false, (e as Error).message, "29 sep 2026: la bienvenida se quedaba en 401");
+  }
+
+  // ── R7. "Eliminar mi cuenta" conoce todas las tablas con datos de personas ──
+  // Se compara lo que hay DE VERDAD en las dos bases con la lista del borrado.
+  // Si alguien crea una tabla nueva con datos de usuario y no la añade a
+  // lib/cuenta/borrar-datos.ts, esto lo dice al día siguiente.
+  try {
+    const { rows } = await getPool().query(
+      `SELECT DISTINCT table_name FROM information_schema.columns
+       WHERE table_schema = 'public' AND column_name IN ('user_id', 'userId')`);
+    const faltanVps = rows.map((r: { table_name: string }) => r.table_name).filter((t: string) => !(t in TABLAS_VPS));
+    const spec = await (await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/`, {
+      headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` },
+    })).json() as { definitions?: Record<string, { properties?: Record<string, unknown> }> };
+    const faltanSb = Object.entries(spec.definitions || {})
+      .filter(([, d]) => d.properties && ("user_id" in d.properties || "userId" in d.properties))
+      .map(([t]) => t).filter((t) => !(t in TABLAS_SUPABASE));
+    const faltan = [...faltanVps.map((t: string) => `VPS:${t}`), ...faltanSb.map((t) => `Supabase:${t}`)];
+    anota("borrar la cuenta conoce todas las tablas con datos de personas", faltan.length === 0,
+      faltan.length ? `sin borrar: ${faltan.join(", ")}` : "todas las tablas con columna de usuario están en la lista",
+      "3 oct 2026: borrar la cuenta dejaba conversaciones, entrevistas, cursos, contactos y las fotos públicas");
+  } catch (e) {
+    anota("borrar la cuenta conoce todas las tablas con datos de personas", false, (e as Error).message,
+      "3 oct 2026: borrar la cuenta dejaba datos personales");
   }
 
   await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/logout?scope=local`, {

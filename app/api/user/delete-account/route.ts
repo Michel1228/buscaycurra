@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getPool } from "@/lib/db";
+import { borrarDatosDeUsuario } from "@/lib/cuenta/borrar-datos";
 import { getStripe } from "@/lib/stripe";
 import { getUserFromToken, extractToken } from "@/lib/auth-server";
 
@@ -63,28 +63,20 @@ export async function DELETE(req: NextRequest) {
       }
     }
 
-    // 3. Borrar de tablas PostgreSQL (pool)
-    const pool = getPool();
-    await pool.query("DELETE FROM cv_sends WHERE user_id = $1", [userId]);
-    await pool.query("DELETE FROM saved_jobs WHERE user_id = $1", [userId]);
-    await pool.query("DELETE FROM job_alerts WHERE user_id = $1", [userId]);
-    await pool.query("DELETE FROM gusi_conversations WHERE user_id = $1", [userId]);
-    await pool.query("DELETE FROM user_cvs WHERE user_id = $1", [userId]);
-
-    // 4. Borrar de tablas Supabase (orden: hijos antes que padre)
-    await supabaseAdmin.from("cv_sends").delete().eq("user_id", userId);
-    await supabaseAdmin.from("company_reviews").delete().eq("user_id", userId);
-    await supabaseAdmin.from("notificaciones").delete().eq("user_id", userId);
-    await supabaseAdmin.from("cvs").delete().eq("user_id", userId);
-    await supabaseAdmin.from("referrals").delete().or(`referrer_id.eq.${userId},referred_id.eq.${userId}`);
-    await supabaseAdmin.from("profiles").delete().eq("id", userId);
-
-    // 5. Borrar archivos de storage (foto de perfil, CV subido)
-    try {
-      await supabaseAdmin.storage.from("profiles").remove([`${userId}/avatar`]);
-      await supabaseAdmin.storage.from("cvs").remove([`${userId}/cv.pdf`]);
-    } catch {
-      // Storage es opcional, no bloqueamos
+    // 3. Todos sus datos, en las dos bases y en el almacenamiento.
+    //    Ver lib/cuenta/borrar-datos.ts: aquí antes se borraban once tablas y
+    //    se quedaban las conversaciones con Guzzi, las entrevistas, los cursos,
+    //    au pair, contactos... y las fotos, que siguen siendo públicas.
+    const { borrado, fallos } = await borrarDatosDeUsuario(supabaseAdmin, userId, user.email);
+    console.log(`[delete-account] ${userId}: ${JSON.stringify(borrado)}`);
+    if (fallos.length) {
+      // Sin borrar la cuenta: si se borrara, lo que ha fallado se quedaría sin
+      // dueño y nadie podría encontrarlo después. La persona puede reintentar.
+      console.error(`[delete-account] ${userId}: no se pudo borrar todo:`, fallos);
+      return NextResponse.json(
+        { error: "No se han podido borrar todos tus datos. Inténtalo de nuevo en un momento; si sigue pasando, escríbenos a privacidad@buscaycurra.es." },
+        { status: 500 }
+      );
     }
 
     // 6. Borrar el usuario de Supabase Auth (operación final e irreversible)

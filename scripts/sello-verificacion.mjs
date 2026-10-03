@@ -1950,6 +1950,26 @@ test("el centinela hace el recorrido de usuario cada dia", () => {
     /delivered\+recorrido@resend\.dev/.test(rec);
 });
 
+// ── ELIMINAR LA CUENTA LO BORRA TODO (RGPD) ────────────────────────────────
+//
+// Borraba once tablas y dejaba las conversaciones con Guzzi, entrevistas,
+// cursos, au pair, contactos... y las fotos, que estan en "avatars/<id>" y
+// "au-pair/<id>/" (se borraba "<id>/avatar", que no existe) y son publicas.
+test("eliminar la cuenta borra todas las tablas y las fotos de verdad", () => {
+  const ruta = leerFuente("app/api/user/delete-account/route.ts");
+  const lib = leerFuente("lib/cuenta/borrar-datos.ts");
+  const rec = leerFuente("lib/centinela/recorrido.ts");
+  const necesarias = ["gusi_conversations", "entrevistas", "usage_tracking", "curso_progreso", "au_pair_profiles",
+    "user_contacts", "cv_cartas", "notificaciones", "user_cvs", "push_subscriptions"];
+  return /await borrarDatosDeUsuario\(/.test(ruta) && !/pool\.query\("DELETE FROM/.test(ruta) &&
+    necesarias.every((t) => lib.includes(`${t}:`)) &&
+    /"avatars"/.test(lib) && /`au-pair\/\$\{userId\}`/.test(lib) &&
+    // si algo falla no se borra la cuenta a medias
+    /if \(fallos\.length\)/.test(ruta) &&
+    // y el centinela avisa si aparece una tabla nueva sin borrar
+    /borrar la cuenta conoce todas las tablas/.test(rec);
+});
+
 // ── NINGUNA OFERTA ENTRA INVISIBLE ─────────────────────────────────────────
 //
 // El 30 sep 2026 habia 290.707 ofertas con isActive vacio: el buscador solo
