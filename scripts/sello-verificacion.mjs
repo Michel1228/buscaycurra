@@ -2342,6 +2342,23 @@ test("el buscador no inventa resultados ni se salta los filtros", () => {
   return fallos.length === 0;
 });
 
+// Auditoria del 3 oct 2026: casi todas las ofertas de Adzuna con mas de una
+// semana ya no existian en origen (404/410) y seguian activas: se podia gastar
+// un envio en un puesto cerrado. La ficha lo comprueba al abrirse y el buscador
+// en segundo plano; solo un 404/410 claro retira una oferta.
+test("las ofertas retiradas en origen se avisan y no gastan envios", () => {
+  const viva = leerFuente("lib/job-search/oferta-viva.ts");
+  const ficha = leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx");
+  const busca = leerFuente("app/api/jobs/search/route.ts");
+  const fallos = [];
+  if (!/res\.status === 404 \|\| res\.status === 410 \? false/.test(viva)) fallos.push("no distingue 404/410");
+  if (!viva.includes(`UPDATE "JobListing" SET "isActive" = false`)) fallos.push("no retira la oferta");
+  if (!ficha.includes("/api/jobs/comprobar?id=") || !ficha.includes("disabled={enviando || !cvListo || retirada}")) fallos.push("la ficha no avisa o deja enviar");
+  if ((busca.match(/comprobarEnSegundoPlano\(/g) || []).length < 2) fallos.push("el buscador no comprueba lo que enseña");
+  fallos.forEach((f) => console.log(`     ↳ ${f}`));
+  return fallos.length === 0;
+});
+
 // Auditoria del 3 oct 2026: EURES guardaba el codigo del pais como ciudad y las
 // tarjetas decian "FR" o "NO" (371.622 ofertas).
 test("las ofertas de EURES guardan el nombre del pais, no el codigo", () => {

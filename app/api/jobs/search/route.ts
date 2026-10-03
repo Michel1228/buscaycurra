@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { buscarOfertasReales } from "@/lib/job-search/real-search";
 import { tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
+import { comprobarEnSegundoPlano } from "@/lib/job-search/oferta-viva";
 
 /**
  * Ofertas de las APIs externas, solo cuando la base no tiene nada.
@@ -443,6 +444,7 @@ export async function GET(request: NextRequest) {
           locParams
         );
         const locOfertas = deduplicar(locResult.rows).map(j => rowToOferta(j, location, userSkills));
+        comprobarEnSegundoPlano(locOfertas.map(o => String(o.id)));
         // El total tiene que ser el de la consulta FILTRADA, no el de la ciudad.
         // Antes se devolvia locTotal (todas las ofertas de la ciudad): la app
         // anunciaba "20.543 ofertas de camarero en Paris" cuando no habia
@@ -466,6 +468,8 @@ export async function GET(request: NextRequest) {
       // volvía a filtrar solo por título y DESPUÉS de paginar: quitaba ofertas
       // buenas y el total dejaba de cuadrar con lo que se veía.
       const ofertas = deduped.map(j => rowToOferta(j, location, userSkills));
+      // Las que ya no estén en la web de origen se retiran para la próxima búsqueda.
+      comprobarEnSegundoPlano(ofertas.map(o => String(o.id)));
       return NextResponse.json({ ofertas, total: totalDB, page, hasMore: offset + ofertas.length < totalDB, keyword, location, source: "database" });
     }
 

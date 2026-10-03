@@ -79,6 +79,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   const [perfilAuPair, setPerfilAuPair] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
+  const [retirada, setRetirada] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "error" | "success" } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -127,7 +128,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   }
 
   async function enviarCV() {
-    if (!oferta || enviando) return;
+    if (!oferta || enviando || retirada) return;
     setEnviando(true);
     try {
       const supabase = getSupabaseBrowser();
@@ -201,6 +202,15 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
       setEnviando(false);
     }
   }
+
+  // ¿La sigue teniendo la web de origen? Si no, se avisa antes de gastar un
+  // envío en un puesto cerrado (ver lib/job-search/oferta-viva.ts).
+  useEffect(() => {
+    fetch(`/api/jobs/comprobar?id=${encodeURIComponent(String(oferta.id))}`)
+      .then((r) => r.json())
+      .then((d: { viva?: boolean | null }) => { if (d.viva === false) setRetirada(true); })
+      .catch(() => {});
+  }, [oferta.id]);
 
   // Al abrir la ficha se mira si ya está guardada. Antes el botón empezaba
   // siempre en "Guardar", decía "Guardada" tres segundos y volvía a "Guardar",
@@ -326,12 +336,23 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
           )}
         </div>
 
+        {retirada && (
+          <div className="rounded-lg px-4 py-3 mb-4 text-sm" style={{ background: "rgba(240,192,64,0.1)", border: "1px solid rgba(240,192,64,0.3)", color: "#f0c040" }}>
+            La web donde se publicó ya ha retirado esta oferta: lo más probable es que el puesto esté cubierto. Mejor no gastes un envío aquí.
+            <button
+              onClick={() => router.push(`/app/buscar?keyword=${encodeURIComponent(oferta.titulo)}&location=${encodeURIComponent(oferta.ubicacion || "")}`)}
+              className="block mt-2 font-medium underline" style={{ color: "#22c55e" }}>
+              Buscar ofertas parecidas
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-3 mb-5">
           {esAuPair ? (
             <>
               <button
                 onClick={enviarCV}
-                disabled={enviando || !perfilAuPair}
+                disabled={enviando || !perfilAuPair || retirada}
                 className="btn-game text-sm font-semibold px-5 py-2.5 rounded-lg disabled:opacity-50 flex items-center gap-2"
                 style={enviado ? { background: "#22c55e" } : {}}>
                 {enviando ? (
@@ -358,7 +379,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
             <>
               <button
                 onClick={enviarCV}
-                disabled={enviando || !cvListo}
+                disabled={enviando || !cvListo || retirada}
                 className="btn-game text-sm font-semibold px-5 py-2.5 rounded-lg disabled:opacity-50 flex items-center gap-2"
                 style={enviado ? { background: "#22c55e" } : {}}>
                 {enviando ? (
