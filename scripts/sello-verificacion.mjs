@@ -2342,6 +2342,14 @@ test("el buscador no inventa resultados ni se salta los filtros", () => {
   return fallos.length === 0;
 });
 
+// Auditoria del 3 oct 2026: EURES guardaba el codigo del pais como ciudad y las
+// tarjetas decian "FR" o "NO" (371.622 ofertas).
+test("las ofertas de EURES guardan el nombre del pais, no el codigo", () => {
+  const s = leerFuente("app/api/jobs/sync-eures/route.ts");
+  return !/city: paisDe\(jv\)\.toUpperCase\(\)/.test(s) && s.includes('new Intl.DisplayNames(["es"], { type: "region" })')
+    && s.includes("city: ciudadDe(jv)");
+});
+
 // Auditoria del 3 oct 2026: a una camarera que pedia un puesto de mecanico la
 // carta le inventaba "cambios de aceite al coche familiar". Probado contra la
 // IA: con la regla, 0 de 3 cartas inventan; sin ella, 3 de 3. La carta sale a

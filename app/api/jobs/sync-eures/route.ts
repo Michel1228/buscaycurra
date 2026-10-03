@@ -158,13 +158,24 @@ export async function POST(req: NextRequest) {
   });
 }
 
+// EURES solo da la región en código NUTS ("BE211"), no la ciudad. Se guardaba
+// el código del país como ciudad y las tarjetas enseñaban "FR" o "NO" como
+// ubicación (auditoría del 3 oct 2026: 371.622 ofertas). El nombre del país en
+// español al menos se entiende, y buscar "Francia" las encuentra.
+const nombrePais = new Intl.DisplayNames(["es"], { type: "region" });
+function ciudadDe(jv: EuresJV): string {
+  const codigo = paisDe(jv).toUpperCase();
+  if (!codigo) return "";
+  try { return nombrePais.of(codigo) || codigo; } catch { return codigo; }
+}
+
 function mapear(jv: EuresJV) {
   return {
     source: "EURES",
     url: `https://europa.eu/eures/portal/jv-se/jv-details/${jv.id}`,
     title: (jv.title || "").slice(0, 300),
     company: (jv.employer?.name || "").slice(0, 200),
-    city: paisDe(jv).toUpperCase(),
+    city: ciudadDe(jv),
     description: limpiarHtml(jv.description || "").slice(0, 2000),
     salary: "",
   };
