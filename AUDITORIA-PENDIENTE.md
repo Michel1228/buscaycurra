@@ -168,8 +168,11 @@ el código anterior (falla con él, pasa con el nuevo).
   ofertas activas de Adzuna con más de 7 días (35.056 de Adzuna España en
   total). Bajar su caducidad a 7-10 días bajaría mucho el número de ofertas
   que se anuncia. La comprobación al abrir la ficha ya protege los envíos.
-- [ ] **DECISIÓN DE MICHEL — escribir a quien no pudo cambiar la contraseña**
-  (6 personas entre el 5 sep y el 3 oct) con un enlace nuevo que ya funciona.
+- [x] **Escrito a quien no pudo cambiar la contraseña** (3-4 oct, lo pidió
+  Michel): 6 personas, disculpa y botón a /auth/recuperar con su correo puesto
+  (un enlace directo caduca en una hora). Antes se comprobó que el enlace
+  nuevo funciona también con cuentas sin confirmar (3 de las 6) y las
+  confirma; ahora además reciben la bienvenida al cambiar la contraseña.
 - [ ] **MICHEL — activar el cambio de plan en el portal de Stripe**
   (https://dashboard.stripe.com/settings/billing/portal → "Customers can
   switch plans", con Esencial, Pro y Empresa). Hoy está desactivado: quien
