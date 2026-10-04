@@ -159,6 +159,14 @@ el código anterior (falla con él, pasa con el nuevo).
   simulador de entrevistas y los referidos. Probado en el navegador.
 - [x] **Au pair y registro** (`35126a4`): barra de guardar en los cuatro pasos
   con el aviso visible; el registro enlaza condiciones y privacidad (RGPD).
+- [x] **Guzzi no sabía enviar el CV a un correo** (4 oct, lo contó Michel con
+  Sofidel; `1d70385`): ahora lo prepara, enseña empresa, correo, puesto y carta,
+  y lo envía con un "sí". Al probarlo de punta a punta salió el fallo de fondo
+  (`2a3dc7c`): el servidor solo escuchaba en la IP del contenedor y las
+  llamadas internas a localhost fallaban, así que **ningún envío desde Guzzi
+  (tampoco el de negocios cercanos) había salido nunca**. Comprobado después
+  con una cuenta de prueba: candidatura entregada con el PDF y la carta, y
+  confirmación al usuario. Centinela R10 lo recorre cada mañana.
 
 ### Abierto
 
