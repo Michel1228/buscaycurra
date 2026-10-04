@@ -3,12 +3,12 @@
 import { useState, useEffect, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
-import InfoTooltip from "@/components/InfoTooltip";
 
 function ReferidosPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [codigo, setCodigo] = useState("");
+  const [soloPro, setSoloPro] = useState(false);
   const [stats, setStats] = useState({ invitados: 0, creditos: 0 });
   const [loading, setLoading] = useState(true);
   const [copiado, setCopiado] = useState(false);
@@ -34,6 +34,10 @@ function ReferidosPageInner() {
           const data = await res.json() as { codigo: string; invitados: number; creditos: number; link: string };
           setCodigo(data.codigo);
           setStats({ invitados: data.invitados, creditos: data.creditos });
+        } else if (res.status === 402) {
+          // Los códigos son del plan Pro. Antes se tiraba la respuesta y salía un
+          // código vacío y un enlace sin código, sin explicar nada.
+          setSoloPro(true);
         }
       } catch (e) {
         console.error("Error cargando referidos:", e);
@@ -89,26 +93,26 @@ function ReferidosPageInner() {
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(245,158,11,0.05))" }}>
         <div className="max-w-2xl mx-auto text-center">
           <h1 className="text-xl font-bold mb-1" style={{ color: "#f1f5f9" }}>Invita y gana</h1>
-          <p className="text-xs" style={{ color: "#64748b" }}>Por cada amigo que se registre, ambos ganáis +10 CVs extra</p>
+          <p className="text-xs" style={{ color: "#64748b" }}>Comparte BuscayCurra con amigos que buscan trabajo</p>
         </div>
       </div>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-        <div className="grid grid-cols-2 gap-3">
+        {soloPro && (
+          <div className="card-game p-5 text-center">
+            <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Los códigos de invitación son del plan Pro</p>
+            <p className="text-xs mb-3" style={{ color: "#64748b" }}>Si alguien te ha pasado su código, puedes canjearlo abajo igualmente.</p>
+            <a href="/app/perfil?tab=plan" className="btn-game text-xs inline-block px-4 py-2">Ver planes</a>
+          </div>
+        )}
+        {!soloPro && (
           <div className="card-game p-4 text-center">
             <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>{stats.invitados}</p>
-            <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>Amigos invitados</p>
+            <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>Amigos que se han registrado con tu código</p>
           </div>
-          <div className="card-game p-4 text-center">
-            <div className="flex items-center justify-center gap-1.5">
-              <p className="text-2xl font-bold" style={{ color: "#f59e0b" }}>{stats.creditos}</p>
-              <InfoTooltip text="Cada amigo que se registra con tu código te da +10 CVs extra al mes. Los créditos se añaden automáticamente a tu cuota mensual." position="top" />
-            </div>
-            <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>CVs extra ganados</p>
-          </div>
-        </div>
+        )}
 
-        <div className="card-game p-5">
+        {!soloPro && <div className="card-game p-5">
           <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>Tu código de invitación</h2>
           <div className="flex items-center gap-2 mb-3">
             <div className="flex-1 p-2.5 rounded-lg text-center font-mono text-sm font-bold tracking-widest"
@@ -121,9 +125,9 @@ function ReferidosPageInner() {
             </button>
           </div>
           <p className="text-[11px]" style={{ color: "#64748b" }}>
-            Comparte este link con tus amigos. Cuando se registren, ambos recibiréis +10 CVs extra al mes.
+            Comparte este link con tus amigos: al registrarse, quedan apuntados como invitados tuyos.
           </p>
-        </div>
+        </div>}
 
         <div className="card-game p-5">
           <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>¿Tienes un código?</h2>
@@ -146,8 +150,7 @@ function ReferidosPageInner() {
             {[
               { num: "1", text: "Copia tu link de invitación" },
               { num: "2", text: "Compártelo con amigos que buscan trabajo" },
-              { num: "3", text: "Cuando se registren, ambos ganáis +10 CVs" },
-              { num: "4", text: "Sin límite de invitados" },
+              { num: "3", text: "Cuando se registran, aparecen en tu contador" },
             ].map(paso => (
               <div key={paso.num} className="flex items-center gap-2.5">
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"

@@ -40,11 +40,24 @@ export async function POST(request: NextRequest) {
     }
 
     const pool = getPool();
-    await pool.query(
-      `INSERT INTO job_alerts (user_id, keyword, location, frequency)
-       VALUES ($1, $2, $3, $4)`,
-      [user.id, body.keyword?.trim() || "", body.location?.trim() || "", body.frequency || "daily"]
+    const keyword = body.keyword?.trim() || "";
+    const location = body.location?.trim() || "";
+    const frequency = body.frequency === "weekly" ? "weekly" : "daily";
+    // Si ya tiene esa misma alerta, se actualiza la frecuencia en vez de crear
+    // otra: dos alertas iguales mandaban dos avisos de lo mismo (auditoría del
+    // 3 oct 2026).
+    const yaExiste = await pool.query(
+      `UPDATE job_alerts SET frequency = $4
+        WHERE user_id = $1 AND active = true AND lower(keyword) = lower($2) AND lower(location) = lower($3)`,
+      [user.id, keyword, location, frequency]
     );
+    if (!yaExiste.rowCount) {
+      await pool.query(
+        `INSERT INTO job_alerts (user_id, keyword, location, frequency)
+         VALUES ($1, $2, $3, $4)`,
+        [user.id, keyword, location, frequency]
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -57,12 +57,14 @@ function PagoExitosoContenido() {
 
   const caracteristicas =
     planActivo === "Empresa"
-      ? ["Envíos ilimitados de CV", "IA avanzada activada", "Acceso a API", "Soporte dedicado 24/7"]
+      // Solo lo que existe de verdad: ni API, ni buscador avanzado, ni "IA
+      // avanzada" (auditoría del 3 oct 2026).
+      ? ["200 CVs enviados por día", "1.500 CVs por semana", "Guzzi sin límite", "Soporte 24/7"]
       : planActivo === "Esencial"
-      ? ["15 CVs enviados por día", "100 CVs por semana", "Mejora CV con IA", "Buscador avanzado"]
+      ? ["15 CVs enviados por día", "100 CVs por semana", "Mejora CV con IA", "Carta IA personalizada"]
       : planActivo === "Básico"
-      ? ["15 CVs enviados por día", "Buscador avanzado", "Mejora CV con IA"]
-      : ["50 CVs enviados por día", "350 CVs por semana", "IA avanzada activada", "Soporte prioritario"];
+      ? ["15 CVs enviados por día", "Mejora CV con IA", "Carta IA personalizada"]
+      : ["50 CVs enviados por día", "350 CVs por semana", "Carta IA personalizada", "Soporte prioritario"];
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 pt-16" style={{ background: "#0f1117" }}>

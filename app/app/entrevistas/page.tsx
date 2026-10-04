@@ -73,6 +73,7 @@ export default function EntrevistasPage() {
   const [idx, setIdx] = useState(0);
   const [texto, setTexto] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [aviso, setAviso] = useState<{ texto: string; plan: string | null } | null>(null);
   const [analizando, setAnalizando] = useState(false);
   const [historial, setHistorial] = useState<Respuesta[]>([]);
   const [finalizado, setFinalizado] = useState(false);
@@ -175,8 +176,18 @@ export default function EntrevistasPage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ pregunta: preguntas[idx], respuesta: texto, sector, pais: paisEntrevista }),
       });
-      const data = await res.json();
-      const fb = data.feedback || "No se pudo analizar.";
+      const data = await res.json().catch(() => ({}));
+      // Si la API dice por qué no (plan gratis, límite por hora...), se dice eso
+      // y NO se apunta como respuesta hecha. Antes a quien no pagaba le salía
+      // "No se pudo analizar." en las 7 preguntas sin saber que era de pago
+      // (auditoría del 3 oct 2026).
+      if (!res.ok || !data.feedback) {
+        setFeedback("");
+        setAviso({ texto: data.error || "No se ha podido analizar ahora. Inténtalo de nuevo en un momento.", plan: res.status === 402 ? (data.upgradeUrl || "/app/perfil?tab=plan") : null });
+        return;
+      }
+      setAviso(null);
+      const fb = data.feedback;
       setFeedback(fb);
       setHistorial(h => [...h, { pregunta: preguntas[idx], respuesta: texto, feedback: fb }]);
     } catch {
@@ -334,6 +345,16 @@ export default function EntrevistasPage() {
 
         {/* InterviewFeedback con animación */}
         <InterviewFeedback feedback={feedback} />
+        {aviso && (
+          <div role="alert" className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(240,192,64,0.1)", border: "1px solid rgba(240,192,64,0.3)", color: "#f0c040" }}>
+            {aviso.texto}
+            {aviso.plan && (
+              <button onClick={() => router.push(aviso.plan!)} className="block mt-2 font-semibold underline" style={{ color: "#22c55e" }}>
+                Ver planes
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Acciones */}
         <div className="flex gap-3">

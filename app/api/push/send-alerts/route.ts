@@ -12,6 +12,7 @@ import { getPool } from "@/lib/db";
 import { sendPush, type PushSub } from "@/lib/push-sender";
 import { sendJobAlertEmail } from "@/lib/email/smtp-sender";
 import { enlaceBaja } from "@/lib/alertas/baja";
+import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
 
 export const dynamic = "force-dynamic";
 
@@ -137,7 +138,9 @@ export async function GET(request: NextRequest) {
       `SELECT id, user_id, keyword, location, last_sent_at
        FROM job_alerts
        WHERE active = true
-         AND (last_sent_at IS NULL OR last_sent_at < NOW() - INTERVAL '2 hours')
+         -- "Semanal" se guardaba y se ignoraba: llegaba igual que la diaria
+         -- (auditoría del 3 oct 2026).
+         AND (last_sent_at IS NULL OR last_sent_at < NOW() - CASE WHEN frequency = 'weekly' THEN INTERVAL '7 days' ELSE INTERVAL '2 hours' END)
        ORDER BY last_sent_at ASC NULLS FIRST
        LIMIT 100`
     );
@@ -369,8 +372,16 @@ export async function GET(request: NextRequest) {
       try {
         const contact = contactsMap.get(alerta.user_id);
 
-        // Email
-        if (contact?.email) {
+        // Email: COMO MÁXIMO UNO POR PERSONA Y DÍA. Esto corre cada 3 horas y
+        // mandaba un correo en cada pasada con ofertas nuevas, por cada alerta:
+        // el 3 oct 2026 hubo personas con 7, 9 y 12 correos de alertas en un
+        // día, cuando la bienvenida promete "un correo al día". Tantos correos
+        // acaban marcados como spam y eso hunde la entrega de TODO el dominio,
+        // también la de los CVs. La campanita sí avisa en cada pasada.
+        const claveCorreo = `alerta-correo:${alerta.user_id}`;
+        const yaTuvoCorreoHoy = !!(await cacheGet(claveCorreo).catch(() => null));
+        if (contact?.email && !yaTuvoCorreoHoy) {
+          await cacheSet(claveCorreo, "1", 20 * 3600).catch(() => false);
           const salio = await sendJobAlertEmail({
             userEmail: contact.email,
             keyword: alerta.keyword,

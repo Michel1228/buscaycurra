@@ -14,6 +14,7 @@ import WhatsAppSubscribeButton from "@/components/WhatsAppSubscribeButton";
 import { isNativeIOS } from "@/lib/utils/platform";
 import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
 import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
+import MisAlertas from "@/components/MisAlertas";
 
 interface PerfilData {
   nombre: string;
@@ -259,6 +260,20 @@ export default function PerfilPage() {
     finally { setCargandoPlan(false); }
   }
 
+  // QUIEN YA PAGA NO PASA POR EL CHECKOUT. /api/stripe/checkout rechaza (409
+  // "Ya tienes un plan activo") a quien tiene una suscripción, así que un
+  // Esencial que pulsaba "Contratar" en Pro se quedaba con un error y sin
+  // poder pagar más (auditoría del 3 oct 2026). El cambio de plan se hace en
+  // el portal de Stripe.
+  function contratar(plan: "esencial" | "pro" | "empresa") {
+    if (iosNativo) return void comprarConIAP(plan);
+    if (planActual !== "free") return void irAPortal();
+    return void irACheckout(plan);
+  }
+  const textoBoton = (plan: "esencial" | "pro" | "empresa") =>
+    (iosNativo ? comprandoIAP === plan : planActual !== "free" ? cargandoPortal : cargandoPlan) ? "..."
+      : !iosNativo && planActual !== "free" ? "Cambiar" : "Contratar";
+
   async function irAPortal() {
     setCargandoPortal(true);
     setErrorPlan(null);
@@ -467,16 +482,19 @@ export default function PerfilPage() {
                 Ir a Mi CV →
               </button>
             </div>
+
+            {/* Alertas de empleo: antes no había dónde verlas ni quitarlas */}
+            <MisAlertas />
           </div>
         )}
 
         {tab === "plan" && (() => {
           const PLANES_INFO = {
             free:     { emoji: "🥚", nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 3 CVs/día" },
-            basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Buscador avanzado" },
-            esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Buscador avanzado" },
-            pro:      { emoji: "⚡", nombre: "Pro",      color: "#a855f7", desc: "50 CVs/día · 350 CVs/semana · IA avanzada" },
-            empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "Ilimitado · API · Soporte 24/7" },
+            basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Carta IA personalizada" },
+            esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Carta IA personalizada" },
+            pro:      { emoji: "⚡", nombre: "Pro",      color: "#a855f7", desc: "50 CVs/día · 350 CVs/semana · 100 consultas a Guzzi al día" },
+            empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "200 CVs/día · Guzzi sin límite · Soporte 24/7" },
           };
           const info = PLANES_INFO[planActual];
           return (
@@ -547,12 +565,12 @@ export default function PerfilPage() {
                       style={{ background: "#161922", border: "1px solid #2d3142" }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🌱 Plan Esencial — 2,99€/mes</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>15 CVs/día · 100 CVs/semana · Buscador avanzado</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>15 CVs/día · 100 CVs/semana · Carta IA personalizada</p>
                       </div>
-                      <button onClick={() => iosNativo ? void comprarConIAP("esencial") : void irACheckout("esencial")}
+                      <button onClick={() => contratar("esencial")}
                         disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
                         className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
-                        {(iosNativo ? comprandoIAP === "esencial" : cargandoPlan) ? "..." : "Contratar"}
+                        {textoBoton("esencial")}
                       </button>
                     </div>
                   )}
@@ -561,12 +579,12 @@ export default function PerfilPage() {
                       style={{ background: "#161922", border: "1px solid #2d3142" }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Plan Pro — 9,99€/mes</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>50 CVs/día · IA avanzada · Estadísticas</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>50 CVs/día · 350 CVs/semana · 100 consultas a Guzzi al día</p>
                       </div>
-                      <button onClick={() => iosNativo ? void comprarConIAP("pro") : void irACheckout("pro")}
+                      <button onClick={() => contratar("pro")}
                         disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
                         className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
-                        {(iosNativo ? comprandoIAP === "pro" : cargandoPlan) ? "..." : "Contratar"}
+                        {textoBoton("pro")}
                       </button>
                     </div>
                   )}
@@ -574,12 +592,12 @@ export default function PerfilPage() {
                     style={{ background: "#161922", border: "1px solid #2d3142" }}>
                     <div>
                       <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Plan Empresa — 49,99€/mes</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Envíos ilimitados · API · Soporte 24/7</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>200 CVs/día · Guzzi sin límite · Soporte 24/7</p>
                     </div>
-                    <button onClick={() => iosNativo ? void comprarConIAP("empresa") : void irACheckout("empresa")}
+                    <button onClick={() => contratar("empresa")}
                       disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
                       className="btn-game px-4 py-2 text-xs ml-4 disabled:opacity-50 flex-shrink-0">
-                      {(iosNativo ? comprandoIAP === "empresa" : cargandoPlan) ? "..." : "Contratar"}
+                      {textoBoton("empresa")}
                     </button>
                   </div>
                   {iosNativo && <RestaurarComprasBoton className="pt-2" />}

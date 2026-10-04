@@ -694,6 +694,36 @@ test("Guzzi entiende oficio, cuenta, au pair, articulos y el texto para el CV", 
     try { unlinkSync(salida); } catch { /* da igual */ }
   }
 });
+// Auditoria del 3 oct 2026, cuenta y funciones:
+// - un suscriptor que pulsaba otro plan acababa en el 409 del checkout;
+// - Mi Plan y "pago completado" vendian buscador avanzado, estadisticas y API;
+// - el simulador decia "No se pudo analizar" a quien no pagaba;
+// - los referidos prometian +10 CVs que nada aplicaba y se quedaban vacios;
+// - las alertas mandaban hasta 12 correos al dia, "semanal" se ignoraba y no
+//   habia pantalla para verlas ni quitarlas.
+test("cambiar de plan no acaba en error ni se venden ventajas que no existen", () => {
+  const p = leerFuente("app/app/perfil/page.tsx");
+  const ok = leerFuente("app/app/pago-exitoso/page.tsx");
+  return p.includes('if (planActual !== "free") return void irAPortal();') && !/Buscador avanzado|Estadísticas|IA avanzada|· API ·/.test(p + ok)
+    && !ok.includes("Acceso a API");
+});
+test("el simulador de entrevistas explica por que no analiza y no lo apunta", () => {
+  const e = leerFuente("app/app/entrevistas/page.tsx");
+  return e.includes("if (!res.ok || !data.feedback)") && !e.includes('data.feedback || "No se pudo analizar."');
+});
+test("los referidos no prometen lo que no se da y avisan a quien no es Pro", () => {
+  const r = leerFuente("app/app/referidos/Content.tsx");
+  return !/\+10 CVs|ambos gan|ambos recib/.test(r) && r.includes("res.status === 402") && r.includes("setSoloPro(true)");
+});
+test("las alertas: un correo al dia como mucho, semanal de verdad y se pueden quitar", () => {
+  const s = leerFuente("app/api/push/send-alerts/route.ts");
+  const api = leerFuente("app/api/jobs/alertas/route.ts");
+  const perfil = leerFuente("app/app/perfil/page.tsx");
+  return s.includes("CASE WHEN frequency = 'weekly' THEN INTERVAL '7 days'") && s.includes("if (contact?.email && !yaTuvoCorreoHoy)")
+    && api.includes("UPDATE job_alerts SET frequency") && perfil.includes("<MisAlertas />")
+    && leerFuente("components/MisAlertas.tsx").includes('method: "DELETE"');
+});
+
 // Auditoria del 3 oct 2026, web publica: la portada describia un plan gratis
 // que no existe ("2 consultas a Guzzi (total)", "Sin envios de CV"), vendia un
 // "Dashboard de equipo" que no existe y una cifra inventada ("la media de
