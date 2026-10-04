@@ -4,6 +4,7 @@
  * NO TOCAR sin ejecutar tests: sello-verificacion.mjs bloques 1 y 2 (12 tests de regex)
  */
 import { aceptaEnvioLocal } from "./envio-local";
+import { propuestaCorreoPendiente, respuestaAPropuesta, pideEnviarACorreo } from "./envio-correo";
 
 export function detectIntent(text: string, history: Array<{ role: string; text: string }> = []): string {
   const t = text.toLowerCase();
@@ -13,6 +14,22 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   // en el historial mandaba el CV a una empresa que nadie había elegido.
   // Va la primera: es muy estricta y, si no, "mándalo a Delicias" se lo come info_empresa.
   if (aceptaEnvioLocal(text, history)) return "send_cv_local_confirm";
+
+  // ENVIAR EL CV A UN CORREO (envio-correo.ts). Va antes que "carta de
+  // presentación": "Mándame mi currículum y carta de presentación a
+  // rrhh@sofidel.com" acababa pidiendo empresa y puesto para redactar una
+  // carta, y el correo se ignoraba (4 oct 2026). Primero, la respuesta a una
+  // propuesta recién hecha; después, pedirlo con el correo delante.
+  {
+    const propuesta = propuestaCorreoPendiente(history);
+    if (propuesta) {
+      const r = respuestaAPropuesta(text, propuesta);
+      if (r?.tipo === "confirmar") return "enviar_correo_confirmar";
+      if (r?.tipo === "cancelar") return "enviar_correo_cancelar";
+      if (r?.tipo === "cambiar") return "enviar_correo";
+    }
+    if (pideEnviarACorreo(text)) return "enviar_correo";
+  }
 
   // LO QUE CUENTA DESPUÉS DE "DIME QUÉ QUIERES PONER Y TE LO REDACTO".
   // Guzzi lo ofrecía y no había nada que lo redactara: la persona obedecía

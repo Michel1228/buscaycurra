@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from "@/lib/guzzi/prompts";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
 import { textoNegociosLocales, propuestaPendiente, negocioElegido } from "@/lib/guzzi/envio-local";
+import { extraerCorreo, empresaDelCorreo, empresaDelTexto, puestoDelTexto, textoPropuesta, propuestaCorreoPendiente, respuestaAPropuesta, type PropuestaCorreo } from "@/lib/guzzi/envio-correo";
 import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { aliasCiudad } from "@/lib/guzzi/ciudades-pais";
 import { LISTA_PAISES } from "@/lib/paises";
@@ -1146,6 +1147,79 @@ El candidato tiene mucha experiencia.
     }
 
     const preIntent = detectIntent(message, history);
+
+    // -- Intent: enviar el CV a un correo que da la persona --------------------
+    // Ver lib/guzzi/envio-correo.ts. Primero se enseña lo que se va a enviar;
+    // solo con un "sí" a esa propuesta sale, por /api/cv-sender/send, que
+    // comprueba el límite del plan, los 15 días por empresa y las direcciones
+    // que no llegan. La carta la escribe la cola con el CV de verdad.
+    if (preIntent === "enviar_correo_cancelar") {
+      return NextResponse.json({
+        reply: "Vale, no lo envío. Cuando quieras mandarlo, pásame otra vez el correo o hazlo desde [tus envíos](/app/envios).",
+        action: "enviar_correo",
+      });
+    }
+    if (preIntent === "enviar_correo") {
+      const pendiente = propuestaCorreoPendiente(history);
+      const cambio = pendiente ? respuestaAPropuesta(message, pendiente) : null;
+      const correo = extraerCorreo(message);
+      const propuesta: PropuestaCorreo = cambio?.tipo === "cambiar"
+        ? cambio.propuesta
+        : { email: correo || "", empresa: empresaDelTexto(message) || (correo ? empresaDelCorreo(correo) : null), puesto: puestoDelTexto(message) };
+      if (!propuesta.email) {
+        return NextResponse.json({ reply: "¿A qué correo lo mando? Pásamelo y lo preparo.", action: "enviar_correo" });
+      }
+      if (!cvData) {
+        return NextResponse.json({
+          reply: "Para enviar tu candidatura necesito tu CV. Súbelo con el clip 📎 de abajo o hazlo en [Mi Currículum](/app/curriculum), y vuelve a pasarme el correo.",
+          action: "send_cv_flow",
+        });
+      }
+      const { motivoParaNoEnviar } = await import("@/lib/cv-sender/direccion-segura");
+      const motivo = await motivoParaNoEnviar(propuesta.email);
+      if (motivo) {
+        return NextResponse.json({ reply: `${motivo} Si tienes otro correo de la empresa, pásamelo.`, action: "enviar_correo" });
+      }
+      return NextResponse.json({ reply: textoPropuesta(propuesta), action: "enviar_correo" });
+    }
+    if (preIntent === "enviar_correo_confirmar") {
+      const p = propuestaCorreoPendiente(history);
+      if (!p?.empresa) {
+        return NextResponse.json({ reply: "¿A qué correo y a qué empresa lo mando? Pásamelos y lo preparo.", action: "enviar_correo" });
+      }
+      try {
+        const sendRes = await fetch("http://localhost:3000/api/cv-sender/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(req.headers.get("authorization") ? { authorization: req.headers.get("authorization")! } : {}),
+          },
+          body: JSON.stringify({
+            companyName: p.empresa,
+            companyEmail: p.email,
+            jobTitle: p.puesto || undefined,
+            strategy: "ahora",
+            useAIPersonalization: true,
+          }),
+        });
+        const d = await sendRes.json().catch(() => ({})) as { success?: boolean; error?: string };
+        if (!sendRes.ok || !d.success) {
+          return NextResponse.json({
+            reply: `No lo he podido enviar: ${d.error || "ha fallado el envío. Inténtalo otra vez en un momento."}`
+              + (sendRes.status === 429 ? "\n\n👉 [Ver planes](/app/perfil?tab=plan)" : ""),
+            action: "enviar_correo",
+          });
+        }
+        return NextResponse.json({
+          reply: `✅ **Hecho.** Tu candidatura sale en un minuto hacia **${p.empresa}** (${p.email})${p.puesto ? ` para el puesto de **${p.puesto}**` : ""}, con tu CV y una carta escrita para ${p.empresa}.\n\n`
+            + "Te llegará un correo cuando salga, y la verás en [tus envíos](/app/envios). Si la empresa contesta, la respuesta te llega directamente a tu correo.",
+          action: "cv_enviado",
+        });
+      } catch (e) {
+        console.error("[enviar_correo] fallo al enviar:", (e as Error).message);
+        return NextResponse.json({ reply: "No lo he podido enviar ahora mismo. Inténtalo otra vez en un momento o desde [tus envíos](/app/envios).", action: "enviar_correo" });
+      }
+    }
 
     // -- Intent: papeles para trabajar en otro país (datos verificados) --------
     // La respuesta sale de lib/primeros-pasos.ts, con los enlaces oficiales, y

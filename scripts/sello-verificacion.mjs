@@ -813,6 +813,43 @@ test("las respuestas de la IA gratuita salen con guiones normales", () =>
 test("la ficha de una oferta no se inventa un porcentaje de compatibilidad", () =>
   !/match:\s*85/.test(leerFuente("app/api/jobs/detail/route.ts")));
 
+// 4 oct 2026: "Mándame mi currículum y carta de presentación a este correo de
+// empresa rrhh@sofidel.com" acababa pidiendo empresa y puesto para redactar
+// una carta, y con la respuesta mandaba a buscar la oferta. Guzzi no sabia
+// enviar a un correo. Ahora lo prepara, lo enseña y lo envia con un "si".
+test("Guzzi envia el CV a un correo que le das, y solo tras un si", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salidas = [".sello-intents4.cjs", ".sello-envio-correo.cjs"];
+  try {
+    for (const [entrada, salida] of [["lib/guzzi/intents.ts", salidas[0]], ["lib/guzzi/envio-correo.ts", salidas[1]]]) {
+      execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    }
+    const { detectIntent } = await import(`../${salidas[0]}?${Date.now()}`);
+    const ec = await import(`../${salidas[1]}?${Date.now()}`);
+    const fallos = [];
+    const f1 = "Mándame mi currículum y carta de presentación a este correo de empresa rrhh@sofidel.com";
+    if (detectIntent(f1, [{ role: "user", text: f1 }]) !== "enviar_correo") fallos.push("la frase de Michel no se entiende como envio");
+    if (ec.empresaDelCorreo("rrhh@sofidel.com") !== "Sofidel") fallos.push("no saca la empresa del correo");
+    const prop = ec.textoPropuesta({ email: "rrhh@sofidel.com", empresa: "Sofidel", puesto: null });
+    const h = (f) => [{ role: "user", text: f1 }, { role: "gusi", text: prop }, { role: "user", text: f }];
+    if (detectIntent("Sofidel nombre de empresa y puesto peon", h("Sofidel nombre de empresa y puesto peon")) !== "enviar_correo") fallos.push("no recoge el puesto");
+    if (detectIntent("sí, envíalo", h("sí, envíalo")) !== "enviar_correo_confirmar") fallos.push("el si no confirma");
+    if (detectIntent("no, espera", h("no, espera")) !== "enviar_correo_cancelar") fallos.push("el no no cancela");
+    if (detectIntent("sí, envíalo", [{ role: "user", text: "sí, envíalo" }]) === "enviar_correo_confirmar") fallos.push("un si sin propuesta envia");
+    if (detectIntent("mi correo es pepe@gmail.com", [{ role: "user", text: "mi correo es pepe@gmail.com" }]) === "enviar_correo") fallos.push("dar tu propio correo dispara un envio");
+    const chat = leerFuente("app/api/gusi/chat/route.ts");
+    if (!chat.includes('preIntent === "enviar_correo_confirmar"') || !chat.includes('"http://localhost:3000/api/cv-sender/send"')) fallos.push("la ruta no envia por /api/cv-sender/send");
+    fallos.forEach((f) => console.log(`     ↳ ${f}`));
+    return fallos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    for (const s of salidas) { try { unlinkSync(s); } catch { /* da igual */ } }
+  }
+});
+
 test("el envio a un negocio no usa correos de buscadores ni ciudad fija", () => {
   const ruta = leerFuente("app/api/gusi/send-cv-local/route.ts");
   const chat = leerFuente("app/api/gusi/chat/route.ts");
