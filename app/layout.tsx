@@ -81,12 +81,11 @@ export const metadata: Metadata = {
       `Guzzi busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países. 24/7. Sin que muevas un dedo.`,
     images: ["/og-image.png"],
   },
-  alternates: {
-    canonical: "https://buscaycurra.es",
-    languages: {
-      es: "https://buscaycurra.es",
-    },
-  },
+  // SIN canonical aquí. Puesto en el layout raíz lo heredaban todas las páginas
+  // que no definen el suyo (/precios, /trabajar-en/*, las legales, las fichas
+  // de oferta...) y le decían a Google "soy una copia de la portada", que es
+  // pedirle que no las indexe (auditoría del 3 oct 2026). La portada lo pone
+  // en su propia página.
   robots: {
     index: true,
     follow: true,

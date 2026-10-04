@@ -694,6 +694,32 @@ test("Guzzi entiende oficio, cuenta, au pair, articulos y el texto para el CV", 
     try { unlinkSync(salida); } catch { /* da igual */ }
   }
 });
+// Auditoria del 3 oct 2026, web publica: la portada describia un plan gratis
+// que no existe ("2 consultas a Guzzi (total)", "Sin envios de CV"), vendia un
+// "Dashboard de equipo" que no existe y una cifra inventada ("la media de
+// nuestros usuarios es de 3 semanas"); el canonical del layout raiz mandaba
+// todas las paginas a la portada; y las paginas de pais decian "0 ofertas".
+test("la portada no promete lo que no es verdad", () => {
+  const h = leerFuente("app/(home)/page.tsx");
+  const fallos = [];
+  if (/2 consultas a Guzzi \(total\)|Sin envíos de CV|Sin Guzzi ni envíos|No incluye Guzzi/.test(h)) fallos.push("plan gratis antiguo");
+  if (!h.includes("${LIMITS.free.enviosCVDia} envíos de CV al día")) fallos.push("el plan gratis no sale de LIMITS");
+  if (/Dashboard de equipo|media de nuestros usuarios|El 95% de esos CVs|reclutador abre el email/.test(h)) fallos.push("promesa sin respaldo");
+  for (const p of ["app/auth/login/page.tsx", "app/auth/registro/page.tsx"]) {
+    if (leerFuente(p).includes("reclutador abre el email")) fallos.push(`${p}: reclutador abre el email`);
+  }
+  fallos.forEach((f) => console.log(`     ↳ ${f}`));
+  return fallos.length === 0;
+});
+test("el canonical de la portada no lo heredan las demas paginas", () =>
+  !/alternates:\s*\{\s*canonical/.test(leerFuente("app/layout.tsx"))
+  && leerFuente("app/(home)/page.tsx").includes('alternates: { canonical: "https://buscaycurra.es" }'));
+test("las paginas de pais no cuentan por su cuenta ni enseñan un 0", () => {
+  const p = leerFuente("app/trabajar-en/[pais]/page.tsx");
+  return p.includes("ofertasDe(await ofertasPorPais(), codigo)") && !p.includes('SELECT COUNT(*) FROM "JobListing"')
+    && p.includes('totalOfertas ? totalOfertas.toLocaleString("es-ES") : "Miles"');
+});
+
 // Auditoria del 3 oct 2026: con mala cobertura el autoguardado del perfil se
 // disparaba antes de cargar y BORRABA telefono, ciudad, provincia, CP y sector.
 test("el perfil no se autoguarda antes de cargar ni se guarda vacio", () => {

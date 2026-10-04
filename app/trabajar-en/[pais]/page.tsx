@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { PAISES, LISTA_PAISES, NUM_PAISES, SLUG_A_CODIGO, formatearSalario, convertirSalario } from "@/lib/paises";
-import { getPool } from "@/lib/db";
+import { ofertasPorPais, ofertasDe } from "@/lib/job-search/ofertas-por-pais";
 import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import RequisitosPais from "@/components/destinos/RequisitosPais";
 import Link from "next/link";
@@ -75,22 +75,10 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
   const codigo = SLUG_A_CODIGO[paisParam.toLowerCase()] || paisParam.toUpperCase();
   const pais = PAISES[codigo];
 
-  // Obtener ofertas reales de este país de la BD
-  let totalOfertas = 0;
-  try {
-    const pool = getPool();
-    // country en la BD está en minúsculas (ej: "de"); el código aquí viene en
-    // mayúsculas ("DE"). Con "=" exacto no casaba y mostraba ~0 ofertas aunque
-    // el país tuviera cientos de miles. Se compara en minúsculas y solo ofertas
-    // vivas (no caducadas), igual que el resto de la app.
-    const countRes = await pool.query(
-      `SELECT COUNT(*) FROM "JobListing"
-       WHERE "isActive" = true AND ("expiresAt" > now() OR "expiresAt" IS NULL)
-         AND LOWER("country") = LOWER($1)`,
-      [codigo]
-    );
-    totalOfertas = parseInt(countRes.rows[0].count);
-  } catch (err) { console.error("[trabajar-en] Error DB:", (err as Error).message); }
+  // Ofertas reales de este país: de la cuenta compartida (ver
+  // lib/job-search/ofertas-por-pais.ts). Contarlas aquí tardaba más que el
+  // tiempo máximo de la conexión y la página decía "0 Ofertas activas".
+  const totalOfertas = ofertasDe(await ofertasPorPais(), codigo);
 
   const primerosPasos = getPrimerosPasos(codigo);
 
@@ -126,7 +114,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
       <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5 text-center">
-            <p className="text-2xl font-bold text-[#22c55e]">{totalOfertas.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-[#22c55e]">{totalOfertas ? totalOfertas.toLocaleString("es-ES") : "Miles"}</p>
             <p className="text-xs text-[#64748b] mt-1">Ofertas activas</p>
           </div>
           <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5 text-center">

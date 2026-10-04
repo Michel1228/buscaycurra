@@ -3,9 +3,10 @@ import LogoGusano from "@/components/LogoGusano";
 import BuscadorPublico from "@/components/BuscadorPublico";
 import PWAInstallButton from "@/components/PWAInstallButton";
 import PublicHeader from "@/components/PublicHeader";
-import { getPool } from "@/lib/db";
+import { ofertasPorPais } from "@/lib/job-search/ofertas-por-pais";
 import { NUM_PAISES } from "@/lib/paises";
-import { Bot, BarChart3, DollarSign, Mail, Lock, Check, X } from "lucide-react";
+import { LIMITS } from "@/lib/plan-limits";
+import { Bot, BarChart3, DollarSign, Mail, Check, X } from "lucide-react";
 
 // La landing se CACHEA y se regenera cada 30 min (ISR con stale-while-revalidate).
 // Antes era force-dynamic → ejecutaba la query pesada de getRealStats (GROUP BY sobre
@@ -13,6 +14,9 @@ import { Bot, BarChart3, DollarSign, Mail, Lock, Check, X } from "lucide-react";
 // (WebView) eso se veía como una PANTALLA NEGRA al arrancar (rechazo Apple 2.1a). Ahora
 // el HTML se sirve al instante desde caché y el arranque es inmediato.
 export const revalidate = 1800;
+
+// El canonical de la portada va aquí y no en el layout raíz (ver app/layout.tsx).
+export const metadata = { alternates: { canonical: "https://buscaycurra.es" } };
 
 function formatOfertas(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} millones de`;
@@ -22,14 +26,13 @@ function formatOfertas(n: number): string {
 
 async function getRealStats() {
   try {
-    const pool = getPool();
-    const { rows } = await pool.query(`
-      SELECT UPPER(country) AS code, COUNT(*)::int AS total
-      FROM "JobListing"
-      WHERE "isActive" = true AND country IS NOT NULL AND country != ''
-      GROUP BY UPPER(country)
-      ORDER BY total DESC
-    `);
+    // La misma cuenta que las páginas de país (lib/job-search/ofertas-por-pais.ts):
+    // se calcula una vez cada 6 horas y la comparten todas.
+    const mapa = await ofertasPorPais();
+    if (!mapa) return null;
+    const rows = Object.entries(mapa)
+      .map(([code, total]) => ({ code, total }))
+      .sort((a, b) => b.total - a.total);
     const totalGlobal = rows.reduce((sum: number, r: {total: number}) => sum + r.total, 0);
     const countryCount = rows.filter((r: {code: string}) => r.code !== '' && r.code !== null).length;
     return { totalGlobal, rows, countryCount };
@@ -118,18 +121,23 @@ export default async function LandingPage() {
       nombre: "Gratis", precio: "0", periodo: "", 
       desc: "Para probar sin compromiso", 
       items: [
-        "📸 3 búsquedas por cámara",
-        "🧠 2 consultas a Guzzi (total)",
-        "📄 1 CV creado con IA",
+        // DE LOS LÍMITES DE VERDAD, como /precios. Esta tarjeta estaba escrita a
+        // mano y describía un plan que ya no existe: dos consultas a Guzzi en
+        // total y ningún envío, con una etiqueta roja que lo repetía, cuando el
+        // gratis tiene 15 consultas y 3 envíos AL DÍA (auditoría del 3 oct
+        // 2026). Escondía el mejor argumento que tenemos.
+        `📤 ${LIMITS.free.enviosCVDia} envíos de CV al día`,
+        `🧠 ${LIMITS.free.guzziMaxConsultasDia} consultas al día a Guzzi`,
+        `📸 ${LIMITS.free.camaraMaxUsos} búsquedas por cámara al día`,
+        `📄 ${LIMITS.free.cvConIAGratis} CV creado con IA`,
         `Búsqueda en ${NUM_PAISES} países`,
         "Pipeline de candidaturas",
         "Comparador de salarios",
-        "💾 10 ofertas guardadas"
+        `💾 ${LIMITS.free.ofertasGuardadas} ofertas guardadas`
       ], 
-      nota: "Sin tarjeta · Sin envíos de CV · Sin cartas IA", 
+      nota: "Sin tarjeta · Sin carta personalizada con IA", 
       destacado: false, 
       cta: "Empezar gratis",
-      limitado: true
     },
     { 
       nombre: "Esencial", precio: "2,99", periodo: "/mes", 
@@ -180,9 +188,9 @@ export default async function LandingPage() {
         "Entrevistas ilimitadas",
         "CVs ilimitados",
         "💾 Ofertas ilimitadas",
-        "🔌 API e integraciones",
+        // Ni la API ni un panel de equipo existen: no se venden (igual que /precios).
+        "🔌 API e integraciones (próximamente)",
         "Códigos promocionales",
-        "Dashboard de equipo",
         "Soporte 24/7"
       ], 
       nota: "Sin permanencia · Facturación mensual", 
@@ -195,7 +203,7 @@ export default async function LandingPage() {
   const pasos = [
     { num: "1", titulo: "Sube tu CV o cuéntaselo a Guzzi", desc: "En 2 minutos Guzzi analiza tu experiencia, la mejora con IA y la adapta al formato que esperan las empresas." },
     { num: "2", titulo: "Elige dónde quieres trabajar", desc: `España, Alemania, Irlanda... Guzzi escanea cientos de miles de ofertas en ${PAISES} países. Filtra por salario, sector y tipo de contrato.` },
-    { num: "3", titulo: "Guzzi envía. Tú solo vas a la entrevista.", desc: "Carta personalizada para cada empresa. Envío en el momento exacto en que el reclutador abre el email. Automático." },
+    { num: "3", titulo: "Guzzi envía. Tú solo vas a la entrevista.", desc: "Carta personalizada para cada empresa. Sale en horario laboral, cuando de verdad se leen los correos. Automático." },
   ];
 
   // ── Superpotencias ──
@@ -243,14 +251,14 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
 
   // ── FAQ ──
   const faq = [
-    { q: "¿Es realmente gratis para los candidatos?", a: "Sí, completamente. El plan gratuito permite buscar ofertas, usar el pipeline y comparar salarios. No incluye Guzzi (asistente IA) ni envío de CVs. Para enviar candidaturas y usar Guzzi necesitas un plan de pago — desde 2,99€/mes con 15 envíos al día y 30 consultas a Guzzi." },
+    { q: "¿Es realmente gratis para los candidatos?", a: `Sí. El plan gratuito incluye ${LIMITS.free.enviosCVDia} envíos de CV al día, ${LIMITS.free.guzziMaxConsultasDia} consultas al día a Guzzi, el buscador, el pipeline y el comparador de salarios, sin tarjeta. Si necesitas más, el plan Esencial cuesta 2,99 €/mes: ${LIMITS.esencial.enviosCVDia} envíos y ${LIMITS.esencial.guzziMaxConsultasDia} consultas al día, y carta personalizada con IA.` },
     { q: "¿En cuántos países busca Guzzi?", a: `Actualmente en ${PAISES} países: España, Alemania, Reino Unido, Estados Unidos, Canadá, Francia, Suecia, Australia, Países Bajos, Italia, Suiza, Irlanda, Bélgica, Portugal, Noruega, Polonia, Dinamarca, Austria, Finlandia y más. Añadimos países nuevos constantemente.` },
     { q: "¿Cómo funciona el envío automático de CVs?", a: "Nuestra IA adapta tu CV a cada oferta antes de enviarlo. No es spam — cada candidatura se personaliza con el perfil y palabras clave de la empresa. Tú marcas sector, países y tipo de contrato, y Guzzi trabaja por ti." },
     { q: "¿Es legal enviar CVs automáticamente?", a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente inteligente que te representa — sin cobrarte comisiones ni quedarse con parte de tu salario." },
     { q: "¿Puedo buscar trabajo en el extranjero sin hablar el idioma?", a: "Sí. Guzzi traduce ofertas a 12 idiomas y adapta tu CV al formato de cada país. Muchas empresas multinacionales trabajan en inglés. Además, si quieres emigrar, te mostramos qué países tienen más demanda de tu perfil y qué salarios ofrecen." },
-    { q: "¿Qué diferencia hay con InfoJobs, LinkedIn o Indeed?", a: `InfoJobs, LinkedIn e Indeed son tablones de anuncios: tú buscas, tú filtras, tú envías. El 95% de esos CVs no llegan a ningún humano. BuscayCurra es activo: Guzzi trabaja por ti 24/7, adapta tu CV a cada oferta y envía candidaturas automáticamente en ${NUM_PAISES} países. No es un portal de empleo. Es tu agente personal de búsqueda.` },
+    { q: "¿Qué diferencia hay con InfoJobs, LinkedIn o Indeed?", a: `InfoJobs, LinkedIn e Indeed son tablones de anuncios: tú buscas, tú filtras, tú envías. Muchos de esos CVs ni se llegan a leer. BuscayCurra es activo: Guzzi trabaja por ti 24/7, adapta tu CV a cada oferta y envía candidaturas automáticamente en ${NUM_PAISES} países. No es un portal de empleo. Es tu agente personal de búsqueda.` },
     { q: "¿Puedo ver las ofertas sin registrarme?", a: "Sí. El buscador público está disponible sin cuenta. Puedes explorar ofertas por país, salario y sector. Para enviar candidaturas y usar la IA necesitas crear una cuenta — es gratis y tarda 30 segundos." },
-    { q: "¿En cuánto tiempo puedo encontrar trabajo?", a: "La media de nuestros usuarios activos que usan envío automático es de 3 semanas. Con CV bien optimizado y búsqueda en varios países, los usuarios suelen recibir respuesta en 1-2 semanas. Tu caso depende de tu sector y experiencia." },
+    { q: "¿En cuánto tiempo puedo encontrar trabajo?", a: "Depende de tu sector, tu zona y tu experiencia, y no te vamos a dar una cifra que no podamos demostrar. Lo que sí sabemos es que ayuda mandar más candidaturas y mejor dirigidas: con un CV claro y carta adaptada a cada empresa, cada envío cuenta más." },
   ];
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
@@ -792,16 +800,6 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                         style={{ background: "#22c55e", color: "#fff" }}
                       >
                         {plan.tag}
-                      </span>
-                    </div>
-                  )}
-                  {plan.limitado && (
-                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                      <span
-                        className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                        style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}
-                      >
-                        <Lock className="w-3 h-3 inline" /> Sin Guzzi ni envíos
                       </span>
                     </div>
                   )}

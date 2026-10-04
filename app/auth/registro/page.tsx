@@ -128,7 +128,7 @@ function RegistroPageInner() {
             {[
               { icon: "🌍", title: `${NUM_PAISES} países, un solo agente`, desc: "Busca en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
               { icon: "🎯", title: "CV único para cada oferta", desc: "Tu CV se adapta a cada empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
-              { icon: "⏰", title: "Enviado cuando toca", desc: "Tu candidatura llega cuando el reclutador abre el email. Timing inteligente." },
+              { icon: "⏰", title: "Enviado cuando toca", desc: "Tu candidatura sale en horario laboral, cuando de verdad se leen los correos." },
             ].map(p => (
               <div key={p.title} className="flex items-start gap-3 p-3 rounded-xl"
                 style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
