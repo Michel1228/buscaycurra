@@ -101,12 +101,17 @@ export default function PerfilPage() {
     init();
   }, [router]);
 
-  // Auto-guardar
+  // Auto-guardar, SOLO si la persona ha cambiado algo. Antes se armaba en cuanto
+  // se sabía quién era, antes de que llegara el perfil: con mala cobertura (la
+  // consulta tardaba más de 3 s) guardaba los campos todavía vacíos y borraba
+  // teléfono, ciudad, provincia, código postal y sector (auditoría del 3 oct
+  // 2026). La ciudad es la que usan las alertas de ofertas.
+  const tocadoRef = useRef(false);
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || cargando || !tocadoRef.current) return;
     const timeout = setTimeout(() => guardarPerfil(), 3000);
     return () => clearTimeout(timeout);
-  }, [perfil, userId]);
+  }, [perfil, userId, cargando]);
 
   async function guardarPerfil() {
     if (!userId || guardando) return;
@@ -159,6 +164,7 @@ export default function PerfilPage() {
   }
 
   function updateField(field: keyof PerfilData, value: string) {
+    tocadoRef.current = true;
     setPerfil(prev => ({ ...prev, [field]: value }));
   }
 

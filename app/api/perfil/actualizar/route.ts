@@ -68,6 +68,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No hay nada que guardar" }, { status: 400 });
   }
 
+  // Un guardado que deja TODO en blanco no lo hace una persona: es una pantalla
+  // que guardó antes de cargar el perfil. Pasó con mala cobertura y borró
+  // teléfono, ciudad, provincia, código postal y sector (auditoría del 3 oct 2026).
+  if (Object.values(cambios).every((v) => v === "")) {
+    return NextResponse.json({ error: "No se guarda un perfil vacío." }, { status: 400 });
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,

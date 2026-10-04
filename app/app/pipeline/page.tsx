@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import InfoTooltip from "@/components/InfoTooltip";
 import { PartyPopper, Inbox, AtSign } from "lucide-react";
+import { CORREO_ANOTACION_MANUAL } from "@/lib/cv-sender/anotacion";
 
 type EstadoCandidatura = "enviado" | "visto_empresa" | "en_revision" | "entrevista" | "oferta" | "descartado";
 
@@ -81,7 +82,7 @@ export default function PipelinePage() {
           return {
             id: e.id,
             empresa: e.company_name || "Empresa desconocida",
-            email: e.company_email || "",
+            email: e.company_email === CORREO_ANOTACION_MANUAL ? "" : (e.company_email || ""),
             puesto: e.job_title || "Candidatura espontánea",
             estado: pipelineEstado,
             fecha: e.created_at,
@@ -139,21 +140,31 @@ export default function PipelinePage() {
     try {
       const session = (await getSupabaseBrowser().auth.getSession()).data.session;
       if (!session) return;
-      const { data } = await getSupabaseBrowser().from("cv_sends").insert({
+      // UNA ANOTACIÓN NO ES UN ENVÍO. Se guardaba como "enviado" y gastaba el
+      // cupo del plan: tres candidaturas apuntadas a mano dejaban a un usuario
+      // gratis sin poder mandar ni un CV ese día, y salían en el historial de
+      // envíos con el correo inventado (auditoría del 3 oct 2026). "cancelado"
+      // es el estado que la tabla admite y que no cuenta para el cupo; la
+      // columna del tablero va en pipeline_estado y la marca de anotación es
+      // CORREO_ANOTACION_MANUAL.
+      const { data, error } = await getSupabaseBrowser().from("cv_sends").insert({
         user_id: session.user.id,
         company_name: nueva.empresa.trim(),
-        company_email: "manual@buscaycurra.es",
+        company_email: CORREO_ANOTACION_MANUAL,
         job_title: nueva.puesto.trim() || null,
-        status: "enviado",
-        error_message: nueva.notas.trim()
-          ? JSON.stringify({ pipeline_estado: "enviado", notas: nueva.notas.trim() })
-          : null,
+        status: "cancelado",
+        error_message: JSON.stringify({ pipeline_estado: "enviado", ...(nueva.notas.trim() ? { notas: nueva.notas.trim() } : {}) }),
       }).select().single();
+      if (error || !data) {
+        console.error("[pipeline] no se creó la candidatura:", error?.message);
+        alert("No se ha podido guardar la candidatura. Inténtalo de nuevo en un momento.");
+        return;
+      }
       if (data) {
         setCandidaturas(prev => [{
           id: data.id,
           empresa: data.company_name,
-          email: data.company_email || "",
+          email: "",
           puesto: data.job_title || "Candidatura espontánea",
           estado: "enviado",
           fecha: data.created_at,

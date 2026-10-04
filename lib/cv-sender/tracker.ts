@@ -10,6 +10,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { ESTADOS_QUE_GASTAN_CUOTA } from "./rate-limiter";
+import { CORREO_ANOTACION_MANUAL } from "./anotacion";
 
 // ─── Cliente Supabase (inicializado de forma diferida) ────────────────────────
 // Usamos la clave de servicio (service role) para operaciones del servidor.
@@ -361,6 +362,8 @@ export async function getUserSendHistory(
     .select("*")
     .eq("user_id", userId)
     .neq("hidden", true) // ocultar los que el usuario "borró" (soft-delete)
+    // Las candidaturas apuntadas a mano en el pipeline no son envíos.
+    .or(`company_email.is.null,company_email.neq.${CORREO_ANOTACION_MANUAL}`)
     .order("created_at", { ascending: false })
     .limit(limit);
 

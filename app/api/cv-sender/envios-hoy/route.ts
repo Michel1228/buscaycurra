@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { PLAN_LIMITS } from "@/lib/cv-sender/plans";
 import { getUserFromToken, extractToken } from "@/lib/auth-server";
 import { getPlanEfectivo } from "@/lib/plan-limits";
+import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,10 @@ export async function GET(request: NextRequest) {
       .from("cv_sends")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
+      // Los mismos estados que el límite del plan: contaba también los
+      // cancelados, fallidos y rebotados, y la pantalla decía "3/3" cuando el
+      // límite real todavía dejaba enviar (auditoría del 3 oct 2026).
+      .in("status", ESTADOS_QUE_GASTAN_CUOTA)
       .gte("created_at", hoy.toISOString());
 
     const planKey = (plan in PLAN_LIMITS ? plan : "free") as keyof typeof PLAN_LIMITS;

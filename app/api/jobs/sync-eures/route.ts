@@ -164,7 +164,9 @@ export async function POST(req: NextRequest) {
 // español al menos se entiende, y buscar "Francia" las encuentra.
 const nombrePais = new Intl.DisplayNames(["es"], { type: "region" });
 function ciudadDe(jv: EuresJV): string {
-  const codigo = paisDe(jv).toUpperCase();
+  // La UE usa "EL" para Grecia y "UK" para Reino Unido; el estándar, GR y GB.
+  const crudo = paisDe(jv).toUpperCase();
+  const codigo = crudo === "EL" ? "GR" : crudo === "UK" ? "GB" : crudo;
   if (!codigo) return "";
   try { return nombrePais.of(codigo) || codigo; } catch { return codigo; }
 }

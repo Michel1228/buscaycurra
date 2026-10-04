@@ -694,6 +694,26 @@ test("Guzzi entiende oficio, cuenta, au pair, articulos y el texto para el CV", 
     try { unlinkSync(salida); } catch { /* da igual */ }
   }
 });
+// Auditoria del 3 oct 2026: con mala cobertura el autoguardado del perfil se
+// disparaba antes de cargar y BORRABA telefono, ciudad, provincia, CP y sector.
+test("el perfil no se autoguarda antes de cargar ni se guarda vacio", () => {
+  const p = leerFuente("app/app/perfil/page.tsx");
+  const api = leerFuente("app/api/perfil/actualizar/route.ts");
+  return p.includes("if (!userId || cargando || !tocadoRef.current) return;") && p.includes("tocadoRef.current = true;")
+    && api.includes('Object.values(cambios).every((v) => v === "")');
+});
+// Auditoria del 3 oct 2026: apuntar una candidatura a mano en el pipeline
+// contaba como CV enviado y agotaba el cupo del dia; y "envios de hoy" contaba
+// tambien cancelados, fallidos y rebotados.
+test("las candidaturas apuntadas a mano no gastan cupo ni salen como envios", () => {
+  const pipe = leerFuente("app/app/pipeline/page.tsx");
+  const tracker = leerFuente("lib/cv-sender/tracker.ts");
+  const hoy = leerFuente("app/api/cv-sender/envios-hoy/route.ts");
+  return /company_email: CORREO_ANOTACION_MANUAL,\s*job_title: [^\n]+\n\s*status: "cancelado"/.test(pipe)
+    && tracker.includes("company_email.neq.${CORREO_ANOTACION_MANUAL}")
+    && hoy.includes('.in("status", ESTADOS_QUE_GASTAN_CUOTA)');
+});
+
 // Auditoria del 3 oct 2026: /api/reviews (sin sesion) gastaba Google Places de
 // pago con cada empresa nueva; un anonimo podia agotar el tope del dia.
 test("las reseñas solo piden Google Places con sesion y lo guardan 7 dias", () => {
