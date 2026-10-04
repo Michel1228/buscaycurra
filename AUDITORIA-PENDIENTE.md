@@ -84,6 +84,126 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   caché de npm y de Python. `build-deploy.sh` borra ya la imagen vieja en cada
   despliegue (`4d928f6`). Las copias de seguridad (7 días, 14 GB) no se tocan.
 
+## AUDITORÍA COMPLETA (2-3 oct 2026)
+
+Michel pidió revisar la aplicación entera "para que esos errores no se vuelvan
+a suceder". Cinco agentes probaron como usuarios (Guzzi, envíos, ofertas, CV,
+seguridad) con cuentas `delivered+qa-...@resend.dev`; sus informes, con la
+forma de reproducir cada fallo, quedaron en la carpeta temporal de la sesión.
+Todo lo de abajo está desplegado y con su prueba en el sello, comprobada contra
+el código anterior (falla con él, pasa con el nuevo).
+
+### Cómo se evita que vuelva a pasar
+
+- **El sello es obligatorio antes de construir** (`2a25415`): si una prueba
+  falla, `build-deploy.sh` no despliega. Ya no depende de acordarse.
+- **El centinela recorre la app como un usuario cada mañana** (`b06c21f`,
+  `lib/centinela/recorrido.ts`): Mejorar con IA, nota ATS, Guzzi editar CV, PDF
+  del móvil con datos, CVs guardados, bienvenida tras confirmar, tablas del
+  borrado de cuenta y (R8) recuperar la contraseña con el enlace abierto en
+  otro navegador.
+- **Una sola pieza para cada cosa**: `normalizar.ts` + `html-guardado.ts` (el
+  CV), `descargar-pdf.ts` (la descarga), `borrar-datos.ts` (el borrado de
+  cuenta), `envio-local.ts` (la lista de negocios de Guzzi y su respuesta),
+  `oferta-viva.ts` (si la oferta sigue publicada).
+
+### Arreglado, desplegado y comprobado
+
+- [x] **Registro: confirmar en otro navegador daba error y sin bienvenida**
+  (`6d052ca`). Bienvenidas atrasadas mandadas a quien se quedó sin ella.
+- [x] **CV: el trabajo actual salía debajo, se perdían datos sin título y
+  autoguardado al salir** (`92f3b80`). PDF "sin datos": `0a48ddd`, `b06c21f`.
+- [x] **Eliminar la cuenta dejaba datos y las fotos seguían públicas**
+  (`fbb747e`). Borrados los restos de 4 cuentas ya eliminadas.
+- [x] **CRÍTICO — un "vale" u "ok gracias" de Guzzi mandaba el CV a una
+  empresa que nadie había elegido** (`3925a0f`), buscando el correo en Tudela
+  fuera cual fuera la ciudad y en buscadores. Ahora solo un sí a la propuesta
+  recién hecha, con el negocio elegido, y solo correos de la web del negocio.
+- [x] **Envíos** (`d605c30`): el correo a la empresa admitía HTML desde
+  noreply@ (30 etiquetas sin escapar en la prueba); el mismo CV se podía
+  repetir al minuto (la espera de 15 días no contaba "entregado"); la carta
+  inventaba experiencia (3 de 3 cartas antes, 0 de 3 después).
+- [x] **Contraseña olvidada** (`1e23f2e`): el correo salía en inglés y el
+  enlace solo funcionaba en el navegador donde se pidió. 11 personas lo
+  pidieron y 4 no han entrado nunca. Ahora el correo es nuestro, en español, y
+  el enlace vale en cualquier navegador. Probado en producción de punta a punta.
+- [x] **Ofertas** (`c22d92f`): no se podía quitar una guardada (y la ficha
+  volvía sola a "Guardar"); empresa y descripción en minúsculas; sin
+  resultados salían 50 ofertas de cualquier cosa; "jornada parcial" y "remoto"
+  no filtraban. Comprobado en producción.
+- [x] **EURES con "FR", "NO"... como ciudad** (`287e1a6`): 371.622 ofertas
+  corregidas al nombre del país (el código sigue en `country`).
+- [x] **Ofertas cerradas en origen** (`6b10e20`): la ficha comprueba si la web
+  de origen la sigue teniendo; si da 404/410 la retira, lo avisa y no deja
+  gastar el envío. El buscador comprueba en segundo plano lo que enseña.
+- [x] **Guzzi** (`be629a5`): cursos a quien habla de su oficio; no redactaba
+  el texto que prometía; "borrar mis datos" iba al editor del CV; carta de au
+  pair; "en la Rioja". La ficha devolvía un 85 % de compatibilidad inventado.
+- [x] **Guiones U+2011 de la IA gratuita** (`be58fef`) que rompían el correo
+  de la firma y las fechas al copiarlas.
+- [x] **Reseñas y tablas abiertas** (`3ed1a9d`): Google Places solo con sesión
+  y con caché de 7 días; centinela R9 comprueba cada mañana con la clave
+  pública que ninguna tabla de Supabase con datos de personas devuelve filas
+  (hoy, de 22, solo "ofertas", pública a propósito).
+- [x] **Perfil y pipeline** (`e981429`): con mala cobertura el autoguardado
+  BORRABA teléfono, ciudad, provincia, CP y sector; apuntar una candidatura a
+  mano gastaba el cupo de envíos; "envíos de hoy" contaba también los fallidos.
+- [x] **Web pública** (`53f3fd0`): plan gratis falso en la portada, promesas
+  sin respaldo ("media de 3 semanas", "llega cuando el reclutador abre el
+  email", "Dashboard de equipo"), canonical heredado que hundía el SEO, y las
+  52 páginas de país con "0 ofertas".
+- [x] **Alertas** (`470887d`): hasta 12 correos de alertas al día a la misma
+  persona; ahora como mucho uno. "Semanal" de verdad, sin duplicadas, y
+  "Mis alertas" en el perfil para verlas y quitarlas. También: el botón de
+  otro plan para quien ya paga, ventajas inexistentes en Mi Plan, el
+  simulador de entrevistas y los referidos. Probado en el navegador.
+- [x] **Au pair y registro** (`35126a4`): barra de guardar en los cuatro pasos
+  con el aviso visible; el registro enlaza condiciones y privacidad (RGPD).
+
+### Abierto
+
+- [ ] **DECISIÓN DE MICHEL — caducidad de las ofertas de Adzuna.** Caducan a
+  los 60 días de la última vez que se vieron, pero en la muestra del 3 oct casi
+  todas las de más de 7 días ya no existían en Adzuna (404/410). Son 942.793
+  ofertas activas de Adzuna con más de 7 días (35.056 de Adzuna España en
+  total). Bajar su caducidad a 7-10 días bajaría mucho el número de ofertas
+  que se anuncia. La comprobación al abrir la ficha ya protege los envíos.
+- [ ] **DECISIÓN DE MICHEL — escribir a quien no pudo cambiar la contraseña**
+  (6 personas entre el 5 sep y el 3 oct) con un enlace nuevo que ya funciona.
+- [ ] **MICHEL — activar el cambio de plan en el portal de Stripe**
+  (https://dashboard.stripe.com/settings/billing/portal → "Customers can
+  switch plans", con Esencial, Pro y Empresa). Hoy está desactivado: quien
+  pague Esencial no puede subir a Pro. No hay suscripciones activas, así que
+  no afecta a nadie todavía.
+- [ ] **DECISIÓN DE MICHEL — referidos**: invitar no da nada (los "+10 CVs" no
+  los aplicaba ningún límite y se ha quitado la promesa). Si se quiere premio,
+  hay que programarlo en el límite de envíos.
+- [ ] **DECISIÓN DE MICHEL — "N CVs con IA" de /precios**: no se aplica en
+  ningún sitio (Mejorar con IA es libre hasta 40/hora). O se aplica o se quita.
+  Igual con el tope de 200 envíos/día del plan Empresa (no lo pone nada) y con
+  "Soporte 24/7 / prioritario" mientras buscaycurra.es no reciba correo.
+- [ ] Pagos (MEDIO): con un cobro fallido (past_due) se pierde el plan al
+  instante y Mi Plan sigue diciendo "Activo" sin avisar; el webhook de Stripe
+  apunta el evento antes de procesarlo (un fallo no se reintenta); la prueba de
+  7 días de Pro se puede repetir. Los dos últimos, SIN PROBAR.
+- [ ] Guzzi (MEDIO): preguntas de seguimiento ("¿y en Zaragoza?"), "mándame"
+  para uno mismo, "hazme un cv", promesas en textos fijos, extractores.
+- [ ] Envíos (MEDIO): hora de /app/envios con 2 h de desfase, recuadro "Foto"
+  vacío en el PDF sin foto.
+- [ ] Ofertas (MEDIO): móvil con los resultados a 1.121 px, sueldos absurdos,
+  Arbeitsagentur con código postal como ciudad, búsqueda inventada tarda 12 s.
+- [ ] Au pair (MEDIO): "3.020 disponibles" cuando solo 2.186 tienen correo, y
+  876 apuntan a info@sitly.com (un mercado de canguros, no familias).
+- [ ] Web (MEDIO): hreflang inválido en páginas de país, /trabajar-en/españa
+  responde 200 "País no encontrado", número de países distinto en manifest
+  (19) y prompt de Guzzi (49) frente a 26, cifras sin fuente ("95 %", "75 %",
+  "369 €" de InfoJobs), títulos repetidos (/empresas, /cookies), /auth/registro
+  titulado "Iniciar sesión".
+- [ ] Funciones (MEDIO): comparador de salarios con cifras de 3 ofertas
+  (camarero en Valencia 81.000 €), notificaciones que esconden los errores.
+- [ ] Sin probar por presupuesto: empresas por zona, ETT y cámara (Places de
+  pago), envío au pair, escribir una reseña, canjear un código de referido.
+
 ## LOS TRES FALLOS DEL CV (2 oct 2026)
 
 Contados por Michel, reproducidos en producción y arreglados.
