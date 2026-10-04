@@ -14,6 +14,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { pedirBienvenida } from "@/lib/onboarding/pedir-bienvenida";
 
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
@@ -115,6 +116,10 @@ export default function NuevaContrasenaPage() {
 
       // Contraseña cambiada correctamente. El enlace ya no sirve: fuera de la barra.
       window.history.replaceState(null, "", "/auth/nueva-contrasena");
+      // Quien nunca confirmó su cuenta (el enlace la confirma) tampoco tuvo la
+      // bienvenida: ficha, ciudad y alerta. Se pide aquí; el servidor la hace
+      // una sola vez por cuenta.
+      pedirBienvenida((await supabase.auth.getSession()).data.session?.access_token);
       setExito(true);
 
       // Redirigir al dashboard tras 2 segundos
