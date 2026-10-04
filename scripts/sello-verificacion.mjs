@@ -733,6 +733,11 @@ test("au pair: guardar esta en los cuatro pasos y el aviso sale junto al boton",
     && (a.match(/onClick=\{guardar\}/g) || []).length === 1;
 });
 
+// Los correos que invitan a pedir un enlace nuevo llevan ?email=: un enlace
+// directo caduca en una hora y quien lo abre al dia siguiente se lo encuentra
+// muerto. La pagina tiene que traer el correo relleno.
+test("recuperar la contraseña acepta el correo en el enlace (?email=)", () =>
+  leerFuente("app/auth/recuperar/page.tsx").includes('new URLSearchParams(window.location.search).get("email")'));
 test("el registro enlaza las condiciones y la politica de privacidad (RGPD)", () => {
   const r = leerFuente("app/auth/registro/page.tsx");
   return r.includes('href="/terminos"') && r.includes('href="/privacidad"');

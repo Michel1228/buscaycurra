@@ -8,7 +8,7 @@
  * Colores de marca: azul #2563EB y naranja #F97316.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 
@@ -21,6 +21,13 @@ export default function RecuperarPage() {
   const [cargando, setCargando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState("");
+
+  // ?email=... lo trae relleno (lo usan los correos que invitan a pedir un
+  // enlace nuevo: un enlace directo caduca en una hora y este no).
+  useEffect(() => {
+    const deLaUrl = new URLSearchParams(window.location.search).get("email");
+    if (deLaUrl && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(deLaUrl)) setEmail(deLaUrl);
+  }, []);
 
   /**
    * Maneja el envío del formulario de recuperación.
