@@ -267,6 +267,14 @@ function RegistroPageInner() {
                   className="btn-game w-full !py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                   {cargando ? "Creando cuenta..." : "Crear cuenta"}
                 </button>
+                {/* El RGPD obliga a informar al recoger los datos. Las páginas
+                    existían, pero el registro no las enlazaba (auditoría del 3 oct 2026). */}
+                <p className="text-[11px] text-center leading-relaxed" style={{ color: "#64748b" }}>
+                  Al crear la cuenta aceptas las{" "}
+                  <Link href="/terminos" className="underline" style={{ color: "#94a3b8" }}>condiciones de uso</Link>{" "}
+                  y la{" "}
+                  <Link href="/privacidad" className="underline" style={{ color: "#94a3b8" }}>política de privacidad</Link>.
+                </p>
               </form>
             )}
           </div>

@@ -323,7 +323,7 @@ export default function AuPairProfilePage() {
   // ── Guardar ──
   const guardar = useCallback(async () => {
     if (!letterText.trim()) {
-      setError("La carta 'Dear Family' es obligatoria");
+      setError("Falta la carta «Dear Family»: escríbela en el paso 2, «Mi historia» (o genérala allí con IA).");
       return;
     }
     setSaving(true);
@@ -755,12 +755,6 @@ export default function AuPairProfilePage() {
 
       {/* Formulario */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-16 space-y-6">
-        {mensaje && (
-          <div className="bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-xl p-4 text-sm text-[#22c55e]">{mensaje}</div>
-        )}
-        {error && (
-          <div className="bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-xl p-4 text-sm text-[#ef4444]">{error}</div>
-        )}
 
         {seccion === "datos" && (<>
         {/* ── Datos personales ── */}
@@ -1298,14 +1292,22 @@ export default function AuPairProfilePage() {
           </div>
         </div>
 
-        {/* Guardar */}
-        <div className="flex gap-3 justify-end">
-          <button onClick={() => router.push("/app/emigrar")} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-[#252836] text-[#94a3b8] hover:bg-[#3d4152] transition-colors">Cancelar</button>
-          <button onClick={guardar} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#22c55e] hover:bg-[#1ea34d] text-black transition-colors disabled:opacity-50">
+        </>)}
+
+        {/* GUARDAR, EN LOS CUATRO PASOS Y CON EL AVISO AL LADO. El botón solo
+            existía al final del paso 4 y el aviso (guardado o error, como "falta
+            la carta") salía arriba del todo, 13.000 px fuera de la pantalla en el
+            móvil: la persona pulsaba y "no pasaba nada", y si salía antes de
+            llegar al paso 4 perdía lo escrito (auditoría del 3 oct 2026). */}
+        <div className="sticky bottom-0 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 flex items-center gap-3"
+          style={{ background: "#0f1117", borderTop: "1px solid #2d3142" }}>
+          <p role="status" aria-live="polite" className="flex-1 text-xs" style={{ color: error ? "#ef4444" : "#22c55e" }}>
+            {error || mensaje}
+          </p>
+          <button onClick={guardar} disabled={saving} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#22c55e] hover:bg-[#1ea34d] text-black transition-colors disabled:opacity-50 flex-shrink-0">
             {saving ? "Guardando..." : <><Save size={14} strokeWidth={1.8} className="inline mr-1.5" />{T.guardarPerfil}</>}
           </button>
         </div>
-        </>)}
       </section>
 
       {/* Comparativa legal y calculadora de costes son específicas de Au Pair

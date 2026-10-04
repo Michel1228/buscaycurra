@@ -724,6 +724,20 @@ test("las alertas: un correo al dia como mucho, semanal de verdad y se pueden qu
     && leerFuente("components/MisAlertas.tsx").includes('method: "DELETE"');
 });
 
+// Auditoria del 3 oct 2026: en au pair el boton de guardar solo estaba en el
+// paso 4 y su aviso salia 13.000 px por encima, fuera de la pantalla del movil.
+test("au pair: guardar esta en los cuatro pasos y el aviso sale junto al boton", () => {
+  const a = leerFuente("app/app/au-pair/page.tsx");
+  const barra = a.indexOf('className="sticky bottom-0 z-30');
+  return barra > 0 && a.indexOf("onClick={guardar}") > barra && a.indexOf("{error || mensaje}") > barra
+    && (a.match(/onClick=\{guardar\}/g) || []).length === 1;
+});
+
+test("el registro enlaza las condiciones y la politica de privacidad (RGPD)", () => {
+  const r = leerFuente("app/auth/registro/page.tsx");
+  return r.includes('href="/terminos"') && r.includes('href="/privacidad"');
+});
+
 // Auditoria del 3 oct 2026, web publica: la portada describia un plan gratis
 // que no existe ("2 consultas a Guzzi (total)", "Sin envios de CV"), vendia un
 // "Dashboard de equipo" que no existe y una cifra inventada ("la media de
