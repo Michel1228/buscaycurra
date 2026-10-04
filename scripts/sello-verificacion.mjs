@@ -839,7 +839,7 @@ test("Guzzi envia el CV a un correo que le das, y solo tras un si", async () => 
     if (detectIntent("sí, envíalo", [{ role: "user", text: "sí, envíalo" }]) === "enviar_correo_confirmar") fallos.push("un si sin propuesta envia");
     if (detectIntent("mi correo es pepe@gmail.com", [{ role: "user", text: "mi correo es pepe@gmail.com" }]) === "enviar_correo") fallos.push("dar tu propio correo dispara un envio");
     const chat = leerFuente("app/api/gusi/chat/route.ts");
-    if (!chat.includes('preIntent === "enviar_correo_confirmar"') || !chat.includes('"http://localhost:3000/api/cv-sender/send"')) fallos.push("la ruta no envia por /api/cv-sender/send");
+    if (!chat.includes('preIntent === "enviar_correo_confirmar"') || !chat.includes("${BASE_INTERNA}/api/cv-sender/send")) fallos.push("la ruta no envia por /api/cv-sender/send");
     fallos.forEach((f) => console.log(`     ↳ ${f}`));
     return fallos.length === 0;
   } catch (e) {
@@ -848,6 +848,25 @@ test("Guzzi envia el CV a un correo que le das, y solo tras un si", async () => 
   } finally {
     for (const s of salidas) { try { unlinkSync(s); } catch { /* da igual */ } }
   }
+});
+
+// 4 oct 2026: el servidor solo escuchaba en la IP del contenedor (Docker pone
+// en HOSTNAME su identificador) y las llamadas internas a localhost fallaban:
+// ningun envio desde Guzzi salio nunca. Las pruebas de codigo pasaban.
+test("el servidor escucha en todas las direcciones y nadie se llama por localhost", () => {
+  const arranque = leerFuente("scripts/docker-start.sh");
+  const sueltos = [];
+  const recorrer = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = `${dir}/${e.name}`;
+      if (e.isDirectory()) { if (e.name !== "node_modules" && !e.name.startsWith(".")) recorrer(p); continue; }
+      if (/\.(ts|tsx)$/.test(e.name) && /fetch\(\s*[`"']http:\/\/localhost:3000/.test(leerFuente(p))) sueltos.push(p);
+    }
+  };
+  recorrer("app"); recorrer("lib");
+  sueltos.forEach((p) => console.log(`     ↳ ${p} llama a localhost:3000`));
+  return arranque.includes("export HOSTNAME=0.0.0.0") && arranque.indexOf("export HOSTNAME=0.0.0.0") < arranque.indexOf("exec node server.js")
+    && sueltos.length === 0 && leerFuente("lib/centinela/recorrido.ts").includes("R10. Guzzi envía el CV a un correo");
 });
 
 test("el envio a un negocio no usa correos de buscadores ni ciudad fija", () => {

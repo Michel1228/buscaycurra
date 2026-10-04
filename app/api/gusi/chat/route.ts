@@ -25,6 +25,10 @@ import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import { callGroq, callDeepSeek, callOpenAI, deepseekApagado, apagarDeepSeek } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 
+// Llamadas del servidor a sí mismo. 127.0.0.1 y no "localhost": en Node,
+// localhost puede resolverse primero a ::1 (IPv6) y el servidor escucha en IPv4.
+const BASE_INTERNA = `http://127.0.0.1:${process.env.PORT || 3000}`;
+
 export const dynamic = "force-dynamic";
 
 
@@ -1188,7 +1192,7 @@ El candidato tiene mucha experiencia.
         return NextResponse.json({ reply: "¿A qué correo y a qué empresa lo mando? Pásamelos y lo preparo.", action: "enviar_correo" });
       }
       try {
-        const sendRes = await fetch("http://localhost:3000/api/cv-sender/send", {
+        const sendRes = await fetch(`${BASE_INTERNA}/api/cv-sender/send`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1839,7 +1843,7 @@ El candidato tiene mucha experiencia.
       try {
         const authHeader = req.headers.get("authorization");
         const cookieHeader = req.headers.get("cookie");
-        const sendRes = await fetch(`http://localhost:3000/api/gusi/send-cv-local`, {
+        const sendRes = await fetch(`${BASE_INTERNA}/api/gusi/send-cv-local`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

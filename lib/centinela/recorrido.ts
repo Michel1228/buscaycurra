@@ -242,6 +242,31 @@ export async function recorridoDeUsuario(anota: Anota): Promise<void> {
     anota("he olvidado mi contraseña: llega el correo y el enlace funciona", false, (e as Error).message, nacioR8);
   }
 
+  // ── R10. Guzzi envía el CV a un correo: propuesta, "sí" y queda en la cola ──
+  // El envío desde Guzzi no funcionó nunca en producción: llamaba al propio
+  // servidor en localhost y el servidor solo escuchaba en la IP del contenedor
+  // ("fetch failed"). Las pruebas del código pasaban; solo se veía usándolo.
+  // Un correo de prueba distinto cada día (la espera de 15 días es por correo).
+  const nacioR10 = "4 oct 2026: Guzzi no sabía enviar a un correo y, por debajo, ningún envío desde el chat llegaba a salir";
+  try {
+    const destino = `delivered+recorrido-envio-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}@resend.dev`;
+    const historia: Array<{ role: string; text: string }> = [];
+    const decir = async (message: string) => {
+      historia.push({ role: "user", text: message });
+      const r = await post("/api/gusi/chat", { message, history: historia });
+      const d = await r.json().catch(() => ({})) as { reply?: string; action?: string };
+      historia.push({ role: "gusi", text: d.reply || "" });
+      return d;
+    };
+    const p1 = await decir(`manda mi currículum a la empresa Recorrido Diario, correo ${destino}, para el puesto de camarero`);
+    const p2 = p1.action === "enviar_correo" ? await decir("sí, envíalo") : p1;
+    anota("Guzzi envía el CV a un correo que le das", p2.action === "cv_enviado",
+      p2.action === "cv_enviado" ? "propuesta, confirmación y envío en cola" : `se quedó en "${p2.action}": ${(p2.reply || "").slice(0, 120)}`,
+      nacioR10);
+  } catch (e) {
+    anota("Guzzi envía el CV a un correo que le das", false, (e as Error).message, nacioR10);
+  }
+
   // ── R9. Con la clave pública ninguna tabla con datos de personas devuelve filas ──
   // La clave pública va en el JavaScript de la web: cualquiera la tiene. Las
   // tablas se crean a mano en el panel de Supabase, y una tabla nueva sin RLS
