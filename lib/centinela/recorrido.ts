@@ -54,7 +54,10 @@ async function prepararCuenta(admin: SupabaseClient): Promise<{ token: string; u
     usuario = data.user;
   }
   const userId = usuario.id;
-  await admin.from("profiles").upsert({ id: userId, email: CUENTA, full_name: "Recorrido Diario", ciudad: "Tudela", plan: "free" }, { onConflict: "id" });
+  // Plan Pro: con el gratuito (3 CVs al día) pasar el centinela varias veces el
+  // mismo día agotaba el cupo y daba una falsa alarma en R10 (6 oct 2026). La
+  // comprobación "todo plan de pago viene de un pago" ignora las @resend.dev.
+  await admin.from("profiles").upsert({ id: userId, email: CUENTA, full_name: "Recorrido Diario", ciudad: "Tudela", plan: "pro", subscription_status: "active" }, { onConflict: "id" });
   const pool = getPool();
   const { rows } = await pool.query(`SELECT 1 FROM user_cvs WHERE user_id = $1 LIMIT 1`, [userId]);
   if (!rows.length) {

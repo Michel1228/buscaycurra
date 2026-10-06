@@ -17,7 +17,7 @@ interface Metricas {
   generado: string;
   usuarios: { total: number; alta1: number; alta7: number; alta30: number; porDia: Record<string, number> };
   planes: Record<string, number>;
-  suscriptores: { activos: number; conOrigenPago: number };
+  suscriptores: { activos: number | null; conOrigenPago: number };
   actividad: { cvTotal: number; cv7: number; cv30: number; conversaciones: number };
   ofertas: { vivas: number; conEmail: number; paises: number; nuevas24h: number; error?: string };
   descargas?: { apple: DescargasTienda; googlePlay: DescargasTienda };
@@ -219,8 +219,9 @@ export default function PanelMetricas() {
 
         <p className="text-[11px] uppercase tracking-wide mb-2" style={{ color: "#64748b" }}>Dinero</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <Tarjeta titulo="Suscriptores activos" valor={d.suscriptores.activos}
-            color={d.suscriptores.activos > 0 ? "#22c55e" : "#f59e0b"} />
+          <Tarjeta titulo="Suscriptores activos" valor={d.suscriptores.activos ?? "—"}
+            pie={d.suscriptores.activos === null ? "no se pudo leer Stripe" : "pagando ahora (Stripe + iPhone)"}
+            color={(d.suscriptores.activos ?? 0) > 0 ? "#22c55e" : "#f59e0b"} />
           <Tarjeta titulo="Han pasado por caja" valor={d.suscriptores.conOrigenPago} pie="alguna vez" />
           <Tarjeta titulo="Cobros" valor={d.cobros.disponible ? d.cobros.numero : "—"} />
           <Tarjeta titulo="Facturado" valor={d.cobros.disponible ? `${d.cobros.importe.toFixed(2)} €` : "—"} />

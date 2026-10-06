@@ -918,6 +918,13 @@ test("los CVs pueden salir por una cuenta aparte y sus avisos de entrega se acep
   return es.includes("process.env.RESEND_API_KEY_CV") && es.includes("const remitente = remitenteDeCVs();")
     && ent.includes("process.env.RESEND_WEBHOOK_SECRET_CV") && lim.includes('" (cuenta de CVs)"');
 });
+// 6 oct 2026: el panel decia "Suscriptores activos: 3" cuando eran 0 (la cuenta
+// de Michel, la de demostracion y una regalada). Ahora cuenta Stripe + iPhone.
+test("el panel cuenta como suscriptores solo a quien paga de verdad", () => {
+  const m = leerFuente("app/api/admin/metricas/route.ts");
+  return m.includes('getStripe().subscriptions.list({ status: estado') && !m.includes('if (plan !== "free" && p.subscription_status === "active") dePago++;')
+    && leerFuente("lib/centinela/recorrido.ts").includes('plan: "pro", subscription_status: "active"');
+});
 test("lo que puede esperar no se come el tope diario de Resend", () => {
   const smtp = leerFuente("lib/email/smtp-sender.ts");
   const alertas = leerFuente("app/api/push/send-alerts/route.ts");
