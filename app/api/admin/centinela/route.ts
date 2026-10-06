@@ -41,6 +41,7 @@ import { OFERTAS_ESPANA } from "@/lib/promesas";
 // perfecto. Lo cazo el propio centinela en su primera ejecucion (22 sep 2026).
 import { Redis } from "ioredis";
 import { recorridoDeUsuario } from "@/lib/centinela/recorrido";
+import { limitesDeCorreo } from "@/lib/centinela/limites-correo";
 import { getCvSenderQueue } from "@/lib/cv-sender/queue";
 import { salarioMinimoSql, CASOS_SALARIO } from "@/lib/job-search/salario-sql";
 
@@ -528,6 +529,10 @@ export async function GET(req: NextRequest) {
   // ── 16-21. Recorrido de usuario: los caminos que se rompieron esta semana ──
   // Ver lib/centinela/recorrido.ts.
   await recorridoDeUsuario(anota);
+
+  // ── Límites de correo de Resend y Supabase: avisar antes de llegar ──
+  // Ver lib/centinela/limites-correo.ts.
+  await limitesDeCorreo(anota);
 
   const fallos = r.filter(x => !x.bien);
   return NextResponse.json(

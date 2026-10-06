@@ -1,5 +1,6 @@
 import { frasePromesaOfertas } from "@/lib/promesas";
 import { getPool } from "@/lib/db";
+import { dominioSinCorreo } from "@/lib/cv-sender/direccion-segura";
 import type { OfertasCiudad } from "@/lib/email/ofertas-para-correo";
 
 const RESEND_API_URL = "https://api.resend.com/emails";
@@ -23,10 +24,18 @@ async function direccionQueRebota(to: string): Promise<boolean> {
       [to.trim().toLowerCase()]
     );
     if (rows.length) console.warn(`[Resend] No se envía a ${to}: esa dirección rebota.`);
-    return rows.length > 0;
+    if (rows.length) return true;
   } catch {
-    return false;
+    // sin la base, se sigue con la comprobación del dominio
   }
+  // Dominios que no reciben correo (p. ej. alertas a @buscaycurra.es, que no
+  // tiene buzón): rebotan siempre y suben la tasa con la que Resend pausa la
+  // cuenta entera (6 oct 2026).
+  if (await dominioSinCorreo(to)) {
+    console.warn(`[Resend] No se envía a ${to}: su dominio no recibe correo.`);
+    return true;
+  }
+  return false;
 }
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {

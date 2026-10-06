@@ -893,6 +893,28 @@ test("el centinela prueba la formula real del filtro de salario", () => {
   return c.includes("salarioMinimoSql(\"t.texto\")") && c.includes("CASOS_SALARIO") && !c.includes(">= 200000")
     && b.includes("const SALARIO_MINIMO_SQL = salarioMinimoSql();");
 });
+// 6 oct 2026: Supabase tenia 2 correos de confirmacion por hora y cortaba
+// registros sin que nadie lo supiera; Resend tiene 100 al dia, 3.000 al mes y
+// pausa la cuenta con mas del 4 % de rebotes. El centinela avisa antes de
+// llegar, la pagina de registro apunta cada registro cortado, y no se manda
+// nada a dominios que no reciben correo.
+test("el centinela vigila los limites de correo y nadie se queda sin registrarse sin saberlo", () => {
+  const lim = leerFuente("lib/centinela/limites-correo.ts");
+  const cent = leerFuente("app/api/admin/centinela/route.ts");
+  const reg = leerFuente("app/auth/registro/page.tsx");
+  return cent.includes("await limitesDeCorreo(anota)")
+    && /LIMITE_RESEND_DIA = 100/.test(lim) && /LIMITE_RESEND_MES = 3000/.test(lim) && /LIMITE_REBOTES = 4/.test(lim) && /LIMITE_SUPABASE_HORA = 30/.test(lim)
+    && lim.includes("claveRegistroCortado(hoy)")
+    && reg.includes('fetch("/api/auth/registro-cortado"')
+    && leerFuente("app/api/auth/registro-cortado/route.ts").includes("incrementar(claveRegistroCortado(");
+});
+test("no se manda correo a dominios que no lo reciben (CVs y avisos)", () => {
+  const ds = leerFuente("lib/cv-sender/direccion-segura.ts");
+  const smtp = leerFuente("lib/email/smtp-sender.ts");
+  const motivo = ds.slice(ds.indexOf("export async function motivoParaNoEnviar"));
+  return motivo.includes("await dominioSinCorreo(email)") && ds.includes('codigo !== "ENOTFOUND" && codigo !== "ENODATA"')
+    && smtp.includes("await dominioSinCorreo(to)");
+});
 // La comprobacion R10 del centinela usaba un correo por dia y, pasandolo dos
 // veces el mismo dia, la espera de 15 dias por empresa daba una falsa alarma.
 test("el centinela usa un correo de prueba distinto en cada pasada (R10)", () =>

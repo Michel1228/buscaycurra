@@ -71,7 +71,12 @@ function RegistroPageInner() {
         // Supabase limita los correos de confirmación por hora. Antes salía un
         // "No se pudo crear la cuenta." a secas y la persona se iba creyendo que
         // la web no funcionaba (6 oct 2026).
-        else if (sErr.status === 429 || /rate limit/i.test(sErr.message)) setError("Ahora mismo se están registrando muchas personas y no podemos mandarte el correo de confirmación. Vuelve a intentarlo en unos minutos: tus datos no se han perdido.");
+        else if (sErr.status === 429 || /rate limit/i.test(sErr.message)) {
+          // Se apunta para que el centinela avise: si pasa, hay que subir el
+          // límite en el panel de Supabase (lib/centinela/limites-correo.ts).
+          fetch("/api/auth/registro-cortado", { method: "POST", keepalive: true }).catch(() => {});
+          setError("Ahora mismo se están registrando muchas personas y no podemos mandarte el correo de confirmación. Vuelve a intentarlo en unos minutos: tus datos no se han perdido.");
+        }
         else setError(`No se pudo crear la cuenta: ${sErr.message}. Inténtalo de nuevo en un momento.`);
         return;
       }

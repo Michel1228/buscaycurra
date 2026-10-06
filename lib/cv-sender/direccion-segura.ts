@@ -16,6 +16,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { promises as dns } from "node:dns";
 
 // Dominios reservados para ejemplos o que aparecen como plantilla en webs.
 const DOMINIOS_DE_RELLENO = new Set([
@@ -59,9 +60,43 @@ export async function direccionQueYaRebota(email: string): Promise<boolean> {
 }
 
 /** Motivo para no enviar, o null si se puede enviar. */
+// ── Dominios que no reciben correo ───────────────────────────────────────────
+// 6 oct 2026: de los 12 rebotes de la semana, varios iban a dominios sin
+// servidor de correo (un CV a un correo de apps.apple.com, alertas a
+// @buscaycurra.es). Los rebotes cuentan para el 4 % a partir del cual Resend
+// pausa TODOS los envíos de la cuenta (lib/centinela/limites-correo.ts).
+// Solo se bloquea cuando el DNS lo dice con seguridad (el dominio no existe o
+// no tiene registro MX); un fallo pasajero de DNS no bloquea nada.
+const cacheMx = new Map<string, { sinCorreo: boolean; ts: number }>();
+
+export async function dominioSinCorreo(email: string): Promise<boolean> {
+  const dominio = (email.split("@")[1] || "").toLowerCase().trim();
+  if (!dominio) return true;
+  const guardado = cacheMx.get(dominio);
+  if (guardado && Date.now() - guardado.ts < 12 * 3600 * 1000) return guardado.sinCorreo;
+  let sinCorreo: boolean;
+  try {
+    const mx = await Promise.race([
+      dns.resolveMx(dominio),
+      new Promise<never>((_, rechazar) => setTimeout(() => rechazar(Object.assign(new Error("timeout"), { code: "ETIMEOUT" })), 4000)),
+    ]);
+    // Sin registros, o el "MX nulo" (RFC 7505) que declara que no recibe correo.
+    sinCorreo = !mx.length || mx.every((r) => !r.exchange || r.exchange === ".");
+  } catch (e) {
+    const codigo = (e as { code?: string }).code;
+    if (codigo !== "ENOTFOUND" && codigo !== "ENODATA") return false;
+    sinCorreo = true;
+  }
+  cacheMx.set(dominio, { sinCorreo, ts: Date.now() });
+  return sinCorreo;
+}
+
 export async function motivoParaNoEnviar(email: string): Promise<string | null> {
   if (esDireccionDeRelleno(email)) {
     return `«${email}» es una dirección de ejemplo, no la de la empresa. Busca su correo en su web o en la oferta.`;
+  }
+  if (await dominioSinCorreo(email)) {
+    return `El dominio de «${email}» no recibe correo, así que el CV rebotaría. Busca otro correo en la web de la empresa o en la oferta.`;
   }
   if (await direccionQueYaRebota(email)) {
     return `El correo «${email}» ya rebotó antes: esa dirección no recibe mensajes. Busca otro en la web de la empresa o en la oferta.`;
