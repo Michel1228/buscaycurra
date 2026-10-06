@@ -30,6 +30,8 @@ export const LIMITE_REBOTES = 4;
 export const LIMITE_SUPABASE_HORA = 30;
 
 const NACIO = "6 oct 2026: Supabase cortaba el tercer registro de la hora y nadie lo sabía";
+const NACIO_DIA = "6 oct 2026: el 30 sep salieron 100 correos y el 3 oct 101, el tope diario del plan gratuito";
+const NACIO_REBOTES = "6 oct 2026: dos direcciones rebotaron 146 alertas cada una y el mes llegó al 32 % de rebotes";
 
 type Correo = { to?: string[]; subject?: string; created_at: string; last_event?: string };
 const fecha = (s: string) => new Date(String(s).replace(" ", "T").replace(/\+00$/, "Z"));
@@ -74,12 +76,12 @@ export async function limitesDeCorreo(anota: Anota): Promise<void> {
   const [diaMax, maxDia] = Object.entries(porDia).sort((a, b) => b[1] - a[1])[0] || ["-", 0];
   anota(`ningún día se acerca al tope de ${LIMITE_RESEND_DIA} correos de Resend`, maxDia < LIMITE_RESEND_DIA * 0.8,
     `el día con más en una semana: ${maxDia} (${diaMax}). Si pasa de ${LIMITE_RESEND_DIA}, el resto del día no sale nada; en el plan de pago no hay tope diario`,
-    NACIO);
+    NACIO_DIA);
 
   // 2. Tope mensual de Resend.
   anota(`el mes no se acerca al tope de ${LIMITE_RESEND_MES} correos de Resend`, correos.length < LIMITE_RESEND_MES * 0.8,
     `${correos.length} correos en 30 días (${Math.round((100 * correos.length) / LIMITE_RESEND_MES)} %)`,
-    NACIO);
+    NACIO_DIA);
 
   // 3. Rebotes de la última semana, solo a direcciones reales (las de prueba de
   //    Resend rebotan a propósito).
@@ -88,7 +90,7 @@ export async function limitesDeCorreo(anota: Anota): Promise<void> {
   const pct = reales.length ? (100 * rebotes) / reales.length : 0;
   anota(`los rebotes siguen por debajo del ${LIMITE_REBOTES} % que exige Resend`, pct < 3,
     `${rebotes} de ${reales.length} correos rebotaron esta semana (${pct.toFixed(1)} %). Con más del ${LIMITE_REBOTES} % Resend puede pausar todos los envíos`,
-    NACIO);
+    NACIO_REBOTES);
 
   // 4. Registros por hora frente al límite de Supabase.
   const porHora: Record<string, number> = {};

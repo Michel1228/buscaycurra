@@ -188,6 +188,20 @@ el código anterior (falla con él, pasa con el nuevo).
   https://supabase.com/dashboard/project/ojesordjedovnpyxspxi/auth/rate-limits
   (subirlo si hay una campaña fuerte). El token de gestión de Supabase caducó
   el 17 jun 2026; si se renueva, se puede tocar desde aquí.
+- [x] **El centinela vigila los límites de correo** (6 oct, lo pidió Michel;
+  `a3c7c61`): tope diario y mensual de Resend, rebotes frente al 4 % con el que
+  Resend pausa la cuenta, registros por hora frente al límite de Supabase, y
+  registros cortados (los apunta la página de registro). Y ya no se manda nada
+  a dominios que no reciben correo.
+- [ ] **DECISIÓN DE MICHEL — plan de Resend.** Si la cuenta está en el plan
+  gratuito, el tope es 100 correos al día: el 30 sep salieron 100 y el 3 oct
+  101. El plan Pro (20 $/mes, https://resend.com/pricing) quita el tope diario
+  y da 50.000 al mes. Ver el plan actual en https://resend.com/settings/billing.
+- [ ] **Rebotes al 3,6 % (Resend pausa la cuenta al 4 %).** Lo que más rebota
+  ahora son CVs a buzones de empresa que no existen (el dominio sí, el buzón
+  no), que no se pueden detectar antes de enviar. Opción: no mandar
+  automáticamente a direcciones deducidas (confianza "baja"/"media") sin que la
+  persona las confirme.
 - [ ] **DECISIÓN DE MICHEL — Guzzi no cabe en el Groq gratis.** Las
   instrucciones fijas (PROMPT_BASE, 30.300 caracteres ≈ 7.000-8.000 tokens)
   superan el límite de 8.000 tokens por minuto del plan gratis de Groq, así
