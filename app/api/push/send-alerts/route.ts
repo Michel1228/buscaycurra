@@ -12,7 +12,7 @@ import { getPool } from "@/lib/db";
 import { sendPush, type PushSub } from "@/lib/push-sender";
 import { sendJobAlertEmail } from "@/lib/email/smtp-sender";
 import { enlaceBaja } from "@/lib/alertas/baja";
-import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
+import { get as cacheGet, set as cacheSet, del as cacheDel } from "@/lib/cache/redis-client";
 
 export const dynamic = "force-dynamic";
 
@@ -394,6 +394,9 @@ export async function GET(request: NextRequest) {
             bajaUrl: enlaceBaja(alerta.user_id),
           });
           if (salio) correos++;
+          // Si no salió (aplazado para no llegar al tope diario, o un fallo),
+          // se suelta la marca para que lo intente la siguiente pasada.
+          else await cacheDel(claveCorreo).catch(() => false);
         }
 
         // WhatsApp: DESACTIVADO por coste (decisión del 6 ago 2026).

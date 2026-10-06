@@ -1,6 +1,7 @@
 import { frasePromesaOfertas } from "@/lib/promesas";
 import { getPool } from "@/lib/db";
 import { dominioSinCorreo } from "@/lib/cv-sender/direccion-segura";
+import { apuntarCorreo, quedaSitioParaLoQuePuedeEsperar } from "@/lib/email/presupuesto-diario";
 import type { OfertasCiudad } from "@/lib/email/ofertas-para-correo";
 
 const RESEND_API_URL = "https://api.resend.com/emails";
@@ -61,6 +62,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
   } else {
     const data = await res.json() as { id?: string };
     console.log("[Resend] Email enviado:", data.id);
+    await apuntarCorreo();
   }
 }
 
@@ -76,11 +78,17 @@ async function enviarCorreo(
   to: string,
   subject: string,
   html: string,
-  opciones: { bajaUrl?: string | null } = {}
+  opciones: { bajaUrl?: string | null; puedeEsperar?: boolean } = {}
 ): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey || apiKey === "placeholder") {
     console.warn("[Resend] API key no configurada, email no enviado");
+    return false;
+  }
+  // Lo que puede esperar (recordatorios, alertas, campañas) no se come el tope
+  // diario de Resend: se deja para la siguiente pasada (lib/email/presupuesto-diario.ts).
+  if (opciones.puedeEsperar && !(await quedaSitioParaLoQuePuedeEsperar())) {
+    console.warn(`[Resend] Aplazado para no llegar al tope diario: ${subject.slice(0, 60)}`);
     return false;
   }
   if (await direccionQueRebota(to)) return false;
@@ -99,6 +107,7 @@ async function enviarCorreo(
       console.error("[Resend] Error al enviar email:", (await res.text()).slice(0, 200));
       return false;
     }
+    await apuntarCorreo();
     return true;
   } catch (err) {
     console.error("[Resend] Error de red al enviar email:", (err as Error).message);
@@ -348,7 +357,8 @@ ${o ? `<p ${P}>${o.texto}</p>${listaOfertas(params.ofertas!)}` : ""}
   return enviarCorreo(
     params.email,
     asunto,
-    plantillaSencilla(cuerpo, "Solo te escribimos esto una vez. Si no te interesa, no tienes que hacer nada.")
+    plantillaSencilla(cuerpo, "Solo te escribimos esto una vez. Si no te interesa, no tienes que hacer nada."),
+    { puedeEsperar: true }
   );
 }
 
@@ -401,7 +411,7 @@ ${params.paso
     ? `Te escribimos por tu cuenta en BuscayCurra. <a href="${params.bajaUrl}" style="color:#6b7280;">No quiero el aviso diario de ofertas</a>.`
     : "Te escribimos por tu cuenta en BuscayCurra.";
 
-  return enviarCorreo(params.email, asunto, plantillaSencilla(cuerpo, pie), { bajaUrl: params.alertaActivada ? params.bajaUrl : null });
+  return enviarCorreo(params.email, asunto, plantillaSencilla(cuerpo, pie), { bajaUrl: params.alertaActivada ? params.bajaUrl : null, puedeEsperar: true });
 }
 
 // ─── Email para cambiar la contraseña ────────────────────────────────────────
@@ -662,7 +672,7 @@ export async function sendJobAlertEmail(params: {
     </p>
   `;
 
-  return enviarCorreo(userEmail, `🔔 ${queEs} — BuscayCurra`, baseTemplate(header, body), { bajaUrl });
+  return enviarCorreo(userEmail, `🔔 ${queEs} — BuscayCurra`, baseTemplate(header, body), { bajaUrl, puedeEsperar: true });
 }
 
 export function generarCartaHTML(

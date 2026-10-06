@@ -908,6 +908,25 @@ test("el centinela vigila los limites de correo y nadie se queda sin registrarse
     && reg.includes('fetch("/api/auth/registro-cortado"')
     && leerFuente("app/api/auth/registro-cortado/route.ts").includes("incrementar(claveRegistroCortado(");
 });
+// 6 oct 2026, decision de Michel: los CVs por una cuenta de Resend aparte (sus
+// rebotes no pueden pausar las confirmaciones y alertas), y seguir gratis
+// repartiendo: lo que puede esperar no se come el tope diario de 100.
+test("los CVs pueden salir por una cuenta aparte y sus avisos de entrega se aceptan", () => {
+  const es = leerFuente("lib/cv-sender/email-sender.ts");
+  const ent = leerFuente("app/api/cv-sender/entrega/route.ts");
+  const lim = leerFuente("lib/centinela/limites-correo.ts");
+  return es.includes("process.env.RESEND_API_KEY_CV") && es.includes("const remitente = remitenteDeCVs();")
+    && ent.includes("process.env.RESEND_WEBHOOK_SECRET_CV") && lim.includes('" (cuenta de CVs)"');
+});
+test("lo que puede esperar no se come el tope diario de Resend", () => {
+  const smtp = leerFuente("lib/email/smtp-sender.ts");
+  const alertas = leerFuente("app/api/push/send-alerts/route.ts");
+  const puedeEsperar = (smtp.match(/puedeEsperar: true/g) || []).length;
+  return smtp.includes("if (opciones.puedeEsperar && !(await quedaSitioParaLoQuePuedeEsperar()))")
+    && puedeEsperar >= 3 && (smtp.match(/await apuntarCorreo\(\)/g) || []).length >= 2
+    && alertas.includes("else await cacheDel(claveCorreo)")
+    && leerFuente("lib/email/presupuesto-diario.ts").includes("LIMITE_RESEND_DIA - RESERVA");
+});
 test("no se manda correo a dominios que no lo reciben (CVs y avisos)", () => {
   const ds = leerFuente("lib/cv-sender/direccion-segura.ts");
   const smtp = leerFuente("lib/email/smtp-sender.ts");
@@ -2486,7 +2505,7 @@ test("las ofertas del correo entienden como escribe la gente su ciudad", async (
 test("los correos propios no se mandan a direcciones que rebotan", () => {
   const s = leerFuente("lib/email/smtp-sender.ts");
   const w = leerFuente("app/api/cv-sender/entrega/route.ts");
-  const cuerpo = (nombre) => s.slice(s.indexOf(`async function ${nombre}(`), s.indexOf(`async function ${nombre}(`) + 400);
+  const cuerpo = (nombre) => s.slice(s.indexOf(`async function ${nombre}(`), s.indexOf(`async function ${nombre}(`) + 1000);
   return /if \(await direccionQueRebota\(to\)\) return;/.test(cuerpo("sendEmail")) &&
     /if \(await direccionQueRebota\(to\)\) return false;/.test(cuerpo("enviarCorreo")) &&
     /WHERE email = \$1 AND \(permanente OR veces >= 2\)/.test(s) &&

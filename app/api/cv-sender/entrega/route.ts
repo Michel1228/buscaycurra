@@ -103,9 +103,12 @@ export async function POST(req: NextRequest) {
   // exacto que mandó Resend.
   const cuerpoCrudo = await req.text();
 
-  const secreto = process.env.RESEND_WEBHOOK_SECRET;
-  if (secreto) {
-    if (!firmaValida(cuerpoCrudo, req.headers, secreto)) {
+  // Dos cuentas de Resend mandan avisos aquí: la principal y la de los CVs
+  // (RESEND_WEBHOOK_SECRET_CV, ver lib/cv-sender/email-sender.ts). Vale la
+  // firma de cualquiera de las dos.
+  const secretos = [process.env.RESEND_WEBHOOK_SECRET, process.env.RESEND_WEBHOOK_SECRET_CV].filter(Boolean) as string[];
+  if (secretos.length) {
+    if (!secretos.some((s) => firmaValida(cuerpoCrudo, req.headers, s))) {
       return NextResponse.json({ error: "Firma no válida" }, { status: 401 });
     }
   } else {

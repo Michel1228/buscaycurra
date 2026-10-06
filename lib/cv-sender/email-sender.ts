@@ -14,6 +14,7 @@
 
 import { Resend } from "resend";
 import { escapeHtml } from "../cv-generator/cv-template";
+import { apuntarCorreo } from "../email/presupuesto-diario";
 
 // ─── Cliente Resend (inicialización lazy para no crashear el worker si falta la key) ──
 let _resend: Resend | null = null;
@@ -28,6 +29,24 @@ function getResend(): Resend {
 
 /** Email de remitente (configurable en variables de entorno) */
 const FROM_EMAIL = process.env.FROM_EMAIL ?? "noreply@buscaycurra.es";
+
+// ─── CUENTA APARTE PARA LOS CVs (6 oct 2026, decisión de Michel) ─────────────
+// Los CVs van a direcciones de empresa que a veces no existen: en 60 días
+// rebotaron 15 de 46. Esos rebotes contaban para el 4 % con el que Resend pausa
+// la cuenta ENTERA, y entonces dejarían de salir también las confirmaciones de
+// registro y las alertas. Con RESEND_API_KEY_CV y CV_FROM_EMAIL (otra cuenta de
+// Resend, con su subdominio) los CVs salen por ahí y un mal mes de rebotes solo
+// afecta a los CVs. Sin esas variables, todo sigue por la cuenta principal.
+let _resendCV: Resend | null = null;
+function remitenteDeCVs(): { cliente: Resend; desde: string; principal: boolean } {
+  const clave = process.env.RESEND_API_KEY_CV;
+  const desde = process.env.CV_FROM_EMAIL;
+  if (clave && desde) {
+    if (!_resendCV) _resendCV = new Resend(clave);
+    return { cliente: _resendCV, desde, principal: false };
+  }
+  return { cliente: getResend(), desde: FROM_EMAIL, principal: true };
+}
 
 /** Elimina caracteres de control MIME para prevenir header injection */
 function sanitizeEmailHeader(value: string): string {
@@ -93,8 +112,9 @@ export async function sendCVEmail(
   }
 
   try {
-    const { data, error } = await getResend().emails.send({
-      from: `${sanitizeEmailHeader(cvData.userName)} via BuscayCurra <${FROM_EMAIL}>`,
+    const remitente = remitenteDeCVs();
+    const { data, error } = await remitente.cliente.emails.send({
+      from: `${sanitizeEmailHeader(cvData.userName)} via BuscayCurra <${remitente.desde}>`,
       to: [to],
       reply_to: cvData.userEmail,
       subject: sanitizeEmailHeader(subject),
@@ -113,6 +133,8 @@ export async function sendCVEmail(
     }
 
     console.log(`[EmailSender] ✅ CV enviado correctamente a ${to}. ID: ${data?.id}`);
+    // Cuenta para el tope diario de la cuenta principal solo si salió por ella.
+    if (remitente.principal) await apuntarCorreo();
     return { success: true, messageId: data?.id };
   } catch (err) {
     const mensaje = err instanceof Error ? err.message : "Error desconocido";
@@ -149,6 +171,7 @@ export async function sendConfirmationToUser(
     });
 
     console.log(`[EmailSender] Confirmación enviada a ${userEmail}`);
+    await apuntarCorreo();
   } catch (err) {
     // La confirmación es secundaria, no queremos fallar el job por esto
     console.warn(`[EmailSender] No se pudo enviar confirmación a ${userEmail}:`, err);

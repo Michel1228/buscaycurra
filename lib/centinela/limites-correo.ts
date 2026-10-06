@@ -39,8 +39,8 @@ const fecha = (s: string) => new Date(String(s).replace(" ", "T").replace(/\+00$
 /** Clave de Redis donde la página de registro apunta los registros cortados (ver /api/auth/registro-cortado). */
 export const claveRegistroCortado = (dia: string) => `registro-cortado:${dia}`;
 
-async function correosUltimosDias(dias: number): Promise<Correo[]> {
-  const H = { Authorization: `Bearer ${process.env.RESEND_API_KEY}` };
+async function correosUltimosDias(dias: number, clave: string): Promise<Correo[]> {
+  const H = { Authorization: `Bearer ${clave}` };
   const desde = Date.now() - dias * 86400000;
   const todos: Correo[] = [];
   let after: string | null = null;
@@ -57,29 +57,23 @@ async function correosUltimosDias(dias: number): Promise<Correo[]> {
   return todos.filter((e) => fecha(e.created_at).getTime() >= desde);
 }
 
-export async function limitesDeCorreo(anota: Anota): Promise<void> {
-  let correos: Correo[];
-  try {
-    correos = await correosUltimosDias(30);
-  } catch (e) {
-    anota("los límites de correo están lejos", false, `no se pudo leer Resend: ${(e as Error).message}`, NACIO);
-    return;
-  }
+/** Topes y rebotes de UNA cuenta de Resend. `cuenta` va en el nombre de cada aviso. */
+function revisarCuentaResend(anota: Anota, correos: Correo[], cuenta: string): void {
   const hace7 = Date.now() - 7 * 86400000;
 
-  // 1. Tope diario de Resend: el día con más correos de la última semana.
+  // 1. Tope diario: el día con más correos de la última semana.
   const porDia: Record<string, number> = {};
   for (const e of correos) if (fecha(e.created_at).getTime() >= hace7) {
     const d = fecha(e.created_at).toISOString().slice(0, 10);
     porDia[d] = (porDia[d] || 0) + 1;
   }
   const [diaMax, maxDia] = Object.entries(porDia).sort((a, b) => b[1] - a[1])[0] || ["-", 0];
-  anota(`ningún día se acerca al tope de ${LIMITE_RESEND_DIA} correos de Resend`, maxDia < LIMITE_RESEND_DIA * 0.8,
+  anota(`ningún día se acerca al tope de ${LIMITE_RESEND_DIA} correos de Resend${cuenta}`, maxDia < LIMITE_RESEND_DIA * 0.8,
     `el día con más en una semana: ${maxDia} (${diaMax}). Si pasa de ${LIMITE_RESEND_DIA}, el resto del día no sale nada; en el plan de pago no hay tope diario`,
     NACIO_DIA);
 
-  // 2. Tope mensual de Resend.
-  anota(`el mes no se acerca al tope de ${LIMITE_RESEND_MES} correos de Resend`, correos.length < LIMITE_RESEND_MES * 0.8,
+  // 2. Tope mensual.
+  anota(`el mes no se acerca al tope de ${LIMITE_RESEND_MES} correos de Resend${cuenta}`, correos.length < LIMITE_RESEND_MES * 0.8,
     `${correos.length} correos en 30 días (${Math.round((100 * correos.length) / LIMITE_RESEND_MES)} %)`,
     NACIO_DIA);
 
@@ -88,9 +82,30 @@ export async function limitesDeCorreo(anota: Anota): Promise<void> {
   const reales = correos.filter((e) => fecha(e.created_at).getTime() >= hace7 && !/@resend\.dev$/i.test(e.to?.[0] || ""));
   const rebotes = reales.filter((e) => e.last_event === "bounced").length;
   const pct = reales.length ? (100 * rebotes) / reales.length : 0;
-  anota(`los rebotes siguen por debajo del ${LIMITE_REBOTES} % que exige Resend`, pct < 3,
-    `${rebotes} de ${reales.length} correos rebotaron esta semana (${pct.toFixed(1)} %). Con más del ${LIMITE_REBOTES} % Resend puede pausar todos los envíos`,
+  anota(`los rebotes siguen por debajo del ${LIMITE_REBOTES} % que exige Resend${cuenta}`, pct < 3,
+    `${rebotes} de ${reales.length} correos rebotaron esta semana (${pct.toFixed(1)} %). Con más del ${LIMITE_REBOTES} % Resend puede pausar todos los envíos de esta cuenta`,
     NACIO_REBOTES);
+}
+
+export async function limitesDeCorreo(anota: Anota): Promise<void> {
+  let correos: Correo[];
+  try {
+    correos = await correosUltimosDias(30, process.env.RESEND_API_KEY || "");
+  } catch (e) {
+    anota("los límites de correo están lejos", false, `no se pudo leer Resend: ${(e as Error).message}`, NACIO);
+    return;
+  }
+  const hace7 = Date.now() - 7 * 86400000;
+  revisarCuentaResend(anota, correos, "");
+
+  // La cuenta aparte de los CVs (lib/cv-sender/email-sender.ts), si ya existe.
+  if (process.env.RESEND_API_KEY_CV) {
+    try {
+      revisarCuentaResend(anota, await correosUltimosDias(30, process.env.RESEND_API_KEY_CV), " (cuenta de CVs)");
+    } catch (e) {
+      anota("se puede leer la cuenta de Resend de los CVs", false, (e as Error).message, NACIO_REBOTES);
+    }
+  }
 
   // 4. Registros por hora frente al límite de Supabase.
   const porHora: Record<string, number> = {};
