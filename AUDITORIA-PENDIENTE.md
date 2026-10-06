@@ -193,15 +193,23 @@ el código anterior (falla con él, pasa con el nuevo).
   Resend pausa la cuenta, registros por hora frente al límite de Supabase, y
   registros cortados (los apunta la página de registro). Y ya no se manda nada
   a dominios que no reciben correo.
-- [ ] **DECISIÓN DE MICHEL — plan de Resend.** Si la cuenta está en el plan
-  gratuito, el tope es 100 correos al día: el 30 sep salieron 100 y el 3 oct
-  101. El plan Pro (20 $/mes, https://resend.com/pricing) quita el tope diario
-  y da 50.000 al mes. Ver el plan actual en https://resend.com/settings/billing.
-- [ ] **Rebotes al 3,6 % (Resend pausa la cuenta al 4 %).** Lo que más rebota
-  ahora son CVs a buzones de empresa que no existen (el dominio sí, el buzón
-  no), que no se pueden detectar antes de enviar. Opción: no mandar
-  automáticamente a direcciones deducidas (confianza "baja"/"media") sin que la
-  persona las confirme.
+- [x] **Decidido por Michel el 6 oct: nada de gastos hasta que haya
+  suscriptores que cubran los costes.** Se sigue en el plan gratuito de Resend
+  (100 al día, 3.000 al mes) y los envíos que pueden esperar (recordatorios,
+  bienvenidas atrasadas, alertas) se aplazan cuando quedan menos de 30 para el
+  día (`64e7240`, lib/email/presupuesto-diario.ts). Resend Pro (20 $/mes, sin
+  tope diario) queda para cuando el centinela avise a menudo o haya ingresos.
+- [ ] **MICHEL — crear la cuenta aparte para los CVs** (decidido el 6 oct). En
+  60 días rebotaron 15 de 46 CVs, y esos rebotes cuentan para el 4 % con el que
+  Resend pausa la cuenta entera. El código ya está listo (`64e7240`): en cuanto
+  existan RESEND_API_KEY_CV, CV_FROM_EMAIL y RESEND_WEBHOOK_SECRET_CV en el
+  .env.local del servidor, los CVs salen por esa cuenta y el centinela la
+  vigila aparte. Pasos: segundo equipo gratuito en Resend, dominio
+  cv.buscaycurra.es (registros DNS en Hostinger), clave de envío y webhook a
+  https://buscaycurra.es/api/cv-sender/entrega (email.delivered,
+  email.bounced, email.complained). Las claves, al fichero de credenciales.
+- [x] **Panel de métricas: decía 3 suscriptores activos y eran 0**
+  (`394adec`). Ahora cuenta Stripe (activas o en prueba) más iPhone.
 - [ ] **DECISIÓN DE MICHEL — Guzzi no cabe en el Groq gratis.** Las
   instrucciones fijas (PROMPT_BASE, 30.300 caracteres ≈ 7.000-8.000 tokens)
   superan el límite de 8.000 tokens por minuto del plan gratis de Groq, así
