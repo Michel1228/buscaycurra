@@ -6,6 +6,7 @@ import { getPool } from "@/lib/db";
 import { buscarOfertasReales } from "@/lib/job-search/real-search";
 import { tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { comprobarEnSegundoPlano } from "@/lib/job-search/oferta-viva";
+import { salarioMinimoSql } from "@/lib/job-search/salario-sql";
 
 /**
  * Ofertas de las APIs externas, solo cuando la base no tiene nada.
@@ -279,10 +280,8 @@ export async function GET(request: NextRequest) {
     // dan 13 y no casan con un filtro anual. Convertirlos exigiria inventarse
     // las horas semanales de cada oferta, asi que quedan fuera del filtro, igual
     // que antes. Esta anotado en AUDITORIA-PENDIENTE.md.
-    const SALARIO_MINIMO_SQL = `NULLIF(substring(
-      regexp_replace(regexp_replace(salary, '([0-9])[.,]([0-9]{3})', '\\1\\2', 'g'),
-                     '([0-9])[.,]([0-9]{3})', '\\1\\2', 'g')
-      from '[0-9]+'), '')::bigint`;
+    // La fórmula vive en lib/job-search/salario-sql.ts: el centinela prueba la misma.
+    const SALARIO_MINIMO_SQL = salarioMinimoSql();
 
     if (salarioMin > 0) {
       conditions.push(`(salary ~ '[0-9]' AND ${SALARIO_MINIMO_SQL} >= $${idx})`);

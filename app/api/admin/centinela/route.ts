@@ -42,6 +42,7 @@ import { OFERTAS_ESPANA } from "@/lib/promesas";
 import { Redis } from "ioredis";
 import { recorridoDeUsuario } from "@/lib/centinela/recorrido";
 import { getCvSenderQueue } from "@/lib/cv-sender/queue";
+import { salarioMinimoSql, CASOS_SALARIO } from "@/lib/job-search/salario-sql";
 
 const supabaseAdmin = () =>
   createClient(
@@ -246,24 +247,25 @@ export async function GET(req: NextRequest) {
   // ── 7. El filtro de salario filtra de verdad ───────────────────────────────
   // Borraba lo que no fuera dígito y pegaba el resto: "30000 - 30000" daba
   // 3000030000, que pasa cualquier filtro. El filtro devolvía de todo.
+  //
+  // SE PRUEBA LA FÓRMULA DEL FILTRO, NO LOS DATOS. Hasta el 6 oct 2026 se
+  // contaban las ofertas con más de 200.000 y se avisaba si pasaban del 5%. Pero
+  // esos sueldos son reales en su moneda (dólares de EE. UU., rupias, złotys,
+  // yenes) y bastaba con que la muestra trajera más ofertas de EE. UU. para dar
+  // una falsa alarma. Ahora se pasan por la MISMA fórmula que usa el buscador
+  // rangos con el resultado conocido.
   try {
-    const SQL_MIN = `NULLIF(substring(
-      regexp_replace(regexp_replace(salary, '([0-9])[.,]([0-9]{3})', '\\1\\2', 'g'),
-                     '([0-9])[.,]([0-9]{3})', '\\1\\2', 'g')
-      from '[0-9]+'), '')::bigint`;
     const { rows } = await pool.query(
-      `SELECT count(*) FILTER (WHERE salary ~ '[0-9]')::int AS con_numero,
-              count(*) FILTER (WHERE salary ~ '[0-9]' AND ${SQL_MIN} >= 200000)::int AS absurdas
-         FROM (SELECT salary FROM "JobListing" WHERE "isActive" AND salary ~ '[0-9]' LIMIT 20000) t`
+      `SELECT t.texto, ${salarioMinimoSql("t.texto")} AS minimo
+         FROM unnest($1::text[]) AS t(texto)`,
+      [CASOS_SALARIO.map(([texto]) => texto)]
     );
-    const { con_numero: conNumero, absurdas } = rows[0] || { con_numero: 0, absurdas: 0 };
-    // Sueldos de más de 200.000 los hay, pero son rarísimos. Si son más del 5%
-    // es que los números vuelven a estar pegados.
-    const pct = conNumero ? (100 * absurdas) / conNumero : 0;
+    const mal = CASOS_SALARIO.filter(([texto, esperado]) =>
+      Number(rows.find((r: { texto: string }) => r.texto === texto)?.minimo) !== esperado);
     anota(
       "el filtro de salario no pega los numeros del rango",
-      pct < 5,
-      `${absurdas} de ${conNumero} pasan de 200.000 (${pct.toFixed(1)}%, limite 5%)`,
+      mal.length === 0,
+      mal.length ? `mal: ${mal.map(([t]) => `«${t}»`).join(", ")}` : `${CASOS_SALARIO.length} rangos de prueba dan su mínimo`,
       '"30000 - 30000" se convertia en 3000030000 y pasaba cualquier filtro'
     );
   } catch (e) {

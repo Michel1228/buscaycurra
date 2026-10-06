@@ -48,7 +48,15 @@ export default function AuthCallbackPage() {
         // Flujo PKCE: ?code=...
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) {
+          // EL CLIENTE YA LO HA CANJEADO SOLO. createBrowserClient lee el ?code=
+          // al arrancar y lo canjea por su cuenta (detectSessionInUrl), así que
+          // este segundo canje falla con el código ya gastado aunque la sesión
+          // exista. Se tomaba por un fallo: "entra con tu correo", sin
+          // bienvenida, y al pulsar Entrar ya estabas dentro sin escribir la
+          // contraseña, así que tampoco la pedía el login. Dos personas en dos
+          // días se quedaron así (centinela, 6 oct 2026).
+          const yaHaySesion = error ? !!(await supabase.auth.getSession()).data.session : false;
+          if (error && !yaHaySesion) {
             // EL CORREO YA ESTÁ CONFIRMADO, aunque aquí no haya sesión.
             //
             // Supabase solo manda aquí con ?code= DESPUÉS de comprobar el enlace

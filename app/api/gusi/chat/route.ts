@@ -2017,7 +2017,12 @@ El candidato tiene mucha experiencia.
             rawReply = data.choices?.[0]?.message?.content || "";
             if (rawReply) break;
           } else {
-            console.error("[Guzzi] Groq HTTP", res.status, await res.text().catch(()=>""));
+            const detalle = await res.text().catch(() => "");
+            // 413 = la petición entera no cabe en el límite del plan gratuito
+            // (8.000 tokens por minuto). Reintentar no la hace más pequeña: solo
+            // añadía casi un segundo de espera antes de pasar al siguiente.
+            if (res.status === 413) { console.error("[Guzzi] Groq 413: la petición no cabe en el plan gratuito"); break; }
+            console.error("[Guzzi] Groq HTTP", res.status, detalle);
           }
         } catch (e) { console.error("[Guzzi] Groq error:", (e as Error).message); }
         if (attempt === 0) await new Promise(r => setTimeout(r, 800));

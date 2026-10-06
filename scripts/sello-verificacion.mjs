@@ -869,6 +869,35 @@ test("el servidor escucha en todas las direcciones y nadie se llama por localhos
     && sueltos.length === 0 && leerFuente("lib/centinela/recorrido.ts").includes("R10. Guzzi envía el CV a un correo");
 });
 
+// 6 oct 2026 (centinela): dos personas confirmaron su cuenta y se quedaron sin
+// bienvenida. El cliente de Supabase canjea solo el ?code= al arrancar; el
+// segundo canje de la pagina fallaba y se tomaba por "sin sesion" aunque la
+// hubiera. Ademas, la bienvenida dependia solo del navegador: ahora el servidor
+// completa cada 10 minutos las que falten.
+test("la bienvenida no depende solo del navegador", () => {
+  const cb = leerFuente("app/auth/callback/page.tsx");
+  const pend = leerFuente("app/api/auth/bienvenidas-pendientes/route.ts");
+  const ruta = leerFuente("app/api/auth/welcome/route.ts");
+  const cron = leerFuente("scripts/vps/crontab.txt");
+  return cb.includes("const yaHaySesion = error ? !!(await supabase.auth.getSession()).data.session : false;")
+    && cb.includes("if (error && !yaHaySesion)")
+    && pend.includes("darBienvenida(u.id)") && ruta.includes("darBienvenida(userId, cuerpo)")
+    && /\*\/10 \* \* \* \* .*bienvenidas-pendientes\.sh/.test(cron);
+});
+// 6 oct 2026: la comprobacion de salario del centinela contaba sueldos de mas
+// de 200.000 sin mirar la moneda y daba falsas alarmas. Ahora prueba la misma
+// formula que el buscador con rangos conocidos.
+test("el centinela prueba la formula real del filtro de salario", () => {
+  const c = leerFuente("app/api/admin/centinela/route.ts");
+  const b = leerFuente("app/api/jobs/search/route.ts");
+  return c.includes("salarioMinimoSql(\"t.texto\")") && c.includes("CASOS_SALARIO") && !c.includes(">= 200000")
+    && b.includes("const SALARIO_MINIMO_SQL = salarioMinimoSql();");
+});
+test("Guzzi no reintenta Groq cuando la peticion no cabe (413)", () =>
+  leerFuente("app/api/gusi/chat/route.ts").includes("if (res.status === 413) {"));
+test("el registro explica el limite de correos de Supabase", () =>
+  leerFuente("app/auth/registro/page.tsx").includes("sErr.status === 429"));
+
 test("el envio a un negocio no usa correos de buscadores ni ciudad fija", () => {
   const ruta = leerFuente("app/api/gusi/send-cv-local/route.ts");
   const chat = leerFuente("app/api/gusi/chat/route.ts");
@@ -1584,11 +1613,13 @@ const salarioSrc = leerFuente("app/api/jobs/search/route.ts");
 test("el filtro de salario no concatena los numeros del rango", () =>
   !salarioSrc.includes("regexp_replace(salary, '[^0-9]'"));
 
+// Desde el 6 oct 2026 la formula vive en lib/job-search/salario-sql.ts.
+const salarioSqlSrc = leerFuente("lib/job-search/salario-sql.ts");
 test("el filtro de salario se queda con el primer numero", () =>
-  salarioSrc.includes("SALARIO_MINIMO_SQL") && salarioSrc.includes("from '[0-9]+'"));
+  salarioSrc.includes("SALARIO_MINIMO_SQL = salarioMinimoSql()") && salarioSqlSrc.includes("from '[0-9]+'"));
 
 test("el filtro de salario quita los separadores de miles antes", () =>
-  salarioSrc.includes("([0-9])[.,]([0-9]{3})"));
+  salarioSqlSrc.includes("([0-9])[.,]([0-9]{3})"));
 
 // ── LOS RESPALDOS NO SE SALTAN EL PAIS ───────────────────────────────
 //
@@ -1794,7 +1825,7 @@ test("el centinela comprueba lo que prometemos", () => {
 // 50 registros del ultimo mes, 49 figuraban "sin ciudad" habiendola escrito. Y a
 // 69 de 123 cuentas no se les habia creado ni la ficha del perfil.
 test("la ciudad del registro llega al perfil", () => {
-  const w = leerFuente("app/api/auth/welcome/route.ts");
+  const w = leerFuente("lib/onboarding/dar-bienvenida.ts");
   return w.includes('.from("profiles")') &&
     w.includes("...(ciudad ? { ciudad } : {})") &&                          // ficha nueva, con ciudad
     w.includes("if (ciudad && !perfilActual.ciudad?.trim()) faltan.ciudad = ciudad") && // ficha vieja sin ciudad
@@ -2017,7 +2048,7 @@ test("el enrutador de IA cae a Groq/Gemini si DeepSeek falla por cualquier motiv
 // cuenta y la hace una sola vez.
 test("la bienvenida se hace al confirmar el correo, con sesion y una sola vez", () => {
   const cb = leerFuente("app/auth/callback/page.tsx");
-  const w = leerFuente("app/api/auth/welcome/route.ts");
+  const w = leerFuente("lib/onboarding/dar-bienvenida.ts");
   const reg = leerFuente("app/auth/registro/page.tsx");
   const ayuda = leerFuente("lib/onboarding/pedir-bienvenida.ts");
   return /pedirBienvenida\(sesion\?\.access_token\)/.test(cb) &&
@@ -2037,8 +2068,8 @@ test("la bienvenida se hace al confirmar el correo, con sesion y una sola vez", 
 test("confirmar el correo en otro navegador no da error y la bienvenida llega al entrar", () => {
   const cb = leerFuente("app/auth/callback/page.tsx");
   const login = leerFuente("app/auth/login/page.tsx");
-  const trasCanje = cb.slice(cb.indexOf("exchangeCodeForSession(code)"), cb.indexOf("exchangeCodeForSession(code)") + 1500);
-  return /if \(error\) \{[\s\S]*?setEstado\("confirmada"\)/.test(trasCanje) &&
+  const trasCanje = cb.slice(cb.indexOf("exchangeCodeForSession(code)"), cb.indexOf("exchangeCodeForSession(code)") + 3000);
+  return /if \(error && !yaHaySesion\) \{[\s\S]*?setEstado\("confirmada"\)/.test(trasCanje) &&
     !/setEstado\("error"\);\s*setMensaje\("El enlace de confirmación no es válido o ha expirado\."\);\s*return;\s*\}\s*\/\/ Flujo implícito/.test(cb) &&
     /supabase\.auth\.setSession\(\{/.test(cb) &&                               // el hash #access_token se recoge
     /pedirBienvenida\(entrada\.session\?\.access_token\)/.test(login);

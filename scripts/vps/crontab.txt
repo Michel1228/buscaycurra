@@ -33,3 +33,6 @@
 # a medias (scripts/vps/recordatorios-primer-dia.sh). A las 10:00 UTC, que en
 # España son las 11 o las 12: un correo a las tres de la manana no lo abre nadie.
 0 10 * * * /usr/bin/flock -n /tmp/recordatorios.lock bash /root/recordatorios-primer-dia.sh >> /root/recordatorios.log 2>&1
+# Bienvenidas que el navegador no pidió (scripts/vps/bienvenidas-pendientes.sh):
+# ficha, ciudad, alerta y correo para cuentas confirmadas sin ella. Cada 10 min.
+*/10 * * * * /usr/bin/flock -n /tmp/bienvenidas.lock bash /root/bienvenidas-pendientes.sh >> /root/bienvenidas.log 2>&1
