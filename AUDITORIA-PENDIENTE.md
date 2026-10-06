@@ -181,13 +181,13 @@ el código anterior (falla con él, pasa con el nuevo).
 
 ### Abierto
 
-- [ ] **MICHEL — subir el límite de correos de Supabase.** Con 2-3 registros en
-  una hora se agota y quien se registra después ve un error (ahora explica que
-  vuelva en unos minutos). Se sube en
+- [x] **Límite de correos de Supabase subido de 2 a 30 por hora** (6 oct,
+  Michel en el panel). Estaba en 2: el tercer registro de la hora fallaba.
+  Comprobado: tres registros seguidos, los tres con su correo de confirmación
+  entregado. Se cambia en
   https://supabase.com/dashboard/project/ojesordjedovnpyxspxi/auth/rate-limits
-  → "Rate limit for sending emails" (con el SMTP propio de Resend se puede
-  poner 100/h). El token de gestión de Supabase caducó el 17 jun 2026: si se
-  renueva (supabase.com/dashboard/account/tokens) se puede hacer desde aquí.
+  (subirlo si hay una campaña fuerte). El token de gestión de Supabase caducó
+  el 17 jun 2026; si se renueva, se puede tocar desde aquí.
 - [ ] **DECISIÓN DE MICHEL — Guzzi no cabe en el Groq gratis.** Las
   instrucciones fijas (PROMPT_BASE, 30.300 caracteres ≈ 7.000-8.000 tokens)
   superan el límite de 8.000 tokens por minuto del plan gratis de Groq, así
