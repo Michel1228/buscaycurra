@@ -246,10 +246,12 @@ export async function recorridoDeUsuario(anota: Anota): Promise<void> {
   // El envío desde Guzzi no funcionó nunca en producción: llamaba al propio
   // servidor en localhost y el servidor solo escuchaba en la IP del contenedor
   // ("fetch failed"). Las pruebas del código pasaban; solo se veía usándolo.
-  // Un correo de prueba distinto cada día (la espera de 15 días es por correo).
+  // Un correo de prueba distinto en CADA pasada: la espera de 15 días es por
+  // correo, y con uno por día, pasar el centinela dos veces el mismo día daba
+  // una falsa alarma ("ya enviaste tu CV hace menos de 15 días", 6 oct 2026).
   const nacioR10 = "4 oct 2026: Guzzi no sabía enviar a un correo y, por debajo, ningún envío desde el chat llegaba a salir";
   try {
-    const destino = `delivered+recorrido-envio-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}@resend.dev`;
+    const destino = `delivered+recorrido-envio-${Date.now()}@resend.dev`;
     const historia: Array<{ role: string; text: string }> = [];
     const decir = async (message: string) => {
       historia.push({ role: "user", text: message });

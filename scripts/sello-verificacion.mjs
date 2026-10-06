@@ -893,6 +893,10 @@ test("el centinela prueba la formula real del filtro de salario", () => {
   return c.includes("salarioMinimoSql(\"t.texto\")") && c.includes("CASOS_SALARIO") && !c.includes(">= 200000")
     && b.includes("const SALARIO_MINIMO_SQL = salarioMinimoSql();");
 });
+// La comprobacion R10 del centinela usaba un correo por dia y, pasandolo dos
+// veces el mismo dia, la espera de 15 dias por empresa daba una falsa alarma.
+test("el centinela usa un correo de prueba distinto en cada pasada (R10)", () =>
+  leerFuente("lib/centinela/recorrido.ts").includes("delivered+recorrido-envio-${Date.now()}@resend.dev"));
 test("Guzzi no reintenta Groq cuando la peticion no cabe (413)", () =>
   leerFuente("app/api/gusi/chat/route.ts").includes("if (res.status === 413) {"));
 test("el registro explica el limite de correos de Supabase", () =>
