@@ -168,8 +168,32 @@ el código anterior (falla con él, pasa con el nuevo).
   con una cuenta de prueba: candidatura entregada con el PDF y la carta, y
   confirmación al usuario. Centinela R10 lo recorre cada mañana.
 
+- [x] **Centinela 5-6 oct: dos personas sin bienvenida** (`88d223a`). El
+  cliente de Supabase canjea solo el código al cargar la página y la página de
+  confirmación lo volvía a canjear, fallaba y no pedía la bienvenida. Ahora mira
+  si ya hay sesión, y además el servidor completa cada 10 minutos las
+  bienvenidas pendientes (/api/auth/bienvenidas-pendientes, crontab instalado).
+  Las dos personas (Valladolid) ya tienen ficha, alerta y correo.
+- [x] **Falsas alarmas del centinela** (`88d223a`, `8e55b68`): la de salarios
+  contaba sueldos de más de 200.000 sin mirar la moneda (ahora prueba la
+  fórmula real del filtro); la del envío desde Guzzi fallaba al pasarlo dos
+  veces el mismo día. Pasada a las 16:17 UTC: 25 de 25.
+
 ### Abierto
 
+- [ ] **MICHEL — subir el límite de correos de Supabase.** Con 2-3 registros en
+  una hora se agota y quien se registra después ve un error (ahora explica que
+  vuelva en unos minutos). Se sube en
+  https://supabase.com/dashboard/project/ojesordjedovnpyxspxi/auth/rate-limits
+  → "Rate limit for sending emails" (con el SMTP propio de Resend se puede
+  poner 100/h). El token de gestión de Supabase caducó el 17 jun 2026: si se
+  renueva (supabase.com/dashboard/account/tokens) se puede hacer desde aquí.
+- [ ] **DECISIÓN DE MICHEL — Guzzi no cabe en el Groq gratis.** Las
+  instrucciones fijas (PROMPT_BASE, 30.300 caracteres ≈ 7.000-8.000 tokens)
+  superan el límite de 8.000 tokens por minuto del plan gratis de Groq, así
+  que todas las respuestas libres salen de OpenAI gpt-4o-mini (28 en 48 h, del
+  orden de céntimos). DeepSeek sigue sin saldo. Opciones: recargar DeepSeek,
+  o recortar las instrucciones (medir la calidad antes y después).
 - [ ] **DECISIÓN DE MICHEL — caducidad de las ofertas de Adzuna.** Caducan a
   los 60 días de la última vez que se vieron, pero en la muestra del 3 oct casi
   todas las de más de 7 días ya no existían en Adzuna (404/410). Son 942.793
