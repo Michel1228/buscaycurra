@@ -199,15 +199,15 @@ el código anterior (falla con él, pasa con el nuevo).
   bienvenidas atrasadas, alertas) se aplazan cuando quedan menos de 30 para el
   día (`64e7240`, lib/email/presupuesto-diario.ts). Resend Pro (20 $/mes, sin
   tope diario) queda para cuando el centinela avise a menudo o haya ingresos.
-- [ ] **MICHEL — crear la cuenta aparte para los CVs** (decidido el 6 oct). En
-  60 días rebotaron 15 de 46 CVs, y esos rebotes cuentan para el 4 % con el que
-  Resend pausa la cuenta entera. El código ya está listo (`64e7240`): en cuanto
-  existan RESEND_API_KEY_CV, CV_FROM_EMAIL y RESEND_WEBHOOK_SECRET_CV en el
-  .env.local del servidor, los CVs salen por esa cuenta y el centinela la
-  vigila aparte. Pasos: segundo equipo gratuito en Resend, dominio
-  cv.buscaycurra.es (registros DNS en Hostinger), clave de envío y webhook a
-  https://buscaycurra.es/api/cv-sender/entrega (email.delivered,
-  email.bounced, email.complained). Las claves, al fichero de credenciales.
+- [ ] **Cuenta aparte para los CVs: NO se puede gratis en Resend** (corregido
+  el 7 oct). Un segundo equipo obliga a elegir un plan de pago
+  (https://resend.com/blog/multiple-teams) y abrir otra cuenta gratuita para
+  saltarse los límites lo prohíbe su política de uso
+  (https://resend.com/legal/acceptable-use). El código queda preparado
+  (`64e7240`: RESEND_API_KEY_CV, CV_FROM_EMAIL, RESEND_WEBHOOK_SECRET_CV) para
+  cuando haya plan de pago. Alternativas gratuitas: no enviar automáticamente a
+  direcciones deducidas (5 de 7 rebotaron), o mandar los CVs por Brevo
+  (300/día gratis; hay que programar el envío y sus avisos de entrega).
 - [x] **Panel de métricas: decía 3 suscriptores activos y eran 0**
   (`394adec`). Ahora cuenta Stripe (activas o en prueba) más iPhone.
 - [ ] **DECISIÓN DE MICHEL — Guzzi no cabe en el Groq gratis.** Las
