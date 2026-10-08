@@ -36,3 +36,7 @@
 # Bienvenidas que el navegador no pidió (scripts/vps/bienvenidas-pendientes.sh):
 # ficha, ciudad, alerta y correo para cuentas confirmadas sin ella. Cada 10 min.
 */10 * * * * /usr/bin/flock -n /tmp/bienvenidas.lock bash /root/bienvenidas-pendientes.sh >> /root/bienvenidas.log 2>&1
+# Plazas reales de cursos gratis (scripts/vps/sync-plazas-cursos.sh): Lanbide, SEF
+# Murcia, SOC, Consorci y Navarra. A las 06:20 UTC, cuando las fuentes ya han
+# publicado lo del dia anterior y antes de que la gente entre a mirar.
+20 6 * * * /usr/bin/flock -n /tmp/plazas-cursos.lock bash /root/sync-plazas-cursos.sh >> /root/sync-plazas-cursos.log 2>&1

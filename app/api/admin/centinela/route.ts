@@ -535,10 +535,10 @@ export async function GET(req: NextRequest) {
   await limitesDeCorreo(anota);
 
   // ── Plazas de cursos: que sigan llegando cada día ──
-  // Las trae alertas-cursos.yml desde GitHub Actions. Si ese workflow se para
-  // (ya pasó con otros: GitHub los desactiva tras 60 días sin cambios en el
-  // repo), las plazas se quedan viejas sin que nadie lo note: las fichas
-  // seguirían enseñando cursos cada vez más escasos y, con el tiempo, ninguno.
+  // Las trae el crontab del servidor (scripts/vps/sync-plazas-cursos.sh). Si
+  // el cron se pierde o una fuente cambia de formato, las plazas se quedan
+  // viejas sin que nadie lo note: las fichas seguirían enseñando cursos cada
+  // vez más escasos y, con el tiempo, ninguno.
   try {
     const { resumenPlazas } = await import("@/lib/cursos/plazas/db");
     const { porEmpezar, fuentes } = await resumenPlazas();

@@ -2895,6 +2895,13 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
     && /descargarFuente\(fuente\)[\s\S]{0,200}guardarFuente\(/.test(sync);
 });
 
+// La sincronización de plazas se puso primero en un workflow de GitHub, que en
+// esta rama no se ejecuta nunca (scripts/vps/README.md). Tiene que estar en el
+// crontab del servidor, activa (no comentada) y llamando al script versionado.
+test("las plazas de cursos se sincronizan desde el crontab del servidor", () =>
+  /^[^#].*sync-plazas-cursos\.sh/m.test(leerFuente("scripts/vps/crontab.txt"))
+  && leerFuente("scripts/vps/sync-plazas-cursos.sh").includes("/api/cursos/plazas/sync"));
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

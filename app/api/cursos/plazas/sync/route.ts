@@ -2,9 +2,10 @@
  * /api/cursos/plazas/sync — Descarga las plazas de cursos de los servicios
  * públicos de empleo y las guarda en curso_plaza.
  *
- * Se lanza una vez al día desde GitHub Actions (alertas-cursos.yml, antes de
- * las alertas) con la cabecera x-sync-secret, igual que las sincronizaciones
- * de ofertas.
+ * Se lanza una vez al día desde el crontab del servidor
+ * (scripts/vps/sync-plazas-cursos.sh, 06:20 UTC) con la cabecera
+ * x-sync-secret. NO desde GitHub Actions: en esta rama los workflows
+ * programados no se ejecutan (ver scripts/vps/README.md).
  *
  * Cada fuente va por separado y en su propio try: que el SOC no responda no
  * puede dejar sin actualizar Lanbide, ni borrar las plazas del SOC de ayer.
