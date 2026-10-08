@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # sync-plazas-cursos.sh — Plazas reales de cursos gratis (Lanbide, SEF Murcia,
-# SOC, Consorci de Formació Contínua y Navarra) a la tabla curso_plaza.
+# SOC, Consorci de Formació Contínua, Navarra y ECyL de Castilla y León) a la
+# tabla curso_plaza.
 #
 # Una vez al día. La lógica está en /api/cursos/plazas/sync: cada fuente por
 # separado, y una que falle NO borra sus plazas de ayer. El centinela avisa si

@@ -305,12 +305,158 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     actualizado: "2026-08",
   },
   {
-    pais: "GB",
+    // Era "GB" y la aplicación usa "UK" (lib/paises.ts): nunca llegaba a salir.
+    pais: "UK",
     nombre: "National Careers Service",
     url: "https://nationalcareers.service.gov.uk/explore-careers",
     queHacer:
       "Servicio público británico de orientación. Explica qué se necesita para cada oficio y qué formación gratuita hay.",
     actualizado: "2026-08",
+  },
+
+  // ─── Añadidos el 2026-10-08: los 19 países de la app que no tenían ───────
+  // Cada dirección se abrió ese día y respondía con la web oficial. El texto
+  // dice solo lo que se ha comprobado; los detalles de cada curso los da el
+  // propio servicio.
+  {
+    pais: "IE",
+    nombre: "FET Course Hub (SOLAS)",
+    url: "https://www.fetchcourses.ie/",
+    queHacer:
+      "El buscador oficial de cursos de formación profesional de Irlanda (Further Education and Training). Muchos son gratis; mira los requisitos de residencia de cada uno.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "PL",
+    nombre: "Publiczne Służby Zatrudnienia",
+    url: "https://psz.praca.gov.pl/",
+    queHacer:
+      "El portal de los servicios públicos de empleo de Polonia. Desde aquí se llega a la oficina de empleo de tu zona (urząd pracy), que es la que da los cursos.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "SE",
+    nombre: "Arbetsförmedlingen",
+    url: "https://arbetsformedlingen.se/",
+    queHacer: "El servicio público de empleo de Suecia: ofertas, orientación y formación para el empleo.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "DK",
+    nombre: "Jobnet",
+    url: "https://www.jobnet.dk/",
+    queHacer: "El portal público de empleo de Dinamarca. Desde aquí se llega al jobcenter de tu municipio, que lleva la formación.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "NO",
+    nombre: "NAV",
+    url: "https://www.nav.no/",
+    queHacer: "El servicio público de empleo y prestaciones de Noruega: ofertas, orientación y cursos para el empleo.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "FI",
+    nombre: "Työmarkkinatori",
+    url: "https://tyomarkkinatori.fi/",
+    queHacer: "El portal público de empleo de Finlandia: ofertas, servicios de empleo y formación para el empleo.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "BE",
+    nombre: "Actiris (Bruselas)",
+    url: "https://www.actiris.brussels/fr/citoyens/",
+    queHacer:
+      "En Bélgica cada región tiene el suyo: Actiris en Bruselas, VDAB en Flandes (vdab.be) y Le Forem en Valonia (leforem.be). Ahí están las ofertas y los cursos.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "AT",
+    nombre: "AMS",
+    url: "https://www.ams.at/",
+    queHacer: "El servicio público de empleo de Austria (Arbeitsmarktservice): ofertas, orientación y cursos para quien busca trabajo.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "CH",
+    nombre: "arbeit.swiss",
+    url: "https://www.arbeit.swiss/",
+    queHacer: "El portal oficial suizo del seguro de desempleo y de las oficinas públicas de empleo (RAV/ORP).",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "GR",
+    nombre: "DYPA",
+    url: "https://www.dypa.gov.gr/",
+    queHacer: "El servicio público de empleo de Grecia (antes OAED): ofertas, prestaciones y programas de formación.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "CZ",
+    nombre: "Úřad práce ČR",
+    url: "https://up.gov.cz/",
+    queHacer: "La oficina pública de empleo de la República Checa: ofertas, prestaciones y recualificación.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "HU",
+    nombre: "Nemzeti Foglalkoztatási Szolgálat",
+    url: "https://nfsz.munka.hu/",
+    queHacer: "El servicio nacional de empleo de Hungría: ofertas, orientación y formación.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "RO",
+    nombre: "ANOFM",
+    url: "https://www.anofm.ro/",
+    queHacer: "La agencia nacional de empleo de Rumanía: ofertas y cursos de formación profesional gratuitos para quien está inscrito.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "US",
+    nombre: "CareerOneStop",
+    url: "https://www.careeronestop.org/FindTraining/find-training.aspx",
+    queHacer:
+      "Del Departamento de Trabajo de EE. UU. Tiene un buscador de centros y programas de formación por oficio y zona, y la red de American Job Centers.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "CA",
+    nombre: "Job Bank",
+    url: "https://www.jobbank.gc.ca/",
+    queHacer: "El portal de empleo del Gobierno de Canadá: ofertas, salarios por oficio y orientación.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "AU",
+    nombre: "Your Career",
+    url: "https://www.yourcareer.gov.au/",
+    queHacer:
+      "Del Gobierno de Australia: compara cursos de formación profesional reconocidos y centros, y te dice qué formación pide cada oficio.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "NZ",
+    nombre: "Tahatū Career Navigator",
+    url: "https://tahatu.govt.nz/",
+    queHacer:
+      "De la Tertiary Education Commission de Nueva Zelanda (sustituye a careers.govt.nz): más de 4.000 cursos y titulaciones y qué centros los dan.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "JP",
+    nombre: "Hello Work",
+    url: "https://www.hellowork.mhlw.go.jp/",
+    queHacer: "Las oficinas públicas de empleo de Japón (Ministerio de Sanidad, Trabajo y Bienestar). La web está en japonés.",
+    actualizado: "2026-10",
+  },
+  {
+    pais: "SG",
+    nombre: "MySkillsFuture",
+    url: "https://www.myskillsfuture.gov.sg/",
+    queHacer:
+      "El portal oficial de formación de Singapur. El crédito SkillsFuture para pagar cursos es para ciudadanos singapurenses; los cursos se pueden mirar igual.",
+    actualizado: "2026-10",
   },
 ];
 

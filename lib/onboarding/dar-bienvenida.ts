@@ -9,12 +9,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendWelcomeEmail } from "@/lib/email/smtp-sender";
 import { getPool } from "@/lib/db";
+import { asegurarColumnaOficio, limpiarOficio } from "@/lib/onboarding/oficio";
 
 export type ResultadoBienvenida = { ok: boolean; yaHecha?: boolean; antigua?: boolean; error?: string };
 
 export async function darBienvenida(
   userId: string,
-  cuerpo: { nombre?: string; ciudad?: string; ref?: string } = {}
+  cuerpo: { nombre?: string; ciudad?: string; ref?: string; oficio?: string } = {}
 ): Promise<ResultadoBienvenida> {
   // LOS DATOS SALEN DE LA CUENTA, NO SOLO DEL FORMULARIO.
   //
@@ -44,10 +45,11 @@ export async function darBienvenida(
     app_metadata: { ...cuenta.app_metadata, bienvenida_en: new Date().toISOString() },
   });
 
-  const meta = (cuenta.user_metadata || {}) as { full_name?: string; ciudad?: string; ref?: string };
+  const meta = (cuenta.user_metadata || {}) as { full_name?: string; ciudad?: string; ref?: string; oficio?: string };
   const email = cuenta.email;
   const nombre = (cuerpo.nombre || meta.full_name || "").trim() || email.split("@")[0];
   const ciudad = (cuerpo.ciudad || meta.ciudad || "").trim();
+  const oficio = limpiarOficio(cuerpo.oficio || meta.oficio);
   const ref = cuerpo.ref || meta.ref || "";
 
   // Una cuenta de hace más de una semana que pasa por aquí no es un registro
@@ -102,12 +104,16 @@ export async function darBienvenida(
     // hubieran escrito.
     const pool = getPool();
     try {
-      // Guardar datos de contacto para futuras notificaciones (email/WhatsApp)
+      // Guardar datos de contacto para futuras notificaciones (email/WhatsApp),
+      // y el oficio si lo dijo al registrarse (lib/onboarding/oficio.ts). Un
+      // oficio vacío no borra el que ya hubiera.
+      await asegurarColumnaOficio(pool);
       await pool.query(
-        `INSERT INTO user_contacts (user_id, email, full_name, whatsapp_alertas)
-         VALUES ($1, $2, $3, false)
-         ON CONFLICT (user_id) DO UPDATE SET email = $2, full_name = $3, updated_at = NOW()`,
-        [userId, email, nombre]
+        `INSERT INTO user_contacts (user_id, email, full_name, whatsapp_alertas, oficio)
+         VALUES ($1, $2, $3, false, NULLIF($4, ''))
+         ON CONFLICT (user_id) DO UPDATE SET email = $2, full_name = $3,
+           oficio = COALESCE(NULLIF($4, ''), user_contacts.oficio), updated_at = NOW()`,
+        [userId, email, nombre, oficio]
       );
 
       // Crear alerta automática para la ciudad

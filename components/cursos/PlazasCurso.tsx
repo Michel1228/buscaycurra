@@ -363,7 +363,7 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
       <p className="text-[11px] leading-relaxed pt-5" style={{ color: "#4b5563", borderTop: "1px solid #2d3142" }}>
         Datos abiertos de Lanbide (Servicio Vasco de Empleo), Servicio Regional de Empleo y Formación de la
         Región de Murcia, Servei Públic d&apos;Ocupació de Catalunya, Consorci per a la Formació Contínua de
-        Catalunya y Servicio Navarro de Empleo. Se actualizan cada día. La inscripción, las fechas y los
+        Catalunya, Servicio Público de Empleo de Castilla y León y Servicio Navarro de Empleo. Se actualizan cada día. La inscripción, las fechas y los
         requisitos los fija cada servicio: confírmalos en su web antes de apuntarte.
       </p>
     </>

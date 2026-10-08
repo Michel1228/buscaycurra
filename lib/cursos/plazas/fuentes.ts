@@ -31,7 +31,7 @@
  * red. La descarga va aparte, en descargarFuente().
  */
 
-export type FuentePlaza = "lanbide" | "sef-murcia" | "soc" | "consorci" | "navarra";
+export type FuentePlaza = "lanbide" | "sef-murcia" | "soc" | "consorci" | "navarra" | "ecyl";
 
 export interface PlazaCurso {
   /** fuente:codigo — único entre todas las fuentes. */
@@ -100,6 +100,13 @@ export const FUENTES: Record<FuentePlaza, InfoFuente> = {
     atribucion: "Consorci per a la Formació Contínua de Catalunya (dades obertes)",
     url: "https://analisi.transparenciacatalunya.cat/api/v3/views/qv5z-dgk3/export.csv?accessType=DOWNLOAD",
     buscador: "https://conforcat.gencat.cat/ca/inici",
+  },
+  ecyl: {
+    nombre: "ECyL",
+    comunidad: "Castilla y León",
+    atribucion: "Servicio Público de Empleo de Castilla y León (datos abiertos, CC BY 4.0)",
+    url: "https://analisis.datosabiertos.jcyl.es/api/explore/v2.1/catalog/datasets/formacion-del-ecyl/exports/json",
+    buscador: "https://empleocastillayleon.jcyl.es/oficinavirtual/",
   },
   navarra: {
     nombre: "Servicio Navarro de Empleo",
@@ -424,12 +431,82 @@ export function leerNavarra(texto: string): PlazaCurso[] {
   });
 }
 
+/**
+ * Texto con las tildes rotas desde el origen ("FACTURACIÃ\u0093N"): UTF-8 que
+ * alguien leyó como Latin-1 y volvió a guardar. Solo se toca si tiene esa
+ * huella; aplicarlo a un texto bien escrito lo estropearía.
+ */
+export function arreglarTildes(s: string | null | undefined): string | null {
+  if (!s) return s ?? null;
+  if (!/[ÃÂ][\u0080-¿]/.test(s)) return s;
+  const arreglado = Buffer.from(s, "latin1").toString("utf8");
+  return arreglado.includes("�") ? s : arreglado;
+}
+
+const MESES_ES: Record<string, number> = {
+  enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8,
+  septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12,
+};
+
+/** "desde el 11 de septiembre de 2023 (previsto) hasta el 02 de octubre de 2023" */
+function fechaEnTexto(texto: string | null, palabra: "desde" | "hasta"): string | null {
+  const m = (texto ?? "").toLowerCase().match(new RegExp(`${palabra} el (\\d{1,2}) de ([a-záéíóú]+) de (\\d{4})`));
+  if (!m || !MESES_ES[m[2]]) return null;
+  return fecha(`${m[1]}/${MESES_ES[m[2]]}/${m[3]}`, "dma");
+}
+
+/**
+ * ECyL (Castilla y León): JSON de su portal de datos abiertos (CC BY 4.0).
+ *   · Tildes rotas en parte de los registros (164 de 437 el 2026-10-08).
+ *   · La fecha a veces solo viene en texto ("desde el 11 de septiembre…").
+ *   · El enlace de cada curso apunta a gestorcontenidos.jcyl.es, que no existe
+ *     desde fuera; la misma ruta en empleo.jcyl.es abre la ficha pública.
+ *   · Las que empiezan por "PNL" son prácticas no laborales en empresas, no
+ *     cursos: enseñarlas como "plaza de curso" sería engañar.
+ */
+export function leerEcyl(texto: string): PlazaCurso[] {
+  const filas = JSON.parse(texto) as Record<string, any>[];
+  return filas.flatMap(r => {
+    const codigo = limpio(r.identificador);
+    const titulo = arreglarTildes(limpio(r.titulo));
+    if (!codigo || !titulo || /^pnl\b/i.test(titulo)) return [];
+    const lugar = arreglarTildes(limpio(r.lugar_de_celebracion)) ?? "";
+    const colectivos = ([] as string[]).concat(r.colectivo_destinatario ?? []).join(" ").toLowerCase();
+    const des = /desemplead/.test(colectivos), ocu = /ocupad|trabajador/.test(colectivos);
+    const enlace = limpio(r.enlace_al_contenido)?.replace(/^https?:\/\/gestorcontenidos\.jcyl\.es\//, "https://empleo.jcyl.es/");
+    const programa = arreglarTildes(limpio(r.programadeformacion)) ?? "";
+    return [{
+      id: `ecyl:${codigo}`,
+      fuente: "ecyl" as const,
+      codigo,
+      titulo: tituloLegible(titulo),
+      familia: arreglarTildes(limpio(r.materia)),
+      provincia: provinciaDeMunicipio(r.codigo_localidad),
+      municipio: arreglarTildes(limpio(r.localidad_)),
+      centro: limpio(lugar.split(",")[0]),
+      direccion: limpio(lugar.replace(/,?\s*Tfno:.*$/i, "").split(",").slice(1).join(",")),
+      telefono: telefono((lugar.match(/Tfno:\s*([\d\s]+)/i) || [])[1]),
+      email: null,
+      web: null,
+      url: enlace && /^https:\/\/empleo\.jcyl\.es\//.test(enlace) ? enlace : FUENTES.ecyl.buscador,
+      inicio: fecha(r.fecha_de_inicio, "amd") ?? fechaEnTexto(r.fechas_de_desarrollo, "desde"),
+      fin: fecha(r.fecha_de_finalizacion, "amd") ?? fechaEnTexto(r.fechas_de_desarrollo, "hasta"),
+      horas: entero(r.duracion),
+      modalidad: modalidadDe(arreglarTildes(limpio(r.tipo_formacion))),
+      dirigido: des && ocu ? "todos" : des ? "desempleados" : ocu ? "ocupados" : null,
+      certificado: /certificado de profesionalidad/i.test(programa) ? true : null,
+      estado: null,
+    }];
+  });
+}
+
 const LECTORES: Record<FuentePlaza, (texto: string) => PlazaCurso[]> = {
   lanbide: leerLanbide,
   "sef-murcia": leerMurcia,
   soc: leerSoc,
   consorci: leerConsorci,
   navarra: leerNavarra,
+  ecyl: leerEcyl,
 };
 
 /**

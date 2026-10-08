@@ -2808,7 +2808,7 @@ test("el boton de la campana tiene nombre accesible", () =>
 // no es una plaza para quien busca su primer trabajo de oficina, y la salida
 // hacia los cursos de pago no puede ser una redirección abierta.
 // Se compila el código de verdad y se le pasan datos como los reales.
-test("las plazas de cursos se leen bien de las cinco fuentes", async () => {
+test("las plazas de cursos se leen bien de las seis fuentes", async () => {
   const { execFileSync } = await import("node:child_process");
   const { unlinkSync, writeFileSync } = await import("node:fs");
   const entrada = ".sello-plazas-entrada.ts";
@@ -2850,6 +2850,20 @@ test("las plazas de cursos se leen bien de las cinco fuentes", async () => {
     // Navarra: 1/0.
     const nav = m.leerNavarra('_id,CODIGO,TITULO DEL CURSO,FECHA DE INICIO,FECHA DE FIN,DESEMPLEADOS,OCUPADOS,DESCRIPCION MODALIDAD\n1,16128,Conducción de Carretillas Elevadoras,09/11/2026,11/11/2026,1,0,Presencial\n');
     comprueba("Navarra con 1/0", nav[0]?.dirigido === "desempleados" && nav[0].provincia === "31");
+
+    // Castilla y León: tildes rotas desde el origen, fecha solo en texto, enlace
+    // a un servidor interno, y prácticas en empresas que no son cursos.
+    const ecyl = m.leerEcyl(JSON.stringify([
+      { identificador: "1", titulo: "FIRMA Y FACTURACIÃ\u0093N ELECTRÃ\u0093NICA", codigo_localidad: 9, localidad_: "Burgos",
+        tipo_formacion: "TeleformaciÃ³n", fecha_de_inicio: null, fechas_de_desarrollo: "desde el 28 de octubre de 2026 (previsto) hasta el 20 de noviembre de 2026",
+        duracion: "20 horas", colectivo_destinatario: ["Ocupado", "Desempleado"], lugar_de_celebracion: "ASOCIACION X, CL/ SAGRADA FAMILIA, 31, 09006 - BURGOS(BURGOS), Tfno: 664384569",
+        enlace_al_contenido: "https://gestorcontenidos.jcyl.es/web/jcyl/Empleo/es/Plantilla100Detalle/1/Formacion/1/Propuesta" },
+      { identificador: "2", titulo: "PNL A POC A POC. LOGOPEDIA", fecha_de_inicio: "2026-11-01" },
+    ]));
+    comprueba("Castilla y León: tildes, fecha en texto, enlace público y sin prácticas", ecyl.length === 1
+      && ecyl[0].titulo === "Firma y facturación electrónica" && ecyl[0].inicio === "2026-10-28" && ecyl[0].fin === "2026-11-20"
+      && ecyl[0].provincia === "09" && ecyl[0].modalidad === "online" && ecyl[0].dirigido === "todos" && ecyl[0].telefono === "664384569"
+      && ecyl[0].url.startsWith("https://empleo.jcyl.es/"));
 
     // Emparejar con las fichas: castellano, catalán y exclusiones.
     comprueba("carretillas y carretons van a carretillero", m.fichasDePlaza("CONDUCCIÓN DE CARRETILLAS ELEVADORAS").includes("carretillero") && m.fichasDePlaza("Conducció de carretons elevadors").includes("carretillero"));
@@ -2903,6 +2917,43 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 // pueden quedarse sin atribuir.
 test("la portada lleva la verificación de Impact (afiliados de Coursera)", () =>
   /name="impact-site-verification"[\s\S]{0,200}value: "5475f2f2-412b-4825-a15f-84781f036795"/.test(leerFuente("app/layout.tsx")));
+
+// Los servicios de empleo de los otros países estaban escritos pero no salían
+// en ninguna página (la de cursos solo enseñaba el de España), el de Reino
+// Unido llevaba "GB" cuando la app usa "UK", y a 19 de los 26 países no les
+// correspondía ninguno. Ahora hay uno por país y se elige en /cursos.
+test("cada país de la app tiene su servicio oficial de formación y se puede elegir en /cursos", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-servicios-entrada.ts", salida = ".sello-servicios.cjs";
+  try {
+    writeFileSync(entrada, 'export { LISTA_PAISES } from "./lib/paises";\nexport { servicioEmpleoDe } from "./lib/cursos/plataformas";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const sin = m.LISTA_PAISES.filter(p => !m.servicioEmpleoDe(p.codigo)).map(p => p.codigo);
+    if (sin.length) console.log("     ↳ sin servicio: " + sin.join(", "));
+    const lista = leerFuente("components/cursos/ListaCursos.tsx");
+    return sin.length === 0 && m.LISTA_PAISES.length >= 26 && lista.includes("<FormacionPorPais");
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// De 32 personas con alerta, 23 no tenían oficio en ningún sitio: el correo
+// no podía decirles qué curso les piden. Se pregunta al registrarse y llega
+// hasta el correo de ofertas.
+test("el oficio del registro se guarda y lo usa el correo de ofertas", () => {
+  const registro = leerFuente("app/auth/registro/page.tsx");
+  const bienvenida = leerFuente("lib/onboarding/dar-bienvenida.ts");
+  const alertas = leerFuente("app/api/push/send-alerts/route.ts");
+  return /data: \{[\s\S]{0,200}oficio:/.test(registro) && registro.includes('htmlFor="oficio"')
+    && bienvenida.includes("meta.oficio") && bienvenida.includes("COALESCE(NULLIF($4, ''), user_contacts.oficio)")
+    && /asegurarColumnaOficio\(pool\)[\s\S]{0,600}SELECT user_id, email, whatsapp_phone, whatsapp_alertas, full_name, oficio/.test(alertas)
+    && alertas.includes("contact?.oficio?.trim()");
+});
 
 // ── LA WEB VUELVE SOLA Y, SI NO, ALGUIEN SE ENTERA (8 oct 2026) ───────
 //

@@ -14,6 +14,7 @@ import { sendJobAlertEmail } from "@/lib/email/smtp-sender";
 import { enlaceBaja } from "@/lib/alertas/baja";
 import { get as cacheGet, set as cacheSet, del as cacheDel } from "@/lib/cache/redis-client";
 import { cursoParaPuesto } from "@/lib/cursos/curso-para-puesto";
+import { asegurarColumnaOficio } from "@/lib/onboarding/oficio";
 import { fichasDePlaza } from "@/lib/cursos/plazas/emparejar";
 import { buscarPlazas } from "@/lib/cursos/plazas/db";
 
@@ -165,14 +166,17 @@ export async function GET(request: NextRequest) {
 
     const contactsMap = new Map<string, {
       email: string | null; whatsapp_phone: string | null;
-      whatsapp_alertas: boolean; full_name: string | null;
+      whatsapp_alertas: boolean; full_name: string | null; oficio: string | null;
     }>();
     if (userIds.length > 0) {
+      // La columna del oficio se crea sola (lib/onboarding/oficio.ts); sin
+      // esto, la primera pasada tras el despliegue fallaría si aún no existe.
+      await asegurarColumnaOficio(pool);
       const allContacts = await pool.query<{
         user_id: string; email: string | null; whatsapp_phone: string | null;
-        whatsapp_alertas: boolean; full_name: string | null;
+        whatsapp_alertas: boolean; full_name: string | null; oficio: string | null;
       }>(
-        `SELECT user_id, email, whatsapp_phone, whatsapp_alertas, full_name
+        `SELECT user_id, email, whatsapp_phone, whatsapp_alertas, full_name, oficio
          FROM user_contacts WHERE user_id = ANY($1)`,
         [userIds]
       );
@@ -411,7 +415,9 @@ export async function GET(request: NextRequest) {
           const claveCurso = `curso-en-alerta:${alerta.user_id}`;
           if (!(await cacheGet(claveCurso).catch(() => null))) {
             const cv = cvPorUsuario.get(alerta.user_id);
-            const puesto = alerta.keyword?.trim() || cv?.puesto?.trim() || "";
+            // La palabra de la alerta manda; si no hay, el oficio que dijo al
+            // registrarse; si tampoco, el subtítulo de su CV.
+            const puesto = alerta.keyword?.trim() || contact?.oficio?.trim() || cv?.puesto?.trim() || "";
             const tipo = cursoParaPuesto(puesto);
             if (tipo && !(cv?.texto && fichasDePlaza(cv.texto).includes(tipo.slug))) {
               if (!plazasPorFicha.has(tipo.slug)) {

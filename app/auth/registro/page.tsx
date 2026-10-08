@@ -18,6 +18,7 @@ function RegistroPageInner() {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [ciudad, setCiudad] = useState("");
+  const [oficio, setOficio] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [confirmarContrasena, setConfirmarContrasena] = useState("");
   const [verContrasena, setVerContrasena] = useState(false);
@@ -61,7 +62,11 @@ function RegistroPageInner() {
         options: {
           // El código de referido va también en la cuenta: la bienvenida se hace
           // al confirmar el correo, y entonces el formulario ya no está.
-          data: { full_name: nombre.trim(), ciudad: ciudad.trim(), ...(referralCode ? { ref: referralCode } : {}) },
+          data: {
+            full_name: nombre.trim(), ciudad: ciudad.trim(),
+            ...(oficio.trim() ? { oficio: oficio.trim().slice(0, 80) } : {}),
+            ...(referralCode ? { ref: referralCode } : {}),
+          },
           emailRedirectTo: `${siteUrl}/auth/callback`,
         },
       });
@@ -91,7 +96,7 @@ function RegistroPageInner() {
       fetch("/api/auth/welcome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), nombre: nombre.trim(), ciudad: ciudad.trim(), userId: data?.user?.id || "", ref: referralCode }),
+        body: JSON.stringify({ email: email.trim(), nombre: nombre.trim(), ciudad: ciudad.trim(), oficio: oficio.trim(), userId: data?.user?.id || "", ref: referralCode }),
       }).catch((err) => { console.error('[Registro] Error welcome:', err) });
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
@@ -224,6 +229,15 @@ function RegistroPageInner() {
                     autoComplete="off"
                     className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
                   <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>Te avisaremos cuando haya ofertas en tu zona</p>
+                </div>
+
+                <div>
+                  <label htmlFor="oficio" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>¿De qué buscas trabajo? <span style={{ color: "#64748b" }}>(opcional)</span></label>
+                  <input id="oficio" type="text" value={oficio} onChange={(e) => setOficio(e.target.value)}
+                    placeholder="Ej: camarera, mozo de almacén, cuidador…"
+                    maxLength={80} autoComplete="organization-title"
+                    className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
+                  <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>Así Guzzi te dice qué curso te piden y dónde sacarlo gratis</p>
                 </div>
 
                 <div>

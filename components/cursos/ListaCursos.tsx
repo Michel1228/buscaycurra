@@ -15,7 +15,9 @@ import {
   tiposPorPais, ordenarPorUrgencia, sectoresConCursos, tiposPorSector,
 } from "@/lib/cursos/tipos";
 import { plataformasPorPais, servicioEmpleoDe, EUROPASS } from "@/lib/cursos/plataformas";
+import { LISTA_PAISES } from "@/lib/paises";
 import CatalogoCursos from "./CatalogoCursos";
+import FormacionPorPais, { type PaisFormacion } from "./FormacionPorPais";
 
 export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?: string }) {
   const todos = tiposPorPais(pais);
@@ -27,6 +29,24 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
       cursos: ordenarPorUrgencia(tiposPorSector(sector, pais).filter(t => t.familia === "mejora")),
     }))
     .filter(s => s.cursos.length > 0);
+
+  // Para quien se va fuera: el servicio oficial de cada país y lo que piden
+  // allí en lugar de nuestros cursos (equivalenteEn de cada ficha).
+  const paisesFuera: PaisFormacion[] = LISTA_PAISES
+    .filter(p => p.codigo !== pais)
+    .map(p => {
+      const s = servicioEmpleoDe(p.codigo);
+      return {
+        codigo: p.codigo,
+        nombre: p.nombre,
+        bandera: p.bandera,
+        servicio: s ? { nombre: s.nombre, url: s.url, queHacer: s.queHacer } : undefined,
+        equivalencias: todos.flatMap(t => (t.equivalenteEn ?? [])
+          .filter(eq => eq.pais === p.codigo)
+          .map(eq => ({ cursoSlug: t.slug, curso: t.nombre, nombre: eq.nombre, nota: eq.nota }))),
+      };
+    })
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
 
   return (
     <>
@@ -101,7 +121,7 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
             </p>
             <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
               Miles de cursos con fecha, horario y centro, publicados por los servicios públicos de
-              empleo de Euskadi, Cataluña, Murcia y Navarra. Busca el tuyo y apúntate.
+              empleo de Euskadi, Cataluña, Castilla y León, Murcia y Navarra. Busca el tuyo y apúntate.
             </p>
           </div>
         </Link>
@@ -114,6 +134,8 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
         servicio={servicioEmpleoDe(pais)}
         base={base}
       />
+
+      <FormacionPorPais paises={paisesFuera} base={base} />
 
       <div className="rounded-xl p-4 text-xs leading-relaxed"
            style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8" }}>

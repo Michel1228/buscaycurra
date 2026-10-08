@@ -91,7 +91,7 @@ export async function respuestaPlazasCurso(texto: string): Promise<string | null
     const etiqueta = etiquetaPlazas(tipo.slug, tipo.nombre);
     return `🎓 **${etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1)}${donde}**\n\n`
       + `Ahora mismo no tengo plazas con fecha de este curso${donde}. Las que enseño las publican los servicios de empleo `
-      + `de Euskadi, Cataluña, Murcia y Navarra; el resto de comunidades no las publica como datos.\n\n`
+      + `de Euskadi, Cataluña, Castilla y León, Murcia y Navarra; el resto de comunidades no las publica como datos.\n\n`
       + `• Busca en el [buscador oficial de FUNDAE](https://experienciafundae.es/buscador), que cubre toda España.\n`
       + `• En la ${enlaceFicha} tienes lo que cuesta, lo que dura y dónde sacarlo gratis.`;
   }

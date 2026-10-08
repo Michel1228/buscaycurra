@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
     const cuerpo = await req.json().catch(() => ({})) as {
-      nombre?: string; ciudad?: string; ref?: string;
+      nombre?: string; ciudad?: string; ref?: string; oficio?: string;
     };
     // Lo que hace está en lib/onboarding/dar-bienvenida.ts, que comparte con la
     // red de seguridad del servidor (/api/auth/bienvenidas-pendientes).
