@@ -67,13 +67,23 @@ export async function respuestaPlazasCurso(texto: string): Promise<string | null
   const { buscarPlazas } = await import("@/lib/cursos/plazas/db");
   let resultado;
   try {
-    resultado = await buscarPlazas({ ficha, provincia: provincia ?? undefined, limite: 3 });
+    resultado = await buscarPlazas({ ficha, provincia: provincia ?? undefined, limite: 12 });
   } catch {
     return null; // sin base de datos, que conteste el flujo de siempre
   }
+  // El mismo curso, el mismo día y en el mismo pueblo sale varias veces cuando
+  // hay varios grupos. En la lista de la web se enseñan todos; en el chat, tres
+  // líneas idénticas parecen un fallo. Una por curso, pueblo y fecha.
+  const vistas = new Set<string>();
+  resultado.plazas = resultado.plazas.filter(p => {
+    const clave = `${p.titulo}|${p.municipio}|${p.inicio}`;
+    if (vistas.has(clave)) return false;
+    vistas.add(clave);
+    return true;
+  }).slice(0, 3);
 
   const donde = provincia ? ` en ${nombreProvincia(provincia)}` : "";
-  const enlaceFicha = `[ficha de ${tipo.nombre.toLowerCase()}](/app/formacion/${tipo.slug})`;
+  const enlaceFicha = `[ficha de ${etiquetaPlazas(tipo.slug, tipo.nombre)}](/app/formacion/${tipo.slug})`;
   const enlaceTodas = `/app/formacion/plazas?ficha=${tipo.slug}`;
 
   if (resultado.total === 0) {
