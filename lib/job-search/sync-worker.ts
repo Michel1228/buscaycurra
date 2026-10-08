@@ -649,7 +649,7 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
 }
 
 /** Auto-detecta categoria desde el titulo de la oferta */
-function detectCategoria(title: string): string | null {
+export function detectCategoria(title: string): string | null {
   const t = title.toLowerCase();
   // Oper / fábrica / almacén
   //

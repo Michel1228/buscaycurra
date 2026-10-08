@@ -2918,6 +2918,44 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 test("la portada lleva la verificación de Impact (afiliados de Coursera)", () =>
   /name="impact-site-verification"[\s\S]{0,200}value: "5475f2f2-412b-4825-a15f-84781f036795"/.test(leerFuente("app/layout.tsx")));
 
+// ── OFERTAS DE LOS SERVICIOS PÚBLICOS DE EMPLEO (8 oct 2026) ──────────
+//
+// España tenía 65.124 ofertas de 2,8 millones, el 70 % de Adzuna y ninguna de
+// los servicios públicos. Lanbide y el SEF de Murcia publican las suyas. Dos
+// trampas que hay que cerrar: con una empresa inventada ("vía Lanbide") el
+// proceso que deduce correos acabaría mandando CVs a Lanbide; y el correo que
+// trae Murcia es de una oficina del SEF, solo para quien está inscrito fuera y
+// con el DNI en el asunto: no puede ir al envío automático.
+test("las ofertas públicas entran sin empresa inventada ni correo, y solo se retiran si la fuente respondió", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-ofertas-entrada.ts", salida = ".sello-ofertas.cjs";
+  try {
+    writeFileSync(entrada, 'export { leerLanbide, leerSefMurcia } from "./lib/job-search/ofertas-publicas";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--external:pg", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const lan = m.leerLanbide('cb([{"codigo":"1","desEmpleo":"CAMARERO/A","desPuesto":"Servicio en sala","pais":"ESPAÑA","provincia":"BIZKAIA","municipio":"BILBAO","fecPub":"08/10/2026","url":"https://web.lanbide.eus/x"}])');
+    const mur = m.leerSefMurcia(JSON.stringify([{ numeroOferta: "9", fechaDeInicio: "08/10/2026", fechaDeFin: "13/10/2026", municipio: { municipio: "LORCA", provincia: { provincia: "MURCIA" } },
+      descripcion: "ADMINISTRATIVO/A", adicionales: "Envíe su CV a oficina@sefcarm.es<BR/>- Atención al público", urlDetalles: "https://sefoficinavirtual.carm.es/x" }]));
+    const lectores = lan[0]?.titulo === "Camarero/a" && lan[0].ciudad === "Bilbao" && lan[0].provincia === "Bizkaia"
+      && mur[0]?.caduca?.toISOString() === "2026-10-13T23:59:00.000Z" && !("contactEmail" in mur[0]) && mur[0].descripcion.includes("\n- Atención");
+    const src = leerFuente("lib/job-search/ofertas-publicas.ts");
+    const insert = (src.match(/INSERT INTO "JobListing"[\s\S]*?RETURNING/) || [""])[0];
+    const sinEmpresaNiCorreo = /VALUES \(\$1, \$2, '',/.test(insert) && !insert.includes("contactEmail");
+    const retiradaSegura = /if \(ofertas\.length < FUENTES\[fuente\]\.minimo\)[\s\S]{0,200}retiradaOmitida: true/.test(src);
+    const emails = leerFuente("scripts/vps/extract-emails-fast.sh");
+    const cron = /^[^#].*sync-ofertas-publicas\.sh/m.test(leerFuente("scripts/vps/crontab.txt"));
+    if (!lectores) console.log("     ↳ los lectores no dan lo esperado");
+    if (!sinEmpresaNiCorreo) console.log("     ↳ el INSERT pone empresa o correo");
+    return lectores && sinEmpresaNiCorreo && retiradaSegura && emails.includes("company != ''") && cron;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar o ejecutar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // Los servicios de empleo de los otros países estaban escritos pero no salían
 // en ninguna página (la de cursos solo enseñaba el de España), el de Reino
 // Unido llevaba "GB" cuando la app usa "UK", y a 19 de los 26 países no les

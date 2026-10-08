@@ -31,6 +31,7 @@ seguía sin ellos.
 | `backup-bc.sh`, `restore-bc.sh` | Copia diaria de la base propia (04:00 UTC, 7 días) y su restauración |
 | `sync-plazas-cursos.sh` | Plazas reales de cursos gratis (Lanbide, SEF Murcia, SOC, Consorci, Navarra, ECyL) a `curso_plaza` (06:20 UTC) |
 | `vigilante-app.sh` | Cada 5 min, desde fuera de la app: si la web no responde y el contenedor falta o está parado, lo levanta; correo al caer y al volver |
+| `sync-ofertas-publicas.sh` | Ofertas de Lanbide y SEF Murcia desde sus datos abiertos (07:15 y 15:15 UTC), sin empresa ni correo inventados |
 | `alertas-cursos.sh` | Aviso a quien encendió el de un curso: hay ofertas que lo piden (09:00 UTC, 40 por pasada, con presupuesto diario) |
 
 ## Reglas
