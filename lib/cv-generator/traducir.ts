@@ -40,13 +40,21 @@ const NOMBRE_IDIOMA: Record<Exclude<IdiomaCV, "es">, string> = {
   en: "English", de: "German", fr: "French", pt: "European Portuguese", it: "Italian", nl: "Dutch",
 };
 
+/**
+ * "Actualidad" en cada idioma. Con un solo ejemplo en inglés, la traducción al
+ * alemán devolvía "2021 - Present" (probado en producción el 8 oct 2026).
+ */
+const HASTA_HOY: Record<Exclude<IdiomaCV, "es">, string> = {
+  en: "Present", de: "heute", fr: "aujourd'hui", pt: "presente", it: "oggi", nl: "heden",
+};
+
 export function promptTraduccion(cv: CVData, idioma: Exclude<IdiomaCV, "es">): string {
   return [
     `Translate this CV content from Spanish into ${NOMBRE_IDIOMA[idioma]}, as a native professional recruiter in that country would write it.`,
     "Rules:",
     "- Translate faithfully. Do NOT add, remove or invent any experience, task, skill, qualification or achievement.",
     "- Use the usual job-title names of that country (e.g. 'Camarero/a' -> 'Waiter/Waitress').",
-    "- In dates translate only the words (e.g. 'Actualidad' -> 'Present'); keep every number.",
+    `- In dates translate only the words into ${NOMBRE_IDIOMA[idioma]} ('Actualidad' -> '${HASTA_HOY[idioma]}'); keep every number.`,
     "- Spanish official qualifications: translate the name and keep the Spanish name in brackets the first time (e.g. 'Hospitality technician (Técnico en Cocina)').",
     "- Keep the same number of items in every array and the same order.",
     "- Reply ONLY with valid JSON with exactly the same keys and structure as the input. No comments, no markdown.",
