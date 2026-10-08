@@ -145,11 +145,12 @@ export default function RootLayout({
         {/* Verificación de la web en Impact (afiliados de Coursera, 8 oct 2026).
             Impact pide el código en el atributo "value", que no es estándar en
             <meta>; va también en "content" por si su lector mira el habitual.
-            No es secreto: es público por definición. */}
+            No es secreto: es público por definición. Impact genera un código
+            nuevo cada vez que se abre su panel; el que vale es el último. */}
         <meta
           name="impact-site-verification"
-          content="3d8e4465-f6f9-4311-adf2-4d8cb327638d"
-          {...({ value: "3d8e4465-f6f9-4311-adf2-4d8cb327638d" } as Record<string, string>)}
+          content="5475f2f2-412b-4825-a15f-84781f036795"
+          {...({ value: "5475f2f2-412b-4825-a15f-84781f036795" } as Record<string, string>)}
         />
       </head>
       <body>

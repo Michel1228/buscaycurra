@@ -2902,7 +2902,7 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 // quita "porque no se usa", Impact deja de reconocer la web y las comisiones
 // pueden quedarse sin atribuir.
 test("la portada lleva la verificación de Impact (afiliados de Coursera)", () =>
-  /name="impact-site-verification"[\s\S]{0,200}value: "3d8e4465-f6f9-4311-adf2-4d8cb327638d"/.test(leerFuente("app/layout.tsx")));
+  /name="impact-site-verification"[\s\S]{0,200}value: "5475f2f2-412b-4825-a15f-84781f036795"/.test(leerFuente("app/layout.tsx")));
 
 // ── LA WEB VUELVE SOLA Y, SI NO, ALGUIEN SE ENTERA (8 oct 2026) ───────
 //
