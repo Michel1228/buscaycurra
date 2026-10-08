@@ -2898,6 +2898,23 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 // La sincronización de plazas se puso primero en un workflow de GitHub, que en
 // esta rama no se ejecuta nunca (scripts/vps/README.md). Tiene que estar en el
 // crontab del servidor, activa (no comentada) y llamando al script versionado.
+// ── LA WEB VUELVE SOLA Y, SI NO, ALGUIEN SE ENTERA (8 oct 2026) ───────
+//
+// El servidor se reinició por una actualización del núcleo y el contenedor de
+// la app no volvió (sin política de reinicio): 7 horas de "Bad Gateway" sin que
+// nadie lo supiera, porque el centinela vive dentro de la propia app.
+test("la app vuelve sola tras un reinicio y un vigilante externo avisa si cae", () => {
+  const deploy = leerFuente("build-deploy.sh");
+  const vig = leerFuente("scripts/vps/vigilante-app.sh");
+  const run = (deploy.match(/docker run -d --name buscaycurra-nextjs[\s\S]*?buscaycurra:latest/) || [""])[0];
+  return run.includes("--restart unless-stopped")
+    && /^[^#].*vigilante-app\.sh/m.test(leerFuente("scripts/vps/crontab.txt"))
+    && vig.includes('pgrep -f "build-deploy.sh"')
+    && vig.includes("--restart unless-stopped")
+    && vig.includes("docker network connect easypanel-buscaycurra buscaycurra-nextjs")
+    && vig.includes("ADMIN_EMAILS");
+});
+
 // ── ALERTAS DE CURSOS QUE LLEGAN DE VERDAD (8 oct 2026) ───────────────
 //
 // No se había mandado ni una: solo estaban en un workflow de GitHub que en esta

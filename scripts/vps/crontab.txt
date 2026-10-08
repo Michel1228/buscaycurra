@@ -43,3 +43,6 @@
 # Alertas de cursos (scripts/vps/alertas-cursos.sh): a quien encendio el aviso de un
 # curso, cuando hay ofertas que lo piden. A las 09:00 UTC, despues de las plazas.
 0 9 * * * /usr/bin/flock -n /tmp/alertas-cursos.lock bash /root/alertas-cursos.sh >> /root/alertas-cursos.log 2>&1
+# Vigilante de la web desde fuera de la app (scripts/vps/vigilante-app.sh): si el
+# contenedor no existe o esta parado lo levanta, y avisa por correo al caer y al volver.
+*/5 * * * * /usr/bin/flock -n /tmp/vigilante-app.lock bash /root/vigilante-app.sh >> /root/vigilante-app.log 2>&1

@@ -49,7 +49,12 @@ docker stop buscaycurra-nextjs 2>/dev/null || true
 docker rm buscaycurra-nextjs 2>/dev/null || true
 # REDIS_URL viene de .env.local (lleva la contraseña del Redis Swarm — NO hardcodear
 # aquí: este script está versionado y un -e sin password rompe el worker con NOAUTH)
+# --restart unless-stopped: el 8 oct 2026 el servidor se reinició solo por una
+# actualización del núcleo (10:22 UTC) y la aplicación no volvió: 7 horas con
+# "Bad Gateway" y nadie se enteró, porque el centinela vive dentro de ella. La
+# base de datos y Redis sí volvieron porque tenían esta política.
 docker run -d --name buscaycurra-nextjs \
+  --restart unless-stopped \
   --network busca-y-curra_default \
   --env-file .env.local \
   -e API_URL=http://buscaycurra-api:3001 \
