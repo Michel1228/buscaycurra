@@ -142,6 +142,15 @@ export default function RootLayout({
         <link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" href="/splash-2048x2732.png" />
         <link rel="alternate" hrefLang="es" href="https://buscaycurra.es" />
         <link rel="alternate" hrefLang="x-default" href="https://buscaycurra.es" />
+        {/* Verificación de la web en Impact (afiliados de Coursera, 8 oct 2026).
+            Impact pide el código en el atributo "value", que no es estándar en
+            <meta>; va también en "content" por si su lector mira el habitual.
+            No es secreto: es público por definición. */}
+        <meta
+          name="impact-site-verification"
+          content="3d8e4465-f6f9-4311-adf2-4d8cb327638d"
+          {...({ value: "3d8e4465-f6f9-4311-adf2-4d8cb327638d" } as Record<string, string>)}
+        />
       </head>
       <body>
         {/* Structured data for Google rich results */}

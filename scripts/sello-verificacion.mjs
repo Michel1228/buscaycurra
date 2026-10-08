@@ -2898,6 +2898,12 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 // La sincronización de plazas se puso primero en un workflow de GitHub, que en
 // esta rama no se ejecuta nunca (scripts/vps/README.md). Tiene que estar en el
 // crontab del servidor, activa (no comentada) y llamando al script versionado.
+// La verificación de la web en Impact (afiliados de Coursera). Si alguien la
+// quita "porque no se usa", Impact deja de reconocer la web y las comisiones
+// pueden quedarse sin atribuir.
+test("la portada lleva la verificación de Impact (afiliados de Coursera)", () =>
+  /name="impact-site-verification"[\s\S]{0,200}value: "3d8e4465-f6f9-4311-adf2-4d8cb327638d"/.test(leerFuente("app/layout.tsx")));
+
 // ── LA WEB VUELVE SOLA Y, SI NO, ALGUIEN SE ENTERA (8 oct 2026) ───────
 //
 // El servidor se reinició por una actualización del núcleo y el contenedor de
