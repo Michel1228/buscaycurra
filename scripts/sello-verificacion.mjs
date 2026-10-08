@@ -2918,6 +2918,34 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 test("la portada lleva la verificación de Impact (afiliados de Coursera)", () =>
   /name="impact-site-verification"[\s\S]{0,200}value: "5475f2f2-412b-4825-a15f-84781f036795"/.test(leerFuente("app/layout.tsx")));
 
+// ── CURSOS DE IDIOMA PARA QUIEN LLEGA (8 oct 2026) ────────────────────
+//
+// Casi nunca es igual para todos, y la diferencia suele ser ser de la UE o no.
+// Cada ficha tiene que decir qué pasa si eres de la UE y salir de una página
+// oficial; y los casos que más se confunden (Noruega, Francia, Alemania) no
+// pueden aparecer como "gratis".
+test("cada curso de idioma para inmigrantes dice qué pasa si eres de la UE y tiene fuente", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-idioma-entrada.ts", salida = ".sello-idioma.cjs";
+  try {
+    writeFileSync(entrada, 'export { CURSOS_IDIOMA } from "./lib/cursos/idioma-inmigrantes";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const { CURSOS_IDIOMA } = await import(`../${salida}`);
+    const malas = CURSOS_IDIOMA.filter(c => !c.siEresDeLaUE || c.siEresDeLaUE.length < 40 || !/^https:\/\//.test(c.url) || !c.fuentes?.length).map(c => c.pais);
+    const porPais = Object.fromEntries(CURSOS_IDIOMA.map(c => [c.pais, c]));
+    const trampas = porPais.NO?.gratis === "no" && porPais.DE?.gratis !== "si" && /no es para ciudadanos de la UE/i.test(porPais.FR?.siEresDeLaUE ?? "");
+    if (malas.length) console.log("     ↳ fichas incompletas: " + malas.join(", "));
+    const lista = leerFuente("components/cursos/ListaCursos.tsx");
+    return CURSOS_IDIOMA.length >= 13 && malas.length === 0 && trampas && lista.includes("cursoIdiomaDe(p.codigo)");
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── EL CV EN EL IDIOMA DEL PAÍS (8 oct 2026) ──────────────────────────
 //
 // Para quien se va fuera faltaba lo más útil: el CV en inglés, alemán,

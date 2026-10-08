@@ -16,6 +16,7 @@ import {
 } from "@/lib/cursos/tipos";
 import { plataformasPorPais, servicioEmpleoDe, EUROPASS } from "@/lib/cursos/plataformas";
 import { LISTA_PAISES } from "@/lib/paises";
+import { cursoIdiomaDe } from "@/lib/cursos/idioma-inmigrantes";
 import CatalogoCursos from "./CatalogoCursos";
 import FormacionPorPais, { type PaisFormacion } from "./FormacionPorPais";
 
@@ -41,6 +42,7 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
         nombre: p.nombre,
         bandera: p.bandera,
         servicio: s ? { nombre: s.nombre, url: s.url, queHacer: s.queHacer } : undefined,
+        idioma: cursoIdiomaDe(p.codigo),
         equivalencias: todos.flatMap(t => (t.equivalenteEn ?? [])
           .filter(eq => eq.pais === p.codigo)
           .map(eq => ({ cursoSlug: t.slug, curso: t.nombre, nombre: eq.nombre, nota: eq.nota }))),

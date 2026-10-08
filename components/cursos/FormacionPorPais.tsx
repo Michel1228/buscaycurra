@@ -23,7 +23,19 @@ export interface PaisFormacion {
   bandera: string;
   servicio?: { nombre: string; url: string; queHacer: string };
   equivalencias: { cursoSlug: string; curso: string; nombre: string; nota: string }[];
+  /** Curso oficial de idioma para recién llegados (lib/cursos/idioma-inmigrantes.ts). */
+  idioma?: {
+    nombre: string; idioma: string; gratis: "si" | "no" | "depende"; siEresDeLaUE: string;
+    siNoEresDeLaUE?: string; coste?: string; comoApuntarse: string; url: string;
+    fuentes: { titulo: string; url: string }[];
+  };
 }
+
+const ETIQUETA_GRATIS: Record<"si" | "no" | "depende", { texto: string; color: string }> = {
+  si: { texto: "Gratis", color: "#22c55e" },
+  no: { texto: "De pago o no para todos", color: "#f59e0b" },
+  depende: { texto: "Depende de tu caso", color: "#3b82f6" },
+};
 
 const CLAVE = "bc_cursos_pais_destino";
 
@@ -48,7 +60,8 @@ export default function FormacionPorPais({ paises, base }: { paises: PaisFormaci
         <div>
           <h2 className="text-base font-bold" style={{ color: "#f1f5f9" }}>¿Te vas a trabajar a otro país?</h2>
           <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#94a3b8" }}>
-            Elige el país y te decimos dónde está su formación oficial y qué te piden allí en lugar de los cursos de aquí.
+            Elige el país y te decimos su curso oficial de idioma para quien llega, dónde está su formación
+            oficial y qué te piden allí en lugar de los cursos de aquí.
           </p>
         </div>
       </div>
@@ -83,6 +96,43 @@ export default function FormacionPorPais({ paises, base }: { paises: PaisFormaci
             <p className="text-xs" style={{ color: "#94a3b8" }}>
               Todavía no tenemos el servicio oficial de {pais.nombre}. Pregúntale a Guzzi y te orienta.
             </p>
+          )}
+
+          {pais.idioma && (
+            <div className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+              <div className="flex items-start justify-between gap-2 mb-1.5">
+                <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
+                  Curso oficial de {pais.idioma.idioma}: {pais.idioma.nombre}
+                </p>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+                      style={{ background: `${ETIQUETA_GRATIS[pais.idioma.gratis].color}1f`, color: ETIQUETA_GRATIS[pais.idioma.gratis].color }}>
+                  {ETIQUETA_GRATIS[pais.idioma.gratis].texto}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed mb-2" style={{ color: "#94a3b8" }}>
+                <strong style={{ color: "#f1f5f9" }}>Si eres de la UE: </strong>{pais.idioma.siEresDeLaUE}
+              </p>
+              {pais.idioma.siNoEresDeLaUE && (
+                <p className="text-xs leading-relaxed mb-2" style={{ color: "#94a3b8" }}>
+                  <strong style={{ color: "#f1f5f9" }}>Si no eres de la UE: </strong>{pais.idioma.siNoEresDeLaUE}
+                </p>
+              )}
+              {pais.idioma.coste && (
+                <p className="text-xs mb-2" style={{ color: "#94a3b8" }}>
+                  <strong style={{ color: "#f1f5f9" }}>Cuánto cuesta: </strong>{pais.idioma.coste}
+                </p>
+              )}
+              <p className="text-xs mb-3" style={{ color: "#94a3b8" }}>
+                <strong style={{ color: "#f1f5f9" }}>Cómo apuntarte: </strong>{pais.idioma.comoApuntarse}
+              </p>
+              <a href={pais.idioma.url} target="_blank" rel="noopener noreferrer"
+                 className="inline-flex items-center gap-1.5 text-xs font-semibold hover:underline" style={{ color: "#22c55e" }}>
+                Página oficial <ExternalLink size={11} strokeWidth={2} />
+              </a>
+              <p className="text-[10px] mt-2" style={{ color: "#4b5563" }}>
+                Fuente: {pais.idioma.fuentes.map(f => f.titulo).join(" · ")}. Comprobado en octubre de 2026.
+              </p>
+            </div>
           )}
 
           {pais.equivalencias.length > 0 && (
