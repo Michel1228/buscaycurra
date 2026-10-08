@@ -50,8 +50,16 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   que llegue a la gente, el correo diario de ofertas recomienda el curso del
   oficio (alerta o subtítulo del CV, una vez cada 14 días, no si el CV ya lo
   tiene), y el aviso se puede encender también en /cursos/plazas y desde Guzzi.
-- [ ] Más fuentes de plazas cuando otras comunidades publiquen datos abiertos
-  (Madrid publica cursos pero sin fechas; Andalucía casi nada).
+- [x] Castilla y León (ECyL) añadida: +132 plazas (`bfb09cd`). Ya son 5
+  comunidades. Servicio oficial de formación para los 26 países y selector
+  "¿Te vas a trabajar a otro país?" en /cursos. El registro pregunta el oficio
+  (user_contacts.oficio) y el correo de ofertas lo usa.
+- [ ] Más fuentes de plazas cuando otras comunidades publiquen datos abiertos.
+  Mirado el 8 oct 2026: Madrid publica cursos pero sin fechas; Andalucía (36,
+  ya empezados), Valencia, Galicia, Aragón, Baleares y Asturias no publican
+  sus cursos como datos. Para ellas, el buscador de FUNDAE.
+- [ ] Los usuarios que ya existían sin oficio (23 con alerta): pedírselo desde
+  la app o desde Guzzi (no se ha hecho; solo los registros nuevos).
 
 ## SÚPER AUDITORÍA (29-30 sep 2026)
 
