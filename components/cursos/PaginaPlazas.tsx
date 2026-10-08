@@ -7,6 +7,7 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, X } from "lucide-react";
 import PlazasCurso from "@/components/cursos/PlazasCurso";
+import AvisoCurso from "@/components/cursos/AvisoCurso";
 import { tipoPorSlug } from "@/lib/cursos/tipos";
 import { etiquetaPlazas } from "@/lib/cursos/plazas/emparejar";
 
@@ -49,6 +50,10 @@ export default function PaginaPlazas({ base, ficha }: { base: string; ficha?: st
       )}
 
       <PlazasCurso ficha={tipo?.slug} base={base} />
+
+      {/* Quien mira plazas de un curso es quien más quiere que le avisen:
+          aquí también se puede encender el aviso, siempre a mano. */}
+      {tipo && <AvisoCurso slug={tipo.slug} nombre={tipo.nombre} />}
     </>
   );
 }

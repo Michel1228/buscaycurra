@@ -13,6 +13,9 @@ import { sendPush, type PushSub } from "@/lib/push-sender";
 import { sendJobAlertEmail } from "@/lib/email/smtp-sender";
 import { enlaceBaja } from "@/lib/alertas/baja";
 import { get as cacheGet, set as cacheSet, del as cacheDel } from "@/lib/cache/redis-client";
+import { cursoParaPuesto } from "@/lib/cursos/curso-para-puesto";
+import { fichasDePlaza } from "@/lib/cursos/plazas/emparejar";
+import { buscarPlazas } from "@/lib/cursos/plazas/db";
 
 export const dynamic = "force-dynamic";
 
@@ -175,6 +178,25 @@ export async function GET(request: NextRequest) {
       );
       for (const c of allContacts.rows) contactsMap.set(c.user_id, c);
     }
+
+    // ── El curso que piden para su oficio, para mencionarlo en el correo ──
+    // Casi todas las alertas no tienen palabra clave (se crean solo con la
+    // ciudad), así que el oficio sale también del CV: el subtítulo
+    // ("Camarero"). Y el texto entero del CV, para no recomendarle un curso
+    // que ya tiene.
+    const cvPorUsuario = new Map<string, { puesto: string; texto: string }>();
+    if (userIds.length > 0) {
+      try {
+        const { rows } = await pool.query<{ user_id: string; puesto: string | null; texto: string | null }>(
+          `SELECT DISTINCT ON (user_id) user_id, form_data->>'subtitulo' AS puesto, form_data::text AS texto
+             FROM user_cvs WHERE user_id = ANY($1)
+            ORDER BY user_id, updated_at DESC`,
+          [userIds]
+        );
+        for (const r of rows) cvPorUsuario.set(r.user_id, { puesto: r.puesto ?? "", texto: r.texto ?? "" });
+      } catch { /* sin CV, el correo sale igual sin la línea del curso */ }
+    }
+    const plazasPorFicha = new Map<string, number>();
 
     // ── Batch fetch: JobListings for all alertas (fix N+1) ──
     // Build a single query: for each alerta, create keyword + geo conditions OR'd together
@@ -382,6 +404,23 @@ export async function GET(request: NextRequest) {
         const yaTuvoCorreoHoy = !!(await cacheGet(claveCorreo).catch(() => null));
         if (contact?.email && !yaTuvoCorreoHoy) {
           await cacheSet(claveCorreo, "1", 20 * 3600).catch(() => false);
+
+          // El curso que le piden, como mucho una vez cada 14 días por persona
+          // y nunca si su CV ya lo menciona.
+          let curso: { slug: string; nombre: string; obligatorio: boolean; puesto: string; plazas: number } | undefined;
+          const claveCurso = `curso-en-alerta:${alerta.user_id}`;
+          if (!(await cacheGet(claveCurso).catch(() => null))) {
+            const cv = cvPorUsuario.get(alerta.user_id);
+            const puesto = alerta.keyword?.trim() || cv?.puesto?.trim() || "";
+            const tipo = cursoParaPuesto(puesto);
+            if (tipo && !(cv?.texto && fichasDePlaza(cv.texto).includes(tipo.slug))) {
+              if (!plazasPorFicha.has(tipo.slug)) {
+                plazasPorFicha.set(tipo.slug, await buscarPlazas({ ficha: tipo.slug, limite: 1 }).then(r => r.total).catch(() => 0));
+              }
+              curso = { slug: tipo.slug, nombre: tipo.nombre, obligatorio: tipo.obligatorioLegal, puesto, plazas: plazasPorFicha.get(tipo.slug) ?? 0 };
+            }
+          }
+
           const salio = await sendJobAlertEmail({
             userEmail: contact.email,
             keyword: alerta.keyword,
@@ -392,8 +431,10 @@ export async function GET(request: NextRequest) {
             ejemploCity: ejemplo.city || undefined,
             esInventario,
             bajaUrl: enlaceBaja(alerta.user_id),
+            curso,
           });
           if (salio) correos++;
+          if (salio && curso) await cacheSet(claveCurso, curso.slug, 14 * 86400).catch(() => false);
           // Si no salió (aplazado para no llegar al tope diario, o un fallo),
           // se suelta la marca para que lo intente la siguiente pasada.
           else await cacheDel(claveCorreo).catch(() => false);

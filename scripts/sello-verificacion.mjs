@@ -2898,6 +2898,73 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 // La sincronización de plazas se puso primero en un workflow de GitHub, que en
 // esta rama no se ejecuta nunca (scripts/vps/README.md). Tiene que estar en el
 // crontab del servidor, activa (no comentada) y llamando al script versionado.
+// ── ALERTAS DE CURSOS QUE LLEGAN DE VERDAD (8 oct 2026) ───────────────
+//
+// No se había mandado ni una: solo estaban en un workflow de GitHub que en esta
+// rama no corre. Y al activarlas apareció lo peligroso: salían por sendEmail
+// (sin mirar el presupuesto diario) con un tope de 200 por pasada, el doble de
+// lo que deja Resend en un día. Una pasada así deja sin confirmación de
+// registro a quien se apunte esa tarde. Ahora: cron, presupuesto, 40 por
+// pasada, baja de un clic, y solo se marca como avisado si el correo salió.
+test("las alertas de cursos salen por cron, con presupuesto diario y baja de un clic", () => {
+  const ruta = leerFuente("app/api/cursos/alertas/route.ts");
+  const correo = leerFuente("lib/email/smtp-sender.ts");
+  const ini = correo.indexOf("export async function sendCursoAlertaEmail");
+  const fn = correo.slice(ini, correo.indexOf("\n}\n", ini));
+  const tope = Number((ruta.match(/const MAX_CORREOS = (\d+)/) || [])[1] || 999);
+  return /^[^#].*alertas-cursos\.sh/m.test(leerFuente("scripts/vps/crontab.txt"))
+    && leerFuente("scripts/vps/alertas-cursos.sh").includes("/api/cursos/alertas")
+    && tope <= 50
+    && ruta.includes("quedaSitioParaLoQuePuedeEsperar()")
+    && /if \(!salio\) \{ fallidos\+\+; continue; \}/.test(ruta)
+    && fn.includes("enviarCorreo(") && fn.includes("puedeEsperar: true") && fn.includes("bajaUrl")
+    && !fn.includes("await sendEmail(");
+});
+
+test("el correo de ofertas recomienda el curso del oficio, bien y sin colar HTML", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-curso-puesto-entrada.ts";
+  const salida = ".sello-curso-puesto.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { cursoParaPuesto } from "./lib/cursos/curso-para-puesto";',
+      'export { enlaceBajaAviso, firmaBajaAvisoValida } from "./lib/cursos/baja-aviso";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node",
+      "--external:pg", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const habiaSecreto = !!process.env.ADMIN_SECRET;
+    if (!habiaSecreto) process.env.ADMIN_SECRET = "secreto-de-prueba-del-sello";
+    const m = await import(`../${salida}`);
+    const casos = [
+      ["camarero", "manipulador-alimentos"], ["Camarera de sala", "manipulador-alimentos"],
+      ["Gerocultora", "atencion-sociosanitaria-instituciones"], ["Mozo de almacén", "carretillero"],
+      ["conductora de autobús", "cap-conductor-profesional"],
+      // Estricto: un taxista no necesita el CAP, y un programador no necesita nada de esto.
+      ["conductor", null], ["programador", null],
+    ];
+    const malos = casos.filter(([p, esperado]) => (m.cursoParaPuesto(p)?.slug ?? null) !== esperado);
+    for (const [p, e] of malos) console.log(`     ↳ "${p}" debería dar ${e} y da ${m.cursoParaPuesto(p)?.slug ?? null}`);
+    const url = new URL(m.enlaceBajaAviso("123"));
+    const firmaBuena = m.firmaBajaAvisoValida("123", url.searchParams.get("t")) && !m.firmaBajaAvisoValida("124", url.searchParams.get("t"));
+    if (!habiaSecreto) delete process.env.ADMIN_SECRET;
+    if (!firmaBuena) console.log("     ↳ la firma de baja del aviso no protege el id");
+    // El oficio sale del CV, que escribe el usuario: dentro del HTML va escapado.
+    const correo = leerFuente("lib/email/smtp-sender.ts");
+    const escapado = correo.includes("escaparHtml(curso.puesto") && correo.includes("escaparHtml(curso.nombre)");
+    if (!escapado) console.log("     ↳ el oficio del CV entra en el correo sin escapar");
+    const ruta = leerFuente("app/api/push/send-alerts/route.ts");
+    const espaciado = ruta.includes("curso-en-alerta:") && /14 \* 86400/.test(ruta) && ruta.includes("fichasDePlaza(cv.texto)");
+    if (!espaciado) console.log("     ↳ la recomendación del curso no se espacia o se repite a quien ya lo tiene");
+    return malos.length === 0 && firmaBuena && escapado && espaciado;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar o ejecutar: ${e.message?.slice(0, 120)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // globals.css fuerza "padding: 10px 14px !important" a todo input de búsqueda,
 // así que pl-10 no hacía nada y la lupa del catálogo de cursos tapaba el texto
 // (visto en una captura en móvil el 8 oct 2026). Los buscadores con lupa

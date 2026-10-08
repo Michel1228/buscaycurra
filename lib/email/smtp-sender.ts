@@ -115,6 +115,11 @@ async function enviarCorreo(
   }
 }
 
+/** Texto que escribe el usuario (el oficio de su CV) dentro del HTML del correo. */
+function escaparHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 // ─── Plantilla base ───────────────────────────────────────────────────────────
 
 function baseTemplate(headerContent: string, bodyContent: string): string {
@@ -633,8 +638,14 @@ export async function sendJobAlertEmail(params: {
   esInventario?: boolean;
   /** Enlace de baja de un clic (lib/alertas/baja.ts). */
   bajaUrl?: string | null;
+  /**
+   * El curso que piden para su oficio (lib/cursos/curso-para-puesto.ts). Va
+   * dentro de este correo, no en uno aparte: así los cursos llegan a la gente
+   * sin mandarle más correos. Lo decide y lo espacia quien llama.
+   */
+  curso?: { slug: string; nombre: string; obligatorio: boolean; puesto: string; plazas: number };
 }): Promise<boolean> {
-  const { userEmail, keyword, location, total, ejemploTitle, ejemploCompany, ejemploCity, esInventario, bajaUrl } = params;
+  const { userEmail, keyword, location, total, ejemploTitle, ejemploCompany, ejemploCity, esInventario, bajaUrl, curso } = params;
   const searchUrl = `https://buscaycurra.es/app/notificaciones`;
 
   const plural = total > 1;
@@ -665,6 +676,18 @@ export async function sendJobAlertEmail(params: {
     ${total > 1 ? `<p style="margin:0 0 20px;color:#64748b;font-size:13px;line-height:1.7;">Y ${total - 1} más en tus avisos.</p>` : ""}
 
     ${ctaButton("Ver todas las ofertas →", searchUrl)}
+
+    ${curso ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f1520;border:1px solid #2d3142;border-radius:14px;margin-top:24px;">
+      <tr><td style="padding:18px 22px;">
+        <p style="margin:0 0 6px;color:#f1f5f9;font-size:14px;font-weight:700;">🎓 ${curso.obligatorio ? "Para" : "Si buscas de"} ${escaparHtml(curso.puesto.toLowerCase())}${curso.obligatorio ? " te van a pedir" : ", te ayuda a destacar"}: ${escaparHtml(curso.nombre)}</p>
+        <p style="margin:0 0 10px;color:#94a3b8;font-size:13px;line-height:1.6;">
+          ${curso.obligatorio ? "Es obligatorio: sin él no te pueden contratar para ese puesto." : "No es obligatorio, pero marca la diferencia."}
+          ${curso.plazas > 0 ? ` Hay <strong style="color:#22c55e;">${curso.plazas} plaza${curso.plazas > 1 ? "s" : ""} gratis con fecha</strong> para sacarlo.` : ""}
+        </p>
+        <a href="https://buscaycurra.es/cursos/${encodeURIComponent(curso.slug)}" style="color:#22c55e;font-size:13px;font-weight:600;text-decoration:none;">Ver dónde sacarlo gratis →</a>
+      </td></tr>
+    </table>` : ""}
 
     <p style="margin:20px 0 0;text-align:center;color:#64748b;font-size:11px;line-height:1.7;">
       Te llega porque tienes una alerta de ofertas en BuscayCurra.
@@ -718,8 +741,14 @@ export async function sendCursoAlertaEmail(params: {
   ejemploCompany: string;
   ejemploCity?: string;
   obligatorio: boolean;
-}): Promise<void> {
+  /** Las ofertas que se anuncian, no un buscador vacío. */
+  ofertasUrl?: string;
+  /** Plazas gratis con fecha de ese curso (curso_plaza). 0 = no se menciona. */
+  plazas?: number;
+  bajaUrl?: string | null;
+}): Promise<boolean> {
   const { userEmail, cursoNombre, cursoSlug, total, ejemploTitle, ejemploCompany, ejemploCity, obligatorio } = params;
+  const plazas = params.plazas ?? 0;
 
   const header = headerGradient(
     "🎓",
@@ -747,20 +776,30 @@ export async function sendCursoAlertaEmail(params: {
       </td></tr>
     </table>
 
-    ${ctaButton("Ver las ofertas →", "https://buscaycurra.es/app/buscar")}
+    ${ctaButton("Ver las ofertas →", params.ofertasUrl || "https://buscaycurra.es/app/buscar")}
 
+    ${plazas > 0 ? `
+    <p style="margin:20px 0 0;color:#94a3b8;font-size:14px;line-height:1.7;text-align:center;">
+      ¿Aún no lo tienes? Hay <strong style="color:#22c55e;">${plazas} plaza${plazas > 1 ? "s" : ""} gratis con fecha</strong>
+      para sacarlo.<br>
+      <a href="https://buscaycurra.es/cursos/plazas?ficha=${encodeURIComponent(cursoSlug)}" style="color:#22c55e;text-decoration:none;">Ver las plazas →</a>
+    </p>` : `
     <p style="margin:20px 0 0;text-align:center;color:#374151;font-size:11px;">
       ¿Aún no lo has sacado? <a href="https://buscaycurra.es/cursos/${cursoSlug}" style="color:#22c55e;text-decoration:none;">Vuelve a la ficha del curso</a>
+    </p>`}
+
+    <p style="margin:24px 0 0;text-align:center;color:#64748b;font-size:11px;line-height:1.7;">
+      Te llega porque activaste el aviso de este curso. Como mucho, uno cada dos semanas.
+      ${params.bajaUrl ? `<br><a href="${params.bajaUrl}" style="color:#94a3b8;text-decoration:underline;">Apagar este aviso</a>` : ""}
     </p>
   `;
 
-  try {
-    await sendEmail(
-      userEmail,
-      `🎓 ${total} oferta${total > 1 ? "s" : ""} piden ${cursoNombre} — BuscayCurra`,
-      baseTemplate(header, body)
-    );
-  } catch (err) {
-    console.error("[Resend] Error en alerta de curso:", (err as Error).message);
-  }
+  // Puede esperar: si hoy queda poco cupo de Resend, sale en la siguiente
+  // pasada en vez de quitarle sitio a una confirmación de registro.
+  return enviarCorreo(
+    userEmail,
+    `🎓 ${total} oferta${total > 1 ? "s" : ""} piden ${cursoNombre} — BuscayCurra`,
+    baseTemplate(header, body),
+    { bajaUrl: params.bajaUrl ?? null, puedeEsperar: true }
+  );
 }

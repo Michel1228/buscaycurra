@@ -24,8 +24,10 @@
  * DÓNDE LLEGA. Correo y campana de la aplicación, las dos cosas. Quien no abre
  * el correo entra a la web y lo ve igual.
  *
- * Se lanza desde GitHub Actions con la cabecera x-sync-secret, igual que las
- * sincronizaciones de ofertas.
+ * Se lanza desde el crontab del servidor (scripts/vps/alertas-cursos.sh, 09:00
+ * UTC) con la cabecera x-sync-secret. Hasta el 8 oct 2026 solo estaba en
+ * .github/workflows/alertas-cursos.yml, que en esta rama no se ejecuta: no
+ * llegó a mandarse ni una alerta.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -34,6 +36,9 @@ import { getPool } from "@/lib/db";
 import { secretIguales } from "@/lib/secret-compare";
 import { sendCursoAlertaEmail } from "@/lib/email/smtp-sender";
 import { tipoPorSlug } from "@/lib/cursos/tipos";
+import { quedaSitioParaLoQuePuedeEsperar } from "@/lib/email/presupuesto-diario";
+import { enlaceBajaAviso } from "@/lib/cursos/baja-aviso";
+import { buscarPlazas } from "@/lib/cursos/plazas/db";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -41,8 +46,13 @@ export const maxDuration = 300;
 /** Días entre dos avisos del mismo curso a la misma persona. */
 const DIAS_ENTRE_AVISOS = 14;
 
-/** Tope por ejecución, para no vaciar la cuota de correo de golpe. */
-const MAX_CORREOS = 200;
+/**
+ * Tope por ejecución. Era 200, el doble de lo que deja Resend gratis en un día
+ * entero (100): una sola pasada podía dejar sin correo de confirmación a quien
+ * se registrase esa tarde. Además, cada envío mira el presupuesto diario
+ * (lib/email/presupuesto-diario.ts) y lo que no quepa sale al día siguiente.
+ */
+const MAX_CORREOS = 40;
 
 function supabaseAdmin() {
   return createClient(
@@ -88,6 +98,9 @@ export async function POST(req: NextRequest) {
   let enviados = 0;
   let sinOfertas = 0;
   let sinEmail = 0;
+  let aplazados = 0;
+  let fallidos = 0;
+  const plazasPorCurso = new Map<string, number>();
   const detalle: Array<{ curso: string; ofertas: number }> = [];
 
   for (const aviso of avisos ?? []) {
@@ -146,14 +159,24 @@ export async function POST(req: NextRequest) {
 
     if (simular) { enviados++; continue; }
 
+    // Sin cupo para lo que puede esperar, se para aquí: estos avisos no se
+    // marcan y salen en la siguiente pasada.
+    if (!(await quedaSitioParaLoQuePuedeEsperar())) { aplazados++; break; }
+
     const nombre = aviso.curso_nombre || tipo.nombre;
+
+    // Plazas gratis con fecha de ese curso, una vez por curso.
+    if (!plazasPorCurso.has(aviso.curso_slug)) {
+      const n = await buscarPlazas({ ficha: aviso.curso_slug, limite: 1 }).then(r => r.total).catch(() => 0);
+      plazasPorCurso.set(aviso.curso_slug, n);
+    }
 
     // El correo está en auth.users, no en curso_aviso.
     const { data: usuario } = await sb.auth.admin.getUserById(aviso.user_id);
     const email = usuario?.user?.email;
 
     if (email) {
-      await sendCursoAlertaEmail({
+      const salio = await sendCursoAlertaEmail({
         userEmail: email,
         cursoNombre: nombre,
         cursoSlug: aviso.curso_slug,
@@ -162,7 +185,13 @@ export async function POST(req: NextRequest) {
         ejemploCompany: hallazgo.ejemplo.company || "Empresa",
         ejemploCity: hallazgo.ejemplo.city || undefined,
         obligatorio: tipo.obligatorioLegal,
+        ofertasUrl: `https://buscaycurra.es/app/buscar?keyword=${encodeURIComponent(tipo.puestos[0])}`,
+        plazas: plazasPorCurso.get(aviso.curso_slug) ?? 0,
+        bajaUrl: enlaceBajaAviso(String(aviso.id)),
       });
+      // Si no salió, no se marca: se reintenta en la siguiente pasada en vez
+      // de dar por avisada a una persona a la que no le llegó nada.
+      if (!salio) { fallidos++; continue; }
     } else {
       sinEmail++;
     }
@@ -198,6 +227,8 @@ export async function POST(req: NextRequest) {
     enviados,
     sinOfertas,
     sinEmail,
+    aplazados,
+    fallidos,
     detalle: detalle.slice(0, 20),
   });
 }

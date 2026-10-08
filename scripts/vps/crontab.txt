@@ -40,3 +40,6 @@
 # Murcia, SOC, Consorci y Navarra. A las 06:20 UTC, cuando las fuentes ya han
 # publicado lo del dia anterior y antes de que la gente entre a mirar.
 20 6 * * * /usr/bin/flock -n /tmp/plazas-cursos.lock bash /root/sync-plazas-cursos.sh >> /root/sync-plazas-cursos.log 2>&1
+# Alertas de cursos (scripts/vps/alertas-cursos.sh): a quien encendio el aviso de un
+# curso, cuando hay ofertas que lo piden. A las 09:00 UTC, despues de las plazas.
+0 9 * * * /usr/bin/flock -n /tmp/alertas-cursos.lock bash /root/alertas-cursos.sh >> /root/alertas-cursos.log 2>&1

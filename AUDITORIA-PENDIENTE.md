@@ -32,6 +32,13 @@ de abajo sobre Japón y Suecia están corregidas por eso.
 - [x] Plataformas: FUNDAE, IBM SkillsBuild, Cisco, DW alemán.
 - [x] Coursera por `/api/cursos/ir` (clics en `curso_clic`). Falta el código
   de afiliado: ver "Pendiente de Michel".
+- [x] Alertas de cursos activadas (Michel, 8 oct). No se había mandado ni una:
+  solo estaban en un workflow que no corre. Ahora cron 09:00 UTC, presupuesto
+  diario, 40 por pasada (eran 200, el doble del tope de Resend), baja de un
+  clic y plazas gratis en el correo. Ese día había 0 avisos encendidos: para
+  que llegue a la gente, el correo diario de ofertas recomienda el curso del
+  oficio (alerta o subtítulo del CV, una vez cada 14 días, no si el CV ya lo
+  tiene), y el aviso se puede encender también en /cursos/plazas y desde Guzzi.
 - [ ] Más fuentes de plazas cuando otras comunidades publiquen datos abiertos
   (Madrid publica cursos pero sin fechas; Andalucía casi nada).
 
@@ -745,11 +752,6 @@ la cola `cv-sender-retry` · el botón `cv_complete` de GusiChat · los chips de
   `AFILIADO_COURSERA_PLANTILLA=<enlace con {url} donde va el destino>` y
   reiniciar el contenedor. Hasta entonces los enlaces van a Coursera sin
   comisión, y los clics se cuentan igual en la tabla `curso_clic`.
-- **Alertas de cursos: nunca se han enviado (encontrado el 8 oct 2026).** Solo
-  estaban en `.github/workflows/alertas-cursos.yml`, que en esta rama no se
-  ejecuta. Activarlas = un cron más en el servidor, pero manda correos a
-  usuarios reales (los que encendieron el aviso) y gasta del tope diario de
-  Resend. Decidir si se activan.
 
 - **Micrófono**: `npx cap sync` y recompilar. Y en iOS faltan
   `NSMicrophoneUsageDescription` y `NSSpeechRecognitionUsageDescription` en el

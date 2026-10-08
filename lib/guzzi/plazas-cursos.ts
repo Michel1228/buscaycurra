@@ -108,5 +108,6 @@ export async function respuestaPlazasCurso(texto: string): Promise<string | null
       ? `👉 [Ver las ${resultado.total} plazas](${enlaceTodas})\n\n`
       : "")
     + `Son cursos de los servicios públicos de empleo: muchos piden estar apuntado al paro. `
-    + `En la ${enlaceFicha} tienes los papeles que te van a pedir, y si quieres te preparo la carta de solicitud con tu CV.`;
+    + `En la ${enlaceFicha} tienes los papeles que te van a pedir, y si quieres te preparo la carta de solicitud con tu CV.\n\n`
+    + `🔔 En esa misma ficha puedes encender el aviso: te escribo cuando salgan ofertas que pidan este curso (como mucho, una vez cada dos semanas).`;
 }

@@ -30,6 +30,7 @@ seguía sin ellos.
 | `enviar-alertas.sh` | Alertas de empleo a los usuarios |
 | `backup-bc.sh`, `restore-bc.sh` | Copia diaria de la base propia (04:00 UTC, 7 días) y su restauración |
 | `sync-plazas-cursos.sh` | Plazas reales de cursos gratis (Lanbide, SEF Murcia, SOC, Consorci, Navarra) a `curso_plaza` (06:20 UTC) |
+| `alertas-cursos.sh` | Aviso a quien encendió el de un curso: hay ofertas que lo piden (09:00 UTC, 40 por pasada, con presupuesto diario) |
 
 ## Reglas
 
