@@ -21,6 +21,19 @@ jobs:
     name: Avisar a los interesados
     runs-on: ubuntu-latest
     steps:
+      # Primero las plazas reales (Lanbide, SEF Murcia, SOC, Consorci, Navarra),
+      # para que lo que se enseñe hoy sea lo publicado hoy. Si falla, las alertas
+      # salen igual: no dependen de las plazas.
+      - name: Actualizar plazas de cursos
+        continue-on-error: true
+        run: |
+          RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://buscaycurra.es/api/cursos/plazas/sync" \
+            -H "x-sync-secret: ${{ secrets.ADMIN_SECRET }}" \
+            --max-time 290)
+          HTTP_CODE=$(echo "$RESULT" | tail -1)
+          echo "HTTP $HTTP_CODE — $(echo "$RESULT" | head -1)"
+          [ "$HTTP_CODE" = "200" ] || exit 1
+
       - name: Enviar alertas
         run: |
           URL="https://buscaycurra.es/api/cursos/alertas"

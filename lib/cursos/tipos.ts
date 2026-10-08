@@ -617,6 +617,159 @@ export const TIPOS_CURSO: TipoCurso[] = [
     ],
     actualizado: "2026-08",
   },
+
+  // ══════════ AÑADIDAS EL 2026-10-08 ══════════
+  //
+  // Elegidas por demanda real: ofertas activas en España que las piden, medido
+  // ese día en JobListing (65.094 ofertas): conductor de camión o autobús 497,
+  // frigorista y climatización 309, vigilante de seguridad 256, soldador 575.
+  // Las tres primeras las exige la ley; la soldadura no, pero es de lo que más
+  // plazas gratis tienen los servicios de empleo.
+
+  {
+    slug: "cap-conductor-profesional",
+    pais: "ES",
+    sector: "TRANSPORTE",
+    familia: "obligatorio",
+    nombre: "CAP de conductor profesional",
+    resumen: "Sin él no puedes conducir camión ni autobús por trabajo, aunque tengas el carné.",
+    queEs:
+      "El Certificado de Aptitud Profesional. Es una formación obligatoria aparte del permiso de conducir: un curso inicial con examen y, después, un curso de formación continua cada cinco años.",
+    paraQueSirve:
+      "Es lo que te piden para trabajar de conductor de camión, autobús o reparto pesado. El carné C o D te deja conducir el vehículo; el CAP te deja hacerlo como trabajo.",
+    obligatorioLegal: true,
+    normativa: "Real Decreto 284/2021",
+    duracionHoras: { min: 35, max: 280 },
+    precio: {
+      min: 0, max: 950, moneda: "EUR",
+      nota: "Hay cursos subvencionados gratis, sobre todo del CAP continuo de 35 h. En autoescuela, ejemplos encontrados el 8 de octubre de 2026: 950 € el inicial de 140 h y entre 150 y 300 € el continuo de 35 h. Cambia mucho de una autoescuela a otra: pide presupuesto.",
+    },
+    validezAnios: 5,
+    notaValidez:
+      "La tarjeta de cualificación vale cinco años. Para renovarla hay que hacer el curso de formación continua de 35 horas; si se hace dentro de los doce meses antes de que caduque, los cinco años nuevos empiezan a contar desde la fecha de caducidad.",
+    puestos: ["conductor de camión", "camionero", "conductor de autobús", "chófer de autobús", "conductor profesional", "conductor de tráiler"],
+    opcionesGratuitas: [SEPE_PRESENCIAL],
+    comoSacarlo: [
+      "Elige modalidad: el curso inicial ordinario son 280 horas y el acelerado, 140. Los dos acaban en el mismo examen.",
+      "Después del curso tienes un año para aprobar el examen. Si no, toca volver a hacer el curso.",
+      "Si ya tienes el CAP y se te va a caducar, haz el continuo de 35 horas en los doce meses antes: así no pierdes días.",
+      "Busca primero curso subvencionado: el continuo sale gratis con bastante frecuencia en autoescuelas y centros del sector.",
+    ],
+    fuentes: [
+      { titulo: "Real Decreto 284/2021, cualificación inicial y formación continua de conductores (arts. 5, 6, 7, 16 y 20)", url: "https://www.boe.es/buscar/act.php?id=BOE-A-2021-6624" },
+      { titulo: "Ejemplos de precio de CAP en autoescuelas (emagister, consultado el 8-10-2026)", url: "https://www.emagister.com/capacitacion-transporte-viajeros-tps-1014249_2.htm" },
+    ],
+    actualizado: "2026-10",
+  },
+
+  {
+    slug: "gases-fluorados",
+    pais: "ES",
+    sector: "INDUSTRIA",
+    familia: "obligatorio",
+    nombre: "Certificado de gases fluorados",
+    resumen: "Obligatorio para instalar o reparar aire acondicionado y frío. Lo piden en cada oferta de frigorista.",
+    queEs:
+      "El certificado personal que exige la ley para manipular los gases refrigerantes de los equipos de frío y climatización. Lo expide tu comunidad autónoma, y hay dos: uno para equipos de cualquier carga y otro para los de menos de 3 kg (el aire acondicionado de casa).",
+    paraQueSirve:
+      "Solo quien lo tiene puede instalar, mantener, cargar o recuperar el gas de estos equipos. Sin él no te pueden poner a trabajar en climatización ni en frío industrial, aunque sepas hacerlo.",
+    obligatorioLegal: true,
+    normativa: "Real Decreto 115/2017",
+    duracionHoras: { min: 30, max: 320 },
+    precio: {
+      min: 0, max: 450, moneda: "EUR",
+      nota: "Gratis si sale curso en tu servicio de empleo. Ejemplo de academia encontrado el 8 de octubre de 2026: 450 € un curso presencial de 300 horas en Zaragoza. Los complementarios, más cortos, suelen costar menos.",
+    },
+    puestos: ["frigorista", "técnico de climatización", "instalador de aire acondicionado", "técnico de mantenimiento", "técnico de frío industrial"],
+    opcionesGratuitas: [SEPE_PRESENCIAL],
+    comoSacarlo: [
+      "Mira primero si ya lo tienes sin saberlo: con el título de FP de Técnico en Instalaciones Frigoríficas y de Climatización se puede pedir directamente a tu comunidad.",
+      "Si no, elige curso según el certificado que necesitas. Para cualquier carga, el básico son 90 horas y el complementario 30. Para menos de 3 kg, el curso completo son 320 horas.",
+      "El curso tiene que ser de un centro autorizado; al acabar, pides el certificado al órgano de industria de tu comunidad.",
+      "Vale en toda España y en la Unión Europea.",
+    ],
+    fuentes: [
+      { titulo: "Real Decreto 115/2017, comercialización y manipulación de gases fluorados (arts. 3, 4 y 5; anexos I y II)", url: "https://www.boe.es/buscar/act.php?id=BOE-A-2017-1679" },
+      { titulo: "Ejemplo de precio: curso de manipulación de gases fluorados (educaweb, consultado el 8-10-2026)", url: "https://www.educaweb.com/curso/manipulacion-gases-fluorados-359980/" },
+    ],
+    actualizado: "2026-10",
+  },
+
+  {
+    slug: "vigilante-seguridad",
+    pais: "ES",
+    sector: "OTRO",
+    familia: "obligatorio",
+    nombre: "Vigilante de seguridad (TIP)",
+    resumen: "Curso de 180 horas y examen de la Policía. Ojo: exige nacionalidad de la UE.",
+    queEs:
+      "La habilitación para trabajar de vigilante de seguridad. Primero un curso de al menos 180 horas en un centro autorizado y, después, unas pruebas que convoca cada año la Secretaría de Estado de Seguridad: físicas y de conocimientos. Si apruebas, te dan la tarjeta de identidad profesional (TIP).",
+    paraQueSirve:
+      "Sin la TIP no puedes trabajar de vigilante: ni en centros comerciales, ni en hospitales, ni en transporte. Es un sector que contrata mucho y todo el año.",
+    obligatorioLegal: true,
+    normativa: "Orden INT/318/2011 y Resolución de 9 de enero de 2026 (bases de las pruebas)",
+    duracionHoras: { min: 180, max: 180 },
+    precio: {
+      min: 0, max: 750, moneda: "EUR",
+      nota: "Hay cursos gratis para personas en paro. En academia, ejemplos encontrados el 8 de octubre de 2026: 750 € (700 al contado) un curso de 180 h en Barcelona. Aparte va la tasa del examen.",
+    },
+    notaValidez:
+      "La TIP no caduca, pero mientras trabajes tienes que hacer al menos 20 horas de formación de actualización cada año en un centro autorizado.",
+    puestos: ["vigilante de seguridad", "vigilante", "escolta", "vigilante de explosivos", "personal de seguridad privada"],
+    opcionesGratuitas: [SEPE_PRESENCIAL],
+    comoSacarlo: [
+      "Antes de nada, mira si puedes: hay que ser mayor de edad, tener nacionalidad de un país de la Unión Europea o del Espacio Económico Europeo (o estar en régimen comunitario, o ser de un país con convenio con España para esto), y el título de la ESO o equivalente.",
+      "Las pruebas físicas son eliminatorias y piden estatura mínima: 1,70 m los hombres y 1,65 m las mujeres. Entrena antes de pagar el curso.",
+      "Haz el curso de 180 horas en un centro de formación autorizado: al menos seis semanas lectivas.",
+      "Preséntate a la convocatoria anual de la Secretaría de Estado de Seguridad. Si apruebas, te expiden la TIP.",
+    ],
+    documentosExtra: [
+      "Certificado de antecedentes penales (o autorizar que lo pidan de oficio)",
+      "Título de la ESO, de Técnico o equivalente",
+      "Informe de aptitud psicofísica de un centro de reconocimiento autorizado",
+    ],
+    fuentes: [
+      { titulo: "Orden INT/318/2011 sobre personal de seguridad privada (arts. 4 y 7)", url: "https://www.boe.es/buscar/act.php?id=BOE-A-2011-3172" },
+      { titulo: "Resolución de 9 de enero de 2026: bases de las pruebas de vigilante de seguridad para 2026", url: "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-813" },
+      { titulo: "Ejemplos de precio de academias (aprendemas, consultado el 8-10-2026)", url: "https://www.aprendemas.com/es/oficios/seguridad-y-medio-ambiente/vigilante-de-seguridad/3" },
+    ],
+    actualizado: "2026-10",
+  },
+
+  {
+    slug: "soldadura",
+    pais: "ES",
+    sector: "INDUSTRIA",
+    familia: "mejora",
+    nombre: "Soldadura (electrodo, MIG/MAG y TIG)",
+    resumen: "De lo más pedido en industria y de lo que más cursos gratis hay.",
+    queEs:
+      "Formación en las técnicas de soldadura que se usan en taller y obra: electrodo revestido, MIG/MAG y TIG. Hay certificados de profesionalidad completos y cursos cortos de una sola técnica.",
+    paraQueSirve:
+      "Las empresas de calderería, metal y construcción buscan soldadores todo el año. Muchas piden además la homologación del soldador: una prueba práctica según la norma UNE-EN ISO 9606-1 que acredita qué sabes soldar.",
+    obligatorioLegal: false,
+    duracionHoras: { min: 60, max: 680 },
+    precio: {
+      min: 0, max: 650, moneda: "EUR",
+      nota: "Gratis en los servicios de empleo, que la programan mucho. En academia, ejemplo encontrado el 8 de octubre de 2026: 650 € un curso presencial de MIG-MAG en Madrid.",
+    },
+    acreditablePorExperiencia: true,
+    puestos: ["soldador", "calderero", "montador", "tubero", "operario del metal"],
+    opcionesGratuitas: [SEPE_PRESENCIAL],
+    comoSacarlo: [
+      "Mira las plazas gratis de abajo: es de los cursos que más se programan.",
+      "Hay dos certificados de profesionalidad de nivel 2: FMEC0110 (electrodo revestido y TIG, 680 horas con las prácticas) y FMEC0210 (oxigás y MIG/MAG, 600 horas).",
+      "Si ya sabes soldar, lo que más vale es la homologación según UNE-EN ISO 9606-1: es una prueba práctica ante una entidad certificadora.",
+      "Si llevas años soldando sin título, puedes acreditar la experiencia en vez de hacer el curso entero.",
+    ],
+    fuentes: [
+      { titulo: "SEPE — ficha del certificado FMEC0110 Soldadura con electrodo revestido y TIG", url: "https://sepe.es/HomeSepe/dam/jcr:ff20abd5-c460-4101-a6f6-b4ed3eecf02e/FMEC0110_ficha.pdf" },
+      { titulo: "SEPE — ficha del certificado FMEC0210 Soldadura oxigás y soldadura MIG/MAG", url: "https://www.sepe.es/SiteSepe/contenidos/personas/formacion/certificados_de_profesionalidad/pdf/fichasCertificados/FMEC0210_ficha.pdf" },
+      { titulo: "Norma UNE-EN ISO 9606-1:2017 Cualificación de soldadores", url: "https://www.une.org/encuentra-tu-norma/busca-tu-norma/norma?c=N0059357" },
+      { titulo: "Ejemplo de precio: curso de soldadura MIG-MAG (aprendemas, consultado el 8-10-2026)", url: "https://www.aprendemas.com/es/curso/curso-soldadura-mig-mag-1189236/" },
+    ],
+    actualizado: "2026-10",
+  },
 ];
 
 // ─── Funciones de consulta ───────────────────────────────────────────────────

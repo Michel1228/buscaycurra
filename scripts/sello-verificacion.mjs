@@ -2793,6 +2793,108 @@ test("marcar todas no va de una en una esperando cada respuesta", () =>
 // accesible: el lector de pantalla no lo anuncia.
 test("el boton de la campana tiene nombre accesible", () =>
   leerFuente("components/NotificationBell.tsx").includes("aria-label="));
+
+// ── PLAZAS REALES DE CURSOS (8 oct 2026) ──────────────────────────────
+//
+// Cinco fuentes de datos abiertos, cada una con sus manías, y las cinco se
+// rompieron de alguna forma al probarlas con los datos de verdad:
+//   · Lanbide y el SOC van en Windows-1252: leídos como UTF-8, "Formación"
+//     sale "Formaci�n" y "ESTÈTIQUES" sale "EST�TIQUES".
+//   · El SOC da las fechas mes/día/año ("06/29/2026").
+//   · El SOC repite cursos y el Consorci repite grupos con otra fecha: sin
+//     quitar repetidos, el upsert falla por meter el mismo id dos veces.
+//   · Navarra marca "para desempleados" con 1/0, no con Sí/No.
+// Y lo que se enseña tiene que ser verdad: "competencias digitales DOCENTES"
+// no es una plaza para quien busca su primer trabajo de oficina, y la salida
+// hacia los cursos de pago no puede ser una redirección abierta.
+// Se compila el código de verdad y se le pasan datos como los reales.
+test("las plazas de cursos se leen bien de las cinco fuentes", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-plazas-entrada.ts";
+  const salida = ".sello-plazas.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export * from "./lib/cursos/plazas/fuentes";',
+      'export * from "./lib/cursos/plazas/emparejar";',
+      'export * from "./lib/cursos/afiliados";',
+      'export { provinciaEnTexto, fichaEnTexto } from "./lib/guzzi/plazas-cursos";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node",
+      "--external:pg", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const fallos = [];
+    const comprueba = (nombre, ok) => { if (!ok) fallos.push(nombre); };
+
+    // Windows-1252: "Formación" con ó = 0xF3, que no es UTF-8 válido.
+    const bytes = Uint8Array.from([...Buffer.from("nombre([{\"codigo\":\"1\",\"titulo\":\"Formaci", "latin1"), 0xF3,
+      ...Buffer.from("n (SSCE01 - Especialidad completa)\",\"municipio\":\"BILBAO\",\"f_inicio\":\"22/01/2027\",\"f_fin\":\"26/04/2027\",\"horas\":\"150\",\"codprov\":\"48\",\"modalidad\":\"1\",\"url\":\"https://web.lanbide.eus/x\"}])", "latin1")]);
+    const lan = m.leerLanbide(m.decodificar(bytes))[0];
+    comprueba("Lanbide en Windows-1252", lan?.titulo.startsWith("Formación") && lan.inicio === "2027-01-22" && lan.provincia === "48" && lan.modalidad === "presencial");
+
+    // SOC: mes/día/año y repetidos.
+    const soc = m.sinRepetidos(m.leerSoc(JSON.stringify([
+      { curs: "9", tipus: "Formació ocupacional", especialitat_formativa: "CONDUCCIÓ DE CARRETONS ELEVADORS", provincia_especialitat: "TARRAGONA", modalitat: "PRESENCIAL", data_inici: "06/29/2026", data_fi: "10/30/2026", hores: "60", web_centre: "info@centre.cat" },
+      { curs: "9", tipus: "Formació ocupacional", especialitat_formativa: "Conducció de carretons elevadors", provincia_especialitat: "TARRAGONA", modalitat: "PRESENCIAL", data_inici: "06/29/2026", data_fi: "10/30/2026", hores: "60" },
+    ])));
+    comprueba("SOC mes/día/año, sin repetidos y correo fuera del campo web", soc.length === 1 && soc[0].inicio === "2026-06-29" && soc[0].provincia === "43" && soc[0].dirigido === "desempleados" && soc[0].email === "info@centre.cat" && soc[0].web === null);
+    comprueba("una fecha imposible no se convierte en otra", m.fecha("31/02/2026", "dma") === null && m.fecha("13/45/2026", "mda") === null);
+
+    // Consorci: CSV con comas dentro de comillas; mismo grupo con otra fecha = otra plaza.
+    const csv = '"IDENTIFICADOR","NUM_GRUP","DENOMINACIO","MODALITAT","HORES","DATA_INICI","DATA_FINAL","CODI_MUNICIPI","NOM_MUNICIPI","WEB","EMAIL","TELÈFON"\n'
+      + '"295782","9","Personal de control d\'accessos, nivell 1","Presencial","60","13/10/2026","03/11/2026","43155","TORTOSA","www.idfo.com","a@idfo.com","932689292"\n'
+      + '"295782","9","Personal de control d\'accessos, nivell 1","Presencial","60","05/10/2026","27/10/2026","43155","TORTOSA","www.idfo.com","a@idfo.com","932689292"\n';
+    const con = m.sinRepetidos(m.leerConsorci(csv));
+    comprueba("Consorci: comas dentro de comillas y dos fechas = dos plazas", con.length === 2 && con[0].titulo.includes("nivell 1") && con[0].provincia === "43" && con[0].dirigido === "ocupados" && con[0].web === "https://www.idfo.com");
+
+    // Navarra: 1/0.
+    const nav = m.leerNavarra('_id,CODIGO,TITULO DEL CURSO,FECHA DE INICIO,FECHA DE FIN,DESEMPLEADOS,OCUPADOS,DESCRIPCION MODALIDAD\n1,16128,Conducción de Carretillas Elevadoras,09/11/2026,11/11/2026,1,0,Presencial\n');
+    comprueba("Navarra con 1/0", nav[0]?.dirigido === "desempleados" && nav[0].provincia === "31");
+
+    // Emparejar con las fichas: castellano, catalán y exclusiones.
+    comprueba("carretillas y carretons van a carretillero", m.fichasDePlaza("CONDUCCIÓN DE CARRETILLAS ELEVADORAS").includes("carretillero") && m.fichasDePlaza("Conducció de carretons elevadors").includes("carretillero"));
+    comprueba("los cursos para profesores no van a competencias digitales", m.fichasDePlaza("COMPETENCIAS DIGITALES DOCENTES (SSCE17)").length === 0 && m.fichasDePlaza("Competencias digitales básicas").includes("competencias-digitales"));
+
+    // Afiliados: nada de redirección abierta, y la comisión solo si hay plantilla.
+    comprueba("la salida a cursos de pago solo va a sus dominios", m.destinoPermitido("coursera", "https://www.coursera.org/search?query=excel")
+      && !m.destinoPermitido("coursera", "https://coursera.org.evil.com/") && !m.destinoPermitido("coursera", "http://www.coursera.org/")
+      && !m.destinoPermitido("coursera", "https://evil.com/?u=coursera.org"));
+    const sinCodigo = m.destinoFinal("coursera", "https://www.coursera.org/x", {});
+    const conCodigo = m.destinoFinal("coursera", "https://www.coursera.org/x?a=1", { AFILIADO_COURSERA_PLANTILLA: "https://imp.i1.net/c/1/2/3?u={url}" });
+    comprueba("el código de afiliado solo se pone si está configurado", !sinCodigo.conComision && sinCodigo.url === "https://www.coursera.org/x"
+      && conCodigo.conComision && conCodigo.url === "https://imp.i1.net/c/1/2/3?u=" + encodeURIComponent("https://www.coursera.org/x?a=1"));
+
+    // Guzzi: curso y provincia salen del mensaje.
+    comprueba("Guzzi reconoce curso y provincia", m.fichaEnTexto("busco un curso de carretillero en Bilbao") === "carretillero"
+      && m.provinciaEnTexto("busco un curso de carretillero en Bilbao") === "48" && m.provinciaEnTexto("curso de inglés en Molina de Segura") === "30");
+
+    for (const f of fallos) console.log(`     ↳ falla: ${f}`);
+    return fallos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar o ejecutar: ${e.message?.slice(0, 120)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela las usan", () => {
+  const ficha = leerFuente("components/cursos/DetalleCurso.tsx");
+  const chat = leerFuente("app/api/gusi/chat/route.ts");
+  const centinela = leerFuente("app/api/admin/centinela/route.ts");
+  const db = leerFuente("lib/cursos/plazas/db.ts");
+  const sync = leerFuente("app/api/cursos/plazas/sync/route.ts");
+  return ficha.includes("<PlazasCurso")
+    && ficha.includes('rel="sponsored')
+    && ficha.includes("puede recibir una comisión")
+    && /preIntent === "buscar_cursos"[\s\S]{0,300}respuestaPlazasCurso/.test(chat)
+    && centinela.includes("las plazas de cursos se actualizan cada día")
+    // Una fuente caída no borra sus plazas: solo se borra lo que una fuente
+    // que acaba de responder bien ya no trae.
+    && db.includes("DELETE FROM curso_plaza WHERE fuente = $1 AND visto_en < $2")
+    && /descargarFuente\(fuente\)[\s\S]{0,200}guardarFuente\(/.test(sync);
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

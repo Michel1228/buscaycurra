@@ -1235,6 +1235,15 @@ El candidato tiene mucha experiencia.
       // Sin ficha de ese país, sigue el flujo normal y contesta la IA.
     }
 
+    // -- Intent: cursos con plazas reales (curso_plaza) ------------------------
+    // "Curso de carretillero en Bilbao" se contesta con plazas de verdad, con
+    // fecha y centro. Si no reconoce el curso, sigue el flujo normal.
+    if (preIntent === "buscar_cursos") {
+      const { respuestaPlazasCurso } = await import("@/lib/guzzi/plazas-cursos");
+      const respuesta = await respuestaPlazasCurso(message);
+      if (respuesta) return NextResponse.json({ reply: respuesta, action: "plazas_curso" });
+    }
+
     // -- Intent: la cuenta (no el CV) ------------------------------------------
     // "Borrar mis datos" se contestaba con el editor del CV, y la baja, el plan o
     // la contraseña iban al modelo, que no sabe dónde está cada cosa aquí y podía

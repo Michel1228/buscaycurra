@@ -27,6 +27,13 @@
  *     conectaempleo-formacion.fundaciontelefonica.com ya redirige a la web
  *     general y el catálogo de formación solo ofrece ProFuturo, que es para
  *     docentes. Estaba en el plan original; a 2026-08 ya no es una opción real.
+ *
+ * Miradas y que NO entran (2026-10-08):
+ *   · Aula Mentor (Ministerio de Educación) — es de pago, y su web oficial no
+ *     respondía para confirmar el precio. Sin precio comprobado, no se publica.
+ *   · Microsoft Learn — gratis y con miles de lecciones en español, pero casi
+ *     todo es para informáticos (Azure, Copilot, administración de sistemas).
+ *     No es lo que busca nuestra gente.
  */
 
 import type { Fuente } from "./tipos";
@@ -141,6 +148,94 @@ export const PLATAFORMAS: PlataformaFormacion[] = [
       },
     ],
     actualizado: "2026-08",
+  },
+
+  // ─── Añadidas el 2026-10-08, abiertas y comprobadas en su web oficial ─────
+
+  {
+    id: "fundae-buscador",
+    nombre: "FUNDAE — buscador oficial de cursos",
+    resumen:
+      "El buscador de la fundación estatal de formación para el empleo: cursos subvencionados para gente en paro y para gente que trabaja.",
+    url: "https://experienciafundae.es/buscador",
+    alcance: { tipo: "paises", codigos: ["ES"] },
+    idiomas: ["Español"],
+    temas: [
+      "subvencionado", "desempleados", "paro", "trabajadores", "ocupados", "certificado de profesionalidad",
+      "hostelería", "logística", "administración", "comercio", "sanidad", "informática", "idiomas",
+    ],
+    certificado: "no_consta",
+    requisitos: "Para trabajadores y personas en paro residentes en España.",
+    aviso:
+      "Es la puerta para toda España, también donde no tenemos las plazas con fecha. Cada curso tiene sus requisitos y su centro: el certificado depende del curso, míralo antes de apuntarte.",
+    fuentes: [
+      { titulo: "FUNDAE — Trabajadores (enlaza al buscador de cursos)", url: "https://www.fundae.es/trabajadores" },
+      { titulo: "Experiencia Fundae — buscador de cursos", url: "https://experienciafundae.es/buscador" },
+    ],
+    actualizado: "2026-10",
+  },
+  {
+    id: "ibm-skillsbuild",
+    nombre: "IBM SkillsBuild",
+    resumen:
+      "Formación gratis de IBM en español: inteligencia artificial, ciberseguridad, datos y competencias para el trabajo.",
+    url: "https://skillsbuild.org/es",
+    alcance: { tipo: "global" },
+    idiomas: ["Español", "Inglés"],
+    temas: [
+      "inteligencia artificial", "IA", "ciberseguridad", "datos", "nube", "cloud",
+      "competencias digitales", "tecnología", "informática",
+    ],
+    certificado: "si",
+    aviso:
+      "Ellos lo llaman \"títulos reconocidos en el sector\": son credenciales digitales de IBM, no títulos oficiales. Sirven para enseñar en el currículum lo que has aprendido.",
+    fuentes: [
+      { titulo: "IBM SkillsBuild — formación 100 % gratuita (página en español)", url: "https://skillsbuild.org/es" },
+    ],
+    actualizado: "2026-10",
+  },
+  {
+    id: "cisco-netacad",
+    nombre: "Cisco Networking Academy",
+    resumen:
+      "Cursos gratis de Cisco para empezar en informática: ciberseguridad, redes y programación, muchos en español.",
+    url: "https://www.netacad.com/es",
+    alcance: { tipo: "global" },
+    idiomas: ["Español", "Inglés", "Portugués"],
+    temas: [
+      "ciberseguridad", "redes", "informática", "programación", "python", "tecnología",
+      "competencias digitales",
+    ],
+    certificado: "no_consta",
+    aviso:
+      "Hay cursos de iniciación gratuitos, como Introducción a la Ciberseguridad. Si necesitas un papel al terminar, comprueba en cada curso qué dan antes de empezar.",
+    fuentes: [
+      {
+        titulo: "Cisco Networking Academy — Introducción a la Ciberseguridad, curso gratuito en línea",
+        url: "https://www.netacad.com/es/courses/introduction-to-cybersecurity",
+      },
+    ],
+    actualizado: "2026-10",
+  },
+  {
+    id: "dw-aprender-aleman",
+    nombre: "DW — Aprender alemán gratis",
+    resumen:
+      "Cursos de alemán gratis de Deutsche Welle, del A1 al C1, con prueba de nivel y alemán para el trabajo.",
+    url: "https://learngerman.dw.com/es/overview",
+    alcance: { tipo: "global" },
+    idiomas: ["Alemán", "explicaciones en español"],
+    temas: [
+      "alemán", "idiomas", "emigrar", "Alemania", "Austria", "Suiza", "trabajar en Alemania",
+      "Nicos Weg", "alemán para el trabajo",
+    ],
+    certificado: "si",
+    aviso:
+      "Es la radiotelevisión pública alemana y no cobra nada. Lo que da al terminar no es un título oficial: para trabajar allí te pedirán un examen oficial (Goethe, telc…), y DW explica cuál.",
+    fuentes: [
+      { titulo: "DW Aprender alemán — cursos gratuitos de A1 a C1", url: "https://learngerman.dw.com/es/overview" },
+    ],
+    actualizado: "2026-10",
   },
 ];
 

@@ -11,6 +11,9 @@ import Link from "next/link";
 import { AlertCircle, ArrowLeft, BadgeCheck, Clock, Euro, Globe, RefreshCw, Sparkles } from "lucide-react";
 import PrepararSolicitud from "@/components/PrepararSolicitud";
 import AvisoCurso from "@/components/cursos/AvisoCurso";
+import PlazasCurso from "@/components/cursos/PlazasCurso";
+import { BUSQUEDA_COURSERA, enlaceSalida, urlBusquedaCoursera } from "@/lib/cursos/afiliados";
+import { etiquetaPlazas } from "@/lib/cursos/plazas/emparejar";
 import {
   tipoPorSlug, NOMBRE_SECTOR, duracionResumida, costeDetallado,
   financiacionDe, NOMBRE_FINANCIACION, COLOR_FINANCIACION, EXPLICA_FINANCIACION,
@@ -215,6 +218,39 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
               </a>
             ))}
           </div>
+        </Seccion>
+      )}
+
+      {/* ── Plazas reales con fecha, si las hay. Si no hay ninguna, el
+          componente no pinta nada: arriba ya se explica dónde buscar. ── */}
+      {t.pais === "ES" && <PlazasCurso ficha={t.slug} nombre={etiquetaPlazas(t.slug, t.nombre)} compacto base={base} />}
+
+      {/* ── Online y a tu ritmo, de pago ──
+          Va DESPUÉS de lo gratis y de las plazas, nunca antes: primero lo que
+          no cuesta nada. Y dice dos veces que es de pago y que nos puede dejar
+          comisión; quien elige pagar tiene que saberlo antes de pulsar. */}
+      {BUSQUEDA_COURSERA[t.slug] && (
+        <Seccion titulo="Si prefieres hacerlo online, a tu ritmo">
+          <a
+            href={enlaceSalida("coursera", urlBusquedaCoursera(BUSQUEDA_COURSERA[t.slug]), t.slug)}
+            target="_blank"
+            rel="sponsored noopener noreferrer nofollow"
+            className="rounded-xl p-4 block hover:opacity-90"
+            style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+          >
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Cursos en español en Coursera</span>
+              <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}>De pago</span>
+            </div>
+            <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+              Cursos de universidades y empresas. El precio y lo que incluye, como el certificado,
+              lo ves en cada curso antes de apuntarte.
+            </p>
+          </a>
+          <p className="text-[11px] mt-2 leading-relaxed" style={{ color: "#64748b" }}>
+            Si te apuntas desde este enlace, BuscayCurra puede recibir una comisión. A ti no te cuesta más.
+          </p>
         </Seccion>
       )}
 

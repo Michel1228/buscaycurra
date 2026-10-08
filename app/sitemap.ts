@@ -43,6 +43,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...paginasNovedades,
     { url: `${baseUrl}/precios`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/cursos`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    // "cursos gratis para desempleados" es de lo más buscado del sector; las
+    // plazas cambian cada día, de ahí "daily".
+    { url: `${baseUrl}/cursos/plazas`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
     // Prioridad alta a propósito: "acreditar experiencia laboral" lo busca
     // mucha gente y no hay ningún portal de empleo contándolo bien.
     { url: `${baseUrl}/cursos/acreditar`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },

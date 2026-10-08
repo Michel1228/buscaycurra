@@ -10,7 +10,7 @@
  * el catálogo es estático, esto no toca la base de datos ni una vez.
  */
 import Link from "next/link";
-import { BadgeCheck, FolderOpen, GraduationCap } from "lucide-react";
+import { BadgeCheck, CalendarDays, FolderOpen, GraduationCap } from "lucide-react";
 import {
   tiposPorPais, ordenarPorUrgencia, sectoresConCursos, tiposPorSector,
 } from "@/lib/cursos/tipos";
@@ -84,6 +84,28 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
           </p>
         </div>
       </Link>
+
+      {/* ── Plazas con fecha: lo que de verdad se puede hacer ya ──
+          Las fichas dicen qué curso te piden; esto dice dónde hay uno gratis
+          que empieza el mes que viene. Solo España: las fuentes son de aquí. */}
+      {pais === "ES" && (
+        <Link
+          href={`${base}/plazas`}
+          className="rounded-xl p-4 mb-8 flex items-start gap-3 hover:opacity-90"
+          style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+        >
+          <CalendarDays size={19} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
+          <div>
+            <p className="text-sm font-semibold mb-0.5" style={{ color: "#f1f5f9" }}>
+              Plazas gratis que empiezan pronto
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+              Miles de cursos con fecha, horario y centro, publicados por los servicios públicos de
+              empleo de Euskadi, Cataluña, Murcia y Navarra. Busca el tuyo y apúntate.
+            </p>
+          </div>
+        </Link>
+      )}
 
       <CatalogoCursos
         obligatorios={obligatorios}

@@ -534,6 +534,31 @@ export async function GET(req: NextRequest) {
   // Ver lib/centinela/limites-correo.ts.
   await limitesDeCorreo(anota);
 
+  // ── Plazas de cursos: que sigan llegando cada día ──
+  // Las trae alertas-cursos.yml desde GitHub Actions. Si ese workflow se para
+  // (ya pasó con otros: GitHub los desactiva tras 60 días sin cambios en el
+  // repo), las plazas se quedan viejas sin que nadie lo note: las fichas
+  // seguirían enseñando cursos cada vez más escasos y, con el tiempo, ninguno.
+  try {
+    const { resumenPlazas } = await import("@/lib/cursos/plazas/db");
+    const { porEmpezar, fuentes } = await resumenPlazas();
+    const horas = (iso: string | null) => (iso ? (Date.now() - new Date(iso).getTime()) / 3600000 : Infinity);
+    const viejas = fuentes.filter(f => horas(f.ultimaVez) > 72).map(f => f.fuente);
+    anota(
+      "las plazas de cursos se actualizan cada día",
+      porEmpezar > 0 && viejas.length === 0,
+      porEmpezar === 0
+        ? "no hay ninguna plaza de curso por empezar: la sincronización no ha llegado a funcionar o se ha parado"
+        : viejas.length
+          ? `${viejas.join(", ")} lleva(n) más de 3 días sin actualizarse (${porEmpezar} plazas por empezar en total)`
+          : `${porEmpezar} plazas por empezar, todas las fuentes al día`,
+      "el 8 oct 2026 se añadieron las plazas reales de Lanbide, SEF Murcia, SOC, Consorci y Navarra"
+    );
+  } catch (e) {
+    anota("las plazas de cursos se actualizan cada día", false, `no se pudo leer curso_plaza: ${(e as Error).message}`,
+      "el 8 oct 2026 se añadieron las plazas reales de cursos");
+  }
+
   const fallos = r.filter(x => !x.bien);
   return NextResponse.json(
     {
