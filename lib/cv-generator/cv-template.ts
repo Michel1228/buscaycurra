@@ -35,6 +35,8 @@ export interface CVData {
   }[];
   accentColor?: string;
   templateId?: string; // "clasica" (default) | "ats"
+  /** Idioma del CV ("es" si no se dice). Ver lib/cv-generator/idiomas-cv.ts. */
+  idioma?: string;
 }
 
 // Escapa caracteres HTML especiales para prevenir XSS

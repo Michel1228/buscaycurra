@@ -2918,6 +2918,50 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 test("la portada lleva la verificación de Impact (afiliados de Coursera)", () =>
   /name="impact-site-verification"[\s\S]{0,200}value: "5475f2f2-412b-4825-a15f-84781f036795"/.test(leerFuente("app/layout.tsx")));
 
+// ── EL CV EN EL IDIOMA DEL PAÍS (8 oct 2026) ──────────────────────────
+//
+// Para quien se va fuera faltaba lo más útil: el CV en inglés, alemán,
+// francés… Tres cosas que no pueden romperse: las diez plantillas tienen que
+// salir enteras en el otro idioma (y idénticas en español); a la IA no se le
+// manda ni nombre, ni teléfono, ni correo, ni empresas; y si la IA inventa un
+// puesto, no llega al CV que se descarga.
+test("el CV se traduce entero, sin mandar datos personales a la IA y sin aceptar inventos", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-cv-idioma-entrada.ts", salida = ".sello-cv-idioma.cjs";
+  try {
+    writeFileSync(entrada, 'export { generarCV, TEMPLATE_IDS } from "./lib/cv-generator/plantillas";\nexport { promptTraduccion, aplicarTraduccion } from "./lib/cv-generator/traducir";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const cv = { nombre: "Ana", email: "ana@correo.test", telefono: "600111222", ciudad: "Tudela", subtitulo: "Camarera", perfilProfesional: "Camarera con experiencia.",
+      aptitudes: ["Atención"], idiomas: [{ nombre: "Español", nivel: 100 }, { nombre: "Inglés", nivel: 70 }],
+      experiencia: [{ fechas: "2020 - Actualidad", puesto: "Camarera", empresa: "Bar Sol", descripcion: ["Servir mesas"] }], formacion: [{ titulo: "Hostelería", centro: "IES Sol" }] };
+    const restos = /(>\s*(Experiencia laboral|Experiencia Laboral|Experiencia|Formación|Aptitudes|Habilidades|Idiomas|Contacto|Sobre mí|Mi perfil|Perfil profesional|Perfil)\s*<)|\b(Nativo|Avanzado|Intermedio|Nociones)\b|Básico|lang="es"/;
+    const malasEn = m.TEMPLATE_IDS.filter(id => restos.test(m.generarCV({ ...cv, templateId: id, idioma: "en" })));
+    const cambianEs = m.TEMPLATE_IDS.filter(id => m.generarCV({ ...cv, templateId: id }) !== m.generarCV({ ...cv, templateId: id, idioma: "es" }));
+    const p = m.promptTraduccion(cv, "en");
+    const privado = !/ana@correo\.test|600111222|Tudela|Bar Sol|IES Sol|"Ana"/.test(p);
+    const inventa = m.aplicarTraduccion(cv, JSON.stringify({ experiencia: [{ puesto: "Waitress", fechas: "2020", descripcion: ["x"] }, { puesto: "CEO", fechas: "2010", descripcion: [] }] }), "en");
+    const sinInventos = inventa && inventa.cv.experiencia.length === 1 && inventa.cv.experiencia[0].empresa === "Bar Sol" && inventa.cv.email === "ana@correo.test";
+    const basura = m.aplicarTraduccion(cv, "Lo siento, no puedo ayudar con eso", "en") === null;
+    if (malasEn.length) console.log("     ↳ plantillas con restos en español: " + malasEn.join(", "));
+    if (cambianEs.length) console.log("     ↳ plantillas que cambian en español: " + cambianEs.join(", "));
+    if (!privado) console.log("     ↳ el prompt lleva datos personales");
+    const pantalla = leerFuente("app/app/curriculum/Content.tsx");
+    // \r?: Content.tsx tiene saltos de línea de Windows (CRLF).
+    const fnTraducir = (pantalla.match(/async function traducirCV\(\)[\s\S]*?\r?\n  \}\r?\n/) || [""])[0];
+    const pantallaBien = pantalla.includes("traducidoHTML || mejoradoHTML || livePreviewHTML") && fnTraducir.includes("/api/cv/traducir") && !fnTraducir.includes("setForm(");
+    const router = leerFuente("lib/ai/ai-router.ts");
+    const margen = /tarea === "traducir-cv"[\s\S]{0,300}maxTokens: (\d+)/.exec(router);
+    return malasEn.length === 0 && cambianEs.length === 0 && privado && sinInventos && basura && pantallaBien && margen && Number(margen[1]) >= 4000;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar o ejecutar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── OFERTAS DE LOS SERVICIOS PÚBLICOS DE EMPLEO (8 oct 2026) ──────────
 //
 // España tenía 65.124 ofertas de 2,8 millones, el 70 % de Adzuna y ninguna de

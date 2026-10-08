@@ -23,6 +23,7 @@ import { generarCV, LISTA_PLANTILLAS, PLANTILLAS, TEMPLATE_IDS, type TemplateId 
 import { normalizar } from "@/lib/cv-generator/normalizar";
 import { CV_EJEMPLO } from "@/lib/cv-generator/ejemplo";
 import type { CVData } from "@/lib/cv-generator/cv-template";
+import { IDIOMAS_CV } from "@/lib/cv-generator/idiomas-cv";
 import InfoTooltip from "@/components/InfoTooltip";
 
 interface Exp {
@@ -112,6 +113,15 @@ export default function CurriculumPage() {
     [accentColor]
   );
 
+  // ── CV traducido (lib/cv-generator/traducir.ts) ──
+  // Va aparte del formulario: traducir NO cambia el CV en español. Se guarda el
+  // contenido traducido y se pinta con la plantilla y el color de ahora, así
+  // que cambiar de plantilla no obliga a volver a traducir.
+  const [idiomaDestino, setIdiomaDestino] = useState<string>("en");
+  const [traduciendo, setTraduciendo] = useState(false);
+  const [traducido, setTraducido] = useState<CVData | null>(null);
+  const [traducidoSinTraducir, setTraducidoSinTraducir] = useState(0);
+
   // ── Múltiples CVs ──
   const [listaCVs, setListaCVs] = useState<CVListItem[]>([]);
   const [cvActivoId, setCvActivoId] = useState<string>("");
@@ -123,6 +133,17 @@ export default function CurriculumPage() {
   }, [form.nombre, form.apellidos, form.subtitulo, form.telefono, form.email, form.ciudad,
       form.perfilProfesional, form.aptitudes, form.idiomas,
       JSON.stringify(form.experiencia), JSON.stringify(form.formacion), fotoUrl, templateId, accentColor]);
+
+  // El CV traducido, con la plantilla, el color y la foto de ahora.
+  const traducidoHTML = useMemo(() => {
+    if (!traducido) return "";
+    return generarCV({ ...traducido, templateId, accentColor, fotoUrl: fotoUrl || undefined });
+  }, [traducido, templateId, accentColor, fotoUrl]);
+
+  // Si se cambia el CV en español, la traducción ya no corresponde: se quita
+  // para no descargar una versión vieja en otro idioma.
+  const contenidoCV = JSON.stringify(form);
+  useEffect(() => { setTraducido(null); }, [contenidoCV]);
 
   /**
    * El CV que se pinta, se descarga, se guarda y se ENVÍA sale de UNA sola
@@ -712,15 +733,39 @@ export default function CurriculumPage() {
   }
 
   async function descargarPDF() {
-    const htmlToUse = mejoradoHTML || livePreviewHTML;
+    const htmlToUse = traducidoHTML || mejoradoHTML || livePreviewHTML;
     if (!htmlToUse || descargando) return;
     setDescargando(true);
     setError("");
     // Todo el lío de bajarse el PDF está en un solo sitio, que lo comparte con
     // la pantalla de CVs guardados: lib/cv-generator/descargar-pdf.ts.
-    const fallo = await descargarCVComoPDF(htmlToUse, token);
+    const fallo = traducido
+      ? await descargarCVComoPDF(htmlToUse, token, `CV_BuscayCurra_${(traducido.idioma || "").toUpperCase()}`)
+      : await descargarCVComoPDF(htmlToUse, token);
     if (fallo) setError(fallo);
     setDescargando(false);
+  }
+
+  /** Traduce el CV al idioma elegido, sin tocar el formulario en español. */
+  async function traducirCV() {
+    if (traduciendo || !livePreviewHTML) return;
+    setTraduciendo(true);
+    setError("");
+    try {
+      const res = await fetch("/api/cv/traducir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ cv: formToCVDataRaw(), idioma: idiomaDestino }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.cv) { setError(j.error || "No hemos podido traducirlo ahora. Vuelve a intentarlo."); return; }
+      setTraducido(j.cv as CVData);
+      setTraducidoSinTraducir(Number(j.sinTraducir) || 0);
+    } catch {
+      setError("No hemos podido traducirlo ahora. Vuelve a intentarlo.");
+    } finally {
+      setTraduciendo(false);
+    }
   }
 
 
@@ -759,8 +804,9 @@ export default function CurriculumPage() {
   const pct = Math.round((doneCount / completitudChecks.length) * 100);
   const completitudColor = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
 
-  // ── HTML para la preview (IA o en vivo) ──
-  const previewHTML = mejoradoHTML || livePreviewHTML;
+  // ── HTML para la preview (traducido, mejorado con IA o en vivo) ──
+  const previewHTML = traducidoHTML || mejoradoHTML || livePreviewHTML;
+  const nombreIdiomaTraducido = traducido ? (IDIOMAS_CV.find(i => i.codigo === traducido.idioma)?.nombre ?? "") : "";
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117", overflowX: "hidden" }}>
@@ -820,11 +866,39 @@ export default function CurriculumPage() {
                 <Check size={12} strokeWidth={2.5} /> Guardado
               </span>
             )}
-            {!mejoradoHTML && (
+            {!mejoradoHTML && !traducido && (
               <button onClick={generarYMejorar} disabled={procesando}
                 className="px-4 py-2 text-xs font-semibold rounded-xl transition disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg, #fff, #e2e8f0)", color: "#16a34a" }}>
                 {procesando ? "Mejorando..." : "✨ Mejorar con IA"}
+              </button>
+            )}
+            {/* Traducir el CV para trabajar fuera (lib/cv-generator/traducir.ts). */}
+            {livePreviewHTML && !traducido && (
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={idiomaDestino}
+                  onChange={e => setIdiomaDestino(e.target.value)}
+                  aria-label="Idioma al que traducir el CV"
+                  className="px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
+                  style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}
+                >
+                  {IDIOMAS_CV.map(i => (
+                    <option key={i.codigo} value={i.codigo} style={{ background: "#1e212b", color: "#f1f5f9" }}>{i.nombre}</option>
+                  ))}
+                </select>
+                <button onClick={traducirCV} disabled={traduciendo}
+                  className="px-3 py-2 text-xs font-semibold rounded-xl disabled:opacity-50"
+                  style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}>
+                  {traduciendo ? "Traduciendo..." : "🌍 Traducir"}
+                </button>
+              </div>
+            )}
+            {traducido && (
+              <button onClick={() => setTraducido(null)}
+                className="px-3 py-2 text-xs rounded-xl"
+                style={{ border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}>
+                ↶ Volver al español
               </button>
             )}
             {previewHTML && (
@@ -885,6 +959,20 @@ export default function CurriculumPage() {
             <span>{avisoMejora}</span>
             <button onClick={deshacerMejora} className="shrink-0 underline" style={{ color: "#94a3b8" }}>
               Deshacer
+            </button>
+          </div>
+        )}
+
+        {traducido && (
+          <div className="mb-4 p-3 rounded-lg text-xs flex items-start justify-between gap-3"
+            style={{ background: "rgba(59,130,246,0.08)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}>
+            <span>
+              Estás viendo tu CV en {nombreIdiomaTraducido.toLowerCase()}. Lo ha traducido la IA: revísalo antes de
+              mandarlo. Tu CV en español no ha cambiado; si lo editas, vuelve a traducirlo.
+              {traducidoSinTraducir > 0 && ` ${traducidoSinTraducir} ${traducidoSinTraducir === 1 ? "apartado se ha quedado" : "apartados se han quedado"} en español porque la traducción no salió bien: vuelve a intentarlo o cámbialo a mano.`}
+            </span>
+            <button onClick={() => setTraducido(null)} className="shrink-0 underline" style={{ color: "#94a3b8" }}>
+              Volver al español
             </button>
           </div>
         )}
@@ -1292,7 +1380,7 @@ export default function CurriculumPage() {
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
                   <span className="text-xs font-semibold" style={{ color: "#22c55e" }}>
-                    {mejoradoHTML ? "CV Mejorado con IA ✨" : "Previsualización en vivo"}
+                    {traducido ? `CV en ${nombreIdiomaTraducido.toLowerCase()} 🌍` : mejoradoHTML ? "CV Mejorado con IA ✨" : "Previsualización en vivo"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1376,7 +1464,7 @@ export default function CurriculumPage() {
             <div className="flex items-center gap-3">
               <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
               <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>
-                {mejoradoHTML ? "CV Mejorado con IA ✨" : "Vista previa del CV"}
+                {traducido ? `CV en ${nombreIdiomaTraducido.toLowerCase()} 🌍` : mejoradoHTML ? "CV Mejorado con IA ✨" : "Vista previa del CV"}
               </span>
             </div>
             <div className="flex items-center gap-3">

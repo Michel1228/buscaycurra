@@ -166,7 +166,8 @@ export async function guardarOfertas(fuente: FuenteOfertas, ofertas: OfertaPubli
     const { rows } = await pool.query<{ es_nueva: boolean }>(
       `INSERT INTO "JobListing" (id, title, company, description, sector, city, province, "sourceUrl", "sourceName",
                                  "isActive", "scrapedAt", "createdAt", "updatedAt", "expiresAt", country, categoria)
-       VALUES ($1, $2, '', $3, 'OTRO'::"JobSector", $4, $5, $6, $7, true, $8, COALESCE($9, $8), $8, $10, 'es', $11)
+       VALUES ($1, $2, '', $3, 'OTRO'::"JobSector", $4, $5, $6, $7, true, $8::timestamptz,
+               COALESCE($9::timestamptz, $8::timestamptz), $8::timestamptz, $10::timestamptz, 'es', $11)
        ON CONFLICT (id) DO UPDATE SET
          title = EXCLUDED.title, description = EXCLUDED.description, city = EXCLUDED.city,
          province = EXCLUDED.province, "sourceUrl" = EXCLUDED."sourceUrl", "isActive" = true,
@@ -185,7 +186,7 @@ export async function guardarOfertas(fuente: FuenteOfertas, ofertas: OfertaPubli
   }
   const { rowCount } = await pool.query(
     `UPDATE "JobListing" SET "isActive" = false, "updatedAt" = NOW()
-      WHERE "sourceName" = $1 AND "isActive" AND "scrapedAt" < $2`,
+      WHERE "sourceName" = $1 AND "isActive" AND "scrapedAt" < $2::timestamptz`,
     [FUENTES[fuente].sourceName, inicio]
   );
   return { guardadas: ofertas.length, nuevas, retiradas: rowCount ?? 0, retiradaOmitida: false };

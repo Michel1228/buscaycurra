@@ -16,6 +16,7 @@ import { generarCVHTML_Ejecutiva } from "./cv-template-ejecutiva";
 import { generarCVHTML_Minimalista } from "./cv-template-minimalista";
 import { generarCVHTML_Firma } from "./cv-template-firma";
 import { generarCVHTML_Oscura } from "./cv-template-oscura";
+import { localizarCV } from "./idiomas-cv";
 
 export type TemplateId =
   | "clasica" | "ats" | "folio" | "moderna" | "elegante"
@@ -125,5 +126,6 @@ export const TEMPLATE_IDS = Object.keys(PLANTILLAS) as TemplateId[];
 export function generarCV(data: CVData): string {
   const id = (data.templateId as TemplateId) || "clasica";
   const plantilla = PLANTILLAS[id] || PLANTILLAS.clasica;
-  return plantilla.generar(data);
+  // Los títulos de las plantillas en el idioma del CV (lib/cv-generator/idiomas-cv.ts).
+  return localizarCV(plantilla.generar(data), data.idioma);
 }

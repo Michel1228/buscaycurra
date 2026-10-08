@@ -29,6 +29,7 @@ export type TareaIA =
   | "analizar-oferta"         // Analizar una oferta de trabajo
   | "analizar-empresa-web"    // Analizar la web de una empresa
   | "chat-agente"             // Respuestas del agente conversacional
+  | "traducir-cv"             // Traducir el contenido del CV (lib/cv-generator/traducir.ts)
   | "generico";               // Cualquier otra tarea
 
 // Estructura de respuesta del router
@@ -55,6 +56,9 @@ type IA = "groq" | "gemini" | "deepseek";
 function iaPreferida(tarea: TareaIA): IA {
   // DeepSeek: el mejor para entender español coloquial
   if (tarea === "chat-agente") return "deepseek";
+
+  // Traducir el CV: Groq, que es gratis, rápido y sigue bien el formato JSON.
+  if (tarea === "traducir-cv") return "groq";
 
   // Gemini: contexto largo para CVs largos y análisis web
   if (tarea === "mejorar-cv-largo" || tarea === "analizar-empresa-web") {
@@ -255,6 +259,15 @@ async function ejecutarTareaConIA(
   // existía en la rama de groq, pero iaPreferida elige deepseek, que recibía el
   // CV crudo y devolvía un ANÁLISIS/feedback en vez de una carta. Prompt único
   // para las tres IAs.
+  // Traducir el CV: el contenido ya llega con su prompt (lib/cv-generator/traducir.ts).
+  // Un CV entero traducido en JSON no cabe en los 2.048 tokens por defecto de
+  // Groq: se le da margen para no devolverlo cortado.
+  if (tarea === "traducir-cv") {
+    if (ia === "gemini") return await llamarGemini(contenido, "generico");
+    if (ia === "groq") return await llamarGroq(contenido, "generico", { maxTokens: 6000, temperatura: 0.2 });
+    return await llamarDeepSeek(contenido, "generico");
+  }
+
   if (tarea === "carta-presentacion") {
     const p = promptCartaPresentacion(contenido, extra?.empresa || "", extra?.puesto || "");
     if (ia === "gemini") return await llamarGemini(p, "carta-presentacion");
@@ -269,6 +282,7 @@ async function ejecutarTareaConIA(
     "analizar-oferta": "analisis-oferta",
     "analizar-empresa-web": "analisis-empresa",
     "chat-agente": "chat-agente",
+    "traducir-cv": "generico",
     "generico": "generico",
   };
 
