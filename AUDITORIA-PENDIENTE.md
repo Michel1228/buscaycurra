@@ -22,6 +22,19 @@ Entre el 3 y el 5 de septiembre se cambió `.github/workflows/sync-jobs.yml`
 creyendo que se ejecutaba. **Esos cambios no tuvieron efecto**: las dos entradas
 de abajo sobre Japón y Suecia están corregidas por eso.
 
+## CURSOS AMPLIADOS (8 oct 2026)
+
+- [x] Plazas reales con fecha de Lanbide, SEF Murcia, SOC, Consorci y Navarra
+  en `curso_plaza` (`4a58f19`, `e35255a`). Página `/cursos/plazas`, plazas en
+  cada ficha, Guzzi las usa. Cron diario 06:20 UTC
+  (`scripts/vps/sync-plazas-cursos.sh`); el centinela avisa si se paran.
+- [x] Fichas nuevas (de 13 a 17): CAP, gases fluorados, vigilante, soldadura.
+- [x] Plataformas: FUNDAE, IBM SkillsBuild, Cisco, DW alemán.
+- [x] Coursera por `/api/cursos/ir` (clics en `curso_clic`). Falta el código
+  de afiliado: ver "Pendiente de Michel".
+- [ ] Más fuentes de plazas cuando otras comunidades publiquen datos abiertos
+  (Madrid publica cursos pero sin fechas; Andalucía casi nada).
+
 ## SÚPER AUDITORÍA (29-30 sep 2026)
 
 ### Arreglado, desplegado y comprobado en producción
@@ -725,6 +738,18 @@ la cola `cv-sender-retry` · el botón `cv_complete` de GusiChat · los chips de
 ---
 
 ## Pendiente de Michel (no lo puedo hacer yo)
+
+- **Afiliado de Coursera (8 oct 2026)**: darse de alta en
+  https://www.coursera.org/about/affiliates (red Impact, gratis). Con el enlace
+  de seguimiento que den, poner en el `.env.local` del servidor
+  `AFILIADO_COURSERA_PLANTILLA=<enlace con {url} donde va el destino>` y
+  reiniciar el contenedor. Hasta entonces los enlaces van a Coursera sin
+  comisión, y los clics se cuentan igual en la tabla `curso_clic`.
+- **Alertas de cursos: nunca se han enviado (encontrado el 8 oct 2026).** Solo
+  estaban en `.github/workflows/alertas-cursos.yml`, que en esta rama no se
+  ejecuta. Activarlas = un cron más en el servidor, pero manda correos a
+  usuarios reales (los que encendieron el aviso) y gasta del tope diario de
+  Resend. Decidir si se activan.
 
 - **Micrófono**: `npx cap sync` y recompilar. Y en iOS faltan
   `NSMicrophoneUsageDescription` y `NSSpeechRecognitionUsageDescription` en el

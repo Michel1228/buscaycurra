@@ -170,7 +170,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
             onChange={e => setQ(e.target.value)}
             placeholder="Carretillero, inglés, limpieza…"
             aria-label="Buscar curso"
-            className="w-full rounded-xl py-3 pl-10 pr-10 text-sm outline-none"
+            className="input-con-icono w-full rounded-xl py-3 pl-10 pr-10 text-sm outline-none"
             style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
           />
           {q && (

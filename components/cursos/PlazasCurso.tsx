@@ -304,7 +304,7 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
             onBlur={() => setQAplicada(q)}
             placeholder="Soldadura, inglés, carretillas, cocina…"
             aria-label="Buscar plaza por nombre del curso"
-            className="w-full rounded-lg py-2.5 pl-9 pr-3 text-sm outline-none"
+            className="input-con-icono w-full rounded-lg py-2.5 pr-3 text-sm outline-none"
             style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
           />
         </div>

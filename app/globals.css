@@ -75,6 +75,13 @@ select {
   outline-offset: 1px !important;
 }
 
+/* Buscadores con la lupa dentro: la regla de arriba fuerza 14px de relleno a
+   la izquierda con !important, así que ni pl-10 ni un style en línea lo
+   cambian, y la lupa quedaba encima del texto (catálogo de cursos, plazas). */
+input[type="search"].input-con-icono {
+  padding-left: 40px !important;
+}
+
 /* Evitar zoom en inputs iOS (font-size < 16px dispara zoom) */
 @media screen and (max-width: 768px) {
   input[type="text"],

@@ -2898,6 +2898,15 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 // La sincronización de plazas se puso primero en un workflow de GitHub, que en
 // esta rama no se ejecuta nunca (scripts/vps/README.md). Tiene que estar en el
 // crontab del servidor, activa (no comentada) y llamando al script versionado.
+// globals.css fuerza "padding: 10px 14px !important" a todo input de búsqueda,
+// así que pl-10 no hacía nada y la lupa del catálogo de cursos tapaba el texto
+// (visto en una captura en móvil el 8 oct 2026). Los buscadores con lupa
+// necesitan la clase que gana a esa regla.
+test("los buscadores de cursos con lupa no la ponen encima del texto", () =>
+  /input\[type="search"\]\.input-con-icono\s*\{[^}]*padding-left:\s*\d+px\s*!important/.test(leerFuente("app/globals.css"))
+  && leerFuente("components/cursos/CatalogoCursos.tsx").includes("input-con-icono")
+  && leerFuente("components/cursos/PlazasCurso.tsx").includes("input-con-icono"));
+
 test("las plazas de cursos se sincronizan desde el crontab del servidor", () =>
   /^[^#].*sync-plazas-cursos\.sh/m.test(leerFuente("scripts/vps/crontab.txt"))
   && leerFuente("scripts/vps/sync-plazas-cursos.sh").includes("/api/cursos/plazas/sync"));

@@ -46,10 +46,25 @@ const ETIQUETA_PLAZAS: Record<string, string> = {
   barista: "bar y cafetería",
   "limpieza-industrial": "limpieza",
   "prl-basico": "prevención de riesgos laborales",
+  // El resto, escritas a mano porque pasar el nombre de la ficha a minúsculas
+  // rompe las siglas: "mig/mag y tig", "cap", "tpc".
+  "manipulador-alimentos": "manipulador de alimentos",
+  carretillero: "carretillero",
+  "plataforma-elevadora": "plataforma elevadora",
+  "tpc-construccion": "TPC y prevención en obra",
+  "atencion-sociosanitaria-instituciones": "atención sociosanitaria en instituciones",
+  "atencion-sociosanitaria-domicilio": "atención sociosanitaria a domicilio",
+  "excel-ofimatica": "Excel y ofimática",
+  "competencias-digitales": "competencias digitales",
+  "atencion-cliente": "atención al cliente",
+  "cap-conductor-profesional": "CAP y conducción profesional",
+  "gases-fluorados": "frío, climatización y gases fluorados",
+  "vigilante-seguridad": "vigilante de seguridad",
+  soldadura: "soldadura",
 };
 
 export function etiquetaPlazas(slug: string, nombreFicha: string): string {
-  return ETIQUETA_PLAZAS[slug] ?? nombreFicha.toLowerCase();
+  return ETIQUETA_PLAZAS[slug] ?? nombreFicha;
 }
 
 export function normalizarTitulo(t: string): string {
