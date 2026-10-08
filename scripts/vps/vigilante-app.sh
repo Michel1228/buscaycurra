@@ -26,7 +26,9 @@ leer() { grep -E "^$1=" "$ENV" | head -1 | cut -d= -f2- | tr -d '\r\042\047'; }
 ESTADO=/root/.vigilante-app-estado
 ahora() { date -u '+%Y-%m-%d %H:%M UTC'; }
 
-if pgrep -f "build-deploy.sh" > /dev/null; then exit 0; fi
+# Solo el proceso del despliegue ("bash build-deploy.sh", lanzado tal cual o con
+# ruta), no cualquier orden que mencione el nombre del fichero.
+if pgrep -f "^bash (.*/)?build-deploy\.sh" > /dev/null; then exit 0; fi
 
 web() { curl -s -o /dev/null -w '%{http_code}' --max-time 20 http://localhost:8892/; }
 
