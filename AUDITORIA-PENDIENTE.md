@@ -757,10 +757,11 @@ la cola `cv-sender-retry` · el botón `cv_complete` de GusiChat · los chips de
 
 ## Pendiente de Michel (no lo puedo hacer yo)
 
-- **Afiliado de Coursera (8 oct 2026)**: darse de alta en
-  https://www.coursera.org/about/affiliates (red Impact, gratis). Con el enlace
-  de seguimiento que den, poner en el `.env.local` del servidor
-  `AFILIADO_COURSERA_PLANTILLA=<enlace con {url} donde va el destino>` y
+- **Afiliado de Coursera**: solicitud ENVIADA el 8 oct 2026 en Impact (cuenta
+  7928604), "En revisión". Web verificada con la etiqueta meta de
+  `app/layout.tsx` (no quitarla; el sello lo vigila). Cuando la aprueben: sacar
+  el enlace de seguimiento en Impact, ponerlo en el `.env.local` del servidor
+  como `AFILIADO_COURSERA_PLANTILLA=<enlace con {url} donde va el destino>` y
   reiniciar el contenedor. Hasta entonces los enlaces van a Coursera sin
   comisión, y los clics se cuentan igual en la tabla `curso_clic`.
 
