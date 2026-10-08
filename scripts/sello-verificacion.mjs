@@ -2909,7 +2909,7 @@ test("la app vuelve sola tras un reinicio y un vigilante externo avisa si cae", 
   const run = (deploy.match(/docker run -d --name buscaycurra-nextjs[\s\S]*?buscaycurra:latest/) || [""])[0];
   return run.includes("--restart unless-stopped")
     && /^[^#].*vigilante-app\.sh/m.test(leerFuente("scripts/vps/crontab.txt"))
-    && vig.includes('pgrep -f "^bash (.*/)?build-deploy\.sh"')
+    && vig.includes('pgrep -f "^bash (.*/)?build-deploy\\.sh"')
     && vig.includes("--restart unless-stopped")
     && vig.includes("docker network connect easypanel-buscaycurra buscaycurra-nextjs")
     && vig.includes("ADMIN_EMAILS");
