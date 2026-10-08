@@ -22,6 +22,17 @@ Entre el 3 y el 5 de septiembre se cambió `.github/workflows/sync-jobs.yml`
 creyendo que se ejecutaba. **Esos cambios no tuvieron efecto**: las dos entradas
 de abajo sobre Japón y Suecia están corregidas por eso.
 
+## CAÍDA DE 7 HORAS (8 oct 2026)
+
+- [x] 10:22 UTC: el servidor se reinició solo (actualización del núcleo
+  6.8.0-142). DB, Redis y Traefik volvieron; la app no, porque su contenedor
+  no tenía política de reinicio. "Bad Gateway" hasta las 17:27 UTC, cuando
+  Michel lo vio. El centinela no avisó: vive dentro de la app.
+  Arreglado (`bd865e9`, `ee5b688`, `e952072`): `--restart unless-stopped` en
+  `build-deploy.sh` y `scripts/vps/vigilante-app.sh` cada 5 min desde el
+  servidor (levanta el contenedor si falta o está parado; correo al caer y al
+  volver). Probado parando la app a propósito: volvió sola en menos de 1 min.
+
 ## CURSOS AMPLIADOS (8 oct 2026)
 
 - [x] Plazas reales con fecha de Lanbide, SEF Murcia, SOC, Consorci y Navarra
