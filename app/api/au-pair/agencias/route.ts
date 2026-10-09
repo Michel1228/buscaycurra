@@ -21,6 +21,7 @@
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { realidadDe, ETIQUETA_DIFICULTAD } from "@/lib/au-pair/puedes-ir";
+import { agenciaEnRegistro, REGISTROS_AU_PAIR } from "@/lib/au-pair/registros-oficiales";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -64,10 +65,18 @@ export async function GET() {
         puedesIr: realidad
           ? { nivel: realidad.dificultad, etiqueta: ETIQUETA_DIFICULTAD[realidad.dificultad], resumen: realidad.resumen }
           : null,
+        // true si está en el registro oficial de su país (hoy, Países Bajos);
+        // null si ese país no tiene lista cerrada. Ver lib/au-pair/registros-oficiales.ts.
+        registroOficial: r.country ? agenciaEnRegistro(r.company, r.country) : null,
       };
     });
 
-    return NextResponse.json({ agencias, total: agencias.length });
+    return NextResponse.json({
+      agencias,
+      total: agencias.length,
+      // Los registros oficiales, para que la pantalla diga dónde comprobar una agencia.
+      registros: REGISTROS_AU_PAIR.map(({ pais, nombre, queSignifica, url }) => ({ pais, nombre, queSignifica, url })),
+    });
   } catch (err) {
     console.error("[au-pair/agencias]", (err as Error).message);
     return NextResponse.json({ error: "Error obteniendo agencias" }, { status: 500 });

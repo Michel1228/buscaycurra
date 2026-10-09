@@ -2918,6 +2918,41 @@ test("las plazas y el aviso de pago están en la ficha, y Guzzi y el centinela l
 test("la portada lleva la verificación de Impact (afiliados de Coursera)", () =>
   /name="impact-site-verification"[\s\S]{0,200}value: "5475f2f2-412b-4825-a15f-84781f036795"/.test(leerFuente("app/layout.tsx")));
 
+// ── AGENCIAS DE AU PAIR: REGISTROS OFICIALES (8 oct 2026) ─────────────
+//
+// La lista de agencias sale de los portales de ofertas, sin comprobar. El
+// registro del IND neerlandés es una lista cerrada: la marca "registro
+// oficial" solo puede salir con el nombre completo, nunca por parecerse
+// ("Au Pair" a secas casaría con media lista).
+test("las agencias de au pair se marcan como oficiales solo si están en el registro, por nombre completo", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-aupair-entrada.ts", salida = ".sello-aupair.cjs";
+  try {
+    writeFileSync(entrada, 'export { agenciaEnRegistro, REGISTROS_AU_PAIR } from "./lib/au-pair/registros-oficiales";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const casos = [
+      [m.agenciaEnRegistro("Au Pair International B.V.", "NL"), true],
+      [m.agenciaEnRegistro("Au Pair International", "nl"), true],
+      [m.agenciaEnRegistro("Au Pair", "NL"), false],
+      [m.agenciaEnRegistro("Agencia Falsa Au Pair B.V.", "NL"), false],
+      [m.agenciaEnRegistro("Au Pair International B.V.", "DE"), null],
+    ];
+    const malos = casos.filter(([r, esperado]) => r !== esperado);
+    const ruta = leerFuente("app/api/au-pair/agencias/route.ts");
+    const pantalla = leerFuente("app/app/au-pair/page.tsx");
+    return malos.length === 0 && m.REGISTROS_AU_PAIR.every(r => /^https:\/\//.test(r.url) && r.queSignifica.length > 40)
+      && ruta.includes("registroOficial: r.country ? agenciaEnRegistro(r.company, r.country) : null")
+      && pantalla.includes("¿Es de fiar esta agencia?");
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── CURSOS DE IDIOMA PARA QUIEN LLEGA (8 oct 2026) ────────────────────
 //
 // Casi nunca es igual para todos, y la diferencia suele ser ser de la UE o no.

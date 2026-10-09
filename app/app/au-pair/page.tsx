@@ -88,13 +88,14 @@ export default function AuPairProfilePage() {
   const [envioError, setEnvioError] = useState("");
 
   // ── Agencias Au Pair ──
-  const [agencias, setAgencias] = useState<{nombre:string; email:string; pais:string; ofertas:number}[]>([]);
+  const [agencias, setAgencias] = useState<{nombre:string; email:string; pais:string; ofertas:number; registroOficial?: boolean | null}[]>([]);
+  const [registros, setRegistros] = useState<{pais:string; nombre:string; queSignifica:string; url:string}[]>([]);
   const [cargandoAgencias, setCargandoAgencias] = useState(true);
 
   useEffect(() => {
     fetch("/api/au-pair/agencias")
       .then(r => r.json())
-      .then(d => { if (d.agencias) setAgencias(d.agencias); })
+      .then(d => { if (d.agencias) setAgencias(d.agencias); if (d.registros) setRegistros(d.registros); })
       .catch(() => {})
       .finally(() => setCargandoAgencias(false));
   }, []);
@@ -1217,6 +1218,27 @@ export default function AuPairProfilePage() {
             Introduce el email de la familia o agencia para enviarles tu {T.perfil} completo.
           </p>
 
+          {/* ── ¿Es de fiar esta agencia? Registros oficiales (lib/au-pair/registros-oficiales.ts) ── */}
+          {registros.length > 0 && (
+            <div className="mb-4 rounded-lg p-3" style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.18)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "#60a5fa" }}>¿Es de fiar esta agencia?</p>
+              <p className="text-[11px] leading-relaxed mb-2" style={{ color: "#94a3b8" }}>
+                Antes de pagar nada o mandar tus documentos, compruébala en el registro oficial de su país, si lo hay.
+                Y desconfía de quien te pida dinero por adelantado para el visado o el billete.
+              </p>
+              <ul className="space-y-1.5">
+                {registros.map(r => (
+                  <li key={r.pais} className="text-[11px] leading-relaxed" style={{ color: "#94a3b8" }}>
+                    <a href={r.url} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline" style={{ color: "#93c5fd" }}>
+                      {r.nombre}
+                    </a>
+                    {": "}{r.queSignifica}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* ── Agencias disponibles ── */}
           {!cargandoAgencias && agencias.length > 0 && (
             <div className="mb-4 space-y-2">
@@ -1227,9 +1249,15 @@ export default function AuPairProfilePage() {
                   onClick={() => { setFamilyEmail(a.email); setFamilyName(a.nombre); }}
                   className="w-full text-left bg-[#0f1117] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg px-3 py-2.5 transition-all group"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="text-sm text-[#e2e8f0] font-medium truncate">{a.nombre}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>{a.ofertas}</span>
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      {a.registroOficial === true && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(59,130,246,0.12)", color: "#60a5fa" }}
+                              title="Está en el registro oficial de agencias de su país">✓ Registro oficial</span>
+                      )}
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>{a.ofertas}</span>
+                    </span>
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-[10px] text-[#64748b]">
                     <span>{a.pais}</span>
