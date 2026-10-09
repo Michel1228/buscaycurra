@@ -33,6 +33,25 @@ de abajo sobre Japón y Suecia están corregidas por eso.
   servidor (levanta el contenedor si falta o está parado; correo al caer y al
   volver). Probado parando la app a propósito: volvió sola en menos de 1 min.
 
+## REFUERZO DE ÁREAS (8-9 oct 2026)
+
+- [x] Ofertas oficiales: Lanbide (712) y SEF Murcia (264) desde sus datos
+  abiertos, sin empresa ni correo inventados (`d9cb0a4`, `cfdca16`). Cron
+  07:15 y 15:15 UTC.
+- [x] Traducir el CV a 6 idiomas sin tocar el de español (`cfdca16`,
+  `ec0def1`). Probado en producción: inglés y alemán bien, datos intactos.
+- [x] Curso oficial de idioma para recién llegados en 13 países, con qué pasa
+  si eres de la UE (`461303f`).
+- [x] Au pair: registros oficiales (IND, Departamento de Estado, sello RAL) y
+  marca "Registro oficial" en las agencias del IND (`d081883`).
+- [ ] Más fuentes de ofertas oficiales: Canarias (dataset de oct 2025, mirar
+  si sigue vivo), puestos temporales de la Generalitat.
+- [ ] Cursos de idioma de los países que faltan (Reino Unido, EE. UU., Suiza,
+  Italia, Nueva Zelanda, Polonia, Grecia, Chequia, Hungría, Rumanía, Japón,
+  Singapur): solo con fuente oficial.
+- [ ] Revisar las fuentes de ofertas que el marcador da por paradas
+  (Careerjet, Arbeitnow).
+
 ## CURSOS AMPLIADOS (8 oct 2026)
 
 - [x] Plazas reales con fecha de Lanbide, SEF Murcia, SOC, Consorci y Navarra
