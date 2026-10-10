@@ -3351,6 +3351,17 @@ test("lo que falló en la auditoría con navegador sigue arreglado", () => {
     "el buscador filtra el país por índice": !/"country" ILIKE/.test(leerFuente("app/api/jobs/search/route.ts"))
       && /lower\("country"\) = lower\(\$\$\{idx\}\)/.test(leerFuente("app/api/jobs/search/route.ts")),
     "un puesto conocido no se busca en company": /esPuestoConocido \? `title ~\* \$\$\{i\}`/.test(leerFuente("app/api/jobs/search/route.ts")),
+    // Guzzi: "enfermera en Alemania" sin ciudad leía la descripción de todo el
+    // país (22 s, corte a los 15 y "no me sale nada"); con ciudad, la pasada por
+    // descripción recorría 3,6 M de filas por el OR del país (21 s).
+    "Guzzi sin ciudad busca solo en el título": (() => {
+      const g = leerFuente("app/api/gusi/chat/route.ts");
+      const sinCiudad = g.slice(g.indexOf("// No city: just strategy 3"), g.indexOf("// -- Estrategia 4"));
+      return sinCiudad.includes("AND title ~* $1") && !sinCiudad.includes("LOWER(description) LIKE");
+    })(),
+    "Guzzi solo mira la descripción en España y por el índice del país":
+      /if \(r\.rows\.length === 0 && isoCode === "ES"\) \{\s*r = await pool\.query\(consulta\("LOWER\(title\) LIKE \$1 OR LOWER\(description\) LIKE \$1", true\)/
+        .test(leerFuente("app/api/gusi/chat/route.ts")),
   };
   const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
   if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);

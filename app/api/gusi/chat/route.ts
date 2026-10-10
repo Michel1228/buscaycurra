@@ -439,13 +439,18 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       // datos. La descripción solo entra en la segunda pasada, si con el título
       // no ha salido nada, para no dejar fuera anuncios de título vago tipo
       // "Personal para restaurante".
-      const consulta = (dondeBuscar: string) => `
+      // porIndicePais: el país por su índice (lower(country) = ...). $3 se
+      // nombra igualmente porque va en los parámetros y Postgres no admite uno
+      // sin usar; con el valor ya conocido, "$3 IS NOT NULL" se queda en true.
+      const consulta = (dondeBuscar: string, porIndicePais = false) => `
         SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl",
                ${scopeCase} as scope_rank
         FROM "JobListing"
         WHERE "isActive" = true
           AND (${dondeBuscar})
-          AND (LOWER(country) = LOWER($2) OR LOWER(country) LIKE $3)
+          AND ${porIndicePais
+            ? "LOWER(country) = LOWER($2) AND $3::text IS NOT NULL"
+            : "(LOWER(country) = LOWER($2) OR LOWER(country) LIKE $3)"}
         ORDER BY scope_rank, "createdAt" DESC
         LIMIT $${pIdx}
       `;
@@ -465,8 +470,13 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       paramsTitulo[0] = "\\m" + query.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\M";
 
       let r = await pool.query(consulta("title ~* $1"), paramsTitulo);
-      if (r.rows.length === 0) {
-        r = await pool.query(consulta("LOWER(title) LIKE $1 OR LOWER(description) LIKE $1"), params);
+      // La descripción, solo en España y entrando por el país: con el OR del
+      // país se leían los 3,6 millones de filas y se cortaba a los 15 s
+      // (10 oct 2026). Fuera de España una palabra española en la descripción
+      // casi nunca aparece; para eso está el respaldo por sinónimos de abajo,
+      // que busca el oficio en el idioma de allí.
+      if (r.rows.length === 0 && isoCode === "ES") {
+        r = await pool.query(consulta("LOWER(title) LIKE $1 OR LOWER(description) LIKE $1", true), params);
       }
 
       // SI LO ENCONTRADO NO ES DE SU CIUDAD, TODAVÍA NO VALE.
@@ -503,14 +513,22 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
       }
     } else {
       // No city: just strategy 3 (nationwide)
+      //
+      // Solo el TÍTULO, como palabra entera. Buscaba también en la descripción
+      // con LIKE '%...%', que obliga a leer el país entero: "enfermera" en
+      // Alemania tardaba 22 s, el pool la cortaba a los 15 y Guzzi contestaba
+      // "no me sale nada" con 12.496 ofertas de enfermería en la base. Por
+      // título tarda 0,05 s, y si no hay nada sigue el respaldo por sinónimos
+      // de abajo, que busca el oficio en el idioma de allí (0,24 s).
+      // Medido en producción el 10 oct 2026.
       const r3 = await pool.query(
         `SELECT id, title, company, city, province, salary, "sourceName", "sourceUrl"
          FROM "JobListing"
          WHERE "isActive" = true
-           AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
+           AND title ~* $1
            AND (LOWER(country) = LOWER($2) OR LOWER(country) LIKE $3)
          ORDER BY "createdAt" DESC LIMIT $4`,
-        [kw, isoCode, countryFilter, N]
+        ["\\m" + query.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\M", isoCode, countryFilter, N]
       );
       if (r3.rows.length > 0) {
         return { jobs: (r3.rows as DbJobRow[]).slice(0, limit).map(j => mapRowToJob(j, city)), scope: "pais" };
@@ -542,8 +560,18 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
           "\\m" + s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\M"
         );
         const synOrClauses = synPatterns.map((_, i) => `title ~* $${i + 1}`).join(" OR ");
-        const synParams: (string | number)[] = [...synPatterns, isoCode, countryFilter];
-        let synIdx = synPatterns.length + 3;
+        // EL PAÍS, SEGÚN DÓNDE. Medido el 10 oct 2026 con 28 sinónimos de
+        // camarero: en España (68.000 ofertas) entrar por el índice del país
+        // tarda 0,6 s y el OR de abajo 3,5 s, que con el servidor cargado pasó
+        // de 15 s y dejó a Guzzi sin ofertas en Pamplona. Fuera es al revés:
+        // con 23 sinónimos de enfermera en Alemania (446.000 ofertas) el índice
+        // del país tarda 4,3 s y el OR, que obliga a ir por el título, 0,24 s.
+        const enEspana = isoCode === "ES";
+        const synParams: (string | number)[] = enEspana ? [...synPatterns, isoCode] : [...synPatterns, isoCode, countryFilter];
+        const condPaisSyn = enEspana
+          ? `LOWER(country) = LOWER($${synPatterns.length + 1})`
+          : `(LOWER(country) = LOWER($${synPatterns.length + 1}) OR LOWER(country) LIKE $${synPatterns.length + 2})`;
+        let synIdx = synParams.length + 1;
 
         // Esta consulta filtraba por país pero NO por ciudad: pidiendo
         // "limpieza en Lisboa" contestaba con un "Jefe de Cocina (Barcelona)".
@@ -566,7 +594,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
            FROM "JobListing"
            WHERE "isActive" = true
              AND (${synOrClauses})
-             AND (LOWER(country) = LOWER($${synPatterns.length + 1}) OR LOWER(country) LIKE $${synPatterns.length + 2})
+             AND ${condPaisSyn}
            ORDER BY ${synOrden} LIMIT $${synIdx}`,
           synParams
         );
