@@ -203,7 +203,7 @@ export default function PreciosPage() {
 
               {plan.dest && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="badge-game badge-dorado text-[10px] flex items-center gap-1"><Star size={10} className="inline" /> Más popular</span>
+                  <span className="badge-game badge-dorado text-[10px] flex items-center gap-1"><Star size={10} className="inline" /> Recomendado</span>
                 </div>
               )}
 

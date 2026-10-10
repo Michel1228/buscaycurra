@@ -3246,6 +3246,39 @@ test("JobPosting solo con empresa real y país de la oferta; ofertas oficiales p
   }
 });
 
+// ── AUDITORÍA PARA CEIN (10 oct 2026) ─────────────────────────────────
+//
+// La web se va a enseñar a un jurado. Lo que dice tiene que poder demostrarse:
+// con 0 suscriptores no hay plan "más popular" ni "más elegido", y con un
+// centenar de usuarios no hay "miles". Los Términos decían 2 envíos al día
+// (Free) y 10 (Pro) cuando lo real y lo anunciado en /precios es 3 y 50.
+test("la web no afirma lo que no se puede demostrar y los Términos dicen los límites reales", () => {
+  const textos = ["app/(home)/page.tsx", "app/precios/page.tsx", "app/app/page.tsx", "app/sobre-nosotros/page.tsx"]
+    .map(leerFuente).join("\n");
+  const falsas = [/M[aá]s elegido/, /M[aá]s popular/, /Miles de personas/i, /miles de usuarios/i].filter(r => r.test(textos));
+  if (falsas.length) console.log(`     ↳ siguen afirmaciones sin respaldo: ${falsas.join(", ")}`);
+  const terminos = leerFuente("app/terminos/page.tsx");
+  const tabla = terminos.includes("LIMITS.free.enviosCVDia") && terminos.includes("LIMITS.esencial.enviosCVDia")
+    && terminos.includes("LIMITS.pro.enviosCVDia") && !/>\s*(2|10) CVs \/ día\s*</.test(terminos);
+  if (!tabla) console.log("     ↳ la tabla de los Términos no sale de lib/plan-limits.ts");
+  return falsas.length === 0 && tabla;
+});
+
+// Las diez pantallas de arranque de iPhone que declara el layout daban 404.
+test("existen todas las imágenes que el layout declara (iconos y pantallas de arranque)", async () => {
+  const { existsSync } = await import("node:fs");
+  const rutas = [...leerFuente("app/layout.tsx").matchAll(/href="(\/[^"]+\.(?:png|jpg|svg|webp|ico))"/g)].map(m => m[1]);
+  const faltan = rutas.filter(r => !existsSync("public" + r));
+  if (faltan.length) console.log(`     ↳ faltan: ${faltan.slice(0, 4).join(", ")}`);
+  return rutas.length > 5 && faltan.length === 0;
+});
+
+// Un único fallo de Adzuna se repetía en cada pasada del sincronizador
+// durante días porque el contador no se vaciaba nunca.
+test("el sincronizador olvida los fallos ya contados tras cada pasada", () =>
+  /delete fallosPorFuente\[f\]/.test(leerFuente("lib/job-search/sync-worker.ts"))
+  && /poweredByHeader:\s*false/.test(leerFuente("next.config.ts")));
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

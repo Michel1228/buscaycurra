@@ -18,7 +18,7 @@ const VALORES = [
 const HITOS = [
   { año: "2024", texto: "Nace BuscayCurra con la idea de que buscar trabajo no debería ser un trabajo en sí mismo." },
   { año: "2025", texto: "Lanzamos Guzzi, el asistente IA que envía candidaturas personalizadas automáticamente." },
-  { año: "2026", texto: `Superamos millones de ofertas activas en ${NUM_PAISES} países y miles de usuarios activos.` },
+  { año: "2026", texto: `Superamos los dos millones de ofertas activas en ${NUM_PAISES} países.` },
 ];
 
 export default function SobreNosotrosPage() {

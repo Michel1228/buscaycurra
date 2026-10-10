@@ -749,6 +749,10 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, count
       (fallos !== "sin fallos" ? ` — ⚠ ${fallos}` : ""),
     );
   }
+  // Los fallos ya contados se olvidan: si no, uno solo de Adzuna se repetía en
+  // cada pasada durante días (10 oct 2026: miles de líneas por un único fallo) y
+  // tapaba los nuevos.
+  for (const f of Object.keys(fallosPorFuente)) delete fallosPorFuente[f];
   return inserted;
 }
 

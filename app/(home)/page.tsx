@@ -155,7 +155,7 @@ export default async function LandingPage() {
       nota: "Sin permanencia · Cancela cuando quieras", 
       destacado: true, 
       cta: "Contratar Esencial", 
-      tag: "🔥 Más elegido" 
+      tag: "⭐ Recomendado" 
     },
     { 
       nombre: "Pro", precio: "9,99", periodo: "/mes", 

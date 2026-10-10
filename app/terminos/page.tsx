@@ -3,11 +3,12 @@
  *
  * Términos de servicio completos para la plataforma.
  * Página pública, no requiere autenticación.
- * Última actualización: Abril 2026
+ * Última actualización: Octubre 2026
  */
 
 import Link from "next/link";
 import type { Metadata } from "next";
+import { LIMITS } from "@/lib/plan-limits";
 
 // ─── Página de Términos y Condiciones ────────────────────────────────────────
 
@@ -61,7 +62,7 @@ export default function TerminosPage() {
             Términos y Condiciones
           </h1>
           <p className="text-gray-500 text-sm">
-            Última actualización: Abril 2026
+            Última actualización: Octubre 2026
           </p>
         </div>
 
@@ -137,19 +138,30 @@ export default function TerminosPage() {
                     <th className="px-4 py-3 font-semibold">Notas</th>
                   </tr>
                 </thead>
+                {/* Los envíos salen de lib/plan-limits.ts, lo mismo que aplica el
+                    servidor y que anuncia /precios. Aquí ponía "2 CVs / día"
+                    (Free) y "10 CVs / día" (Pro), y faltaba el plan Esencial. */}
                 <tbody>
                   <tr className="border-t border-gray-100 bg-white">
                     <td className="px-4 py-3 font-medium">Free</td>
                     <td className="px-4 py-3">Gratis</td>
-                    <td className="px-4 py-3">2 CVs / día</td>
+                    <td className="px-4 py-3">{LIMITS.free.enviosCVDia} CVs / día ({LIMITS.free.enviosCVSemana} / semana)</td>
                     <td className="px-4 py-3 text-gray-500">Sin tarjeta</td>
+                  </tr>
+                  <tr className="border-t border-gray-100 bg-white">
+                    <td className="px-4 py-3 font-medium" style={{ color: "#22c55e" }}>
+                      Esencial
+                    </td>
+                    <td className="px-4 py-3">2,99 € / mes</td>
+                    <td className="px-4 py-3">{LIMITS.esencial.enviosCVDia} CVs / día ({LIMITS.esencial.enviosCVSemana} / semana)</td>
+                    <td className="px-4 py-3 text-gray-500">Renovación mensual</td>
                   </tr>
                   <tr className="border-t border-gray-100 bg-blue-50">
                     <td className="px-4 py-3 font-medium" style={{ color: "#22c55e" }}>
                       Pro
                     </td>
                     <td className="px-4 py-3">9,99 € / mes</td>
-                    <td className="px-4 py-3">10 CVs / día</td>
+                    <td className="px-4 py-3">{LIMITS.pro.enviosCVDia} CVs / día ({LIMITS.pro.enviosCVSemana} / semana)</td>
                     <td className="px-4 py-3 text-gray-500">Renovación mensual</td>
                   </tr>
                   <tr className="border-t border-gray-100 bg-white">
@@ -157,7 +169,7 @@ export default function TerminosPage() {
                       Empresa
                     </td>
                     <td className="px-4 py-3">49,99 € / mes</td>
-                    <td className="px-4 py-3">Ilimitado</td>
+                    <td className="px-4 py-3">{LIMITS.empresa.enviosCVDia} CVs / día ({LIMITS.empresa.enviosCVSemana.toLocaleString("es-ES")} / semana)</td>
                     <td className="px-4 py-3 text-gray-500">Renovación mensual</td>
                   </tr>
                 </tbody>

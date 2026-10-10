@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   compress: true,
   productionBrowserSourceMaps: false,
+  // Sin la cabecera "X-Powered-By: Next.js": no aporta nada al visitante y los
+  // analizadores de seguridad la marcan por dar pistas del servidor.
+  poweredByHeader: false,
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
