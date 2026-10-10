@@ -202,37 +202,37 @@ export default async function LandingPage() {
   // ── Cómo funciona ──
   const pasos = [
     { num: "1", titulo: "Sube tu CV o cuéntaselo a Guzzi", desc: "En 2 minutos Guzzi analiza tu experiencia, la mejora con IA y la adapta al formato que esperan las empresas." },
-    { num: "2", titulo: "Elige dónde quieres trabajar", desc: `España, Alemania, Irlanda... Guzzi escanea cientos de miles de ofertas en ${PAISES} países. Filtra por salario, sector y tipo de contrato.` },
+    { num: "2", titulo: "Elige dónde quieres trabajar", desc: `España, Alemania, Irlanda... Guzzi escanea cientos de miles de ofertas en ${PAISES} países. Filtra por jornada, experiencia y salario.` },
     { num: "3", titulo: "Guzzi envía. Tú solo vas a la entrevista.", desc: "Carta personalizada para cada empresa. Sale en horario laboral, cuando de verdad se leen los correos. Automático." },
   ];
 
   // ── Superpotencias ──
   const superpotencias = [
-    { titulo: `${PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país. De España a Alemania, de Irlanda a Australia — sin mover un dedo.", acento: "#22c55e" },
-    { titulo: "CV único para cada oferta. Cero spam.", desc: "Tu CV no se dispara a lo loco. Guzzi lo adapta a cada empresa: palabras clave, formato, tono. Supera los filtros ATS que descartan al 75% de candidatos antes de que un humano lo vea.", acento: "#f59e0b" },
-    { titulo: "Enviado cuando el reclutador está leyendo", desc: "Analizamos la hora de actividad de cada empresa. Tu candidatura llega a las 8:32am del martes — no a las 3am de un sábado. La diferencia entre abrirlo o borrarlo sin leer.", acento: "#a855f7" },
-    { titulo: "24/7. No duerme. No se cansa. No se rinde.", desc: "Mientras tú vives tu vida, duermes o ves Netflix, Guzzi está escaneando ofertas, adaptando candidaturas y enviando. Como tener un comercial trabajando para ti a tiempo completo.", acento: "#e07850" },
+    { titulo: `${PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi traduce tu CV al inglés, alemán, francés, portugués, italiano o neerlandés y te explica cómo es el CV en cada país. De España a Alemania, de Irlanda a Australia.", acento: "#22c55e" },
+    { titulo: "Una carta distinta para cada empresa. Cero spam.", desc: "Tu CV no se dispara a lo loco. Guzzi escribe una carta para cada empresa y cada puesto, y el análisis de encaje te dice qué palabras clave le faltan a tu CV para esa oferta.", acento: "#f59e0b" },
+    { titulo: "Enviado en horario laboral", desc: "Tu candidatura sale un día laborable entre las 9:00 y las 18:00 (hora de España), repartida para no llegar en bloque. No a las 3 de la madrugada de un sábado.", acento: "#a855f7" },
+    { titulo: "24/7. No duerme. No se cansa. No se rinde.", desc: "Mientras tú vives tu vida, Guzzi revisa las ofertas nuevas que encajan con tus alertas y te avisa, y los envíos que dejaste programados salen solos.", acento: "#e07850" },
     { titulo: "Pipeline visual: sabes dónde está cada CV", desc: "Deja de preguntarte \"¿lo habrán leído?\". Ve en tiempo real el estado de cada candidatura: enviada, abierta, en revisión, entrevista, oferta. Sin agujeros negros.", acento: "#3b82f6" },
     { titulo: "Comparador de salarios reales", desc: "¿Cuánto pagan por tu puesto en Berlín vs Barcelona? ¿Merece la pena emigrar? Datos reales de cientos de miles de ofertas. Decide con números, no con intuición.", acento: "#f59e0b" },
   ];
 
   // ── La verdad incómoda ──
-  const verdades = [
-    { stat: "95%", label: "de CVs no los lee nadie", fuente: "InfoJobs / Randstad" },
-    { stat: "78%", label: "de candidatos ghosteados", fuente: "Adecco Spain" },
-    { stat: "3-5%", label: "tasa de respuesta real", fuente: "Portales tradicionales" },
-    { stat: "35-45 días", label: "de media hasta encontrar trabajo", fuente: "Infoempleo" },
-  ];
+  // RETIRADAS el 10 oct 2026, antes de presentar la web en CEIN. Las cifras
+  // estaban mal atribuidas: el "78 % de candidatos ghosteados" de "Adecco" es
+  // de Indeed y mide lo contrario (candidatos que ignoran a empresas), y los
+  // "35-45 días" de "Infoempleo" chocan con los 11,6 meses de Asempleo. Las
+  // otras dos no tenían fuente localizable. La sección reaparece sola cuando
+  // haya cifras con enlace a su estudio.
+  const verdades: { stat: string; label: string; fuente: string }[] = [];
 
   // ── Comparativa ──
   const comparativa = [
     { ellos: "Tú buscas, filtras y envías a mano", nosotros: "Guzzi busca, filtra y envía por ti" },
-    { ellos: "Mismo CV para 200 ofertas distintas", nosotros: "CV adaptado por IA a cada empresa" },
+    { ellos: "La misma carta para 200 ofertas distintas", nosotros: "Carta escrita por IA para cada empresa" },
     { ellos: "Ofertas caducadas y empresas fantasma", nosotros: `${OFERTAS.toLowerCase()} ofertas actualizadas a diario` },
     { ellos: "Sin saber si tu CV fue leído", nosotros: "Pipeline visual: enviado → abierto → entrevista" },
     { ellos: "Solo España. Si quieres emigrar, busca tú.", nosotros: `${PAISES} países. Guzzi busca en todos a la vez.` },
-    { ellos: "ATS descarta tu CV sin leerlo", nosotros: "IA que optimiza para pasar los filtros ATS" },
-    { ellos: "29€/mes para que te ignoren", nosotros: "Gratis para candidatos. Sin permanencia." },
+    { ellos: "No sabes por qué te descartan", nosotros: "IA que te dice qué le falta a tu CV para cada oferta" },
   ];
 
   // ── Testimonios ──
@@ -253,11 +253,11 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
   const faq = [
     { q: "¿Es realmente gratis para los candidatos?", a: `Sí. El plan gratuito incluye ${LIMITS.free.enviosCVDia} envíos de CV al día, ${LIMITS.free.guzziMaxConsultasDia} consultas al día a Guzzi, el buscador, el pipeline y el comparador de salarios, sin tarjeta. Si necesitas más, el plan Esencial cuesta 2,99 €/mes: ${LIMITS.esencial.enviosCVDia} envíos y ${LIMITS.esencial.guzziMaxConsultasDia} consultas al día, y carta personalizada con IA.` },
     { q: "¿En cuántos países busca Guzzi?", a: `Actualmente en ${PAISES} países: España, Alemania, Reino Unido, Estados Unidos, Canadá, Francia, Suecia, Australia, Países Bajos, Italia, Suiza, Irlanda, Bélgica, Portugal, Noruega, Polonia, Dinamarca, Austria, Finlandia y más. Añadimos países nuevos constantemente.` },
-    { q: "¿Cómo funciona el envío automático de CVs?", a: "Nuestra IA adapta tu CV a cada oferta antes de enviarlo. No es spam — cada candidatura se personaliza con el perfil y palabras clave de la empresa. Tú marcas sector, países y tipo de contrato, y Guzzi trabaja por ti." },
+    { q: "¿Cómo funciona el envío automático de CVs?", a: "Eliges la oferta o la empresa y Guzzi escribe una carta para ese puesto, la envía con tu CV en horario laboral y la apunta en tu pipeline. No es spam: cada envío lleva su propia carta, y antes de mandar a una dirección que no sale de la oferta te pide confirmación." },
     { q: "¿Es legal enviar CVs automáticamente?", a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente inteligente que te representa — sin cobrarte comisiones ni quedarse con parte de tu salario." },
-    { q: "¿Puedo buscar trabajo en el extranjero sin hablar el idioma?", a: "Sí. Guzzi traduce ofertas a 12 idiomas y adapta tu CV al formato de cada país. Muchas empresas multinacionales trabajan en inglés. Además, si quieres emigrar, te mostramos qué países tienen más demanda de tu perfil y qué salarios ofrecen." },
-    { q: "¿Qué diferencia hay con InfoJobs, LinkedIn o Indeed?", a: `InfoJobs, LinkedIn e Indeed son tablones de anuncios: tú buscas, tú filtras, tú envías. Muchos de esos CVs ni se llegan a leer. BuscayCurra es activo: Guzzi trabaja por ti 24/7, adapta tu CV a cada oferta y envía candidaturas automáticamente en ${NUM_PAISES} países. No es un portal de empleo. Es tu agente personal de búsqueda.` },
-    { q: "¿Puedo ver las ofertas sin registrarme?", a: "Sí. El buscador público está disponible sin cuenta. Puedes explorar ofertas por país, salario y sector. Para enviar candidaturas y usar la IA necesitas crear una cuenta — es gratis y tarda 30 segundos." },
+    { q: "¿Puedo buscar trabajo en el extranjero sin hablar el idioma?", a: "Sí. Guzzi traduce tu CV a seis idiomas (inglés, alemán, francés, portugués, italiano y neerlandés) y te explica cómo es el CV en cada país. Muchas empresas multinacionales trabajan en inglés. Y si emigras, en 13 países te enseñamos el curso oficial de idioma para recién llegados." },
+    { q: "¿Qué diferencia hay con InfoJobs, LinkedIn o Indeed?", a: `InfoJobs, LinkedIn e Indeed son tablones de anuncios: tú buscas, tú filtras, tú envías. Muchos de esos CVs ni se llegan a leer. BuscayCurra es activo: Guzzi trabaja por ti 24/7, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países. No es un portal de empleo. Es tu agente personal de búsqueda.` },
+    { q: "¿Puedo ver las ofertas sin registrarme?", a: "Sí. Las páginas de empleo por país y por puesto (en «Trabajar en…» y «Empleo») se ven sin cuenta. Para buscar con filtros, enviar candidaturas y usar la IA necesitas crear una cuenta: es gratis y tarda 30 segundos." },
     { q: "¿En cuánto tiempo puedo encontrar trabajo?", a: "Depende de tu sector, tu zona y tu experiencia, y no te vamos a dar una cifra que no podamos demostrar. Lo que sí sabemos es que ayuda mandar más candidaturas y mejor dirigidas: con un CV claro y carta adaptada a cada empresa, cada envío cuenta más." },
   ];
   return (
@@ -401,6 +401,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         </section>
 
         {/* ═══════════ LA VERDAD INCÓMODA ═══════════ */}
+        {verdades.length > 0 && (
         <section
           className="py-14 px-6"
           style={{
@@ -452,6 +453,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             </p>
           </div>
         </section>
+        )}
 
         {/* ═══════════ CÓMO FUNCIONA ═══════════ */}
         <section className="py-20 px-6">
@@ -570,8 +572,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                 Guzzi está en los dos lados.
               </h2>
               <p className="text-sm" style={{ color: "#64748b" }}>
-                1 de cada 5 titulados españoles quiere trabajar fuera. Guzzi te busca curro antes de
-                que hagas la maleta.
+                Si te planteas irte, Guzzi te busca curro antes de que hagas la maleta.
               </p>
             </div>
 
@@ -887,7 +888,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
               Guzzi lo encuentra mientras tú descansas.
             </p>
             <p className="text-xs mb-8" style={{ color: "#64748b" }}>
-              En {PAISES} países. 24/7. Con CV adaptado a cada empresa. El trabajo viene a ti, no
+              En {PAISES} países. 24/7. Con una carta para cada empresa. El trabajo viene a ti, no
               al revés.
             </p>
             <Link

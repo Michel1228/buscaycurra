@@ -106,8 +106,8 @@ export default function EmpleoPage() {
             ¿Buscas trabajo activamente?
           </h2>
           <p className="text-[#94a3b8] mb-6 max-w-lg mx-auto">
-            Guzzi, nuestra IA, busca ofertas por ti, adapta tu CV a cada empresa
-            y envía candidaturas automáticamente. Tú solo apareces a la entrevista.
+            Guzzi, nuestra IA, busca ofertas por ti, escribe una carta para cada empresa
+            y envía tus candidaturas. Tú solo apareces a la entrevista.
           </p>
           <Link
             href="/auth/registro"

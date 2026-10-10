@@ -242,12 +242,11 @@ export default function HomePage() {
               </div>
               {[
                 { concepto: "Quién aplica por ti", ellos: "Tú, a mano, oferta por oferta", byc: "Guzzi aplica por ti solo" },
-                { concepto: "CV personalizado", ellos: "El mismo para todas", byc: "Adaptado por IA a cada oferta" },
-                { concepto: "Tu CV entre otros", ellos: "Entre 200-2.000 candidatos", byc: "Llega en el momento exacto" },
+                { concepto: "Carta de presentación", ellos: "La misma para todas", byc: "Escrita por IA para cada empresa" },
+                { concepto: "Cuándo llega", ellos: "Cuando tú lo mandas", byc: "En horario laboral, repartido" },
                 { concepto: "Seguimiento", ellos: "No sabes si lo leyeron", byc: "Ves cada envío en tiempo real" },
-                { concepto: "Prep. entrevista", ellos: "Ninguna ayuda", byc: "Simulacro con IA por empresa" },
+                { concepto: "Prep. entrevista", ellos: "Por tu cuenta", byc: "Simulacro con IA por empresa" },
                 { concepto: "Fuentes de ofertas", ellos: "Solo las de ese portal", byc: "Millones de ofertas de Adzuna, Careerjet, EURES…" },
-                { concepto: "Precio real", ellos: "Gratis (inútil) o 39€/mes", byc: "Desde 2,99€/mes" },
               ].map((fila, i) => (
                 <div key={fila.concepto} className="grid grid-cols-3 text-center text-sm py-4 px-4 items-center gap-2"
                   style={{ background: i % 2 === 0 ? "rgba(126,213,111,0.02)" : "transparent", borderBottom: "1px solid rgba(126,213,111,0.05)" }}>

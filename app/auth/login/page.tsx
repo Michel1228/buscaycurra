@@ -110,8 +110,8 @@ function LoginPageInner() {
           {/* 3 puntos fuertes — siempre visibles */}
           <div className="space-y-3 mb-6">
             {[
-              { Icon: Globe, titulo: `${NUM_PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
-              { Icon: Target, titulo: "CV único para cada oferta", desc: "Cada candidatura se adapta a la empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
+              { Icon: Globe, titulo: `${NUM_PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi traduce tu CV a 6 idiomas y te explica cómo es el CV en cada país." },
+              { Icon: Target, titulo: "Una carta para cada empresa", desc: "Guzzi escribe una carta distinta para cada empresa y te dice qué le falta a tu CV para cada oferta." },
               { Icon: Clock, titulo: "Enviado cuando toca", desc: "Tu candidatura sale en horario laboral, cuando de verdad se leen los correos." },
             ].map(p => (
               <div key={p.titulo} className="flex items-start gap-3 p-3 rounded-xl"
@@ -134,10 +134,9 @@ function LoginPageInner() {
               <span className="text-center" style={{ color: "#22c55e" }}>BuscayCurra</span>
             </div>
             {[
-              { label: "Tu CV llega", ellos: "Entre 300–2.000 iguales", nosotros: "Primero en la bandeja" },
+              { label: "Tu CV llega", ellos: "A la cola del portal", nosotros: "Al correo de la empresa" },
               { label: "Quién aplica", ellos: "Tú, a mano, uno a uno", nosotros: "Guzzi, automático" },
-              { label: "CV adaptado", ellos: "El mismo para todas", nosotros: "IA lo personaliza" },
-              { label: "Precio real", ellos: "Gratis (inútil) o 39€/mes", nosotros: "Desde 2,99€/mes" },
+              { label: "Carta", ellos: "La misma para todas", nosotros: "IA la escribe para cada una" },
             ].map((row, i) => (
               <div key={row.label}
                 className="px-4 py-2 grid grid-cols-3 gap-2 text-[11px] items-center"

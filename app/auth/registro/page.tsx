@@ -140,8 +140,8 @@ function RegistroPageInner() {
           {/* 3 puntos fuertes */}
           <div className="space-y-3">
             {[
-              { icon: "🌍", title: `${NUM_PAISES} países, un solo agente`, desc: "Busca en España o emigra. Guzzi habla 12 idiomas y adapta tu CV al formato de cada país." },
-              { icon: "🎯", title: "CV único para cada oferta", desc: "Tu CV se adapta a cada empresa. Supera los filtros ATS que descartan al 75% de candidatos." },
+              { icon: "🌍", title: `${NUM_PAISES} países, un solo agente`, desc: "Busca en España o emigra. Guzzi traduce tu CV a 6 idiomas y te explica cómo es el CV en cada país." },
+              { icon: "🎯", title: "Una carta para cada empresa", desc: "Guzzi escribe una carta distinta para cada empresa y te dice qué le falta a tu CV para cada oferta." },
               { icon: "⏰", title: "Enviado cuando toca", desc: "Tu candidatura sale en horario laboral, cuando de verdad se leen los correos." },
             ].map(p => (
               <div key={p.title} className="flex items-start gap-3 p-3 rounded-xl"

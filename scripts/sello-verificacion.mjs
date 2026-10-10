@@ -3279,6 +3279,39 @@ test("el sincronizador olvida los fallos ya contados tras cada pasada", () =>
   /delete fallosPorFuente\[f\]/.test(leerFuente("lib/job-search/sync-worker.ts"))
   && /poweredByHeader:\s*false/.test(leerFuente("next.config.ts")));
 
+// Lo que la web dice que hace tiene que hacerlo. Revisado contra el código el
+// 10 oct 2026: la IA escribe una CARTA por empresa (no adapta el CV), el envío
+// sale en horario laboral (no "a la hora de actividad de cada empresa"), el CV
+// se traduce a 6 idiomas (no "12"), y las estadísticas de "la verdad
+// incómoda" estaban mal atribuidas (el 78 % de "Adecco" es de Indeed y mide
+// otra cosa). Tampoco hay fuente para "InfoJobs Premium cuesta 39 €".
+test("las funciones y cifras que anuncia la web coinciden con el código y tienen fuente", async () => {
+  const paginas = ["app/(home)/page.tsx", "app/auth/login/page.tsx", "app/auth/registro/page.tsx", "app/empleo/page.tsx",
+    "app/sobre-nosotros/page.tsx", "app/app/page.tsx", "lib/datos-reales.ts", "lib/guzzi/prompts.ts"].map(leerFuente).join("\n");
+  const prohibidas = [/12 idiomas y adapta/, /descartan (al|el) 75/, /El 75% de los CVs/, /8:32/, /hora de actividad de cada empresa/,
+    /Primero en la bandeja/, /\(inútil\)/, /InfoJobs Premium cuesta/, /1 de cada 5 titulados/, /fuente: "Adecco Spain"/,
+    /adapta tu CV a cada (oferta|empresa)/, /CV adaptado (por IA )?a cada empresa/, /49 países/];
+  const quedan = prohibidas.filter(r => r.test(paginas));
+  if (quedan.length) console.log(`     ↳ sigue: ${quedan.map(String).join(", ")}`);
+  // El texto del porcentaje de email tiene que salir del porcentaje medido.
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const { execFileSync } = await import("node:child_process");
+  const entrada = ".sello-datos-entrada.ts", salida = ".sello-datos.cjs";
+  let cuadra = false;
+  try {
+    writeFileSync(entrada, 'export { DATOS } from "./lib/datos-reales";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const { DATOS } = await import(`../${salida}`);
+    cuadra = DATOS.conEmailTexto === `${Math.floor(DATOS.porcentajeConEmail / 10)} de cada 10` && !("precioInfoJobsPremium" in DATOS);
+    if (!cuadra) console.log(`     ↳ "${DATOS.conEmailTexto}" no cuadra con el ${DATOS.porcentajeConEmail} %`);
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+  return quedan.length === 0 && cuadra;
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

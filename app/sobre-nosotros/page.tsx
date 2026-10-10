@@ -87,7 +87,7 @@ export default function SobreNosotrosPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {[
               { icon: "🔍", titulo: "Busca por ti", desc: `Escanea millones de ofertas en ${NUM_PAISES} países cada 6 horas. Filtra por tu perfil, sector y salario esperado.` },
-              { icon: "✨", titulo: "Mejora tu CV", desc: "Analiza tu currículum con IA y lo adapta a cada oferta antes de enviarlo. Supera los filtros ATS que descartan el 75% de candidatos." },
+              { icon: "✨", titulo: "Mejora tu CV", desc: "Analiza tu currículum con IA, te dice qué le falta para cada oferta y lo traduce a 6 idiomas si buscas fuera." },
               { icon: "📧", titulo: "Envía candidaturas", desc: "Envía tu CV automáticamente con carta personalizada para cada empresa. Tú solo vas a la entrevista." },
               { icon: "📊", titulo: "Seguimiento en tiempo real", desc: "Pipeline visual de todas tus candidaturas: enviada, abierta, en revisión, entrevista. Sin agujeros negros." },
             ].map((s) => (

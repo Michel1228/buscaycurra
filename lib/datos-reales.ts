@@ -24,27 +24,30 @@
  */
 
 /** Cuándo se contaron estos números contra la base de datos de producción. */
-export const VERIFICADO_EL = "17 de agosto de 2026";
+export const VERIFICADO_EL = "10 de octubre de 2026";
 
 export const DATOS = {
-  /** 2.131.293 ofertas activas. Se enseña "2,1 millones". */
-  ofertasActivas: 2_100_000,
-  ofertasActivasTexto: "2,1 millones",
+  /** 2.919.004 ofertas activas el 10 oct 2026. Se enseña "2,9 millones". */
+  ofertasActivas: 2_900_000,
+  ofertasActivasTexto: "2,9 millones",
 
-  /** 286.239 nuevas en los últimos 7 días → 40.891 al día. */
-  ofertasNuevasDia: 40_000,
-  ofertasNuevasDiaTexto: "40.000",
+  /** 454.639 nuevas en los últimos 7 días → 64.948 al día. */
+  ofertasNuevasDia: 60_000,
+  ofertasNuevasDiaTexto: "60.000",
 
-  /** 1.768.107 de 2.131.293 traen email: el 83%. Se dice "8 de cada 10". */
-  porcentajeConEmail: 83,
-  conEmailTexto: "8 de cada 10",
+  /**
+   * 2.159.096 de 2.919.004 tienen email: el 74 %. Se dice "7 de cada 10".
+   * Hasta el 10 oct ponía "8 de cada 10" (el 83 % de agosto): con más
+   * ofertas de fuentes sin correo, la proporción bajó y la web exageraba.
+   */
+  porcentajeConEmail: 74,
+  conEmailTexto: "7 de cada 10",
 
-  /** Países con ofertas activas en la base de datos. */
-  paises: 49,
+  /** Países con ofertas activas en la base de datos (48 el 10 oct 2026). */
+  paises: 48,
 
   /** Precio de entrada, y con qué se compara. */
   precioDesde: "2,99 €",
-  precioInfoJobsPremium: "39 €",
 } as const;
 
 /**
@@ -60,7 +63,7 @@ export const GANCHOS = [
   {
     numero: DATOS.ofertasNuevasDiaTexto,
     titulo: "nuevas cada día",
-    frase: "Son 28 cada minuto. Mientras lees esto han entrado unas cuantas.",
+    frase: `Son ${Math.floor(DATOS.ofertasNuevasDia / 1440)} cada minuto. Mientras lees esto han entrado unas cuantas.`,
   },
   {
     numero: DATOS.conEmailTexto,
@@ -70,6 +73,7 @@ export const GANCHOS = [
   {
     numero: DATOS.precioDesde,
     titulo: "al mes",
-    frase: `InfoJobs Premium cuesta ${DATOS.precioInfoJobsPremium}. Y aquí el CV lo manda Guzzi por ti.`,
+    // Aquí se comparaba con un precio de InfoJobs Premium sin fuente localizable.
+    frase: "Menos que un café al mes. Y el CV lo manda Guzzi por ti.",
   },
 ] as const;
