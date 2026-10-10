@@ -126,7 +126,7 @@ export const GRUPOS_FUNCIONES: GrupoFunciones[] = [
       {
         titulo: "Crear o mejorar el CV con IA",
         descripcion:
-          "Si no tienes CV, se monta con lo que cuentes. Si lo tienes, se ordena y se adapta a la oferta sin inventar experiencia.",
+          "Si no tienes CV, se monta con lo que cuentes. Si lo tienes, se ordena y se adapta al puesto que buscas sin inventar experiencia.",
         ruta: "/app/curriculum",
       },
       {

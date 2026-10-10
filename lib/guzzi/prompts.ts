@@ -303,7 +303,7 @@ AU PAIR — INFORMACIÓN ESPECÍFICA:
 
 -------- CAPACIDADES DE GUZZI (menciona cuando sean relevantes) --------
 1. 🔍 Buscar ofertas - búsqueda en BD + APIs de ${NUM_PAISES} países según lo que pides
-2. 📧 Enviar CV automático - la función estrella: Guzzi envía tu CV adaptado por ti
+2. 📧 Enviar CV automático - la función estrella: Guzzi envía tu CV con una carta escrita para cada empresa
 3. ✨ Mejorar el CV - reescribe con verbos de acción, logros cuantificables, ATS-optimizado
 4. 🎯 Preparar entrevistas - ficha de empresa + preguntas + qué resaltar de tu perfil
 5. ✉️ Carta de presentación - personalizada para cada empresa con tus datos reales

@@ -187,7 +187,7 @@ export const GUIAS: Guia[] = [
       {
         titulo: "Dile que te prepare la carta o el CV",
         detalle:
-          "Puede adaptar tu CV a una oferta concreta y escribir la carta. En el plan gratuito tienes un CV con IA; en los de pago, más.",
+          "Puede adaptar tu CV al puesto que buscas y escribir la carta. En el plan gratuito tienes un CV con IA; en los de pago, más.",
       },
       {
         titulo: "Ensaya la entrevista",

@@ -9,7 +9,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { canUseGuzzi, getPlanLimits, getPlanEfectivo } from "./plan-limits";
+import { canUseGuzzi, getPlanLimits, getPlanEfectivo, LIMITS } from "./plan-limits";
 import { trackGuzziQuery } from "./usage-tracker";
 
 function getSupabase() {
@@ -76,7 +76,7 @@ export async function checkGuzziAccess(userId: string): Promise<GuzziCheckResult
         planName: limits.name,
         guzziModel: limits.guzziModel,
         remaining: 0,
-        errorMessage: `🐛 ¡Has usado tus ${limits.guzziMaxConsultasDia} consultas gratis de hoy!\n\nMañana se recargan y seguimos. Y si quieres a Guzzi sin freno, con el plan Esencial (2,99€/mes) tienes:\n\n✅ 30 consultas/día\n✅ 15 envíos de CV/día\n✅ CV adaptado con IA\n✅ Pipeline de candidaturas\n\n👉 Ve a /app/perfil para activarlo.`,
+        errorMessage: `🐛 ¡Has usado tus ${limits.guzziMaxConsultasDia} consultas gratis de hoy!\n\nMañana se recargan y seguimos. Y si quieres a Guzzi sin freno, con el plan Esencial (2,99€/mes) tienes:\n\n✅ ${LIMITS.esencial.guzziMaxConsultasDia} consultas/día\n✅ ${LIMITS.esencial.enviosCVDia} envíos de CV/día\n✅ Carta escrita con IA para cada empresa\n✅ ${LIMITS.esencial.cvConIAGratis} CVs mejorados con IA\n\n👉 Ve a /app/perfil para activarlo.`,
       };
     }
     return {

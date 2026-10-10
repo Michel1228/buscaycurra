@@ -3292,11 +3292,13 @@ test("el sincronizador olvida los fallos ya contados tras cada pasada", () =>
 test("las funciones y cifras que anuncia la web coinciden con el código y tienen fuente", async () => {
   const paginas = ["app/(home)/page.tsx", "app/auth/login/page.tsx", "app/auth/registro/page.tsx", "app/empleo/page.tsx",
     "app/sobre-nosotros/page.tsx", "app/app/page.tsx", "lib/datos-reales.ts", "lib/guzzi/prompts.ts", "app/layout.tsx",
-    "public/manifest.json"].map(leerFuente).join("\n");
+    "public/manifest.json", "lib/guzzi-limits.ts", "app/trabajar-en/page.tsx", "lib/funciones.ts", "lib/guias/contenido.ts"].map(leerFuente).join("\n");
   const prohibidas = [/12 idiomas y adapta/, /descartan (al|el) 75/, /El 75% de los CVs/, /8:32/, /hora de actividad de cada empresa/,
     /Primero en la bandeja/, /\(inútil\)/, /InfoJobs Premium cuesta/, /1 de cada 5 titulados/, /fuente: "Adecco Spain"/,
     /adapta tu CV a cada (oferta|empresa)/, /CV adaptado (por IA )?a cada empresa/, /49 países/,
-    /primer agente IA/i, /busca, adapta y env[ií]a/, /No hay otro sistema igual/, /19 países/];
+    /primer agente IA/i, /busca, adapta y env[ií]a/, /No hay otro sistema igual/, /19 países/,
+    /CV adaptado con IA/, /adapta tu CV y env[ií]a/, /tu CV adaptado por ti/, /adapta a la oferta/, /adaptar tu CV a una oferta concreta/,
+    /Pipeline de candidaturas\\n\\n/];
   const quedan = prohibidas.filter(r => r.test(paginas));
   if (quedan.length) console.log(`     ↳ sigue: ${quedan.map(String).join(", ")}`);
   // El texto del porcentaje de email tiene que salir del porcentaje medido.
