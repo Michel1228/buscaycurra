@@ -179,12 +179,19 @@ export async function GET(request: NextRequest) {
         // ingenieros y desarrolladores como si fueran camareros.
         const { expandirPuesto } = await import("@/lib/job-search/sinonimos-puesto");
         const variantes = expandirPuesto(keyword);
+        // Si la palabra es un puesto conocido (tiene equivalentes), no se busca
+        // en `company`: nadie busca una empresa llamada "nurse", y `company` no
+        // tiene índice trigram, así que el OR obligaba a leer el país entero.
+        // "enfermera" en Alemania (18 variantes): 19 s y el corte de 15 s del
+        // pool → caía a las APIs externas. Solo por título: 2,4 s, el mismo
+        // total (12.496). Medido en producción el 10 oct 2026.
+        const esPuestoConocido = variantes.length > 1;
         const orsLigeros: string[] = [];
         const orsCompletos: string[] = [];
         for (const v of variantes) {
           params.push(palabraExacta(v));
           const i = idx++;
-          orsLigeros.push(`title ~* $${i} OR company ~* $${i}`);
+          orsLigeros.push(esPuestoConocido ? `title ~* $${i}` : `title ~* $${i} OR company ~* $${i}`);
           orsCompletos.push(`title ~* $${i} OR description ~* $${i} OR company ~* $${i}`);
         }
         condicionKeywordLigera = `(${orsLigeros.join(" OR ")})`;
@@ -194,9 +201,11 @@ export async function GET(request: NextRequest) {
       conditions.push(condicionKeywordLigera);
     }
 
-   // Filtro por pais (case-insensitive: DB tiene 'uk' y 'UK' mezclados)
+   // Filtro por pais (case-insensitive: DB tiene 'uk' y 'UK' mezclados).
+   // lower() = lower() y no ILIKE: así entra por el índice
+   // idx_joblisting_country_lower_vivas. ILIKE no puede usar un btree.
    if (country) {
-      conditions.push(`"country" ILIKE $${idx}`);
+      conditions.push(`lower("country") = lower($${idx})`);
      params.push(country);
      idx++;
    }
@@ -380,7 +389,7 @@ export async function GET(request: NextRequest) {
       let condPaisCuenta = "";
       if (country) {
         paramsCuenta.push(country);
-        condPaisCuenta = ` AND "country" ILIKE $${paramsCuenta.length}`;
+        condPaisCuenta = ` AND lower("country") = lower($${paramsCuenta.length})`;
       }
       const locCount = await pool.query(
         `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})${condPaisCuenta}`,
@@ -412,7 +421,7 @@ export async function GET(request: NextRequest) {
         let condPais = "";
         if (country) {
           locParams.push(country);
-          condPais = ` AND "country" ILIKE $${locParams.length}`;
+          condPais = ` AND lower("country") = lower($${locParams.length})`;
         }
 
         const orsLoc: string[] = [];

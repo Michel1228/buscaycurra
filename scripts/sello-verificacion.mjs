@@ -576,6 +576,10 @@ test("detectIntent CLASIFICA BIEN frases reales (no solo existe el texto)", asyn
       ["¿qué papeles necesito para trabajar en Alemania?", "papeles_pais"],
       ["¿me compensa ir a trabajar a Zaragoza desde Tudela?", "desplazamiento"],
       ["hola, busco trabajo de camarero en Tudela", "buscar"],
+      // 10 oct 2026: sin nombrar "papeles" acababa buscando negocios en
+      // "Alemania de enfermera".
+      ["¿Qué necesito para trabajar en Alemania de enfermera?", "papeles_pais"],
+      ["¿Qué necesito para trabajar de camarero en Pamplona?", "buscar"],
     ];
     const fallos = casos.filter(([frase, esperado]) => detectIntent(frase) !== esperado);
     if (fallos.length) {
@@ -3342,6 +3346,11 @@ test("lo que falló en la auditoría con navegador sigue arreglado", () => {
     "GPS permitido para la propia web": /geolocation=\(self\)/.test(cabeceras),
     "el buscador no pide GPS al abrir": !buscar.includes("navigator.geolocation") && !buscar.includes("nominatim"),
     "el despliegue precalienta el sitemap": /setsid timeout \d+ bash -c[\s\S]*sitemap\.xml/.test(deploy),
+    // "enfermera" en Alemania: 19 s y corte por statement_timeout. El país va
+    // por su índice y un puesto conocido se busca solo en el título (2,4 s).
+    "el buscador filtra el país por índice": !/"country" ILIKE/.test(leerFuente("app/api/jobs/search/route.ts"))
+      && /lower\("country"\) = lower\(\$\$\{idx\}\)/.test(leerFuente("app/api/jobs/search/route.ts")),
+    "un puesto conocido no se busca en company": /esPuestoConocido \? `title ~\* \$\$\{i\}`/.test(leerFuente("app/api/jobs/search/route.ts")),
   };
   const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
   if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);

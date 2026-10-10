@@ -125,7 +125,11 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   // el gratuito dijo en una prueba que el carné español de manipulador vale en
   // Alemania, y no vale.
   {
-    const hablaDePapeles = /(papeles|documentos?|documentaci[oó]n|visados?|\bvisa\b|permiso\s+de\s+(trabajo|residencia)|requisitos|tr[aá]mites?|\bnie\b|empadron|seguridad\s+social|homolog)/i.test(tn);
+    // "¿Qué necesito para trabajar en Alemania de enfermera?" no nombra ningún
+    // papel y acababa en una búsqueda de NEGOCIOS en "Alemania de enfermera"
+    // (prueba de flujos del 10 oct 2026). Es la forma más común de preguntarlo.
+    const hablaDePapeles = /(papeles|documentos?|documentaci[oó]n|visados?|\bvisa\b|permiso\s+de\s+(trabajo|residencia)|requisitos|tr[aá]mites?|\bnie\b|empadron|seguridad\s+social|homolog)/i.test(tn)
+      || /qu[eé]\s+(necesito|necesitas|hace\s+falta|me\s+hace\s+falta|tengo\s+que\s+hacer|se\s+necesita)\s+para\s+(poder\s+)?(trabajar|irme|ir|vivir|emigrar|mudarme)/i.test(tn);
     const nombraPais = /\b(alemania|francia|italia|portugal|b[eé]lgica|holanda|pa[ií]ses\s+bajos|suiza|austria|irlanda|reino\s+unido|inglaterra|londres|noruega|suecia|dinamarca|finlandia|polonia|grecia|chequia|rep[uú]blica\s+checa|hungr[ií]a|ruman[ií]a|estados\s+unidos|eeuu|canad[aá]|australia|nueva\s+zelanda|jap[oó]n|singapur)\b/i.test(tn);
     if (hablaDePapeles && nombraPais) return "papeles_pais";
   }
