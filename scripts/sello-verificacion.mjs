@@ -3359,6 +3359,13 @@ test("lo que falló en la auditoría con navegador sigue arreglado", () => {
       const sinCiudad = g.slice(g.indexOf("// No city: just strategy 3"), g.indexOf("// -- Estrategia 4"));
       return sinCiudad.includes("AND title ~* $1") && !sinCiudad.includes("LOWER(description) LIKE");
     })(),
+    // "Camarero en Pamplona" → "Operario puente grúa + carretilla": el bucle
+    // de sinónimos se quedaba siempre con la primera entrada (carretillero).
+    "Guzzi usa los sinónimos del puesto pedido, no los del primero del diccionario": (() => {
+      const g = leerFuente("app/api/gusi/chat/route.ts");
+      return !g.includes("syns.some(s => queryNorm.includes(s)) || enOtrosIdiomas.length > 1")
+        && g.includes("const entradaEs = Object.entries(SINONIMOS_PUESTO).find(");
+    })(),
     "Guzzi solo mira la descripción en España y por el índice del país":
       /if \(r\.rows\.length === 0 && isoCode === "ES"\) \{\s*r = await pool\.query\(consulta\("LOWER\(title\) LIKE \$1 OR LOWER\(description\) LIKE \$1", true\)/
         .test(leerFuente("app/api/gusi/chat/route.ts")),

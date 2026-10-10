@@ -546,8 +546,19 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     // búsquedas fuera de España respondían "no hay ofertas" habiendo cientos.
     const queryNorm = query.toLowerCase();
     const enOtrosIdiomas = expandirPuesto(query);
-    for (const [key, syns] of Object.entries(SINONIMOS_PUESTO)) {
-      if (queryNorm.includes(key) || syns.some(s => queryNorm.includes(s)) || enOtrosIdiomas.length > 1) {
+    // La entrada del diccionario español que corresponde al puesto, si hay.
+    // La condición del bucle llevaba "|| enOtrosIdiomas.length > 1", que es
+    // cierto para cualquier puesto conocido: el bucle se quedaba con la
+    // PRIMERA entrada del diccionario (carretillero) y mezclaba sus sinónimos
+    // con todo. "Camarero en Pamplona" devolvía "Operario puente grúa +
+    // carretilla" (prueba de flujos del 10 oct 2026).
+    const entradaEs = Object.entries(SINONIMOS_PUESTO).find(([key, syns]) =>
+      queryNorm.includes(key) || syns.some(s => queryNorm.includes(s)));
+    const candidatas: Array<[string, string[]]> = entradaEs
+      ? [entradaEs]
+      : enOtrosIdiomas.length > 1 ? [[queryNorm, []]] : [];
+    for (const [key, syns] of candidatas) {
+      {
         const allSynonyms = [...new Set([key, ...syns, ...enOtrosIdiomas])];
 
         // Se busca el oficio en el TÍTULO y como palabra entera.

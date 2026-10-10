@@ -22,6 +22,44 @@ Entre el 3 y el 5 de septiembre se cambió `.github/workflows/sync-jobs.yml`
 creyendo que se ejecutaba. **Esos cambios no tuvieron efecto**: las dos entradas
 de abajo sobre Japón y Suecia están corregidas por eso.
 
+## AUDITORÍA PARA CEIN (10 oct 2026)
+
+Antes de presentar la app al programa de CEIN (Gobierno de Navarra): que no
+falle nada y que todo lo que dice la web se pueda demostrar.
+
+- [x] Search Console: "Falta name en hiringOrganization". 6.316 ofertas de
+  España sin empresa real (las 920 de Lanbide/SEF y rellenos "Empresa"). Sin
+  empresa no hay JobPosting; con ella, el país real (no "ES" siempre)
+  (`6bce4ad`). Las de Lanbide/SEF se solicitan con "Inscribirme en…" y el
+  servidor rechaza CVs a sus dominios (antes se deducía empleo@lanbide).
+- [x] Afirmaciones sin respaldo fuera: "Más elegido/popular" (0 de pago),
+  "miles de usuarios", "el primer agente IA", "adapta tu CV" (la IA escribe la
+  CARTA), "8:32 / hora de actividad" (sale en horario laboral), "12 idiomas"
+  (el CV se traduce a 6), estadísticas mal atribuidas, "InfoJobs 39 €",
+  "1 de cada 5 titulados" (`953e4d0`, `68aa3b1`, `5b6066b`). Cifras al
+  10 oct: 2,9 M ofertas, 60.000/día, 7 de cada 10 con email, 48 países.
+- [x] Términos con los límites reales (decían 2 y 10 envíos/día) (`953e4d0`).
+- [x] 10 pantallas de arranque de iPhone daban 404; sin X-Powered-By; panel
+  interno noindex (`953e4d0`, `cc70167`).
+- [x] Auditoría con navegador: 308 páginas, 4.326 enlaces, 0 rotos. Arreglado
+  el 406 de Guzzi, "Sin resultados" en candidatos sin sesión, GPS bloqueado
+  por nuestra cabecera, precalentado del sitemap tras desplegar (`5b6066b`).
+- [x] Búsqueda fuera de España: 19 s y corte → 2,4 s (`e3412a0`). Guzzi: tres
+  consultas pasaban de 15 s (22 s sin ciudad) → 0,05-0,85 s (`2ede59e`).
+  "¿Qué necesito para trabajar en Alemania?" ya contesta papeles (`e3412a0`).
+- [ ] **Correo del dominio**: buscaycurra.es no tiene MX. privacidad@,
+  soporte@, contacto@, hola@ y empresas@ rebotan, y salen en Aviso legal y
+  Privacidad. Lo tiene que hacer Michel (reenvío gratuito, ver abajo).
+- [ ] Hitos "2024: nace BuscayCurra" y "2025: lanzamos Guzzi" en Sobre
+  nosotros: el repositorio empieza el 16 abr 2026. Confirmar con Michel.
+- [ ] Plazas de cursos de Navarra: el dataset abierto solo trae ~12 cursos
+  (hoy 2 por empezar). El catálogo real está en formacion.navarra.es (Liferay,
+  sin descarga). Buen tema para hablar con el SNE-NL.
+- [ ] Error React #418 intermitente en 9 páginas /trabajar-en durante la
+  auditoría; no se reprodujo en 14 cargas posteriores. Vigilar.
+- [ ] La fuente Inter se carga con media="print" sin onload: la web se ve con
+  la fuente del sistema. Cambio visual: decidir con Michel.
+
 ## CAÍDA DE 7 HORAS (8 oct 2026)
 
 - [x] 10:22 UTC: el servidor se reinició solo (actualización del núcleo
@@ -783,6 +821,19 @@ la cola `cv-sender-retry` · el botón `cv_complete` de GusiChat · los chips de
 ---
 
 ## Pendiente de Michel (no lo puedo hacer yo)
+
+- **Recibir correo en @buscaycurra.es (URGENTE antes de CEIN)**: el dominio no
+  tiene registro MX y todo lo que llega a privacidad@, soporte@, contacto@,
+  hola@ o empresas@ rebota. Opción gratis: reenvío a Gmail con ImprovMX
+  (https://improvmx.com/pricing, gratis hasta 25 alias). Se añaden dos MX en
+  el DNS de Hostinger; los envíos de Resend van por `send.buscaycurra.es` y no
+  se tocan. Comprobar después escribiendo a soporte@ desde otra cuenta.
+- **GPS en las apps**: la web ya permite la ubicación a la búsqueda por cámara
+  (`5b6066b`). En Android falta `ACCESS_COARSE_LOCATION` en el manifiesto y en
+  iOS `NSLocationWhenInUseUsageDescription` en el `Info.plist`; sin ellas la
+  app sigue funcionando, solo que sin GPS. Añadir en la próxima compilación.
+- **Hitos de "Sobre nosotros"**: ¿2024 y 2025 son ciertos? El código empieza
+  el 16 abr 2026.
 
 - **Afiliado de Coursera**: solicitud ENVIADA el 8 oct 2026 en Impact (cuenta
   7928604), "En revisión". Web verificada con la etiqueta meta de
