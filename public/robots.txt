@@ -21,6 +21,7 @@ Allow: /
 Disallow: /app/
 Disallow: /auth/
 Disallow: /api/
+Disallow: /admin
 
 # Google, además, va directo a lo que de verdad posiciona: las páginas de país
 # y las ofertas. Sin Crawl-delay: no lo respeta, y ponerlo a 0 solo servía para
@@ -33,6 +34,7 @@ Allow: /cursos/
 Disallow: /app/
 Disallow: /auth/
 Disallow: /api/
+Disallow: /admin
 
 Sitemap: https://buscaycurra.es/sitemap.xml
 # Las ofertas van aparte: son decenas de miles y no caben en el de arriba.

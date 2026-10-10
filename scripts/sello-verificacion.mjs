@@ -3312,6 +3312,14 @@ test("las funciones y cifras que anuncia la web coinciden con el código y tiene
   return quedan.length === 0 && cuadra;
 });
 
+// El panel de métricas salía como "index, follow" y robots.txt no lo cerraba.
+test("el panel interno no se indexa: noindex y fuera de robots para todos los bots", () => {
+  const robots = leerFuente("public/robots.txt");
+  const layout = leerFuente("app/admin/layout.tsx");
+  return (robots.match(/^Disallow: \/admin\r?$/gm) || []).length === 2
+    && /robots:\s*\{\s*index:\s*false/.test(layout);
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);
