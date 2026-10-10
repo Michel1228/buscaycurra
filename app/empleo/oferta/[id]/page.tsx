@@ -3,6 +3,14 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Search, MapPin, DollarSign, Calendar, ClipboardList } from "lucide-react";
+import { empresaParaGoogle, jobPostingDe } from "@/lib/seo/job-posting";
+import { servicioOficial } from "@/lib/job-search/fuente-oficial";
+
+/** "Camarero en Bar Pepe - Bilbao", o sin la parte que falte (empresa, ciudad). */
+function tituloDe(row: { title: string; company: string | null; city: string | null }): string {
+  const empresa = empresaParaGoogle(row.company);
+  return `${row.title}${empresa ? ` en ${empresa}` : ""}${row.city ? ` - ${row.city}` : ""}`;
+}
 
 export async function generateMetadata({
   params,
@@ -12,7 +20,7 @@ export async function generateMetadata({
   const { id } = await params;
   const pool = getPool();
   const result = await pool.query(
-    `SELECT "title", "company", "city", "expiresAt" FROM "JobListing" WHERE "id" = $1`,
+    `SELECT "title", "company", "city", "sourceName", "expiresAt" FROM "JobListing" WHERE "id" = $1`,
     [id]
   );
   const row = result.rows[0];
@@ -32,13 +40,20 @@ export async function generateMetadata({
   // verdad interesa posicionar.
   const caducada = row.expiresAt != null && new Date(row.expiresAt) < new Date();
 
+  // Las de Lanbide o SEF Murcia no dicen la empresa: "X en  - Bilbao" era lo
+  // que salía en Google. Se nombra solo lo que se sabe.
+  const titulo = tituloDe(row);
+  const oficial = servicioOficial(row.sourceName);
+
   return {
     title: caducada
-      ? `${row.title} en ${row.company} (oferta cerrada) | BuscayCurra`
-      : `${row.title} en ${row.company} - ${row.city} | BuscayCurra`,
+      ? `${titulo} (oferta cerrada) | BuscayCurra`
+      : `${titulo} | BuscayCurra`,
     description: caducada
-      ? `Esta oferta de ${row.title} en ${row.company} ya no está disponible. Busca ofertas parecidas en BuscayCurra.`
-      : `Trabajo de ${row.title} en ${row.company}, ${row.city}. Envía tu CV automáticamente con IA.`,
+      ? `Esta oferta de ${titulo} ya no está disponible. Busca ofertas parecidas en BuscayCurra.`
+      : oficial
+        ? `Trabajo de ${titulo}, publicada por ${oficial.nombre}. Se solicita en su web oficial.`
+        : `Trabajo de ${titulo}. Envía tu CV automáticamente con IA.`,
     ...(caducada && { robots: { index: false, follow: true } }),
   };
 }
@@ -53,7 +68,8 @@ export default async function OfertaPublicaPage({
 
   const result = await pool.query(
     `SELECT "id", "title", "company", "city", "sourceUrl", "sourceName",
-            "description", "salary", "sector", "createdAt", "expiresAt"
+            "description", "salary", "sector", "createdAt", "expiresAt",
+            "country", "province"
      FROM "JobListing" WHERE "id" = $1`,
     [id]
   );
@@ -68,36 +84,20 @@ export default async function OfertaPublicaPage({
 
   const caducada = row.expiresAt != null && new Date(row.expiresAt) < new Date();
 
-  const jobPostingSchema = {
-    "@context": "https://schema.org",
-    "@type": "JobPosting",
-    title: row.title,
-    description: row.description?.slice(0, 5000) || row.title,
-    datePosted: row.createdAt || new Date().toISOString(),
-    // Google usa validThrough para retirar la oferta de Google Empleo cuando
-    // vence. Sin este campo se queda ahí indefinidamente aunque esté cerrada.
-    ...(row.expiresAt && { validThrough: new Date(row.expiresAt).toISOString() }),
-    hiringOrganization: {
-      "@type": "Organization",
-      name: row.company,
-    },
-    jobLocation: {
-      "@type": "Place",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: row.city || "España",
-        addressRegion: "",
-        addressCountry: "ES",
-      },
-    },
-  };
+  // Sin empresa real no se marca como JobPosting: ver lib/seo/job-posting.ts.
+  const jobPostingSchema = jobPostingDe(row);
+  const empresa = empresaParaGoogle(row.company);
+  // Lanbide y SEF Murcia: se solicitan en su web, no mandando el CV por correo.
+  const oficial = servicioOficial(row.sourceName);
 
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
-      />
+      {jobPostingSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
+        />
+      )}
       
       <div className="max-w-3xl mx-auto px-4 py-8">
         <Link href="/" className="text-xs mb-6 inline-block hover:underline" style={{ color: "#64748b" }}>
@@ -130,7 +130,7 @@ export default async function OfertaPublicaPage({
             {row.title}
           </h1>
           <p className="text-base font-medium mb-4" style={{ color: "#22c55e" }}>
-            {row.company}
+            {empresa ?? (oficial ? `Publicada por ${oficial.nombre}` : "Empresa sin especificar")}
           </p>
 
           <div className="flex flex-wrap gap-4 mb-5 text-sm" style={{ color: "#94a3b8" }}>
@@ -157,11 +157,21 @@ export default async function OfertaPublicaPage({
               style={{ background: "transparent", color: "#64748b", border: "1px solid #2d3142" }}>
               Buscar similares en BuscayCurra
             </Link>
-            <Link
-              href={`/auth/registro`}
-              className="btn-game text-sm px-5 py-2.5 rounded-lg font-semibold">
-              Enviar CV con IA
-            </Link>
+            {oficial && row.sourceUrl ? (
+              <a
+                href={row.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-game text-sm px-5 py-2.5 rounded-lg font-semibold">
+                Inscribirme en {oficial.corto}
+              </a>
+            ) : (
+              <Link
+                href={`/auth/registro`}
+                className="btn-game text-sm px-5 py-2.5 rounded-lg font-semibold">
+                Enviar CV con IA
+              </Link>
+            )}
           </div>
         </div>
       </div>

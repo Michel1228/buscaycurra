@@ -1,50 +1,7 @@
 import { getPool } from "@/lib/db";
 import OfertaDetalleClient, { type OfertaDetalle } from "./OfertaDetalleClient";
 import { Search } from "lucide-react";
-
-function generarJobPostingSchema(oferta: OfertaDetalle) {
-  const schema: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "JobPosting",
-    title: oferta.titulo,
-    description: oferta.descripcion?.slice(0, 5000) || oferta.titulo,
-    datePosted: oferta.fecha || new Date().toISOString(),
-    hiringOrganization: {
-      "@type": "Organization",
-      name: oferta.empresa,
-    },
-    jobLocation: {
-      "@type": "Place",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: oferta.ubicacion || "España",
-        addressRegion: oferta.provincia || "",
-        addressCountry: "ES",
-      },
-    },
-  };
-
-  if (oferta.salario && oferta.salario !== "Ver en oferta") {
-    const salarioNum = parseInt(oferta.salario.replace(/[^0-9]/g, ""), 10);
-    if (salarioNum > 0) {
-      schema.baseSalary = {
-        "@type": "MonetaryAmount",
-        currency: "EUR",
-        value: {
-          "@type": "QuantitativeValue",
-          value: salarioNum,
-          unitText: oferta.salario.includes("/año") || oferta.salario.includes("year") ? "YEAR"
-            : oferta.salario.includes("/mes") || oferta.salario.includes("month") ? "MONTH"
-            : oferta.salario.includes("/hora") || oferta.salario.includes("hour") ? "HOUR"
-            : "YEAR",
-        },
-      };
-    }
-  }
-
-  schema.employmentType = "FULL_TIME";
-  return schema;
-}
+import { jobPostingDe } from "@/lib/seo/job-posting";
 
 export default async function DetalleOfertaPage({
   params,
@@ -59,7 +16,7 @@ export default async function DetalleOfertaPage({
   const result = await pool.query(
     `SELECT "id", "title", "company", "city", "sourceUrl", "sourceName",
             "description", "salary", "sector", "createdAt", "country",
-            "contactEmail", "contactEmailConfianza"
+            "contactEmail", "contactEmailConfianza", "expiresAt", "province"
      FROM "JobListing" WHERE "id" = $1`,
     [id]
   );
@@ -147,14 +104,19 @@ export default async function DetalleOfertaPage({
     country: row.country || undefined,
   };
 
-  const jobPostingSchema = generarJobPostingSchema(ofertaData);
+  // El mismo JobPosting que la página pública (lib/seo/job-posting.ts). El de
+  // aquí decía "ES" de cualquier país, "FULL_TIME" de cualquier oferta y
+  // convertía "1.200 - 1.500 €" en un salario de 12.001.500.
+  const jobPostingSchema = jobPostingDe(row);
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
-      />
+      {jobPostingSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
+        />
+      )}
       <OfertaDetalleClient oferta={ofertaData} />
     </>
   );

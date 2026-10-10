@@ -17,6 +17,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { promises as dns } from "node:dns";
+import { esCorreoDeServicioOficial } from "@/lib/job-search/fuente-oficial";
 
 // Dominios reservados para ejemplos o que aparecen como plantilla en webs.
 const DOMINIOS_DE_RELLENO = new Set([
@@ -94,6 +95,11 @@ export async function dominioSinCorreo(email: string): Promise<boolean> {
 export async function motivoParaNoEnviar(email: string): Promise<string | null> {
   if (esDireccionDeRelleno(email)) {
     return `«${email}» es una dirección de ejemplo, no la de la empresa. Busca su correo en su web o en la oferta.`;
+  }
+  // Correos deducidos del enlace de una oferta de Lanbide o SEF Murcia: no son
+  // de la empresa, son de la administración (lib/job-search/fuente-oficial.ts).
+  if (esCorreoDeServicioOficial(email)) {
+    return `«${email}» es del servicio público de empleo, no de la empresa. Esta oferta se solicita inscribiéndote en su web oficial: pulsa "Inscribirme" en la oferta.`;
   }
   if (await dominioSinCorreo(email)) {
     return `El dominio de «${email}» no recibe correo, así que el CV rebotaría. Busca otro correo en la web de la empresa o en la oferta.`;

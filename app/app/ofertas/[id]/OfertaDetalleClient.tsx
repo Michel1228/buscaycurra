@@ -7,6 +7,7 @@ import { esOfertaAuPair } from "@/lib/au-pair";
 import AlojamientoOferta from "@/components/AlojamientoOferta";
 import { CheckCircle2, FileText, Users, ClipboardList, Bookmark, ArrowLeft } from "lucide-react";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
+import { servicioOficial } from "@/lib/job-search/fuente-oficial";
 
 export interface OfertaDetalle {
   id: string;
@@ -84,6 +85,9 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const esAuPair = esOfertaAuPair(oferta.titulo);
+  // Lanbide y SEF Murcia no dicen la empresa: se solicitan en su web oficial.
+  // Mandar el CV aquí acababa en un correo deducido de la administración.
+  const oficial = servicioOficial(oferta.fuente);
 
   function showToast(msg: string, type: "error" | "success" = "error") {
     setToast({ msg, type });
@@ -305,7 +309,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
               {oferta.titulo}
             </h1>
             <p className="text-base mt-1 font-medium" style={{ color: "#22c55e" }}>
-              {oferta.empresa}
+              {oficial ? `Publicada por ${oficial.nombre}` : oferta.empresa}
             </p>
           </div>
           {oferta.fuente && (
@@ -348,7 +352,15 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         )}
 
         <div className="flex flex-wrap gap-3 mb-5">
-          {esAuPair ? (
+          {oficial && oferta.url ? (
+            <a
+              href={oferta.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-game text-sm font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2">
+              Inscribirme en {oficial.corto}
+            </a>
+          ) : esAuPair ? (
             <>
               <button
                 onClick={enviarCV}

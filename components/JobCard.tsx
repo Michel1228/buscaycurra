@@ -10,6 +10,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
+import { servicioOficial } from "@/lib/job-search/fuente-oficial";
 
 export interface PropiedadesJobCard {
   id: string;
@@ -70,6 +71,9 @@ export default function JobCard({
   // en la BD → /app/ofertas/[id] mostraría "Oferta no encontrada". Para esas,
   // "Ver oferta" abre su URL externa directamente.
   const esSintetica = /^(jooble|adzuna|cj|li|arb|rem|indeed|tec|fb)-/.test(id);
+  // Lanbide y SEF Murcia: se solicitan en su web. "Enviar CV" deducía
+  // empleo@web.lanbide.eus y mandaba el CV a la administración.
+  const oficial = servicioOficial(fuente);
 
   const [enviando, setEnviando] = useState(false);
   const [estadoEnvio, setEstadoEnvio] = useState<"idle" | "ok" | "sin-email">("idle");
@@ -202,7 +206,7 @@ export default function JobCard({
       {/* Content */}
       <div>
         <h3 className="font-bold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{titulo}</h3>
-        <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{empresa}</p>
+        <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{oficial ? `Publicada por ${oficial.corto}` : empresa}</p>
         <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: "#64748b" }}>
           <span>📍</span><span>{ubicacion}</span>
         </div>
@@ -289,22 +293,30 @@ export default function JobCard({
             Ver oferta
           </Link>
         )}
-        <button
-          onClick={enviarCV}
-          disabled={enviando}
-          className="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition hover:opacity-90 disabled:opacity-60"
-          style={{
-            background: estadoEnvio === "ok"
-              ? "linear-gradient(135deg, #22c55e, #16a34a)"
-              : "linear-gradient(135deg, #22c55e, #5cb848)",
-            color: "#1a1a12",
-          }}>
-          {enviando
-            ? "⏳ Enviando..."
-            : estadoEnvio === "ok"
-              ? "✅ Enviado"
-              : "📧 Enviar CV"}
-        </button>
+        {oficial && url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            className="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition hover:opacity-90"
+            style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}>
+            Inscribirme en {oficial.corto}
+          </a>
+        ) : (
+          <button
+            onClick={enviarCV}
+            disabled={enviando}
+            className="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition hover:opacity-90 disabled:opacity-60"
+            style={{
+              background: estadoEnvio === "ok"
+                ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                : "linear-gradient(135deg, #22c55e, #5cb848)",
+              color: "#1a1a12",
+            }}>
+            {enviando
+              ? "⏳ Enviando..."
+              : estadoEnvio === "ok"
+                ? "✅ Enviado"
+                : "📧 Enviar CV"}
+          </button>
+        )}
       </div>
     </div>
   );

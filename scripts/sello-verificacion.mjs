@@ -3197,6 +3197,55 @@ test("las plazas de cursos se sincronizan desde el crontab del servidor", () =>
   /^[^#].*sync-plazas-cursos\.sh/m.test(leerFuente("scripts/vps/crontab.txt"))
   && leerFuente("scripts/vps/sync-plazas-cursos.sh").includes("/api/cursos/plazas/sync"));
 
+// ── GOOGLE: JOBPOSTING SIN EMPRESA (10 oct 2026) ──────────────────────
+//
+// Search Console avisó de un error crítico: "Falta el campo name (en
+// hiringOrganization)". 6.316 ofertas de España no tienen empresa real (las de
+// Lanbide y SEF Murcia, y rellenos como "Empresa"), y todas declaraban país
+// "ES" aunque fueran de Alemania. Sin empresa real no se marca la oferta; con
+// ella, el país es el suyo. Y las de los servicios públicos se solicitan en su
+// web: el CV no puede acabar en un correo deducido de la administración.
+test("JobPosting solo con empresa real y país de la oferta; ofertas oficiales por su web", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-jobposting-entrada.ts", salida = ".sello-jobposting.cjs";
+  try {
+    writeFileSync(entrada, 'export { jobPostingDe } from "./lib/seo/job-posting";\nexport { servicioOficial, esCorreoDeServicioOficial } from "./lib/job-search/fuente-oficial";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const base = { title: "Camarero", description: "Turno de tarde", city: "Bilbao", province: "Bizkaia", createdAt: "2026-10-01T00:00:00Z" };
+    const buena = m.jobPostingDe({ ...base, company: "Bar Pepe", country: "de" });
+    const reino = m.jobPostingDe({ ...base, company: "Pub Ltd", country: "uk" });
+    const sinEmpresa = [m.jobPostingDe({ ...base, company: "", country: "es" }), m.jobPostingDe({ ...base, company: "Empresa", country: "es" }),
+      m.jobPostingDe({ ...base, company: "  Ver en oferta ", country: "es" }), m.jobPostingDe({ ...base, company: null, country: "es" })];
+    const okSchema = buena?.hiringOrganization?.name === "Bar Pepe" && buena.jobLocation.address.addressCountry === "DE"
+      && reino?.jobLocation.address.addressCountry === "GB" && sinEmpresa.every(x => x === null)
+      && m.jobPostingDe({ ...base, company: "Bar Pepe", country: null }) === null;
+    if (!okSchema) console.log("     ↳ el JobPosting sale sin empresa o con el país equivocado");
+    const okOficial = m.servicioOficial("LANBIDE")?.corto === "Lanbide" && m.servicioOficial("ADZUNA_ES") === null
+      && m.esCorreoDeServicioOficial("empleo@web.lanbide.eus") && m.esCorreoDeServicioOficial("empleo@sefoficinavirtual.carm.es")
+      && !m.esCorreoDeServicioOficial("rrhh@empresa-lanbide.es");
+    if (!okOficial) console.log("     ↳ no se reconocen las ofertas o los correos de los servicios públicos");
+    const publica = leerFuente("app/empleo/oferta/[id]/page.tsx");
+    const app = leerFuente("app/app/ofertas/[id]/page.tsx");
+    const paginas = publica.includes("jobPostingDe(row)") && app.includes("jobPostingDe(row)")
+      && !/addressCountry:\s*"ES"/.test(publica + app) && !app.includes('employmentType = "FULL_TIME"')
+      && /\{jobPostingSchema && \(/.test(publica) && /\{jobPostingSchema && \(/.test(app);
+    if (!paginas) console.log("     ↳ alguna página de oferta no usa lib/seo/job-posting.ts");
+    const botones = leerFuente("components/JobCard.tsx").includes("Inscribirme en {oficial.corto}")
+      && leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx").includes("Inscribirme en {oficial.corto}")
+      && publica.includes("Inscribirme en {oficial.corto}")
+      && leerFuente("lib/cv-sender/direccion-segura.ts").includes("if (esCorreoDeServicioOficial(email))");
+    if (!botones) console.log("     ↳ las ofertas oficiales siguen ofreciendo enviar el CV por correo");
+    return okSchema && okOficial && paginas && botones;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);
