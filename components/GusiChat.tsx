@@ -209,7 +209,9 @@ export default function GusiChat({ modoIncrustado }: { modoIncrustado?: boolean 
             .from("gusi_conversations")
             .select("messages")
             .eq("user_id", user.id)
-            .single();
+            // maybeSingle: quien aún no ha hablado con Guzzi no tiene fila, y
+            // .single() lo convertía en un error 406 en la consola cada vez.
+            .maybeSingle();
           if (conv?.messages && Array.isArray(conv.messages) && conv.messages.length > 0) {
             setMensajes(conv.messages as Mensaje[]);
           } else {

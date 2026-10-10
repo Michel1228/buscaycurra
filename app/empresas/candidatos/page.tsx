@@ -34,6 +34,8 @@ export default function CandidatosPage() {
   const [candidatos, setCandidatos] = useState<Candidato[]>([]);
   const [cargando, setCargando] = useState(true);
   const [esEmpresa, setEsEmpresa] = useState(false);
+  // Sin sesión la API responde 401: no es que no haya candidatos, es que hay que entrar.
+  const [necesitaEntrar, setNecesitaEntrar] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [ciudad, setCiudad] = useState("");
   const [keyword, setKeyword] = useState("");
@@ -57,6 +59,7 @@ export default function CandidatosPage() {
       if (userId) params.set("userId", userId);
 
       const res = await fetch(`/api/empresas/candidatos?${params}`);
+      setNecesitaEntrar(res.status === 401);
       const data = await res.json() as { candidatos: Candidato[]; esEmpresa: boolean };
       setCandidatos(data.candidatos || []);
       setEsEmpresa(data.esEmpresa || false);
@@ -175,6 +178,14 @@ export default function CandidatosPage() {
                 <div className="h-2.5 rounded" style={{ background: "#1e212b", width: "70%" }} />
               </div>
             ))}
+          </div>
+        ) : necesitaEntrar ? (
+          <div className="text-center py-20">
+            <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Entra con tu cuenta para ver los perfiles</p>
+            <p className="text-xs mb-4" style={{ color: "#64748b" }}>Los perfiles de candidatos solo se enseñan a usuarios registrados.</p>
+            <Link href="/auth/login?redirect=%2Fempresas%2Fcandidatos" className="btn-game text-sm px-5 py-2.5 rounded-lg inline-block">
+              Entrar
+            </Link>
           </div>
         ) : candidatos.length === 0 ? (
           <div className="text-center py-20">

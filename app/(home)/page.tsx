@@ -332,7 +332,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
               // "...candidaturas por / ti." con dos letras solas y centradas.
               style={{ color: "#94a3b8", textWrap: "balance" }}
             >
-              Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti.
+              Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas.
               <br />
               <strong style={{ color: "#cbd5e1" }}>
                 En {PAISES} países. 24 horas al día. Sin que muevas un dedo.
@@ -923,7 +923,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                 </span>
               </div>
               <p className="text-[11px] leading-relaxed max-w-xs" style={{ color: "#6b7280" }}>
-                El primer agente IA que busca trabajo por ti. {PAISES} países, 24/7, cero spam.
+                Un agente de IA que busca trabajo por ti. {PAISES} países, 24/7, cero spam.
                 Tu agente personal de búsqueda de empleo.
               </p>
             </div>

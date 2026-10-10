@@ -2,7 +2,7 @@
   "id": "es.buscaycurra.app",
   "name": "BuscayCurra — Encuentra trabajo con IA",
   "short_name": "BuscayCurra",
-  "description": "Mejora tu CV con IA, busca ofertas en toda España y envía candidaturas automáticamente. Trabaja en España o emigra a 19 países.",
+  "description": "Mejora tu CV con IA, busca ofertas en toda España y envía candidaturas automáticamente. Trabaja en España o emigra a otros 25 países.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
@@ -31,7 +31,7 @@
       "short_name": "Buscar",
       "url": "/app/buscar",
       "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }],
-      "description": "Buscar ofertas de empleo en España y 19 países"
+      "description": "Buscar ofertas de empleo en España y otros 25 países"
     },
     {
       "name": "Mi CV",

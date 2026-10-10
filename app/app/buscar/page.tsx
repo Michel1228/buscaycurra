@@ -113,27 +113,11 @@ function BuscarPageInner() {
         return;
       }
 
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            if (!mountedRef.current) return;
-            try {
-              const res = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`
-              );
-              const data = await res.json();
-              const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
-              if (city && mountedRef.current) {
-                setUbicacion(city);
-                setGeoDetected(true);
-                await getSupabaseBrowser().from("profiles").update({ ciudad: city }).eq("id", user.id);
-              }
-            } catch { /* ignore */ }
-          },
-          () => { /* denied */ },
-          { timeout: 5000, enableHighAccuracy: false }
-        );
-      }
+      // Aquí se pedía el GPS al abrir el buscador y se preguntaba el nombre de
+      // la ciudad a OpenStreetMap. No funcionaba: la política de permisos
+      // bloqueaba el GPS y la CSP la petición a OpenStreetMap. Pedir la
+      // ubicación nada más abrir, sin que la persona haya hecho nada, tampoco
+      // es buena idea: se usa la ciudad del perfil y ya.
     }
     init();
     return () => { mountedRef.current = false; };

@@ -3287,10 +3287,12 @@ test("el sincronizador olvida los fallos ya contados tras cada pasada", () =>
 // otra cosa). Tampoco hay fuente para "InfoJobs Premium cuesta 39 €".
 test("las funciones y cifras que anuncia la web coinciden con el código y tienen fuente", async () => {
   const paginas = ["app/(home)/page.tsx", "app/auth/login/page.tsx", "app/auth/registro/page.tsx", "app/empleo/page.tsx",
-    "app/sobre-nosotros/page.tsx", "app/app/page.tsx", "lib/datos-reales.ts", "lib/guzzi/prompts.ts"].map(leerFuente).join("\n");
+    "app/sobre-nosotros/page.tsx", "app/app/page.tsx", "lib/datos-reales.ts", "lib/guzzi/prompts.ts", "app/layout.tsx",
+    "public/manifest.json"].map(leerFuente).join("\n");
   const prohibidas = [/12 idiomas y adapta/, /descartan (al|el) 75/, /El 75% de los CVs/, /8:32/, /hora de actividad de cada empresa/,
     /Primero en la bandeja/, /\(inútil\)/, /InfoJobs Premium cuesta/, /1 de cada 5 titulados/, /fuente: "Adecco Spain"/,
-    /adapta tu CV a cada (oferta|empresa)/, /CV adaptado (por IA )?a cada empresa/, /49 países/];
+    /adapta tu CV a cada (oferta|empresa)/, /CV adaptado (por IA )?a cada empresa/, /49 países/,
+    /primer agente IA/i, /busca, adapta y env[ií]a/, /No hay otro sistema igual/, /19 países/];
   const quedan = prohibidas.filter(r => r.test(paginas));
   if (quedan.length) console.log(`     ↳ sigue: ${quedan.map(String).join(", ")}`);
   // El texto del porcentaje de email tiene que salir del porcentaje medido.
@@ -3318,6 +3320,32 @@ test("el panel interno no se indexa: noindex y fuera de robots para todos los bo
   const layout = leerFuente("app/admin/layout.tsx");
   return (robots.match(/^Disallow: \/admin\r?$/gm) || []).length === 2
     && /robots:\s*\{\s*index:\s*false/.test(layout);
+});
+
+// Lo que la auditoría con navegador (308 páginas, 10 oct 2026) vio fallar:
+// un 406 de Supabase al abrir Guzzi sin conversación previa, "Sin resultados"
+// en la página de candidatos cuando lo que pasaba era que no había sesión, el
+// GPS bloqueado por nuestra propia cabecera, y páginas de 9,5 s en la primera
+// visita tras cada despliegue.
+test("lo que falló en la auditoría con navegador sigue arreglado", () => {
+  const chat = leerFuente("components/GusiChat.tsx");
+  const conv = /from\("gusi_conversations"\)[\s\S]{0,400}?\n\s*\.(maybeSingle|single)\(\);/.exec(chat);
+  const candidatos = leerFuente("app/empresas/candidatos/page.tsx");
+  const login = leerFuente("app/auth/login/page.tsx");
+  const cabeceras = leerFuente("next.config.ts");
+  const buscar = leerFuente("app/app/buscar/page.tsx");
+  const deploy = leerFuente("build-deploy.sh");
+  const checks = {
+    "Guzzi carga la conversación con maybeSingle": conv?.[1] === "maybeSingle",
+    "candidatos pide entrar si la API da 401": candidatos.includes("setNecesitaEntrar(res.status === 401)"),
+    "el login vuelve a /empresas/candidatos y a nada más fuera de /app/": login.includes('destino === "/empresas/candidatos"') && !/destino\.startsWith\("\/(?!app\/)/.test(login),
+    "GPS permitido para la propia web": /geolocation=\(self\)/.test(cabeceras),
+    "el buscador no pide GPS al abrir": !buscar.includes("navigator.geolocation") && !buscar.includes("nominatim"),
+    "el despliegue precalienta el sitemap": /setsid timeout \d+ bash -c[\s\S]*sitemap\.xml/.test(deploy),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
 });
 
 await Promise.all(pendientes);

@@ -63,7 +63,10 @@ function LoginPageInner() {
       // antes de que le pidiéramos entrar. Ignorarlo perdía el destino de
       // cualquier enlace profundo (una oferta, un email, una notificación).
       const destino = searchParams.get("redirect");
-      router.push(destino && destino.startsWith("/app/") ? destino : "/app/bienvenida");
+      // Fuera de /app/ solo se admite la página de candidatos (exacta): una
+      // ruta libre aquí permitiría redirigir a cualquier sitio.
+      const valido = destino && (destino.startsWith("/app/") || destino === "/empresas/candidatos");
+      router.push(valido ? destino : "/app/bienvenida");
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
     } finally {
@@ -104,7 +107,7 @@ function LoginPageInner() {
             <span style={{ color: "#22c55e" }}>al vacío.</span>
           </h2>
           <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            {`Guzzi es el primer agente IA que busca, adapta y envía candidaturas por ti en ${NUM_PAISES} países. 24/7. Tú solo vas a la entrevista.`}
+            {`Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países. 24/7. Tú solo vas a la entrevista.`}
           </p>
 
           {/* 3 puntos fuertes — siempre visibles */}

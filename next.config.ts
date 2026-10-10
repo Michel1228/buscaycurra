@@ -22,7 +22,10 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), geolocation=()' },
+          // geolocation=(self): la búsqueda por cámara de Guzzi pide la ubicación
+          // al hacer la foto para situar el negocio. Con geolocation=() el
+          // navegador la bloqueaba siempre (visto en la auditoría del 10 oct 2026).
+          { key: 'Permissions-Policy', value: 'camera=(), geolocation=(self)' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
           // frame-src incluye youtube-nocookie para poder enseñar los vídeos de
           // las campañas en /novedades. Solo ese dominio y solo marcos: NO se

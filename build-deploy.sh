@@ -93,3 +93,16 @@ bash /root/candados.sh db 2>/dev/null && echo "  ✅ DB OK"
 # las que no usa ningún contenedor, así que la que está en marcha no se toca.
 docker image prune -f > /dev/null 2>&1 && echo "🧹 Imágenes viejas borradas"
 echo "✅ Deploy completo."
+
+# 🔥 Precalentar las páginas del sitemap. Se guardan una hora en caché, pero la
+# primera visita tras cada despliegue las construye desde cero: en la
+# auditoría del 10 oct 2026 "/trabajar-en/us/developer" tardó 9,5 s. De una en
+# una y en segundo plano, para no cargar el servidor ni retrasar este script.
+# Proceso aparte (setsid bash -c) y con tope de 15 min: el vigilante busca
+# "bash build-deploy.sh" para saber si hay un despliegue en marcha, y una copia
+# de este script calentando páginas le haría creer que sí.
+setsid timeout 900 bash -c '
+  sleep 20
+  curl -s https://buscaycurra.es/sitemap.xml | grep -o "<loc>[^<]*</loc>" | sed "s/<[^>]*>//g" |
+    while read -r url; do curl -s -o /dev/null --max-time 30 "$url"; done
+' > /dev/null 2>&1 < /dev/null &
