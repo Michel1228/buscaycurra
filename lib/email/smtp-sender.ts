@@ -744,12 +744,14 @@ export async function sendCursoSugerenciaEmail(params: {
   /** La plaza concreta o, si no hay, la ficha del curso. */
   destinoUrl: string;
   conPlaza: boolean;
+  /** Ya trabaja de ello: el aviso es sobre acreditar su experiencia. */
+  viaExperiencia?: boolean;
   bajaUrl?: string | null;
 }): Promise<boolean> {
-  const header = headerGradient("🎓", "Un curso que encaja con tu CV", escaparHtml(params.cursoNombre));
+  const header = headerGradient("🎓", params.viaExperiencia ? "Tu experiencia puede valer un título" : "Un curso que encaja con tu CV", escaparHtml(params.cursoNombre));
   const body = `
     <p style="margin:0 0 24px;color:#cbd5e1;font-size:15px;line-height:1.7;">${escaparHtml(params.mensaje)}</p>
-    ${ctaButton(params.conPlaza ? "Ver la plaza →" : "Ver dónde sacarlo →", params.destinoUrl)}
+    ${ctaButton(params.viaExperiencia ? "Ver cómo se hace →" : params.conPlaza ? "Ver la plaza →" : "Ver dónde sacarlo →", params.destinoUrl)}
     <p style="margin:24px 0 0;text-align:center;color:#64748b;font-size:11px;line-height:1.7;">
       Te llega porque tienes tu CV en BuscayCurra. Como mucho, una sugerencia cada dos semanas.
       ${params.bajaUrl ? `<br><a href="${params.bajaUrl}" style="color:#94a3b8;text-decoration:underline;">No quiero sugerencias de cursos</a>` : ""}

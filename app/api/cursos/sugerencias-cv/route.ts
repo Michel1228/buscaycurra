@@ -7,6 +7,13 @@
  * y busca una plaza gratis con fecha en su provincia u online. Si la hay, se lo
  * dice con la razón a la vista: "Veo en tu CV que has trabajado de camarera…".
  *
+ * QUÉ PLAZA SE PUEDE SUGERIR (primera prueba, 12 oct 2026: se ofrecían cursos
+ * del Consorci, en catalán y para gente con trabajo, como "online" a personas
+ * de Navarra o Asturias). Una plaza de un servicio autonómico es para la gente
+ * de esa comunidad. Así que vale si es presencial en su provincia, u online de
+ * un servicio de su comunidad; nunca solo para ocupados (quien nos usa busca
+ * trabajo); y que empiece dentro de 3 días o más, para que dé tiempo a apuntarse.
+ *
  * PARA NO SER PESADOS, que es como se acaba en spam (y ahí se cae TODO nuestro
  * correo, no solo este):
  *   · Como mucho una sugerencia cada 14 días por persona, y nunca la misma
@@ -41,6 +48,25 @@ const MAX_POR_PASADA = 15;
 const DE_PRUEBA = /@(resend\.dev|buscaycurra\.es)$/i;
 
 const escaparRegex = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Provincias que cubre cada servicio de empleo cuyas plazas leemos (códigos INE). */
+const PROVINCIAS_DE_FUENTE: Record<string, string[]> = {
+  lanbide: ["01", "20", "48"],
+  "sef-murcia": ["30"],
+  soc: ["08", "17", "25", "43"],
+  consorci: ["08", "17", "25", "43"],
+  ecyl: ["05", "09", "24", "34", "37", "40", "42", "47", "49"],
+  navarra: ["31"],
+};
+
+/** Que la plaza sea para esa persona y le dé tiempo a apuntarse. */
+function plazaParaEsaPersona(p: PlazaPublica, provincia: string): boolean {
+  if (p.dirigido === "ocupados") return false;
+  const enTresDias = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+  if (p.inicio < enTresDias) return false;
+  if (p.modalidad === "online") return (PROVINCIAS_DE_FUENTE[p.fuente] ?? []).includes(provincia);
+  return p.provincia === provincia;
+}
 
 /** Ofertas vivas en esa provincia de los puestos que piden el curso. */
 async function ofertasEnZona(puestos: string[], zona: string): Promise<number> {
@@ -112,9 +138,13 @@ export async function POST(req: NextRequest) {
     // la tiene, la ficha del primero que no se le haya sugerido nunca.
     let elegido: { curso: (typeof cursos)[number]; plaza: PlazaPublica | null } | null = null;
     for (const curso of cursos) {
-      const nueva = (r: { plazas: PlazaPublica[] }) => r.plazas.find((p) => !yaPlazas.has(p.id)) ?? null;
-      let plaza = provincia ? nueva(await buscarPlazas({ ficha: curso.slug, provincia, limite: 10 })) : null;
-      if (!plaza) plaza = nueva(await buscarPlazas({ ficha: curso.slug, modalidad: "online", limite: 10 }));
+      // Quien ya trabaja de ello no necesita plaza: necesita saber que puede
+      // acreditar su experiencia. Eso se le dice una vez (más abajo).
+      if (curso.viaExperiencia || !provincia) continue;
+      const nueva = (r: { plazas: PlazaPublica[] }) =>
+        r.plazas.find((p) => !yaPlazas.has(p.id) && plazaParaEsaPersona(p, provincia)) ?? null;
+      let plaza = nueva(await buscarPlazas({ ficha: curso.slug, provincia, limite: 20 }));
+      if (!plaza) plaza = nueva(await buscarPlazas({ ficha: curso.slug, modalidad: "online", limite: 50 }));
       if (plaza) { elegido = { curso, plaza }; break; }
     }
     if (!elegido) {
@@ -124,16 +154,17 @@ export async function POST(req: NextRequest) {
     if (!elegido) { sinCurso++; continue; }
 
     const { curso, plaza } = elegido;
-    const total = zona ? await ofertasEnZona(curso.puestosQueLoPiden, zona).catch(() => 0) : 0;
+    const total = zona && !curso.viaExperiencia ? await ofertasEnZona(curso.puestosQueLoPiden, zona).catch(() => 0) : 0;
     const { titulo, mensaje } = textoSugerencia(
       curso,
       plaza ? { ...plaza, provincia: nombreProvincia(plaza.provincia) } : null,
       zona ? { total, zona } : null
     );
-    const rutaApp = plaza ? `/cursos/plazas?ficha=${encodeURIComponent(curso.slug)}` : `/cursos/${curso.slug}`;
+    const rutaApp = curso.viaExperiencia ? "/cursos/acreditar"
+      : plaza ? `/cursos/plazas?ficha=${encodeURIComponent(curso.slug)}` : `/cursos/${curso.slug}`;
 
     if (simular) {
-      detalle.push({ usuario: cv.user_id.slice(0, 8), curso: curso.slug, plaza: plaza?.id ?? null, zona, mensaje });
+      detalle.push({ usuario: cv.user_id.slice(0, 8), curso: curso.slug, plaza: plaza?.id ?? null, inicio: plaza?.inicio ?? null, zona, mensaje });
       enviadas++;
       continue;
     }
@@ -162,6 +193,7 @@ export async function POST(req: NextRequest) {
       cursoNombre: curso.nombre,
       destinoUrl: `https://buscaycurra.es${rutaApp}`,
       conPlaza: !!plaza,
+      viaExperiencia: curso.viaExperiencia,
       bajaUrl: enlaceBajaSugerencias(cv.user_id),
     });
     if (salio) correos++; else sinCorreo++;

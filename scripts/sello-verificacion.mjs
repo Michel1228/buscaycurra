@@ -3444,11 +3444,25 @@ test("cursos según el CV: el que falta para lo trabajado, nunca el que ya tiene
     ];
     const malos = casos.filter(([r, e]) => r !== e);
     if (malos.length) console.log(`     ↳ ${JSON.stringify(malos)}`);
+    // Primera prueba en producción (12 oct): a un oficial soldador se le sugería
+    // el curso de soldadura. Quien trabaja de algo acreditable recibe la vía de
+    // la experiencia; y si el certificado ya está en su formación, nada.
+    const soldador = m.cursosQueEncajan({ experiencia: [{ puesto: "Oficial soldador", empresa: "Metálicas SA" }] })[0];
+    const conTitulo = m.cursosQueEncajan({ experiencia: [{ puesto: "Oficial soldador" }], formacion: [{ titulo: "Certificado de soldadura MIG/MAG" }] });
+    const viaOk = soldador?.viaExperiencia === true && m.textoSugerencia(soldador, null, null).mensaje.includes("sin volver a clase")
+      && conTitulo.length === 0;
+    if (!viaOk) console.log("     ↳ al que ya trabaja de algo acreditable no se le ofrece la vía de la experiencia");
     const c = m.cursosQueEncajan({ experiencia: [{ puesto: "Camarera", empresa: "Bar Pepe" }] })[0];
     const t = m.textoSugerencia(c, { titulo: "Manipulador", municipio: "Tudela", provincia: "Navarra", inicio: "2026-11-03", horas: 10, modalidad: "presencial" }, { total: 23, zona: "Navarra" });
     const textoOk = t.mensaje.startsWith("Veo en tu CV que has trabajado de camarera en Bar Pepe.") && t.mensaje.includes("3 de noviembre") && t.mensaje.includes("23 ofertas");
     if (!textoOk) console.log(`     ↳ ${t.mensaje}`);
     const ruta = leerFuente("app/api/cursos/sugerencias-cv/route.ts");
+    // Plazas del Consorci (en catalán, para ocupados) se ofrecían "online" a
+    // gente de Navarra o Asturias, y alguna empezaba al día siguiente.
+    const plazaBien = ruta.includes('if (p.dirigido === "ocupados") return false;')
+      && ruta.includes("if (p.inicio < enTresDias) return false;")
+      && ruta.includes('if (p.modalidad === "online") return (PROVINCIAS_DE_FUENTE[p.fuente] ?? []).includes(provincia);');
+    if (!plazaBien) console.log("     ↳ se pueden sugerir plazas de otra comunidad, solo para ocupados o que empiezan ya");
     const freno = /DIAS_ENTRE_SUGERENCIAS = 14;/.test(ruta) && /MAX_POR_PASADA = \d+;/.test(ruta)
       && ruta.includes("quedaSitioParaLoQuePuedeEsperar()") && ruta.includes("enlaceBajaSugerencias(cv.user_id)")
       && ruta.includes("sinSugerencias(") && ruta.includes('get("simular") === "1"') && ruta.includes("secretIguales(");
@@ -3457,7 +3471,7 @@ test("cursos según el CV: el que falta para lo trabajado, nunca el que ya tiene
       && leerFuente("scripts/vps/sugerencias-cursos-cv.sh").includes("/api/cursos/sugerencias-cv");
     if (!cron) console.log("     ↳ no está en el crontab cada 3 horas");
     const interruptor = leerFuente("components/MisAvisosCursos.tsx").includes("Sugerirme cursos según mi CV");
-    return malos.length === 0 && textoOk && freno && cron && interruptor;
+    return malos.length === 0 && viaOk && plazaBien && textoOk && freno && cron && interruptor;
   } catch (e) {
     console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
     return false;
