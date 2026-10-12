@@ -47,7 +47,17 @@ falle nada y que todo lo que dice la web se pueda demostrar.
 - [x] Búsqueda fuera de España: 19 s y corte → 2,4 s (`e3412a0`). Guzzi: tres
   consultas pasaban de 15 s (22 s sin ciudad) → 0,05-0,85 s (`2ede59e`).
   "¿Qué necesito para trabajar en Alemania?" ya contesta papeles (`e3412a0`).
-- [ ] **Correo del dominio**: buscaycurra.es no tiene MX. privacidad@,
+- [x] 12 oct: alertas de empleo se pueden AÑADIR desde el perfil (antes solo
+  quitar), tope de 10; avisos de cursos en su propia sección; au pair: «Ver mi
+  perfil tal cual lo recibirán» (el PDF exacto, sin gastar cupo) y el rol
+  Live-in Nanny ya no sale como «Au Pair»; sitemap sin ofertas que caducan en
+  menos de 3 días (aviso "noindex" de Search Console).
+- [x] 12 oct: cursos según el CV (`/api/cursos/sugerencias-cv`, cron cada 3 h a
+  y 40). Lee el último CV, ve qué curso le falta para lo que ha trabajado y avisa
+  si hay plaza gratis en su provincia u online. Campana + correo, 1 cada 14 días,
+  15 por pasada, con baja. Las plazas públicas no dan comisión: solo Coursera,
+  cuando aprueben el afiliado.
+- [ ] **Correo del dominio** (pendiente por decisión de Michel, 12 oct): buscaycurra.es no tiene MX. privacidad@,
   soporte@, contacto@, hola@ y empresas@ rebotan, y salen en Aviso legal y
   Privacidad. Lo tiene que hacer Michel (reenvío gratuito, ver abajo).
 - [ ] Hitos "2024: nace BuscayCurra" y "2025: lanzamos Guzzi" en Sobre

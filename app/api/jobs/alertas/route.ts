@@ -23,6 +23,12 @@ async function getUserFromToken(request: NextRequest) {
   return await getUser(token);
 }
 
+// Desde el 12 oct 2026 las alertas también se crean desde el perfil, con un
+// campo libre: tope de alertas por persona y de largo del texto, para que nadie
+// llene la tabla (y la pasada de avisos, que procesa 40 por vuelta).
+const MAX_ALERTAS = 10;
+const MAX_TEXTO = 80;
+
 // ─── POST: crear alerta ───────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   try {
@@ -40,8 +46,8 @@ export async function POST(request: NextRequest) {
     }
 
     const pool = getPool();
-    const keyword = body.keyword?.trim() || "";
-    const location = body.location?.trim() || "";
+    const keyword = (body.keyword?.trim() || "").slice(0, MAX_TEXTO);
+    const location = (body.location?.trim() || "").slice(0, MAX_TEXTO);
     const frequency = body.frequency === "weekly" ? "weekly" : "daily";
     // Si ya tiene esa misma alerta, se actualiza la frecuencia en vez de crear
     // otra: dos alertas iguales mandaban dos avisos de lo mismo (auditoría del
@@ -52,6 +58,16 @@ export async function POST(request: NextRequest) {
       [user.id, keyword, location, frequency]
     );
     if (!yaExiste.rowCount) {
+      const { rows } = await pool.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM job_alerts WHERE user_id = $1 AND active = true`,
+        [user.id]
+      );
+      if ((rows[0]?.n ?? 0) >= MAX_ALERTAS) {
+        return NextResponse.json(
+          { error: `Ya tienes ${MAX_ALERTAS} alertas, el máximo. Quita alguna para añadir otra.` },
+          { status: 400 }
+        );
+      }
       await pool.query(
         `INSERT INTO job_alerts (user_id, keyword, location, frequency)
          VALUES ($1, $2, $3, $4)`,

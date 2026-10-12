@@ -2,6 +2,7 @@
  * /api/cursos/aviso — Encender y apagar el aviso de un curso.
  *
  * GET  ?slug=carretillero  → si lo tengo encendido
+ * GET  (sin slug)          → todos los que tengo encendidos (pantalla del perfil)
  * POST { slug, activo }    → lo enciendo o lo apago
  *
  * Quien lo enciende entra en el reparto diario de /api/cursos/alertas, que le
@@ -25,9 +26,24 @@ function admin() {
 
 export async function GET(req: NextRequest) {
   const slug = new URL(req.url).searchParams.get("slug");
-  if (!slug) return NextResponse.json({ error: "Falta slug" }, { status: 400 });
 
   const userId = await getUserId(req);
+
+  // Sin slug: la lista para el perfil, donde se ven y se apagan juntos. Van
+  // aparte de las alertas de empleo (/api/jobs/alertas): esto avisa de un
+  // curso concreto, aquello de ofertas.
+  if (!slug) {
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    const { data, error } = await admin()
+      .from("curso_aviso")
+      .select("curso_slug, curso_nombre")
+      .eq("user_id", userId)
+      .eq("activo", true)
+      .order("updated_at", { ascending: false });
+    if (error) return NextResponse.json({ error: "No se pudieron leer tus avisos" }, { status: 500 });
+    return NextResponse.json({ avisos: (data || []).map((a) => ({ slug: a.curso_slug, nombre: a.curso_nombre })) });
+  }
+
   // Sin sesión no es un error: la ficha es pública y el interruptor sale
   // apagado, invitando a entrar.
   if (!userId) return NextResponse.json({ sesion: false, activo: false });

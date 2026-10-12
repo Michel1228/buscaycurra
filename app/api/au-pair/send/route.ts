@@ -173,7 +173,8 @@ function buildAuPairEmailHTML(
   profile: AuPairProfile,
   familyName: string | undefined,
   personalMessage: string | undefined,
-  userName: string
+  userName: string,
+  rol = "Au Pair"
 ): string {
   const nombre = profile.nombre || userName;
   const greeting = familyName ? `Dear ${familyName},` : "Dear Host Family,";
@@ -282,7 +283,7 @@ function buildAuPairEmailHTML(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Au Pair Application — ${escapeHtml(nombre)}</title>
+  <title>${rol} Application — ${escapeHtml(nombre)}</title>
 </head>
 <body style="margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif;background:#f4f4f5;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 0;">
@@ -294,7 +295,7 @@ function buildAuPairEmailHTML(
           <tr>
             <td style="background:linear-gradient(135deg,#F97316,#ea580c);padding:32px 40px;text-align:center;">
               <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">
-                🌍 Au Pair Application
+                🌍 ${rol} Application
               </h1>
               <p style="color:rgba(255,255,255,0.9);margin:6px 0 0;font-size:14px;">
                 ${escapeHtml(nombre)} — ${escapeHtml(profile.nationality || "")}
@@ -307,7 +308,7 @@ function buildAuPairEmailHTML(
             <td style="padding:32px 40px 16px;">
               <p style="color:#1e293b;font-size:16px;font-weight:600;margin:0 0 4px;">${escapeHtml(greeting)}</p>
               <p style="color:#6b7280;font-size:14px;margin:0;">
-                ${escapeHtml(nombre)} has applied to become your Au Pair through BuscayCurra. Below is their complete profile.
+                ${escapeHtml(nombre)} has applied to become your ${rol} through BuscayCurra. Below is their complete profile.
               </p>
               ${personalMessageHtml}
             </td>
@@ -405,7 +406,7 @@ function buildAuPairEmailHTML(
           <tr>
             <td style="padding:0 40px 24px;">
               <p style="color:#6b7280;font-size:13px;margin:0;text-align:center;">
-                📎 Complete Au Pair profile attached as PDF
+                📎 Complete ${rol} profile attached as PDF
               </p>
             </td>
           </tr>
@@ -415,7 +416,7 @@ function buildAuPairEmailHTML(
             <td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
               <p style="color:#9ca3af;font-size:12px;margin:0;">
                 Sent via <a href="https://buscaycurra.es" style="color:#F97316;text-decoration:none;font-weight:600;">BuscayCurra</a>
-                — Au Pair matching platform
+                — Au Pair &amp; Live-in Nanny matching platform
               </p>
             </td>
           </tr>
@@ -453,10 +454,19 @@ export async function POST(request: NextRequest) {
       familyEmail: string;
       familyName?: string;
       personalMessage?: string;
+      modo?: "au_pair" | "live_in_nanny";
+      soloVer?: boolean;
     };
 
     const { familyEmail, familyName, personalMessage } = body;
-    if (!familyEmail || !familyEmail.includes("@")) {
+    // El rol se elige en la pantalla y no se guarda en el perfil. Antes todo
+    // salía como "Au Pair" aunque la persona buscara de Live-in Nanny.
+    const rol = body.modo === "live_in_nanny" ? "Live-in Nanny" : "Au Pair";
+    // VER ANTES DE ENVIAR (12 oct 2026). Devuelve el perfil exactamente como lo
+    // recibirá la familia (el HTML del PDF adjunto), sin enviar nada ni gastar
+    // cupo. La pantalla solo enseñaba el texto de la carta.
+    const soloVer = body.soloVer === true;
+    if (!soloVer && (!familyEmail || !familyEmail.includes("@"))) {
       return NextResponse.json({ error: "Email de la familia requerido" }, { status: 400 });
     }
 
@@ -505,8 +515,8 @@ export async function POST(request: NextRequest) {
       .gte("created_at", hoy.toISOString());
 
     // Sin excepcion para "empresa": ese plan tambien tiene tope (200/dia) y
-    // antes se lo saltaba entero.
-    if ((enviadosHoy || 0) >= limiteHoy) {
+    // antes se lo saltaba entero. Ver el perfil no envía nada: no cuenta.
+    if (!soloVer && (enviadosHoy || 0) >= limiteHoy) {
       return NextResponse.json(
         { error: `Límite diario de ${limiteHoy} envíos alcanzado` },
         { status: 429 }
@@ -522,7 +532,7 @@ export async function POST(request: NextRequest) {
     const auPairLetter = profile.letter_text || "";
     const coverLetter = `Dear ${familyName || "Host Family"},
 
-My name is ${userName} and I am interested in becoming your Au Pair.
+My name is ${userName} and I am interested in becoming your ${rol}.
 
 ${auPairLetter}
 
@@ -532,24 +542,28 @@ Warm regards,
 ${userName}`;
 
     // ── Generar PDF con plantilla visual ─────────────────────────────────
-    const pdfBuffer = await generateCVPdf(generarAuPairHTML(profile, coverLetter));
+    const htmlPerfil = generarAuPairHTML(profile, coverLetter);
+    const subjectLine = `${rol} Application — ${userName} from ${profile.nationality || "Spain"}`;
+    if (soloVer) {
+      return NextResponse.json({ html: htmlPerfil, asunto: subjectLine });
+    }
+    const pdfBuffer = await generateCVPdf(htmlPerfil);
 
     // ── Generar HTML del email ────────────────────────────────────────────
     const htmlBody = buildAuPairEmailHTML(
       profile,
       familyName,
       personalMessage,
-      userName
+      userName,
+      rol
     );
-
-    const subjectLine = `Au Pair Application — ${userName} from ${profile.nationality || "Spain"}`;
 
     // ── Registrar en cv_sends ────────────────────────────────────────────
     await adminClient.from("cv_sends").insert({
       user_id: userId,
       company_name: familyName || "Host Family",
       company_email: familyEmail.trim().toLowerCase(),
-      job_title: "Au Pair",
+      job_title: rol,
       status: "pendiente",
       sent_at: null,
     });
@@ -570,7 +584,7 @@ ${userName}`;
       subject: sanitizeEmailHeader(subjectLine),
       html: htmlBody,
       attachments: [{
-        filename: `AuPair_Profile_${userName.replace(/\s+/g, "_")}.pdf`,
+        filename: `${rol.replace(/\W+/g, "")}_Profile_${userName.replace(/\s+/g, "_")}.pdf`,
         content: pdfBuffer,
       }],
     });

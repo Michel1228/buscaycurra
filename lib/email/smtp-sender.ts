@@ -732,6 +732,37 @@ export function generarCartaHTML(
  * No es un boletín. Solo sale cuando hay ofertas de verdad que piden ese curso,
  * y como mucho una vez cada dos semanas por curso y persona.
  */
+/**
+ * Un curso que encaja con lo que dice el CV (lib/cursos/sugerencia-cv.ts).
+ * El texto lleva palabras del propio CV (puesto, empresa): va escapado.
+ */
+export async function sendCursoSugerenciaEmail(params: {
+  userEmail: string;
+  titulo: string;
+  mensaje: string;
+  cursoNombre: string;
+  /** La plaza concreta o, si no hay, la ficha del curso. */
+  destinoUrl: string;
+  conPlaza: boolean;
+  bajaUrl?: string | null;
+}): Promise<boolean> {
+  const header = headerGradient("🎓", "Un curso que encaja con tu CV", escaparHtml(params.cursoNombre));
+  const body = `
+    <p style="margin:0 0 24px;color:#cbd5e1;font-size:15px;line-height:1.7;">${escaparHtml(params.mensaje)}</p>
+    ${ctaButton(params.conPlaza ? "Ver la plaza →" : "Ver dónde sacarlo →", params.destinoUrl)}
+    <p style="margin:24px 0 0;text-align:center;color:#64748b;font-size:11px;line-height:1.7;">
+      Te llega porque tienes tu CV en BuscayCurra. Como mucho, una sugerencia cada dos semanas.
+      ${params.bajaUrl ? `<br><a href="${params.bajaUrl}" style="color:#94a3b8;text-decoration:underline;">No quiero sugerencias de cursos</a>` : ""}
+    </p>
+  `;
+  return enviarCorreo(
+    params.userEmail,
+    `🎓 ${params.titulo} — BuscayCurra`,
+    baseTemplate(header, body),
+    { bajaUrl: params.bajaUrl ?? null, puedeEsperar: true }
+  );
+}
+
 export async function sendCursoAlertaEmail(params: {
   userEmail: string;
   cursoNombre: string;

@@ -102,6 +102,9 @@ export default function AuPairProfilePage() {
 
   // ── Preview & Confirmación ──
   const [showPreview, setShowPreview] = useState(false);
+  // El perfil tal cual lo recibe la familia (el HTML del PDF adjunto).
+  const [perfilFinal, setPerfilFinal] = useState("");
+  const [cargandoPerfilFinal, setCargandoPerfilFinal] = useState(false);
   const [previewSubject, setPreviewSubject] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmData, setConfirmData] = useState<{familyName: string; email: string; subject: string; carta: string} | null>(null);
@@ -322,16 +325,16 @@ export default function AuPairProfilePage() {
   }, [nombre, age, nationality, ciudad, languages, paisDestino, childcareExperience, hobbies, availableFrom, tipoPerfil, nivelEducativo, duracionPreferida]);
 
   // ── Guardar ──
-  const guardar = useCallback(async () => {
+  const guardar = useCallback(async (): Promise<boolean> => {
     if (!letterText.trim()) {
       setError("Falta la carta «Dear Family»: escríbela en el paso 2, «Mi historia» (o genérala allí con IA).");
-      return;
+      return false;
     }
     setSaving(true);
     setError("");
 
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setError("Sesión expirada"); setSaving(false); return; }
+    if (!session) { setError("Sesión expirada"); setSaving(false); return false; }
 
     const res = await fetch("/api/au-pair/profile", {
       method: "POST",
@@ -372,9 +375,10 @@ export default function AuPairProfilePage() {
     if (json.success) {
       setMensaje(modo === "live_in_nanny" ? "Perfil Live-in Nanny guardado correctamente" : "Perfil Au Pair guardado correctamente");
       setTimeout(() => setMensaje(""), 4000);
-    } else {
-      setError(json.error || "Error al guardar");
+      return true;
     }
+    setError(json.error || "Error al guardar");
+    return false;
   }, [
     userId, nombre, letterText, age, nationality, ciudad, languages, childcareExperience,
     hasDrivingLicense, availableFrom, availableTo, dietaryInfo, hobbies,
@@ -507,6 +511,32 @@ export default function AuPairProfilePage() {
     }
   }
 
+  // VER EL PERFIL TERMINADO ANTES DE ENVIARLO (12 oct 2026). La familia recibe
+  // un PDF que monta el servidor con lo GUARDADO; aquí solo se veía el texto de
+  // la carta. Se guarda primero, para que lo que se ve sea lo que se enviaría,
+  // y se pide al servidor la misma plantilla (soloVer: no envía ni gasta cupo).
+  async function verPerfilFinal() {
+    if (cargandoPerfilFinal) return;
+    setCargandoPerfilFinal(true);
+    setEnvioError("");
+    try {
+      if (!(await guardar())) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/au-pair/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token || ""}` },
+        body: JSON.stringify({ soloVer: true, modo, familyName: familyName || undefined }),
+      });
+      const data = await res.json() as { html?: string; error?: string };
+      if (!res.ok || !data.html) throw new Error(data.error || "No se ha podido preparar la vista previa");
+      setPerfilFinal(data.html);
+    } catch (err) {
+      setEnvioError((err as Error).message);
+    } finally {
+      setCargandoPerfilFinal(false);
+    }
+  }
+
   async function enviarPerfil() {
     if (!familyEmail || !familyEmail.includes("@")) {
       setEnvioError("Introduce un email válido");
@@ -535,7 +565,7 @@ export default function AuPairProfilePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token || ""}`,
         },
-        body: JSON.stringify({ familyEmail, familyName: familyName || undefined }),
+        body: JSON.stringify({ familyEmail, familyName: familyName || undefined, modo }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar");
@@ -1307,6 +1337,15 @@ export default function AuPairProfilePage() {
               className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
             />
             <button
+              onClick={verPerfilFinal}
+              disabled={cargandoPerfilFinal}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+              style={{ border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e", background: "rgba(34,197,94,0.06)" }}
+            >
+              <Eye size={14} strokeWidth={1.8} />
+              {cargandoPerfilFinal ? "Preparando…" : "Ver mi perfil tal cual lo recibirán"}
+            </button>
+            <button
               onClick={enviarPerfil}
               disabled={enviandoPerfil || !familyEmail}
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50"
@@ -1375,6 +1414,10 @@ export default function AuPairProfilePage() {
               <div className="flex items-center gap-2">
                 <span style={{ color: "#64748b" }}>Adjunto:</span>
                 <span style={{ color: "#94a3b8" }}>{T.perfilCompleto}</span>
+                <button onClick={verPerfilFinal} disabled={cargandoPerfilFinal}
+                  className="ml-auto font-semibold underline disabled:opacity-50" style={{ color: "#22c55e" }}>
+                  {cargandoPerfilFinal ? "Preparando…" : "Verlo"}
+                </button>
               </div>
             </div>
 
@@ -1403,6 +1446,23 @@ export default function AuPairProfilePage() {
                 <Check size={13} strokeWidth={2.5} className="inline mr-1" />Confirmar envío
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: el perfil tal cual lo recibe la familia ── */}
+      {perfilFinal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3" style={{ background: "rgba(0,0,0,0.8)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setPerfilFinal(""); }}>
+          <div className="w-full max-w-3xl h-[90vh] flex flex-col rounded-xl overflow-hidden" style={{ background: "#111827", border: "1px solid #2d3142" }}>
+            <div className="flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: "1px solid #2d3142" }}>
+              <div className="min-w-0">
+                <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Así lo recibirá la familia</p>
+                <p className="text-[11px]" style={{ color: "#64748b" }}>Es el PDF que va adjunto, con lo que tienes guardado.</p>
+              </div>
+              <button onClick={() => setPerfilFinal("")} aria-label="Cerrar" style={{ color: "#94a3b8" }}><X size={18} strokeWidth={1.8} /></button>
+            </div>
+            <iframe title="Perfil tal cual lo recibe la familia" srcDoc={perfilFinal} sandbox="" className="flex-1 w-full" style={{ background: "#fff" }} />
           </div>
         </div>
       )}

@@ -15,6 +15,7 @@ import { isNativeIOS } from "@/lib/utils/platform";
 import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
 import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 import MisAlertas from "@/components/MisAlertas";
+import MisAvisosCursos from "@/components/MisAvisosCursos";
 
 interface PerfilData {
   nombre: string;
@@ -485,6 +486,8 @@ export default function PerfilPage() {
 
             {/* Alertas de empleo: antes no había dónde verlas ni quitarlas */}
             <MisAlertas />
+            {/* Los de cursos, aparte: no son alertas de ofertas */}
+            <MisAvisosCursos />
           </div>
         )}
 

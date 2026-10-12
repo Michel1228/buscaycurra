@@ -3377,6 +3377,95 @@ test("lo que falló en la auditoría con navegador sigue arreglado", () => {
   return malos.length === 0;
 });
 
+// ── 12 OCT 2026: ALERTAS, AU PAIR, GOOGLE Y CURSOS SEGÚN EL CV ─────────
+//
+// En el perfil solo se podían QUITAR alertas de empleo; crear una exigía ir al
+// buscador. Los avisos de cursos (otra cosa) no salían en ningún sitio.
+test("el perfil deja añadir y quitar alertas de empleo y, aparte, avisos de cursos", () => {
+  const alertas = leerFuente("components/MisAlertas.tsx");
+  const api = leerFuente("app/api/jobs/alertas/route.ts");
+  const cursos = leerFuente("components/MisAvisosCursos.tsx");
+  const perfil = leerFuente("app/app/perfil/page.tsx");
+  const aviso = leerFuente("app/api/cursos/aviso/route.ts");
+  const ok = {
+    "añadir alerta": alertas.includes('method: "POST"') && alertas.includes("Añadir alerta") && alertas.includes('method: "DELETE"'),
+    "tope de alertas": /MAX_ALERTAS = \d+/.test(api) && api.includes(">= MAX_ALERTAS"),
+    "avisos de cursos en el perfil": perfil.includes("<MisAvisosCursos />") && perfil.includes("<MisAlertas />"),
+    "lista de avisos de cursos": aviso.includes("if (!slug) {") && cursos.includes("Añadir aviso") && cursos.includes("cambiar(a.slug, false)"),
+  };
+  const malos = Object.entries(ok).filter(([, v]) => !v).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
+// La familia recibe un PDF que monta el servidor; la pantalla solo enseñaba el
+// texto de la carta. Y todo salía como "Au Pair" aunque fuera Live-in Nanny.
+test("au pair: se ve el perfil tal cual lo recibe la familia, sin gastar cupo, y con su rol", () => {
+  const ruta = leerFuente("app/api/au-pair/send/route.ts");
+  const pagina = leerFuente("app/app/au-pair/page.tsx");
+  const ok = {
+    "soloVer devuelve el HTML del PDF": /if \(soloVer\) \{\s*return NextResponse\.json\(\{ html: htmlPerfil/.test(ruta),
+    "ver no gasta cupo": ruta.includes("if (!soloVer && (enviadosHoy || 0) >= limiteHoy)"),
+    "rol de la persona": ruta.includes('body.modo === "live_in_nanny" ? "Live-in Nanny" : "Au Pair"') && !ruta.includes("`Au Pair Application — ${userName}"),
+    "botón y ventana": pagina.includes("Ver mi perfil tal cual lo recibirán") && pagina.includes("srcDoc={perfilFinal}") && pagina.includes("soloVer: true, modo"),
+    "se guarda antes de ver": pagina.includes("if (!(await guardar())) return;"),
+  };
+  const malos = Object.entries(ok).filter(([, v]) => !v).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
+// Search Console, 12 oct 2026: "Excluida por una etiqueta noindex" en páginas
+// del sitemap. Eran ofertas que caducaban antes de que Google pasara.
+test("el sitemap de ofertas no da ofertas que vayan a caducar antes de que Google pase", () => {
+  const s = leerFuente("app/sitemap-ofertas.xml/route.ts");
+  return /VIVA_AL_RASTREAR = `\("expiresAt" IS NULL OR "expiresAt" > NOW\(\) \+ INTERVAL '\d+ days'\)`/.test(s)
+    && (s.match(/AND \$\{VIVA_AL_RASTREAR\}/g) || []).length === 2;
+});
+
+// "Veo en tu CV que has trabajado de camarera…": el curso que le falta para lo
+// que ha trabajado, con la misma regla estricta que el correo de ofertas.
+test("cursos según el CV: el que falta para lo trabajado, nunca el que ya tiene, sin abusar", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-sugerencia-entrada.ts", salida = ".sello-sugerencia.cjs";
+  try {
+    writeFileSync(entrada, 'export { cursosQueEncajan, textoSugerencia } from "./lib/cursos/sugerencia-cv";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const slugs = (cv) => m.cursosQueEncajan(cv).map((c) => c.slug).join(",");
+    const casos = [
+      [slugs({ experiencia: [{ puesto: "Camarera", empresa: "Bar Pepe" }] }), "manipulador-alimentos"],
+      [slugs({ experiencia: [{ puesto: "Camarera" }], formacion: [{ titulo: "Manipulador de alimentos" }] }), ""],
+      [slugs({ experiencia: [{ puesto: "Conductor", empresa: "Taxi" }] }), ""],
+      [slugs({ experiencia: [{ puesto: "Mozo de almacén" }] }), "carretillero"],
+      [slugs(null), ""],
+      [slugs({ experiencia: "texto suelto" }), ""],
+    ];
+    const malos = casos.filter(([r, e]) => r !== e);
+    if (malos.length) console.log(`     ↳ ${JSON.stringify(malos)}`);
+    const c = m.cursosQueEncajan({ experiencia: [{ puesto: "Camarera", empresa: "Bar Pepe" }] })[0];
+    const t = m.textoSugerencia(c, { titulo: "Manipulador", municipio: "Tudela", provincia: "Navarra", inicio: "2026-11-03", horas: 10, modalidad: "presencial" }, { total: 23, zona: "Navarra" });
+    const textoOk = t.mensaje.startsWith("Veo en tu CV que has trabajado de camarera en Bar Pepe.") && t.mensaje.includes("3 de noviembre") && t.mensaje.includes("23 ofertas");
+    if (!textoOk) console.log(`     ↳ ${t.mensaje}`);
+    const ruta = leerFuente("app/api/cursos/sugerencias-cv/route.ts");
+    const freno = /DIAS_ENTRE_SUGERENCIAS = 14;/.test(ruta) && /MAX_POR_PASADA = \d+;/.test(ruta)
+      && ruta.includes("quedaSitioParaLoQuePuedeEsperar()") && ruta.includes("enlaceBajaSugerencias(cv.user_id)")
+      && ruta.includes("sinSugerencias(") && ruta.includes('get("simular") === "1"') && ruta.includes("secretIguales(");
+    if (!freno) console.log("     ↳ faltan los frenos de la ruta (14 días, tope, presupuesto, baja o secreto)");
+    const cron = /^40 \*\/3 \* \* \* .*sugerencias-cursos-cv\.sh/m.test(leerFuente("scripts/vps/crontab.txt"))
+      && leerFuente("scripts/vps/sugerencias-cursos-cv.sh").includes("/api/cursos/sugerencias-cv");
+    if (!cron) console.log("     ↳ no está en el crontab cada 3 horas");
+    const interruptor = leerFuente("components/MisAvisosCursos.tsx").includes("Sugerirme cursos según mi CV");
+    return malos.length === 0 && textoOk && freno && cron && interruptor;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

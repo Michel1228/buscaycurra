@@ -45,6 +45,16 @@ const POR_PAGINA = 25000;
 /** Mercado que se publica. Ampliar SOLO después de ver que funciona. */
 const PAIS = "es";
 
+/**
+ * SOLO OFERTAS QUE SEGUIRÁN VIVAS CUANDO GOOGLE LLEGUE. La página de una oferta
+ * caducada lleva noindex (app/empleo/oferta/[id]/page.tsx), y este sitemap solo
+ * miraba "isActive": Google recibía ofertas que caducaban antes de visitarlas y
+ * Search Console avisaba de "Excluida por una etiqueta noindex" en páginas del
+ * sitemap (correo del 12 oct 2026). Se dejan fuera las que caducan en menos de
+ * tres días: Google tarda días en pasar por cada URL.
+ */
+const VIVA_AL_RASTREAR = `("expiresAt" IS NULL OR "expiresAt" > NOW() + INTERVAL '3 days')`;
+
 function xml(cuerpo: string) {
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n${cuerpo}`, {
     headers: {
@@ -65,7 +75,7 @@ export async function GET(req: Request) {
       const { rows } = await pool.query(
         `SELECT count(*)::int AS total
            FROM "JobListing"
-          WHERE "isActive" = true AND lower(country) = $1`,
+          WHERE "isActive" = true AND lower(country) = $1 AND ${VIVA_AL_RASTREAR}`,
         [PAIS]
       );
       const total = rows[0]?.total ?? 0;
@@ -92,7 +102,7 @@ export async function GET(req: Request) {
     const { rows } = await pool.query(
       `SELECT id, "createdAt", "updatedAt"
          FROM "JobListing"
-        WHERE "isActive" = true AND lower(country) = $1
+        WHERE "isActive" = true AND lower(country) = $1 AND ${VIVA_AL_RASTREAR}
         ORDER BY "createdAt" DESC NULLS LAST
         LIMIT $2 OFFSET $3`,
       [PAIS, POR_PAGINA, n * POR_PAGINA]
