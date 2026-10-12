@@ -3420,7 +3420,8 @@ test("au pair: se ve el perfil tal cual lo recibe la familia, sin gastar cupo, y
 test("el sitemap de ofertas no da ofertas que vayan a caducar antes de que Google pase", () => {
   const s = leerFuente("app/sitemap-ofertas.xml/route.ts");
   return /VIVA_AL_RASTREAR = `\("expiresAt" IS NULL OR "expiresAt" > NOW\(\) \+ INTERVAL '\d+ days'\)`/.test(s)
-    && (s.match(/AND \$\{VIVA_AL_RASTREAR\}/g) || []).length === 2;
+    && (s.match(/AND \$\{VIVA_AL_RASTREAR\}/g) || []).length === 1
+    && /ORDER BY "createdAt" DESC NULLS LAST/.test(s.slice(s.indexOf("AND ${VIVA_AL_RASTREAR}")));
 });
 
 // "Veo en tu CV que has trabajado de camarera…": el curso que le falta para lo

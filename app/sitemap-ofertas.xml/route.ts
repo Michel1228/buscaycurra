@@ -54,6 +54,10 @@ const PAIS = "es";
  * tres días: Google tarda días en pasar por cada URL.
  */
 const VIVA_AL_RASTREAR = `("expiresAt" IS NULL OR "expiresAt" > NOW() + INTERVAL '3 days')`;
+// Solo en las URLs, no en el recuento de páginas del índice: con el filtro,
+// el recuento tiene que leer cada fila y, recién arrancado el servidor, pasó
+// de los 15 s y el sitemap devolvió 503 (12 oct 2026). Sin él sale del índice.
+// Contar alguna de más solo puede dejar la última página algo más corta.
 
 function xml(cuerpo: string) {
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n${cuerpo}`, {
@@ -75,7 +79,7 @@ export async function GET(req: Request) {
       const { rows } = await pool.query(
         `SELECT count(*)::int AS total
            FROM "JobListing"
-          WHERE "isActive" = true AND lower(country) = $1 AND ${VIVA_AL_RASTREAR}`,
+          WHERE "isActive" = true AND lower(country) = $1`,
         [PAIS]
       );
       const total = rows[0]?.total ?? 0;
