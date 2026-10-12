@@ -139,7 +139,7 @@ export function textoSugerencia(
     : `Tu CV es de ${puesto}.`;
   const falta = c.obligatorio
     ? `Para ese trabajo es obligatorio el curso de ${c.nombre} y en tu CV no aparece.`
-    : `Para ese trabajo piden mucho el curso de ${c.nombre} y en tu CV no aparece.`;
+    : `Para ese trabajo, el curso de ${c.nombre} te hace mejor candidato y en tu CV no aparece.`;
   let donde: string;
   if (plaza) {
     const lugar = plaza.modalidad === "online" ? "online" : `en ${[plaza.municipio, plaza.provincia].filter(Boolean).join(", ")}`;
