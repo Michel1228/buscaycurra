@@ -33,6 +33,7 @@
  */
 
 import { getPool } from "@/lib/db";
+import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -76,14 +77,26 @@ export async function GET(req: Request) {
   try {
     // ── Índice: cuántos hijos hacen falta ──────────────────────────────────
     if (pagina === null) {
-      const { rows } = await pool.query(
-        `SELECT count(*)::int AS total
-           FROM "JobListing"
-          WHERE "isActive" = true AND lower(country) = $1`,
-        [PAIS]
-      );
-      const total = rows[0]?.total ?? 0;
-      const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+      // NUNCA UN 503 POR CONTAR. Recién arrancado el servidor (cada despliegue)
+      // el recuento pasaba de los 15 s y el índice entero fallaba, aunque las
+      // páginas funcionaran (12 oct 2026). Se guarda el último recuento bueno y,
+      // si contar falla, se usa ese; sin ninguno, 4 páginas (unas 100.000
+      // ofertas). Una página de más solo sale vacía.
+      let total: number | null = null;
+      try {
+        const { rows } = await pool.query(
+          `SELECT count(*)::int AS total
+             FROM "JobListing"
+            WHERE "isActive" = true AND lower(country) = $1`,
+          [PAIS]
+        );
+        total = rows[0]?.total ?? 0;
+        await cacheSet("sitemap-ofertas:total", String(total), 7 * 86400);
+      } catch (e) {
+        console.warn("[sitemap-ofertas] recuento:", (e as Error).message, "— uso el último guardado");
+        total = Number(await cacheGet("sitemap-ofertas:total")) || null;
+      }
+      const paginas = total === null ? 4 : Math.max(1, Math.ceil(total / POR_PAGINA));
 
       const hijos = Array.from({ length: paginas }, (_, i) =>
         `  <sitemap>\n    <loc>${BASE_URL}/sitemap-ofertas.xml?page=${i}</loc>\n` +
