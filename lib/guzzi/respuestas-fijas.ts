@@ -63,6 +63,27 @@ export function respuestaOfertasMostradas(mensaje: string, history: Mensaje[], t
   };
 }
 
+/**
+ * El modelo gratuito (gpt-oss-120b) a veces contesta con voseo ("¿Y vos?",
+ * "tenés", "decime") aunque se le pida "tú" (14 oct 2026: una de cada tres
+ * pruebas). Para quien escribe desde España suena raro, así que se cambian las
+ * formas más comunes. Solo palabras enteras, en minúscula o empezando frase.
+ */
+const mayuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const VOSEO: Array<[RegExp, string]> = [
+  [/\b(a|para|de|por) vos\b/g, "$1 ti"], [/\bcon vos\b/g, "contigo"], [/\bvos\b/g, "tú"], [/\bVos\b/g, "Tú"], [/\bsos\b/g, "eres"],
+  ...Object.entries({
+    tenés: "tienes", querés: "quieres", podés: "puedes", necesitás: "necesitas", sabés: "sabes", buscás: "buscas",
+    hacés: "haces", pensás: "piensas", preferís: "prefieres", venís: "vienes", decís: "dices", trabajás: "trabajas",
+    vivís: "vives", contás: "cuentas", encontrás: "encuentras", decime: "dime", contame: "cuéntame", avisame: "avísame",
+    escribime: "escríbeme", pasame: "pásame", mandame: "mándame", fijate: "fíjate", mirá: "mira", tené: "ten",
+  }).flatMap(([v, t]) => [[v, t], [mayuscula(v), mayuscula(t)]])
+    .map(([v, t]): [RegExp, string] => [new RegExp(`(?<![\\wáéíóúñÁÉÍÓÚÑ])${v}(?![\\wáéíóúñ])`, "g"), t]),
+];
+export function sinVoseo(texto: string): string {
+  return VOSEO.reduce((t, [re, tu]) => t.replace(re, tu), texto);
+}
+
 /** El atajo "Enviar CV automático": cómo se manda el CV de verdad en la app. */
 export function textoEnvioAutomatico(tieneCV: boolean): string {
   return "📧 **Así mando tu CV a empresas:**\n\n"

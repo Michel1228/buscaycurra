@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA, PROMPT_MODO_CV, temasParaLaConversacion } from "@/lib/guzzi/prompts";
 import { entenderMensaje, hayQueEntender, refiereAOfertasMostradas } from "@/lib/guzzi/entender";
-import { respuestaOfertasMostradas, textoEnvioAutomatico, TEXTO_INFO_AU_PAIR } from "@/lib/guzzi/respuestas-fijas";
+import { respuestaOfertasMostradas, textoEnvioAutomatico, TEXTO_INFO_AU_PAIR, sinVoseo } from "@/lib/guzzi/respuestas-fijas";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
 import { textoNegociosLocales, propuestaPendiente, negocioElegido } from "@/lib/guzzi/envio-local";
 import { extraerCorreo, empresaDelCorreo, empresaDelTexto, puestoDelTexto, textoPropuesta, propuestaCorreoPendiente, respuestaAPropuesta, type PropuestaCorreo } from "@/lib/guzzi/envio-correo";
@@ -2199,7 +2199,8 @@ El candidato tiene mucha experiencia.
       contarFalloGuzzi("sin-ia");
       return NextResponse.json({ reply: localReply(intent, cvParsed) });
     }
-    let reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
+    // sinVoseo: el modelo gratuito a veces contesta "¿Y vos?", "tenés", "decime".
+    let reply = sinVoseo(rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim()) || localReply(intent, cvParsed);
 
     // Si aun así promete una búsqueda ("voy a buscar…, un momento"), la persona
     // se queda esperando algo que no llega: se le dice cómo pedirla.

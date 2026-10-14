@@ -789,11 +789,15 @@ test("Guzzi entiende los atajos, 'a todas' y los puestos que no lo son", async (
     const e = g.parseEntendido?.('Aquí va: {"accion":"buscar_ofertas","puesto":"camarero","lugar":"Londres","pais":"gb"}');
     if (e?.pais !== "uk" || e?.puesto !== "camarero") fallos.push(`la respuesta del modelo no se lee bien: ${JSON.stringify(e)}`);
     if (g.parseEntendido?.('{"accion":"borrar_todo"}') !== null) fallos.push("acepta una acción que no existe");
+    // El modelo gratuito a veces contesta con voseo aunque se le pida "tú".
+    const tuteo = g.sinVoseo?.("¿Y vos? Si tenés dudas, decime y te busco algo para vos.");
+    if (tuteo !== "¿Y tú? Si tienes dudas, dime y te busco algo para ti.") fallos.push(`el voseo no se corrige: ${tuteo}`);
+    if (g.sinVoseo?.("Tienes razón, puedes mirar las ofertas.") !== "Tienes razón, puedes mirar las ofertas.") fallos.push("sinVoseo cambia el tuteo normal");
     fallos.forEach((f) => console.log(`     ↳ ${f}`));
     const chat = leerFuente("app/api/gusi/chat/route.ts");
     const BS = String.fromCharCode(92);
     const ruta = chat.includes("refiereAOfertasMostradas(message, history)") && chat.includes("const puestoDelCV")
-      && chat.includes('preIntent === "envio_auto_info"') && chat.includes("TEXTO_INFO_AU_PAIR")
+      && chat.includes('preIntent === "envio_auto_info"') && chat.includes("TEXTO_INFO_AU_PAIR") && chat.includes("sinVoseo(rawReply")
       && !chat.includes("de" + BS + BS + "s+limpieza") && chat.includes("🏢 **${sectorRaw}** en **${cityFromSector}**");
     if (!ruta) console.log("     ↳ el chat no usa lo nuevo (ofertas enseñadas, prefijo del CV, atajos o la expresión de sectores)");
     return fallos.length === 0 && ruta;
