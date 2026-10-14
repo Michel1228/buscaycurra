@@ -26,6 +26,8 @@ interface Props {
   dietaryInfo: string;
   references: AuPairReference[];
   tipoPerfil: "joven_estudiante" | "con_experiencia" | "profesional_cambio";
+  /** Au Pair o Live-in Nanny: antes decía "Au Pair" siempre. */
+  modo?: "au_pair" | "live_in_nanny";
 }
 
 export default function AuPairPlantilla({
@@ -34,8 +36,9 @@ export default function AuPairPlantilla({
   photos, paisDestino, nivelEducativo, duracionPreferida,
   availableFrom, hasDrivingLicense, fumador,
   primerosAuxilios, sabeNadar, dietaryInfo,
-  references, tipoPerfil,
+  references, tipoPerfil, modo = "au_pair",
 }: Props) {
+  const rol = modo === "live_in_nanny" ? "Live-in Nanny" : "Au Pair";
   const pais = PAISES[paisDestino];
   const paisOrigen = PAISES[nationality];
 
@@ -56,7 +59,7 @@ export default function AuPairPlantilla({
       <div className="relative" style={{ background: "linear-gradient(135deg, #1a3d34 0%, #2d5a4e 100%)" }}>
         <div className="p-8 sm:p-10">
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            {nombre || (age ? `Au Pair, ${age} años` : "Au Pair Profile")}
+            {nombre || (age ? `${rol}, ${age} años` : `${rol} Profile`)}
           </h1>
           <p className="text-xs text-white/60 uppercase tracking-[2px] mt-1">{tipoLabel}</p>
           <div className="flex flex-wrap gap-4 mt-4 text-xs text-white/80">
@@ -94,7 +97,7 @@ export default function AuPairPlantilla({
               <div key={url} className={`relative rounded-lg overflow-hidden bg-gray-200 shadow-sm ${
                 i === 0 && photos.length >= 3 ? "sm:col-span-2 sm:row-span-2" : ""
               } ${photos.length === 2 ? "aspect-[3/4]" : photos.length >= 5 ? "aspect-square" : "aspect-[4/3]"}`}>
-                <img src={url} alt={`Au Pair photo ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                <img src={url} alt={`${rol} photo ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
                 {i === 0 && (
                   <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[9px] font-bold" style={{ background: "#22c55e", color: "#000" }}>
                     MAIN
@@ -182,7 +185,7 @@ export default function AuPairPlantilla({
 
       {/* ── Footer ── */}
       <div className="px-8 sm:px-10 py-4 flex justify-between items-center text-[10px] text-gray-400" style={{ background: "#f8f6f0", borderTop: "1px solid #e8e4d9" }}>
-        <span className="uppercase tracking-wider">Au Pair Profile · {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span>
+        <span className="uppercase tracking-wider">{rol} Profile · {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span>
         {pais && (
           <span className="px-3 py-1 rounded-full text-[10px] font-bold text-white" style={{ background: "#2d5a4e" }}>
             {pais.bandera} {pais.nombre}

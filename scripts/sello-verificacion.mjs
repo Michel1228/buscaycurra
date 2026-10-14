@@ -3485,6 +3485,24 @@ test("cursos según el CV: el que falta para lo trabajado, nunca el que ya tiene
   }
 });
 
+// 14 oct 2026: la plantilla de Au Pair / Live-in Nanny no se podía ver a
+// pantalla completa, "Ver carta" no enseñaba nada, "Descargar PDF" no hacía
+// nada sin "Ver carta" antes (y no mandaba la sesión), y la plantilla decía
+// "Au Pair" aunque fuera Live-in Nanny.
+test("au pair: plantilla y carta a pantalla completa, PDF que descarga y rol correcto", () => {
+  const p = leerFuente("app/app/au-pair/page.tsx");
+  const t = leerFuente("components/AuPairPlantilla.tsx");
+  const ok = {
+    "botón de pantalla completa": p.includes('onClick={() => setVistaCompleta("plantilla")}') && p.includes("{vistaCompleta && ("),
+    "ver carta la enseña": /function verCarta\(\) \{[\s\S]{0,200}setVistaCompleta\("carta"\)/.test(p) && p.includes("srcDoc={previewHTML}"),
+    "descargar monta la carta y usa el camino del editor": /async function descargarCarta\(\) \{[\s\S]{0,300}const html = construirCarta\(\);[\s\S]{0,500}descargarCVComoPDF\(html/.test(p),
+    "la plantilla recibe el rol": (p.match(/modo=\{modo\}/g) || []).length >= 2 && t.includes('modo === "live_in_nanny" ? "Live-in Nanny" : "Au Pair"') && !t.includes(">Au Pair Profile ·"),
+  };
+  const malos = Object.entries(ok).filter(([, v]) => !v).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

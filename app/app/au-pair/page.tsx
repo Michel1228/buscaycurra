@@ -13,6 +13,7 @@ import {
 } from "@/lib/au-pair";
 import { NACIONALIDADES, ESTATUS_RESIDENCIA } from "@/lib/au-pair-legal-data";
 import { PAISES } from "@/lib/paises";
+import { descargarCVComoPDF } from "@/lib/cv-generator/descargar-pdf";
 import AuPairPlantilla from "@/components/AuPairPlantilla";
 import AuPairComparativaLegal from "@/components/AuPairComparativaLegal";
 import AuPairCalculadoraCostes from "@/components/AuPairCalculadoraCostes";
@@ -75,6 +76,11 @@ export default function AuPairProfilePage() {
   const [generandoIA, setGenerandoIA] = useState(false);
   const [auPairStats, setAuPairStats] = useState({ hoy: 0, limiteHoy: 2, disponibles: 2, plan: "free" });
   const [previewHTML, setPreviewHTML] = useState("");
+  // PANTALLA COMPLETA (14 oct 2026). "Ver carta" preparaba la carta pero no se
+  // enseñaba en ningún sitio (la ventana que la mostraba ya no existía), y la
+  // plantilla solo se veía dentro de un recuadro de 80 % de alto, mal en el
+  // móvil. Ahora las dos se abren a pantalla completa.
+  const [vistaCompleta, setVistaCompleta] = useState<"plantilla" | "carta" | null>(null);
   const [showPlantilla, setShowPlantilla] = useState(true);
   const [descargandoCarta, setDescargandoCarta] = useState(false);
   const iframeCartaRef = useRef<HTMLIFrameElement>(null);
@@ -386,8 +392,8 @@ export default function AuPairProfilePage() {
   ]);
 
   // ── Preview carta ──
-  function verCarta() {
-    if (!letterText.trim()) { setError("Escribe o genera tu carta antes de previsualizar."); return; }
+  function construirCarta(): string | null {
+    if (!letterText.trim()) { setError("Escribe o genera tu carta antes de previsualizar."); return null; }
     const pais = PAISES[paisDestino];
     const rolCarta = modo === "live_in_nanny" ? "Live-in Nanny" : "Au Pair";
 
@@ -480,32 +486,31 @@ export default function AuPairProfilePage() {
 </div>
 </body>
 </html>`;
-    setPreviewHTML(html);
+    return html;
   }
 
+  function verCarta() {
+    const html = construirCarta();
+    if (!html) return;
+    setPreviewHTML(html);
+    setVistaCompleta("carta");
+  }
+
+  // Antes solo descargaba si se había pulsado "Ver carta" (si no, no hacía
+  // nada) y no mandaba la sesión, que el generador de PDF exige. Ahora monta la
+  // carta en el momento y usa el mismo camino que el editor de CV, que también
+  // funciona en el iPhone y explica el fallo si lo hay.
   async function descargarCarta() {
-    if (!previewHTML || descargandoCarta) return;
+    if (descargandoCarta) return;
+    const html = construirCarta();
+    if (!html) return;
+    setPreviewHTML(html);
     setDescargandoCarta(true);
     try {
-      const res = await fetch("/api/cv/pdf-template", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html: previewHTML }),
-      });
-      if (!res.ok) throw new Error();
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = modo === "live_in_nanny" ? `Carta_Nanny_${nombre || "BuscayCurra"}.pdf` : `Carta_AuPair_${nombre || "BuscayCurra"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch {
-      if (iframeCartaRef.current?.contentWindow) {
-        iframeCartaRef.current.contentWindow.print();
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const fallo = await descargarCVComoPDF(html, session?.access_token || "",
+        modo === "live_in_nanny" ? `Carta_Nanny_${nombre || "BuscayCurra"}` : `Carta_AuPair_${nombre || "BuscayCurra"}`);
+      if (fallo) setError(fallo);
     } finally {
       setDescargandoCarta(false);
     }
@@ -1204,6 +1209,9 @@ export default function AuPairProfilePage() {
               <button onClick={() => setShowPlantilla(!showPlantilla)} className="text-xs px-3 py-1.5 rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
                 {showPlantilla ? "Ocultar" : "Mostrar"}
               </button>
+              <button onClick={() => setVistaCompleta("plantilla")} className="text-xs px-3 py-1.5 rounded-lg" style={{ border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}>
+                ⛶ Pantalla completa
+              </button>
               <button onClick={descargarCarta} disabled={descargandoCarta} className="text-xs font-semibold px-4 py-1.5 rounded-lg disabled:opacity-60" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
                 {descargandoCarta ? "Generando PDF..." : "⬇ Descargar PDF"}
               </button>
@@ -1232,6 +1240,7 @@ export default function AuPairProfilePage() {
                 dietaryInfo={dietaryInfo}
                 references={references}
                 tipoPerfil={tipoPerfil}
+                modo={modo}
               />
             </div>
           )}
@@ -1447,6 +1456,60 @@ export default function AuPairProfilePage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── PANTALLA COMPLETA: la plantilla en vivo o la carta ── */}
+      {vistaCompleta && (
+        <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: "#0f1117" }}>
+          <div className="flex items-center justify-between gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid #2d3142" }}>
+            <p className="text-sm font-bold truncate" style={{ color: "#f1f5f9" }}>
+              {vistaCompleta === "carta" ? "Tu carta" : modo === "live_in_nanny" ? "Tu perfil Live-in Nanny" : "Tu perfil Au Pair"}
+            </p>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button onClick={descargarCarta} disabled={descargandoCarta}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-60"
+                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                {descargandoCarta ? "Generando…" : "⬇ PDF"}
+              </button>
+              <button onClick={() => setVistaCompleta(null)} aria-label="Cerrar" className="p-1.5 rounded-lg" style={{ color: "#94a3b8", border: "1px solid #2d3142" }}>
+                <X size={18} strokeWidth={1.8} />
+              </button>
+            </div>
+          </div>
+          {error && <p className="px-4 pt-2 text-xs flex-shrink-0" style={{ color: "#ef4444" }}>{error}</p>}
+          {vistaCompleta === "carta" ? (
+            <iframe ref={iframeCartaRef} title="Tu carta a pantalla completa" srcDoc={previewHTML}
+              sandbox="allow-same-origin allow-modals" className="flex-1 w-full" style={{ background: "#fff" }} />
+          ) : (
+            <div className="flex-1 overflow-y-auto p-2 sm:p-6">
+              <div className="max-w-3xl mx-auto rounded-xl overflow-hidden">
+                <AuPairPlantilla
+                  nombre={nombre}
+                  age={age}
+                  nationality={nationality}
+                  ciudad={ciudad}
+                  languages={languages}
+                  childcareExperience={childcareExperience}
+                  hobbies={hobbies}
+                  letterText={letterText}
+                  photos={photos}
+                  paisDestino={paisDestino}
+                  nivelEducativo={nivelEducativo}
+                  duracionPreferida={duracionPreferida}
+                  availableFrom={availableFrom}
+                  hasDrivingLicense={hasDrivingLicense}
+                  fumador={fumador}
+                  primerosAuxilios={primerosAuxilios}
+                  sabeNadar={sabeNadar}
+                  dietaryInfo={dietaryInfo}
+                  references={references}
+                  tipoPerfil={tipoPerfil}
+                  modo={modo}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
