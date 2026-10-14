@@ -210,7 +210,7 @@ export function temasParaLaConversacion(mensaje: string, anteriores: string[] = 
 /**
  * "Crear mi CV" en el chat (el modo que el chat llama "entrevista"). Antes el
  * modelo no sabía que estaba en ese modo y las respuestas se tomaban por
- * búsquedas: "Recepcionista en el Meliá de Madrid, 2019-2022" sacaba ofertas.
+ * búsquedas: "Recepcionista en un hotel de Sevilla, 2019-2022" sacaba ofertas.
  */
 export const PROMPT_MODO_CV = `
 

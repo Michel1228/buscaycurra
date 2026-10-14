@@ -4,14 +4,14 @@
  * POR QUÉ (auditoría del 14 oct 2026 sobre 474 mensajes reales). Guzzi decide
  * qué hacer con reglas escritas a mano (lib/guzzi/intents.ts): "busco X en Y".
  * Lo que no encaja en la forma esperada cae donde no toca:
- *   · "Operador de logística em Lisboa", "Limpieza, logística, cuidadora",
- *     "Valladolid" (respondiendo a "¿dónde?") → la charla libre, y el modelo
+ *   · "Mozo de almacén em Oporto", "Limpieza, hostelería, cuidado de mayores",
+ *     "Salamanca" (respondiendo a "¿dónde?") → la charla libre, y el modelo
  *     contestaba "Voy a buscar ofertas… un momento" sin poder buscar nada.
- *   · "Hola buenas soy un chico español y estoy buscando trabajo en Italia de
- *     electricista" → buscaba el puesto "buenas soy un chico español y estoy
+ *   · "Hola, soy un chaval de Murcia y estoy buscando curro en Italia de
+ *     fontanero" → buscaba el puesto "soy un chaval de murcia y estoy
  *     buscando".
- *   · "Quiero saber con cuántas ofertas cuenta la aplicación en Suiza" → el
- *     puesto "saber con cuantas ofertas cuenta la aplicacion", sin resultados,
+ *   · "Quiero saber cuántas ofertas tiene la app en Suiza" → el puesto
+ *     "saber cuantas ofertas tiene la app", sin resultados,
  *     y respuesta "Basándome en tu CV (último puesto: …)".
  *
  * Aquí, un modelo pequeño y gratuito (Groq, gpt-oss-20b: su cupo es aparte del

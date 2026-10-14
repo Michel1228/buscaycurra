@@ -1193,14 +1193,14 @@ El candidato tiene mucha experiencia.
     }
 
     // "Crear mi CV" (el chat lo manda como mode "entrevista"): lo que escribe
-    // son respuestas para su CV. "Recepcionista en el Meliá de Madrid,
+    // son respuestas para su CV. "Recepcionista en un hotel de Sevilla,
     // 2019-2022" se tomaba por una búsqueda y le salían ofertas a mitad de la
     // entrevista. Solo se busca si lo pide con esas palabras.
     const enModoCV = mode === "entrevista" && !/\b(busca|buscar|busco|buscame|búscame|ofertas?)\b/i.test(message);
     const preIntent = enModoCV ? "chat" : detectIntent(message, history);
 
     // -- Ofertas que Guzzi ya le ha enseñado ("a todas", "la primera") --------
-    // Antes "quisiera enviar mi curriculum a todas" se tomaba por el nombre de
+    // Antes "quiero mandar el curriculum a todas" se tomaba por el nombre de
     // una empresa ("Todas") y se buscaba en Google. Ver lib/guzzi/entender.ts.
     if (!enModoCV && !/^(send_cv_local_confirm|enviar_correo)/.test(preIntent) && refiereAOfertasMostradas(message, history)) {
       return NextResponse.json(respuestaOfertasMostradas(message, history, !!cvData));
@@ -1586,9 +1586,9 @@ El candidato tiene mucha experiencia.
     // -- Intent: buscar trabajo -----------------------------------------------
     let intent = enModoCV ? "chat" : detectIntent(message, history);
 
-    // Lo que las reglas no reconocen ("Operador de logística em Lisboa",
-    // "Valladolid" tras preguntarle dónde), o un puesto que no lo parece ("buenas
-    // soy un chico español y estoy buscando"), lo lee un modelo pequeño y
+    // Lo que las reglas no reconocen ("Mozo de almacén em Oporto",
+    // "Salamanca" tras preguntarle dónde), o un puesto que no lo parece ("soy un
+    // chaval de Murcia y estoy buscando"), lo lee un modelo pequeño y
     // gratuito (lib/guzzi/entender.ts). Si no contesta, todo sigue como antes.
     const entendido = !enModoCV && (mode === "chat" || mode === "entrevista") && hayQueEntender(intent, message)
       ? await entenderMensaje(message, history)
@@ -1598,7 +1598,7 @@ El candidato tiene mucha experiencia.
     }
     if (entendido?.accion === "buscar_ofertas" || entendido?.accion === "contar_ofertas") intent = "buscar";
     // Las reglas veían una búsqueda pero el puesto era basura y el modelo dice
-    // que es otra cosa ("convierte el currículum en PDF"): que conteste la IA.
+    // que es otra cosa ("pásame el currículum a PDF"): que conteste la IA.
     else if (entendido?.accion === "otra" && intent === "buscar") intent = "chat";
     const quiereContar = entendido?.accion === "contar_ofertas";
 
