@@ -733,9 +733,13 @@ test("Guzzi cabe en el plan gratuito y no promete búsquedas que no hace", async
     if (!completo.includes("el limite del tratado es DIARIO")) fallos.push("se perdió el límite diario del au pair");
     fallos.forEach((f) => console.log(`     ↳ ${f}`));
     const chat = leerFuente("app/api/gusi/chat/route.ts");
+    // Y que si vuelve a pasar, el centinela lo vea: el chat cuenta cada caso en
+    // Redis y el centinela lo lee cada mañana.
     const ruta = chat.includes("temasParaLaConversacion(message") && chat.includes("PROMPT_MODO_CV")
-      && /voy a buscar\|d\[ée\]jame buscar/.test(chat);
-    if (!ruta) console.log("     ↳ el chat no usa los temas, el modo CV o la red de seguridad de 'voy a buscar'");
+      && /voy a buscar\|d\[ée\]jame buscar/.test(chat)
+      && chat.includes('contarFalloGuzzi("sin-ia")') && chat.includes('contarFalloGuzzi("groq-413")')
+      && leerFuente("app/api/admin/centinela/route.ts").includes("guzzi:fallo:${t}:${d}");
+    if (!ruta) console.log("     ↳ el chat no usa los temas, el modo CV, la red de seguridad de 'voy a buscar' o los contadores del centinela");
     return fallos.length === 0 && ruta;
   } catch (e) {
     console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);

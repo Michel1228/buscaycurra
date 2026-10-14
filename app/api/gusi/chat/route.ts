@@ -2131,7 +2131,11 @@ El candidato tiene mucha experiencia.
             // 413 = la petición entera no cabe en el límite del plan gratuito
             // (8.000 tokens por minuto). Reintentar no la hace más pequeña: solo
             // añadía casi un segundo de espera antes de pasar al siguiente.
-            if (res.status === 413) { console.error("[Guzzi] Groq 413: la petición no cabe en el plan gratuito"); break; }
+            if (res.status === 413) {
+              console.error("[Guzzi] Groq 413: la petición no cabe en el plan gratuito");
+              contarFalloGuzzi("groq-413");
+              break;
+            }
             console.error("[Guzzi] Groq HTTP", res.status, detalle);
           }
         } catch (e) { console.error("[Guzzi] Groq error:", (e as Error).message); }
@@ -2180,7 +2184,10 @@ El candidato tiene mucha experiencia.
         if (res.ok) {
           const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
           rawReply = data.choices?.[0]?.message?.content || "";
-          if (rawReply) console.log("[Guzzi] respondido por OpenAI (DeepSeek y Groq caidos)");
+          if (rawReply) {
+            console.log("[Guzzi] respondido por OpenAI (DeepSeek y Groq caidos)");
+            contarFalloGuzzi("respaldo-openai");
+          }
         } else {
           console.error("[Guzzi] OpenAI HTTP", res.status);
         }
@@ -2189,6 +2196,7 @@ El candidato tiene mucha experiencia.
 
     if (!rawReply) {
       console.error("[Guzzi] AI call failed — DeepSeek, Groq y OpenAI sin respuesta. Falling back to localReply.");
+      contarFalloGuzzi("sin-ia");
       return NextResponse.json({ reply: localReply(intent, cvParsed) });
     }
     let reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
@@ -2270,6 +2278,19 @@ async function consultaConMargen<R extends Record<string, unknown>>(sql: string,
  * en X" de memoria: o lo ha contado, o no lo dice. Se cuentan todos los países
  * de una vez (unos 10 s) y se guardan: ver consultaGuardada.
  */
+/**
+ * Cuenta por día lo que antes solo quedaba en el registro del contenedor, que
+ * no lee nadie: Groq rechazando la petición por tamaño, el respaldo de pago
+ * contestando y Guzzi sin ninguna IA (respuesta enlatada). El centinela lo
+ * mira cada mañana y avisa por correo (app/api/admin/centinela).
+ */
+function contarFalloGuzzi(tipo: "groq-413" | "respaldo-openai" | "sin-ia"): void {
+  const dia = new Date().toISOString().slice(0, 10);
+  import("@/lib/cache/redis-client")
+    .then(({ incrementar }) => incrementar(`guzzi:fallo:${tipo}:${dia}`, 8 * 86400))
+    .catch(() => { /* sin Redis no se cuenta, pero se contesta igual */ });
+}
+
 async function ofertasPorPais(): Promise<Record<string, number> | null> {
   return consultaGuardada("guzzi:ofertas-por-pais", async () => {
     const filas = await consultaConMargen<{ pais: string; n: string }>(

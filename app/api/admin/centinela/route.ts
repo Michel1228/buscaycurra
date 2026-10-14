@@ -526,6 +526,29 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  // ── 22. Guzzi contesta con la IA, no con textos enlatados ──────────────────
+  // 14 oct 2026: las instrucciones de Guzzi no cabían en el plan gratuito de
+  // Groq (413 en TODAS las conversaciones gratuitas) y todo dependía del
+  // respaldo de pago; si ese fallaba, salía un texto enlatado. Solo quedaba en
+  // el registro del contenedor. El chat lo cuenta ahora por día en Redis.
+  try {
+    const { mget } = await import("@/lib/cache/redis-client");
+    const dias = [1, 0].map((d) => new Date(Date.now() - d * 86400000).toISOString().slice(0, 10));
+    const tipos = ["sin-ia", "groq-413", "respaldo-openai"];
+    const valores = await mget(dias.flatMap((d) => tipos.map((t) => `guzzi:fallo:${t}:${d}`)));
+    const suma = (t: string) => dias.reduce((n, _, i) => n + (parseInt(valores[i * tipos.length + tipos.indexOf(t)] || "0", 10) || 0), 0);
+    const sinIA = suma("sin-ia"), demasiadoGrande = suma("groq-413"), respaldo = suma("respaldo-openai");
+    anota(
+      "Guzzi contesta con la IA, no con textos enlatados",
+      sinIA === 0 && demasiadoGrande === 0,
+      `ayer y hoy: ${sinIA} respuestas enlatadas (sin ninguna IA), ${demasiadoGrande} rechazos de Groq por tamaño, ${respaldo} respuestas del respaldo de pago`,
+      "14 oct 2026: las instrucciones de Guzzi no cabían en el Groq gratis y todo salía del respaldo de pago"
+    );
+  } catch (e) {
+    anota("Guzzi contesta con la IA, no con textos enlatados", false, `no se pudo leer: ${(e as Error).message}`,
+      "14 oct 2026: las instrucciones de Guzzi no cabían en el Groq gratis");
+  }
+
   // ── 16-21. Recorrido de usuario: los caminos que se rompieron esta semana ──
   // Ver lib/centinela/recorrido.ts.
   await recorridoDeUsuario(anota);
