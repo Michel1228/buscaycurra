@@ -30,6 +30,9 @@ export const TABLAS_VPS: Record<string, string> = {
   user_contacts: "user_id", push_subscriptions: "user_id", cv_cartas: "user_id", cv_sends: "user_id",
   gusi_conversations: "user_id", company_reviews: "user_id",
   SavedJob: "userId", Application: "userId", CV: "userId", ScheduledCampaign: "userId",
+  // 13 oct 2026: la baja de las sugerencias de cursos según el CV. Se creó sin
+  // añadirla aquí y el centinela lo cazó al día siguiente.
+  curso_sugerencia_baja: "user_id",
 };
 
 /** Supabase: tabla → columna con el id de la persona. "profiles" va aparte, al final. */
