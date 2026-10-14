@@ -113,6 +113,13 @@ const RELLENO = new Set([
   "buscame", "encuentra", "encuentrame", "sea", "cualquier", "cualquiera",
   "todo", "todas", "todos", "toda", "mas", "otras", "otros", "porfa",
   "favor", "gracias", "hola", "por",
+  // Preguntas de cuántas hay. "¿Cuántas ofertas contamos en Suiza?" buscaba
+  // el puesto "contamos", no salía nada y Guzzi acababa tirando del CV
+  // (lo vio Michel el 14 oct 2026). "cuenta"/"cuentas" NO van: romperían
+  // "gestor de cuentas".
+  "cuantas", "cuantos", "cuanto", "cuanta", "contamos", "contabamos", "contais",
+  "tenemos", "teniamos", "teneis", "tienes", "tienen", "tengo", "tenia", "habia",
+  "existen",
 ]);
 
 /**

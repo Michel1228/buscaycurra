@@ -3503,6 +3503,37 @@ test("au pair: plantilla y carta a pantalla completa, PDF que descarga y rol cor
   return malos.length === 0;
 });
 
+// 14 oct 2026: "¿Cuántas ofertas contamos en Suiza?" buscaba el puesto
+// "contamos" y Guzzi acababa tirando del CV. Una pregunta de cuántas hay en un
+// país no lleva puesto: tiene que acabar en el recuento del país.
+test("Guzzi: «¿cuántas ofertas tenemos en Suiza?» no se convierte en un puesto", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-cuantas-entrada.ts", salida = ".sello-cuantas.cjs";
+  try {
+    writeFileSync(entrada, 'export { extractJobTerm } from "./lib/guzzi/intents";\nexport { limpiarTerminoBusqueda, detectarPais } from "./lib/guzzi/paises-detect";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const puesto = (f) => m.limpiarTerminoBusqueda(m.extractJobTerm(f));
+    const casos = [
+      ["¿Cuántas ofertas contamos en Suiza?", null],
+      ["cuantas ofertas contabamos en suiza", null],
+      ["cuántas ofertas tenemos en Suiza", null],
+      ["¿cuántos trabajos tenéis en Noruega?", null],
+      ["busco trabajo de camarero en Suiza", "camarero"],
+      ["gestor de cuentas en Madrid", "gestor de cuentas"],
+    ];
+    const malos = casos.filter(([f, e]) => puesto(f) !== e).map(([f]) => `${f} → ${JSON.stringify(puesto(f))}`);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0 && m.detectarPais("¿Cuántas ofertas contamos en Suiza?")?.codigo === "ch";
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);
