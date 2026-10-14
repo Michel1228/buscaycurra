@@ -106,6 +106,14 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
     }
   }
 
+  // Los atajos del chat (14 oct 2026). "Quiero enviar mi CV automáticamente a
+  // empresas" iba a la charla libre, que no sabía explicarlo, y "¿Cómo mejoro
+  // mi foto de CV? Dame prompts para ChatGPT" a la pregunta del CV por países.
+  if (/\b(enviar|mandar|envio|env[ií]e)\b.{0,25}\b(cv|curr[ií]culum|curriculum)\b.{0,15}\bautom[aá]tic|\benv[ií]o\s+autom[aá]tico\b/.test(tn)) {
+    return "envio_auto_info";
+  }
+  if (/\bfoto\b/.test(tn) && /\b(prompts?|chatgpt|gemini)\b/.test(tn)) return "foto_prompts";
+
   // El CV según el país de destino: foto, extensión, datos personales.
   // "Quita mi foto del CV" o "subir foto al CV" no son esa pregunta: son
   // tocar el CV, y sin nombrar un país siguen hacia el editor o la foto.
@@ -222,6 +230,9 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
     const hablaDeEmpleo = /\b(trabajo|empleo|ofertas?|puesto|vacantes?|curro)\b/.test(tn);
     if (pideCurso || sacarCarnet || (nombraCurso && !cuentaLoQueEs && !hablaDeEmpleo)) return "buscar_cursos";
   }
+  // Antes que las de buscar: "Quiero preparar una entrevista de trabajo" (otro
+  // atajo del chat) lleva "quiero" y "trabajo", y se tomaba por una búsqueda.
+  if (/(prep[aá]r|practicar|simul).*(entrevista)|entrevista.*(prep[aá]r|practica)/.test(t)) return "entrevista_prep";
   if (/(?:peluquer[ií]a|barber[ií]a|restaurante|bar\b|hotel|cafeter[ií]a|cl[ií]nica|farmacia|panader[ií]a|tienda|taller|supermercado|sal[oó]n|est[eé]tica|gimnasio|lavander[ií]a|fruter[ií]a|carnicer[ií]a|pescader[ií]a)\b.{3,}/i.test(t) && /(?:calle|plaza|avenida|avda|paseo|crta|carretera|c\/)\s/i.test(t)) return "buscar";
   if (/(busco|buscar|necesito|quiero).*(trabajo|empleo|oferta|puesto)|(trabajo|empleo).*(busco|buscar|hay)|(?:^|\s)(busco|busca|me\s+interesa|estoy\s+buscando|necesito\s+trabajo\s+de|quiero\s+trabajar\s+de)\s+(?!que\b|lo\b|la\b|el\b|un\b|una\b)[a-záéíóúüñ]/.test(t)) return "buscar";
   // "algo EN algún sitio" es una búsqueda, salvo que la frase sea de otro tema.
@@ -255,7 +266,6 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
   if (/[\wáéíóúüñçàèìòù]{3,}(?:\s+[\wáéíóúüñçàèìòù]{1,2})?\s+(?:en|por)\s+(?:(?:la|el|los|las)\s+)?[\wáéíóúüñçàèìòù]{3,}/i.test(t) && !OTRO_TEMA.test(t)) return "buscar";
   if (/(?:env[ií]a|m[aá]nda|t[ií]ra)\s*(?:se\s*(?:lo|la|los|las|me|te|nos)|lo|la|los|las|le|les|me|te|nos)\b/i.test(t)) return "enviar";
   if (/foto|imagen\s+cv|foto.*cv/.test(t)) return "foto";
-  if (/(prep[aá]r|practicar|simul).*(entrevista)|entrevista.*(prep[aá]r|practica)/.test(t)) return "entrevista_prep";
   if (/(crear|hacer|nuevo).*(cv|curriculum)/.test(t)) return "crear_cv";
   if (/(info|informacion|datos|busca|conoce|saber|dime).*(sobre\s+)?(la\s+)?empresa\s+\w|(qué|quien)\s+(es|conoces)\s+\w+\s*(empresa)?/.test(t)) return "info_empresa";
   return "chat";

@@ -14,7 +14,9 @@
 
 
 import { NextRequest, NextResponse } from "next/server";
-import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA } from "@/lib/guzzi/prompts";
+import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA, PROMPT_MODO_CV, temasParaLaConversacion } from "@/lib/guzzi/prompts";
+import { entenderMensaje, hayQueEntender, refiereAOfertasMostradas } from "@/lib/guzzi/entender";
+import { respuestaOfertasMostradas, textoEnvioAutomatico, TEXTO_INFO_AU_PAIR } from "@/lib/guzzi/respuestas-fijas";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
 import { textoNegociosLocales, propuestaPendiente, negocioElegido } from "@/lib/guzzi/envio-local";
 import { extraerCorreo, empresaDelCorreo, empresaDelTexto, puestoDelTexto, textoPropuesta, propuestaCorreoPendiente, respuestaAPropuesta, type PropuestaCorreo } from "@/lib/guzzi/envio-correo";
@@ -131,7 +133,8 @@ function parseCVData(raw: string): CVParsed | null {
   }
 }
 
-function buildSystemPrompt(cvData?: string, pais?: string, auPairData?: Record<string, unknown> | null): string {
+// `temas`: el conocimiento que toca para esta conversación (ver lib/guzzi/prompts.ts).
+function buildSystemPrompt(cvData?: string, pais?: string, auPairData?: Record<string, unknown> | null, temas = ""): string {
   const paisInfo = pais && pais !== "ES"
     ? `\nEl usuario está buscando trabajo en ${pais}. Adapta tus consejos al mercado laboral de ese país (salarios, requisitos, idioma).\n`
     : "";
@@ -150,12 +153,12 @@ function buildSystemPrompt(cvData?: string, pais?: string, auPairData?: Record<s
     auPairContext = `\n--- PERFIL AU PAIR DEL USUARIO ---\nNombre: ${nombre}\nEdad: ${edad}\nCiudad: ${ciudad}\nIdiomas: ${idiomas}\nExperiencia con niños: ${experiencia}\nPaís preferido: ${paisDestino}\nFotos subidas: ${fotos}\nCarta Dear Family: ${auPairData.letter_text ? "✅ Creada" : "❌ Pendiente"}\n-----------------------------\n\nCuando el usuario pida "generar carta au pair" o "carta dear family", usa estos datos para personalizarla.\nCuando pida "buscar au pair" o "busco trabajo de au pair", busca ofertas de tipo au pair/nanny/niñera.\n`;
   }
 
-  if (!cvData) return PROMPT_BASE + paisInfo + auPairContext;
+  if (!cvData) return PROMPT_BASE + temas + paisInfo + auPairContext;
 
   const cv = parseCVData(cvData);
-  if (!cv || !cv.resumenTexto) return PROMPT_BASE + paisInfo + auPairContext;
+  if (!cv || !cv.resumenTexto) return PROMPT_BASE + temas + paisInfo + auPairContext;
 
-  return `${PROMPT_BASE}${paisInfo}
+  return `${PROMPT_BASE}${temas}${paisInfo}
 --- DATOS REALES DEL CV DEL USUARIO (usa esto en TODAS tus respuestas) ---
 ${cv.resumenTexto}
 ------------------------------------------------------------------------
@@ -943,7 +946,7 @@ async function respuestaDesplazamiento(texto: string, ciudadCv: string): Promise
 function localReply(intent: string, cv?: CVParsed | null): string {
   switch (intent) {
     case "foto":
-      return "📸 **Cómo mejorar tu foto de CV con IA:**\n\nSube tu foto a ChatGPT (o cualquier IA con imagen) y usa este prompt:\n\n---\n*Utiliza esta foto para realizar los siguientes cambios:\n\n1. Crear un fondo blanco y cambiar todo el fondo actual.\n2. Cambiar la camiseta por una camisa blanca.\n3. Poner la figura en posición sentada.\n\nFotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.*\n\n---\n\n**Resultado:** foto profesional lista para el CV. Una buena foto = +40% más respuestas. ";
+      return "📸 **Cómo mejorar tu foto de CV con IA:**\n\nSube tu foto a ChatGPT (o cualquier IA con imagen) y usa este prompt:\n\n---\n*Utiliza esta foto para realizar los siguientes cambios:\n\n1. Crear un fondo blanco y cambiar todo el fondo actual.\n2. Cambiar la camiseta por una camisa blanca.\n3. Poner la figura en posición sentada.\n\nFotografía tamaño carnet hasta la altura de los hombros. Preséntalo para un currículum.*\n\n---\n\n**Resultado:** foto profesional lista para el CV.";
     case "buscar":
       if (cv?.ultimoPuesto) {
         return `🔍 Conozco tu perfil (**${cv.ultimoPuesto}**${cv.ciudad ? ` en **${cv.ciudad}**` : ""}). Dime "buscar ofertas" y te muestro las que mejor encajan ahora mismo. También puedes usar el buscador avanzado. `;
@@ -1189,7 +1192,27 @@ El candidato tiene mucha experiencia.
       return NextResponse.json({ reply, action: "carta_recomendacion", empresa: cartaEmpresa, puesto: cartaPuesto });
     }
 
-    const preIntent = detectIntent(message, history);
+    // "Crear mi CV" (el chat lo manda como mode "entrevista"): lo que escribe
+    // son respuestas para su CV. "Recepcionista en el Meliá de Madrid,
+    // 2019-2022" se tomaba por una búsqueda y le salían ofertas a mitad de la
+    // entrevista. Solo se busca si lo pide con esas palabras.
+    const enModoCV = mode === "entrevista" && !/\b(busca|buscar|busco|buscame|búscame|ofertas?)\b/i.test(message);
+    const preIntent = enModoCV ? "chat" : detectIntent(message, history);
+
+    // -- Ofertas que Guzzi ya le ha enseñado ("a todas", "la primera") --------
+    // Antes "quisiera enviar mi curriculum a todas" se tomaba por el nombre de
+    // una empresa ("Todas") y se buscaba en Google. Ver lib/guzzi/entender.ts.
+    if (!enModoCV && !/^(send_cv_local_confirm|enviar_correo)/.test(preIntent) && refiereAOfertasMostradas(message, history)) {
+      return NextResponse.json(respuestaOfertasMostradas(message, history, !!cvData));
+    }
+
+    // -- Atajos del chat con respuesta fija (lib/guzzi/respuestas-fijas.ts) ----
+    if (preIntent === "envio_auto_info") {
+      return NextResponse.json({ reply: textoEnvioAutomatico(!!cvData), action: "send_cv_flow" });
+    }
+    if (preIntent === "foto_prompts") {
+      return NextResponse.json({ reply: localReply("foto"), action: "foto" });
+    }
 
     // -- Intent: enviar el CV a un correo que da la persona --------------------
     // Ver lib/guzzi/envio-correo.ts. Primero se enseña lo que se va a enviar;
@@ -1393,16 +1416,23 @@ El candidato tiene mucha experiencia.
 
       // Si no es un nombre de empresa concreto, pero es búsqueda por sector+ciudad
       // (ej: "empresas de limpieza en Tudela", "bares en Corella")
+      //
+      // 14 oct 2026: esta expresión llevaba las barras dobladas (\\s, que
+      // busca una barra de verdad) y un grupo de menos, así que no encajaba
+      // con nada y siempre contestaba "dime el nombre de la empresa".
       if (!companyName) {
         const sectorMatch = message.match(
-          /(?:empresas?|negocios?|comercios?|tiendas?|f[aá]bricas?|bares?|restaurantes?|cafeter[ií]as?|talleres?|panader[ií]as?|farmacias?|cl[ií]nicas?|peluquer[ií]as?|supermercados?|hoteles?|de\\s+limpieza|de\\s+reparto)\\s+(?:de\\s+)?([a-záéíóúüñA-Z][\\w\\s]{2,40}?)(?:\\s+(?:en|por|cerca|de)\\s+(\\w[\\w\\s]+))?$/i
+          /(empresas?|negocios?|comercios?|tiendas?|f[aá]bricas?|bares?|restaurantes?|cafeter[ií]as?|talleres?|panader[ií]as?|farmacias?|cl[ií]nicas?|peluquer[ií]as?|supermercados?|hoteles?|de\s+limpieza|de\s+reparto)\s+(?:de\s+)?([a-záéíóúüñA-Z][\wáéíóúüñ\s]{2,40}?)(?:\s+(?:en|por|cerca|de)\s+([\wáéíóúüñ][\wáéíóúüñ\s]+))?$/i
         );
-        const sectorRaw = sectorMatch?.[2]?.trim();
-        const cityFromSector = sectorMatch?.[3]?.trim() || searchCity;
+        // "bares en Corella": el sector es "bares"; "qué empresas de logística
+        // hay en Zaragoza": sin el "hay"; "cerca de Tudela": sin el "de".
+        let sectorRaw = sectorMatch?.[2]?.trim().replace(/\s+hay$/i, "");
+        if (sectorMatch && sectorRaw && /^(en|por|cerca)\s/i.test(sectorRaw)) sectorRaw = sectorMatch[1];
+        const cityFromSector = sectorMatch?.[3]?.trim().replace(/^de\s+/i, "") || searchCity;
 
         if (sectorRaw && cityFromSector) {
           return NextResponse.json({
-            reply: `🏢 **${sectorRaw} en ${cityFromSector}** — ¿cómo quieres que busque?\n\n**1. 🔍 Empresa grande** — busco ofertas publicadas en portales de empleo\n**2. 📍 Negocio local** — busco en Google Maps (email, teléfono, para enviar CV directo)\n\nResponde **"grande"** o **"pequeña"** y me pongo.`,
+            reply: `🏢 **${sectorRaw}** en **${cityFromSector}** — ¿cómo quieres que busque?\n\n**1. 🔍 Empresa grande** — busco ofertas publicadas en portales de empleo\n**2. 📍 Negocio local** — busco en Google Maps (email, teléfono, para enviar CV directo)\n\nResponde **"grande"** o **"pequeña"** y me pongo.`,
             action: "choose_size",
             sector: sectorRaw,
             city: cityFromSector,
@@ -1518,42 +1548,21 @@ El candidato tiene mucha experiencia.
       }
 
       if (wantSmall) {
-        // Google Places para negocios locales
+        // La misma lista de negocios que sale en la búsqueda, que es la que
+        // entiende el "sí" siguiente (lib/guzzi/envio-local.ts). La de antes
+        // decía "Responde sí y las enviamos" y ese "sí" no lo recogía nadie.
         try {
-          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://buscaycurra.es";
-          const extractRes = await fetch(`${siteUrl}/api/company/extract`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-sync-secret": process.env.ADMIN_SECRET || "" },
-            body: JSON.stringify({ name: `${sector} ${city}`, city }),
-            signal: AbortSignal.timeout(15000),
-          });
-
-          if (extractRes.ok) {
-            const extractData = await extractRes.json() as {
-              empresas?: Array<{ nombre?: string; emailRrhh?: string; telefono?: string; googleAddress?: string; googleRating?: number; googleReviews?: number; sector?: string; }>;
-            };
-            const empresas = (extractData.empresas || []).slice(0, 5);
-            if (empresas.length > 0) {
-              const conEmail = empresas.filter(e => e.emailRrhh);
-              let reply = `📍 **${empresas.length} negocios de ${sector} en ${city}** (Google Maps)\n\n`;
-              empresas.forEach((e, i) => {
-                reply += `${["🥇","🥈","🥉","📌","📌"][i]} **${e.nombre}**\n`;
-                if (e.telefono) reply += `   📞 ${e.telefono}\n`;
-                if (e.emailRrhh) reply += `   📧 ${e.emailRrhh}\n`;
-                if (e.googleAddress) reply += `   📍 ${e.googleAddress}\n`;
-                reply += "\n";
-              });
-              if (conEmail.length > 0) reply += `📧 ¿Envío tu CV a las ${conEmail.length} con email? Responde "sí" y las enviamos.`;
-              return NextResponse.json({ reply, action: "sector_search_results" });
-            }
+          const negocios = await buscarNegociosLocales(sector, city);
+          if (negocios.length > 0) {
+            return NextResponse.json({ reply: listaDeNegocios(negocios, city, sector).trim(), action: "search_results" });
           }
           return NextResponse.json({
-            reply: `📍 No encontré negocios de **${sector}** en **${city}** en Google Maps.\n\n¿Quieres que busque por nombre exacto? Dame el nombre y te busco email y teléfono.`,
+            reply: `📍 No encontré negocios de **${sector}** en **${city}**.\n\n¿Quieres que busque por nombre exacto? Dame el nombre y te busco email y teléfono.`,
             action: "need_company_name",
           });
         } catch {
           return NextResponse.json({
-            reply: `📍 No pude conectar con Google Maps. ¿Buscamos ofertas grandes de **${sector}** en **${city}**? Responde "grande".`,
+            reply: `📍 Ahora mismo no puedo sacar los negocios de la zona. ¿Buscamos ofertas de **${sector}** en **${city}**? Responde "grande".`,
             action: "need_keyword",
           });
         }
@@ -1575,13 +1584,36 @@ El candidato tiene mucha experiencia.
     }
 
     // -- Intent: buscar trabajo -----------------------------------------------
-    const intent = detectIntent(message, history);
+    let intent = enModoCV ? "chat" : detectIntent(message, history);
+
+    // Lo que las reglas no reconocen ("Operador de logística em Lisboa",
+    // "Valladolid" tras preguntarle dónde), o un puesto que no lo parece ("buenas
+    // soy un chico español y estoy buscando"), lo lee un modelo pequeño y
+    // gratuito (lib/guzzi/entender.ts). Si no contesta, todo sigue como antes.
+    const entendido = !enModoCV && (mode === "chat" || mode === "entrevista") && hayQueEntender(intent, message)
+      ? await entenderMensaje(message, history)
+      : null;
+    if (entendido?.accion === "enviar_a_ofertas_mostradas" && refiereAOfertasMostradas(message, history)) {
+      return NextResponse.json(respuestaOfertasMostradas(message, history, !!cvData));
+    }
+    if (entendido?.accion === "buscar_ofertas" || entendido?.accion === "contar_ofertas") intent = "buscar";
+    // Las reglas veían una búsqueda pero el puesto era basura y el modelo dice
+    // que es otra cosa ("convierte el currículum en PDF"): que conteste la IA.
+    else if (entendido?.accion === "otra" && intent === "buscar") intent = "chat";
+    const quiereContar = entendido?.accion === "contar_ofertas";
 
     // -- Intent: buscar au pair ----------------------------------------------
     if (intent === "buscar_au_pair" || mode === "buscar_au_pair") {
       const extractedCity = extractCity(message);
       const extractedCountry = extractCountryCode(message);
-      const cityOrCountry = extractedCountry || extractedCity || (auPairProfile?.nationality as string) || "UK";
+      // "El extranjero" no es una ciudad: el atajo "Quiero información sobre el
+      // programa Au Pair en el extranjero" respondía "No encontré ofertas au
+      // pair para El extranjero". Si pide información y no dice dónde, se le da.
+      const ciudadAuPair = extractedCity && !/extranjero|fuera/i.test(extractedCity) ? extractedCity : null;
+      if (!extractedCountry && !ciudadAuPair && /informaci|programa|qu[eé] es|c[oó]mo funciona|requisitos|opciones/i.test(message)) {
+        return NextResponse.json({ reply: TEXTO_INFO_AU_PAIR, action: "au_pair_info" });
+      }
+      const cityOrCountry = extractedCountry || ciudadAuPair || (auPairProfile?.nationality as string) || "UK";
 
       const ofertas = await searchAuPairJobs(cityOrCountry, 5);
       if (!ofertas || ofertas.length === 0) {
@@ -1687,15 +1719,24 @@ El candidato tiene mucha experiencia.
       // "hay ofertas en Dublin" hacía que se buscara el puesto "hay ofertas" y
       // no apareciera nada. Si al limpiar no queda una profesión de verdad, se
       // busca sin filtrar por puesto en vez de inventarse uno.
-      const extractedJob = limpiarTerminoBusqueda(extractJobTerm(message));
+      // Si el modelo ha leído el mensaje, manda lo que ha entendido: el puesto
+      // que sacan las reglas era justo lo que fallaba.
+      const extractedJob = entendido
+        ? (entendido.puesto ? limpiarTerminoBusqueda(entendido.puesto) : null)
+        : limpiarTerminoBusqueda(extractJobTerm(message));
       const puestoBusqueda = extractedJob || cvParsed?.ultimoPuesto || "";
-      const extractedCity = extractCity(message);
+      // "Basándome en tu CV" solo si el puesto sale del CV: a quien preguntaba
+      // por las ofertas de Suiza se le contestaba con su último trabajo.
+      const puestoDelCV = !extractedJob && !!cvParsed?.ultimoPuesto;
+      const lugarEntendido = entendido?.lugar || null;
+      const paisDelLugar = lugarEntendido ? detectarPais(lugarEntendido) : null;
+      const extractedCity = lugarEntendido ? (paisDelLugar ? null : lugarEntendido) : extractCity(message);
 
       // Un país es una ubicación válida. extractCity lo descartaba a propósito
       // (llevaba 'irlanda', 'españa'... en su lista de "no ciudades"), así que
       // "ofertas de trabajo en Irlanda" se quedaba sin sitio donde buscar y
       // Guzzi respondía que no había ninguna, teniendo 13.604.
-      const paisPedido = detectarPais(message);
+      const paisPedido = entendido ? (paisDelLugar || (lugarEntendido ? null : detectarPais(message))) : detectarPais(message);
       const ciudadBusqueda = extractedCity || (paisPedido ? "" : cvParsed?.ciudad || "");
 
       // Si el usuario está insatisfecho y no especifica nuevo puesto, pedir aclaración
@@ -1747,6 +1788,19 @@ El candidato tiene mucha experiencia.
         }
       }
 
+      // "¿Cuántas ofertas tenéis?" sin decir dónde: el total de verdad.
+      if (quiereContar && !paisPedido && !extractedCity) {
+        const porPais = await ofertasPorPais();
+        const total = Object.values(porPais || {}).reduce((a, b) => a + b, 0);
+        if (total > 0) {
+          return NextResponse.json({
+            reply: `🌍 Ahora mismo hay **${total.toLocaleString("es-ES")} ofertas activas** de **${Object.keys(porPais || {}).length} países**.\n\n¿De qué y dónde te gustaría trabajar? Dime el puesto y la ciudad o el país (por ejemplo, "camarero en Tudela") y te las saco.`,
+            action: "need_keyword",
+            total,
+          });
+        }
+      }
+
       // Si el usuario menciona una ciudad pero NO un puesto, no usar el puesto del CV
       if (!puestoBusqueda) {
         return NextResponse.json({
@@ -1789,8 +1843,8 @@ El candidato tiene mucha experiencia.
           }
 
           return NextResponse.json({
-            reply: (cvParsed?.ultimoPuesto
-              ? `Basándome en tu CV (último puesto: **${cvParsed.ultimoPuesto}**), ` : "") +
+            reply: (puestoDelCV
+              ? `Basándome en tu CV (último puesto: **${cvParsed!.ultimoPuesto}**), ` : "") +
               (googleReply || fallbackMessage(puestoBusqueda, ciudadBusqueda)),
             action: googleReply ? "search_results" : "no_results",
           });
@@ -1845,8 +1899,8 @@ El candidato tiene mucha experiencia.
             action: "search_scope_pais",
           });
         }
-        const prefix = cvParsed?.ultimoPuesto
-          ? `Basándome en tu CV (último puesto: **${cvParsed.ultimoPuesto}**), aquí tienes lo mejor que encontré:\n\n`
+        const prefix = puestoDelCV
+          ? `Basándome en tu CV (último puesto: **${cvParsed!.ultimoPuesto}**), aquí tienes lo mejor que encontré:\n\n`
           : "";
         // Aunque la búsqueda haya acertado con la ciudad, entre los resultados
         // suele haber alguno de la capital o del pueblo de al lado. Se dice lo
@@ -1997,15 +2051,23 @@ El candidato tiene mucha experiencia.
     }
 
     // -- Chat normal con IA ---------------------------------------------------
-    const systemPrompt = buildSystemPrompt(cvData, pais, auPairProfile);
+    const anterioresDeLaPersona = history.filter((m) => m.role === "user" && m.text).slice(-3).map((m) => m.text);
+    const systemPrompt = buildSystemPrompt(cvData, pais, auPairProfile,
+      temasParaLaConversacion(message, anterioresDeLaPersona) + (mode === "entrevista" ? PROMPT_MODO_CV : ""));
+    // El plan gratuito de Groq admite 8.000 tokens por minuto CONTANDO la
+    // respuesta, y las listas de ofertas de Guzzi son largas: con los 14
+    // últimos mensajes enteros no cabía. Se recortan los largos y se quitan
+    // los más antiguos hasta que el historial quede en unos 8.000 caracteres.
+    const recientes = history.slice(-14)
+      .filter((m: { role: string; text: string }) => m.text)
+      .map((m: { role: string; text: string }) => ({
+        role: (m.role === "gusi" ? "assistant" : "user") as "assistant" | "user",
+        content: m.text.length > 1500 ? m.text.slice(0, 1500) + "…" : m.text,
+      }));
+    while (recientes.length > 2 && recientes.reduce((n, m) => n + m.content.length, 0) > 8000) recientes.shift();
     const messages = [
       { role: "system" as const, content: systemPrompt },
-      ...history.slice(-14)
-        .filter((m: { role: string; text: string }) => m.text)
-        .map((m: { role: string; text: string }) => ({
-          role: (m.role === "gusi" ? "assistant" : "user") as "assistant" | "user",
-          content: m.text,
-        })),
+      ...recientes,
       { role: "user" as const, content: message },
     ];
 
@@ -2131,6 +2193,12 @@ El candidato tiene mucha experiencia.
     }
     let reply = rawReply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || localReply(intent, cvParsed);
 
+    // Si aun así promete una búsqueda ("voy a buscar…, un momento"), la persona
+    // se queda esperando algo que no llega: se le dice cómo pedirla.
+    if (/\b(voy a buscar|d[ée]jame buscar|dame un (segundo|momento)|un momento,? (que|y) (te )?(busco|miro)|ahora te (busco|paso las))/i.test(reply)) {
+      reply += "\n\n👉 Para que te salgan las ofertas, escríbeme el puesto y la ciudad en un mensaje, por ejemplo: \"camarero en Tudela\".";
+    }
+
     // 🔒 ANTI-ALUCINACIÓN: detectar emails inventados en respuestas del chat
     const hasFakeEmails = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(reply);
     const claimsSending = /(?:he\s+enviado|estoy\s+enviando|envi[ée]\s+tu\s+CV|CV\s+enviado|te\s+lo\s+he\s+enviado|les\s+estoy\s+enviando|les\s+he\s+enviado|ya\s+est[aá]n?\s+enviados|enviados?\s+a\s+\d+\s+empresas)/i.test(reply);
@@ -2202,8 +2270,8 @@ async function consultaConMargen<R extends Record<string, unknown>>(sql: string,
  * en X" de memoria: o lo ha contado, o no lo dice. Se cuentan todos los países
  * de una vez (unos 10 s) y se guardan: ver consultaGuardada.
  */
-async function contarOfertasPais(codigoPais: string): Promise<number> {
-  const porPais = await consultaGuardada("guzzi:ofertas-por-pais", async () => {
+async function ofertasPorPais(): Promise<Record<string, number> | null> {
+  return consultaGuardada("guzzi:ofertas-por-pais", async () => {
     const filas = await consultaConMargen<{ pais: string; n: string }>(
       `SELECT lower(country) AS pais, count(*)::text AS n FROM "JobListing"
         WHERE "isActive" = true
@@ -2214,7 +2282,10 @@ async function contarOfertasPais(codigoPais: string): Promise<number> {
     );
     return Object.fromEntries(filas.map(f => [f.pais, parseInt(f.n, 10)])) as Record<string, number>;
   });
-  return porPais?.[codigoPais.toLowerCase()] ?? 0;
+}
+
+async function contarOfertasPais(codigoPais: string): Promise<number> {
+  return (await ofertasPorPais())?.[codigoPais.toLowerCase()] ?? 0;
 }
 
 /**

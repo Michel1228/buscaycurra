@@ -698,6 +698,108 @@ test("Guzzi entiende oficio, cuenta, au pair, articulos y el texto para el CV", 
     try { unlinkSync(salida); } catch { /* da igual */ }
   }
 });
+
+// Auditoria del 14 oct 2026 ("¿por qué se rompe tanto Guzzi?"), sobre 474
+// mensajes reales. Las frases de aquí son parecidas a las reales, no copias.
+//  1. Las instrucciones fijas (32.000 caracteres) no cabían en el plan
+//     gratuito de Groq (8.000 tokens por minuto): Groq daba 413 a TODAS las
+//     conversaciones gratuitas y todo dependía del respaldo de pago.
+//  2. Le pedían decir "Dame un segundo que te busco…" sin buscar nada.
+//  3. "Mándalo a todas" buscaba en Google una empresa llamada "Todas".
+//  4. Los atajos del chat (envío automático, entrevista, foto, au pair) caían
+//     donde no tocaba.
+test("Guzzi cabe en el plan gratuito y no promete búsquedas que no hace", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-prompts.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/guzzi/prompts.ts", "--bundle", "--format=cjs", "--platform=node",
+      `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const p = await import(`../${salida}?${Date.now()}`);
+    const fallos = [];
+    if (!(p.PROMPT_BASE.length < 8000)) fallos.push(`el núcleo mide ${p.PROMPT_BASE.length} caracteres (máximo 8.000)`);
+    // Una conversación que toca todos los temas a la vez no puede pasarse.
+    const todo = "me han despedido y cobro el paro, quiero irme a Alemania de au pair, cuánto se cobra, tengo una entrevista, mi cv y un curso";
+    const temas = p.temasParaLaConversacion ? p.temasParaLaConversacion(todo, []) : "x".repeat(99999);
+    if (temas.length > 9000) fallos.push(`los temas suman ${temas.length} caracteres (máximo 9.000)`);
+    if (p.temasParaLaConversacion && !p.temasParaLaConversacion("me han despedido, qué me toca de finiquito?").includes("Finiquito")) {
+      fallos.push("una pregunta de despido no lleva el bloque de derechos");
+    }
+    if (p.temasParaLaConversacion && p.temasParaLaConversacion("hola").length > 0) fallos.push("un saludo carga temas");
+    const completo = p.PROMPT_BASE + Object.values(p.TEMAS || {}).map((t) => t.texto).join("\n");
+    if (/Dame un segundo que te busco|D[ée]jame buscar las \[/.test(completo)) fallos.push("sigue pidiendo prometer búsquedas");
+    if (!/NUNCA digas "voy a buscar"/.test(p.PROMPT_BASE)) fallos.push("falta la regla de no prometer búsquedas");
+    if (/1\.231 €|16 pagas/.test(completo) || !completo.includes("1.221 € al mes brutos en 14 pagas")) fallos.push("el SMI de 2026 no es el de la ficha de derechos");
+    if (!completo.includes("el limite del tratado es DIARIO")) fallos.push("se perdió el límite diario del au pair");
+    fallos.forEach((f) => console.log(`     ↳ ${f}`));
+    const chat = leerFuente("app/api/gusi/chat/route.ts");
+    const ruta = chat.includes("temasParaLaConversacion(message") && chat.includes("PROMPT_MODO_CV")
+      && /voy a buscar\|d\[ée\]jame buscar/.test(chat);
+    if (!ruta) console.log("     ↳ el chat no usa los temas, el modo CV o la red de seguridad de 'voy a buscar'");
+    return fallos.length === 0 && ruta;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+});
+
+test("Guzzi entiende los atajos, 'a todas' y los puestos que no lo son", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-guzzi-entrada.ts", salida = ".sello-guzzi.cjs";
+  try {
+    writeFileSync(entrada, 'export * from "./lib/guzzi/intents";\nexport * from "./lib/guzzi/entender";\nexport * from "./lib/guzzi/respuestas-fijas";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--external:ioredis",
+      `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const g = await import(`../${salida}?${Date.now()}`);
+    const fallos = [];
+    // Los atajos del chat (son textos nuestros, de components/GusiChat.tsx).
+    for (const [f, esperado] of [
+      ["Quiero enviar mi CV automáticamente a empresas", "envio_auto_info"],
+      ["Quiero preparar una entrevista de trabajo", "entrevista_prep"],
+      ["¿Cómo mejoro mi foto de CV? Dame prompts para ChatGPT", "foto_prompts"],
+      ["busco trabajo de camarero en Tudela", "buscar"],
+    ]) {
+      const r = g.detectIntent(f, []);
+      if (r !== esperado) fallos.push(`"${f.slice(0, 40)}" da ${r} (esperado ${esperado})`);
+    }
+    // "A todas", "la segunda"... solo si antes se le enseñaron ofertas.
+    const conOfertas = [{ role: "user", text: "soldador en zaragoza" }, { role: "gusi", text: "🔍 **2 ofertas** de **soldador**:\n\n🥇 ...",
+      jobs: [{ id: "db-1", titulo: "Soldador TIG", empresa: "Talleres Uno" }, { id: "db-2", titulo: "Soldador MIG", empresa: "Metal Dos" }] }];
+    const sinOfertas = [{ role: "gusi", text: "¡Hola! Tengo millones de ofertas para ti." }];
+    const refiere = g.refiereAOfertasMostradas;
+    if (!refiere?.("me encantan todas, quiero mandar el curriculum a todas ellas", conOfertas)) fallos.push("'a todas' con ofertas no se reconoce");
+    if (refiere?.("me encantan todas, quiero mandar el curriculum a todas ellas", sinOfertas)) fallos.push("'a todas' sin ofertas se toma por ofertas");
+    if (refiere?.("vale, gracias", conOfertas)) fallos.push("'vale, gracias' se toma por mandar el CV");
+    const segunda = g.respuestaOfertasMostradas?.("mándalo a la segunda", conOfertas, true);
+    if (segunda?.jobs?.length !== 1 || segunda.jobs[0].id !== "db-2") fallos.push("'la segunda' no devuelve la segunda oferta");
+    const todas = g.respuestaOfertasMostradas?.("a todas", conOfertas, true);
+    if (todas?.jobs?.length !== 2 || /he enviado|enviados/i.test(todas.reply)) fallos.push("'a todas' no devuelve las ofertas o dice que ya las ha enviado");
+    if (g.respuestaOfertasMostradas?.("a todas", conOfertas, false)?.jobs) fallos.push("sin CV no pide subirlo primero");
+    // Puestos que no lo son → al modelo; puestos de verdad → no.
+    if (!g.hayQueEntender?.("buscar", "Hola, soy un chaval de Murcia y estoy buscando curro en Italia de fontanero")) fallos.push("un puesto-frase no va al modelo");
+    if (g.hayQueEntender?.("buscar", "camarero en Madrid")) fallos.push("'camarero en Madrid' va al modelo sin necesidad");
+    if (g.hayQueEntender?.("chat", "gracias")) fallos.push("un 'gracias' va al modelo");
+    const e = g.parseEntendido?.('Aquí va: {"accion":"buscar_ofertas","puesto":"camarero","lugar":"Londres","pais":"gb"}');
+    if (e?.pais !== "uk" || e?.puesto !== "camarero") fallos.push(`la respuesta del modelo no se lee bien: ${JSON.stringify(e)}`);
+    if (g.parseEntendido?.('{"accion":"borrar_todo"}') !== null) fallos.push("acepta una acción que no existe");
+    fallos.forEach((f) => console.log(`     ↳ ${f}`));
+    const chat = leerFuente("app/api/gusi/chat/route.ts");
+    const BS = String.fromCharCode(92);
+    const ruta = chat.includes("refiereAOfertasMostradas(message, history)") && chat.includes("const puestoDelCV")
+      && chat.includes('preIntent === "envio_auto_info"') && chat.includes("TEXTO_INFO_AU_PAIR")
+      && !chat.includes("de" + BS + BS + "s+limpieza") && chat.includes("🏢 **${sectorRaw}** en **${cityFromSector}**");
+    if (!ruta) console.log("     ↳ el chat no usa lo nuevo (ofertas enseñadas, prefijo del CV, atajos o la expresión de sectores)");
+    return fallos.length === 0 && ruta;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
 // Auditoria del 3 oct 2026, cuenta y funciones:
 // - un suscriptor que pulsaba otro plan acababa en el 409 del checkout;
 // - Mi Plan y "pago completado" vendian buscador avanzado, estadisticas y API;
