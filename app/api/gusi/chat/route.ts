@@ -2149,24 +2149,72 @@ El candidato tiene mucha experiencia.
 
 
 /**
+ * LO CARO DE CONTAR, GUARDADO UNAS HORAS (14 oct 2026). Contar las ofertas de
+ * un país recorre cientos de miles de filas: Alemania pasaba de los 15 s del
+ * pool, el recuento fallaba, devolvía 0 y Guzzi contestaba "¿qué tipo de
+ * trabajo buscas?" a quien preguntaba cuántas ofertas había en Alemania.
+ * Ahora se cuenta con más margen, se guarda en Redis y se contesta al momento
+ * con lo guardado; si tiene más de 3 horas, se recalcula por detrás.
+ */
+async function consultaGuardada<T>(clave: string, consulta: () => Promise<T>): Promise<T | null> {
+  const { get: cacheGet, set: cacheSet } = await import("@/lib/cache/redis-client");
+  const refrescar = async (): Promise<T | null> => {
+    try {
+      const valor = await consulta();
+      await cacheSet(clave, JSON.stringify({ t: Date.now(), valor }), 12 * 3600);
+      return valor;
+    } catch (e) {
+      console.error(`[Guzzi] ${clave}:`, (e as Error).message);
+      return null;
+    }
+  };
+  const guardado = await cacheGet(clave).catch(() => null);
+  if (guardado) {
+    try {
+      const { t, valor } = JSON.parse(guardado) as { t: number; valor: T };
+      if (Date.now() - t > 3 * 3600 * 1000) void refrescar();
+      return valor;
+    } catch { /* guardado roto: se recalcula */ }
+  }
+  return refrescar();
+}
+
+/** Una consulta con 60 s de margen en vez de los 15 s del pool. */
+async function consultaConMargen<R extends Record<string, unknown>>(sql: string, params: unknown[]): Promise<R[]> {
+  const { getPool } = await import("@/lib/db");
+  const cliente = await getPool().connect();
+  try {
+    await cliente.query("BEGIN");
+    await cliente.query("SET LOCAL statement_timeout = 60000");
+    const r = await cliente.query<R>(sql, params);
+    await cliente.query("COMMIT");
+    return r.rows;
+  } catch (e) {
+    await cliente.query("ROLLBACK").catch(() => {});
+    throw e;
+  } finally {
+    cliente.release();
+  }
+}
+
+/**
  * Cuántas ofertas VIVAS hay en un país. Guzzi nunca debe decir "no hay ofertas
- * en X" de memoria: o lo ha contado, o no lo dice.
+ * en X" de memoria: o lo ha contado, o no lo dice. Se cuentan todos los países
+ * de una vez (unos 10 s) y se guardan: ver consultaGuardada.
  */
 async function contarOfertasPais(codigoPais: string): Promise<number> {
-  try {
-    const { getPool } = await import("@/lib/db");
-    const r = await getPool().query<{ n: string }>(
-      `SELECT count(*)::text AS n FROM "JobListing"
+  const porPais = await consultaGuardada("guzzi:ofertas-por-pais", async () => {
+    const filas = await consultaConMargen<{ pais: string; n: string }>(
+      `SELECT lower(country) AS pais, count(*)::text AS n FROM "JobListing"
         WHERE "isActive" = true
           AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
-          AND LOWER(country) = LOWER($1)`,
-      [codigoPais]
+          AND country IS NOT NULL
+        GROUP BY 1`,
+      []
     );
-    return parseInt(r.rows[0]?.n || "0", 10);
-  } catch (e) {
-    console.error("[Guzzi] contarOfertasPais:", (e as Error).message);
-    return 0;
-  }
+    return Object.fromEntries(filas.map(f => [f.pais, parseInt(f.n, 10)])) as Record<string, number>;
+  });
+  return porPais?.[codigoPais.toLowerCase()] ?? 0;
 }
 
 /**
@@ -2200,11 +2248,10 @@ async function ofertasVariadasPais(
   }
 }
 
-/** Ciudades con más ofertas vivas de un país, para sugerirlas al usuario. */
+/** Ciudades con más ofertas vivas de un país, para sugerirlas al usuario (guardadas: ver consultaGuardada). */
 async function ciudadesTopPais(codigoPais: string, limite = 6): Promise<string[]> {
-  try {
-    const { getPool } = await import("@/lib/db");
-    const r = await getPool().query<{ city: string }>(
+  const ciudades = await consultaGuardada(`guzzi:ciudades-top:${codigoPais.toLowerCase()}`, async () => {
+    const filas = await consultaConMargen<{ city: string }>(
       `SELECT city FROM "JobListing"
         WHERE "isActive" = true
           AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
@@ -2212,14 +2259,12 @@ async function ciudadesTopPais(codigoPais: string, limite = 6): Promise<string[]
           AND city IS NOT NULL AND city <> ''
         GROUP BY city
         ORDER BY count(*) DESC
-        LIMIT $2`,
-      [codigoPais, limite]
+        LIMIT 12`,
+      [codigoPais]
     );
-    return r.rows.map(x => x.city);
-  } catch (e) {
-    console.error("[Guzzi] ciudadesTopPais:", (e as Error).message);
-    return [];
-  }
+    return filas.map(x => x.city);
+  });
+  return (ciudades ?? []).slice(0, limite);
 }
 
 function extractCity(text: string): string {

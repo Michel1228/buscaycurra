@@ -3525,7 +3525,13 @@ test("Guzzi: «¿cuántas ofertas tenemos en Suiza?» no se convierte en un pues
     ];
     const malos = casos.filter(([f, e]) => puesto(f) !== e).map(([f]) => `${f} → ${JSON.stringify(puesto(f))}`);
     if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
-    return malos.length === 0 && m.detectarPais("¿Cuántas ofertas contamos en Suiza?")?.codigo === "ch";
+    // Y el recuento no puede caer por tiempo: Alemania pasaba de 15 s, daba 0
+    // y Guzzi preguntaba por el puesto en vez de contestar.
+    const ruta = leerFuente("app/api/gusi/chat/route.ts");
+    const recuento = ruta.includes('consultaGuardada("guzzi:ofertas-por-pais"') && ruta.includes('SET LOCAL statement_timeout = 60000')
+      && ruta.includes("consultaGuardada(`guzzi:ciudades-top:");
+    if (!recuento) console.log("     ↳ el recuento por país no está guardado ni tiene margen de tiempo");
+    return malos.length === 0 && recuento && m.detectarPais("¿Cuántas ofertas contamos en Suiza?")?.codigo === "ch";
   } catch (e) {
     console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
     return false;
