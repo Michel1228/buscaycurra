@@ -749,6 +749,38 @@ test("Guzzi cabe en el plan gratuito y no promete búsquedas que no hace", async
   }
 });
 
+
+// 16 oct 2026, antes de enseñarlo en el consorcio: la foto se quedaba
+// "cargando" y nunca llegaba al servidor. En iPhone el timeout de
+// getCurrentPosition no corre mientras el permiso está pendiente, y el envío no
+// tenía tiempo máximo. Y "búscame la peluquería X" buscaba ofertas de
+// peluquería en toda España en vez de ese negocio.
+test("la cámara de Guzzi no espera a la ubicación para siempre y 'búscame la peluquería X' busca el negocio", async () => {
+  const chat = leerFuente("components/GusiChat.tsx");
+  const camara = chat.includes("new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000))")
+    && /fetch\("\/api\/gusi\/analyze-image"[\s\S]{0,400}signal: corte\.signal/.test(chat);
+  if (!camara) console.log("     ↳ la ubicación o el envío de la foto vuelven a no tener tope");
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-intents-peluqueria.cjs";
+  let negocio = false;
+  try {
+    execFileSync("npx", ["esbuild", "lib/guzzi/intents.ts", "--bundle", "--format=cjs", "--platform=node",
+      `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const { detectIntent } = await import(`../${salida}?${Date.now()}`);
+    negocio = detectIntent("búscame la peluquería Bella Imagen", []) === "info_empresa"
+      && detectIntent("encuéntrame el bar La Parada", []) === "info_empresa"
+      && detectIntent("busco trabajo de peluquera en Tudela", []) === "buscar";
+    if (!negocio) console.log("     ↳ 'búscame la peluquería X' ya no busca el negocio");
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+  } finally {
+    try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+  const ruta = leerFuente("app/api/gusi/chat/route.ts").includes("extractCity(message) || cvParsed?.ciudad");
+  if (!ruta) console.log("     ↳ sin ciudad en el mensaje, el negocio ya no se busca en la ciudad del CV");
+  return camara && negocio && ruta;
+});
 test("Guzzi entiende los atajos, 'a todas' y los puestos que no lo son", async () => {
   const { execFileSync } = await import("node:child_process");
   const { unlinkSync, writeFileSync } = await import("node:fs");
