@@ -74,6 +74,9 @@ interface Oferta {
 interface Mensaje {
   role: "user" | "gusi";
   text: string;
+  /** Miniatura de la foto que mandó la persona (unos 15 KB) y la hora. */
+  foto?: string;
+  hora?: string;
   action?: string;
   jobs?: Oferta[];
   company?: {
@@ -318,7 +321,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
         },
         body: JSON.stringify({
           message: texto,
-          history: nuevosMensajes.slice(-12),
+          history: nuevosMensajes.slice(-12).map((m) => ({ ...m, foto: undefined })),
           mode: modoEntrevista ? "entrevista" : "chat",
           userId: userId || undefined,
         }),
@@ -495,7 +498,12 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
       return;
     }
 
-    addMsg("user", "Analizando imagen...");
+    // La foto se ve en el chat, con la hora, como en WhatsApp (16 oct 2026).
+    // Antes solo salía "Analizando imagen..." y no se sabía qué foto era.
+    // Miniatura pequeña: se guarda con la conversación y no debe engordarla.
+    const miniatura = await reducirFoto(file, 360, 0.6).catch(() => "");
+    const hora = new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+    setMensajes(prev => [...prev, { role: "user", text: "📷 Foto", foto: miniatura.startsWith("data:image/jpeg") && miniatura.length < 200000 ? miniatura : undefined, hora }]);
     setCargando(true);
 
     try {
@@ -794,6 +802,14 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                   </div>
                 )}
                 <div className="max-w-[80%] space-y-2">
+                  {m.foto && (
+                    <figure className="ml-auto w-fit">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- miniatura en data URL, no hay nada que optimizar */}
+                      <img src={m.foto} alt="Foto que has mandado" className="block rounded-2xl max-w-[220px] max-h-[260px] object-cover"
+                        style={{ border: "2px solid #22c55e" }} />
+                      {m.hora && <figcaption className="text-[10px] text-right mt-1" style={{ color: "#64748b" }}>{m.hora}</figcaption>}
+                    </figure>
+                  )}
                   <div
                     className="px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-hidden"
                     style={{

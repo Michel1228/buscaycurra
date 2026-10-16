@@ -783,8 +783,11 @@ test("la cámara de Guzzi no espera a la ubicación para siempre y 'búscame la 
     try { unlinkSync(salida); } catch { /* da igual */ }
   }
   const ruta = leerFuente("app/api/gusi/chat/route.ts").includes("extractCity(message) || cvParsed?.ciudad");
+  // La foto se ve en el chat (16 oct 2026) y no viaja a la IA en cada mensaje.
+  const enElChat = chat.includes("<img src={m.foto}") && chat.includes(".map((m) => ({ ...m, foto: undefined }))");
+  if (!enElChat) console.log("     ↳ la foto no se ve en el chat o se manda a la IA en cada mensaje");
   if (!ruta) console.log("     ↳ sin ciudad en el mensaje, el negocio ya no se busca en la ciudad del CV");
-  return camara && negocio && ruta;
+  return camara && negocio && ruta && enElChat;
 });
 
 // 16 oct 2026, después de enseñarlo en el Consorcio EDER: la foto de su tarjeta
