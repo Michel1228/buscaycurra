@@ -534,14 +534,16 @@ export async function GET(req: NextRequest) {
   try {
     const { mget } = await import("@/lib/cache/redis-client");
     const dias = [1, 0].map((d) => new Date(Date.now() - d * 86400000).toISOString().slice(0, 10));
-    const tipos = ["sin-ia", "groq-413", "respaldo-openai"];
+    const tipos = ["sin-ia", "groq-413", "respaldo-openai", "luna-fallo"];
     const valores = await mget(dias.flatMap((d) => tipos.map((t) => `guzzi:fallo:${t}:${d}`)));
     const suma = (t: string) => dias.reduce((n, _, i) => n + (parseInt(valores[i * tipos.length + tipos.indexOf(t)] || "0", 10) || 0), 0);
-    const sinIA = suma("sin-ia"), demasiadoGrande = suma("groq-413"), respaldo = suma("respaldo-openai");
+    const sinIA = suma("sin-ia"), demasiadoGrande = suma("groq-413"), respaldo = suma("respaldo-openai"), lunaFallo = suma("luna-fallo");
+    // Desde el 16 oct 2026 el modelo principal es gpt-5.6-luna (OpenAI): si
+    // falla mucho (sin saldo, caído), contesta Groq y baja la calidad.
     anota(
       "Guzzi contesta con la IA, no con textos enlatados",
-      sinIA === 0 && demasiadoGrande === 0,
-      `ayer y hoy: ${sinIA} respuestas enlatadas (sin ninguna IA), ${demasiadoGrande} rechazos de Groq por tamaño, ${respaldo} respuestas del respaldo de pago`,
+      sinIA === 0 && demasiadoGrande === 0 && lunaFallo <= 10,
+      `ayer y hoy: ${sinIA} respuestas enlatadas (sin ninguna IA), ${lunaFallo} fallos del modelo principal (gpt-5.6-luna), ${demasiadoGrande} rechazos de Groq por tamaño, ${respaldo} respuestas de gpt-4o-mini`,
       "14 oct 2026: las instrucciones de Guzzi no cabían en el Groq gratis y todo salía del respaldo de pago"
     );
   } catch (e) {

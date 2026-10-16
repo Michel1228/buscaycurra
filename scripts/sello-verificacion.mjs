@@ -738,6 +738,11 @@ test("Guzzi cabe en el plan gratuito y no promete búsquedas que no hace", async
     const ruta = chat.includes("temasParaLaConversacion(message") && chat.includes("PROMPT_MODO_CV")
       && /voy a buscar\|d\[ée\]jame buscar/.test(chat)
       && chat.includes('contarFalloGuzzi("sin-ia")') && chat.includes('contarFalloGuzzi("groq-413")')
+      // El modelo principal (16 oct 2026): gpt-5.6-luna antes que el resto, y
+      // DeepSeek no se llama si ya ha contestado.
+      && chat.indexOf('model: "gpt-5.6-luna"') > 0
+      && chat.indexOf('model: "gpt-5.6-luna"') < chat.indexOf("// Intento 1: DeepSeek")
+      && chat.includes("if (!rawReply && deepseekKey && usarDeepSeekPrimero && !deepseekApagado())")
       && leerFuente("app/api/admin/centinela/route.ts").includes("guzzi:fallo:${t}:${d}");
     if (!ruta) console.log("     ↳ el chat no usa los temas, el modo CV, la red de seguridad de 'voy a buscar' o los contadores del centinela");
     return fallos.length === 0 && ruta;

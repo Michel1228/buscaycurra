@@ -2100,10 +2100,35 @@ El candidato tiene mucha experiencia.
     let rawReply = "";
     const usarDeepSeekPrimero = esDePago;
 
+    // Intento 0: OpenAI gpt-5.6-luna, para TODOS (16 oct 2026). Se pasaron las
+    // mismas 8 preguntas, con estas instrucciones, por seis modelos y fue el
+    // único que no se inventó nada: Groq gratis mandaba a convalidar el título
+    // de enfermera a organismos alemanes que no tienen nada que ver y metía
+    // tablas que el chat no pinta. Aguanta 5.000 mensajes y 2 millones de
+    // tokens por minuto (Groq gratis: 8.000). Unos 0,08 céntimos por mensaje.
+    // Si falla o se acaba el saldo, sigue la cadena de siempre.
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "gpt-5.6-luna", messages, reasoning_effort: "low", max_completion_tokens: 2500 }),
+          signal: AbortSignal.timeout(25000),
+        });
+        if (res.ok) {
+          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+          rawReply = data.choices?.[0]?.message?.content || "";
+        } else {
+          console.error("[Guzzi] gpt-5.6-luna HTTP", res.status, (await res.text().catch(() => "")).slice(0, 200));
+        }
+      } catch (e) { console.error("[Guzzi] gpt-5.6-luna error:", (e as Error).message); }
+      if (!rawReply) contarFalloGuzzi("luna-fallo");
+    }
+
     // Intento 1: DeepSeek — solo de entrada para los planes de pago.
     // deepseekApagado(): si la cuenta se quedo sin saldo, no se le llama durante
     // unas horas. Ver lib/guzzi/llm.ts.
-    if (deepseekKey && usarDeepSeekPrimero && !deepseekApagado()) {
+    if (!rawReply && deepseekKey && usarDeepSeekPrimero && !deepseekApagado()) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const res = await fetch("https://api.deepseek.com/chat/completions", {
@@ -2305,7 +2330,7 @@ async function consultaConMargen<R extends Record<string, unknown>>(sql: string,
  * contestando y Guzzi sin ninguna IA (respuesta enlatada). El centinela lo
  * mira cada mañana y avisa por correo (app/api/admin/centinela).
  */
-function contarFalloGuzzi(tipo: "groq-413" | "respaldo-openai" | "sin-ia"): void {
+function contarFalloGuzzi(tipo: "groq-413" | "respaldo-openai" | "sin-ia" | "luna-fallo"): void {
   const dia = new Date().toISOString().slice(0, 10);
   import("@/lib/cache/redis-client")
     .then(({ incrementar }) => incrementar(`guzzi:fallo:${tipo}:${dia}`, 8 * 86400))
