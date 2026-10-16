@@ -1411,7 +1411,10 @@ El candidato tiene mucha experiencia.
       // extractCompanyFromContact cubre "manda un correo al Mercadona de la
       // calle X"; extractCompanyName cubre "info sobre la empresa X". Se prueba
       // primero el de contacto porque es el que limpia la coletilla de la vía.
-      const searchCity = extractCity(message) || "";
+      // Sin ciudad en el mensaje, la de su CV, como hace la cámara con la del
+      // perfil: "búscame la peluquería Enjoy Estilistas" sin ciudad devolvía
+      // una de Cardedeu (Barcelona) a quien estaba en Tudela (16 oct 2026).
+      const searchCity = extractCity(message) || cvParsed?.ciudad || "";
       let companyName = extractCompanyFromContact(message) || extractCompanyName(message);
       // "Echar el currículum en Tudela" no es una empresa: es un pueblo. Si lo
       // que queda es la propia ciudad, se pregunta a qué empresa en vez de
