@@ -781,6 +781,52 @@ test("la cámara de Guzzi no espera a la ubicación para siempre y 'búscame la 
   if (!ruta) console.log("     ↳ sin ciudad en el mensaje, el negocio ya no se busca en la ciudad del CV");
   return camara && negocio && ruta;
 });
+
+// 16 oct 2026, después de enseñarlo en el Consorcio EDER: la foto de su tarjeta
+// pedía "más información" estando el Consorcio a 0 km, un nombre escrito a mano
+// no se buscaba, una botella de agua no daba las empresas del sector y "búscalo"
+// se iba a la charla libre. Probado con 39 fotos (tarjetas, papeles escritos a
+// mano, carteles, dibujos, productos, fachadas) desde Tudela con y sin GPS.
+test("la cámara busca cualquier nombre cerca y el sector de más cerca a más lejos", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-camara.cjs";
+  const fallos = [];
+  try {
+    execFileSync("npx", ["esbuild", "lib/camara/analizar-foto.ts", "--bundle", "--format=cjs", "--platform=node",
+      "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const c = await import(`../${salida}?${Date.now()}`);
+    if (c.quitarCiudad?.("bar la parada tudela", ["Tudela"]) !== "bar la parada") fallos.push("la ciudad pegada al nombre no se quita");
+    if (c.quitarCiudad?.("Randstad", ["Tudela"]) !== "Randstad") fallos.push("quitarCiudad estropea un nombre sin ciudad");
+    if (!c.coincideFuerte?.("Zara", "ZARA Gran Vía") || c.coincideFuerte?.("Rasta", "Oficial Rastas Madrid")) fallos.push("la coincidencia por palabras falla");
+    if (!(c.similitud?.("Rasta", "Randstad Tudela") >= 0.5) || c.similitud?.("Rasta", "Mercadona") >= 0.5) fallos.push("el parecido entre nombres falla");
+    const t = c.terminosDeOfertas?.("", ["administrativo sanitario", "enfermero"]) || [];
+    if (t.some((x) => x.startsWith("administrati")) || !t.some((x) => x.startsWith("enferm"))) fallos.push(`palabras de ofertas genéricas: ${t.join(",")}`);
+    const tras = [{ role: "gusi", text: "📸 He leído **Consorcio EDER**, pero no encuentro ningún sitio con ese nombre." }];
+    const b1 = c.nombreDeLaFotoAnterior?.("búscalo", tras);
+    const b2 = c.nombreDeLaFotoAnterior?.("búscalo en pamplona", tras);
+    if (b1?.nombre !== "Consorcio EDER" || b1?.ciudad !== null || b2?.ciudad !== "Pamplona") fallos.push("'búscalo' después de una foto no se entiende");
+    if (c.nombreDeLaFotoAnterior?.("búscalo", [{ role: "gusi", text: "📸 En la foto hay **botella de agua**." }])) fallos.push("'búscalo' tras un objeto busca el objeto como negocio");
+    const p = c.PROMPT_VISION || "";
+    if (!["escrito a mano", "NO adivines marcas", "\"busquedas_empresas\"", "\"nombre_corregido\"", "\"palabras_ofertas\""].every((x) => p.includes(x))) fallos.push("faltan reglas en las instrucciones de la foto");
+  } catch (e) {
+    fallos.push(`no se pudo probar: ${e.message?.slice(0, 80)}`);
+  } finally {
+    try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+  const lib = leerFuente("lib/camara/analizar-foto.ts");
+  const ruta = leerFuente("app/api/gusi/analyze-image/route.ts");
+  const chat = leerFuente("app/api/gusi/chat/route.ts");
+  if (!ruta.includes("responderFoto(foto, { lat, lng, ciudadUsuario })") || !ruta.includes("form_data->>'ciudad'")) fallos.push("la ruta no usa el módulo o no mira la ciudad del CV");
+  if (!chat.includes("nombreDeLaFotoAnterior(message, history)")) fallos.push("el chat no entiende 'búscalo' tras una foto");
+  // Los datos de una tarjeta nunca en la ficha de otra empresa, ninguna web de
+  // Google se toma por la de la empresa, y "en la calle" es en la calle.
+  if (!lib.includes('if (deLaFoto.email && encontrado && encontrado.via !== "exacto") encontrado = null;')) fallos.push("el correo de una tarjeta puede acabar en otra empresa");
+  if (!lib.includes("PLATAFORMAS.test(dominioDe(web))") || !lib.includes("website: webPropia(r.website)")) fallos.push("se deducen correos de webs de Google o Facebook");
+  if (!lib.includes("distanciaKm({ lat, lng }, r.geometry.location) <= 1")) fallos.push("'en la calle' no comprueba la distancia");
+  fallos.forEach((f) => console.log(`     ↳ ${f}`));
+  return fallos.length === 0;
+});
 test("Guzzi entiende los atajos, 'a todas' y los puestos que no lo son", async () => {
   const { execFileSync } = await import("node:child_process");
   const { unlinkSync, writeFileSync } = await import("node:fs");
@@ -1937,7 +1983,8 @@ test("la carta del envio no puede salir en blanco", () => {
 // fuente de Girona, las "ofertas cerca de Tudela" eran de Berlin y Plymouth, las
 // instrucciones obligaban al modelo a adivinar marcas, y el boton de "Enviar mi
 // CV" no aparecia nunca despues de una foto.
-const camaraSrc = leerFuente("app/api/gusi/analyze-image/route.ts");
+// Desde el 16 oct 2026 lo que se hace con la foto está en lib/camara/analizar-foto.ts.
+const camaraSrc = leerFuente("app/api/gusi/analyze-image/route.ts") + leerFuente("lib/camara/analizar-foto.ts");
 const fichaSrc = leerFuente("lib/camara/ficha-marca.ts");
 const chatSrc = leerFuente("components/GusiChat.tsx");
 
@@ -1950,7 +1997,8 @@ test("la camara no obliga a adivinar marcas", () => {
 test("la camara no anuncia como cercanas ofertas de otro pais", () =>
   !camaraSrc.includes("async function searchJobsBySector") &&
   !camaraSrc.includes("async function searchJobsByCompanyOrSector") &&
-  camaraSrc.includes("country = $1") &&
+  // Desde el 16 oct 2026 la consulta compara en minúsculas: lower(j.country) = $1.
+  (camaraSrc.includes("country = $1") || camaraSrc.includes("lower(j.country) = $1")) &&
   fichaSrc.includes("(country = $2) AS en_pais"));
 
 test("la ficha de la marca solo enseña webs que existen", () =>
@@ -1971,7 +2019,7 @@ test("la fachada solo se da por buena si el nombre coincide", () =>
   camaraSrc.includes("sitios.filter((s) => nombreCoincide(companyName, s.name))"));
 
 test("despues de una foto aparece el boton de enviar el CV", () =>
-  chatSrc.includes("addMsg(\"gusi\", data.reply, data.action, data.company)") &&
+  chatSrc.includes("addMsg(\"gusi\", data.reply, data.action, data.company") &&
   camaraSrc.includes("emailRrhh: p.email") &&
   camaraSrc.includes("company: lugarAEmpresaDelChat(lugar)"));
 

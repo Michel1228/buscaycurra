@@ -209,7 +209,7 @@ export async function investigarMarca(marca: string, objeto: string): Promise<Fi
 export async function ofertasDeLaMarca(
   nombres: string[],
   paisCodigo: string
-): Promise<{ enPais: OfertaMarca[]; totalPais: number; totalFuera: number }> {
+): Promise<{ enPais: OfertaMarca[]; totalPais: number; totalFuera: number; fallo?: boolean }> {
   const vacio = { enPais: [], totalPais: 0, totalFuera: 0 };
   // Nombres de 3+ letras, sin la forma jurídica, que en la base no aparece igual.
   const limpios = [...new Set(
@@ -252,7 +252,9 @@ export async function ofertasDeLaMarca(
     };
   } catch (e) {
     console.warn("[ficha-marca] ofertas:", (e as Error).message);
-    return vacio;
+    // No es lo mismo "no tiene ofertas" que "no se ha podido mirar": con Coca-Cola
+    // la consulta se pasaba de tiempo y se decía que no tenía (16 oct 2026).
+    return { ...vacio, fallo: true };
   }
 }
 

@@ -274,8 +274,8 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
     return () => clearTimeout(t);
   }, []);
 
-  const addMsg = (role: "user" | "gusi", text: string, action?: string, company?: Mensaje["company"]) => {
-    setMensajes(prev => [...prev, { role, text, action, company }]);
+  const addMsg = (role: "user" | "gusi", text: string, action?: string, company?: Mensaje["company"], jobs?: Oferta[]) => {
+    setMensajes(prev => [...prev, { role, text, action, company, jobs }]);
   };
 
   const enviar = async (texto: string) => {
@@ -553,11 +553,12 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
         clearTimeout(reloj);
       }
 
-      const data = await res.json().catch(() => ({} as { reply?: string; error?: string; action?: string; company?: unknown }));
+      const data = await res.json().catch(() => ({} as { reply?: string; error?: string; action?: string; company?: unknown; jobs?: Oferta[] }));
       if (data.reply) {
         // La empresa viaja con el mensaje: sin ella la tarjeta de "Enviar mi CV"
         // no se pintaba nunca después de una foto.
-        addMsg("gusi", data.reply, data.action, data.company);
+        // Y las ofertas de cerca, con su botón de "Enviar CV" (16 oct 2026).
+        addMsg("gusi", data.reply, data.action, data.company, data.jobs);
       } else {
         addMsg("gusi", data.error || "No pude analizar la imagen. Prueba de nuevo.");
       }

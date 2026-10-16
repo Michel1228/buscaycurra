@@ -1204,6 +1204,18 @@ El candidato tiene mucha experiencia.
     const enModoCV = mode === "entrevista" && !/\b(busca|buscar|busco|buscame|búscame|ofertas?)\b/i.test(message);
     const preIntent = enModoCV ? "chat" : detectIntent(message, history);
 
+    // -- "Búscalo" después de una foto ----------------------------------------
+    // La cámara dice "He leído **Consorcio EDER**…"; un "búscalo" (o "búscalo
+    // en Pamplona") busca eso, en su ciudad si no dice otra. Antes se iba a la
+    // charla libre (16 oct 2026). Ver lib/camara/analizar-foto.ts.
+    if (!enModoCV) {
+      const { nombreDeLaFotoAnterior, buscarNegocioPorNombre } = await import("@/lib/camara/analizar-foto");
+      const deLaFoto = nombreDeLaFotoAnterior(message, history);
+      if (deLaFoto) {
+        return NextResponse.json(await buscarNegocioPorNombre(deLaFoto.nombre, deLaFoto.ciudad || cvParsed?.ciudad || ""));
+      }
+    }
+
     // -- Ofertas que Guzzi ya le ha enseñado ("a todas", "la primera") --------
     // Antes "quiero mandar el curriculum a todas" se tomaba por el nombre de
     // una empresa ("Todas") y se buscaba en Google. Ver lib/guzzi/entender.ts.
