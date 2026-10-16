@@ -506,37 +506,54 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
       // HEIC). Si el navegador no puede dibujarla, se manda tal cual.
       const base64 = await reducirFoto(file, 1280, 0.82);
 
-      // Capturar ubicación GPS (si el usuario lo permite)
+      // Capturar ubicación GPS (si el usuario lo permite), CON UN TOPE DE VERDAD.
+      // En iPhone el `timeout` de getCurrentPosition no corre mientras el aviso
+      // de permiso está en pantalla o el GPS no responde: la foto se quedaba
+      // esperando para siempre y nunca llegaba al servidor (16 oct 2026). A los
+      // 4 segundos se sigue sin ubicación; la búsqueda solo es menos precisa.
       let lat: number | undefined;
       let lng: number | undefined;
-      try {
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-          if (!navigator.geolocation) reject(new Error("Sin GPS"));
-          else navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 60000,
-          });
-        });
+      const pos = await Promise.race([
+        new Promise<GeolocationPosition | null>((resolve) => {
+          if (!navigator.geolocation) return resolve(null);
+          try {
+            navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), {
+              enableHighAccuracy: false,
+              timeout: 4000,
+              maximumAge: 300000,
+            });
+          } catch { resolve(null); }
+        }),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+      ]);
+      if (pos) {
         lat = pos.coords.latitude;
         lng = pos.coords.longitude;
-      } catch {
-        // Sin GPS — no pasa nada, la búsqueda será menos precisa
       }
 
       // La sesión también en la cabecera: con las cookies suele bastar, pero en
       // la app nativa no siempre viajan, y sin sesión el servidor responde 401.
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
-      const res = await fetch("/api/gusi/analyze-image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-        },
-        body: JSON.stringify({ imageBase64: base64, userId, lat, lng }),
-      });
+      // Y un tiempo máximo para la respuesta: sin él, si algo se atascaba, el
+      // chat se quedaba "pensando" sin decir nada.
+      const corte = new AbortController();
+      const reloj = setTimeout(() => corte.abort(), 50000);
+      let res: Response;
+      try {
+        res = await fetch("/api/gusi/analyze-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({ imageBase64: base64, userId, lat, lng }),
+          signal: corte.signal,
+        });
+      } finally {
+        clearTimeout(reloj);
+      }
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({} as { reply?: string; error?: string; action?: string; company?: unknown }));
       if (data.reply) {
         // La empresa viaja con el mensaje: sin ella la tarjeta de "Enviar mi CV"
         // no se pintaba nunca después de una foto.
@@ -544,8 +561,10 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
       } else {
         addMsg("gusi", data.error || "No pude analizar la imagen. Prueba de nuevo.");
       }
-    } catch {
-      addMsg("gusi", "⚠️ Error al analizar la imagen. ¿Tienes conexión?");
+    } catch (e) {
+      addMsg("gusi", (e as Error)?.name === "AbortError"
+        ? "⏱️ La foto está tardando demasiado. Prueba otra vez, más cerca del cartel, o escríbeme el nombre del negocio y la ciudad."
+        : "⚠️ Error al analizar la imagen. ¿Tienes conexión?");
     }
     setCargando(false);
   };

@@ -162,7 +162,10 @@ export function detectIntent(text: string, history: Array<{ role: string; text: 
     return "info_empresa";
   }
 
-  if (/(?:busca|busco|info|información|hay|conoces|sabes)\s+(?:el\s+|la\s+|los\s+|las\s+|un\s+|una\s+)?(?:bar\s+|restaurante\s+|tienda\s+|hotel\s+|cafeter[ií]a\s+|empresa\s+|supermercado\s+|taller\s+|panader[ií]a\s+|farmacia\s+|cl[ií]nica\s+|peluquer[ií]a\s+)/i.test(t)) return "info_empresa";
+  // Sin tildes y con "búscame/encuéntrame": "búscame la peluquería Enjoy
+  // Estilistas" se tomaba por una búsqueda de ofertas de peluquería en toda
+  // España (16 oct 2026).
+  if (/(?:busca(?:me)?|busco|encuentra(?:me)?|localiza(?:me)?|info|informacion|hay|conoces|sabes)\s+(?:el\s+|la\s+|los\s+|las\s+|un\s+|una\s+)?(?:bar\s+|restaurante\s+|tienda\s+|hotel\s+|cafeteria\s+|empresa\s+|supermercado\s+|taller\s+|panaderia\s+|farmacia\s+|clinica\s+|peluqueria\s+|barberia\s+|gimnasio\s+|academia\s+|centro\s+de\s+estetica\s+|estetica\s+)/i.test(tn)) return "info_empresa";
   if (/empresas?\s+(?:de|del?)\s+\w+/i.test(t) && /\s+(?:en|por|cerca)\s+\w+/i.test(t)) return "info_empresa";
   if (/(?:qué|que)\s+(?:empresas?|f[áa]bricas?|negocios?|comercios?|tiendas?)\s+(?:hay|conoces|sabes)\s+(?:en|por|cerca|de)\s+\w+/i.test(t)) return "info_empresa";
   // "manda un correo al Mercadona de la calle X" / "contacta con Bar Pepe" /

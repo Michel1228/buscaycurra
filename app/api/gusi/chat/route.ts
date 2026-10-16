@@ -821,6 +821,11 @@ function buildJobsText(puesto: string, ciudad: string, ofertas: unknown[], scope
 }
 
 function extractCompanyName(text: string): string | null {
+  // "búscame la peluquería Enjoy Estilistas": el tipo de negocio y el nombre,
+  // juntos, que es como mejor lo encuentra el buscador de sitios. Va primero:
+  // la regla de "busca" de abajo cortaba en dos letras ("pe").
+  const conTipo = text.trim().match(/^(?:b[uú]sca(?:me)?|busco|encu[eé]ntra(?:me)?|localiza(?:me)?)\s+(?:el\s+|la\s+|los\s+|las\s+|un\s+|una\s+)?((?:bar|restaurante|tienda|hotel|cafeter[ií]a|supermercado|taller|panader[ií]a|farmacia|cl[ií]nica|peluquer[ií]a|barber[ií]a|gimnasio|academia|centro\s+de\s+est[eé]tica|est[eé]tica)\s+.{2,50}?)(?:\s+en\s+\S.*)?\s*[.?!]*$/i);
+  if (conTipo?.[1]) return conTipo[1].trim();
   const patterns = [
     /empresa\s+[""]?(\w[\w\s]{2,40}?)[""]?\s*(?:es|tiene|ofrece|busca|contrata|$)/i,
     /(?:info|información|datos)\s+(?:sobre\s+)?(?:la\s+)?empresa\s+[""]?([\w\s]{2,40}?)[""]?$/i,
