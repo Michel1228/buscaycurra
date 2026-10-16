@@ -291,14 +291,18 @@ export async function responderFoto(
     }
 
     // No está en el mapa. Si la foto trae el correo (una tarjeta), con eso basta
-    // para mandar el CV.
-    if (deLaFoto.email) {
+    // para mandar el CV. Y si trae su web, el correo se saca de su propia web,
+    // sin Google: con el cupo diario de Google gastado, la tarjeta del Consorcio
+    // EDER salía "no lo encuentro" llevando impresa www.consorcioeder.es.
+    const deSuWeb = !deLaFoto.email && deLaFoto.web ? await correoDeLaWeb(deLaFoto.web) : null;
+    if (deLaFoto.email || deSuWeb?.email || (deLaFoto.web && (deLaFoto.direccion || deLaFoto.telefono))) {
       const desdeFoto: PlacesResult = {
         name: nombre, address: deLaFoto.direccion || ciudadVisible || "", phone: deLaFoto.telefono || "",
-        email: deLaFoto.email, emailConfianza: "alta", website: deLaFoto.web || "", mapsUrl: "", rating: 0,
+        email: deLaFoto.email || deSuWeb?.email || "", emailConfianza: deLaFoto.email ? "alta" : (deSuWeb?.emailConfianza || "baja"),
+        website: webPropia(deLaFoto.web), mapsUrl: "", rating: 0,
       };
       return {
-        reply: `${encabezadoCartel}📸 He leído **${nombre}**. No lo encuentro en el mapa, pero la foto trae sus datos:\n\n${buildCompanyReply(desdeFoto, null, zona)}`,
+        reply: `${encabezadoCartel}📸 He leído **${nombre}**. Con los datos de la foto${deSuWeb?.email ? " y de su web" : ""}:\n\n${buildCompanyReply(desdeFoto, null, zona)}`,
         action: "company_info",
         company: lugarAEmpresaDelChat(desdeFoto),
       };
@@ -313,7 +317,7 @@ export async function responderFoto(
     } else {
       reply += `\n\nSi sabes dónde está, dímelo así: "búscalo en Pamplona", y lo busco allí.`;
     }
-    const bloque = sector ? await bloqueSector(foto, zona) : null;
+    const bloque = sector && !ficha?.empresa ? await bloqueSector(foto, zona) : null;
     if (bloque?.texto) reply += `\n\n${bloque.texto}`;
     return {
       reply,
@@ -1089,6 +1093,8 @@ function webPropia(web?: string | null): string {
 
 async function correoDeLaWeb(web?: string | null): Promise<{ email: string; emailConfianza: "alta" | "media" | "baja" }> {
   if (!web || PLATAFORMAS.test(dominioDe(web))) return { email: "", emailConfianza: "baja" };
+  // En una tarjeta la web viene como "www.consorcioeder.es", sin https://.
+  if (!/^https?:/i.test(web)) web = `https://${web.replace(/^\/+/, "")}`;
   try {
     const { extraerInfoEmpresa } = await import("@/lib/company-extractor");
     const { extraerDominio, generarEmails, dominioAceptaCorreo } = await import("@/lib/empresa-datos");
