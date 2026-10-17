@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
+import { puestosDelCv } from "@/lib/job-search/puestos-del-cv";
 
 interface Guardado {
   job_id: string;
@@ -54,11 +55,18 @@ export default function GuardadosPage() {
               .single();
 
             const ciudad = profile?.ciudad || "";
-            const sector = profile?.sector || "";
+            // Lo primero que dice su CV, como la portada (17 oct 2026); el
+            // sector del perfil, que casi nadie rellena, solo si no hay CV.
+            let puesto = "";
+            try {
+              const resCv = await fetch(`/api/gusi/cv?userId=${session.user.id}`);
+              if (resCv.ok) puesto = puestosDelCv(((await resCv.json()) as { cv?: unknown }).cv)[0] || "";
+            } catch { /* sin CV */ }
+            const sector = puesto || profile?.sector || "";
 
-            if (ciudad || sector) {
+            if (sector) {
               const searchParams = new URLSearchParams();
-              if (sector) searchParams.set("keyword", sector);
+              searchParams.set("keyword", sector);
               if (ciudad) searchParams.set("location", ciudad);
               const searchRes = await fetch(`/api/jobs/search?${searchParams.toString()}`);
               if (searchRes.ok) {

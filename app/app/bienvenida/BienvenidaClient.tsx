@@ -264,7 +264,7 @@ export default function BienvenidaClient() {
               <div className="flex items-center gap-2">
                 <span className="text-lg"><Briefcase className="w-5 h-5" style={{color: "#f59e0b"}} /></span>
                 <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>
-                  Ofertas recomendadas para ti
+                  Ofertas según tu CV
                 </h2>
               </div>
               <Link href="/app/buscar" className="text-xs font-medium" style={{ color: "#22c55e" }}>

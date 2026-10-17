@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
+import { ofertasParaTi } from "@/lib/job-search/ofertas-para-ti";
 
 export const dynamic = "force-dynamic";
 
@@ -108,46 +109,18 @@ export async function GET(request: NextRequest) {
     // primero que ve alguien al entrar en la aplicacion.
     //
     // Ahora se leen de la misma tabla a la que apunta el enlace.
+    // SEGÚN SU CV (17 oct 2026). Eran las seis más nuevas de su ciudad, de
+    // cualquier cosa, y se rellenaban con lo más reciente de donde fuera: a un
+    // carretillero de Tudela le salían "Profesor/a particular" y "Director/a
+    // de Delegación". Ahora salen de los puestos de su CV, en su ciudad y su
+    // provincia; si no hay seis de lo suyo, salen menos, y sin CV, ninguna.
     let ofertasRecomendadas: any[] = [];
     try {
-      const pool = getPool();
-      // Se piden por ciudad si la sabemos, y si no hay suficientes se
-      // completan con las mas recientes. En una sola consulta, ordenando por
-      // "las de tu ciudad primero", en vez de dos viajes a la base.
-      const { rows } = await pool.query(
-        `SELECT id, title, company, city, salary, "sourceName", sector
-           FROM "JobListing"
-          WHERE "isActive"
-            AND ($1::text IS NULL OR city ILIKE '%' || $1 || '%')
-          ORDER BY "createdAt" DESC
-          LIMIT 6`,
-        [profile?.ciudad || null]
+      const { rows: cvs } = await getPool().query(
+        "SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1",
+        [userId]
       );
-
-      let filas = rows;
-      // Si su ciudad no tiene seis, se rellena con lo mas reciente de donde sea:
-      // una portada con dos tarjetas se ve rota.
-      if (filas.length < 6) {
-        const { rows: extra } = await pool.query(
-          `SELECT id, title, company, city, salary, "sourceName", sector
-             FROM "JobListing"
-            WHERE "isActive" AND id <> ALL($1::text[])
-            ORDER BY "createdAt" DESC
-            LIMIT $2`,
-          [filas.map((r: any) => r.id), 6 - filas.length]
-        );
-        filas = [...filas, ...extra];
-      }
-
-      ofertasRecomendadas = filas.map((r: any) => ({
-        id: r.id,
-        titulo: r.title,
-        empresa: r.company,
-        ubicacion: r.city,
-        salario: r.salary,
-        fuente: r.sourceName,
-        sector: r.sector,
-      }));
+      ofertasRecomendadas = await ofertasParaTi(cvs[0]?.form_data ?? null, profile?.ciudad);
     } catch (e) {
       // Sin ofertas la portada sigue en pie: quedan las estadisticas y los
       // accesos rapidos. Pero que se vea en el registro, que antes un fallo
