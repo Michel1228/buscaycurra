@@ -11,36 +11,43 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Para Empresas — BuscayCurra | Accede a talento activo",
   description:
-    "Publica tus ofertas gratis y llega a quien busca trabajo de verdad. Candidatos con CV optimizado por IA, contacto directo sin intermediarios. 49,99€/mes, sin coste por oferta.",
+    "Encuentra a gente que busca trabajo y ha pedido que las empresas la encuentren: nombre, contacto y CV completo. Plan Empresa, 49,99€/mes, sin coste por oferta.",
   openGraph: {
     title: "BuscayCurra para Empresas — Talento real, sin depender de InfoJobs",
     description:
-      "Candidatos activos, CVs con IA, contacto directo. Publica ofertas gratis. Todo por 49,99€/mes.",
+      "Candidatos que han pedido que les encuentren, con su CV completo y contacto directo. 49,99€/mes.",
     url: "https://buscaycurra.es/empresas",
     type: "website",
   },
 };
 
+// LO QUE SE PROMETE ES LO QUE HAY (17 oct 2026). Aquí se anunciaban alertas
+// de nuevos candidatos, una API, exportar contactos, "soporte 24/7", "nuevos
+// candidatos cada día" y precios de InfoJobs y LinkedIn sin fuente. Nada de
+// eso existía o se podía demostrar, y a una empresa que paga no se le puede
+// vender así (Ley de Competencia Desleal: actos de engaño y publicidad
+// comparativa que no se puede comprobar). Si algo de eso llega a existir, se
+// vuelve a anunciar.
 const VENTAJAS: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   {
     Icon: Target,
-    titulo: "Candidatos activos, no pasivos",
-    desc: "Cada perfil pertenece a alguien que está buscando trabajo ahora mismo. No bases de datos de años atrás.",
+    titulo: "Gente que quiere que la encuentren",
+    desc: "Solo aparece quien ha activado «Visible para empresas» en su CV. Te escribe alguien que ha pedido que le escribas.",
   },
   {
     Icon: Bot,
-    titulo: "CVs mejorados con IA",
-    desc: "Guzzi optimiza cada CV antes de que llegue a tu bandeja. Recibes candidatos con el perfil bien estructurado.",
+    titulo: "CV completos y ordenados",
+    desc: "Todos los CV están hechos con el mismo editor: experiencia, formación, aptitudes e idiomas, fáciles de comparar.",
   },
   {
     Icon: MapPin,
-    titulo: "Filtra por ciudad y perfil",
-    desc: "Busca exactamente lo que necesitas: cocinero en Madrid, electricista en Bilbao, programador remoto.",
+    titulo: "Busca por ciudad y perfil",
+    desc: "Escribe la ciudad y lo que buscas (camarero, carretillero, administrativo…) y te salen los que encajan.",
   },
   {
     Icon: Banknote,
-    titulo: "Sin pagar por oferta",
-    desc: "InfoJobs cobra hasta 369€ por publicar una oferta. Aquí accedes a candidatos ilimitados por 49,99€/mes.",
+    titulo: "Sin pagar por candidato",
+    desc: "Una cuota al mes, sin coste por oferta ni por contacto. Sin permanencia.",
   },
   {
     Icon: Zap,
@@ -49,8 +56,8 @@ const VENTAJAS: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   },
   {
     Icon: RefreshCw,
-    titulo: "Base actualizada diariamente",
-    desc: "Nuevos candidatos cada día. Recibes alertas cuando alguien de tu sector y ciudad carga su CV.",
+    titulo: "Ofertas sin coste",
+    desc: "Mándanos tu oferta desde el formulario: la revisamos y te contestamos por correo.",
   },
 ];
 
@@ -70,7 +77,7 @@ const TESTIMONIOS: { nombre: string; ciudad?: string; puesto?: string; texto: st
 const FAQ_EMPRESAS = [
   {
     q: "¿Necesito publicar una oferta para encontrar candidatos?",
-    a: "No. Con el Plan Empresa accedes directamente al pool completo de candidatos activos. Puedes filtrar por sector, ciudad y perfil sin esperar a que apliquen.",
+    a: "No. Con el Plan Empresa ves directamente a todos los candidatos que han activado «Visible para empresas», y los buscas por ciudad y perfil sin esperar a que te escriban.",
   },
   {
     q: "¿Qué datos de contacto tengo de cada candidato?",
@@ -78,25 +85,18 @@ const FAQ_EMPRESAS = [
   },
   {
     q: "¿Puedo publicar ofertas también?",
-    a: "Sí, gratis e ilimitadas. Cuando publicas una oferta, Guzzi la incluye automáticamente en las búsquedas de todos los candidatos relevantes del sistema.",
+    a: "Sí, sin coste. Nos la mandas desde el formulario, la revisamos y te contestamos por correo.",
   },
   {
-    q: "¿Con cuánta frecuencia se actualiza la bolsa de candidatos?",
-    a: "Nuevos candidatos cada día. Puedes activar alertas para recibir notificaciones cuando alguien con el perfil exacto que buscas se registre.",
+    q: "¿Cuántos candidatos hay?",
+    a: "Los que han activado «Visible para empresas» en su CV. Antes de pagar puedes ver sus fichas sin nombre (puesto, ciudad y aptitudes) en el portal de candidatos, y así sabes si hay lo que buscas.",
   },
   {
     q: "¿Funcionáis solo en España?",
-    a: "Principalmente España, aunque tenemos candidatos en toda Europa y Latinoamérica. Si buscas perfiles para trabajar en remoto o en el extranjero, también podemos ayudarte.",
+    a: "Casi todos los candidatos están en España, y hay algunos de otros países.",
   },
 ];
 
-const COMPARATIVA = [
-  { aspecto: "Publicar oferta", infojobs: "369€ por oferta", nosotros: "Gratis (incluido)" },
-  { aspecto: "Acceso a candidatos", infojobs: "Solo los que aplican", nosotros: "Todo el pool activo" },
-  { aspecto: "Contacto directo", infojobs: "Solo si aplican ellos", nosotros: "Email y teléfono directo" },
-  { aspecto: "CVs optimizados IA", infojobs: "No", nosotros: "Sí, todos" },
-  { aspecto: "Coste mensual", infojobs: "300-800€/mes (suscripción BD)", nosotros: "49,99€/mes" },
-];
 
 export default function EmpresasLandingPage() {
   return (
@@ -133,7 +133,7 @@ export default function EmpresasLandingPage() {
               <span className="flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-medium"
                 style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", color: "#22c55e" }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-current inline-block animate-pulse" />
-                Publicar ofertas es gratis
+                Ver los perfiles es gratis
               </span>
             </div>
 
@@ -143,9 +143,9 @@ export default function EmpresasLandingPage() {
             </h1>
 
             <p className="text-base md:text-lg mb-8 leading-relaxed max-w-2xl mx-auto" style={{ color: "#94a3b8" }}>
-              Publica tus ofertas y llega a quien está buscando <strong style={{ color: "#cbd5e1" }}>ahora mismo</strong>.
-              Candidatos con el CV ya optimizado por IA. Filtra por sector, ciudad y perfil.
-              Contacta directo, sin intermediarios y sin coste por oferta.
+              Encuentra a gente que busca trabajo y <strong style={{ color: "#cbd5e1" }}>ha pedido que las empresas la encuentren</strong>.
+              Búscalos por ciudad y perfil, mira su CV completo y contacta directo,
+              sin intermediarios y sin coste por oferta.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
@@ -157,7 +157,7 @@ export default function EmpresasLandingPage() {
               <Link href="/empresas/publicar"
                 className="text-center text-sm font-medium py-3.5 px-8 rounded-xl transition hover:bg-[#1e212b]"
                 style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
-                Publicar oferta gratis
+                Mandar una oferta gratis
               </Link>
             </div>
 
@@ -165,38 +165,13 @@ export default function EmpresasLandingPage() {
               {[
                 // No se promete un numero de candidatos: seria mentir a
                 // quien va a pagar 49,99 EUR al mes por esto.
-                { num: "0€", label: "Publicar ofertas", color: "#22c55e" },
-                { num: "49,99€", label: "Al mes, todo incluido", color: "#f59e0b" },
-                { num: "IA", label: "CVs ya optimizados", color: "#a855f7" },
+                { num: "0€", label: "Ver perfiles y mandar ofertas", color: "#22c55e" },
+                { num: "49,99€", label: "Al mes, sin permanencia", color: "#f59e0b" },
+                { num: "CV", label: "Completo y con contacto", color: "#a855f7" },
               ].map(s => (
                 <div key={s.label} className="text-center">
                   <div className="text-2xl font-extrabold" style={{ color: s.color }}>{s.num}</div>
                   <div className="text-[11px]" style={{ color: "#64748b" }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Comparativa vs InfoJobs para empresas */}
-        <section className="py-12 px-6" style={{ background: "rgba(15,17,23,0.5)", borderTop: "1px solid rgba(45,49,66,0.4)" }}>
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-xl font-bold text-center mb-8" style={{ color: "#f1f5f9" }}>
-              InfoJobs para empresas cobra 369€ por oferta. Nosotros no.
-            </h2>
-            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(45,49,66,0.5)" }}>
-              <div className="grid grid-cols-3 py-3 px-4 text-[11px] font-semibold uppercase tracking-wider"
-                style={{ background: "#1e212b", color: "#64748b" }}>
-                <span></span>
-                <span className="text-center" style={{ color: "#ef4444" }}>InfoJobs / LinkedIn</span>
-                <span className="text-center" style={{ color: "#22c55e" }}>BuscayCurra</span>
-              </div>
-              {COMPARATIVA.map((row, i) => (
-                <div key={i} className="grid grid-cols-3 py-3 px-4 text-[11px] items-center"
-                  style={{ background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent", borderTop: "1px solid rgba(45,49,66,0.3)" }}>
-                  <span style={{ color: "#94a3b8" }}>{row.aspecto}</span>
-                  <span className="text-center" style={{ color: "#64748b" }}>{row.infojobs}</span>
-                  <span className="text-center font-semibold" style={{ color: "#22c55e" }}>{row.nosotros}</span>
                 </div>
               ))}
             </div>
@@ -222,7 +197,8 @@ export default function EmpresasLandingPage() {
           </div>
         </section>
 
-        {/* Testimonios */}
+        {/* Testimonios: solo si los hay de verdad (el array está vacío a propósito) */}
+        {TESTIMONIOS.length > 0 && (
         <section className="py-16 px-6" style={{ background: "rgba(15,17,23,0.6)", borderTop: "1px solid rgba(45,49,66,0.4)" }}>
           <div className="max-w-5xl mx-auto">
             <h2 className="text-xl font-bold text-center mb-2" style={{ color: "#f1f5f9" }}>Lo que dicen las empresas</h2>
@@ -242,6 +218,7 @@ export default function EmpresasLandingPage() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Precios para empresas */}
         <section className="py-16 px-6">
@@ -256,14 +233,12 @@ export default function EmpresasLandingPage() {
               <p className="text-xs mb-6" style={{ color: "#64748b" }}>Sin permanencia · Cancela cuando quieras</p>
               <div className="grid sm:grid-cols-2 gap-2 text-left mb-8">
                 {[
-                  "Acceso ilimitado a todos los candidatos",
+                  "Todos los candidatos visibles, con nombre",
                   "Contacto directo (email + teléfono)",
-                  "Publicar ofertas ilimitadas gratis",
-                  "Alertas de nuevos candidatos",
-                  "Filtros por sector, ciudad y perfil",
-                  "CVs optimizados con IA",
-                  "API de acceso a la base de datos",
-                  "Soporte prioritario 24/7",
+                  "CV completo de cada candidato",
+                  "Búsqueda por ciudad y perfil",
+                  "Mandarnos ofertas sin coste",
+                  "Guzzi IA ilimitado",
                 ].map(item => (
                   <div key={item} className="flex items-center gap-2">
                     <Check size={11} strokeWidth={2.5} className="flex-shrink-0" style={{ color: "#22c55e" }} />
@@ -276,9 +251,6 @@ export default function EmpresasLandingPage() {
                 style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
                 Contratar Plan Empresa →
               </Link>
-              <p className="text-[10px] mt-3" style={{ color: "#6b7280" }}>
-                Comparado con InfoJobs (mín. 369€/oferta) o LinkedIn (500€+/mes). Sin publicar ninguna oferta.
-              </p>
             </div>
           </div>
         </section>
@@ -319,9 +291,9 @@ export default function EmpresasLandingPage() {
             <div className="flex-1">
               <h2 className="text-lg font-bold mb-2" style={{ color: "#f59e0b" }}>¿Eres una ETT o consultora de RRHH?</h2>
               <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
-                Accede a toda nuestra bolsa de candidatos activos. Filtra por sector, ciudad y experiencia.
-                Exporta contactos directo. Sin límites en el Plan Empresa —{" "}
-                <strong style={{ color: "#f1f5f9" }}>49,99€/mes por acceso ilimitado a toda la base.</strong>
+                Ves a todos los candidatos que han activado «Visible para empresas», con su contacto y su CV
+                completo, y los buscas por ciudad y perfil —{" "}
+                <strong style={{ color: "#f1f5f9" }}>49,99€/mes, sin coste por candidato.</strong>
               </p>
             </div>
             <Link href="/precios"
@@ -338,8 +310,8 @@ export default function EmpresasLandingPage() {
             <h2 className="text-2xl md:text-3xl font-extrabold mb-3" style={{ color: "#f1f5f9" }}>
               Empieza a contratar diferente
             </h2>
-            <p className="text-sm mb-2" style={{ color: "#22c55e" }}>Sin ofertas fantasma. Sin candidatos desaparecidos.</p>
-            <p className="text-xs mb-8" style={{ color: "#64748b" }}>Candidatos reales buscando trabajo hoy en España.</p>
+            <p className="text-sm mb-2" style={{ color: "#22c55e" }}>Candidatos reales que han pedido que les encuentren.</p>
+            <p className="text-xs mb-8" style={{ color: "#64748b" }}>Mira sus perfiles sin nombre antes de pagar.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/empresas/candidatos"
                 className="text-sm font-semibold py-3.5 px-10 rounded-xl transition hover:opacity-90"
@@ -349,7 +321,7 @@ export default function EmpresasLandingPage() {
               <Link href="/empresas/publicar"
                 className="text-sm font-medium py-3.5 px-8 rounded-xl transition hover:bg-[#1e212b]"
                 style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
-                Publicar oferta
+                Mandar una oferta
               </Link>
             </div>
           </div>
@@ -361,7 +333,7 @@ export default function EmpresasLandingPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-[11px]" style={{ color: "#2d3142" }}>
           <Link href="/" className="hover:opacity-80">← Volver a BuscayCurra</Link>
           <span className="hidden sm:block">·</span>
-          <Link href="/empresas/publicar" className="hover:opacity-80">Publicar oferta gratis</Link>
+          <Link href="/empresas/publicar" className="hover:opacity-80">Mandar una oferta gratis</Link>
           <span className="hidden sm:block">·</span>
           <Link href="/precios" className="hover:opacity-80">Planes y precios</Link>
         </div>

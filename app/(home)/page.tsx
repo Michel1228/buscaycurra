@@ -179,19 +179,18 @@ export default async function LandingPage() {
     { 
       nombre: "Empresa", precio: "49,99", periodo: "/mes", 
       desc: "Para RRHH y reclutadores", 
+      // Lo mismo que /precios (17 oct 2026): lo que compra una empresa es ver a
+      // los candidatos, y "Soporte 24/7" no existía.
       items: [
-        `${LIMITS.empresa.camaraMaxUsos} búsquedas/mes por cámara`,
+        "👥 Ver candidatos con nombre, email y teléfono",
+        "📄 CV completo de cada candidato",
+        "🔍 Buscar candidatos por ciudad y perfil",
+        "📨 Mandarnos ofertas sin coste",
         "Guzzi IA ilimitado",
-        "📤 200 envíos de CV al día",
-        "📤 1.500 envíos a la semana",
-        "Cartas IA ilimitadas",
-        "Entrevistas ilimitadas",
-        "CVs ilimitados",
-        "💾 Ofertas ilimitadas",
+        `${LIMITS.empresa.camaraMaxUsos} búsquedas/mes por cámara`,
+        "Todo lo del plan Pro, con más envíos de CV",
         // Ni la API ni un panel de equipo existen: no se venden (igual que /precios).
         "🔌 API e integraciones (próximamente)",
-        "Códigos promocionales",
-        "Soporte 24/7"
       ], 
       nota: "Sin permanencia · Facturación mensual", 
       destacado: false, 

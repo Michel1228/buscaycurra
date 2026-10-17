@@ -7,7 +7,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, Check, Target, Mail, Bot, PartyPopper, FileText, Rocket, AlertTriangle, Briefcase } from "lucide-react";
+import { Building2, Check, Mail, PartyPopper, FileText, Rocket, AlertTriangle, Briefcase } from "lucide-react";
 
 const SECTORES = [
   "Hostelería y turismo", "Construcción", "Tecnología", "Sanidad",
@@ -74,14 +74,12 @@ export default function PublicarOfertaPage() {
           <Building2 size={44} strokeWidth={1.3} className="mx-auto mb-3" style={{ color: "#22c55e" }} />
           <h1 className="text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Portal de Empresas</h1>
           <p className="text-sm" style={{ color: "#94a3b8" }}>
-            Publica tu oferta de trabajo y llega a miles de candidatos cualificados. <strong style={{ color: "#22c55e" }}>¡100% gratis!</strong>
+            Mándanos tu oferta de trabajo: la revisamos y te contestamos por correo. <strong style={{ color: "#22c55e" }}>Gratis.</strong>
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-4">
             {[
               { Icon: Check, label: "Gratis" },
-              { Icon: Target, label: "Candidatos filtrados" },
-              { Icon: Mail, label: "CVs directos" },
-              { Icon: Bot, label: "IA matching" },
+              { Icon: Mail, label: "Te contestamos por correo" },
             ].map(({ Icon, label }) => (
               <span key={label} className="text-xs px-3 py-1 rounded-full flex items-center gap-1"
                 style={{ background: "rgba(126,213,111,0.1)", color: "#22c55e", border: "1px solid rgba(126,213,111,0.15)" }}>
@@ -97,14 +95,14 @@ export default function PublicarOfertaPage() {
         {exito ? (
           <div className="card-game p-8 text-center">
             <PartyPopper size={52} strokeWidth={1.3} className="mx-auto mb-4" style={{ color: "#22c55e" }} />
-            <h2 className="text-xl font-bold mb-2" style={{ color: "#22c55e" }}>¡Oferta publicada!</h2>
+            <h2 className="text-xl font-bold mb-2" style={{ color: "#22c55e" }}>Oferta recibida</h2>
             <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
-              Tu oferta será revisada y publicada en minutos. Los candidatos que encajen recibirán una notificación.
+              La revisamos y te contestamos al correo que nos has dejado.
             </p>
             <button onClick={() => setExito(false)}
               className="px-6 py-3 rounded-xl font-bold text-sm"
               style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}>
-              <FileText size={13} className="inline mr-1" />Publicar otra oferta
+              <FileText size={13} className="inline mr-1" />Enviar otra oferta
             </button>
           </div>
         ) : (
@@ -206,11 +204,11 @@ export default function PublicarOfertaPage() {
                 color: enviando ? "#64748b" : "#1a1a12",
                 boxShadow: enviando ? "none" : "0 4px 16px rgba(126,213,111,0.25)",
               }}>
-              {enviando ? "Publicando..." : <><Rocket size={13} className="inline mr-1" />Publicar oferta gratis</>}
+              {enviando ? "Enviando..." : <><Rocket size={13} className="inline mr-1" />Enviar oferta gratis</>}
             </button>
 
             <p className="text-xs text-center" style={{ color: "#64748b" }}>
-              Las ofertas son revisadas antes de publicarse. Sin spam, sin coste.
+              La revisamos antes de publicarla y te contestamos por correo. Sin coste.
             </p>
           </form>
         )}

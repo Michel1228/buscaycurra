@@ -899,6 +899,69 @@ test("Guzzi recomienda el siguiente paso con datos y sin exagerar", async () => 
   fallos.forEach((f) => console.log(`     ↳ ${f}`));
   return fallos.length === 0;
 });
+// "Ofertas recomendadas para ti" eran las seis más nuevas de la ciudad, de
+// cualquier cosa: a un carretillero de Tudela le salía "Profesor/a particular"
+// (17 oct 2026). Ahora salen de los puestos de su CV, sin rellenar con nada.
+test("las ofertas recomendadas salen del CV, no de lo último publicado", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-puestos-cv.cjs";
+  const fallos = [];
+  try {
+    execFileSync("npx", ["esbuild", "lib/job-search/puestos-del-cv.ts", "--bundle", "--format=cjs", "--platform=node",
+      `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}?${Date.now()}`);
+    const cv = { subtitulo: "Reponedor, Repartidor, Encargado de Almacén y Ventas", experiencia: [
+      { puesto: "Ayudante de cocina y camarero", fechas: "2009" },
+      { puesto: "Carretillero - mantenimiento de maquinaria", fechas: "2015-2026" }] };
+    const p = m.patronesDelCv?.(cv) || [];
+    if (!p.includes("carretill") || !p.includes("reponed") || !p.includes("almacen")) fallos.push(`puestos del CV: ${p.join(",")}`);
+    if (p.indexOf("carretill") > p.indexOf("cocin") && p.includes("cocin")) fallos.push("la experiencia más antigua va antes que la reciente");
+    for (const t of ["Profesor/a particular a domicilio", "Director/a de Delegación", "Terapeuta ocupacional"]) {
+      if (m.patronDelTitulo?.(t, p) !== -1) fallos.push(`recomienda «${t}» a un carretillero`);
+    }
+    for (const t of ["Carretilleros/as", "Mozo/a almacén con carnet de carretilla", "Cajero/a Reponedor/a"]) {
+      if (!(m.patronDelTitulo?.(t, p) >= 0)) fallos.push(`no recomienda «${t}»`);
+    }
+    if (m.raiz?.("cajero") !== "cajer" || m.raiz?.("pintor") !== "pintor") fallos.push("raíces demasiado cortas (caj, pint)");
+    if ((m.patronesDelCv?.({ nombre: "Ana" }) || []).length !== 0) fallos.push("sin puestos en el CV recomienda algo");
+  } catch (e) {
+    fallos.push(`no se pudo probar: ${e.message?.slice(0, 80)}`);
+  } finally {
+    try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+  const portada = leerFuente("app/api/dashboard/route.ts");
+  const consulta = leerFuente("lib/job-search/ofertas-para-ti.ts");
+  if (!portada.includes("ofertasParaTi(cvs[0]?.form_data ?? null, profile?.ciudad)") || /ORDER BY "createdAt" DESC\s+LIMIT \$2/.test(portada)) {
+    fallos.push("la portada no usa el CV o sigue rellenando con lo último publicado");
+  }
+  if (!consulta.includes("WITH zona AS MATERIALIZED") || !consulta.includes("regexDePatrones(patrones)")) fallos.push("la consulta no filtra primero por zona");
+  const guardados = leerFuente("app/app/guardados/Content.tsx");
+  if (!guardados.includes("puestosDelCv(") || guardados.includes("if (ciudad || sector)")) fallos.push("Guardados recomienda por ciudad sin mirar el CV");
+  fallos.forEach((f) => console.log(`     ↳ ${f}`));
+  return fallos.length === 0;
+});
+// El plan Empresa se vendía con alertas de candidatos, API, exportar
+// contactos, "soporte 24/7" y precios de InfoJobs sin fuente; y la oferta que
+// mandaba una empresa iba a una tabla que no existe (17 oct 2026).
+test("a las empresas se les vende lo que hay y su oferta se guarda", () => {
+  const empresas = leerFuente("app/empresas/page.tsx").replace(/^\s*\/\/.*$/gm, "");
+  const precios = leerFuente("app/precios/page.tsx").replace(/^\s*\/\/.*$/gm, "");
+  const portada = leerFuente("app/(home)/page.tsx").replace(/^\s*\/\/.*$/gm, "");
+  const ruta = leerFuente("app/api/empresas/publicar/route.ts");
+  const checks = {
+    "sin promesas que no existen en /empresas": !/369|Alertas de nuevos candidatos|API de acceso|24\/7|Exporta contactos|optimizado por IA|Guzzi la incluye/.test(empresas),
+    "los testimonios solo si los hay": empresas.includes("{TESTIMONIOS.length > 0 && ("),
+    "precios vende ver candidatos y no soporte 24/7": precios.includes("Ver candidatos con nombre, email y teléfono") && !/Soporte 24\/7/.test(precios + portada),
+    "la oferta se guarda en nuestra base y avisa al equipo": ruta.includes("INSERT INTO oferta_empresa") && ruta.includes("sendOfertaEmpresaAvisoEmail(")
+      && !ruta.includes('from("ofertas_empresas")'),
+    "no promete publicarla en minutos": !leerFuente("app/empresas/publicar/page.tsx").includes("publicada en minutos"),
+    "borrar la cuenta borra sus ofertas": leerFuente("lib/cuenta/borrar-datos.ts").includes('oferta_empresa: "user_id"'),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
 // La foto es un extra (17 oct 2026): cada una cuesta ~1 céntimo de GPT-4o y
 // hasta 10-12 de Google Maps, y escribir el nombre del negocio es gratis.
 test("la cámara se cuenta por mes: 5, 30, 100 y 300 fotos", () => {

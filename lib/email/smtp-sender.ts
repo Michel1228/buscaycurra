@@ -736,6 +736,43 @@ export function generarCartaHTML(
  * Un curso que encaja con lo que dice el CV (lib/cursos/sugerencia-cv.ts).
  * El texto lleva palabras del propio CV (puesto, empresa): va escapado.
  */
+/**
+ * Una empresa nos ha mandado una oferta (/empresas/publicar). Le llega al
+ * equipo con todo lo que escribió, para revisarla y contestarle.
+ */
+export async function sendOfertaEmpresaAvisoEmail(params: {
+  adminEmail: string;
+  id: string;
+  empresa: string;
+  emailEmpresa: string;
+  webEmpresa: string | null;
+  titulo: string;
+  sector: string | null;
+  ciudad: string;
+  jornada: string | null;
+  salario: string | null;
+  descripcion: string | null;
+  requisitos: string | null;
+}): Promise<boolean> {
+  const fila = (k: string, v: string | null) => v
+    ? `<tr><td style="padding:4px 12px 4px 0;color:#94a3b8;font-size:13px;vertical-align:top;">${k}</td><td style="padding:4px 0;color:#f1f5f9;font-size:13px;white-space:pre-wrap;">${escaparHtml(v)}</td></tr>`
+    : "";
+  const header = headerGradient("🏢", "Una empresa nos ha mandado una oferta", escaparHtml(`${params.titulo} · ${params.empresa}`));
+  const body = `
+    <table style="width:100%;border-collapse:collapse;margin:0 0 20px;">
+      ${fila("Empresa", params.empresa)}${fila("Correo", params.emailEmpresa)}${fila("Web", params.webEmpresa)}
+      ${fila("Puesto", params.titulo)}${fila("Sector", params.sector)}${fila("Ciudad", params.ciudad)}
+      ${fila("Jornada", params.jornada)}${fila("Salario", params.salario)}
+      ${fila("Descripción", params.descripcion)}${fila("Requisitos", params.requisitos)}
+    </table>
+    <p style="margin:0;color:#64748b;font-size:12px;line-height:1.7;">
+      Está guardada como pendiente (oferta_empresa n.º ${escaparHtml(String(params.id))}). A la empresa se le ha dicho
+      que la revisamos y le contestamos a ${escaparHtml(params.emailEmpresa)}.
+    </p>
+  `;
+  return enviarCorreo(params.adminEmail, `🏢 Oferta de empresa: ${params.titulo} — ${params.empresa}`, baseTemplate(header, body));
+}
+
 export async function sendCursoSugerenciaEmail(params: {
   userEmail: string;
   titulo: string;

@@ -78,24 +78,25 @@ const PLANES = [
   },
   {
     id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", PlanIcon: Building2,
-    desc: "Sin límites para equipos",
+    // PARA EMPRESAS (17 oct 2026). Se vendía con ventajas de quien busca
+    // trabajo ("200 envíos de CV al día") y sin decir lo que una empresa compra:
+    // ver a los candidatos. Y "Soporte 24/7" con el tick puesto, cuando no hay
+    // nadie de guardia ni un correo que reciba (el dominio no tiene MX).
+    desc: "Para empresas y ETT que buscan candidatos",
     items: [
+      { t: "Ver candidatos con nombre, email y teléfono", ok: true, highlight: true },
+      { t: "CV completo de cada candidato", ok: true, highlight: false },
+      { t: "Buscar candidatos por ciudad y perfil", ok: true, highlight: false },
+      { t: "Mandarnos ofertas sin coste", ok: true, highlight: false },
+      { t: "Guzzi IA ilimitado", ok: true, highlight: false },
       { t: `${LIMITS.empresa.camaraMaxUsos} búsquedas/mes por cámara`, ok: true, highlight: false },
-      { t: "Guzzi IA ilimitado", ok: true, highlight: true },
-      { t: "200 envíos CV/día", ok: true, highlight: false },
-      { t: "1.500 envíos CV/semana", ok: true, highlight: false },
-      { t: "Carta IA personalizada", ok: true, highlight: false },
-      { t: "Entrevistas ilimitadas", ok: true, highlight: false },
-      { t: "CVs ilimitados", ok: true, highlight: false },
-      { t: "Ofertas ilimitadas", ok: true, highlight: false },
-      { t: "Códigos promocionales", ok: true, highlight: false },
+      { t: "Todo lo del plan Pro, con más envíos de CV", ok: true, highlight: false },
       // NO SE VENDE LO QUE NO EXISTE. Esto salia con el tick puesto en un plan
       // de 49,99 EUR, y no hay ninguna API para clientes: ni ruta, ni claves,
       // ni forma de darla de alta. Comprobado con grep en todo el proyecto —
       // apiAccess solo aparece en plan-limits.ts y para pintar este check.
       // Se marca como lo que es hasta que exista de verdad.
       { t: "API e integraciones (próximamente)", ok: false, highlight: false },
-      { t: "Soporte 24/7", ok: true, highlight: false },
     ],
     dest: false, btn: "Elegir Empresa", accion: "empresa" as const,
   },

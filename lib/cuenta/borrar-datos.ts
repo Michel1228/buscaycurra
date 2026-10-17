@@ -33,6 +33,8 @@ export const TABLAS_VPS: Record<string, string> = {
   // 13 oct 2026: la baja de las sugerencias de cursos según el CV. Se creó sin
   // añadirla aquí y el centinela lo cazó al día siguiente.
   curso_sugerencia_baja: "user_id",
+  // 17 oct 2026: las ofertas que manda una empresa desde /empresas/publicar.
+  oferta_empresa: "user_id",
 };
 
 /** Supabase: tabla → columna con el id de la persona. "profiles" va aparte, al final. */
