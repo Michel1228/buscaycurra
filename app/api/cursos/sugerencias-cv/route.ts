@@ -37,6 +37,7 @@ import { provinciaEnTexto } from "@/lib/guzzi/plazas-cursos";
 import { sendCursoSugerenciaEmail } from "@/lib/email/smtp-sender";
 import { quedaSitioParaLoQuePuedeEsperar } from "@/lib/email/presupuesto-diario";
 import { set as cacheSet } from "@/lib/cache/redis-client";
+import { plazaParaEsaPersona, ofertasEnZona } from "@/lib/cursos/para-esa-persona";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 280;
@@ -47,40 +48,8 @@ const MAX_POR_PASADA = 15;
 /** Cuentas de prueba: reciben la campana, pero no se gasta correo en ellas. */
 const DE_PRUEBA = /@(resend\.dev|buscaycurra\.es)$/i;
 
-const escaparRegex = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-/** Provincias que cubre cada servicio de empleo cuyas plazas leemos (códigos INE). */
-const PROVINCIAS_DE_FUENTE: Record<string, string[]> = {
-  lanbide: ["01", "20", "48"],
-  "sef-murcia": ["30"],
-  soc: ["08", "17", "25", "43"],
-  consorci: ["08", "17", "25", "43"],
-  ecyl: ["05", "09", "24", "34", "37", "40", "42", "47", "49"],
-  navarra: ["31"],
-};
-
-/** Que la plaza sea para esa persona y le dé tiempo a apuntarse. */
-function plazaParaEsaPersona(p: PlazaPublica, provincia: string): boolean {
-  if (p.dirigido === "ocupados") return false;
-  const enTresDias = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
-  if (p.inicio < enTresDias) return false;
-  if (p.modalidad === "online") return (PROVINCIAS_DE_FUENTE[p.fuente] ?? []).includes(provincia);
-  return p.provincia === provincia;
-}
-
-/** Ofertas vivas en esa provincia de los puestos que piden el curso. */
-async function ofertasEnZona(puestos: string[], zona: string): Promise<number> {
-  const ps = puestos.slice(0, 8);
-  if (!ps.length) return 0;
-  const ors = ps.map((_, i) => `title ~* $${i + 2}`).join(" OR ");
-  const { rows } = await getPool().query<{ n: number }>(
-    `SELECT count(*)::int AS n FROM "JobListing"
-      WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
-        AND lower(country) = 'es' AND (city ILIKE $1 OR province ILIKE $1) AND (${ors})`,
-    [`%${zona}%`, ...ps.map((p) => `\\m${escaparRegex(p)}`)]
-  );
-  return rows[0]?.n ?? 0;
-}
+// La plaza y el recuento de ofertas, en lib/cursos/para-esa-persona.ts: Guzzi
+// usa los mismos al contestar "¿qué curso me conviene?".
 
 export async function POST(req: NextRequest) {
   if (!secretIguales(req.headers.get("x-sync-secret"), process.env.ADMIN_SECRET)) {

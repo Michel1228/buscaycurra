@@ -853,6 +853,52 @@ test("las empresas ven a los candidatos visibles y solo ellas saben quién es ca
   if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
   return malos.length === 0;
 });
+// Guzzi con iniciativa (17 oct 2026): "¿qué curso me conviene?" se contesta
+// con su CV, una plaza gratis, las ofertas que lo piden y negocios de la zona;
+// y al enseñar ofertas avisa una vez del curso que le falta. Sin exagerar: el
+// carné de carretillero no es obligatorio para todo mozo, y el manipulador de
+// alimentos no convierte a una camarera en cocinera.
+test("Guzzi recomienda el siguiente paso con datos y sin exagerar", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-siguiente-paso.cjs";
+  const fallos = [];
+  try {
+    execFileSync("npx", ["esbuild", "lib/guzzi/siguiente-paso.ts", "--bundle", "--format=cjs", "--platform=node",
+      "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}?${Date.now()}`);
+    for (const t of ["¿Qué curso me conviene?", "¿Cómo consigo un trabajo mejor?", "¿qué me falta para trabajar de camarero?", "en qué me puedo formar"]) {
+      if (!m.pideSiguientePaso?.(t)) fallos.push(`no entiende «${t}»`);
+    }
+    for (const t of ["curso de carretillero en Pamplona", "busco trabajo de camarero en Tudela", "¿qué me falta en mi CV?"]) {
+      if (m.pideSiguientePaso?.(t)) fallos.push(`se lleva «${t}»`);
+    }
+    const mozo = { subtitulo: "Mozo de almacén", experiencia: [{ puesto: "Mozo de almacén", empresa: "X" }] };
+    const pista = m.pistaDeCurso?.("mozo de almacén", mozo, []) || "";
+    if (!pista.includes("**Carné de carretillero** (obligatorio por ley para esas tareas)")) fallos.push(`pista: ${pista.slice(0, 90)}`);
+    if (m.pistaDeCurso?.("mozo de almacén", { ...mozo, aptitudes: "carnet de carretillero" }, [])) fallos.push("avisa de un curso que ya está en el CV");
+    if (m.pistaDeCurso?.("mozo de almacén", mozo, [{ role: "gusi", text: pista }])) fallos.push("repite la pista en la misma conversación");
+    if (m.pistaDeCurso?.("barista", null, [])) fallos.push("sin CV avisa de un curso que no es obligatorio");
+    const carretillero = { nombre: "Carné de carretillero", puesto: "Mozo de almacén", puestosQueLoPiden: ["carretillero", "mozo de almacén", "preparador de pedidos"] };
+    const manipulador = { nombre: "Manipulador de alimentos", puesto: "Camarera", puestosQueLoPiden: ["camarero", "cocinero", "reponedor"] };
+    if (m.puestosQueAbre?.(carretillero, mozo).join() !== "carretillero") fallos.push("el carné no abre la puerta a carretillero");
+    if (m.puestosQueAbre?.(manipulador, { subtitulo: "Camarera" }).length !== 0) fallos.push("dice que el manipulador convierte a una camarera en cocinera");
+    if (m.cvConContenido?.({ nombre: "", experiencia: [{ puesto: "" }] }) !== null) fallos.push("un CV vacío cuenta como CV");
+    if (m.provinciaPorCodigoPostal?.("Tudela 31500") !== "31") fallos.push("no saca la provincia del código postal");
+  } catch (e) {
+    fallos.push(`no se pudo probar: ${e.message?.slice(0, 80)}`);
+  } finally {
+    try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+  const chat = leerFuente("app/api/gusi/chat/route.ts");
+  if (!chat.includes("pideSiguientePaso(message)") || (chat.match(/pistaDeCurso\(puestoBusqueda, cvObjeto, history\)/g) || []).length !== 2) {
+    fallos.push("el chat no contesta el siguiente paso o no da la pista al enseñar ofertas");
+  }
+  // "Bilbao, Vizcaya": buscando solo "Bizkaia" no salía ninguna de sus ofertas.
+  if (!leerFuente("lib/cursos/para-esa-persona.ts").includes('Bizkaia: ["Vizcaya"]')) fallos.push("las provincias no tienen sus otros nombres");
+  fallos.forEach((f) => console.log(`     ↳ ${f}`));
+  return fallos.length === 0;
+});
 // La foto es un extra (17 oct 2026): cada una cuesta ~1 céntimo de GPT-4o y
 // hasta 10-12 de Google Maps, y escribir el nombre del negocio es gratis.
 test("la cámara se cuenta por mes: 5, 30, 100 y 300 fotos", () => {
@@ -3695,7 +3741,8 @@ test("cursos según el CV: el que falta para lo trabajado, nunca el que ya tiene
     const t = m.textoSugerencia(c, { titulo: "Manipulador", municipio: "Tudela", provincia: "Navarra", inicio: "2026-11-03", horas: 10, modalidad: "presencial" }, { total: 23, zona: "Navarra" });
     const textoOk = t.mensaje.startsWith("Veo en tu CV que has trabajado de camarera en Bar Pepe.") && t.mensaje.includes("3 de noviembre") && t.mensaje.includes("23 ofertas");
     if (!textoOk) console.log(`     ↳ ${t.mensaje}`);
-    const ruta = leerFuente("app/api/cursos/sugerencias-cv/route.ts");
+    // La plaza y el recuento viven en una librería que también usa Guzzi.
+    const ruta = leerFuente("app/api/cursos/sugerencias-cv/route.ts") + leerFuente("lib/cursos/para-esa-persona.ts");
     // Plazas del Consorci (en catalán, para ocupados) se ofrecían "online" a
     // gente de Navarra o Asturias, y alguna empezaba al día siguiente.
     const plazaBien = ruta.includes('if (p.dirigido === "ocupados") return false;')

@@ -20,7 +20,7 @@ import { normalizarTitulo } from "@/lib/cursos/plazas/emparejar";
  * buena parte de quien nos lee escribe "camarera de sala" o "gerocultora".
  * Se pasa cada palabra a la forma de la ficha antes de comparar.
  */
-function aFormaDeFicha(texto: string): string {
+export function aFormaDeFicha(texto: string): string {
   return texto
     .replace(/\b(\w+)oras?\b/g, "$1or")
     .replace(/\b(\w+)eras?\b/g, "$1ero")

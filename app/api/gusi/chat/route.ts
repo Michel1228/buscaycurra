@@ -19,6 +19,7 @@ import { entenderMensaje, hayQueEntender, refiereAOfertasMostradas } from "@/lib
 import { respuestaOfertasMostradas, textoEnvioAutomatico, TEXTO_INFO_AU_PAIR, sinVoseo } from "@/lib/guzzi/respuestas-fijas";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
 import { textoNegociosLocales, propuestaPendiente, negocioElegido } from "@/lib/guzzi/envio-local";
+import { pideSiguientePaso, respuestaSiguientePaso, cvConContenido, pistaDeCurso } from "@/lib/guzzi/siguiente-paso";
 import { extraerCorreo, empresaDelCorreo, empresaDelTexto, puestoDelTexto, textoPropuesta, propuestaCorreoPendiente, respuestaAPropuesta, type PropuestaCorreo } from "@/lib/guzzi/envio-correo";
 import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { aliasCiudad } from "@/lib/guzzi/ciudades-pais";
@@ -1102,6 +1103,8 @@ export async function POST(req: NextRequest) {
     }
 
     const cvParsed = cvData ? parseCVData(cvData) : null;
+    // El CV tal cual, para recomendar cursos (lib/guzzi/siguiente-paso.ts).
+    const cvObjeto = (() => { try { return cvConContenido(cvData ? JSON.parse(cvData) : null); } catch { return null; } })();
     const groqKey = process.env.GROQ_API_KEY;
     const deepseekKey = process.env.DEEPSEEK_API_KEY;
 
@@ -1312,6 +1315,30 @@ El candidato tiene mucha experiencia.
       const respuesta = respuestaPapelesPais(message);
       if (respuesta) return NextResponse.json({ reply: respuesta, action: "papeles_pais" });
       // Sin ficha de ese país, sigue el flujo normal y contesta la IA.
+    }
+
+    // -- "¿Qué curso me conviene?": su siguiente paso, con datos ---------------
+    // (17 oct 2026) El curso que le falta según su CV o el puesto que nombra,
+    // la plaza gratis más cercana, cuántas ofertas lo piden en su provincia
+    // (con tres) y negocios de la zona a los que mandar el CV. Si con lo que
+    // sabemos no hay curso que recomendarle, sigue el flujo normal.
+    if (!enModoCV && pideSiguientePaso(message)) {
+      const paso = await respuestaSiguientePaso({ mensaje: message, cv: cvObjeto, ciudad: extractCity(message) || cvParsed?.ciudad || "" })
+        .catch((e) => { console.error("[siguiente-paso]", (e as Error).message); return null; });
+      if (paso) {
+        let reply = paso.reply;
+        if (paso.empresas) {
+          try {
+            const negocios = await buscarNegociosLocales(paso.empresas.busqueda, paso.empresas.ciudad);
+            if (negocios.length > 0) {
+              reply += "\n\n" + textoNegociosLocales(negocios.slice(0, 4).map((n) => ({
+                nombre: n.name, direccion: n.formatted_address, telefono: n.formatted_phone_number, web: n.website, rating: n.rating,
+              })), paso.empresas.ciudad, paso.empresas.puesto, "🏭 Y aunque no tengan oferta publicada, te he buscado negocios");
+            }
+          } catch { /* sin Google Maps, la respuesta vale igual */ }
+        }
+        return NextResponse.json({ reply, jobs: paso.jobs.length ? paso.jobs : undefined, action: "siguiente_paso" });
+      }
     }
 
     // -- Intent: cursos con plazas reales (curso_plaza) ------------------------
@@ -1894,6 +1921,7 @@ El candidato tiene mucha experiencia.
             return NextResponse.json({
               reply: buildJobsText(puestoBusqueda, ciudadBusqueda, result.jobs, result.scope) +
                 (alrededores ? `\n\n📊 **Lo que hay cerca de ${ciudadBusqueda}, con las cuentas hechas:**\n\n${alrededores}` : "") +
+                pistaDeCurso(puestoBusqueda, cvObjeto, history) +
                 (googleReply ? `\n${googleReply}` : ""),
               jobs: result.jobs,
               action: "search_results",
@@ -1928,7 +1956,8 @@ El candidato tiene mucha experiencia.
         // es lo que hace que la gente los descarte sin mirarlos.
         const cuentas = await cuentasDeLasOfertas(result.jobs, ciudadBusqueda, paisBusqueda);
         return NextResponse.json({
-          reply: prefix + buildJobsText(puestoBusqueda, ciudadBusqueda, result.jobs, result.scope) + cuentas,
+          reply: prefix + buildJobsText(puestoBusqueda, ciudadBusqueda, result.jobs, result.scope) + cuentas
+            + pistaDeCurso(puestoBusqueda, cvObjeto, history),
           jobs: result.jobs,
           action: "search_results",
         });
