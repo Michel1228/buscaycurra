@@ -128,7 +128,7 @@ export default async function LandingPage() {
         // 2026). Escondía el mejor argumento que tenemos.
         `📤 ${LIMITS.free.enviosCVDia} envíos de CV al día`,
         `🧠 ${LIMITS.free.guzziMaxConsultasDia} consultas al día a Guzzi`,
-        `📸 ${LIMITS.free.camaraMaxUsos} búsquedas por cámara al día`,
+        `📸 ${LIMITS.free.camaraMaxUsos} búsquedas por cámara al mes`,
         `📄 ${LIMITS.free.cvConIAGratis} CV creado con IA`,
         `Búsqueda en ${NUM_PAISES} países`,
         "Pipeline de candidaturas",
@@ -143,7 +143,7 @@ export default async function LandingPage() {
       nombre: "Esencial", precio: "2,99", periodo: "/mes", 
       desc: "Menos que un café al mes", 
       items: [
-        "📸 10 búsquedas/día por cámara",
+        `📸 ${LIMITS.esencial.camaraMaxUsos} búsquedas/mes por cámara`,
         "🧠 30 consultas/día a Guzzi",
         "📤 15 envíos de CV al día",
         "📤 100 envíos a la semana",
@@ -161,7 +161,7 @@ export default async function LandingPage() {
       nombre: "Pro", precio: "9,99", periodo: "/mes", 
       desc: "Para profesionales serios", 
       items: [
-        "📸 30 búsquedas/día por cámara",
+        `📸 ${LIMITS.pro.camaraMaxUsos} búsquedas/mes por cámara`,
         "🧠 100 consultas/día a Guzzi",
         "📤 50 envíos de CV al día",
         "📤 350 envíos a la semana",
@@ -180,7 +180,7 @@ export default async function LandingPage() {
       nombre: "Empresa", precio: "49,99", periodo: "/mes", 
       desc: "Para RRHH y reclutadores", 
       items: [
-        "Búsquedas por cámara ilimitadas",
+        `${LIMITS.empresa.camaraMaxUsos} búsquedas/mes por cámara`,
         "Guzzi IA ilimitado",
         "📤 200 envíos de CV al día",
         "📤 1.500 envíos a la semana",

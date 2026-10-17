@@ -152,7 +152,7 @@ export default function CandidatosPage() {
             style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
             <div>
               <p className="text-sm font-semibold" style={{ color: "#22c55e" }}>Estás viendo perfiles anonimizados</p>
-              <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Con Plan Empresa (49,99€/mes) ves nombre completo, email y teléfono de cada candidato.</p>
+              <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Con Plan Empresa (49,99€/mes) ves nombre completo, email, teléfono y el CV entero de cada candidato.</p>
             </div>
             <Link href="/precios"
               className="flex-shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
@@ -244,6 +244,10 @@ export default function CandidatosPage() {
                     {!c.email && !c.telefono && (
                       <p className="text-[10px]" style={{ color: "#6b7280" }}>Sin contacto en CV</p>
                     )}
+                    <Link href={`/talento/${c.id}`} className="inline-block text-[11px] font-semibold pt-1 hover:opacity-80 transition"
+                      style={{ color: "#22c55e" }}>
+                      Ver CV completo →
+                    </Link>
                   </div>
                 ) : (
                   <div className="mt-auto pt-2" style={{ borderTop: "1px solid rgba(45,49,66,0.5)" }}>

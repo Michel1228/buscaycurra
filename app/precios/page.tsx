@@ -31,7 +31,7 @@ const PLANES = [
     items: [
       { t: `${LIMITS.free.enviosCVDia} envíos de CV al día`, ok: true, highlight: true },
       { t: `${LIMITS.free.guzziMaxConsultasDia} consultas a Guzzi al día`, ok: true, highlight: false },
-      { t: `${LIMITS.free.camaraMaxUsos} búsquedas por cámara al día`, ok: true, highlight: false },
+      { t: `${LIMITS.free.camaraMaxUsos} búsquedas por cámara al mes`, ok: true, highlight: false },
       { t: `${LIMITS.free.cvConIAGratis} CV creado con IA`, ok: true, highlight: false },
       { t: `Búsqueda en ${NUM_PAISES} países`, ok: true, highlight: false },
       { t: `${LIMITS.free.ofertasGuardadas} ofertas guardadas`, ok: true, highlight: false },
@@ -46,7 +46,7 @@ const PLANES = [
     id: "esencial", nombre: "Esencial", precio: "2,99€", periodo: "/mes", PlanIcon: Sprout,
     desc: "Menos que un café al mes",
     items: [
-      { t: "10 búsquedas/día por cámara", ok: true, highlight: false },
+      { t: `${LIMITS.esencial.camaraMaxUsos} búsquedas/mes por cámara`, ok: true, highlight: false },
       { t: "30 consultas/día a Guzzi", ok: true, highlight: true },
       { t: "15 envíos CV/día", ok: true, highlight: false },
       { t: "100 envíos CV/semana", ok: true, highlight: false },
@@ -63,7 +63,7 @@ const PLANES = [
     id: "pro", nombre: "Pro", precio: "9,99€", periodo: "/mes", PlanIcon: Zap,
     desc: "Para profesionales serios",
     items: [
-      { t: "30 búsquedas/día por cámara", ok: true, highlight: false },
+      { t: `${LIMITS.pro.camaraMaxUsos} búsquedas/mes por cámara`, ok: true, highlight: false },
       { t: "100 consultas/día a Guzzi", ok: true, highlight: true },
       { t: "50 envíos CV/día", ok: true, highlight: false },
       { t: "350 envíos CV/semana", ok: true, highlight: false },
@@ -80,7 +80,7 @@ const PLANES = [
     id: "empresa", nombre: "Empresa", precio: "49,99€", periodo: "/mes", PlanIcon: Building2,
     desc: "Sin límites para equipos",
     items: [
-      { t: "Cámara ilimitada", ok: true, highlight: false },
+      { t: `${LIMITS.empresa.camaraMaxUsos} búsquedas/mes por cámara`, ok: true, highlight: false },
       { t: "Guzzi IA ilimitado", ok: true, highlight: true },
       { t: "200 envíos CV/día", ok: true, highlight: false },
       { t: "1.500 envíos CV/semana", ok: true, highlight: false },

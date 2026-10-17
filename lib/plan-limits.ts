@@ -14,7 +14,7 @@ export interface PlanLimits {
   guzziMaxConsultasDia: number;    // Consultas al chat por día (free: TOTAL trial)
   enviosCVDia: number;             // Envíos de CV por día
   enviosCVSemana: number;          // Envíos de CV por semana
-  camaraMaxUsos: number;           // 📸 Búsqueda por cámara (free: TOTAL, pago: /día)
+  camaraMaxUsos: number;           // 📸 Fotos a la cámara AL MES, todos los planes (se recargan el día 1)
   cvsGuardados: number;            // CVs que puede tener guardados
   cvConIAGratis: number;           // CVs gratuitos creados con IA (TOTAL)
   cartaPersonalizada: boolean;     // Si la carta se personaliza con IA
@@ -36,7 +36,11 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     guzziMaxConsultasDia: 15,         // antes 5 — subido el 7 ago 2026
     enviosCVDia: 3,                   // 3 envíos/día
     enviosCVSemana: 7,               // 7 envíos/semana
-    camaraMaxUsos: 2,                 // 2 búsquedas/DÍA recargables (es la cara: GPT-4o Vision)
+    // LA CÁMARA VA POR MES (17 oct 2026). Cada foto cuesta ~1 céntimo de
+    // GPT-4o y hasta 10-12 de Google Maps; y lo mismo se consigue gratis
+    // escribiendo el nombre del negocio. La foto es un extra: 5/30/100/300 al
+    // mes en vez de 2/10/30/ilimitado al día.
+    camaraMaxUsos: 5,
     cvsGuardados: 1,
     cvConIAGratis: 1,                 // 1 CV gratis con IA
     cartaPersonalizada: false,
@@ -51,7 +55,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     guzziMaxConsultasDia: 30,
     enviosCVDia: 15,
     enviosCVSemana: 100,
-    camaraMaxUsos: 10,                // Legacy — mismo que esencial
+    camaraMaxUsos: 30,                // Legacy — mismo que esencial
     cvsGuardados: 3,
     cvConIAGratis: 3,
     cartaPersonalizada: true,
@@ -66,7 +70,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     guzziMaxConsultasDia: 30,
     enviosCVDia: 15,
     enviosCVSemana: 100,
-    camaraMaxUsos: 10,                // 10 fotos/día — cubre jornada de búsqueda
+    camaraMaxUsos: 30,                // 30 fotos al mes
     cvsGuardados: 3,
     cvConIAGratis: 3,
     cartaPersonalizada: true,
@@ -81,7 +85,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     guzziMaxConsultasDia: 100,
     enviosCVDia: 50,
     enviosCVSemana: 350,
-    camaraMaxUsos: 30,                // 30 fotos/día — recruiter intensivo
+    camaraMaxUsos: 100,               // 100 fotos al mes
     cvsGuardados: 10,
     cvConIAGratis: 10,
     cartaPersonalizada: true,
@@ -96,7 +100,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     guzziMaxConsultasDia: 999999,
     enviosCVDia: 200,
     enviosCVSemana: 1500,
-    camaraMaxUsos: 999999,            // Ilimitado
+    camaraMaxUsos: 300,               // 300 fotos al mes (antes ilimitado)
     cvsGuardados: 999,
     cvConIAGratis: 999999,
     cartaPersonalizada: true,

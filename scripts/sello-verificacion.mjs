@@ -835,6 +835,42 @@ test("la cámara busca cualquier nombre cerca y el sector de más cerca a más l
   fallos.forEach((f) => console.log(`     ↳ ${f}`));
   return fallos.length === 0;
 });
+// Las empresas veían siempre 0 candidatos (17 oct 2026): el portal miraba la
+// visibilidad en una columna de Supabase que no existe, mientras 16 personas la
+// tenían activada en user_cvs. Y el CV completo (/talento) leía una tabla vacía.
+test("las empresas ven a los candidatos visibles y solo ellas saben quién es cada uno", () => {
+  const api = leerFuente("app/api/empresas/candidatos/route.ts");
+  const talento = leerFuente("app/talento/[id]/page.tsx");
+  const checks = {
+    "el portal lee la visibilidad de user_cvs": api.includes("uc.visible_empresas = true") && !api.includes('.from("profiles")'),
+    "quien no es empresa no recibe ni el nombre ni el identificador del CV":
+      api.includes("id: esEmpresa ? row.user_id :") && /nombre: esEmpresa \?[^\n]*: "Candidato"/.test(api),
+    "buscar por correo o teléfono no delata a nadie": api.includes("(uc.form_data - 'email' - 'telefono'"),
+    "el CV completo sale de user_cvs": talento.includes("FROM user_cvs") && !talento.includes('.from("cvs")'),
+    "el CV completo solo lo ven las empresas y el propio candidato": talento.includes('!== "empresa"') && talento.includes("quien === id"),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+// La foto es un extra (17 oct 2026): cada una cuesta ~1 céntimo de GPT-4o y
+// hasta 10-12 de Google Maps, y escribir el nombre del negocio es gratis.
+test("la cámara se cuenta por mes: 5, 30, 100 y 300 fotos", () => {
+  const limites = leerFuente("lib/plan-limits.ts");
+  const ruta = leerFuente("app/api/gusi/analyze-image/route.ts");
+  const textos = leerFuente("app/precios/page.tsx") + leerFuente("app/(home)/page.tsx");
+  // En el orden del fichero: free, basico, esencial, pro, empresa.
+  const fotos = [...limites.matchAll(/camaraMaxUsos: (\d+)/g)].map((m) => m[1]).join(",");
+  const checks = {
+    [`límites 5/30/30/100/300 (hay ${fotos})`]: fotos === "5,30,30,100,300",
+    "el contador va por mes": ruta.includes("const dateKey = `camara-${new Date().toISOString().slice(0, 7)}`;"),
+    "sin fotos se le dice que escriba el nombre del negocio": ruta.includes("escríbeme el nombre del negocio"),
+    "ninguna página promete fotos al día ni ilimitadas": !/cámara al día|\/día por cámara|cámara ilimitada/i.test(textos),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
 test("Guzzi entiende los atajos, 'a todas' y los puestos que no lo son", async () => {
   const { execFileSync } = await import("node:child_process");
   const { unlinkSync, writeFileSync } = await import("node:fs");

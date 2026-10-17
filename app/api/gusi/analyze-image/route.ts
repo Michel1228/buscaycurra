@@ -85,11 +85,17 @@ export async function POST(req: NextRequest) {
         if (limits.camaraMaxUsos >= 999999) {
           // Ilimitado — no hacer nada
         } else {
-          // Cuota DIARIA recargable para todos (antes el free usaba "trial" = total de por vida).
-          const dateKey = new Date().toISOString().slice(0, 10);
-          const sinCuota = plan === "free"
-            ? `📸 Has usado tus ${limits.camaraMaxUsos} búsquedas por cámara de hoy. Mañana se recargan. Con Esencial (2,99€/mes) tienes 10/día.`
-            : `📸 Límite de ${limits.camaraMaxUsos} fotos/día alcanzado. Mañana se resetea. Sube a Pro para 30/día.`;
+          // Cuota MENSUAL (17 oct 2026): se recarga el día 1. La clave lleva
+          // "camara-" delante para no mezclarse con las filas de cada día, donde
+          // se cuentan las consultas a Guzzi.
+          const dateKey = `camara-${new Date().toISOString().slice(0, 7)}`;
+          const { LIMITS } = await import("@/lib/plan-limits");
+          const siguiente = plan === "free" ? LIMITS.esencial : plan === "esencial" || plan === "basico" ? LIMITS.pro : null;
+          const mejora = !siguiente ? ""
+            : plan === "free" ? ` Con Esencial (2,99€/mes) tienes ${siguiente.camaraMaxUsos} al mes.`
+            : ` Con ${siguiente.name} tienes ${siguiente.camaraMaxUsos} al mes.`;
+          // Lo mismo se consigue gratis escribiendo el nombre: se le dice.
+          const sinCuota = `📸 Has usado tus ${limits.camaraMaxUsos} fotos de este mes; se recargan el día 1. Mientras, escríbeme el nombre del negocio (por ejemplo "búscame la peluquería Lola en Tudela") y te lo busco igual.${mejora}`;
 
           // SUMAR Y COMPROBAR EN LA MISMA OPERACION.
           //
