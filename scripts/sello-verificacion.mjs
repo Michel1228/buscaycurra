@@ -971,6 +971,16 @@ test("la sugerencia de curso no se repite si no se puede leer lo ya enviado", ()
     && /if \(errPrevias \|\| !previas\) \{[\s\S]{0,300}?status: 500/.test(r)
     && !r.includes("for (const n of previas || [])");
 });
+// El 17 oct 2026 el servidor estuvo 29 minutos apagado y se veía el error del
+// navegador o de la app. Ahora sale nuestra página de mantenimiento.
+test("si el servidor no contesta sale nuestra página de mantenimiento", () => {
+  const sw = leerFuente("public/sw.js");
+  const pagina = leerFuente("public/mantenimiento.html");
+  return sw.includes("event.request.mode !== 'navigate'") && sw.includes("c.add(new Request(PAGINA_MANTENIMIENTO")
+    && /r\.status >= 502 && r\.status <= 504/.test(sw) && sw.includes(".catch(() => mantenimiento()")
+    && pagina.includes("Volvemos en unos minutos") && !/<link[^>]+href="https?:|<script[^>]+src=/.test(pagina)
+    && leerFuente("capacitor.config.ts").includes('errorPath: "mantenimiento.html"');
+});
 // La foto es un extra (17 oct 2026): cada una cuesta ~1 céntimo de GPT-4o y
 // hasta 10-12 de Google Maps, y escribir el nombre del negocio es gratis.
 test("la cámara se cuenta por mes: 5, 30, 100 y 300 fotos", () => {

@@ -1,0 +1,74 @@
+<!doctype html>
+<!--
+  Página de mantenimiento (17 oct 2026).
+
+  Cuando el servidor no contesta (el 17 oct estuvo 29 minutos apagado por un
+  parche de Hostinger) el navegador y la app enseñaban su propio error. Esta
+  página la guarda el service worker (public/sw.js) para quien ya ha entrado
+  alguna vez, y la app la tiene dentro (capacitor.config.ts, server.errorPath).
+
+  No puede depender de nada del servidor: todo va aquí dentro.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0f1117">
+<title>Volvemos en unos minutos — BuscayCurra</title>
+<style>
+  :root { --fondo: #0f1117; --tarjeta: #1e212b; --borde: #2d3142; --verde: #22c55e; --texto: #f1f5f9; --suave: #94a3b8; --apagado: #64748b; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--fondo); color: var(--texto); }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; display: grid; place-items: center; min-height: 100vh; padding: 24px 16px; }
+  main { width: 100%; max-width: 420px; text-align: center; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 20px; padding: 36px 24px; }
+  .gusano { font-size: 56px; line-height: 1; display: inline-block; animation: mover 2.4s ease-in-out infinite; }
+  @keyframes mover { 0%, 100% { transform: translateX(-6px); } 50% { transform: translateX(6px); } }
+  @media (prefers-reduced-motion: reduce) { .gusano { animation: none; } }
+  h1 { font-size: 22px; margin: 18px 0 10px; text-wrap: balance; }
+  p { color: var(--suave); font-size: 15px; line-height: 1.6; margin: 0 0 12px; }
+  .marca { color: var(--verde); font-weight: 700; font-size: 13px; letter-spacing: .04em; margin-bottom: 4px; }
+  button { margin-top: 12px; background: var(--verde); color: #0f1117; border: 0; border-radius: 12px; padding: 12px 24px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--texto); outline-offset: 2px; }
+  .nota { color: var(--apagado); font-size: 12px; margin: 16px 0 0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="marca">BUSCAYCURRA</div>
+  <div class="gusano" aria-hidden="true">🐛</div>
+  <h1 id="titulo">Volvemos en unos minutos</h1>
+  <p id="texto">Estamos actualizando el sistema. Tus datos, tu CV y tus envíos están a salvo.</p>
+  <button id="reintentar" type="button">Reintentar</button>
+  <p class="nota" id="nota">Esta página se recarga sola en cuanto volvamos. Perdona las molestias.</p>
+</main>
+<script>
+  (function () {
+    var WEB = "https://buscaycurra.es";
+    // En la app (Capacitor) esta página es un fichero local: recargarla no
+    // vuelve a la web, hay que ir a ella.
+    var enLaWeb = location.hostname === "buscaycurra.es";
+    function volver() { if (enLaWeb) location.reload(); else location.href = WEB + "/app/gusi"; }
+
+    function sinInternet() {
+      document.getElementById("titulo").textContent = "No tienes conexión a internet";
+      document.getElementById("texto").textContent = "Revisa el wifi o los datos del móvil y vuelve a intentarlo.";
+      document.getElementById("nota").textContent = "En cuanto vuelva la conexión, esto se recarga solo.";
+    }
+    if (navigator.onLine === false) sinInternet();
+    window.addEventListener("offline", sinInternet);
+    window.addEventListener("online", function () { setTimeout(volver, 1500); });
+    document.getElementById("reintentar").addEventListener("click", volver);
+
+    // Cada 20 segundos se pregunta si ya contestamos; si sí, se vuelve sola.
+    setInterval(function () {
+      if (navigator.onLine === false) return;
+      var url = (enLaWeb ? "" : WEB) + "/?comprobar=" + Date.now();
+      fetch(url, enLaWeb ? { method: "HEAD", cache: "no-store" } : { mode: "no-cors", cache: "no-store" })
+        .then(function (r) { if (!enLaWeb || r.status < 500) volver(); })
+        .catch(function () { /* seguimos esperando */ });
+    }, 20000);
+  })();
+</script>
+</body>
+</html>

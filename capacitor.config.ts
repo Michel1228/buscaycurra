@@ -10,6 +10,10 @@ const config: CapacitorConfig = {
   server: {
     url: "https://buscaycurra.es",
     cleartext: false,
+    // Si la web no carga (servidor caído o en mantenimiento), la app enseña
+    // esta página, que va dentro de la app, en vez del error del sistema.
+    // Hace falta una versión nueva de la app en las tiendas (17 oct 2026).
+    errorPath: "mantenimiento.html",
   },
   android: {
     // ANDROID PASA DE TWA A CAPACITOR.
