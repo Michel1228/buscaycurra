@@ -962,6 +962,15 @@ test("a las empresas se les vende lo que hay y su oferta se guarda", () => {
   if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
   return malos.length === 0;
 });
+// Del 12 al 17 oct 2026 la sugerencia de curso se repetía cada 3 horas a las
+// mismas personas (42 veces): una fila de user_cvs con user_id "test" hacía
+// fallar la lectura de lo ya sugerido y el error se tomaba por "nada".
+test("la sugerencia de curso no se repite si no se puede leer lo ya enviado", () => {
+  const r = leerFuente("app/api/cursos/sugerencias-cv/route.ts");
+  return r.includes("const cvsValidos = cvs.filter((c) => UUID.test(c.user_id));")
+    && /if \(errPrevias \|\| !previas\) \{[\s\S]{0,300}?status: 500/.test(r)
+    && !r.includes("for (const n of previas || [])");
+});
 // La foto es un extra (17 oct 2026): cada una cuesta ~1 céntimo de GPT-4o y
 // hasta 10-12 de Google Maps, y escribir el nombre del negocio es gratis.
 test("la cámara se cuenta por mes: 5, 30, 100 y 300 fotos", () => {

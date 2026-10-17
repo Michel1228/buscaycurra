@@ -47,6 +47,7 @@ const DIAS_ENTRE_SUGERENCIAS = 14;
 const MAX_POR_PASADA = 15;
 /** Cuentas de prueba: reciben la campana, pero no se gasta correo en ellas. */
 const DE_PRUEBA = /@(resend\.dev|buscaycurra\.es)$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // La plaza y el recuento de ofertas, en lib/cursos/para-esa-persona.ts: Guzzi
 // usa los mismos al contestar "¿qué curso me conviene?".
@@ -64,8 +65,14 @@ export async function POST(req: NextRequest) {
        FROM user_cvs WHERE form_data IS NOT NULL
       ORDER BY user_id, updated_at DESC`
   );
-  const apagados = await sinSugerencias(cvs.map((c) => c.user_id));
-  const candidatos = cvs.filter((c) => !apagados.has(c.user_id));
+  // SOLO IDENTIFICADORES DE VERDAD (17 oct 2026). En user_cvs hay una fila de
+  // pruebas con user_id "test": con ella en la lista, Supabase rechazaba la
+  // consulta de abajo entera (22P02, no es un uuid), no se leía ninguna
+  // sugerencia anterior y el freno de 14 días no frenaba nada. Cinco personas
+  // recibieron el mismo curso 42 veces, cada 3 horas, del 12 al 17 de octubre.
+  const cvsValidos = cvs.filter((c) => UUID.test(c.user_id));
+  const apagados = await sinSugerencias(cvsValidos.map((c) => c.user_id));
+  const candidatos = cvsValidos.filter((c) => !apagados.has(c.user_id));
   const ids = candidatos.map((c) => c.user_id);
 
   // ── Lo que ya se les sugirió (la propia notificación hace de registro) ────
@@ -74,9 +81,15 @@ export async function POST(req: NextRequest) {
   const cursosVistos = new Map<string, Set<string>>();
   const ciudadPerfil = new Map<string, string>();
   if (ids.length) {
-    const { data: previas } = await sb.from("notificaciones")
+    const { data: previas, error: errPrevias } = await sb.from("notificaciones")
       .select("user_id, created_at, datos").eq("tipo", TIPO).in("user_id", ids);
-    for (const n of previas || []) {
+    // Sin saber lo que ya se mandó, no se manda nada: un error aquí era
+    // "nunca se le sugirió nada" y se repetía a todos en cada pasada.
+    if (errPrevias || !previas) {
+      console.error("[sugerencias-cv] no se pudo leer lo ya sugerido:", errPrevias?.message);
+      return NextResponse.json({ error: "No se pudo leer lo ya sugerido; no se envía nada", detalle: errPrevias?.message ?? null }, { status: 500 });
+    }
+    for (const n of previas) {
       const t = new Date(n.created_at).getTime();
       if (t > (ultima.get(n.user_id) ?? 0)) ultima.set(n.user_id, t);
       const d = (n.datos || {}) as { plaza_id?: string; curso_slug?: string };
