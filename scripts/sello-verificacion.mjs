@@ -971,6 +971,17 @@ test("la sugerencia de curso no se repite si no se puede leer lo ya enviado", ()
     && /if \(errPrevias \|\| !previas\) \{[\s\S]{0,300}?status: 500/.test(r)
     && !r.includes("for (const n of previas || [])");
 });
+// "Recomendar ofertas siempre está bien, pero por el currículum, no al
+// tuntún" (Michel, 17 oct 2026): el buscador enseña ofertas según el CV antes
+// de buscar, y sin CV se pide rellenarlo en vez de enseñar cualquier cosa.
+test("el buscador recomienda ofertas según el CV y sin CV pide rellenarlo", () => {
+  const ruta = leerFuente("app/api/ofertas/para-ti/route.ts");
+  const buscar = leerFuente("app/app/buscar/page.tsx");
+  const portada = leerFuente("app/api/dashboard/route.ts") + leerFuente("app/app/bienvenida/BienvenidaClient.tsx");
+  return ruta.includes('if (!patronesDelCv(cv).length) return NextResponse.json({ estado: "sin-cv"') && ruta.includes("ofertasParaTi(cv, perfil?.ciudad, 6)")
+    && buscar.includes('fetch("/api/ofertas/para-ti"') && buscar.includes('paraTi?.estado === "sin-cv"') && buscar.includes("Ofertas según tu CV")
+    && portada.includes("estadoRecomendadas") && portada.includes('estadoRecomendadas === "sin-cv"');
+});
 // El 17 oct 2026 el servidor estuvo 29 minutos apagado y se veía el error del
 // navegador o de la app. Ahora sale nuestra página de mantenimiento.
 test("si el servidor no contesta sale nuestra página de mantenimiento", () => {

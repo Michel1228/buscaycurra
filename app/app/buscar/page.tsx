@@ -12,6 +12,7 @@ import { DATOS } from "@/lib/datos-reales";
 import { sectorDeOficio } from "@/lib/job-search/oficio-a-sector";
 import EmpresasDeLaZona from "@/components/EmpresasDeLaZona";
 import NavTrabajo from "@/components/NavTrabajo";
+import Link from "next/link";
 import { TrendingUp, Send, Building2, Info, AlertTriangle } from "lucide-react";
 
 /** El nombre del pais tal y como lo lee la gente: "Francia", no "FR". */
@@ -55,6 +56,19 @@ function BuscarPageInner() {
   const [cargando, setCargando] = useState(false);
   const [cargandoMas, setCargandoMas] = useState(false);
   const [buscado, setBuscado] = useState(false);
+  // OFERTAS SEGÚN TU CV, antes de buscar (17 oct 2026). Salen de su CV, nunca
+  // al tuntún: sin CV se le pide que lo rellene (/api/ofertas/para-ti).
+  const [paraTi, setParaTi] = useState<{ estado: string; ofertas: PropiedadesJobCard[]; puestos: string[] } | null>(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+        if (!session) return;
+        const res = await fetch("/api/ofertas/para-ti", { headers: { Authorization: `Bearer ${session.access_token}` } });
+        if (res.ok) setParaTi(await res.json());
+      } catch { /* sin recomendaciones, el buscador sigue igual */ }
+    })();
+  }, []);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResultados, setTotalResultados] = useState(0);
@@ -573,6 +587,37 @@ function BuscarPageInner() {
               <div className="rounded-xl px-4 py-3 text-sm flex items-start gap-2" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
                 <AlertTriangle size={15} strokeWidth={2} className="shrink-0 mt-0.5" />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {!cargando && !buscado && paraTi?.estado === "ok" && paraTi.ofertas.length > 0 && (
+              <div>
+                <div className="mb-3">
+                  <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Ofertas según tu CV</h2>
+                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                    De lo que has trabajado ({paraTi.puestos.join(", ").toLowerCase()}), primero las de tu zona.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {paraTi.ofertas.map((o) => <JobCard key={o.id} {...o} />)}
+                </div>
+              </div>
+            )}
+            {!cargando && !buscado && paraTi?.estado === "sin-cv" && (
+              <div className="card-game p-6 text-center">
+                <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Aquí te saldrán ofertas de lo tuyo</p>
+                <p className="text-xs mt-1 mb-4" style={{ color: "#94a3b8" }}>
+                  Pon en tu CV de qué has trabajado y te enseñamos ofertas que encajan, cerca de ti. Nada al azar.
+                </p>
+                <Link href="/app/curriculum" className="btn-game text-xs px-4 py-2 inline-block">Rellenar mi CV</Link>
+              </div>
+            )}
+            {!cargando && !buscado && paraTi?.estado === "sin-ofertas" && (
+              <div className="card-game p-6 text-center">
+                <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Ahora no hay ofertas de lo tuyo en tu zona</p>
+                <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                  Busca arriba con otra ciudad o crea una alerta y te avisamos en cuanto salga una.
+                </p>
               </div>
             )}
 

@@ -26,6 +26,12 @@ export interface OfertaParaTi {
   salario: string | null;
   fuente: string | null;
   sector: string | null;
+  /** Para la tarjeta con "Enviar CV" del buscador. */
+  descripcion: string | null;
+  url: string | null;
+  fecha: string | null;
+  emailEmpresa: string | null;
+  emailConfianza: string | null;
 }
 
 export async function ofertasParaTi(cv: unknown, ciudadPerfil: string | null | undefined, cuantas = 6): Promise<OfertaParaTi[]> {
@@ -53,9 +59,11 @@ export async function ofertasParaTi(cv: unknown, ciudadPerfil: string | null | u
   const enCiudad = [`%${ciudad}%`];
   const enZona = [...enCiudad, ...provincias.map((p) => `%${p}%`)];
 
-  const { rows } = await pool.query<{ id: string; title: string; company: string | null; city: string | null; salary: string | null; sourceName: string | null; sector: string | null }>(
+  const { rows } = await pool.query<{ id: string; title: string; company: string | null; city: string | null; salary: string | null; sourceName: string | null; sector: string | null;
+    descripcion: string | null; sourceUrl: string | null; scrapedAt: Date | null; contactEmail: string | null; contactEmailConfianza: string | null }>(
     `WITH zona AS MATERIALIZED (
        SELECT id, title, company, city, salary, "sourceName", sector, "createdAt",
+              left(description, 300) AS descripcion, "sourceUrl", "scrapedAt", "contactEmail", "contactEmailConfianza",
               (city ILIKE ANY($2::text[])) AS en_ciudad
          FROM "JobListing"
         WHERE "isActive" AND lower(country) = 'es' AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
@@ -86,5 +94,7 @@ export async function ofertasParaTi(cv: unknown, ciudadPerfil: string | null | u
   return elegidas.map((r) => ({
     id: r.id, titulo: r.title, empresa: r.company, ubicacion: r.city,
     salario: r.salary, fuente: r.sourceName, sector: r.sector,
+    descripcion: r.descripcion, url: r.sourceUrl, fecha: r.scrapedAt ? new Date(r.scrapedAt).toISOString() : null,
+    emailEmpresa: r.contactEmail, emailConfianza: r.contactEmailConfianza,
   }));
 }

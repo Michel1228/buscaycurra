@@ -7,6 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
 import { ofertasParaTi } from "@/lib/job-search/ofertas-para-ti";
+import { patronesDelCv } from "@/lib/job-search/puestos-del-cv";
 
 export const dynamic = "force-dynamic";
 
@@ -115,12 +116,15 @@ export async function GET(request: NextRequest) {
     // de Delegación". Ahora salen de los puestos de su CV, en su ciudad y su
     // provincia; si no hay seis de lo suyo, salen menos, y sin CV, ninguna.
     let ofertasRecomendadas: any[] = [];
+    // Para que la portada diga por qué no hay: sin CV se le pide que lo rellene.
+    let estadoRecomendadas: "ok" | "sin-cv" | "sin-ofertas" = "sin-cv";
     try {
       const { rows: cvs } = await getPool().query(
         "SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1",
         [userId]
       );
       ofertasRecomendadas = await ofertasParaTi(cvs[0]?.form_data ?? null, profile?.ciudad);
+      estadoRecomendadas = !patronesDelCv(cvs[0]?.form_data ?? null).length ? "sin-cv" : ofertasRecomendadas.length ? "ok" : "sin-ofertas";
     } catch (e) {
       // Sin ofertas la portada sigue en pie: quedan las estadisticas y los
       // accesos rapidos. Pero que se vea en el registro, que antes un fallo
@@ -157,6 +161,7 @@ export async function GET(request: NextRequest) {
         entrevistasPendientes,
         pipelineActivo: pipelineActivo || 0,
       },
+      estadoRecomendadas,
       ofertasRecomendadas: ofertasRecomendadas.map((o: any) => ({
         id: o.id,
         titulo: o.titulo,

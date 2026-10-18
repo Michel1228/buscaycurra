@@ -65,6 +65,7 @@ export default function BienvenidaClient() {
     pipelineActivo: 0,
   });
   const [ofertas, setOfertas] = useState<OfertaRec[]>([]);
+  const [estadoRecomendadas, setEstadoRecomendadas] = useState<string>("");
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("");
@@ -93,6 +94,7 @@ export default function BienvenidaClient() {
           const data = await res.json();
           setStats(data.stats);
           setOfertas(data.ofertasRecomendadas || []);
+          setEstadoRecomendadas(data.estadoRecomendadas || "");
           setQuickActions(data.quickActions || []);
         }
       } catch (err) {
@@ -258,6 +260,20 @@ export default function BienvenidaClient() {
         </div>
 
         {/* ── Ofertas recomendadas ── */}
+        {/* Sin CV no se recomienda nada al azar: se le pide que lo rellene (17 oct 2026). */}
+        {ofertas.length === 0 && estadoRecomendadas === "sin-cv" && (
+          <div className="rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between"
+            style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div>
+              <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Ofertas según tu CV</h2>
+              <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
+                Pon en tu CV de qué has trabajado y aquí te saldrán ofertas que encajan, cerca de ti.
+              </p>
+            </div>
+            <Link href="/app/curriculum" className="btn-game text-xs px-4 py-2 text-center flex-shrink-0">Rellenar mi CV</Link>
+          </div>
+        )}
+
         {ofertas.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
