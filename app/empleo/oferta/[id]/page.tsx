@@ -14,6 +14,13 @@ function sueldoDe(s: string | null): string | null {
   return t && !/^(ver en oferta|consultar|a convenir|no especificado|n\/?d|-)$/i.test(t) ? t : null;
 }
 
+/** "EURES_GIJ" → "EURES", "ADZUNA_ES" → "Adzuna": el código interno no se enseña. */
+function nombreFuente(s: string | null): string | null {
+  const base = (s || "").split("_")[0].trim();
+  if (!base) return null;
+  return base.length <= 5 && base === base.toUpperCase() ? base : base[0].toUpperCase() + base.slice(1).toLowerCase();
+}
+
 const APP_STORE = "https://apps.apple.com/app/buscaycurra-empleo-con-ia/id6775232067";
 const GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=es.buscaycurra.app";
 
@@ -193,7 +200,7 @@ export default async function OfertaPublicaPage({
             {row.sourceUrl && !oficial && (
               <a href={row.sourceUrl} target="_blank" rel="nofollow noopener noreferrer"
                 className="text-xs mt-4 inline-block hover:underline" style={{ color: "#64748b" }}>
-                Ver la oferta original{row.sourceName ? ` en ${row.sourceName}` : ""} ↗
+                Ver la oferta original{nombreFuente(row.sourceName) ? ` en ${nombreFuente(row.sourceName)}` : ""} ↗
               </a>
             )}
           </div>

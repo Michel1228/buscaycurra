@@ -1010,6 +1010,10 @@ test("de la ficha de oferta al registro y de vuelta a la oferta, sin perderla", 
     "con sesión, el registro de una oferta lleva a la oferta": leerFuente("middleware.ts").includes("NextResponse.redirect(new URL(`/app/ofertas/${oferta}`"),
     "hacer el CV no pierde la oferta": leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx").includes("/app/curriculum?volver=") && leerFuente("app/app/curriculum/Content.tsx").includes("Volver a la oferta"),
     "banner de la App Store en Safari": leerFuente("app/layout.tsx").includes('itunes: { appId: "6775232067" }'),
+    // "Ver la oferta original en EURES_GIJ": el código interno no se enseña.
+    "la fuente se nombra legible": ficha.includes("nombreFuente(row.sourceName)") && !ficha.includes("` en ${row.sourceName}`"),
+    // Uno de cada cuatro no confirmaba el correo: botón a su bandeja.
+    "botón para abrir el correo y confirmar": registro.includes("bandejaDe(email)") && registro.includes("mail.google.com"),
   };
   const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
   if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);

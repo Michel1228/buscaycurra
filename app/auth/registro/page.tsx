@@ -9,6 +9,16 @@ import Image from "next/image";
 import { Globe, Target, Clock, CheckCircle2 } from "lucide-react";
 import { palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
 
+/** La bandeja de entrada de los correos más comunes, para confirmar con un toque. */
+function bandejaDe(email: string): { nombre: string; url: string } | null {
+  const d = email.trim().toLowerCase().split("@")[1] || "";
+  if (/^(gmail|googlemail)\.com$/.test(d)) return { nombre: "Gmail", url: "https://mail.google.com/mail/u/0/#search/buscaycurra" };
+  if (/^(hotmail|outlook|live|msn)\.[a-z.]+$/.test(d)) return { nombre: "Outlook", url: "https://outlook.live.com/mail/0/" };
+  if (/^yahoo\.[a-z.]+$/.test(d)) return { nombre: "Yahoo Mail", url: "https://mail.yahoo.com/" };
+  if (/^(icloud|me|mac)\.com$/.test(d)) return { nombre: "iCloud Mail", url: "https://www.icloud.com/mail" };
+  return null;
+}
+
 function RegistroPageInner() {
   const searchParams = useSearchParams();
   const referralCode = useMemo(() => {
@@ -224,6 +234,14 @@ function RegistroPageInner() {
                   Último paso: abre el correo que te hemos mandado a <strong style={{ color: "#f1f5f9" }}>{email}</strong> y pulsa el enlace.
                   {oferta ? ` Te llevará directo a la oferta${oferta.empresa ? ` de ${oferta.empresa}` : ""} para mandar tu CV.` : " Te llevará directo a tu cuenta."}
                 </p>
+                {/* Uno de cada cuatro no llegaba a confirmar el correo (18 oct
+                    2026): se le lleva a su bandeja con un toque. */}
+                {bandejaDe(email) && (
+                  <a href={bandejaDe(email)!.url} target="_blank" rel="noopener noreferrer"
+                    className="btn-game inline-block text-sm px-5 py-2.5 mb-3">
+                    Abrir {bandejaDe(email)!.nombre}
+                  </a>
+                )}
                 <Link href="/auth/login" className="btn-game inline-block text-xs">Ir al login</Link>
 
                 <div className="mt-5 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
