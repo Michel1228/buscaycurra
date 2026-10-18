@@ -1004,7 +1004,13 @@ test("de la ficha de oferta al registro y de vuelta a la oferta, sin perderla", 
       !landing.includes("generateStaticParams") && !landing.includes("description ILIKE") && landing.includes("ofertasParecidas("),
     "la ciudad se busca sin tildes y con el índice": leerFuente("lib/job-search/ofertas-parecidas.ts").includes("translate(city, 'áéíóúñüÁÉÍÓÚÑÜàèìòùÀÈÌÒÙ', 'aeiounuAEIOUNUaeiouAEIOU')`")
       && leerFuente("lib/job-search/ofertas-parecidas.ts").includes("${CIUDAD_SIN_TILDES} ILIKE $1"),
-    "el registro guarda a qué oferta volver": registro.includes("destino: `/app/ofertas/${ofertaId}`") && registro.includes("/api/ofertas/resumen?id="),
+    "el registro guarda a qué oferta volver": registro.includes("destinoCuenta = ofertaId ? `/app/ofertas/${ofertaId}`") && registro.includes("/api/ofertas/resumen?id="),
+    // Los botones de las páginas públicas que llevan dentro de la app dejaban a
+    // la gente nueva en "Bienvenido de vuelta" (el login).
+    "sin cuenta en el dispositivo, al registro con el destino": leerFuente("middleware.ts").includes("if (!request.cookies.get(COOKIE_CUENTA))")
+      && leerFuente("middleware.ts").includes('registroUrl.searchParams.set("destino", destino)'),
+    "el login ofrece crear cuenta a quien viene de un botón": leerFuente("app/auth/login/page.tsx").includes("¿Primera vez en BuscayCurra?"),
+    "el destino solo puede ser de la app": /startsWith\("\/app\/"\) \|\| v\.includes\("\/\/"\)/.test(leerFuente("lib/auth/destino.ts")),
     "al confirmar el correo se vuelve a la oferta": leerFuente("app/auth/callback/page.tsx").includes("sesion?.user?.user_metadata?.destino"),
     "al entrar sin redirect se vuelve a la oferta": leerFuente("app/auth/login/page.tsx").includes("entrada.user?.user_metadata?.destino"),
     "con sesión, el registro de una oferta lleva a la oferta": leerFuente("middleware.ts").includes("NextResponse.redirect(new URL(`/app/ofertas/${oferta}`"),

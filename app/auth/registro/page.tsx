@@ -8,6 +8,7 @@ import { NUM_PAISES } from "@/lib/paises";
 import Image from "next/image";
 import { Globe, Target, Clock, CheckCircle2 } from "lucide-react";
 import { palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
+import { destinoSeguro } from "@/lib/auth/destino";
 
 /** La bandeja de entrada de los correos más comunes, para confirmar con un toque. */
 function bandejaDe(email: string): { nombre: string; url: string } | null {
@@ -39,6 +40,10 @@ function RegistroPageInner() {
     const v = searchParams.get("desde");
     return v && /^[a-z0-9/-]{1,80}$/i.test(v) ? v : null;
   }, [searchParams]);
+  // Viene de un botón de la web que lleva dentro de la app ("Buscar ofertas en
+  // Suecia"): el middleware le manda aquí con el destino, y vuelve a él.
+  const destinoParam = useMemo(() => destinoSeguro(searchParams.get("destino")), [searchParams]);
+  const destinoCuenta = ofertaId ? `/app/ofertas/${ofertaId}` : destinoParam;
   const [oferta, setOferta] = useState<{ titulo: string; empresa: string | null; ciudad: string | null } | null>(null);
 
   const [nombre, setNombre] = useState("");
@@ -107,7 +112,8 @@ function RegistroPageInner() {
             ...(oficio.trim() ? { oficio: oficio.trim().slice(0, 80) } : {}),
             ...(referralCode ? { ref: referralCode } : {}),
             // A dónde volver al confirmar, y de dónde vino (para medir).
-            ...(ofertaId ? { destino: `/app/ofertas/${ofertaId}`, origen: `oferta:${ofertaId}` } : desde ? { origen: `desde:${desde}` } : {}),
+            ...(destinoCuenta ? { destino: destinoCuenta } : {}),
+            ...(ofertaId ? { origen: `oferta:${ofertaId}` } : desde ? { origen: `desde:${desde}` } : destinoParam ? { origen: `destino:${destinoParam.split("?")[0]}` } : {}),
           },
           emailRedirectTo: `${siteUrl}/auth/callback`,
         },
@@ -156,7 +162,7 @@ function RegistroPageInner() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#0f1117" }}>
       {/* Panel marketing — arriba en móvil, izquierda en desktop */}
-      <div className={`w-full lg:w-1/2 ${ofertaId || desde ? "hidden lg:flex" : "flex"} flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden`}
+      <div className={`w-full lg:w-1/2 ${ofertaId || desde || destinoParam ? "hidden lg:flex" : "flex"} flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden`}
         style={{ background: "linear-gradient(135deg, #0a1f0e 0%, #0f1117 60%, #111827 100%)" }}>
         <div className="absolute inset-0 pointer-events-none">
           <div style={{
@@ -209,8 +215,17 @@ function RegistroPageInner() {
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>{ofertaId ? "Un paso y mandas tu CV" : "Crea tu cuenta"}</h1>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>{ofertaId ? "Gratis. Se tarda un minuto." : "Empieza a buscar trabajo con Guzzi"}</p>
+            <p className="text-xs mt-1" style={{ color: "#64748b" }}>{ofertaId ? "Gratis. Se tarda un minuto." : destinoParam ? "Gratis. Al terminar te llevamos a lo que estabas viendo." : "Empieza a buscar trabajo con Guzzi"}</p>
           </div>
+
+          {/* Quien ya tiene cuenta y llega aquí desde otro móvil: entrar está arriba. */}
+          {!registrado && (destinoParam || ofertaId) && (
+            <p className="text-xs text-center mb-4" style={{ color: "#94a3b8" }}>
+              ¿Ya tienes cuenta?{" "}
+              <Link href={`/auth/login${destinoCuenta ? `?redirect=${encodeURIComponent(destinoCuenta)}` : ""}`}
+                className="font-semibold underline" style={{ color: "#22c55e" }}>Entra aquí</Link>
+            </p>
+          )}
 
           {oferta && !registrado && (
             <div className="rounded-xl p-4 mb-4" style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.25)" }}>
@@ -369,7 +384,7 @@ function RegistroPageInner() {
           {!registrado && (
             <p className="text-center text-xs mt-5" style={{ color: "#64748b" }}>
               ¿Ya tienes cuenta?{" "}
-              <Link href="/auth/login" className="font-semibold hover:underline" style={{ color: "#22c55e" }}>Iniciar sesión</Link>
+              <Link href={`/auth/login${destinoCuenta ? `?redirect=${encodeURIComponent(destinoCuenta)}` : ""}`} className="font-semibold hover:underline" style={{ color: "#22c55e" }}>Iniciar sesión</Link>
             </p>
           )}
         </div>

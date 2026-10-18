@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Globe, Target, Clock } from "lucide-react";
 import { NUM_PAISES } from "@/lib/paises";
 import { pedirBienvenida } from "@/lib/onboarding/pedir-bienvenida";
+import { destinoSeguro, marcarQueTieneCuenta } from "@/lib/auth/destino";
 
 function LoginPageInner() {
   const router = useRouter();
@@ -58,6 +59,8 @@ function LoginPageInner() {
       // en otro navegador, este es el primer momento con sesión (ver
       // lib/onboarding/pedir-bienvenida.ts). El servidor solo la hace una vez.
       pedirBienvenida(entrada.session?.access_token);
+      // Este dispositivo ya tiene cuenta: si se cierra la sesión, al login.
+      marcarQueTieneCuenta();
 
       // El middleware guarda en ?redirect= la página que el usuario quería ver
       // antes de que le pidiéramos entrar. Ignorarlo perdía el destino de
@@ -66,12 +69,12 @@ function LoginPageInner() {
       // Fuera de /app/ solo se admite la página de candidatos (exacta): una
       // ruta libre aquí permitiría redirigir a cualquier sitio.
       const valido = destino && (destino.startsWith("/app/") || destino === "/empresas/candidatos");
-      // Quien se registró desde una oferta y confirmó el correo en otro
-      // navegador entra aquí sin ?redirect=: se le lleva a esa oferta la
-      // primera semana (el registro guarda el destino en la cuenta).
-      const deLaOferta = entrada.user?.user_metadata?.destino;
+      // Quien se registró desde una oferta (o un botón de la web) y confirmó
+      // el correo en otro navegador entra aquí sin ?redirect=: se le lleva a
+      // donde iba la primera semana (el registro guarda el destino en la cuenta).
+      const deLaCuenta = entrada.user?.user_metadata?.destino;
       const reciente = entrada.user?.created_at && Date.now() - new Date(entrada.user.created_at).getTime() < 7 * 86400000;
-      const aLaOferta = reciente && typeof deLaOferta === "string" && /^\/app\/ofertas\/[a-z0-9]{8,40}$/i.test(deLaOferta) ? deLaOferta : null;
+      const aLaOferta = reciente ? destinoSeguro(deLaCuenta) : null;
       router.push(valido ? destino : aLaOferta || "/app/bienvenida");
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
@@ -90,7 +93,7 @@ function LoginPageInner() {
     <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#0f1117" }}>
 
       {/* Panel marketing — arriba en móvil, izquierda en desktop */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden"
+      <div className={`w-full lg:w-1/2 ${searchParams.get("redirect") ? "hidden lg:flex" : "flex"} flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden`}
         style={{ background: "linear-gradient(135deg, #0a1f0e 0%, #0f1117 60%, #111827 100%)" }}>
 
         {/* Glow de fondo */}
@@ -176,6 +179,17 @@ function LoginPageInner() {
         style={{ background: "#0f1117" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
+            {/* Quien llega aquí desde un botón de la web suele no tener cuenta
+                (18 oct 2026): se le ofrece crearla antes que la contraseña. */}
+            {destinoSeguro(searchParams.get("redirect")) && (
+              <Link href={`/auth/registro?destino=${encodeURIComponent(searchParams.get("redirect")!)}`}
+                className="block rounded-xl p-4 mb-5 text-left"
+                style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)" }}>
+                <span className="block text-sm font-bold" style={{ color: "#f1f5f9" }}>¿Primera vez en BuscayCurra?</span>
+                <span className="block text-xs mt-1" style={{ color: "#94a3b8" }}>Crea tu cuenta gratis en un minuto y te llevamos a lo que estabas viendo.</span>
+                <span className="inline-block text-xs font-semibold mt-2" style={{ color: "#22c55e" }}>Crear cuenta gratis →</span>
+              </Link>
+            )}
             <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Bienvenido de vuelta</h1>
             <p className="text-xs mt-1" style={{ color: "#64748b" }}>Sigue tu búsqueda donde la dejaste</p>
           </div>

@@ -6,6 +6,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { pedirBienvenida } from "@/lib/onboarding/pedir-bienvenida";
+import { destinoSeguro, marcarQueTieneCuenta } from "@/lib/auth/destino";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -68,6 +69,7 @@ export default function AuthCallbackPage() {
             // cuenta confirmada, y la persona creía que el registro había fallado
             // (comprobado con un registro real el 3 oct 2026).
             if (!mountedRef.current) return;
+            marcarQueTieneCuenta();
             setEstado("confirmada");
             return;
           }
@@ -84,6 +86,7 @@ export default function AuthCallbackPage() {
           window.history.replaceState(null, "", window.location.pathname);
           if (error) {
             if (!mountedRef.current) return;
+            marcarQueTieneCuenta();
             setEstado("confirmada");
             return;
           }
@@ -127,7 +130,9 @@ export default function AuthCallbackPage() {
         // el registro guarda el destino en la cuenta. Antes todos acababan en
         // la portada y la oferta que les había traído se perdía.
         const destino = sesion?.user?.user_metadata?.destino;
-        const irA = typeof destino === "string" && /^\/app\/ofertas\/[a-z0-9]{8,40}$/i.test(destino) ? destino : "/app/bienvenida";
+        const irA = destinoSeguro(destino) || "/app/bienvenida";
+        // Este dispositivo ya tiene cuenta: si se cierra la sesión, al login.
+        marcarQueTieneCuenta();
         timerRef.current = setTimeout(() => {
           if (mountedRef.current) router.push(irA);
         }, 2000);

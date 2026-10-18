@@ -5,6 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { COOKIE_CUENTA } from "@/lib/auth/destino";
 
 // Dominios permitidos para peticiones API (CSRF protection)
 const ALLOWED_ORIGINS = [
@@ -113,12 +114,29 @@ export async function middleware(request: NextRequest) {
   if (!pathname.startsWith("/app")) return NextResponse.next();
 
   if (!isAuthenticated) {
+    // QUIEN NUNCA HA TENIDO CUENTA AQUÍ, AL REGISTRO (18 oct 2026). Desde las
+    // páginas públicas ("Buscar ofertas en Suecia") la gente nueva acababa en
+    // "Bienvenido de vuelta" y se iba. Se distingue por una cookie que se pone
+    // al entrar o al confirmar el correo; el registro tiene "Ya tengo cuenta".
+    // El destino lleva también la búsqueda (?pais=SE), que antes se perdía.
+    const destino = pathname + request.nextUrl.search;
+    if (!request.cookies.get(COOKIE_CUENTA)) {
+      const registroUrl = new URL("/auth/registro", request.url);
+      registroUrl.searchParams.set("destino", destino);
+      return NextResponse.redirect(registroUrl);
+    }
     const loginUrl = new URL("/auth/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set("redirect", destino);
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  // Con sesión dentro de la app: este dispositivo ya tiene cuenta. Si un día
+  // caduca la sesión, le saldrá el login y no el registro.
+  const respuesta = NextResponse.next();
+  if (!request.cookies.get(COOKIE_CUENTA)) {
+    respuesta.cookies.set(COOKIE_CUENTA, "1", { path: "/", maxAge: 31536000, sameSite: "lax" });
+  }
+  return respuesta;
 }
 
 export const config = {
