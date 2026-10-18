@@ -98,6 +98,12 @@ export async function middleware(request: NextRequest) {
   // abierta (o recarga tras abrirlo) tiene que poder cambiarla, no acabar en Guzzi.
   if (pathname === "/" || (pathname.startsWith("/auth/") && pathname !== "/auth/nueva-contrasena")) {
     if (isAuthenticated) {
+      // Quien ya tiene cuenta y pulsa "Envía tu CV a…" en una ficha de oferta
+      // va a esa oferta dentro de la app, no a Guzzi (18 oct 2026).
+      const oferta = pathname === "/auth/registro" ? request.nextUrl.searchParams.get("oferta") : null;
+      if (oferta && /^[a-z0-9]{8,40}$/i.test(oferta)) {
+        return NextResponse.redirect(new URL(`/app/ofertas/${oferta}`, request.url));
+      }
       return NextResponse.redirect(new URL("/app/gusi", request.url));
     }
     return NextResponse.next();

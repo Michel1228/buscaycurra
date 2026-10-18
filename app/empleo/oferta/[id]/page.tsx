@@ -5,6 +5,17 @@ import Link from "next/link";
 import { Search, MapPin, DollarSign, Calendar, ClipboardList } from "lucide-react";
 import { empresaParaGoogle, jobPostingDe } from "@/lib/seo/job-posting";
 import { servicioOficial } from "@/lib/job-search/fuente-oficial";
+import { ofertasParecidas, slug } from "@/lib/job-search/ofertas-parecidas";
+import { DATOS } from "@/lib/datos-reales";
+
+/** "Ver en oferta", "Consultar"…: no es un sueldo, y no se enseña como si lo fuera. */
+function sueldoDe(s: string | null): string | null {
+  const t = (s || "").trim();
+  return t && !/^(ver en oferta|consultar|a convenir|no especificado|n\/?d|-)$/i.test(t) ? t : null;
+}
+
+const APP_STORE = "https://apps.apple.com/app/buscaycurra-empleo-con-ia/id6775232067";
+const GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=es.buscaycurra.app";
 
 /** "Camarero en Bar Pepe - Bilbao", o sin la parte que falte (empresa, ciudad). */
 function tituloDe(row: { title: string; company: string | null; city: string | null }): string {
@@ -89,6 +100,13 @@ export default async function OfertaPublicaPage({
   const empresa = empresaParaGoogle(row.company);
   // Lanbide y SEF Murcia: se solicitan en su web, no mandando el CV por correo.
   const oficial = servicioOficial(row.sourceName);
+  const sueldo = sueldoDe(row.salary);
+  // Más de lo mismo en su ciudad (18 oct 2026): casi todas las visitas de
+  // Google entran por una ficha como esta, y no se les enseñaba ninguna más.
+  const parecidas = await ofertasParecidas(row.title || "", row.city, { excluirId: row.id, limite: 5 }).catch(() => null);
+  const ciudadCorta = (row.city || "").split(",")[0].trim();
+  const listaParecidas = parecidas ? (parecidas.ofertas.length ? parecidas.ofertas : parecidas.deLaCiudad) : [];
+  const sonDelPuesto = !!parecidas?.ofertas.length;
 
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
@@ -135,7 +153,7 @@ export default async function OfertaPublicaPage({
 
           <div className="flex flex-wrap gap-4 mb-5 text-sm" style={{ color: "#94a3b8" }}>
             <span>{row.city}</span>
-            {row.salary && <span>{row.salary}</span>}
+            {sueldo && <span>{sueldo}</span>}
             {row.createdAt && (
               <span>📅 {new Date(row.createdAt).toLocaleDateString("es-ES")}</span>
             )}
@@ -150,28 +168,80 @@ export default async function OfertaPublicaPage({
             </div>
           )}
 
-          <div className="mt-6 pt-4 flex flex-wrap gap-3" style={{ borderTop: "1px solid #2d3142" }}>
-            <Link
-              href={`/app/buscar?keyword=${encodeURIComponent(row.title || "")}&location=${encodeURIComponent(row.city || "")}`}
-              className="text-sm px-5 py-2.5 rounded-lg font-medium"
-              style={{ background: "transparent", color: "#64748b", border: "1px solid #2d3142" }}>
-              Buscar similares en BuscayCurra
-            </Link>
+          {/* QUÉ HACER CON ESTA OFERTA (18 oct 2026). Era "Enviar CV con IA" al
+              registro, que luego no recordaba la oferta, y "Buscar similares",
+              que pedía entrar. De Google llegan unas 80 personas al día y se
+              registraban 2 o 3. Ahora el botón dice a quién se manda el CV y
+              el registro te devuelve a esta oferta con el envío preparado. */}
+          <div className="mt-6 pt-5" style={{ borderTop: "1px solid #2d3142" }}>
             {oficial && row.sourceUrl ? (
-              <a
-                href={row.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-game text-sm px-5 py-2.5 rounded-lg font-semibold">
+              <a href={row.sourceUrl} target="_blank" rel="noopener noreferrer"
+                className="btn-game text-sm px-5 py-3 rounded-lg font-semibold inline-block">
                 Inscribirme en {oficial.corto}
               </a>
-            ) : (
-              <Link
-                href={`/auth/registro`}
-                className="btn-game text-sm px-5 py-2.5 rounded-lg font-semibold">
-                Enviar CV con IA
+            ) : !caducada ? (
+              <>
+                <Link href={`/auth/registro?oferta=${encodeURIComponent(row.id)}`}
+                  className="btn-game text-base px-6 py-3 rounded-xl font-bold block text-center sm:inline-block">
+                  Envía tu CV a {empresa ?? "esta empresa"}
+                </Link>
+                <p className="text-xs mt-3" style={{ color: "#94a3b8" }}>
+                  Gratis. Guzzi, nuestro asistente con IA, te prepara la carta para esta oferta y te ayuda a mandarla.
+                </p>
+              </>
+            ) : null}
+            {row.sourceUrl && !oficial && (
+              <a href={row.sourceUrl} target="_blank" rel="nofollow noopener noreferrer"
+                className="text-xs mt-4 inline-block hover:underline" style={{ color: "#64748b" }}>
+                Ver la oferta original{row.sourceName ? ` en ${row.sourceName}` : ""} ↗
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Más ofertas de lo mismo en su ciudad, con enlace a su página. */}
+        {listaParecidas.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-base font-bold mb-3" style={{ color: "#f1f5f9" }}>
+              {sonDelPuesto ? `Más ofertas de ${parecidas!.puesto} en ${ciudadCorta}` : `Últimas ofertas en ${ciudadCorta}`}
+            </h2>
+            <div className="space-y-2">
+              {listaParecidas.map((o) => (
+                <Link key={o.id} href={`/empleo/oferta/${o.id}`}
+                  className="block rounded-xl px-4 py-3 transition hover:opacity-90"
+                  style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{o.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
+                    {[o.company, (o.city || "").split(",")[0], sueldoDe(o.salary)].filter(Boolean).join(" · ")}
+                  </p>
+                </Link>
+              ))}
+            </div>
+            {sonDelPuesto && parecidas!.puesto && parecidas!.deEsePuesto > listaParecidas.length && (
+              <Link href={`/empleo/${slug(parecidas!.puesto)}/${slug(ciudadCorta)}`}
+                className="text-sm font-semibold mt-3 inline-block hover:underline" style={{ color: "#22c55e" }}>
+                Ver las {parecidas!.deEsePuesto} ofertas de {parecidas!.puesto} en {ciudadCorta} →
               </Link>
             )}
+          </section>
+        )}
+
+        {/* Quiénes somos, en una línea, y la app. */}
+        <div className="mt-8 rounded-xl p-5" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
+          <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>BuscayCurra es gratis</p>
+          <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+            {DATOS.ofertasActivasTexto} de ofertas y {DATOS.conEmailTexto} traen el correo de la empresa: tu CV llega a una persona.
+            Guzzi te ayuda a hacer el CV y a mandarlo.
+          </p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <a href={APP_STORE} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-2 rounded-lg font-semibold"
+              style={{ background: "#0f1117", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+              App para iPhone
+            </a>
+            <a href={GOOGLE_PLAY} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-2 rounded-lg font-semibold"
+              style={{ background: "#0f1117", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+              App para Android
+            </a>
           </div>
         </div>
       </div>

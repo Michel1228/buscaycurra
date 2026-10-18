@@ -123,8 +123,13 @@ export default function AuthCallbackPage() {
         if (!mountedRef.current) return;
         setEstado("ok");
 
+        // A la oferta de la que venía, si se registró desde una (18 oct 2026):
+        // el registro guarda el destino en la cuenta. Antes todos acababan en
+        // la portada y la oferta que les había traído se perdía.
+        const destino = sesion?.user?.user_metadata?.destino;
+        const irA = typeof destino === "string" && /^\/app\/ofertas\/[a-z0-9]{8,40}$/i.test(destino) ? destino : "/app/bienvenida";
         timerRef.current = setTimeout(() => {
-          if (mountedRef.current) router.push("/app/bienvenida");
+          if (mountedRef.current) router.push(irA);
         }, 2000);
 
       } catch {

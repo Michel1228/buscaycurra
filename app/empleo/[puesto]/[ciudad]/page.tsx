@@ -5,66 +5,28 @@
  */
 
 import { Metadata } from "next";
-import { getPool } from "@/lib/db";
+import { ofertasParecidas, type OfertaCorta } from "@/lib/job-search/ofertas-parecidas";
 import Link from "next/link";
 import { DollarSign, Search } from "lucide-react";
 
-// ─── Lista de puestos populares para pre-renderizar ─────────────────────────
-const PUESTOS_POPULARES = [
-  "camarero", "cocinero", "limpieza", "conductor", "electricista",
-  "dependiente", "programador", "enfermero", "administrativo", "mecanico",
-  "albanil", "almacen", "soldador", "fontanero", "peluquero",
-  "cuidador", "operario", "repartidor", "cajero", "vendedor",
-  "auxiliar", "mozo", "camarera", "recepcionista", "chofer",
-  "peón", "encargado", "gerente", "diseñador", "analista",
-];
+const sueldoValido = (s: string | null) => (s && !/^(ver en oferta|consultar|a convenir)$/i.test(s.trim()) ? s : null);
 
-const CIUDADES_POPULARES = [
-  "madrid", "barcelona", "valencia", "sevilla", "malaga",
-  "zaragoza", "murcia", "palma", "las-palmas", "bilbao",
-  "alicante", "cordoba", "valladolid", "vigo", "gijon",
-  "hospitalet", "vitoria", "la-coruna", "granada", "elche",
-  "oviedo", "badalona", "cartagena", "terrassa", "jerez",
-  "sabadell", "mostoles", "alcalá", "pamplona", "fuenlabrada",
-];
-
-// POR QUE ESTA PAGINA TARDA, Y DONDE ESTA EL TIEMPO DE VERDAD.
+// POR QUE ESTA PAGINA ESTABA VACIA (18 oct 2026).
 //
-// Medido, no supuesto. Generar una de estas cuesta unos 8,5 segundos, y la
-// primera sospecha —el `description ILIKE`, que obliga a mirar el texto entero
-// del anuncio— resulto ser FALSA. Con EXPLAIN ANALYZE contra produccion:
-//
-//   contar con puesto y ciudad ......  492 ms
-//   listar 50 con puesto y ciudad ...  598 ms
-//   contar solo por ciudad ..........  526 ms   (respaldo)
-//   listar 50 solo por ciudad .......  475 ms   (respaldo)
-//
-// O sea unos 2 segundos de base de datos como mucho, y usando indices. Los
-// otros 6,5 son Next.js montando la pagina por primera vez, en un servidor con
-// el 85% de la CPU robada por el hipervisor. Un indice sobre `description` no
-// habria arreglado nada: el problema no estaba ahi.
-//
-// Asi que lo que se hace es quitar ese coste del camino del usuario:
-//
-//   · Las combinaciones que de verdad traen visitas se generan AL COMPILAR, de
-//     modo que quien llega se encuentra el HTML hecho. Son 80, no las 900
-//     posibles: 900 serian media hora de compilacion.
-//   · El resto se sigue generando bajo demanda la primera vez (dynamicParams).
-//   · Y una vez generada, un dia de cache. Sin revalidate se quedaban
-//     congeladas hasta el siguiente despliegue, ensenando ofertas de hace meses
-//     bajo un titulo que dice "N ofertas encontradas".
-export const revalidate = 86400;
+// Las 80 combinaciones más visitadas se generaban AL COMPILAR, y en la
+// compilación no hay base de datos (getaddrinfo ENOTFOUND buscaycurra-db): se
+// guardaban con "0 ofertas" y se servían así un día. Las demás buscaban
+// "%puesto%" también en la descripción de 3 millones de ofertas, tardaban y
+// fallaban igual. Se comprobó en producción: "Trabajo de camarero en Madrid,
+// 0 ofertas", con 232 abiertas. Ahora la ciudad va primero y sin tildes, el
+// puesto solo en el título, y se guarda en Redis una hora.
+// NO SE GENERAN AL COMPILAR (18 oct 2026). En la compilación no hay base de
+// datos: las 80 que se pre-generaban salían con "0 ofertas" y se servían así un
+// día entero. Ahora cada una se genera la primera vez que alguien la abre y se
+// guarda 6 horas.
+export const revalidate = 21600;
 export const dynamicParams = true;
-export function generateStaticParams() {
-  // Producto cruzado de los diez puestos y las ocho ciudades con mas busquedas.
-  // El trafico de este tipo de paginas se concentra muchisimo en la cabeza, asi
-  // que cubrir ochenta combinaciones cubre casi todas las visitas reales.
-  const puestos = PUESTOS_POPULARES.slice(0, 10);
-  const ciudades = CIUDADES_POPULARES.slice(0, 8);
-  return puestos.flatMap(puesto => ciudades.map(ciudad => ({ puesto, ciudad })));
-}
 
-// ─── Metadata dinámica ──────────────────────────────────────────────────────
 export async function generateMetadata({
   params,
 }: {
@@ -75,7 +37,7 @@ export async function generateMetadata({
   const ciudadFmt = decodeURIComponent(ciudad).replace(/-/g, " ");
 
   const titulo = `Empleo de ${puestoFmt} en ${ciudadFmt} | BuscayCurra`;
-  const descripcion = `Encuentra trabajo de ${puestoFmt} en ${ciudadFmt}. Miles de ofertas actualizadas. Envía tu CV automáticamente con IA.`;
+  const descripcion = `Ofertas de trabajo de ${puestoFmt} en ${ciudadFmt}, actualizadas cada día. Envía tu CV a las empresas con ayuda de IA, gratis.`;
 
   return {
     title: titulo,
@@ -103,62 +65,18 @@ export default async function EmpleoPage({
   const puestoFmt = decodeURIComponent(puesto).replace(/-/g, " ");
   const ciudadFmt = decodeURIComponent(ciudad).replace(/-/g, " ");
 
-  // Buscar ofertas en la BD
-  let ofertas: Array<{
-    id: string;
-    title: string;
-    company: string;
-    city: string;
-    salary: string;
-    description: string;
-    sourceUrl: string;
-  }> = [];
-  let total = 0;
-
+  // LA CIUDAD PRIMERO Y SIN TILDES (18 oct 2026): ver lib/job-search/ofertas-parecidas.ts.
+  // Antes se buscaba "%camarero%" también en la descripción de 3 millones de
+  // ofertas; tardaba tanto que fallaba y la página decía "0 ofertas" hasta en
+  // Madrid. Si algo falla, no se enseña ninguna cifra.
+  let ofertas: OfertaCorta[] = [];
+  let total: number | null = null;
+  let soloDeLaCiudad = false;
   try {
-    const pool = getPool();
-    const kw = `%${puestoFmt}%`;
-    const loc = `%${ciudadFmt}%`;
-
-    // Contar y listar son independientes: no hace falta esperar a que termine
-    // una para lanzar la otra. Iban en fila y cada una tarda medio segundo, asi
-    // que solo por ponerlas en paralelo se ahorra medio segundo en cada
-    // generacion. Lo mismo abajo con las de respaldo.
-    const [countRes, result] = await Promise.all([
-      pool.query(
-        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1) AND (city ILIKE $2 OR province ILIKE $2)`,
-        [kw, loc]
-      ),
-      pool.query(
-        `SELECT id, title, company, city, salary, description, "sourceUrl"
-         FROM "JobListing"
-         WHERE "isActive" = true AND (title ILIKE $1 OR description ILIKE $1) AND (city ILIKE $2 OR province ILIKE $2)
-         ORDER BY "scrapedAt" DESC
-         LIMIT 50`,
-        [kw, loc]
-      ),
-    ]);
-    total = parseInt(countRes.rows[0].count);
-    ofertas = result.rows;
-
-    // Si no hay resultados, mostrar todas las ofertas de esa ciudad
-    if (ofertas.length === 0) {
-      const [fallbackResult, fallbackCount] = await Promise.all([
-        pool.query(
-          `SELECT id, title, company, city, salary, description, "sourceUrl"
-           FROM "JobListing"
-           WHERE "isActive" = true AND (city ILIKE $1 OR province ILIKE $1)
-           ORDER BY "scrapedAt" DESC
-           LIMIT 50`,
-          [loc]
-        ),
-        pool.query(
-          `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND (city ILIKE $1 OR province ILIKE $1)`,
-          [loc]
-        ),
-      ]);
-      ofertas = fallbackResult.rows;
-      total = parseInt(fallbackCount.rows[0].count);
+    const r = await ofertasParecidas(puestoFmt, ciudadFmt, { limite: 50 });
+    if (r) {
+      if (r.ofertas.length) { ofertas = r.ofertas; total = r.deEsePuesto; }
+      else { ofertas = r.deLaCiudad; total = r.enLaCiudad; soloDeLaCiudad = r.deLaCiudad.length > 0; }
     }
   } catch (e) {
     console.error("[EmpleoPage] Error:", (e as Error).message);
@@ -182,14 +100,18 @@ export default async function EmpleoPage({
       <div className="py-12 px-4" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}>
         <div className="max-w-4xl mx-auto">
           <nav className="text-xs mb-4" style={{ color: "#64748b" }}>
-            <Link href="/">Inicio</Link> → <Link href="/app/buscar">Empleo</Link> → {puestoFmt} → {ciudadFmt}
+            <Link href="/">Inicio</Link> → <Link href="/empleo">Empleo</Link> → {puestoFmt} → {ciudadFmt}
           </nav>
           <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#22c55e" }}>
             Trabajo de {puestoFmt} en {ciudadFmt}
           </h1>
           <p className="text-base" style={{ color: "#94a3b8" }}>
-            {total.toLocaleString("es-ES")} ofertas encontradas. 
-            Encuentra tu próximo empleo con BuscayCurra.
+            {total !== null && total > 0
+              ? soloDeLaCiudad
+                ? `Ahora no hay ofertas de ${puestoFmt}, pero hay ${total.toLocaleString("es-ES")} en ${ciudadFmt}.`
+                : `${total.toLocaleString("es-ES")} ofertas abiertas ahora mismo.`
+              : "Ofertas actualizadas cada día."}{" "}
+            Envía tu CV gratis con BuscayCurra.
           </p>
         </div>
       </div>
@@ -199,15 +121,15 @@ export default async function EmpleoPage({
         <div className="card-game p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <p className="font-bold text-lg" style={{ color: "#f1f5f9" }}>
-              ¿Quieres que Guzzi busque por ti?
+              Manda tu CV a estas empresas
             </p>
             <p className="text-sm" style={{ color: "#64748b" }}>
-              Envía tu CV automáticamente a empresas de {ciudadFmt}
+              Crea tu cuenta gratis: Guzzi te ayuda con el CV y la carta para cada oferta de {ciudadFmt}.
             </p>
           </div>
-          <Link href={`/app/buscar?keyword=${encodeURIComponent(puestoFmt)}&location=${encodeURIComponent(ciudadFmt)}`}
+          <Link href={`/auth/registro?desde=${encodeURIComponent(`empleo/${puesto}/${ciudad}`)}`}
             className="btn-game whitespace-nowrap">
-            Buscar con Guzzi →
+            Crear cuenta gratis →
           </Link>
         </div>
 
@@ -215,33 +137,30 @@ export default async function EmpleoPage({
         {ofertas.length > 0 ? (
           <div className="space-y-4 mb-10">
             <h2 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>
-              Ofertas destacadas
+              {soloDeLaCiudad ? `Últimas ofertas en ${ciudadFmt}` : `Ofertas de ${puestoFmt} en ${ciudadFmt}`}
             </h2>
             {ofertas.map((o) => (
               <div key={o.id} className="card-game p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>{o.title}</h3>
-                    <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{o.company || "Empresa"} · {o.city}</p>
-                    {o.salary && (
-                      <p className="text-xs font-semibold mt-1 flex items-center gap-1" style={{ color: "#22c55e" }}><DollarSign size={11} />{o.salary}</p>
-                    )}
-                    {o.description && (
-                      <p className="text-xs mt-2 line-clamp-2" style={{ color: "#64748b" }}>{o.description.slice(0, 150)}...</p>
+                    <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{[o.company, (o.city || "").split(",")[0]].filter(Boolean).join(" · ")}</p>
+                    {sueldoValido(o.salary) && (
+                      <p className="text-xs font-semibold mt-1 flex items-center gap-1" style={{ color: "#22c55e" }}><DollarSign size={11} />{sueldoValido(o.salary)}</p>
                     )}
                   </div>
-                  <Link href={`/app/buscar?keyword=${encodeURIComponent(puestoFmt)}&location=${encodeURIComponent(ciudadFmt)}`}
+                  <Link href={`/empleo/oferta/${o.id}`}
                     className="shrink-0 px-4 py-2 rounded-xl text-xs font-semibold transition hover:opacity-80"
                     style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}>
-                    Buscar ahora
+                    Ver oferta
                   </Link>
                 </div>
               </div>
             ))}
             <div className="text-center py-4">
-              <Link href={`/app/buscar?keyword=${encodeURIComponent(puestoFmt)}&location=${encodeURIComponent(ciudadFmt)}`}
+              <Link href={`/auth/registro?desde=${encodeURIComponent(`empleo/${puesto}/${ciudad}`)}`}
                 className="btn-game-outline">
-                Ver todas las ofertas →
+                Crear cuenta y ver todas →
               </Link>
             </div>
           </div>
@@ -250,11 +169,11 @@ export default async function EmpleoPage({
             <Search size={40} className="mx-auto mb-3" style={{ color: "#64748b" }} />
             <p className="font-semibold" style={{ color: "#f1f5f9" }}>No hay ofertas en este momento</p>
             <p className="text-sm mt-1" style={{ color: "#64748b" }}>
-              Prueba con términos similares o deja que Guzzi busque por ti
+              Crea tu cuenta gratis y te avisamos cuando salga una de {puestoFmt} en {ciudadFmt}.
             </p>
-            <Link href={`/app/buscar?keyword=${encodeURIComponent(puestoFmt)}&location=${encodeURIComponent(ciudadFmt)}`}
+            <Link href={`/auth/registro?desde=${encodeURIComponent(`empleo/${puesto}/${ciudad}`)}`}
               className="btn-game inline-block mt-4">
-              Buscar con Guzzi
+              Crear cuenta gratis
             </Link>
           </div>
         )}
@@ -309,7 +228,9 @@ export default async function EmpleoPage({
               "name": `¿Dónde encontrar trabajo de ${puestoFmt} en ${ciudadFmt}?`,
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": `En BuscayCurra encontrarás miles de ofertas de ${puestoFmt} en ${ciudadFmt}. Nuestro asistente Guzzi puede enviar tu CV automáticamente a las empresas.`
+                "text": total && !soloDeLaCiudad
+                  ? `En BuscayCurra hay ahora mismo ${total} ofertas de ${puestoFmt} en ${ciudadFmt}. Guzzi, el asistente con IA, te ayuda a enviar tu CV a las empresas.`
+                  : `En BuscayCurra se publican cada día ofertas de ${puestoFmt} en ${ciudadFmt}. Guzzi, el asistente con IA, te ayuda a enviar tu CV a las empresas.`
               }
             }
           ]

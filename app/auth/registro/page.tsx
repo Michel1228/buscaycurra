@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { NUM_PAISES } from "@/lib/paises";
 import Image from "next/image";
 import { Globe, Target, Clock, CheckCircle2 } from "lucide-react";
+import { palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
 
 function RegistroPageInner() {
   const searchParams = useSearchParams();
@@ -14,6 +15,21 @@ function RegistroPageInner() {
     const raw = searchParams.get("ref");
     return raw ? raw.trim().toUpperCase() : null;
   }, [searchParams]);
+
+  // VIENE DE UNA OFERTA (18 oct 2026). De Google llegan unas 80 personas al
+  // día a fichas de oferta y se registraban 2 o 3: el registro no decía para
+  // qué era y, al confirmar el correo, te dejaba en la portada sin la oferta.
+  // Ahora se dice a quién va el CV, se rellenan ciudad y oficio, y el destino
+  // se guarda en la cuenta (sirve aunque el correo se abra en otro navegador).
+  const ofertaId = useMemo(() => {
+    const v = searchParams.get("oferta");
+    return v && /^[a-z0-9]{8,40}$/i.test(v) ? v : null;
+  }, [searchParams]);
+  const desde = useMemo(() => {
+    const v = searchParams.get("desde");
+    return v && /^[a-z0-9/-]{1,80}$/i.test(v) ? v : null;
+  }, [searchParams]);
+  const [oferta, setOferta] = useState<{ titulo: string; empresa: string | null; ciudad: string | null } | null>(null);
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -41,6 +57,20 @@ function RegistroPageInner() {
     setReenvio(rErr ? "error" : "hecho");
   };
 
+  useEffect(() => {
+    if (!ofertaId) return;
+    fetch(`/api/ofertas/resumen?id=${encodeURIComponent(ofertaId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((o: { titulo: string; empresa: string | null; ciudad: string | null } | null) => {
+        if (!o?.titulo) return;
+        setOferta(o);
+        if (o.ciudad) setCiudad((c) => c || o.ciudad || "");
+        const oficioOferta = palabraPrincipal(o.titulo);
+        if (oficioOferta) setOficio((v) => v || oficioOferta);
+      })
+      .catch(() => { /* sin resumen, el registro sigue igual */ });
+  }, [ofertaId]);
+
   const validar = (): string => {
     if (!nombre.trim()) return "El nombre es obligatorio.";
     if (contrasena.length < 8) return "Mínimo 8 caracteres.";
@@ -66,6 +96,8 @@ function RegistroPageInner() {
             full_name: nombre.trim(), ciudad: ciudad.trim(),
             ...(oficio.trim() ? { oficio: oficio.trim().slice(0, 80) } : {}),
             ...(referralCode ? { ref: referralCode } : {}),
+            // A dónde volver al confirmar, y de dónde vino (para medir).
+            ...(ofertaId ? { destino: `/app/ofertas/${ofertaId}`, origen: `oferta:${ofertaId}` } : desde ? { origen: `desde:${desde}` } : {}),
           },
           emailRedirectTo: `${siteUrl}/auth/callback`,
         },
@@ -114,7 +146,7 @@ function RegistroPageInner() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#0f1117" }}>
       {/* Panel marketing — arriba en móvil, izquierda en desktop */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden"
+      <div className={`w-full lg:w-1/2 ${ofertaId || desde ? "hidden lg:flex" : "flex"} flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden`}
         style={{ background: "linear-gradient(135deg, #0a1f0e 0%, #0f1117 60%, #111827 100%)" }}>
         <div className="absolute inset-0 pointer-events-none">
           <div style={{
@@ -166,9 +198,22 @@ function RegistroPageInner() {
         style={{ background: "#0f1117" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Crea tu cuenta</h1>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>Empieza a buscar trabajo con Guzzi</p>
+            <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>{ofertaId ? "Un paso y mandas tu CV" : "Crea tu cuenta"}</h1>
+            <p className="text-xs mt-1" style={{ color: "#64748b" }}>{ofertaId ? "Gratis. Se tarda un minuto." : "Empieza a buscar trabajo con Guzzi"}</p>
           </div>
+
+          {oferta && !registrado && (
+            <div className="rounded-xl p-4 mb-4" style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.25)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#22c55e" }}>Vas a enviar tu CV a</p>
+              <p className="text-sm font-bold mt-1" style={{ color: "#f1f5f9" }}>{oferta.empresa || oferta.titulo}</p>
+              <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
+                {[oferta.empresa ? oferta.titulo : null, oferta.ciudad].filter(Boolean).join(" · ")}
+              </p>
+              <p className="text-xs mt-2" style={{ color: "#94a3b8" }}>
+                Crea tu cuenta y te llevamos a la oferta con la carta preparada por Guzzi.
+              </p>
+            </div>
+          )}
 
           <div className="card-game p-6">
             {registrado ? (
@@ -176,7 +221,8 @@ function RegistroPageInner() {
                 <CheckCircle2 size={48} className="mx-auto mb-3" style={{ color: "#22c55e" }} />
                 <h2 className="text-base font-bold mb-2" style={{ color: "#22c55e" }}>¡Cuenta creada!</h2>
                 <p className="text-xs mb-5" style={{ color: "#94a3b8" }}>
-                  Hemos enviado un email a <strong style={{ color: "#f1f5f9" }}>{email}</strong>. Confírmalo para empezar.
+                  Último paso: abre el correo que te hemos mandado a <strong style={{ color: "#f1f5f9" }}>{email}</strong> y pulsa el enlace.
+                  {oferta ? ` Te llevará directo a la oferta${oferta.empresa ? ` de ${oferta.empresa}` : ""} para mandar tu CV.` : " Te llevará directo a tu cuenta."}
                 </p>
                 <Link href="/auth/login" className="btn-game inline-block text-xs">Ir al login</Link>
 

@@ -11,6 +11,10 @@ import { NUM_PAISES } from "@/lib/paises";
 import { RefreshCw } from "lucide-react";
 
 export const metadata: Metadata = {
+  // Banner de Apple en Safari del iPhone: "BuscayCurra — Abrir en la App
+  // Store" (18 oct 2026). Llegan ~80 visitas al día desde Google y casi
+  // ninguna se convertía en descarga; es el aviso nativo, sin ventanas.
+  itunes: { appId: "6775232067" },
   // El titulo lleva las dos formas de la marca: mucha gente la busca separada
   // ("busca y curra") y sin esa variante Google no relaciona las dos consultas.
   title: `BuscayCurra (Busca y Curra) — Agente IA que busca trabajo por ti`,

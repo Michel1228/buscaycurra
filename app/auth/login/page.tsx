@@ -66,7 +66,13 @@ function LoginPageInner() {
       // Fuera de /app/ solo se admite la página de candidatos (exacta): una
       // ruta libre aquí permitiría redirigir a cualquier sitio.
       const valido = destino && (destino.startsWith("/app/") || destino === "/empresas/candidatos");
-      router.push(valido ? destino : "/app/bienvenida");
+      // Quien se registró desde una oferta y confirmó el correo en otro
+      // navegador entra aquí sin ?redirect=: se le lleva a esa oferta la
+      // primera semana (el registro guarda el destino en la cuenta).
+      const deLaOferta = entrada.user?.user_metadata?.destino;
+      const reciente = entrada.user?.created_at && Date.now() - new Date(entrada.user.created_at).getTime() < 7 * 86400000;
+      const aLaOferta = reciente && typeof deLaOferta === "string" && /^\/app\/ofertas\/[a-z0-9]{8,40}$/i.test(deLaOferta) ? deLaOferta : null;
+      router.push(valido ? destino : aLaOferta || "/app/bienvenida");
     } catch {
       setError("Error inesperado. Inténtalo de nuevo.");
     } finally {

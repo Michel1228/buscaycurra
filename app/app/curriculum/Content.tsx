@@ -70,6 +70,13 @@ interface CVListItem {
 
 export default function CurriculumPage() {
   const router = useRouter();
+  // Si viene de una oferta ("Crear CV primero"), se le ofrece volver a ella
+  // para mandar el CV. Antes, al hacer el CV, la oferta se perdía (18 oct 2026).
+  const [volver, setVolver] = useState<string | null>(null);
+  useEffect(() => {
+    const v = new URLSearchParams(window.location.search).get("volver");
+    if (v && /^\/app\/ofertas\/[a-z0-9]{8,40}$/i.test(v)) setVolver(v);
+  }, []);
   const [userId, setUserId] = useState<string | null>(null);
   const [token, setToken] = useState("");
   const [form, setForm] = useState<CVForm>(emptyForm);
@@ -810,6 +817,13 @@ export default function CurriculumPage() {
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117", overflowX: "hidden" }}>
+      {volver && (
+        <div className="mx-3 mt-3 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+          style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
+          <p className="text-sm" style={{ color: "#f1f5f9" }}>Rellena tu CV y vuelve a la oferta para mandarlo. Se guarda solo.</p>
+          <Link href={volver} className="btn-game text-xs px-4 py-2">Volver a la oferta →</Link>
+        </div>
+      )}
       {/* Header */}
       {/* Mismo acabado suave que el resto: fondo tenido, borde sutil y esquinas
           redondeadas, en vez del bloque de verde macizo que habia antes. */}

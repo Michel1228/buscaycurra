@@ -930,6 +930,7 @@ test("las ofertas recomendadas salen del CV, no de lo último publicado", async 
     if ((m.puestosDelCv?.(camarero) || []).length !== 1) fallos.push("el mismo puesto sale repetido");
     if (!/de\\s\+pisos/.test(m.exclusionesDelCv?.(camarero, m.patronesDelCv(camarero)) || "")) fallos.push("a un camarero de bar le recomienda camarera de pisos");
     if (m.exclusionesDelCv?.({ subtitulo: "Camarera de pisos" }, ["camar"]) !== null) fallos.push("a una camarera de pisos le quita lo suyo");
+    if (m.palabraPrincipal?.("DEPENDIENTES/AS T. PARCIAL GIJON") !== "dependiente") fallos.push(`oficio del título: ${m.palabraPrincipal?.("DEPENDIENTES/AS T. PARCIAL GIJON")}`);
   } catch (e) {
     fallos.push(`no se pudo probar: ${e.message?.slice(0, 80)}`);
   } finally {
@@ -986,6 +987,33 @@ test("el buscador recomienda ofertas según el CV y sin CV pide rellenarlo", () 
   return ruta.includes('if (!patronesDelCv(cv).length) return NextResponse.json({ estado: "sin-cv"') && ruta.includes("ofertasParaTi(cv, perfil?.ciudad, 6)")
     && buscar.includes('fetch("/api/ofertas/para-ti"') && buscar.includes('paraTi?.estado === "sin-cv"') && buscar.includes("Ofertas según tu CV")
     && portada.includes("estadoRecomendadas") && portada.includes('estadoRecomendadas === "sin-cv"');
+});
+// MUCHAS VISITAS, POCOS REGISTROS (18 oct 2026): de Google llegan unas 80
+// personas al día, casi todas a una ficha de oferta, y se registraban 2 o 3.
+// La ficha mandaba al registro sin la oferta, "Buscar similares" pedía entrar,
+// y /empleo/[puesto]/[ciudad] decía "0 ofertas" (también camarero en Madrid).
+test("de la ficha de oferta al registro y de vuelta a la oferta, sin perderla", () => {
+  const ficha = leerFuente("app/empleo/oferta/[id]/page.tsx");
+  const landing = leerFuente("app/empleo/[puesto]/[ciudad]/page.tsx");
+  const registro = leerFuente("app/auth/registro/page.tsx");
+  const checks = {
+    "la ficha manda al registro con la oferta": ficha.includes("/auth/registro?oferta=${encodeURIComponent(row.id)}") && ficha.includes("Envía tu CV a {empresa ??"),
+    "la ficha enseña más ofertas de lo mismo en su ciudad": ficha.includes("ofertasParecidas(") && !ficha.includes("Buscar similares en BuscayCurra"),
+    "la ficha no enseña 'Ver en oferta' como sueldo": ficha.includes("sueldoDe(row.salary)"),
+    "las páginas de puesto y ciudad no se generan al compilar ni buscan en la descripción":
+      !landing.includes("generateStaticParams") && !landing.includes("description ILIKE") && landing.includes("ofertasParecidas("),
+    "la ciudad se busca sin tildes y con el índice": leerFuente("lib/job-search/ofertas-parecidas.ts").includes("translate(city, 'áéíóúñüÁÉÍÓÚÑÜàèìòùÀÈÌÒÙ', 'aeiounuAEIOUNUaeiouAEIOU')`")
+      && leerFuente("lib/job-search/ofertas-parecidas.ts").includes("${CIUDAD_SIN_TILDES} ILIKE $1"),
+    "el registro guarda a qué oferta volver": registro.includes("destino: `/app/ofertas/${ofertaId}`") && registro.includes("/api/ofertas/resumen?id="),
+    "al confirmar el correo se vuelve a la oferta": leerFuente("app/auth/callback/page.tsx").includes("sesion?.user?.user_metadata?.destino"),
+    "al entrar sin redirect se vuelve a la oferta": leerFuente("app/auth/login/page.tsx").includes("entrada.user?.user_metadata?.destino"),
+    "con sesión, el registro de una oferta lleva a la oferta": leerFuente("middleware.ts").includes("NextResponse.redirect(new URL(`/app/ofertas/${oferta}`"),
+    "hacer el CV no pierde la oferta": leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx").includes("/app/curriculum?volver=") && leerFuente("app/app/curriculum/Content.tsx").includes("Volver a la oferta"),
+    "banner de la App Store en Safari": leerFuente("app/layout.tsx").includes('itunes: { appId: "6775232067" }'),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
 });
 // /empresas enseñaba la página de enviar CV en producción: compilando en una
 // carpeta llamada /app, Next.js confundía app/empresas con app/app/empresas
@@ -1635,16 +1663,18 @@ for (const pantalla of [
       .test(leerFuente(pantalla)));
 }
 
-// LAS PAGINAS DE EMPLEO POR CIUDAD. Tardaban 8,5 s la primera vez que alguien
-// pedia una combinacion. Medido con EXPLAIN ANALYZE, la base de datos eran solo
-// 2 s: el resto era Next.js montando la pagina en un servidor con el 85% de la
-// CPU robada. Se pre-generan las 80 combinaciones que traen visitas, para que
-// ese coste lo pague la compilacion y no el usuario.
+// LAS PAGINAS DE EMPLEO POR CIUDAD. Se pre-generaban 80 al compilar para que
+// la primera visita no tardase, pero en la compilacion no hay base de datos:
+// salian con "0 ofertas" y se servian asi (18 oct 2026, "camarero en Madrid,
+// 0 ofertas" con 232 abiertas). Ahora se generan al pedirlas, con una sola
+// consulta rapida (ciudad primero, sin tildes; el puesto en el titulo) que
+// cuenta y lista a la vez, y se guardan en Redis.
 const empleoSrc = leerFuente("app/empleo/[puesto]/[ciudad]/page.tsx");
-test("las combinaciones populares de empleo se pre-generan", () =>
-  empleoSrc.includes("PUESTOS_POPULARES.slice") && !/generateStaticParams\(\) \{\s*return \[\];/.test(empleoSrc));
-test("las consultas de empleo van en paralelo, no en fila", () =>
-  (empleoSrc.match(/await Promise\.all\(\[/g) || []).length >= 2);
+test("las paginas de empleo no se pre-generan sin base de datos", () =>
+  !empleoSrc.includes("generateStaticParams") && empleoSrc.includes("export const dynamicParams = true"));
+test("las paginas de empleo cuentan y listan en una sola consulta rapida", () =>
+  empleoSrc.includes("ofertasParecidas(") && !empleoSrc.includes("description ILIKE")
+    && /SELECT count\(\*\) FROM zona\)::int AS en_ciudad/.test(leerFuente("lib/job-search/ofertas-parecidas.ts")));
 test("las paginas de empleo no se cachean para siempre", () =>
   empleoSrc.includes("export const revalidate"));
 

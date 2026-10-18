@@ -94,6 +94,19 @@ export function raiz(palabra: string): string {
   return r;
 }
 
+/**
+ * La palabra que dice el oficio, en singular, para enlaces y títulos:
+ * "DEPENDIENTES/AS T. PARCIAL GIJON" → "dependiente", "Encargado de Almacén" → "almacen".
+ */
+export function palabraPrincipal(texto: string): string | null {
+  for (const p of trozos(texto)) {
+    const palabras = norm(p).split(/[^a-z]+/).filter((w) => w.length >= 3 && !VACIAS.has(w));
+    const w = palabras.find((x) => !GENERICAS.has(x)) ?? palabras[0];
+    if (w) return w.replace(/ores$/, "or").replace(/([aeiou])s$/, "$1");
+  }
+  return null;
+}
+
 /** Las raíces que se buscan en los títulos de las ofertas (como mucho `max`). */
 export function patronesDelCv(cv: unknown, max = 6): string[] {
   const salida: string[] = [];
