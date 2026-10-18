@@ -12,6 +12,7 @@ import { AlertCircle, ArrowLeft, BadgeCheck, Clock, Euro, Globe, RefreshCw, Spar
 import PrepararSolicitud from "@/components/PrepararSolicitud";
 import AvisoCurso from "@/components/cursos/AvisoCurso";
 import PlazasCurso from "@/components/cursos/PlazasCurso";
+import { CasillasRenovacion } from "@/components/cursos/Renovacion";
 import { BUSQUEDA_COURSERA, enlaceSalida, urlBusquedaCoursera } from "@/lib/cursos/afiliados";
 import { etiquetaPlazas } from "@/lib/cursos/plazas/emparejar";
 import {
@@ -152,13 +153,23 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
           etiqueta="Cuánto dura"
           valor={duracionResumida(t)}
         />
-        {t.validezAnios && (
+        {t.renovacion ? (
+          // Lleva al bloque de renovación: quien ya tiene el carné viene a esto.
+          <a href="#renovacion" className="hover:opacity-90" style={{ textDecoration: "none" }}>
+            <Dato
+              icono={<RefreshCw size={12} strokeWidth={1.9} />}
+              etiqueta="Se renueva"
+              valor={t.renovacion.cada}
+              destacado
+            />
+          </a>
+        ) : t.validezAnios ? (
           <Dato
             icono={<RefreshCw size={12} strokeWidth={1.9} />}
             etiqueta="Se renueva"
             valor={`Cada ${t.validezAnios} años`}
           />
-        )}
+        ) : null}
       </div>
 
       <p className="text-xs mb-2 -mt-4" style={{ color: "#64748b" }}>
@@ -270,7 +281,13 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
         </ol>
       </Seccion>
 
-      {t.notaValidez && (
+      {/* ── Para quien ya lo tiene ── */}
+      {t.renovacion ? (
+        <section id="renovacion" className="mb-8 scroll-mt-20">
+          <h2 className="text-base font-bold mb-3" style={{ color: "#f1f5f9" }}>Si ya lo tienes: cómo se renueva</h2>
+          <CasillasRenovacion r={t.renovacion} />
+        </section>
+      ) : t.notaValidez && (
         <div
           className="rounded-xl p-4 mb-8 flex gap-2.5"
           style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)" }}

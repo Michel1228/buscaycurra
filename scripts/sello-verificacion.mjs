@@ -3967,6 +3967,47 @@ test("Guzzi: «¿cuántas ofertas tenemos en Suiza?» no se convierte en un pues
   }
 });
 
+// RENOVACIONES (18 oct 2026): quien ya tiene el carné quiere saber cada cuánto
+// caduca y qué hacer. Solo con el plazo confirmado en una fuente, y la TIP del
+// vigilante decía "no caduca" cuando vale 10 años (Orden INT/318/2011, art. 14.2).
+test("renovación de carnés: plazos con fuente, en la ficha y con página propia", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-renovar-entrada.ts", salida = ".sello-renovar.cjs";
+  try {
+    writeFileSync(entrada, 'export { tiposConRenovacion, tipoPorSlug } from "./lib/cursos/tipos";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const conRenovacion = m.tiposConRenovacion("ES").map(t => t.slug);
+    const vigilante = m.tipoPorSlug("vigilante-seguridad");
+    const ficha = leerFuente("components/cursos/DetalleCurso.tsx");
+    const pagina = leerFuente("app/cursos/[tipo]/renovar/page.tsx");
+    const mapa = leerFuente("app/sitemap.ts");
+    const checks = {
+      "los seis carnés confirmados tienen renovación": ["carretillero", "plataforma-elevadora", "tpc-construccion", "cap-conductor-profesional", "vigilante-seguridad", "soldadura"].every(s => conRenovacion.includes(s)),
+      "sin plazo confirmado no se inventa": !conRenovacion.includes("gases-fluorados") && !conRenovacion.includes("manipulador-alimentos"),
+      "cada renovación lleva casillas y fuente": m.tiposConRenovacion("ES").every(t => t.renovacion.cada && t.renovacion.casillas.length > 0
+        && t.renovacion.fuentes.length > 0 && t.renovacion.fuentes.every(f => f.url.startsWith("https://"))),
+      "la TIP caduca a los 10 años": vigilante?.validezAnios === 10 && !/no caduca/i.test(JSON.stringify(vigilante)),
+      "la TPC caduca a los 5 años": m.tipoPorSlug("tpc-construccion")?.validezAnios === 5,
+      "la ficha lleva al bloque de renovación": ficha.includes('href="#renovacion"') && ficha.includes('id="renovacion"') && ficha.includes("<CasillasRenovacion r={t.renovacion} />"),
+      "página pública por carné, 404 si no hay dato": pagina.includes('tiposConRenovacion("ES").map(t => ({ tipo: t.slug }))') && pagina.includes("if (!t?.renovacion) notFound();"),
+      "índice público y en la app": leerFuente("app/cursos/renovar/page.tsx").includes('<ListaRenovaciones base="/cursos" />')
+        && leerFuente("app/app/formacion/renovar/page.tsx").includes('<ListaRenovaciones base="/app/formacion" />'),
+      "el listado de cursos enlaza a renovaciones": leerFuente("components/cursos/ListaCursos.tsx").includes("href={`${base}/renovar`}"),
+      "en el sitemap": mapa.includes("...paginasRenovar,") && mapa.includes("/cursos/renovar`"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

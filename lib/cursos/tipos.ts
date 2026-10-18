@@ -50,6 +50,23 @@ export interface OpcionGratuita {
   certificado: boolean;
 }
 
+/**
+ * Cómo se renueva un carné que ya tienes. Va en casillas cortas, una idea en
+ * cada una, porque se busca con prisa: con el carné a punto de caducar y una
+ * empresa pidiéndolo en vigor. Cada casilla sale de `fuentes`.
+ */
+export interface Renovacion {
+  /** Lo que se renueva, si no es el título de la ficha (en soldadura, la homologación). */
+  que?: string;
+  /** Lo que se lee de un vistazo: "Cada 5 años". */
+  cada: string;
+  /** Qué hacer, cuándo, qué pasa si caduca… Una o dos frases por casilla. */
+  casillas: { titulo: string; texto: string }[];
+  /** Dónde se tramita, si hay un sitio oficial al que mandar a la gente. */
+  donde?: { nombre: string; url: string };
+  fuentes: Fuente[];
+}
+
 export interface TipoCurso {
   slug: string;
   pais: string;
@@ -68,6 +85,12 @@ export interface TipoCurso {
   /** Años hasta tener que renovarlo, si aplica. */
   validezAnios?: number;
   notaValidez?: string;
+  /**
+   * Para quien ya lo tiene. Solo se rellena con la renovación confirmada en
+   * una fuente: si un título no caduca, o no hay dato fiable, se queda sin
+   * esto antes que publicar un plazo inventado.
+   */
+  renovacion?: Renovacion;
   /**
    * Si este título se puede sacar acreditando la experiencia en vez de
    * estudiándolo (procedimiento PEAC). Solo vale para lo que está en el
@@ -233,8 +256,18 @@ export const TIPOS_CURSO: TipoCurso[] = [
     duracionHoras: { min: 12, max: 20 },
     precio: { min: 0, max: 300, moneda: "EUR", nota: "Gratis por tu servicio de empleo autonómico. En academias privadas, entre 150 y 300 € según categoría de máquina." },
     validezAnios: 5,
-    notaValidez:
-      "La UNE 58451 recomienda reciclarlo cada 5 años. No es un plazo legal fijo, pero es el criterio que siguen las empresas y las auditorías.",
+    renovacion: {
+      cada: "Cada 5 años",
+      casillas: [
+        { titulo: "Qué hay que hacer", texto: "Un curso de reciclaje en un centro que vuelva a certificarte según la UNE 58451." },
+        { titulo: "Ojo", texto: "El plazo de 5 años lo marca la norma UNE 58451, no una ley. Pero es el que siguen las empresas y las auditorías." },
+        { titulo: "Si estás trabajando", texto: "Es formación de prevención de tu puesto: la empresa tiene que dártela sin coste para ti y, siempre que se pueda, dentro de la jornada." },
+      ],
+      fuentes: [
+        { titulo: "FEMPA: la UNE 58451 fija una caducidad de cinco años", url: "https://fempa.es/?p=9422" },
+        { titulo: "Ley 31/1995 de Prevención de Riesgos Laborales (art. 19)", url: "https://www.boe.es/buscar/act.php?id=BOE-A-1995-24292" },
+      ],
+    },
     puestos: ["carretillero", "mozo de almacén", "operario de logística", "preparador de pedidos", "operario de fábrica"],
     opcionesGratuitas: [
       SEPE_PRESENCIAL,
@@ -264,7 +297,7 @@ export const TIPOS_CURSO: TipoCurso[] = [
       { titulo: "Real Decreto 1215/1997 sobre equipos de trabajo", url: "https://www.boe.es/buscar/act.php?id=BOE-A-1997-17824" },
       { titulo: "Buscador de cursos de Lanbide", url: "https://web.lanbide.eus/apps/FR_BUSQUEDA_CURSOS?LG=C&ML=FORMEN1" },
     ],
-    actualizado: "2026-08",
+    actualizado: "2026-10",
   },
 
   {
@@ -283,7 +316,19 @@ export const TIPOS_CURSO: TipoCurso[] = [
     duracionHoras: { min: 8, max: 20 },
     precio: { min: 0, max: 300, moneda: "EUR", nota: "Gratis por servicio autonómico; en privado, en una horquilla parecida a la del carretillero." },
     validezAnios: 5,
-    notaValidez: "Mismo criterio que el carretillero: reciclaje recomendado a los 5 años.",
+    renovacion: {
+      cada: "Cada 5 años",
+      casillas: [
+        { titulo: "Con la tarjeta PAL de IPAF", texto: "Vale cinco años. Para renovarla vuelves a hacer el curso y la prueba teórica y práctica en un centro de IPAF." },
+        { titulo: "Con otro certificado", texto: "Mira la fecha de validez que pone y pregunta al centro que te lo dio." },
+        { titulo: "Si estás trabajando", texto: "Es formación de prevención de tu puesto: la empresa tiene que dártela sin coste para ti y, siempre que se pueda, dentro de la jornada." },
+      ],
+      donde: { nombre: "Centros de formación de IPAF", url: "https://www.ipaf.org/training" },
+      fuentes: [
+        { titulo: "IPAF: el carné PAL (validez de cinco años)", url: "https://www.ipaf.org/sites/default/files/2021-12/PAL%20Card%20leaflet%20%28MA-929-1121-4-es%29%20-%20WEB%20%281%29.pdf" },
+        { titulo: "Ley 31/1995 de Prevención de Riesgos Laborales (art. 19)", url: "https://www.boe.es/buscar/act.php?id=BOE-A-1995-24292" },
+      ],
+    },
     puestos: ["operario de mantenimiento", "montador", "electricista industrial", "mozo de almacén", "operario de obra"],
     opcionesGratuitas: [SEPE_PRESENCIAL],
     comoSacarlo: [
@@ -295,7 +340,7 @@ export const TIPOS_CURSO: TipoCurso[] = [
       { titulo: "Norma UNE 58923 (AENOR)", url: "https://www.une.org/encuentra-tu-norma/busca-tu-norma/norma?c=N0052623" },
       { titulo: "Real Decreto 1215/1997 sobre equipos de trabajo", url: "https://www.boe.es/buscar/act.php?id=BOE-A-1997-17824" },
     ],
-    actualizado: "2026-08",
+    actualizado: "2026-10",
   },
 
   {
@@ -354,7 +399,19 @@ export const TIPOS_CURSO: TipoCurso[] = [
     normativa: "Convenio General del Sector de la Construcción",
     duracionHoras: { min: 20, max: 60 },
     precio: { min: 0, max: 250, moneda: "EUR", nota: "La formación suele darla gratis la Fundación Laboral de la Construcción a trabajadores del sector." },
-    notaValidez: "La tarjeta se renueva de forma periódica. Consulta el plazo vigente en la Fundación Laboral.",
+    validezAnios: 5,
+    renovacion: {
+      cada: "Cada 5 años",
+      casillas: [
+        { titulo: "Qué te piden", texto: "Haber estado de alta al menos 30 días en empresas de la construcción en los 60 meses anteriores a pedirla." },
+        { titulo: "Cómo se pide", texto: "En la Fundación Laboral, con el mismo trámite que la primera vez." },
+        { titulo: "Los papeles", texto: "Foto, DNI o tarjeta de residencia, informe de vida laboral sacado en los últimos 90 días y un certificado de empresa, nóminas o contrato." },
+      ],
+      donde: { nombre: "Fundación Laboral de la Construcción", url: "https://www.fundacionlaboral.org/" },
+      fuentes: [
+        { titulo: "VII Convenio general del sector de la construcción (arts. 159 y 161)", url: "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2023-19903" },
+      ],
+    },
     puestos: ["peón de obra", "albañil", "encofrador", "ferrallista", "electricista de obra", "fontanero", "pintor"],
     opcionesGratuitas: [
       {
@@ -384,7 +441,7 @@ export const TIPOS_CURSO: TipoCurso[] = [
       { titulo: "Fundación Laboral de la Construcción — TPC", url: "https://www.fundacionlaboral.org/" },
       { titulo: "Ley 31/1995 de Prevención de Riesgos Laborales", url: "https://www.boe.es/buscar/act.php?id=BOE-A-1995-24292" },
     ],
-    actualizado: "2026-08",
+    actualizado: "2026-10",
   },
 
   // ─── Salud y cuidados ─────────────────────────────────────────────────────
@@ -645,8 +702,18 @@ export const TIPOS_CURSO: TipoCurso[] = [
       nota: "Hay cursos subvencionados gratis, sobre todo del CAP continuo de 35 h. En autoescuela, ejemplos encontrados el 8 de octubre de 2026: 950 € el inicial de 140 h y entre 150 y 300 € el continuo de 35 h. Cambia mucho de una autoescuela a otra: pide presupuesto.",
     },
     validezAnios: 5,
-    notaValidez:
-      "La tarjeta de cualificación vale cinco años. Para renovarla hay que hacer el curso de formación continua de 35 horas; si se hace dentro de los doce meses antes de que caduque, los cinco años nuevos empiezan a contar desde la fecha de caducidad.",
+    renovacion: {
+      cada: "Cada 5 años",
+      casillas: [
+        { titulo: "Qué hay que hacer", texto: "Un curso de formación continua de 35 horas en un centro autorizado." },
+        { titulo: "Cuándo hacerlo", texto: "En los 12 meses antes de que caduque la tarjeta. Si lo haces antes, los 5 años nuevos cuentan desde el día en que lo superas." },
+        { titulo: "Si ya se te caducó", texto: "Antes de volver a conducir por trabajo tienes que hacer ese mismo curso de 35 horas." },
+        { titulo: "Ojo", texto: "Poner a conducir a alguien sin la tarjeta en vigor es una infracción para la empresa: por eso te la piden al día." },
+      ],
+      fuentes: [
+        { titulo: "Real Decreto 284/2021 (arts. 7 y 20, y disposición final primera)", url: "https://www.boe.es/buscar/act.php?id=BOE-A-2021-6624" },
+      ],
+    },
     puestos: ["conductor de camión", "camionero", "conductor de autobús", "chófer de autobús", "conductor profesional", "conductor de tráiler"],
     opcionesGratuitas: [SEPE_PRESENCIAL],
     comoSacarlo: [
@@ -713,8 +780,22 @@ export const TIPOS_CURSO: TipoCurso[] = [
       min: 0, max: 750, moneda: "EUR",
       nota: "Hay cursos gratis para personas en paro. En academia, ejemplos encontrados el 8 de octubre de 2026: 750 € (700 al contado) un curso de 180 h en Barcelona. Aparte va la tasa del examen.",
     },
-    notaValidez:
-      "La TIP no caduca, pero mientras trabajes tienes que hacer al menos 20 horas de formación de actualización cada año en un centro autorizado.",
+    // La TIP SÍ caduca: 10 años desde que se expide (Orden INT/318/2011, art.
+    // 14.2). Aquí ponía "no caduca" hasta el 18 oct 2026.
+    validezAnios: 10,
+    renovacion: {
+      cada: "Cada 10 años",
+      casillas: [
+        { titulo: "Qué hay que hacer", texto: "Pedir la renovación de la TIP en la Policía Nacional: en las unidades de seguridad privada o en una comisaría." },
+        { titulo: "Los papeles", texto: "La solicitud con la declaración jurada, DNI o NIE, dos fotos tamaño carné y un certificado médico de aptitud física y psíquica." },
+        { titulo: "Cada año", texto: "Mientras trabajes, al menos 20 horas de formación de actualización en un centro autorizado." },
+      ],
+      donde: { nombre: "Policía Nacional: renovación de la TIP", url: "https://sede.policia.gob.es/portalCiudadano/_es/tramites_seguridadprivada_tramite_renovacionycanje_tip.php" },
+      fuentes: [
+        { titulo: "Orden INT/318/2011 sobre personal de seguridad privada (arts. 7 y 14)", url: "https://www.boe.es/buscar/act.php?id=BOE-A-2011-3172" },
+        { titulo: "Policía Nacional: renovación y canje de la TIP", url: "https://sede.policia.gob.es/portalCiudadano/_es/tramites_seguridadprivada_tramite_renovacionycanje_tip.php" },
+      ],
+    },
     puestos: ["vigilante de seguridad", "vigilante", "escolta", "vigilante de explosivos", "personal de seguridad privada"],
     opcionesGratuitas: [SEPE_PRESENCIAL],
     comoSacarlo: [
@@ -754,6 +835,19 @@ export const TIPOS_CURSO: TipoCurso[] = [
       nota: "Gratis en los servicios de empleo, que la programan mucho. En academia, ejemplo encontrado el 8 de octubre de 2026: 650 € un curso presencial de MIG-MAG en Madrid.",
     },
     acreditablePorExperiencia: true,
+    // Lo que se renueva es la homologación (UNE-EN ISO 9606-1), no el curso.
+    renovacion: {
+      que: "Homologación de soldador",
+      cada: "Cada 2 o 3 años",
+      casillas: [
+        { titulo: "Cada 6 meses", texto: "El responsable de soldadura de tu empresa firma que has seguido soldando en lo que cubre tu homologación." },
+        { titulo: "Cada 2 o 3 años", texto: "Según lo que diga tu certificado: una prueba nueva cada 3 años, o cada 2 años ensayar dos soldaduras tuyas de los últimos 6 meses." },
+        { titulo: "Si dejas de soldar", texto: "Más de 6 meses sin soldar y la homologación se retira: toca examinarse otra vez." },
+      ],
+      fuentes: [
+        { titulo: "Applus: guía de certificación de soldadores según UNE-EN ISO 9606-1 (apartados 6.2.2, 6.3 y 6.5)", url: "https://www.applus.com/dam/Energy-and-Industry/GLOBAL/Energy-and-Industry-PDFs/PDF-E-I-services-and-categories/Spanish-Services-PDF/Gu%C3%ADa-para-el-cliente-de-certificaci%C3%B3n-de-soldadores.pdf.pdf" },
+      ],
+    },
     puestos: ["soldador", "calderero", "montador", "tubero", "operario del metal"],
     opcionesGratuitas: [SEPE_PRESENCIAL],
     comoSacarlo: [
@@ -776,6 +870,11 @@ export const TIPOS_CURSO: TipoCurso[] = [
 
 export function tiposPorPais(pais = "ES"): TipoCurso[] {
   return TIPOS_CURSO.filter(t => t.pais === pais);
+}
+
+/** Los carnés que caducan y tienen la renovación confirmada en una fuente. */
+export function tiposConRenovacion(pais = "ES"): TipoCurso[] {
+  return TIPOS_CURSO.filter(t => t.pais === pais && t.renovacion);
 }
 
 export function tipoPorSlug(slug: string, pais = "ES"): TipoCurso | undefined {

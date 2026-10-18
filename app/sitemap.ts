@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 import { LISTA_PAISES } from "@/lib/paises";
-import { tiposPorPais } from "@/lib/cursos/tipos";
+import { tiposPorPais, tiposConRenovacion } from "@/lib/cursos/tipos";
 import { GUIAS } from "@/lib/guias/contenido";
 import { NOVEDADES } from "@/lib/novedades/contenido";
 
@@ -14,6 +14,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.8,
+  }));
+
+  // "renovar carné de carretillero", "renovar la TIP"...: lo busca gente que ya
+  // trabaja de esto. Solo las fichas con la renovación confirmada.
+  const paginasRenovar: MetadataRoute.Sitemap = tiposConRenovacion("ES").map(t => ({
+    url: `${baseUrl}/cursos/${t.slug}/renovar`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
   }));
 
   // Guías de uso: entran solas al añadir una nueva a lib/guias/contenido.ts.
@@ -49,6 +58,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Prioridad alta a propósito: "acreditar experiencia laboral" lo busca
     // mucha gente y no hay ningún portal de empleo contándolo bien.
     { url: `${baseUrl}/cursos/acreditar`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    { url: `${baseUrl}/cursos/renovar`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
     // "derechos au pair" lo busca gente que aun no se ha registrado, muchas
     // veces ya en el pais de acogida y con un problema encima.
     { url: `${baseUrl}/derechos-au-pair`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
@@ -58,6 +68,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // "se pone foto en el CV en Reino Unido" lo busca muchisima gente.
     { url: `${baseUrl}/cv-por-pais`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     ...paginasCursos,
+    ...paginasRenovar,
     { url: `${baseUrl}/trabajar-en`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/empleo`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
     { url: `${baseUrl}/empresas`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },

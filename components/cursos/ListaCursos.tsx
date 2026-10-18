@@ -10,7 +10,7 @@
  * el catálogo es estático, esto no toca la base de datos ni una vez.
  */
 import Link from "next/link";
-import { BadgeCheck, CalendarDays, FolderOpen, GraduationCap } from "lucide-react";
+import { BadgeCheck, CalendarDays, FolderOpen, GraduationCap, RefreshCw } from "lucide-react";
 import {
   tiposPorPais, ordenarPorUrgencia, sectoresConCursos, tiposPorSector,
 } from "@/lib/cursos/tipos";
@@ -126,6 +126,20 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
               empleo de Euskadi, Cataluña, Castilla y León, Murcia y Navarra. Busca el tuyo y apúntate.
             </p>
           </div>
+        </Link>
+      )}
+
+      {/* Para quien ya lo tiene: una línea, no otra tarjeta grande. */}
+      {pais === "ES" && (
+        <Link
+          href={`${base}/renovar`}
+          className="rounded-xl px-4 py-3 mb-8 -mt-5 flex items-center gap-3 hover:opacity-90"
+          style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+        >
+          <RefreshCw size={16} strokeWidth={1.9} className="shrink-0" style={{ color: "#22c55e" }} />
+          <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
+            ¿Se te caduca el carné? Cada cuánto y cómo renovarlo
+          </span>
         </Link>
       )}
 
