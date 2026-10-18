@@ -1,6 +1,11 @@
 # Build stage — instala deps y compila Next.js
 FROM node:20.19.0-alpine AS builder
-WORKDIR /app
+# NO COMPILAR EN /app (17 oct 2026). Con el proyecto en una carpeta llamada
+# "app", Next.js confundía app/empresas (la página para empresas) con
+# app/app/empresas (enviar CV): /empresas salía con la página equivocada, y
+# lo mismo /admin. Comprobado con dos compilaciones iguales salvo la carpeta:
+# en /app sale mal, en /srv/web sale bien. La imagen final sigue en /app.
+WORKDIR /srv/web
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
@@ -58,17 +63,17 @@ RUN apk add --no-cache \
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 
 # Standalone Next.js output
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
+COPY --from=builder /srv/web/.next/standalone ./
+COPY --from=builder /srv/web/.next/static ./.next/static
+COPY --from=builder /srv/web/public ./public
 
 # node_modules necesarios para el worker (tsx + bullmq + ioredis + supabase)
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /srv/web/node_modules ./node_modules
 
 # Scripts del worker
-COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/lib ./lib
-COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /srv/web/scripts ./scripts
+COPY --from=builder /srv/web/lib ./lib
+COPY --from=builder /srv/web/tsconfig.json ./tsconfig.json
 
 EXPOSE 3000
 

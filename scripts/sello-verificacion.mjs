@@ -987,6 +987,14 @@ test("el buscador recomienda ofertas según el CV y sin CV pide rellenarlo", () 
     && buscar.includes('fetch("/api/ofertas/para-ti"') && buscar.includes('paraTi?.estado === "sin-cv"') && buscar.includes("Ofertas según tu CV")
     && portada.includes("estadoRecomendadas") && portada.includes('estadoRecomendadas === "sin-cv"');
 });
+// /empresas enseñaba la página de enviar CV en producción: compilando en una
+// carpeta llamada /app, Next.js confundía app/empresas con app/app/empresas
+// (comprobado el 17 oct 2026 con dos compilaciones iguales salvo la carpeta).
+test("la compilación no se hace en /app (confunde /empresas con /app/empresas)", () => {
+  const d = leerFuente("Dockerfile");
+  const builder = d.slice(d.indexOf("AS builder"), d.indexOf("AS runner"));
+  return /^WORKDIR \/srv\/web$/m.test(builder) && !/^WORKDIR \/app$/m.test(builder) && !d.includes("--from=builder /app/");
+});
 // El 17 oct 2026 el servidor estuvo 29 minutos apagado y se veía el error del
 // navegador o de la app. Ahora sale nuestra página de mantenimiento.
 test("si el servidor no contesta sale nuestra página de mantenimiento", () => {
