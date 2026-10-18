@@ -12,7 +12,7 @@
  * reciente de donde sea es justo lo que metía al profesor en la portada.
  */
 import { getPool } from "@/lib/db";
-import { patronesDelCv, regexDePatrones, patronDelTitulo } from "@/lib/job-search/puestos-del-cv";
+import { patronesDelCv, regexDePatrones, patronDelTitulo, exclusionesDelCv } from "@/lib/job-search/puestos-del-cv";
 import { provinciaEnTexto } from "@/lib/guzzi/plazas-cursos";
 import { provinciaPorCodigoPostal } from "@/lib/guzzi/siguiente-paso";
 import { nombreProvincia } from "@/lib/cursos/plazas/provincias";
@@ -36,6 +36,8 @@ export interface OfertaParaTi {
 
 export async function ofertasParaTi(cv: unknown, ciudadPerfil: string | null | undefined, cuantas = 6): Promise<OfertaParaTi[]> {
   const patrones = patronesDelCv(cv);
+  // "camarera de pisos" no es de un camarero de bar (falsos amigos).
+  const excluir = exclusionesDelCv(cv, patrones);
   const ciudadCv = cv && typeof cv === "object" && typeof (cv as { ciudad?: unknown }).ciudad === "string"
     ? (cv as { ciudad: string }).ciudad : "";
   const todo = `${ciudadPerfil || ""} ${ciudadCv}`;
@@ -69,10 +71,10 @@ export async function ofertasParaTi(cv: unknown, ciudadPerfil: string | null | u
         WHERE "isActive" AND lower(country) = 'es' AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
           AND (city ILIKE ANY($3::text[]) OR province ILIKE ANY($3::text[]))
      )
-     SELECT * FROM zona WHERE title ~* $1
+     SELECT * FROM zona WHERE title ~* $1 AND ($4::text IS NULL OR title !~* $4)
       ORDER BY en_ciudad DESC, "createdAt" DESC
       LIMIT 60`,
-    [regexDePatrones(patrones), enCiudad, enZona]
+    [regexDePatrones(patrones), enCiudad, enZona, excluir]
   );
 
   // Que no salgan seis de lo mismo: en la primera vuelta, como mucho dos por

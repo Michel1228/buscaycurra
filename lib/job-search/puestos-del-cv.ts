@@ -53,11 +53,35 @@ export function puestosDelCv(cv: unknown): string[] {
     .sort((a, b) => b.anio - a.anio || a.i - b.i)
     .map((e) => trozos(e.puesto)[0]);
   const salida: string[] = [];
+  const vistos = new Set<string>();
+  const anadir = (p: string | undefined) => {
+    // "Camarero" en el título y "Camarero" en la experiencia: una sola vez.
+    if (p && !vistos.has(norm(p))) { vistos.add(norm(p)); salida.push(p); }
+  };
   for (let i = 0; i < Math.max(titulo.length, exp.length); i++) {
-    if (titulo[i]) salida.push(titulo[i]);
-    if (exp[i]) salida.push(exp[i]);
+    anadir(titulo[i]);
+    anadir(exp[i]);
   }
   return salida;
+}
+
+/**
+ * Falsos amigos: la raíz casa con otro oficio. "camar" es camarero, pero
+ * también "camarera de pisos" (limpieza de hotel) y "cámara frigorífica"; a un
+ * camarero de bar le salían las dos (17 oct 2026). Se quitan, salvo que su CV
+ * hable de eso.
+ */
+const FALSOS_AMIGOS: Record<string, { excluir: string; salvoSiElCvDice: RegExp }> = {
+  camar: { excluir: "de\\s+pisos|\\mc[aá]maras?\\M", salvoSiElCvDice: /pisos|camaras?\b/ },
+};
+
+/** Lo que no se recomienda aunque case con la raíz (expresión para ~*), o null. */
+export function exclusionesDelCv(cv: unknown, patrones: string[]): string | null {
+  const textoCv = norm(JSON.stringify(cv ?? ""));
+  const l = patrones
+    .filter((p) => FALSOS_AMIGOS[p] && !FALSOS_AMIGOS[p].salvoSiElCvDice.test(textoCv))
+    .map((p) => FALSOS_AMIGOS[p].excluir);
+  return l.length ? l.join("|") : null;
 }
 
 /** "carretillero" → "carretill", "cocina" → "cocin", "albañilería" → "albanil". */

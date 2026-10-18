@@ -925,6 +925,11 @@ test("las ofertas recomendadas salen del CV, no de lo último publicado", async 
     }
     if (m.raiz?.("cajero") !== "cajer" || m.raiz?.("pintor") !== "pintor") fallos.push("raíces demasiado cortas (caj, pint)");
     if ((m.patronesDelCv?.({ nombre: "Ana" }) || []).length !== 0) fallos.push("sin puestos en el CV recomienda algo");
+    // A un camarero de bar le salían "Camarera/o de pisos" (limpieza de hotel).
+    const camarero = { subtitulo: "Camarero", experiencia: [{ puesto: "Camarero" }] };
+    if ((m.puestosDelCv?.(camarero) || []).length !== 1) fallos.push("el mismo puesto sale repetido");
+    if (!/de\\s\+pisos/.test(m.exclusionesDelCv?.(camarero, m.patronesDelCv(camarero)) || "")) fallos.push("a un camarero de bar le recomienda camarera de pisos");
+    if (m.exclusionesDelCv?.({ subtitulo: "Camarera de pisos" }, ["camar"]) !== null) fallos.push("a una camarera de pisos le quita lo suyo");
   } catch (e) {
     fallos.push(`no se pudo probar: ${e.message?.slice(0, 80)}`);
   } finally {
