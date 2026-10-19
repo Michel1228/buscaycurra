@@ -2,139 +2,80 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { LISTA_PAISES } from "@/lib/paises";
 import VoiceRecorder from "@/components/VoiceInterview/VoiceRecorder";
 import InterviewFeedback from "@/components/VoiceInterview/InterviewFeedback";
-import { Mic, PartyPopper, Volume2, BarChart2 } from "lucide-react";
+import { Mic, PartyPopper, Volume2, VolumeX, Square } from "lucide-react";
+import {
+  PREGUNTAS, SECTORES_ENTREVISTA, FRASES, esSector,
+  type SectorEntrevista, type IdFrase,
+} from "@/lib/entrevistas/preguntas";
+import type { PartesFeedback } from "@/lib/entrevistas/feedback";
+import { hablar, parar, type Clip } from "@/lib/entrevistas/voz";
 
-const PREGUNTAS: Record<string, string[]> = {
-  general: [
-    "Háblame de ti y de tu experiencia profesional.",
-    "¿Por qué quieres trabajar con nosotros?",
-    "¿Cuál es tu mayor fortaleza y tu mayor debilidad?",
-    "¿Dónde te ves en 5 años?",
-    "Cuéntame de un conflicto laboral que hayas resuelto.",
-    "¿Por qué dejaste tu último trabajo?",
-    "¿Qué te motiva en tu día a día laboral?",
-  ],
-  hosteleria: [
-    "¿Cómo manejas a un cliente insatisfecho con su plato?",
-    "Cuéntame de una vez que hayas trabajado bajo mucha presión en cocina o sala.",
-    "¿Qué harías si un compañero no aparece y tienes que cubrir su turno?",
-    "¿Cómo gestionas varias mesas ocupadas a la vez?",
-    "Háblame de tu experiencia con alérgenos y seguridad alimentaria.",
-  ],
-  tecnologia: [
-    "¿Cuál ha sido el proyecto más complejo en el que has trabajado?",
-    "¿Cómo te mantienes actualizado con las nuevas tecnologías?",
-    "Cuéntame de una vez que hayas tenido que aprender algo nuevo muy rápido.",
-    "¿Cómo explicas un concepto técnico a alguien no técnico?",
-    "Háblame de un bug difícil que hayas resuelto.",
-  ],
-  comercio: [
-    "¿Cómo convencerías a un cliente indeciso?",
-    "Cuéntame de una venta de la que estés especialmente orgulloso.",
-    "¿Cómo manejas los objetivos mensuales de ventas?",
-    "Un cliente quiere devolver un producto fuera de plazo. ¿Qué haces?",
-    "¿Cómo te organizas cuando tienes varios clientes a la vez?",
-  ],
-  salud: [
-    "¿Cómo manejas el estrés emocional del trabajo con pacientes?",
-    "Cuéntame de una emergencia que hayas gestionado.",
-    "¿Cómo comunicas malas noticias a un paciente o familiar?",
-    "¿Cómo priorizas cuando tienes varios pacientes urgentes?",
-    "Háblame de tu experiencia trabajando en equipo multidisciplinar.",
-  ],
-};
-
-const SECTORES = [
-  { id: "general", label: "General" },
-  { id: "hosteleria", label: "Hostelería" },
-  { id: "tecnologia", label: "Tecnología" },
-  { id: "comercio", label: "Comercio" },
-  { id: "salud", label: "Salud" },
-];
-
-type Respuesta = { pregunta: string; respuesta: string; feedback: string };
+type Respuesta = { pregunta: string; respuesta: string; feedback: string; partes?: PartesFeedback | null };
 
 const LS_KEY = "bc_entrevistas";
+const LS_VOZ = "bc_entrevista_voz";
+const frase = (id: IdFrase): Clip => ({ id, texto: FRASES[id] });
 
 export default function EntrevistasPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
-  const [sector, setSector] = useState("general");
-  // Para qué país se prepara. La entrevista no es igual en Berlín que en Madrid,
-  // y hasta ahora el simulador ensayaba siempre la española.
+  const [sector, setSector] = useState<SectorEntrevista>("general");
+  // Lo que eligió el CV, para decirlo en pantalla (solo mientras siga en ese sector).
+  const [delCv, setDelCv] = useState<{ sector: SectorEntrevista; puesto: string } | null>(null);
+  // Para qué país se prepara. La entrevista no es igual en Berlín que en Madrid.
   const [paisEntrevista, setPaisEntrevista] = useState("ES");
-  const [preguntas, setPreguntas] = useState(PREGUNTAS.general);
+  const [empezado, setEmpezado] = useState(false);
   const [idx, setIdx] = useState(0);
   const [texto, setTexto] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [partes, setPartes] = useState<PartesFeedback | null>(null);
   const [aviso, setAviso] = useState<{ texto: string; plan: string | null } | null>(null);
   const [analizando, setAnalizando] = useState(false);
   const [historial, setHistorial] = useState<Respuesta[]>([]);
   const [finalizado, setFinalizado] = useState(false);
-  const [soporteVoz, setSoporteVoz] = useState(false);
   const [cargando, setCargando] = useState(true);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const [voz, setVoz] = useState(true);
+  const [hablando, setHablando] = useState(false);
 
-  // ─── Inicialización (auth + localStorage) ──────────────────────
+  const preguntas = PREGUNTAS[sector];
+
+  // ─── Inicialización (auth + sector según el CV + lo guardado) ──
   useEffect(() => {
     async function init() {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       if (!session) { router.push("/auth/login"); return; }
       setToken(session.access_token);
 
-      // Autodetectar sector del perfil
-      const { data: p } = await getSupabaseBrowser()
-        .from("profiles")
-        .select("sector")
-        .eq("id", session.user.id)
-        .single();
-      
-      let sectorDetectado = "general";
-      if (p?.sector) {
-        const s = p.sector.toLowerCase();
-        if (PREGUNTAS[s]) sectorDetectado = s;
-      }
-
-      // Restaurar estado desde localStorage
+      let sectorDetectado: SectorEntrevista = "general";
       try {
-        const saved = localStorage.getItem(LS_KEY);
-        if (saved) {
-          const data = JSON.parse(saved);
-          // Solo restaurar si es del mismo sector y no ha pasado mucho tiempo (>24h)
-          if (data.sector === sectorDetectado || data.sector === p?.sector?.toLowerCase()) {
-            if (typeof data.idx === "number" && data.idx >= 0) setIdx(data.idx);
-            if (Array.isArray(data.historial)) setHistorial(data.historial);
-            setSector(data.sector || sectorDetectado);
-            setPreguntas(PREGUNTAS[data.sector || sectorDetectado]);
-            if (typeof data.paisEntrevista === "string") setPaisEntrevista(data.paisEntrevista);
-          } else {
-            setSector(sectorDetectado);
-            setPreguntas(PREGUNTAS[sectorDetectado]);
-          }
-        } else {
-          setSector(sectorDetectado);
-          setPreguntas(PREGUNTAS[sectorDetectado]);
-        }
-      } catch {
-        setSector(sectorDetectado);
-        setPreguntas(PREGUNTAS[sectorDetectado]);
-      }
+        const r = await fetch("/api/entrevistas/sector", { headers: { Authorization: `Bearer ${session.access_token}` } });
+        const d = await r.json();
+        if (esSector(d.sector)) sectorDetectado = d.sector;
+        if (d.origen === "cv" && d.puesto && esSector(d.sector)) setDelCv({ sector: d.sector, puesto: d.puesto });
+      } catch { /* se queda en general */ }
 
+      try {
+        if (localStorage.getItem(LS_VOZ) === "no") setVoz(false);
+        const saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+        // Se retoma por donde iba si era del mismo sector.
+        if (saved && saved.sector === sectorDetectado) {
+          if (typeof saved.idx === "number" && saved.idx >= 0 && saved.idx < PREGUNTAS[sectorDetectado].length) setIdx(saved.idx);
+          if (Array.isArray(saved.historial)) setHistorial(saved.historial);
+          if (typeof saved.paisEntrevista === "string") setPaisEntrevista(saved.paisEntrevista);
+          if (saved.idx > 0 || saved.historial?.length) setEmpezado(true);
+        }
+      } catch { /* localStorage puede no estar disponible */ }
+
+      setSector(sectorDetectado);
       setCargando(false);
     }
     init();
-
-    if (typeof window !== "undefined") {
-      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SR) setSoporteVoz(true);
-      synthRef.current = window.speechSynthesis || null;
-    }
   }, [router]);
 
   // ─── Persistencia automática en localStorage ───────────────────
@@ -145,53 +86,63 @@ export default function EntrevistasPage() {
     } catch { /* localStorage puede no estar disponible */ }
   }, [sector, idx, historial, paisEntrevista, cargando]);
 
-  // Liberar síntesis de voz al desmontar
-  useEffect(() => {
-    return () => {
-      if (synthRef.current) {
-        try { synthRef.current.cancel(); } catch { /* ok */ }
-      }
-    };
-  }, []);
+  // Que no siga hablando al salir de la pantalla.
+  useEffect(() => () => parar(), []);
 
-  const cambiarSector = (s: string) => {
-    setSector(s); setPreguntas(PREGUNTAS[s]); setIdx(0);
-    setTexto(""); setFeedback(""); setHistorial([]); setFinalizado(false);
+  /** El entrevistador dice estos clips, si la voz está puesta. */
+  const decir = useCallback((clips: Clip[]) => {
+    if (!voz) return;
+    // Primero hablar() (que cierra lo anterior) y luego marcar que habla:
+    // al revés, el cierre de lo anterior lo dejaba marcado como callado.
+    hablar(clips, () => setHablando(false));
+    setHablando(true);
+  }, [voz]);
+
+  const cambiarSector = (s: SectorEntrevista) => {
+    parar();
+    setSector(s); setIdx(0); setEmpezado(false);
+    setTexto(""); setFeedback(""); setPartes(null); setHistorial([]); setFinalizado(false);
   };
 
-  const leerPregunta = () => {
-    if (!synthRef.current) return;
-    synthRef.current.cancel();
-    const u = new SpeechSynthesisUtterance(preguntas[idx]);
-    u.lang = "es-ES"; u.rate = 0.9;
-    synthRef.current.speak(u);
+  const cambiarVoz = () => {
+    const nueva = !voz;
+    if (!nueva) parar();
+    setVoz(nueva);
+    try { localStorage.setItem(LS_VOZ, nueva ? "si" : "no"); } catch { /* da igual */ }
+  };
+
+  const empezar = () => {
+    setEmpezado(true);
+    decir([frase("bienvenida"), preguntas[idx]]);
   };
 
   const analizar = async () => {
     if (!texto.trim()) return;
+    parar();
     setAnalizando(true);
     try {
       const res = await fetch("/api/entrevistas/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ pregunta: preguntas[idx], respuesta: texto, sector, pais: paisEntrevista }),
+        body: JSON.stringify({ pregunta: preguntas[idx].texto, respuesta: texto, sector, pais: paisEntrevista }),
       });
       const data = await res.json().catch(() => ({}));
       // Si la API dice por qué no (plan gratis, límite por hora...), se dice eso
-      // y NO se apunta como respuesta hecha. Antes a quien no pagaba le salía
-      // "No se pudo analizar." en las 7 preguntas sin saber que era de pago
-      // (auditoría del 3 oct 2026).
+      // y NO se apunta como respuesta hecha (auditoría del 3 oct 2026).
       if (!res.ok || !data.feedback) {
         setFeedback("");
+        setPartes(null);
         setAviso({ texto: data.error || "No se ha podido analizar ahora. Inténtalo de nuevo en un momento.", plan: res.status === 402 ? (data.upgradeUrl || "/app/perfil?tab=plan") : null });
         return;
       }
       setAviso(null);
-      const fb = data.feedback;
-      setFeedback(fb);
-      setHistorial(h => [...h, { pregunta: preguntas[idx], respuesta: texto, feedback: fb }]);
+      setFeedback(data.feedback);
+      setPartes(data.partes ?? null);
+      setHistorial(h => [...h, { pregunta: preguntas[idx].texto, respuesta: texto, feedback: data.feedback, partes: data.partes ?? null }]);
+      const acuses: IdFrase[] = ["acuse-1", "acuse-2", "acuse-3"];
+      decir([frase(acuses[historial.length % acuses.length])]);
     } catch {
-      setFeedback("Error al analizar. Inténtalo de nuevo.");
+      setAviso({ texto: "No se ha podido analizar ahora. Inténtalo de nuevo en un momento.", plan: null });
     } finally {
       setAnalizando(false);
     }
@@ -199,21 +150,24 @@ export default function EntrevistasPage() {
 
   const siguiente = () => {
     if (idx < preguntas.length - 1) {
-      setIdx(i => i + 1); setTexto(""); setFeedback("");
+      setIdx(i => i + 1); setTexto(""); setFeedback(""); setPartes(null);
+      decir([frase("siguiente"), preguntas[idx + 1]]);
     } else {
       setFinalizado(true);
+      decir([frase("cierre")]);
     }
   };
 
   const reiniciar = () => {
-    setIdx(0); setTexto(""); setFeedback(""); setHistorial([]); setFinalizado(false);
+    parar();
+    setIdx(0); setTexto(""); setFeedback(""); setPartes(null); setHistorial([]); setFinalizado(false); setEmpezado(false);
   };
 
   if (cargando) {
     return (
       <div className="min-h-screen pt-24 pb-8 px-4 flex items-center justify-center" style={{ background: "#0f1117" }}>
         <div className="text-center">
-          <div className="flex justify-center mb-3"><Mic size={40} strokeWidth={1.2} style={{ color: "#10b981" }} /></div>
+          <div className="flex justify-center mb-3"><Mic size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
           <p className="text-sm" style={{ color: "#6b7280" }}>Cargando simulador...</p>
         </div>
       </div>
@@ -222,33 +176,41 @@ export default function EntrevistasPage() {
 
   // ─── Resumen final ────────────────────────────────────────────
   if (finalizado) {
+    const fuertes = historial.map(r => r.partes?.bien).filter((b): b is string => !!b);
     return (
       <div className="min-h-screen pt-16 pb-8 px-4" style={{ background: "#0f1117" }}>
         <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-3"><PartyPopper size={48} strokeWidth={1.2} style={{ color: "#10b981" }} /></div>
-            <h1 className="text-2xl font-bold text-white mb-1">¡Entrevista completada!</h1>
-            <p className="text-sm" style={{ color: "#6b7280" }}>
-              {historial.length} de {preguntas.length} preguntas respondidas
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-3"><PartyPopper size={44} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
+            <h1 className="text-2xl font-bold text-white mb-1">¡Entrevista terminada!</h1>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>
+              Has contestado {historial.length} de {preguntas.length} preguntas. Cada ensayo cuenta.
             </p>
           </div>
 
+          {fuertes.length > 0 && (
+            <div className="rounded-2xl p-4 mb-6" style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.25)" }}>
+              <p className="text-[10px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#22c55e" }}>Lo que mejor se te da</p>
+              <ul className="space-y-1.5">
+                {fuertes.map((b, i) => (
+                  <li key={i} className="text-sm leading-relaxed" style={{ color: "#e2e8f0" }}>{b}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="space-y-4 mb-6">
             {historial.map((r, i) => (
-              <div key={i} className="rounded-2xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-                <p className="text-xs font-semibold mb-1" style={{ color: "#10b981" }}>P{i + 1}. {r.pregunta}</p>
-                <p className="text-sm mb-3" style={{ color: "#9ca3af" }}>{r.respuesta}</p>
-                <div className="text-xs whitespace-pre-wrap" style={{ color: "#d1d5db" }}>{r.feedback}</div>
+              <div key={i} className="space-y-2.5">
+                <p className="text-xs font-semibold" style={{ color: "#22c55e" }}>{i + 1}. {r.pregunta}</p>
+                <p className="text-sm" style={{ color: "#94a3b8" }}>{r.respuesta}</p>
+                <InterviewFeedback feedback={r.feedback} partes={r.partes} />
               </div>
             ))}
           </div>
 
-          <button
-            onClick={reiniciar}
-            className="w-full py-3 rounded-xl font-semibold text-sm"
-            style={{ background: "#10b981", color: "#fff" }}
-          >
-            Volver a empezar
+          <button onClick={reiniciar} className="btn-game w-full py-3 text-sm">
+            Volver a ensayar
           </button>
         </div>
       </div>
@@ -258,130 +220,148 @@ export default function EntrevistasPage() {
   return (
     <div className="min-h-screen pt-16 pb-8 px-4" style={{ background: "#0f1117" }}>
       <div className="max-w-2xl mx-auto space-y-5">
-        {/* Header */}
+        {/* Cabecera */}
         <div className="text-center pt-2">
-          <div className="flex justify-center mb-2"><Mic size={36} strokeWidth={1.2} style={{ color: "#10b981" }} /></div>
-          <h1 className="text-xl font-bold text-white">Simulador de Entrevistas</h1>
-          <p className="text-xs mt-1" style={{ color: "#6b7280" }}>
-            Practica y recibe feedback de IA
+          <div className="flex justify-center mb-2"><Mic size={34} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
+          <h1 className="text-xl font-bold text-white">Simulador de entrevistas</h1>
+          <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+            Ensaya con calma: aquí no hay respuestas perfectas.
           </p>
         </div>
 
-        {/* Sectores */}
-        <div className="flex flex-wrap gap-2 justify-center">
-          {SECTORES.map(s => (
-            <button
-              key={s.id}
-              onClick={() => cambiarSector(s.id)}
-              className="px-4 py-1.5 rounded-full text-xs font-medium transition"
-              style={{
-                background: sector === s.id ? "#10b981" : "#1e212b",
-                color: sector === s.id ? "#fff" : "#6b7280",
-                border: `1px solid ${sector === s.id ? "#10b981" : "#2d3142"}`,
-              }}
+        {/* Qué preguntas y para qué país */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <label className="rounded-xl px-3 py-2 block" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+            <span className="text-[10px] uppercase tracking-wide font-semibold block" style={{ color: "#64748b" }}>Preguntas de</span>
+            <select
+              id="sector-entrevista"
+              value={sector}
+              onChange={e => cambiarSector(e.target.value as SectorEntrevista)}
+              className="w-full bg-transparent text-sm outline-none mt-0.5"
+              style={{ color: "#f1f5f9" }}
             >
-              {s.label}
-            </button>
-          ))}
-        </div>
-
-        {/* País de la entrevista */}
-        <div className="flex items-center justify-center gap-2">
-          <label htmlFor="pais-entrevista" className="text-xs" style={{ color: "#6b7280" }}>
-            Entrevista en
+              {SECTORES_ENTREVISTA.map(s => <option key={s.id} value={s.id} style={{ background: "#1e212b" }}>{s.label}</option>)}
+            </select>
           </label>
-          <select
-            id="pais-entrevista"
-            value={paisEntrevista}
-            onChange={e => setPaisEntrevista(e.target.value)}
-            className="rounded-lg px-2.5 py-1 text-xs outline-none"
-            style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
-          >
-            {LISTA_PAISES.map(p => (
-              <option key={p.codigo} value={p.codigo}>{p.bandera} {p.nombre}</option>
-            ))}
-          </select>
+          <label className="rounded-xl px-3 py-2 block" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+            <span className="text-[10px] uppercase tracking-wide font-semibold block" style={{ color: "#64748b" }}>Entrevista en</span>
+            <select
+              id="pais-entrevista"
+              value={paisEntrevista}
+              onChange={e => setPaisEntrevista(e.target.value)}
+              className="w-full bg-transparent text-sm outline-none mt-0.5"
+              style={{ color: "#f1f5f9" }}
+            >
+              {LISTA_PAISES.map(p => <option key={p.codigo} value={p.codigo} style={{ background: "#1e212b" }}>{p.bandera} {p.nombre}</option>)}
+            </select>
+          </label>
         </div>
-
-        {/* Progreso */}
-        <div>
-          <div className="flex justify-between text-xs mb-1" style={{ color: "#6b7280" }}>
-            <span>Pregunta {idx + 1} de {preguntas.length}</span>
-            <span>{Math.round((idx / preguntas.length) * 100)}%</span>
-          </div>
-          <div className="h-1.5 rounded-full" style={{ background: "#1e212b" }}>
-            <div
-              className="h-1.5 rounded-full transition-all"
-              style={{ background: "#10b981", width: `${(idx / preguntas.length) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Pregunta */}
-        <div className="rounded-2xl p-5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-base font-medium text-white leading-relaxed flex-1">
-              {preguntas[idx]}
-            </p>
-            {soporteVoz && (
-              <button
-                onClick={leerPregunta}
-                className="p-2 rounded-lg shrink-0"
-                style={{ background: "#0f1117", color: "#10b981" }}
-                title="Escuchar pregunta"
-              >
-                <Volume2 size={18} strokeWidth={1.8} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* VoiceRecorder con fallback a textarea */}
-        <VoiceRecorder
-          value={texto}
-          onChange={setTexto}
-          disabled={analizando}
-        />
-
-        {/* InterviewFeedback con animación */}
-        <InterviewFeedback feedback={feedback} />
-        {aviso && (
-          <div role="alert" className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(240,192,64,0.1)", border: "1px solid rgba(240,192,64,0.3)", color: "#f0c040" }}>
-            {aviso.texto}
-            {aviso.plan && (
-              <button onClick={() => router.push(aviso.plan!)} className="block mt-2 font-semibold underline" style={{ color: "#22c55e" }}>
-                Ver planes
-              </button>
-            )}
-          </div>
+        {delCv && delCv.sector === sector && (
+          <p className="text-xs -mt-2" style={{ color: "#64748b" }}>Elegidas por tu CV: {delCv.puesto}.</p>
         )}
 
-        {/* Acciones */}
-        <div className="flex gap-3">
-          <button
-            onClick={analizar}
-            disabled={!texto.trim() || analizando}
-            className="flex-1 py-3 rounded-xl font-semibold text-sm transition"
-            style={{
-              background: texto.trim() && !analizando ? "#10b981" : "#1e212b",
-              color: texto.trim() && !analizando ? "#fff" : "#6b7280",
-            }}
-          >
-            {analizando ? "Analizando..." : <><BarChart2 size={14} strokeWidth={1.8} className="inline mr-1.5" />Analizar respuesta</>}
-          </button>
-          <button
-            onClick={siguiente}
-            disabled={!feedback}
-            className="flex-1 py-3 rounded-xl font-semibold text-sm transition"
-            style={{
-              background: feedback ? "#1e212b" : "#0f1117",
-              color: feedback ? "#e5e7eb" : "#2d3142",
-              border: `1px solid ${feedback ? "#2d3142" : "#1e212b"}`,
-            }}
-          >
-            {idx < preguntas.length - 1 ? "Siguiente →" : "Finalizar"}
-          </button>
-        </div>
+        {!empezado ? (
+          // ─── Antes de empezar ─────────────────────────────────────
+          // El botón no es un trámite: el móvil solo deja sonar audio después
+          // de un toque, y con él el entrevistador puede saludar y preguntar.
+          <div className="rounded-2xl p-5 space-y-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+            <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
+              Te haré {preguntas.length} preguntas. Contesta hablando o escribiendo, como te sea más cómodo.
+              Después de cada una te diré lo que te ha salido bien y un detalle que pulir.
+            </p>
+            <div className="flex items-center gap-3">
+              <button onClick={empezar} className="btn-game flex-1 py-3 text-sm">Empezar</button>
+              <button
+                onClick={cambiarVoz}
+                aria-pressed={voz}
+                className="rounded-xl px-3 py-3 text-xs flex items-center gap-1.5"
+                style={{ background: "#0f1117", border: "1px solid #2d3142", color: voz ? "#22c55e" : "#64748b" }}
+              >
+                {voz ? <Volume2 size={15} strokeWidth={1.9} /> : <VolumeX size={15} strokeWidth={1.9} />}
+                {voz ? "Con voz" : "Sin voz"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Progreso */}
+            <div>
+              <div className="flex justify-between text-xs mb-1" style={{ color: "#64748b" }}>
+                <span>Pregunta {idx + 1} de {preguntas.length}</span>
+                {hablando && (
+                  <button onClick={() => parar()} className="flex items-center gap-1" style={{ color: "#22c55e" }}>
+                    <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
+                    Hablando · parar <Square size={10} strokeWidth={2.2} />
+                  </button>
+                )}
+              </div>
+              <div className="h-1.5 rounded-full" style={{ background: "#1e212b" }}>
+                <div className="h-1.5 rounded-full transition-all" style={{ background: "#22c55e", width: `${(idx / preguntas.length) * 100}%` }} />
+              </div>
+            </div>
+
+            {/* Pregunta */}
+            <div className="rounded-2xl p-5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-base font-medium text-white leading-relaxed flex-1">{preguntas[idx].texto}</p>
+                <div className="flex gap-1.5 shrink-0">
+                  {voz && (
+                    <button onClick={() => decir([preguntas[idx]])} className="p-2 rounded-lg" style={{ background: "#0f1117", color: "#22c55e" }}
+                            title="Escuchar otra vez" aria-label="Escuchar la pregunta otra vez">
+                      <Volume2 size={18} strokeWidth={1.8} />
+                    </button>
+                  )}
+                  <button onClick={cambiarVoz} className="p-2 rounded-lg" style={{ background: "#0f1117", color: voz ? "#64748b" : "#22c55e" }}
+                          title={voz ? "Quitar la voz" : "Poner la voz"} aria-label={voz ? "Quitar la voz" : "Poner la voz"} aria-pressed={!voz}>
+                    {voz ? <VolumeX size={18} strokeWidth={1.8} /> : <Volume2 size={18} strokeWidth={1.8} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Respuesta: hablando o escribiendo */}
+            <VoiceRecorder value={texto} onChange={setTexto} disabled={analizando || !!feedback} alEscuchar={() => parar()} />
+
+            <InterviewFeedback feedback={feedback} partes={partes} />
+            {aviso && (
+              <div role="alert" className="rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(240,192,64,0.1)", border: "1px solid rgba(240,192,64,0.3)", color: "#f0c040" }}>
+                {aviso.texto}
+                {aviso.plan && (
+                  <button onClick={() => router.push(aviso.plan!)} className="block mt-2 font-semibold underline" style={{ color: "#22c55e" }}>
+                    Ver planes
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Acciones */}
+            <div className="flex gap-3">
+              <button
+                onClick={analizar}
+                disabled={!texto.trim() || analizando || !!feedback}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm transition"
+                style={{
+                  background: texto.trim() && !analizando && !feedback ? "#22c55e" : "#1e212b",
+                  color: texto.trim() && !analizando && !feedback ? "#fff" : "#64748b",
+                }}
+              >
+                {analizando ? "Escuchando tu respuesta..." : "Contestar"}
+              </button>
+              <button
+                onClick={siguiente}
+                disabled={!feedback}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm transition"
+                style={{
+                  background: feedback ? "#1e212b" : "#0f1117",
+                  color: feedback ? "#e5e7eb" : "#2d3142",
+                  border: `1px solid ${feedback ? "#2d3142" : "#1e212b"}`,
+                }}
+              >
+                {idx < preguntas.length - 1 ? "Siguiente →" : "Terminar"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

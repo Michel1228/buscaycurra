@@ -1,76 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { PartesFeedback } from "@/lib/entrevistas/feedback";
 
 interface InterviewFeedbackProps {
   feedback: string;
+  /** Las tres casillas. Si no vienen (formato roto o respuesta antigua), se enseña el texto. */
+  partes?: PartesFeedback | null;
 }
 
-export default function InterviewFeedback({ feedback }: InterviewFeedbackProps) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (feedback) {
-      // Pequeño delay para que se note la animación
-      const t = setTimeout(() => setVisible(true), 50);
-      return () => clearTimeout(t);
-    } else {
-      setVisible(false);
-    }
-  }, [feedback]);
-
+/**
+ * Lo que contesta el entrevistador, en casillas cortas: lo que ha salido bien,
+ * un detalle que pulir y cómo decirlo. Sin nota: es un ensayo, no un examen.
+ */
+export default function InterviewFeedback({ feedback, partes }: InterviewFeedbackProps) {
   if (!feedback) return null;
 
-  return (
-    <div
-      className="rounded-2xl p-4 text-sm whitespace-pre-wrap transition-all duration-300 ease-out"
-      style={{
-        background: "#0d2818",
-        border: "1px solid #065f46",
-        color: "#d1fae5",
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(8px)",
-        maxHeight: visible ? "600px" : "0px",
-        overflow: "hidden",
-      }}
-    >
-      {/* Cabecera del feedback */}
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-base">🤖</span>
-        <span className="text-xs font-semibold" style={{ color: "#34d399" }}>
-          Feedback de IA
-        </span>
+  if (!partes) {
+    return (
+      <div className="rounded-2xl p-4 text-sm whitespace-pre-wrap leading-relaxed"
+           style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#cbd5e1" }}>
+        {feedback}
       </div>
+    );
+  }
 
-      {/* Contenido del feedback */}
-      <div className="space-y-1.5">
-        {feedback.split("\n").map((line, i) => {
-          const trimmed = line.trim();
-          if (!trimmed) return null;
-
-          // Detectar tipo de línea por prefijo
-          const isPositive = trimmed.startsWith("✅");
-          const isWarning = trimmed.startsWith("⚠️");
-          const isTip = trimmed.startsWith("💡");
-          const isScore = trimmed.startsWith("📊");
-
-          let icon = "";
-          let color = "#d1fae5";
-          if (isPositive) { icon = "✅"; color = "#34d399"; }
-          else if (isWarning) { icon = "⚠️"; color = "#fbbf24"; }
-          else if (isTip) { icon = "💡"; color = "#60a5fa"; }
-          else if (isScore) { icon = "📊"; color = "#c084fc"; }
-
-          return (
-            <p
-              key={i}
-              className="leading-relaxed"
-              style={{ color }}
-            >
-              {trimmed}
-            </p>
-          );
-        })}
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div className="rounded-xl p-3.5" style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.25)" }}>
+        <p className="text-[10px] uppercase tracking-wide font-semibold mb-1" style={{ color: "#22c55e" }}>Lo que te ha salido bien</p>
+        <p className="text-sm leading-relaxed" style={{ color: "#e2e8f0" }}>{partes.bien}</p>
+      </div>
+      <div className="rounded-xl p-3.5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+        <p className="text-[10px] uppercase tracking-wide font-semibold mb-1" style={{ color: "#f59e0b" }}>Un detalle</p>
+        <p className="text-sm leading-relaxed" style={{ color: "#e2e8f0" }}>{partes.pulir}</p>
+      </div>
+      <div className="sm:col-span-2 rounded-xl p-3.5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+        <p className="text-[10px] uppercase tracking-wide font-semibold mb-1" style={{ color: "#64748b" }}>Podrías decirlo así</p>
+        <p className="text-sm leading-relaxed italic" style={{ color: "#e2e8f0" }}>«{partes.diloAsi}»</p>
       </div>
     </div>
   );

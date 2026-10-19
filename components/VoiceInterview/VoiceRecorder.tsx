@@ -13,6 +13,8 @@ interface VoiceRecorderProps {
   onChange: (text: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  /** Se avisa al abrir el micrófono: quien habla por el altavoz tiene que callarse. */
+  alEscuchar?: () => void;
 }
 
 export default function VoiceRecorder({
@@ -20,6 +22,7 @@ export default function VoiceRecorder({
   onChange,
   disabled = false,
   placeholder = "Escribe tu respuesta aquí...",
+  alEscuchar,
 }: VoiceRecorderProps) {
   const [escuchando, setEscuchando] = useState(false);
 
@@ -195,17 +198,28 @@ export default function VoiceRecorder({
     }
   }, [onChange]);
 
+  const pararEscucha = useCallback(() => {
+    if (modoVoz === "nativo") {
+      VozNativa.stop().catch(() => { /* ya parado */ });
+    } else {
+      recognitionRef.current?.stop();
+    }
+    setEscuchando(false);
+  }, [modoVoz]);
+
+  // Al contestar se deshabilita: el micrófono se cierra para que lo que diga
+  // después el entrevistador por el altavoz no se cuele en la respuesta.
+  useEffect(() => {
+    if (disabled && escuchando) pararEscucha();
+  }, [disabled, escuchando, pararEscucha]);
+
   const toggleVoz = useCallback(() => {
     if (escuchando) {
-      if (modoVoz === "nativo") {
-        VozNativa.stop().catch(() => { /* ya parado */ });
-      } else {
-        recognitionRef.current?.stop();
-      }
-      setEscuchando(false);
+      pararEscucha();
       return;
     }
 
+    alEscuchar?.();
     if (modoVoz === "nativo") { void iniciarNativo(); return; }
 
     const SR =
@@ -217,7 +231,7 @@ export default function VoiceRecorder({
     // No usamos getUserMedia primero: en iOS son permisos separados y
     // llamar getUserMedia antes provoca el ciclo de bloqueo/desbloqueo.
     iniciarReconocimiento();
-  }, [escuchando, modoVoz, iniciarNativo, iniciarReconocimiento]);
+  }, [escuchando, modoVoz, iniciarNativo, iniciarReconocimiento, pararEscucha, alEscuchar]);
 
   const desbloquear = useCallback(() => {
     setBloqueado(false);

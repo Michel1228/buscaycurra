@@ -5,6 +5,7 @@ import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 import { promptDePais } from "@/lib/entrevistas/por-pais";
 import { normalizarPais } from "@/lib/origen/movilidad";
 import { PAISES } from "@/lib/paises";
+import { partesDelFeedback } from "@/lib/entrevistas/feedback";
 
 export const dynamic = "force-dynamic";
 
@@ -61,21 +62,25 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "GROQ_API_KEY no configurada" }, { status: 500 });
 
-    const prompt = `[ESPAÑOL OBLIGATORIO] Eres un coach de entrevistas experto en el sector ${sectorSafe}.
+    // EL TONO (18 oct 2026). Antes salía "A mejorar" y una nota del 1 al 10 en
+    // cada respuesta: parecía un examen, y quien ensaya una entrevista ya va
+    // nervioso. Ahora es un entrevistador cercano que da confianza, un solo
+    // detalle que pulir y una frase de ejemplo para decirlo mejor. Sin nota,
+    // como el ensayo de entrevistas de Google, que lo plantea sin juicios.
+    const prompt = `[ESPAÑOL OBLIGATORIO] Eres un entrevistador cercano que ayuda a ensayar entrevistas de trabajo del sector ${sectorSafe}.
 ${promptDePais(paisEntrevista, nombrePais)}
-Analiza esta respuesta de entrevista y da feedback constructivo.
+La persona está practicando y puede estar nerviosa. Tu trabajo es darle confianza y una mejora concreta, nunca juzgarla.
 
 PREGUNTA: "${preguntaSafe}"
 
 RESPUESTA DEL CANDIDATO: "${respuestaSafe}"
 
-Da feedback EN ESPAÑOL en este formato:
-✅ Lo que hiciste bien: [1-2 frases]
-⚠️ A mejorar: [1-2 frases con consejos concretos]
-💡 Consejo: [1 frase accionable]
-📊 Puntuación: [1-10]
+Contesta EXACTAMENTE con estas tres líneas y nada más:
+BIEN: [una frase concreta sobre algo que ha hecho bien en esta respuesta]
+PULIR: [un solo detalle que mejorar, dicho con amabilidad y en positivo]
+DILO ASÍ: [una frase de ejemplo, en primera persona, que podría decir en la entrevista con lo que ha contado]
 
-Sé directo pero motivador. Máximo 150 palabras.`;
+Háblale de tú, con frases cortas y sencillas, en español de España («has contado», no «contaste»). Sin notas ni puntuaciones. Sin emojis. En DILO ASÍ aprovecha los datos que haya dado, como cifras, sitios o tiempos, y no te inventes ninguno: si hace falta uno que no ha dicho, deja un hueco como [tu último trabajo]. Si la respuesta es muy corta o no contesta a la pregunta, dilo con tacto en PULIR y ayúdale en DILO ASÍ.`;
 
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -90,7 +95,9 @@ Sé directo pero motivador. Máximo 150 palabras.`;
         reasoning_effort: "low",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 300,
+        // Razona antes de contestar y eso gasta del mismo límite: con 300 la
+        // tercera casilla a veces salía cortada.
+        max_tokens: 500,
       }),
     });
 
@@ -103,7 +110,9 @@ Sé directo pero motivador. Máximo 150 palabras.`;
     const data = await res.json() as { choices: Array<{ message: { content: string } }> };
     const feedback = data.choices?.[0]?.message?.content ?? "No se pudo generar feedback.";
 
-    return NextResponse.json({ feedback });
+    // Las tres casillas por separado; si el modelo no respeta el formato, la
+    // pantalla enseña el texto tal cual.
+    return NextResponse.json({ feedback, partes: partesDelFeedback(feedback) });
   } catch (err) {
     console.error("[Entrevistas/feedback]", (err as Error).message);
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

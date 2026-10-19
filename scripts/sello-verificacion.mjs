@@ -4056,6 +4056,55 @@ test("mis carnés: fecha de caducidad bien calculada, avisos con baja y Guzzi co
   }
 });
 
+// LA VOZ DEL ENTREVISTADOR (18 oct 2026). Michel: "una voz relajada, agradable,
+// que no sea tan autoritaria". Antes leía la voz que trajera cada móvil (en la
+// app de Android, ninguna), cada respuesta llevaba "A mejorar" y una nota del 1
+// al 10, y las preguntas no salían del CV.
+test("entrevista: voz grabada para cada pregunta, tono que anima y preguntas según el CV", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { existsSync, unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-entrevista-entrada.ts", salida = ".sello-entrevista.cjs";
+  try {
+    writeFileSync(entrada, 'export { textosGrabados, sectorDePuestos, PREGUNTAS } from "./lib/entrevistas/preguntas";\nexport { partesDelFeedback } from "./lib/entrevistas/feedback";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const grabado = JSON.parse(leerFuente("lib/entrevistas/voz-grabada.json") || "{}");
+    const textos = m.textosGrabados();
+    const sinAudio = textos.filter(t => !existsSync(`public/voz/entrevista/${t.id}.mp3`)).map(t => t.id);
+    // Si alguien cambia una pregunta sin volver a grabarla, se oiría otra cosa.
+    const desfasados = textos.filter(t => grabado[t.id] !== t.texto).map(t => t.id);
+    const sector = (p) => m.sectorDePuestos([p]);
+    const casos = [
+      ["Camarera de pisos", "limpieza"], ["Camarero", "hosteleria"], ["Auxiliar de ayuda a domicilio", "cuidados"],
+      ["Auxiliar de enfermería", "salud"], ["Mozo de almacén", "almacen"], ["Conductor de camión", "transporte"],
+      ["Peón de obra", "construccion"], ["Operario de limpieza", "limpieza"], ["Dependienta", "comercio"],
+    ];
+    const malSector = casos.filter(([p, s]) => sector(p) !== s).map(([p]) => `${p} → ${sector(p)}`);
+    const partes = m.partesDelFeedback("**BIEN:** Has dado un ejemplo.\nPULIR: Di cuánto tiempo.\nDILO ASI: «Llevé seis mesas a la vez.»");
+    const ruta = leerFuente("app/api/entrevistas/feedback/route.ts");
+    const pagina = leerFuente("app/app/entrevistas/page.tsx");
+    const grabadora = leerFuente("components/VoiceInterview/VoiceRecorder.tsx");
+    const checks = {
+      [`cada frase tiene su audio (faltan: ${sinAudio.slice(0, 4).join(", ")})`]: sinAudio.length === 0,
+      [`lo grabado es lo que se lee (desfasados: ${desfasados.slice(0, 4).join(", ")})`]: desfasados.length === 0,
+      "cinco sectores nuevos": ["almacen", "limpieza", "construccion", "transporte", "cuidados"].every(s => m.PREGUNTAS[s]?.length >= 5),
+      [`el sector sale del puesto (${malSector.join(" · ")})`]: malSector.length === 0,
+      "las tres casillas se separan": partes?.bien === "Has dado un ejemplo." && partes?.diloAsi === "Llevé seis mesas a la vez.",
+      "sin nota del 1 al 10 en cada respuesta": !ruta.includes("Puntuación") && ruta.includes("Sin notas ni puntuaciones") && ruta.includes("partesDelFeedback(feedback)"),
+      "la pantalla usa la voz grabada, no la del móvil": pagina.includes("hablar(clips") && !pagina.includes("new SpeechSynthesisUtterance") && pagina.includes('fetch("/api/entrevistas/sector"'),
+      "el micrófono se cierra al contestar y calla al entrevistador": grabadora.includes("if (disabled && escuchando) pararEscucha();") && pagina.includes("alEscuchar={() => parar()}"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);
