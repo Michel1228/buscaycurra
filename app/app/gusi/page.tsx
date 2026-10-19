@@ -8,14 +8,6 @@ import { isNativeIOS } from "@/lib/utils/platform";
 import UsageCounter from "@/components/UsageCounter";
 import { Users, Mail, Rocket, Trophy } from "lucide-react";
 
-const COMPARATIVA = [
-  { aspecto: "Coste", buscaycurra: "2,99 €/mes", infojobs: "Gratis... con publicidad" },
-  { aspecto: "Tu CV vs otros", buscaycurra: "Personalizado con IA", infojobs: "El mismo para todas" },
-  { aspecto: "Contacto empresa", buscaycurra: "Directo", infojobs: "Cola de espera" },
-  { aspecto: "Asistente IA", buscaycurra: "Guzzi 24/7", infojobs: "Ninguno" },
-  { aspecto: "Envío masivo", buscaycurra: "Automatizado", infojobs: "Manual" },
-];
-
 export default function GusiPage() {
   const [iosNativo, setIosNativo] = useState(false);
   useEffect(() => { setIosNativo(isNativeIOS()); }, []);
@@ -61,32 +53,6 @@ export default function GusiPage() {
           </p>
         </div>
 
-        {/* Comparativa */}
-        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #1e2130" }}>
-          <div className="px-3 py-2" style={{ background: "#161922" }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#2d3142" }}>
-              Comparativa
-            </p>
-          </div>
-          <table className="w-full text-[10px]" style={{ borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ background: "#111520" }}>
-                <th className="text-left px-2 py-1.5" style={{ color: "#6b7280", fontWeight: 500 }}></th>
-                <th className="text-center px-2 py-1.5" style={{ color: "#22c55e", fontWeight: 700 }}>Nosotros</th>
-                <th className="text-center px-2 py-1.5" style={{ color: "#6b7280", fontWeight: 500 }}>InfoJobs</th>
-              </tr>
-            </thead>
-            <tbody>
-              {COMPARATIVA.map((row, i) => (
-                <tr key={row.aspecto} style={{ borderTop: "1px solid #1a1d27", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)" }}>
-                  <td className="px-2 py-1.5" style={{ color: "#64748b" }}>{row.aspecto}</td>
-                  <td className="px-2 py-1.5 text-center font-semibold" style={{ color: "#22c55e" }}>{row.buscaycurra}</td>
-                  <td className="px-2 py-1.5 text-center" style={{ color: "#6b7280" }}>{row.infojobs}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
 
         {/* Diferenciadores clave */}
         <div className="rounded-xl p-3" style={{ background: "#161922", border: "1px solid #1e2130" }}>

@@ -18,7 +18,9 @@ export interface PlanLimits {
   cvsGuardados: number;            // CVs que puede tener guardados
   cvConIAGratis: number;           // CVs gratuitos creados con IA (TOTAL)
   cartaPersonalizada: boolean;     // Si la carta se personaliza con IA
-  prepararEntrevista: boolean;     // Simulador de entrevista con IA
+  prepararEntrevista: boolean;     // Simulador de entrevista con IA, sin límite
+  /** Entrevistas de ensayo a la semana; null = sin límite (lib/entrevistas/cupo.ts). */
+  entrevistasSemana: number | null;
   ofertasGuardadas: number;        // Ofertas que puede guardar
   codigosPromocionales: boolean;   // Puede crear códigos de referido
   apiAccess: boolean;              // Acceso a API externa
@@ -45,6 +47,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     cvConIAGratis: 1,                 // 1 CV gratis con IA
     cartaPersonalizada: false,
     prepararEntrevista: false,
+    entrevistasSemana: 2,                // 19 oct 2026: dos ensayos a la semana gratis
     ofertasGuardadas: 10,
     codigosPromocionales: false,
     apiAccess: false,
@@ -60,6 +63,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     cvConIAGratis: 3,
     cartaPersonalizada: true,
     prepararEntrevista: true,
+    entrevistasSemana: null,
     ofertasGuardadas: 50,
     codigosPromocionales: false,
     apiAccess: false,
@@ -75,6 +79,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     cvConIAGratis: 3,
     cartaPersonalizada: true,
     prepararEntrevista: true,
+    entrevistasSemana: null,
     ofertasGuardadas: 50,
     codigosPromocionales: false,
     apiAccess: false,
@@ -90,6 +95,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     cvConIAGratis: 10,
     cartaPersonalizada: true,
     prepararEntrevista: true,
+    entrevistasSemana: null,
     ofertasGuardadas: 200,
     codigosPromocionales: true,
     apiAccess: false,
@@ -105,6 +111,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     cvConIAGratis: 999999,
     cartaPersonalizada: true,
     prepararEntrevista: true,
+    entrevistasSemana: null,
     ofertasGuardadas: 9999,
     codigosPromocionales: true,
     apiAccess: true,

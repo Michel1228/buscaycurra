@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description:
     "Encuentra a gente que busca trabajo y ha pedido que las empresas la encuentren: nombre, contacto y CV completo. Plan Empresa, 49,99€/mes, sin coste por oferta.",
   openGraph: {
-    title: "BuscayCurra para Empresas — Talento real, sin depender de InfoJobs",
+    title: "BuscayCurra para Empresas — Talento real, sin intermediarios",
     description:
       "Candidatos que han pedido que les encuentren, con su CV completo y contacto directo. 49,99€/mes.",
     url: "https://buscaycurra.es/empresas",
@@ -139,7 +139,7 @@ export default function EmpresasLandingPage() {
 
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-5 tracking-tight" style={{ color: "#f1f5f9" }}>
               El talento que necesitas.<br />
-              <span style={{ color: "#22c55e" }}>Sin depender de InfoJobs.</span>
+              <span style={{ color: "#22c55e" }}>Sin intermediarios.</span>
             </h1>
 
             <p className="text-base md:text-lg mb-8 leading-relaxed max-w-2xl mx-auto" style={{ color: "#94a3b8" }}>

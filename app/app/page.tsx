@@ -9,7 +9,7 @@ import LogoGusano from "@/components/LogoGusano";
 import { NUM_PAISES } from "@/lib/paises";
 import {
   Sparkles, FileText, Search, Mail, PartyPopper,
-  Brain, Target, Zap, Sprout, Check, X, Egg, Rocket,
+  Brain, Target, Zap, Sprout, Check, Egg, Rocket,
   Flame, Star
 } from "lucide-react";
 
@@ -230,28 +230,23 @@ export default function HomePage() {
         <section className="py-20 px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-3" style={{ color: "#f1f5f9" }}>
-              InfoJobs, LinkedIn, Indeed… te tienen en una fila.
+              Lo que Guzzi hace por ti
             </h2>
-            <p className="text-center mb-12" style={{ color: "#64748b" }}>Tú aplicas. Ellos esperan. Guzzi trabaja por ti cada día.</p>
+            <p className="text-center mb-12" style={{ color: "#64748b" }}>Mientras tú vives, Guzzi busca y manda tu CV cada día.</p>
             <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(15,26,10,0.6)", border: "1px solid rgba(126,213,111,0.12)" }}>
-              <div className="grid grid-cols-3 text-center text-sm font-bold py-4 px-4"
-                style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(126,213,111,0.1)" }}>
-                <div style={{ color: "#64748b" }}>Aspecto</div>
-                <div style={{ color: "#e07850" }}>InfoJobs / LinkedIn</div>
-                <div style={{ color: "#22c55e" }}>BuscayCurra</div>
-              </div>
+
               {[
-                { concepto: "Quién aplica por ti", ellos: "Tú, a mano, oferta por oferta", byc: "Guzzi aplica por ti solo" },
-                { concepto: "Carta de presentación", ellos: "La misma para todas", byc: "Escrita por IA para cada empresa" },
-                { concepto: "Cuándo llega", ellos: "Cuando tú lo mandas", byc: "En horario laboral, repartido" },
-                { concepto: "Seguimiento", ellos: "No sabes si lo leyeron", byc: "Ves cada envío en tiempo real" },
-                { concepto: "Prep. entrevista", ellos: "Por tu cuenta", byc: "Simulacro con IA por empresa" },
-                { concepto: "Fuentes de ofertas", ellos: "Solo las de ese portal", byc: "Millones de ofertas de Adzuna, Careerjet, EURES…" },
+                // Sin columna de "ellos": contamos lo que hacemos, no hundimos a nadie (Michel, 19 oct 2026).
+                { concepto: "Quién aplica por ti", byc: "Guzzi, cuando tú se lo pides" },
+                { concepto: "Carta de presentación", byc: "Una escrita para cada empresa" },
+                { concepto: "Cuándo llega", byc: "En horario laboral, repartido" },
+                { concepto: "Seguimiento", byc: "Ves cada envío y si ha llegado" },
+                { concepto: "Preparar la entrevista", byc: "Un ensayo con voz, por sector" },
+                { concepto: "De dónde salen las ofertas", byc: "Millones de ofertas de muchas fuentes" },
               ].map((fila, i) => (
-                <div key={fila.concepto} className="grid grid-cols-3 text-center text-sm py-4 px-4 items-center gap-2"
+                <div key={fila.concepto} className="grid grid-cols-2 text-center text-sm py-4 px-4 items-center gap-2"
                   style={{ background: i % 2 === 0 ? "rgba(126,213,111,0.02)" : "transparent", borderBottom: "1px solid rgba(126,213,111,0.05)" }}>
                   <div className="font-medium text-left text-xs md:text-sm" style={{ color: "#94a3b8" }}>{fila.concepto}</div>
-                  <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#e07850" }}><X className="w-3.5 h-3.5 inline" /> {fila.ellos}</div>
                   <div className="flex items-center justify-center gap-1 text-xs md:text-sm" style={{ color: "#22c55e" }}><Check className="w-3.5 h-3.5 inline" /> {fila.byc}</div>
                 </div>
               ))}

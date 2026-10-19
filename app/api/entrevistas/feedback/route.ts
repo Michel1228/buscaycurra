@@ -6,6 +6,7 @@ import { promptDePais } from "@/lib/entrevistas/por-pais";
 import { normalizarPais } from "@/lib/origen/movilidad";
 import { PAISES } from "@/lib/paises";
 import { partesDelFeedback } from "@/lib/entrevistas/feedback";
+import { usarEntrevista } from "@/lib/entrevistas/cupo";
 
 export const dynamic = "force-dynamic";
 
@@ -24,24 +25,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
     }
 
-    // Función de pago (prepararEntrevista en lib/plan-limits.ts). Estaba
-    // definida y anunciada en los planes, pero aquí solo se pedía sesión.
-    const { getPlanLimits } = await import("@/lib/plan-limits");
-    // El estado de la suscripcion manda sobre el plan guardado.
-    if (!getPlanLimits(await planEfectivoDeUsuario(supabase, user.id)).prepararEntrevista) {
-      return NextResponse.json(
-        { error: "El simulador de entrevistas está en los planes de pago. Desde 2,99 €/mes lo tienes disponible.", upgradeUrl: "/app/perfil?tab=plan" },
-        { status: 402 }
-      );
-    }
-
-    const { pregunta, respuesta, sector, pais } = await req.json() as {
+    const { pregunta, respuesta, sector, pais, sesion } = await req.json() as {
       pregunta: string;
       respuesta: string;
       sector?: string;
       /** País para el que se prepara la entrevista. Por defecto España. */
       pais?: string;
+      /** La entrevista a la que pertenece esta respuesta (cupo del plan gratis). */
+      sesion?: string;
     };
+
+    // Sin límite en los planes de pago; el gratis, 2 entrevistas a la semana
+    // (lib/entrevistas/cupo.ts). El estado de la suscripción manda sobre el plan guardado.
+    const plan = await planEfectivoDeUsuario(supabase, user.id);
+    const uso = await usarEntrevista(user.id, plan, sesion);
+    if (!uso.ok) {
+      return NextResponse.json(
+        uso.motivo === "sesion"
+          ? { error: "Vuelve a pulsar «Empezar» para abrir la entrevista." }
+          : { error: "Ya has hecho las 2 entrevistas de esta semana del plan gratis. Vuelve el lunes, o ensaya sin límite con el plan Esencial (2,99 €/mes).", upgradeUrl: "/app/perfil?tab=plan" },
+        { status: uso.motivo === "sesion" ? 400 : 402 }
+      );
+    }
 
     if (!pregunta || !respuesta) {
       return NextResponse.json({ error: "pregunta y respuesta requeridos" }, { status: 400 });

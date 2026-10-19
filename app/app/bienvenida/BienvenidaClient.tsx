@@ -357,7 +357,7 @@ export default function BienvenidaClient() {
 
         {/* ── Footer tagline ── */}
         <p className="text-center text-xs" style={{ color: "#6b7280" }}>
-          BuscayCurra — La alternativa real a InfoJobs y LinkedIn
+          BuscayCurra — Buscar trabajo, más fácil
         </p>
       </div>
     </div>

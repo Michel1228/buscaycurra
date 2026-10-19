@@ -4152,6 +4152,46 @@ test("los cuatro fuertes, claros y sin afirmaciones falsas (auditoría para las 
   }
 });
 
+// 19 oct 2026, Michel: dos entrevistas a la semana en el plan gratis ("si no
+// nos cuesta créditos": la voz está grabada y el entrevistador va por el nivel
+// gratuito), y "dejemos de atacar" a InfoJobs: se compara solo si lo preguntan.
+test("plan gratis con 2 entrevistas a la semana, y sin atacar a la competencia", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-cupo-entrada.ts", salida = ".sello-cupo.cjs";
+  try {
+    writeFileSync(entrada, 'export { semanaIso, RESPUESTAS_POR_SESION } from "./lib/entrevistas/cupo";\nexport { LIMITS } from "./lib/plan-limits";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const ruta = leerFuente("app/api/entrevistas/feedback/route.ts");
+    const pantalla = leerFuente("app/app/entrevistas/page.tsx");
+    const ataques = [
+      ["app/app/gusi/page.tsx", "InfoJobs"], ["app/app/page.tsx", "InfoJobs / LinkedIn"], ["app/auth/login/page.tsx", "<span className=\"text-center\">InfoJobs / LinkedIn</span>"],
+      ["app/app/bienvenida/BienvenidaClient.tsx", "alternativa real a InfoJobs"], ["app/empresas/page.tsx", "Sin depender de InfoJobs"], ["app/(home)/page.tsx", "ni se llegan a leer"],
+    ].filter(([f, t]) => leerFuente(f).includes(t)).map(([f]) => f);
+    const checks = {
+      "gratis: 2 entrevistas a la semana; de pago: sin límite": m.LIMITS.free.entrevistasSemana === 2
+        && ["esencial", "pro", "empresa"].every((p) => m.LIMITS[p].entrevistasSemana === null),
+      "la semana empieza el lunes": m.semanaIso(new Date("2026-10-19T08:00:00Z")) === "2026-W43" && m.semanaIso(new Date("2026-10-25T20:00:00Z")) === "2026-W43"
+        && m.semanaIso(new Date("2026-10-26T08:00:00Z")) === "2026-W44",
+      "una entrevista no da para infinitas respuestas": m.RESPUESTAS_POR_SESION > 0 && m.RESPUESTAS_POR_SESION <= 15,
+      "la respuesta gasta el cupo en vez de cerrar el simulador al plan gratis": ruta.includes("usarEntrevista(user.id, plan, sesion)") && !ruta.includes("está en los planes de pago"),
+      "la pantalla abre una entrevista al empezar y enseña lo que queda": pantalla.includes("sesion: sesionActual") && pantalla.includes("Plan gratis: te ") && pantalla.includes("disabled={sinCupo}"),
+      "precios dicen lo mismo": leerFuente("app/precios/page.tsx").includes("ensayos de entrevista con voz a la semana"),
+      [`sin ataques a InfoJobs (${ataques.join(", ")})`]: ataques.length === 0,
+      "Guzzi compara solo si se lo preguntan y sin hablar mal": leerFuente("lib/guzzi/prompts.ts").includes("No hables mal de InfoJobs"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

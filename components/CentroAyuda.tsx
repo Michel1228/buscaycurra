@@ -55,7 +55,7 @@ const FAQS = [
   {
     categoria: "Planes y pagos",
     items: [
-      { q: "¿Qué incluye el plan Esencial (2,99€/mes)?", a: `${ESENCIAL.enviosCVDia} envíos de CV por día, carta de presentación personalizada por IA, simulador de entrevista, ${ESENCIAL.guzziMaxConsultasDia} consultas diarias a Guzzi y ${ESENCIAL.cvsGuardados} CVs guardados. Sin permanencia.` },
+      { q: "¿Qué incluye el plan Esencial (2,99€/mes)?", a: `${ESENCIAL.enviosCVDia} envíos de CV por día, carta de presentación personalizada por IA, ensayos de entrevista sin límite, ${ESENCIAL.guzziMaxConsultasDia} consultas diarias a Guzzi y ${ESENCIAL.cvsGuardados} CVs guardados. Sin permanencia.` },
       { q: "¿Puedo cancelar en cualquier momento?", a: "Sí. Sin permanencia ni penalización. Ve a tu perfil → 'Mi Plan' → 'Cancelar suscripción'. Sigues teniendo acceso hasta el final del período pagado." },
       { q: "¿Cómo pago? ¿Es seguro?", a: "En la web usamos Stripe, el estándar mundial de pagos online. En la app de iPhone/iPad el pago se realiza de forma segura con tu cuenta de Apple (compra integrada). Nunca almacenamos datos de tu tarjeta." },
       { q: "¿Ofrecéis factura para empresas?", a: "Sí. Escríbenos a hola@buscaycurra.es con tu NIF/CIF y te enviamos la factura." },

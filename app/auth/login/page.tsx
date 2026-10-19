@@ -137,24 +137,22 @@ function LoginPageInner() {
             ))}
           </div>
 
-          {/* Comparativa — solo en desktop */}
+          {/* Lo que hace BuscayCurra — solo en desktop. Antes era una tabla contra
+              InfoJobs y LinkedIn: contamos lo nuestro sin hundir a nadie (19 oct 2026). */}
           <div className="hidden lg:block rounded-xl overflow-hidden mb-6" style={{ border: "1px solid #2d3142" }}>
-            <div className="px-4 py-2 text-[10px] font-bold grid grid-cols-3 gap-2"
-              style={{ background: "#161922", color: "#6b7280" }}>
-              <span></span>
-              <span className="text-center">InfoJobs / LinkedIn</span>
-              <span className="text-center" style={{ color: "#22c55e" }}>BuscayCurra</span>
+            <div className="px-4 py-2 text-[10px] font-bold"
+              style={{ background: "#161922", color: "#22c55e" }}>
+              Con BuscayCurra
             </div>
             {[
-              { label: "Tu CV llega", ellos: "A la cola del portal", nosotros: "Al correo de la empresa" },
-              { label: "Quién aplica", ellos: "Tú, a mano, uno a uno", nosotros: "Guzzi, automático" },
-              { label: "Carta", ellos: "La misma para todas", nosotros: "IA la escribe para cada una" },
+              { label: "Tu CV llega", nosotros: "Al correo de la empresa" },
+              { label: "Quién aplica", nosotros: "Guzzi te ayuda" },
+              { label: "Carta", nosotros: "Una para cada empresa" },
             ].map((row, i) => (
               <div key={row.label}
-                className="px-4 py-2 grid grid-cols-3 gap-2 text-[11px] items-center"
+                className="px-4 py-2 grid grid-cols-2 gap-2 text-[11px] items-center"
                 style={{ background: i % 2 === 0 ? "#0f1117" : "#0a0c10", borderTop: "1px solid #1a1d27" }}>
                 <span style={{ color: "#94a3b8" }}>{row.label}</span>
-                <span className="text-center" style={{ color: "#ef4444" }}>✕ {row.ellos}</span>
                 <span className="text-center font-semibold" style={{ color: "#22c55e" }}>✓ {row.nosotros}</span>
               </div>
             ))}

@@ -132,9 +132,8 @@ export const GRUPOS_FUNCIONES: GrupoFunciones[] = [
       {
         titulo: "Simulador de entrevista",
         descripcion:
-          "Hace de entrevistador, te deja responder y te dice qué mejorarías. Es la parte que más cambia el resultado y la que casi nadie practica.",
+          "Hace de entrevistador con voz, te deja responder y te dice qué te ha salido bien y qué pulir. Dos ensayos a la semana gratis; sin límite en los planes de pago.",
         ruta: "/app/entrevistas",
-        dePago: true,
       },
       {
         titulo: "Guzzi, el asistente",

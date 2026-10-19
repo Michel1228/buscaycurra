@@ -42,6 +42,10 @@ export default function EntrevistasPage() {
   const [cargando, setCargando] = useState(true);
   const [voz, setVoz] = useState(true);
   const [hablando, setHablando] = useState(false);
+  // Cupo del plan gratis (2 entrevistas a la semana); null = sin límite o sin saberlo.
+  const [cupo, setCupo] = useState<{ ilimitado: boolean; restantes: number | null } | null>(null);
+  // La entrevista en curso: la primera respuesta de una nueva gasta una del cupo.
+  const [sesion, setSesion] = useState<string | null>(null);
 
   const preguntas = PREGUNTAS[sector];
 
@@ -58,6 +62,7 @@ export default function EntrevistasPage() {
         const d = await r.json();
         if (esSector(d.sector)) sectorDetectado = d.sector;
         if (d.origen === "cv" && d.puesto && esSector(d.sector)) setDelCv({ sector: d.sector, puesto: d.puesto });
+        if (d.cupo) setCupo({ ilimitado: !!d.cupo.ilimitado, restantes: d.cupo.restantes ?? null });
       } catch { /* se queda en general */ }
 
       try {
@@ -68,6 +73,7 @@ export default function EntrevistasPage() {
           if (typeof saved.idx === "number" && saved.idx >= 0 && saved.idx < PREGUNTAS[sectorDetectado].length) setIdx(saved.idx);
           if (Array.isArray(saved.historial)) setHistorial(saved.historial);
           if (typeof saved.paisEntrevista === "string") setPaisEntrevista(saved.paisEntrevista);
+          if (typeof saved.sesion === "string") setSesion(saved.sesion);
           if (saved.idx > 0 || saved.historial?.length) setEmpezado(true);
         }
       } catch { /* localStorage puede no estar disponible */ }
@@ -82,9 +88,9 @@ export default function EntrevistasPage() {
   useEffect(() => {
     if (cargando) return;
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify({ sector, idx, historial, paisEntrevista }));
+      localStorage.setItem(LS_KEY, JSON.stringify({ sector, idx, historial, paisEntrevista, sesion }));
     } catch { /* localStorage puede no estar disponible */ }
-  }, [sector, idx, historial, paisEntrevista, cargando]);
+  }, [sector, idx, historial, paisEntrevista, sesion, cargando]);
 
   // Que no siga hablando al salir de la pantalla.
   useEffect(() => () => parar(), []);
@@ -100,7 +106,7 @@ export default function EntrevistasPage() {
 
   const cambiarSector = (s: SectorEntrevista) => {
     parar();
-    setSector(s); setIdx(0); setEmpezado(false);
+    setSector(s); setIdx(0); setEmpezado(false); setSesion(null);
     setTexto(""); setFeedback(""); setPartes(null); setHistorial([]); setFinalizado(false);
   };
 
@@ -111,7 +117,12 @@ export default function EntrevistasPage() {
     try { localStorage.setItem(LS_VOZ, nueva ? "si" : "no"); } catch { /* da igual */ }
   };
 
+  const sinCupo = !!cupo && !cupo.ilimitado && cupo.restantes !== null && cupo.restantes <= 0;
+
   const empezar = () => {
+    if (sinCupo) return;
+    // Cada "Empezar" abre una entrevista nueva: es lo que cuenta el cupo del plan gratis.
+    setSesion(typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
     setEmpezado(true);
     decir([frase("bienvenida"), preguntas[idx]]);
   };
@@ -119,12 +130,15 @@ export default function EntrevistasPage() {
   const analizar = async () => {
     if (!texto.trim()) return;
     parar();
+    // Una entrevista retomada de antes de existir el cupo no trae sesión: se abre aquí.
+    const sesionActual = sesion ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
+    if (!sesion) setSesion(sesionActual);
     setAnalizando(true);
     try {
       const res = await fetch("/api/entrevistas/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ pregunta: preguntas[idx].texto, respuesta: texto, sector, pais: paisEntrevista }),
+        body: JSON.stringify({ pregunta: preguntas[idx].texto, respuesta: texto, sector, pais: paisEntrevista, sesion: sesionActual }),
       });
       const data = await res.json().catch(() => ({}));
       // Si la API dice por qué no (plan gratis, límite por hora...), se dice eso
@@ -136,6 +150,10 @@ export default function EntrevistasPage() {
         return;
       }
       setAviso(null);
+      // La primera respuesta de esta entrevista ya ha gastado una del cupo.
+      if (historial.length === 0 && cupo && !cupo.ilimitado && cupo.restantes !== null) {
+        setCupo({ ...cupo, restantes: Math.max(0, cupo.restantes - 1) });
+      }
       setFeedback(data.feedback);
       setPartes(data.partes ?? null);
       setHistorial(h => [...h, { pregunta: preguntas[idx].texto, respuesta: texto, feedback: data.feedback, partes: data.partes ?? null }]);
@@ -160,7 +178,7 @@ export default function EntrevistasPage() {
 
   const reiniciar = () => {
     parar();
-    setIdx(0); setTexto(""); setFeedback(""); setPartes(null); setHistorial([]); setFinalizado(false); setEmpezado(false);
+    setIdx(0); setTexto(""); setFeedback(""); setPartes(null); setHistorial([]); setFinalizado(false); setEmpezado(false); setSesion(null);
   };
 
   if (cargando) {
@@ -269,8 +287,20 @@ export default function EntrevistasPage() {
               Te haré {preguntas.length} preguntas. Contesta hablando o escribiendo, como te sea más cómodo.
               Después de cada una te diré lo que te ha salido bien y un detalle que pulir.
             </p>
+            {cupo && !cupo.ilimitado && cupo.restantes !== null && (
+              <p className="text-xs" style={{ color: sinCupo ? "#f59e0b" : "#94a3b8" }}>
+                {sinCupo
+                  ? "Ya has hecho las 2 entrevistas de esta semana del plan gratis. Vuelve el lunes, o ensaya sin límite con el plan Esencial."
+                  : `Plan gratis: te ${cupo.restantes === 1 ? "queda 1 entrevista" : `quedan ${cupo.restantes} entrevistas`} esta semana.`}
+                {sinCupo && (
+                  <button onClick={() => router.push("/app/perfil?tab=plan")} className="block mt-1 font-semibold underline" style={{ color: "#22c55e" }}>
+                    Ver el plan Esencial (2,99 €/mes)
+                  </button>
+                )}
+              </p>
+            )}
             <div className="flex items-center gap-3">
-              <button onClick={empezar} className="btn-game flex-1 py-3 text-sm">Empezar</button>
+              <button onClick={empezar} disabled={sinCupo} className="btn-game flex-1 py-3 text-sm" style={sinCupo ? { opacity: 0.5 } : undefined}>Empezar</button>
               <button
                 onClick={cambiarVoz}
                 aria-pressed={voz}
