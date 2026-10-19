@@ -4128,7 +4128,7 @@ test("los cuatro fuertes, claros y sin afirmaciones falsas (auditoría para las 
       "con el CV casi vacío, subir el PDF va lo primero": cv.includes("{pct < 50 && bloqueSubirPDF}") && !cv.includes("Completitud del CV"),
       "envíos: «Entregado» y «No llegó» con nombre y filtro": envios.includes('entregado: "Entregado"') && envios.includes('rebotado: "No llegó"')
         && envios.includes('estados: ["enviado", "entregado"]') && !envios.includes(">\n              Limpiar todo"),
-      "contador de envíos en palabras": leerFuente("components/UsageCounter.tsx").includes("{usage.envios.remainingDia} quedan"),
+      "contador de envíos en palabras": leerFuente("components/UsageCounter.tsx").includes("{enviosQuedan} quedan"),
       "au pair: sin «¡vuelve mañana!» con envíos por delante, país y no gentilicio, una sola casilla de fumador":
         !aupair.includes("disponible{auPairStats.disponibles !== 1 ? \"s\" : \"\"} hoy — ¡vuelve mañana!")
         && aupair.includes("nombrePaisEs(n.code)") && !aupair.includes("Fumador/a</span>"),
@@ -4190,6 +4190,25 @@ test("plan gratis con 2 entrevistas a la semana, y sin atacar a la competencia",
   } finally {
     for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
   }
+});
+
+// Recorrido con una cuenta gratis nueva (19 oct 2026): la primera pantalla se
+// veía vacía (la ruedita usaba "border-3", que Tailwind no tiene: borde 0) y el
+// plan gratis no veía cuántos envíos le quedaban.
+test("una cuenta gratis nueva ve que carga y cuántos envíos le quedan", () => {
+  const ruedas = ["app/app/bienvenida/BienvenidaClient.tsx", "app/app/curriculum/Content.tsx", "app/app/perfil/page.tsx"]
+    .filter((f) => /\bborder-3\b/.test(leerFuente(f)));
+  const contador = leerFuente("components/UsageCounter.tsx");
+  const checks = {
+    [`ruedas de carga visibles (${ruedas.join(", ")})`]: ruedas.length === 0,
+    "la bienvenida dice que está cargando": leerFuente("app/app/bienvenida/BienvenidaClient.tsx").includes("Preparando tu panel…"),
+    "el contador sale también en el plan gratis, con lo que de verdad queda": !contador.includes('usage.plan === "free") return null')
+      && contador.includes("Math.min(usage.envios.remainingDia"),
+    "lista de envíos vacía dice que aún no hay": leerFuente("app/app/envios/page.tsx").includes("Todavía no has enviado ningún CV."),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
 });
 
 await Promise.all(pendientes);

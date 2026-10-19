@@ -320,7 +320,7 @@ export default function PerfilPage() {
   if (cargando) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-16" style={{ background: "#0f1117" }}>
-        <div className="animate-spin rounded-full h-10 w-10 border-3" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
+        <div className="animate-spin rounded-full h-10 w-10 border-[3px]" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
       </div>
     );
   }

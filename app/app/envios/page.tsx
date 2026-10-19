@@ -186,7 +186,7 @@ export default function EnviosPage() {
         ) : filtrados.length === 0 ? (
           <div className="text-center py-16 text-slate-500">
             <div className="flex justify-center mb-3"><Mail size={40} className="opacity-40" /></div>
-            <p>No hay envíos con este filtro.</p>
+            <p>{envios.length === 0 ? "Todavía no has enviado ningún CV." : "No hay envíos con este filtro."}</p>
             <Link href="/app/empresas" className="mt-4 inline-block px-4 py-2 bg-green-500 text-black rounded-lg text-sm font-semibold">
               Enviar mi primer CV →
             </Link>

@@ -28,7 +28,7 @@ export interface PlanLimits {
 
 export const LIMITS: Record<PlanTier, PlanLimits> = {
   free: {
-    name: "Free",
+    name: "Gratis",
     // Los gratuitos van por Groq, cuyo plan libre no cuesta nada. Por eso se
     // pueden dar 15 consultas al dia en vez de 5: con 5 la gente ni se molesta
     // en probarlo, y quien no prueba nunca se suscribe. Si Groq se agota

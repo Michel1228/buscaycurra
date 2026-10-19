@@ -144,8 +144,11 @@ export default function BienvenidaClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-16" style={{ background: "#0f1117" }}>
-        <div className="animate-spin rounded-full h-10 w-10 border-3" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
+      // La ruedita usaba una clase de borde que Tailwind no tiene: salía con borde 0
+      // y la primera pantalla de quien se acaba de registrar se veía vacía (19 oct 2026).
+      <div className="min-h-screen flex flex-col gap-3 items-center justify-center pt-16" style={{ background: "#0f1117" }}>
+        <div className="animate-spin rounded-full h-10 w-10 border-[3px]" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
+        <p className="text-sm" style={{ color: "#94a3b8" }}>Preparando tu panel…</p>
       </div>
     );
   }

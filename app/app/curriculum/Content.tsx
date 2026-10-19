@@ -792,7 +792,7 @@ export default function CurriculumPage() {
   if (cargando) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-16" style={{ background: "#0f1117" }}>
-        <div className="animate-spin rounded-full h-10 w-10 border-3" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
+        <div className="animate-spin rounded-full h-10 w-10 border-[3px]" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
       </div>
     );
   }
@@ -961,9 +961,9 @@ export default function CurriculumPage() {
         <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
-              Tu CV está al {pct} %
+              Tu CV
             </p>
-            <span className="text-sm font-bold" style={{ color: completitudColor }}>{pct === 100 ? "Completo" : `${pct}%`}</span>
+            <span className="text-sm font-bold" style={{ color: completitudColor }}>{pct === 100 ? "Completo" : `${pct} % hecho`}</span>
           </div>
           <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: "#252836" }}>
             <div className="h-full rounded-full transition-all duration-500"

@@ -29,7 +29,11 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
     });
   }, []);
 
-  if (loading || !usage || usage.plan === "free") return null;
+  // También en el plan gratis: quien llega de una ONG tiene que ver que le
+  // quedan 3 envíos hoy, y no descubrirlo cuando ya no le deja (19 oct 2026).
+  if (loading || !usage) return null;
+  // Lo que de verdad queda: el menor entre el límite del día y el de la semana.
+  const enviosQuedan = Math.min(usage.envios.remainingDia, usage.envios.remainingSemana ?? usage.envios.remainingDia);
 
   const barH = compact ? 4 : 6;
   const textSize = compact ? "text-[10px]" : "text-[11px]";
@@ -83,7 +87,7 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
             />
           </div>
           <span className={textSize + " w-14 text-right flex-shrink-0"} style={{ color: "#64748b" }}>
-            {usage.envios.remainingDia} quedan
+            {enviosQuedan} quedan
           </span>
         </div>
       )}
