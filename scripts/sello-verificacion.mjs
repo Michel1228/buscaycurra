@@ -4030,7 +4030,7 @@ test("mis carnés: fecha de caducidad bien calculada, avisos con baja y Guzzi co
       "el carné de conducir no es el CAP": m.carneEnTexto("renovar el carnet de conducir") === null,
       "Guzzi lo contesta con la ficha": leerFuente("app/api/gusi/chat/route.ts").includes("respuestaRenovacion(message, userId)"),
       "la ficha tiene «Ya lo tengo»": leerFuente("components/cursos/DetalleCurso.tsx").includes("<MiCarne slug={t.slug}"),
-      "avisos: solo uuid, correo solo si se aprueba, se puede simular": avisos.includes("UUID.test(r.user_id)") && avisos.includes('process.env.CARNES_AVISO_CORREO === "1"') && avisos.includes('searchParams.get("simular") === "1"'),
+      "avisos: solo uuid, correo solo si se aprueba, se puede simular": avisos.includes("UUID.test(r.user_id)") && avisos.includes('process.env.CARNES_AVISO_CORREO === "1"') && avisos.includes('params.get("simular") === "1"'),
       "el correo lleva baja firmada": avisos.includes("bajaUrl: enlaceBajaCarnes(r.user_id)") && leerFuente("lib/cursos/carnes.ts").includes("timingSafeEqual"),
       // Solo si el CV nombra el carné: ser conductor no es tener el CAP.
       "el CV propone los carnés que nombra, y solo esos": enCv({ formacion: "Carnet de carretillero (UNE 58451)" }) === '["carretillero"]'
