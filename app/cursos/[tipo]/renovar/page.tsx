@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Search } from "lucide-react";
 import PublicHeader from "@/components/PublicHeader";
 import { CasillasRenovacion, queSeRenueva } from "@/components/cursos/Renovacion";
+import MiCarne from "@/components/cursos/MiCarne";
 import { tipoPorSlug, tiposConRenovacion } from "@/lib/cursos/tipos";
 
 export function generateStaticParams() {
@@ -72,6 +73,7 @@ export default async function RenovarCarne({ params }: { params: Promise<{ tipo:
 
         <section className="mb-8">
           <CasillasRenovacion r={t.renovacion} />
+          <MiCarne slug={t.slug} nombre={queSeRenueva(t)} anios={t.validezAnios ?? null} dentroDeLaApp={false} />
         </section>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

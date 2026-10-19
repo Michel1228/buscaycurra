@@ -35,6 +35,8 @@ export const TABLAS_VPS: Record<string, string> = {
   curso_sugerencia_baja: "user_id",
   // 17 oct 2026: las ofertas que manda una empresa desde /empresas/publicar.
   oferta_empresa: "user_id",
+  // 18 oct 2026: los carnés que tiene y cuándo caducan (lib/cursos/carnes.ts).
+  carne_usuario: "user_id",
 };
 
 /** Supabase: tabla → columna con el id de la persona. "profiles" va aparte, al final. */

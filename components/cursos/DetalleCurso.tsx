@@ -13,6 +13,7 @@ import PrepararSolicitud from "@/components/PrepararSolicitud";
 import AvisoCurso from "@/components/cursos/AvisoCurso";
 import PlazasCurso from "@/components/cursos/PlazasCurso";
 import { CasillasRenovacion } from "@/components/cursos/Renovacion";
+import MiCarne from "@/components/cursos/MiCarne";
 import { BUSQUEDA_COURSERA, enlaceSalida, urlBusquedaCoursera } from "@/lib/cursos/afiliados";
 import { etiquetaPlazas } from "@/lib/cursos/plazas/emparejar";
 import {
@@ -286,6 +287,8 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
         <section id="renovacion" className="mb-8 scroll-mt-20">
           <h2 className="text-base font-bold mb-3" style={{ color: "#f1f5f9" }}>Si ya lo tienes: cómo se renueva</h2>
           <CasillasRenovacion r={t.renovacion} />
+          <MiCarne slug={t.slug} nombre={t.renovacion.que ?? t.nombre} anios={t.validezAnios ?? null}
+                   dentroDeLaApp={base.startsWith("/app")} />
         </section>
       ) : t.notaValidez && (
         <div

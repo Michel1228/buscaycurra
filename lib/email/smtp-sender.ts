@@ -802,6 +802,41 @@ export async function sendCursoSugerenciaEmail(params: {
   );
 }
 
+/**
+ * "Tu carné caduca en 3 meses": a quien guardó su carné en Mis cursos y pidió
+ * que le avisáramos (lib/cursos/carnes.ts). Dos avisos por carné como mucho.
+ */
+export async function sendCarneCaducaEmail(params: {
+  userEmail: string;
+  /** "carné de carretillero", "TIP de vigilante de seguridad"… ya en minúscula de frase. */
+  carne: string;
+  /** "en 3 meses", "en 1 mes", "en 12 días". */
+  queda: string;
+  /** "12 de enero de 2027" */
+  fecha: string;
+  destinoUrl: string;
+  bajaUrl?: string | null;
+}): Promise<boolean> {
+  const header = headerGradient("🔔", `Tu ${escaparHtml(params.carne)} caduca ${escaparHtml(params.queda)}`, `El ${escaparHtml(params.fecha)}`);
+  const body = `
+    <p style="margin:0 0 24px;color:#cbd5e1;font-size:15px;line-height:1.7;">
+      Renovarlo a tiempo es mucho más fácil que hacerlo con prisas. En la ficha tienes qué hay que hacer,
+      qué papeles te piden y dónde se hace.
+    </p>
+    ${ctaButton("Ver cómo se renueva →", params.destinoUrl)}
+    <p style="margin:24px 0 0;text-align:center;color:#64748b;font-size:11px;line-height:1.7;">
+      Te llega porque guardaste este carné en BuscayCurra y pediste que te avisáramos antes de que caducara.
+      ${params.bajaUrl ? `<br><a href="${params.bajaUrl}" style="color:#94a3b8;text-decoration:underline;">No quiero más avisos de caducidad</a>` : ""}
+    </p>
+  `;
+  return enviarCorreo(
+    params.userEmail,
+    `🔔 Tu ${params.carne} caduca ${params.queda} — BuscayCurra`,
+    baseTemplate(header, body),
+    { bajaUrl: params.bajaUrl ?? null, puedeEsperar: true }
+  );
+}
+
 export async function sendCursoAlertaEmail(params: {
   userEmail: string;
   cursoNombre: string;

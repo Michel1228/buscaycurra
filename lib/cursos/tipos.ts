@@ -317,6 +317,7 @@ export const TIPOS_CURSO: TipoCurso[] = [
     precio: { min: 0, max: 300, moneda: "EUR", nota: "Gratis por servicio autonómico; en privado, en una horquilla parecida a la del carretillero." },
     validezAnios: 5,
     renovacion: {
+      que: "Carné de plataforma elevadora",
       cada: "Cada 5 años",
       casillas: [
         { titulo: "Con la tarjeta PAL de IPAF", texto: "Vale cinco años. Para renovarla vuelves a hacer el curso y la prueba teórica y práctica en un centro de IPAF." },
@@ -784,6 +785,7 @@ export const TIPOS_CURSO: TipoCurso[] = [
     // 14.2). Aquí ponía "no caduca" hasta el 18 oct 2026.
     validezAnios: 10,
     renovacion: {
+      que: "TIP de vigilante de seguridad",
       cada: "Cada 10 años",
       casillas: [
         { titulo: "Qué hay que hacer", texto: "Pedir la renovación de la TIP en la Policía Nacional: en las unidades de seguridad privada o en una comisaría." },

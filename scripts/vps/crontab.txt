@@ -46,6 +46,11 @@
 # Cursos segun el CV (scripts/vps/sugerencias-cursos-cv.sh): el curso que le falta a
 # quien tiene CV, cuando hay plaza gratis. Cada 3 horas, a y 40.
 40 */3 * * * /usr/bin/flock -n /tmp/sugerencias-cv.lock bash /root/sugerencias-cursos-cv.sh >> /root/sugerencias-cursos-cv.log 2>&1
+# Caducidad de carnes (scripts/vps/avisos-carnes.sh): 3 meses y 1 mes antes de que
+# caduque el carne que alguien guardo en Mis cursos. De lunes a viernes a las 10:30 de
+# Espana: se llama a las 08:30 y 09:30 UTC y la web solo avisa entre las 10 y las 12 de
+# Madrid, asi vale en horario de verano y de invierno.
+30 8,9 * * 1-5 /usr/bin/flock -n /tmp/avisos-carnes.lock bash /root/avisos-carnes.sh >> /root/avisos-carnes.log 2>&1
 # Vigilante de la web desde fuera de la app (scripts/vps/vigilante-app.sh): si el
 # contenedor no existe o esta parado lo levanta, y avisa por correo al caer y al volver.
 */5 * * * * /usr/bin/flock -n /tmp/vigilante-app.lock bash /root/vigilante-app.sh >> /root/vigilante-app.log 2>&1

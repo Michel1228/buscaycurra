@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, GraduationCap } from "lucide-react";
 import MisCursosContent from "./Content";
+import MisCarnes from "./MisCarnes";
 
 export const metadata: Metadata = {
   title: "Mis cursos | BuscayCurra",
@@ -40,6 +41,7 @@ export default function MisCursosPage() {
           </p>
         </div>
 
+        <MisCarnes />
         <MisCursosContent />
       </div>
     </div>

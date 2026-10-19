@@ -1341,6 +1341,15 @@ El candidato tiene mucha experiencia.
       }
     }
 
+    // -- Intent: renovar un carné ----------------------------------------------
+    // "¿Cómo renuevo el CAP?", "¿cuándo me caduca la TPC?": con la ficha
+    // verificada y su propia fecha si lo tiene guardado, no de memoria.
+    if (!enModoCV) {
+      const { respuestaRenovacion } = await import("@/lib/guzzi/renovacion");
+      const respuesta = await respuestaRenovacion(message, userId).catch(() => null);
+      if (respuesta) return NextResponse.json({ reply: respuesta, action: "renovacion_carne" });
+    }
+
     // -- Intent: cursos con plazas reales (curso_plaza) ------------------------
     // "Curso de carretillero en Bilbao" se contesta con plazas de verdad, con
     // fecha y centro. Si no reconoce el curso, sigue el flujo normal.

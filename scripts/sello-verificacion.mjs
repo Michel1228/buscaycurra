@@ -4008,6 +4008,54 @@ test("renovación de carnés: plazos con fuente, en la ficha y con página propi
   }
 });
 
+// RENOVACIONES, FASE 2 (18 oct 2026): "ya lo tengo", cuándo caduca y el aviso
+// 3 meses y 1 mes antes. Un CAP o una TPC caducados te dejan sin trabajar.
+test("mis carnés: fecha de caducidad bien calculada, avisos con baja y Guzzi con la ficha verificada", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-carnes-entrada.ts", salida = ".sello-carnes.cjs";
+  try {
+    writeFileSync(entrada, 'export { calcularCaducidad, fechaValida, enHorarioDeAviso } from "./lib/cursos/carnes";\nexport { preguntaPorRenovacion, carneEnTexto } from "./lib/guzzi/renovacion";\nexport { tipoPorSlug } from "./lib/cursos/tipos";\nexport { carnesEnElCv } from "./lib/cursos/carnes-en-cv";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const enCv = (cv) => JSON.stringify(m.carnesEnElCv(cv));
+    const avisos = leerFuente("app/api/cursos/carnes/avisos/route.ts");
+    const checks = {
+      "carretillero sacado el 15-3-2020 caduca el 15-3-2025": m.calcularCaducidad(m.tipoPorSlug("carretillero"), "2020-03-15") === "2025-03-15",
+      "la TIP, a los 10 años": m.calcularCaducidad(m.tipoPorSlug("vigilante-seguridad"), "2018-06-01") === "2028-06-01",
+      "el soldador pone su fecha (depende de su certificado)": m.calcularCaducidad(m.tipoPorSlug("soldadura"), "2024-01-10") === null,
+      "fechas imposibles fuera": m.fechaValida("2026-02-30") === null && m.fechaValida("2026-02-28") === "2026-02-28",
+      "Guzzi reconoce «¿Cómo renuevo el CAP?»": m.preguntaPorRenovacion("¿Cómo renuevo el CAP?") && m.carneEnTexto("¿Cómo renuevo el CAP?") === "cap-conductor-profesional",
+      "«convencer» no es «vence»": !m.preguntaPorRenovacion("como convencer al encargado de carretillero"),
+      "el carné de conducir no es el CAP": m.carneEnTexto("renovar el carnet de conducir") === null,
+      "Guzzi lo contesta con la ficha": leerFuente("app/api/gusi/chat/route.ts").includes("respuestaRenovacion(message, userId)"),
+      "la ficha tiene «Ya lo tengo»": leerFuente("components/cursos/DetalleCurso.tsx").includes("<MiCarne slug={t.slug}"),
+      "avisos: solo uuid, correo solo si se aprueba, se puede simular": avisos.includes("UUID.test(r.user_id)") && avisos.includes('process.env.CARNES_AVISO_CORREO === "1"') && avisos.includes('searchParams.get("simular") === "1"'),
+      "el correo lleva baja firmada": avisos.includes("bajaUrl: enlaceBajaCarnes(r.user_id)") && leerFuente("lib/cursos/carnes.ts").includes("timingSafeEqual"),
+      // Solo si el CV nombra el carné: ser conductor no es tener el CAP.
+      "el CV propone los carnés que nombra, y solo esos": enCv({ formacion: "Carnet de carretillero (UNE 58451)" }) === '["carretillero"]'
+        && enCv({ titulo: "Conductor de reparto", descripcion: "Furgoneta, carnet B" }) === "[]"
+        && enCv({ certificaciones: "CAP en vigor, carnet C+E" }) === '["cap-conductor-profesional"]'
+        && enCv({ descripcion: "Capacidad de trabajo en equipo" }) === "[]",
+      "se borran al borrar la cuenta": leerFuente("lib/cuenta/borrar-datos.ts").includes('carne_usuario: "user_id"'),
+      // Michel: "programarlo para horarios óptimos". Entre semana a media mañana de
+      // España, también después del cambio de hora (el servidor va en UTC).
+      "a las 10:30 de España entre semana, en verano y en invierno": m.enHorarioDeAviso(new Date("2026-10-19T08:30:00Z"))
+        && m.enHorarioDeAviso(new Date("2026-10-26T09:30:00Z")) && !m.enHorarioDeAviso(new Date("2026-10-26T08:30:00Z"))
+        && !m.enHorarioDeAviso(new Date("2026-10-24T08:30:00Z")) && avisos.includes("!enHorarioDeAviso()"),
+      "programado de lunes a viernes": leerFuente("scripts/vps/crontab.txt").includes("30 8,9 * * 1-5 /usr/bin/flock -n /tmp/avisos-carnes.lock"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

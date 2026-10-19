@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { destinoDeNotificacion, esAlertaDesplegable } from "@/lib/notificaciones/destino";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
-import { Bell, Briefcase, Upload, Pin, BellOff, ClipboardList, ChevronDown, ChevronUp, ExternalLink, Send, Star } from "lucide-react";
+import { Bell, Briefcase, Upload, Pin, BellOff, ClipboardList, ChevronDown, ChevronUp, ExternalLink, Send, Star, RefreshCw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 
@@ -35,6 +35,7 @@ const ICONOS: Record<string, LucideIcon> = {
   nuevo_empleo: Bell,
   alerta_empleo: Briefcase,
   nuevas_ofertas: Briefcase,
+  carne_caduca: RefreshCw,
 };
 
 export default function NotificacionesPage() {
