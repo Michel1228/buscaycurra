@@ -21,15 +21,28 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
+  const caja = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!localStorage.getItem("cookie-consent")) setVisible(true);
   }, []);
+
+  // Mientras se ve, la página deja debajo el mismo hueco que ocupa el aviso:
+  // en el móvil tapaba los últimos botones ("Contestar" en el simulador de
+  // entrevistas, por ejemplo) hasta que se aceptaba (auditoría del 19 oct 2026).
+  useEffect(() => {
+    if (!visible || !caja.current) return;
+    const antes = document.body.style.paddingBottom;
+    const ajustar = () => { document.body.style.paddingBottom = `${caja.current?.offsetHeight ?? 0}px`; };
+    ajustar();
+    window.addEventListener("resize", ajustar);
+    return () => { window.removeEventListener("resize", ajustar); document.body.style.paddingBottom = antes; };
+  }, [visible]);
 
   function decidir(valor: "accepted" | "necessary") {
     localStorage.setItem("cookie-consent", valor);
@@ -40,6 +53,7 @@ export default function CookieBanner() {
 
   return (
     <div
+      ref={caja}
       className="fixed bottom-0 left-0 right-0 z-50 border-t"
       style={{ background: "#1e212b", borderColor: "#2d3142" }}
       role="dialog"

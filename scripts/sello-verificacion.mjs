@@ -4105,6 +4105,53 @@ test("entrevista: voz grabada para cada pregunta, tono que anima y preguntas seg
   }
 });
 
+// AUDITORÍA PARA LAS ONG (19 oct 2026): los cuatro fuertes (CV, envíos,
+// migración y cursos) tienen que entenderse sin ayuda y no decir nada falso.
+test("los cuatro fuertes, claros y sin afirmaciones falsas (auditoría para las ONG)", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { existsSync, unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-ong-entrada.ts", salida = ".sello-ong.cjs";
+  try {
+    writeFileSync(entrada, 'export { leerIdiomas, escribirIdiomas } from "./components/cv/SelectorIdiomas";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", "--jsx=automatic", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const ida = (t) => m.escribirIdiomas(m.leerIdiomas(t));
+    const cv = leerFuente("app/app/curriculum/Content.tsx");
+    const envios = leerFuente("app/app/envios/page.tsx");
+    const aupair = leerFuente("app/app/au-pair/page.tsx");
+    const todo = ["app/app/buscar/page.tsx", "app/app/gusi/page.tsx"].map(leerFuente).join("\n");
+    const checks = {
+      "sin «uno entre 2.000» (no tenía fuente) ni «Contrato directo»": !/[">]\s*(CV propio, no )?[Uu]no entre 2\.000/.test(todo) && !todo.includes("Contrato directo"),
+      "el CV enseña qué es cada campo": !cv.includes('className="sr-only" htmlFor="cv-') && !cv.includes('className="sr-only" htmlFor={`cv-'),
+      "idiomas con nivel en palabras, sin romper los CV hechos": cv.includes("<SelectorIdiomas") && !cv.includes("Formato: Idioma:nivel (0-100)")
+        && ida("Español:95, Inglés:60") === "Español:95, Inglés:60" && ida("Inglés B1, Francés:40") === "Inglés B1, Francés:40",
+      "con el CV casi vacío, subir el PDF va lo primero": cv.includes("{pct < 50 && bloqueSubirPDF}") && !cv.includes("Completitud del CV"),
+      "envíos: «Entregado» y «No llegó» con nombre y filtro": envios.includes('entregado: "Entregado"') && envios.includes('rebotado: "No llegó"')
+        && envios.includes('estados: ["enviado", "entregado"]') && !envios.includes(">\n              Limpiar todo"),
+      "contador de envíos en palabras": leerFuente("components/UsageCounter.tsx").includes("{usage.envios.remainingDia} quedan"),
+      "au pair: sin «¡vuelve mañana!» con envíos por delante, país y no gentilicio, una sola casilla de fumador":
+        !aupair.includes("disponible{auPairStats.disponibles !== 1 ? \"s\" : \"\"} hoy — ¡vuelve mañana!")
+        && aupair.includes("nombrePaisEs(n.code)") && !aupair.includes("Fumador/a</span>"),
+      "ofertas de cuidado de niños con su nombre y el salario en español": leerFuente("components/AuPairOfertasRecientes.tsx").includes('titulo: "Ofertas para cuidar niños"')
+        && leerFuente("components/AuPairOfertasRecientes.tsx").includes("salarioLegible(o.salary)"),
+      "pestañas de país con nombre también en el móvil": !leerFuente("app/app/emigrar/page.tsx").includes('<span className="hidden sm:inline">{t.label}</span>'),
+      "plazas de tu provincia y el centro sin código interno": leerFuente("components/cursos/PlazasCurso.tsx").includes("if (!provinciaLista) return;")
+        && leerFuente("components/cursos/PlazasCurso.tsx").includes("centroLegible(p.centro)"),
+      "banderas también en Windows, con su autoría": leerFuente("app/layout.tsx").includes("<PolyfillBanderas />") && existsSync("public/fonts/banderas.woff2")
+        && leerFuente("app/aviso-legal/page.tsx").includes("Twemoji"),
+      "el aviso de cookies no tapa los botones": leerFuente("components/CookieBanner.tsx").includes("document.body.style.paddingBottom"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

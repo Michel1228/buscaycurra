@@ -494,14 +494,15 @@ function BuscarPageInner() {
           <div className="flex items-center gap-2.5">
             <Send size={18} strokeWidth={1.9} className="shrink-0" style={{ color: "#22c55e" }} />
             <div>
-              <p className="text-xs font-bold" style={{ color: "#22c55e" }}>CV propio, no uno entre 2.000</p>
-              <p className="text-[10px]" style={{ color: "#64748b" }}>InfoJobs te mete en una cola — aquí Guzzi te pone delante</p>
+              {/* Aquí había una cifra sin ninguna fuente detrás: fuera (auditoría del 19 oct 2026). */}
+              <p className="text-xs font-bold" style={{ color: "#22c55e" }}>Tu CV, directo a la empresa</p>
+              <p className="text-[10px]" style={{ color: "#64748b" }}>por correo y con una carta escrita para cada una</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">
             <Building2 size={18} strokeWidth={1.9} className="shrink-0" style={{ color: "#94a3b8" }} />
             <div>
-              <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>Contrato directo con la empresa</p>
+              <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>Contacto directo con la empresa</p>
               <p className="text-[10px]" style={{ color: "#64748b" }}>sin esperar a que alguien en un portal te encuentre</p>
             </div>
           </div>

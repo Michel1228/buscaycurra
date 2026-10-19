@@ -16,6 +16,8 @@
  */
 
 import { useEffect, useState } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { provinciaEnTexto } from "@/lib/cursos/plazas/provincias";
 import Link from "next/link";
 import { CalendarDays, Clock, ExternalLink, Mail, MapPin, Monitor, Phone, Search } from "lucide-react";
 
@@ -76,6 +78,12 @@ function guardarProvincia(v: string) {
   try { if (v) localStorage.setItem(CLAVE_PROVINCIA, v); else localStorage.removeItem(CLAVE_PROVINCIA); } catch { /* sin almacenamiento */ }
 }
 
+/** "CPES_PEÑASCAL_BHIP (Centro de Rekalde)" → "Centro de Rekalde": el código es interno de la fuente. */
+function centroLegible(centro: string): string {
+  const m = centro.match(/^[A-Z0-9_ÁÉÍÓÚÑ.-]{4,}\s*\((.+)\)\s*$/);
+  return m ? m[1] : centro;
+}
+
 function TarjetaPlaza({ p }: { p: Plaza }) {
   const lugar = p.modalidad === "online"
     ? "Online"
@@ -127,7 +135,7 @@ function TarjetaPlaza({ p }: { p: Plaza }) {
 
       {p.centro && (
         <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>
-          {p.centro}{p.direccion && p.modalidad !== "online" ? ` · ${p.direccion}` : ""}
+          {centroLegible(p.centro)}{p.direccion && p.modalidad !== "online" ? ` · ${p.direccion}` : ""}
         </p>
       )}
 
@@ -183,7 +191,25 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
 
-  useEffect(() => { setProvincia(leerProvincia()); }, []);
+  // Sin provincia elegida, la del perfil: a alguien de Tudela le salían primero
+  // los cursos de Bilbao (auditoría del 19 oct 2026). Hasta saberla no se busca.
+  const [provinciaLista, setProvinciaLista] = useState(false);
+  useEffect(() => {
+    const guardada = leerProvincia();
+    if (guardada) { setProvincia(guardada); setProvinciaLista(true); return; }
+    (async () => {
+      try {
+        const sb = getSupabaseBrowser();
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+          const { data: perfil } = await sb.from("profiles").select("ciudad, provincia").eq("id", session.user.id).maybeSingle();
+          const deMiPerfil = provinciaEnTexto(`${perfil?.ciudad ?? ""} ${perfil?.provincia ?? ""}`);
+          if (deMiPerfil) setProvincia(deMiPerfil);
+        }
+      } catch { /* sin sesión o sin perfil: todas las provincias */ }
+      setProvinciaLista(true);
+    })();
+  }, []);
 
   // La URL de la página completa puede traer ?ficha= o ?q= (desde la ficha o desde Guzzi).
   useEffect(() => {
@@ -209,6 +235,7 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
   }
 
   useEffect(() => {
+    if (!provinciaLista) return;
     let vivo = true;
     setCargando(true);
     setError(false);
@@ -219,7 +246,7 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
       .finally(() => { if (vivo) setCargando(false); });
     return () => { vivo = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ficha, provincia, modalidad, qAplicada]);
+  }, [ficha, provincia, modalidad, qAplicada, provinciaLista]);
 
   function masPlazas() {
     fetch(url(plazas.length))

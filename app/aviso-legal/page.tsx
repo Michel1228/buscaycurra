@@ -178,6 +178,13 @@ export default function AvisoLegalPage() {
               industrial.
             </p>
             <p className="mt-2">
+              Las banderas que se ven en navegadores que no las dibujan (por
+              ejemplo, Chrome en Windows) son de{" "}
+              <a href="https://github.com/twitter/twemoji" target="_blank" rel="noopener noreferrer" className="underline">Twemoji</a>,
+              de Twitter, con licencia{" "}
+              <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener noreferrer" className="underline">CC-BY 4.0</a>.
+            </p>
+            <p className="mt-2">
               Queda expresamente <strong>prohibida</strong> la reproducción
               total o parcial, distribución, transformación o comunicación
               pública de cualquier contenido del sitio web sin la autorización

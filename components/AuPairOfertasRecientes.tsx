@@ -30,9 +30,29 @@ interface Props {
 }
 
 const LABELS: Record<Modo, { titulo: string; keyword: string; categoria: string }> = {
-  au_pair: { titulo: "Ofertas Au Pair", keyword: "au pair", categoria: "au_pair" },
+  // No todas son de au pair: también canguro y niñera ("Garde d'enfants", "Babysitter").
+  // Llamarlas "Ofertas Au Pair" era decir más de lo que hay (auditoría del 19 oct 2026).
+  au_pair: { titulo: "Ofertas para cuidar niños", keyword: "au pair", categoria: "au_pair" },
   live_in_nanny: { titulo: "Ofertas Live-in Nanny", keyword: "live in nanny", categoria: "live_in_nanny" },
 };
+
+/** "fr" → "Francia". Con el código suelto, "London, Middlesex, ca" parecía Londres y es Canadá. */
+function nombrePais(codigo: string): string {
+  try {
+    return new Intl.DisplayNames(["es"], { type: "region" }).of(String(codigo).toUpperCase()) ?? codigo;
+  } catch {
+    return codigo;
+  }
+}
+
+/** "€12.31 - 12.67 per hour" → "€12.31 - 12.67 /hora"; "31200 - 31200" → "31200". */
+function salarioLegible(salario: string): string {
+  let t = salario
+    .replace(/\s*per\s+hour\b/i, " /hora").replace(/\s*per\s+month\b/i, " /mes")
+    .replace(/\s*per\s+(year|annum)\b/i, " /año").replace(/\s*per\s+week\b/i, " /semana");
+  t = t.replace(/^([^\d]*)([\d.,]+)\s*-\s*\2\b/, "$1$2");
+  return t.length > 28 ? t.slice(0, 28) + "…" : t;
+}
 
 export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
   const router = useRouter();
@@ -161,7 +181,7 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
         <div>
           <h2 className="text-xl font-bold text-[#f1f5f9] flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-[#22c55e]" />
-            {labels.titulo} — {total} disponibles
+            {labels.titulo}: {total}
           </h2>
           <p className="text-sm text-[#94a3b8] mt-1">
             {stats ? (
@@ -203,14 +223,14 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
                     {o.salary && o.salary !== "Ver en oferta" && (
                       <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
                         <Banknote className="w-3 h-3 inline mr-0.5" />
-                        {o.salary.length > 25 ? o.salary.slice(0, 25) + "…" : o.salary}
+                        {salarioLegible(o.salary)}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[#64748b]">
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
-                      {o.city && o.city !== "Ver en oferta" ? `${o.city}, ` : ""}{o.country}
+                      {o.city && o.city !== "Ver en oferta" ? `${o.city}, ` : ""}{nombrePais(o.country)}
                     </span>
                     <span className="text-[#94a3b8]">{o.company}</span>
                   </div>

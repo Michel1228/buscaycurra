@@ -12,39 +12,13 @@
  * se invente una academia.
  */
 import { etiquetaPlazas, fichasDePlaza, normalizarTitulo } from "@/lib/cursos/plazas/emparejar";
-import { PROVINCIAS, nombreProvincia } from "@/lib/cursos/plazas/provincias";
+import { nombreProvincia } from "@/lib/cursos/plazas/provincias";
 import { tipoPorSlug } from "@/lib/cursos/tipos";
 
-/** Ciudades que la gente nombra en vez de la provincia. */
-const CIUDADES: Record<string, string> = {
-  bilbao: "48", barakaldo: "48", getxo: "48",
-  donostia: "20", "san sebastian": "20", irun: "20", eibar: "20",
-  vitoria: "01", gasteiz: "01",
-  pamplona: "31", iruna: "31", tudela: "31",
-  cartagena: "30", lorca: "30", "molina de segura": "30",
-  "l'hospitalet": "08", hospitalet: "08", badalona: "08", terrassa: "08", sabadell: "08", mataro: "08",
-  reus: "43", tortosa: "43", lerida: "25", gerona: "17",
-  // Capitales de comunidades sin datos: se reconocen para poder decir que ahí
-  // no tenemos plazas y dónde mirar, en vez de no contestar nada.
-  sevilla: "41", malaga: "29", valencia: "46", alicante: "03", zaragoza: "50",
-  valladolid: "47", vigo: "36", gijon: "33", oviedo: "33", santander: "39",
-  palma: "07", granada: "18", cordoba: "14", almeria: "04", logrono: "26",
-};
-
-/** Código INE de la provincia nombrada en el texto, o null. */
-export function provinciaEnTexto(texto: string): string | null {
-  const t = ` ${normalizarTitulo(texto).replace(/[^a-z0-9' ]/g, " ")} `;
-  const candidatos: [string, string][] = [
-    ...Object.entries(CIUDADES),
-    ...Object.entries(PROVINCIAS).map(([cod, nombre]) => [normalizarTitulo(nombre), cod] as [string, string]),
-  ];
-  // Los nombres más largos primero: "molina de segura" antes que "murcia".
-  candidatos.sort((a, b) => b[0].length - a[0].length);
-  for (const [nombre, cod] of candidatos) {
-    if (t.includes(` ${nombre} `)) return cod;
-  }
-  return null;
-}
+// provinciaEnTexto vive en lib/cursos/plazas/provincias.ts: el buscador de plazas
+// la usa también en el navegador, y este fichero arrastra la base de datos.
+import { provinciaEnTexto } from "@/lib/cursos/plazas/provincias";
+export { provinciaEnTexto };
 
 /** Ficha que se pide en el mensaje (la primera que encaje), o null. */
 export function fichaEnTexto(texto: string): string | null {

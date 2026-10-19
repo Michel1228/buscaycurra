@@ -12,6 +12,15 @@ import {
   PAISES_AU_PAIR,
 } from "@/lib/au-pair";
 import { NACIONALIDADES, ESTATUS_RESIDENCIA } from "@/lib/au-pair-legal-data";
+
+/** "ES" → "España". La lista de nacionalidades trae el gentilicio ("Española"). */
+function nombrePaisEs(codigo: string): string {
+  try {
+    return new Intl.DisplayNames(["es"], { type: "region" }).of(codigo) ?? codigo;
+  } catch {
+    return codigo;
+  }
+}
 import { PAISES } from "@/lib/paises";
 import { descargarCVComoPDF } from "@/lib/cv-generator/descargar-pdf";
 import AuPairPlantilla from "@/components/AuPairPlantilla";
@@ -685,7 +694,9 @@ export default function AuPairProfilePage() {
               />
             </div>
             <p className="text-[9px] text-[#22c55e] mt-1">
-              {auPairStats.disponibles} disponible{auPairStats.disponibles !== 1 ? "s" : ""} hoy — ¡vuelve mañana!
+              {auPairStats.disponibles > 0
+                ? `Te quedan ${auPairStats.disponibles} envío${auPairStats.disponibles !== 1 ? "s" : ""} hoy`
+                : "Has llegado al límite de hoy: vuelve mañana"}
             </p>
           </div>
         )}
@@ -827,7 +838,7 @@ export default function AuPairProfilePage() {
                 className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 {NACIONALIDADES.map((n) => (
-                  <option key={n.code} value={n.code}>{n.bandera} {n.nombre} ({n.code})</option>
+                  <option key={n.code} value={n.code}>{n.bandera} {n.nombre}</option>
                 ))}
               </select>
             </div>
@@ -839,7 +850,7 @@ export default function AuPairProfilePage() {
                 className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 {NACIONALIDADES.map((n) => (
-                  <option key={n.code} value={n.code}>{n.bandera} {n.nombre} ({n.code})</option>
+                  <option key={n.code} value={n.code}>{n.bandera} {nombrePaisEs(n.code)}</option>
                 ))}
               </select>
             </div>
@@ -960,18 +971,6 @@ export default function AuPairProfilePage() {
                 <span className="text-sm text-[#94a3b8] peer-checked:text-[#e2e8f0]">{item.label}</span>
               </label>
             ))}
-            <label className="flex items-center gap-3 bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 cursor-pointer hover:border-[#ef4444]/30 transition-colors">
-              <input
-                type="checkbox"
-                checked={fumador}
-                onChange={(e) => setFumador(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${fumador ? "bg-[#ef4444] border-[#ef4444]" : "border-[#2d3142]"}`}>
-                {fumador && <Check size={12} strokeWidth={3} />}
-              </div>
-              <span className={`text-sm ${fumador ? "text-[#ef4444]" : "text-[#94a3b8]"}`}>Fumador/a</span>
-            </label>
           </div>
         </div>
 
@@ -1012,7 +1011,7 @@ export default function AuPairProfilePage() {
             <Camera size={13} strokeWidth={1.8} /> Fotos <span className="text-[10px] text-[#64748b] font-normal">({photos.length}/{MAX_FOTOS})</span>
           </h3>
           <p className="text-xs text-[#64748b] mb-4">
-            Las familias quieren verte. Sube fotos tuyas, con niños, haciendo actividades.
+            Las familias quieren verte. Sube fotos tuyas haciendo actividades; si salen niños, solo con permiso de sus padres.
             La primera foto será tu foto de portada.
           </p>
 
@@ -1190,7 +1189,7 @@ export default function AuPairProfilePage() {
           />
 
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {["Añade anécdotas personales", "Sube fotos con niños", "Sé auténtica, no genérica", "Menciona por qué ese país"].map(tip => (
+            {["Añade anécdotas personales", "Sube fotos haciendo actividades", "Sé auténtica, no genérica", "Menciona por qué ese país"].map(tip => (
               <span key={tip} className="text-[9px] px-2 py-1 rounded-full bg-[#252839] text-[#94a3b8] border border-[#2d3142]">{tip}</span>
             ))}
           </div>

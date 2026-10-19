@@ -318,14 +318,15 @@ export default function EmigrarPage() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 py-2 sm:py-2.5 rounded-lg font-medium transition-all flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5"
               style={{
                 background: tab === t.id ? "rgba(34,197,94,0.12)" : "transparent",
                 color: tab === t.id ? "#22c55e" : "#94a3b8",
               }}
             >
               <t.Icon size={15} strokeWidth={1.8} />
-              <span className="hidden sm:inline">{t.label}</span>
+              {/* El nombre también en el móvil: solo con iconos no se sabía qué era cada pestaña. */}
+              <span className="text-[11px] sm:text-sm">{t.label}</span>
             </button>
           ))}
         </div>
@@ -362,6 +363,9 @@ export default function EmigrarPage() {
         <h2 className="text-lg font-semibold mb-4 text-center">
           ¿Listo para buscar trabajo en {pais.nombre}? {pais.bandera}
         </h2>
+        <p className="text-sm text-center text-[#94a3b8] -mt-2 mb-4">
+          Allí las ofertas se escriben en su idioma. Busca con estas palabras:
+        </p>
         <div className="flex flex-wrap gap-3 justify-center">
           {pais.keywordsLaborales.slice(0, 6).map((kw) => (
             <Link
@@ -369,7 +373,7 @@ export default function EmigrarPage() {
               href={`/app/buscar?keyword=${encodeURIComponent(kw)}&pais=${paisCode}`}
               className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-full px-4 py-2 text-sm text-[#94a3b8] transition-colors"
             >
-              {kw} en {pais.nombre}
+              {kw}
             </Link>
           ))}
           <Link

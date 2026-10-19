@@ -83,7 +83,7 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
             />
           </div>
           <span className={textSize + " w-14 text-right flex-shrink-0"} style={{ color: "#64748b" }}>
-            {usage.envios.remainingDia}/{usage.envios.maxDia}
+            {usage.envios.remainingDia} quedan
           </span>
         </div>
       )}

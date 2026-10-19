@@ -10,7 +10,7 @@ import { Users, Mail, Rocket, Trophy } from "lucide-react";
 
 const COMPARATIVA = [
   { aspecto: "Coste", buscaycurra: "2,99 €/mes", infojobs: "Gratis... con publicidad" },
-  { aspecto: "Tu CV vs otros", buscaycurra: "Personalizado con IA", infojobs: "Uno entre 2.000" },
+  { aspecto: "Tu CV vs otros", buscaycurra: "Personalizado con IA", infojobs: "El mismo para todas" },
   { aspecto: "Contacto empresa", buscaycurra: "Directo", infojobs: "Cola de espera" },
   { aspecto: "Asistente IA", buscaycurra: "Guzzi 24/7", infojobs: "Ninguno" },
   { aspecto: "Envío masivo", buscaycurra: "Automatizado", infojobs: "Manual" },
@@ -95,10 +95,10 @@ export default function GusiPage() {
           </p>
           <div className="space-y-2">
             {[
-              "CV propio, no uno entre 2.000",
+              "Tu CV, directo a la empresa",
               "Guzzi prepara tus entrevistas",
               "Envío masivo en segundos",
-              "Contrato directo con la empresa",
+              "Contacto directo con la empresa",
               "Sin colas, sin esperas",
             ].map(item => (
               <div key={item} className="flex items-start gap-2">

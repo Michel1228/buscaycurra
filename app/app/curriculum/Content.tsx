@@ -1,5 +1,6 @@
 "use client";
 
+import SelectorIdiomas from "@/components/cv/SelectorIdiomas";
 import Link from "next/link";
 
 /**
@@ -811,6 +812,28 @@ export default function CurriculumPage() {
   const pct = Math.round((doneCount / completitudChecks.length) * 100);
   const completitudColor = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
 
+  // Quien llega con su CV de siempre empieza por aquí: si el CV está casi vacío,
+  // subirlo va lo primero, antes de plantillas y colores.
+  const bloqueSubirPDF = (
+    <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+        style={{ background: "rgba(59,130,246,0.15)" }}>
+        📎
+      </div>
+      <div className="flex-1">
+        <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¿Ya tienes un CV en PDF?</h3>
+        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Súbelo y extraigo los datos automáticamente</p>
+      </div>
+      <label className={`shrink-0 px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
+        style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }}>
+        {subiendoPDF ? "Procesando…" : "📎 Subir PDF"}
+        <input type="file" accept="application/pdf,.pdf" className="hidden"
+          onChange={e => e.target.files?.[0] && subirPDF(e.target.files[0])}
+          disabled={subiendoPDF} />
+      </label>
+    </div>
+  );
+
   // ── HTML para la preview (traducido, mejorado con IA o en vivo) ──
   const previewHTML = traducidoHTML || mejoradoHTML || livePreviewHTML;
   const nombreIdiomaTraducido = traducido ? (IDIOMAS_CV.find(i => i.codigo === traducido.idioma)?.nombre ?? "") : "";
@@ -938,9 +961,9 @@ export default function CurriculumPage() {
         <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
-              Completitud del CV
+              Tu CV está al {pct} %
             </p>
-            <span className="text-sm font-bold" style={{ color: completitudColor }}>{pct}%</span>
+            <span className="text-sm font-bold" style={{ color: completitudColor }}>{pct === 100 ? "Completo" : `${pct}%`}</span>
           </div>
           <div className="h-2 rounded-full overflow-hidden mb-3" style={{ background: "#252836" }}>
             <div className="h-full rounded-full transition-all duration-500"
@@ -1003,6 +1026,8 @@ export default function CurriculumPage() {
         <div className="flex flex-col xl:flex-row gap-6">
           {/* ── COLUMNA IZQUIERDA: Formulario ── */}
           <div className="cv-form-inputs flex-1 min-w-0 xl:max-w-[50%] space-y-5">
+            {pct < 50 && bloqueSubirPDF}
+
             {/* Selector de plantilla */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
               <div className="flex items-center gap-2 mb-3">
@@ -1142,24 +1167,8 @@ export default function CurriculumPage() {
               )}
             </div>
 
-            {/* Subir PDF */}
-            <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                style={{ background: "rgba(59,130,246,0.15)" }}>
-                📎
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¿Ya tienes un CV en PDF?</h3>
-                <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Súbelo y extraigo los datos automáticamente</p>
-              </div>
-              <label className={`shrink-0 px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
-                style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }}>
-                {subiendoPDF ? "Procesando…" : "📎 Subir PDF"}
-                <input type="file" accept="application/pdf,.pdf" className="hidden"
-                  onChange={e => e.target.files?.[0] && subirPDF(e.target.files[0])}
-                  disabled={subiendoPDF} />
-              </label>
-            </div>
+            {/* Subir PDF: aquí si el CV ya está avanzado; si no, arriba del todo */}
+            {pct >= 50 && bloqueSubirPDF}
 
             {/* Foto profesional */}
             <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
@@ -1209,21 +1218,21 @@ export default function CurriculumPage() {
 
               <div className="p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}>
                 <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>Truco: Foto profesional gratis con IA</p>
-                <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia el prompt y pégalo en ChatGPT con tu foto:</p>
+                <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia este texto y pégalo en ChatGPT junto con tu foto:</p>
                 <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
-                  Utiliza personajes pero en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro
+                  Convierte esta foto en una foto de carnet para un currículum: de los hombros hacia arriba, fondo liso y claro, camisa blanca y buena luz. Que se me reconozca: no cambies mi cara.
                 </div>
                 <div className="mt-2 flex gap-2">
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("Utiliza personajes pero en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro");
+                      navigator.clipboard.writeText("Convierte esta foto en una foto de carnet para un currículum: de los hombros hacia arriba, fondo liso y claro, camisa blanca y buena luz. Que se me reconozca: no cambies mi cara.");
                     }}
                     className="px-3 py-1 text-[10px] font-semibold rounded-md" style={{ background: "#22c55e", color: "#fff" }}>
-                    1. Copiar prompt
+                    1. Copiar el texto
                   </button>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("Utiliza personajes pero en tamaño carnet desde los hombros ponme la camisa blanca y adaptada para un currículum que sea fiel a las características de rostro");
+                      navigator.clipboard.writeText("Convierte esta foto en una foto de carnet para un currículum: de los hombros hacia arriba, fondo liso y claro, camisa blanca y buena luz. Que se me reconozca: no cambies mi cara.");
                       window.open("https://chatgpt.com", "_blank");
                     }}
                     className="px-3 py-1 text-[10px] font-semibold rounded-md"
@@ -1241,31 +1250,43 @@ export default function CurriculumPage() {
                 <InfoTooltip text="Tu nombre, teléfono, email y ciudad aparecen en la cabecera del CV. El título profesional resume tu perfil (ej: 'Camarero con 5 años de experiencia')." />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="sr-only" htmlFor="cv-nombre">Nombre</label>
-                <input id="cv-nombre" placeholder="Nombre" value={form.nombre} onChange={e => f("nombre", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <label className="sr-only" htmlFor="cv-apellidos">Apellidos</label>
-                <input id="cv-apellidos" placeholder="Apellidos" value={form.apellidos} onChange={e => f("apellidos", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <label className="sr-only" htmlFor="cv-subtitulo">Título profesional</label>
-                <input id="cv-subtitulo" placeholder="Título profesional" value={form.subtitulo} onChange={e => f("subtitulo", e.target.value)}
-                  className="sm:col-span-2 w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <label className="sr-only" htmlFor="cv-telefono">Teléfono</label>
-                <input id="cv-telefono" placeholder="Teléfono" value={form.telefono} onChange={e => f("telefono", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <label className="sr-only" htmlFor="cv-email">Email</label>
-                <input id="cv-email" placeholder="Email" value={form.email} onChange={e => f("email", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <label className="sr-only" htmlFor="cv-ciudad">Ciudad</label>
-                <input id="cv-ciudad" placeholder="Ciudad" value={form.ciudad} onChange={e => f("ciudad", e.target.value)}
-                  autoComplete="off"
-                  className="sm:col-span-2 w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <div>
+                  <label htmlFor="cv-nombre" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Nombre</label>
+                  <input id="cv-nombre" placeholder="Nombre" value={form.nombre} onChange={e => f("nombre", e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                </div>
+                <div>
+                  <label htmlFor="cv-apellidos" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Apellidos</label>
+                  <input id="cv-apellidos" placeholder="Apellidos" value={form.apellidos} onChange={e => f("apellidos", e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="cv-subtitulo" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Tu oficio o el puesto que buscas</label>
+                  <input id="cv-subtitulo" placeholder="Título profesional" value={form.subtitulo} onChange={e => f("subtitulo", e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                </div>
+                <div>
+                  <label htmlFor="cv-telefono" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Teléfono</label>
+                  <input id="cv-telefono" placeholder="Teléfono" value={form.telefono} onChange={e => f("telefono", e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                </div>
+                <div>
+                  <label htmlFor="cv-email" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Correo electrónico</label>
+                  <input id="cv-email" placeholder="Email" value={form.email} onChange={e => f("email", e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="cv-ciudad" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Ciudad</label>
+                  <input id="cv-ciudad" placeholder="Ciudad" value={form.ciudad} onChange={e => f("ciudad", e.target.value)}
+                    autoComplete="off"
+                    className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                </div>
               </div>
             </div>
 
@@ -1284,25 +1305,35 @@ export default function CurriculumPage() {
                         className="text-[11px]" style={{ color: "#ef4444" }}>Eliminar</button>
                     )}
                   </div>
-                  <label className="sr-only" htmlFor={`cv-exp-fechas-${i}`}>Fechas</label>
-                  <input id={`cv-exp-fechas-${i}`} placeholder="Fechas (ej: 2020 - 2023)" value={exp.fechas}
-                    onChange={e => updExp(i, "fechas", e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="sr-only" htmlFor={`cv-exp-puesto-${i}`}>Puesto</label>
-                    <input id={`cv-exp-puesto-${i}`} placeholder="Puesto" value={exp.puesto} onChange={e => updExp(i, "puesto", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                    <label className="sr-only" htmlFor={`cv-exp-empresa-${i}`}>Empresa</label>
-                    <input id={`cv-exp-empresa-${i}`} placeholder="Empresa" value={exp.empresa} onChange={e => updExp(i, "empresa", e.target.value)}
+                  <div>
+                    <label htmlFor={`cv-exp-fechas-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Fechas</label>
+                    <input id={`cv-exp-fechas-${i}`} placeholder="Fechas (ej: 2020 - 2023)" value={exp.fechas}
+                      onChange={e => updExp(i, "fechas", e.target.value)}
                       className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
                   </div>
-                  <label className="sr-only" htmlFor={`cv-exp-ubicacion-${i}`}>Ubicación</label>
-                  <input id={`cv-exp-ubicacion-${i}`} placeholder="Ubicación" value={exp.ubicacion} onChange={e => updExp(i, "ubicacion", e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                  <label className="sr-only" htmlFor={`cv-exp-descripcion-${i}`}>Descripción</label>
-                  <textarea id={`cv-exp-descripcion-${i}`} placeholder="Descripción de tareas (una por línea)" value={exp.descripcion} rows={3}
-                    onChange={e => updExp(i, "descripcion", e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg text-sm resize-none" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label htmlFor={`cv-exp-puesto-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Puesto</label>
+                      <input id={`cv-exp-puesto-${i}`} placeholder="Puesto" value={exp.puesto} onChange={e => updExp(i, "puesto", e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    </div>
+                    <div>
+                      <label htmlFor={`cv-exp-empresa-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Empresa</label>
+                      <input id={`cv-exp-empresa-${i}`} placeholder="Empresa" value={exp.empresa} onChange={e => updExp(i, "empresa", e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor={`cv-exp-ubicacion-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Ciudad</label>
+                    <input id={`cv-exp-ubicacion-${i}`} placeholder="Ubicación" value={exp.ubicacion} onChange={e => updExp(i, "ubicacion", e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  </div>
+                  <div>
+                    <label htmlFor={`cv-exp-descripcion-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Qué hacías (una tarea por línea)</label>
+                    <textarea id={`cv-exp-descripcion-${i}`} placeholder="Descripción de tareas (una por línea)" value={exp.descripcion} rows={3}
+                      onChange={e => updExp(i, "descripcion", e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg text-sm resize-none" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  </div>
                 </div>
               ))}
               <button onClick={() => setForm(p => ({ ...p, experiencia: [...p.experiencia, { fechas: "", puesto: "", empresa: "", ubicacion: "", descripcion: "" }] }))}
@@ -1324,17 +1355,23 @@ export default function CurriculumPage() {
                         className="text-[11px]" style={{ color: "#ef4444" }}>Eliminar</button>
                     )}
                   </div>
-                  <label className="sr-only" htmlFor={`cv-edu-titulo-${i}`}>Título / Estudios</label>
-                  <input id={`cv-edu-titulo-${i}`} placeholder="Título / Estudios" value={edu.titulo}
-                    onChange={e => updEdu(i, "titulo", e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  <div>
+                    <label htmlFor={`cv-edu-titulo-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Estudios o curso</label>
+                    <input id={`cv-edu-titulo-${i}`} placeholder="Título / Estudios" value={edu.titulo}
+                      onChange={e => updEdu(i, "titulo", e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <label className="sr-only" htmlFor={`cv-edu-centro-${i}`}>Centro</label>
-                    <input id={`cv-edu-centro-${i}`} placeholder="Centro" value={edu.centro} onChange={e => updEdu(i, "centro", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                    <label className="sr-only" htmlFor={`cv-edu-ubicacion-${i}`}>Ubicación</label>
-                    <input id={`cv-edu-ubicacion-${i}`} placeholder="Ubicación" value={edu.ubicacion} onChange={e => updEdu(i, "ubicacion", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    <div>
+                      <label htmlFor={`cv-edu-centro-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Centro</label>
+                      <input id={`cv-edu-centro-${i}`} placeholder="Centro" value={edu.centro} onChange={e => updEdu(i, "centro", e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    </div>
+                    <div>
+                      <label htmlFor={`cv-edu-ubicacion-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Ciudad</label>
+                      <input id={`cv-edu-ubicacion-${i}`} placeholder="Ubicación" value={edu.ubicacion} onChange={e => updEdu(i, "ubicacion", e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1349,21 +1386,19 @@ export default function CurriculumPage() {
                   <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Habilidades</h2>
                   <InfoTooltip text="Tus puntos fuertes separados por comas. Ej: Trabajo en equipo, Excel, Liderazgo, Resolución de problemas." position="right" />
                 </div>
-                <label className="sr-only" htmlFor="cv-aptitudes">Habilidades</label>
-                <input id="cv-aptitudes" placeholder="Separadas por comas" value={form.aptitudes}
-                  onChange={e => f("aptitudes", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <div>
+                  <label htmlFor="cv-aptitudes" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Lo que sabes hacer (separado por comas)</label>
+                  <input id="cv-aptitudes" placeholder="Separadas por comas" value={form.aptitudes}
+                    onChange={e => f("aptitudes", e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                </div>
               </div>
               <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
                 <div className="flex items-center gap-2 mb-3">
                   <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Idiomas</h2>
-                  <InfoTooltip text="Escribe cada idioma con un nivel del 0 al 100. Ej: Español:95, Inglés:60, Francés:40. El número controla la barra de progreso en el CV." position="left" />
+                  <InfoTooltip text="Cada idioma que hablas y con qué soltura. En el CV sale como una barra." position="left" />
                 </div>
-                <label className="sr-only" htmlFor="cv-idiomas">Idiomas</label>
-                <input id="cv-idiomas" placeholder="Español:95, Inglés:60, Francés:40" value={form.idiomas}
-                  onChange={e => f("idiomas", e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
-                <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>Formato: Idioma:nivel (0-100). Ej: Español:95, Inglés:60</p>
+                <SelectorIdiomas valor={form.idiomas} onChange={v => f("idiomas", v)} />
               </div>
             </div>
 
@@ -1373,10 +1408,12 @@ export default function CurriculumPage() {
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>📝 Perfil profesional (opcional)</h2>
                 <InfoTooltip text="2-3 frases que resumen quién eres como profesional. Si lo dejas vacío, la IA lo generará automáticamente a partir de tu experiencia." />
               </div>
-              <label className="sr-only" htmlFor="cv-perfil-profesional">Perfil profesional</label>
-              <textarea id="cv-perfil-profesional" placeholder="Breve descripción de ti como profesional... (la IA lo mejorará)"
-                value={form.perfilProfesional} onChange={e => f("perfilProfesional", e.target.value)} rows={3}
-                className="w-full px-4 py-2.5 rounded-lg text-sm resize-none" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+              <div>
+                <label htmlFor="cv-perfil-profesional" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Cuéntalo en dos o tres frases</label>
+                <textarea id="cv-perfil-profesional" placeholder="Breve descripción de ti como profesional... (la IA lo mejorará)"
+                  value={form.perfilProfesional} onChange={e => f("perfilProfesional", e.target.value)} rows={3}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm resize-none" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+              </div>
             </div>
           </div>
 

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import UsageCounter from "@/components/UsageCounter";
-import { Mail, Eye, MessageCircle, Clock, X, Ban, FileText, Briefcase, MapPin, Phone, Send } from "lucide-react";
+import { Mail, MailCheck, MailX, Eye, MessageCircle, Clock, X, Ban, FileText, Briefcase, MapPin, Phone, Send } from "lucide-react";
 import { formatLocalDate } from "@/lib/timezone";
 
 interface Envio {
@@ -25,6 +25,8 @@ interface Envio {
 function StatusIcon({ status, size = 24 }: { status: string; size?: number }) {
   switch (status) {
     case "enviado": return <Mail size={size} />;
+    case "entregado": return <MailCheck size={size} />;
+    case "rebotado": return <MailX size={size} />;
     case "visto": return <Eye size={size} />;
     case "respondido": return <MessageCircle size={size} />;
     case "pendiente": return <Clock size={size} />;
@@ -34,9 +36,25 @@ function StatusIcon({ status, size = 24 }: { status: string; size?: number }) {
   }
 }
 const STATUS_COLOR: Record<string, string> = {
-  enviado: "#22c55e", visto: "#a855f7", respondido: "#f59e0b",
-  pendiente: "#64748b", fallido: "#ef4444", cancelado: "#64748b",
+  enviado: "#22c55e", entregado: "#22c55e", visto: "#a855f7", respondido: "#f59e0b",
+  pendiente: "#64748b", fallido: "#ef4444", rebotado: "#ef4444", cancelado: "#64748b",
 };
+// "entregado" y "rebotado" los pone el aviso de entrega de Resend (017_cv_sends_entrega):
+// antes salían en minúscula, sin color y fuera de los filtros.
+const STATUS_TEXTO: Record<string, string> = {
+  pendiente: "Programado", enviado: "Enviado", entregado: "Entregado", visto: "Visto",
+  respondido: "Respondido", fallido: "Falló", rebotado: "No llegó", cancelado: "Cancelado",
+};
+/** Cada filtro y los estados que recoge: "Enviado" incluye los ya entregados. */
+const FILTROS: { id: string; estados: string[] }[] = [
+  { id: "todos", estados: [] },
+  { id: "pendiente", estados: ["pendiente"] },
+  { id: "enviado", estados: ["enviado", "entregado"] },
+  { id: "visto", estados: ["visto"] },
+  { id: "respondido", estados: ["respondido"] },
+  { id: "fallido", estados: ["fallido", "rebotado"] },
+];
+const textoEstado = (s: string) => STATUS_TEXTO[s] ?? s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function EnviosPage() {
   const router = useRouter();
@@ -83,8 +101,9 @@ export default function EnviosPage() {
     load();
   }, [router]);
 
-  const filtrados = filtro === "todos" ? envios : envios.filter(e => e.status === filtro);
-  const contadores = envios.reduce((acc, e) => ({ ...acc, [e.status]: (acc[e.status] || 0) + 1 }), {} as Record<string, number>);
+  const estadosDe = (f: string) => FILTROS.find(x => x.id === f)?.estados ?? [f];
+  const filtrados = filtro === "todos" ? envios : envios.filter(e => estadosDe(filtro).includes(e.status));
+  const contadores = Object.fromEntries(FILTROS.map(f => [f.id, envios.filter(e => estadosDe(f.id).includes(e.status)).length]));
 
   async function cancelarEnvio(id: string) {
     const { data: { session } } = await getSupabaseBrowser().auth.getSession();
@@ -113,7 +132,7 @@ export default function EnviosPage() {
   }
 
   async function eliminarTodos() {
-    if (!confirm("¿Eliminar todos los envíos de la lista?")) return;
+    if (!confirm("¿Vaciar la lista? Los CV ya enviados no se anulan: solo dejan de salir aquí.")) return;
     const { data: { session } } = await getSupabaseBrowser().auth.getSession();
     if (!session) return;
     const res = await fetch("/api/cv-sender/delete", {
@@ -137,14 +156,6 @@ export default function EnviosPage() {
               <Link href="/app/empresas" className="text-green-400 underline">Enviar nuevo CV →</Link>
             </p>
           </div>
-          {envios.length > 0 && (
-            <button
-              onClick={eliminarTodos}
-              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition hover:opacity-80"
-              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444" }}>
-              Limpiar todo
-            </button>
-          )}
         </div>
 
         {/* Contador de uso del plan */}
@@ -154,7 +165,7 @@ export default function EnviosPage() {
 
         {/* Filtros */}
         <div className="flex gap-2 flex-wrap mb-5">
-          {["todos", "pendiente", "enviado", "visto", "respondido", "fallido"].map(f => (
+          {FILTROS.map(({ id: f }) => (
             <button key={f} onClick={() => setFiltro(f)}
               className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition"
               style={{
@@ -163,8 +174,8 @@ export default function EnviosPage() {
                 border: `1px solid ${filtro === f ? "#22c55e" : "rgba(255,255,255,0.1)"}`,
               }}>
               <StatusIcon status={f} size={12} />
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-              {contadores[f] ? ` (${contadores[f]})` : ""}
+              {f === "todos" ? "Todos" : textoEstado(f)}
+              {f !== "todos" && contadores[f] ? ` (${contadores[f]})` : ""}
             </button>
           ))}
         </div>
@@ -197,8 +208,8 @@ export default function EnviosPage() {
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <span className="px-2 py-0.5 rounded-full text-xs font-bold"
-                    style={{ background: `${STATUS_COLOR[envio.status]}22`, color: STATUS_COLOR[envio.status] }}>
-                    {envio.status}
+                    style={{ background: `${STATUS_COLOR[envio.status] ?? "#94a3b8"}22`, color: STATUS_COLOR[envio.status] ?? "#94a3b8" }}>
+                    {textoEstado(envio.status)}
                   </span>
                   <div className="flex gap-1">
                     {envio.status === "pendiente" && (
@@ -218,6 +229,12 @@ export default function EnviosPage() {
                 </div>
               </div>
             ))}
+            {/* Vaciar la lista: abajo y discreto. Arriba, en rojo, era lo primero que se veía. */}
+            <div className="pt-4 text-center">
+              <button onClick={eliminarTodos} className="text-xs underline hover:opacity-80" style={{ color: "#64748b" }}>
+                Vaciar la lista de envíos
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -238,7 +255,7 @@ export default function EnviosPage() {
                 <div><span className="text-slate-400">Puesto:</span> <span className="text-white">{detalle.job_title}</span></div>
               )}
               <div><span className="text-slate-400">Email:</span> <span className="text-white">{detalle.company_email}</span></div>
-              <div><span className="text-slate-400">Estado:</span> <span className="font-semibold" style={{ color: STATUS_COLOR[detalle.status] }}>{detalle.status}</span></div>
+              <div><span className="text-slate-400">Estado:</span> <span className="font-semibold" style={{ color: STATUS_COLOR[detalle.status] }}>{textoEstado(detalle.status)}</span></div>
               <div><span className="text-slate-400">Fecha:</span> <span className="text-white">
                 {formatLocalDate(detalle.sent_at || detalle.created_at, "ES", { month: "long" })}
               </span></div>
