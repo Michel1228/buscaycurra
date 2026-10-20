@@ -7,7 +7,7 @@ import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
 import InfoTooltip from "@/components/InfoTooltip";
 import CountrySelector from "@/components/CountrySelector";
 import { paisDeCiudad } from "@/lib/guzzi/ciudades-pais";
-import { PAISES } from "@/lib/paises";
+import { PAISES, paisPorNombre } from "@/lib/paises";
 import { DATOS } from "@/lib/datos-reales";
 import { sectorDeOficio } from "@/lib/job-search/oficio-a-sector";
 import EmpresasDeLaZona from "@/components/EmpresasDeLaZona";
@@ -43,8 +43,15 @@ function BuscarPageInner() {
   const urlKeyword = searchParams.get("keyword") || searchParams.get("q") || "";
   const urlUbicacion = searchParams.get("location") || searchParams.get("ubicacion") || "";
   const urlCategoria = searchParams.get("categoria") || "";
+  // VIENE DE EMIGRAR (21 oct 2026): "Ver todas las ofertas en Australia" trae
+  // ?pais=AU. Se rellenaba el "¿Dónde?" con la ciudad del perfil (Tudela) con
+  // la bandera de Australia debajo, y se buscaba en Tudela. Ahora el "¿Dónde?"
+  // es el país del que vienes y se busca solo.
+  const urlPais = (searchParams.get("pais") || "").toUpperCase();
+  const paisDeFuera = urlPais && urlPais !== "ES" && PAISES[urlPais] ? urlPais : "";
+  const ubicacionInicial = urlUbicacion || (paisDeFuera ? PAISES[paisDeFuera].nombre : "");
   const [keyword, setKeyword] = useState(urlKeyword);
-  const [ubicacion, setUbicacion] = useState(urlUbicacion);
+  const [ubicacion, setUbicacion] = useState(ubicacionInicial);
   const [categoria] = useState(urlCategoria); // au_pair | live_in_nanny — viene del URL, no cambia
   const [geoDetected, setGeoDetected] = useState(false);
   const [jornada, setJornada] = useState("");
@@ -104,6 +111,17 @@ function BuscarPageInner() {
     window.dispatchEvent(new CustomEvent("bc-pais-change", { detail: codigo }));
   }
 
+  /** La bandera elegida a mano. Si el "¿Dónde?" era un país o la ciudad del
+   *  perfil puesta sola, cambia con ella: Australia arriba y Tudela abajo no. */
+  function elegirPaisAMano(codigo: string) {
+    cambiarPais(codigo);
+    if (!ubicacion.trim() || geoDetected || paisPorNombre(ubicacion)) {
+      setUbicacion(codigo === "ES" ? "" : PAISES[codigo]?.nombre || "");
+      setGeoDetected(false);
+      setAvisoPais("");
+    }
+  }
+
   // Ref para que el auto-fill de ciudad solo ocurra una vez (evita que el campo se reponga al borrarlo)
   const locationFetched = useRef(false);
   const mountedRef = useRef(true);
@@ -118,6 +136,8 @@ function BuscarPageInner() {
       if (locationFetched.current || searchParams.has("location") || searchParams.has("ubicacion")) return;
       locationFetched.current = true;
 
+      // Viene a mirar otro país: su ciudad de aquí no pinta nada allí.
+      if (paisDeFuera) return;
       const { data: perfil } = await getSupabaseBrowser().from("profiles")
         .select("ciudad").eq("id", user.id).single();
       if (perfil?.ciudad) {
@@ -138,22 +158,19 @@ function BuscarPageInner() {
   }, [router, searchParams]);
 
   // Auto-disparar búsqueda al entrar desde una página SEO con params pre-rellenados
+  // (o desde Emigrar con el país). Los valores van en la llamada: con el submit
+  // del formulario se buscaba con lo que hubiera en los campos en ese momento,
+  // y si la ciudad del perfil llegaba antes, se buscaba en Tudela.
   const autoSearched = useRef(false);
   useEffect(() => {
     if (autoSearched.current) return;
-    if (urlKeyword || urlUbicacion) {
+    if (urlKeyword || ubicacionInicial) {
       autoSearched.current = true;
       // Pequeño delay para que el usuario esté autenticado y el DOM listo
-      const t = setTimeout(() => {
-        setKeyword(urlKeyword);
-        setUbicacion(urlUbicacion);
-        // Disparamos submit manualmente
-        const form = document.querySelector('form') as HTMLFormElement;
-        if (form) form.requestSubmit();
-      }, 300);
+      const t = setTimeout(() => { void buscar(undefined, { keyword: urlKeyword, ubicacion: ubicacionInicial }); }, 300);
       return () => clearTimeout(t);
     }
-  }, [urlKeyword, urlUbicacion]);
+  }, [urlKeyword, ubicacionInicial]);
 
   async function buscarJoobleCliente(kw: string, loc: string): Promise<PropiedadesJobCard[]> {
     // Solo buscar en Jooble si hay keyword, no para búsquedas solo por ciudad
@@ -234,12 +251,19 @@ function BuscarPageInner() {
     "new york", "los angeles", "chicago", "miami", "toronto", "sydney", "melbourne"
   ]);
   
-  async function buscar(e?: React.FormEvent) {
+  async function buscar(e?: React.FormEvent, valores?: { keyword: string; ubicacion: string }) {
     if (e) e.preventDefault();
     
     // Extraer ciudad del keyword si el usuario escribió "trabajo ciudad"
-    let finalKeyword = keyword.trim();
-    let finalUbicacion = ubicacion.trim();
+    let finalKeyword = (valores?.keyword ?? keyword).trim();
+    let finalUbicacion = (valores?.ubicacion ?? ubicacion).trim();
+    // Solo un país en "¿Qué?" ("Japón"): es el sitio, no el trabajo.
+    if (finalKeyword && !finalUbicacion && paisPorNombre(finalKeyword)) {
+      finalUbicacion = PAISES[paisPorNombre(finalKeyword)!].nombre;
+      finalKeyword = "";
+      setKeyword("");
+      setUbicacion(finalUbicacion);
+    }
     
     if (finalKeyword && !finalUbicacion) {
       const words = finalKeyword.split(/\s+/);
@@ -283,7 +307,12 @@ function BuscarPageInner() {
     // país, se cambia sola y se dice. Nunca se bloquea la búsqueda por esto.
     let paisParaBuscar = paisSeleccionado;
     setAvisoPais("");
-    if (finalUbicacion) {
+    // Un país entero en "¿Dónde?": la bandera pasa a ese país (la API busca en todo él).
+    const paisEscrito = paisPorNombre(finalUbicacion);
+    if (paisEscrito) {
+      paisParaBuscar = paisEscrito;
+      if (paisEscrito !== paisSeleccionado) cambiarPais(paisEscrito);
+    } else if (finalUbicacion) {
       const paisDeLaCiudad = paisDeCiudad(finalUbicacion);
       if (paisDeLaCiudad && paisDeLaCiudad !== paisSeleccionado) {
         paisParaBuscar = paisDeLaCiudad;
@@ -313,8 +342,9 @@ function BuscarPageInner() {
       if (salarioMin) params.set("salarioMin", salarioMin);
       if (salarioMax) params.set("salarioMax", salarioMax);
 
-      // Saltarse Jooble si hay categoría — Jooble no filtra por au_pair/live_in_nanny
-      const jooblePromise = categoria ? Promise.resolve([]) : buscarJoobleCliente(keyword.trim(), ubicacion.trim());
+      // Saltarse Jooble si hay categoría — Jooble no filtra por au_pair/live_in_nanny.
+      // Y fuera de España también: es el Jooble español y mezclaba ofertas de aquí.
+      const jooblePromise = categoria || paisParaBuscar !== "ES" ? Promise.resolve([]) : buscarJoobleCliente(finalKeyword, finalUbicacion);
 
       const [serverRes, joobleRes] = await Promise.allSettled([
         fetch(`/api/jobs/search?${params.toString()}`, { signal: AbortSignal.timeout(15000) })
@@ -406,6 +436,8 @@ function BuscarPageInner() {
 
 
   const esEnTiempoReal = fuenteResultados.startsWith("live-api");
+  // En un país grande sin palabra ni ciudad la API cuenta hasta 10.000 y para.
+  const totalEsMinimo = fuenteResultados === "database-pais";
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
@@ -465,7 +497,7 @@ function BuscarPageInner() {
               no había forma de saber por qué. */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-[11px]" style={{ color: "#94a3b8" }}>Buscando en:</span>
-            <CountrySelector paisActual={paisSeleccionado} onCambiarPais={cambiarPais} variant="buscar" />
+            <CountrySelector paisActual={paisSeleccionado} onCambiarPais={elegirPaisAMano} variant="buscar" />
             <span className="text-[11px] opacity-75">· Si escribes una ciudad de otro país, lo cambio yo.</span>
           </div>
 
@@ -664,7 +696,7 @@ function BuscarPageInner() {
                 <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <p className="text-xs" style={{ color: "#64748b" }}>
-                      {esEnTiempoReal ? `${ofertas.length} ofertas` : `${ofertas.length} de ${(totalResultados > ofertas.length ? totalResultados : ofertas.length).toLocaleString("es-ES")} ofertas`}
+                      {esEnTiempoReal ? `${ofertas.length} ofertas` : `${ofertas.length} de ${totalEsMinimo ? "más de " : ""}${(totalResultados > ofertas.length ? totalResultados : ofertas.length).toLocaleString("es-ES")} ofertas`}
                     </p>
                     {esEnTiempoReal && <p className="text-[10px]" style={{ color: "#6b7280" }}>Resultados en tiempo real</p>}
                   </div>
@@ -698,7 +730,7 @@ function BuscarPageInner() {
                       </div>
                     )}
                     <p className="text-[10px]" style={{ color: "#6b7280" }}>
-                      Mostrando {ofertas.length.toLocaleString("es-ES")} de {totalResultados.toLocaleString("es-ES")} ofertas
+                      Mostrando {ofertas.length.toLocaleString("es-ES")} de {totalEsMinimo ? "más de " : ""}{totalResultados.toLocaleString("es-ES")} ofertas
                     </p>
                   </div>
                 )}
@@ -710,7 +742,7 @@ function BuscarPageInner() {
                 por tu cuenta que si buscas de camarero te interesan los bares.
                 Solo aparece si el oficio encaja en un sector con negocios de
                 calle: a un programador no se le ensenan bares. */}
-            {!cargando && buscado && ubicacion && keyword && sectorDeOficio(keyword) && (
+            {!cargando && buscado && ubicacion && !paisPorNombre(ubicacion) && keyword && sectorDeOficio(keyword) && (
               <EmpresasDeLaZona
                 sector={sectorDeOficio(keyword) as string}
                 ciudad={ubicacion}

@@ -4267,6 +4267,47 @@ test("confirmar el correo: lo que falta en grande, erratas avisadas y un recorda
   }
 });
 
+// VIENE DE EMIGRAR (21 oct 2026). "Ver todas las ofertas en Australia" ponía
+// Tudela (la ciudad del perfil) en el "¿Dónde?" con la bandera de Australia
+// debajo; "Japón" en el "¿Dónde?" daba camareros de Sevilla (se buscaba como
+// ciudad y se caía a las APIs externas, que son de España); todo Estados Unidos
+// tardaba 16 s y salían ofertas españolas. Y "Lo que he enviado" parpadeaba:
+// cada 30 s la rueda tapaba la lista entera.
+test("emigrar → ofertas: el país del que vienes, nunca España por detrás, y envíos sin parpadeo", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-pais-entrada.ts", salida = ".sello-pais.cjs";
+  try {
+    writeFileSync(entrada, 'export { paisPorNombre } from "./lib/paises";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const buscar = leerFuente("app/app/buscar/page.tsx");
+    const api = leerFuente("app/api/jobs/search/route.ts");
+    const envios = leerFuente("components/CVSenderDashboard.tsx");
+    const checks = {
+      "reconoce el país escrito como sea": m.paisPorNombre("Japón") === "JP" && m.paisPorNombre("japon") === "JP" && m.paisPorNombre("Inglaterra") === "UK"
+        && m.paisPorNombre("EE.UU.") === "US" && m.paisPorNombre("Australia") === "AU",
+      "y una ciudad no es un país": m.paisPorNombre("Tudela") === null && m.paisPorNombre("Paris") === null && m.paisPorNombre("") === null,
+      "viniendo de otro país no se pone la ciudad del perfil": buscar.includes("if (paisDeFuera) return;") && buscar.includes("useState(ubicacionInicial)"),
+      "y se busca solo con los valores en la llamada, no con el formulario": buscar.includes("buscar(undefined, { keyword: urlKeyword, ubicacion: ubicacionInicial })") && !buscar.includes("form.requestSubmit()"),
+      "la bandera a mano arrastra el «¿Dónde?»": buscar.includes("onCambiarPais={elegirPaisAMano}"),
+      "el Jooble español solo con España": buscar.includes('paisParaBuscar !== "ES" ? Promise.resolve([])'),
+      "la API busca en todo el país escrito": api.includes("const paisEscrito = paisPorNombre(location);"),
+      "fuera de España nunca las APIs españolas": (api.match(/if \(!externasValen\)/g) || []).length === 2,
+      "todo un país grande, por fecha y con tope": api.includes('ORDER BY "createdAt" DESC') && api.includes("masDe: true"),
+      "lo enviado se refresca sin tapar la lista": envios.includes("setInterval(() => void loadData(true), 30_000)") && envios.includes("if (!enSegundoPlano) { setLoading(true); setError(null); }"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

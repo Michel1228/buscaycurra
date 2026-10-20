@@ -7,6 +7,7 @@ import { buscarOfertasReales } from "@/lib/job-search/real-search";
 import { tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { comprobarEnSegundoPlano } from "@/lib/job-search/oferta-viva";
 import { salarioMinimoSql } from "@/lib/job-search/salario-sql";
+import { paisPorNombre } from "@/lib/paises";
 
 /**
  * Ofertas de las APIs externas, solo cuando la base no tiene nada.
@@ -98,8 +99,16 @@ function rowToOferta(j: Record<string, unknown>, location: string, userSkills: s
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const keyword  = (searchParams.get("keyword")  || "").trim();
-  const location = (searchParams.get("location") || "").trim();
-  const country  = (searchParams.get("country")  || "").trim();
+  let location = (searchParams.get("location") || "").trim();
+  let country  = (searchParams.get("country")  || "").trim();
+  // "¿Dónde?" = un país entero ("Japón", "Australia"): se busca en todo el país.
+  // Se buscaba como una ciudad que se llamara así, no salía nada y se acababa
+  // en las APIs externas, que son de España: camareros de Sevilla (21 oct 2026).
+  const paisEscrito = paisPorNombre(location);
+  if (paisEscrito) { country = paisEscrito; location = ""; }
+  // Las APIs externas solo buscan en España. Con otro país, mejor "no hay" que
+  // ofertas de Zaragoza con la bandera de Japón puesta.
+  const externasValen = !country || country.toUpperCase() === "ES";
   const categoria = (searchParams.get("categoria") || "").trim(); // au_pair | live_in_nanny
   // Tope de página: sin él, page=100000 → OFFSET gigante que Postgres materializa
   // y descarta en cada request (DoS de BD barato). 200 páginas × 500 = 100k resultados.
@@ -340,6 +349,34 @@ export async function GET(request: NextRequest) {
       LIMIT $${idx} OFFSET $${idx + 1}
     `;
 
+    // TODO UN PAÍS, SIN PALABRA NI CIUDAD (21 oct 2026): "Ver todas las ofertas
+    // en Estados Unidos" desde Emigrar. Ordenar al azar y contar todas las del
+    // país tardaba 16 s en EE. UU. (se cortaba a los 15 y salían ofertas de
+    // España), 7 s en Reino Unido y 5 en Australia. En los países grandes se
+    // sacan las más nuevas por el índice de createdAt (28 ms en EE. UU.) y se
+    // cuenta hasta 10.000. En los pequeños se sigue como siempre: en Japón
+    // (3.700) ordenarlas todas tarda 0,6 s y el índice de fechas, 2,6.
+    const soloPais = !!country && !keyword && !cityParts && !categoria && !jornada && !experiencia && !salarioMin && !salarioMax;
+    if (soloPais) {
+      const TOPE = 10000;
+      const paramsWhere = params.slice(0, -2);
+      const cuenta = await pool.query(`SELECT count(*)::int AS n FROM (SELECT 1 FROM "JobListing" WHERE ${whereClause} LIMIT ${TOPE + 1}) t`, paramsWhere);
+      if (cuenta.rows[0].n > TOPE) {
+        const nuevas = await pool.query(
+          `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
+                  "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
+                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza
+             FROM "JobListing" WHERE ${whereClause}
+            ORDER BY "createdAt" DESC
+            LIMIT $${idx} OFFSET $${idx + 1}`,
+          params
+        );
+        const ofertasPais = deduplicar(nuevas.rows).map(j => rowToOferta(j, location, userSkills));
+        comprobarEnSegundoPlano(ofertasPais.map(o => String(o.id)));
+        return NextResponse.json({ ofertas: ofertasPais, total: TOPE, masDe: true, page, hasMore: offset + nuevas.rows.length < TOPE, keyword, location, source: "database-pais" });
+      }
+    }
+
     let dbResult = await pool.query(construirSql(whereClause), params);
 
     // Segunda pasada: si buscando por título y empresa no sale bastante, se
@@ -489,6 +526,9 @@ export async function GET(request: NextRequest) {
     if (jornada || experiencia) {
       return NextResponse.json({ ofertas: [], total: 0, page, hasMore: false, keyword, location, source: "database-filtro-noresults" });
     }
+    if (!externasValen) {
+      return NextResponse.json({ ofertas: [], total: 0, page, hasMore: false, keyword, location, source: "database-pais-noresults" });
+    }
     console.log("[Search] BD: 0 -> APIs en tiempo real");
     const apiOfertas = await ofertasExternasDelPuesto(keyword, location);
     return NextResponse.json({ ofertas: apiOfertas, total: apiOfertas.length, page: 1, hasMore: false, keyword, location, source: "live-api" });
@@ -497,6 +537,9 @@ export async function GET(request: NextRequest) {
     console.error("Error en busqueda:", (error as Error).message);
     if (categoria) {
       return NextResponse.json({ ofertas: [], total: 0, page: 1, hasMore: false, source: "database-category-error" });
+    }
+    if (!externasValen) {
+      return NextResponse.json({ error: "La búsqueda ha tardado demasiado. Prueba con una palabra o una ciudad." }, { status: 503 });
     }
     try {
       const apiOfertas = await ofertasExternasDelPuesto(keyword, location);

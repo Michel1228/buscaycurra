@@ -62,9 +62,14 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
+  // EN SEGUNDO PLANO, SIN RUEDA (21 oct 2026). Cada 30 segundos se ponía la
+  // rueda de "Cargando tus envíos..." en lugar de toda la lista, y a veces
+  // tardaba más de 5 segundos: la pantalla parpadeaba sola. La rueda solo sale
+  // la primera vez; las recargas cambian los datos sin quitar lo que se ve, y
+  // si una falla se queda lo de antes.
+  const loadData = useCallback(async (enSegundoPlano = false) => {
     try {
-      setLoading(true); setError(null);
+      if (!enSegundoPlano) { setLoading(true); setError(null); }
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       const token = session?.access_token ?? "";
       const res = await fetch("/api/cv-sender/status", {
@@ -80,15 +85,15 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       setHistory(data.history ?? []);
       setStats(data.stats ?? null);
       setRateLimit(data.rateLimitInfo ?? null);
-    } catch (err) { setError((err as Error).message); }
-    finally { setLoading(false); }
+    } catch (err) { if (!enSegundoPlano) setError((err as Error).message); }
+    finally { if (!enSegundoPlano) setLoading(false); }
   }, [userId]);
 
   // BUG-03: no arrancar polling hasta tener userId
   useEffect(() => {
     if (!userId) return;
     void loadData();
-    const iv = setInterval(() => void loadData(), 30_000);
+    const iv = setInterval(() => void loadData(true), 30_000);
     return () => clearInterval(iv);
   }, [loadData, userId]);
 
@@ -107,7 +112,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       const data = await res.json() as { success?: boolean; error?: string; message?: string };
       if (data.success) {
         setPendingJobs(prev => prev.filter(j => j.id !== jobId));
-        void loadData(); // refrescar
+        void loadData(true); // refrescar
       } else {
         // BUG-02: mostrar error al usuario
         setError(data.error ?? data.message ?? "No se pudo cancelar el envío");

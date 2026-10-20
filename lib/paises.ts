@@ -566,3 +566,27 @@ export const SLUG_A_CODIGO: Record<string, string> = {};
 for (const [codigo, pais] of Object.entries(PAISES)) {
   SLUG_A_CODIGO[pais.slug] = codigo;
 }
+
+// Cómo lo escribe la gente cuando no pone el nombre oficial.
+const OTROS_NOMBRES: Record<string, string> = {
+  eeuu: "US", "ee uu": "US", usa: "US", "estados unidos de america": "US",
+  inglaterra: "UK", uk: "UK", "gran bretana": "UK", escocia: "UK", gales: "UK",
+  holanda: "NL", "republica checa": "CZ", chequia: "CZ",
+};
+
+const sinTildes = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[.]/g, " ").replace(/\s+/g, " ").trim();
+
+/**
+ * "Japón", "Australia", "Inglaterra" → su código. null si no es un país nuestro.
+ *
+ * POR QUÉ (21 oct 2026). En el "¿Dónde?" del buscador la gente escribe el país
+ * entero, y se buscaba como si fuera una ciudad que se llamara así: "Japón" no
+ * encontraba nada y acababa devolviendo camareros de Sevilla y Madrid.
+ */
+export function paisPorNombre(texto: string): string | null {
+  const t = sinTildes(texto || "");
+  if (t.length < 2) return null;
+  if (OTROS_NOMBRES[t]) return OTROS_NOMBRES[t];
+  const pais = LISTA_PAISES.find((p) => sinTildes(p.nombre) === t || sinTildes(p.nombreLocal) === t);
+  return pais ? pais.codigo : null;
+}
