@@ -41,8 +41,10 @@ const NAV_ITEMS = [
   { href: "/app/entrevistas",label: "Entrevistas",icon: "entrevistas", title: "Simulador de entrevistas" },
   { href: "/app/guardados",  label: "Guardados",  icon: "guardados", title: "Ofertas guardadas" },
   { href: "/app/emigrar",    label: "Emigrar",    icon: "emigrar", title: "Guía para emigrar" },
-  { href: "/app/au-pair",    label: "Au Pair",    icon: "aupair", title: "Perfil y ofertas Au Pair" },
-  { href: "/app/au-pair?modo=live_in_nanny", label: "Live-in Nanny", icon: "liveinnanny", title: "Perfil y ofertas Live-in Nanny" },
+  // Una sola entrada (21 oct 2026): la página tiene dentro las pestañas Au Pair
+  // y Live-in Nanny, y la entrada "Live-in Nanny" abría la misma pantalla de Au
+  // Pair (la página no lee ?modo=). Dos entradas para lo mismo, una que engañaba.
+  { href: "/app/au-pair",    label: "Au Pair y Nanny", icon: "aupair", title: "Perfil y ofertas Au Pair y Live-in Nanny" },
   { href: "/app/salarios",   label: "Salarios",   icon: "salarios", title: "Comparador de salarios" },
   { href: "/app/reviews",    label: "Reviews",    icon: "reviews", title: "Reviews de empresas" },
   { href: "/app/referidos",  label: "Invitar",    icon: "referidos", title: "Invitar amigos" },
@@ -60,7 +62,6 @@ const ICON_COLORS: Record<string, string> = {
   entrevistas: "#a855f7",
   emigrar: "#06b6d4",
   aupair: "#ec4899",
-  liveinnanny: "#f97316",
   salarios: "#f59e0b",
   guardados: "#22c55e",
   reviews: "#fbbf24",
@@ -133,8 +134,6 @@ function NavIcon({ name, size = 22, activo = false }: { name: string; size?: num
       return <svg {...base}><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>;
     case "referidos":
       return <svg {...base}><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>;
-    case "liveinnanny":
-      return <svg {...base}><path d="M12 4a4 4 0 0 1 4 4v1h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2V8a4 4 0 0 1 4-4z"/><circle cx="10" cy="12" r="1.5"/><circle cx="14" cy="12" r="1.5"/><path d="M9 15c.83 1 1.83 1.5 3 1.5s2.17-.5 3-1.5"/></svg>;
     case "ayuda":
       return <svg {...base}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
     case "plan":
