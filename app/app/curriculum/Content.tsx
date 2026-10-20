@@ -1220,19 +1220,19 @@ export default function CurriculumPage() {
                 <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>Truco: Foto profesional gratis con IA</p>
                 <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia este texto y pégalo en ChatGPT junto con tu foto:</p>
                 <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
-                  Convierte esta foto en una foto de carnet para un currículum: de los hombros hacia arriba, fondo liso y claro, camisa blanca y buena luz. Que se me reconozca: no cambies mi cara.
+                  Utiliza este personaje, pero en tamaño carnet, desde los hombros hacia arriba. Ponme una camisa blanca y adáptalo para un currículum. Que sea fiel a las características de mi rostro.
                 </div>
                 <div className="mt-2 flex gap-2">
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("Convierte esta foto en una foto de carnet para un currículum: de los hombros hacia arriba, fondo liso y claro, camisa blanca y buena luz. Que se me reconozca: no cambies mi cara.");
+                      navigator.clipboard.writeText("Utiliza este personaje, pero en tamaño carnet, desde los hombros hacia arriba. Ponme una camisa blanca y adáptalo para un currículum. Que sea fiel a las características de mi rostro.");
                     }}
                     className="px-3 py-1 text-[10px] font-semibold rounded-md" style={{ background: "#22c55e", color: "#fff" }}>
                     1. Copiar el texto
                   </button>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("Convierte esta foto en una foto de carnet para un currículum: de los hombros hacia arriba, fondo liso y claro, camisa blanca y buena luz. Que se me reconozca: no cambies mi cara.");
+                      navigator.clipboard.writeText("Utiliza este personaje, pero en tamaño carnet, desde los hombros hacia arriba. Ponme una camisa blanca y adáptalo para un currículum. Que sea fiel a las características de mi rostro.");
                       window.open("https://chatgpt.com", "_blank");
                     }}
                     className="px-3 py-1 text-[10px] font-semibold rounded-md"
