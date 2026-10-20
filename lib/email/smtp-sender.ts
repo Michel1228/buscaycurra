@@ -367,6 +367,44 @@ ${o ? `<p ${P}>${o.texto}</p>${listaOfertas(params.ofertas!)}` : ""}
   );
 }
 
+// ─── Te falta confirmar el correo ────────────────────────────────────────────
+
+/**
+ * A quien se registró y no confirmó el correo (ver /api/auth/recordar-confirmacion).
+ * Las ofertas van sin enlace: abrirlas pide entrar, y sin confirmar no se puede.
+ * El único enlace es el botón, que confirma y deja dentro (/api/auth/confirmar).
+ */
+export async function sendConfirmarCorreoEmail(params: {
+  email: string;
+  nombre: string;
+  fechaAlta: string; // "19 de octubre"
+  enlace: string;
+  ciudad?: string | null;
+  ofertas?: OfertasCiudad | null;
+}): Promise<boolean> {
+  const primerNombre = esc((params.nombre || "").trim().split(" ")[0]);
+  const ciudad = params.ofertas?.lugar || capitalizar((params.ciudad || "").trim());
+  const conOfertas = !!(ciudad && params.ofertas && params.ofertas.total > 0 && params.ofertas.ofertas.length);
+  const o = conOfertas ? frasesOfertas(ciudad, params.ofertas!) : null;
+
+  const asunto = `${primerNombre ? `${primerNombre}, te` : "Te"} falta confirmar tu correo para entrar en BuscayCurra`;
+
+  const cuerpo = `
+<p ${P}>Hola${primerNombre ? ` ${primerNombre}` : ""}:</p>
+<p ${P}>Te registraste en BuscayCurra el ${esc(params.fechaAlta)}, pero no llegaste a confirmar tu correo, así que todavía no has podido entrar.</p>
+${o ? `<p ${P}>${o.texto}</p><ul style="margin:0 0 16px;padding-left:20px;">${params.ofertas!.ofertas
+    .map((x) => `<li style="margin:0 0 6px;">${esc(x.titulo)}${x.empresa ? ` — ${esc(x.empresa)}` : ""}</li>`).join("")}</ul>` : ""}
+<p ${P}><a href="${params.enlace}" ${ENLACE}>Confirmar mi correo y entrar →</a> Es un toque: entras directamente, sin escribir la contraseña.</p>
+<p style="margin:0;">Un saludo,<br>Guzzi 🐛 y el equipo de BuscayCurra</p>`;
+
+  return enviarCorreo(
+    params.email,
+    asunto,
+    plantillaSencilla(cuerpo, "Solo te escribimos esto una vez. Si no fuiste tú quien se registró, no hagas nada: sin confirmar, la cuenta no se activa."),
+    { puedeEsperar: true }
+  );
+}
+
 // ─── Bienvenida que llegó tarde ──────────────────────────────────────────────
 
 /**

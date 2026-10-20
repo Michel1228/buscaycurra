@@ -6,9 +6,10 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { NUM_PAISES } from "@/lib/paises";
 import Image from "next/image";
-import { Globe, Target, Clock, CheckCircle2 } from "lucide-react";
+import { Globe, Target, Clock, Mail } from "lucide-react";
 import { palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
 import { destinoSeguro } from "@/lib/auth/destino";
+import { sugerenciaCorreo } from "@/lib/auth/sugerencia-correo";
 
 /** La bandeja de entrada de los correos más comunes, para confirmar con un toque. */
 function bandejaDe(email: string): { nombre: string; url: string } | null {
@@ -141,6 +142,7 @@ function RegistroPageInner() {
         return;
       }
       setRegistrado(true);
+      window.scrollTo({ top: 0 });
       fetch("/api/auth/welcome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -162,7 +164,7 @@ function RegistroPageInner() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#0f1117" }}>
       {/* Panel marketing — arriba en móvil, izquierda en desktop */}
-      <div className={`w-full lg:w-1/2 ${ofertaId || desde || destinoParam ? "hidden lg:flex" : "flex"} flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden`}
+      <div className={`w-full lg:w-1/2 ${ofertaId || desde || destinoParam || registrado ? "hidden lg:flex" : "flex"} flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden`}
         style={{ background: "linear-gradient(135deg, #0a1f0e 0%, #0f1117 60%, #111827 100%)" }}>
         <div className="absolute inset-0 pointer-events-none">
           <div style={{
@@ -214,8 +216,8 @@ function RegistroPageInner() {
         style={{ background: "#0f1117" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>{ofertaId ? "Un paso y mandas tu CV" : "Crea tu cuenta"}</h1>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>{ofertaId ? "Gratis. Se tarda un minuto." : destinoParam ? "Gratis. Al terminar te llevamos a lo que estabas viendo." : "Empieza a buscar trabajo con Guzzi"}</p>
+            <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>{registrado ? "Te falta un paso" : ofertaId ? "Un paso y mandas tu CV" : "Crea tu cuenta"}</h1>
+            <p className="text-xs mt-1" style={{ color: "#64748b" }}>{registrado ? "Sin confirmar tu correo no puedes entrar" : ofertaId ? "Gratis. Se tarda un minuto." : destinoParam ? "Gratis. Al terminar te llevamos a lo que estabas viendo." : "Empieza a buscar trabajo con Guzzi"}</p>
           </div>
 
           {/* Quien ya tiene cuenta y llega aquí desde otro móvil: entrar está arriba. */}
@@ -243,21 +245,32 @@ function RegistroPageInner() {
           <div className="card-game p-6">
             {registrado ? (
               <div className="text-center py-4">
-                <CheckCircle2 size={48} className="mx-auto mb-3" style={{ color: "#22c55e" }} />
-                <h2 className="text-base font-bold mb-2" style={{ color: "#22c55e" }}>¡Cuenta creada!</h2>
-                <p className="text-xs mb-5" style={{ color: "#94a3b8" }}>
-                  Último paso: abre el correo que te hemos mandado a <strong style={{ color: "#f1f5f9" }}>{email}</strong> y pulsa el enlace.
+                {/* AÚN NO ESTÁ HECHO (20 oct 2026). Salía un check verde diciendo
+                    que la cuenta estaba creada y el botón grande llevaba al login:
+                    parecía hecho, la gente iba a entrar y le salía un error en rojo. De 206
+                    registros, 56 no confirmaron; de los que confirman, 9 de cada 10
+                    lo hacen en los 5 primeros minutos. Lo que falta, en grande. */}
+                <Mail size={44} className="mx-auto mb-3" style={{ color: "#f59e0b" }} />
+                <h2 className="text-lg font-bold mb-2" style={{ color: "#f1f5f9" }}>Confirma tu correo</h2>
+                <p className="text-sm mb-5" style={{ color: "#94a3b8" }}>
+                  Te hemos mandado un correo a <strong style={{ color: "#f1f5f9" }}>{email}</strong>. Ábrelo y pulsa
+                  «Confirmar mi cuenta».
                   {oferta ? ` Te llevará directo a la oferta${oferta.empresa ? ` de ${oferta.empresa}` : ""} para mandar tu CV.` : " Te llevará directo a tu cuenta."}
                 </p>
-                {/* Uno de cada cuatro no llegaba a confirmar el correo (18 oct
-                    2026): se le lleva a su bandeja con un toque. */}
                 {bandejaDe(email) && (
                   <a href={bandejaDe(email)!.url} target="_blank" rel="noopener noreferrer"
-                    className="btn-game inline-block text-sm px-5 py-2.5 mb-3">
+                    className="btn-game inline-block text-sm px-5 py-2.5 mb-4">
                     Abrir {bandejaDe(email)!.nombre}
                   </a>
                 )}
-                <Link href="/auth/login" className="btn-game inline-block text-xs">Ir al login</Link>
+                <p className="text-xs mb-3" style={{ color: "#94a3b8" }}>
+                  ¿No lo ves? Mira en <strong style={{ color: "#f1f5f9" }}>Spam</strong> o en <strong style={{ color: "#f1f5f9" }}>Promociones</strong>.
+                  Llega de noreply@buscaycurra.es.
+                </p>
+                <button type="button" onClick={() => { setRegistrado(false); setReenvio(""); setTimeout(() => document.getElementById("email")?.focus(), 50); }}
+                  className="text-xs font-semibold underline" style={{ color: "#22c55e" }}>
+                  ¿Está mal escrito el correo? Corrígelo
+                </button>
 
                 <div className="mt-5 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
                   {reenvio === "hecho" ? (
@@ -283,6 +296,9 @@ function RegistroPageInner() {
                       )}
                     </>
                   )}
+                  <p className="text-xs mt-4" style={{ color: "#64748b" }}>
+                    ¿Ya lo has confirmado? <Link href="/auth/login" className="underline" style={{ color: "#94a3b8" }}>Entra aquí</Link>
+                  </p>
                 </div>
               </div>
             ) : (
@@ -299,6 +315,12 @@ function RegistroPageInner() {
                   <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                     placeholder="tu@email.com" required autoComplete="email"
                     className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
+                  {sugerenciaCorreo(email) && (
+                    <button type="button" onClick={() => setEmail(sugerenciaCorreo(email)!)}
+                      className="text-xs mt-1.5 text-left" style={{ color: "#f59e0b" }}>
+                      ¿Querías decir <strong className="underline">{sugerenciaCorreo(email)}</strong>?
+                    </button>
+                  )}
                 </div>
 
                 <div>

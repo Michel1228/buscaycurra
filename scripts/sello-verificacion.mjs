@@ -4211,6 +4211,62 @@ test("una cuenta gratis nueva ve que carga y cuántos envíos le quedan", () => 
   return malos.length === 0;
 });
 
+// CONFIRMAR EL CORREO (20 oct 2026). 56 de 206 cuentas sin confirmar. Tras
+// registrarse salía "¡Cuenta creada!" con un check y el botón grande era "Ir al
+// login"; había correos con erratas (gmaill.com, gail.com) y nadie recordaba
+// nada a quien no confirmaba. Michel: que se mande solo a quien le falta.
+test("confirmar el correo: lo que falta en grande, erratas avisadas y un recordatorio que no caduca", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-confirmar-entrada.ts", salida = ".sello-confirmar.cjs";
+  try {
+    writeFileSync(entrada, 'export { sugerenciaCorreo } from "./lib/auth/sugerencia-correo";\nexport { enlaceConfirmar, firmaConfirmarValida } from "./lib/auth/confirmar-correo";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    // La firma lee el secreto del entorno: se pone y se quita sin esperar a nada,
+    // así ninguna otra prueba lo ve.
+    const antes = process.env.ALERTS_SECRET;
+    process.env.ALERTS_SECRET = "secreto-del-sello";
+    const id = "0b5e6c1a-2f4d-4c8e-9a7b-3d2e1f0a9b8c", otro = "1c6f7d2b-3a5e-4d9f-8b8c-4e3f2a1b0c9d";
+    const t = new URL(m.enlaceConfirmar(id)).searchParams.get("t");
+    const firmas = m.firmaConfirmarValida(id, t) && !m.firmaConfirmarValida(otro, t) && !m.firmaConfirmarValida(id, t.slice(0, -1) + "x");
+    if (antes === undefined) delete process.env.ALERTS_SECRET; else process.env.ALERTS_SECRET = antes;
+
+    const recordar = leerFuente("app/api/auth/recordar-confirmacion/route.ts");
+    const confirmar = leerFuente("app/api/auth/confirmar/route.ts");
+    const smtp = leerFuente("lib/email/smtp-sender.ts");
+    const correo = smtp.slice(smtp.indexOf("export async function sendConfirmarCorreoEmail"), smtp.indexOf("// ─── Bienvenida que llegó tarde"));
+    const registro = leerFuente("app/auth/registro/page.tsx");
+    const checks = {
+      "«¿Querías decir…?» con las erratas vistas": m.sugerenciaCorreo("ana@gmaill.com") === "ana@gmail.com" && m.sugerenciaCorreo("ana@gail.com") === "ana@gmail.com"
+        && m.sugerenciaCorreo("ana@gmail.es") === "ana@gmail.com" && m.sugerenciaCorreo("ana@hotmial.com") === "ana@hotmail.com",
+      "y nada con los que existen": m.sugerenciaCorreo("ana@hotmail.es") === null && m.sugerenciaCorreo("ana@mail.com") === null
+        && m.sugerenciaCorreo("ana@live.fr") === null && m.sugerenciaCorreo("ana@gmail.com") === null,
+      "el enlace del correo va firmado y solo vale para esa cuenta": firmas,
+      "tras registrarse, lo que falta en grande y sin «Ir al login»": registro.includes("Confirma tu correo") && !/>\s*¡Cuenta creada!/.test(registro)
+        && !registro.includes("Ir al login") && registro.includes("Corrígelo") && registro.includes("sugerenciaCorreo(email)"),
+      "el botón solo sirve sin confirmar, con enlace recién hecho": confirmar.includes("email_confirmed_at) return alLogin")
+        && confirmar.includes('generateLink({ type: "magiclink"') && confirmar.includes("/auth/callback?token_hash="),
+      "recordatorio: sin confirmar, de 1 a 30 días, una vez y solo si salió": recordar.includes("!u.email_confirmed_at") && recordar.includes("dias >= 1 && dias <= 30")
+        && recordar.includes("!u.app_metadata?.recordatorio_confirmar_en")
+        && recordar.indexOf("if (!salio) continue;") > 0 && recordar.indexOf("if (!salio) continue;") < recordar.indexOf("recordatorio_confirmar_en: new Date"),
+      "a media mañana entre semana y nunca a cuentas de prueba": recordar.includes("!enHorarioDeAviso()") && recordar.includes("resend\\.dev")
+        && leerFuente("scripts/vps/crontab.txt").includes("45 8,9 * * 1-5 /usr/bin/flock -n /tmp/recordar-confirmacion.lock"),
+      // Las ofertas piden entrar, y sin confirmar no se puede: el único enlace es el botón.
+      "el correo no se come el cupo y su único enlace es el botón": correo.includes("puedeEsperar: true") && !correo.includes("x.url") && correo.includes("params.enlace"),
+      "el del primer día ya no va a quien no puede entrar": leerFuente("app/api/onboarding/recordatorios/route.ts").includes("!u.email_confirmed_at) continue;"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

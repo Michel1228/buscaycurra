@@ -51,6 +51,9 @@
 # Espana: se llama a las 08:30 y 09:30 UTC y la web solo avisa entre las 10 y las 12 de
 # Madrid, asi vale en horario de verano y de invierno.
 30 8,9 * * 1-5 /usr/bin/flock -n /tmp/avisos-carnes.lock bash /root/avisos-carnes.sh >> /root/avisos-carnes.log 2>&1
+# Te falta confirmar el correo (scripts/vps/recordar-confirmacion.sh): una vez, entre 1 y
+# 30 dias despues del registro, a quien no lo confirmo. Lunes a viernes a las 10:45 de Espana.
+45 8,9 * * 1-5 /usr/bin/flock -n /tmp/recordar-confirmacion.lock bash /root/recordar-confirmacion.sh >> /root/recordar-confirmacion.log 2>&1
 # Vigilante de la web desde fuera de la app (scripts/vps/vigilante-app.sh): si el
 # contenedor no existe o esta parado lo levanta, y avisa por correo al caer y al volver.
 */5 * * * * /usr/bin/flock -n /tmp/vigilante-app.lock bash /root/vigilante-app.sh >> /root/vigilante-app.log 2>&1

@@ -82,7 +82,10 @@ export async function POST(request: NextRequest) {
       if (error) throw new Error(error.message);
       const usuarios = data.users || [];
       for (const u of usuarios) {
-        if (!u.email) continue;
+        // Sin confirmar el correo no puede entrar a hacer ningún paso: a esa
+        // gente le llega el de confirmar (/api/auth/recordar-confirmacion). A 42
+        // de 56 les llegaba este, que les mandaba a donde no podían entrar (20 oct 2026).
+        if (!u.email || !u.email_confirmed_at) continue;
         const dias = (ahora - new Date(u.created_at).getTime()) / 86400000;
         if (dias >= DIAS_MINIMO && dias <= DIAS_MAXIMO) {
           candidatos.push({ id: u.id, email: u.email, alta: u.created_at });

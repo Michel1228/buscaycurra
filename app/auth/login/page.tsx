@@ -49,7 +49,7 @@ function LoginPageInner() {
       if (err) {
         if (err.message.includes("Invalid login")) setError("Email o contraseña incorrectos.");
         else if (err.message.includes("Email not confirmed")) {
-          setError("Confirma tu email antes de entrar.");
+          setError("Te falta confirmar tu correo. Busca el correo «Confirma tu cuenta en BuscayCurra» (mira también en Spam o en Promociones) y pulsa el botón.");
           setSinConfirmar(true);
         }
         else setError("Error al iniciar sesión. Inténtalo de nuevo.");
