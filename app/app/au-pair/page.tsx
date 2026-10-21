@@ -28,6 +28,7 @@ import AuPairComparativaLegal from "@/components/AuPairComparativaLegal";
 import AuPairCalculadoraCostes from "@/components/AuPairCalculadoraCostes";
 import AuPairOfertasRecientes from "@/components/AuPairOfertasRecientes";
 import AlojamientoOferta from "@/components/AlojamientoOferta";
+import { fotoParaSubir } from "@/lib/imagen/foto-para-subir";
 import {
   Users, Sparkles, User, Check, Globe, Camera, Star, ClipboardList,
   Mail, FileText, Eye, Upload, Save, X, CheckCircle2, ShieldCheck,
@@ -209,12 +210,14 @@ export default function AuPairProfilePage() {
 
   // ── Fotos ──
   const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const original = e.target.files?.[0];
+    if (!original) return;
     if (photos.length >= MAX_FOTOS) {
       setError(`Máximo ${MAX_FOTOS} fotos`);
       return;
     }
+    // Una foto del móvil pesa 3-6 MB: se reduce antes (lib/imagen/foto-para-subir.ts).
+    const file = await fotoParaSubir(original);
     if (file.size > 5 * 1024 * 1024) {
       setError("La foto no puede superar 5 MB");
       return;

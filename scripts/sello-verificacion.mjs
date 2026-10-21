@@ -4355,6 +4355,25 @@ test("invitar a un amigo: invita cualquiera, se dice qué se gana y los extras s
   }
 });
 
+// LAS FOTOS DEL MÓVIL (21 oct 2026, antes de una presentación). La foto del CV
+// no podía pasar de 3 MB y la de au pair de 5; una foto del móvil pesa 3-6 MB
+// y salía "La imagen no puede superar 3 MB". Ahora se reducen antes de subir.
+test("fotos del móvil: se reducen antes de subirlas al CV y a au pair", () => {
+  const util = leerFuente("lib/imagen/foto-para-subir.ts");
+  const cv = leerFuente("app/app/curriculum/Content.tsx");
+  const au = leerFuente("app/app/au-pair/page.tsx");
+  const reduceAntes = (src, tope) => src.indexOf("await fotoParaSubir(original)") > 0
+    && src.indexOf("await fotoParaSubir(original)") < src.indexOf(tope);
+  const checks = {
+    "la utilidad deja la foto en JPEG de 1.200 px con fondo blanco": util.includes("ladoMax = 1200") && util.includes('lienzo.toBlob(ok, "image/jpeg", calidad)') && util.includes('ctx.fillStyle = "#ffffff"'),
+    "el CV reduce antes de mirar los 3 MB": reduceAntes(cv, "if (file.size > 3 * 1024 * 1024)"),
+    "au pair reduce antes de mirar los 5 MB": reduceAntes(au, "if (file.size > 5 * 1024 * 1024)"),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

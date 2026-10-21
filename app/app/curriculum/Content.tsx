@@ -26,6 +26,7 @@ import { CV_EJEMPLO } from "@/lib/cv-generator/ejemplo";
 import type { CVData } from "@/lib/cv-generator/cv-template";
 import { IDIOMAS_CV } from "@/lib/cv-generator/idiomas-cv";
 import InfoTooltip from "@/components/InfoTooltip";
+import { fotoParaSubir } from "@/lib/imagen/foto-para-subir";
 
 interface Exp {
   fechas: string;
@@ -595,12 +596,14 @@ export default function CurriculumPage() {
     }
   }
 
-  async function subirFoto(file: File) {
-    if (!file.type.startsWith("image/")) { setError("Solo se aceptan imágenes."); return; }
-    if (file.size > 3 * 1024 * 1024) { setError("La imagen no puede superar 3 MB."); return; }
+  async function subirFoto(original: File) {
+    if (!original.type.startsWith("image/")) { setError("Solo se aceptan imágenes."); return; }
     setSubiendoFoto(true);
     setError("");
     try {
+      // Una foto del móvil pesa 3-6 MB y el límite es 3: se reduce antes (lib/imagen/foto-para-subir.ts).
+      const file = await fotoParaSubir(original);
+      if (file.size > 3 * 1024 * 1024) { setError("La imagen no puede superar 3 MB."); return; }
       const fd = new FormData();
       fd.append("foto", file);
       const res = await fetch("/api/perfil/foto", {
