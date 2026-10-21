@@ -4374,6 +4374,19 @@ test("fotos del móvil: se reducen antes de subirlas al CV y a au pair", () => {
   return malos.length === 0;
 });
 
+// LA RESPUESTA A UNA FOTO, A LA VISTA (21 oct 2026, antes de enseñar la cámara
+// en una charla). En el móvil la página de Guzzi crece con la conversación y lo
+// que se desplaza es la ventana; solo se bajaba la caja de mensajes, y tras una
+// foto la respuesta quedaba 4.500 px por debajo de lo que se veía.
+test("Guzzi baja al último mensaje también en el móvil, y otra vez al cargar una foto", () => {
+  const c = leerFuente("components/GusiChat.tsx");
+  return c.includes('if (modoIncrustado) finRef.current?.scrollIntoView({ block: "end" });')
+    && c.includes('caja.addEventListener("load", alCargar, true);')
+    && c.includes('<div ref={finRef} aria-hidden="true" />')
+    // La página sigue creciendo (con altura fija el iPhone tapaba la campana).
+    && leerFuente("app/app/gusi/page.tsx").includes('minHeight: "100dvh"');
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

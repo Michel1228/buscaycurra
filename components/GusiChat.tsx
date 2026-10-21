@@ -12,7 +12,7 @@
  * - Preparar entrevistas
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import GuzziAvatar from "@/components/GuzziAvatar";
@@ -262,15 +262,33 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
   const [sendTarget, setSendTarget] = useState<{ empresa: string; titulo: string; url: string; email?: string; emailConfianza?: string } | null>(null);
   const [sessionToken, setSessionToken] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const finRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  // AL ÚLTIMO MENSAJE, TAMBIÉN EN EL MÓVIL (21 oct 2026, antes de enseñar la
+  // cámara en una charla). En /app/gusi la página crece con la conversación
+  // (minHeight y no height: con altura fija el Safari del iPhone tapaba la
+  // campana, ver 4a4af20), así que lo que se desplaza es la ventana y no la
+  // caja de mensajes. Solo se bajaba la caja: tras una foto, la respuesta
+  // quedaba 4.500 px por debajo de lo que se veía. Y las fotos cargan después
+  // de pintarse el mensaje y empujan la respuesta: se vuelve a bajar entonces.
+  const bajarAlFinal = useCallback(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (modoIncrustado) finRef.current?.scrollIntoView({ block: "end" });
+  }, [modoIncrustado]);
+
+  useEffect(() => { bajarAlFinal(); }, [mensajes, cargando, bajarAlFinal]);
+
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [mensajes, cargando]);
+    const caja = scrollRef.current;
+    if (!caja) return;
+    // "load" no sube por el árbol: se escucha en la fase de captura.
+    const alCargar = (e: Event) => { if ((e.target as HTMLElement)?.tagName === "IMG") bajarAlFinal(); };
+    caja.addEventListener("load", alCargar, true);
+    return () => caja.removeEventListener("load", alCargar, true);
+  }, [bajarAlFinal, abierto]);
 
   useEffect(() => {
     const t = setTimeout(() => setPulso(false), 6000);
@@ -994,6 +1012,8 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
               </button>
             </div>
           </div>
+          {/* Hasta aquí baja la página al llegar un mensaje: el último y, debajo, donde escribir. */}
+          <div ref={finRef} aria-hidden="true" />
 
           {/* ── Sugerencias (bajo el input) ── */}
           {mostrarSugerencias && (
