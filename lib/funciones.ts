@@ -199,7 +199,7 @@ export const GRUPOS_FUNCIONES: GrupoFunciones[] = [
       },
       {
         titulo: "Invitar a alguien",
-        descripcion: "Código para compartir con quien también esté buscando.",
+        descripcion: "Por cada amigo que se registre con tu enlace, 5 envíos de CV y 1 foto más. Tu amigo empieza con 5 envíos extra.",
         ruta: "/app/referidos",
       },
       {

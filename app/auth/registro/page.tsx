@@ -229,6 +229,13 @@ function RegistroPageInner() {
             </p>
           )}
 
+          {/* Lo que gana quien llega invitado: si no se dice, el enlace no motiva. */}
+          {referralCode && !registrado && (
+            <div className="rounded-xl p-3 mb-4 text-xs text-center" style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.25)", color: "#f1f5f9" }}>
+              Vienes invitado: al confirmar tu correo empiezas con <strong>5 envíos de CV extra</strong>.
+            </div>
+          )}
+
           {oferta && !registrado && (
             <div className="rounded-xl p-4 mb-4" style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.25)" }}>
               <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#22c55e" }}>Vas a enviar tu CV a</p>

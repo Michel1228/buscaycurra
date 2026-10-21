@@ -65,6 +65,38 @@ export interface RateLimitResult {
   limiteHoy: number | typeof Infinity; // Límite diario del plan (Infinity = ilimitado)
   limiteMes: number | typeof Infinity; // Límite mensual del plan (Infinity = ilimitado)
   cvsRestantesHoy: number | typeof Infinity; // CVs que puede enviar hoy todavía
+  conExtra?: boolean; // Sale con un envío extra de invitar amigos (lib/referidos/premios.ts)
+  enviosExtra?: number; // Envíos extra que le quedan, cuando ha llegado al tope del plan
+}
+
+/**
+ * POR ENCIMA DEL PLAN, CON LOS ENVÍOS EXTRA (21 oct 2026). Quien invita a un
+ * amigo gana envíos que se gastan cuando se acaban los del plan. Se cobra uno
+ * por empresa y día (la ruta y el programador comprueban los dos el mismo CV),
+ * y nunca por un envío que luego se rechazaría por los quince días.
+ */
+async function conEnvioExtra(userId: string, companyEmail: string | undefined, bloqueo: RateLimitResult): Promise<RateLimitResult> {
+  try {
+    const { premiosDe, gastarEnvioExtra } = await import("@/lib/referidos/premios");
+    if (companyEmail) {
+      // Aquí y no arriba: el tracker importa de este fichero.
+      const { canSendToCompany } = await import("./tracker");
+      if ((await canSendToCompany(userId, companyEmail)) && (await gastarEnvioExtra(userId, companyEmail))) {
+        const quedan = (await premiosDe(userId)).envios;
+        return { ...bloqueo, allowed: true, reason: undefined, conExtra: true, enviosExtra: quedan, cvsRestantesHoy: quedan };
+      }
+    }
+    const extra = (await premiosDe(userId)).envios;
+    return {
+      ...bloqueo,
+      enviosExtra: extra,
+      reason: extra > 0 || !bloqueo.reason ? bloqueo.reason
+        : `${bloqueo.reason} ¿Quieres más? Invita a un amigo: por cada uno que se registre te damos 5 envíos.`,
+    };
+  } catch (e) {
+    console.error("[RateLimiter] envíos extra:", (e as Error).message);
+    return bloqueo;
+  }
 }
 
 // ─── Funciones Principales ───────────────────────────────────────────────────
@@ -151,7 +183,7 @@ export async function checkRateLimit(
 
   // ── Verificar límites ────────────────────────────────────────────────────
   if (hoy >= limite.perDay) {
-    return {
+    return conEnvioExtra(userId, companyEmail, {
       allowed: false,
       reason: `🎯 ¡Buen ritmo! Ya has enviado ${limite.perDay} CVs hoy, el máximo de tu plan ${plan}. Descansa y vuelve mañana — tus candidaturas ya están trabajando. ¡Mucha suerte! 🍀`,
       enviadosHoy: hoy,
@@ -159,7 +191,7 @@ export async function checkRateLimit(
       limiteHoy: limite.perDay,
       limiteMes: limite.perMonth,
       cvsRestantesHoy: 0,
-    };
+    });
   }
 
   // EL LIMITE SEMANAL NO SE COMPROBABA NUNCA. Estaba declarado en
@@ -179,7 +211,7 @@ export async function checkRateLimit(
   const semana = enviadosSemana ?? 0;
   const limiteSemana = LIMITS[plan]?.enviosCVSemana ?? Infinity;
   if (semana >= limiteSemana) {
-    return {
+    return conEnvioExtra(userId, companyEmail, {
       allowed: false,
       reason: `Has enviado ${semana} CVs en los ultimos siete dias, el maximo de tu plan ${plan}. Se te van liberando segun pasan los dias.`,
       enviadosHoy: hoy,
@@ -187,11 +219,11 @@ export async function checkRateLimit(
       limiteHoy: limite.perDay,
       limiteMes: limite.perMonth,
       cvsRestantesHoy: 0,
-    };
+    });
   }
 
   if (mes >= limite.perMonth) {
-    return {
+    return conEnvioExtra(userId, companyEmail, {
       allowed: false,
       reason: `📦 ¡Vaya mes! Has alcanzado el tope mensual de ${limite.perMonth} CVs en el plan ${plan}. Con el plan Pro son ${PLAN_LIMITS.pro.perMonth} al mes.`,
       enviadosHoy: hoy,
@@ -199,7 +231,7 @@ export async function checkRateLimit(
       limiteHoy: limite.perDay,
       limiteMes: limite.perMonth,
       cvsRestantesHoy: 0,
-    };
+    });
   }
 
   // ── Todo OK, puede enviar ────────────────────────────────────────────────

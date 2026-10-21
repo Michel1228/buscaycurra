@@ -49,7 +49,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     prepararEntrevista: false,
     entrevistasSemana: 2,                // 19 oct 2026: dos ensayos a la semana gratis
     ofertasGuardadas: 10,
-    codigosPromocionales: false,
+    codigosPromocionales: true,       // 21 oct 2026: invita cualquiera (lib/referidos/premios.ts)
     apiAccess: false,
   },
   basico: {
@@ -65,7 +65,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     prepararEntrevista: true,
     entrevistasSemana: null,
     ofertasGuardadas: 50,
-    codigosPromocionales: false,
+    codigosPromocionales: true,       // 21 oct 2026: invita cualquiera (lib/referidos/premios.ts)
     apiAccess: false,
   },
   esencial: {
@@ -81,7 +81,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
     prepararEntrevista: true,
     entrevistasSemana: null,
     ofertasGuardadas: 50,
-    codigosPromocionales: false,
+    codigosPromocionales: true,       // 21 oct 2026: invita cualquiera (lib/referidos/premios.ts)
     apiAccess: false,
   },
   pro: {

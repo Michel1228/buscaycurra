@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPlanLimits } from "@/lib/plan-limits";
+import { premiosDe } from "@/lib/referidos/premios";
 
 function todayKey() { return new Date().toISOString().slice(0, 10); }
 
@@ -76,6 +77,8 @@ export async function GET(request: NextRequest) {
   const guzziUsadas = todayUsage?.guzzi_consultas ?? 0;
   const enviosHoy = enviosHoyCount ?? 0;
   const enviosSemana = enviosSemanaCount ?? 0;
+  // Los ganados invitando amigos: se usan cuando se acaban los del plan.
+  const premios = await premiosDe(user.id).catch(() => ({ envios: 0, fotos: 0 }));
 
   return NextResponse.json({
     plan: plan === "basico" ? "esencial" : plan,
@@ -93,7 +96,9 @@ export async function GET(request: NextRequest) {
       semana: enviosSemana,
       maxSemana: limits.enviosCVSemana,
       remainingSemana: Math.max(0, limits.enviosCVSemana - enviosSemana),
+      extra: premios.envios,
     },
+    fotosExtra: premios.fotos,
     features: {
       cartaIA: limits.cartaPersonalizada,
       codigosPromo: limits.codigosPromocionales,

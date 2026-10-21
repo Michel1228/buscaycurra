@@ -1137,9 +1137,11 @@ test("el simulador de entrevistas explica por que no analiza y no lo apunta", ()
   const e = leerFuente("app/app/entrevistas/page.tsx");
   return e.includes("if (!res.ok || !data.feedback)") && !e.includes('data.feedback || "No se pudo analizar."');
 });
-test("los referidos no prometen lo que no se da y avisan a quien no es Pro", () => {
+// Antes también exigía el aviso "solo Pro": el 21 oct 2026 Michel decidió que
+// invite cualquiera (ver la prueba "invitar a un amigo" más abajo).
+test("los referidos no prometen lo que no se da y dicen qué se gana", () => {
   const r = leerFuente("app/app/referidos/Content.tsx");
-  return !/\+10 CVs|ambos gan|ambos recib/.test(r) && r.includes("res.status === 402") && r.includes("setSoloPro(true)");
+  return !/\+10 CVs|ambos gan|ambos recib/.test(r) && r.includes("+5 envíos de CV y +1 foto con la cámara");
 });
 test("las alertas: un correo al dia como mucho, semanal de verdad y se pueden quitar", () => {
   const s = leerFuente("app/api/push/send-alerts/route.ts");
@@ -4296,6 +4298,51 @@ test("emigrar → ofertas: el país del que vienes, nunca España por detrás, y
       "fuera de España nunca las APIs españolas": (api.match(/if \(!externasValen\)/g) || []).length === 2,
       "todo un país grande, por fecha y con tope": api.includes('ORDER BY "createdAt" DESC') && api.includes("masDe: true"),
       "lo enviado se refresca sin tapar la lista": envios.includes("setInterval(() => void loadData(true), 30_000)") && envios.includes("if (!enSegundoPlano) { setLoading(true); setError(null); }"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// INVITAR A UN AMIGO (21 oct 2026). Solo el plan Pro tenía código y no había
+// nadie de pago: 0 invitaciones en la historia. La página no decía qué se
+// ganaba, y el "+10 CVs" que se apuntaba no lo miraba el límite de envíos.
+// Lo aprobado por Michel: +5 envíos y +1 foto por amigo que confirma, el amigo
+// empieza con +5, hasta 10 al mes, y los extras se gastan al acabarse el plan.
+test("invitar a un amigo: invita cualquiera, se dice qué se gana y los extras se usan de verdad", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-referidos-entrada.ts", salida = ".sello-referidos.cjs";
+  try {
+    writeFileSync(entrada, 'export { ENVIOS_POR_AMIGO, FOTOS_POR_AMIGO, ENVIOS_DEL_INVITADO, AMIGOS_CON_PREMIO_AL_MES } from "./lib/referidos/premios";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const premios = leerFuente("lib/referidos/premios.ts");
+    const limite = leerFuente("lib/cv-sender/rate-limiter.ts");
+    const ruta = leerFuente("app/api/referidos/route.ts");
+    const pagina = leerFuente("app/app/referidos/Content.tsx");
+    const planes = leerFuente("lib/plan-limits.ts");
+    const extra = limite.slice(limite.indexOf("async function conEnvioExtra"), limite.indexOf("// ─── Funciones Principales"));
+    const checks = {
+      "lo aprobado: 5 envíos y 1 foto por amigo, 5 para el amigo, 10 al mes": m.ENVIOS_POR_AMIGO === 5 && m.FOTOS_POR_AMIGO === 1 && m.ENVIOS_DEL_INVITADO === 5 && m.AMIGOS_CON_PREMIO_AL_MES === 10,
+      "invita cualquiera, también el plan gratis": !planes.includes("codigosPromocionales: false") && !ruta.includes("status: 402"),
+      "la página dice qué se gana, con las mismas cifras": pagina.includes("+5 envíos de CV y +1 foto con la cámara") && pagina.includes("Empieza con 5 envíos de CV extra") && !pagina.includes("del plan Pro"),
+      "y quien llega invitado lo ve al registrarse": leerFuente("app/auth/registro/page.tsx").includes("Vienes invitado"),
+      "bienvenida y canjear reparten igual": leerFuente("lib/onboarding/dar-bienvenida.ts").includes("aplicarReferido(supabaseAdmin, userId, ref)") && ruta.includes("aplicarReferido(supabaseAdmin, user.id, codigo)")
+        && !leerFuente("lib/onboarding/dar-bienvenida.ts").includes("referral_credits"),
+      "el código a mano, solo para cuentas nuevas": ruta.includes("30 * 86400000"),
+      "los extras entran en los tres topes del plan": (limite.match(/return conEnvioExtra\(userId, companyEmail, \{/g) || []).length === 3,
+      "uno por empresa y día, y nunca por un envío que luego se rechaza": extra.indexOf("canSendToCompany") > 0 && extra.indexOf("canSendToCompany") < extra.indexOf("gastarEnvioExtra(userId, companyEmail)")
+        && premios.includes("FOR UPDATE") && premios.includes("envio:${companyEmail.trim().toLowerCase()}:${new Date().toISOString().slice(0, 10)}"),
+      "el saldo nunca baja de cero": premios.includes("CHECK (envios_extra >= 0)") && premios.includes("fotos_extra > 0"),
+      "la cámara usa las fotos ganadas": leerFuente("app/api/gusi/analyze-image/route.ts").includes("gastarFotoExtra(userId)"),
+      "se borran al borrar la cuenta": leerFuente("lib/cuenta/borrar-datos.ts").includes('premios_usuario: "user_id"'),
     };
     const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
     if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);

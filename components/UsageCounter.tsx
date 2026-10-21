@@ -7,7 +7,7 @@ interface UsageData {
   plan: string;
   planName: string;
   guzzi: { used: number; max: number | null; remaining: number | null; unlimited: boolean };
-  envios: { hoy: number; maxDia: number; remainingDia: number; semana: number; maxSemana: number; remainingSemana: number };
+  envios: { hoy: number; maxDia: number; remainingDia: number; semana: number; maxSemana: number; remainingSemana: number; extra?: number };
   features: { cartaIA: boolean; codigosPromo: boolean; apiAccess: boolean };
 }
 
@@ -86,8 +86,8 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
               }}
             />
           </div>
-          <span className={textSize + " w-14 text-right flex-shrink-0"} style={{ color: "#64748b" }}>
-            {enviosQuedan} quedan
+          <span className={textSize + " text-right flex-shrink-0 whitespace-nowrap"} style={{ color: "#64748b" }}>
+            {enviosQuedan} quedan{usage.envios.extra ? ` · +${usage.envios.extra} extra` : ""}
           </span>
         </div>
       )}

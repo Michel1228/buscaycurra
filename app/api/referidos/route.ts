@@ -2,11 +2,14 @@
  * /api/referidos — Sistema de referidos
  * GET: obtener código de referido + stats
  * POST: canjear código de referido
+ *
+ * Qué se gana y por qué, en lib/referidos/premios.ts (21 oct 2026).
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUserFromToken, extractToken } from "@/lib/auth-server";
+import { aplicarReferido, amigosEsteMes, premiosDe, AMIGOS_CON_PREMIO_AL_MES, ENVIOS_DEL_INVITADO } from "@/lib/referidos/premios";
 
 export const dynamic = "force-dynamic";
 
@@ -25,21 +28,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Sesión no válida" }, { status: 401 });
     }
 
-    // FUNCION DE PAGO. Los codigos promocionales salen con la cruz en los planes
-    // gratuito y Esencial, pero aqui bastaba con tener sesion. El flag
-    // codigosPromocionales existia y solo se usaba para pintar el check.
-    const { getPlanLimits, planEfectivoDeUsuario } = await import("@/lib/plan-limits");
-    if (!getPlanLimits(await planEfectivoDeUsuario(supabaseAdmin, user.id)).codigosPromocionales) {
-      return NextResponse.json(
-        { error: "Los códigos de referido están en el plan Pro.", upgradeUrl: "/app/perfil?tab=plan" },
-        { status: 402 },
-      );
-    }
+    // Antes solo el plan Pro tenía código, y sin nadie de pago nadie podía
+    // invitar: 0 invitaciones en toda la historia. Ahora invita cualquiera.
 
     // Obtener o generar código de referido
     const { data: perfil } = await supabaseAdmin
       .from("profiles")
-      .select("referral_code, referral_count, referral_credits")
+      .select("referral_code, referral_count")
       .eq("id", user.id)
       .single();
 
@@ -68,10 +63,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const [premios, esteMes] = await Promise.all([premiosDe(user.id), amigosEsteMes(supabaseAdmin, user.id)]);
     return NextResponse.json({
       codigo,
       invitados: perfil?.referral_count || 0,
-      creditos: perfil?.referral_credits || 0,
+      invitadosEsteMes: esteMes,
+      topeAlMes: AMIGOS_CON_PREMIO_AL_MES,
+      enviosExtra: premios.envios,
+      fotosExtra: premios.fotos,
       link: `https://buscaycurra.es/auth/registro?ref=${codigo}`,
     });
   } catch (error) {
@@ -102,63 +101,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Código requerido" }, { status: 400 });
     }
 
-    // No puedes referirte a ti mismo
-    const { data: miPerfil } = await supabaseAdmin
-      .from("profiles")
-      .select("referral_code")
-      .eq("id", user.id)
-      .single();
-
-    if (miPerfil?.referral_code === codigo) {
-      return NextResponse.json({ error: "No puedes usar tu propio código" }, { status: 400 });
+    // El código es para quien llega nuevo. Sin esto, dos cuentas de siempre se
+    // canjeaban el código la una a la otra y se llevaban los premios.
+    const { data: cuenta } = await supabaseAdmin.auth.admin.getUserById(user.id);
+    if (!cuenta?.user || Date.now() - new Date(cuenta.user.created_at).getTime() > 30 * 86400000) {
+      return NextResponse.json({ error: "El código es para cuentas nuevas (del último mes)." }, { status: 400 });
     }
 
-    // Buscar al referente
-    const { data: referente } = await supabaseAdmin
-      .from("profiles")
-      .select("id, referral_count, referral_credits")
-      .eq("referral_code", codigo)
-      .single();
-
-    if (!referente) {
-      return NextResponse.json({ error: "Código no válido" }, { status: 400 });
+    const r = await aplicarReferido(supabaseAdmin, user.id, codigo);
+    if (!r.ok) {
+      const error = r.motivo === "propio" ? "No puedes usar tu propio código"
+        : r.motivo === "ya-invitado" ? "Ya has usado un código de invitación"
+        : "Código no válido";
+      return NextResponse.json({ error }, { status: 400 });
     }
-
-    // Verificar que no haya sido referido antes
-    const { data: yaReferido } = await supabaseAdmin
-      .from("referrals")
-      .select("id")
-      .eq("referred_id", user.id)
-      .single();
-
-    if (yaReferido) {
-      return NextResponse.json({ error: "Ya has usado un código de referido" }, { status: 400 });
-    }
-
-    // Registrar la referencia
-    await supabaseAdmin.from("referrals").insert({
-      referrer_id: referente.id,
-      referred_id: user.id,
-      code_used: codigo,
-      created_at: new Date().toISOString(),
-    });
-
-    // Actualizar contador del referente (+10 créditos = +10 CVs extra en el mes)
-    const nuevoCount = Math.max(0, referente.referral_count || 0) + 1;
-    const nuevoCreditos = Math.max(0, referente.referral_credits || 0) + 10;
-    await supabaseAdmin.from("profiles").update({
-      referral_count: nuevoCount,
-      referral_credits: nuevoCreditos,
-    }).eq("id", referente.id);
-
-    // Actualizar el perfil del nuevo usuario con el referente
-    await supabaseAdmin.from("profiles").update({
-      referred_by: referente.id,
-    }).eq("id", user.id);
 
     return NextResponse.json({
       success: true,
-      mensaje: "¡Código canjeado! Tu amigo ha ganado +10 CVs",
+      mensaje: `¡Código canjeado! Tienes ${ENVIOS_DEL_INVITADO} envíos de CV extra${r.referentePremiado ? ", y quien te invitó también gana" : ""}.`,
     });
   } catch (error) {
     console.error("[referidos] Error POST:", (error as Error).message);

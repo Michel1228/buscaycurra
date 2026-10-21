@@ -95,7 +95,9 @@ export async function POST(req: NextRequest) {
             : plan === "free" ? ` Con Esencial (2,99€/mes) tienes ${siguiente.camaraMaxUsos} al mes.`
             : ` Con ${siguiente.name} tienes ${siguiente.camaraMaxUsos} al mes.`;
           // Lo mismo se consigue gratis escribiendo el nombre: se le dice.
-          const sinCuota = `📸 Has usado tus ${limits.camaraMaxUsos} fotos de este mes; se recargan el día 1. Mientras, escríbeme el nombre del negocio (por ejemplo "búscame la peluquería Lola en Tudela") y te lo busco igual.${mejora}`;
+          const sinCuota = `📸 Has usado tus ${limits.camaraMaxUsos} fotos de este mes; se recargan el día 1. Mientras, escríbeme el nombre del negocio (por ejemplo "búscame la peluquería Lola en Tudela") y te lo busco igual. Y por cada amigo que invites te damos una foto más.${mejora}`;
+          // Sin fotos del plan: las que ha ganado invitando amigos (lib/referidos/premios.ts).
+          const { gastarFotoExtra } = await import("@/lib/referidos/premios");
 
           // SUMAR Y COMPROBAR EN LA MISMA OPERACION.
           //
@@ -124,13 +126,14 @@ export async function POST(req: NextRequest) {
               .select("camara_usos").eq("user_id", userId).eq("date_key", dateKey).single();
             const usos = usage?.camara_usos ?? 0;
             if (usos >= limits.camaraMaxUsos) {
-              return NextResponse.json({ error: sinCuota }, { status: 429 });
+              if (!(await gastarFotoExtra(userId))) return NextResponse.json({ error: sinCuota }, { status: 429 });
+            } else {
+              await sbAdmin.from("usage_tracking").upsert(
+                { user_id: userId, date_key: dateKey, week_key: "", camara_usos: usos + 1 },
+                { onConflict: "user_id,date_key" }
+              );
             }
-            await sbAdmin.from("usage_tracking").upsert(
-              { user_id: userId, date_key: dateKey, week_key: "", camara_usos: usos + 1 },
-              { onConflict: "user_id,date_key" }
-            );
-          } else if (nuevoUso === null) {
+          } else if (nuevoUso === null && !(await gastarFotoExtra(userId))) {
             return NextResponse.json({ error: sinCuota }, { status: 429 });
           }
         }

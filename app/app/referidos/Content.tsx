@@ -4,12 +4,20 @@ import { useState, useEffect, Suspense } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 
+interface DatosReferidos {
+  codigo: string;
+  invitados: number;
+  invitadosEsteMes: number;
+  topeAlMes: number;
+  enviosExtra: number;
+  fotosExtra: number;
+  link: string;
+}
+
 function ReferidosPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [codigo, setCodigo] = useState("");
-  const [soloPro, setSoloPro] = useState(false);
-  const [stats, setStats] = useState({ invitados: 0, creditos: 0 });
+  const [datos, setDatos] = useState<DatosReferidos | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiado, setCopiado] = useState(false);
   const [canjearInput, setCanjearInput] = useState("");
@@ -30,15 +38,7 @@ function ReferidosPageInner() {
         const res = await fetch("/api/referidos", {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
-        if (res.ok) {
-          const data = await res.json() as { codigo: string; invitados: number; creditos: number; link: string };
-          setCodigo(data.codigo);
-          setStats({ invitados: data.invitados, creditos: data.creditos });
-        } else if (res.status === 402) {
-          // Los códigos son del plan Pro. Antes se tiraba la respuesta y salía un
-          // código vacío y un enlace sin código, sin explicar nada.
-          setSoloPro(true);
-        }
+        if (res.ok) setDatos(await res.json() as DatosReferidos);
       } catch (e) {
         console.error("Error cargando referidos:", e);
       } finally {
@@ -49,10 +49,12 @@ function ReferidosPageInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const enlace = datos ? `https://buscaycurra.es/auth/registro?ref=${datos.codigo}` : "";
+  // Lo que se manda por WhatsApp: corto, con lo que gana el amigo, que es lo que le hace pulsar.
+  const mensaje = `Te paso BuscayCurra, una app para buscar trabajo y mandar tu CV a las empresas. Si te registras con mi enlace empiezas con 5 envíos de CV extra: ${enlace}`;
+
   async function copiarLink() {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
-    const link = `${siteUrl}/auth/registro?ref=${codigo}`;
-    await navigator.clipboard.writeText(link);
+    await navigator.clipboard.writeText(enlace);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
   }
@@ -92,45 +94,74 @@ function ReferidosPageInner() {
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(245,158,11,0.05))" }}>
         <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-xl font-bold mb-1" style={{ color: "#f1f5f9" }}>Invita y gana</h1>
-          <p className="text-xs" style={{ color: "#64748b" }}>Comparte BuscayCurra con amigos que buscan trabajo</p>
+          <h1 className="text-xl font-bold mb-1" style={{ color: "#f1f5f9" }}>Invita a un amigo y ganáis los dos</h1>
+          <p className="text-xs" style={{ color: "#94a3b8" }}>Para quien también esté buscando trabajo</p>
         </div>
       </div>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-        {soloPro && (
-          <div className="card-game p-5 text-center">
-            <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Los códigos de invitación son del plan Pro</p>
-            <p className="text-xs mb-3" style={{ color: "#64748b" }}>Si alguien te ha pasado su código, puedes canjearlo abajo igualmente.</p>
-            <a href="/app/perfil?tab=plan" className="btn-game text-xs inline-block px-4 py-2">Ver planes</a>
+        {/* LO QUE SE GANA, LO PRIMERO (21 oct 2026). Ponía "Invita y gana" y no
+            decía qué. Las cifras salen de lib/referidos/premios.ts. */}
+        <div className="card-game p-5">
+          <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>Lo que ganáis</h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="rounded-lg p-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "#22c55e" }}>Tú</p>
+              <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>+5 envíos de CV y +1 foto con la cámara</p>
+              <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Por cada amigo que se registre con tu enlace y confirme su correo.</p>
+            </div>
+            <div className="rounded-lg p-3" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: "#f59e0b" }}>Tu amigo</p>
+              <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Empieza con 5 envíos de CV extra</p>
+              <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Por llegar con tu enlace.</p>
+            </div>
           </div>
-        )}
-        {!soloPro && (
-          <div className="card-game p-4 text-center">
-            <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>{stats.invitados}</p>
-            <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>Amigos que se han registrado con tu código</p>
+          <p className="text-[11px] mt-3" style={{ color: "#64748b" }}>
+            Los extras se usan cuando se te acaban los de tu plan y no caducan. Hasta {datos?.topeAlMes ?? 10} amigos al mes.
+          </p>
+        </div>
+
+        {datos && (
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { n: datos.invitados, t: "amigos invitados" },
+              { n: datos.enviosExtra, t: "envíos extra" },
+              { n: datos.fotosExtra, t: "fotos extra" },
+            ].map(c => (
+              <div key={c.t} className="card-game p-3 text-center">
+                <p className="text-xl font-bold" style={{ color: "#22c55e" }}>{c.n}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>{c.t}</p>
+              </div>
+            ))}
           </div>
         )}
 
-        {!soloPro && <div className="card-game p-5">
-          <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>Tu código de invitación</h2>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex-1 p-2.5 rounded-lg text-center font-mono text-sm font-bold tracking-widest"
-              style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", color: "#22c55e" }}>
-              {codigo}
-            </div>
+        {datos && <div className="card-game p-5">
+          <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>Tu enlace</h2>
+          <div className="p-2.5 rounded-lg text-center font-mono text-sm font-bold tracking-widest mb-3"
+            style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", color: "#22c55e" }}>
+            {datos.codigo}
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <a href={`https://wa.me/?text=${encodeURIComponent(mensaje)}`} target="_blank" rel="noopener noreferrer"
+              className="flex-1 text-center px-4 py-2.5 rounded-lg text-sm font-semibold btn-game">
+              Compartir por WhatsApp
+            </a>
             <button onClick={copiarLink}
-              className="px-4 py-2.5 rounded-lg text-xs font-semibold transition hover:opacity-80 btn-game">
-              {copiado ? "¡Copiado!" : "Copiar link"}
+              className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-80"
+              style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}>
+              {copiado ? "¡Copiado!" : "Copiar enlace"}
             </button>
           </div>
-          <p className="text-[11px]" style={{ color: "#64748b" }}>
-            Comparte este link con tus amigos: al registrarse, quedan apuntados como invitados tuyos.
-          </p>
+          {datos.invitadosEsteMes >= datos.topeAlMes && (
+            <p className="text-[11px] mt-3" style={{ color: "#f59e0b" }}>
+              Este mes ya tienes {datos.topeAlMes} amigos con premio. Los que lleguen ahora también empiezan con sus 5 envíos; los tuyos vuelven el mes que viene.
+            </p>
+          )}
         </div>}
 
         <div className="card-game p-5">
-          <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>¿Tienes un código?</h2>
+          <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>¿Te ha pasado alguien su código?</h2>
           <div className="flex gap-2">
             <input type="text" value={canjearInput} onChange={e => setCanjearInput(e.target.value)}
               placeholder="Pega el código" className="flex-1 text-sm uppercase" maxLength={10} />
@@ -140,6 +171,7 @@ function ReferidosPageInner() {
               Canjear
             </button>
           </div>
+          <p className="text-[11px] mt-2" style={{ color: "#64748b" }}>Para cuentas creadas en el último mes.</p>
           {canjearMsg && <p className="text-[11px] mt-2" style={{ color: "#22c55e" }}>{canjearMsg}</p>}
           {canjearError && <p className="text-[11px] mt-2" style={{ color: "#ef4444" }}>{canjearError}</p>}
         </div>
@@ -148,12 +180,12 @@ function ReferidosPageInner() {
           <h2 className="font-semibold text-sm mb-3" style={{ color: "#f1f5f9" }}>¿Cómo funciona?</h2>
           <div className="space-y-2">
             {[
-              { num: "1", text: "Copia tu link de invitación" },
-              { num: "2", text: "Compártelo con amigos que buscan trabajo" },
-              { num: "3", text: "Cuando se registran, aparecen en tu contador" },
+              { num: "1", text: "Mándale tu enlace a alguien que esté buscando trabajo" },
+              { num: "2", text: "Se registra con él y confirma su correo" },
+              { num: "3", text: "Os damos los envíos a los dos, y a ti la foto. Te avisamos en la campana" },
             ].map(paso => (
               <div key={paso.num} className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
                   style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
                   {paso.num}
                 </div>

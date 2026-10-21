@@ -169,7 +169,6 @@ export default async function LandingPage() {
         "Preparación de entrevistas",
         "📄 10 CVs con IA",
         "💾 200 ofertas guardadas",
-        "Códigos promocionales",
         "Soporte prioritario"
       ], 
       nota: "Sin permanencia · Cancela cuando quieras", 
