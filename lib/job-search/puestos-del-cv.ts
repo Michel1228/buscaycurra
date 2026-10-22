@@ -26,12 +26,24 @@ const GENERICAS = new Set([
   "practicas", "especialista", "profesional", "senior", "junior", "becario", "becaria", "puesto", "trabajo",
 ]);
 
+/**
+ * Nunca dicen el oficio (22 oct 2026, cuentas de una charla): "5 años de
+ * experiencia" salía como puesto y traía "Interinidad 3 Años"; "Full Stack"
+ * buscaba "full" ("Full-Cycle Demos"); "Atención al público" casaba con
+ * cualquier "atención"; "Prácticas profesionales" con cualquier práctica.
+ * Se quitan antes de elegir la palabra: "Full Stack Developer" se queda en "stack".
+ */
+const NUNCA_OFICIO = new Set([
+  "anos", "ano", "meses", "mes", "experiencia", "full", "part", "time", "atencion", "publico", "cliente", "clientes",
+  "producto", "productos", "natural", "naturales", "practicas", "profesionales",
+]);
+
 const norm = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const texto = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
 
 /** "Reponedor, Repartidor, Encargado de Almacén y Ventas" → cuatro trozos. */
 function trozos(puesto: string): string[] {
-  return puesto.split(/\s*[,;/|·()]\s*|\s+-\s+|\s+y\s+|\s+e\s+/i).map((t) => t.trim()).filter(Boolean);
+  return puesto.split(/\s*[,;/|·()]\s*|\s+[-–—]\s+|\s+y\s+|\s+e\s+/i).map((t) => t.trim()).filter(Boolean);
 }
 
 /** El año más reciente de "2015-2026"; "actualidad" cuenta como ahora. */
@@ -73,6 +85,8 @@ export function puestosDelCv(cv: unknown): string[] {
  */
 const FALSOS_AMIGOS: Record<string, { excluir: string; salvoSiElCvDice: RegExp }> = {
   camar: { excluir: "de\\s+pisos|\\mc[aá]maras?\\M", salvoSiElCvDice: /pisos|camaras?\b/ },
+  // "Ayudante de cocina" no es "Vendedor/a experto/a en cocinas" (22 oct 2026).
+  cocin: { excluir: "\\mcocinas\\M", salvoSiElCvDice: /mueble|monta|vende|instala/ },
 };
 
 /** Lo que no se recomienda aunque case con la raíz (expresión para ~*), o null. */
@@ -111,7 +125,7 @@ export function palabraPrincipal(texto: string): string | null {
 export function patronesDelCv(cv: unknown, max = 6): string[] {
   const salida: string[] = [];
   for (const p of puestosDelCv(cv)) {
-    const palabras = norm(p).split(/[^a-z]+/).filter((w) => w.length >= 3 && !VACIAS.has(w));
+    const palabras = norm(p).split(/[^a-z]+/).filter((w) => w.length >= 3 && !VACIAS.has(w) && !NUNCA_OFICIO.has(w));
     const conSentido = palabras.find((w) => !GENERICAS.has(w)) ?? palabras[0];
     if (!conSentido) continue;
     const r = raiz(conSentido);

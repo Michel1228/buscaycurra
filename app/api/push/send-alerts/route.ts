@@ -17,6 +17,7 @@ import { cursoParaPuesto } from "@/lib/cursos/curso-para-puesto";
 import { asegurarColumnaOficio } from "@/lib/onboarding/oficio";
 import { fichasDePlaza } from "@/lib/cursos/plazas/emparejar";
 import { buscarPlazas } from "@/lib/cursos/plazas/db";
+import { patronesDelCv, regexDePatrones, exclusionesDelCv } from "@/lib/job-search/puestos-del-cv";
 
 export const dynamic = "force-dynamic";
 
@@ -202,13 +203,34 @@ export async function GET(request: NextRequest) {
     }
     const plazasPorFicha = new Map<string, number>();
 
+    // LAS ALERTAS SIN PALABRA, POR EL CV (22 oct 2026). La bienvenida crea una
+    // alerta con la ciudad y sin palabra, y llegaban todas las ofertas nuevas de
+    // la ciudad: en Tudela y Pamplona, casi todo almacén. Alumnos de una charla
+    // de Michel con CV de camarero o dependienta recibían "bastantes ofertas de
+    // ese tipo". Ahora, sin palabra, se busca por los puestos del CV (como
+    // "Ofertas para ti"); sin CV, por el oficio que dijo al registrarse; y sin
+    // ninguno de los dos no se manda nada al azar.
+    const puestoDeLaAlerta = (userId: string): { re: string; excluir: string | null } | null => {
+      let cv: unknown = null;
+      try { cv = JSON.parse(cvPorUsuario.get(userId)?.texto || "null"); } catch { /* CV ilegible: como sin CV */ }
+      let patrones = patronesDelCv(cv);
+      const oficio = contactsMap.get(userId)?.oficio?.trim();
+      if (!patrones.length && oficio) { cv = { subtitulo: oficio }; patrones = patronesDelCv(cv); }
+      return patrones.length ? { re: regexDePatrones(patrones), excluir: exclusionesDelCv(cv, patrones) } : null;
+    };
+
     // ── Batch fetch: JobListings for all alertas (fix N+1) ──
     // Build a single query: for each alerta, create keyword + geo conditions OR'd together
-    const alertasEntries = alertasResult.rows.map(a => ({
-      alerta: a,
-      kw: `%${a.keyword.toLowerCase()}%`,
-      locNorm: a.location ? a.location.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "",
-    }));
+    const alertasEntries = alertasResult.rows.map(a => {
+      const puesto = a.keyword.trim() ? null : puestoDeLaAlerta(a.user_id);
+      return {
+        alerta: a,
+        kw: `%${a.keyword.toLowerCase()}%`,
+        puesto,
+        sinNada: !a.keyword.trim() && !puesto,
+        locNorm: a.location ? a.location.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "") : "",
+      };
+    });
 
     const jobsMap = new Map<number, Array<{ id: string; title: string; company: string; city: string; sourceUrl: string }>>();
     if (alertasEntries.length > 0) {
@@ -219,9 +241,19 @@ export async function GET(request: NextRequest) {
 
       for (const entry of alertasEntries) {
         const desde = entry.alerta.last_sent_at ?? batchDesde;
-        const keywordClause = `(LOWER(title) LIKE $${bpIdx} OR LOWER(company) LIKE $${bpIdx} OR LOWER(description) LIKE $${bpIdx})`;
-        batchParams.push(entry.kw);
-        bpIdx++;
+        let keywordClause: string;
+        if (entry.puesto) {
+          keywordClause = `(title ~* $${bpIdx}${entry.puesto.excluir ? ` AND title !~* $${bpIdx + 1}` : ""})`;
+          batchParams.push(entry.puesto.re);
+          bpIdx++;
+          if (entry.puesto.excluir) { batchParams.push(entry.puesto.excluir); bpIdx++; }
+        } else if (entry.sinNada) {
+          keywordClause = "FALSE";
+        } else {
+          keywordClause = `(LOWER(title) LIKE $${bpIdx} OR LOWER(company) LIKE $${bpIdx} OR LOWER(description) LIKE $${bpIdx})`;
+          batchParams.push(entry.kw);
+          bpIdx++;
+        }
 
         let geoParts = "";
         if (entry.alerta.location) {
@@ -281,13 +313,20 @@ export async function GET(request: NextRequest) {
       // del inventario que el usuario NO haya recibido antes (alert_sent_jobs).
       // Cadencia: máx. 1 aviso de inventario por alerta y día. Sin engaños:
       // el texto dice "ofertas activas", no "nuevas".
+      const { puesto, sinNada } = alertasEntries[alertaIdx];
       if (!jobsResult || jobsResult.length === 0) {
         const hace24h = Date.now() - 24 * 3600 * 1000;
-        const elegible = !alerta.last_sent_at || alerta.last_sent_at.getTime() < hace24h;
+        const elegible = !sinNada && (!alerta.last_sent_at || alerta.last_sent_at.getTime() < hace24h);
         if (elegible) {
           try {
             const kw = `%${alerta.keyword.toLowerCase()}%`;
-            const invParams: string[] = [kw, alerta.user_id];
+            const invParams: string[] = [puesto ? puesto.re : kw, alerta.user_id];
+            // Sin palabra, por los puestos de su CV; con palabra, como siempre.
+            let invPuesto = "(LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)";
+            if (puesto) {
+              invPuesto = "title ~* $1";
+              if (puesto.excluir) { invParams.push(puesto.excluir); invPuesto += ` AND title !~* $${invParams.length}`; }
+            }
             let invGeo = "";
             if (alerta.location) {
               const locNorm = alerta.location.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -304,7 +343,7 @@ export async function GET(request: NextRequest) {
                FROM "JobListing"
                WHERE "isActive" = true
                  AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
-                 AND (LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
+                 AND ${invPuesto}
                  ${invGeo}
                  AND id NOT IN (SELECT job_id FROM alert_sent_jobs WHERE user_id = $2)
                ORDER BY "createdAt" DESC
@@ -325,7 +364,9 @@ export async function GET(request: NextRequest) {
         // Se marca last_sent_at aunque no se envíe nada, para no reintentar en
         // bucle. Se deja traza porque desde fuera esto era indistinguible de un
         // envío correcto: la alerta quedaba con fecha reciente en ambos casos.
-        console.log(`[send-alerts] sin ofertas nuevas para "${alerta.keyword || "(sin palabra clave)"}" en ${alerta.location || "cualquier sitio"} — no se envía nada`);
+        console.log(sinNada
+          ? `[send-alerts] alerta ${alerta.id} sin palabra, sin CV y sin oficio: no se mandan ofertas al azar`
+          : `[send-alerts] sin ofertas nuevas para "${alerta.keyword || "(según su CV)"}" en ${alerta.location || "cualquier sitio"} — no se envía nada`);
         await pool.query(`UPDATE job_alerts SET last_sent_at = NOW() WHERE id = $1`, [alerta.id]);
         continue;
       }

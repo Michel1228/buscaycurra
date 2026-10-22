@@ -4387,6 +4387,44 @@ test("Guzzi baja al último mensaje también en el móvil, y otra vez al cargar 
     && leerFuente("app/app/gusi/page.tsx").includes('minHeight: "100dvh"');
 });
 
+// LOS AVISOS, POR EL CV (22 oct 2026). Alumnos de una charla con CV de camarero
+// o dependienta recibían "bastantes ofertas" de almacén: la alerta que crea la
+// bienvenida no tiene palabra y mandaba todo lo nuevo de su ciudad. Y en la
+// lectura del CV, "5 años de experiencia" era un puesto, "Full Stack" buscaba
+// "full" y "Ayudante de cocina" recibía "Vendedor/a experto/a en cocinas".
+test("avisos y recomendaciones salen del CV: sin palabra, por sus puestos; sin CV ni oficio, nada al azar", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-puestos-cv2.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/job-search/puestos-del-cv.ts", "--bundle", "--format=cjs", "--platform=node",
+      `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}?${Date.now()}`);
+    const dev = m.patronesDelCv({ subtitulo: "Desarrollador Full Stack · 5 años de experiencia", experiencia: [{ puesto: "Full Stack Developer", fechas: "2020 - 2022" }] });
+    const farmacia = m.patronesDelCv({ subtitulo: "TÉCNICA DE FARMACIA", experiencia: [{ puesto: "ATENCIÓN AL PÚBLICO" }, { puesto: "PRODUCTOS NATURALES" }] });
+    const cocina = { subtitulo: "Ayudante de cocina" };
+    const alertas = leerFuente("app/api/push/send-alerts/route.ts");
+    const checks = {
+      "«5 años de experiencia» y «Full» no son un oficio": !dev.includes("anos") && !dev.includes("full") && dev.includes("stack") && dev.includes("desarrollad"),
+      "«Atención al público» y «Productos» tampoco": farmacia.join() === "farmaci",
+      "a quien es de cocina no le salen vendedores de cocinas": /cocinas/.test(m.exclusionesDelCv(cocina, m.patronesDelCv(cocina)) || "")
+        && m.exclusionesDelCv({ subtitulo: "Montador de cocinas" }, ["montad", "cocin"]) === null,
+      "la alerta sin palabra busca por los puestos del CV": alertas.includes("const puesto = a.keyword.trim() ? null : puestoDeLaAlerta(a.user_id);")
+        && alertas.includes("keywordClause = `(title ~* $${bpIdx}"),
+      "sin CV, por el oficio del registro": alertas.includes("if (!patrones.length && oficio) { cv = { subtitulo: oficio }; patrones = patronesDelCv(cv); }"),
+      "sin CV ni oficio, nada al azar (tampoco del inventario)": alertas.includes('keywordClause = "FALSE";') && alertas.includes("const elegible = !sinNada &&"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);
