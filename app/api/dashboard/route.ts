@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
 import { ofertasParaTi } from "@/lib/job-search/ofertas-para-ti";
-import { patronesDelCv } from "@/lib/job-search/puestos-del-cv";
+import { patronesDelCv, puestosDelCv } from "@/lib/job-search/puestos-del-cv";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +118,8 @@ export async function GET(request: NextRequest) {
     let ofertasRecomendadas: any[] = [];
     // Para que la portada diga por qué no hay: sin CV se le pide que lo rellene.
     let estadoRecomendadas: "ok" | "sin-cv" | "sin-ofertas" = "sin-cv";
+    // De qué puestos del CV salen, para decirlo en la portada (22 oct 2026).
+    let puestosRecomendadas: string[] = [];
     try {
       const { rows: cvs } = await getPool().query(
         "SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1",
@@ -125,6 +127,7 @@ export async function GET(request: NextRequest) {
       );
       ofertasRecomendadas = await ofertasParaTi(cvs[0]?.form_data ?? null, profile?.ciudad);
       estadoRecomendadas = !patronesDelCv(cvs[0]?.form_data ?? null).length ? "sin-cv" : ofertasRecomendadas.length ? "ok" : "sin-ofertas";
+      puestosRecomendadas = puestosDelCv(cvs[0]?.form_data ?? null).slice(0, 3);
     } catch (e) {
       // Sin ofertas la portada sigue en pie: quedan las estadisticas y los
       // accesos rapidos. Pero que se vea en el registro, que antes un fallo
@@ -162,6 +165,7 @@ export async function GET(request: NextRequest) {
         pipelineActivo: pipelineActivo || 0,
       },
       estadoRecomendadas,
+      puestosRecomendadas,
       ofertasRecomendadas: ofertasRecomendadas.map((o: any) => ({
         id: o.id,
         titulo: o.titulo,

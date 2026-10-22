@@ -4491,6 +4491,24 @@ test("privacidad: la política nombra a quien recibe datos, el borrado es comple
   return malos.length === 0;
 });
 
+// POR QUÉ SE SUGIERE (superauditoría del 22 oct 2026). La portada decía "Ofertas
+// según tu CV" sin decir de qué puestos, y con CV pero sin ofertas cerca dejaba
+// el hueco vacío. Los avisos decían "3 nuevas ofertas para ti" sin decir de qué.
+test("las sugerencias dicen de qué puesto del CV salen", () => {
+  const portada = leerFuente("app/app/bienvenida/BienvenidaClient.tsx");
+  const alertas = leerFuente("app/api/push/send-alerts/route.ts");
+  const checks = {
+    "la API de la portada manda los puestos": leerFuente("app/api/dashboard/route.ts").includes("puestosRecomendadas = puestosDelCv(cvs[0]?.form_data ?? null).slice(0, 3);"),
+    "la portada dice de qué puestos salen": portada.includes("De lo que has trabajado ({puestosRecomendadas.join"),
+    "y si no hay nada cerca, lo dice": portada.includes('estadoRecomendadas === "sin-ofertas"') && portada.includes("Ahora no hay ofertas de lo tuyo"),
+    "el aviso nombra el puesto del CV": alertas.includes("que: puestosDelCv(cv)[0] || oficio") && alertas.includes('const deQue = !alerta.keyword.trim() && puesto?.que'),
+    "y el correo y el enlace usan ese puesto": alertas.includes("keyword: palabraAviso,") && alertas.includes("encodeURIComponent(palabraAviso)"),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

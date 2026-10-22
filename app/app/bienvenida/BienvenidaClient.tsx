@@ -66,6 +66,7 @@ export default function BienvenidaClient() {
   });
   const [ofertas, setOfertas] = useState<OfertaRec[]>([]);
   const [estadoRecomendadas, setEstadoRecomendadas] = useState<string>("");
+  const [puestosRecomendadas, setPuestosRecomendadas] = useState<string[]>([]);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("");
@@ -95,6 +96,7 @@ export default function BienvenidaClient() {
           setStats(data.stats);
           setOfertas(data.ofertasRecomendadas || []);
           setEstadoRecomendadas(data.estadoRecomendadas || "");
+          setPuestosRecomendadas(data.puestosRecomendadas || []);
           setQuickActions(data.quickActions || []);
         }
       } catch (err) {
@@ -277,14 +279,37 @@ export default function BienvenidaClient() {
           </div>
         )}
 
+        {/* POR QUÉ SE SUGIERE (22 oct 2026): de qué puestos del CV salen, como en
+            el buscador; y si hoy no hay nada de lo suyo cerca, se dice en vez de
+            dejar el hueco vacío. */}
+        {ofertas.length === 0 && estadoRecomendadas === "sin-ofertas" && (
+          <div className="rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between"
+            style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div>
+              <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Ofertas según tu CV</h2>
+              <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
+                Ahora no hay ofertas de lo tuyo{puestosRecomendadas.length ? ` (${puestosRecomendadas.join(", ").toLowerCase()})` : ""} cerca de ti. Te avisamos cuando salgan.
+              </p>
+            </div>
+            <Link href="/app/buscar" className="btn-game text-xs px-4 py-2 text-center flex-shrink-0">Buscar en otra zona</Link>
+          </div>
+        )}
+
         {ofertas.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="text-lg"><Briefcase className="w-5 h-5" style={{color: "#f59e0b"}} /></span>
-                <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>
-                  Ofertas según tu CV
-                </h2>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg"><Briefcase className="w-5 h-5" style={{color: "#f59e0b"}} /></span>
+                  <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>
+                    Ofertas según tu CV
+                  </h2>
+                </div>
+                {puestosRecomendadas.length > 0 && (
+                  <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                    De lo que has trabajado ({puestosRecomendadas.join(", ").toLowerCase()}), primero las de tu zona.
+                  </p>
+                )}
               </div>
               <Link href="/app/buscar" className="text-xs font-medium" style={{ color: "#22c55e" }}>
                 Ver todas →

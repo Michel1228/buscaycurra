@@ -17,7 +17,7 @@ import { cursoParaPuesto } from "@/lib/cursos/curso-para-puesto";
 import { asegurarColumnaOficio } from "@/lib/onboarding/oficio";
 import { fichasDePlaza } from "@/lib/cursos/plazas/emparejar";
 import { buscarPlazas } from "@/lib/cursos/plazas/db";
-import { patronesDelCv, regexDePatrones, exclusionesDelCv } from "@/lib/job-search/puestos-del-cv";
+import { patronesDelCv, regexDePatrones, exclusionesDelCv, puestosDelCv } from "@/lib/job-search/puestos-del-cv";
 
 export const dynamic = "force-dynamic";
 
@@ -210,13 +210,14 @@ export async function GET(request: NextRequest) {
     // ese tipo". Ahora, sin palabra, se busca por los puestos del CV (como
     // "Ofertas para ti"); sin CV, por el oficio que dijo al registrarse; y sin
     // ninguno de los dos no se manda nada al azar.
-    const puestoDeLaAlerta = (userId: string): { re: string; excluir: string | null } | null => {
+    // "que": el puesto que se nombra en el aviso, para que diga por qué le llega.
+    const puestoDeLaAlerta = (userId: string): { re: string; excluir: string | null; que: string } | null => {
       let cv: unknown = null;
       try { cv = JSON.parse(cvPorUsuario.get(userId)?.texto || "null"); } catch { /* CV ilegible: como sin CV */ }
       let patrones = patronesDelCv(cv);
       const oficio = contactsMap.get(userId)?.oficio?.trim();
       if (!patrones.length && oficio) { cv = { subtitulo: oficio }; patrones = patronesDelCv(cv); }
-      return patrones.length ? { re: regexDePatrones(patrones), excluir: exclusionesDelCv(cv, patrones) } : null;
+      return patrones.length ? { re: regexDePatrones(patrones), excluir: exclusionesDelCv(cv, patrones), que: puestosDelCv(cv)[0] || oficio || "" } : null;
     };
 
     // ── Batch fetch: JobListings for all alertas (fix N+1) ──
@@ -373,9 +374,12 @@ export async function GET(request: NextRequest) {
 
       const total = jobsResult.length;
       const ejemplo = jobsResult[0];
+      // Sin palabra, el aviso dice de qué puesto de su CV son: "3 nuevas ofertas de camarero".
+      const palabraAviso = alerta.keyword.trim() || puesto?.que || "";
+      const deQue = !alerta.keyword.trim() && puesto?.que ? ` de ${puesto.que.toLowerCase()}` : "";
       const titulo = esInventario
-        ? `${total} oferta${total > 1 ? "s" : ""} activa${total > 1 ? "s" : ""} que encaja${total > 1 ? "n" : ""} contigo`
-        : `${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""} para ti`;
+        ? (deQue ? `${total} oferta${total > 1 ? "s" : ""} activa${total > 1 ? "s" : ""}${deQue}` : `${total} oferta${total > 1 ? "s" : ""} activa${total > 1 ? "s" : ""} que encaja${total > 1 ? "n" : ""} contigo`)
+        : `${total} nueva${total > 1 ? "s" : ""} oferta${total > 1 ? "s" : ""}${deQue || " para ti"}`;
       const cuerpo = `${ejemplo.title} en ${ejemplo.company}${ejemplo.city ? ` · ${ejemplo.city}` : ""}`;
 
       // Registrar TODO lo enviado en la tabla de deduplicación (nuevas e inventario):
@@ -396,7 +400,7 @@ export async function GET(request: NextRequest) {
       // URL directo a la oferta concreta si hay job_id, si no al buscador con la keyword
       const pushUrl = ejemplo.id
         ? `/app/ofertas/${encodeURIComponent(ejemplo.id)}`
-        : `/app/buscar?q=${encodeURIComponent(alerta.keyword)}${alerta.location ? `&ciudad=${encodeURIComponent(alerta.location)}` : ""}`;
+        : `/app/buscar?q=${encodeURIComponent(palabraAviso)}${alerta.location ? `&ciudad=${encodeURIComponent(alerta.location)}` : ""}`;
 
       for (const sub of userSubs) {
         try {
@@ -423,7 +427,7 @@ export async function GET(request: NextRequest) {
           titulo,
           mensaje: cuerpo,
           datos: {
-            keyword: alerta.keyword,
+            keyword: palabraAviso,
             location: alerta.location,
             total: String(total),
             job_id: ejemplo.id,
@@ -470,7 +474,7 @@ export async function GET(request: NextRequest) {
 
           const salio = await sendJobAlertEmail({
             userEmail: contact.email,
-            keyword: alerta.keyword,
+            keyword: palabraAviso,
             location: alerta.location || undefined,
             total,
             ejemploTitle: ejemplo.title,
