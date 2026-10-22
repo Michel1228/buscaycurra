@@ -72,7 +72,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
     },
     alternates: {
-      canonical: `https://buscaycurra.es/trabajar-en/${paisParam.toLowerCase()}/${keyword.toLowerCase()}`,
+      // Minúsculas ANTES de codificar: "b%C3%BCrokaufmann".toLowerCase() daba
+      // "b%c3%bc…", distinta de la del mapa del sitio (22 oct 2026).
+      canonical: `https://buscaycurra.es/trabajar-en/${paisParam.toLowerCase()}/${encodeURIComponent(decodeURIComponent(keyword).toLowerCase())}`,
     },
   };
 }

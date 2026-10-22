@@ -4509,6 +4509,16 @@ test("las sugerencias dicen de qué puesto del CV salen", () => {
   return malos.length === 0;
 });
 
+// LA WEB PÚBLICA, RECORRIDA ENTERA (22 oct 2026): las 208 direcciones del mapa
+// del sitio responden y tienen título y canonical, pero en "trabajar en" con
+// tildes la canonical salía en minúsculas ya codificada (%c3%bc frente al
+// %C3%BC del mapa), y /cookies heredaba el título de la portada.
+test("web pública: canonical igual que el mapa del sitio y títulos propios", () => {
+  const pagina = leerFuente("app/trabajar-en/[pais]/[keyword]/page.tsx");
+  return pagina.includes("encodeURIComponent(decodeURIComponent(keyword).toLowerCase())") && !pagina.includes("${keyword.toLowerCase()}")
+    && leerFuente("app/cookies/layout.tsx").includes('title: "Política de cookies — BuscayCurra"');
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);
