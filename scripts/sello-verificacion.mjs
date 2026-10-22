@@ -1190,8 +1190,11 @@ test("la portada no promete lo que no es verdad", () => {
   fallos.forEach((f) => console.log(`     ↳ ${f}`));
   return fallos.length === 0;
 });
-test("el canonical de la portada no lo heredan las demas paginas", () =>
-  !/alternates:\s*\{\s*canonical/.test(leerFuente("app/layout.tsx"))
+// 22 oct 2026: sin ninguno, Search Console avisaba "Duplicada: el usuario no ha
+// indicado ninguna versión canónica". El layout raíz pone "./", que Next resuelve
+// con la ruta de cada página: nunca "/" (eso era mandarlas todas a la portada).
+test("el canonical de la portada no lo heredan las demas paginas: cada una, el suyo", () =>
+  (leerFuente("app/layout.tsx").match(/alternates:\s*\{\s*canonical:\s*"([^"]*)"/) || [])[1] === "./"
   && leerFuente("app/(home)/page.tsx").includes('alternates: { canonical: "https://buscaycurra.es" }'));
 test("las paginas de pais no cuentan por su cuenta ni enseñan un 0", () => {
   const p = leerFuente("app/trabajar-en/[pais]/page.tsx");

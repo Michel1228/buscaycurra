@@ -86,11 +86,15 @@ export const metadata: Metadata = {
       `Guzzi busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países. 24/7.`,
     images: ["/og-image.png"],
   },
-  // SIN canonical aquí. Puesto en el layout raíz lo heredaban todas las páginas
-  // que no definen el suyo (/precios, /trabajar-en/*, las legales, las fichas
-  // de oferta...) y le decían a Google "soy una copia de la portada", que es
-  // pedirle que no las indexe (auditoría del 3 oct 2026). La portada lo pone
-  // en su propia página.
+  // CANONICAL "./": CADA PÁGINA, LA SUYA (22 oct 2026). Un canonical "/" aquí
+  // lo heredaban todas las páginas sin el suyo y le decían a Google "soy una
+  // copia de la portada" (auditoría del 3 oct 2026). Sin ninguno, Search
+  // Console avisaba "Duplicada: el usuario no ha indicado ninguna versión
+  // canónica": /precios, /sobre-nosotros, las legales, las fichas... llegan
+  // también con ?ref=, ?desde=anuncio o los de los anuncios. Next resuelve
+  // "./" con la ruta de cada página y sin parámetros (resolveRelativeUrl), y
+  // las que definen el suyo (portada, cursos, empleo...) lo siguen mandando.
+  alternates: { canonical: "./" },
   robots: {
     index: true,
     follow: true,
