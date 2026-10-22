@@ -4464,6 +4464,33 @@ test("plantilla Sencilla: la primera y recomendada, en blanco y negro y traducid
   }
 });
 
+// PRIVACIDAD (superauditoría del 22 oct 2026). La política decía que los datos
+// solo iban a Supabase, Stripe y Resend, con los servidores "en el EEE o con
+// garantías equivalentes"; Guzzi va por OpenAI, el CV por Groq, la cámara por
+// OpenAI y Google. Un script llevaba escrita una contraseña de Redis (antigua)
+// en este repositorio público, y el borrado de cuenta se dejaba la tabla "User"
+// del sistema de cuentas anterior.
+test("privacidad: la política nombra a quien recibe datos, el borrado es completo y no hay contraseñas en scripts", async () => {
+  const politica = leerFuente("app/privacidad/page.tsx");
+  const { execFileSync } = await import("node:child_process");
+  // git grep sin resultados sale con código 1: eso es lo bueno.
+  let contrasenasEnScripts = "";
+  try {
+    contrasenasEnScripts = execFileSync("git", ["grep", "-nIE", "(REDIS_PASS|PASSWORD|PASS)=['\"][A-Za-z0-9]{8,}['\"]", "--", "scripts"], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+  } catch { /* sin resultados */ }
+  const checks = {
+    "nombra a todos los que reciben datos": ["OpenAI", "Groq", "DeepSeek", "Google", "Resend", "Supabase", "Stripe", "Hostinger", "RevenueCat", "WhatsApp"].every((n) => politica.includes(n)),
+    "no dice que solo se comparten con tres": !/únicamente con estos proveedores/.test(politica) && !/Espacio Económico Europeo o cuentan con garantías/.test(politica),
+    "dice que hay datos que salen de la UE": politica.includes("salen del Espacio Económico Europeo"),
+    "cuenta las fotos, la ubicación y las conversaciones": /miniatura/.test(politica) && /Ubicación:/.test(politica) && /Conversaciones con Guzzi/.test(politica),
+    "el borrado de cuenta quita la tabla antigua User": leerFuente("lib/cuenta/borrar-datos.ts").includes(`DELETE FROM "User" WHERE lower(email) = $1`),
+    "ninguna contraseña escrita en los scripts": contrasenasEnScripts === "",
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

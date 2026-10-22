@@ -29,7 +29,8 @@ for COUNTRY in "${EU_COUNTRIES[@]}"; do
   # Reset circuit breaker cada BREAKER_RESET_INTERVAL países
   if [ $((COUNTER % BREAKER_RESET_INTERVAL)) -eq 0 ]; then
     REDIS_CT=$(docker ps --filter "name=buscaycurra.*redis" --format "{{.Names}}" | head -1)
-    REDIS_PASS='9tateikic492s8mggp03'
+    # La contraseña, de la configuración (antes iba escrita aquí, y era una antigua: el reinicio fallaba sin avisar).
+    REDIS_PASS=$(grep -E '^REDIS_URL=' /root/.openclaw/workspace/buscaycurra-unified/.env.local | head -1 | cut -d= -f2- | tr -d '\r\042\047' | sed -E 's#^redis://:([^@]*)@.*#\1#')
     if [ -n "$REDIS_CT" ]; then
       docker exec "$REDIS_CT" redis-cli -a "$REDIS_PASS" --no-auth-warning DEL "api:usage:careerjet:0:$(date +%Y%m%d)" "api:breaker:careerjet:0" >> $LOG 2>&1
     fi

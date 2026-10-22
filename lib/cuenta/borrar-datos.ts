@@ -74,6 +74,10 @@ export async function borrarDatosDeUsuario(
   }
   await vps("vps.referrals", `DELETE FROM referrals WHERE referrer_id::text = $1 OR referred_id::text = $1`, [userId]);
   if (email) await vps("vps.correos_rebotados", `DELETE FROM correos_rebotados WHERE email = $1`, [email.toLowerCase()]);
+  // La tabla "User" es del sistema de cuentas de antes de Supabase (abril-mayo
+  // 2026): correo, nombre, teléfono y contraseña. Ningún código la usa, pero
+  // quien borra su cuenta también tiene que desaparecer de ahí (22 oct 2026).
+  if (email) await vps("vps.User", `DELETE FROM "User" WHERE lower(email) = $1`, [email.toLowerCase()]);
 
   const sb = async (etiqueta: string, consulta: PromiseLike<{ error: { message: string } | null; count: number | null }>) => {
     const { error, count } = await consulta;
