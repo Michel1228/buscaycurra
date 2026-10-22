@@ -127,7 +127,7 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
   const hreflangTags = LISTA_PAISES.map((p) => ({
     codigo: p.codigo.toLowerCase(),
     idioma: p.idioma,
-    url: `https://buscaycurra.es/trabajar-en/${p.codigo.toLowerCase()}/${keyword.toLowerCase()}`,
+    url: `https://buscaycurra.es/trabajar-en/${p.codigo.toLowerCase()}/${encodeURIComponent(decodeURIComponent(keyword).toLowerCase())}`,
   }));
 
   return (
@@ -247,7 +247,7 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
           {LISTA_PAISES.filter((p) => p.codigo !== codigo).map((p) => (
             <Link
               key={p.codigo}
-              href={`/trabajar-en/${p.codigo.toLowerCase()}/${keyword.toLowerCase()}`}
+              href={`/trabajar-en/${p.codigo.toLowerCase()}/${encodeURIComponent(decodeURIComponent(keyword).toLowerCase())}`}
               className="rounded-lg px-4 py-2.5 text-sm flex items-center gap-2 transition-colors"
               style={{
                 background: "#1e212b",
