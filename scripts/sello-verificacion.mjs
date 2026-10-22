@@ -4428,6 +4428,38 @@ test("avisos y recomendaciones salen del CV: sin palabra, por sus puestos; sin C
   }
 });
 
+// LA PLANTILLA SENCILLA (22 oct 2026). A los alumnos de los cursos les piden
+// dejar colores y adornos y mandar el CV de siempre: blanco y negro,
+// "CURRÍCULUM VITAE" arriba, datos personales con etiqueta, foto al lado y
+// apartados subrayados con viñetas. Va la primera, como recomendada.
+test("plantilla Sencilla: la primera y recomendada, en blanco y negro y traducida", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-sencilla-entrada.ts", salida = ".sello-sencilla.cjs";
+  try {
+    writeFileSync(entrada, 'export { generarCV, LISTA_PLANTILLAS, PLANTILLAS } from "./lib/cv-generator/plantillas";\nexport { CV_EJEMPLO } from "./lib/cv-generator/ejemplo";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}?${Date.now()}`);
+    const es = m.generarCV({ ...m.CV_EJEMPLO, templateId: "sencilla", accentColor: "#e11d48" });
+    const en = m.generarCV({ ...m.CV_EJEMPLO, templateId: "sencilla", idioma: "en" });
+    const checks = {
+      "es la primera y la recomendada": m.LISTA_PLANTILLAS[0]?.id === "sencilla" && m.PLANTILLAS.sencilla.recomendada === true,
+      "título, datos personales con etiqueta y foto": es.includes(">Currículum vitae<") && es.includes("<b>Nombre y apellidos</b>:") && es.includes('class="foto"'),
+      "en blanco y negro: el color elegido no entra": !es.includes("#e11d48"),
+      "títulos y etiquetas traducidos": en.includes(">Curriculum Vitae<") && en.includes(">Personal details<") && en.includes("<b>Full name</b>:") && !en.includes(">Datos personales<"),
+      "en el móvil se ve aunque las demás estén plegadas": leerFuente("app/app/curriculum/Content.tsx").includes("!activa && !p.recomendada && !verPlantillas"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

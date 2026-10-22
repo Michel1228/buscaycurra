@@ -1044,8 +1044,8 @@ export default function CurriculumPage() {
                     <div
                       key={p.id}
                       onClick={() => setTemplateId(p.id)}
-                      // En el móvil, plegadas salvo la elegida (ver más abajo).
-                      className={`text-left rounded-lg transition cursor-pointer overflow-hidden ${!activa && !verPlantillas ? "hidden sm:block" : ""}`}
+                      // En el móvil, plegadas salvo la elegida y la recomendada (ver más abajo).
+                      className={`text-left rounded-lg transition cursor-pointer overflow-hidden ${!activa && !p.recomendada && !verPlantillas ? "hidden sm:block" : ""}`}
                       style={{
                         background: activa ? "rgba(34,197,94,0.08)" : "#0f1117",
                         border: `1.5px solid ${activa ? "#22c55e" : "#2d3142"}`,
@@ -1070,8 +1070,12 @@ export default function CurriculumPage() {
                       </div>
                       <div className="p-3">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-semibold" style={{ color: activa ? "#22c55e" : "#f1f5f9" }}>
+                          <span className="text-sm font-semibold flex items-center gap-1.5" style={{ color: activa ? "#22c55e" : "#f1f5f9" }}>
                             {p.nombre}
+                            {/* La sobria de toda la vida: la que se aconseja mandar (22 oct 2026). */}
+                            {p.recomendada && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b" }}>Recomendada</span>
+                            )}
                           </span>
                           {activa && <span className="text-[10px]" style={{ color: "#22c55e" }}>✓ activa</span>}
                         </div>

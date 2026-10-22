@@ -16,11 +16,12 @@ import { generarCVHTML_Ejecutiva } from "./cv-template-ejecutiva";
 import { generarCVHTML_Minimalista } from "./cv-template-minimalista";
 import { generarCVHTML_Firma } from "./cv-template-firma";
 import { generarCVHTML_Oscura } from "./cv-template-oscura";
+import { generarCVHTML_Sencilla } from "./cv-template-sencilla";
 import { localizarCV } from "./idiomas-cv";
 
 export type TemplateId =
   | "clasica" | "ats" | "folio" | "moderna" | "elegante"
-  | "coqueta" | "ejecutiva" | "minimalista" | "firma" | "oscura";
+  | "coqueta" | "ejecutiva" | "minimalista" | "firma" | "oscura" | "sencilla";
 
 export interface PlantillaInfo {
   id: TemplateId;
@@ -28,10 +29,20 @@ export interface PlantillaInfo {
   descripcion: string;
   /** Si true, el color de acento influye mucho en el diseño (barra/banner de color). */
   usaColor: boolean;
+  /** La que se aconseja: va la primera y se ve aunque las demás estén plegadas. */
+  recomendada?: boolean;
   generar: (data: CVData) => string;
 }
 
 export const PLANTILLAS: Record<TemplateId, PlantillaInfo> = {
+  sencilla: {
+    id: "sencilla",
+    nombre: "Sencilla",
+    descripcion: "Blanco y negro, una columna y la foto al lado: el CV sobrio de toda la vida, sin colores ni adornos. Se lee de un vistazo y vale para cualquier sector.",
+    usaColor: false,
+    recomendada: true,
+    generar: generarCVHTML_Sencilla,
+  },
   ejecutiva: {
     id: "ejecutiva",
     nombre: "Ejecutiva",
@@ -107,6 +118,7 @@ export const PLANTILLAS: Record<TemplateId, PlantillaInfo> = {
 // Orden de aparición en el selector (visuales primero, ATS al final)
 // Orden del selector: editoriales/nuevas primero, ATS al final.
 export const LISTA_PLANTILLAS: PlantillaInfo[] = [
+  PLANTILLAS.sencilla,
   PLANTILLAS.ejecutiva,
   PLANTILLAS.firma,
   PLANTILLAS.coqueta,
