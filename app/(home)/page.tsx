@@ -135,7 +135,7 @@ export default async function LandingPage() {
         "Comparador de salarios",
         `💾 ${LIMITS.free.ofertasGuardadas} ofertas guardadas`
       ], 
-      nota: "Sin tarjeta · Sin carta personalizada con IA", 
+      nota: "Sin tarjeta · Con carta escrita por IA en cada envío", 
       destacado: false, 
       cta: "Empezar gratis",
     },
@@ -147,7 +147,7 @@ export default async function LandingPage() {
         "🧠 30 consultas/día a Guzzi",
         "📤 15 envíos de CV al día",
         "📤 100 envíos a la semana",
-        "Carta personalizada con IA",
+        "Ver y editar la carta antes de enviar",
         "Preparación de entrevistas",
         "📄 3 CVs con IA",
         "💾 50 ofertas guardadas"
@@ -165,7 +165,7 @@ export default async function LandingPage() {
         "🧠 100 consultas/día a Guzzi",
         "📤 50 envíos de CV al día",
         "📤 350 envíos a la semana",
-        "Carta personalizada premium",
+        "Ver y editar la carta antes de enviar",
         "Preparación de entrevistas",
         "📄 10 CVs con IA",
         "💾 200 ofertas guardadas",
@@ -229,7 +229,7 @@ export default async function LandingPage() {
     { ellos: "La misma carta para 200 ofertas distintas", nosotros: "Carta escrita por IA para cada empresa" },
     { ellos: "Ofertas caducadas y empresas fantasma", nosotros: `${OFERTAS.toLowerCase()} ofertas actualizadas a diario` },
     { ellos: "Sin saber si tu CV fue leído", nosotros: "Pipeline visual: enviado → abierto → entrevista" },
-    { ellos: "Solo España. Si quieres emigrar, busca tú.", nosotros: `${PAISES} países. Guzzi busca en todos a la vez.` },
+    { ellos: "Para trabajar fuera, un portal distinto en cada país", nosotros: `${PAISES} países. Guzzi busca en todos a la vez.` },
     { ellos: "No sabes por qué te descartan", nosotros: "IA que te dice qué le falta a tu CV para cada oferta" },
   ];
 
@@ -249,7 +249,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
 
   // ── FAQ ──
   const faq = [
-    { q: "¿Es realmente gratis para los candidatos?", a: `Sí. El plan gratuito incluye ${LIMITS.free.enviosCVDia} envíos de CV al día, ${LIMITS.free.guzziMaxConsultasDia} consultas al día a Guzzi, el buscador, el pipeline y el comparador de salarios, sin tarjeta. Si necesitas más, el plan Esencial cuesta 2,99 €/mes: ${LIMITS.esencial.enviosCVDia} envíos y ${LIMITS.esencial.guzziMaxConsultasDia} consultas al día, y carta personalizada con IA.` },
+    { q: "¿Es realmente gratis para los candidatos?", a: `Sí. El plan gratuito incluye ${LIMITS.free.enviosCVDia} envíos de CV al día, ${LIMITS.free.guzziMaxConsultasDia} consultas al día a Guzzi, el buscador, el pipeline y el comparador de salarios, sin tarjeta. Si necesitas más, el plan Esencial cuesta 2,99 €/mes: ${LIMITS.esencial.enviosCVDia} envíos y ${LIMITS.esencial.guzziMaxConsultasDia} consultas al día, y puedes ver y editar la carta antes de enviarla.` },
     { q: "¿En cuántos países busca Guzzi?", a: `Actualmente en ${PAISES} países: España, Alemania, Reino Unido, Estados Unidos, Canadá, Francia, Suecia, Australia, Países Bajos, Italia, Suiza, Irlanda, Bélgica, Portugal, Noruega, Polonia, Dinamarca, Austria, Finlandia y más. Añadimos países nuevos constantemente.` },
     { q: "¿Cómo funciona el envío automático de CVs?", a: "Eliges la oferta o la empresa y Guzzi escribe una carta para ese puesto, la envía con tu CV en horario laboral y la apunta en tu pipeline. No es spam: cada envío lleva su propia carta, y antes de mandar a una dirección que no sale de la oferta te pide confirmación." },
     { q: "¿Es legal enviar CVs automáticamente?", a: "Totalmente legal. Enviar tu currículum a ofertas de trabajo publicadas es un derecho tuyo. Actuamos como un agente inteligente que te representa — sin cobrarte comisiones ni quedarse con parte de tu salario." },
