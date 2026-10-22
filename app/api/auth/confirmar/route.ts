@@ -1,11 +1,15 @@
 /**
  * GET /api/auth/confirmar?u=…&t=… — El botón del recordatorio de confirmar el correo.
  *
- * Pide a Supabase un enlace de entrada recién hecho y lleva a /auth/callback,
- * que hace lo de siempre: la bienvenida y a donde iba. Ese enlace confirma el
- * correo de una cuenta sin confirmar (probado con una cuenta de prueba el 20 oct
- * 2026), y si el antivirus del correo abre este antes que la persona, el
- * siguiente sigue valiendo: el de Supabase solo se gasta en el navegador.
+ * Pide a Supabase un enlace de entrada recién hecho, lo canjea AQUÍ y manda a
+ * /auth/callback con la sesión en el fragmento (#access_token=…), que la página
+ * recoge y hace lo de siempre: la bienvenida y a donde iba. Canjear el enlace
+ * confirma el correo de una cuenta sin confirmar (probado el 20 oct 2026).
+ *
+ * POR QUÉ SE CANJEA EN EL SERVIDOR (22 oct 2026). Canjeado en el navegador, si
+ * la respuesta de Supabase se perdía ("Failed to fetch") su librería repetía la
+ * petición, el enlace ya estaba gastado (403) y la página decía "Algo no fue
+ * bien" con la cuenta ya confirmada y dentro. Aquí se canjea una sola vez.
  *
  * Solo sirve mientras la cuenta está sin confirmar. Después lleva al login, para
  * que el correo no sea una llave para entrar que vale para siempre.
@@ -35,5 +39,12 @@ export async function GET(req: NextRequest) {
     console.error("[auth/confirmar]", error?.message || "sin enlace");
     return alLogin;
   }
-  return NextResponse.redirect(`${WEB}/auth/callback?token_hash=${encodeURIComponent(enlace.properties.hashed_token)}&type=email`);
+  const publico = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { auth: { persistSession: false } });
+  const { data: canje, error: errCanje } = await publico.auth.verifyOtp({ token_hash: enlace.properties.hashed_token, type: "email" });
+  if (errCanje || !canje.session) {
+    console.error("[auth/confirmar] canje:", errCanje?.message || "sin sesión");
+    return alLogin;
+  }
+  const fragmento = new URLSearchParams({ access_token: canje.session.access_token, refresh_token: canje.session.refresh_token, type: "magiclink" });
+  return NextResponse.redirect(`${WEB}/auth/callback#${fragmento.toString()}`);
 }

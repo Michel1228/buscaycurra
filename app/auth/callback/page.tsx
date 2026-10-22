@@ -97,10 +97,18 @@ export default function AuthCallbackPage() {
             token_hash: tokenHash,
             type: type as "email" | "signup" | "invite" | "magiclink" | "recovery" | "email_change",
           });
-          if (error) {
+          // GASTADO POR SU PROPIO REINTENTO (22 oct 2026). Si la respuesta de
+          // Supabase se pierde ("Failed to fetch"), su librería repite la
+          // petición; si la primera sí llegó, el enlace ya está gastado (403)
+          // aunque la cuenta haya quedado confirmada. Si hay sesión, adelante;
+          // si no, se dice lo que de verdad ha pasado (Supabase da el mismo 403
+          // para un enlace gastado y para uno caducado).
+          if (error && !(await supabase.auth.getSession()).data.session) {
             if (!mountedRef.current) return;
             setEstado("error");
-            setMensaje("El enlace de confirmación no es válido o ha expirado.");
+            setMensaje(error.status === 403
+              ? "Este enlace ya se ha usado o ha caducado. Si acabas de pulsarlo, tu correo ya está confirmado: entra con tu correo y contraseña. Si no te deja, pide otro correo de confirmación."
+              : "El enlace de confirmación no es válido o ha expirado.");
             return;
           }
 

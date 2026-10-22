@@ -4251,7 +4251,11 @@ test("confirmar el correo: lo que falta en grande, erratas avisadas y un recorda
       "tras registrarse, lo que falta en grande y sin «Ir al login»": registro.includes("Confirma tu correo") && !/>\s*¡Cuenta creada!/.test(registro)
         && !registro.includes("Ir al login") && registro.includes("Corrígelo") && registro.includes("sugerenciaCorreo(email)"),
       "el botón solo sirve sin confirmar, con enlace recién hecho": confirmar.includes("email_confirmed_at) return alLogin")
-        && confirmar.includes('generateLink({ type: "magiclink"') && confirmar.includes("/auth/callback?token_hash="),
+        && confirmar.includes('generateLink({ type: "magiclink"')
+        // 22 oct 2026: se canjea en el servidor (en el navegador, el reintento de
+        // Supabase gastaba el enlace y salía "Algo no fue bien" con la cuenta dentro).
+        && confirmar.includes("publico.auth.verifyOtp(") && confirmar.includes("/auth/callback#") && !confirmar.includes("/auth/callback?token_hash=")
+        && leerFuente("app/auth/callback/page.tsx").includes("if (error && !(await supabase.auth.getSession()).data.session)"),
       "recordatorio: sin confirmar, de 1 a 30 días, una vez y solo si salió": recordar.includes("!u.email_confirmed_at") && recordar.includes("dias >= 1 && dias <= 30")
         && recordar.includes("!u.app_metadata?.recordatorio_confirmar_en")
         && recordar.indexOf("if (!salio) continue;") > 0 && recordar.indexOf("if (!salio) continue;") < recordar.indexOf("recordatorio_confirmar_en: new Date"),
