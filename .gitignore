@@ -69,3 +69,17 @@ android/keystore.properties
 *.keystore
 android/.idea/
 android/.kotlin/
+
+# Scripts sueltos de auditoría, depuración y pruebas en la raíz, y sus capturas
+# (22 oct 2026). Algunos llevan contraseñas de cuentas reales y michel2.pdf es
+# un CV: un "git add ." despistado los subía a este repositorio PÚBLICO.
+/audit_*
+/debug_*
+/test_*.py
+/review_app.py
+/screenshots/
+/audit_screenshots/
+/test_screenshots/
+/*.pdf
+# Ficheros con el nombre roto por una redirección mal escapada ("C:Users…").
+/C*Users*
