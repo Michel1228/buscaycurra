@@ -1369,8 +1369,10 @@ test("los CVs pueden salir por una cuenta aparte y sus avisos de entrega se acep
 // 6 oct 2026: el panel decia "Suscriptores activos: 3" cuando eran 0 (la cuenta
 // de Michel, la de demostracion y una regalada). Ahora cuenta Stripe + iPhone.
 test("el panel cuenta como suscriptores solo a quien paga de verdad", () => {
-  const m = leerFuente("app/api/admin/metricas/route.ts");
+  // Desde el 23 oct 2026 la regla vive en lib/metricas/suscriptores.ts (la usan el panel y el contador).
+  const m = leerFuente("app/api/admin/metricas/route.ts") + leerFuente("lib/metricas/suscriptores.ts");
   return m.includes('getStripe().subscriptions.list({ status: estado') && !m.includes('if (plan !== "free" && p.subscription_status === "active") dePago++;')
+    && leerFuente("app/api/admin/metricas/route.ts").includes("await suscriptoresDePago(perfiles || [])")
     && leerFuente("lib/centinela/recorrido.ts").includes('plan: "pro", subscription_status: "active"');
 });
 test("lo que puede esperar no se come el tope diario de Resend", () => {

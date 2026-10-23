@@ -5,6 +5,7 @@
 import { createHmac } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { resumenPersonas, type ResumenPersonas } from "@/lib/metricas/personas";
+import { suscriptoresDePago } from "@/lib/metricas/suscriptores";
 
 /**
  * Clave SOLO DE LECTURA para el contador del ordenador de Michel. Sale de
@@ -27,22 +28,8 @@ export async function numerosDelContador(): Promise<NumerosContador> {
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   const personas = await resumenPersonas(sb);
 
-  // Los suscriptores los cuenta /api/admin/metricas (Stripe más iPhone, sin las
-  // cuentas de prueba): se le pregunta a él para no tener esa regla dos veces.
-  let dePago: number | null = null;
-  try {
-    const r = await fetch(`http://127.0.0.1:${process.env.PORT || 3000}/api/admin/metricas`, {
-      headers: { "x-admin-secret": process.env.ADMIN_SECRET || "" },
-      cache: "no-store",
-      signal: AbortSignal.timeout(25000),
-    });
-    if (r.ok) {
-      const m = await r.json() as { suscriptores?: { activos?: number | null } };
-      dePago = m.suscriptores?.activos ?? null;
-    }
-  } catch (e) {
-    console.error("[contador] suscriptores:", (e as Error).message);
-  }
+  const { data: perfiles } = await sb.from("profiles").select("plan, subscription_status, plan_source, email");
+  const dePago = await suscriptoresDePago(perfiles || []);
 
   return { generado: new Date().toISOString(), personas, dePago };
 }

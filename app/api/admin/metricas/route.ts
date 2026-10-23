@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { secretIguales } from "@/lib/secret-compare";
 import { descargasApple, descargasGooglePlay, type DescargasTienda } from "@/lib/descargas-tiendas";
-import { getStripe } from "@/lib/stripe";
+import { suscriptoresDePago } from "@/lib/metricas/suscriptores";
 
 export const dynamic = "force-dynamic";
 
@@ -115,31 +115,13 @@ export async function GET(req: NextRequest) {
     const { data: perfiles } = await sb.from("profiles").select("plan, subscription_status, plan_source, email");
     const planes: Record<string, number> = {};
     let conOrigenPago = 0;
-    let deIphone = 0;
     for (const p of perfiles || []) {
       const plan = p.plan || "free";
       planes[plan] = (planes[plan] || 0) + 1;
       if (p.plan_source) conOrigenPago++;
-      if (plan !== "free" && p.subscription_status === "active" && p.plan_source === "revenuecat"
-          && !/@(resend\.dev|buscaycurra\.es)$/i.test(p.email || "")) deIphone++;
     }
-    // SUSCRIPTORES DE VERDAD, NO FICHAS CON PLAN. Hasta el 6 oct 2026 se
-    // contaba cualquier ficha con plan y estado "active", y el panel decía 3
-    // cuando eran 0: la cuenta de Michel, la de demostración para Apple y una
-    // regalada (en Stripe no había ninguna suscripción activa). Ahora cuentan
-    // las suscripciones activas o en prueba de Stripe, más las compras de
-    // iPhone (RevenueCat) de cuentas reales.
-    let deStripe: number | null = null;
-    try {
-      deStripe = 0;
-      for (const estado of ["active", "trialing"] as const) {
-        for await (const _sub of getStripe().subscriptions.list({ status: estado, limit: 100 })) deStripe++;
-      }
-    } catch (e) {
-      console.error("[metricas] Stripe:", (e as Error).message);
-      deStripe = null;
-    }
-    const dePago = deStripe === null ? null : deStripe + deIphone;
+    // Quien paga de verdad, no fichas con plan (lib/metricas/suscriptores.ts).
+    const dePago = await suscriptoresDePago(perfiles || []);
 
     // ── Actividad ───────────────────────────────────────────────────────
     const [cvTotal, cv7, cv30, conversaciones] = await Promise.all([
