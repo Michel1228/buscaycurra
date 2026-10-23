@@ -152,43 +152,9 @@ Un saludo${formData.nombre ? `,\n${formData.nombre}` : ""}`;
       };
     };
 
-    // === INTENTO 1: DeepSeek (primario, key verificada 15 Jun 2026) ===
-    const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-    if (DEEPSEEK_API_KEY) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
-
-        const res = await fetch("https://api.deepseek.com/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            // deepseek-chat: retirado por DeepSeek el 24 jul 2026 (ver lib/ai/deepseek-client.ts)
-            model: "deepseek-v4-flash",
-            messages: [{ role: "user", content: prompt }],
-            temperature: 0.7,
-            max_tokens: 1200,
-          }),
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-
-        if (res.ok) {
-          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-          const raw = data.choices?.[0]?.message?.content || "";
-          const parsed = parseAIResponse(raw);
-          return NextResponse.json({ ...parsed, generatedBy: "deepseek" });
-        }
-        console.warn("[preview-carta] DeepSeek falló, intentando Groq...");
-      } catch (e) {
-        console.warn("[preview-carta] DeepSeek error:", (e as Error).message);
-      }
-    }
-
-    // === INTENTO 2: Groq (secundario) ===
+    // === INTENTO 1: Groq ===
+    // DeepSeek iba delante hasta el 23 oct 2026; se retiró para que ningún dato
+    // salga a China. Llevaba sin saldo desde el 22 sep: ya respondía Groq.
     const GROQ_API_KEY = process.env.GROQ_API_KEY;
     if (GROQ_API_KEY) {
       try {
@@ -226,7 +192,7 @@ Un saludo${formData.nombre ? `,\n${formData.nombre}` : ""}`;
       }
     }
 
-    // === INTENTO 3: Template genérica (siempre disponible) ===
+    // === INTENTO 2: Template genérica (siempre disponible) ===
     console.warn("[preview-carta] Sin APIs disponibles, usando template genérica");
     return NextResponse.json({
       carta: cartaTemplate,

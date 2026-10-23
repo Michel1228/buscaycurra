@@ -17,7 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUserId } from "@/lib/auth-server";
-import { callGroq, callDeepSeek } from "@/lib/guzzi/llm";
+import { callGroq, callOpenAI } from "@/lib/guzzi/llm";
 import { tipoPorSlug } from "@/lib/cursos/tipos";
 import { leerCVUsuario } from "@/lib/cv/leer-cv";
 
@@ -114,11 +114,11 @@ export async function POST(request: NextRequest) {
     cv.aptitudes ? `APTITUDES: ${cv.aptitudes}` : "",
   ].filter(Boolean).join("\n");
 
-  // Groq primero: es gratis y para 150 palabras da de sobra. DeepSeek de
+  // Groq primero: es gratis y para 150 palabras da de sobra. OpenAI de
   // respaldo. Mismo criterio que el resto de generaciones de texto de la app.
   const carta =
     (await callGroq(PROMPT_SOLICITUD, contexto, 400)) ||
-    (await callDeepSeek(PROMPT_SOLICITUD, contexto, 400));
+    (await callOpenAI(PROMPT_SOLICITUD, contexto, 400));
 
   if (!carta) {
     return NextResponse.json(

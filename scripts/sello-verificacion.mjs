@@ -738,11 +738,9 @@ test("Guzzi cabe en el plan gratuito y no promete búsquedas que no hace", async
     const ruta = chat.includes("temasParaLaConversacion(message") && chat.includes("PROMPT_MODO_CV")
       && /voy a buscar\|d\[ée\]jame buscar/.test(chat)
       && chat.includes('contarFalloGuzzi("sin-ia")') && chat.includes('contarFalloGuzzi("groq-413")')
-      // El modelo principal (16 oct 2026): gpt-5.6-luna antes que el resto, y
-      // DeepSeek no se llama si ya ha contestado.
+      // El modelo principal (16 oct 2026): gpt-5.6-luna antes que Groq.
       && chat.indexOf('model: "gpt-5.6-luna"') > 0
-      && chat.indexOf('model: "gpt-5.6-luna"') < chat.indexOf("// Intento 1: DeepSeek")
-      && chat.includes("if (!rawReply && deepseekKey && usarDeepSeekPrimero && !deepseekApagado())")
+      && chat.indexOf('model: "gpt-5.6-luna"') < chat.indexOf('model: "openai/gpt-oss-120b"')
       && leerFuente("app/api/admin/centinela/route.ts").includes("guzzi:fallo:${t}:${d}");
     if (!ruta) console.log("     ↳ el chat no usa los temas, el modo CV, la red de seguridad de 'voy a buscar' o los contadores del centinela");
     return fallos.length === 0 && ruta;
@@ -2498,31 +2496,33 @@ test("el buscador de ETTs pregunta en el idioma del pais", () => {
     t.includes("Zeitarbeitsfirma") && t.includes("uitzendbureau") && faltan.length === 0;
 });
 
-// ── DEEPSEEK SIN SALDO ─────────────────────────────────────────────────────
+// ── NINGÚN DATO SALE A CHINA ───────────────────────────────────────────────
 //
-// El 22 sep 2026 la cuenta estaba a -0,01 USD y respondia 402 a todo. Guzzi seguia
-// contestando (cae a Groq), pero gastaba dos intentos y casi un segundo por mensaje
-// en una llamada condenada a fallar.
-test("Guzzi deja de llamar a DeepSeek cuando se queda sin saldo", () => {
-  const llm = leerFuente("lib/guzzi/llm.ts");
-  const chat = leerFuente("app/api/gusi/chat/route.ts");
-  return /if\s*\(!deepseekKey \|\| deepseekApagado\(\)\) return null;/.test(llm) &&
-    llm.includes("if (res.status === 402) { apagarDeepSeek(); return null; }") &&
-    chat.includes("!deepseekApagado()") && chat.includes("apagarDeepSeek()");
+// DeepSeek (China) era respaldo de Guzzi, de las cartas y del enrutador de IA.
+// Michel lo retiró el 23 oct 2026: que ningún dato de los usuarios salga a China.
+// Si alguien lo vuelve a meter, aunque sea de respaldo, la política de privacidad
+// dejaría de decir la verdad.
+test("ningún dato sale a China: nada llama a DeepSeek", async () => {
+  const { execFileSync } = await import("node:child_process");
+  // git grep sin resultados sale con código 1: eso es lo bueno.
+  let llamadas = "";
+  try {
+    llamadas = execFileSync("git", ["grep", "-nIE", "api\\.deepseek\\.com|DEEPSEEK_API_KEY", "--", "app", "lib", "components", "scripts", ":!scripts/sello-verificacion.mjs"], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+  } catch { /* sin resultados */ }
+  if (llamadas) console.log("     ↳ " + llamadas.split("\n").slice(0, 5).join("\n       "));
+  return llamadas === "";
 });
 
 // El enrutador de IA ("Mejorar mi CV", carta y nota ATS) elegia DeepSeek por
 // defecto y, si fallaba por algo que no fuera "limite diario", relanzaba el
 // error. Con el 402 de falta de saldo, esas dos pantallas daban error 500 a
 // todos los usuarios (comprobado en produccion el 29 sep 2026).
-test("el enrutador de IA cae a Groq/Gemini si DeepSeek falla por cualquier motivo", () => {
+test("el enrutador de IA cae a la otra IA si la elegida falla por cualquier motivo", () => {
   const r = leerFuente("lib/ai/ai-router.ts");
   const bloqueCatch = r.slice(r.indexOf("} catch (error) {"), r.indexOf("// EJECUTOR DE TAREAS"));
   const soloLimites = /if\s*\(\s*mensaje === "GROQ_LIMIT_REACHED"/.test(bloqueCatch);
   return !soloLimites &&
-    /for \(const fallback of alternativas\)[\s\S]*?ejecutarTareaConIA\(fallback/.test(bloqueCatch) &&
-    /DEEPSEEK[\s\S]{0,40}402[\s\S]{0,20}apagarDeepSeek\(\)/.test(bloqueCatch) &&
-    /preferidaOk = await iaDisponible\(iaPreferidaParaTarea\)\s*&& !\(iaPreferidaParaTarea === "deepseek" && deepseekApagado\(\)\)/.test(r);
+    /for \(const fallback of alternativas\)[\s\S]*?ejecutarTareaConIA\(fallback/.test(bloqueCatch);
 });
 
 // ── EL REGISTRO NO PUEDE PERDER LO QUE ESCRIBE LA PERSONA ─────────────────
@@ -4479,7 +4479,8 @@ test("privacidad: la política nombra a quien recibe datos, el borrado es comple
     contrasenasEnScripts = execFileSync("git", ["grep", "-nIE", "(REDIS_PASS|PASSWORD|PASS)=['\"][A-Za-z0-9]{8,}['\"]", "--", "scripts"], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
   } catch { /* sin resultados */ }
   const checks = {
-    "nombra a todos los que reciben datos": ["OpenAI", "Groq", "DeepSeek", "Google", "Resend", "Supabase", "Stripe", "Hostinger", "RevenueCat", "WhatsApp"].every((n) => politica.includes(n)),
+    "nombra a todos los que reciben datos": ["OpenAI", "Groq", "Google", "Resend", "Supabase", "Stripe", "Hostinger", "RevenueCat", "WhatsApp"].every((n) => politica.includes(n)),
+    "no nombra a DeepSeek ni a China (retirado el 23 oct 2026)": !/DeepSeek|China/.test(politica),
     "no dice que solo se comparten con tres": !/únicamente con estos proveedores/.test(politica) && !/Espacio Económico Europeo o cuentan con garantías/.test(politica),
     "dice que hay datos que salen de la UE": politica.includes("salen del Espacio Económico Europeo"),
     "cuenta las fotos, la ubicación y las conversaciones": /miniatura/.test(politica) && /Ubicación:/.test(politica) && /Conversaciones con Guzzi/.test(politica),

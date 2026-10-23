@@ -75,16 +75,15 @@ export default function PrivacidadPage() {
           <ul style={{ paddingLeft: 20, marginTop: 8 }}>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Hostinger</strong> — nuestro servidor, en Francia: CV, envíos y conversaciones.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Supabase</strong> — las cuentas, la ficha y los ficheros (el CV en PDF y las fotos).</li>
-            <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>OpenAI</strong> (Estados Unidos) — las respuestas de Guzzi y la lectura de las fotos de la cámara.</li>
-            <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Groq</strong> (Estados Unidos) — Guzzi cuando OpenAI no responde, las cartas para las empresas, leer el PDF de tu CV, los ensayos de entrevista y las traducciones.</li>
-            <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>DeepSeek</strong> (China) — respaldo de Guzzi y de las cartas en los planes de pago.</li>
+            <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>OpenAI</strong> (Estados Unidos) — las respuestas de Guzzi, la lectura de las fotos de la cámara y el respaldo de las cartas cuando Groq no responde.</li>
+            <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Groq</strong> (Estados Unidos) — Guzzi cuando OpenAI no responde, las cartas para las empresas, mejorar tu CV, leer el PDF de tu CV, los ensayos de entrevista y las traducciones.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Google</strong> (Estados Unidos) — Google Maps para encontrar empresas y negocios (lo que buscas y, con la cámara, tu ubicación) y Gemini para mejorar CV largos.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Resend</strong> (Estados Unidos) — los correos, también los CV que mandas a las empresas.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Stripe</strong> y, en la app de iPhone, <strong style={{ color: "#f1f5f9" }}>Apple</strong> y <strong style={{ color: "#f1f5f9" }}>RevenueCat</strong> — los pagos.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Meta (WhatsApp)</strong> — solo si activas los avisos por WhatsApp.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Las empresas</strong> a las que tú mandas tu CV y, si activas «Visible para empresas», las que tienen Plan Empresa.</li>
           </ul>
-          <p style={{ marginTop: 10 }}>Nuestro servidor está en la Unión Europea. Varios de estos servicios están en Estados Unidos y uno en China: al usarlos, esos datos salen del Espacio Económico Europeo.</p>
+          <p style={{ marginTop: 10 }}>Nuestro servidor está en la Unión Europea. Varios de estos servicios están en Estados Unidos: al usarlos, esos datos salen del Espacio Económico Europeo.</p>
           <p style={{ marginTop: 10 }}>No vendemos tus datos ni los usamos para publicidad.</p>
         </S>
 

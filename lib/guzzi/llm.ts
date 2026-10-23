@@ -1,38 +1,16 @@
 /**
  * lib/guzzi/llm.ts
- * LLM helpers: DeepSeek (primario, con streaming SSE), Groq (respaldo rápido)
- * y OpenAI (último recurso).
+ * LLM helpers: Groq (gratis, el de cabecera) y OpenAI (respaldo).
  *
  * El 6 ago 2026 se comprobó que DeepSeek devolvía 402 (saldo agotado) y Groq
  * 401 (clave caducada) a la vez: con solo dos proveedores, Guzzi se quedaba sin
  * IA y respondía con textos enlatados. OpenAI se añade como tercera red porque
  * su clave ya está en el proyecto y funcionando (la usa la búsqueda por foto).
- */
-
-/**
- * DEEPSEEK SIN SALDO: se deja de llamar durante unas horas.
  *
- * El 22 sep 2026 la cuenta de DeepSeek estaba a -0,01 USD y la API respondia 402
- * a todo. Guzzi seguia funcionando (cae a Groq), pero cada mensaje gastaba antes
- * dos intentos y casi un segundo en una llamada condenada a fallar. Con esto, el
- * primer 402 apaga DeepSeek un rato y Guzzi va directo al que si responde.
- *
- * Se reintenta solo al cabo de 6 horas: el dia que se recargue el saldo, DeepSeek
- * vuelve a entrar sin tocar nada ni desplegar.
+ * DeepSeek se retiró del todo el 23 oct 2026 (decisión de Michel): que ningún
+ * dato de los usuarios salga a China. Llevaba sin saldo desde el 22 sep, así que
+ * en la práctica ya respondían Groq y OpenAI.
  */
-const HORAS_SIN_SALDO = 6;
-let deepseekSinSaldoHasta = 0;
-
-export function deepseekApagado(): boolean {
-  return Date.now() < deepseekSinSaldoHasta;
-}
-
-export function apagarDeepSeek(): void {
-  if (!deepseekApagado()) {
-    console.warn(`[Guzzi] DeepSeek sin saldo (402): no se le llama en ${HORAS_SIN_SALDO} h. Se usa Groq.`);
-  }
-  deepseekSinSaldoHasta = Date.now() + HORAS_SIN_SALDO * 3600_000;
-}
 
 export async function callGroq(systemPrompt: string, userContent: string, maxTokens = 600): Promise<string | null> {
   const groqKey = process.env.GROQ_API_KEY;
@@ -85,52 +63,7 @@ export async function callGroq(systemPrompt: string, userContent: string, maxTok
 }
 
 /**
- * DeepSeek. Se usa V4-Flash y no V4-Pro a proposito: medido el 6 ago 2026 con
- * la misma pregunta, Pro gastaba 227 tokens de salida para dar 64 de respuesta
- * (el 72% se le iba en razonar para si mismo) frente a 100 y 65 de Flash. Es
- * 3,5 veces mas caro y en la prueba respondio igual de bien o peor: Pro llego a
- * inventarse nombres de calles de Tudela.
- */
-export async function callDeepSeek(systemPrompt: string, userContent: string, maxTokens = 800): Promise<string | null> {
-  const deepseekKey = process.env.DEEPSEEK_API_KEY;
-  if (!deepseekKey || deepseekApagado()) return null;
-
-  const body = JSON.stringify({
-    model: "deepseek-v4-flash",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userContent },
-    ],
-    temperature: 0.5,
-    max_tokens: maxTokens,
-  });
-
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const res = await fetch("https://api.deepseek.com/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
-        body,
-        signal: AbortSignal.timeout(35000),
-      });
-      if (!res.ok) {
-        // 402 es "sin saldo": reintentar no arregla nada y retrasa la respuesta.
-        if (res.status === 402) { apagarDeepSeek(); return null; }
-        if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
-        return null;
-      }
-      const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-      return data.choices?.[0]?.message?.content?.trim() || null;
-    } catch {
-      if (attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
-      return null;
-    }
-  }
-  return null;
-}
-
-/**
- * Último recurso cuando DeepSeek y Groq fallan. Usa gpt-4o-mini, el modelo
+ * Último recurso cuando Groq falla. Usa gpt-4o-mini, el modelo
  * barato: es una red de seguridad, no el proveedor habitual.
  */
 export async function callOpenAI(systemPrompt: string, userContent: string, maxTokens = 800): Promise<string | null> {
@@ -168,84 +101,4 @@ export async function callOpenAI(systemPrompt: string, userContent: string, maxT
     }
   }
   return null;
-}
-
-/**
- * Streaming SSE con DeepSeek.
- * Devuelve un ReadableStream que emite chunks de texto.
- */
-export function streamDeepSeek(systemPrompt: string, userContent: string, maxTokens = 800): ReadableStream | null {
-  const deepseekKey = process.env.DEEPSEEK_API_KEY;
-  if (!deepseekKey || deepseekApagado()) return null;
-
-  const encoder = new TextEncoder();
-  let aborted = false;
-
-  return new ReadableStream({
-    async start(controller) {
-      try {
-        const res = await fetch("https://api.deepseek.com/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${deepseekKey}`,
-            "Content-Type": "application/json",
-            "Accept": "text/event-stream",
-          },
-          body: JSON.stringify({
-            model: "deepseek-v4-flash",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userContent },
-            ],
-            temperature: 0.5,
-            max_tokens: maxTokens,
-            stream: true,
-          }),
-          signal: AbortSignal.timeout(35000),
-        });
-
-        if (!res.ok || !res.body) {
-          if (res.status === 402) apagarDeepSeek();
-          controller.close();
-          return;
-        }
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (!aborted) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6).trim();
-              if (data === "[DONE]") {
-                controller.close();
-                return;
-              }
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content;
-                if (content) {
-                  controller.enqueue(encoder.encode(content));
-                }
-              } catch { /* skip invalid JSON chunks */ }
-            }
-          }
-        }
-        controller.close();
-      } catch {
-        if (!aborted) controller.close();
-      }
-    },
-    cancel() {
-      aborted = true;
-    },
-  });
 }

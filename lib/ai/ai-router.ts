@@ -2,19 +2,21 @@
  * Router inteligente de IA para BuscayCurra
  *
  * Decide automáticamente qué IA usar según:
- * - El tipo de tarea (chat → DeepSeek, CV largo → Gemini, rápido → Groq)
+ * - El tipo de tarea (CV largo y webs → Gemini, todo lo demás → Groq)
  * - Los límites de cada API (si una está llena, usa otra)
  * - Si todas están llenas, pone la tarea en cola para mañana
  *
  * El resto de la app solo llama a este router y no necesita
  * saber qué IA se usa internamente ✅
+ *
+ * DeepSeek se retiró el 23 oct 2026 (decisión de Michel): que ningún dato de los
+ * usuarios salga a China. Llevaba sin saldo desde el 22 sep, así que en la
+ * práctica estas tareas ya las hacía Groq.
  */
 
 import { get } from "../cache/redis-client";
 import { llamarGroq, analizarOfertaTrabajo, LIMITE_DIARIO_GROQ } from "./groq-client";
 import { llamarGemini, extraerDatosEmpresa, LIMITE_DIARIO_GEMINI } from "./gemini-client";
-import { llamarDeepSeek, LIMITE_DIARIO_DEEPSEEK } from "./deepseek-client";
-import { deepseekApagado, apagarDeepSeek } from "@/lib/guzzi/llm";
 import { TipoPeticionIA } from "../cache/ai-cache";
 
 // ==========================================
@@ -35,12 +37,12 @@ export type TareaIA =
 // Estructura de respuesta del router
 export interface RespuestaRouter {
   respuesta: string;
-  iaUsada: "groq" | "gemini" | "deepseek" | "cola";
+  iaUsada: "groq" | "gemini" | "cola";
   desdecache: boolean;
   tiempoMs: number;
 }
 
-type IA = "groq" | "gemini" | "deepseek";
+type IA = "groq" | "gemini";
 
 // ==========================================
 // LÓGICA DE SELECCIÓN DE IA
@@ -49,24 +51,17 @@ type IA = "groq" | "gemini" | "deepseek";
 /**
  * Determina la IA preferida para cada tipo de tarea
  *
- * DeepSeek → Chat y NLP (mejor español coloquial)
- * Gemini   → Contexto largo (1M tokens), análisis complejos
- * Groq     → Velocidad (500 tokens/s), tareas cortas
+ * Gemini → Contexto largo (1M tokens), análisis complejos
+ * Groq   → Todo lo demás: gratis y rápido (500 tokens/s)
  */
 function iaPreferida(tarea: TareaIA): IA {
-  // DeepSeek: el mejor para entender español coloquial
-  if (tarea === "chat-agente") return "deepseek";
-
-  // Traducir el CV: Groq, que es gratis, rápido y sigue bien el formato JSON.
-  if (tarea === "traducir-cv") return "groq";
-
   // Gemini: contexto largo para CVs largos y análisis web
   if (tarea === "mejorar-cv-largo" || tarea === "analizar-empresa-web") {
     return "gemini";
   }
 
-  // DeepSeek: default para todo — consumo mínimo, español nativo
-  return "deepseek";
+  // Groq: todo lo demás (también traducir el CV: sigue bien el formato JSON)
+  return "groq";
 }
 
 // ==========================================
@@ -80,12 +75,9 @@ async function iaDisponible(ia: IA): Promise<boolean> {
     if (ia === "groq") {
       const llamadasStr = await get(`groq:calls:${fecha}`);
       return parseInt(llamadasStr || "0") < LIMITE_DIARIO_GROQ;
-    } else if (ia === "gemini") {
+    } else {
       const llamadasStr = await get(`gemini:calls:${fecha}`);
       return parseInt(llamadasStr || "0") < LIMITE_DIARIO_GEMINI;
-    } else {
-      const llamadasStr = await get(`deepseek:calls:${fecha}`);
-      return parseInt(llamadasStr || "0") < LIMITE_DIARIO_DEEPSEEK;
     }
   } catch {
     return true;
@@ -113,10 +105,7 @@ export async function enrutarPeticionIA(
   try {
     const iaPreferidaParaTarea = iaPreferida(tarea);
 
-    // Comprobar disponibilidad de las 3 IAs. DeepSeek cuenta como no disponible
-    // mientras esté apagado por falta de saldo (ver lib/guzzi/llm.ts).
-    const preferidaOk = await iaDisponible(iaPreferidaParaTarea)
-      && !(iaPreferidaParaTarea === "deepseek" && deepseekApagado());
+    const preferidaOk = await iaDisponible(iaPreferidaParaTarea);
 
     if (preferidaOk) {
       iaUsada = iaPreferidaParaTarea;
@@ -124,9 +113,7 @@ export async function enrutarPeticionIA(
     } else {
       // Fallback: Groq primero (gratis y rápido); Gemini después, que responde
       // pero tardó hasta 84 s en la prueba del 22 sep 2026.
-      const alternativas: IA[] = (["groq", "gemini", "deepseek"] as IA[]).filter(
-        (ia) => ia !== iaPreferidaParaTarea && !(ia === "deepseek" && deepseekApagado())
-      );
+      const alternativas: IA[] = (["groq", "gemini"] as IA[]).filter((ia) => ia !== iaPreferidaParaTarea);
 
       let encontrada = false;
       for (const alt of alternativas) {
@@ -139,7 +126,7 @@ export async function enrutarPeticionIA(
       }
 
       if (!encontrada) {
-        console.warn("⚠️  Router: las 3 IAs han alcanzado el límite diario");
+        console.warn("⚠️  Router: las IAs han alcanzado el límite diario");
         return {
           respuesta:
             "Todas las IAs han alcanzado su límite diario. Tu petición se procesará mañana.",
@@ -168,11 +155,8 @@ export async function enrutarPeticionIA(
     // nota ATS daban error 500 a TODO el mundo. Comprobado en producción el
     // 29 sep 2026: llevaba así desde que se acabó el saldo, con Groq gratis y
     // funcionando al lado.
-    if (/DEEPSEEK/i.test(mensaje) && /402/.test(mensaje)) apagarDeepSeek();
     const iaFallida = iaIntentada;
-    const alternativas: IA[] = (["groq", "gemini", "deepseek"] as IA[]).filter(
-      (ia) => ia !== iaFallida && !(ia === "deepseek" && deepseekApagado())
-    );
+    const alternativas: IA[] = (["groq", "gemini"] as IA[]).filter((ia) => ia !== iaFallida);
 
     for (const fallback of alternativas) {
       if (!(await iaDisponible(fallback))) continue;
@@ -251,28 +235,25 @@ async function ejecutarTareaConIA(
   if (tarea === "mejorar-cv" || tarea === "mejorar-cv-largo") {
     const p = promptMejoraCV(contenido, extra?.puesto || "");
     if (ia === "gemini") return await llamarGemini(p, "mejora-cv");
-    if (ia === "groq") return await llamarGroq(p, "mejora-cv", { maxTokens: 800 });
-    return await llamarDeepSeek(p, "mejora-cv");
+    return await llamarGroq(p, "mejora-cv", { maxTokens: 800 });
   }
 
   // Carta de presentación: MISMO bug que mejorar-cv — el prompt de carta solo
-  // existía en la rama de groq, pero iaPreferida elige deepseek, que recibía el
+  // existía en la rama de groq, pero iaPreferida elegía deepseek, que recibía el
   // CV crudo y devolvía un ANÁLISIS/feedback en vez de una carta. Prompt único
-  // para las tres IAs.
+  // para todas las IAs.
   // Traducir el CV: el contenido ya llega con su prompt (lib/cv-generator/traducir.ts).
   // Un CV entero traducido en JSON no cabe en los 2.048 tokens por defecto de
   // Groq: se le da margen para no devolverlo cortado.
   if (tarea === "traducir-cv") {
     if (ia === "gemini") return await llamarGemini(contenido, "generico");
-    if (ia === "groq") return await llamarGroq(contenido, "generico", { maxTokens: 6000, temperatura: 0.2 });
-    return await llamarDeepSeek(contenido, "generico");
+    return await llamarGroq(contenido, "generico", { maxTokens: 6000, temperatura: 0.2 });
   }
 
   if (tarea === "carta-presentacion") {
     const p = promptCartaPresentacion(contenido, extra?.empresa || "", extra?.puesto || "");
     if (ia === "gemini") return await llamarGemini(p, "carta-presentacion");
-    if (ia === "groq") return await llamarGroq(p, "carta-presentacion", { maxTokens: 1500 });
-    return await llamarDeepSeek(p, "carta-presentacion");
+    return await llamarGroq(p, "carta-presentacion", { maxTokens: 1500 });
   }
 
   const tipoCache: Record<TareaIA, TipoPeticionIA> = {
@@ -297,17 +278,12 @@ async function ejecutarTareaConIA(
   }
 
   // === GEMINI ===
-  if (ia === "gemini") {
-    switch (tarea) {
-      case "analizar-empresa-web":
-        return await extraerDatosEmpresa(contenido, extra?.urlEmpresa || "");
-      default:
-        return await llamarGemini(contenido, tipoCache[tarea]);
-    }
+  switch (tarea) {
+    case "analizar-empresa-web":
+      return await extraerDatosEmpresa(contenido, extra?.urlEmpresa || "");
+    default:
+      return await llamarGemini(contenido, tipoCache[tarea]);
   }
-
-  // === DEEPSEEK ===
-  return await llamarDeepSeek(contenido, tipoCache[tarea]);
 }
 
 /**

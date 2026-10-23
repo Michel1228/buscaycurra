@@ -29,12 +29,10 @@ export interface PlanLimits {
 export const LIMITS: Record<PlanTier, PlanLimits> = {
   free: {
     name: "Gratis",
-    // Los gratuitos van por Groq, cuyo plan libre no cuesta nada. Por eso se
-    // pueden dar 15 consultas al dia en vez de 5: con 5 la gente ni se molesta
-    // en probarlo, y quien no prueba nunca se suscribe. Si Groq se agota
-    // (1.000/dia en toda la app), se cae a DeepSeek: 15 consultas cuestan
-    // menos de medio centimo.
-    guzziModel: "openai/gpt-oss-120b (Groq)",
+    // 15 consultas al dia en vez de 5: con 5 la gente ni se molesta en
+    // probarlo, y quien no prueba nunca se suscribe. Desde el 16 oct 2026 todos
+    // los planes van por el mismo modelo (ver app/api/gusi/chat/route.ts).
+    guzziModel: "gpt-5.6-luna (OpenAI), respaldo Groq",
     guzziMaxConsultasDia: 15,         // antes 5 — subido el 7 ago 2026
     enviosCVDia: 3,                   // 3 envíos/día
     enviosCVSemana: 7,               // 7 envíos/semana
@@ -54,7 +52,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   basico: {
     name: "Básico",
-    guzziModel: "deepseek-v4-flash",   // los planes de pago van por DeepSeek
+    guzziModel: "gpt-5.6-luna (OpenAI), respaldo Groq",
     guzziMaxConsultasDia: 30,
     enviosCVDia: 15,
     enviosCVSemana: 100,
@@ -70,7 +68,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   esencial: {
     name: "Esencial",
-    guzziModel: "deepseek-v4-flash",   // los planes de pago van por DeepSeek
+    guzziModel: "gpt-5.6-luna (OpenAI), respaldo Groq",
     guzziMaxConsultasDia: 30,
     enviosCVDia: 15,
     enviosCVSemana: 100,
@@ -86,7 +84,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   pro: {
     name: "Pro",
-    guzziModel: "deepseek-v4-flash",
+    guzziModel: "gpt-5.6-luna (OpenAI), respaldo Groq",
     guzziMaxConsultasDia: 100,
     enviosCVDia: 50,
     enviosCVSemana: 350,
@@ -102,7 +100,7 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
   empresa: {
     name: "Empresa",
-    guzziModel: "deepseek-v4-flash",
+    guzziModel: "gpt-5.6-luna (OpenAI), respaldo Groq",
     guzziMaxConsultasDia: 999999,
     enviosCVDia: 200,
     enviosCVSemana: 1500,

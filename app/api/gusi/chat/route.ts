@@ -25,7 +25,7 @@ import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/s
 import { aliasCiudad } from "@/lib/guzzi/ciudades-pais";
 import { LISTA_PAISES } from "@/lib/paises";
 import { getPrimerosPasos } from "@/lib/primeros-pasos";
-import { callGroq, callDeepSeek, callOpenAI, deepseekApagado, apagarDeepSeek } from "@/lib/guzzi/llm";
+import { callGroq, callOpenAI } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 
 // Llamadas del servidor a sí mismo. 127.0.0.1 y no "localhost": en Node,
@@ -1032,13 +1032,9 @@ export async function POST(req: NextRequest) {
     if (!message) return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
 
     // -- Verificar límites del plan --
-    // El plan se guarda para elegir despues el proveedor de IA: los usuarios
-    // gratuitos van por Groq (que no cuesta nada) y los de pago por DeepSeek.
-    let planUsuario = "free";
     if (userId) {
       const { checkGuzziAccess } = await import("@/lib/guzzi-limits");
       const access = await checkGuzziAccess(userId);
-      planUsuario = access.plan || "free";
       if (!access.allowed) {
         return NextResponse.json(
           {
@@ -1051,7 +1047,6 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-    const esDePago = planUsuario !== "free";
 
     // Si hay userId, leer el CV fresco desde la BD (ignora el cvData del cliente)
     let cvData = cvDataFromClient;
@@ -1106,7 +1101,6 @@ export async function POST(req: NextRequest) {
     // El CV tal cual, para recomendar cursos (lib/guzzi/siguiente-paso.ts).
     const cvObjeto = (() => { try { return cvConContenido(cvData ? JSON.parse(cvData) : null); } catch { return null; } })();
     const groqKey = process.env.GROQ_API_KEY;
-    const deepseekKey = process.env.DEEPSEEK_API_KEY;
 
 
 
@@ -1192,9 +1186,7 @@ El candidato tiene mucha experiencia.
       }
       const ctx = cvData ? `Datos del candidato: ${cvParsed?.resumenTexto || cvData.slice(0, 400)}` : "";
       const content = `Empresa: ${cartaEmpresa}. Puesto: ${cartaPuesto}. ${ctx}`;
-      // DeepSeek primario (mejor español), Groq fallback
-      const reply = await callDeepSeek(PROMPT_CARTA, content, 800)
-        || await callGroq(PROMPT_CARTA, content, 800)
+      const reply = await callGroq(PROMPT_CARTA, content, 800)
         || await callOpenAI(PROMPT_CARTA, content, 800)
         || localReply("carta_recomendacion");
       return NextResponse.json({ reply, action: "carta_recomendacion", empresa: cartaEmpresa, puesto: cartaPuesto });
@@ -1697,9 +1689,8 @@ El candidato tiene mucha experiencia.
         });
       }
 
-      // Usar DeepSeek para generar carta personalizada
+      // Carta personalizada con IA
       try {
-        const deepseekKey = process.env.DEEPSEEK_API_KEY;
         const nombre = auPairProfile.nombre || "el/la candidato/a";
         const edad = auPairProfile.age || "";
         const ciudad = auPairProfile.ciudad || "";
@@ -1708,38 +1699,25 @@ El candidato tiene mucha experiencia.
         const hobbies = auPairProfile.hobbies || "";
         const paisDestino = auPairProfile.nationality || "";
 
-        if (deepseekKey) {
-          const res = await fetch("https://api.deepseek.com/chat/completions", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: "deepseek-v4-flash",
-              messages: [{
-                role: "system",
-                content: `Eres experto en cartas "Dear Family" para au pairs. Escribe en INGLÉS (idioma estándar internacional para au pair). La carta debe ser cálida, personal y profesional. Máximo 300 palabras. NO uses placeholders — usa los datos reales proporcionados.`
-              }, {
-                role: "user",
-                content: `Genera una carta "Dear Family" para una au pair con estos datos:\n\nNombre: ${nombre}\nEdad: ${edad}\nCiudad: ${ciudad}\nIdiomas: ${idiomas}\nExperiencia con niños: ${experiencia}\nHobbies: ${hobbies}\nPaís de destino: ${paisDestino}\n\nLa carta debe incluir: presentación personal, experiencia con niños, por qué quiere ser au pair en ese país, hobbies y personalidad, y despedida cálida.`
-              }],
-              temperature: 0.7,
-              max_tokens: 800,
-            }),
-            signal: AbortSignal.timeout(20000),
-          });
+        // DeepSeek retirado (23 oct 2026, decisión de Michel: que ningún dato salga a
+        // China). La carta la escribe Groq y, si no responde, OpenAI; si tampoco, la plantilla.
+        const sistemaCarta = `Eres experto en cartas "Dear Family" para au pairs. Escribe en INGLÉS (idioma estándar internacional para au pair). La carta debe ser cálida, personal y profesional. Máximo 300 palabras. NO uses placeholders — usa los datos reales proporcionados.`;
+        const peticionCarta = `Genera una carta "Dear Family" para una au pair con estos datos:\n\nNombre: ${nombre}\nEdad: ${edad}\nCiudad: ${ciudad}\nIdiomas: ${idiomas}\nExperiencia con niños: ${experiencia}\nHobbies: ${hobbies}\nPaís de destino: ${paisDestino}\n\nLa carta debe incluir: presentación personal, experiencia con niños, por qué quiere ser au pair en ese país, hobbies y personalidad, y despedida cálida.`;
+        const cartaIA = (await callGroq(sistemaCarta, peticionCarta, 800)) || (await callOpenAI(sistemaCarta, peticionCarta, 800));
+        if (cartaIA) {
+          return NextResponse.json({
+            reply: `💌 **Aquí tienes tu carta "Dear Family" personalizada:**
 
-          if (res.ok) {
-            const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-            const letter = data.choices?.[0]?.message?.content || "";
-            if (letter) {
-              return NextResponse.json({
-                reply: `💌 **Aquí tienes tu carta "Dear Family" personalizada:**\n\n${letter}\n\n✅ **¿Te gusta?** Puedes copiarla y pegarla en tu perfil Au Pair, o dime "cambia [lo que quieras modificar]" y la ajusto. \n\n🧒 También puedes ir a la sección **Au Pair** para guardarla en tu perfil.`,
-                action: "au_pair_letter_generated",
-                auPairLetter: letter,
-              });
-            }
-          }
+${cartaIA}
+
+✅ **¿Te gusta?** Puedes copiarla y pegarla en tu perfil Au Pair, o dime "cambia [lo que quieras modificar]" y la ajusto. 
+
+🧒 También puedes ir a la sección **Au Pair** para guardarla en tu perfil.`,
+            action: "au_pair_letter_generated",
+            auPairLetter: cartaIA,
+          });
         }
-        // Fallback: generar con plantilla si DeepSeek no disponible
+        // Fallback: generar con plantilla si la IA no responde
         const { generarPlantillaLetter } = await import("@/lib/au-pair");
         const letter = generarPlantillaLetter({
           nombre: nombre as string,
@@ -2129,14 +2107,11 @@ El candidato tiene mucha experiencia.
       { role: "user" as const, content: message },
     ];
 
-    // ── Reparto de proveedores segun el plan ──────────────────────────────
-    // Los usuarios GRATUITOS van por Groq, que no cuesta nada: asi pueden
-    // seguir hablando con Guzzi en vez de quedarse colgados, que es la mejor
-    // forma de que nunca lleguen a suscribirse. DeepSeek, que responde mejor en
-    // espanol, se reserva para quien paga. Si el proveedor asignado falla, se
-    // prueba el otro igualmente: nadie se queda sin respuesta por esto.
+    // ── Cadena de proveedores ─────────────────────────────────────────────
+    // OpenAI primero para todos; si no responde, Groq; y si tampoco, otra vez
+    // OpenAI con un modelo más barato. DeepSeek se retiró el 23 oct 2026
+    // (decisión de Michel): que ningún dato de los usuarios salga a China.
     let rawReply = "";
-    const usarDeepSeekPrimero = esDePago;
 
     // Intento 0: OpenAI gpt-5.6-luna, para TODOS (16 oct 2026). Se pasaron las
     // mismas 8 preguntas, con estas instrucciones, por seis modelos y fue el
@@ -2163,34 +2138,7 @@ El candidato tiene mucha experiencia.
       if (!rawReply) contarFalloGuzzi("luna-fallo");
     }
 
-    // Intento 1: DeepSeek — solo de entrada para los planes de pago.
-    // deepseekApagado(): si la cuenta se quedo sin saldo, no se le llama durante
-    // unas horas. Ver lib/guzzi/llm.ts.
-    if (!rawReply && deepseekKey && usarDeepSeekPrimero && !deepseekApagado()) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const res = await fetch("https://api.deepseek.com/chat/completions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
-            body: JSON.stringify({ model: "deepseek-v4-flash", messages, max_tokens: 1024, temperature: 0.5 }),
-            signal: AbortSignal.timeout(35000),
-          });
-          if (res.ok) {
-            const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-            rawReply = data.choices?.[0]?.message?.content || "";
-            if (rawReply) break;
-          } else {
-            console.error("[Guzzi] DeepSeek HTTP", res.status, await res.text().catch(()=>""));
-            if (res.status === 402) { apagarDeepSeek(); break; }
-          }
-        } catch (e) { console.error("[Guzzi] DeepSeek error:", (e as Error).message); }
-        if (attempt === 0) await new Promise(r => setTimeout(r, 600));
-      }
-    } else if (!deepseekKey) {
-      console.error("[Guzzi] DeepSeek key MISSING");
-    }
-
-    // Intento 2: Groq. Es el proveedor de cabecera de los usuarios gratuitos.
+    // Intento 2: Groq.
     // El prefijo "/no_think" que llevaba antes era un truco para qwen3, el
     // modelo que Groq ha retirado; con gpt-oss-120b sobra.
     if (!rawReply && groqKey) {
@@ -2225,33 +2173,11 @@ El candidato tiene mucha experiencia.
         if (attempt === 0) await new Promise(r => setTimeout(r, 800));
       }
     } else if (!rawReply) {
-      console.error("[Guzzi] Groq key MISSING or DeepSeek already succeeded");
+      console.error("[Guzzi] Groq key MISSING");
     }
 
-    // Intento 2b: DeepSeek para los usuarios gratuitos cuando Groq no responde
-    // (su plan libre corta a 1.000 peticiones al dia en toda la app). Preferimos
-    // pagar unas decimas de centimo antes que dejar a alguien a medias de una
-    // conversacion. Va despues de Groq, no antes: el orden es lo que reparte el
-    // coste, no un candado.
-    if (!rawReply && deepseekKey && !usarDeepSeekPrimero && !deepseekApagado()) {
-      try {
-        const res = await fetch("https://api.deepseek.com/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
-          body: JSON.stringify({ model: "deepseek-v4-flash", messages, max_tokens: 1024, temperature: 0.5 }),
-          signal: AbortSignal.timeout(35000),
-        });
-        if (res.status === 402) apagarDeepSeek();
-        if (res.ok) {
-          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-          rawReply = data.choices?.[0]?.message?.content || "";
-          if (rawReply) console.log("[Guzzi] usuario free atendido por DeepSeek (Groq no respondio)");
-        }
-      } catch (e) { console.error("[Guzzi] DeepSeek (respaldo free) error:", (e as Error).message); }
-    }
-
-    // Intento 3: OpenAI. Red de seguridad para cuando los otros dos caen a la
-    // vez, que ya ha pasado (DeepSeek 402 sin saldo + Groq 401 clave caducada).
+    // Intento 3: OpenAI con un modelo más barato. Red de seguridad para cuando
+    // los dos anteriores caen a la vez, que ya ha pasado.
     // Sin esto Guzzi respondía con textos enlatados y parecía roto.
     if (!rawReply && process.env.OPENAI_API_KEY) {
       try {
@@ -2268,7 +2194,7 @@ El candidato tiene mucha experiencia.
           const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
           rawReply = data.choices?.[0]?.message?.content || "";
           if (rawReply) {
-            console.log("[Guzzi] respondido por OpenAI (DeepSeek y Groq caidos)");
+            console.log("[Guzzi] respondido por OpenAI de respaldo (gpt-5.6-luna y Groq caidos)");
             contarFalloGuzzi("respaldo-openai");
           }
         } else {
@@ -2278,7 +2204,7 @@ El candidato tiene mucha experiencia.
     }
 
     if (!rawReply) {
-      console.error("[Guzzi] AI call failed — DeepSeek, Groq y OpenAI sin respuesta. Falling back to localReply.");
+      console.error("[Guzzi] AI call failed — OpenAI y Groq sin respuesta. Falling back to localReply.");
       contarFalloGuzzi("sin-ia");
       return NextResponse.json({ reply: localReply(intent, cvParsed) });
     }
