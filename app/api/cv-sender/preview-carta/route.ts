@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
     const sbPlan = crearSb(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
     if (!getPlanLimits(await planEfectivoDeUsuario(sbPlan, userId)).cartaPersonalizada) {
       return NextResponse.json(
-        { error: "La carta personalizada con IA está en los planes de pago. Desde 2,99 €/mes la tienes.", upgradeUrl: "/app/perfil?tab=plan" },
+        // Lo de pago es VER y EDITAR la carta antes de enviar: en el plan gratis la
+        // IA la escribe igualmente en cada envío (lib/cv-sender/worker.ts), como
+        // dice la página de precios desde el 22 oct 2026.
+        { error: "Ver y editar la carta antes de enviarla está en los planes de pago, desde 2,99 €/mes. En tu plan, la carta la escribe la IA igualmente en cada envío.", upgradeUrl: "/app/perfil?tab=plan" },
         { status: 402 },
       );
     }

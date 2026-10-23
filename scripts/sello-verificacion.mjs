@@ -2543,6 +2543,24 @@ test("el enrutador de IA cae a la otra IA si la elegida falla por cualquier moti
     /for \(const fallback of alternativas\)[\s\S]*?ejecutarTareaConIA\(fallback/.test(bloqueCatch);
 });
 
+// 23 oct 2026, probando Guzzi en producción: "hazme una carta de presentación
+// para Mercadona de reponedor" daba empresa "Mercadona de reponedor", ningún
+// puesto, y Guzzi volvía a pedir los dos. Se prueba la expresión tal cual está
+// en el chat con frases de verdad.
+test("Guzzi saca empresa y puesto de 'carta para Mercadona de reponedor'", () => {
+  const chat = leerFuente("app/api/gusi/chat/route.ts");
+  const linea = chat.split("\n").find((l) => l.includes("const empMatch = message.match(")) || "";
+  const re = new Function("return " + linea.slice(linea.indexOf("match(") + 6, linea.lastIndexOf(");")))();
+  const casos = [
+    ["hazme una carta de presentación para Mercadona de reponedor", "Mercadona", "reponedor"],
+    ["carta para Leroy Merlin de dependiente", "Leroy Merlin", "dependiente"],
+    ["carta de presentación para Mercadona", "Mercadona", undefined],
+  ];
+  const mal = casos.filter(([frase, empresa, puesto]) => { const m = frase.match(re); return !m || m[1] !== empresa || m[2] !== puesto; });
+  mal.forEach(([frase]) => console.log(`     ↳ ${frase}: ${JSON.stringify(frase.match(re)?.slice(1, 3))}`));
+  return mal.length === 0;
+});
+
 // ── EL REGISTRO NO PUEDE PERDER LO QUE ESCRIBE LA PERSONA ─────────────────
 //
 // El formulario llamaba a /api/auth/welcome sin sesion (con la confirmacion por

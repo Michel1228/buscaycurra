@@ -1164,7 +1164,10 @@ El candidato tiene mucha experiencia.
       let cartaPuesto = puesto || "";
       if (!cartaEmpresa || !cartaPuesto) {
         // Patrones: "carta para [EMPRESA] de [PUESTO]", "carta de [PUESTO] en [EMPRESA]"
-        const empMatch = message.match(/(?:carta\s+(?:de\s+)?(?:presentaci[oó]n|recomendaci[oó]n)\s+)?(?:para|en)\s+([A-ZÁÉÍÓÚÑ][A-Za-záéíóúüñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúüñ]+){0,4})(?:\s+de\s+(.+?))?(?:\s*$)/);
+        // El nombre de la empresa coge las mínimas palabras ({0,4}?): si no, "para
+        // Mercadona de reponedor" daba empresa "Mercadona de reponedor" y ningún
+        // puesto, y Guzzi volvía a pedir los dos (23 oct 2026).
+        const empMatch = message.match(/(?:carta\s+(?:de\s+)?(?:presentaci[oó]n|recomendaci[oó]n)\s+)?(?:para|en)\s+([A-ZÁÉÍÓÚÑ][A-Za-záéíóúüñ]+(?:\s+[A-ZÁÉÍÓÚÑa-záéíóúüñ]+){0,4}?)(?:\s+de\s+(.+?))?(?:\s*$)/);
         if (empMatch) {
           cartaEmpresa = cartaEmpresa || empMatch[1]?.trim() || "";
           cartaPuesto = cartaPuesto || empMatch[2]?.trim() || "";
