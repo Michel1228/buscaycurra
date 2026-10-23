@@ -2562,6 +2562,95 @@ test("Guzzi saca empresa y puesto de 'carta para Mercadona de reponedor'", () =>
   return mal.length === 0;
 });
 
+// ── DE DÓNDE VIENE LA GENTE (23 oct 2026) ──────────────────────────────────
+//
+// De 248 cuentas, de 190 no se sabía por qué canal llegaron. Ahora se apunta al
+// registrarse: lo que contestan, de qué web venían y si es la app o la web. Sin
+// cookies ni nada guardado en el navegador (la política lo dice así), y con las
+// referencias que mandan de verdad Google, Instagram o la app de Google.
+test("de dónde viene cada registro: sin cookies, con la pregunta y bien clasificado", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-llegada.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/origen/llegada.ts", "--bundle", "--format=cjs", "--platform=node",
+      `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const { clasificarLlegada } = await import(`../${salida}?${Date.now()}`);
+    const casos = [
+      [["https://www.google.com/", "", ""], "google"],
+      [["https://www.google.es/", "", ""], "google"],
+      [["android-app://com.google.android.googlequicksearchbox/", "", ""], "google"],
+      [["https://l.instagram.com/", "", ""], "instagram"],
+      [["https://play.google.com/store/apps", "", ""], "google play"],
+      [["https://www.tiktok.com/", "", ""], "tiktok"],
+      [["", "Instagram", "Bio"], "instagram"],
+      [["https://buscaycurra.es/precios", "", ""], "directo"],
+      [["", "", ""], "directo"],
+      [["https://www.diariodenavarra.es/noticia", "", ""], "diariodenavarra.es"],
+    ];
+    const mal = casos.filter(([args, esperado]) => clasificarLlegada(...args).llegoDe !== esperado);
+    mal.forEach(([args, esperado]) => console.log(`     ↳ ${JSON.stringify(args)}: ${clasificarLlegada(...args).llegoDe} (debía ser ${esperado})`));
+    const llegada = leerFuente("lib/origen/llegada.ts");
+    const reg = leerFuente("app/auth/registro/page.tsx");
+    const checks = {
+      "sin almacenamiento en el navegador": !/localStorage|sessionStorage|document\.cookie/.test(llegada),
+      "la campaña del enlace se guarda": clasificarLlegada("", "Instagram", "Bio").campana === "bio",
+      "el registro guarda pregunta, web y plataforma": reg.includes('htmlFor="conocio"') && reg.includes("...(conocio ? { conocio } : {})")
+        && reg.includes("llego_de: llegada.llegoDe") && reg.includes("plataforma: plataforma()"),
+      "se apunta al llegar a cualquier página": leerFuente("app/layout.tsx").includes("<ApuntarLlegada />"),
+      "la política de privacidad lo cuenta": leerFuente("app/privacidad/page.tsx").includes("Cómo nos conociste:"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return mal.length === 0 && malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    try { unlinkSync(salida); } catch { /* no estaba */ }
+  }
+});
+
+// El contador del escritorio de Michel y el resumen de cada mañana: personas
+// reales (sin cuentas de prueba), un canal por persona y con clave de solo lectura.
+test("el contador y el resumen diario cuentan personas reales y piden clave", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-personas.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/metricas/personas.ts", "--bundle", "--format=cjs", "--platform=node",
+      "--external:@supabase/supabase-js", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const { canalDe, esCuentaDePrueba } = await import(`../${salida}?${Date.now()}`);
+    const casos = [
+      [{ conocio: "charla", llego_de: "google" }, "En una charla o un curso"],
+      [{ llego_de: "instagram" }, "Instagram"],
+      [{ llego_de: "directo", origen: "oferta:abc123" }, "Ficha de una oferta"],
+      [{ llego_de: "directo", plataforma: "ios" }, "App de iPhone"],
+      [{ llego_de: "directo", plataforma: "web" }, "Directo"],
+      [{}, "Sin dato"],
+    ];
+    const mal = casos.filter(([meta, esperado]) => canalDe(meta) !== esperado);
+    mal.forEach(([meta, esperado]) => console.log(`     ↳ ${JSON.stringify(meta)}: ${canalDe(meta)} (debía ser ${esperado})`));
+    const contador = leerFuente("app/api/admin/contador/route.ts");
+    const resumen = leerFuente("app/api/admin/resumen-diario/route.ts");
+    const checks = {
+      "cuentas de prueba fuera": esCuentaDePrueba("delivered+qa@resend.dev") && esCuentaDePrueba("demo@buscaycurra.es")
+        && esCuentaDePrueba("audit3@gmail.com") && !esCuentaDePrueba("lucia.perez@gmail.com"),
+      "el contador pide su clave": contador.includes('secretIguales(req.headers.get("x-contador"), claveContador())') && contador.includes("status: 401"),
+      "el resumen pide el secreto del servidor": resumen.includes('secretIguales(req.headers.get("x-sync-secret"), process.env.ADMIN_SECRET)'),
+      "sale cada mañana después del centinela": /\n40 7 \* \* \* .*resumen-diario\.sh/.test(leerFuente("scripts/vps/crontab.txt")),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return mal.length === 0 && malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    try { unlinkSync(salida); } catch { /* no estaba */ }
+  }
+});
+
 // ── EL REGISTRO NO PUEDE PERDER LO QUE ESCRIBE LA PERSONA ─────────────────
 //
 // El formulario llamaba a /api/auth/welcome sin sesion (con la confirmacion por

@@ -10,6 +10,8 @@ import { Globe, Target, Clock, Mail } from "lucide-react";
 import { palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
 import { destinoSeguro } from "@/lib/auth/destino";
 import { sugerenciaCorreo } from "@/lib/auth/sugerencia-correo";
+import { llegadaDeEstaVisita, COMO_NOS_CONOCIO } from "@/lib/origen/llegada";
+import { plataforma } from "@/lib/utils/platform";
 
 /** La bandeja de entrada de los correos más comunes, para confirmar con un toque. */
 function bandejaDe(email: string): { nombre: string; url: string } | null {
@@ -51,6 +53,7 @@ function RegistroPageInner() {
   const [email, setEmail] = useState("");
   const [ciudad, setCiudad] = useState("");
   const [oficio, setOficio] = useState("");
+  const [conocio, setConocio] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [confirmarContrasena, setConfirmarContrasena] = useState("");
   const [verContrasena, setVerContrasena] = useState(false);
@@ -102,6 +105,7 @@ function RegistroPageInner() {
     setCargando(true);
     try {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+      const llegada = llegadaDeEstaVisita();
       const { data, error: sErr } = await getSupabaseBrowser().auth.signUp({
         email: email.trim(),
         password: contrasena,
@@ -115,6 +119,12 @@ function RegistroPageInner() {
             // A dónde volver al confirmar, y de dónde vino (para medir).
             ...(destinoCuenta ? { destino: destinoCuenta } : {}),
             ...(ofertaId ? { origen: `oferta:${ofertaId}` } : desde ? { origen: `desde:${desde}` } : destinoParam ? { origen: `destino:${destinoParam.split("?")[0]}` } : {}),
+            // Por qué canal llegó (23 oct 2026): lo que contesta, de qué web venía
+            // y si se registra desde la app o la web (lib/origen/llegada.ts).
+            ...(conocio ? { conocio } : {}),
+            llego_de: llegada.llegoDe,
+            ...(llegada.campana ? { campana: llegada.campana } : {}),
+            plataforma: plataforma(),
           },
           emailRedirectTo: `${siteUrl}/auth/callback`,
         },
@@ -386,6 +396,15 @@ function RegistroPageInner() {
                       {contrasena === confirmarContrasena ? "Coinciden" : "No coinciden"}
                     </p>
                   )}
+                </div>
+
+                <div>
+                  <label htmlFor="conocio" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>¿Cómo nos has conocido? <span style={{ color: "#64748b" }}>(opcional)</span></label>
+                  <select id="conocio" value={conocio} onChange={(e) => setConocio(e.target.value)}
+                    className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle}>
+                    <option value="">Elige una opción</option>
+                    {COMO_NOS_CONOCIO.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
+                  </select>
                 </div>
 
                 {error && (

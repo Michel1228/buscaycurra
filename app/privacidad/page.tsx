@@ -43,6 +43,7 @@ export default function PrivacidadPage() {
         <S titulo="2. Datos que guardamos">
           <ul style={{ paddingLeft: 20 }}>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Tu cuenta:</strong> nombre, correo, ciudad y, si lo indicas, tu oficio. Si llegas con un enlace de invitación, quién te invitó.</li>
+            <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Cómo nos conociste:</strong> lo que contestes en el registro, si quieres, la web o el enlace desde el que llegaste y si te registraste en la app o en la web. Solo lo usamos para saber qué funciona, y se guarda con tu cuenta: no usamos cookies para esto.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Tu currículum:</strong> lo que escribes en el editor o el PDF que subes (experiencia, formación, idiomas, teléfono, correo y la foto si la pones).</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Lo que haces aquí:</strong> búsquedas, ofertas guardadas, los CV que mandas (a qué empresa y cuándo) y si te contestan, tus carnés y cuándo caducan, y tus ensayos de entrevista.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Conversaciones con Guzzi:</strong> se guardan para que puedas seguirlas. Si mandas una foto con la cámara, en la conversación queda una miniatura.</li>

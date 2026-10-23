@@ -2,6 +2,7 @@ import { frasePromesaOfertas } from "@/lib/promesas";
 import { getPool } from "@/lib/db";
 import { dominioSinCorreo } from "@/lib/cv-sender/direccion-segura";
 import { apuntarCorreo, quedaSitioParaLoQuePuedeEsperar } from "@/lib/email/presupuesto-diario";
+import type { NumerosContador } from "@/lib/metricas/contador";
 import type { OfertasCiudad } from "@/lib/email/ofertas-para-correo";
 
 const RESEND_API_URL = "https://api.resend.com/emails";
@@ -455,6 +456,57 @@ ${params.paso
     : "Te escribimos por tu cuenta en BuscayCurra.";
 
   return enviarCorreo(params.email, asunto, plantillaSencilla(cuerpo, pie), { bajaUrl: params.alertaActivada ? params.bajaUrl : null, puedeEsperar: true });
+}
+
+// ─── Resumen diario para Michel ──────────────────────────────────────────────
+
+/**
+ * Cada mañana, cuántas personas hay, cuántas han entrado y de dónde vienen
+ * (23 oct 2026: "que me llegue al móvil, para no tener que encender el
+ * ordenador"). Lo pide scripts/vps/resumen-diario.sh después del centinela.
+ */
+export async function sendResumenDiarioEmail(params: {
+  destinos: string[];
+  numeros: NumerosContador;
+  /** "28 pasan, 4 fallan", del registro del centinela de hoy; null si no ha corrido. */
+  centinela: { pasan: number; fallan: number } | null;
+}): Promise<number> {
+  const p = params.numeros.personas;
+  const fila = (texto: string, valor: string | number) =>
+    `<tr><td style="padding:4px 16px 4px 0;color:#4b5563;">${texto}</td><td style="padding:4px 0;font-weight:600;text-align:right;">${valor}</td></tr>`;
+  const lista = (xs: Array<{ nombre: string; n: number }>) =>
+    xs.length ? xs.map((x) => `${esc(x.nombre)} <strong>${x.n}</strong>`).join(" · ") : "todavía nada";
+  const diaCorto = (dia: string) =>
+    new Date(`${dia}T12:00:00Z`).toLocaleDateString("es-ES", { weekday: "short", day: "numeric", timeZone: "Europe/Madrid" });
+  const fecha = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" });
+
+  const asunto = `BuscayCurra: ${p.reales} personas (+${p.ayer} ayer)`;
+  const cuerpo = `
+<p ${P}>Así va BuscayCurra hoy, ${esc(fecha)}:</p>
+<table style="border-collapse:collapse;margin:0 0 20px;font-size:15px;">
+${fila("Personas reales", p.reales)}
+${fila("Altas de ayer", p.ayer)}
+${fila("Altas de hoy, hasta ahora", p.hoy)}
+${fila("Últimos 7 días", p.ultimos7)}
+${fila("Últimos 30 días", p.ultimos30)}
+${fila("Sin confirmar el correo", p.sinConfirmar)}
+${fila("Han entrado esta semana", p.activas7)}
+${fila("De pago", params.numeros.dePago ?? "no se pudo mirar")}
+</table>
+<p ${P}><strong>Altas de la última semana</strong><br>${p.porDia.slice(-7).map((d) => `${esc(diaCorto(d.dia))}: <strong>${d.altas}</strong>`).join(" · ")}</p>
+<p ${P}><strong>Cómo llegan</strong> (altas de los últimos 30 días)<br>${lista(p.canales30)}</p>
+<p ${P}><strong>Ciudades</strong> (todas las personas)<br>${lista(p.ciudades)}</p>
+${params.centinela
+    ? `<p ${P}>Centinela: ${params.centinela.pasan} de ${params.centinela.pasan + params.centinela.fallan} comprobaciones bien.${params.centinela.fallan ? " Los fallos te llegan en su propio correo." : ""}</p>`
+    : ""}
+<p ${P}><a href="https://buscaycurra.es/admin/metricas" ${ENLACE}>Abrir el panel completo →</a></p>`;
+  const pie = "El canal de llegada se apunta desde el 23 oct 2026: lo de antes sale como «Sin dato». Te llega cada mañana por ser administrador de BuscayCurra.";
+
+  let enviados = 0;
+  for (const to of params.destinos) {
+    if (await enviarCorreo(to, asunto, plantillaSencilla(cuerpo, pie))) enviados++;
+  }
+  return enviados;
 }
 
 // ─── Email para cambiar la contraseña ────────────────────────────────────────

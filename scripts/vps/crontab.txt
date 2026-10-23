@@ -23,6 +23,8 @@
 30 5 * * * /usr/bin/flock -n /tmp/limpiar-caducadas.lock nice -n 19 /root/limpiar-caducadas.sh >> /root/limpiar-caducadas.log 2>&1
 # Centinela: 12 comprobaciones contra los datos reales; correo si cambia el resultado (scripts/vps/centinela.sh)
 30 7 * * * /usr/bin/flock -n /tmp/centinela.lock bash /root/centinela.sh >> /root/centinela.log 2>&1
+# Resumen diario para Michel (scripts/vps/resumen-diario.sh): personas, altas y de dónde vienen.
+40 7 * * * /usr/bin/flock -n /tmp/resumen-diario.lock bash /root/resumen-diario.sh >> /root/resumen-diario.log 2>&1
 # Barrido diario de Adzuna: lo publicado en 24 h, paginando sin palabras clave (scripts/vps/sync-adzuna-barrido.sh)
 # A las 00:05 UTC, EL PRIMERO DEL DIA: los contadores de las 12 claves se reinician
 # a las 00:00 UTC. Hasta el 29 sep 2026 iba a las 11:00, despues de que los otros dos

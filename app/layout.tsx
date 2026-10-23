@@ -6,6 +6,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 import PolyfillBanderas from "@/components/PolyfillBanderas";
+import ApuntarLlegada from "@/components/ApuntarLlegada";
 import AppNavWrapper from "@/components/AppNavWrapper";
 import { BodyWrapper } from "@/components/BodyWrapper";
 import { NUM_PAISES } from "@/lib/paises";
@@ -250,6 +251,7 @@ export default function RootLayout({
           {children}
           <CookieBanner />
           <PolyfillBanderas />
+          <ApuntarLlegada />
         </BodyWrapper>
         <div id="pwa-update-banner" style={{ display: "none", position: "fixed", bottom: 0, left: 0, right: 0, background: "#111827", borderTop: "2px solid #22c55e", padding: "12px 16px", zIndex: 9999, textAlign: "center", fontSize: "14px", color: "#f1f5f9" }}>
           <RefreshCw size={16} strokeWidth={2} style={{ display: "inline", marginRight: "6px", verticalAlign: "middle" }} />Nueva versión disponible —{" "}
