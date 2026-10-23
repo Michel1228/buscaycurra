@@ -16,7 +16,10 @@ export type ResultadoBienvenida = { ok: boolean; yaHecha?: boolean; antigua?: bo
 
 export async function darBienvenida(
   userId: string,
-  cuerpo: { nombre?: string; ciudad?: string; ref?: string; oficio?: string } = {}
+  cuerpo: { nombre?: string; ciudad?: string; ref?: string; oficio?: string } = {},
+  // Bienvenidas atrasadas (/api/auth/bienvenidas-pendientes?antiguas=1): correo
+  // y alerta aunque la cuenta tenga más de una semana.
+  opciones: { aunqueSeaAntigua?: boolean } = {}
 ): Promise<ResultadoBienvenida> {
   // LOS DATOS SALEN DE LA CUENTA, NO SOLO DEL FORMULARIO.
   //
@@ -56,15 +59,19 @@ export async function darBienvenida(
   // Una cuenta de hace más de una semana que pasa por aquí no es un registro
   // nuevo (enlace mágico de alguien que ya usaba la aplicación): se le
   // completa la ficha en silencio, sin correo ni alerta que no ha pedido.
-  const esNueva = Date.now() - new Date(cuenta.created_at).getTime() < 7 * 24 * 60 * 60 * 1000;
+  const esNueva = opciones.aunqueSeaAntigua || Date.now() - new Date(cuenta.created_at).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   // 1. La ficha, siempre, haya ciudad o no.
+  // Quien lleva tiempo puede tener la ciudad en la ficha y no en la cuenta: sirve
+  // igual para su alerta.
+  let ciudadDeLaFicha = "";
   try {
     const { data: perfilActual } = await admin
       .from("profiles")
       .select("id, ciudad, full_name")
       .eq("id", userId)
       .maybeSingle();
+    ciudadDeLaFicha = perfilActual?.ciudad?.trim() || "";
 
     if (!perfilActual) {
       // NI SIQUIERA HABIA FICHA. A 23 sep 2026 habia 122 cuentas y 54
@@ -98,7 +105,8 @@ export async function darBienvenida(
   await sendWelcomeEmail(email, nombre);
 
   // 3. Si hay ciudad, guardar en user_contacts + crear alerta
-  if (ciudad) {
+  const ciudadAlerta = ciudad || ciudadDeLaFicha;
+  if (ciudadAlerta) {
     // LA CIUDAD TAMBIEN AL PERFIL: ya se guarda arriba, en el paso 1. Antes
     // solo iba a user_contacts y a la alerta, y a 23 sep 2026 de 50 personas
     // registradas en el ultimo mes, 49 figuraban "sin ciudad" aunque la
@@ -117,12 +125,19 @@ export async function darBienvenida(
         [userId, email, nombre, oficio]
       );
 
-      // Crear alerta automática para la ciudad
-      await pool.query(
-        `INSERT INTO job_alerts (user_id, keyword, location, frequency, active)
-         VALUES ($1, '', $2, 'daily', true)`,
-        [userId, ciudad.trim()]
+      // Crear alerta automática para la ciudad, si no tiene ya una (una cuenta
+      // antigua puede haberla creado ella misma).
+      const { rowCount: yaTieneAlerta } = await pool.query(
+        `SELECT 1 FROM job_alerts WHERE user_id = $1 LIMIT 1`,
+        [userId]
       );
+      if (!yaTieneAlerta) {
+        await pool.query(
+          `INSERT INTO job_alerts (user_id, keyword, location, frequency, active)
+           VALUES ($1, '', $2, 'daily', true)`,
+          [userId, ciudadAlerta]
+        );
+      }
     } catch (dbErr) {
       console.error("[welcome] Error guardando contactos/alerta:", (dbErr as Error).message);
       // No bloqueamos — el email ya se envió

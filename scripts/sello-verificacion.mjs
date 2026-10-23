@@ -1310,8 +1310,26 @@ test("la bienvenida no depende solo del navegador", () => {
   const cron = leerFuente("scripts/vps/crontab.txt");
   return cb.includes("const yaHaySesion = error ? !!(await supabase.auth.getSession()).data.session : false;")
     && cb.includes("if (error && !yaHaySesion)")
-    && pend.includes("darBienvenida(u.id)") && ruta.includes("darBienvenida(userId, cuerpo)")
+    && /darBienvenida\(u\.id[,)]/.test(pend) && ruta.includes("darBienvenida(userId, cuerpo)")
     && /\*\/10 \* \* \* \* .*bienvenidas-pendientes\.sh/.test(cron);
+});
+
+// 23 oct 2026 (aprobado por Michel): 81 cuentas confirmadas de antes de la red
+// de seguridad nunca recibieron la bienvenida. Se les da con cuidado: en horario
+// de aviso, a tandas, sin comerse el cupo de correos, nunca a cuentas de prueba
+// y sin duplicar el aviso de ofertas de quien ya se hizo uno.
+test("las bienvenidas atrasadas salen a tandas, en horario y sin duplicar avisos", () => {
+  const pend = leerFuente("app/api/auth/bienvenidas-pendientes/route.ts");
+  const w = leerFuente("lib/onboarding/dar-bienvenida.ts");
+  const cron = leerFuente("scripts/vps/crontab.txt");
+  const bucle = pend.slice(pend.indexOf("let hechas = 0;"));
+  return pend.includes('if (antiguas && !probar && !enHorarioDeAviso()) return')
+    && /pendientes\.slice\(0, MAX_ANTIGUAS_POR_PASADA\)/.test(bucle)
+    && /if \(antiguas && !\(await quedaSitioParaLoQuePuedeEsperar\(\)\)\) break;/.test(bucle)
+    && /DE_PRUEBA = \/buscaycurra\|@\(resend/.test(pend) && pend.includes('.neq("plan", "free")')
+    && w.includes("opciones.aunqueSeaAntigua ||")
+    && /SELECT 1 FROM job_alerts WHERE user_id = \$1 LIMIT 1[\s\S]{0,200}if \(!yaTieneAlerta\)/.test(w)
+    && /\n15 9 \* \* 1-5 .*bienvenidas-antiguas\.sh/.test(cron);
 });
 // 6 oct 2026: la comprobacion de salario del centinela contaba sueldos de mas
 // de 200.000 sin mirar la moneda y daba falsas alarmas. Ahora prueba la misma

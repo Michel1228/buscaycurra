@@ -54,6 +54,9 @@
 # Te falta confirmar el correo (scripts/vps/recordar-confirmacion.sh): una vez, entre 1 y
 # 30 dias despues del registro, a quien no lo confirmo. Lunes a viernes a las 10:45 de Espana.
 45 8,9 * * 1-5 /usr/bin/flock -n /tmp/recordar-confirmacion.lock bash /root/recordar-confirmacion.sh >> /root/recordar-confirmacion.log 2>&1
+# Bienvenidas atrasadas (scripts/vps/bienvenidas-antiguas.sh): cuentas de antes de la red
+# de seguridad que nunca la recibieron. Como mucho 25 por mañana, de lunes a viernes.
+15 9 * * 1-5 /usr/bin/flock -n /tmp/bienvenidas-antiguas.lock bash /root/bienvenidas-antiguas.sh >> /root/bienvenidas-antiguas.log 2>&1
 # Vigilante de la web desde fuera de la app (scripts/vps/vigilante-app.sh): si el
 # contenedor no existe o esta parado lo levanta, y avisa por correo al caer y al volver.
 */5 * * * * /usr/bin/flock -n /tmp/vigilante-app.lock bash /root/vigilante-app.sh >> /root/vigilante-app.log 2>&1
