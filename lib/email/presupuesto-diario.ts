@@ -13,6 +13,10 @@
  * más de RESERVA correos para el día; si no, se deja para la siguiente pasada.
  * Lo urgente no mira el contador. Las confirmaciones que manda Supabase no
  * pasan por aquí: la reserva también les deja sitio.
+ *
+ * Desde el 23 oct 2026 la cuenta está en el plan Pro, sin tope diario:
+ * LIMITE_RESEND_DIA es ahora nuestro reparto de los 50.000 del mes
+ * (lib/centinela/limites-correo.ts).
  */
 import { incrementar, get } from "@/lib/cache/redis-client";
 import { LIMITE_RESEND_DIA } from "@/lib/centinela/limites-correo";

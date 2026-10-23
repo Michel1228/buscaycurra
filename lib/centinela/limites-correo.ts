@@ -11,6 +11,11 @@
  * Las cifras, de las fuentes oficiales (comprobadas el 6 oct 2026):
  *  - Resend, plan gratuito: 100 correos al día (día natural en hora UTC) y
  *    3.000 al mes. https://resend.com/docs/knowledge-base/account-quotas-and-limits
+ *    DESDE EL 23 OCT 2026, PLAN PRO (20 $/mes, lo contrató Michel): 50.000 al
+ *    mes y sin tope diario. El 22 oct salieron 107 correos sin ninguna tanda
+ *    (38 eran confirmaciones de Supabase, que nuestro contador no ve) y lo
+ *    primero que fallaba al pasar de 100 era la confirmación del que se registra.
+ *    https://resend.com/pricing
  *  - Resend, todas las cuentas: rebotes por debajo del 4 %, o pausa los envíos
  *    hasta que baje. (Misma página.)
  *  - Supabase, correos de confirmación: 30 por hora. Lo puso Michel el 6 oct en
@@ -24,8 +29,10 @@ import { get as cacheGet } from "@/lib/cache/redis-client";
 
 type Anota = (nombre: string, bien: boolean, detalle: string, nacioDe: string) => void;
 
-export const LIMITE_RESEND_DIA = 100;
-export const LIMITE_RESEND_MES = 3000;
+// No es un tope de Resend (el plan Pro no tiene): es nuestro reparto de los
+// 50.000 del mes, unos 1.600 al día, para que una tanda no se coma el mes.
+export const LIMITE_RESEND_DIA = 1600;
+export const LIMITE_RESEND_MES = 50000;
 export const LIMITE_REBOTES = 4;
 export const LIMITE_SUPABASE_HORA = 30;
 
@@ -68,8 +75,8 @@ function revisarCuentaResend(anota: Anota, correos: Correo[], cuenta: string): v
     porDia[d] = (porDia[d] || 0) + 1;
   }
   const [diaMax, maxDia] = Object.entries(porDia).sort((a, b) => b[1] - a[1])[0] || ["-", 0];
-  anota(`ningún día se acerca al tope de ${LIMITE_RESEND_DIA} correos de Resend${cuenta}`, maxDia < LIMITE_RESEND_DIA * 0.8,
-    `el día con más en una semana: ${maxDia} (${diaMax}). Si pasa de ${LIMITE_RESEND_DIA}, el resto del día no sale nada; en el plan de pago no hay tope diario`,
+  anota(`ningún día se acerca al reparto diario de ${LIMITE_RESEND_DIA} correos de Resend${cuenta}`, maxDia < LIMITE_RESEND_DIA * 0.8,
+    `el día con más en una semana: ${maxDia} (${diaMax}). El plan Pro no tiene tope diario; este reparto es para no llegar al tope del mes`,
     NACIO_DIA);
 
   // 2. Tope mensual.
