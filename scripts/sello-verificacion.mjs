@@ -1351,7 +1351,7 @@ test("el centinela vigila los limites de correo y nadie se queda sin registrarse
   const reg = leerFuente("app/auth/registro/page.tsx");
   return cent.includes("await limitesDeCorreo(anota)")
     // Plan Pro desde el 23 oct 2026: 50.000 al mes, sin tope diario (el diario es nuestro reparto).
-    && /LIMITE_RESEND_DIA = 1600/.test(lim) && /LIMITE_RESEND_MES = 50000/.test(lim) && /LIMITE_REBOTES = 4/.test(lim) && /LIMITE_SUPABASE_HORA = 30/.test(lim)
+    && /LIMITE_RESEND_DIA = 1600/.test(lim) && /LIMITE_RESEND_MES = 50000/.test(lim) && /LIMITE_REBOTES = 4/.test(lim) && /LIMITE_SUPABASE_HORA = 150/.test(lim)
     && lim.includes("claveRegistroCortado(hoy)")
     && reg.includes('fetch("/api/auth/registro-cortado"')
     && leerFuente("app/api/auth/registro-cortado/route.ts").includes("incrementar(claveRegistroCortado(");

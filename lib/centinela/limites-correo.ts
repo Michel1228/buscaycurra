@@ -21,6 +21,11 @@
  *  - Supabase, correos de confirmación: 30 por hora. Lo puso Michel el 6 oct en
  *    https://supabase.com/dashboard/project/ojesordjedovnpyxspxi/auth/rate-limits
  *    Si se cambia ahí, hay que cambiar LIMITE_SUPABASE_HORA aquí.
+ *    23 oct 2026: subido a 150 por hora con Resend Pro. El 22 oct se cortaron 4
+ *    registros; en el mismo panel, registros y entradas por IP pasaron de 30 a
+ *    100 cada 5 minutos (en un aula todos salen por la misma IP) y la
+ *    validación de enlaces de 30 a 100 (los de /api/auth/confirmar se validan
+ *    desde nuestro servidor: una sola IP para todos).
  *
  * Se avisa al 80 % de los topes de Resend, al 70 % del de Supabase y desde el
  * 3 % de rebotes, para tener tiempo.
@@ -34,7 +39,7 @@ type Anota = (nombre: string, bien: boolean, detalle: string, nacioDe: string) =
 export const LIMITE_RESEND_DIA = 1600;
 export const LIMITE_RESEND_MES = 50000;
 export const LIMITE_REBOTES = 4;
-export const LIMITE_SUPABASE_HORA = 30;
+export const LIMITE_SUPABASE_HORA = 150;
 
 const NACIO = "6 oct 2026: Supabase cortaba el tercer registro de la hora y nadie lo sabía";
 const NACIO_DIA = "6 oct 2026: el 30 sep salieron 100 correos y el 3 oct 101, el tope diario del plan gratuito";
