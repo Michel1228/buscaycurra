@@ -46,6 +46,19 @@
          mandaba a Ajustes, donde no habia nada que activar. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- UBICACION PARA LA CAMARA DE GUZZI (oct 2026). Sin declararla, Capacitor la
+         pide y Android la deniega sin preguntar: la camara buscaba alrededor de la
+         ciudad del perfil y no donde estaba la persona. Con el perfil en Tudela y
+         una foto en Pamplona, salia el "Cafe Iruna" de Sartaguda y el Mercadona de
+         Tudela. Las dos, porque Capacitor pide las dos; quien quiera puede elegir
+         "aproximada" en el aviso. El uses-feature en false es para que Google Play
+         no oculte la app a los moviles sin GPS. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.location.network" android:required="false" />
+
     <!-- Android 11+ exige declarar con que apps se habla. El reconocimiento de
          voz vive en otra app del sistema; sin esto, SpeechRecognizer no la ve. -->
     <queries>

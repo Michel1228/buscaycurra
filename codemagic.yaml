@@ -69,6 +69,14 @@ workflows:
           /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'BuscayCurra necesita guardar tu foto de perfil en la galería'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'BuscayCurra necesita acceso al micrófono para grabar vídeo'" "$PLIST" 2>/dev/null || \
           /usr/libexec/PlistBuddy -c "Set :NSMicrophoneUsageDescription 'BuscayCurra necesita acceso al micrófono para grabar vídeo'" "$PLIST"
+          # La cámara de Guzzi: sin esta clave, iOS deniega la ubicación sin preguntar
+          # y la foto se busca alrededor de la ciudad del perfil, no donde está la persona.
+          /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string 'BuscayCurra usa tu ubicación cuando haces una foto con la cámara de Guzzi, para encontrar ese negocio y los que tienes cerca. No la guardamos.'" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription 'BuscayCurra usa tu ubicación cuando haces una foto con la cámara de Guzzi, para encontrar ese negocio y los que tienes cerca. No la guardamos.'" "$PLIST"
+          # La versión visible. "cap add ios" crea el proyecto de cero en cada compilación,
+          # con la 1.0, y la 1.0 está publicada desde el 28 jul 2026: App Store Connect no
+          # admite más compilaciones con ese número. Subirla en cada versión nueva.
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.7" "$PLIST"
       - name: Incrementar build number
         script: |
           cd ios/App

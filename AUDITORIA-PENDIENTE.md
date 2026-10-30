@@ -838,7 +838,7 @@ la cola `cv-sender-retry` · el botón `cv_complete` de GusiChat · los chips de
   (https://improvmx.com/pricing, gratis hasta 25 alias). Se añaden dos MX en
   el DNS de Hostinger; los envíos de Resend van por `send.buscaycurra.es` y no
   se tocan. Comprobar después escribiendo a soporte@ desde otra cuenta.
-- **GPS en las apps**: la web ya permite la ubicación a la búsqueda por cámara
+- **HECHO en la versión 1.0.7 (oct 2026). GPS en las apps**: la web ya permite la ubicación a la búsqueda por cámara
   (`5b6066b`). En Android falta `ACCESS_COARSE_LOCATION` en el manifiesto y en
   iOS `NSLocationWhenInUseUsageDescription` en el `Info.plist`; sin ellas la
   app sigue funcionando, solo que sin GPS. Añadir en la próxima compilación.

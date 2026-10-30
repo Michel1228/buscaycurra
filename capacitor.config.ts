@@ -47,7 +47,9 @@ const config: CapacitorConfig = {
       NSMicrophoneUsageDescription: "BuscayCurra usa el micrófono para el simulador de entrevistas con IA, donde puedes responder las preguntas por voz.",
       // Alertas de nuevas ofertas y respuestas de empresas
       NSUserNotificationsUsageDescription: "Activa las notificaciones para recibir alertas cuando Guzzi encuentre nuevas ofertas o una empresa responda a tu candidatura.",
-      // NSLocationWhenInUseUsageDescription eliminado — no se usa en la versión actual
+      // La cámara de Guzzi. Lo que manda en la compilación es codemagic.yaml, que es
+      // donde se escribe de verdad el Info.plist: si se cambia aquí, cambiarlo allí.
+      NSLocationWhenInUseUsageDescription: "BuscayCurra usa tu ubicación cuando haces una foto con la cámara de Guzzi, para encontrar ese negocio y los que tienes cerca. No la guardamos.",
     },
   },
   plugins: {

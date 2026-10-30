@@ -2564,6 +2564,23 @@ test("Guzzi saca empresa y puesto de 'carta para Mercadona de reponedor'", () =>
   return mal.length === 0;
 });
 
+// ── LAS APPS TIENEN QUE PODER DAR LA UBICACIÓN (oct 2026) ─────────────────
+//
+// La cámara busca donde está el móvil, y sin ubicación, en la ciudad del perfil.
+// Dentro de las apps nunca llegaba: faltaba declarar el permiso, y sin él el
+// sistema lo deniega sin preguntar. Probado en producción con un perfil de Tudela
+// y fotos de Pamplona: salía el "Cafe Iruña" de Sartaguda y el Mercadona de Tudela.
+test("las apps de iPhone y Android declaran el permiso de ubicación que usa la cámara", () => {
+  const manifiesto = leerFuente("android/app/src/main/AndroidManifest.xml");
+  const codemagic = leerFuente("codemagic.yaml");
+  return manifiesto.includes("android.permission.ACCESS_COARSE_LOCATION") && manifiesto.includes("android.permission.ACCESS_FINE_LOCATION")
+    // Sin esto Google Play escondería la app a quien no tenga GPS.
+    && /android\.hardware\.location\.gps" android:required="false"/.test(manifiesto)
+    && /Add :NSLocationWhenInUseUsageDescription string/.test(codemagic)
+    // "cap add ios" crea el proyecto con la 1.0, ya publicada: Apple no admite otra igual.
+    && /Set :CFBundleShortVersionString \d+\.\d+\.\d+"/.test(codemagic);
+});
+
 // ── DE DÓNDE VIENE LA GENTE (23 oct 2026) ──────────────────────────────────
 //
 // De 248 cuentas, de 190 no se sabía por qué canal llegaron. Ahora se apunta al
