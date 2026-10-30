@@ -2582,7 +2582,7 @@ test("las apps de iPhone y Android declaran el permiso de ubicación que usa la 
     // npm ci sin esto acaba en ERESOLVE, y Codemagic pide las "Novedades" del idioma principal para enviar a Apple.
     && codemagic.includes("script: npm ci --legacy-peer-deps")
     // Sin esto, el altool de Xcode 26 no encuentra la app y la subida a Apple falla (error 19).
-    && /APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: "--apple-id d+"/.test(codemagic)
+    && /APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: "--apple-id \d+"/.test(codemagic)
     && JSON.parse(leerFuente("release_notes.json")).some((n) => n.language === "es-ES" && n.text);
 });
 
