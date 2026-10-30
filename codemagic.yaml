@@ -24,7 +24,9 @@ workflows:
       cocoapods: default
     scripts:
       - name: Instalar dependencias Node
-        script: npm ci
+        # --legacy-peer-deps, igual que el Dockerfile: sin él, npm ci acaba en ERESOLVE
+        # (comprobado con Node 22 el 30 oct 2026) y la compilación muere aquí.
+        script: npm ci --legacy-peer-deps
       - name: Crear plataforma iOS
         script: |
           rm -rf ios

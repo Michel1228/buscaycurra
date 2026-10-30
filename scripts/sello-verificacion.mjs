@@ -2578,7 +2578,10 @@ test("las apps de iPhone y Android declaran el permiso de ubicación que usa la 
     && /android\.hardware\.location\.gps" android:required="false"/.test(manifiesto)
     && /Add :NSLocationWhenInUseUsageDescription string/.test(codemagic)
     // "cap add ios" crea el proyecto con la 1.0, ya publicada: Apple no admite otra igual.
-    && /Set :CFBundleShortVersionString \d+\.\d+\.\d+"/.test(codemagic);
+    && /Set :CFBundleShortVersionString \d+\.\d+\.\d+"/.test(codemagic)
+    // npm ci sin esto acaba en ERESOLVE, y Codemagic pide las "Novedades" del idioma principal para enviar a Apple.
+    && codemagic.includes("script: npm ci --legacy-peer-deps")
+    && JSON.parse(leerFuente("release_notes.json")).some((n) => n.language === "es-ES" && n.text);
 });
 
 // ── DE DÓNDE VIENE LA GENTE (23 oct 2026) ──────────────────────────────────
