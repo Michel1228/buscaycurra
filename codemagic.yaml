@@ -19,6 +19,10 @@ workflows:
       vars:
         BUNDLE_ID: es.buscaycurra.app
         APPLE_TEAM_ID: P9L962T32A
+        # El altool de Xcode 26 no saca la app del bundle id: "Cannot determine the Apple ID
+        # from Bundle ID" (error 19, 30 oct 2026). Es el id de la app en App Store Connect.
+        # https://help.codemagic.io/articles/6636894916
+        APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: "--apple-id 6775232067"
       node: 22
       xcode: latest
       cocoapods: default
