@@ -73,8 +73,12 @@ workflows:
           /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'BuscayCurra necesita acceso a tu cámara para hacer una foto para tu CV'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'BuscayCurra necesita guardar tu foto de perfil en la galería'" "$PLIST" 2>/dev/null || \
           /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'BuscayCurra necesita guardar tu foto de perfil en la galería'" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'BuscayCurra necesita acceso al micrófono para grabar vídeo'" "$PLIST" 2>/dev/null || \
-          /usr/libexec/PlistBuddy -c "Set :NSMicrophoneUsageDescription 'BuscayCurra necesita acceso al micrófono para grabar vídeo'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'BuscayCurra usa el micrófono para el simulador de entrevistas con IA, donde puedes responder las preguntas por voz.'" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :NSMicrophoneUsageDescription 'BuscayCurra usa el micrófono para el simulador de entrevistas con IA, donde puedes responder las preguntas por voz.'" "$PLIST"
+          # El plugin de voz: sin esta clave, Apple rechaza la compilación (ITMS-90683)
+          # y iOS cierra la app al pedir el permiso.
+          /usr/libexec/PlistBuddy -c "Add :NSSpeechRecognitionUsageDescription string 'BuscayCurra convierte tu voz en texto para que puedas responder por voz en el simulador de entrevistas con IA.'" "$PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Set :NSSpeechRecognitionUsageDescription 'BuscayCurra convierte tu voz en texto para que puedas responder por voz en el simulador de entrevistas con IA.'" "$PLIST"
           # La cámara de Guzzi: sin esta clave, iOS deniega la ubicación sin preguntar
           # y la foto se busca alrededor de la ciudad del perfil, no donde está la persona.
           /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string 'BuscayCurra usa tu ubicación cuando haces una foto con la cámara de Guzzi, para encontrar ese negocio y los que tienes cerca. No la guardamos.'" "$PLIST" 2>/dev/null || \

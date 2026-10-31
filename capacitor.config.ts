@@ -45,6 +45,7 @@ const config: CapacitorConfig = {
       NSPhotoLibraryAddUsageDescription: "BuscayCurra puede guardar capturas de tus candidaturas en tu carrete.",
       // Simulador de entrevistas con respuesta por voz
       NSMicrophoneUsageDescription: "BuscayCurra usa el micrófono para el simulador de entrevistas con IA, donde puedes responder las preguntas por voz.",
+      NSSpeechRecognitionUsageDescription: "BuscayCurra convierte tu voz en texto para que puedas responder por voz en el simulador de entrevistas con IA.",
       // Alertas de nuevas ofertas y respuestas de empresas
       NSUserNotificationsUsageDescription: "Activa las notificaciones para recibir alertas cuando Guzzi encuentre nuevas ofertas o una empresa responda a tu candidatura.",
       // La cámara de Guzzi. Lo que manda en la compilación es codemagic.yaml, que es

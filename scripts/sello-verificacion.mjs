@@ -2586,6 +2586,17 @@ test("las apps de iPhone y Android declaran el permiso de ubicación que usa la 
     && JSON.parse(leerFuente("release_notes.json")).some((n) => n.language === "es-ES" && n.text);
 });
 
+// ── EL SIMULADOR DE ENTREVISTAS POR VOZ EN IPHONE (31 oct 2026) ───────────
+//
+// El plugin de voz necesita las dos claves. Sin la de reconocimiento, Apple rechazó
+// la compilación 23 (ITMS-90683) y iOS cierra la app al pedir el permiso. El Info.plist
+// real lo escribe codemagic.yaml, que decía que el micrófono era para "grabar vídeo".
+test("el iPhone explica el micrófono y el reconocimiento de voz del simulador de entrevistas", () => {
+  const codemagic = leerFuente("codemagic.yaml");
+  return /Add :NSSpeechRecognitionUsageDescription string '[^']*entrevistas[^']*'/.test(codemagic)
+    && /Add :NSMicrophoneUsageDescription string '[^']*entrevistas[^']*'/.test(codemagic);
+});
+
 // ── DE DÓNDE VIENE LA GENTE (23 oct 2026) ──────────────────────────────────
 //
 // De 248 cuentas, de 190 no se sabía por qué canal llegaron. Ahora se apunta al

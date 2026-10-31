@@ -853,9 +853,10 @@ la cola `cv-sender-retry` · el botón `cv_complete` de GusiChat · los chips de
   reiniciar el contenedor. Hasta entonces los enlaces van a Coursera sin
   comisión, y los clics se cuentan igual en la tabla `curso_clic`.
 
-- **Micrófono**: `npx cap sync` y recompilar. Y en iOS faltan
-  `NSMicrophoneUsageDescription` y `NSSpeechRecognitionUsageDescription` en el
-  `Info.plist`; sin ellas **iOS cierra la app** al pedir permiso.
+- **HECHO en la versión 1.0.7 (31 oct 2026). Micrófono**: `npx cap sync` y recompilar.
+  Y en iOS faltan `NSMicrophoneUsageDescription` y `NSSpeechRecognitionUsageDescription`
+  en el `Info.plist`; sin ellas **iOS cierra la app** al pedir permiso. Están en
+  `codemagic.yaml`; falta probarlo en un iPhone real.
 - **Capturas del producto** para la portada (`/app/*` pide sesión).
 - Decidir sobre la mascota, el `gpt-4o` de analyze-image, y qué gana en la tabla
   de precios del plan gratuito.
