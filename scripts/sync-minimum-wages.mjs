@@ -22,11 +22,12 @@ const OUTPUT = join(ROOT, "public", "data", "salarios-minimos.json");
 
 // ─── Eurostat API ─────────────────────────────────────────────────────────────
 // Dataset earn_mw_cur: salarios mínimos mensuales estatutarios
-// currency=EUR: convertidos a euros. Antes se pedia unit= y na_item=, que el
-// dataset ya no admite: daba un 400 (comprobado el 1 nov 2026).
+// currency=NAC: en la moneda de cada pais, que es en la que los enseña la pantalla
+// (en euros, Polonia salia unas 4 veces mas baja con el simbolo del zloty). Antes
+// se pedia unit= y na_item=, que el dataset ya no admite: daba un 400 (1 nov 2026).
 const EUROSTAT_URL =
   "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/earn_mw_cur" +
-  "?format=JSON&lang=EN&currency=EUR";
+  "?format=JSON&lang=EN&currency=NAC";
 
 // ─── Fuentes alternativas para países sin dato en Eurostat ───────────────────
 // (países sin salario mínimo legal o fuera de la UE)
@@ -53,6 +54,9 @@ const EUROSTAT_MAP = {
   PL: "PL", PT: "PT", RO: null, SI: null, SK: null,
   HU: null,
 };
+
+// De los que se usan, el unico que no tiene el euro.
+const MONEDA_NACIONAL = { PL: "PLN" };
 
 async function fetchEurostat() {
   console.log("🔄 Descargando datos de Eurostat...");
@@ -115,7 +119,7 @@ function parseEurostat(json) {
     if (wage != null && !isNaN(wage)) {
       result[byc] = {
         salarioMinimo: Math.round(wage),
-        moneda: "EUR",
+        moneda: MONEDA_NACIONAL[byc] || "EUR",
         periodo: periodoReciente,
         fuente: "Eurostat earn_mw_cur",
       };
