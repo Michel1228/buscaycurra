@@ -51,6 +51,7 @@ function RegistroPageInner() {
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
+  const [correoAvisado, setCorreoAvisado] = useState("");
   const [ciudad, setCiudad] = useState("");
   const [oficio, setOficio] = useState("");
   const [conocio, setConocio] = useState("");
@@ -102,6 +103,15 @@ function RegistroPageInner() {
     setError("");
     const err = validar();
     if (err) { setError(err); return; }
+    // Con una errata la confirmación no llega nunca y esa persona no se entera
+    // (1 nov 2026: gmails.com y gmail.comñ pasaron con la sugerencia a la vista).
+    // Se para una sola vez: si el correo está bien, al volver a pulsar sigue.
+    const sugerido = sugerenciaCorreo(email);
+    if (sugerido && correoAvisado !== email.trim()) {
+      setCorreoAvisado(email.trim());
+      setError(`¿Tu correo es ${sugerido}? A «${email.trim()}» puede que no te llegue la confirmación. Corrígelo o, si está bien, vuelve a pulsar.`);
+      return;
+    }
     setCargando(true);
     try {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
@@ -132,6 +142,12 @@ function RegistroPageInner() {
       if (sErr) {
         if (sErr.message.includes("already registered")) setError("Este email ya está registrado.");
         else if (sErr.message.includes("weak password")) setError("Contraseña demasiado débil.");
+        // También es un 429, pero no es el límite por hora: Supabase pide esperar
+        // entre dos correos a la misma persona, que ya tiene uno de hace un momento.
+        else if (/after \d+ seconds?/i.test(sErr.message)) {
+          const segundos = sErr.message.match(/after (\d+) second/i)?.[1];
+          setError(`Acabamos de mandarte el correo de confirmación a ${email.trim()}. Míralo también en spam; si no está, vuelve a intentarlo en ${segundos} segundos.`);
+        }
         // Supabase limita los correos de confirmación por hora. Antes salía un
         // "No se pudo crear la cuenta." a secas y la persona se iba creyendo que
         // la web no funcionaba (6 oct 2026).

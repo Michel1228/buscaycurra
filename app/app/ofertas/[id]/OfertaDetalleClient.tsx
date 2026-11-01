@@ -8,6 +8,7 @@ import AlojamientoOferta from "@/components/AlojamientoOferta";
 import { CheckCircle2, FileText, Users, ClipboardList, Bookmark, ArrowLeft } from "lucide-react";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { servicioOficial } from "@/lib/job-search/fuente-oficial";
+import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
 
 export interface OfertaDetalle {
   id: string;
@@ -148,7 +149,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
           const r = await fetch("/api/company/extract", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: oferta.empresa }),
+            body: JSON.stringify({ name: oferta.empresa, city: ciudadParaBuscarEmpresa(oferta.ubicacion) }),
             signal: AbortSignal.timeout(8000),
           });
           const d = await r.json() as { empresas?: Array<{ emailRrhh?: string; emailsExtraidos?: string[]; emailConfianza?: string }>; emailRrhh?: string };

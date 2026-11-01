@@ -156,6 +156,24 @@ export async function GET(req: NextRequest) {
     anota("las fuentes grandes siguen trayendo ofertas", false, `no se pudo comprobar: ${(e as Error).message}`, "");
   }
 
+  // España es lo que más importa y la comprobación de arriba no lo veía: el barrido
+  // de Adzuna falló 5 de 13 noches (503 al empezar por España) y, como otra tarea
+  // mete unas pocas, la fuente nunca llegaba a estar 7 días callada.
+  try {
+    const { rows } = await pool.query(
+      `SELECT count(*)::int AS n FROM "JobListing"
+        WHERE "sourceName" = 'ADZUNA_ES' AND "createdAt" > now() - interval '48 hours'`
+    );
+    anota(
+      "el barrido de Adzuna trae ofertas de España",
+      rows[0].n >= 500,
+      `${rows[0].n} ofertas nuevas de Adzuna España en 48 horas (lo normal son unas 3.000 al día)`,
+      "1 nov 2026: España se quedó 5 de 13 noches sin barrido sin que nada avisara"
+    );
+  } catch (e) {
+    anota("el barrido de Adzuna trae ofertas de España", false, `no se pudo comprobar: ${(e as Error).message}`, "");
+  }
+
   // ── 3. La bandera de la oferta coincide con su fuente ──────────────────────
   // ADZUNA_ES tenía 6.820 ofertas de A Coruña y Toledo marcadas como suecas:
   // el sincronizador caía a España ante un país que Adzuna no cubre.

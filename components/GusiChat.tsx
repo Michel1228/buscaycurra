@@ -18,6 +18,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import GuzziAvatar from "@/components/GuzziAvatar";
 import ChatSendPanel from "@/components/ChatSendPanel";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
+import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
 import { Zap, Compass, Sparkles, Mic, Plane, Home, Image, Upload, Pin, Mail, Inbox, ChartColumn, Gem, Paperclip, Camera, type LucideIcon, ChevronDown, ChevronUp } from "lucide-react";
 
 // Mapa de palabras clave → id de país en /app/emigrar
@@ -259,7 +260,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
   const [pulso, setPulso] = useState(true);
   const [notif, setNotif] = useState(false);
   const [enviandoATodas, setEnviandoATodas] = useState(false);
-  const [sendTarget, setSendTarget] = useState<{ empresa: string; titulo: string; url: string; email?: string; emailConfianza?: string } | null>(null);
+  const [sendTarget, setSendTarget] = useState<{ empresa: string; titulo: string; url: string; ubicacion?: string; email?: string; emailConfianza?: string } | null>(null);
   const [sessionToken, setSessionToken] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const finRef = useRef<HTMLDivElement>(null);
@@ -623,7 +624,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
         const exRes = await fetch("/api/company/extract", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: job.empresa }),
+          body: JSON.stringify({ name: job.empresa, city: ciudadParaBuscarEmpresa(job.ubicacion) }),
         });
         if (exRes.ok) {
           const exData = await exRes.json();
@@ -881,7 +882,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                                 onClick={async () => {
                                   const { data: { session } } = await getSupabaseBrowser().auth.getSession();
                                   setSessionToken(session?.access_token || "");
-                                  setSendTarget({ empresa: job.empresa, titulo: job.titulo, url: job.url });
+                                  setSendTarget({ empresa: job.empresa, titulo: job.titulo, url: job.url, ubicacion: job.ubicacion });
                                 }}
                                 className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition hover:opacity-90 shrink-0"
                                 style={{ background: "#22c55e", color: "#0a1208" }}>
@@ -904,7 +905,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                           const first = m.jobs![0];
                           const { data: { session } } = await getSupabaseBrowser().auth.getSession();
                           setSessionToken(session?.access_token || "");
-                          setSendTarget({ empresa: first.empresa, titulo: first.titulo, url: first.url });
+                          setSendTarget({ empresa: first.empresa, titulo: first.titulo, url: first.url, ubicacion: first.ubicacion });
                         }}
                         className="w-full py-2 rounded-xl text-sm font-semibold transition hover:opacity-90"
                         style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#22c55e" }}>

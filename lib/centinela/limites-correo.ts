@@ -51,7 +51,15 @@ const fecha = (s: string) => new Date(String(s).replace(" ", "T").replace(/\+00$
 /** Clave de Redis donde la página de registro apunta los registros cortados (ver /api/auth/registro-cortado). */
 export const claveRegistroCortado = (dia: string) => `registro-cortado:${dia}`;
 
-async function correosUltimosDias(dias: number, clave: string): Promise<Correo[]> {
+/** Rebotes de la última semana, solo a direcciones reales (las de prueba de Resend rebotan a propósito). */
+export function rebotesDeLaSemana(correos: Correo[]): { rebotes: number; total: number; pct: number } {
+  const hace7 = Date.now() - 7 * 86400000;
+  const reales = correos.filter((e) => fecha(e.created_at).getTime() >= hace7 && !/@resend\.dev$/i.test(e.to?.[0] || ""));
+  const rebotes = reales.filter((e) => e.last_event === "bounced").length;
+  return { rebotes, total: reales.length, pct: reales.length ? (100 * rebotes) / reales.length : 0 };
+}
+
+export async function correosUltimosDias(dias: number, clave: string): Promise<Correo[]> {
   const H = { Authorization: `Bearer ${clave}` };
   const desde = Date.now() - dias * 86400000;
   const todos: Correo[] = [];
@@ -89,13 +97,10 @@ function revisarCuentaResend(anota: Anota, correos: Correo[], cuenta: string): v
     `${correos.length} correos en 30 días (${Math.round((100 * correos.length) / LIMITE_RESEND_MES)} %)`,
     NACIO_DIA);
 
-  // 3. Rebotes de la última semana, solo a direcciones reales (las de prueba de
-  //    Resend rebotan a propósito).
-  const reales = correos.filter((e) => fecha(e.created_at).getTime() >= hace7 && !/@resend\.dev$/i.test(e.to?.[0] || ""));
-  const rebotes = reales.filter((e) => e.last_event === "bounced").length;
-  const pct = reales.length ? (100 * rebotes) / reales.length : 0;
+  // 3. Rebotes de la última semana.
+  const { rebotes, total, pct } = rebotesDeLaSemana(correos);
   anota(`los rebotes siguen por debajo del ${LIMITE_REBOTES} % que exige Resend${cuenta}`, pct < 3,
-    `${rebotes} de ${reales.length} correos rebotaron esta semana (${pct.toFixed(1)} %). Con más del ${LIMITE_REBOTES} % Resend puede pausar todos los envíos de esta cuenta`,
+    `${rebotes} de ${total} correos rebotaron esta semana (${pct.toFixed(1)} %). Con más del ${LIMITE_REBOTES} % Resend puede pausar todos los envíos de esta cuenta`,
     NACIO_REBOTES);
 }
 

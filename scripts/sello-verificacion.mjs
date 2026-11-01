@@ -2586,6 +2586,51 @@ test("las apps de iPhone y Android declaran el permiso de ubicación que usa la 
     && JSON.parse(leerFuente("release_notes.json")).some((n) => n.language === "es-ES" && n.text);
 });
 
+// ── REBOTES Y EMPRESA EQUIVOCADA (1 nov 2026) ─────────────────────────────
+//
+// La semana llegó al 4,0 % de rebotes, el límite de Resend. De 19 CVs a direcciones
+// genéricas rebotaron 11, y de 18 a otras, 1. Además la empresa se buscaba solo por
+// el nombre: "Clober" acabó en un club de golf británico y Adecco en adecco.de.
+test("con los rebotes altos se frena lo deducido, y la empresa se busca en la ciudad de la oferta", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-freno-entrada.ts", salida = ".sello-freno.cjs";
+  try {
+    writeFileSync(entrada, 'export { esDireccionGenerica, UMBRAL_FRENO_REBOTES } from "./lib/cv-sender/direccion-generica";\nexport { ciudadParaBuscarEmpresa } from "./lib/job-search/ciudad-oferta";\nexport { rebotesDeLaSemana } from "./lib/centinela/limites-correo";\nexport { sugerenciaCorreo } from "./lib/auth/sugerencia-correo";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const ahora = new Date().toISOString();
+    const viejo = new Date(Date.now() - 9 * 864e5).toISOString();
+    const r = m.rebotesDeLaSemana([
+      { to: ["a@x.es"], created_at: ahora, last_event: "bounced" }, { to: ["b@x.es"], created_at: ahora, last_event: "delivered" },
+      { to: ["bounced@resend.dev"], created_at: ahora, last_event: "bounced" }, { to: ["c@x.es"], created_at: viejo, last_event: "bounced" },
+    ]);
+    const ds = leerFuente("lib/cv-sender/direccion-segura.ts");
+    const motivo = ds.slice(ds.indexOf("export async function motivoParaNoEnviar"));
+    const reg = leerFuente("app/auth/registro/page.tsx");
+    const sh = leerFuente("scripts/vps/sync-adzuna-barrido.sh");
+    const cent = leerFuente("app/api/admin/centinela/route.ts");
+    const checks = {
+      "reconoce lo genérico": m.esDireccionGenerica("empleo@x.es") && m.esDireccionGenerica("INFO@x.es") && m.esDireccionGenerica("rrhh@x.es") && !m.esDireccionGenerica("ana.garcia@x.es") && !m.esDireccionGenerica("info.madrid@x.es"),
+      "frena al mismo 3 % en que avisa el centinela": m.UMBRAL_FRENO_REBOTES === 3 && leerFuente("lib/cv-sender/freno-rebotes.ts").includes("UMBRAL_FRENO_REBOTES"),
+      "cuenta solo la semana y sin las pruebas de Resend": r.rebotes === 1 && r.total === 2 && r.pct === 50,
+      "el freno solo mira lo genérico y respeta lo que ya llegó": /esDireccionGenerica\(email\)[\s\S]*frenoDeRebotesActivo\(\)[\s\S]*direccionQueYaLlego\(email\)/.test(motivo),
+      "ciudad limpia para buscar": m.ciudadParaBuscarEmpresa("Madrid, Comunidad de Madrid") === "Madrid" && m.ciudadParaBuscarEmpresa("Vitoria-Gasteiz (Álava)") === "Vitoria-Gasteiz",
+      "sin ciudad si no es un sitio": m.ciudadParaBuscarEmpresa("España") === undefined && m.ciudadParaBuscarEmpresa("Remoto") === undefined && m.ciudadParaBuscarEmpresa("") === undefined && m.ciudadParaBuscarEmpresa(undefined) === undefined,
+      "las pantallas de ofertas pasan la ciudad": ["components/JobCard.tsx", "components/ChatSendPanel.tsx", "components/GusiChat.tsx", "app/app/ofertas/[id]/OfertaDetalleClient.tsx"].every((f) => leerFuente(f).includes("ciudadParaBuscarEmpresa(")),
+      "la espera entre correos no cuenta como registro cortado": reg.indexOf("segundos") > 0 && reg.indexOf("segundos") < reg.indexOf('fetch("/api/auth/registro-cortado"'),
+      "el registro para una vez si el correo parece mal escrito": /sugerido && correoAvisado !== /.test(reg) && m.sugerenciaCorreo("ma@gmails.com") === "ma@gmail.com",
+      "el barrido repite al final los países que no trajeron nada": sh.includes("REPETIR") && sh.includes("barrer_pais"),
+      "el centinela avisa si España se queda sin barrido": cent.includes("el barrido de Adzuna trae ofertas de España") && cent.includes("ADZUNA_ES"),
+    };
+    const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
+    if (fallos.length) console.log("    fallan:", fallos.join(" | "));
+    return fallos.length === 0;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* ya no está */ } }
+  }
+});
+
 // ── EL SIMULADOR DE ENTREVISTAS POR VOZ EN IPHONE (31 oct 2026) ───────────
 //
 // El plugin de voz necesita las dos claves. Sin la de reconocimiento, Apple rechazó

@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
+import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
 
 interface SendTarget {
   empresa: string;
   titulo: string;
   url: string;
+  ubicacion?: string;
   email?: string;
   emailConfianza?: string;
 }
@@ -71,7 +73,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
           const exRes = await fetch("/api/company/extract", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: target.empresa }),
+            body: JSON.stringify({ name: target.empresa, city: ciudadParaBuscarEmpresa(target.ubicacion) }),
           });
           if (exRes.ok) {
             const exData = await exRes.json();

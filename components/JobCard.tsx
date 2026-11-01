@@ -11,6 +11,7 @@ import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { servicioOficial } from "@/lib/job-search/fuente-oficial";
+import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
 
 export interface PropiedadesJobCard {
   id: string;
@@ -132,7 +133,7 @@ export default function JobCard({
           const r = await fetch("/api/company/extract", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: empresa }),
+            body: JSON.stringify({ name: empresa, city: ciudadParaBuscarEmpresa(ubicacion) }),
             signal: AbortSignal.timeout(6000),
           });
           const d = await r.json() as { empresas?: Array<{ emailRrhh?: string; emailConfianza?: string }>; emailRrhh?: string };

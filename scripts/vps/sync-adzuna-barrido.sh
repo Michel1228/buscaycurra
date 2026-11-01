@@ -42,12 +42,11 @@ if [ -z "$SECRET" ]; then
   exit 1
 fi
 
-echo "=== BARRIDO ADZUNA $(date -u '+%F %H:%M') UTC ==="
-TOTAL=0
-for entrada in $PLAN; do
+# Barre un pais. Deja en TRAIDAS lo que ha traido, para saber si hay que repetirlo.
+barrer_pais() {
+  local entrada=$1 pais tope desde=1 nuevas=0 traidas=0 motivo=""
   pais=${entrada%%:*}
   tope=${entrada##*:}
-  desde=1; nuevas=0; traidas=0; motivo=""
 
   # De 60 en 60 paginas (el tope por llamada) hasta agotar lo del dia o llegar
   # al limite del pais. "agotado" llega a true cuando una pagina vuelve vacia,
@@ -58,10 +57,7 @@ for entrada in $PLAN; do
     resta=$((tope - desde + 1))
     if [ "$resta" -lt "$lote" ]; then lote=$resta; fi
 
-    r=$(curl -s --max-time 290 -X POST "$BASE" \
-          -H "Content-Type: application/json" \
-          -H "x-sync-secret: $SECRET" \
-          -d "{\"country\":\"$pais\",\"paginas\":$lote,\"dias\":1,\"desde\":$desde}")
+    r=$(curl -s --max-time 290 -X POST "$BASE"           -H "Content-Type: application/json"           -H "x-sync-secret: $SECRET"           -d "{\"country\":\"$pais\",\"paginas\":$lote,\"dias\":1,\"desde\":$desde}")
 
     n=$(echo "$r" | grep -oE '"insertadas":[0-9]+' | cut -d: -f2)
     t=$(echo "$r" | grep -oE '"traidas":[0-9]+' | cut -d: -f2)
@@ -94,5 +90,31 @@ for entrada in $PLAN; do
     echo "  AVISO $pais: el barrido no trajo NINGUNA oferta. Motivo: ${motivo:-Adzuna no dio ninguno}"
   fi
   TOTAL=$((TOTAL + nuevas))
+  TRAIDAS=$traidas
+}
+
+echo "=== BARRIDO ADZUNA $(date -u '+%F %H:%M') UTC ==="
+TOTAL=0
+REPETIR=""
+for entrada in $PLAN; do
+  barrer_pais "$entrada"
+  if [ "$TRAIDAS" -eq 0 ]; then REPETIR="$REPETIR $entrada"; fi
+done
+
+# Espana va la primera y es la que mas fallaba: 5 de 13 noches, casi siempre un 503
+# de Adzuna al empezar que a los pocos minutos ya no estaba. El reintento de la API
+# solo espera segundos, y un pais perdido no se recuperaba hasta la noche siguiente.
+# Asi que lo que no trajo nada se repite al final: dos vueltas mas, a los 5 y a los
+# 15 minutos. ESPERAS se puede cambiar para probar.
+for espera in ${ESPERAS:-300 900}; do
+  if [ -z "$REPETIR" ]; then break; fi
+  echo "  Se repite en $espera s:$REPETIR"
+  sleep "$espera"
+  PENDIENTES=$REPETIR
+  REPETIR=""
+  for entrada in $PENDIENTES; do
+    barrer_pais "$entrada"
+    if [ "$TRAIDAS" -eq 0 ]; then REPETIR="$REPETIR $entrada"; fi
+  done
 done
 echo "=== TOTAL=$TOTAL  $(date -u '+%H:%M:%S') ==="

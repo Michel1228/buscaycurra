@@ -18,6 +18,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { promises as dns } from "node:dns";
 import { esCorreoDeServicioOficial } from "@/lib/job-search/fuente-oficial";
+import { esDireccionGenerica } from "@/lib/cv-sender/direccion-generica";
+import { frenoDeRebotesActivo } from "@/lib/cv-sender/freno-rebotes";
 
 // Dominios reservados para ejemplos o que aparecen como plantilla en webs.
 const DOMINIOS_DE_RELLENO = new Set([
@@ -58,6 +60,21 @@ export async function direccionQueYaRebota(email: string): Promise<boolean> {
   if (error || !data) return false;
   if (data.length >= 2) return true;
   return data.some((r) => /hard bounce|spam/i.test(r.motivo_rebote || ""));
+}
+
+/** ¿Consta que un CV ya llegó a esta dirección? Entonces existe, aunque sea genérica. */
+async function direccionQueYaLlego(email: string): Promise<boolean> {
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const { data } = await sb
+    .from("cv_sends")
+    .select("id")
+    .ilike("company_email", email.trim().replace(/[%_\\]/g, (c) => "\\" + c))
+    .in("status", ["entregado", "visto"])
+    .limit(1);
+  return !!data?.length;
 }
 
 /** Motivo para no enviar, o null si se puede enviar. */
@@ -106,6 +123,10 @@ export async function motivoParaNoEnviar(email: string): Promise<string | null> 
   }
   if (await direccionQueYaRebota(email)) {
     return `El correo «${email}» ya rebotó antes: esa dirección no recibe mensajes. Busca otro en la web de la empresa o en la oferta.`;
+  }
+  // Rebotes cerca del límite de Resend: se para lo que más rebota (lib/cv-sender/freno-rebotes.ts).
+  if (esDireccionGenerica(email) && await frenoDeRebotesActivo() && !(await direccionQueYaLlego(email))) {
+    return `No sabemos si «${email}» existe y ahora mismo no enviamos a correos sin confirmar, para que tu CV no se pierda. Busca el correo en la web de la empresa o en la oferta, o vuelve a intentarlo en unos días. No te ha gastado ningún envío.`;
   }
   return null;
 }
