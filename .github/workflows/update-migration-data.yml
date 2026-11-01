@@ -12,12 +12,18 @@ jobs:
   sync-wages:
     name: "Sincronizar salarios mínimos (Eurostat)"
     runs-on: ubuntu-latest
+    # Sin esto el robot no puede subir el resultado: fallaba cada mes con un 403.
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Produccion sale de esta rama, no de main. Los calendarios solo se lanzan
+          # desde main, asi que este fichero tiene que estar igual en las dos.
+          ref: unified-production
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
