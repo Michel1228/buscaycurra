@@ -133,7 +133,7 @@ export default function JobCard({
           const r = await fetch("/api/company/extract", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: empresa, city: ciudadParaBuscarEmpresa(ubicacion) }),
+            body: JSON.stringify({ name: empresa, city: ciudadParaBuscarEmpresa(ubicacion), deOferta: true }),
             signal: AbortSignal.timeout(6000),
           });
           const d = await r.json() as { empresas?: Array<{ emailRrhh?: string; emailConfianza?: string }>; emailRrhh?: string };

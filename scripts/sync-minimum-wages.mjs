@@ -22,10 +22,11 @@ const OUTPUT = join(ROOT, "public", "data", "salarios-minimos.json");
 
 // ─── Eurostat API ─────────────────────────────────────────────────────────────
 // Dataset earn_mw_cur: salarios mínimos mensuales estatutarios
-// unit=EUR: convertidos a euros / na_item=MRW_MNC: salario bruto mensual
+// currency=EUR: convertidos a euros. Antes se pedia unit= y na_item=, que el
+// dataset ya no admite: daba un 400 (comprobado el 1 nov 2026).
 const EUROSTAT_URL =
   "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/earn_mw_cur" +
-  "?format=JSON&lang=EN&unit=EUR&na_item=MRW_MNC";
+  "?format=JSON&lang=EN&currency=EUR";
 
 // ─── Fuentes alternativas para países sin dato en Eurostat ───────────────────
 // (países sin salario mínimo legal o fuera de la UE)
@@ -106,8 +107,8 @@ function parseEurostat(json) {
     const gIdx = geoIndex[eurostatCode];
     if (gIdx === undefined) continue;
 
-    // El índice en el array plano (asumiendo orden: unit × na_item × geo × time)
-    // Dado que filtramos unit=EUR y na_item=MRW_MNC, el índice es: gIdx * nTime + tIdx
+    // El índice en el array plano (orden: freq × currency × geo × time). Con una
+    // sola frecuencia y una moneda, el índice es: gIdx * nTime + tIdx
     const valueIdx = gIdx * nTime + tIdx;
     const wage = value[valueIdx];
 
@@ -135,18 +136,11 @@ async function main() {
     } catch {}
   }
 
-  let datosEurostat = {};
-  try {
-    const json = await fetchEurostat();
-    datosEurostat = parseEurostat(json);
-    console.log(`  ✅ ${Object.keys(datosEurostat).length} países obtenidos de Eurostat`);
-  } catch (err) {
-    console.warn(`  ⚠️  Error Eurostat: ${err.message}. Usando datos anteriores como base.`);
-    // Mantener datos previos del Eurostat si los había
-    for (const [k, v] of Object.entries(datosPrevios)) {
-      if (v.fuente === "Eurostat earn_mw_cur") datosEurostat[k] = v;
-    }
-  }
+  // Si Eurostat falla se para sin escribir nada: el fichero se queda como está y la
+  // tarea sale en rojo. El 1 nov 2026, el "usar datos anteriores" que había aquí
+  // miraba en el sitio equivocado y dejó el fichero sin España ni otros 8 países.
+  const datosEurostat = parseEurostat(await fetchEurostat());
+  console.log(`  ✅ ${Object.keys(datosEurostat).length} países obtenidos de Eurostat`);
 
   // Combinar datos Eurostat + fuentes alternativas
   const resultado = {
@@ -167,6 +161,14 @@ async function main() {
         ...datos,
         fuente: "Fuente oficial nacional",
       };
+    }
+  }
+
+  // Un país que este mes no venga se queda con su último dato: nunca se pierde.
+  for (const [codigo, datos] of Object.entries(datosPrevios.paises || {})) {
+    if (!resultado.paises[codigo]) {
+      console.log(`  ⚠️  ${codigo}: sin dato nuevo, se mantiene el anterior`);
+      resultado.paises[codigo] = datos;
     }
   }
 

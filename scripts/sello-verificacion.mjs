@@ -2596,7 +2596,7 @@ test("con los rebotes altos se frena lo deducido, y la empresa se busca en la ci
   const { unlinkSync, writeFileSync } = await import("node:fs");
   const entrada = ".sello-freno-entrada.ts", salida = ".sello-freno.cjs";
   try {
-    writeFileSync(entrada, 'export { esDireccionGenerica, UMBRAL_FRENO_REBOTES } from "./lib/cv-sender/direccion-generica";\nexport { ciudadParaBuscarEmpresa } from "./lib/job-search/ciudad-oferta";\nexport { rebotesDeLaSemana } from "./lib/centinela/limites-correo";\nexport { sugerenciaCorreo } from "./lib/auth/sugerencia-correo";\n');
+    writeFileSync(entrada, 'export { esDireccionGenerica, UMBRAL_FRENO_REBOTES } from "./lib/cv-sender/direccion-generica";\nexport { ciudadParaBuscarEmpresa, esLaMismaEmpresa } from "./lib/job-search/ciudad-oferta";\nexport { rebotesDeLaSemana } from "./lib/centinela/limites-correo";\nexport { sugerenciaCorreo } from "./lib/auth/sugerencia-correo";\n');
     execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
     const m = await import(`../${salida}`);
     const ahora = new Date().toISOString();
@@ -2617,7 +2617,13 @@ test("con los rebotes altos se frena lo deducido, y la empresa se busca en la ci
       "el freno solo mira lo genérico y respeta lo que ya llegó": /esDireccionGenerica\(email\)[\s\S]*frenoDeRebotesActivo\(\)[\s\S]*direccionQueYaLlego\(email\)/.test(motivo),
       "ciudad limpia para buscar": m.ciudadParaBuscarEmpresa("Madrid, Comunidad de Madrid") === "Madrid" && m.ciudadParaBuscarEmpresa("Vitoria-Gasteiz (Álava)") === "Vitoria-Gasteiz",
       "sin ciudad si no es un sitio": m.ciudadParaBuscarEmpresa("España") === undefined && m.ciudadParaBuscarEmpresa("Remoto") === undefined && m.ciudadParaBuscarEmpresa("") === undefined && m.ciudadParaBuscarEmpresa(undefined) === undefined,
-      "las pantallas de ofertas pasan la ciudad": ["components/JobCard.tsx", "components/ChatSendPanel.tsx", "components/GusiChat.tsx", "app/app/ofertas/[id]/OfertaDetalleClient.tsx"].every((f) => leerFuente(f).includes("ciudadParaBuscarEmpresa(")),
+      "las pantallas de ofertas pasan la ciudad": ["components/JobCard.tsx", "components/ChatSendPanel.tsx", "components/GusiChat.tsx", "app/app/ofertas/[id]/OfertaDetalleClient.tsx"].every((f) => leerFuente(f).includes("ciudadParaBuscarEmpresa(") && leerFuente(f).includes("deOferta: true")),
+      // Casos reales del 1 nov 2026, probados contra Google en producción.
+      "lo parecido no vale": !m.esLaMismaEmpresa("Clober", "The Clover House", "thecloverhouse.es") && !m.esLaMismaEmpresa("Fastrack", "Fast Track T4 - Aeropuerto de Adolfo Suárez Madrid-Barajas (MAD)", "aena.es"),
+      "la misma empresa sí": m.esLaMismaEmpresa("Adecco", "Adecco Staffing", "adecco.com") && m.esLaMismaEmpresa("Universidad de Deusto.", "Universidad de Deusto", "deusto.es")
+        && m.esLaMismaEmpresa("HOFFMAN", "Hoffmann Group", "hoffmann-group.com") && m.esLaMismaEmpresa("Catalonia Hotels & Resorts", "Catalonia Gran Hotel", "cataloniahotels.com") && m.esLaMismaEmpresa("Café Bar Gaucho S.L.", "Cafe Bar Gaucho", null),
+      "la ruta filtra y sin ciudad no busca": /deOferta && name && !city/.test(leerFuente("app/api/company/extract/route.ts")) && leerFuente("app/api/company/extract/route.ts").includes("empresas: soloLaMisma(empresas)"),
+      "salarios: si Eurostat falla no se escribe nada y ningún país se pierde": !leerFuente("scripts/sync-minimum-wages.mjs").includes("Usando datos anteriores") && leerFuente("scripts/sync-minimum-wages.mjs").includes("datosPrevios.paises || {}") && leerFuente("scripts/sync-minimum-wages.mjs").includes("currency=EUR"),
       "la espera entre correos no cuenta como registro cortado": reg.indexOf("segundos") > 0 && reg.indexOf("segundos") < reg.indexOf('fetch("/api/auth/registro-cortado"'),
       "el registro para una vez si el correo parece mal escrito": /sugerido && correoAvisado !== /.test(reg) && m.sugerenciaCorreo("ma@gmails.com") === "ma@gmail.com",
       "el barrido repite al final los países que no trajeron nada": sh.includes("REPETIR") && sh.includes("barrer_pais"),

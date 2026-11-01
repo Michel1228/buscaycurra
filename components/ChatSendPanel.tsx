@@ -73,7 +73,7 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
           const exRes = await fetch("/api/company/extract", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: target.empresa, city: ciudadParaBuscarEmpresa(target.ubicacion) }),
+            body: JSON.stringify({ name: target.empresa, city: ciudadParaBuscarEmpresa(target.ubicacion), deOferta: true }),
           });
           if (exRes.ok) {
             const exData = await exRes.json();

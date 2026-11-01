@@ -624,7 +624,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
         const exRes = await fetch("/api/company/extract", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: job.empresa, city: ciudadParaBuscarEmpresa(job.ubicacion) }),
+          body: JSON.stringify({ name: job.empresa, city: ciudadParaBuscarEmpresa(job.ubicacion), deOferta: true }),
         });
         if (exRes.ok) {
           const exData = await exRes.json();

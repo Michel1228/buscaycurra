@@ -20,6 +20,7 @@ import { construirEmpresaDesdeGoogle, enriquecerEmpresas, type EmpresaCompleta }
 import { buscarEnCachePorNombre, guardarEnCache } from "@/lib/empresas-cache";
 import { getUserId } from "@/lib/auth-server";
 import { secretIguales } from "@/lib/secret-compare";
+import { esLaMismaEmpresa } from "@/lib/job-search/ciudad-oferta";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const body = await request.json() as { name?: string; url?: string; city?: string; address?: string };
+    const body = await request.json() as { name?: string; url?: string; city?: string; address?: string; deOferta?: boolean };
     const name = body.name?.trim();
     const city = body.city?.trim();
+    // Buscar la empresa de una oferta para mandarle un CV no admite parecidos: sin
+    // ciudad, Google contesta con cualquiera del mundo que se llame igual, y con
+    // ella, con lo más parecido que haya allí (lib/job-search/ciudad-oferta.ts).
+    const deOferta = !!body.deOferta;
+    const soloLaMisma = (lista: EmpresaCompleta[]) =>
+      deOferta ? lista.filter((e) => esLaMismaEmpresa(name || "", e.nombre, e.dominio)) : lista;
+    if (deOferta && name && !city) {
+      return NextResponse.json({ success: true, empresas: [] });
+    }
     // Calle opcional: desambigua entre locales de la misma cadena en una ciudad.
     const address = body.address?.trim();
 
@@ -51,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Con dirección NO se usa caché: está indexada por nombre+ciudad, así que
     // devolvería otro local de la misma cadena en vez del de esa calle.
     if (!address) {
-      const enCache = await buscarEnCachePorNombre(name, city);
+      const enCache = soloLaMisma(await buscarEnCachePorNombre(name, city));
       if (enCache.length) {
         console.log(`💾 ${enCache.length} empresas servidas desde caché: "${name}"`);
         return NextResponse.json({ success: true, empresas: enCache, desdeCache: true });
@@ -103,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ ${empresas.length} empresas encontradas: ${empresas.map(e => e.nombre).join(", ")}`);
 
-    return NextResponse.json({ success: true, empresas });
+    return NextResponse.json({ success: true, empresas: soloLaMisma(empresas) });
   } catch (error) {
     console.error("[company/extract] Error:", (error as Error).message);
     return NextResponse.json(
