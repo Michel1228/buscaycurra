@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { encajeConPuestos } from "@/lib/guzzi/consejo-encaje";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { esOfertaAuPair } from "@/lib/au-pair";
 import AlojamientoOferta from "@/components/AlojamientoOferta";
@@ -78,6 +80,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [cvListo, setCvListo] = useState(false);
+  const [cvDatos, setCvDatos] = useState<unknown>(null);
   const [perfilAuPair, setPerfilAuPair] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
@@ -112,8 +115,16 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
       const res = await fetch(`/api/gusi/cv?userId=${user.id}`);
       const json = await res.json() as { cv_exists?: boolean; cv?: unknown };
       setCvListo(json.cv_exists === true || !!json.cv);
+      setCvDatos(json.cv ?? null);
     } catch (err) { console.error('[OfertaDetalle] Error verificar CV:', err) }
   }
+
+  // Cómo encaja con su CV, sin IA: si ya ha trabajado de esto y qué curso piden
+  // para el puesto que su CV no nombra (lib/guzzi/consejo-encaje.ts).
+  const encaje = useMemo(
+    () => (cvDatos && !oficial && !esAuPair ? encajeConPuestos(cvDatos, [oferta.titulo], (oferta.country || "es").toUpperCase()) : null),
+    [cvDatos, oficial, esAuPair, oferta.titulo, oferta.country]
+  );
 
   async function checkAuPairProfile() {
     try {
@@ -436,6 +447,27 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
             )}
           </button>
         </div>
+
+        {encaje && (
+          <div className="rounded-lg px-4 py-3 mb-5 text-sm space-y-2" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", color: "#94a3b8" }}>
+            <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#22c55e" }}>Cómo encajas, según tu CV</p>
+            {encaje.encaja[0] ? (
+              <p>
+                <strong style={{ color: "#f1f5f9" }}>Encajas:</strong> has trabajado de {encaje.encaja[0].suyo.toLowerCase()}
+                {encaje.encaja[0].empresa ? ` en ${encaje.encaja[0].empresa}` : ""}. Destácalo en tu CV y nómbralo en la carta.
+              </p>
+            ) : (
+              <p>En tu CV no aparece este puesto. Si lo has hecho alguna vez, aunque fuera poco tiempo, añádelo antes de mandarlo.</p>
+            )}
+            {encaje.curso && (
+              <p>
+                <strong style={{ color: "#f1f5f9" }}>Te daría ventaja:</strong> {encaje.curso.nombre}. Lo piden para este puesto
+                {encaje.curso.obligatorio ? " (es un curso obligatorio por ley)" : ""} y tu CV no lo nombra.{" "}
+                <Link href={`/cursos/${encaje.curso.slug}`} className="underline font-medium" style={{ color: "#22c55e" }}>Dónde sacarlo</Link>
+              </p>
+            )}
+          </div>
+        )}
 
         {oferta.descripcion && (
           <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>

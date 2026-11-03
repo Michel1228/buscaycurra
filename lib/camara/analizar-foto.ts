@@ -109,7 +109,7 @@ export function limpio(v: unknown): string | null {
   return t;
 }
 
-const lista = (v: unknown, max: number): string[] =>
+export const lista = (v: unknown, max: number): string[] =>
   Array.isArray(v) ? v.map(limpio).filter((x): x is string => !!x).slice(0, max) : [];
 
 /** GPT-4o lee la foto. null si no contesta. */

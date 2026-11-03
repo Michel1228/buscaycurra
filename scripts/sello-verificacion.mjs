@@ -2728,6 +2728,44 @@ test("un correo deducido de otra empresa u otro país no se ofrece, y el extract
   }
 });
 
+// ── ENCAJAS AQUÍ / TE DARÍA VENTAJA (3 nov 2026, idea de Michel) ──────────
+//
+// La foto decía qué negocio era y la oferta qué pedía, pero ninguna decía qué
+// tenía que ver con el CV de quien miraba. Sin IA: puestos de aquí contra los
+// suyos, y el curso que piden para ellos y su CV no nombra.
+test("Guzzi dice si encajas y qué te daría ventaja, en la foto y en la oferta, sin inventar", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-encaje.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/guzzi/consejo-encaje.ts", "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const { encajeConPuestos, textoEncaje } = await import(`../${salida}?${Date.now()}`);
+    const camarera = { subtitulo: "Camarera", experiencia: [{ puesto: "Camarera de sala", empresa: "Bar La Parada" }, { puesto: "Reponedora", empresa: "Eroski" }] };
+    const conCarne = { ...camarera, formacion: [{ titulo: "Manipulador de alimentos" }] };
+    const informatico = { subtitulo: "Desarrollador web", experiencia: [{ puesto: "Programador", empresa: "Acme" }] };
+    const super_ = ["reponedor", "cajero", "carnicero"];
+    const a = encajeConPuestos(camarera, super_);
+    const b = encajeConPuestos(conCarne, ["camarero", "cocinero"]);
+    const c = encajeConPuestos(informatico, ["reponedor", "cajero"]);
+    const ruta = leerFuente("app/api/gusi/analyze-image/route.ts");
+    const checks = {
+      "encaja por lo que ha trabajado, con dónde": a.encaja[0]?.suyo === "Reponedora" && a.encaja[0]?.empresa === "Eroski" && /has trabajado de reponedora en Eroski/.test(textoEncaje(a, super_, true)),
+      "el curso que piden y su CV no nombra": a.curso?.slug === "manipulador-alimentos" && textoEncaje(a, super_, true).includes("[Dónde sacarlo](/cursos/manipulador-alimentos)"),
+      "no se le recomienda lo que ya tiene": b.encaja.length === 1 && b.curso === null,
+      "sin nada en común no se le inventa experiencia": c.encaja.length === 0 && /en tu CV no aparece/.test(textoEncaje(c, ["reponedor", "cajero"], true)) && !/Encajas/.test(textoEncaje(c, ["reponedor", "cajero"], true)),
+      "sin CV, que lo suba": /Si subes tu CV/.test(textoEncaje(null, ["camarero"], false)) && encajeConPuestos(null, ["camarero"]) === null,
+      "sin puestos, nada": textoEncaje(encajeConPuestos(camarera, []), [], true) === "",
+      "la foto lo añade sin esperar más: el CV se pide mientras se lee": ruta.indexOf("const cvEnCamino") > 0 && ruta.indexOf("const cvEnCamino") < ruta.indexOf("await leerFoto(") && ruta.includes("ACCIONES_CON_CONSEJO.has("),
+      "la ficha de la oferta lo enseña": leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx").includes("encajeConPuestos(cvDatos, [oferta.titulo]"),
+    };
+    const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
+    if (fallos.length) console.log("    fallan:", fallos.join(" | "));
+    return fallos.length === 0;
+  } finally {
+    try { unlinkSync(salida); } catch { /* ya no está */ }
+  }
+});
+
 // ── EL SIMULADOR DE ENTREVISTAS POR VOZ EN IPHONE (31 oct 2026) ───────────
 //
 // El plugin de voz necesita las dos claves. Sin la de reconocimiento, Apple rechazó

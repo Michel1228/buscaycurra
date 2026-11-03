@@ -26,9 +26,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { createClient } from "@supabase/supabase-js";
 import { planEfectivoDeUsuario } from "@/lib/plan-limits";
-import { leerFoto, responderFoto } from "@/lib/camara/analizar-foto";
+import { leerFoto, responderFoto, lista } from "@/lib/camara/analizar-foto";
+import { encajeConPuestos, textoEncaje } from "@/lib/guzzi/consejo-encaje";
 
 export const dynamic = "force-dynamic";
+
+// Las respuestas que hablan de un negocio o de un sector: ahí tiene sentido
+// decir si encaja. No en una foto borrosa ni en una que no dice nada.
+const ACCIONES_CON_CONSEJO = new Set(["company_info", "business_not_found", "job_sign_detected", "object_brand_found", "object_to_sector"]);
 
 export async function POST(req: NextRequest) {
   // 🔒 Verificar autenticación (NO confiar en userId del body)
@@ -185,6 +190,15 @@ export async function POST(req: NextRequest) {
       return ciudad;
     })();
 
+    // Su CV, también mientras se lee la foto: para decirle si encaja en lo que
+    // ha fotografiado y qué le daría ventaja (lib/guzzi/consejo-encaje.ts).
+    const cvEnCamino: Promise<unknown> = userId
+      ? getPool().query<{ form_data: unknown }>(
+          "SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1",
+          [userId]
+        ).then((r) => r.rows[0]?.form_data ?? null).catch(() => null)
+      : Promise.resolve(null);
+
     // ─── Qué hay en la foto (GPT-4o Vision) y qué hacer con ello ───────
     // Todo el camino está en lib/camara/analizar-foto.ts.
     const foto = await leerFoto(base64Data, openaiKey);
@@ -195,6 +209,13 @@ export async function POST(req: NextRequest) {
       );
     }
     const respuesta = await responderFoto(foto, { lat, lng, ciudadUsuario: await ciudadEnCamino });
+    // Encajas aquí / te daría ventaja: con los puestos de ese negocio o sector.
+    if (respuesta.reply && userId && ACCIONES_CON_CONSEJO.has(respuesta.action || "")) {
+      const cv = await cvEnCamino;
+      const puestos = lista(foto.puestos, 4);
+      const consejo = textoEncaje(encajeConPuestos(cv, puestos), puestos, !!cv);
+      if (consejo) respuesta.reply += `\n\n${consejo}`;
+    }
     return NextResponse.json(respuesta);
   } catch (error) {
     console.error("analyze-image error:", error);
