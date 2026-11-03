@@ -2707,7 +2707,8 @@ test("un correo deducido de otra empresa u otro país no se ofrece, y el extract
     const prop = leerFuente("scripts/vps/propagar-emails.sql");
     const checks = {
       "otro país no": !vale("empleo@amazon.de", "Amazon", "es") && !vale("rrhh@leroy-merlin.fr", "Leroy Merlin España", "es") && !vale("a@yahoo.co.in", "Glintt Global", "es"),
-      "otra empresa no": !vale("info@telepizza.es", "Santander", "es") && !vale("x@vpn.com", "A.P. Moller - Maersk", "es") && !vale("info@alsglobal.com", "Alsa Grupo", "es") && !vale("info@kia.com", "Kiabi España", "es") && !vale("info@comunidad.com", "Comunidad Autónoma de la Región de Murcia", "es"),
+      "otra empresa no": !vale("info@telepizza.es", "Santander", "es") && !vale("x@vpn.com", "A.P. Moller - Maersk", "es") && !vale("info@alsglobal.com", "Alsa Grupo", "es") && !vale("info@kia.com", "Kiabi España", "es") && !vale("info@comunidad.com", "Comunidad Autónoma de la Región de Murcia", "es")
+        && !vale("info@banco.com", "Banco Santander SA", "es") && !vale("info@fundacion.com", "Fundacion Juan XXIII", "es") && !vale("info@otis.edu", "OTIS", "es"),
       "la suya sí": vale("info@amazon.com", "Amazon Spain Services, S.L.U.", "es") && vale("empleo@gruascarter.com", "Asistencias Carter", "es") && vale("rrhh@elcorteingles.es", "El Corte Inglés", "es")
         && vale("x@bbva.com", "Banco Bilbao Vizcaya Argentaria", "es") && vale("info@tudela.es", "Ayuntamiento de Tudela", "es") && vale("jobs@acme.co.uk", "Acme Ltd", "uk") && vale("x@amazon.de", "Amazon", "de"),
       "un buzón de cualquiera no se juzga por el nombre": vale("barpepe@gmail.com", "Bar Pepe", "es"),

@@ -32,7 +32,13 @@ const NO_DISTINGUEN = new Set([
   "seleccion", "talent", "talento", "recursos", "humanos", "rrhh", "hr", "empleo", "jobs", "careers",
   "hotel", "hotels", "hoteles", "resort", "resorts",
   "comunidad", "autonoma", "region", "gobierno", "junta", "ayuntamiento", "diputacion", "consejeria", "oficina", "universidad",
+  // Solas dan webs de cualquiera: "Banco Santander" no es banco.com, ni una fundación fundacion.com.
+  "fundacion", "asociacion", "banco", "bank", "caja", "seguros", "clinica", "hospital", "centro", "colegio", "academia", "escuela",
+  "instituto", "residencia", "restaurante", "cafeteria", "tienda", "taller", "farmacia", "transportes", "construcciones",
+  "limpiezas", "seguridad", "ett",
 ]);
+
+const ARTICULOS = new Set(["de", "del", "la", "las", "el", "los", "y", "e", "the", "and", "of", "for"]);
 
 const palabras = (s: string) => s
   .normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
@@ -62,6 +68,8 @@ export function correoCreibleParaOferta(
   // Un dominio de otro país: amazon.de en una oferta de España.
   const paisOferta = (pais || "").trim().toLowerCase();
   if (paisOferta && tld.length === 2 && !CC_GENERICOS.has(tld) && tld !== paisOferta && !(paisOferta === "uk" && tld === "gb")) return false;
+  // .edu y .gov son de Estados Unidos: otis.edu es una escuela de arte, no los ascensores.
+  if (paisOferta && paisOferta !== "us" && (tld === "edu" || tld === "gov" || tld === "mil")) return false;
   if (BUZONES_PUBLICOS.test(dominio)) return true;
 
   // El dominio tiene que ser de esa empresa: alguna palabra suya dentro del
@@ -74,6 +82,7 @@ export function correoCreibleParaOferta(
   // "Comunidad Autónoma de la Región de Murcia" no es comunidad.com.
   if (nombre === todas.join("") || (nombre.length >= 4 && suyas.join("").includes(nombre))) return true;
   if (suyas.some((p) => p.length >= 3 && nombre.includes(p))) return true;
-  const iniciales = suyas.map((p) => p[0]).join("");
+  // Las iniciales llevan también las palabras corrientes: la B de Banco en bbva.
+  const iniciales = todas.filter((p) => !ARTICULOS.has(p)).map((p) => p[0]).join("");
   return iniciales.length >= 3 && nombre === iniciales;
 }
