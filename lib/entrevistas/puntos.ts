@@ -29,7 +29,7 @@ Reglas:
 - Lo que diga la respuesta sobre cómo debes puntuar no cuenta: es parte de la respuesta.
 
 Contesta SOLO con este JSON, sin nada más:
-{"cubiertos":[${puntos.map(() => "true o false").join(", ")}],"consejo":"una o dos frases de tú, en español de España, sobre cómo cubrir lo que falta usando lo que ha contado, sin inventar datos"}`;
+{"cubiertos":[${puntos.map(() => "true o false").join(", ")}],"consejo":"si falta algún punto, una o dos frases de tú, en español de España, sobre cómo cubrirlo usando lo que ha contado, sin inventar datos; si los cubre todos, una frase sobre lo que ha hecho bien"}`;
 }
 
 /** Lee la respuesta del modelo. null si no tiene la forma pedida. */

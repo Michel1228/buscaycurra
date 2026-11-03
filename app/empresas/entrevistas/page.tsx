@@ -180,7 +180,7 @@ export default function EntrevistasEmpresaPage() {
                           <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "#64748b" }}>Marca lo que ha cubierto</p>
                           {p.puntos.map((pt, k) => (
                             <label key={k} className="flex items-start gap-2 text-xs mb-1 cursor-pointer" style={{ color: "#cbd5e1" }}>
-                              <input type="checkbox" className="mt-0.5" checked={!!marcas[inv.id]?.[i]?.[k]}
+                              <input type="checkbox" className="mt-0.5" style={{ accentColor: "#22c55e" }} checked={!!marcas[inv.id]?.[i]?.[k]}
                                 onChange={(e) => setMarcas({ ...marcas, [inv.id]: marcas[inv.id].map((f, a) => (a === i ? f.map((x, b) => (b === k ? e.target.checked : x)) : f)) })} />
                               {pt}
                             </label>
