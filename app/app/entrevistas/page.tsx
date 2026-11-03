@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { LISTA_PAISES } from "@/lib/paises";
 import VoiceRecorder from "@/components/VoiceInterview/VoiceRecorder";
 import InterviewFeedback from "@/components/VoiceInterview/InterviewFeedback";
+import InvitacionesEmpresa from "@/components/VoiceInterview/InvitacionesEmpresa";
 import { Mic, PartyPopper, Volume2, VolumeX, Square } from "lucide-react";
 import {
   PREGUNTAS, SECTORES_ENTREVISTA, FRASES, esSector,
@@ -246,6 +247,9 @@ export default function EntrevistasPage() {
             Ensaya con calma: aquí no hay respuestas perfectas.
           </p>
         </div>
+
+        {/* Las empresas que le han invitado a preparar su entrevista */}
+        {token && <InvitacionesEmpresa token={token} />}
 
         {/* Qué preguntas y para qué país */}
         <div className="grid grid-cols-2 gap-2.5">

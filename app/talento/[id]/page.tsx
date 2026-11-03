@@ -19,6 +19,7 @@ import { Lock, User, MapPin, Wrench, Briefcase, GraduationCap, Globe, Mail, Phon
 import { getPool } from "@/lib/db";
 import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { enlaceCarta, referenciasVerificadas } from "@/lib/referencias/referencias";
+import InvitarEntrevista from "@/components/empresas/InvitarEntrevista";
 
 export const dynamic = "force-dynamic";
 
@@ -152,6 +153,9 @@ export default async function TalentoPage({ params }: Props) {
             )}
           </div>
         )}
+
+        {/* «Me interesa»: invitarle a preparar la entrevista de la empresa */}
+        {!esElMismo && <InvitarEntrevista candidatoId={id} nombre={nombre} />}
 
         {/* Referencias verificadas */}
         {referencias.length > 0 && (

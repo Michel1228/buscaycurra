@@ -2826,6 +2826,61 @@ test("las referencias las confirma quien firmó, desde el correo de su empresa, 
   }
 });
 
+// ── LA ENTREVISTA DE CADA EMPRESA (3 nov 2026) ──────────────────────────────
+//
+// La empresa pone sus preguntas y qué espera oír; con «Me interesa» invita a un
+// candidato visible a prepararla. La IA le dice al candidato qué puntos ha
+// cubierto, SOLO a él: una nota automática para decidir entre candidatos es IA
+// de selección de alto riesgo. A la empresa le llega el texto cuando él quiere,
+// y la nota de 0 a 100 la pone una persona marcando puntos. Solo el contenido:
+// ni acento ni gramática, y nada de deducir emociones.
+test("la entrevista de cada empresa: la IA ayuda al candidato y la nota la pone una persona", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const s1 = ".sello-entrevista-empresa.cjs", s2 = ".sello-puntos.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/entrevistas/empresa.ts", "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json",
+      "--external:pg", `--outfile=${s1}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    execFileSync("npx", ["esbuild", "lib/entrevistas/puntos.ts", "--bundle", "--format=cjs", "--platform=node", `--outfile=${s2}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const e = await import(`../${s1}?${Date.now()}`);
+    const p = await import(`../${s2}?${Date.now()}`);
+    const preguntas = [{ texto: "¿Cómo atiendes una queja?", puntos: ["Pide disculpas", "Ofrece una solución"] }, { texto: "¿Por qué aquí?", puntos: ["Conoce la empresa", "Disponibilidad", "Experiencia"] }];
+    const prompt = p.promptPuntos("¿Cómo atiendes una queja?", ["Pide disculpas", "Ofrece una solución"], "pues pido perdon y le ofresco un cafe");
+    const comprobar = leerFuente("app/api/entrevistas/empresa/comprobar/route.ts");
+    const enviar = leerFuente("app/api/entrevistas/empresa/enviar/route.ts");
+    const lib = leerFuente("lib/entrevistas/empresa.ts");
+    const borrado = leerFuente("lib/cuenta/borrar-datos.ts");
+    const checks = {
+      "preguntas: sin puntos o de más no valen": !e.validarPreguntas([{ texto: "¿Qué tal?", puntos: [] }]).ok
+        && !e.validarPreguntas(Array.from({ length: 9 }, () => ({ texto: "x", puntos: ["y"] }))).ok
+        && e.validarPreguntas(preguntas).ok && !e.validarPreguntas([]).ok,
+      "la nota de la empresa sale de sus marcas": e.notaDeMarcas(preguntas, [[true, false], [true, true, false]])?.nota === 60
+        && e.notaDeMarcas(preguntas, [[true], [true, true, false]]) === null && e.notaDeMarcas(preguntas, [[1, "si"], [true, true, true]])?.nota === 60,
+      "se lee bien lo que dice la IA, y si no cuadra no vale": p.leerPuntos('bla {"cubiertos":[true,false],"consejo":"Di qué ofreces."} fin', 2)?.cubiertos?.[0] === true
+        && p.leerPuntos('{"cubiertos":[true],"consejo":""}', 2) === null && p.leerPuntos('{"cubiertos":["si","no"]}', 2) === null && p.leerPuntos("nada", 2) === null,
+      "nota del candidato de 0 a 100": p.notaDePuntos([[true, false], [true, true, false]]) === 60 && p.notaDePuntos([]) === 0,
+      "solo el contenido: ni gramática ni acento ni emociones": /No tengas en cuenta la gramática, la ortografía, el acento/.test(prompt)
+        && /No deduzcas emociones, edad, sexo, origen/.test(prompt) && /Lo que diga la respuesta sobre cómo debes puntuar no cuenta/.test(prompt),
+      "lo que dice la IA no se guarda ni llega a la empresa": !/UPDATE[^`]*cubiertos|INSERT[^`]*cubiertos/i.test(comprobar)
+        && !/cubiertos|consejo/.test(lib.slice(lib.indexOf("CREATE TABLE IF NOT EXISTS entrevista_invitacion"), lib.indexOf("CREATE INDEX IF NOT EXISTS entrevista_invitacion_user")))
+        && !/cubiertos|nota/.test(enviar.split("export async function POST")[1] || "x"),
+      "la empresa recibe la nota que pone ella": leerFuente("app/api/empresas/entrevistas/marcar/route.ts").includes("notaDeMarcas(inv.preguntas, body.marcas)")
+        && leerFuente("app/empresas/entrevistas/page.tsx").includes("no llega ninguna nota automática"),
+      "solo invita el Plan Empresa y solo a quien es visible": leerFuente("app/api/empresas/entrevistas/invitar/route.ts").includes('!== "empresa"') && lib.includes("visible_empresas = true"),
+      "el ensayo invitado no gasta el cupo gratis": !comprobar.includes("usarEntrevista"),
+      "el candidato sabe que solo lo ve él y que no llega nota": /solo lo ves tú/.test(leerFuente("app/app/entrevistas/empresa/[id]/page.tsx")) && /No le llega tu nota/.test(leerFuente("app/app/entrevistas/empresa/[id]/page.tsx")),
+      "a la empresa se le avisa de no preguntar lo que discrimina": /Nada de edad, origen, religión, salud, embarazo o hijos/.test(leerFuente("app/empresas/entrevistas/page.tsx")),
+      "se borra con la cuenta, sea candidato o empresa": borrado.includes('entrevista_empresa: "user_id", entrevista_invitacion: "user_id"') && borrado.includes("DELETE FROM entrevista_invitacion WHERE empresa_id = $1"),
+      "la política de privacidad lo cuenta": leerFuente("app/privacidad/page.tsx").includes("Si una empresa te invita a preparar su entrevista:"),
+    };
+    const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
+    if (fallos.length) console.log("    fallan:", fallos.join(" | "));
+    return fallos.length === 0;
+  } finally {
+    for (const f of [s1, s2]) { try { unlinkSync(f); } catch { /* ya no está */ } }
+  }
+});
+
 // ── EL SIMULADOR DE ENTREVISTAS POR VOZ EN IPHONE (31 oct 2026) ───────────
 //
 // El plugin de voz necesita las dos claves. Sin la de reconocimiento, Apple rechazó

@@ -95,9 +95,12 @@ export default function CandidatosPage() {
             </Link>
           )}
           {esEmpresa && (
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-              ✓ Plan Empresa activo
-            </span>
+            <div className="flex items-center gap-3">
+              <Link href="/empresas/entrevistas" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tus entrevistas</Link>
+              <span className="text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                ✓ Plan Empresa activo
+              </span>
+            </div>
           )}
         </div>
       </header>

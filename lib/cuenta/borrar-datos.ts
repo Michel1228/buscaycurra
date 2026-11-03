@@ -42,6 +42,10 @@ export const TABLAS_VPS: Record<string, string> = {
   // 3 nov 2026: cartas de recomendación y a quién se pidió que las confirmara
   // (lib/referencias/referencias.ts). La carta va en cvs/<id>/, que se borra abajo.
   referencia_laboral: "user_id", referencia_peticion: "user_id",
+  // 3 nov 2026: las entrevistas de cada empresa y a quién ha invitado
+  // (lib/entrevistas/empresa.ts). En la invitación, user_id es el candidato;
+  // la de la empresa (empresa_id) se borra abajo.
+  entrevista_empresa: "user_id", entrevista_invitacion: "user_id",
 };
 
 /** Supabase: tabla → columna con el id de la persona. "profiles" va aparte, al final. */
@@ -76,6 +80,8 @@ export async function borrarDatosDeUsuario(
     await vps(`vps.${tabla}`, `DELETE FROM "${tabla}" WHERE "${col}"::text = $1`, [userId]);
   }
   await vps("vps.referrals", `DELETE FROM referrals WHERE referrer_id::text = $1 OR referred_id::text = $1`, [userId]);
+  // Si quien se va es una empresa: sus invitaciones, con las respuestas que le mandaron.
+  await vps("vps.entrevista_invitacion.empresa", `DELETE FROM entrevista_invitacion WHERE empresa_id = $1`, [userId]);
   if (email) await vps("vps.correos_rebotados", `DELETE FROM correos_rebotados WHERE email = $1`, [email.toLowerCase()]);
   // La tabla "User" es del sistema de cuentas de antes de Supabase (abril-mayo
   // 2026): correo, nombre, teléfono y contraseña. Ningún código la usa, pero
