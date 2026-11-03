@@ -114,7 +114,7 @@ const lista = (v: unknown, max: number): string[] =>
 
 /** GPT-4o lee la foto. null si no contesta. */
 export async function leerFoto(base64Data: string, openaiKey: string): Promise<LecturaFoto | null> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const pedir = () => fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
     body: JSON.stringify({
@@ -133,8 +133,28 @@ export async function leerFoto(base64Data: string, openaiKey: string): Promise<L
     // La app reduce la foto antes de mandarla; se deja margen para las que no.
     signal: AbortSignal.timeout(25000),
   });
-  if (!res.ok) {
-    console.error("GPT-4o Vision error:", res.status, (await res.text()).slice(0, 300));
+  // Un fallo pasajero de OpenAI (5xx, 429 o la conexión) se reintenta una vez.
+  // El 3 nov 2026 contestó un 520 a la primera foto tras un despliegue y salió
+  // "No se pudo leer la imagen". Lo que tarda de más, 25 s, no se reintenta: con
+  // los 50 s que espera la app no daría tiempo.
+  let res: Response | null = null;
+  for (let intento = 1; intento <= 2; intento++) {
+    try {
+      res = await pedir();
+    } catch (e) {
+      if ((e as Error).name === "TimeoutError" || intento === 2) {
+        console.error("GPT-4o Vision error:", (e as Error).message);
+        return null;
+      }
+      console.warn("[camara] OpenAI sin conexión, se reintenta:", (e as Error).message);
+      continue;
+    }
+    if (res.ok || intento === 2 || !(res.status >= 500 || res.status === 429)) break;
+    console.warn(`[camara] OpenAI respondió ${res.status}, se reintenta`);
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!res || !res.ok) {
+    console.error("GPT-4o Vision error:", res?.status, (await res?.text().catch(() => ""))?.slice(0, 300));
     return null;
   }
   const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };

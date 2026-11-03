@@ -2603,6 +2603,40 @@ test("la foto sube a 1024 px y la ciudad se busca mientras se lee", () => {
     && !meta.includes("themeColor") && layout.slice(layout.indexOf("export const viewport")).includes('themeColor: "#0f1117"');
 });
 
+// El 3 nov 2026, la primera foto tras un despliegue: OpenAI contestó un 520 y la
+// persona leyó "No se pudo leer la imagen". Un fallo pasajero se reintenta una vez.
+test("la lectura de la foto reintenta una vez si OpenAI falla de paso", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-leerfoto.cjs";
+  const fetchReal = globalThis.fetch;
+  try {
+    execFileSync("npx", ["esbuild", "lib/camara/analizar-foto.ts", "--bundle", "--format=cjs", "--platform=node",
+      "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const c = await import(`../${salida}?${Date.now()}`);
+    const bien = () => new Response(JSON.stringify({ choices: [{ message: { content: '{"tipo":"negocio","nombre":"Mercadona"}' } }] }), { status: 200 });
+    const conRespuestas = async (respuestas) => {
+      let n = 0;
+      globalThis.fetch = async () => { const r = respuestas[n++]; if (r instanceof Error) throw r; return typeof r === "function" ? r() : r; };
+      const errores = console.error; console.error = () => {};
+      try { return { foto: await c.leerFoto("AAAA", "clave"), llamadas: n }; } finally { console.error = errores; }
+    };
+    const pasajero = await conRespuestas([new Response("<!DOCTYPE html>", { status: 520 }), bien]);
+    const red = await conRespuestas([new TypeError("fetch failed"), bien]);
+    const clave = await conRespuestas([new Response("bad key", { status: 401 }), bien]);
+    const dosVeces = await conRespuestas([new Response("x", { status: 503 }), new Response("x", { status: 503 }), bien]);
+    const ok = pasajero.foto?.nombre === "Mercadona" && pasajero.llamadas === 2
+      && red.foto?.nombre === "Mercadona"
+      && clave.foto === null && clave.llamadas === 1
+      && dosVeces.foto === null && dosVeces.llamadas === 2;
+    if (!ok) console.log("    ", JSON.stringify({ pasajero, red, clave, dosVeces }).slice(0, 300));
+    return ok;
+  } finally {
+    globalThis.fetch = fetchReal;
+    try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+});
+
 // ── REBOTES Y EMPRESA EQUIVOCADA (1 nov 2026) ─────────────────────────────
 //
 // La semana llegó al 4,0 % de rebotes, el límite de Resend. De 19 CVs a direcciones
