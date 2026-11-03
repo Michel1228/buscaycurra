@@ -15,9 +15,10 @@ import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import Link from "next/link";
-import { Lock, User, MapPin, Wrench, Briefcase, GraduationCap, Globe, Mail, Phone } from "lucide-react";
+import { Lock, User, MapPin, Wrench, Briefcase, GraduationCap, Globe, Mail, Phone, BadgeCheck } from "lucide-react";
 import { getPool } from "@/lib/db";
 import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
+import { enlaceCarta, referenciasVerificadas } from "@/lib/referencias/referencias";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +107,14 @@ export default async function TalentoPage({ params }: Props) {
     .map((f: Record<string, unknown>) => ({ titulo: texto(f.titulo), centro: texto(f.centro), ubicacion: texto(f.ubicacion) }))
     .filter((f) => f.titulo || f.centro);
 
+  // Cartas confirmadas por quien las firmó (lib/referencias). La carta solo se
+  // enlaza si la persona lo permite, con un enlace que caduca en 10 minutos.
+  const referencias = await Promise.all((await referenciasVerificadas(id).catch(() => [])).map(async (r) => {
+    const carta = r.carta_publica && r.carta_ruta ? await enlaceCarta(r.carta_ruta, 600) : null;
+    const fecha = r.respondida_en ? new Date(r.respondida_en).toLocaleDateString("es-ES", { month: "long", year: "numeric", timeZone: "Europe/Madrid" }) : "";
+    return { id: r.id, empresa: r.empresa, firmante: r.firmante, cargo: r.cargo, fecha, carta };
+  }));
+
   const caja = { background: "#161922", border: "1px solid #2d3142" };
 
   return (
@@ -141,6 +150,29 @@ export default async function TalentoPage({ params }: Props) {
                 <Phone size={14} strokeWidth={1.8} />{telefono}
               </a>
             )}
+          </div>
+        )}
+
+        {/* Referencias verificadas */}
+        {referencias.length > 0 && (
+          <div className="p-5 rounded-xl" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)" }}>
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-1" style={{ color: "#22c55e" }}><BadgeCheck size={14} strokeWidth={1.8} />Referencias verificadas</h2>
+            <p className="text-xs mb-3" style={{ color: "#64748b" }}>Quien firmó cada carta ha confirmado que es suya desde el correo de su empresa.</p>
+            <div className="space-y-3">
+              {referencias.map((r) => (
+                <div key={r.id}>
+                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{r.empresa}</p>
+                  <p className="text-xs" style={{ color: "#94a3b8" }}>
+                    Firmada por {r.firmante}, {r.cargo}{r.fecha ? ` · confirmada en ${r.fecha}` : ""}
+                  </p>
+                  {r.carta && (
+                    <a href={r.carta} target="_blank" rel="noopener" className="inline-block text-xs font-semibold mt-1 hover:opacity-80" style={{ color: "#22c55e" }}>
+                      Leer la carta →
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import SelectorIdiomas from "@/components/cv/SelectorIdiomas";
+import TusReferencias from "@/components/cv/TusReferencias";
 import Link from "next/link";
 
 /**
@@ -1173,6 +1174,9 @@ export default function CurriculumPage() {
                 </p>
               )}
             </div>
+
+            {/* Cartas de recomendación confirmadas por quien las firmó */}
+            {token && <TusReferencias token={token} />}
 
             {/* Subir PDF: aquí si el CV ya está avanzado; si no, arriba del todo */}
             {pct >= 50 && bloqueSubirPDF}

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { getUserId } from "@/lib/auth-server";
+import { asegurarTablasReferencias } from "@/lib/referencias/referencias";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +61,8 @@ export async function GET(req: NextRequest) {
 
     params.push(limit, offset);
 
+    // Quien tiene una carta confirmada por quien la firmó sale antes (lib/referencias).
+    await asegurarTablasReferencias();
     const result = await pool.query(
       `SELECT
          uc.user_id,
@@ -72,13 +75,17 @@ export async function GET(req: NextRequest) {
          uc.form_data->>'email'     AS email,
          uc.form_data->>'telefono'  AS telefono,
          uc.updated_at,
+         COALESCE(rv.n, 0) AS referencias,
          COUNT(*) OVER() AS total
        FROM (
          SELECT DISTINCT ON (user_id) * FROM user_cvs
          ORDER BY user_id, updated_at DESC
        ) uc
+       LEFT JOIN (
+         SELECT user_id, count(*)::int AS n FROM referencia_laboral WHERE estado = 'verificada' GROUP BY user_id
+       ) rv ON rv.user_id = uc.user_id::text
        WHERE ${conds.join(" AND ")}
-       ORDER BY uc.updated_at DESC
+       ORDER BY COALESCE(rv.n, 0) > 0 DESC, uc.updated_at DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       params
     );
@@ -108,6 +115,8 @@ export async function GET(req: NextRequest) {
         aptitudes: aptitudesArr,
         email: esEmpresa ? (row.email || null) : null,
         telefono: esEmpresa ? (row.telefono || null) : null,
+        // Cuántas cartas tiene confirmadas: no dice quién es, lo ve cualquiera.
+        referencias: Number(row.referencias) || 0,
         updatedAt: row.updated_at,
       };
     });

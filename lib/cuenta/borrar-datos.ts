@@ -39,6 +39,9 @@ export const TABLAS_VPS: Record<string, string> = {
   carne_usuario: "user_id",
   // 21 oct 2026: lo ganado invitando amigos (lib/referidos/premios.ts).
   premios_usuario: "user_id", premios_gastados: "user_id",
+  // 3 nov 2026: cartas de recomendación y a quién se pidió que las confirmara
+  // (lib/referencias/referencias.ts). La carta va en cvs/<id>/, que se borra abajo.
+  referencia_laboral: "user_id", referencia_peticion: "user_id",
 };
 
 /** Supabase: tabla → columna con el id de la persona. "profiles" va aparte, al final. */

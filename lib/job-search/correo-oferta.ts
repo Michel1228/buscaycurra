@@ -22,6 +22,12 @@ const SEGUNDO_NIVEL = new Set(["co", "com", "org", "net", "ac", "gov", "edu", "o
 // Buzones de cualquiera: no dicen nada de la empresa, ni a favor ni en contra.
 const BUZONES_PUBLICOS = /^(gmail|googlemail|hotmail|outlook|live|msn|yahoo|ymail|icloud|me|mac|gmx|web|aol|protonmail|proton|telefonica|movistar)\./;
 
+/** Un buzón que puede abrir cualquiera (Gmail, Hotmail…): no prueba que sea de una empresa. */
+export function esBuzonPublico(email: string | null | undefined): boolean {
+  const dominio = (email || "").trim().toLowerCase().split("@")[1] || "";
+  return BUZONES_PUBLICOS.test(dominio);
+}
+
 // Lo que no distingue a una empresa de otra.
 const NO_DISTINGUEN = new Set([
   "de", "del", "la", "las", "el", "los", "y", "e", "the", "and", "of", "for",

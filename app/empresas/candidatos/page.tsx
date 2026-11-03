@@ -12,6 +12,8 @@ interface Candidato {
   aptitudes: string[];
   email: string | null;
   telefono: string | null;
+  /** Cartas de recomendación confirmadas por quien las firmó. */
+  referencias: number;
   updatedAt: string;
 }
 
@@ -209,6 +211,14 @@ export default function CandidatosPage() {
                     <p className="text-[11px]" style={{ color: "#64748b" }}>{c.ciudad}</p>
                   </div>
                 </div>
+
+                {c.referencias > 0 && (
+                  <p className="text-[10px] font-semibold self-start px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }}
+                    title="Quien firmó la carta lo ha confirmado desde el correo de su empresa">
+                    ✓ {c.referencias > 1 ? `${c.referencias} referencias verificadas` : "Referencia verificada"}
+                  </p>
+                )}
 
                 {/* Puesto */}
                 {c.puesto && (

@@ -2767,6 +2767,65 @@ test("Guzzi dice si encajas y qué te daría ventaja, en la foto y en la oferta,
   }
 });
 
+// ── REFERENCIAS QUE CONFIRMA QUIEN LAS FIRMÓ (3 nov 2026) ──────────────────
+//
+// Las empresas ven qué candidatos tienen una carta de recomendación confirmada
+// por quien la firmó. Solo vale el correo de esa empresa (un Gmail lo abre
+// cualquiera), abrir el enlace no contesta (los antivirus del correo lo abren
+// solos), el premio tiene tope aunque se quiten cartas, y todo se borra con la
+// cuenta. Nada de faltas ni notas de empresas: eso no se guarda en ningún sitio.
+test("las referencias las confirma quien firmó, desde el correo de su empresa, con tope y borrado", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-referencias.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/referencias/referencias.ts", "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json",
+      "--external:pg", "--external:@supabase/supabase-js", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const antes = process.env.ALERTS_SECRET;
+    process.env.ALERTS_SECRET = "secreto-de-prueba";
+    const m = await import(`../${salida}?${Date.now()}`);
+    const enlace = m.enlaceReferencia("abc123") || "";
+    const t = new URL(enlace).searchParams.get("t") || "";
+    const firmaBien = m.firmaReferenciaValida("abc123", t) && !m.firmaReferenciaValida("otra", t)
+      && !m.firmaReferenciaValida("abc123", t.slice(0, -1) + (t.endsWith("A") ? "B" : "A")) && !m.firmaReferenciaValida("abc123", "");
+    if (antes === undefined) delete process.env.ALERTS_SECRET; else process.env.ALERTS_SECRET = antes;
+    const confirmar = leerFuente("app/api/referencias/confirmar/route.ts");
+    const [soloGet] = confirmar.split("export async function POST");
+    const lib = leerFuente("lib/referencias/referencias.ts");
+    const borrado = leerFuente("lib/cuenta/borrar-datos.ts");
+    const correo = leerFuente("lib/email/smtp-sender.ts");
+    const correoFirmante = correo.slice(correo.indexOf("export async function sendReferenciaConfirmarEmail"), correo.indexOf("// ─── Email para cambiar la contraseña"));
+    const checks = {
+      "vale el correo de la empresa": m.correoDeEmpresaValido("rrhh@barlaplaza.es", "Bar La Plaza") && m.correoDeEmpresaValido("ana.lopez@grupohotusa.com", "Grupo Hotusa"),
+      "no vale un Gmail ni un Hotmail": !m.correoDeEmpresaValido("ana@gmail.com", "Bar La Plaza") && !m.correoDeEmpresaValido("ana@hotmail.es", "Hotel Ribera"),
+      "no vale el de otra empresa": !m.correoDeEmpresaValido("ana@telepizza.es", "Santander") && !m.correoDeEmpresaValido("jefe@banco.com", "Banco Santander"),
+      "no vale lo que no es un correo": !m.correoDeEmpresaValido("barlaplaza.es", "Bar La Plaza"),
+      "el enlace va firmado y la firma no vale para otra carta": firmaBien
+        && enlace.startsWith("https://buscaycurra.es/api/referencias/confirmar?r=abc123&t=") && t.length === 32,
+      "abrir el enlace no contesta: solo el botón": !soloGet.includes("responderReferencia(") && confirmar.includes('method="post"'),
+      "premio de 5 envíos, como mucho 2 cartas, contado donde no se borra": m.ENVIOS_POR_REFERENCIA === 5 && m.REFERENCIAS_CON_PREMIO === 2
+        && lib.includes("FROM premios_gastados WHERE user_id = $1 AND clave LIKE 'premio-referencia:%'") && lib.includes("pg_advisory_xact_lock"),
+      "no se escribe sin fin a la misma persona": lib.includes("Ya le escribimos a ese correo hace poco") && m.PETICIONES_EN_30_DIAS === 3,
+      "si no la reconoce, la carta se borra": lib.includes("SET carta_ruta = NULL") && confirmar.includes('res.estado === "rechazada" && res.cartaRuta'),
+      "se borra con la cuenta": borrado.includes('referencia_laboral: "user_id"') && borrado.includes('referencia_peticion: "user_id"'),
+      "las empresas lo ven y salen antes": leerFuente("app/api/empresas/candidatos/route.ts").includes("ORDER BY COALESCE(rv.n, 0) > 0 DESC")
+        && leerFuente("app/empresas/candidatos/page.tsx").includes("Referencia verificada")
+        && leerFuente("app/talento/[id]/page.tsx").includes("r.carta_publica && r.carta_ruta"),
+      "el correo de quien firma no se enseña": !leerFuente("app/talento/[id]/page.tsx").includes("r.email"),
+      "a quien firma se le escribe una vez, de usted, y se le dice qué se guarda": /Solo le escribimos esto una vez/.test(correoFirmante)
+        && /Guardamos su nombre, su cargo, este correo y su respuesta/.test(correoFirmante) && !correoFirmante.includes("privacidad@"),
+      "nada de faltas ni bajas": !/falta|asistencia|baja médica|absentismo/i.test(lib.replace(/\/\*\*[\s\S]*?\*\//, "")),
+      "la política de privacidad lo cuenta": leerFuente("app/privacidad/page.tsx").includes("Tus referencias, si subes alguna:"),
+      "está en el editor del CV": leerFuente("app/app/curriculum/Content.tsx").includes("<TusReferencias token={token} />"),
+    };
+    const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
+    if (fallos.length) console.log("    fallan:", fallos.join(" | "));
+    return fallos.length === 0;
+  } finally {
+    try { unlinkSync(salida); } catch { /* ya no está */ }
+  }
+});
+
 // ── EL SIMULADOR DE ENTREVISTAS POR VOZ EN IPHONE (31 oct 2026) ───────────
 //
 // El plugin de voz necesita las dos claves. Sin la de reconocimiento, Apple rechazó

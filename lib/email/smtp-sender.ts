@@ -509,6 +509,34 @@ ${params.centinela
   return enviados;
 }
 
+// ─── ¿Firmó usted esta carta? ────────────────────────────────────────────────
+
+/**
+ * A quien firmó una carta de recomendación que alguien ha subido (lib/referencias).
+ * Una sola vez, de usted, y sin pedirle nada más que un clic. Abrir el enlace no
+ * contesta nada: la página tiene los botones, porque los antivirus del correo
+ * abren los enlaces solos.
+ */
+export async function sendReferenciaConfirmarEmail(params: {
+  to: string;
+  firmante: string;
+  candidato: string;
+  empresa: string;
+  cargo: string;
+  enlace: string;
+}): Promise<boolean> {
+  const quien = esc(params.candidato);
+  const cuerpo = `
+<p ${P}>Hola, ${esc(params.firmante)}:</p>
+<p ${P}>${quien} ha subido a BuscayCurra, una web de búsqueda de empleo, una carta de recomendación firmada por usted como ${esc(params.cargo)} de ${esc(params.empresa)}, y nos ha dado esta dirección para que usted lo confirme.</p>
+<p ${P}>¿La escribió usted? Puede verla y contestar con un clic:</p>
+<p style="margin:0 0 20px;"><a href="${params.enlace}" style="display:inline-block;background:#16a34a;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:10px;">Ver la carta y contestar</a></p>
+<p ${P}>Si confirma que es suya, las empresas que vean el perfil de ${quien} sabrán que la carta es auténtica. Si no la reconoce, no se enseñará.</p>
+<p style="margin:0;">Un saludo,<br>El equipo de BuscayCurra</p>`;
+  const pie = `Solo le escribimos esto una vez. Guardamos su nombre, su cargo, este correo y su respuesta mientras ${quien} tenga la carta en su perfil, y solo para esto. Si no sabe de qué se trata, no haga nada. Más información en <a href="https://buscaycurra.es/privacidad" style="color:#6b7280;">buscaycurra.es/privacidad</a>.`;
+  return enviarCorreo(params.to, `${params.candidato} le pide que confirme su carta de recomendación`, plantillaSencilla(cuerpo, pie));
+}
+
 // ─── Email para cambiar la contraseña ────────────────────────────────────────
 
 /**

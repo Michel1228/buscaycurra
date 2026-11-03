@@ -23,7 +23,7 @@ export default function PrivacidadPage() {
             ← Volver a BuscayCurra
           </Link>
           <h1 style={{ color: "#f1f5f9", fontSize: 28, fontWeight: 800, margin: "0 0 8px" }}>Política de Privacidad</h1>
-          <p style={{ color: "#6b7280", fontSize: 13, margin: 0 }}>Última actualización: octubre de 2026</p>
+          <p style={{ color: "#6b7280", fontSize: 13, margin: 0 }}>Última actualización: noviembre de 2026</p>
         </div>
 
         <S titulo="1. Responsable del tratamiento">
@@ -46,6 +46,7 @@ export default function PrivacidadPage() {
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Cómo nos conociste:</strong> lo que contestes en el registro, si quieres, la web o el enlace desde el que llegaste y si te registraste en la app o en la web. Solo lo usamos para saber qué funciona, y se guarda con tu cuenta: no usamos cookies para esto.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Tu currículum:</strong> lo que escribes en el editor o el PDF que subes (experiencia, formación, idiomas, teléfono, correo y la foto si la pones).</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Lo que haces aquí:</strong> búsquedas, ofertas guardadas, los CV que mandas (a qué empresa y cuándo) y si te contestan, tus carnés y cuándo caducan, y tus ensayos de entrevista.</li>
+            <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Tus referencias, si subes alguna:</strong> la carta de recomendación, la empresa, el nombre, el cargo y el correo de quien la firmó, y si ha confirmado que es suya. A esa persona le escribimos una sola vez para preguntárselo; guardamos su respuesta mientras tengas la carta, y si dice que no la reconoce, la carta se borra.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Conversaciones con Guzzi:</strong> se guardan para que puedas seguirlas. Si mandas una foto con la cámara, en la conversación queda una miniatura.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Ubicación:</strong> solo si das permiso al usar la cámara, para buscar los negocios de cerca. No la guardamos.</li>
             <li style={{ marginBottom: 6 }}><strong style={{ color: "#f1f5f9" }}>Au pair:</strong> si haces ese perfil, edad, nacionalidad, idiomas, experiencia con niños, referencias y fotos.</li>
@@ -60,6 +61,7 @@ export default function PrivacidadPage() {
             <li style={{ marginBottom: 6 }}>Recomendarte ofertas, cursos y avisos según lo que pone tu CV y tu ciudad. Si no has rellenado el CV, no te mandamos ofertas al azar — <em>ejecución del contrato (art. 6.1.b RGPD)</em>.</li>
             <li style={{ marginBottom: 6 }}>Mandar tu CV a las empresas que tú eliges, cuando pulsas enviar — <em>consentimiento (art. 6.1.a RGPD)</em>.</li>
             <li style={{ marginBottom: 6 }}>Enseñar tu CV a empresas con Plan Empresa, solo si activas «Visible para empresas». Lo puedes apagar cuando quieras — <em>consentimiento (art. 6.1.a RGPD)</em>.</li>
+            <li style={{ marginBottom: 6 }}>Comprobar tus cartas de recomendación con quien las firmó y, si lo confirma, enseñar a esas empresas quién la firmó, su cargo y la fecha (la carta, solo si lo permites). El correo de quien firma no se enseña nunca. Lo quitas cuando quieras — <em>consentimiento (art. 6.1.a RGPD); para quien firma, interés legítimo (art. 6.1.f RGPD)</em>.</li>
             <li style={{ marginBottom: 6 }}>Avisarte por correo de ofertas, recordatorios y la caducidad de tus carnés. Cada correo trae cómo darte de baja — <em>interés legítimo (art. 6.1.f RGPD)</em>.</li>
             <li style={{ marginBottom: 6 }}>Gestionar tu suscripción y la facturación — <em>ejecución del contrato (art. 6.1.b RGPD)</em>.</li>
           </ul>
