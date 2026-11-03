@@ -17,6 +17,7 @@ import { provinciaEnTexto } from "@/lib/guzzi/plazas-cursos";
 import { provinciaPorCodigoPostal } from "@/lib/guzzi/siguiente-paso";
 import { nombreProvincia } from "@/lib/cursos/plazas/provincias";
 import { nombresDeLaZona } from "@/lib/cursos/para-esa-persona";
+import { correoCreibleParaOferta } from "@/lib/job-search/correo-oferta";
 
 export interface OfertaParaTi {
   id: string;
@@ -97,6 +98,9 @@ export async function ofertasParaTi(cv: unknown, ciudadPerfil: string | null | u
     id: r.id, titulo: r.title, empresa: r.company, ubicacion: r.city,
     salario: r.salary, fuente: r.sourceName, sector: r.sector,
     descripcion: r.descripcion, url: r.sourceUrl, fecha: r.scrapedAt ? new Date(r.scrapedAt).toISOString() : null,
-    emailEmpresa: r.contactEmail, emailConfianza: r.contactEmailConfianza,
+    // Todas son de España (la consulta lo pide): un correo .de o de otra empresa no se da.
+    ...(correoCreibleParaOferta(r.contactEmail, r.company, "es", r.contactEmailConfianza)
+      ? { emailEmpresa: r.contactEmail, emailConfianza: r.contactEmailConfianza }
+      : { emailEmpresa: null, emailConfianza: null }),
   }));
 }

@@ -5,6 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { correoCreibleParaOferta } from "@/lib/job-search/correo-oferta";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 300; // cache 5 min
@@ -39,19 +40,23 @@ export async function GET(request: Request) {
            AND ${cat}`
       ),
       pool.query(
-        `SELECT title, company, "contactEmail", country, city, salary, "sourceUrl", "scrapedAt"
+        `SELECT title, company, "contactEmail", "contactEmailConfianza", country, city, salary, "sourceUrl", "scrapedAt"
          FROM "JobListing"
          WHERE "isActive" = true
            AND ${cat}
            AND "contactEmail" IS NOT NULL AND "contactEmail" != ''
          ORDER BY "scrapedAt" DESC
-         LIMIT 8`
+         LIMIT 24`
       ),
     ]);
 
     const stats = countRes.rows[0] || { total: 0, con_email: 0, paises: 0, empresas: 0 };
 
-    const ofertas = ofertasRes.rows.map((r: any) => ({
+    // Un correo deducido de otra empresa u otro país no se da (lib/job-search/correo-oferta.ts).
+    const ofertas = ofertasRes.rows
+      .filter((r: any) => correoCreibleParaOferta(r.contactEmail, r.company, r.country, r.contactEmailConfianza))
+      .slice(0, 8)
+      .map((r: any) => ({
       title: r.title,
       company: r.company,
       email: r.contactEmail,

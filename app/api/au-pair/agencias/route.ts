@@ -22,6 +22,7 @@ import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { realidadDe, ETIQUETA_DIFICULTAD } from "@/lib/au-pair/puedes-ir";
 import { agenciaEnRegistro, REGISTROS_AU_PAIR } from "@/lib/au-pair/registros-oficiales";
+import { correoCreibleParaOferta } from "@/lib/job-search/correo-oferta";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,10 +36,12 @@ export async function GET() {
       country: string;
       ofertas: string;
       ultima: Date | null;
+      confianza: string | null;
     }>(
       `SELECT company,
               "contactEmail"                       AS contact_email,
               COALESCE(country, '')                AS country,
+              MIN("contactEmailConfianza")         AS confianza,
               COUNT(*)                             AS ofertas,
               MAX(COALESCE("createdAt", "updatedAt")) AS ultima
          FROM "JobListing"
@@ -53,7 +56,8 @@ export async function GET() {
         LIMIT 200`
     );
 
-    const agencias = rows.map(r => {
+    // Un correo deducido de otra empresa u otro país no se da (lib/job-search/correo-oferta.ts).
+    const agencias = rows.filter(r => correoCreibleParaOferta(r.contact_email, r.company, r.country, r.confianza)).map(r => {
       const realidad = r.country ? realidadDe(r.country) : undefined;
       return {
         nombre: r.company,

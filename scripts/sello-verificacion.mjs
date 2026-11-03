@@ -1018,6 +1018,8 @@ test("de la ficha de oferta al registro y de vuelta a la oferta, sin perderla", 
     "la fuente se nombra legible": ficha.includes("nombreFuente(row.sourceName)") && !ficha.includes("` en ${row.sourceName}`"),
     // Uno de cada cuatro no confirmaba el correo: botón a su bandeja.
     "botón para abrir el correo y confirmar": registro.includes("bandejaDe(email)") && registro.includes("mail.google.com"),
+    // Abría la primera cuenta del móvil y no buscaba en spam.
+    "Gmail se abre en la cuenta registrada y busca también en spam": registro.includes("authuser=${encodeURIComponent(email.trim())}") && registro.includes("in%3Aanywhere"),
   };
   const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
   if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
@@ -2685,6 +2687,44 @@ test("con los rebotes altos se frena lo deducido, y la empresa se busca en la ci
     return fallos.length === 0;
   } finally {
     for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* ya no está */ } }
+  }
+});
+
+// ── CORREOS DEDUCIDOS DE OTRA EMPRESA U OTRO PAÍS (3 nov 2026) ────────────
+//
+// El proceso nocturno adivinaba la web por el nombre, en cualquier país, y copiaba
+// el correo a todas las ofertas con ese nombre. En ofertas de España: Amazon con
+// amazon.de, Santander con telepizza.es, Maersk con vpn.com. Casos reales.
+test("un correo deducido de otra empresa u otro país no se ofrece, y el extractor busca por país", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-correo-oferta.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/job-search/correo-oferta.ts", "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const { correoCreibleParaOferta: vale } = await import(`../${salida}?${Date.now()}`);
+    const worker = leerFuente("scripts/vps/extract-emails-worker.js");
+    const sh = leerFuente("scripts/vps/extract-emails-fast.sh");
+    const prop = leerFuente("scripts/vps/propagar-emails.sql");
+    const checks = {
+      "otro país no": !vale("empleo@amazon.de", "Amazon", "es") && !vale("rrhh@leroy-merlin.fr", "Leroy Merlin España", "es") && !vale("a@yahoo.co.in", "Glintt Global", "es"),
+      "otra empresa no": !vale("info@telepizza.es", "Santander", "es") && !vale("x@vpn.com", "A.P. Moller - Maersk", "es") && !vale("info@alsglobal.com", "Alsa Grupo", "es") && !vale("info@kia.com", "Kiabi España", "es") && !vale("info@comunidad.com", "Comunidad Autónoma de la Región de Murcia", "es"),
+      "la suya sí": vale("info@amazon.com", "Amazon Spain Services, S.L.U.", "es") && vale("empleo@gruascarter.com", "Asistencias Carter", "es") && vale("rrhh@elcorteingles.es", "El Corte Inglés", "es")
+        && vale("x@bbva.com", "Banco Bilbao Vizcaya Argentaria", "es") && vale("info@tudela.es", "Ayuntamiento de Tudela", "es") && vale("jobs@acme.co.uk", "Acme Ltd", "uk") && vale("x@amazon.de", "Amazon", "de"),
+      "un buzón de cualquiera no se juzga por el nombre": vale("barpepe@gmail.com", "Bar Pepe", "es"),
+      "lo que escribió la empresa en la oferta vale siempre": vale("rrhh@otra.de", "Lo que sea", "es", "alta"),
+      "sin correo, nada": !vale("", "Amazon", "es") && !vale(null, "Amazon", "es"),
+      "la búsqueda, la ficha, para ti y au pair lo comprueban": ["app/api/jobs/search/route.ts", "app/app/ofertas/[id]/page.tsx", "lib/job-search/ofertas-para-ti.ts", "app/api/au-pair/ofertas/route.ts", "app/api/au-pair/agencias/route.ts"].every((f) => leerFuente(f).includes("correoCreibleParaOferta(")),
+      "el extractor prueba solo los dominios del país": worker.includes("guessTlds(country)") && !/'de', 'fr', 'es', 'it', 'se'/.test(worker),
+      "el extractor solo acepta correos del propio dominio y que pasen la comprobación de la app": worker.includes("if (!suyos.length) return null") && worker.includes("correoCreibleParaOferta(email, name, country, null)"),
+      "la web tiene que nombrar a la empresa": worker.includes("nombraALaEmpresa(html, name)"),
+      "el correo encontrado va solo a las ofertas de ese país": worker.includes("AND lower(country) = '${safeCountry.toLowerCase()}'") && sh.includes("GROUP BY company, lower(country)"),
+      "la propagación no cruza países": prop.includes("lower(j.country) = m.pais"),
+    };
+    const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
+    if (fallos.length) console.log("    fallan:", fallos.join(" | "));
+    return fallos.length === 0;
+  } finally {
+    try { unlinkSync(salida); } catch { /* ya no está */ }
   }
 });
 

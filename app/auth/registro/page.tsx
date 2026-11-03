@@ -16,7 +16,9 @@ import { plataforma } from "@/lib/utils/platform";
 /** La bandeja de entrada de los correos más comunes, para confirmar con un toque. */
 function bandejaDe(email: string): { nombre: string; url: string } | null {
   const d = email.trim().toLowerCase().split("@")[1] || "";
-  if (/^(gmail|googlemail)\.com$/.test(d)) return { nombre: "Gmail", url: "https://mail.google.com/mail/u/0/#search/buscaycurra" };
+  // authuser abre la cuenta de ese correo aunque el móvil tenga varias (u/0 abría
+  // la primera), e in:anywhere busca también en spam, que la búsqueda normal no mira.
+  if (/^(gmail|googlemail)\.com$/.test(d)) return { nombre: "Gmail", url: `https://mail.google.com/mail/u/?authuser=${encodeURIComponent(email.trim())}#search/in%3Aanywhere+buscaycurra` };
   if (/^(hotmail|outlook|live|msn)\.[a-z.]+$/.test(d)) return { nombre: "Outlook", url: "https://outlook.live.com/mail/0/" };
   if (/^yahoo\.[a-z.]+$/.test(d)) return { nombre: "Yahoo Mail", url: "https://mail.yahoo.com/" };
   if (/^(icloud|me|mac)\.com$/.test(d)) return { nombre: "iCloud Mail", url: "https://www.icloud.com/mail" };

@@ -2,6 +2,7 @@ import { getPool } from "@/lib/db";
 import OfertaDetalleClient, { type OfertaDetalle } from "./OfertaDetalleClient";
 import { Search } from "lucide-react";
 import { jobPostingDe } from "@/lib/seo/job-posting";
+import { correoCreibleParaOferta } from "@/lib/job-search/correo-oferta";
 
 export default async function DetalleOfertaPage({
   params,
@@ -97,8 +98,10 @@ export default async function DetalleOfertaPage({
     descripcion: row.description || "",
     fuente: row.sourceName || "Desconocida",
     url: row.sourceUrl || "",
-    email_empresa: row.contactEmail || undefined,
-    email_confianza: row.contactEmailConfianza || undefined,
+    // Si el correo deducido es de otra empresa u otro país, mejor no darlo.
+    ...(correoCreibleParaOferta(row.contactEmail, row.company, row.country, row.contactEmailConfianza)
+      ? { email_empresa: row.contactEmail, email_confianza: row.contactEmailConfianza || undefined }
+      : { email_empresa: undefined, email_confianza: undefined }),
     sector: row.sector || "OTRO",
     fecha: row.createdAt || new Date().toISOString(),
     country: row.country || undefined,

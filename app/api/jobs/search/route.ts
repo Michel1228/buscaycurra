@@ -8,6 +8,7 @@ import { tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { comprobarEnSegundoPlano } from "@/lib/job-search/oferta-viva";
 import { salarioMinimoSql } from "@/lib/job-search/salario-sql";
 import { paisPorNombre } from "@/lib/paises";
+import { correoCreibleParaOferta } from "@/lib/job-search/correo-oferta";
 
 /**
  * Ofertas de las APIs externas, solo cuando la base no tiene nada.
@@ -91,8 +92,10 @@ function rowToOferta(j: Record<string, unknown>, location: string, userSkills: s
     // El email ya estaba guardado en la oferta (78% de las vivas lo tienen),
     // pero no se devolvia, asi que la tarjeta lo pedia a /api/company/extract
     // por el nombre de la empresa y, si eso fallaba, mostraba "sin email aun".
-    emailEmpresa: (j.contactemail as string) || undefined,
-    emailConfianza: (j.contactemailconfianza as string) || undefined,
+    // Si es de otra empresa u otro país (amazon.de en España), no se da.
+    ...(correoCreibleParaOferta(j.contactemail as string, empresaOriginal, j.country as string, j.contactemailconfianza as string)
+      ? { emailEmpresa: j.contactemail as string, emailConfianza: (j.contactemailconfianza as string) || undefined }
+      : { emailEmpresa: undefined, emailConfianza: undefined }),
   };
 }
 
@@ -337,7 +340,7 @@ export async function GET(request: NextRequest) {
              -- busqueda eso son megabytes de JSON en cada peticion.
              LEFT(description, 300) AS description,
              "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
-             "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza,
+             "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza, country,
              COUNT(*) OVER() AS total_encontrado
       FROM "JobListing"
       WHERE ${where}
@@ -365,7 +368,7 @@ export async function GET(request: NextRequest) {
         const nuevas = await pool.query(
           `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
                   "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
-                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza
+                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza, country
              FROM "JobListing" WHERE ${whereClause}
             ORDER BY "createdAt" DESC
             LIMIT $${idx} OFFSET $${idx + 1}`,
@@ -474,7 +477,7 @@ export async function GET(request: NextRequest) {
         const locResult = await pool.query(
           `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
                   "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
-                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza,
+                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza, country,
                   COUNT(*) OVER() AS total_encontrado
              FROM "JobListing"
             WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)

@@ -22,26 +22,33 @@ docker exec buscaycurra-db psql -U buscaycurra -d buscaycurra -t -A -q -c "
 " > /dev/null
 
 echo "[extract-emails] Fetching companies..."
+# v18 (3 nov 2026): por empresa Y país. La misma empresa se busca aparte en cada
+# país, con los dominios de ese país, y su correo solo va a sus ofertas de allí:
+# antes Amazon España recibía amazon.de. En email_busqueda_intentos la clave pasa
+# a ser "empresa|pais"; las anotaciones viejas (solo empresa) caducan solas.
+# El worker necesita /root/correo-oferta.cjs: lib/job-search/correo-oferta.ts
+# compilado con esbuild, la misma comprobación que hace la app.
 docker exec buscaycurra-db psql -U buscaycurra -d buscaycurra -t -A -q -c "
   WITH elegidas AS (
-    SELECT company, jobs FROM (
-      SELECT company, COUNT(*) as jobs
+    SELECT company, country, jobs FROM (
+      SELECT company, lower(country) AS country, COUNT(*) as jobs
       FROM \"JobListing\"
       WHERE company IS NOT NULL AND company != ''
         AND lower(trim(company)) NOT IN ('empresa europea','empresa','company','ver en oferta','confidencial','confidential','n/a','na','sin especificar','no especificado','private','empresa confidencial','recruiter','recruitment','agency','ett','-','.')
         AND (\"contactEmail\" IS NULL OR \"contactEmail\" = '')
         AND \"isActive\" = true
-      GROUP BY company
+        AND country IS NOT NULL AND country != ''
+      GROUP BY company, lower(country)
     ) g
     WHERE NOT EXISTS (
       SELECT 1 FROM email_busqueda_intentos i
-      WHERE i.company = g.company AND i.intentado_en > NOW() - INTERVAL '30 days'
+      WHERE i.company = g.company || '|' || g.country AND i.intentado_en > NOW() - INTERVAL '30 days'
     )
     ORDER BY jobs DESC LIMIT $MAX
   ),
   anotadas AS (
     INSERT INTO email_busqueda_intentos (company)
-    SELECT company FROM elegidas
+    SELECT company || '|' || country FROM elegidas
     ON CONFLICT (company) DO UPDATE SET intentado_en = NOW()
   )
   SELECT json_agg(row_to_json(elegidas)) FROM elegidas
