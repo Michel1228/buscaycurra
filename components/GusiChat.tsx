@@ -531,7 +531,9 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
       // igual de bien, sube en un momento y cuesta menos. Además sale siempre en
       // JPEG, que es lo que espera el servidor (las de iPhone pueden venir en
       // HEIC). Si el navegador no puede dibujarla, se manda tal cual.
-      const base64 = await reducirFoto(file, 1280, 0.82);
+      // 1024 y no 1280 (3 nov 2026): el modelo deja una foto de móvil en 1024x768
+      // antes de leerla, así que lee lo mismo y se sube un tercio menos.
+      const base64 = await reducirFoto(file, 1024, 0.82);
 
       // Capturar ubicación GPS (si el usuario lo permite), CON UN TOPE DE VERDAD.
       // En iPhone el `timeout` de getCurrentPosition no corre mientras el aviso

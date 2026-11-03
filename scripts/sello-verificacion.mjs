@@ -823,7 +823,7 @@ test("la cámara busca cualquier nombre cerca y el sector de más cerca a más l
   const lib = leerFuente("lib/camara/analizar-foto.ts");
   const ruta = leerFuente("app/api/gusi/analyze-image/route.ts");
   const chat = leerFuente("app/api/gusi/chat/route.ts");
-  if (!ruta.includes("responderFoto(foto, { lat, lng, ciudadUsuario })") || !ruta.includes("form_data->>'ciudad'")) fallos.push("la ruta no usa el módulo o no mira la ciudad del CV");
+  if (!ruta.includes("responderFoto(foto, { lat, lng, ciudadUsuario: await ciudadEnCamino })") ||!ruta.includes("form_data->>'ciudad'")) fallos.push("la ruta no usa el módulo o no mira la ciudad del CV");
   if (!chat.includes("nombreDeLaFotoAnterior(message, history)")) fallos.push("el chat no entiende 'búscalo' tras una foto");
   // Los datos de una tarjeta nunca en la ficha de otra empresa, ninguna web de
   // Google se toma por la de la empresa, y "en la calle" es en la calle.
@@ -2285,7 +2285,7 @@ test("despues de una foto aparece el boton de enviar el CV", () =>
 
 test("la app reduce la foto antes de mandarla", () =>
   chatSrc.includes("async function reducirFoto") &&
-  chatSrc.includes("await reducirFoto(file, 1280"));
+  chatSrc.includes("await reducirFoto(file, 1024"));
 
 // ── EL PRIMER DIA DEL USUARIO ──────────────────────────────────────────────
 //
@@ -2584,6 +2584,23 @@ test("las apps de iPhone y Android declaran el permiso de ubicación que usa la 
     // Sin esto, el altool de Xcode 26 no encuentra la app y la subida a Apple falla (error 19).
     && /APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: "--apple-id \d+"/.test(codemagic)
     && JSON.parse(leerFuente("release_notes.json")).some((n) => n.language === "es-ES" && n.text);
+});
+
+// ── LA FOTO, MÁS LIGERA (3 nov 2026) ──────────────────────────────────────
+//
+// Medido en producción: de 5 a 7 s por foto, unos 4 de ellos leyéndola. El modelo
+// reduce una foto de móvil a 1024x768 de todas formas, así que subirla a 1280 era
+// mandar más para lo mismo; y la ciudad del perfil se buscaba después de leerla.
+test("la foto sube a 1024 px y la ciudad se busca mientras se lee", () => {
+  const chat = leerFuente("components/GusiChat.tsx");
+  const ruta = leerFuente("app/api/gusi/analyze-image/route.ts");
+  const layout = leerFuente("app/layout.tsx");
+  const meta = layout.slice(layout.indexOf("export const metadata"), layout.indexOf("export const viewport"));
+  return chat.includes("reducirFoto(file, 1024, 0.82)")
+    && ruta.indexOf("const ciudadEnCamino") > 0 && ruta.indexOf("const ciudadEnCamino") < ruta.indexOf("await leerFoto(")
+    && ruta.includes("ciudadUsuario: await ciudadEnCamino")
+    // 78.390 avisos en un día por tenerlo en metadata: va en viewport.
+    && !meta.includes("themeColor") && layout.slice(layout.indexOf("export const viewport")).includes('themeColor: "#0f1117"');
 });
 
 // ── REBOTES Y EMPRESA EQUIVOCADA (1 nov 2026) ─────────────────────────────

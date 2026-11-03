@@ -55,7 +55,6 @@ export const metadata: Metadata = {
     "ofertas live-in nanny",
   ],
  manifest: "/manifest.json",
-  themeColor: "#0f1117",
  appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -109,6 +108,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: true,
+  // Aquí y no en metadata: allí Next lo da por obsoleto y avisaba en cada página
+  // servida, 78.390 líneas de registro en un día (3 nov 2026).
+  themeColor: "#0f1117",
 };
 
 export default function RootLayout({

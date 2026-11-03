@@ -153,37 +153,40 @@ export async function POST(req: NextRequest) {
     // Limpiar el prefijo data:image si viene
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
+      return NextResponse.json({ error: "Servicio no disponible" }, { status: 503 });
+    }
+
     // Dónde vive, para buscar "cerca de ti" cuando el móvil no da el GPS: la
     // ciudad del perfil y, si no la tiene, la de su CV. Con la tarjeta del
     // Consorcio EDER hecha en Tudela, sin ciudad no había forma de saber dónde
-    // buscar.
-    let ciudadUsuario = "";
-    if (userId) {
+    // buscar. Se busca mientras se lee la foto, no después (3 nov 2026).
+    const ciudadEnCamino = (async (): Promise<string> => {
+      if (!userId) return "";
+      let ciudad = "";
       try {
         const sbCiudad = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
         const { data: profileCiudad } = await sbCiudad.from("profiles").select("ciudad").eq("id", userId).single();
-        ciudadUsuario = profileCiudad?.ciudad || "";
+        ciudad = profileCiudad?.ciudad || "";
       } catch { /* sin perfil, sin problema */ }
-      if (!ciudadUsuario) {
+      if (!ciudad) {
         try {
           const { rows } = await getPool().query<{ ciudad: string | null }>(
             "SELECT form_data->>'ciudad' AS ciudad FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1",
             [userId]
           );
-          ciudadUsuario = rows[0]?.ciudad?.trim() || "";
+          ciudad = rows[0]?.ciudad?.trim() || "";
         } catch { /* sin CV, sin problema */ }
       }
-    }
+      return ciudad;
+    })();
 
     // ─── Qué hay en la foto (GPT-4o Vision) y qué hacer con ello ───────
     // Todo el camino está en lib/camara/analizar-foto.ts.
-    const openaiKey = process.env.OPENAI_API_KEY;
-    if (!openaiKey) {
-      return NextResponse.json({ error: "Servicio no disponible" }, { status: 503 });
-    }
     const foto = await leerFoto(base64Data, openaiKey);
     if (!foto) {
       return NextResponse.json(
@@ -191,7 +194,7 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    const respuesta = await responderFoto(foto, { lat, lng, ciudadUsuario });
+    const respuesta = await responderFoto(foto, { lat, lng, ciudadUsuario: await ciudadEnCamino });
     return NextResponse.json(respuesta);
   } catch (error) {
     console.error("analyze-image error:", error);
