@@ -62,6 +62,31 @@ type Resultado = {
   nacioDe: string;
 };
 
+/**
+ * Para las comprobaciones que recorren JobListing entera.
+ *
+ * El 3 nov 2026 la tabla pasaba de 4,5 millones de filas y recorrerla tardaba
+ * unos 20 s. El pool corta a los 15 s, y cuatro controles salían «no se pudo
+ * comprobar» sin que pasara nada malo en los datos. SET LOCAL sube el límite
+ * solo para esta consulta, como en /api/admin/metricas: es una lectura, una
+ * vez al día.
+ */
+async function consultaLarga(sql: string, params?: unknown[]) {
+  const cliente = await getPool().connect();
+  try {
+    await cliente.query("BEGIN");
+    await cliente.query("SET LOCAL statement_timeout = 60000");
+    const res = await cliente.query(sql, params);
+    await cliente.query("COMMIT");
+    return res;
+  } catch (e) {
+    await cliente.query("ROLLBACK").catch(() => {});
+    throw e;
+  } finally {
+    cliente.release();
+  }
+}
+
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("x-admin-secret");
   if (!secretIguales(secret, process.env.ADMIN_SECRET)) {
@@ -83,7 +108,7 @@ export async function GET(req: NextRequest) {
     // esto, la consulta murio por statement timeout recorriendo 2,1 millones de
     // filas. Un centinela que no puede mirar no es un aprobado, asi que se
     // apunta como fallo — pero mejor que pueda mirar.
-    const { rows } = await pool.query(
+    const { rows } = await consultaLarga(
       `SELECT country AS pais, count(*)::int AS n
          FROM "JobListing" WHERE "isActive" AND country = ANY($1::text[])
         GROUP BY 1`,
@@ -128,7 +153,7 @@ export async function GET(req: NextRequest) {
     //
     // Se usa LIKE y no expresiones regulares: la consulta recorre la tabla
     // entera y con el VPS al 85% de robo de CPU conviene la comparacion barata.
-    const { rows } = await pool.query(
+    const { rows } = await consultaLarga(
       `WITH f AS (
          SELECT CASE WHEN "sourceName" LIKE 'EURES!_%' ESCAPE '!'
                      THEN 'Careerjet (EURES_ciudad)' ELSE "sourceName" END AS fuente,
@@ -177,11 +202,17 @@ export async function GET(req: NextRequest) {
   // ── 3. La bandera de la oferta coincide con su fuente ──────────────────────
   // ADZUNA_ES tenía 6.820 ofertas de A Coruña y Toledo marcadas como suecas:
   // el sincronizador caía a España ante un país que Adzuna no cubre.
+  //
+  // Hasta el 4 nov 2026 ponía LIKE 'ADZUNA[_]%', que es de SQL Server: en
+  // Postgres los corchetes no son especiales, no casaba con ninguna fuente y el
+  // control salía bien siempre. Con el patrón bueno había 1.336 descuadradas:
+  // 1.178 de Australia marcadas como de EE. UU., 142 de España como suecas y
+  // 16 de Francia como de EE. UU.
   try {
-    const { rows } = await pool.query(
+    const { rows } = await consultaLarga(
       `SELECT "sourceName" AS fuente, country, count(*)::int AS n
          FROM "JobListing"
-        WHERE "isActive" AND "sourceName" LIKE 'ADZUNA[_]%'
+        WHERE "isActive" AND "sourceName" LIKE 'ADZUNA!_%' ESCAPE '!'
           AND lower(country) <> lower(right("sourceName", 2))
         GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 5`
     );
@@ -201,7 +232,7 @@ export async function GET(req: NextRequest) {
   // ── 4. Las ofertas no se quedan eternas ────────────────────────────────────
   // Ninguna oferta caducaba nunca: llegó a haber un 7,1% con más de dos meses.
   try {
-    const { rows } = await pool.query(
+    const { rows } = await consultaLarga(
       `SELECT round(100.0 * count(*) FILTER (WHERE "scrapedAt" < now() - interval '60 days')
                     / greatest(count(*), 1), 2)::float AS pct
          FROM "JobListing" WHERE "isActive"`

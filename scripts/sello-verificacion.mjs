@@ -3658,6 +3658,17 @@ test("el centinela agrupa Careerjet y descarta nombres de fuente retirados", () 
   const c = leerFuente("app/api/admin/centinela/route.ts");
   return c.includes("Careerjet (EURES_ciudad)") && c.includes("NOT LIKE 'careerjet!_%'");
 });
+// 4 nov 2026: con JobListing por encima de 4,5 millones de filas, recorrerla
+// tardaba unos 20 s y el pool corta a los 15: cuatro controles decian «no se
+// pudo comprobar» cada mañana. Y el de la bandera no podia fallar desde
+// septiembre: LIKE 'ADZUNA[_]%' es de SQL Server y en Postgres no casa con nada.
+test("el centinela tiene tiempo para recorrer las ofertas y el control de la bandera puede fallar", () => {
+  const c = leerFuente("app/api/admin/centinela/route.ts");
+  const usos = (c.match(/await consultaLarga\(/g) || []).length;
+  return c.includes("SET LOCAL statement_timeout = 60000") && usos >= 4
+    && !c.includes(`"sourceName" LIKE 'ADZUNA[_]%'`)
+    && c.includes(`"isActive" AND "sourceName" LIKE 'ADZUNA!_%' ESCAPE '!'`);
+});
 
 // ── TOCAR UNA NOTIFICACION HACE ALGO AL MOMENTO ───────────────────────
 //
