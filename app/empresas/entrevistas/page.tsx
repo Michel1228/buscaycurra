@@ -106,7 +106,10 @@ export default function EntrevistasEmpresaPage() {
           <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
           <span className="hidden sm:inline text-xs" style={{ color: "#6b7280" }}>/ Entrevistas</span>
         </Link>
-        <Link href="/empresas/candidatos" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Candidatos →</Link>
+        <div className="flex items-center gap-4">
+          <Link href="/empresas/equipo" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tu equipo</Link>
+          <Link href="/empresas/candidatos" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Candidatos →</Link>
+        </div>
       </div>
     </header>
   );
@@ -161,7 +164,8 @@ export default function EntrevistasEmpresaPage() {
                     <div className="text-right">
                       {inv.nota !== null && <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>{inv.nota}<span className="text-xs" style={{ color: "#64748b" }}>/100</span></p>}
                       <div className="flex gap-3 justify-end mt-1">
-                        <Link href={`/talento/${inv.candidatoId}`} className="text-xs" style={{ color: "#94a3b8" }}>Ver CV</Link>
+                        {/* <a> y no <Link>: Next precarga los <Link>, y abrir un CV nuevo gasta cupo del mes. */}
+                        <a href={`/talento/${inv.candidatoId}`} className="text-xs" style={{ color: "#94a3b8" }}>Ver CV</a>
                         {inv.respuestas && (
                           <button onClick={() => abrir(inv)} className="text-xs font-semibold" style={{ color: "#22c55e" }}>
                             {abierta === inv.id ? "Cerrar" : inv.nota === null ? "Leer y valorar" : "Ver valoración"}

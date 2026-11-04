@@ -5,7 +5,7 @@ import PWAInstallButton from "@/components/PWAInstallButton";
 import PublicHeader from "@/components/PublicHeader";
 import { ofertasPorPais } from "@/lib/job-search/ofertas-por-pais";
 import { NUM_PAISES } from "@/lib/paises";
-import { LIMITS } from "@/lib/plan-limits";
+import { LIMITS, LIMITES_EMPRESA } from "@/lib/plan-limits";
 import { Bot, BarChart3, DollarSign, Mail, Check, X } from "lucide-react";
 
 // La landing se CACHEA y se regenera cada 30 min (ISR con stale-while-revalidate).
@@ -182,13 +182,15 @@ export default async function LandingPage() {
       // los candidatos, y "Soporte 24/7" no existía.
       items: [
         "👥 Ver candidatos con nombre, email y teléfono",
-        "📄 CV completo de cada candidato",
+        `📄 Contacto y CV completo de hasta ${LIMITES_EMPRESA.candidatosMes} candidatos al mes`,
+        `Hasta ${LIMITES_EMPRESA.usuarios} personas de tu empresa, cada una con su cuenta`,
         "🔍 Buscar candidatos por ciudad y perfil",
         "📨 Mandarnos ofertas sin coste",
         "Guzzi IA ilimitado",
         `${LIMITS.empresa.camaraMaxUsos} búsquedas/mes por cámara`,
         "Todo lo del plan Pro, con más envíos de CV",
-        // Ni la API ni un panel de equipo existen: no se venden (igual que /precios).
+        // La API no existe: no se vende (igual que /precios). El equipo sí,
+        // desde el 4 nov 2026 (/empresas/equipo).
         "🔌 API e integraciones (próximamente)",
       ], 
       nota: "Sin permanencia · Facturación mensual", 

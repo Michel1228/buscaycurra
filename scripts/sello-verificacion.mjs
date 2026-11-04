@@ -845,7 +845,10 @@ test("las empresas ven a los candidatos visibles y solo ellas saben quién es ca
       api.includes("id: esEmpresa ? row.user_id :") && /nombre: esEmpresa \?[^\n]*: "Candidato"/.test(api),
     "buscar por correo o teléfono no delata a nadie": api.includes("(uc.form_data - 'email' - 'telefono'"),
     "el CV completo sale de user_cvs": talento.includes("FROM user_cvs") && !talento.includes('.from("cvs")'),
-    "el CV completo solo lo ven las empresas y el propio candidato": talento.includes('!== "empresa"') && talento.includes("quien === id"),
+    // Desde el 4 nov 2026 el Plan Empresa se mira con cuentaEmpresa (el propio
+    // o el de la empresa que le ha dado acceso), no con el plan de quien mira.
+    "el CV completo solo lo ven las empresas y el propio candidato": talento.includes("await cuentaEmpresa(quien)")
+      && talento.includes("if (!esElMismo && !cuenta)") && talento.includes("quien.id === id"),
   };
   const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
   if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
@@ -2867,7 +2870,8 @@ test("la entrevista de cada empresa: la IA ayuda al candidato y la nota la pone 
         && !/cubiertos|nota/.test(enviar.split("export async function POST")[1] || "x"),
       "la empresa recibe la nota que pone ella": leerFuente("app/api/empresas/entrevistas/marcar/route.ts").includes("notaDeMarcas(inv.preguntas, body.marcas)")
         && leerFuente("app/empresas/entrevistas/page.tsx").includes("no llega ninguna nota automática"),
-      "solo invita el Plan Empresa y solo a quien es visible": leerFuente("app/api/empresas/entrevistas/invitar/route.ts").includes('!== "empresa"') && lib.includes("visible_empresas = true"),
+      "solo invita el Plan Empresa y solo a quien es visible": /const cuenta = await cuentaEmpresa\(usuario\)[\s\S]{0,80}if \(!cuenta\)/.test(leerFuente("app/api/empresas/entrevistas/invitar/route.ts"))
+        && lib.includes("visible_empresas = true"),
       "el ensayo invitado no gasta el cupo gratis": !comprobar.includes("usarEntrevista"),
       "el candidato sabe que solo lo ve él y que no llega nota": /solo lo ves tú/.test(leerFuente("app/app/entrevistas/empresa/[id]/page.tsx")) && /No le llega tu nota/.test(leerFuente("app/app/entrevistas/empresa/[id]/page.tsx")),
       "a la empresa se le avisa de no preguntar lo que discrimina": /Nada de edad, origen, religión, salud, embarazo o hijos/.test(leerFuente("app/empresas/entrevistas/page.tsx")),
@@ -2880,6 +2884,49 @@ test("la entrevista de cada empresa: la IA ayuda al candidato y la nota la pone 
   } finally {
     for (const f of [s1, s2]) { try { unlinkSync(f); } catch { /* ya no está */ } }
   }
+});
+
+// ── EL PLAN EMPRESA, POR PERSONAS Y CON CUPO (4 nov 2026) ──────────────────
+//
+// Era una sola cuenta con una contraseña: varios departamentos podían
+// compartirla y abrir todos los contactos que quisieran por 49,99 €/mes. Ahora
+// cada persona entra con su cuenta (la titular la añade por su correo, que
+// tiene que estar confirmado), y el cupo del mes es de la empresa: candidatos
+// abiertos e invitaciones. Los números son provisionales y viven en un sitio.
+test("el Plan Empresa va por personas y el cupo del mes es de la empresa", () => {
+  const cuenta = leerFuente("lib/empresas/cuenta.ts");
+  const api = leerFuente("app/api/empresas/candidatos/route.ts");
+  const talento = leerFuente("app/talento/[id]/page.tsx");
+  const equipo = leerFuente("app/api/empresas/equipo/route.ts");
+  const entrevistas = leerFuente("lib/entrevistas/empresa.ts");
+  const borrado = leerFuente("lib/cuenta/borrar-datos.ts");
+  const empresas = leerFuente("app/empresas/page.tsx");
+  const enlacePrecargado = /<Link href=\{`\/talento\//;
+  const checks = {
+    "los números salen de un solo sitio": /export const LIMITES_EMPRESA = \{[\s\S]*usuarios:[\s\S]*candidatosMes:[\s\S]*invitacionesMes:/.test(leerFuente("lib/plan-limits.ts")),
+    "del equipo, solo con el correo confirmado y mientras la empresa pague": cuenta.includes("if (!u.email || !u.confirmado) return null;")
+      && cuenta.includes("!(await esEmpresa(m.empresa_id))"),
+    "no se pasa de las personas del plan": cuenta.includes("1 + ya.length >= LIMITES_EMPRESA.usuarios"),
+    "solo quien paga añade o quita personas": (equipo.match(/if \(!q\.cuenta\.titular\) return error/g) || []).length === 2,
+    "la lista no da el contacto de quien no se ha abierto": api.includes("email: abierto ?") && api.includes("telefono: abierto ?") && !/email: esEmpresa \?/.test(api),
+    "abrir un CV nuevo gasta cupo, y uno ya abierto no": talento.includes("await abrirCandidato(cuenta.empresaId, id)")
+      && cuenta.includes("if ((await yaAbiertos(empresaId, [candidatoId])).has(candidatoId))"),
+    "el cupo se cuenta con la empresa bloqueada": cuenta.includes("pg_advisory_xact_lock") && cuenta.includes("if (r.n >= maximo)"),
+    "no se gasta plaza en un CV que no se puede enseñar": talento.indexOf("if (!fila || !fila.visible_empresas") < talento.indexOf("await abrirCandidato("),
+    "los enlaces al CV no se precargan (gastarían cupo)": !enlacePrecargado.test(leerFuente("app/empresas/candidatos/page.tsx"))
+      && !enlacePrecargado.test(leerFuente("app/empresas/entrevistas/page.tsx")),
+    "las invitaciones también tienen cupo al mes": entrevistas.includes("(await invitacionesDelMes(empresaId)) >= LIMITES_EMPRESA.invitacionesMes"),
+    "todo va a nombre de la empresa, entre quien entre": leerFuente("app/api/empresas/entrevistas/route.ts").includes("return cuenta.empresaId;")
+      && leerFuente("app/api/empresas/entrevistas/invitar/route.ts").includes("const empresaId = cuenta.empresaId;")
+      && leerFuente("app/api/empresas/entrevistas/marcar/route.ts").includes("const empresaId = cuenta.empresaId;"),
+    "borrar la cuenta limpia el equipo y lo abierto": borrado.includes("DELETE FROM empresa_candidato_abierto WHERE empresa_id = $1 OR candidato_id = $1")
+      && borrado.includes("DELETE FROM empresa_miembro WHERE empresa_id = $1") && borrado.includes("DELETE FROM empresa_miembro WHERE email = $1"),
+    "las páginas y la privacidad lo cuentan": empresas.includes("¿Pueden usarlo varias personas de mi empresa?") && !empresas.includes("sin límite de candidatos")
+      && leerFuente("app/privacidad/page.tsx").includes("Si tu empresa te da acceso a su Plan Empresa:"),
+  };
+  const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
+  if (fallos.length) console.log("    fallan:", fallos.join(" | "));
+  return fallos.length === 0;
 });
 
 // ── EL SIMULADOR DE ENTREVISTAS POR VOZ EN IPHONE (31 oct 2026) ───────────

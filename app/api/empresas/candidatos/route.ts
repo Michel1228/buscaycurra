@@ -1,16 +1,16 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
-import { getUserId } from "@/lib/auth-server";
+import { getUsuario } from "@/lib/auth-server";
 import { asegurarTablasReferencias } from "@/lib/referencias/referencias";
+import { cuentaEmpresa, cupoDelMes, yaAbiertos } from "@/lib/empresas/cuenta";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   // Autenticación obligatoria
-  const authUserId = await getUserId(req);
-  if (!authUserId) {
+  const usuario = await getUsuario(req);
+  if (!usuario) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -21,12 +21,9 @@ export async function GET(req: NextRequest) {
   const limit = 24;
   const offset = (page - 1) * limit;
 
-  // Verificar si el usuario autenticado tiene plan empresa
-  let esEmpresa = false;
-  try {
-    const plan = await getUserPlan(authUserId);
-    esEmpresa = plan === "empresa";
-  } catch { /* tratar como free */ }
+  // Plan Empresa: el suyo o el de la empresa que le ha dado acceso (lib/empresas/cuenta.ts).
+  const cuenta = await cuentaEmpresa(usuario).catch(() => null);
+  const esEmpresa = !!cuenta;
 
   // LA VISIBILIDAD SE LEE DE user_cvs, QUE ES DONDE LA GUARDA EL CV.
   //
@@ -94,7 +91,13 @@ export async function GET(req: NextRequest) {
     // contacto y el enlace a su CV. Los demás ven la ficha sin nombre (puesto,
     // ciudad y aptitudes), para que una empresa sepa que hay gente antes de
     // pagar, y sin el identificador que abre el CV completo.
+    //
+    // EL CONTACTO, SOLO DE LOS YA ABIERTOS (4 nov 2026). Abrir uno gasta cupo
+    // del mes (/talento/[id]); si la lista diera el correo y el teléfono de
+    // todos, el cupo no serviría de nada.
+    const abiertos = cuenta ? await yaAbiertos(cuenta.empresaId, result.rows.map((r) => String(r.user_id))) : new Set<string>();
     const candidatos = result.rows.map((row, i) => {
+      const abierto = abiertos.has(String(row.user_id));
       let aptitudesArr: string[] = [];
       if (typeof row.aptitudes === "string" && row.aptitudes) {
         aptitudesArr = row.aptitudes.split(",").map((s: string) => s.trim()).filter(Boolean).slice(0, 4);
@@ -113,8 +116,9 @@ export async function GET(req: NextRequest) {
         ciudad: row.ciudad || "España",
         puesto: ultimoPuesto,
         aptitudes: aptitudesArr,
-        email: esEmpresa ? (row.email || null) : null,
-        telefono: esEmpresa ? (row.telefono || null) : null,
+        email: abierto ? (row.email || null) : null,
+        telefono: abierto ? (row.telefono || null) : null,
+        abierto,
         // Cuántas cartas tiene confirmadas: no dice quién es, lo ve cualquiera.
         referencias: Number(row.referencias) || 0,
         updatedAt: row.updated_at,
@@ -122,7 +126,8 @@ export async function GET(req: NextRequest) {
     });
 
     const total = result.rows.length > 0 ? Number(result.rows[0].total) : 0;
-    return NextResponse.json({ candidatos, esEmpresa, pagina: page, total });
+    const cupo = cuenta ? await cupoDelMes(cuenta.empresaId) : null;
+    return NextResponse.json({ candidatos, esEmpresa, titular: !!cuenta?.titular, cupo, pagina: page, total });
   } catch (error) {
     console.error("[empresas/candidatos] Error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });

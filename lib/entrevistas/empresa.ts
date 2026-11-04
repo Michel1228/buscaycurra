@@ -24,10 +24,14 @@
  */
 import { randomBytes } from "node:crypto";
 import { getPool } from "@/lib/db";
+import { LIMITES_EMPRESA } from "@/lib/plan-limits";
 
 export const MAX_PREGUNTAS = 8;
 export const MAX_PUNTOS = 5;
 export const INVITACIONES_AL_DIA = 30;
+
+/** El día 1 de este mes, a las 00:00 de Madrid: ahí empieza el cupo de la empresa. */
+export const INICIO_DEL_MES = `(date_trunc('month', now() AT TIME ZONE 'Europe/Madrid') AT TIME ZONE 'Europe/Madrid')`;
 
 export interface Pregunta { texto: string; puntos: string[] }
 
@@ -179,10 +183,20 @@ export async function invitar(empresaId: string, candidatoId: string, entrevista
     "SELECT 1 FROM user_cvs WHERE user_id::text = $1 AND visible_empresas = true LIMIT 1", [candidatoId]
   );
   if (!visible.length) return { ok: false, error: "Este candidato no tiene su perfil visible para empresas.", status: 404 };
+  // Si ya estaba invitado se contesta antes de mirar los topes: volver a pulsar
+  // no gasta cupo ni le avisa otra vez, y con el cupo lleno no debe dar error.
+  const { rows: [previa] } = await pool.query<{ id: string }>(
+    "SELECT id FROM entrevista_invitacion WHERE empresa_id = $1 AND user_id = $2 AND entrevista_id = $3", [empresaId, candidatoId, e.id]
+  );
+  if (previa) return { ok: true, id: previa.id, nueva: false, empresa: e.empresa, puesto: e.puesto };
   const { rows: [hoy] } = await pool.query<{ n: number }>(
     "SELECT count(*)::int AS n FROM entrevista_invitacion WHERE empresa_id = $1 AND creado > now() - interval '1 day'", [empresaId]
   );
   if (hoy.n >= INVITACIONES_AL_DIA) return { ok: false, error: `Puedes invitar a ${INVITACIONES_AL_DIA} candidatos al día.`, status: 429 };
+  // El cupo es de la empresa: cuenta lo que invite cualquiera de su equipo.
+  if ((await invitacionesDelMes(empresaId)) >= LIMITES_EMPRESA.invitacionesMes) {
+    return { ok: false, error: `Ya has usado las ${LIMITES_EMPRESA.invitacionesMes} invitaciones de este mes. Se renuevan el día 1.`, status: 429 };
+  }
   const id = nuevoId();
   const { rows } = await pool.query<{ id: string; nueva: boolean }>(
     `INSERT INTO entrevista_invitacion (id, user_id, empresa_id, entrevista_id, empresa, puesto, preguntas)
@@ -192,6 +206,15 @@ export async function invitar(empresaId: string, candidatoId: string, entrevista
     [id, candidatoId, empresaId, e.id, e.empresa, e.puesto, JSON.stringify(e.preguntas)]
   );
   return { ok: true, id: rows[0].id, nueva: rows[0].nueva, empresa: e.empresa, puesto: e.puesto };
+}
+
+/** Invitaciones de la empresa desde el día 1 de este mes. Volver a invitar a quien ya lo está no suma. */
+export async function invitacionesDelMes(empresaId: string): Promise<number> {
+  await asegurarTablasEntrevistaEmpresa();
+  const { rows: [r] } = await getPool().query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM entrevista_invitacion WHERE empresa_id = $1 AND creado >= ${INICIO_DEL_MES}`, [empresaId]
+  );
+  return r.n;
 }
 
 const COLUMNAS = `id, user_id, empresa_id, empresa, puesto, preguntas, intentos, respuestas, enviada_en, marcas, nota, creado`;

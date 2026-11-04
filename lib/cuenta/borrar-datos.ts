@@ -82,6 +82,12 @@ export async function borrarDatosDeUsuario(
   await vps("vps.referrals", `DELETE FROM referrals WHERE referrer_id::text = $1 OR referred_id::text = $1`, [userId]);
   // Si quien se va es una empresa: sus invitaciones, con las respuestas que le mandaron.
   await vps("vps.entrevista_invitacion.empresa", `DELETE FROM entrevista_invitacion WHERE empresa_id = $1`, [userId]);
+  // 4 nov 2026 (lib/empresas/cuenta.ts): qué candidatos ha abierto una empresa y
+  // quién tiene acceso a ella. Sin columna user_id: se borra a mano, sea la
+  // empresa, el candidato abierto o la persona del equipo (por su correo).
+  await vps("vps.empresa_candidato_abierto", `DELETE FROM empresa_candidato_abierto WHERE empresa_id = $1 OR candidato_id = $1`, [userId]);
+  await vps("vps.empresa_miembro.empresa", `DELETE FROM empresa_miembro WHERE empresa_id = $1`, [userId]);
+  if (email) await vps("vps.empresa_miembro", `DELETE FROM empresa_miembro WHERE email = $1`, [email.toLowerCase()]);
   if (email) await vps("vps.correos_rebotados", `DELETE FROM correos_rebotados WHERE email = $1`, [email.toLowerCase()]);
   // La tabla "User" es del sistema de cuentas de antes de Supabase (abril-mayo
   // 2026): correo, nombre, teléfono y contraseña. Ningún código la usa, pero

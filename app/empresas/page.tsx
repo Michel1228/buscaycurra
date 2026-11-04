@@ -2,6 +2,12 @@ import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import { Target, Bot, MapPin, Banknote, Zap, RefreshCw, Star, Check, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { LIMITES_EMPRESA } from "@/lib/plan-limits";
+
+// Cuánto incluye el plan (4 nov 2026): cupo de candidatos al mes y personas
+// con acceso. Sale de lib/plan-limits.ts, lo mismo que aplica el servidor.
+const CANDIDATOS_MES = LIMITES_EMPRESA.candidatosMes;
+const PERSONAS = LIMITES_EMPRESA.usuarios;
 
 // Esta pagina no consulta la base de datos ni una sola vez: es una landing con
 // texto fijo. Estaba en force-dynamic, o sea que el servidor la renderizaba
@@ -47,12 +53,12 @@ const VENTAJAS: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   {
     Icon: Banknote,
     titulo: "Sin pagar por candidato",
-    desc: "Una cuota al mes, sin coste por oferta ni por contacto. Sin permanencia.",
+    desc: `Una cuota al mes, sin coste por oferta ni por contacto, para hasta ${PERSONAS} personas de tu empresa. Sin permanencia.`,
   },
   {
     Icon: Zap,
     titulo: "Contacto directo",
-    desc: "Con Plan Empresa ves nombre, email y teléfono de cada candidato. Sin intermediarios, sin plataforma de mensajería.",
+    desc: `Con Plan Empresa ves el nombre de cada candidato y abres el email, el teléfono y el CV de hasta ${CANDIDATOS_MES} al mes. Sin intermediarios, sin plataforma de mensajería.`,
   },
   {
     Icon: RefreshCw,
@@ -81,7 +87,11 @@ const FAQ_EMPRESAS = [
   },
   {
     q: "¿Qué datos de contacto tengo de cada candidato?",
-    a: "Con Plan Empresa ves nombre completo, email y teléfono de todos los candidatos que han activado 'visible para empresas'. Contacto directo sin intermediarios.",
+    a: `Con Plan Empresa ves el nombre completo de todos los candidatos que han activado «Visible para empresas», y abres el email, el teléfono y el CV completo de hasta ${CANDIDATOS_MES} al mes. Uno que ya has abierto sigue abierto y no vuelve a contar. Contacto directo sin intermediarios.`,
+  },
+  {
+    q: "¿Pueden usarlo varias personas de mi empresa?",
+    a: `Sí, hasta ${PERSONAS} contándote a ti, cada una con su propia cuenta: nadie tiene que pasarse la contraseña. Las añades por su correo en «Tu equipo». El cupo de candidatos del mes es de toda la empresa.`,
   },
   {
     q: "¿Puedo publicar ofertas también?",
@@ -224,7 +234,7 @@ export default function EmpresasLandingPage() {
         <section className="py-16 px-6">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Un precio. Todo incluido.</h2>
-            <p className="text-sm mb-10" style={{ color: "#64748b" }}>Sin sorpresas, sin coste por oferta, sin límite de candidatos</p>
+            <p className="text-sm mb-10" style={{ color: "#64748b" }}>Sin sorpresas y sin coste por oferta ni por candidato</p>
             <div className="rounded-2xl p-8" style={{ background: "#161922", border: "2px solid rgba(34,197,94,0.3)" }}>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="text-5xl font-black" style={{ color: "#22c55e" }}>49,99€</span>
@@ -234,8 +244,8 @@ export default function EmpresasLandingPage() {
               <div className="grid sm:grid-cols-2 gap-2 text-left mb-8">
                 {[
                   "Todos los candidatos visibles, con nombre",
-                  "Contacto directo (email + teléfono)",
-                  "CV completo de cada candidato",
+                  `Email, teléfono y CV completo de hasta ${CANDIDATOS_MES} al mes`,
+                  `Hasta ${PERSONAS} personas de tu empresa, cada una con su cuenta`,
                   "Búsqueda por ciudad y perfil",
                   "Mandarnos ofertas sin coste",
                   "Guzzi IA ilimitado",
@@ -291,8 +301,8 @@ export default function EmpresasLandingPage() {
             <div className="flex-1">
               <h2 className="text-lg font-bold mb-2" style={{ color: "#f59e0b" }}>¿Eres una ETT o consultora de RRHH?</h2>
               <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
-                Ves a todos los candidatos que han activado «Visible para empresas», con su contacto y su CV
-                completo, y los buscas por ciudad y perfil —{" "}
+                Ves a todos los candidatos que han activado «Visible para empresas», los buscas por ciudad y
+                perfil y abres el contacto y el CV completo de hasta {CANDIDATOS_MES} al mes —{" "}
                 <strong style={{ color: "#f1f5f9" }}>49,99€/mes, sin coste por candidato.</strong>
               </p>
             </div>

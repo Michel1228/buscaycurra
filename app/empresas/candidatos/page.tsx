@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { LIMITES_EMPRESA } from "@/lib/plan-limits";
 
 interface Candidato {
   id: string;
@@ -10,12 +11,16 @@ interface Candidato {
   ciudad: string;
   puesto: string;
   aptitudes: string[];
+  /** Solo de los que la empresa ya ha abierto (lib/empresas/cuenta.ts). */
   email: string | null;
   telefono: string | null;
+  abierto?: boolean;
   /** Cartas de recomendación confirmadas por quien las firmó. */
   referencias: number;
   updatedAt: string;
 }
+
+interface Cupo { usados: number; maximo: number }
 
 const SECTORES = [
   "Hostelería", "Construcción", "Logística", "Comercio", "Tecnología",
@@ -36,6 +41,7 @@ export default function CandidatosPage() {
   const [candidatos, setCandidatos] = useState<Candidato[]>([]);
   const [cargando, setCargando] = useState(true);
   const [esEmpresa, setEsEmpresa] = useState(false);
+  const [cupo, setCupo] = useState<Cupo | null>(null);
   // Sin sesión la API responde 401: no es que no haya candidatos, es que hay que entrar.
   const [necesitaEntrar, setNecesitaEntrar] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -62,9 +68,10 @@ export default function CandidatosPage() {
 
       const res = await fetch(`/api/empresas/candidatos?${params}`);
       setNecesitaEntrar(res.status === 401);
-      const data = await res.json() as { candidatos: Candidato[]; esEmpresa: boolean };
+      const data = await res.json() as { candidatos: Candidato[]; esEmpresa: boolean; cupo?: { candidatos: Cupo } | null };
       setCandidatos(data.candidatos || []);
       setEsEmpresa(data.esEmpresa || false);
+      setCupo(data.cupo?.candidatos ?? null);
       setPagina(p);
     } catch { /* silencioso */ }
     finally { setCargando(false); }
@@ -97,7 +104,8 @@ export default function CandidatosPage() {
           {esEmpresa && (
             <div className="flex items-center gap-3">
               <Link href="/empresas/entrevistas" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tus entrevistas</Link>
-              <span className="text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+              <Link href="/empresas/equipo" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tu equipo</Link>
+              <span className="hidden sm:inline text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
                 ✓ Plan Empresa activo
               </span>
             </div>
@@ -114,6 +122,12 @@ export default function CandidatosPage() {
             Profesionales buscando trabajo activamente en España. CVs optimizados con IA.
             {!esEmpresa && <> <Link href="/precios" style={{ color: "#22c55e" }}> Activa Plan Empresa</Link> para ver contacto completo.</>}
           </p>
+          {esEmpresa && cupo && (
+            <p className="text-xs -mt-3 mb-5" style={{ color: cupo.usados >= cupo.maximo ? "#f59e0b" : "#94a3b8" }}>
+              Este mes habéis abierto <strong className="tabular-nums">{cupo.usados} de {cupo.maximo}</strong> candidatos.
+              Los ya abiertos no vuelven a contar, y el cupo se renueva el día 1.
+            </p>
+          )}
 
           <div className="flex flex-wrap gap-3">
             <input
@@ -157,7 +171,7 @@ export default function CandidatosPage() {
             style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
             <div>
               <p className="text-sm font-semibold" style={{ color: "#22c55e" }}>Estás viendo perfiles anonimizados</p>
-              <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Con Plan Empresa (49,99€/mes) ves nombre completo, email, teléfono y el CV entero de cada candidato.</p>
+              <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Con Plan Empresa (49,99€/mes) ves el nombre de cada candidato y abres el email, el teléfono y el CV entero de hasta {LIMITES_EMPRESA.candidatosMes} al mes.</p>
             </div>
             <Link href="/precios"
               className="flex-shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
@@ -241,7 +255,9 @@ export default function CandidatosPage() {
                 )}
 
                 {/* Contacto / lock */}
-                {esEmpresa ? (
+                {/* Enlaces <a> y no <Link>: Next precarga los <Link>, y abrir un
+                    CV gasta cupo del mes. Así solo cuenta el que se abre. */}
+                {esEmpresa && c.abierto ? (
                   <div className="mt-auto space-y-1 pt-2" style={{ borderTop: "1px solid rgba(45,49,66,0.5)" }}>
                     {c.email && (
                       <a href={`mailto:${c.email}`} className="flex items-center gap-2 text-[11px] hover:opacity-80 transition"
@@ -257,10 +273,24 @@ export default function CandidatosPage() {
                     {!c.email && !c.telefono && (
                       <p className="text-[10px]" style={{ color: "#6b7280" }}>Sin contacto en CV</p>
                     )}
-                    <Link href={`/talento/${c.id}`} className="inline-block text-[11px] font-semibold pt-1 hover:opacity-80 transition"
+                    <a href={`/talento/${c.id}`} className="inline-block text-[11px] font-semibold pt-1 hover:opacity-80 transition"
                       style={{ color: "#22c55e" }}>
                       Ver CV completo →
-                    </Link>
+                    </a>
+                  </div>
+                ) : esEmpresa ? (
+                  <div className="mt-auto pt-2" style={{ borderTop: "1px solid rgba(45,49,66,0.5)" }}>
+                    {cupo && cupo.usados >= cupo.maximo ? (
+                      <p className="text-[10px]" style={{ color: "#f59e0b" }}>Cupo del mes completo: se renueva el día 1.</p>
+                    ) : (
+                      <>
+                        <a href={`/talento/${c.id}`} className="inline-block text-[11px] font-semibold hover:opacity-80 transition"
+                          style={{ color: "#22c55e" }}>
+                          Abrir contacto y CV →
+                        </a>
+                        <p className="text-[10px] mt-0.5" style={{ color: "#6b7280" }}>Cuenta como 1 de los {cupo?.maximo ?? LIMITES_EMPRESA.candidatosMes} de este mes.</p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="mt-auto pt-2" style={{ borderTop: "1px solid rgba(45,49,66,0.5)" }}>

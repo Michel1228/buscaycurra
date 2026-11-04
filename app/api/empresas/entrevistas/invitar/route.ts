@@ -7,8 +7,8 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getUserId } from "@/lib/auth-server";
-import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
+import { getUsuario } from "@/lib/auth-server";
+import { cuentaEmpresa } from "@/lib/empresas/cuenta";
 import { invitar } from "@/lib/entrevistas/empresa";
 
 export const dynamic = "force-dynamic";
@@ -16,14 +16,18 @@ export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(req: NextRequest) {
-  const empresaId = await getUserId(req);
-  if (!empresaId) return NextResponse.json({ error: "Entra con tu cuenta de empresa" }, { status: 401 });
-  if ((await getUserPlan(empresaId).catch(() => "free")) !== "empresa") {
+  const usuario = await getUsuario(req);
+  if (!usuario) return NextResponse.json({ error: "Entra con tu cuenta de empresa" }, { status: 401 });
+  // Plan Empresa propio o el de la empresa que le ha dado acceso: invita a nombre de la empresa.
+  const cuenta = await cuentaEmpresa(usuario).catch(() => null);
+  if (!cuenta) {
     return NextResponse.json({ error: "Esto es del Plan Empresa" }, { status: 402 });
   }
+  const empresaId = cuenta.empresaId;
   const body = (await req.json().catch(() => ({}))) as { candidatoId?: string; entrevistaId?: string };
   const candidatoId = String(body.candidatoId || "");
   if (!UUID.test(candidatoId) || !body.entrevistaId) return NextResponse.json({ error: "Falta el candidato o la entrevista" }, { status: 400 });
+  if (candidatoId === usuario.id) return NextResponse.json({ error: "No puedes invitarte a ti mismo." }, { status: 400 });
 
   try {
     const r = await invitar(empresaId, candidatoId, String(body.entrevistaId));

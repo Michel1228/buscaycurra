@@ -116,6 +116,25 @@ export const LIMITS: Record<PlanTier, PlanLimits> = {
   },
 };
 
+/**
+ * Lo que compra una empresa con el Plan Empresa (lib/empresas/cuenta.ts).
+ *
+ * POR QUÉ (4 nov 2026). Era una sola cuenta con una contraseña: cinco
+ * departamentos podían usarla a la vez y abrir todos los contactos que
+ * quisieran por 49,99 €/mes. Ahora cada persona entra con su cuenta y el cupo
+ * del mes es de la empresa, lo use quien lo use.
+ *
+ * NÚMEROS PROVISIONALES: Michel los fija cuando decida el precio de empresa.
+ */
+export const LIMITES_EMPRESA = {
+  /** Personas con acceso, contando a quien paga. */
+  usuarios: 3,
+  /** Candidatos distintos a los que abre contacto y CV cada mes; uno ya abierto no vuelve a contar. */
+  candidatosMes: 100,
+  /** Invitaciones «Me interesa» al mes (además del tope diario de lib/entrevistas/empresa.ts). */
+  invitacionesMes: 60,
+};
+
 /** Obtiene los límites para un plan. Si no se reconoce, devuelve free. */
 export function getPlanLimits(plan?: string | null): PlanLimits {
   if (!plan) return LIMITS.free;

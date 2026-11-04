@@ -6,18 +6,20 @@
  * (lib/entrevistas/empresa.ts). Solo con Plan Empresa.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
-import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
+import { getUsuario } from "@/lib/auth-server";
+import { cuentaEmpresa } from "@/lib/empresas/cuenta";
 import { guardarMarcas, invitacionPorId, notaDeMarcas } from "@/lib/entrevistas/empresa";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const empresaId = await getUserId(req);
-  if (!empresaId) return NextResponse.json({ error: "Entra con tu cuenta de empresa" }, { status: 401 });
-  if ((await getUserPlan(empresaId).catch(() => "free")) !== "empresa") {
+  const usuario = await getUsuario(req);
+  if (!usuario) return NextResponse.json({ error: "Entra con tu cuenta de empresa" }, { status: 401 });
+  const cuenta = await cuentaEmpresa(usuario).catch(() => null);
+  if (!cuenta) {
     return NextResponse.json({ error: "Esto es del Plan Empresa" }, { status: 402 });
   }
+  const empresaId = cuenta.empresaId;
   const body = (await req.json().catch(() => ({}))) as { invitacionId?: string; marcas?: unknown };
   try {
     const inv = await invitacionPorId(String(body.invitacionId || ""));

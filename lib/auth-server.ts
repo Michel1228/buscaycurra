@@ -10,6 +10,8 @@ import { createServerClient } from "@supabase/ssr";
 export interface AuthUser {
   id: string;
   email: string;
+  /** Si ha confirmado su correo: sin eso, el correo no prueba quién es. */
+  confirmado?: boolean;
 }
 
 export async function getUserFromToken(token: string): Promise<AuthUser | null> {
@@ -24,9 +26,9 @@ export async function getUserFromToken(token: string): Promise<AuthUser | null> 
       }
     );
     if (!res.ok) return null;
-    const data = (await res.json()) as { id?: string; email?: string };
+    const data = (await res.json()) as { id?: string; email?: string; email_confirmed_at?: string | null };
     if (!data?.id) return null;
-    return { id: data.id, email: data.email || "" };
+    return { id: data.id, email: data.email || "", confirmado: !!data.email_confirmed_at };
   } catch {
     return null;
   }
@@ -44,6 +46,14 @@ export function extractToken(authHeader: string | null): string | null {
  * Retorna null si no se puede autenticar al usuario.
  */
 export async function getUserId(request: NextRequest): Promise<string | null> {
+  return (await getUsuario(request))?.id ?? null;
+}
+
+/**
+ * Como getUserId, pero con el correo y si está confirmado: hace falta para
+ * saber de qué empresa es alguien (lib/empresas/cuenta.ts).
+ */
+export async function getUsuario(request: NextRequest): Promise<AuthUser | null> {
   // 1. Intentar autenticación vía cookies (cliente web)
   try {
     const supabase = createServerClient(
@@ -62,7 +72,7 @@ export async function getUserId(request: NextRequest): Promise<string | null> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user?.id) return user.id;
+    if (user?.id) return { id: user.id, email: user.email || "", confirmado: !!user.email_confirmed_at };
   } catch {
     // Cookies no disponibles, continuar con fallback
   }
@@ -72,7 +82,7 @@ export async function getUserId(request: NextRequest): Promise<string | null> {
   const token = extractToken(authHeader);
   if (token) {
     const authUser = await getUserFromToken(token);
-    if (authUser?.id) return authUser.id;
+    if (authUser?.id) return authUser;
   }
 
   return null;

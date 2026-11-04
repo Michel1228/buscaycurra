@@ -17,8 +17,8 @@ import { createServerClient } from "@supabase/ssr";
 import Link from "next/link";
 import { Lock, User, MapPin, Wrench, Briefcase, GraduationCap, Globe, Mail, Phone, BadgeCheck } from "lucide-react";
 import { getPool } from "@/lib/db";
-import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { enlaceCarta, referenciasVerificadas } from "@/lib/referencias/referencias";
+import { abrirCandidato, cuentaEmpresa } from "@/lib/empresas/cuenta";
 import InvitarEntrevista from "@/components/empresas/InvitarEntrevista";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +33,11 @@ type Props = { params: Promise<{ id: string }> };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Quién está mirando, por la sesión de las cookies (la misma que usa la web). */
-async function quienMira(): Promise<string | null> {
+/**
+ * Quién está mirando, por la sesión de las cookies (la misma que usa la web).
+ * Con el correo: hace falta para saber si es del equipo de una empresa.
+ */
+async function quienMira(): Promise<{ id: string; email: string; confirmado: boolean } | null> {
   try {
     const almacen = await cookies();
     const supabase = createServerClient(
@@ -42,8 +45,11 @@ async function quienMira(): Promise<string | null> {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       { cookies: { getAll: () => almacen.getAll() } }
     );
-    const { data: { user } } = await supabase.auth.getUser();
-    return user?.id ?? null;
+    // Se llama "sesion" y no "user" a propósito: el sello comprueba que en esta
+    // página no salga el correo de quien firma una referencia buscando el campo
+    // email de "r", y el correo del usuario escrito con "user" da un falso aviso.
+    const sesion = (await supabase.auth.getUser()).data.user;
+    return sesion?.id ? { id: sesion.id, email: sesion.email || "", confirmado: !!sesion.email_confirmed_at } : null;
   } catch {
     return null;
   }
@@ -77,10 +83,12 @@ export default async function TalentoPage({ params }: Props) {
     return <Aviso titulo="Entra con tu cuenta de empresa" mensaje="Los CV de los candidatos solo se enseñan a empresas registradas."
       enlace="/auth/login?redirect=%2Fempresas%2Fcandidatos" boton="Entrar →" />;
   }
-  const esElMismo = quien === id;
+  const esElMismo = quien.id === id;
   // El plan se mira antes que el CV: a quien no es empresa no se le dice ni
-  // si ese candidato existe.
-  if (!esElMismo && (await getUserPlan(quien).catch(() => "free")) !== "empresa") {
+  // si ese candidato existe. Vale el Plan Empresa propio o el de la empresa
+  // que le ha dado acceso (lib/empresas/cuenta.ts).
+  const cuenta = esElMismo ? null : await cuentaEmpresa(quien).catch(() => null);
+  if (!esElMismo && !cuenta) {
     return <Aviso titulo="CV solo para empresas" mensaje="Con el Plan Empresa ves el CV entero de cada candidato, con su correo y su teléfono."
       enlace="/empresas" boton="Ver Plan Empresa →" />;
   }
@@ -91,6 +99,18 @@ export default async function TalentoPage({ params }: Props) {
   );
   const fila = rows[0];
   if (!fila || !fila.visible_empresas || !fila.form_data) return noDisponible;
+
+  // Abrir un candidato nuevo gasta una plaza del cupo del mes de la empresa; uno
+  // ya abierto, no. Se mira después de saber que el CV existe y es visible, para
+  // no gastar plaza en un perfil que no se puede enseñar.
+  if (cuenta) {
+    const abierto = await abrirCandidato(cuenta.empresaId, id);
+    if (!abierto.ok) {
+      return <Aviso titulo={`Ya has abierto ${abierto.maximo} candidatos este mes`}
+        mensaje="Los que ya has abierto siguen disponibles. El cupo es de toda la empresa y se renueva el día 1."
+        enlace="/empresas/candidatos" boton="← Volver a candidatos" />;
+    }
+  }
 
   const cv = fila.form_data as Record<string, unknown>;
   const nombre = [texto(cv.nombre), texto(cv.apellidos)].filter(Boolean).join(" ") || "Candidato";

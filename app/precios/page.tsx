@@ -13,7 +13,7 @@ import { isNativeIOS } from "@/lib/utils/platform";
 // busquedas por camara" cuando son 2, y "2 consultas a Guzzi (total)" cuando
 // son 15 diarias. Dos sitios escribiendo lo mismo por separado siempre acaban
 // diciendo cosas distintas.
-import { LIMITS } from "@/lib/plan-limits";
+import { LIMITS, LIMITES_EMPRESA } from "@/lib/plan-limits";
 import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
 import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 import { Bot, Zap, Building2, Sprout, Egg, Star, CreditCard, Check, X, Apple } from "lucide-react";
@@ -86,7 +86,9 @@ const PLANES = [
     desc: "Para empresas y ETT que buscan candidatos",
     items: [
       { t: "Ver candidatos con nombre, email y teléfono", ok: true, highlight: true },
-      { t: "CV completo de cada candidato", ok: true, highlight: false },
+      // 4 nov 2026: el contacto se abre con cupo y cada persona entra con su cuenta (lib/empresas/cuenta.ts).
+      { t: `Contacto y CV completo de hasta ${LIMITES_EMPRESA.candidatosMes} candidatos al mes`, ok: true, highlight: false },
+      { t: `Hasta ${LIMITES_EMPRESA.usuarios} personas de tu empresa, cada una con su cuenta`, ok: true, highlight: false },
       { t: "Buscar candidatos por ciudad y perfil", ok: true, highlight: false },
       { t: "Mandarnos ofertas sin coste", ok: true, highlight: false },
       { t: "Guzzi IA ilimitado", ok: true, highlight: false },

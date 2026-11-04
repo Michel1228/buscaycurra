@@ -7,9 +7,9 @@
  * DELETE ?id=                               → quitarla (las invitaciones ya hechas guardan su copia)
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUsuario } from "@/lib/auth-server";
 import { getPool } from "@/lib/db";
-import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
+import { cuentaEmpresa } from "@/lib/empresas/cuenta";
 import { entrevistasDe, guardarEntrevista, invitacionesDeEmpresa, quitarEntrevista, validarPreguntas } from "@/lib/entrevistas/empresa";
 import { asegurarTablasReferencias } from "@/lib/referencias/referencias";
 
@@ -17,11 +17,13 @@ export const dynamic = "force-dynamic";
 
 const error = (mensaje: string, status = 400) => NextResponse.json({ error: mensaje }, { status });
 
+/** La cuenta de la empresa: la de quien paga, también cuando entra alguien de su equipo. */
 async function empresa(req: NextRequest): Promise<string | NextResponse> {
-  const id = await getUserId(req);
-  if (!id) return error("Entra con tu cuenta de empresa", 401);
-  if ((await getUserPlan(id).catch(() => "free")) !== "empresa") return error("Esto es del Plan Empresa", 402);
-  return id;
+  const usuario = await getUsuario(req);
+  if (!usuario) return error("Entra con tu cuenta de empresa", 401);
+  const cuenta = await cuentaEmpresa(usuario).catch(() => null);
+  if (!cuenta) return error("Esto es del Plan Empresa", 402);
+  return cuenta.empresaId;
 }
 
 export async function GET(req: NextRequest) {
