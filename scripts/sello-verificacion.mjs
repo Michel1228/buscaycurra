@@ -3659,15 +3659,25 @@ test("el centinela agrupa Careerjet y descarta nombres de fuente retirados", () 
   return c.includes("Careerjet (EURES_ciudad)") && c.includes("NOT LIKE 'careerjet!_%'");
 });
 // 4 nov 2026: con JobListing por encima de 4,5 millones de filas, recorrerla
-// tardaba unos 20 s y el pool corta a los 15: cuatro controles decian «no se
-// pudo comprobar» cada mañana. Y el de la bandera no podia fallar desde
-// septiembre: LIKE 'ADZUNA[_]%' es de SQL Server y en Postgres no casa con nada.
-test("el centinela tiene tiempo para recorrer las ofertas y el control de la bandera puede fallar", () => {
+// tardaba de 20 s a más de 2 minutos y el pool corta a los 15: cuatro controles
+// decian «no se pudo comprobar» cada mañana. Ahora los paises van por indice
+// (paran en 500), bandera y caducidad por muestra, y solo las fuentes recorren
+// la tabla, lanzadas al empezar. El cron espera hasta 10 minutos. Y el de la
+// bandera no podia fallar desde septiembre: LIKE 'ADZUNA[_]%' es de SQL Server
+// y en Postgres no casa con nada.
+test("el centinela mira las ofertas sin cortarse y el control de la bandera puede fallar", () => {
   const c = leerFuente("app/api/admin/centinela/route.ts");
-  const usos = (c.match(/await consultaLarga\(/g) || []).length;
-  return c.includes("SET LOCAL statement_timeout = 60000") && usos >= 4
+  const sh = leerFuente("scripts/vps/centinela.sh");
+  const fuentesAlEmpezar = c.indexOf("const fuentesGrandes = consultaLarga(") > 0
+    && c.indexOf("const fuentesGrandes = consultaLarga(") < c.indexOf("// ── 1. Ningún país")
+    && c.includes("await fuentesGrandes");
+  return fuentesAlEmpezar
+    && c.includes("SET LOCAL statement_timeout = ${ms}")
+    && c.includes(`"isActive" = true AND lower(country) = c LIMIT \${UMBRAL}`)
+    && (c.match(/TABLESAMPLE SYSTEM/g) || []).length >= 3
     && !c.includes(`"sourceName" LIKE 'ADZUNA[_]%'`)
-    && c.includes(`"isActive" AND "sourceName" LIKE 'ADZUNA!_%' ESCAPE '!'`);
+    && c.includes(`"isActive" AND "sourceName" LIKE 'ADZUNA!_%' ESCAPE '!'`)
+    && sh.includes("--max-time 600");
 });
 
 // ── TOCAR UNA NOTIFICACION HACE ALGO AL MOMENTO ───────────────────────

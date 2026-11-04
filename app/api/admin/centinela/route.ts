@@ -63,19 +63,21 @@ type Resultado = {
 };
 
 /**
- * Para las comprobaciones que recorren JobListing entera.
+ * Para las consultas grandes sobre JobListing: la 2, que la recorre entera, y
+ * las muestras de la 3 y la 4.
  *
- * El 3 nov 2026 la tabla pasaba de 4,5 millones de filas y recorrerla tardaba
- * unos 20 s. El pool corta a los 15 s, y cuatro controles salían «no se pudo
- * comprobar» sin que pasara nada malo en los datos. SET LOCAL sube el límite
- * solo para esta consulta, como en /api/admin/metricas: es una lectura, una
- * vez al día.
+ * El 3 nov 2026 la tabla pasaba de 4,5 millones de filas. Recorrerla tardaba
+ * unos 20 s con el servidor tranquilo y más de 2 minutos con el robo de CPU
+ * alto, y el pool corta a los 15 s: cuatro controles salían «no se pudo
+ * comprobar» sin que pasara nada malo en los datos. Ahora solo la 2 la recorre;
+ * la 1 usa un índice y la 3 y la 4, una muestra. SET LOCAL sube el límite solo
+ * para esa consulta, como en /api/admin/metricas: es una lectura, una vez al día.
  */
-async function consultaLarga(sql: string, params?: unknown[]) {
+async function consultaLarga(sql: string, params: unknown[] | undefined, ms: number) {
   const cliente = await getPool().connect();
   try {
     await cliente.query("BEGIN");
-    await cliente.query("SET LOCAL statement_timeout = 60000");
+    await cliente.query(`SET LOCAL statement_timeout = ${ms}`);
     const res = await cliente.query(sql, params);
     await cliente.query("COMMIT");
     return res;
@@ -98,33 +100,53 @@ export async function GET(req: NextRequest) {
   const anota = (nombre: string, bien: boolean, detalle: string, nacioDe: string) =>
     r.push({ nombre, bien, detalle, nacioDe });
 
+  // La 2 es la única que recorre la tabla entera (no hay índice por fuente y
+  // fecha). Se lanza ya, para que corra mientras se hace lo demás, y se recoge
+  // en su sitio. Con el robo de CPU alto tardó más de 2 minutos el 4 nov 2026.
+  const fuentesGrandes = consultaLarga(
+    `WITH f AS (
+       SELECT CASE WHEN "sourceName" LIKE 'EURES!_%' ESCAPE '!'
+                   THEN 'Careerjet (EURES_ciudad)' ELSE "sourceName" END AS fuente,
+              "createdAt", "isActive"
+         FROM "JobListing"
+        WHERE "sourceName" NOT LIKE 'careerjet!_%' ESCAPE '!'
+     )
+     SELECT fuente,
+            (now()::date - max("createdAt")::date)::int AS dias_callada,
+            count(*) FILTER (WHERE "isActive")::int AS vivas
+       FROM f
+      GROUP BY 1 HAVING count(*) FILTER (WHERE "isActive") > 5000
+      ORDER BY 2 DESC`,
+    undefined,
+    300000
+  );
+  fuentesGrandes.catch(() => { /* se recoge en la comprobación 2 */ });
+
   // ── 1. Ningún país de la aplicación está vacío ─────────────────────────────
   // Japón llegó a tener 19 ofertas porque no estaba en ningún calendario. Quien
   // lo elegía abría la aplicación y no había nada, sin ningún aviso.
   try {
     const codigos = LISTA_PAISES.map(p => p.codigo.toLowerCase());
-    // Sin lower() en la columna. `country` ya se guarda en minusculas, y
-    // envolverla en una funcion impide usar el indice: la primera vez que corrio
-    // esto, la consulta murio por statement timeout recorriendo 2,1 millones de
-    // filas. Un centinela que no puede mirar no es un aprobado, asi que se
-    // apunta como fallo — pero mejor que pueda mirar.
-    const { rows } = await consultaLarga(
-      `SELECT country AS pais, count(*)::int AS n
-         FROM "JobListing" WHERE "isActive" AND country = ANY($1::text[])
-        GROUP BY 1`,
+    const UMBRAL = 500;
+    // No hace falta contar las 3,2 millones de vivas: basta saber si cada país
+    // llega a 500. Cada subconsulta usa el índice parcial de vivas por país
+    // (idx_joblisting_country_lower_vivas, por eso `lower(country)` y
+    // `"isActive" = true` tal cual) y para en la 500. Contarlas todas tardaba
+    // más de un minuto el 4 nov 2026; así, 3 s con el servidor cargado.
+    const { rows } = await pool.query(
+      `SELECT c AS pais,
+              (SELECT count(*) FROM (SELECT 1 FROM "JobListing"
+                                      WHERE "isActive" = true AND lower(country) = c LIMIT ${UMBRAL}) t)::int AS n
+         FROM unnest($1::text[]) AS c`,
       [codigos]
     );
-    const porPais = new Map(rows.map((x: { pais: string; n: number }) => [x.pais, x.n]));
-    const UMBRAL = 500;
-    const flacos = codigos
-      .map(c => ({ c, n: porPais.get(c) ?? 0 }))
-      .filter(x => x.n < UMBRAL);
+    const flacos = rows.filter((x: { n: number }) => x.n < UMBRAL);
     anota(
       "ningun pais de la app esta vacio",
       flacos.length === 0,
       flacos.length
-        ? `por debajo de ${UMBRAL}: ${flacos.map(x => `${x.c}=${x.n}`).join(", ")}`
-        : `los ${codigos.length} paises pasan de ${UMBRAL} ofertas`,
+        ? `por debajo de ${UMBRAL}: ${flacos.map((x: { pais: string; n: number }) => `${x.pais}=${x.n}`).join(", ")}`
+        : `los ${codigos.length} paises llegan a ${UMBRAL} ofertas`,
       "Japon tenia 19 ofertas: no estaba en ningun calendario"
     );
   } catch (e) {
@@ -153,21 +175,8 @@ export async function GET(req: NextRequest) {
     //
     // Se usa LIKE y no expresiones regulares: la consulta recorre la tabla
     // entera y con el VPS al 85% de robo de CPU conviene la comparacion barata.
-    const { rows } = await consultaLarga(
-      `WITH f AS (
-         SELECT CASE WHEN "sourceName" LIKE 'EURES!_%' ESCAPE '!'
-                     THEN 'Careerjet (EURES_ciudad)' ELSE "sourceName" END AS fuente,
-                "createdAt", "isActive"
-           FROM "JobListing"
-          WHERE "sourceName" NOT LIKE 'careerjet!_%' ESCAPE '!'
-       )
-       SELECT fuente,
-              (now()::date - max("createdAt")::date)::int AS dias_callada,
-              count(*) FILTER (WHERE "isActive")::int AS vivas
-         FROM f
-        GROUP BY 1 HAVING count(*) FILTER (WHERE "isActive") > 5000
-        ORDER BY 2 DESC`
-    );
+    // La consulta está arriba (fuentesGrandes): se lanzó al empezar.
+    const { rows } = await fuentesGrandes;
     const mudas = rows.filter((x: { dias_callada: number }) => x.dias_callada > 7);
     anota(
       "las fuentes grandes siguen trayendo ofertas",
@@ -207,22 +216,29 @@ export async function GET(req: NextRequest) {
   // Postgres los corchetes no son especiales, no casaba con ninguna fuente y el
   // control salía bien siempre. Con el patrón bueno había 1.336 descuadradas:
   // 1.178 de Australia marcadas como de EE. UU., 142 de España como suecas y
-  // 16 de Francia como de EE. UU.
+  // 16 de Francia como de EE. UU. Se corrigieron ese día.
+  //
+  // Sobre una MUESTRA del 2 %, como la 5: recorrer la tabla entera pasaba de
+  // un minuto con el servidor cargado. Un fallo como los de verdad (miles de
+  // ofertas de golpe) deja decenas en la muestra; uno de una docena puede no
+  // verse, y no es lo que este control busca.
   try {
     const { rows } = await consultaLarga(
       `SELECT "sourceName" AS fuente, country, count(*)::int AS n
-         FROM "JobListing"
+         FROM "JobListing" TABLESAMPLE SYSTEM (2)
         WHERE "isActive" AND "sourceName" LIKE 'ADZUNA!_%' ESCAPE '!'
           AND lower(country) <> lower(right("sourceName", 2))
-        GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 5`
+        GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 5`,
+      undefined,
+      60000
     );
     const total = rows.reduce((s: number, x: { n: number }) => s + x.n, 0);
     anota(
       "la bandera de la oferta coincide con su fuente",
       total === 0,
       total === 0
-        ? "ninguna oferta de Adzuna lleva un pais distinto al de su fuente"
-        : `${total} descuadradas: ${rows.map((x: { fuente: string; country: string; n: number }) => `${x.fuente}→${x.country} (${x.n})`).join(", ")}`,
+        ? "en una muestra del 2 % de las vivas, ninguna oferta de Adzuna lleva un pais distinto al de su fuente"
+        : `${total} descuadradas en una muestra del 2 % (unas ${total * 50} en total): ${rows.map((x: { fuente: string; country: string; n: number }) => `${x.fuente}→${x.country} (${x.n})`).join(", ")}`,
       "6.820 ofertas de A Coruña y Toledo estaban guardadas como suecas"
     );
   } catch (e) {
@@ -231,17 +247,21 @@ export async function GET(req: NextRequest) {
 
   // ── 4. Las ofertas no se quedan eternas ────────────────────────────────────
   // Ninguna oferta caducaba nunca: llegó a haber un 7,1% con más de dos meses.
+  // Es un porcentaje: con una muestra del 1 % (unas 35.000 vivas) sobra para
+  // saber si ronda el 0,2 % de hoy o se acerca al 3 %.
   try {
     const { rows } = await consultaLarga(
       `SELECT round(100.0 * count(*) FILTER (WHERE "scrapedAt" < now() - interval '60 days')
                     / greatest(count(*), 1), 2)::float AS pct
-         FROM "JobListing" WHERE "isActive"`
+         FROM "JobListing" TABLESAMPLE SYSTEM (1) WHERE "isActive"`,
+      undefined,
+      60000
     );
     const pct = rows[0]?.pct ?? 0;
     anota(
       "las ofertas caducan",
       pct < 3,
-      `${pct}% de las vivas tienen mas de 60 dias (limite 3%)`,
+      `${pct}% de las vivas tienen mas de 60 dias, en una muestra del 1 % (limite 3%)`,
       "las ofertas no caducaban nunca: se llego al 7,1%"
     );
   } catch (e) {
