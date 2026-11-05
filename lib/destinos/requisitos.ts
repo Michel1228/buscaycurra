@@ -653,6 +653,30 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y muchas ofertas de Costa Rica piden inglés: si no lo hablas, filtra por las que no lo pidan antes de mandar el CV.",
   },
+  // Uruguay (5 nov 2026). Fuentes: Ley 19.254 (residencia permanente para
+  // nacionales de los Estados Parte y Asociados del Mercosur, gratis, la
+  // resuelve Cancillería en 30 días hábiles; al iniciarla se da una cédula
+  // provisoria), la guía «Tipos de residencia» de Cancillería (residencia
+  // temporaria por categorías, como profesional contratado con certificación
+  // de la empresa; residencia legal definitiva con medios de vida) y Voz de
+  // América (los venezolanos también se acogen).
+  {
+    codigo: "UY",
+    nombre: "Uruguay",
+    bandera: "🇺🇾",
+    autoridad: { nombre: "Ministerio de Relaciones Exteriores — Residencias", url: "https://www.gub.uy/ministerio-relaciones-exteriores/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Uruguay. Con pasaporte español entras sin visa como turista.",
+      "Para quedarte hay residencia temporaria por categorías (por ejemplo, profesional contratado, con un certificado de la empresa con tu actividad, sueldo y duración) o la residencia legal definitiva, demostrando medios de vida.",
+    ],
+    siNoEresDeLaUE: [
+      "Si eres de Argentina, Brasil, Paraguay, Bolivia, Chile, Colombia, Ecuador, Perú o Venezuela, tienes la residencia permanente por la Ley 19.254: gratis, la pides en Uruguay o en un consulado, Cancillería tiene 30 días hábiles para resolver y al empezar te dan una cédula provisoria.",
+      "Si no, la residencia temporaria por categorías o la residencia legal definitiva, como desde la UE.",
+    ],
+    ojoCon:
+      "Para alquilar, el Estado ofrece una garantía (Contaduría General de la Nación y Ministerio de Vivienda), y otra para jóvenes de 18 a 29 años. Infórmate antes de pagar un seguro de fianza.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

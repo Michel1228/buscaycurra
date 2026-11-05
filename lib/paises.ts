@@ -766,6 +766,34 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["servicio al cliente", "bodega", "vendedor", "chofer", "operario"],
     slug: "costa-rica",
   },
+
+  // Uruguay entra el 5 nov 2026, por el barrido de Careerjet (2.147 ofertas).
+  UY: {
+    codigo: "UY",
+    nombre: "Uruguay",
+    nombreLocal: "Uruguay",
+    moneda: "UYU",
+    simboloMoneda: "$U",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇺🇾",
+    // Salario mínimo nacional desde el 1 jul 2026: $25.383 al mes (Decreto
+    // 64/2025 del MTSS: $24.572 de enero a junio y +3,3 % en julio).
+    salarioMinimo: 25383,
+    // Remuneración media mensual de los trabajadores dependientes en 2025:
+    // $56.920, a precios de diciembre de 2025 (BPS, Boletín Estadístico 2026).
+    salarioMedio: 56920,
+    // El Banco Central del Uruguay publica el euro: 45,12 pesos, 4 nov 2026.
+    tasaCambioEUR: 45.12,
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    ciudades: ["Montevideo", "Canelones", "Maldonado", "Punta del Este", "Salto", "Paysandú"],
+    // Las que más ofertas tienen en Careerjet Uruguay el 5 nov 2026: atención
+    // al cliente 317, limpieza 252, depósito 177, administrativo 168 y
+    // vendedor 157.
+    keywordsLaborales: ["atención al cliente", "limpieza", "depósito", "administrativo", "vendedor"],
+    slug: "uruguay",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -805,6 +833,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.EC,  // Ecuador — 513 USD/mes (~455 €)
   PAISES.GT,  // Guatemala — 2.713 GTQ/mes (~315 €)
   PAISES.CR,  // Costa Rica — 723.135 CRC/mes (~1.418 €)
+  PAISES.UY,  // Uruguay — 56.920 UYU/mes (~1.261 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

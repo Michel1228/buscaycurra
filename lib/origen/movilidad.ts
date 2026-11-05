@@ -135,6 +135,13 @@ const MERCOSUR_EN_ARGENTINA = new Set(["UY", "BR", "PY", "BO", "CL", "PE", "EC",
 const MERCOSUR_EN_ECUADOR = new Set(["AR", "BR", "PY", "UY", "BO", "CL", "PE", "CO"]);
 const ANDINOS_EN_ECUADOR = new Set(["CO", "PE", "BO"]);
 
+/**
+ * Uruguay: residencia permanente por la Ley 19.254 para nacionales de los
+ * Estados Parte y Asociados del Mercosur (también Venezuela, según Voz de
+ * América), gratis y resuelta en 30 días hábiles.
+ */
+const MERCOSUR_EN_URUGUAY = new Set(["AR", "BR", "PY", "BO", "CL", "CO", "EC", "PE", "VE"]);
+
 const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   MX: {
     titulo: "Instituto Nacional de Migración — Gobierno de México",
@@ -171,6 +178,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   CR: {
     titulo: "Dirección General de Migración y Extranjería — Costa Rica",
     url: "https://www.migracion.go.cr/",
+  },
+  UY: {
+    titulo: "Residencias — Ministerio de Relaciones Exteriores del Uruguay",
+    url: "https://www.gub.uy/ministerio-relaciones-exteriores/",
   },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
@@ -315,6 +326,17 @@ export function movilidadDe(origen: string | null | undefined, destino: string):
         ? "Con tu nacionalidad puedes pedir en Ecuador la residencia temporal del Estatuto Migratorio Andino: dos años, sin oferta de trabajo, y solo pagas los 50 US$ de la solicitud."
         : "Con tu nacionalidad puedes pedir en Ecuador la residencia temporal Mercosur: dos años, sin oferta de trabajo, y con ella trabajar.",
       enlaceOficial: OFICIAL_POR_DESTINO.EC,
+    };
+  }
+
+  // Uruguay: residencia permanente directa por la Ley 19.254.
+  if (d === "UY" && MERCOSUR_EN_URUGUAY.has(o)) {
+    return {
+      regimen: "acuerdo_regional",
+      titulo: "Tienes la residencia permanente del Mercosur",
+      explicacion:
+        "Con tu nacionalidad puedes pedir en Uruguay la residencia permanente (Ley 19.254), sin oferta de trabajo y gratis. Cancillería tiene 30 días hábiles para resolver, y al empezar el trámite te dan una cédula provisoria.",
+      enlaceOficial: OFICIAL_POR_DESTINO.UY,
     };
   }
 

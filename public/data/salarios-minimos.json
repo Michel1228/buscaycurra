@@ -181,6 +181,12 @@
       "moneda": "CRC",
       "nota": "Salario mínimo 2026 del trabajador en ocupación no calificada genérico (Decreto Ejecutivo 45303-MTSS). Cada ocupación tiene el suyo; el doméstico es más bajo.",
       "fuente": "Fuente oficial nacional"
+    },
+    "UY": {
+      "salarioMinimo": 25383,
+      "moneda": "UYU",
+      "nota": "Salario mínimo nacional desde el 1 jul 2026 (Decreto 64/2025 del MTSS). De enero a junio era de $24.572.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

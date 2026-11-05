@@ -1336,6 +1336,43 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── URUGUAY (5 nov 2026) ─────────────────────────────────────────────────
+  // Fuentes: Ley 19.254 y la guía «Tipos de residencia» de Cancillería; gub.uy
+  // (Garantía de alquiler del Ministerio de Vivienda con la Contaduría General
+  // de la Nación, y la de jóvenes de 18 a 29 años). Sin media oficial de
+  // precios, no se pone.
+  UY: {
+    codigo: "UY",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Uruguay no tiene una visa de au pair: cuidar niños en una casa pide la misma residencia que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Gallito", url: "https://www.gallito.com.uy/inmuebles/alquiler", descripcion: "El portal de anuncios de toda la vida en Uruguay, con alquileres en todo el país." },
+        { nombre: "InfoCasas", url: "https://www.infocasas.com.uy/alquiler", descripcion: "Alquileres de inmobiliarias y particulares." },
+        { nombre: "Mercado Libre Inmuebles", url: "https://listado.mercadolibre.com.uy/inmuebles/alquiler", descripcion: "Muchos anuncios de particulares." },
+      ],
+      consejo: "Para alquilar piden una garantía. El Estado da una (Garantía de alquiler del Ministerio de Vivienda con la Contaduría General de la Nación): se paga una comisión mensual del 3 % del alquiler. Si tienes de 18 a 29 años y estudias o trabajas, hay una garantía para jóvenes.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Con nacionalidad de un país del Mercosur o asociado, residencia permanente gratis por la Ley 19.254. Desde España o el resto de la UE, residencia temporaria por categorías (por ejemplo, profesional contratado) o legal definitiva con medios de vida.",
+      enlaceOficial: "https://www.gub.uy/ministerio-relaciones-exteriores/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Residencia", descripcion: "Por la Ley 19.254 si eres del Mercosur o asociado (gratis, 30 días hábiles); si no, temporaria o legal definitiva.", tiempoObtener: "Al llegar o desde el consulado", obligatorio: true, enlaceOficial: "https://www.gub.uy/ministerio-relaciones-exteriores/" },
+        { nombre: "Cédula de identidad", descripcion: "Al iniciar la residencia te dan una cédula provisoria; la definitiva llega con la residencia.", tiempoObtener: "Desde que empiezas el trámite", obligatorio: true },
+        { nombre: "BPS y FONASA", descripcion: "Con contrato, la empresa te da de alta en el Banco de Previsión Social, que incluye la salud por el FONASA.", tiempoObtener: "Al empezar a trabajar", obligatorio: true },
+        { nombre: "Garantía de alquiler", descripcion: "La del Estado (Contaduría General de la Nación) o, de 18 a 29 años, la de jóvenes.", tiempoObtener: "Antes de firmar el alquiler", obligatorio: false, enlaceOficial: "https://www.gub.uy/tramites/garantia-alquiler" },
+      ],
+      consejo: "El orden: residencia (y cédula provisoria) → contrato, BPS y FONASA → garantía y alquiler.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

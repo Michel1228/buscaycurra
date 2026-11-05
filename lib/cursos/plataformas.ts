@@ -170,6 +170,25 @@ export const PLATAFORMAS: PlataformaFormacion[] = [
     actualizado: "2026-11",
   },
   {
+    id: "inefop-uruguay",
+    nombre: "INEFOP (Instituto Nacional de Empleo y Formación Profesional)",
+    resumen:
+      "Cursos gratuitos para quien vive en Uruguay, trabaje o no: idiomas, oficios y habilidades digitales, por convocatorias.",
+    url: "https://www.inefop.org.uy/",
+    alcance: { tipo: "paises", codigos: ["UY"] },
+    idiomas: ["Español"],
+    temas: ["idiomas", "inglés", "portugués", "oficios", "habilidades digitales"],
+    certificado: "no_consta",
+    requisitos: "Vivir en Uruguay y ser mayor de edad.",
+    aviso:
+      "Las inscripciones se abren por convocatorias y se cierran al llenarse las plazas: mira las abiertas en su portal.",
+    fuentes: [
+      { titulo: "INEFOP promueve el acceso de personas, empresas y organizaciones a cursos gratuitos — Presidencia de Uruguay", url: "https://www.gub.uy/presidencia/comunicacion/noticias/inefop-promueve-acceso-personas-empresas-organizaciones-cursos-gratuitos" },
+      { titulo: "INEFOP abrió inscripciones para cursos de inglés en todo el país — Presidencia de Uruguay", url: "https://www.gub.uy/presidencia/comunicacion/noticias/inefop-abrio-inscripciones-para-cursos-ingles-todo-pais" },
+    ],
+    actualizado: "2026-11",
+  },
+  {
     id: "capacitate-en-linea-ecuador",
     nombre: "Capacítate en línea (Ministerio del Trabajo del Ecuador)",
     resumen:

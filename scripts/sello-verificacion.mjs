@@ -2589,6 +2589,51 @@ test("Costa Rica es un pais completo: la residencia da el permiso, DIMEX, CCSS, 
   }
 });
 
+// ── URUGUAY, PAÍS COMPLETO (5 nov 2026) ──────────────────────────────────────
+//
+// Lo propio de Uruguay: la Ley 19.254 da residencia PERMANENTE (no temporal)
+// al Mercosur y asociados, con Venezuela; el BCU publica el euro; el Estado
+// da garantía de alquiler; e INEFOP tiene cursos gratis.
+test("Uruguay es un pais completo: residencia permanente Mercosur, garantia del Estado e INEFOP", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-uruguay-entrada.ts", salida = ".sello-uruguay.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { plataformasPorPais, servicioEmpleoDe } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const uy = m.PAISES.UY;
+    const casos = [
+      ["minimo desde julio", uy?.salarioMinimo, 25383],
+      ["remuneracion media BPS", uy?.salarioMedio, 56920],
+      ["slug", uy?.slug, "uruguay"],
+      ["paisPorNombre", m.paisPorNombre("Uruguay"), "UY"],
+      ["Guzzi lo detecta", m.detectarPais("empleo en Uruguay")?.codigo, "uy"],
+      ["Argentina: permanente", m.movilidadDe("AR", "UY").titulo, "Tienes la residencia permanente del Mercosur"],
+      ["Venezuela tambien", m.movilidadDe("VE", "UY").regimen, "acuerdo_regional"],
+      ["Espana no", m.movilidadDe("ES", "UY").regimen, "visado_general"],
+      ["garantia del Estado", m.getPrimerosPasos("UY")?.papeleo.documentos.some(d => d.nombre === "Garantía de alquiler"), true],
+      ["INEFOP", m.plataformasPorPais("UY").some(p => p.id === "inefop-uruguay"), true],
+      ["bolsa publica", m.servicioEmpleoDe("UY")?.nombre, "Vía Trabajo"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual
