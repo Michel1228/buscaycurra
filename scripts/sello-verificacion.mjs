@@ -2329,7 +2329,8 @@ test("los filtros del buscador van por lib/job-search/filtros.ts, no por palabra
 test("todo un pais grande con un filtro no se corta: mas nuevas primero y con tope de tiempo", () => {
   const ruta = leerFuente("app/api/jobs/search/route.ts");
   return ruta.includes("const paisConFiltro") && ruta.includes("SET LOCAL statement_timeout = 9000")
-    && ruta.includes('source: "database-pais-filtro"') && ruta.includes("title ILIKE $");
+    && ruta.includes('source: "database-pais-filtro"') && ruta.includes("title ILIKE $")
+    && ruta.includes("LIMIT ${VENTANA}");
 });
 
 // Guzzi sabe en qué país está la persona. Antes el chat no lo mandaba y

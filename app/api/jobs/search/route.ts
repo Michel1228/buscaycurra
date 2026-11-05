@@ -260,10 +260,10 @@ export async function GET(request: NextRequest) {
     // ciudad). Con el país solo, se mira el título, que va por índice: leer la
     // descripción de todo un país grande no termina a tiempo.
     //
-    // Con el país solo, la expresión regular no basta: no usa el índice del
-    // título y se leía el país entero (Reino Unido + "parcial" se cortaba).
-    // Delante van los mismos términos como ILIKE, que sí van por el índice
-    // (patronesIlike en lib/job-search/filtros.ts).
+    // Sin palabra ni ciudad, la expresión regular no usa el índice del título.
+    // Delante van los mismos términos como ILIKE, que sí pueden usarlo
+    // (patronesIlike en lib/job-search/filtros.ts). Todo un país sin más
+    // filtros va aparte, por la ventana de las más nuevas (paisConFiltro).
     const { regexFiltro, patronesIlike } = await import("@/lib/job-search/filtros");
     const acotada = !!keyword || !!cityParts;
     const condicionFiltro = (filtro: Parameters<typeof regexFiltro>[0]): string => {
@@ -382,52 +382,62 @@ export async function GET(request: NextRequest) {
     `;
 
     // TODO UN PAÍS CON UN FILTRO DE TEXTO (5 nov 2026): "En todo Reino Unido"
-    // + "parcial", sin puesto ni ciudad. Ordenar al azar y contar todas obliga
-    // a mirar el título de cada oferta del país, y en los grandes se cortaba a
-    // los 15 s (Alemania tiene 545.000). Las candidatas salen por el índice del
-    // título (patronesIlike, arriba); aquí se toman las más nuevas, sin
-    // ordenarlas todas al azar, y se cuentan hasta 5.000 con un tope de tiempo.
+    // + "parcial", sin puesto ni ciudad. Mirar el título de cada oferta del
+    // país no termina a tiempo en los grandes (Alemania tiene 545.000). Medido
+    // en producción: 503 a los 9-15 s en Reino Unido, Alemania y EE. UU., con
+    // la expresión regular sola, con los ILIKE delante y con las más nuevas
+    // primero. Así que se toman las 3.000 ofertas más nuevas del país, que
+    // salen por el índice de fechas como en "todo el país" sin filtros, y el
+    // filtro se aplica solo sobre ellas. El total es el de esas 3.000: son las
+    // más recientes, no todas las del país, y masDe lo dice.
     const paisConFiltro = !!country && !keyword && !cityParts && !categoria && !salarioMin && !salarioMax
       && (jornada === "parcial" || jornada === "remoto" || inclusiva || experiencia === "sin-experiencia")
       && (!experiencia || experiencia === "sin-experiencia");
     if (paisConFiltro) {
-      const TOPE = 5000;
+      const VENTANA = 3000;
+      const p: (string | number)[] = [country];
+      const filtrosVentana: string[] = [];
+      const anadir = (rx: string, negado = false) => {
+        p.push(rx);
+        filtrosVentana.push(`title ${negado ? "!~*" : "~*"} $${p.length}`);
+      };
+      if (jornada === "remoto") anadir(regexFiltro("remoto"));
+      else if (jornada === "parcial") anadir(regexFiltro("parcial"));
+      else if (jornada === "completa") anadir(regexFiltro("parcial"), true);
+      if (inclusiva) anadir(regexFiltro("inclusiva"));
+      if (experiencia === "sin-experiencia") anadir(regexFiltro("sinExperiencia"));
+      p.push(limit, offset);
       const cliente = await pool.connect();
       try {
         await cliente.query("BEGIN READ ONLY");
         await cliente.query("SET LOCAL statement_timeout = 9000");
-        const nuevas = await cliente.query(
-          `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
-                  "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
-                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza, country
-             FROM "JobListing" WHERE ${whereClause}
-            ORDER BY "createdAt" DESC
-            LIMIT $${idx} OFFSET $${idx + 1}`,
-          params
+        const r = await cliente.query(
+          `WITH ventana AS MATERIALIZED (
+             SELECT id, title, "createdAt" FROM "JobListing"
+              WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
+                AND lower("country") = lower($1)
+              ORDER BY "createdAt" DESC
+              LIMIT ${VENTANA}
+           ), elegidas AS (
+             SELECT id, "createdAt", COUNT(*) OVER() AS total_encontrado
+               FROM ventana WHERE ${filtrosVentana.join(" AND ")}
+              ORDER BY "createdAt" DESC
+              LIMIT $${p.length - 1} OFFSET $${p.length}
+           )
+           SELECT j.id, j.title, j.company, j.city, j.province, j.salary, LEFT(j.description, 300) AS description,
+                  j."sourceUrl" AS sourceurl, j."sourceName" AS sourcename, j."scrapedAt" AS scrapedat,
+                  j."contactEmail" AS contactemail, j."contactEmailConfianza" AS contactemailconfianza, j.country,
+                  e.total_encontrado, (SELECT count(*) FROM ventana) AS en_ventana
+             FROM elegidas e JOIN "JobListing" j ON j.id = e.id
+            ORDER BY e."createdAt" DESC`,
+          p
         );
-        let total = offset + nuevas.rows.length;
-        let masDe = false;
-        if (nuevas.rows.length === limit) {
-          // Contar cuesta más que llenar la página. Si no da tiempo, el
-          // total es lo visto hasta ahora y hay más páginas.
-          try {
-            await cliente.query("SAVEPOINT cuenta");
-            await cliente.query("SET LOCAL statement_timeout = 4000");
-            const c = await cliente.query(
-              `SELECT count(*)::int AS n FROM (SELECT 1 FROM "JobListing" WHERE ${whereClause} LIMIT ${TOPE + 1}) t`,
-              params.slice(0, -2)
-            );
-            total = Math.min(c.rows[0].n, TOPE);
-            masDe = c.rows[0].n > TOPE;
-          } catch {
-            await cliente.query("ROLLBACK TO SAVEPOINT cuenta");
-            masDe = true;
-          }
-        }
         await cliente.query("COMMIT");
-        const ofertasPais = deduplicar(nuevas.rows).map(j => rowToOferta(j, location, userSkills));
+        const total = parseInt(String(r.rows[0]?.total_encontrado || "0"), 10);
+        const masDe = parseInt(String(r.rows[0]?.en_ventana || "0"), 10) >= VENTANA;
+        const ofertasPais = deduplicar(r.rows).map(j => rowToOferta(j, location, userSkills));
         comprobarEnSegundoPlano(ofertasPais.map(o => String(o.id)));
-        return NextResponse.json({ ofertas: ofertasPais, total, masDe, page, hasMore: masDe || offset + nuevas.rows.length < total, keyword, location, source: "database-pais-filtro" });
+        return NextResponse.json({ ofertas: ofertasPais, total, masDe, page, hasMore: offset + r.rows.length < total, keyword, location, source: "database-pais-filtro" });
       } catch (e) {
         await cliente.query("ROLLBACK").catch(() => {});
         throw e;

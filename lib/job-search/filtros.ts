@@ -82,11 +82,11 @@ export function regexFiltro(filtro: Filtro): string {
  * un país, sin puesto ni ciudad.
  *
  * La expresión regular sola no puede usar el índice de trigramas del título
- * (es una alternancia larga, con acentos), así que Postgres leía cada oferta
- * del país: Reino Unido + "parcial" y Alemania + "remoto" se cortaban a los
- * 10-15 s (medido en producción el 5 nov 2026). Cada ILIKE sí va por el
- * índice: sale un puñado de candidatas y la expresión regular solo afina el
- * límite de palabra.
+ * (es una alternancia larga, con acentos). Los ILIKE sí pueden, y la
+ * expresión regular solo afina el límite de palabra. Ojo: en todo un país
+ * grande ni así terminaba a tiempo (Reino Unido + "parcial", 503 a los 15 s,
+ * medido en producción el 5 nov 2026); ese caso va por la ventana de las
+ * ofertas más nuevas en app/api/jobs/search/route.ts.
  */
 export function patronesIlike(filtro: Filtro): string[] {
   const formas = new Set<string>();
