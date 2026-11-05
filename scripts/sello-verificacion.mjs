@@ -2230,7 +2230,7 @@ test("Latinoamerica: Guadalajara, filtros en varios idiomas, donde estas y Brasi
   try {
     writeFileSync(entrada, [
       'export { paisDeCiudad } from "./lib/guzzi/ciudades-pais";',
-      'export { coincideFiltro } from "./lib/job-search/filtros";',
+      'export { coincideFiltro, patronesIlike } from "./lib/job-search/filtros";',
       'export { expandirPuesto } from "./lib/job-search/sinonimos-puesto";',
       'export { paisDeZona, paisDeIdioma } from "./lib/origen/donde-estoy";',
       'export { detectarPais } from "./lib/guzzi/paises-detect";',
@@ -2294,6 +2294,17 @@ test("Latinoamerica: Guadalajara, filtros en varios idiomas, donde estas y Brasi
       ["cursos gratis de Chile", m.plataformasPorPais("CL").some(p => p.id === "sence-cursos-en-linea"), true],
       ["los de Chile no salen en Perú", m.plataformasPorPais("PE").some(p => p.id === "sence-cursos-en-linea"), false],
     ];
+    // Lo que acepta la expresión regular lo tiene que dejar pasar antes el
+    // ILIKE que va delante (patronesIlike): si no, se perderían ofertas buenas.
+    const cubre = (filtro, texto) => m.patronesIlike(filtro).some(p => texto.toLowerCase().includes(p.slice(1, -1)));
+    casos.push(
+      ["el atajo deja pasar Part-Time", cubre("parcial", "Retail Assistant Part-Time"), true],
+      ["el atajo deja pasar Homeoffice", cubre("remoto", "Sachbearbeiter (m/w/d) Homeoffice"), true],
+      ["el atajo deja pasar Meio Período", cubre("parcial", "Atendente - Meio Período"), true],
+      ["el atajo deja pasar la vaga PCD", cubre("inclusiva", "Auxiliar - Vaga exclusiva PCD"), true],
+      ["el atajo deja pasar Jovem Aprendiz", cubre("sinExperiencia", "Jovem Aprendiz"), true],
+      ["ningún atajo de menos de 3 letras", m.patronesIlike("inclusiva").every(p => p.length >= 5), true],
+    );
     const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
     if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
     return mal.length === 0;
@@ -2308,8 +2319,9 @@ test("Latinoamerica: Guadalajara, filtros en varios idiomas, donde estas y Brasi
 // Los filtros del buscador ya no son palabras sueltas en español.
 test("los filtros del buscador van por lib/job-search/filtros.ts, no por palabras en espanol", () => {
   const ruta = leerFuente("app/api/jobs/search/route.ts");
-  return ruta.includes('regexFiltro("remoto")') && ruta.includes('regexFiltro("parcial")')
-    && ruta.includes('regexFiltro("inclusiva")') && !ruta.includes('"%remoto%"') && !ruta.includes('"%parcial%"');
+  return ruta.includes('condicionFiltro("remoto")') && ruta.includes('condicionFiltro("parcial")')
+    && ruta.includes('condicionFiltro("inclusiva")') && ruta.includes("patronesIlike(filtro)")
+    && !ruta.includes('"%remoto%"') && !ruta.includes('"%parcial%"');
 });
 
 // "En todo Reino Unido" + "parcial", sin puesto ni ciudad, se cortaba a los
@@ -2317,7 +2329,7 @@ test("los filtros del buscador van por lib/job-search/filtros.ts, no por palabra
 test("todo un pais grande con un filtro no se corta: mas nuevas primero y con tope de tiempo", () => {
   const ruta = leerFuente("app/api/jobs/search/route.ts");
   return ruta.includes("const paisConFiltro") && ruta.includes("SET LOCAL statement_timeout = 9000")
-    && ruta.includes('source: "database-pais-filtro"');
+    && ruta.includes('source: "database-pais-filtro"') && ruta.includes("title ILIKE $");
 });
 
 // Guzzi sabe en qué país está la persona. Antes el chat no lo mandaba y

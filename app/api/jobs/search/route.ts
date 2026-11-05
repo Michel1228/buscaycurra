@@ -259,17 +259,24 @@ export async function GET(request: NextRequest) {
     // La descripción solo se lee si algo ya ha recortado las filas (palabra o
     // ciudad). Con el país solo, se mira el título, que va por índice: leer la
     // descripción de todo un país grande no termina a tiempo.
-    const { regexFiltro } = await import("@/lib/job-search/filtros");
+    //
+    // Con el país solo, la expresión regular no basta: no usa el índice del
+    // título y se leía el país entero (Reino Unido + "parcial" se cortaba).
+    // Delante van los mismos términos como ILIKE, que sí van por el índice
+    // (patronesIlike en lib/job-search/filtros.ts).
+    const { regexFiltro, patronesIlike } = await import("@/lib/job-search/filtros");
     const acotada = !!keyword || !!cityParts;
-    const condicionFiltro = (rx: string): string => {
-      params.push(rx);
+    const condicionFiltro = (filtro: Parameters<typeof regexFiltro>[0]): string => {
+      params.push(regexFiltro(filtro));
       const i = idx++;
-      return acotada ? `(title ~* $${i} OR description ~* $${i})` : `title ~* $${i}`;
+      if (acotada) return `(title ~* $${i} OR description ~* $${i})`;
+      const candidatas = patronesIlike(filtro).map((p) => { params.push(p); return `title ILIKE $${idx++}`; });
+      return `((${candidatas.join(" OR ")}) AND title ~* $${i})`;
     };
     if (jornada === "remoto") {
-      conditions.push(condicionFiltro(regexFiltro("remoto")));
+      conditions.push(condicionFiltro("remoto"));
     } else if (jornada === "parcial") {
-      conditions.push(condicionFiltro(regexFiltro("parcial")));
+      conditions.push(condicionFiltro("parcial"));
     } else if (jornada === "completa") {
       // Antes no tenía condición y daba lo mismo que "Todas". Casi ninguna
       // oferta a tiempo completo lo dice: se quitan las que dicen ser parciales.
@@ -277,10 +284,10 @@ export async function GET(request: NextRequest) {
       conditions.push(`title !~* $${idx++}`);
     }
     if (inclusiva) {
-      conditions.push(condicionFiltro(regexFiltro("inclusiva")));
+      conditions.push(condicionFiltro("inclusiva"));
     }
     if (experiencia === "sin-experiencia") {
-      conditions.push(condicionFiltro(regexFiltro("sinExperiencia")));
+      conditions.push(condicionFiltro("sinExperiencia"));
     }
 
     // Filtro por experiencia (los tramos de años; "sin experiencia" va arriba)
@@ -377,63 +384,55 @@ export async function GET(request: NextRequest) {
     // TODO UN PAÍS CON UN FILTRO DE TEXTO (5 nov 2026): "En todo Reino Unido"
     // + "parcial", sin puesto ni ciudad. Ordenar al azar y contar todas obliga
     // a mirar el título de cada oferta del país, y en los grandes se cortaba a
-    // los 15 s (Alemania tiene 545.000). En los países grandes se recorren las
-    // más nuevas por el índice de fechas, que para en cuanto llena la página,
-    // y se cuentan hasta 1.000 con un tope de tiempo. Los pequeños siguen como
-    // siempre: Brasil daba sus 870 ofertas inclusivas en 2,3 s.
+    // los 15 s (Alemania tiene 545.000). Las candidatas salen por el índice del
+    // título (patronesIlike, arriba); aquí se toman las más nuevas, sin
+    // ordenarlas todas al azar, y se cuentan hasta 5.000 con un tope de tiempo.
     const paisConFiltro = !!country && !keyword && !cityParts && !categoria && !salarioMin && !salarioMax
       && (jornada === "parcial" || jornada === "remoto" || inclusiva || experiencia === "sin-experiencia")
       && (!experiencia || experiencia === "sin-experiencia");
     if (paisConFiltro) {
-      const GRANDE = 50000;
-      const tam = await pool.query(
-        `SELECT count(*)::int AS n FROM (SELECT 1 FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND lower("country") = lower($1) LIMIT ${GRANDE + 1}) t`,
-        [country]
-      );
-      if (tam.rows[0].n > GRANDE) {
-        const TOPE = 1000;
-        const cliente = await pool.connect();
-        try {
-          await cliente.query("BEGIN READ ONLY");
-          await cliente.query("SET LOCAL statement_timeout = 9000");
-          const nuevas = await cliente.query(
-            `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
-                    "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
-                    "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza, country
-               FROM "JobListing" WHERE ${whereClause}
-              ORDER BY "createdAt" DESC
-              LIMIT $${idx} OFFSET $${idx + 1}`,
-            params
-          );
-          let total = offset + nuevas.rows.length;
-          let masDe = false;
-          if (nuevas.rows.length === limit) {
-            // Contar cuesta más que llenar la página. Si no da tiempo, el
-            // total es lo visto hasta ahora y hay más páginas.
-            try {
-              await cliente.query("SAVEPOINT cuenta");
-              await cliente.query("SET LOCAL statement_timeout = 4000");
-              const c = await cliente.query(
-                `SELECT count(*)::int AS n FROM (SELECT 1 FROM "JobListing" WHERE ${whereClause} LIMIT ${TOPE + 1}) t`,
-                params.slice(0, -2)
-              );
-              total = Math.min(c.rows[0].n, TOPE);
-              masDe = c.rows[0].n > TOPE;
-            } catch {
-              await cliente.query("ROLLBACK TO SAVEPOINT cuenta");
-              masDe = true;
-            }
+      const TOPE = 5000;
+      const cliente = await pool.connect();
+      try {
+        await cliente.query("BEGIN READ ONLY");
+        await cliente.query("SET LOCAL statement_timeout = 9000");
+        const nuevas = await cliente.query(
+          `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
+                  "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
+                  "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza, country
+             FROM "JobListing" WHERE ${whereClause}
+            ORDER BY "createdAt" DESC
+            LIMIT $${idx} OFFSET $${idx + 1}`,
+          params
+        );
+        let total = offset + nuevas.rows.length;
+        let masDe = false;
+        if (nuevas.rows.length === limit) {
+          // Contar cuesta más que llenar la página. Si no da tiempo, el
+          // total es lo visto hasta ahora y hay más páginas.
+          try {
+            await cliente.query("SAVEPOINT cuenta");
+            await cliente.query("SET LOCAL statement_timeout = 4000");
+            const c = await cliente.query(
+              `SELECT count(*)::int AS n FROM (SELECT 1 FROM "JobListing" WHERE ${whereClause} LIMIT ${TOPE + 1}) t`,
+              params.slice(0, -2)
+            );
+            total = Math.min(c.rows[0].n, TOPE);
+            masDe = c.rows[0].n > TOPE;
+          } catch {
+            await cliente.query("ROLLBACK TO SAVEPOINT cuenta");
+            masDe = true;
           }
-          await cliente.query("COMMIT");
-          const ofertasPais = deduplicar(nuevas.rows).map(j => rowToOferta(j, location, userSkills));
-          comprobarEnSegundoPlano(ofertasPais.map(o => String(o.id)));
-          return NextResponse.json({ ofertas: ofertasPais, total, masDe, page, hasMore: masDe || offset + nuevas.rows.length < total, keyword, location, source: "database-pais-filtro" });
-        } catch (e) {
-          await cliente.query("ROLLBACK").catch(() => {});
-          throw e;
-        } finally {
-          cliente.release();
         }
+        await cliente.query("COMMIT");
+        const ofertasPais = deduplicar(nuevas.rows).map(j => rowToOferta(j, location, userSkills));
+        comprobarEnSegundoPlano(ofertasPais.map(o => String(o.id)));
+        return NextResponse.json({ ofertas: ofertasPais, total, masDe, page, hasMore: masDe || offset + nuevas.rows.length < total, keyword, location, source: "database-pais-filtro" });
+      } catch (e) {
+        await cliente.query("ROLLBACK").catch(() => {});
+        throw e;
+      } finally {
+        cliente.release();
       }
     }
 
