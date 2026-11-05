@@ -76,29 +76,6 @@ export function regexFiltro(filtro: Filtro): string {
   return "\\m(" + [...formas].join("|") + ")\\M";
 }
 
-/**
- * Los mismos términos como patrones de ILIKE: "%part time%", "%part-time%",
- * "%parttime%"... Van DELANTE de la expresión regular cuando se busca en todo
- * un país, sin puesto ni ciudad.
- *
- * La expresión regular sola no puede usar el índice de trigramas del título
- * (es una alternancia larga, con acentos). Los ILIKE sí pueden, y la
- * expresión regular solo afina el límite de palabra. Ojo: en todo un país
- * grande ni así terminaba a tiempo (Reino Unido + "parcial", 503 a los 15 s,
- * medido en producción el 5 nov 2026); ese caso va por la ventana de las
- * ofertas más nuevas en app/api/jobs/search/route.ts.
- */
-export function patronesIlike(filtro: Filtro): string[] {
-  const formas = new Set<string>();
-  for (const t of TERMINOS[filtro]) {
-    for (const v of [t.toLowerCase(), sinAcentos(t.toLowerCase())]) {
-      const palabras = v.split(/[\s-]+/);
-      for (const sep of [" ", "-", ""]) formas.add(`%${palabras.join(sep)}%`);
-    }
-  }
-  return [...formas];
-}
-
 /** Lo mismo para probar en JavaScript (pruebas y el sello). */
 export function coincideFiltro(filtro: Filtro, texto: string): boolean {
   const js = regexFiltro(filtro).replace(/^\\m/, "(?<![\\p{L}\\p{N}])").replace(/\\M$/, "(?![\\p{L}\\p{N}])");

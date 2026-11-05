@@ -409,8 +409,11 @@ function BuscarPageInner() {
       const jooblePromise = categoria || paisParaBuscar !== "ES" ? Promise.resolve([]) : buscarJoobleCliente(finalKeyword, finalUbicacion);
 
       const [serverRes, joobleRes] = await Promise.allSettled([
+        // Si la búsqueda se corta (503), la API dice qué hacer ("prueba con una
+        // palabra o una ciudad"). Antes se tiraba y se veía una lista vacía
+        // sin explicación: pasa con un filtro en todo un país grande.
         fetch(`/api/jobs/search?${params.toString()}`, { signal: AbortSignal.timeout(15000) })
-          .then(r => r.ok ? r.json() : { ofertas: [] })
+          .then(r => r.ok ? r.json() : r.json().then((d: { error?: string }) => ({ ofertas: [], error: d?.error })).catch(() => ({ ofertas: [] })))
           .catch(() => ({ ofertas: [] })),
         jooblePromise,
       ]);
@@ -451,6 +454,8 @@ function BuscarPageInner() {
       setFuenteResultados(source);
       setTotalResultados(serverTotal > 0 ? serverTotal : todas.length);
       setHayMas(serverHasMore);
+      const cortada = serverRes.status === "fulfilled" ? (serverRes.value as { error?: string }).error : undefined;
+      if (cortada && todas.length === 0) setAvisoPais(cortada);
       console.log(`[Buscar] Final: ${todas.length} ofertas, hayMas: ${serverHasMore}, total: ${serverTotal}`);
     } catch (err) {
       setError((err as Error).message || "Error al buscar ofertas");
