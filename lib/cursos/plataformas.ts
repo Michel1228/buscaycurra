@@ -693,6 +693,14 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     actualizado: "2026-11",
   },
   {
+    pais: "GT",
+    nombre: "Tu Empleo (Servicio Nacional de Empleo)",
+    url: "https://tuempleo.mintrabajo.gob.gt/",
+    queHacer:
+      "Del Ministerio de Trabajo, gratis: creas tu perfil y postulas en línea a las vacantes. También organiza ferias de empleo por todo el país.",
+    actualizado: "2026-11",
+  },
+  {
     pais: "CR",
     nombre: "Agencia Nacional de Empleo",
     url: "https://www.ane.cr/",

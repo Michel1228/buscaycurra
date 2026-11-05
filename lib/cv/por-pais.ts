@@ -329,6 +329,16 @@ export const ESTILOS: EstiloCV[] = [
     noPongas: [],
     nota: "No hemos encontrado una norma ecuatoriana sobre qué no poner. Si buscas por Encuentra Empleo, el portal público, tu hoja de vida se arma allí con su formato.",
   },
+  {
+    codigo: "GT",
+    pais: "Guatemala",
+    bandera: "🇬🇹",
+    foto: "opcional",
+    nombreLocal: "Currículum (CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    nota: "No hemos encontrado una norma guatemalteca sobre qué no poner. Muchas ofertas de call center piden inglés: si lo hablas, ponlo arriba y con tu nivel real.",
+  },
 ];
 
 /**

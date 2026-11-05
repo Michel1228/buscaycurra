@@ -169,6 +169,12 @@
       "moneda": "USD",
       "nota": "Salario básico unificado 2026 (Acuerdo Ministerial MDT-2025-195). Ecuador usa el dólar.",
       "fuente": "Fuente oficial nacional"
+    },
+    "GT": {
+      "salarioMinimo": 4002,
+      "moneda": "GTQ",
+      "nota": "Salario mínimo 2026 de actividades no agrícolas en el departamento de Guatemala (Acuerdo Gubernativo 256-2025), más Q250 de bonificación incentivo. En el resto del país, Q3.816,90.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

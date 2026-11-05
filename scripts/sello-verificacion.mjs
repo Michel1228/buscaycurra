@@ -2500,6 +2500,52 @@ test("Ecuador es un pais completo: dolar, via andina, sin ETT y cursos del Minis
   }
 });
 
+// ── GUATEMALA, PAÍS COMPLETO (5 nov 2026) ────────────────────────────────────
+//
+// Lo propio de Guatemala: permiso del Ministerio de Trabajo Y residencia de
+// Migración (uno sin otro no vale), "Ciudad de Guatemala" es la capital y no
+// el país entero, y su bolsa pública es Tu Empleo.
+test("Guatemala es un pais completo: permiso y residencia, la capital no es el pais, Tu Empleo", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-guatemala-entrada.ts", salida = ".sello-guatemala.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { servicioEmpleoDe } from "./lib/cursos/plataformas";',
+      'export { paisDeCiudad } from "./lib/guzzi/ciudades-pais";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const gt = m.PAISES.GT;
+    const docs = m.getPrimerosPasos("GT")?.papeleo.documentos || [];
+    const casos = [
+      ["minimo no agricola 2026", gt?.salarioMinimo, 4002],
+      ["slug", gt?.slug, "guatemala"],
+      ["paisPorNombre", m.paisPorNombre("Guatemala"), "GT"],
+      ["Guzzi detecta el pais", m.detectarPais("busco empleo en Guatemala")?.codigo, "gt"],
+      ["la capital no es el pais", m.detectarPais("mesero en Ciudad de Guatemala") ?? null, null],
+      ["la capital es de Guatemala", m.paisDeCiudad("Ciudad de Guatemala"), "GT"],
+      ["permiso y residencia", docs.some(d => d.nombre === "Permiso de trabajo") && docs.some(d => /Residencia temporal/.test(d.nombre)), true],
+      ["Espana no", m.movilidadDe("ES", "GT").regimen, "visado_general"],
+      ["enlace oficial", m.movilidadDe("ES", "GT").enlaceOficial?.url, "https://igm.gob.gt/"],
+      ["bolsa publica", m.servicioEmpleoDe("GT")?.nombre, "Tu Empleo (Servicio Nacional de Empleo)"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

@@ -87,6 +87,7 @@ export default async function LandingPage() {
     CL: { flag: "🇨🇱", nombre: "Chile" },
     AR: { flag: "🇦🇷", nombre: "Argentina" },
     EC: { flag: "🇪🇨", nombre: "Ecuador" },
+    GT: { flag: "🇬🇹", nombre: "Guatemala" },
   };
 
   const PAISES_DATA = stats

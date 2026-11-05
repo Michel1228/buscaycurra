@@ -609,6 +609,29 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y en Ecuador las ETT están prohibidas desde 2008 (Mandato 8): si una agencia te ofrece trabajar contratado por ella para otra empresa, desconfía.",
   },
+  // Guatemala (5 nov 2026). Fuentes: Agencia Guatemalteca de Noticias (el
+  // permiso de trabajo del Ministerio de Trabajo lo pide el empleador, en
+  // línea por la plataforma PEX) y guías que lo distinguen de la residencia
+  // temporal del Instituto Guatemalteco de Migración: hacen falta los dos.
+  // No se ha encontrado una vía regional para trabajar (el CA-4 es para
+  // viajar), así que no se promete ninguna.
+  {
+    codigo: "GT",
+    nombre: "Guatemala",
+    bandera: "🇬🇹",
+    autoridad: { nombre: "Instituto Guatemalteco de Migración", url: "https://igm.gob.gt/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Guatemala. Con pasaporte español entras sin visa como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "Hace falta una empresa que te contrate: ella pide en línea al Ministerio de Trabajo tu permiso de trabajo, que va ligado a esa empresa.",
+      "Además necesitas la residencia temporal como trabajador del Instituto Guatemalteco de Migración. Una sin la otra no vale.",
+      "Con la residencia, sacas el DPI de extranjero domiciliado en el RENAP.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y el permiso es para una empresa concreta: si cambias de trabajo, la nueva tiene que pedir otro.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

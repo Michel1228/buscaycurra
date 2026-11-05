@@ -1267,6 +1267,41 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── GUATEMALA (5 nov 2026) ───────────────────────────────────────────────
+  // Fuentes: Agencia Guatemalteca de Noticias (permiso de trabajo en línea, lo
+  // pide el empleador), Instituto Guatemalteco de Migración. Alquiler: sin una
+  // fuente fiable sobre garantías ni precios, no se afirma nada que no conste.
+  GT: {
+    codigo: "GT",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Guatemala no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Encuentra24", url: "https://www.encuentra24.com/guatemala-es/bienes-raices-alquiler-apartamentos", descripcion: "El portal de anuncios más usado de Guatemala, con apartamentos y habitaciones en alquiler." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Guatemala/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Guatemala, lo práctico es empezar por un alquiler mensual o una habitación. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Hace falta una empresa que te contrate y pida tu permiso de trabajo al Ministerio de Trabajo, y además la residencia temporal como trabajador del Instituto Guatemalteco de Migración.",
+      enlaceOficial: "https://igm.gob.gt/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Permiso de trabajo", descripcion: "Lo pide la empresa al Ministerio de Trabajo, en línea. Vale solo para esa empresa.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.mintrabajo.gob.gt/" },
+        { nombre: "Residencia temporal como trabajador", descripcion: "La da el Instituto Guatemalteco de Migración. Sin ella, el permiso de trabajo no basta.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://igm.gob.gt/" },
+        { nombre: "DPI de extranjero domiciliado", descripcion: "Tu documento de identidad en Guatemala. Lo da el RENAP cuando tienes la residencia.", tiempoObtener: "Tras la residencia", obligatorio: true },
+        { nombre: "Afiliación al IGSS", descripcion: "Con contrato, la empresa te inscribe en el Instituto Guatemalteco de Seguridad Social.", tiempoObtener: "Al empezar a trabajar", obligatorio: true },
+      ],
+      consejo: "El orden: oferta de una empresa → permiso de trabajo (lo pide ella) y residencia temporal en Migración → DPI en el RENAP → IGSS.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

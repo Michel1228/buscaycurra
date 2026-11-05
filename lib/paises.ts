@@ -707,6 +707,37 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["atención al cliente", "asesor comercial", "limpieza", "vendedor", "call center"],
     slug: "ecuador",
   },
+
+  // Guatemala entra el 5 nov 2026, la de más ofertas de la fase 2 (9.142 en Careerjet).
+  GT: {
+    codigo: "GT",
+    nombre: "Guatemala",
+    nombreLocal: "Guatemala",
+    moneda: "GTQ",
+    simboloMoneda: "Q",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇬🇹",
+    // Salario mínimo 2026 de actividades no agrícolas en el departamento de
+    // Guatemala: Q4.002,28 al mes, más Q250 de bonificación incentivo
+    // (Acuerdo Gubernativo 256-2025). En el resto del país, Q3.816,90.
+    salarioMinimo: 4002,
+    // Ingreso laboral medio de 2025: unos Q2.713 al mes (ENEIC del INE, según
+    // el boletín del instituto de economía de la Universidad de San Carlos, feb 2026).
+    salarioMedio: 2713,
+    // El BCE no publica el quetzal: 1,1267 $ por euro (BCE) × 7,64082 quetzales
+    // por dólar (tipo de cambio de referencia del Banco de Guatemala), 4 nov 2026.
+    tasaCambioEUR: 8.61,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Ciudad de Guatemala", "Mixco", "Villa Nueva", "Quetzaltenango", "Escuintla", "Cobán"],
+    // Las que más ofertas tienen en Careerjet Guatemala el 5 nov 2026: asesor
+    // de ventas 776, bodega 611, vendedor 561, call center 462 y piloto 409.
+    // Allí "piloto" es el conductor; por eso no se traduce como sinónimo: en
+    // España sacaría pilotos de avión.
+    keywordsLaborales: ["asesor de ventas", "call center", "bodega", "vendedor", "piloto"],
+    slug: "guatemala",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -744,6 +775,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.CL,  // Chile — 962.945 CLP/mes (~871 €)
   PAISES.AR,  // Argentina — 1.982.518 ARS/mes (~1.138 €)
   PAISES.EC,  // Ecuador — 513 USD/mes (~455 €)
+  PAISES.GT,  // Guatemala — 2.713 GTQ/mes (~315 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */
