@@ -590,6 +590,35 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["asesor comercial", "operario", "call center", "aseo", "conductor"],
     slug: "colombia",
   },
+
+  // Perú entra el 5 nov 2026, detrás de Colombia y por el mismo barrido de Careerjet.
+  PE: {
+    codigo: "PE",
+    nombre: "Perú",
+    nombreLocal: "Perú",
+    moneda: "PEN",
+    simboloMoneda: "S/",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇵🇪",
+    // Remuneración mínima vital: S/ 1.230 desde el 1 oct 2026 (Decreto Supremo
+    // 015-2026-TR). Subirá a S/ 1.300 en el primer semestre de 2027.
+    salarioMinimo: 1230,
+    // Ingreso medio mensual del trabajo en todo el país en 2025: S/ 1.887,2 (INEI).
+    salarioMedio: 1887,
+    // El BCE no publica el sol: 1,1267 $ por euro (BCE) × 3,452 soles por dólar
+    // (BCRP, tipo de cambio bancario de venta), 4 nov 2026.
+    tasaCambioEUR: 3.89,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Lima", "Arequipa", "Trujillo", "Chiclayo", "Piura", "Cusco", "Huancayo"],
+    // De las que más ofertas tienen en Careerjet Perú el 5 nov 2026: limpieza
+    // 21.139, asesor de ventas 15.583, call center 12.479, operario 8.747 y
+    // practicante 4.854. "Seguridad" daba 34.791, pero mezcla vigilantes con
+    // "seguridad y salud en el trabajo".
+    keywordsLaborales: ["limpieza", "asesor de ventas", "call center", "operario", "practicante"],
+    slug: "peru",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -623,6 +652,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.MX,  // México — 20.490 MXN/mes (~975 €)
   PAISES.BR,  // Brasil — 3.722 BRL/mes (~604 €)
   PAISES.CO,  // Colombia — 2.158.174 COP/mes (~597 €)
+  PAISES.PE,  // Perú — 1.887 PEN/mes (~485 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

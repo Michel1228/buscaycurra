@@ -37,7 +37,6 @@ const PAISES_MAP: Record<string, { flag: string; nombre: string }> = {
   CZ: { flag: "🇨🇿", nombre: "República Checa" },
   IN: { flag: "🇮🇳", nombre: "India" },
   BR: { flag: "🇧🇷", nombre: "Brasil" },
-  CO: { flag: "🇨🇴", nombre: "Colombia" },
   MX: { flag: "🇲🇽", nombre: "México" },
   SG: { flag: "🇸🇬", nombre: "Singapur" },
   JP: { flag: "🇯🇵", nombre: "Japón" },
@@ -46,6 +45,7 @@ const PAISES_MAP: Record<string, { flag: string; nombre: string }> = {
   KR: { flag: "🇰🇷", nombre: "Corea del Sur" },
   ID: { flag: "🇮🇩", nombre: "Indonesia" },
   CO: { flag: "🇨🇴", nombre: "Colombia" },
+  PE: { flag: "🇵🇪", nombre: "Perú" },
 };
 
 function formatNumber(n: number): string {

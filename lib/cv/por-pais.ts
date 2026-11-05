@@ -34,6 +34,11 @@
  *     plantillas y los formatos oficiales (SIGEP, de Función Pública, para
  *     empleo público) llevan tipo y número de documento. No hemos encontrado
  *     una fuente fiable sobre qué datos NO poner, así que no se inventa.
+ * Perú, comprobada el 2026-11-05:
+ *   · Ley 31944 (vigente desde el 26 nov 2023): en la selección no se puede
+ *     exigir el certificado de antecedentes penales (basta declaración jurada)
+ *     ni el reporte crediticio. Ley 26772: las ofertas no pueden pedir
+ *     requisitos discriminatorios («buena presencia», según la PUCP).
  */
 
 export type UsoFoto = "se_espera" | "opcional" | "mejor_no";
@@ -272,6 +277,19 @@ export const ESTILOS: EstiloCV[] = [
     noPongas: [],
     siPonen: ["Tipo y número de documento: cédula, cédula de extranjería o pasaporte."],
     nota: "La foto es costumbre pero no obligatoria, y las empresas con selección a ciegas la piden sin ella. Para empleos del Estado se usa el formato del SIGEP o de la convocatoria, no el tuyo.",
+  },
+  {
+    codigo: "PE",
+    pais: "Perú",
+    bandera: "🇵🇪",
+    foto: "opcional",
+    nombreLocal: "Currículum vitae (CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [
+      "Certificado de antecedentes penales: en la selección basta una declaración jurada, y lo comprueban solo si te eligen (Ley 31944)",
+      "Tu reporte de deudas: no pueden exigírtelo ni descartarte por no darlo (Ley 31944)",
+    ],
+    nota: "En Perú las ofertas no pueden pedir requisitos que discriminen, como «buena presencia» (Ley 26772). Para empleos del Estado se presenta el «CV documentado» con el formato de la convocatoria.",
   },
 ];
 

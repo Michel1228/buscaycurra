@@ -507,6 +507,32 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal, y la empresa que te contrata así se arriesga a multas. Y para alquilar, nadie puede pedirte un depósito en dinero: la ley lo prohíbe (Ley 820 de 2003).",
   },
+  // Perú (5 nov 2026). Fuentes: Decreto Legislativo 689 (art. 3.c, leído en el
+  // PDF de gob.pe: quien viene de un país con convenio de doble nacionalidad,
+  // como España, no cuenta en el tope del 20% de plantilla y 30% de sueldos),
+  // el reglamento de la Ley de Migraciones (contrato aprobado por el Ministerio
+  // de Trabajo y calidad migratoria antes de empezar), gob.pe/12927 (residencia
+  // Mercosur: Argentina, Brasil, Paraguay, Uruguay, Chile, Colombia, Ecuador y
+  // Bolivia) y la Decisión 878 (residencia andina de dos años).
+  {
+    codigo: "PE",
+    nombre: "Perú",
+    bandera: "🇵🇪",
+    autoridad: { nombre: "Superintendencia Nacional de Migraciones", url: "https://www.gob.pe/migraciones" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Perú. Con pasaporte español entras sin visa como turista, pero esa estancia no permite trabajar.",
+      "Si eres de España, la empresa puede contratarte sin el tope de extranjeros (20% de la plantilla), porque hay convenio de doble nacionalidad. El contrato y el permiso hacen falta igual.",
+    ],
+    siNoEresDeLaUE: [
+      "Si eres de Argentina, Brasil, Bolivia, Chile, Colombia, Ecuador, Paraguay o Uruguay, puedes pedir la residencia Mercosur en Migraciones: dos años, y con ella puedes trabajar. Bolivia, Colombia y Ecuador tienen además la residencia andina.",
+      "Si no, hace falta una empresa que te contrate: registra tu contrato en el Ministerio de Trabajo y, con él aprobado, pides en Migraciones la calidad migratoria de trabajador residente. No puedes empezar a trabajar hasta tener las dos cosas.",
+      "Con la residencia aprobada, Migraciones te da el carné de extranjería: es tu documento de identidad en Perú.",
+      "Si eres de Venezuela, el Carné de Permiso Temporal de Permanencia (CPP) se abre por campañas: mira en Migraciones si hay una en marcha.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y en una selección no pueden exigirte el certificado de antecedentes penales (basta una declaración jurada) ni tu reporte de deudas (Ley 31944).",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

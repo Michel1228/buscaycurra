@@ -1110,6 +1110,46 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── PERÚ (5 nov 2026) ────────────────────────────────────────────────────
+  // Fuentes: Decreto Legislativo 689 (contratación de extranjeros, art. 3.c),
+  // reglamento de la Ley de Migraciones (contrato aprobado y calidad
+  // migratoria antes de empezar), gob.pe (Migraciones y residencia Mercosur).
+  // Alquiler: lo que piden los anuncios de Lima (dos meses de garantía y uno de
+  // adelanto, contrato de un año); no hemos encontrado una media oficial de
+  // precios y no se inventa.
+  PE: {
+    codigo: "PE",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Perú no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Urbania", url: "https://urbania.pe", descripcion: "De los portales de alquiler más usados de Perú: departamentos y habitaciones." },
+        { nombre: "Adondevivir", url: "https://www.adondevivir.com", descripcion: "Alquileres de inmobiliarias y particulares, sobre todo en Lima." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com.pe/s/Peru/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo. Más caro, pero sin garantía." },
+      ],
+      consejo: "En Lima los anuncios suelen pedir dos meses de garantía y uno de adelanto, con contrato de un año, y comprueban tus ingresos y tu historial en las centrales de riesgo. Sin historial en Perú, lo práctico es empezar por una habitación o un alquiler mensual.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Desde España o el resto de la UE hace falta una empresa que te contrate: el contrato se aprueba en el Ministerio de Trabajo y con él pides en Migraciones la calidad de trabajador residente. Con nacionalidad de un país del Mercosur o de la Comunidad Andina hay residencia de dos años sin oferta.",
+      enlaceOficial: "https://www.gob.pe/migraciones",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Contrato aprobado por el Ministerio de Trabajo", descripcion: "La empresa registra tu contrato en el Ministerio de Trabajo y Promoción del Empleo. Sin él aprobado no se puede pedir el permiso.", tiempoObtener: "Antes de pedir la residencia", obligatorio: true, enlaceOficial: "https://www.gob.pe/mtpe" },
+        { nombre: "Calidad migratoria de trabajador residente", descripcion: "El permiso para vivir y trabajar en Perú. Se pide en Migraciones, en línea, con el contrato aprobado. No puedes empezar a trabajar antes.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.gob.pe/migraciones" },
+        { nombre: "Carné de extranjería", descripcion: "Tu documento de identidad en Perú. Lo da Migraciones cuando te aprueban la residencia, y lo piden para el banco, el alquiler y el seguro de salud.", tiempoObtener: "Tras aprobar la residencia", obligatorio: true, enlaceOficial: "https://www.gob.pe/migraciones" },
+        { nombre: "EsSalud y pensiones", descripcion: "Con contrato, la empresa te inscribe en EsSalud (salud). Para la pensión eliges entre la ONP y una AFP.", tiempoObtener: "Al firmar el contrato", obligatorio: true },
+        { nombre: "Cuenta bancaria", descripcion: "Para cobrar la nómina. Los bancos piden el carné de extranjería; algunas empresas abren ellas la cuenta.", tiempoObtener: "Depende del banco", obligatorio: false },
+      ],
+      consejo: "El orden: contrato aprobado en el Ministerio de Trabajo → calidad de trabajador residente en Migraciones → carné de extranjería → EsSalud, pensión y cuenta bancaria.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

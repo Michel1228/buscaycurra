@@ -24,7 +24,7 @@
  *
  * COLOMBIA Y CHILE (5 nov 2026, 800 títulos de Careerjet de cada país): la
  * limpieza es "aseo", el almacén "bodega", el camarero chileno "garzón" y el
- * repartidor "mensajero". Solo entran palabras que en España no signifiquen
+ * repartidor "mensajero"; en Perú, el almacén es del "almacenero". Solo entran palabras que en España no signifiquen
  * otra cosa: "mozo" (camarero en Perú y Argentina) es aquí el mozo de almacén,
  * y "domiciliario" (repartidor en Colombia) sale en "enfermero domiciliario".
  */
@@ -104,7 +104,7 @@ const SINONIMOS: Record<string, string[]> = {
   almacen: ["warehouse", "warehouse operative", "magasinier", "lagerarbeiter",
             "magazziniere", "picker", "packer", "forklift",
              "almacenista", "auxiliar de almacén", "estoquista", "almoxarife", "auxiliar de almoxarifado", "conferente",
-             "auxiliar de bodega"],
+             "auxiliar de bodega", "almacenero"],
 
   // ── Comercio y oficina ──────────────────────────────────────────────
   dependiente: ["shop assistant", "retail assistant", "sales assistant", "vendeur",

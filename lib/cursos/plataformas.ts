@@ -152,6 +152,23 @@ export const PLATAFORMAS: PlataformaFormacion[] = [
     ],
     actualizado: "2026-11",
   },
+  {
+    id: "capacita-t",
+    nombre: "Capacita-T (Ministerio de Trabajo del Perú)",
+    resumen:
+      "La plataforma gratuita del Ministerio de Trabajo del Perú: 204 cursos virtuales y 42 rutas de aprendizaje, con certificado sin costo.",
+    url: "https://capacitacionlaboral.trabajo.gob.pe/",
+    alcance: { tipo: "paises", codigos: ["PE"] },
+    idiomas: ["Español"],
+    temas: ["capacitación laboral", "personas mayores", "lengua de señas"],
+    certificado: "si",
+    aviso:
+      "Hay cursos para personas mayores y en lengua de señas peruana. En 2026 el ministerio ya había dado más de 64.000 certificados.",
+    fuentes: [
+      { titulo: "Plataforma Capacíta-T: conocimientos transformadores — El Peruano (17 jul 2026)", url: "https://elperuano.pe/noticia/300533-plataforma-capacita-t-conocimientos-transformadores" },
+    ],
+    actualizado: "2026-11",
+  },
   // Comprobados el 5 nov 2026 en sus webs y en prensa del país (fuentes abajo).
   {
     id: "sence-cursos-en-linea",

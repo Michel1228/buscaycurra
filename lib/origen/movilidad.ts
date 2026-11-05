@@ -103,6 +103,14 @@ const ACUERDO_MERCOSUR = new Set(["AR", "BO", "CL", "CO", "EC", "PY", "PE", "UY"
 const MERCOSUR_EN_COLOMBIA = new Set(["AR", "BR", "BO", "EC", "PY", "PE", "UY"]);
 const ANDINOS_EN_COLOMBIA = new Set(["BO", "EC", "PE"]);
 
+/**
+ * Perú: residencia Mercosur (gob.pe/12927: Argentina, Brasil, Paraguay,
+ * Uruguay, Chile, Colombia, Ecuador y Bolivia) y residencia temporal andina de
+ * dos años (Decisión 878: Bolivia, Colombia y Ecuador).
+ */
+const MERCOSUR_EN_PERU = new Set(["AR", "BR", "PY", "UY", "CL", "CO", "EC", "BO"]);
+const ANDINOS_EN_PERU = new Set(["BO", "CO", "EC"]);
+
 const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   MX: {
     titulo: "Instituto Nacional de Migración — Gobierno de México",
@@ -115,6 +123,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   CO: {
     titulo: "Visas — Cancillería de Colombia",
     url: "https://www.cancilleria.gov.co/atencion-y-servicio-al-ciudadano/tramites-y-servicios/visa",
+  },
+  PE: {
+    titulo: "Superintendencia Nacional de Migraciones — Perú",
+    url: "https://www.gob.pe/migraciones",
   },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
@@ -205,6 +217,17 @@ export function movilidadDe(origen: string | null | undefined, destino: string):
       explicacion:
         "Con tu nacionalidad puedes pedir en Colombia una visa M de dos años sin tener oferta de trabajo, y con ella trabajar. Al llegar, tienes 15 días para sacar la cédula de extranjería en Migración Colombia.",
       enlaceOficial: OFICIAL_POR_DESTINO.CO,
+    };
+  }
+
+  // Perú: residencia Mercosur o andina, sin oferta de trabajo.
+  if (d === "PE" && MERCOSUR_EN_PERU.has(o)) {
+    return {
+      regimen: "acuerdo_regional",
+      titulo: ANDINOS_EN_PERU.has(o) ? "Tienes la vía andina y la del Mercosur" : "Tienes la vía del Mercosur",
+      explicacion:
+        "Con tu nacionalidad puedes pedir en Migraciones una residencia temporal de dos años sin tener oferta de trabajo, y con ella trabajar. Te dan el carné de extranjería.",
+      enlaceOficial: OFICIAL_POR_DESTINO.PE,
     };
   }
 

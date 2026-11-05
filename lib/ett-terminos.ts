@@ -50,6 +50,9 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   // En Colombia la ETT es la "empresa de servicios temporales" (EST, Ley 50 de
   // 1990), y las agencias de colocación se anuncian como agencias de empleo.
   CO: ["empresa de servicios temporales", "agencia de empleo"],
+  // En Perú las ETT son "empresas de servicios temporales" (Ley 27626, de
+  // intermediación laboral).
+  PE: ["empresa de servicios temporales", "agencia de empleo"],
 };
 
 /**

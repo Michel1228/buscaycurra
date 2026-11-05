@@ -55,7 +55,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `Trabajar en ${pais.nombre} — Ofertas de empleo para españoles ${pais.bandera}`,
     description: `Encuentra trabajo en ${pais.nombre}. ${formatearSalario(pais.salarioMedio, codigo)}/mes de media. Ofertas en ${pais.ciudades.slice(0, 3).join(", ")}. BuscayCurra te ayuda a encontrar empleo en ${pais.nombreLocal}.`,
     openGraph: {
-      title: `Trabajar en ${pais.nombre} 🇪🇺 — BuscayCurra`,
+      // Era 🇪🇺 para todos: al compartir la página de Japón o de Colombia salía la bandera de la UE.
+      title: `Trabajar en ${pais.nombre} ${pais.bandera} — BuscayCurra`,
       description: `Salario medio: ${formatearSalario(pais.salarioMedio, codigo)}/mes. Ofertas en ${pais.ciudades.slice(0, 4).join(", ")}.`,
     },
   };

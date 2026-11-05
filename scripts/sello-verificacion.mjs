@@ -2304,6 +2304,58 @@ test("Colombia es un pais completo: papeles, primeros pasos, CV, Mercosur y pala
   }
 });
 
+// ── PERÚ, PAÍS COMPLETO (5 nov 2026) ─────────────────────────────────────────
+//
+// Igual que Colombia. Y lo que es solo de Perú: a quien viene de España no le
+// cuenta el tope de extranjeros (D. Leg. 689, art. 3.c), Chile SÍ tiene la
+// residencia Mercosur allí, y la Ley 31944 dice qué no se puede pedir.
+test("Peru es un pais completo: papeles, Mercosur con Chile, Ley 31944 y Capacita-T", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-peru-entrada.ts", salida = ".sello-peru.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { ESTILOS } from "./lib/cv/por-pais";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { plataformasPorPais, servicioEmpleoDe } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const pe = m.PAISES.PE;
+    const req = m.requisitosDe("PE");
+    const cv = (m.ESTILOS || []).find(e => e.codigo === "PE");
+    const casos = [
+      ["remuneracion minima vital oct 2026", pe?.salarioMinimo, 1230],
+      ["slug", pe?.slug, "peru"],
+      ["paisPorNombre", m.paisPorNombre("Perú"), "PE"],
+      ["Guzzi lo detecta", m.detectarPais("quiero trabajar en Perú")?.codigo, "pe"],
+      ["Espana fuera del tope", (req?.siEresDeLaUE || []).some(t => /doble nacionalidad/.test(t)), true],
+      ["primeros pasos: contrato aprobado", m.getPrimerosPasos("PE")?.papeleo.documentos.some(d => /Ministerio de Trabajo/.test(d.nombre)), true],
+      ["CV con la Ley 31944", (cv?.noPongas || []).some(t => /31944/.test(t)), true],
+      ["Chile SI tiene Mercosur en Peru", m.movilidadDe("CL", "PE").regimen, "acuerdo_regional"],
+      ["Colombia via andina", m.movilidadDe("CO", "PE").titulo, "Tienes la vía andina y la del Mercosur"],
+      ["Venezuela no", m.movilidadDe("VE", "PE").regimen, "visado_general"],
+      ["Espana no", m.movilidadDe("ES", "PE").regimen, "visado_general"],
+      ["Capacita-T en Peru", m.plataformasPorPais("PE").some(p => p.id === "capacita-t"), true],
+      ["Capacita-T no en Chile", m.plataformasPorPais("CL").some(p => p.id === "capacita-t"), false],
+      ["bolsa publica", m.servicioEmpleoDe("PE")?.nombre, "Empleos Perú"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    const og = leerFuente("app/trabajar-en/[pais]/page.tsx");
+    return mal.length === 0 && og.includes("title: `Trabajar en ${pais.nombre} ${pais.bandera} — BuscayCurra`") && !og.includes("🇪🇺 — BuscayCurra");
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual
