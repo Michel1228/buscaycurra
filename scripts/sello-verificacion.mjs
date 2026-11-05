@@ -2312,6 +2312,21 @@ test("los filtros del buscador van por lib/job-search/filtros.ts, no por palabra
     && ruta.includes('regexFiltro("inclusiva")') && !ruta.includes('"%remoto%"') && !ruta.includes('"%parcial%"');
 });
 
+// Todo un país grande con un filtro (Reino Unido + parcial) se cortaba a los
+// 15 s: para contar y barajar se leían del disco todas las que cumplían, con
+// su descripción. Ahora se para en 1.001 y solo se lee el texto de la página,
+// y la pantalla dice "más de 1.000" en vez de "1.000".
+test("todo un pais con un filtro para en 1.000 y la pantalla dice 'mas de'", () => {
+  const ruta = leerFuente("app/api/jobs/search/route.ts");
+  const buscar = leerFuente("app/app/buscar/page.tsx");
+  const tramo = ruta.slice(ruta.indexOf("const paisConFiltro"), ruta.indexOf("let dbResult"));
+  return tramo.includes("!keyword && !cityParts")
+    && /WITH cand AS MATERIALIZED \(\s*SELECT id, "scrapedAt" FROM "JobListing" WHERE \$\{whereClause\} LIMIT \$\{TOPE \+ 1\}/.test(tramo)
+    && tramo.includes("LEFT(j.description, 300)")
+    && tramo.includes('"database-pais-filtro-tope"')
+    && buscar.includes('fuenteResultados === "database-pais-filtro-tope"');
+});
+
 // Guzzi sabe en qué país está la persona. Antes el chat no lo mandaba y
 // buscaba siempre en España: "camarera en Lima" devolvía ofertas españolas.
 test("Guzzi recibe el pais de la persona y no busca en Espana a quien esta fuera", () => {

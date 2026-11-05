@@ -504,8 +504,9 @@ function BuscarPageInner() {
 
 
   const esEnTiempoReal = fuenteResultados.startsWith("live-api");
-  // En un país grande sin palabra ni ciudad la API cuenta hasta 10.000 y para.
-  const totalEsMinimo = fuenteResultados === "database-pais";
+  // En un país grande sin palabra ni ciudad la API cuenta hasta 10.000 y para;
+  // con un filtro (parcial, remoto...), hasta 1.000.
+  const totalEsMinimo = fuenteResultados === "database-pais" || fuenteResultados === "database-pais-filtro-tope";
 
   // Qué casilla de "¿Dónde quieres trabajar?" está puesta ahora.
   const enMiCiudad = !!residencia && paisSeleccionado === residencia && !!ciudadPerfil
