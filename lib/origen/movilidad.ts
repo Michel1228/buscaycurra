@@ -187,6 +187,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
     titulo: "Dirección General de Migración y Extranjería — El Salvador",
     url: "https://www.migracion.gob.sv/",
   },
+  PA: {
+    titulo: "Servicio Nacional de Migración — Panamá",
+    url: "https://www.migracion.gob.pa/",
+  },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
     url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-finder",

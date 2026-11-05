@@ -712,6 +712,14 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     actualizado: "2026-11",
   },
   {
+    pais: "PA",
+    nombre: "Empleos Panamá (MITRADEL)",
+    url: "https://www.empleospanama.gob.pa/",
+    queHacer:
+      "El portal de empleo del Ministerio de Trabajo, gratis: publica cada semana vacantes de empresas de todo el país. Ojo con los portales falsos que lo imitan.",
+    actualizado: "2026-11",
+  },
+  {
     pais: "SV",
     nombre: "Lunes de Empleo (Ministerio de Trabajo)",
     url: "https://www.mtps.gob.sv/",

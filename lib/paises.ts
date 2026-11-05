@@ -823,6 +823,37 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["atención al cliente", "bodega", "asesor de ventas", "motorista", "vendedor"],
     slug: "el-salvador",
   },
+
+  // Panamá entra el 5 nov 2026, por el barrido de Careerjet (2.940 ofertas).
+  PA: {
+    codigo: "PA",
+    nombre: "Panamá",
+    nombreLocal: "Panamá",
+    moneda: "PAB",
+    simboloMoneda: "B/.",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇵🇦",
+    // En Panamá el mínimo va por hora, actividad, región y tamaño de empresa
+    // (Decreto Ejecutivo 13 de 31 dic 2025, desde el 16 ene 2026, para dos
+    // años). Comercio en gran empresa, región 1: B/.3,02 la hora; con la
+    // jornada de 48 horas semanales salen unos B/.628 al mes. Es una cuenta
+    // nuestra, no una cifra mensual oficial.
+    salarioMinimo: 628,
+    // Salario mensual MEDIANO de los empleados en 2025: B/.755,8 (Contraloría,
+    // con datos del INEC). Es la mediana, no la media.
+    salarioMedio: 756,
+    // El balboa va a la par del dólar: 1,1267 por euro (BCE, 4 nov 2026).
+    tasaCambioEUR: 1.1267,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Ciudad de Panamá", "San Miguelito", "Colón", "David", "La Chorrera", "Santiago"],
+    // Las que más ofertas tienen en Careerjet Panamá el 5 nov 2026: atención
+    // al cliente 500, ejecutivo de ventas 129, bodega 128, vendedor 107 y
+    // asistente administrativo 79.
+    keywordsLaborales: ["atención al cliente", "ejecutivo de ventas", "bodega", "vendedor", "asistente administrativo"],
+    slug: "panama",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -864,6 +895,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.CR,  // Costa Rica — 723.135 CRC/mes (~1.418 €)
   PAISES.UY,  // Uruguay — 56.920 UYU/mes (~1.261 €)
   PAISES.SV,  // El Salvador — 437 USD/mes (~388 €)
+  PAISES.PA,  // Panamá — 756 PAB/mes, mediana (~671 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

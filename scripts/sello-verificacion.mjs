@@ -2675,6 +2675,50 @@ test("El Salvador es un pais completo: dolar, residencia con oferta y Lunes de E
   }
 });
 
+// ── PANAMÁ, PAÍS COMPLETO (5 nov 2026) ───────────────────────────────────────
+//
+// Lo propio de Panamá: España es País Amigo, pero la residencia NO exime del
+// permiso de trabajo; el mínimo va por hora; "Ciudad de Panamá" es la capital.
+test("Panama es un pais completo: Paises Amigos mas permiso de trabajo, minimo por hora y la capital", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-panama-entrada.ts", salida = ".sello-panama.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { servicioEmpleoDe } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const pa = m.PAISES.PA;
+    const req = m.requisitosDe("PA");
+    const docs = m.getPrimerosPasos("PA")?.papeleo.documentos || [];
+    const casos = [
+      ["minimo calculado por hora", pa?.salarioMinimo, 628],
+      ["balboa", pa?.moneda, "PAB"],
+      ["slug", pa?.slug, "panama"],
+      ["paisPorNombre", m.paisPorNombre("Panamá"), "PA"],
+      ["Guzzi lo detecta", m.detectarPais("trabajo en Panamá")?.codigo, "pa"],
+      ["la capital no es el pais", m.detectarPais("mesero en Ciudad de Panamá") ?? null, null],
+      ["Espana Pais Amigo", (req?.siEresDeLaUE || []).some(t => /Países Amigos/.test(t)), true],
+      ["permiso de trabajo aparte", docs.some(d => d.nombre === "Permiso de trabajo") && docs.some(d => /Países Amigos/.test(d.nombre)), true],
+      ["bolsa publica", m.servicioEmpleoDe("PA")?.nombre, "Empleos Panamá (MITRADEL)"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

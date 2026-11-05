@@ -369,6 +369,16 @@ export const ESTILOS: EstiloCV[] = [
     noPongas: [],
     nota: "No hemos encontrado una norma salvadoreña sobre qué no poner. Lleva el CV impreso a los «Lunes de Empleo» del Ministerio de Trabajo: allí se recogen en persona.",
   },
+  {
+    codigo: "PA",
+    pais: "Panamá",
+    bandera: "🇵🇦",
+    foto: "opcional",
+    nombreLocal: "Hoja de vida",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    nota: "No hemos encontrado una norma panameña sobre qué no poner. Muchas ofertas piden inglés: si lo hablas, pon tu nivel real arriba.",
+  },
 ];
 
 /**

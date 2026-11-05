@@ -697,6 +697,30 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y el Ministerio de Trabajo no tiene bolsa en línea: sus vacantes salen en los «Lunes de Empleo» de sus 14 oficinas.",
   },
+  // Panamá (5 nov 2026). Fuentes: el decreto de Países Amigos y su
+  // ampliación a Ecuador (Decreto Ejecutivo 16, en vigor el 1 sep 2026; la
+  // lista incluye a España), guías jurídicas que coinciden en la vía por
+  // contrato laboral (residencia provisional de dos años, luego permanente) y
+  // en que la residencia NO exime del permiso de trabajo del Ministerio de
+  // Trabajo (MITRADEL).
+  {
+    codigo: "PA",
+    nombre: "Panamá",
+    bandera: "🇵🇦",
+    autoridad: { nombre: "Servicio Nacional de Migración", url: "https://www.migracion.gob.pa/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Panamá. Con pasaporte español entras sin visa como turista, pero esa estancia no permite trabajar.",
+      "Si eres de España, estás en la lista de Países Amigos: con un contrato de trabajo en Panamá pides una residencia provisional de dos años que luego pasa a permanente.",
+      "Aun con esa residencia, para trabajar necesitas además el permiso de trabajo del Ministerio de Trabajo (MITRADEL).",
+    ],
+    siNoEresDeLaUE: [
+      "Mira si tu país está en la lista de Países Amigos (en septiembre de 2026 se añadió Ecuador): con contrato de trabajo tienes residencia provisional de dos años y después permanente.",
+      "Con esa residencia o con otra, el permiso de trabajo del Ministerio de Trabajo se pide aparte.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y el Ministerio de Trabajo ha avisado de portales de empleo falsos que se hacen pasar por el suyo: el oficial es empleospanama.gob.pa.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

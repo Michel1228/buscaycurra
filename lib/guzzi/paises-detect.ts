@@ -39,6 +39,7 @@ const ALIAS: Record<string, string[]> = {
   CR: ["costa rica"],
   UY: ["uruguay"],
   SV: ["el salvador"],
+  PA: ["panama"],
   CH: ["suiza", "switzerland", "schweiz"],
   BE: ["belgica", "belgium"],
   AT: ["austria"],
@@ -64,7 +65,7 @@ function normalizar(s: string): string {
 // Y desde que Chile lo es (5 nov 2026), el chile que se come: en México hay
 // empacadoras de chile, y "empacador de chile jalapeño" no es buscar en Chile.
 const NO_SON_EL_PAIS = [
-  "ciudad de mexico", "estado de mexico", "nuevo mexico", "ciudad de guatemala",
+  "ciudad de mexico", "estado de mexico", "nuevo mexico", "ciudad de guatemala", "ciudad de panama",
   "chile jalapeno", "chile habanero", "chile poblano", "chile serrano", "chile verde",
   "chile seco", "chile en nogada", "chile de arbol", "chile ancho", "chile guajillo",
 ];

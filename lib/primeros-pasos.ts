@@ -1407,6 +1407,43 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── PANAMÁ (5 nov 2026) ──────────────────────────────────────────────────
+  // Fuentes: decreto de Países Amigos y su ampliación a Ecuador (Decreto
+  // Ejecutivo 16, 2026), guías jurídicas sobre la vía por contrato y el
+  // permiso de trabajo del MITRADEL. Sin una fuente fiable sobre alquileres,
+  // no se afirma nada.
+  PA: {
+    codigo: "PA",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Panamá no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Encuentra24", url: "https://www.encuentra24.com/panama-es/bienes-raices-alquiler-apartamentos", descripcion: "El portal de anuncios más usado de Panamá, con apartamentos y habitaciones." },
+        { nombre: "Compreoalquile", url: "https://www.compreoalquile.com", descripcion: "Alquileres de inmobiliarias y particulares en Panamá." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Panama/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Panamá, lo práctico es empezar por un alquiler mensual o una habitación. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Desde España (País Amigo): con un contrato de trabajo en Panamá, residencia provisional de dos años y luego permanente, más el permiso de trabajo del Ministerio de Trabajo, que se pide aparte.",
+      enlaceOficial: "https://www.migracion.gob.pa/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Residencia (Países Amigos u otra)", descripcion: "La da el Servicio Nacional de Migración. Por Países Amigos con contrato de trabajo: provisional de dos años y luego permanente.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.migracion.gob.pa/" },
+        { nombre: "Permiso de trabajo", descripcion: "Lo da el Ministerio de Trabajo (MITRADEL). La residencia no te exime de él.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true },
+        { nombre: "Carné de residente", descripcion: "Tu documento de identidad como residente. Te lo da Migración con la residencia.", tiempoObtener: "Tras la residencia", obligatorio: true },
+        { nombre: "Caja de Seguro Social", descripcion: "Con contrato, la empresa te inscribe en la CSS: salud y pensión.", tiempoObtener: "Al empezar a trabajar", obligatorio: true },
+      ],
+      consejo: "El orden: contrato → residencia en Migración y permiso de trabajo en el MITRADEL → carné de residente → Caja de Seguro Social.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

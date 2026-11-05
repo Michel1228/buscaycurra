@@ -193,6 +193,12 @@
       "moneda": "USD",
       "nota": "Salario mínimo de industria, comercio y servicios desde el 1 jun 2025 (Decreto Ejecutivo 11); sin decreto nuevo en 2026. Maquila y campo tienen el suyo.",
       "fuente": "Fuente oficial nacional"
+    },
+    "PA": {
+      "salarioMinimo": 628,
+      "moneda": "PAB",
+      "nota": "En Panamá el mínimo va por hora, actividad y región (Decreto Ejecutivo 13 de 2025, desde el 16 ene 2026). Comercio en gran empresa, región 1: B/.3,02 la hora; unos B/.628 al mes con 48 horas semanales.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

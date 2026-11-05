@@ -91,6 +91,7 @@ export default async function LandingPage() {
     CR: { flag: "🇨🇷", nombre: "Costa Rica" },
     UY: { flag: "🇺🇾", nombre: "Uruguay" },
     SV: { flag: "🇸🇻", nombre: "El Salvador" },
+    PA: { flag: "🇵🇦", nombre: "Panamá" },
   };
 
   const PAISES_DATA = stats
