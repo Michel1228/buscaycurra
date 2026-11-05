@@ -4,7 +4,13 @@
  *
  * Lo pide el crontab del servidor después del centinela
  * (scripts/vps/resumen-diario.sh), que le pasa cómo le ha ido:
- * ?centinela=28 pasan, 4 fallan. Va a ADMIN_EMAILS.
+ * ?centinela=28 pasan, 4 fallan. Va a ADMIN_EMAILS y a RESUMEN_DIARIO_EMAILS.
+ *
+ * RESUMEN_DIARIO_EMAILS (5 nov 2026): quien recibe este correo y puede abrir el
+ * panel de métricas, pero NO es administrador: no le llegan los avisos del
+ * centinela ni del vigilante, ni las ofertas de empresas. Es el socio. Las
+ * direcciones van en el .env.local del servidor, nunca aquí: el repositorio
+ * es público.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { secretIguales } from "@/lib/secret-compare";
@@ -18,8 +24,10 @@ export async function POST(req: NextRequest) {
   if (!secretIguales(req.headers.get("x-sync-secret"), process.env.ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  const destinos = (process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAIL || "")
-    .split(",").map((e) => e.trim()).filter(Boolean);
+  const destinos = [...new Set(
+    `${process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAIL || ""},${process.env.RESUMEN_DIARIO_EMAILS || ""}`
+      .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
+  )];
   if (!destinos.length) return NextResponse.json({ error: "Falta ADMIN_EMAILS" }, { status: 500 });
 
   const m = (req.nextUrl.searchParams.get("centinela") || "").match(/(\d+) pasan, (\d+) fallan/);

@@ -500,7 +500,7 @@ ${params.centinela
     ? `<p ${P}>Centinela: ${params.centinela.pasan} de ${params.centinela.pasan + params.centinela.fallan} comprobaciones bien.${params.centinela.fallan ? " Los fallos te llegan en su propio correo." : ""}</p>`
     : ""}
 <p ${P}><a href="https://buscaycurra.es/admin/metricas" ${ENLACE}>Abrir el panel completo →</a></p>`;
-  const pie = "El canal de llegada se apunta desde el 23 oct 2026: lo de antes sale como «Sin dato». Te llega cada mañana por ser administrador de BuscayCurra.";
+  const pie = "El canal de llegada se apunta desde el 23 oct 2026: lo de antes sale como «Sin dato». Te llega cada mañana por ser del equipo de BuscayCurra.";
 
   let enviados = 0;
   for (const to of params.destinos) {

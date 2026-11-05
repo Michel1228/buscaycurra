@@ -91,6 +91,7 @@ no da error, da lista vacía.
 | `CRON_SECRET` | 1 | Tareas programadas |
 | `WEBHOOK_SECRET` | 1 | ⚠️ Genérico y confuso. Ya hubo una fuga con él — revisar si sigue haciendo falta |
 | `ADMIN_EMAILS` / `NEXT_PUBLIC_ADMIN_EMAIL` | 1+3 | Quién puede entrar al panel |
+| `RESUMEN_DIARIO_EMAILS` | 2 | Quién recibe el resumen de cada mañana y ve el panel de métricas sin ser administrador (sin avisos técnicos). Solo en el `.env.local` del servidor |
 
 ---
 

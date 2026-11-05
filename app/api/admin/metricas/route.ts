@@ -49,8 +49,10 @@ async function esAdministrador(req: NextRequest): Promise<boolean> {
     return true;
   }
 
-  // 2) Sesión de un email autorizado
-  const admins = (process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAIL || "")
+  // 2) Sesión de un email autorizado. Quien recibe el resumen de cada mañana
+  // (RESUMEN_DIARIO_EMAILS) también puede abrir el panel: el correo lleva el
+  // enlace, y aquí solo se leen cifras.
+  const admins = `${process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAIL || ""},${process.env.RESUMEN_DIARIO_EMAILS || ""}`
     .split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
   if (admins.length === 0) return false;
 
