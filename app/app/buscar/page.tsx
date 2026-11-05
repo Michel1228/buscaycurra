@@ -7,13 +7,15 @@ import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
 import InfoTooltip from "@/components/InfoTooltip";
 import CountrySelector from "@/components/CountrySelector";
 import { paisDeCiudad } from "@/lib/guzzi/ciudades-pais";
-import { PAISES, paisPorNombre } from "@/lib/paises";
+import { PAISES, paisPorNombre, NUM_PAISES } from "@/lib/paises";
+import { dondeEstoy, guardarDondeEstoy } from "@/lib/origen/donde-estoy";
+import { NACIONALIDADES, nacionalidadDe } from "@/lib/origen/nacionalidades";
 import { DATOS } from "@/lib/datos-reales";
 import { sectorDeOficio } from "@/lib/job-search/oficio-a-sector";
 import EmpresasDeLaZona from "@/components/EmpresasDeLaZona";
 import NavTrabajo from "@/components/NavTrabajo";
 import Link from "next/link";
-import { TrendingUp, Send, Building2, Info, AlertTriangle } from "lucide-react";
+import { TrendingUp, Send, Building2, Info, AlertTriangle, MapPin } from "lucide-react";
 
 /** El nombre del pais tal y como lo lee la gente: "Francia", no "FR". */
 function nombrePais(codigo: string): string {
@@ -25,7 +27,7 @@ const opcionesJornada = [
   { valor: "", etiqueta: "Todas" },
   { valor: "completa", etiqueta: "Jornada completa" },
   { valor: "parcial", etiqueta: "Jornada parcial" },
-  { valor: "remoto", etiqueta: "Remoto" },
+  { valor: "remoto", etiqueta: "Remoto / desde casa" },
 ];
 
 const opcionesExperiencia = [
@@ -56,6 +58,8 @@ function BuscarPageInner() {
   const [geoDetected, setGeoDetected] = useState(false);
   const [jornada, setJornada] = useState("");
   const [experiencia, setExperiencia] = useState("");
+  // Ofertas para personas con discapacidad: el filtro "PCD" de los portales de Brasil.
+  const [inclusiva, setInclusiva] = useState(false);
   const [salarioMin, setSalarioMin] = useState("");
   const [salarioMax, setSalarioMax] = useState("");
 
@@ -93,16 +97,28 @@ function BuscarPageInner() {
   const [creandoAlerta, setCreandoAlerta] = useState(false);
 
   const [paisSeleccionado, setPaisSeleccionado] = useState(() => {
-    // Prioridad: URL > localStorage > España
+    // Prioridad: URL > el último que eligió > el país donde está > España.
+    // Sin lo tercero, alguien de Monterrey que entraba por primera vez veía
+    // ofertas de Madrid.
     const urlPais = searchParams.get("pais");
     if (urlPais) return urlPais.toUpperCase();
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("bc_pais");
       if (saved) return saved;
+      const aqui = dondeEstoy();
+      if (aqui && PAISES[aqui]) return aqui;
     }
     return "ES";
   });
   const paisCambiadoPorUsuario = useRef(false);
+
+  // DÓNDE ESTÁ LA PERSONA (lib/origen/donde-estoy.ts) y su ciudad del perfil.
+  // Con eso, "¿dónde quieres trabajar?" se contesta con un toque: en mi
+  // ciudad, en todo mi país o en otro país. Nada de formularios.
+  const [residencia, setResidencia] = useState<string | null>(null);
+  const [ciudadPerfil, setCiudadPerfil] = useState("");
+  const [cambiandoResidencia, setCambiandoResidencia] = useState(false);
+  useEffect(() => { setResidencia(dondeEstoy()); }, []);
   function cambiarPais(codigo: string) {
     setPaisSeleccionado(codigo);
     paisCambiadoPorUsuario.current = true;
@@ -132,6 +148,13 @@ function BuscarPageInner() {
       const { data: { user } } = await getSupabaseBrowser().auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
+      // En otro dispositivo: lo que eligió en su cuenta vale también aquí.
+      const deLaCuenta = String(user.user_metadata?.pais_residencia || "").toUpperCase();
+      if (deLaCuenta && !localStorage.getItem("bc_donde_estoy")) {
+        try { localStorage.setItem("bc_donde_estoy", deLaCuenta); } catch { /* da igual */ }
+        if (mountedRef.current) setResidencia(deLaCuenta);
+      }
+
       // Si la URL ya trae location (aunque sea vacío), respetarlo — no auto-rellenar
       if (locationFetched.current || searchParams.has("location") || searchParams.has("ubicacion")) return;
       locationFetched.current = true;
@@ -142,6 +165,7 @@ function BuscarPageInner() {
         .select("ciudad").eq("id", user.id).single();
       if (perfil?.ciudad) {
         if (!mountedRef.current) return;
+        setCiudadPerfil(perfil.ciudad);
         setUbicacion(perfil.ciudad);
         setGeoDetected(true);
         return;
@@ -251,7 +275,27 @@ function BuscarPageInner() {
     "new york", "los angeles", "chicago", "miami", "toronto", "sydney", "melbourne"
   ]);
   
-  async function buscar(e?: React.FormEvent, valores?: { keyword: string; ubicacion: string }) {
+  /** Las casillas de "¿Dónde quieres trabajar?": un toque y busca. */
+  function trabajarEn(donde: "ciudad" | "pais") {
+    if (!residencia || !PAISES[residencia]) return;
+    const sitio = donde === "ciudad" ? ciudadPerfil : PAISES[residencia].nombre;
+    if (!sitio) return;
+    if (residencia !== paisSeleccionado) cambiarPais(residencia);
+    setUbicacion(sitio);
+    setGeoDetected(donde === "ciudad");
+    void buscar(undefined, { keyword, ubicacion: sitio, pais: residencia });
+  }
+
+  function cambiarResidencia(codigo: string) {
+    setCambiandoResidencia(false);
+    if (!codigo) return;
+    setResidencia(codigo);
+    void guardarDondeEstoy(codigo);
+    // Si está en un país donde hay ofertas, se busca ahí desde ya.
+    if (PAISES[codigo]) elegirPaisAMano(codigo);
+  }
+
+  async function buscar(e?: React.FormEvent, valores?: { keyword: string; ubicacion: string; pais?: string }) {
     if (e) e.preventDefault();
     
     // Extraer ciudad del keyword si el usuario escribió "trabajo ciudad"
@@ -305,16 +349,16 @@ function BuscarPageInner() {
     // ofertas y ni una pista de por qué — la bandera está en otra esquina de
     // la pantalla y nadie la relaciona. Si la ciudad que escribes está en otro
     // país, se cambia sola y se dice. Nunca se bloquea la búsqueda por esto.
-    let paisParaBuscar = paisSeleccionado;
+    let paisParaBuscar = valores?.pais ?? paisSeleccionado;
     setAvisoPais("");
     // Un país entero en "¿Dónde?": la bandera pasa a ese país (la API busca en todo él).
     const paisEscrito = paisPorNombre(finalUbicacion);
     if (paisEscrito) {
       paisParaBuscar = paisEscrito;
-      if (paisEscrito !== paisSeleccionado) cambiarPais(paisEscrito);
+      if (paisEscrito !== paisParaBuscar) cambiarPais(paisEscrito);
     } else if (finalUbicacion) {
-      const paisDeLaCiudad = paisDeCiudad(finalUbicacion);
-      if (paisDeLaCiudad && paisDeLaCiudad !== paisSeleccionado) {
+      const paisDeLaCiudad = paisDeCiudad(finalUbicacion, paisParaBuscar);
+      if (paisDeLaCiudad && paisDeLaCiudad !== paisParaBuscar) {
         paisParaBuscar = paisDeLaCiudad;
         cambiarPais(paisDeLaCiudad);
         setAvisoPais(
@@ -339,6 +383,7 @@ function BuscarPageInner() {
       if (categoria) params.set("categoria", categoria);
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
+      if (inclusiva) params.set("inclusiva", "1");
       if (salarioMin) params.set("salarioMin", salarioMin);
       if (salarioMax) params.set("salarioMax", salarioMax);
 
@@ -413,6 +458,7 @@ function BuscarPageInner() {
       if (categoria) params.set("categoria", categoria);
       if (jornada) params.set("jornada", jornada);
       if (experiencia) params.set("experiencia", experiencia);
+      if (inclusiva) params.set("inclusiva", "1");
       if (salarioMin) params.set("salarioMin", salarioMin);
       if (salarioMax) params.set("salarioMax", salarioMax);
       params.set("page", String(nextPage));
@@ -438,6 +484,16 @@ function BuscarPageInner() {
   const esEnTiempoReal = fuenteResultados.startsWith("live-api");
   // En un país grande sin palabra ni ciudad la API cuenta hasta 10.000 y para.
   const totalEsMinimo = fuenteResultados === "database-pais";
+
+  // Qué casilla de "¿Dónde quieres trabajar?" está puesta ahora.
+  const enMiCiudad = !!residencia && paisSeleccionado === residencia && !!ciudadPerfil
+    && ubicacion.trim().toLowerCase() === ciudadPerfil.trim().toLowerCase();
+  const enMiPais = !!residencia && paisSeleccionado === residencia
+    && (!ubicacion.trim() || paisPorNombre(ubicacion) === residencia);
+  const fichaResidencia = nacionalidadDe(residencia);
+  const nombreResidencia = residencia
+    ? `${PAISES[residencia]?.bandera ?? fichaResidencia?.bandera ?? ""} ${PAISES[residencia]?.nombre ?? fichaResidencia?.nombre ?? residencia}`.trim()
+    : "";
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
@@ -495,11 +551,61 @@ function BuscarPageInner() {
               Suelto abajo a la derecha, nadie lo relacionaba con el "¿Dónde?":
               escribías "París" con la bandera en España, salían cero ofertas y
               no había forma de saber por qué. */}
+          {/* ¿DÓNDE QUIERES TRABAJAR? Tres respuestas y un toque cada una: en
+              tu ciudad, en todo tu país o en otro país. Lo que en otros
+              portales es un formulario, aquí son tres casillas. */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-[11px]" style={{ color: "#94a3b8" }}>Buscando en:</span>
+            <span className="text-[11px]" style={{ color: "#94a3b8" }}>¿Dónde quieres trabajar?</span>
+            {residencia && PAISES[residencia] && ciudadPerfil && (
+              <button type="button" onClick={() => trabajarEn("ciudad")} disabled={cargando}
+                aria-pressed={enMiCiudad}
+                className="px-2.5 py-1 rounded-full text-xs font-semibold hover:opacity-90 disabled:opacity-50"
+                style={enMiCiudad ? { background: "#22c55e", color: "#0f1117", border: "1px solid #22c55e" } : { background: "#161922", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+                <MapPin size={12} strokeWidth={2.2} className="inline -mt-0.5 mr-1" />En {ciudadPerfil}
+              </button>
+            )}
+            {residencia && PAISES[residencia] && (
+              <button type="button" onClick={() => trabajarEn("pais")} disabled={cargando}
+                aria-pressed={enMiPais}
+                className="px-2.5 py-1 rounded-full text-xs font-semibold hover:opacity-90 disabled:opacity-50"
+                style={enMiPais ? { background: "#22c55e", color: "#0f1117", border: "1px solid #22c55e" } : { background: "#161922", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+                {PAISES[residencia].bandera} En todo {PAISES[residencia].nombre}
+              </button>
+            )}
+            <span className="text-[11px]" style={{ color: "#94a3b8" }}>
+              {residencia && PAISES[residencia] ? "o en otro país:" : "Buscando en:"}
+            </span>
             <CountrySelector paisActual={paisSeleccionado} onCambiarPais={elegirPaisAMano} variant="buscar" />
-            <span className="text-[11px] opacity-75">· Si escribes una ciudad de otro país, lo cambio yo.</span>
           </div>
+
+          {/* Dónde está ahora. Se detecta solo; si no acierta, se cambia aquí. */}
+          <div className="mt-1.5 text-[11px] flex flex-wrap items-center gap-1.5" style={{ color: "#64748b" }}>
+            {cambiandoResidencia ? (
+              <>
+                <label htmlFor="donde-estoy">¿En qué país estás ahora?</label>
+                <select id="donde-estoy" autoFocus defaultValue={residencia || ""} onChange={(e) => cambiarResidencia(e.target.value)}
+                  className="text-xs px-2 py-1 rounded" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}>
+                  <option value="">Elige…</option>
+                  {NACIONALIDADES.map(n => <option key={n.codigo} value={n.codigo}>{n.bandera} {n.nombre}</option>)}
+                </select>
+                <button type="button" onClick={() => setCambiandoResidencia(false)} className="underline">cancelar</button>
+              </>
+            ) : (
+              <>
+                <span>{residencia ? <>Estás en {nombreResidencia}</> : <>No sabemos en qué país estás</>}</span>
+                <button type="button" onClick={() => setCambiandoResidencia(true)} className="underline hover:opacity-80" style={{ color: "#94a3b8" }}>
+                  {residencia ? "cambiar" : "dínoslo"}
+                </button>
+                <span className="opacity-75">· Si escribes una ciudad de otro país, cambio la búsqueda yo.</span>
+              </>
+            )}
+          </div>
+          {residencia && !PAISES[residencia] && (
+            <p className="mt-2 text-xs px-3 py-2 rounded-lg" style={{ background: "#161922", border: "1px solid #2d3142", color: "#94a3b8" }}>
+              Todavía no tenemos ofertas de {nombreResidencia}. Las estamos preparando; mientras, puedes
+              buscar en los {NUM_PAISES} países donde sí hay: elige uno arriba.
+            </p>
+          )}
 
           {avisoPais && (
             <div className="mt-2 px-3 py-2 rounded-lg text-xs flex items-start gap-2"
@@ -561,7 +667,7 @@ function BuscarPageInner() {
             <button onClick={() => setFiltrosAbiertos(v => !v)}
               className="md:hidden w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium"
               style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8" }}>
-              <span>Filtros{(jornada || experiencia || salarioMin || salarioMax) ? " · activos" : ""}</span>
+              <span>Filtros{(jornada || experiencia || inclusiva || salarioMin || salarioMax) ? " · activos" : ""}</span>
               <span>{filtrosAbiertos ? "▲" : "▼"}</span>
             </button>
 
@@ -582,13 +688,20 @@ function BuscarPageInner() {
                   {opcionesExperiencia.map(op => <option key={op.valor} value={op.valor}>{op.etiqueta}</option>)}
                 </select>
               </div>
+              {/* Como las "vagas PCD" de los portales de Brasil: ofertas que dicen
+                  ser para personas con discapacidad. Hoy se reconoce en español
+                  y portugués (lib/job-search/filtros.ts). */}
+              <label className="mb-4 flex items-start gap-2 text-xs cursor-pointer" style={{ color: "#94a3b8" }}>
+                <input type="checkbox" checked={inclusiva} onChange={(e) => setInclusiva(e.target.checked)} className="mt-0.5" />
+                <span>Para personas con discapacidad <span style={{ color: "#64748b" }}>(ofertas en español y portugués)</span></span>
+              </label>
               <div className="mb-4">
-                <label htmlFor="filtro-salario" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario mínimo (€/año)</label>
+                <label htmlFor="filtro-salario" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario mínimo ({PAISES[paisSeleccionado]?.simboloMoneda ?? "€"}/año)</label>
                 <input id="filtro-salario" type="number" value={salarioMin} onChange={(e) => setSalarioMin(e.target.value)}
                   placeholder="Ej: 20000" className="w-full text-sm" />
               </div>
               <div className="mb-4">
-                <label htmlFor="filtro-salario-max" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario máximo (€/año)</label>
+                <label htmlFor="filtro-salario-max" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario máximo ({PAISES[paisSeleccionado]?.simboloMoneda ?? "€"}/año)</label>
                 <input id="filtro-salario-max" type="number" value={salarioMax} onChange={(e) => setSalarioMax(e.target.value)}
                   placeholder="Ej: 50000" className="w-full text-sm" />
               </div>
@@ -674,8 +787,8 @@ function BuscarPageInner() {
                       Buscar en todo el país
                     </button>
                   )}
-                  {(jornada || experiencia || salarioMin || salarioMax) && (
-                    <button onClick={() => { setJornada(""); setExperiencia(""); setSalarioMin(""); setSalarioMax(""); setTimeout(() => buscar(), 0); }}
+                  {(jornada || experiencia || inclusiva || salarioMin || salarioMax) && (
+                    <button onClick={() => { setJornada(""); setExperiencia(""); setInclusiva(false); setSalarioMin(""); setSalarioMax(""); setTimeout(() => buscar(), 0); }}
                       className="px-3 py-2 rounded-lg text-xs font-semibold"
                       style={{ background: "#1e212b", color: "#f1f5f9", border: "1px solid #2d3142" }}>
                       Quitar los filtros

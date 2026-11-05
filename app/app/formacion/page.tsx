@@ -23,16 +23,23 @@
  */
 import type { Metadata } from "next";
 import ListaCursos from "@/components/cursos/ListaCursos";
+import { nacionalidadDe } from "@/lib/origen/nacionalidades";
+/** El país del catálogo: el de ?pais=, si es un país que conocemos. España si no. */
+function paisDelCatalogo(pais?: string): string {
+  return nacionalidadDe(pais)?.codigo ?? "ES";
+}
+
 
 export const metadata: Metadata = {
   title: "Cursos | BuscayCurra",
 };
 
-export default function CursosApp() {
+export default async function CursosApp({ searchParams }: { searchParams: Promise<{ pais?: string }> }) {
+  const { pais } = await searchParams;
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117", color: "#f1f5f9" }}>
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <ListaCursos base="/app/formacion" />
+        <ListaCursos base="/app/formacion" pais={paisDelCatalogo(pais)} />
       </div>
     </div>
   );

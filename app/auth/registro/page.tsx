@@ -11,6 +11,7 @@ import { palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
 import { destinoSeguro } from "@/lib/auth/destino";
 import { sugerenciaCorreo } from "@/lib/auth/sugerencia-correo";
 import { llegadaDeEstaVisita, COMO_NOS_CONOCIO } from "@/lib/origen/llegada";
+import { dondeEstoy } from "@/lib/origen/donde-estoy";
 import { plataforma } from "@/lib/utils/platform";
 
 /** La bandeja de entrada de los correos más comunes, para confirmar con un toque. */
@@ -128,6 +129,9 @@ function RegistroPageInner() {
             full_name: nombre.trim(), ciudad: ciudad.trim(),
             ...(oficio.trim() ? { oficio: oficio.trim().slice(0, 80) } : {}),
             ...(referralCode ? { ref: referralCode } : {}),
+            // En qué país está, sin preguntárselo: sale de la zona horaria
+            // del dispositivo (lib/origen/donde-estoy.ts). Se cambia en el buscador.
+            ...(dondeEstoy() ? { pais_residencia: dondeEstoy() } : {}),
             // A dónde volver al confirmar, y de dónde vino (para medir).
             ...(destinoCuenta ? { destino: destinoCuenta } : {}),
             ...(ofertaId ? { origen: `oferta:${ofertaId}` } : desde ? { origen: `desde:${desde}` } : destinoParam ? { origen: `destino:${destinoParam.split("?")[0]}` } : {}),

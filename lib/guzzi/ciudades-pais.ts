@@ -12,7 +12,7 @@
  * formas, así que se buscan todas a la vez.
  *
  * No están todas las ciudades del mundo: están las que tienen ofertas de verdad
- * en los 26 países que cubrimos. Si una ciudad no está, no pasa nada — se sigue
+ * en los países que cubrimos. Si una ciudad no está, no pasa nada — se sigue
  * usando el país del perfil, que es como funcionaba antes.
  */
 
@@ -187,9 +187,30 @@ const CIUDADES: Record<string, [string, string[]]> = {
   calgary: ["CA", ["calgary"]],
   ottawa: ["CA", ["ottawa"]],
   quebec: ["CA", ["quebec", "québec"]],
-  "ciudad de mexico": ["MX", ["ciudad de mexico", "cdmx", "mexico city"]],
+
+  // ── México ──────────────────────────────────────────────────────────
+  // Así vienen en las ofertas: "Guadalajara, Jalisco", "Miguel Hidalgo, Ciudad
+  // de México" (la alcaldía delante). Mirado en 600 ofertas el 5 nov 2026.
+  "ciudad de mexico": ["MX", ["ciudad de mexico", "cdmx", "mexico city", "distrito federal"]],
+  cdmx: ["MX", ["ciudad de mexico", "cdmx", "mexico city", "distrito federal"]],
   guadalajara: ["MX", ["guadalajara"]],
+  zapopan: ["MX", ["zapopan"]],
   monterrey: ["MX", ["monterrey"]],
+  puebla: ["MX", ["puebla"]],
+  queretaro: ["MX", ["queretaro", "querétaro"]],
+  hermosillo: ["MX", ["hermosillo"]],
+  toluca: ["MX", ["toluca"]],
+  merida: ["MX", ["merida", "mérida"]],
+  leon: ["MX", ["leon", "león"]],
+  aguascalientes: ["MX", ["aguascalientes"]],
+  culiacan: ["MX", ["culiacan", "culiacán"]],
+  tijuana: ["MX", ["tijuana"]],
+  chihuahua: ["MX", ["chihuahua"]],
+  morelia: ["MX", ["morelia"]],
+  cancun: ["MX", ["cancun", "cancún"]],
+  saltillo: ["MX", ["saltillo"]],
+  "san luis potosi": ["MX", ["san luis potosi", "san luis potosí"]],
+  "ciudad juarez": ["MX", ["ciudad juarez", "ciudad juárez", "juarez", "juárez"]],
 
   // ── Oceanía ─────────────────────────────────────────────────────────
   sidney: ["AU", ["sydney", "sidney"]],
@@ -222,6 +243,57 @@ const CIUDADES: Record<string, [string, string[]]> = {
   "sao paulo": ["BR", ["sao paulo", "são paulo"]],
   "rio de janeiro": ["BR", ["rio de janeiro"]],
   brasilia: ["BR", ["brasilia", "brasília"]],
+  // Las que más ofertas tenían el 5 nov 2026, escritas como vienen.
+  "belo horizonte": ["BR", ["belo horizonte"]],
+  curitiba: ["BR", ["curitiba"]],
+  "porto alegre": ["BR", ["porto alegre"]],
+  salvador: ["BR", ["salvador"]],
+  recife: ["BR", ["recife"]],
+  fortaleza: ["BR", ["fortaleza"]],
+  manaus: ["BR", ["manaus"]],
+  belem: ["BR", ["belem", "belém"]],
+  goiania: ["BR", ["goiania", "goiânia"]],
+  campinas: ["BR", ["campinas"]],
+  florianopolis: ["BR", ["florianopolis", "florianópolis"]],
+  "campo grande": ["BR", ["campo grande"]],
+  maceio: ["BR", ["maceio", "maceió"]],
+  "sao luis": ["BR", ["sao luis", "são luís", "sao luís"]],
+  "joao pessoa": ["BR", ["joao pessoa", "joão pessoa"]],
+  vitoria: ["BR", ["vitoria", "vitória"]],
+};
+
+/**
+ * CIUDADES QUE SE LLAMAN IGUAL EN VARIOS PAÍSES.
+ *
+ * Hay 360 ofertas en Guadalajara (España) y la tabla de arriba decía que
+ * Guadalajara es de México: un español que buscaba en su Guadalajara acababa
+ * mirando ofertas de Jalisco, con un aviso de "he cambiado la búsqueda". Con
+ * Latinoamérica dentro, pasa con muchas más: Mérida, León, Córdoba, Valencia,
+ * Cartagena, Vitoria...
+ *
+ * La regla es la de cualquier persona: si la ciudad existe en el país donde ya
+ * estás buscando, es esa. Solo si no existe allí se va a la primera de la
+ * lista, que es la que tiene más ofertas o la más conocida.
+ */
+const HOMONIMAS: Record<string, string[]> = {
+  guadalajara: ["MX", "ES"],
+  merida: ["MX", "ES", "VE"],
+  leon: ["MX", "ES"],
+  cordoba: ["ES", "AR", "MX"],
+  salamanca: ["ES", "MX"],
+  toledo: ["ES", "US", "BR"],
+  valencia: ["ES", "VE"],
+  cartagena: ["ES", "CO"],
+  santiago: ["CL", "ES"],
+  granada: ["ES", "NI"],
+  barcelona: ["ES", "VE"],
+  trujillo: ["PE", "ES", "VE"],
+  vitoria: ["ES", "BR"],
+  "santa cruz": ["BO", "ES"],
+  london: ["UK", "CA"],
+  londres: ["UK", "CA"],
+  perth: ["AU", "UK"],
+  birmingham: ["UK", "US"],
 };
 
 /** Quita acentos y pasa a minúsculas. */
@@ -235,9 +307,18 @@ function normalizar(s: string): string {
  * Devolver null es una respuesta legítima: quiere decir "no me consta", y quien
  * llama sigue con el país del perfil. Nunca se adivina.
  */
-export function paisDeCiudad(ciudad: string): string | null {
+export function paisDeCiudad(ciudad: string, paisActual?: string): string | null {
   const c = normalizar(ciudad);
   if (!c) return null;
+
+  // "Mérida, Yucatán" o "Vitoria-Gasteiz": vale con la primera palabra.
+  const primeraHom = c.split(/[s,-]+/)[0];
+  const varios = HOMONIMAS[c] ?? (primeraHom.length >= 5 ? HOMONIMAS[primeraHom] : undefined);
+  if (varios) {
+    const actual = (paisActual || "").trim().toUpperCase();
+    return actual && varios.includes(actual) ? actual : varios[0];
+  }
+
   const directa = CIUDADES[c];
   if (directa) return directa[0];
 

@@ -13,6 +13,14 @@
  * Se cubren los oficios que de verdad busca nuestro público —hostelería,
  * cuidados, limpieza, construcción, transporte— en los idiomas de los países
  * con más ofertas. No pretende ser un diccionario completo.
+ *
+ * MÉXICO Y BRASIL (nov 2026). El español de México no es el de aquí: allí el
+ * camarero es "mesero", el fontanero "plomero" y el peón "ayudante general".
+ * Sin esas palabras, un español que buscaba camarero en México no veía las 304
+ * ofertas de mesero, y un mexicano que buscaba "mesero" no veía las de España.
+ * Lo de Brasil va en portugués de allí ("garçom", "encanador", "faxineira"),
+ * que tampoco es el de Portugal. Las palabras salen de los títulos reales de
+ * 600 ofertas de cada país mirados el 5 nov 2026.
  */
 
 /** Puesto en español -> cómo se dice en las ofertas de otros países. */
@@ -21,74 +29,98 @@ const SINONIMOS: Record<string, string[]> = {
   camarero: ["waiter", "waitress", "serveur", "serveuse", "kellner", "cameriere",
              "empregado de mesa", "ober", "servitor", "bartender", "barista", "barman",
              "wait staff", "food service", "runner", "bar staff",
-             "servitør", "servitör", "tarjoilija"],
+             "servitør", "servitör", "tarjoilija",
+             "mesero", "mesera", "garçom", "garçonete"],
   // OJO: "chef" a secas NO vale. En francés "chef de projet" o "chef de
   // produit" son jefes de proyecto, no cocineros: en París había 2.263 así.
   cocinero: ["cook", "cuisinier", "koch", "cuoco", "cozinheiro", "kok", "kokk",
              "commis", "chef de partie", "chef de cuisine", "sous chef", "head chef",
-             "line cook", "chefkoch", "cuisine"],
+             "line cook", "chefkoch", "cuisine",
+             "cozinheira", "cocinera"],
   ayudante_cocina: ["kitchen assistant", "kitchen porter", "commis de cuisine",
-                    "küchenhilfe", "aiuto cuoco", "dishwasher", "plongeur"],
+                    "küchenhilfe", "aiuto cuoco", "dishwasher", "plongeur",
+             "auxiliar de cozinha", "ayudante de cocina", "auxiliar de cocina"],
   recepcionista: ["receptionist", "réceptionniste", "rezeptionist", "receptionista",
                   "front desk", "front office"],
 
   // ── Limpieza ────────────────────────────────────────────────────────
   limpieza: ["cleaner", "cleaning", "nettoyage", "agent d'entretien", "reinigung",
              "reinigungskraft", "pulizia", "limpeza", "schoonmaak", "housekeeping",
-             "housekeeper", "femme de ménage", "room attendant"],
+             "housekeeper", "femme de ménage", "room attendant",
+             "intendencia", "auxiliar de limpieza", "faxineira", "faxineiro", "auxiliar de limpeza", "diarista"],
   camarera_piso: ["room attendant", "housekeeping", "femme de chambre",
-                  "zimmermädchen", "cameriera ai piani"],
+                  "zimmermädchen", "cameriera ai piani",
+             "recamarista", "camareira"],
 
   // ── Cuidados ────────────────────────────────────────────────────────
   cuidador: ["caregiver", "carer", "care assistant", "aide soignant", "auxiliaire de vie",
              "pflegehelfer", "altenpfleger", "badante", "cuidador", "support worker",
-             "healthcare assistant", "personal care"],
+             "healthcare assistant", "personal care",
+             "cuidador de idosos", "cuidadora de idosos", "cuidadora"],
   enfermera: ["nurse", "infirmier", "infirmière", "krankenschwester", "krankenpfleger",
               "pflegefachkraft", "infermiere", "enfermeiro", "verpleegkundige",
               "registered nurse", "staff nurse",
               // Nórdicos: en Oslo había 882 "sykepleier" que no se encontraban
-              "sykepleier", "sjuksköterska", "sygeplejerske", "sairaanhoitaja"],
+              "sykepleier", "sjuksköterska", "sygeplejerske", "sairaanhoitaja",
+             "enfermeira", "técnico de enfermagem", "técnica de enfermagem"],
   ninera: ["niñera", "nanny", "babysitter", "au pair", "nounou", "kindermädchen",
-           "tata", "childminder", "childcare", "barnepike"],
+           "tata", "childminder", "childcare", "barnepike",
+             "nana", "babá"],
 
   // ── Construcción e industria ────────────────────────────────────────
   // La clave va sin ñ, pero en la base de datos pone "Albañil": se incluyen
   // las dos formas o la búsqueda da cero (95 ofertas invisibles).
   // "builder" se quita: casaba con "Product Builder" y "AI Builder".
   albanil: ["albañil", "bricklayer", "mason", "maçon", "maurer", "muratore",
-            "construction worker", "obrero construccion", "peon de obra", "murer"],
+            "construction worker", "obrero construccion", "peon de obra", "murer",
+             "pedreiro", "servente de obras", "servente de pedreiro"],
   electricista: ["electrician", "électricien", "elektriker", "elettricista", "eletricista"],
-  fontanero: ["plumber", "plombier", "klempner", "installateur", "idraulico", "canalizador"],
+  fontanero: ["plumber", "plombier", "klempner", "installateur", "idraulico", "canalizador",
+             "plomero", "encanador"],
   soldador: ["welder", "soudeur", "schweisser", "schweißer", "saldatore", "soldador"],
-  carpintero: ["carpenter", "menuisier", "tischler", "schreiner", "falegname", "joiner"],
+  carpintero: ["carpenter", "menuisier", "tischler", "schreiner", "falegname", "joiner",
+             "carpinteiro", "marceneiro"],
   pintor: ["painter", "peintre", "maler", "imbianchino", "decorator"],
   operario: ["operator", "production worker", "opérateur", "produktionsmitarbeiter",
-             "operaio", "factory worker", "machine operator", "assembler"],
-  mecanico: ["mechanic", "mécanicien", "mechaniker", "meccanico", "technician"],
+             "operaio", "factory worker", "machine operator", "assembler",
+             "ayudante general", "auxiliar de produção", "operador de produção", "operário"],
+  mecanico: ["mechanic", "mécanicien", "mechaniker", "meccanico", "technician",
+             "mecânico"],
 
   // ── Transporte y almacén ────────────────────────────────────────────
   conductor: ["driver", "chauffeur", "fahrer", "autista", "motorista", "hgv driver",
               "lkw fahrer", "lkw-fahrer", "delivery driver", "truck driver", "van driver",
-              "sjåfør", "chaufför", "chauffør", "kuljettaja"],
-  repartidor: ["delivery", "courier", "livreur", "zusteller", "corriere", "rider"],
+              "sjåfør", "chaufför", "chauffør", "kuljettaja",
+             "chofer", "chófer", "motorista de caminhão"],
+  repartidor: ["delivery", "courier", "livreur", "zusteller", "corriere", "rider",
+             "entregador", "motoboy"],
   almacen: ["warehouse", "warehouse operative", "magasinier", "lagerarbeiter",
-            "magazziniere", "picker", "packer", "forklift"],
+            "magazziniere", "picker", "packer", "forklift",
+             "almacenista", "auxiliar de almacén", "estoquista", "almoxarife", "auxiliar de almoxarifado", "conferente"],
 
   // ── Comercio y oficina ──────────────────────────────────────────────
   dependiente: ["shop assistant", "retail assistant", "sales assistant", "vendeur",
-                "verkäufer", "commesso", "store associate", "cashier"],
-  cajero: ["cashier", "caissier", "kassierer", "cassiere", "checkout"],
+                "verkäufer", "commesso", "store associate", "cashier",
+             "vendedor de piso", "atendente de loja", "vendedor", "vendedora"],
+  cajero: ["cashier", "caissier", "kassierer", "cassiere", "checkout",
+             "operador de caixa", "operadora de caixa"],
   administrativo: ["administrative assistant", "administrator", "office assistant",
-                   "assistant administratif", "sachbearbeiter", "impiegato"],
+                   "assistant administratif", "sachbearbeiter", "impiegato",
+             "auxiliar administrativo", "auxiliar administrativa", "assistente administrativo", "assistente administrativa"],
   seguridad: ["security guard", "agent de sécurité", "sicherheitsmitarbeiter",
-              "guardia giurata", "doorman"],
+              "guardia giurata", "doorman",
+             "guardia de seguridad", "vigilante", "porteiro"],
 
   // ── Otros frecuentes ────────────────────────────────────────────────
-  jardinero: ["gardener", "jardinier", "gärtner", "giardiniere", "landscaper"],
-  peluquero: ["hairdresser", "coiffeur", "friseur", "parrucchiere", "barber"],
-  profesor: ["teacher", "professeur", "lehrer", "insegnante", "tutor", "instructor"],
+  jardinero: ["gardener", "jardinier", "gärtner", "giardiniere", "landscaper",
+             "jardineiro"],
+  peluquero: ["hairdresser", "coiffeur", "friseur", "parrucchiere", "barber",
+             "estilista", "cabeleireiro", "cabeleireira", "barbeiro"],
+  profesor: ["teacher", "professeur", "lehrer", "insegnante", "tutor", "instructor",
+             "professora"],
   programador: ["developer", "software engineer", "programmer", "développeur",
-                "entwickler", "sviluppatore"],
+                "entwickler", "sviluppatore",
+             "desenvolvedor", "desenvolvedora"],
 };
 
 /** Quita acentos y pasa a minúsculas, para comparar sin sorpresas. */

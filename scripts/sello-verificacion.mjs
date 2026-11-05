@@ -2218,6 +2218,97 @@ test('Mexico es un pais de la app y "Ciudad de Mexico" se busca como ciudad', as
   }
 });
 
+// ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
+//
+// Se comprueba con el código de verdad, compilado: ciudades que se llaman igual
+// en varios países, los filtros del buscador en los idiomas de las ofertas,
+// el país donde está la persona, Brasil como país y la vía del Mercosur.
+test("Latinoamerica: Guadalajara, filtros en varios idiomas, donde estas y Brasil", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-latam-entrada.ts", salida = ".sello-latam.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { paisDeCiudad } from "./lib/guzzi/ciudades-pais";',
+      'export { coincideFiltro } from "./lib/job-search/filtros";',
+      'export { expandirPuesto } from "./lib/job-search/sinonimos-puesto";',
+      'export { paisDeZona, paisDeIdioma } from "./lib/origen/donde-estoy";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { paisPorNombre, PAISES } from "./lib/paises";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { plataformasPorPais, servicioEmpleoDe } from "./lib/cursos/plataformas";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { estiloDe } from "./lib/cv/por-pais";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const casos = [
+      // La Guadalajara de un español es la suya; la de un mexicano, la de Jalisco.
+      ["Guadalajara desde España", m.paisDeCiudad("Guadalajara", "ES"), "ES"],
+      ["Guadalajara desde México", m.paisDeCiudad("Guadalajara", "MX"), "MX"],
+      ["Vitoria desde España", m.paisDeCiudad("Vitoria-Gasteiz", "ES"), "ES"],
+      ["Vitória desde Brasil", m.paisDeCiudad("Vitória", "BR"), "BR"],
+      ["París sigue siendo Francia", m.paisDeCiudad("París", "ES"), "FR"],
+      // Los filtros entienden las ofertas de fuera.
+      ["parcial en inglés", m.coincideFiltro("parcial", "Retail Assistant Part-Time"), true],
+      ["remoto en alemán", m.coincideFiltro("remoto", "Sachbearbeiter (m/w/d) Homeoffice"), true],
+      ["sin experiencia en Brasil", m.coincideFiltro("sinExperiencia", "Jovem Aprendiz"), true],
+      ["no confunde international", m.coincideFiltro("sinExperiencia", "International Sales"), false],
+      ["PCD de Brasil", m.coincideFiltro("inclusiva", "Auxiliar - Vaga exclusiva PCD"), true],
+      ["la frase legal de EE. UU. no cuenta", m.coincideFiltro("inclusiva", "without regard to disability"), false],
+      // El español de México y el portugués de Brasil.
+      ["mesero es camarero", m.expandirPuesto("mesero").includes("camarero"), true],
+      ["camarero encuentra garçom", m.expandirPuesto("camarero").includes("garçom"), true],
+      // Dónde está, sin preguntar.
+      ["zona de Monterrey", m.paisDeZona("America/Monterrey"), "MX"],
+      ["zona de Recife", m.paisDeZona("America/Recife"), "BR"],
+      ["idioma pt-BR", m.paisDeIdioma("pt-BR"), "BR"],
+      ["UTC no es nadie", m.paisDeZona("UTC"), null],
+      // Brasil es país de la app y Brasília es una ciudad.
+      ["Brasil por su nombre", m.paisPorNombre("Brasil"), "BR"],
+      ["Brasil en una frase", m.detectarPais("quiero trabajar en Brasil")?.codigo, "br"],
+      ["Brasília no es el país", m.detectarPais("camarero en Brasília"), null],
+      ["Brasil con su moneda", m.PAISES.BR?.moneda, "BRL"],
+      // La vía del Mercosur, solo para quien la tiene.
+      ["argentino a Brasil", m.movilidadDe("AR", "BR").regimen, "acuerdo_regional"],
+      ["español a Brasil", m.movilidadDe("ES", "BR").regimen, "visado_general"],
+      ["venezolano a Brasil, sin inventar", m.movilidadDe("VE", "BR").regimen, "visado_general"],
+      // Cada país con lo suyo.
+      ["cursos de México", m.plataformasPorPais("MX").some(p => p.id === "capacitate-para-el-empleo"), true],
+      ["cursos de Brasil", m.plataformasPorPais("BR").some(p => p.id === "escola-virtual-gov"), true],
+      ["los de México no salen en España", m.plataformasPorPais("ES").some(p => p.id === "capacitate-para-el-empleo"), false],
+      ["servicio de empleo de Brasil", !!m.servicioEmpleoDe("BR"), true],
+      ["primeros pasos de México", !!m.getPrimerosPasos("MX"), true],
+      ["primeros pasos de Brasil", !!m.getPrimerosPasos("BR"), true],
+      ["CV de Brasil", m.estiloDe("BR")?.foto, "mejor_no"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// Los filtros del buscador ya no son palabras sueltas en español.
+test("los filtros del buscador van por lib/job-search/filtros.ts, no por palabras en espanol", () => {
+  const ruta = leerFuente("app/api/jobs/search/route.ts");
+  return ruta.includes('regexFiltro("remoto")') && ruta.includes('regexFiltro("parcial")')
+    && ruta.includes('regexFiltro("inclusiva")') && !ruta.includes('"%remoto%"') && !ruta.includes('"%parcial%"');
+});
+
+// El buscador ya no empieza siempre en España, y los cursos son del país de cada uno.
+test("el buscador y los cursos parten del pais donde esta la persona", () => {
+  const buscar = leerFuente("app/app/buscar/page.tsx");
+  const cursos = leerFuente("components/cursos/ListaCursos.tsx");
+  return buscar.includes("dondeEstoy()") && buscar.includes("paisDeCiudad(finalUbicacion, paisParaBuscar)")
+    && cursos.includes("<PaisCursos actual={pais} />")
+    && leerFuente("app/cursos/page.tsx").includes("paisDelCatalogo(pais)");
+});
+
 // ── LAS TAREAS PROGRAMADAS VIVEN EN EL CRONTAB DEL VPS ─────────────────
 //
 // GitHub solo lanza calendarios programados desde la rama por defecto (main), y
@@ -3633,7 +3724,8 @@ test("el buscador no inventa resultados ni se salta los filtros", () => {
   if (/descripcion: description\.slice/.test(s)) fallos.push("la descripcion sale en minusculas");
   if (/await buscarOfertasReales\(keyword, location, 50\);\s*return NextResponse/.test(s)) fallos.push("las ofertas externas no se filtran por puesto");
   if (!/tituloCoincide\(o\.titulo/.test(s) || !/setTimeout\(\(\) => ok\(\[\]\), 8000\)/.test(s)) fallos.push("sin filtro por titulo o sin tope de tiempo");
-  if (!/!categoria && !jornada && !experiencia\)/.test(s)) fallos.push("el respaldo por ciudad se salta la jornada");
+  // Desde el 5 nov 2026 también respeta el filtro de discapacidad (&& !inclusiva).
+  if (!/!categoria && !jornada && !experiencia( && !inclusiva)?\)/.test(s)) fallos.push("el respaldo por ciudad se salta la jornada");
   fallos.forEach((f) => console.log(`     ↳ ${f}`));
   return fallos.length === 0;
 });

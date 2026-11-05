@@ -118,6 +118,8 @@ export async function GET(request: NextRequest) {
   const page     = Math.min(200, Math.max(1, parseInt(searchParams.get("page") || "1")));
   const jornada      = searchParams.get("jornada") || "";
   const experiencia  = searchParams.get("experiencia") || "";
+  // Ofertas para personas con discapacidad ("vagas PCD" en Brasil).
+  const inclusiva    = searchParams.get("inclusiva") === "1";
   const salarioMin   = parseInt(searchParams.get("salarioMin") || "0");
   const salarioMax   = parseInt(searchParams.get("salarioMax") || "0");
   // Antes era 500 fijo y se ignoraba lo que pidiera el cliente: cada busqueda
@@ -249,21 +251,41 @@ export async function GET(request: NextRequest) {
       idx++;
     }
 
-    // Filtro por jornada
+    // LOS FILTROS, EN LOS IDIOMAS DE LAS OFERTAS (lib/job-search/filtros.ts).
+    //
+    // Solo sabían español: "parcial" en Reino Unido daba 0 y "remoto" en
+    // Alemania se cortaba por tiempo leyendo 545.000 descripciones.
+    //
+    // La descripción solo se lee si algo ya ha recortado las filas (palabra o
+    // ciudad). Con el país solo, se mira el título, que va por índice: leer la
+    // descripción de todo un país grande no termina a tiempo.
+    const { regexFiltro } = await import("@/lib/job-search/filtros");
+    const acotada = !!keyword || !!cityParts;
+    const condicionFiltro = (rx: string): string => {
+      params.push(rx);
+      const i = idx++;
+      return acotada ? `(title ~* $${i} OR description ~* $${i})` : `title ~* $${i}`;
+    };
     if (jornada === "remoto") {
-      conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
-      params.push("%remoto%");
-      idx++;
+      conditions.push(condicionFiltro(regexFiltro("remoto")));
     } else if (jornada === "parcial") {
-      conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
-      params.push("%parcial%");
-      idx++;
+      conditions.push(condicionFiltro(regexFiltro("parcial")));
+    } else if (jornada === "completa") {
+      // Antes no tenía condición y daba lo mismo que "Todas". Casi ninguna
+      // oferta a tiempo completo lo dice: se quitan las que dicen ser parciales.
+      params.push(regexFiltro("parcial"));
+      conditions.push(`title !~* $${idx++}`);
+    }
+    if (inclusiva) {
+      conditions.push(condicionFiltro(regexFiltro("inclusiva")));
+    }
+    if (experiencia === "sin-experiencia") {
+      conditions.push(condicionFiltro(regexFiltro("sinExperiencia")));
     }
 
-    // Filtro por experiencia
-    if (experiencia) {
+    // Filtro por experiencia (los tramos de años; "sin experiencia" va arriba)
+    if (experiencia && experiencia !== "sin-experiencia") {
       const expMap: Record<string, string[]> = {
-        "sin-experiencia": ["%junior%", "%trainee%", "%becario%", "%prácticas%", "%sin experiencia%", "%entry level%"],
         "1-3": ["%1 año%", "%2 años%", "%3 años%", "%junior%"],
         "3-5": ["%3 años%", "%5 años%", "%mid%", "%mid-level%"],
         "5-10": ["%5 años%", "%10 años%", "%senior%"],
@@ -359,7 +381,9 @@ export async function GET(request: NextRequest) {
     // sacan las más nuevas por el índice de createdAt (28 ms en EE. UU.) y se
     // cuenta hasta 10.000. En los pequeños se sigue como siempre: en Japón
     // (3.700) ordenarlas todas tarda 0,6 s y el índice de fechas, 2,6.
-    const soloPais = !!country && !keyword && !cityParts && !categoria && !jornada && !experiencia && !salarioMin && !salarioMax;
+    // "Jornada completa" cabe aquí: es quitar las parciales, y se filtra igual
+    // mientras se recorren las más nuevas por el índice de fechas.
+    const soloPais = !!country && !keyword && !cityParts && !categoria && (!jornada || jornada === "completa") && !experiencia && !inclusiva && !salarioMin && !salarioMax;
     if (soloPais) {
       const TOPE = 10000;
       const paramsWhere = params.slice(0, -2);
@@ -421,7 +445,7 @@ export async function GET(request: NextRequest) {
     // "insuficiente" y saltaba al respaldo igualmente.
     // Con filtro de jornada o experiencia tampoco: el respaldo no los aplica, y
     // "jornada parcial" devolvía las mismas ofertas que sin filtro.
-    if (keyword && cityParts && dbResult.rows.length < Math.min(10, limit) && !categoria && !jornada && !experiencia) {
+    if (keyword && cityParts && dbResult.rows.length < Math.min(10, limit) && !categoria && !jornada && !experiencia && !inclusiva) {
       // El recuento tiene que filtrar por lo mismo que la consulta de abajo. Si
       // cuenta sin el pais, cuenta los Toledo de Ohio y decide que hay material
       // de sobra para lanzar el respaldo cuando en realidad no lo hay.
@@ -526,7 +550,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ofertas: [], total: 0, page, hasMore: false, keyword, location, source: "database-category-noresults" });
     }
     // Con filtros que las APIs externas no entienden, mejor "no hay" que ofertas que no los cumplen.
-    if (jornada || experiencia) {
+    if (jornada || experiencia || inclusiva) {
       return NextResponse.json({ ofertas: [], total: 0, page, hasMore: false, keyword, location, source: "database-filtro-noresults" });
     }
     if (!externasValen) {

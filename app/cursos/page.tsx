@@ -9,6 +9,12 @@ import type { Metadata } from "next";
 import PublicHeader from "@/components/PublicHeader";
 import ListaCursos from "@/components/cursos/ListaCursos";
 import PublicFooter from "@/components/PublicFooter";
+import { nacionalidadDe } from "@/lib/origen/nacionalidades";
+/** El país del catálogo: el de ?pais=, si es un país que conocemos. España si no. */
+function paisDelCatalogo(pais?: string): string {
+  return nacionalidadDe(pais)?.codigo ?? "ES";
+}
+
 
 export const metadata: Metadata = {
   title: "Cursos para trabajar: gratis, subvencionados y obligatorios | BuscayCurra",
@@ -27,12 +33,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CursosPublico() {
+export default async function CursosPublico({ searchParams }: { searchParams: Promise<{ pais?: string }> }) {
+  const { pais } = await searchParams;
   return (
     <div className="min-h-screen" style={{ background: "#0f1117", color: "#f1f5f9" }}>
       <PublicHeader />
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
-        <ListaCursos base="/cursos" />
+        <ListaCursos base="/cursos" pais={paisDelCatalogo(pais)} />
       </div>
       <PublicFooter />
     </div>

@@ -9,6 +9,7 @@
  * CatalogoCursos, que es de cliente porque el filtro responde al teclear. Como
  * el catálogo es estático, esto no toca la base de datos ni una vez.
  */
+import { Suspense } from "react";
 import Link from "next/link";
 import { BadgeCheck, CalendarDays, FolderOpen, GraduationCap, RefreshCw } from "lucide-react";
 import {
@@ -19,6 +20,7 @@ import { LISTA_PAISES } from "@/lib/paises";
 import { cursoIdiomaDe } from "@/lib/cursos/idioma-inmigrantes";
 import CatalogoCursos from "./CatalogoCursos";
 import FormacionPorPais, { type PaisFormacion } from "./FormacionPorPais";
+import PaisCursos from "./PaisCursos";
 
 export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?: string }) {
   const todos = tiposPorPais(pais);
@@ -66,6 +68,11 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
         </p>
       </div>
 
+      {/* El catálogo es del país donde está cada uno (?pais=MX). */}
+      <Suspense fallback={null}>
+        <PaisCursos actual={pais} />
+      </Suspense>
+
       {/* Solo dentro de la app: en la pública no hay sesión que consultar, y
           ofrecer "mis cursos" a quien no ha entrado es una puerta a un login
           que no ha pedido. */}
@@ -90,7 +97,8 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
           sino "acredita lo que ya sabes". Ponerlo debajo de trece fichas de
           cursos sería enterrarlo: quien lleva diez años cuidando o limpiando ya
           se habría ido a mirar precios. */}
-      <Link
+      {/* La acreditación es un procedimiento de España: fuera no se ofrece. */}
+      {pais === "ES" && <Link
         href={`${base}/acreditar`}
         className="rounded-xl p-4 mb-8 flex items-start gap-3 hover:opacity-90"
         style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)", textDecoration: "none" }}
@@ -105,7 +113,7 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
             Mira si cumples los requisitos antes de pagar ningún curso.
           </p>
         </div>
-      </Link>
+      </Link>}
 
       {/* ── Plazas con fecha: lo que de verdad se puede hacer ya ──
           Las fichas dicen qué curso te piden; esto dice dónde hay uno gratis

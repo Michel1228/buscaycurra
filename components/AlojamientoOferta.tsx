@@ -8,18 +8,24 @@
  * consejo y precio medio de ese país. El dato ya existe en lib/primeros-pasos
  * (lo usa /app/emigrar), pero estaba aislado — el usuario tenía que buscarlo.
  *
- * No se muestra para ofertas de España (país de origen de los usuarios): ahí no
- * hay que "emigrar para quedarse".
+ * No se muestra para ofertas del país donde ya está la persona: ahí no hay que
+ * "emigrar para quedarse". Antes era siempre España, como si todo el mundo
+ * viviera aquí; desde nov 2026 es el país donde está (lib/origen/donde-estoy).
+ * Mientras no se sabe, se sigue suponiendo España, que es lo que había.
  */
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { dondeEstoy } from "@/lib/origen/donde-estoy";
 import { Home, ExternalLink } from "lucide-react";
 import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import { PAISES } from "@/lib/paises";
 
 export default function AlojamientoOferta({ country }: { country?: string }) {
+  const [aqui, setAqui] = useState<string | null>(null);
+  useEffect(() => { setAqui(dondeEstoy()); }, []);
   if (!country) return null;
   const codigo = country.trim().toUpperCase();
-  if (codigo === "ES") return null; // España es el origen, no destino
+  if (codigo === (aqui || "ES")) return null; // donde ya vive no busca dónde quedarse
 
   const info = getPrimerosPasos(codigo);
   if (!info?.alojamiento?.plataformas?.length) return null;

@@ -1864,7 +1864,7 @@ ${cartaIA}
         // Madrid. Le pasaba a las 11 busquedas de fuera de Espana.
         const { paisDeCiudad } = await import("@/lib/guzzi/ciudades-pais");
         const paisBusqueda = paisPedido?.codigo?.toUpperCase()
-          || (ciudadBusqueda ? paisDeCiudad(ciudadBusqueda) : null)?.toUpperCase()
+          || (ciudadBusqueda ? paisDeCiudad(ciudadBusqueda, pais || "ES") : null)?.toUpperCase()
           || pais || "ES";
         const result = await searchJobsReal(puestoBusqueda, ciudadBusqueda, 5, paisBusqueda);
         if (!result || result.jobs.length === 0) {

@@ -110,6 +110,9 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
 
   const consulta = normalizar(q.trim());
   const buscando = consulta.length >= 2;
+  // Las fichas una a una (carnés, obligatorios) son de España. En otro país no
+  // se enseña un buscador vacío con "Todos 0": se dice qué hay y qué no.
+  const sinFichas = obligatorios.length === 0 && porSector.length === 0;
 
   // Todo el texto de cada curso en una sola cadena, para no repetir el filtro.
   const indexados = useMemo(() => {
@@ -158,7 +161,15 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
 
   return (
     <>
+      {sinFichas && (
+        <div className="rounded-xl p-4 mb-8 text-sm leading-relaxed" style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8" }}>
+          Las fichas de cursos obligatorios y carnés, una a una, son de España por ahora. Para tu país
+          tienes aquí abajo los cursos gratis que sirven allí y la puerta del servicio oficial de empleo.
+        </div>
+      )}
+
       {/* ── La lupa ── */}
+      {!sinFichas && <>
       <div className="mb-4">
         <div className="relative">
           <Search size={16} strokeWidth={1.9}
@@ -218,6 +229,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
           ? "Gratis es gratis siempre. Subvencionado es gratis si sale convocatoria en tu zona; si no, lo pagas tú."
           : EXPLICA_FINANCIACION[filtro]}
       </p>
+      </>}
 
       {/* ── Resultados de búsqueda ── */}
       {buscando && (
@@ -303,7 +315,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
             </section>
           )}
 
-          {obligatoriosVisibles.length === 0 && sectoresVisibles.length === 0 && (
+          {!sinFichas && obligatoriosVisibles.length === 0 && sectoresVisibles.length === 0 && (
             <div className="rounded-xl p-5 mb-10 text-center" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
               <p className="text-sm" style={{ color: "#94a3b8" }}>
                 Todavía no tenemos ninguna ficha de ese tipo. Prueba con otro filtro o mira las plataformas de abajo.
