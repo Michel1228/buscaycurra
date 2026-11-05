@@ -48,6 +48,8 @@ function formatSource(raw: string): string {
     "JOOBLE": "Jooble",
     "CAREERJET": "Careerjet",
   };
+  // Latinoamérica entra como CAREERJET_CO, CAREERJET_PE...: se enseña "Careerjet".
+  if (/^CAREERJET_/i.test(raw || "")) return "Careerjet";
   return m[raw?.toUpperCase()] || raw?.replace(/_/g, " ") || "Desconocida";
 }
 

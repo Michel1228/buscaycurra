@@ -31,6 +31,10 @@
 # sincronizadores de Adzuna gastaran media cuota, y fallo 3 de 7 dias con 0 ofertas.
 # Es el que mas rinde: 39 ofertas nuevas por peticion frente a 7,7 de los otros.
 5 0 * * * /usr/bin/flock -n /tmp/barrido-adzuna.lock bash /root/sync-adzuna-barrido.sh >> /root/sync-adzuna-barrido.log 2>&1
+# Barrido diario de Careerjet para Latinoamérica (scripts/vps/sync-careerjet-barrido.sh):
+# Colombia, Perú, Chile y Argentina, que Adzuna no cubre. A las 23:30 UTC, en un hueco
+# sin otros sincronizadores grandes.
+30 23 * * * /usr/bin/flock -n /tmp/barrido-careerjet.lock bash /root/sync-careerjet-barrido.sh >> /root/sync-careerjet-barrido.log 2>&1
 # Recordatorio del primer dia: UNA vez por persona, a quien se registro y se quedo
 # a medias (scripts/vps/recordatorios-primer-dia.sh). A las 10:00 UTC, que en
 # España son las 11 o las 12: un correo a las tres de la manana no lo abre nadie.

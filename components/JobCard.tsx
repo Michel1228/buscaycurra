@@ -65,7 +65,7 @@ export default function JobCard({
 }: PropiedadesJobCard) {
   const fc = colorFuente(fuente);
   // "ADZUNA_ES" o "EURES_MAD" son nombres internos: se enseña solo la fuente.
-  const fuenteVisible = (() => { const base = fuente.split("_")[0]; return base === "ADZUNA" ? "Adzuna" : base; })();
+  const fuenteVisible = (() => { const base = fuente.split("_")[0]; return base === "ADZUNA" ? "Adzuna" : base === "CAREERJET" ? "Careerjet" : base; })();
   const matchColor = match !== undefined ? colorMatch(match) : "#64748b";
 
   // Las ofertas en vivo (Jooble/APIs) llevan id sintético con prefijo y NO existen

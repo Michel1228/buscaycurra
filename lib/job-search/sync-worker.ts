@@ -648,6 +648,105 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
   return allJobs;
 }
 
+/**
+ * LATINOAMÉRICA POR CAREERJET (5 nov 2026). Adzuna no cubre Colombia, Perú,
+ * Chile ni Argentina, y en la base no había ni una oferta de ellos. Careerjet
+ * sí: medido ese día sin palabra clave, con el país como lugar, Perú 171.266,
+ * Colombia 129.767, Chile 129.233 y Argentina 97.563. La página 100 sigue
+ * respondiendo, así que se pagina el catálogo por fecha igual que el barrido
+ * de Adzuna, en vez de combinar palabras y ciudades.
+ *
+ * Se guardan como "CAREERJET_CO" y no como "EURES_...": EURES es el portal de
+ * empleo de Europa y una oferta de Bogotá no puede decir que viene de ahí.
+ *
+ * user_ip: la API lo exige ("missing param user_ip") y es la IP de quien va a
+ * ver los resultados. En una carga nocturna no hay nadie mirando, y la del
+ * servidor no se escribe en un repositorio público.
+ */
+export const CAREERJET_BARRIDO: Record<string, { locale: string; lugar: string }> = {
+  co: { locale: "es_CO", lugar: "Colombia" },
+  pe: { locale: "es_PE", lugar: "Peru" },
+  cl: { locale: "es_CL", lugar: "Chile" },
+  ar: { locale: "es_AR", lugar: "Argentina" },
+};
+
+export async function barrerCareerjet(
+  countryCode: string,
+  paginas: number = 20,
+  desdePagina: number = 1,
+): Promise<{ insertadas: number; traidas: number; siguientePagina: number; agotado: boolean; country: string; noSoportado?: boolean; motivoFallo?: string }> {
+  const pais = countryCode.toLowerCase();
+  const cfg = CAREERJET_BARRIDO[pais];
+  if (!cfg) {
+    return { insertadas: 0, traidas: 0, siguientePagina: desdePagina, agotado: true, country: pais, noSoportado: true };
+  }
+  const keyInfo = await getCareerjetKey();
+  if (!keyInfo) {
+    return { insertadas: 0, traidas: 0, siguientePagina: desdePagina, agotado: true, country: pais, motivoFallo: "sin clave de Careerjet" };
+  }
+
+  let insertadas = 0;
+  let traidas = 0;
+  let pagina = Math.max(1, desdePagina);
+  let agotado = false;
+  let motivoFallo: string | undefined;
+
+  for (let i = 0; i < paginas; i++) {
+    const url = `http://public.api.careerjet.net/search?locale_code=${cfg.locale}&location=${encodeURIComponent(cfg.lugar)}`
+      + `&affid=${keyInfo.key}&user_ip=127.0.0.1&user_agent=BuscayCurra%2F3.0&pagesize=99&page=${pagina}&sort=date`;
+    let data: { type?: string; error?: string; jobs?: Record<string, string>[] } | null = null;
+    // Un 5xx o un corte de red se reintenta una vez: un fallo pasajero no
+    // puede dejar un país a cero (lo que le pasó a España con Adzuna).
+    for (let intento = 0; intento < 2 && !data; intento++) {
+      try {
+        const res = await fetch(url, { headers: { Referer: "https://buscaycurra.es" }, signal: AbortSignal.timeout(20000) });
+        if (!res.ok) {
+          motivoFallo = `HTTP ${res.status}`;
+          await reportFailure("careerjet", keyInfo.idx, res.status);
+          if (res.status < 500) break;
+        } else {
+          data = await res.json();
+        }
+      } catch {
+        motivoFallo = "error de red";
+      }
+      if (!data && intento === 0) await new Promise(r => setTimeout(r, 5000));
+    }
+    if (!data || data.type === "ERROR") {
+      if (data?.error) motivoFallo = String(data.error).slice(0, 120);
+      agotado = true;
+      break;
+    }
+    const lote: RawJob[] = (data.jobs || []).map(j => ({
+      source: `CAREERJET_${pais.toUpperCase()}`,
+      url: j.url || "",
+      title: (j.title || "").replace(/<[^>]+>/g, "").slice(0, 200),
+      company: (j.company || "").slice(0, 200),
+      city: (j.locations || cfg.lugar).slice(0, 100),
+      description: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 1000),
+      salary: (j.salary || "Ver en oferta").slice(0, 100),
+    }));
+    traidas += lote.length;
+    if (lote.length === 0) {
+      agotado = true;
+      break;
+    }
+    motivoFallo = undefined;
+    insertadas += await upsertJobsForSync(lote, "OTRO", pais);
+    pagina++;
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  return {
+    insertadas,
+    traidas,
+    siguientePagina: agotado ? 1 : pagina,
+    agotado,
+    country: pais,
+    ...(traidas === 0 && motivoFallo ? { motivoFallo } : {}),
+  };
+}
+
 /** Auto-detecta categoria desde el titulo de la oferta */
 export function detectCategoria(title: string): string | null {
   const t = title.toLowerCase();

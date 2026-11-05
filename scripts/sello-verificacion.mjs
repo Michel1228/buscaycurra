@@ -2158,9 +2158,12 @@ const paisesApp = [...leerFuente("lib/paises.ts").matchAll(/^  ([A-Z][A-Z]): \{/
 // "estaban" desde el 5 de septiembre... en un calendario que no se ejecuta: el
 // script real de Careerjet seguia sin ellos. La prueba pasaba y Japon no crecia.
 const scriptCareerjet = leerFuente("scripts/vps/sync-careerjet-parallel.sh");
+// Latinoamérica entra por el barrido de Careerjet (5 nov 2026).
+const planBarridoCj = (leerFuente("scripts/vps/sync-careerjet-barrido.sh").match(/^PLAN=\$\{1:-"([^"]+)"\}/m) || [])[1] || "";
 const paisesSincronizados = new Set([
   ...((scriptCareerjet.match(/^countries="([a-z ]+)"/m) || [])[1] || "").split(" "),
   ...paisesCalendario,
+  ...planBarridoCj.split(" ").map(e => e.split(":")[0]),
 ].filter(Boolean));
 
 test("todos los paises de la app estan en algun script de sincronizacion del VPS", () => {
@@ -2183,6 +2186,30 @@ test("los paises de la app que publica Adzuna estan en su barrido diario", () =>
   const faltan = paisesApp.filter(p => paisesAdzuna.includes(p) && !paisesBarrido.has(p));
   if (faltan.length) console.log("      fuera del barrido: " + faltan.join(", "));
   return paisesBarrido.size >= 15 && faltan.length === 0;
+});
+
+// ── LATINOAMERICA ENTRA POR EL BARRIDO DE CAREERJET ───────────────────────────
+//
+// Adzuna no cubre Colombia, Peru, Chile ni Argentina. Los paises de
+// CAREERJET_BARRIDO tienen que estar en el plan del script y el script en el
+// crontab; si no, la ruta existe y no la llama nadie (como le paso a Japon).
+// Y su fuente se llama CAREERJET_XX, no EURES_: una oferta de Bogota no viene
+// del portal europeo.
+test("el barrido de Careerjet de Latinoamerica esta completo, en el crontab y sin la IP del servidor", () => {
+  const worker = leerFuente("lib/job-search/sync-worker.ts");
+  const tabla = worker.slice(worker.indexOf("export const CAREERJET_BARRIDO"), worker.indexOf("export async function barrerCareerjet"));
+  const funcion = worker.slice(worker.indexOf("export async function barrerCareerjet"), worker.indexOf("/** Auto-detecta categoria"));
+  const enTabla = [...tabla.matchAll(/^  ([a-z]{2}): \{ locale: "es_([A-Z]{2})"/gm)];
+  const enPlan = new Set(planBarridoCj.split(" ").map(e => e.split(":")[0]));
+  const faltan = enTabla.map(m => m[1]).filter(p => !enPlan.has(p));
+  if (faltan.length) console.log("      fuera del plan: " + faltan.join(", "));
+  return enTabla.length >= 4
+    && enTabla.every(m => m[1] === m[2].toLowerCase())
+    && faltan.length === 0
+    && leerFuente("scripts/vps/crontab.txt").includes("/root/sync-careerjet-barrido.sh")
+    && funcion.includes("source: `CAREERJET_${pais.toUpperCase()}`")
+    && !/\d{2,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(funcion.replace("127.0.0.1", ""))
+    && leerFuente("components/JobCard.tsx").includes('base === "CAREERJET" ? "Careerjet"');
 });
 
 // ── MEXICO ES UN PAIS DE LA APP, Y CIUDAD DE MEXICO UNA CIUDAD ─────────────────
