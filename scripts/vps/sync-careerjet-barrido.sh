@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # sync-careerjet-barrido.sh — Barrido diario de Careerjet para Latinoamérica.
 #
-# Adzuna no cubre Colombia, Perú, Chile ni Argentina. Careerjet sí, pero cada
+# Adzuna no cubre Latinoamérica (salvo México y Brasil). Careerjet sí, pero cada
 # búsqueda da como mucho unas 1.000 ofertas distintas (medido el 5 nov 2026: a
 # partir de la página 10 repite). Así que cada noche se piden las más nuevas
 # del país y de cada ciudad grande, un lugar por llamada. La lista de lugares
@@ -15,7 +15,7 @@ set -uo pipefail
 ENV=/root/.openclaw/workspace/buscaycurra-unified/.env.local
 SECRET=$(grep -E '^ADMIN_SECRET=' "$ENV" | head -1 | cut -d= -f2- | tr -d '\r\042\047')
 BASE="http://localhost:8892/api/jobs/sync-careerjet-barrido"
-PLAN=${1:-"co pe cl ar"}
+PLAN=${1:-"co pe cl ar ec gt cr ve pa uy sv hn ni do py bo"}
 
 if [ -z "$SECRET" ]; then
   echo "$(date -u '+%F %T') ERROR: no hay ADMIN_SECRET en $ENV"

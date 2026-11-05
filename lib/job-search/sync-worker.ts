@@ -673,6 +673,24 @@ export const CAREERJET_BARRIDO: Record<string, { locale: string; lugares: string
   pe: { locale: "es_PE", lugares: ["Peru", "Lima", "Arequipa", "Trujillo", "Chiclayo", "Piura", "Cusco", "Huancayo", "Iquitos", "Ica", "Tacna"] },
   cl: { locale: "es_CL", lugares: ["Chile", "Santiago", "Valparaiso", "Concepcion", "Antofagasta", "Vina del Mar", "Temuco", "La Serena", "Rancagua", "Puerto Montt", "Iquique"] },
   ar: { locale: "es_AR", lugares: ["Argentina", "Buenos Aires", "Cordoba", "Rosario", "Mendoza", "La Plata", "Mar del Plata", "Tucuman", "Neuquen", "Salta", "Santa Fe"] },
+  // Fase 2 (5 nov 2026, de noche). Sin palabra clave tienen menos (Guatemala
+  // 9.142, Ecuador 8.166, Costa Rica 4.638, El Salvador 3.382, Venezuela
+  // 3.044, Panamá 2.940, Uruguay 2.147, Nicaragua 1.760, Honduras 1.597,
+  // República Dominicana 1.374, Paraguay 391, Bolivia 280): con el país y
+  // cinco o seis ciudades se cubre casi todo. Sus ofertas entran ya aunque el
+  // país todavía no sea de la aplicación; el paquete completo va después.
+  ec: { locale: "es_EC", lugares: ["Ecuador", "Quito", "Guayaquil", "Cuenca", "Manta", "Ambato", "Machala"] },
+  gt: { locale: "es_GT", lugares: ["Guatemala", "Ciudad de Guatemala", "Mixco", "Villa Nueva", "Quetzaltenango", "Escuintla", "Coban"] },
+  cr: { locale: "es_CR", lugares: ["Costa Rica", "San Jose", "Heredia", "Alajuela", "Cartago", "Limon", "Puntarenas"] },
+  ve: { locale: "es_VE", lugares: ["Venezuela", "Caracas", "Maracaibo", "Valencia", "Barquisimeto", "Maracay", "Barcelona"] },
+  pa: { locale: "es_PA", lugares: ["Panama", "Ciudad de Panama", "Colon", "David", "La Chorrera", "Santiago"] },
+  uy: { locale: "es_UY", lugares: ["Uruguay", "Montevideo", "Canelones", "Maldonado", "Salto", "Paysandu"] },
+  sv: { locale: "es_SV", lugares: ["El Salvador", "San Salvador", "Santa Ana", "San Miguel", "Soyapango", "La Libertad"] },
+  hn: { locale: "es_HN", lugares: ["Honduras", "Tegucigalpa", "San Pedro Sula", "La Ceiba", "Choloma", "Comayagua"] },
+  ni: { locale: "es_NI", lugares: ["Nicaragua", "Managua", "Leon", "Masaya", "Matagalpa", "Chinandega"] },
+  do: { locale: "es_DO", lugares: ["Republica Dominicana", "Santo Domingo", "Santiago de los Caballeros", "Punta Cana", "La Romana", "San Pedro de Macoris"] },
+  py: { locale: "es_PY", lugares: ["Paraguay", "Asuncion", "Ciudad del Este", "Encarnacion", "San Lorenzo", "Luque"] },
+  bo: { locale: "es_BO", lugares: ["Bolivia", "Santa Cruz", "La Paz", "Cochabamba", "El Alto", "Sucre"] },
 };
 
 /** Pasadas las 10 páginas de 99, Careerjet repite: no vale la pena pedir más. */
