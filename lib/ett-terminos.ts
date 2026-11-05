@@ -55,6 +55,8 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   PE: ["empresa de servicios temporales", "agencia de empleo"],
   // En Chile la ETT es la "empresa de servicios transitorios" (EST, Ley 20.123).
   CL: ["empresa de servicios transitorios", "agencia de empleo"],
+  // En Argentina son "empresas de servicios eventuales" (Decreto 1694/2006).
+  AR: ["empresa de servicios eventuales", "agencia de empleo"],
 };
 
 /**

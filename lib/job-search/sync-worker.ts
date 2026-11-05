@@ -678,6 +678,15 @@ export const CAREERJET_BARRIDO: Record<string, { locale: string; lugares: string
 /** Pasadas las 10 páginas de 99, Careerjet repite: no vale la pena pedir más. */
 export const PAGINAS_POR_LUGAR = 10;
 
+/**
+ * NO SON OFERTAS: altas en paneles de encuestas pagadas ("Surveoo", de
+ * Proprofit Worldwide y Clubshop) anunciadas como "Asistente de Investigación
+ * de Mercado", con el mismo texto copiado en decenas de pueblos. El 5 nov 2026
+ * eran 203 de 792 títulos de Argentina en Careerjet, y también salían en
+ * Colombia, Perú y Chile. No entran.
+ */
+export const NO_SON_OFERTAS = /surveoo|proprofit|clubshop/i;
+
 export async function barrerCareerjet(
   countryCode: string,
   indiceLugar: number = 0,
@@ -722,19 +731,24 @@ export async function barrerCareerjet(
       if (data?.error) motivoFallo = String(data.error).slice(0, 120);
       break;
     }
-    const lote: RawJob[] = (data.jobs || []).map(j => ({
-      source: `CAREERJET_${pais.toUpperCase()}`,
-      url: j.url || "",
-      title: (j.title || "").replace(/<[^>]+>/g, "").slice(0, 200),
-      company: (j.company || "").slice(0, 200),
-      city: (j.locations || lugar).slice(0, 100),
-      description: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 1000),
-      salary: (j.salary || "Ver en oferta").slice(0, 100),
-    }));
-    traidas += lote.length;
-    if (lote.length === 0) break;
+    const recibidas = data.jobs || [];
+    traidas += recibidas.length;
+    // Página vacía = Careerjet no tiene más. Una página entera de anuncios de
+    // encuestas no es el final: se salta y se sigue.
+    if (recibidas.length === 0) break;
     motivoFallo = undefined;
-    insertadas += await upsertJobsForSync(lote, "OTRO", pais);
+    const lote: RawJob[] = recibidas
+      .filter(j => !NO_SON_OFERTAS.test(`${j.title || ""} ${j.company || ""} ${j.description || ""}`))
+      .map(j => ({
+        source: `CAREERJET_${pais.toUpperCase()}`,
+        url: j.url || "",
+        title: (j.title || "").replace(/<[^>]+>/g, "").slice(0, 200),
+        company: (j.company || "").slice(0, 200),
+        city: (j.locations || lugar).slice(0, 100),
+        description: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 1000),
+        salary: (j.salary || "Ver en oferta").slice(0, 100),
+      }));
+    if (lote.length > 0) insertadas += await upsertJobsForSync(lote, "OTRO", pais);
     await new Promise(r => setTimeout(r, 300));
   }
 

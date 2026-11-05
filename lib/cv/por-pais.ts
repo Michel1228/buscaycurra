@@ -308,6 +308,17 @@ export const ESTILOS: EstiloCV[] = [
     siPonen: ["Tu RUN, cuando ya tienes cédula chilena."],
     nota: "Una oferta no puede pedirte foto ni «buena presencia»: la Dirección del Trabajo lo considera discriminación (art. 2 del Código del Trabajo). Ponla solo si quieres.",
   },
+  {
+    codigo: "AR",
+    pais: "Argentina",
+    bandera: "🇦🇷",
+    foto: "opcional",
+    nombreLocal: "CV",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    siPonen: ["Tu CUIL, cuando ya lo tienes."],
+    nota: "No hemos encontrado una norma sobre qué no poner en el CV. La Ley 23.592 castiga la discriminación: si una oferta pide «buena presencia» o una edad concreta sin motivo, desconfía.",
+  },
 ];
 
 /**

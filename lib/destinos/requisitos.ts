@@ -558,6 +558,31 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y una oferta no puede pedirte foto, «buena presencia» ni antecedentes que no tengan que ver con el puesto: la Dirección del Trabajo lo considera discriminación.",
   },
+  // Argentina (5 nov 2026). Fuentes: argentina.gob.ar (residencia temporaria
+  // por nacionalidad Mercosur: Uruguay, Brasil, Paraguay, Bolivia, Chile, Perú,
+  // Ecuador, Colombia y Venezuela), la Cancillería argentina (Programa de
+  // Movilidad de Jóvenes con España, en vigor desde el 10 feb 2023: visa de
+  // vacaciones y trabajo de 12 meses no prorrogables) y la DNM (trabajador
+  // migrante: el empleador inscrito en el RENURE y firmas certificadas).
+  {
+    codigo: "AR",
+    nombre: "Argentina",
+    bandera: "🇦🇷",
+    autoridad: { nombre: "Dirección Nacional de Migraciones", url: "https://www.argentina.gob.ar/interior/migraciones" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Argentina. Con pasaporte español entras sin visa como turista, pero esa estancia no permite trabajar.",
+      "Si eres joven y de España, hay un programa de movilidad de jóvenes: una visa de vacaciones y trabajo de 12 meses, que se pide en un consulado argentino en España. Mira allí la edad y el cupo.",
+      "Si no, hace falta una empresa inscrita en el RENURE (el registro de quienes contratan extranjeros) que te firme el contrato, con las firmas certificadas, para pedir la residencia temporaria como trabajador migrante.",
+    ],
+    siNoEresDeLaUE: [
+      "Si eres de Uruguay, Brasil, Paraguay, Bolivia, Chile, Perú, Ecuador, Colombia o Venezuela, puedes pedir la residencia temporaria por nacionalidad Mercosur: dos años, y con ella puedes trabajar.",
+      "Si no, hace falta una empresa inscrita en el RENURE que te contrate, para pedir la residencia temporaria como trabajador migrante en la Dirección Nacional de Migraciones.",
+      "Con la residencia, sacas el DNI para extranjeros y el CUIL, el número con el que te dan de alta en el trabajo.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y desconfía de los anuncios de «encuestas pagadas desde casa» que se publican como empleo en decenas de pueblos a la vez: no son trabajos.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

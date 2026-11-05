@@ -648,6 +648,38 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["operario", "vendedor", "administrativo", "guardia de seguridad", "auxiliar de aseo"],
     slug: "chile",
   },
+
+  // Argentina entra el 5 nov 2026, por el mismo barrido de Careerjet. OJO: con
+  // la inflación de allí, el mínimo y el salario medio se quedan viejos en
+  // meses; el mínimo sube cada mes hasta abril de 2027 (Resolución 4/2026).
+  AR: {
+    codigo: "AR",
+    nombre: "Argentina",
+    nombreLocal: "Argentina",
+    moneda: "ARS",
+    simboloMoneda: "$",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇦🇷",
+    // Salario mínimo, vital y móvil de noviembre de 2026: 398.800 $ (Resolución
+    // 4/2026 del Consejo del Salario, BO 2 sep 2026). Diciembre: 406.400 $.
+    salarioMinimo: 398800,
+    // RIPTE de agosto de 2026, el salario medio de los registrados estables:
+    // 1.982.518 $ (Secretaría de Trabajo).
+    salarioMedio: 1982518,
+    // El BCE no publica el peso argentino: 1,1267 $ por euro (BCE) × 1.546
+    // pesos por dólar (cotización oficial del BCRA), 4 nov 2026.
+    tasaCambioEUR: 1742,
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    ciudades: ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "La Plata", "Mar del Plata", "Tucumán"],
+    // De las que más ofertas tienen en Careerjet Argentina el 5 nov 2026:
+    // atención al cliente 4.174, limpieza 2.555, vendedor 2.229, operario
+    // 1.743 y administrativo 1.621. "Seguridad" daba más (6.680), pero mezcla
+    // vigilantes con seguridad informática e higiene y seguridad.
+    keywordsLaborales: ["atención al cliente", "limpieza", "vendedor", "operario", "administrativo"],
+    slug: "argentina",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -683,6 +715,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.CO,  // Colombia — 2.158.174 COP/mes (~597 €)
   PAISES.PE,  // Perú — 1.887 PEN/mes (~485 €)
   PAISES.CL,  // Chile — 962.945 CLP/mes (~871 €)
+  PAISES.AR,  // Argentina — 1.982.518 ARS/mes (~1.138 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

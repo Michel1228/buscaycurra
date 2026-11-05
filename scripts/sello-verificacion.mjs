@@ -2406,6 +2406,55 @@ test("Chile es un pais completo: Mercosur de cinco, cedula en 30 dias y el chile
   }
 });
 
+// ── ARGENTINA, PAÍS COMPLETO (5 nov 2026) ────────────────────────────────────
+//
+// Lo propio de Argentina: el Mercosur allí incluye a Venezuela y a los
+// asociados, España tiene movilidad de jóvenes, y los anuncios de encuestas
+// pagadas (una cuarta parte de lo que daba Careerjet) no entran como ofertas.
+test("Argentina es un pais completo: Mercosur con asociados, movilidad joven y sin anuncios de encuestas", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-argentina-entrada.ts", salida = ".sello-argentina.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { servicioEmpleoDe } from "./lib/cursos/plataformas";',
+      'export { NO_SON_OFERTAS } from "./lib/job-search/sync-worker";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", "--external:pg", "--external:ioredis", "--external:bullmq", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const ar = m.PAISES.AR;
+    const casos = [
+      ["minimo de noviembre", ar?.salarioMinimo, 398800],
+      ["slug", ar?.slug, "argentina"],
+      ["paisPorNombre", m.paisPorNombre("Argentina"), "AR"],
+      ["Guzzi lo detecta", m.detectarPais("trabajo en Argentina")?.codigo, "ar"],
+      ["requisitos", m.requisitosDe("AR")?.codigo, "AR"],
+      ["CUIL en primeros pasos", m.getPrimerosPasos("AR")?.papeleo.documentos.some(d => d.nombre === "CUIL"), true],
+      ["Peru via Mercosur", m.movilidadDe("PE", "AR").regimen, "acuerdo_regional"],
+      ["Venezuela via Mercosur", m.movilidadDe("VE", "AR").regimen, "acuerdo_regional"],
+      ["Espana movilidad joven", m.movilidadDe("ES", "AR").regimen, "movilidad_joven"],
+      ["Francia no", m.movilidadDe("FR", "AR").regimen, "visado_general"],
+      ["bolsa publica", m.servicioEmpleoDe("AR")?.nombre, "Portal Empleo"],
+      ["encuestas fuera", m.NO_SON_OFERTAS.test("Proprofit Worldwide Ltd Surveoo busca asistentes"), true],
+      ["un camarero entra", m.NO_SON_OFERTAS.test("Mozo de salon para restaurante en Palermo"), false],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    const worker = leerFuente("lib/job-search/sync-worker.ts");
+    return mal.length === 0 && worker.includes(".filter(j => !NO_SON_OFERTAS.test(");
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

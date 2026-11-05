@@ -118,6 +118,14 @@ const ANDINOS_EN_PERU = new Set(["BO", "CO", "EC"]);
  */
 const MERCOSUR_EN_CHILE = new Set(["AR", "BO", "BR", "PY", "UY"]);
 
+/**
+ * Argentina: residencia temporaria por nacionalidad Mercosur (argentina.gob.ar:
+ * Uruguay, Brasil, Paraguay, Bolivia, Chile, Perú, Ecuador, Colombia y
+ * Venezuela). Y con España, el Programa de Movilidad de Jóvenes (en vigor
+ * desde el 10 feb 2023): visa de vacaciones y trabajo de 12 meses.
+ */
+const MERCOSUR_EN_ARGENTINA = new Set(["UY", "BR", "PY", "BO", "CL", "PE", "EC", "CO", "VE"]);
+
 const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   MX: {
     titulo: "Instituto Nacional de Migración — Gobierno de México",
@@ -138,6 +146,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   CL: {
     titulo: "Servicio Nacional de Migraciones — Chile",
     url: "https://serviciomigraciones.cl/",
+  },
+  AR: {
+    titulo: "Dirección Nacional de Migraciones — Argentina",
+    url: "https://www.argentina.gob.ar/interior/migraciones",
   },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
@@ -250,6 +262,26 @@ export function movilidadDe(origen: string | null | undefined, destino: string):
       explicacion:
         "Con tu nacionalidad puedes pedir en Chile la residencia temporal por reciprocidad del Mercosur, y con ella trabajar. Con la residencia en vigor, tienes 30 días para sacar la cédula en el Registro Civil.",
       enlaceOficial: OFICIAL_POR_DESTINO.CL,
+    };
+  }
+
+  // Argentina: residencia por nacionalidad Mercosur, y movilidad de jóvenes con España.
+  if (d === "AR" && MERCOSUR_EN_ARGENTINA.has(o)) {
+    return {
+      regimen: "acuerdo_regional",
+      titulo: "Tienes la vía del Mercosur",
+      explicacion:
+        "Con tu nacionalidad puedes pedir en Argentina la residencia temporaria por nacionalidad Mercosur, de dos años, sin oferta de trabajo, y con ella trabajar. Después sacas el DNI y el CUIL.",
+      enlaceOficial: OFICIAL_POR_DESTINO.AR,
+    };
+  }
+  if (d === "AR" && o === "ES") {
+    return {
+      regimen: "movilidad_joven",
+      titulo: "Tienes vía de movilidad joven",
+      explicacion:
+        "España y Argentina tienen un programa de movilidad de jóvenes: una visa de vacaciones y trabajo de 12 meses, no prorrogable, que se pide en un consulado argentino en España. Mira allí la edad y el cupo antes de contar con ello.",
+      enlaceOficial: OFICIAL_POR_DESTINO.AR,
     };
   }
 

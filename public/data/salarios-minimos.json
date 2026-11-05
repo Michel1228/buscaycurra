@@ -157,6 +157,12 @@
       "moneda": "CLP",
       "nota": "Ingreso mínimo mensual de 18 a 65 años desde el 1 may 2026 (Ley 21.830). Para menores de 18 y mayores de 65 es más bajo.",
       "fuente": "Fuente oficial nacional"
+    },
+    "AR": {
+      "salarioMinimo": 398800,
+      "moneda": "ARS",
+      "nota": "Salario mínimo, vital y móvil de noviembre de 2026 (Resolución 4/2026). Sube cada mes: 406.400 $ en diciembre y 437.000 $ en abril de 2027.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

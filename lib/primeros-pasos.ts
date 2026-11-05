@@ -1189,6 +1189,46 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── ARGENTINA (5 nov 2026) ───────────────────────────────────────────────
+  // Fuentes: argentina.gob.ar (residencia Mercosur y Dirección Nacional de
+  // Migraciones), la Cancillería (movilidad de jóvenes con España). Alquiler:
+  // desde el DNU 70/2023, que derogó la Ley de Alquileres, casi todo se pacta
+  // libre; lo habitual según las guías es garantía propietaria o seguro de
+  // caución, depósito e ingresos de unas tres veces el alquiler. Con la
+  // inflación, una media de precios caducaría enseguida: no se pone.
+  AR: {
+    codigo: "AR",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Argentina no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Zonaprop", url: "https://www.zonaprop.com.ar", descripcion: "De los portales de alquiler más usados de Argentina." },
+        { nombre: "Argenprop", url: "https://www.argenprop.com", descripcion: "Alquileres de inmobiliarias y particulares; explica también las garantías." },
+        { nombre: "Mercado Libre Inmuebles", url: "https://inmuebles.mercadolibre.com.ar/alquiler/", descripcion: "Muchos anuncios de particulares, también de habitaciones." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com.ar/s/Argentina/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo. Sin garantía." },
+      ],
+      consejo: "Desde 2023 los contratos se pactan casi libres (plazo, ajuste y moneda). Suelen pedir una garantía propietaria (una casa a nombre de alguien que responda por ti) o un seguro de caución, más un depósito y demostrar ingresos de unas tres veces el alquiler. Sin garantía en Argentina, el seguro de caución o un alquiler mensual son lo práctico.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Desde España: si eres joven, la visa de vacaciones y trabajo de 12 meses del programa de movilidad; si no, una empresa inscrita en el RENURE que te contrate. Con nacionalidad de un país del Mercosur o asociado, residencia de dos años sin oferta.",
+      enlaceOficial: "https://www.argentina.gob.ar/interior/migraciones",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Residencia temporaria", descripcion: "El permiso para vivir y trabajar en Argentina. Se pide a la Dirección Nacional de Migraciones: por nacionalidad Mercosur o como trabajador migrante, con contrato.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.argentina.gob.ar/interior/migraciones" },
+        { nombre: "DNI para extranjeros", descripcion: "Tu documento de identidad en Argentina. Se tramita con la residencia y lo emite el Registro Nacional de las Personas (RENAPER).", tiempoObtener: "Tras la residencia", obligatorio: true },
+        { nombre: "CUIL", descripcion: "El número con el que la empresa te da de alta, aporta a tu jubilación y a tu obra social (salud). Lo da la ANSES.", tiempoObtener: "En línea o en la ANSES, con el DNI", obligatorio: true },
+        { nombre: "Cuenta bancaria", descripcion: "Para cobrar el sueldo, que en blanco se paga por banco. Suele abrirla la empresa con tu DNI y CUIL.", tiempoObtener: "Al empezar", obligatorio: false },
+      ],
+      consejo: "El orden: residencia (o visa de movilidad de jóvenes) → DNI para extranjeros → CUIL → contrato y cuenta sueldo.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {
