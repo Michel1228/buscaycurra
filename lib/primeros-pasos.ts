@@ -1302,6 +1302,40 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── COSTA RICA (5 nov 2026) ──────────────────────────────────────────────
+  // Fuentes: Ley General de Migración 8764 (art. 80) y guías sobre la
+  // residencia con permiso de trabajo. Sin una fuente fiable sobre alquileres,
+  // no se afirma nada que no conste.
+  CR: {
+    codigo: "CR",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Costa Rica no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Encuentra24", url: "https://www.encuentra24.com/costa-rica-es/bienes-raices-alquiler-apartamentos", descripcion: "El portal de anuncios más usado de Costa Rica, con apartamentos y habitaciones." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.co.cr/s/Costa-Rica/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Costa Rica, lo práctico es empezar por un alquiler mensual o una habitación. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Hace falta una empresa que te contrate: ella hace su parte ante el Ministerio de Trabajo y tú pides la residencia con permiso de trabajo en la Dirección General de Migración. Va ligada a esa empresa.",
+      enlaceOficial: "https://www.migracion.go.cr/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Residencia con permiso de trabajo", descripcion: "La da la Dirección General de Migración y Extranjería, con el criterio del Ministerio de Trabajo. Sin ella no puedes trabajar.", tiempoObtener: "Suele tardar meses", obligatorio: true, enlaceOficial: "https://www.migracion.go.cr/" },
+        { nombre: "DIMEX", descripcion: "El documento de identidad de los residentes extranjeros. Te lo dan con la residencia.", tiempoObtener: "Tras aprobar la residencia", obligatorio: true },
+        { nombre: "Afiliación a la CCSS", descripcion: "Con contrato, la empresa te asegura en la Caja Costarricense de Seguro Social: salud y pensión.", tiempoObtener: "Al empezar a trabajar", obligatorio: true },
+      ],
+      consejo: "El orden: oferta de una empresa → residencia con permiso de trabajo (meses) → DIMEX → CCSS.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

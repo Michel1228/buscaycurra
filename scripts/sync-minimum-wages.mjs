@@ -46,6 +46,7 @@ const FUENTES_ALTERNATIVAS = {
   NZ: { salarioMinimo: 4019,  moneda: "NZD", nota: "Minimum Wage: $23.15/h × 40h (Apr 2025)" },
   MX: { salarioMinimo: 9582,  moneda: "MXN", nota: "Zona general: $315,04/día × 30,4 (CONASAMI, ene 2026). Frontera norte: $440,87/día." },
   BR: { salarioMinimo: 1621,  moneda: "BRL", nota: "Salário mínimo nacional 2026 (Decreto 12.797/2025). Algunos estados fijan un piso regional más alto." },
+  CR: { salarioMinimo: 373092, moneda: "CRC", nota: "Salario mínimo 2026 del trabajador en ocupación no calificada genérico (Decreto Ejecutivo 45303-MTSS). Cada ocupación tiene el suyo; el doméstico es más bajo." },
   GT: { salarioMinimo: 4002, moneda: "GTQ", nota: "Salario mínimo 2026 de actividades no agrícolas en el departamento de Guatemala (Acuerdo Gubernativo 256-2025), más Q250 de bonificación incentivo. En el resto del país, Q3.816,90." },
   EC: { salarioMinimo: 482, moneda: "USD", nota: "Salario básico unificado 2026 (Acuerdo Ministerial MDT-2025-195). Ecuador usa el dólar." },
   AR: { salarioMinimo: 398800, moneda: "ARS", nota: "Salario mínimo, vital y móvil de noviembre de 2026 (Resolución 4/2026). Sube cada mes: 406.400 $ en diciembre y 437.000 $ en abril de 2027." },

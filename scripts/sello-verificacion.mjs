@@ -2546,6 +2546,49 @@ test("Guatemala es un pais completo: permiso y residencia, la capital no es el p
   }
 });
 
+// ── COSTA RICA, PAÍS COMPLETO (5 nov 2026) ───────────────────────────────────
+//
+// Lo propio de Costa Rica: no hay permiso de trabajo aparte (lo da la
+// residencia), el DIMEX y la CCSS, y el INA y la ANE ya estaban.
+test("Costa Rica es un pais completo: la residencia da el permiso, DIMEX, CCSS, INA y ANE", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-costarica-entrada.ts", salida = ".sello-costarica.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre, SLUG_A_CODIGO } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { plataformasPorPais, servicioEmpleoDe } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const cr = m.PAISES.CR;
+    const docs = m.getPrimerosPasos("CR")?.papeleo.documentos || [];
+    const casos = [
+      ["minimo no calificado 2026", cr?.salarioMinimo, 373092],
+      ["slug con guion", m.SLUG_A_CODIGO?.["costa-rica"], "CR"],
+      ["paisPorNombre", m.paisPorNombre("Costa Rica"), "CR"],
+      ["Guzzi lo detecta", m.detectarPais("trabajo en Costa Rica")?.codigo, "cr"],
+      ["sin permiso aparte", (m.requisitosDe("CR")?.siNoEresDeLaUE || []).some(t => /no hay un permiso de trabajo aparte/.test(t)), true],
+      ["DIMEX y CCSS", docs.some(d => d.nombre === "DIMEX") && docs.some(d => /CCSS/.test(d.nombre)), true],
+      ["Espana no", m.movilidadDe("ES", "CR").regimen, "visado_general"],
+      ["INA en Costa Rica", m.plataformasPorPais("CR").some(p => p.id === "ina-costa-rica"), true],
+      ["bolsa publica", m.servicioEmpleoDe("CR")?.nombre, "Agencia Nacional de Empleo"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

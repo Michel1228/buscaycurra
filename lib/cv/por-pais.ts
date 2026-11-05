@@ -339,6 +339,16 @@ export const ESTILOS: EstiloCV[] = [
     noPongas: [],
     nota: "No hemos encontrado una norma guatemalteca sobre qué no poner. Muchas ofertas de call center piden inglés: si lo hablas, ponlo arriba y con tu nivel real.",
   },
+  {
+    codigo: "CR",
+    pais: "Costa Rica",
+    bandera: "🇨🇷",
+    foto: "opcional",
+    nombreLocal: "Currículum (CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    nota: "No hemos encontrado una norma costarricense sobre qué no poner. Muchos puestos son bilingües: si hablas inglés, pon tu nivel real arriba; si la oferta está en inglés, el CV también.",
+  },
 ];
 
 /**

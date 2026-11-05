@@ -168,6 +168,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
     titulo: "Instituto Guatemalteco de Migración",
     url: "https://igm.gob.gt/",
   },
+  CR: {
+    titulo: "Dirección General de Migración y Extranjería — Costa Rica",
+    url: "https://www.migracion.go.cr/",
+  },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
     url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-finder",

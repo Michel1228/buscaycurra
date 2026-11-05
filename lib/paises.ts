@@ -738,6 +738,34 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["asesor de ventas", "call center", "bodega", "vendedor", "piloto"],
     slug: "guatemala",
   },
+
+  // Costa Rica entra el 5 nov 2026, por el barrido de Careerjet (4.638 ofertas).
+  CR: {
+    codigo: "CR",
+    nombre: "Costa Rica",
+    nombreLocal: "Costa Rica",
+    moneda: "CRC",
+    simboloMoneda: "₡",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇨🇷",
+    // Salario mínimo 2026 del trabajador en ocupación no calificada genérico:
+    // ₡373.092 al mes (Decreto Ejecutivo 45303-MTSS, desde el 1 ene 2026).
+    salarioMinimo: 373092,
+    // Ingreso medio por trabajo asalariado en 2026: ₡723.135 al mes (INEC, ENAHO).
+    salarioMedio: 723135,
+    // El BCE no publica el colón: 1,1224 $ por euro (BCE) × 454,41 colones por
+    // dólar (tipo de cambio de venta del BCCR que publica Hacienda), 5 nov 2026.
+    tasaCambioEUR: 510,
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    ciudades: ["San José", "Heredia", "Alajuela", "Cartago", "Liberia", "Limón"],
+    // De las que más ofertas tienen en Careerjet Costa Rica el 5 nov 2026:
+    // servicio al cliente 637, bodega 200, vendedor 132, chofer 106 y operario
+    // 102. "Inglés" daba 468: muchos puestos son bilingües.
+    keywordsLaborales: ["servicio al cliente", "bodega", "vendedor", "chofer", "operario"],
+    slug: "costa-rica",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -776,6 +804,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.AR,  // Argentina — 1.982.518 ARS/mes (~1.138 €)
   PAISES.EC,  // Ecuador — 513 USD/mes (~455 €)
   PAISES.GT,  // Guatemala — 2.713 GTQ/mes (~315 €)
+  PAISES.CR,  // Costa Rica — 723.135 CRC/mes (~1.418 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

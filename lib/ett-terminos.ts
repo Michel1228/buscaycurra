@@ -62,6 +62,7 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   // (limpieza, vigilancia, alimentación) y las agencias de empleo.
   EC: ["agencia de empleo", "actividades complementarias"],
   GT: ["agencia de empleo", "agencia de reclutamiento"],
+  CR: ["agencia de empleo", "agencia de reclutamiento"],
 };
 
 /**

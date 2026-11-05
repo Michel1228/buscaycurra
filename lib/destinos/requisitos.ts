@@ -632,6 +632,27 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y el permiso es para una empresa concreta: si cambias de trabajo, la nueva tiene que pedir otro.",
   },
+  // Costa Rica (5 nov 2026). Fuente: Ley General de Migración 8764 (art. 80:
+  // la autorización para trabajar la da la Dirección General de Migración, con
+  // el criterio del Ministerio de Trabajo) y guías que coinciden en que no hay
+  // permiso de trabajo aparte: trabajar depende de la categoría de residencia,
+  // va ligado a un empleador y tarda meses.
+  {
+    codigo: "CR",
+    nombre: "Costa Rica",
+    bandera: "🇨🇷",
+    autoridad: { nombre: "Dirección General de Migración y Extranjería", url: "https://www.migracion.go.cr/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Costa Rica. Con pasaporte español entras sin visa como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "En Costa Rica no hay un permiso de trabajo aparte: lo que te deja trabajar es la categoría de residencia. Para un empleo, la empresa hace su parte ante el Ministerio de Trabajo y tú pides la residencia en la Dirección General de Migración.",
+      "Esa autorización va ligada a la empresa que te contrata, y el trámite suele tardar meses.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y muchas ofertas de Costa Rica piden inglés: si no lo hablas, filtra por las que no lo pidan antes de mandar el CV.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";
