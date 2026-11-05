@@ -22,9 +22,9 @@
 # `dias=1` pide lo publicado en las ultimas 24 h: lanzarlo mas de una vez al dia
 # solo volveria a bajarse las mismas paginas.
 #
-# NO estan Brasil, India ni Sudafrica aunque Adzuna los cubra: no son paises de
-# la aplicacion. Mexico si lo es desde el 5 nov 2026 y entra con 40 paginas,
-# como los paises medianos.
+# NO estan India ni Sudafrica aunque Adzuna los cubra: no son paises de la
+# aplicacion. Mexico y Brasil si lo son desde el 5 nov 2026 y entran con 40
+# paginas cada uno, como los paises medianos.
 
 set -uo pipefail
 
