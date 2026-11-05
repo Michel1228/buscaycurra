@@ -712,6 +712,14 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     actualizado: "2026-11",
   },
   {
+    pais: "SV",
+    nombre: "Lunes de Empleo (Ministerio de Trabajo)",
+    url: "https://www.mtps.gob.sv/",
+    queHacer:
+      "No hay bolsa en línea: el Ministerio de Trabajo recoge currículums y ofrece vacantes cada lunes en sus 14 oficinas departamentales. Gratis.",
+    actualizado: "2026-11",
+  },
+  {
     pais: "GT",
     nombre: "Tu Empleo (Servicio Nacional de Empleo)",
     url: "https://tuempleo.mintrabajo.gob.gt/",

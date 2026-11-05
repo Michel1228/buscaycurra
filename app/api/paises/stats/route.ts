@@ -51,6 +51,7 @@ const PAISES_MAP: Record<string, { flag: string; nombre: string }> = {
   GT: { flag: "🇬🇹", nombre: "Guatemala" },
   CR: { flag: "🇨🇷", nombre: "Costa Rica" },
   UY: { flag: "🇺🇾", nombre: "Uruguay" },
+  SV: { flag: "🇸🇻", nombre: "El Salvador" },
 };
 
 function formatNumber(n: number): string {

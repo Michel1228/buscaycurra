@@ -2634,6 +2634,47 @@ test("Uruguay es un pais completo: residencia permanente Mercosur, garantia del 
   }
 });
 
+// ── EL SALVADOR, PAÍS COMPLETO (5 nov 2026) ──────────────────────────────────
+//
+// Lo propio de El Salvador: dólar, residencia temporal con oferta, y su
+// servicio público de empleo es presencial (Lunes de Empleo), no un portal.
+test("El Salvador es un pais completo: dolar, residencia con oferta y Lunes de Empleo", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-salvador-entrada.ts", salida = ".sello-salvador.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre, SLUG_A_CODIGO } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { servicioEmpleoDe } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const sv = m.PAISES.SV;
+    const casos = [
+      ["minimo comercio y servicios", sv?.salarioMinimo, 408.8],
+      ["dolar", sv?.moneda, "USD"],
+      ["slug con guion", m.SLUG_A_CODIGO?.["el-salvador"], "SV"],
+      ["paisPorNombre", m.paisPorNombre("El Salvador"), "SV"],
+      ["Guzzi lo detecta", m.detectarPais("quiero trabajar en El Salvador")?.codigo, "sv"],
+      ["residencia con oferta", m.getPrimerosPasos("SV")?.papeleo.documentos.some(d => d.nombre === "Residencia temporal"), true],
+      ["Espana no", m.movilidadDe("ES", "SV").regimen, "visado_general"],
+      ["servicio presencial", m.servicioEmpleoDe("SV")?.nombre, "Lunes de Empleo (Ministerio de Trabajo)"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

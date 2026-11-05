@@ -794,6 +794,35 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["atención al cliente", "limpieza", "depósito", "administrativo", "vendedor"],
     slug: "uruguay",
   },
+
+  // El Salvador entra el 5 nov 2026, por el barrido de Careerjet (3.382 ofertas).
+  SV: {
+    codigo: "SV",
+    nombre: "El Salvador",
+    nombreLocal: "El Salvador",
+    moneda: "USD",
+    simboloMoneda: "US$",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇸🇻",
+    // Salario mínimo de industria, comercio y servicios: 408,80 US$ al mes
+    // desde el 1 jun 2025 (Decreto Ejecutivo 11, DO del 23 may 2025); en 2026
+    // no ha habido decreto nuevo.
+    salarioMinimo: 408.8,
+    // Salario medio mensual de los ocupados en 2025: 437,39 US$ (EHPM 2025 del
+    // Banco Central de Reserva, según la prensa salvadoreña).
+    salarioMedio: 437,
+    // El Salvador usa el dólar: 1,1267 $ por euro (BCE, 4 nov 2026).
+    tasaCambioEUR: 1.1267,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["San Salvador", "Santa Ana", "San Miguel", "Soyapango", "Santa Tecla"],
+    // Las que más ofertas tienen en Careerjet El Salvador el 5 nov 2026:
+    // atención al cliente 548, bodega 268, asesor de ventas 173, motorista
+    // 127 (allí es el conductor) y vendedor 121.
+    keywordsLaborales: ["atención al cliente", "bodega", "asesor de ventas", "motorista", "vendedor"],
+    slug: "el-salvador",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -834,6 +863,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.GT,  // Guatemala — 2.713 GTQ/mes (~315 €)
   PAISES.CR,  // Costa Rica — 723.135 CRC/mes (~1.418 €)
   PAISES.UY,  // Uruguay — 56.920 UYU/mes (~1.261 €)
+  PAISES.SV,  // El Salvador — 437 USD/mes (~388 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

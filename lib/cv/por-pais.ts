@@ -359,6 +359,16 @@ export const ESTILOS: EstiloCV[] = [
     noPongas: [],
     nota: "No hemos encontrado una norma uruguaya sobre qué no poner. En Vía Trabajo, el portal público de empleo, tu perfil se arma allí con su formato.",
   },
+  {
+    codigo: "SV",
+    pais: "El Salvador",
+    bandera: "🇸🇻",
+    foto: "opcional",
+    nombreLocal: "Currículum (CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    nota: "No hemos encontrado una norma salvadoreña sobre qué no poner. Lleva el CV impreso a los «Lunes de Empleo» del Ministerio de Trabajo: allí se recogen en persona.",
+  },
 ];
 
 /**

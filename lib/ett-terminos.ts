@@ -64,6 +64,7 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   GT: ["agencia de empleo", "agencia de reclutamiento"],
   CR: ["agencia de empleo", "agencia de reclutamiento"],
   UY: ["agencia de empleo", "agencia de colocación"],
+  SV: ["agencia de empleo", "agencia de reclutamiento"],
 };
 
 /**

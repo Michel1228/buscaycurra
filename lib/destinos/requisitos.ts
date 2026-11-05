@@ -677,6 +677,26 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Para alquilar, el Estado ofrece una garantía (Contaduría General de la Nación y Ministerio de Vivienda), y otra para jóvenes de 18 a 29 años. Infórmate antes de pagar un seguro de fianza.",
   },
+  // El Salvador (5 nov 2026). Fuentes: Diario El Mundo (la Dirección General de
+  // Migración y Extranjería da residencias temporales de hasta dos años a
+  // quien tiene una oferta de empleo), portal de transparencia del Gobierno.
+  // No se ha encontrado una vía regional para trabajar (el CA-4 es para
+  // viajar), así que no se promete ninguna.
+  {
+    codigo: "SV",
+    nombre: "El Salvador",
+    bandera: "🇸🇻",
+    autoridad: { nombre: "Dirección General de Migración y Extranjería", url: "https://www.migracion.gob.sv/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en El Salvador. Con pasaporte español entras sin visa como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "Hace falta una oferta de empleo de una empresa salvadoreña: con ella pides la residencia temporal en la Dirección General de Migración y Extranjería, de hasta dos años y prorrogable.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y el Ministerio de Trabajo no tiene bolsa en línea: sus vacantes salen en los «Lunes de Empleo» de sus 14 oficinas.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

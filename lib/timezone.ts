@@ -37,6 +37,7 @@ export const PAIS_TIMEZONE: Record<string, string> = {
   GT: "America/Guatemala",
   CR: "America/Costa_Rica",
   UY: "America/Montevideo",
+  SV: "America/El_Salvador",
 };
 
 /**
@@ -70,7 +71,7 @@ function mapPaisToLocale(pais: string): string {
     GB: "en-GB", IE: "en-IE", NL: "nl-NL", BE: "nl-BE", AT: "de-AT",
     CH: "de-CH", SE: "sv-SE", DK: "da-DK", NO: "nb-NO", FI: "fi-FI",
     PL: "pl-PL", CZ: "cs-CZ", AU: "en-AU", NZ: "en-NZ",
-    US: "en-US", CA: "en-CA", MX: "es-MX", BR: "pt-BR", CO: "es-CO", PE: "es-PE", CL: "es-CL", AR: "es-AR", EC: "es-EC", GT: "es-GT", CR: "es-CR", UY: "es-UY",
+    US: "en-US", CA: "en-CA", MX: "es-MX", BR: "pt-BR", CO: "es-CO", PE: "es-PE", CL: "es-CL", AR: "es-AR", EC: "es-EC", GT: "es-GT", CR: "es-CR", UY: "es-UY", SV: "es-SV",
   };
   return map[pais] || "es-ES";
 }

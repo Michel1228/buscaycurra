@@ -187,6 +187,12 @@
       "moneda": "UYU",
       "nota": "Salario mínimo nacional desde el 1 jul 2026 (Decreto 64/2025 del MTSS). De enero a junio era de $24.572.",
       "fuente": "Fuente oficial nacional"
+    },
+    "SV": {
+      "salarioMinimo": 408.8,
+      "moneda": "USD",
+      "nota": "Salario mínimo de industria, comercio y servicios desde el 1 jun 2025 (Decreto Ejecutivo 11); sin decreto nuevo en 2026. Maquila y campo tienen el suyo.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

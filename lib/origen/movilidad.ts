@@ -183,6 +183,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
     titulo: "Residencias — Ministerio de Relaciones Exteriores del Uruguay",
     url: "https://www.gub.uy/ministerio-relaciones-exteriores/",
   },
+  SV: {
+    titulo: "Dirección General de Migración y Extranjería — El Salvador",
+    url: "https://www.migracion.gob.sv/",
+  },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
     url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-finder",

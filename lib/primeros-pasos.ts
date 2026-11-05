@@ -1373,6 +1373,40 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── EL SALVADOR (5 nov 2026) ─────────────────────────────────────────────
+  // Fuentes: Diario El Mundo (residencia temporal por oferta de empleo, hasta
+  // dos años) y la prensa sobre los «Lunes de Empleo» del Ministerio de
+  // Trabajo. Sin una fuente fiable sobre alquileres, no se afirma nada.
+  SV: {
+    codigo: "SV",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "El Salvador no tiene una visa de au pair: cuidar niños en una casa pide la misma residencia que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Encuentra24", url: "https://www.encuentra24.com/el-salvador-es/bienes-raices-alquiler-apartamentos", descripcion: "El portal de anuncios más usado de El Salvador, con apartamentos y habitaciones." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/El-Salvador/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en El Salvador, lo práctico es empezar por un alquiler mensual o una habitación. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Hace falta una oferta de empleo de una empresa salvadoreña para pedir la residencia temporal en la Dirección General de Migración y Extranjería, de hasta dos años.",
+      enlaceOficial: "https://www.migracion.gob.sv/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Residencia temporal", descripcion: "La da la Dirección General de Migración y Extranjería con tu oferta de empleo. Dura hasta dos años y se prorroga.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.migracion.gob.sv/" },
+        { nombre: "Carné de residente", descripcion: "Tu documento de identidad como residente. Te lo dan con la residencia.", tiempoObtener: "Tras la residencia", obligatorio: true },
+        { nombre: "Afiliación al ISSS y a una AFP", descripcion: "Con contrato, la empresa te inscribe en el Instituto Salvadoreño del Seguro Social (salud) y en una administradora de pensiones.", tiempoObtener: "Al empezar a trabajar", obligatorio: true },
+      ],
+      consejo: "El orden: oferta de empleo → residencia temporal → carné de residente → ISSS y AFP.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {
