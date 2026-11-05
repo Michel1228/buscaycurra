@@ -2455,6 +2455,51 @@ test("Argentina es un pais completo: Mercosur con asociados, movilidad joven y s
   }
 });
 
+// ── ECUADOR, PAÍS COMPLETO (5 nov 2026) ──────────────────────────────────────
+//
+// Lo propio de Ecuador: usa el dólar, la residencia andina sale casi gratis,
+// no hay ETT (Mandato 8) y el Ministerio del Trabajo tiene cursos en línea.
+test("Ecuador es un pais completo: dolar, via andina, sin ETT y cursos del Ministerio", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-ecuador-entrada.ts", salida = ".sello-ecuador.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { plataformasPorPais, servicioEmpleoDe } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const ec = m.PAISES.EC;
+    const casos = [
+      ["salario basico 2026", ec?.salarioMinimo, 482],
+      ["usa el dolar", ec?.moneda, "USD"],
+      ["slug", ec?.slug, "ecuador"],
+      ["paisPorNombre", m.paisPorNombre("Ecuador"), "EC"],
+      ["Guzzi lo detecta", m.detectarPais("quiero trabajar en Ecuador")?.codigo, "ec"],
+      ["sin ETT", (m.requisitosDe("EC")?.ojoCon || "").includes("Mandato 8"), true],
+      ["IESS en primeros pasos", m.getPrimerosPasos("EC")?.papeleo.documentos.some(d => /IESS/.test(d.nombre)), true],
+      ["Colombia via andina", m.movilidadDe("CO", "EC").titulo, "Tienes la vía andina y la del Mercosur"],
+      ["Chile via Mercosur", m.movilidadDe("CL", "EC").regimen, "acuerdo_regional"],
+      ["Espana no", m.movilidadDe("ES", "EC").regimen, "visado_general"],
+      ["cursos del Ministerio", m.plataformasPorPais("EC").some(p => p.id === "capacitate-en-linea-ecuador"), true],
+      ["bolsa publica", m.servicioEmpleoDe("EC")?.nombre, "Encuentra Empleo"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

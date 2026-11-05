@@ -47,6 +47,7 @@ const PAISES_MAP: Record<string, { flag: string; nombre: string }> = {
   CO: { flag: "🇨🇴", nombre: "Colombia" },
   PE: { flag: "🇵🇪", nombre: "Perú" },
   AR: { flag: "🇦🇷", nombre: "Argentina" },
+  EC: { flag: "🇪🇨", nombre: "Ecuador" },
 };
 
 function formatNumber(n: number): string {

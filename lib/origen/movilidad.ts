@@ -126,6 +126,15 @@ const MERCOSUR_EN_CHILE = new Set(["AR", "BO", "BR", "PY", "UY"]);
  */
 const MERCOSUR_EN_ARGENTINA = new Set(["UY", "BR", "PY", "BO", "CL", "PE", "EC", "CO", "VE"]);
 
+/**
+ * Ecuador: residencia temporal Mercosur (Estados Parte del Acuerdo de
+ * Residencia: Argentina, Brasil, Paraguay, Uruguay, Bolivia, Chile, Perú y
+ * Colombia) y del Estatuto Migratorio Andino (Colombia, Perú y Bolivia), dos
+ * años cada una (gob.ec).
+ */
+const MERCOSUR_EN_ECUADOR = new Set(["AR", "BR", "PY", "UY", "BO", "CL", "PE", "CO"]);
+const ANDINOS_EN_ECUADOR = new Set(["CO", "PE", "BO"]);
+
 const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   MX: {
     titulo: "Instituto Nacional de Migración — Gobierno de México",
@@ -150,6 +159,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   AR: {
     titulo: "Dirección Nacional de Migraciones — Argentina",
     url: "https://www.argentina.gob.ar/interior/migraciones",
+  },
+  EC: {
+    titulo: "Visas — Cancillería del Ecuador",
+    url: "https://www.cancilleria.gob.ec/",
   },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
@@ -282,6 +295,18 @@ export function movilidadDe(origen: string | null | undefined, destino: string):
       explicacion:
         "España y Argentina tienen un programa de movilidad de jóvenes: una visa de vacaciones y trabajo de 12 meses, no prorrogable, que se pide en un consulado argentino en España. Mira allí la edad y el cupo antes de contar con ello.",
       enlaceOficial: OFICIAL_POR_DESTINO.AR,
+    };
+  }
+
+  // Ecuador: residencia andina o Mercosur, sin oferta de trabajo.
+  if (d === "EC" && MERCOSUR_EN_ECUADOR.has(o)) {
+    return {
+      regimen: "acuerdo_regional",
+      titulo: ANDINOS_EN_ECUADOR.has(o) ? "Tienes la vía andina y la del Mercosur" : "Tienes la vía del Mercosur",
+      explicacion: ANDINOS_EN_ECUADOR.has(o)
+        ? "Con tu nacionalidad puedes pedir en Ecuador la residencia temporal del Estatuto Migratorio Andino: dos años, sin oferta de trabajo, y solo pagas los 50 US$ de la solicitud."
+        : "Con tu nacionalidad puedes pedir en Ecuador la residencia temporal Mercosur: dos años, sin oferta de trabajo, y con ella trabajar.",
+      enlaceOficial: OFICIAL_POR_DESTINO.EC,
     };
   }
 

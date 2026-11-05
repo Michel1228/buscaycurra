@@ -33,6 +33,7 @@ export const PAIS_TIMEZONE: Record<string, string> = {
   PE: "America/Lima",
   CL: "America/Santiago",
   AR: "America/Argentina/Buenos_Aires",
+  EC: "America/Guayaquil",
 };
 
 /**
@@ -66,7 +67,7 @@ function mapPaisToLocale(pais: string): string {
     GB: "en-GB", IE: "en-IE", NL: "nl-NL", BE: "nl-BE", AT: "de-AT",
     CH: "de-CH", SE: "sv-SE", DK: "da-DK", NO: "nb-NO", FI: "fi-FI",
     PL: "pl-PL", CZ: "cs-CZ", AU: "en-AU", NZ: "en-NZ",
-    US: "en-US", CA: "en-CA", MX: "es-MX", BR: "pt-BR", CO: "es-CO", PE: "es-PE", CL: "es-CL", AR: "es-AR",
+    US: "en-US", CA: "en-CA", MX: "es-MX", BR: "pt-BR", CO: "es-CO", PE: "es-PE", CL: "es-CL", AR: "es-AR", EC: "es-EC",
   };
   return map[pais] || "es-ES";
 }

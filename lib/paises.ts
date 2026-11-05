@@ -680,6 +680,33 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["atención al cliente", "limpieza", "vendedor", "operario", "administrativo"],
     slug: "argentina",
   },
+
+  // Ecuador entra el 5 nov 2026, el primero de la fase 2, por el barrido de Careerjet.
+  EC: {
+    codigo: "EC",
+    nombre: "Ecuador",
+    nombreLocal: "Ecuador",
+    moneda: "USD",
+    simboloMoneda: "US$",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇪🇨",
+    // Salario básico unificado 2026: 482 US$ al mes (Acuerdo Ministerial
+    // MDT-2025-195, desde el 1 ene 2026).
+    salarioMinimo: 482,
+    // Ingreso laboral medio en todo el país, abril de 2026: 513 US$ (INEC, ENEMDU).
+    salarioMedio: 513,
+    // Ecuador usa el dólar: 1,1267 $ por euro (BCE, 4 nov 2026).
+    tasaCambioEUR: 1.1267,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Quito", "Guayaquil", "Cuenca", "Manta", "Ambato", "Machala"],
+    // Las que más ofertas tienen en Careerjet Ecuador el 5 nov 2026: atención
+    // al cliente 1.472, asesor comercial 732, limpieza 674, vendedor 535 y call
+    // center 217.
+    keywordsLaborales: ["atención al cliente", "asesor comercial", "limpieza", "vendedor", "call center"],
+    slug: "ecuador",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -716,6 +743,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.PE,  // Perú — 1.887 PEN/mes (~485 €)
   PAISES.CL,  // Chile — 962.945 CLP/mes (~871 €)
   PAISES.AR,  // Argentina — 1.982.518 ARS/mes (~1.138 €)
+  PAISES.EC,  // Ecuador — 513 USD/mes (~455 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

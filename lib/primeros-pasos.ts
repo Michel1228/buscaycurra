@@ -1229,6 +1229,44 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── ECUADOR (5 nov 2026) ─────────────────────────────────────────────────
+  // Fuentes: gob.ec (visas de residencia temporal de trabajo, Mercosur y
+  // andina; todo en línea), Ley Orgánica de Movilidad Humana. Alquiler: la Ley
+  // de Inquilinato no obliga a dar garantía, pero se suele pedir de uno a dos
+  // meses (El Universo, Expreso, El Comercio); en julio de 2026 se debatía una
+  // reforma con topes. Sin media oficial de precios, no se pone.
+  EC: {
+    codigo: "EC",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Ecuador no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Plusvalía", url: "https://www.plusvalia.com", descripcion: "El portal de alquileres más usado de Ecuador, sobre todo en Quito y Guayaquil." },
+        { nombre: "Properati", url: "https://www.properati.com.ec", descripcion: "Departamentos y casas de inmobiliarias y particulares." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com.ec/s/Ecuador/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo. Más caro, pero sin garantía." },
+      ],
+      consejo: "La ley no obliga a dar garantía, pero lo habitual es de uno a dos meses de arriendo, que te deben devolver si dejas la vivienda como la recibiste y sin deudas. Pon en el contrato cuánto es y cuándo te la devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Desde España o el resto de la UE hace falta un contrato con una empresa ecuatoriana, registrado en el Ministerio del Trabajo, para pedir en línea la visa de residencia temporal de trabajo. Con nacionalidad de un país del Mercosur o de la Comunidad Andina, residencia de dos años sin oferta.",
+      enlaceOficial: "https://www.gob.ec/mremh/tramites/concesion-visa-residencia-temporal-trabajo-actividades-laborales-relacion-dependencia",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Contrato registrado en el Ministerio del Trabajo", descripcion: "La empresa registra tu contrato; el certificado de ese registro es uno de los requisitos de la visa.", tiempoObtener: "Antes de pedir la visa", obligatorio: true },
+        { nombre: "Visa de residencia temporal", descripcion: "Se pide en línea (e-VISAS) a la Cancillería. Dura dos años.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.gob.ec/mremh/tramites/concesion-visa-residencia-temporal-trabajo-actividades-laborales-relacion-dependencia" },
+        { nombre: "Cédula de identidad de extranjero", descripcion: "Con la visa, la sacas en el Registro Civil. Es tu documento para el banco, el alquiler y el seguro social.", tiempoObtener: "Tras la visa", obligatorio: true },
+        { nombre: "Afiliación al IESS", descripcion: "Con contrato, la empresa te afilia al Instituto Ecuatoriano de Seguridad Social: salud y jubilación.", tiempoObtener: "Desde el primer día de trabajo", obligatorio: true },
+      ],
+      consejo: "El orden: contrato registrado → visa en línea → cédula de extranjero en el Registro Civil → afiliación al IESS.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

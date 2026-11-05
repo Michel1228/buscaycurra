@@ -57,6 +57,10 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   CL: ["empresa de servicios transitorios", "agencia de empleo"],
   // En Argentina son "empresas de servicios eventuales" (Decreto 1694/2006).
   AR: ["empresa de servicios eventuales", "agencia de empleo"],
+  // En Ecuador no hay ETT: el Mandato Constituyente 8 (2008) prohibió la
+  // intermediación laboral. Quedan las empresas de actividades complementarias
+  // (limpieza, vigilancia, alimentación) y las agencias de empleo.
+  EC: ["agencia de empleo", "actividades complementarias"],
 };
 
 /**

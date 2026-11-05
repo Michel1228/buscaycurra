@@ -169,6 +169,24 @@ export const PLATAFORMAS: PlataformaFormacion[] = [
     ],
     actualizado: "2026-11",
   },
+  {
+    id: "capacitate-en-linea-ecuador",
+    nombre: "Capacítate en línea (Ministerio del Trabajo del Ecuador)",
+    resumen:
+      "Los cursos del Servicio Público de Empleo del Ecuador, sin costo, para mayores de 18 años ecuatorianos o extranjeros, con certificado digital.",
+    url: "https://encuentraempleo.trabajo.gob.ec/",
+    alcance: { tipo: "paises", codigos: ["EC"] },
+    idiomas: ["Español"],
+    temas: ["habilidades técnicas", "habilidades blandas"],
+    certificado: "si",
+    requisitos: "Registrarse en Encuentra Empleo y entrar en «Capacítate en Línea».",
+    aviso:
+      "El certificado es de asistencia: se descarga en «Capacitaciones vigentes» al terminar.",
+    fuentes: [
+      { titulo: "Inscripción en los cursos que oferta el Ministerio del Trabajo — gob.ec (31 mar 2026)", url: "https://www.gob.ec/mt/tramites/inscripcion-cursos-oferta-ministerio-trabajo-fortalecimiento-perfil-laboral" },
+    ],
+    actualizado: "2026-11",
+  },
   // Comprobados el 5 nov 2026 en sus webs y en prensa del país (fuentes abajo).
   {
     id: "sence-cursos-en-linea",

@@ -163,6 +163,12 @@
       "moneda": "ARS",
       "nota": "Salario mínimo, vital y móvil de noviembre de 2026 (Resolución 4/2026). Sube cada mes: 406.400 $ en diciembre y 437.000 $ en abril de 2027.",
       "fuente": "Fuente oficial nacional"
+    },
+    "EC": {
+      "salarioMinimo": 482,
+      "moneda": "USD",
+      "nota": "Salario básico unificado 2026 (Acuerdo Ministerial MDT-2025-195). Ecuador usa el dólar.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

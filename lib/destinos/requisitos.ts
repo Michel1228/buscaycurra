@@ -583,6 +583,32 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y desconfía de los anuncios de «encuestas pagadas desde casa» que se publican como empleo en decenas de pueblos a la vez: no son trabajos.",
   },
+  // Ecuador (5 nov 2026). Fuentes: gob.ec (visa de residencia temporal de
+  // trabajo en relación de dependencia, con el contrato registrado en el
+  // Ministerio del Trabajo; residencia temporal Mercosur, 2 años, 50 + 200
+  // US$; residencia temporal del Estatuto Migratorio Andino, 2 años, 50 US$),
+  // Ley Orgánica de Movilidad Humana (art. 60) y el Acuerdo de Residencia del
+  // Mercosur (art. 8: trabajar por cuenta propia o ajena). Lista Mercosur: los
+  // firmantes (Argentina, Brasil, Paraguay, Uruguay, Bolivia, Chile) y los que
+  // se adhirieron (Perú, Colombia); la ficha de gob.ec no enumera países.
+  {
+    codigo: "EC",
+    nombre: "Ecuador",
+    bandera: "🇪🇨",
+    autoridad: { nombre: "Ministerio de Relaciones Exteriores y Movilidad Humana", url: "https://www.cancilleria.gob.ec/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Ecuador. Con pasaporte español entras sin visa como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "Si eres de Colombia, Perú o Bolivia, tienes la residencia temporal del Estatuto Migratorio Andino: dos años y solo pagas los 50 US$ de la solicitud.",
+      "Si eres de Argentina, Brasil, Paraguay, Uruguay, Bolivia, Chile, Perú o Colombia, puedes pedir la residencia temporal Mercosur: dos años, 250 US$ en total, y con ella puedes trabajar.",
+      "Si no, hace falta un contrato con una empresa ecuatoriana, registrado en el Ministerio del Trabajo, para pedir la visa de residencia temporal de trabajo. Todo se pide en línea.",
+      "Si eres de Venezuela, hay además un estatuto migratorio entre los dos países: pregunta en Cancillería qué visa te toca.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y en Ecuador las ETT están prohibidas desde 2008 (Mandato 8): si una agencia te ofrece trabajar contratado por ella para otra empresa, desconfía.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

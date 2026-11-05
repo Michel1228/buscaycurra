@@ -319,6 +319,16 @@ export const ESTILOS: EstiloCV[] = [
     siPonen: ["Tu CUIL, cuando ya lo tienes."],
     nota: "No hemos encontrado una norma sobre qué no poner en el CV. La Ley 23.592 castiga la discriminación: si una oferta pide «buena presencia» o una edad concreta sin motivo, desconfía.",
   },
+  {
+    codigo: "EC",
+    pais: "Ecuador",
+    bandera: "🇪🇨",
+    foto: "opcional",
+    nombreLocal: "Hoja de vida",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    nota: "No hemos encontrado una norma ecuatoriana sobre qué no poner. Si buscas por Encuentra Empleo, el portal público, tu hoja de vida se arma allí con su formato.",
+  },
 ];
 
 /**
