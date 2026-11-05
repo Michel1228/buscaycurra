@@ -389,6 +389,16 @@ export const ESTILOS: EstiloCV[] = [
     noPongas: [],
     nota: "No hemos encontrado una norma dominicana sobre qué no poner. En turismo y call center piden mucho inglés: si lo hablas, pon tu nivel real arriba.",
   },
+  {
+    codigo: "HN",
+    pais: "Honduras",
+    bandera: "🇭🇳",
+    foto: "opcional",
+    nombreLocal: "Hoja de vida",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    nota: "No hemos encontrado una norma hondureña sobre qué no poner. Los call center bilingües piden inglés: si lo hablas, pon tu nivel real arriba.",
+  },
 ];
 
 /**

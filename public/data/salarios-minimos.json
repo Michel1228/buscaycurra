@@ -205,6 +205,12 @@
       "moneda": "DOP",
       "nota": "Salario mínimo del sector privado no sectorizado en grandes empresas desde el 1 feb 2026 (Resolución CNS-01-2025). Medianas, RD$27.489,60; pequeñas y micro, menos.",
       "fuente": "Fuente oficial nacional"
+    },
+    "HN": {
+      "salarioMinimo": 14917,
+      "moneda": "HNL",
+      "nota": "Salario mínimo promedio vigente en 2026 (comunicado SAR-19-2026, Acuerdo Ejecutivo SETRASS 233-2026). Cada sector y tamaño de empresa tiene el suyo.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

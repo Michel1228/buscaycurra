@@ -744,6 +744,27 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y desde 2026 el permiso solo se renueva con un contrato formal registrado: una declaración jurada ya no sirve.",
   },
+  // Honduras (5 nov 2026). Fuentes: Código de Trabajo, art. 11 (al menos el
+  // 90 % de la plantilla tiene que ser hondureña; salvo hasta dos directivos
+  // extranjeros por empresa, según el anexo del TLC Perú-Honduras) y guías que
+  // coinciden en el proceso: autorización de la Secretaría de Trabajo y
+  // residencia del Instituto Nacional de Migración.
+  {
+    codigo: "HN",
+    nombre: "Honduras",
+    bandera: "🇭🇳",
+    autoridad: { nombre: "Instituto Nacional de Migración", url: "https://inm.gob.hn/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Honduras. Con pasaporte español entras sin visa como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "Hace falta una empresa que te contrate: la Secretaría de Trabajo autoriza tu permiso de trabajo y el Instituto Nacional de Migración te da la residencia.",
+      "Por ley, al menos el 90 % de la plantilla tiene que ser hondureña, así que cada empresa tiene un cupo pequeño para extranjeros.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y la empresa que contrata a alguien sin permiso se arriesga a una multa de la Secretaría de Trabajo.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

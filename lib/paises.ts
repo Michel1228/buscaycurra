@@ -884,6 +884,37 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["servicio al cliente", "almacén", "chofer", "vendedor", "call center"],
     slug: "republica-dominicana",
   },
+
+  // Honduras entra el 5 nov 2026, por el barrido de Careerjet.
+  HN: {
+    codigo: "HN",
+    nombre: "Honduras",
+    nombreLocal: "Honduras",
+    moneda: "HNL",
+    simboloMoneda: "L",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇭🇳",
+    // Salario mínimo PROMEDIO vigente en 2026: L14.917,20 al mes (comunicado
+    // SAR-19-2026, con el Acuerdo Ejecutivo SETRASS 233-2026, La Gaceta del 29
+    // abr 2026). Cada sector y tamaño de empresa tiene el suyo.
+    salarioMinimo: 14917,
+    // Ingreso medio mensual de los ocupados en 2026: L10.356 (INE, según
+    // E&N). Es MENOR que el mínimo: casi 870.000 asalariados privados cobran
+    // por debajo (El Heraldo).
+    salarioMedio: 10356,
+    // El BCE no publica el lempira: 1,1225 $ por euro (BCE) × 27,027 lempiras
+    // por dólar (precio de venta de referencia del BCH), ambos del 2 oct 2026.
+    // El lempira apenas se mueve; se actualiza con el resto.
+    tasaCambioEUR: 30.34,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Tegucigalpa", "San Pedro Sula", "La Ceiba", "Choloma", "Comayagua"],
+    // Las que más ofertas tienen en Careerjet Honduras el 5 nov 2026: atención
+    // al cliente 235, vendedor 101, bodega 48, call center 36 y cajero 29.
+    keywordsLaborales: ["atención al cliente", "vendedor", "bodega", "call center", "cajero"],
+    slug: "honduras",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -927,6 +958,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.SV,  // El Salvador — 437 USD/mes (~388 €)
   PAISES.PA,  // Panamá — 756 PAB/mes, mediana (~671 €)
   PAISES.DO,  // República Dominicana — 39.566 DOP/mes (~575 €)
+  PAISES.HN,  // Honduras — 10.356 HNL/mes (~341 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

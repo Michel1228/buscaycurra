@@ -1478,6 +1478,41 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── HONDURAS (5 nov 2026) ────────────────────────────────────────────────
+  // Fuentes: Código de Trabajo (art. 11, 90 %) y guías sobre el permiso de la
+  // Secretaría de Trabajo y la residencia del Instituto Nacional de Migración.
+  // Sin una fuente fiable sobre alquileres, no se afirma nada.
+  HN: {
+    codigo: "HN",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Honduras no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Encuentra24", url: "https://www.encuentra24.com/honduras-es/bienes-raices-alquiler-apartamentos", descripcion: "Anuncios de apartamentos y habitaciones en alquiler en Honduras." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Honduras/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Honduras, lo práctico es empezar por un alquiler mensual o una habitación. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Hace falta una empresa que te contrate: permiso de trabajo de la Secretaría de Trabajo y residencia del Instituto Nacional de Migración.",
+      enlaceOficial: "https://inm.gob.hn/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Permiso de trabajo", descripcion: "Lo autoriza la Secretaría de Trabajo y Seguridad Social, a petición de la empresa.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.trabajo.gob.hn/" },
+        { nombre: "Residencia", descripcion: "La da el Instituto Nacional de Migración. Sin ella el permiso de trabajo no basta.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://inm.gob.hn/" },
+        { nombre: "Carné de residente", descripcion: "Tu documento de identidad como residente; te lo dan con la residencia.", tiempoObtener: "Tras la residencia", obligatorio: true },
+        { nombre: "Afiliación al IHSS", descripcion: "Con contrato, la empresa te inscribe en el Instituto Hondureño de Seguridad Social.", tiempoObtener: "Al empezar a trabajar", obligatorio: true },
+      ],
+      consejo: "El orden: oferta de una empresa → permiso de la Secretaría de Trabajo y residencia en Migración → carné de residente → IHSS.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

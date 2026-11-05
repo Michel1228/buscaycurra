@@ -712,6 +712,14 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     actualizado: "2026-11",
   },
   {
+    pais: "HN",
+    nombre: "Servicio Nacional de Empleo de Honduras (SENAEH)",
+    url: "https://www.trabajo.gob.hn/",
+    queHacer:
+      "De la Secretaría de Trabajo, gratis: bolsa electrónica de trabajo con vacantes por departamento y ferias de empleo.",
+    actualizado: "2026-11",
+  },
+  {
     pais: "DO",
     nombre: "Servicio Nacional de Empleo (Ministerio de Trabajo)",
     url: "https://mt.gob.do/",

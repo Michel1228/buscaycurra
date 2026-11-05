@@ -41,6 +41,7 @@ const ALIAS: Record<string, string[]> = {
   SV: ["el salvador"],
   PA: ["panama"],
   DO: ["republica dominicana", "dominican republic"],
+  HN: ["honduras"],
   CH: ["suiza", "switzerland", "schweiz"],
   BE: ["belgica", "belgium"],
   AT: ["austria"],

@@ -93,6 +93,7 @@ export default async function LandingPage() {
     SV: { flag: "🇸🇻", nombre: "El Salvador" },
     PA: { flag: "🇵🇦", nombre: "Panamá" },
     DO: { flag: "🇩🇴", nombre: "República Dominicana" },
+    HN: { flag: "🇭🇳", nombre: "Honduras" },
   };
 
   const PAISES_DATA = stats

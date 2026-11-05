@@ -2762,6 +2762,51 @@ test("Republica Dominicana es un pais completo: RT-3, 80/20, y la nacionalidad n
   }
 });
 
+// ── HONDURAS, PAÍS COMPLETO (5 nov 2026) ─────────────────────────────────────
+//
+// Lo propio de Honduras: el mínimo es el promedio oficial del SAR (cada sector
+// tiene el suyo), el ingreso medio está POR DEBAJO del mínimo y se dice, y el
+// 90 % de la plantilla tiene que ser hondureña.
+test("Honduras es un pais completo: minimo promedio del SAR, el 90 % y el SENAEH", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-honduras-entrada.ts", salida = ".sello-honduras.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { servicioEmpleoDe } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const hn = m.PAISES.HN;
+    const fuente = leerFuente("lib/paises.ts");
+    const casos = [
+      ["minimo promedio SAR", hn?.salarioMinimo, 14917],
+      ["ingreso medio INE", hn?.salarioMedio, 10356],
+      ["se explica que el medio es menor", fuente.includes("Es MENOR que el mínimo"), true],
+      ["slug", hn?.slug, "honduras"],
+      ["paisPorNombre", m.paisPorNombre("Honduras"), "HN"],
+      ["Guzzi lo detecta", m.detectarPais("busco trabajo en Honduras")?.codigo, "hn"],
+      ["el 90 %", (m.requisitosDe("HN")?.siNoEresDeLaUE || []).some(t => /90 %/.test(t)), true],
+      ["IHSS", m.getPrimerosPasos("HN")?.papeleo.documentos.some(d => /IHSS/.test(d.nombre)), true],
+      ["Espana no", m.movilidadDe("ES", "HN").regimen, "visado_general"],
+      ["bolsa publica", m.servicioEmpleoDe("HN")?.nombre, "Servicio Nacional de Empleo de Honduras (SENAEH)"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

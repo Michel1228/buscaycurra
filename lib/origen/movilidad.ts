@@ -195,6 +195,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
     titulo: "Dirección General de Migración — República Dominicana",
     url: "https://migracion.gob.do/",
   },
+  HN: {
+    titulo: "Instituto Nacional de Migración — Honduras",
+    url: "https://inm.gob.hn/",
+  },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
     url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-finder",
