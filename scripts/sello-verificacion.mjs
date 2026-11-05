@@ -2199,12 +2199,18 @@ test("el barrido de Careerjet de Latinoamerica esta completo, en el crontab y si
   const worker = leerFuente("lib/job-search/sync-worker.ts");
   const tabla = worker.slice(worker.indexOf("export const CAREERJET_BARRIDO"), worker.indexOf("export async function barrerCareerjet"));
   const funcion = worker.slice(worker.indexOf("export async function barrerCareerjet"), worker.indexOf("/** Auto-detecta categoria"));
-  const enTabla = [...tabla.matchAll(/^  ([a-z]{2}): \{ locale: "es_([A-Z]{2})"/gm)];
+  const enTabla = [...tabla.matchAll(/^  ([a-z]{2}): \{ locale: "es_([A-Z]{2})", lugares: \[([^\]]*)\]/gm)];
+  // Cada búsqueda da como mucho ~1.000 distintas (repite pasada la página 10):
+  // hacen falta varias ciudades por país y no más de 10 páginas por lugar.
+  const pocasCiudades = enTabla.filter(m => (m[3].match(/"/g) || []).length / 2 < 6).map(m => m[1]);
+  if (pocasCiudades.length) console.log("      con menos de 6 lugares: " + pocasCiudades.join(", "));
   const enPlan = new Set(planBarridoCj.split(" ").map(e => e.split(":")[0]));
   const faltan = enTabla.map(m => m[1]).filter(p => !enPlan.has(p));
   if (faltan.length) console.log("      fuera del plan: " + faltan.join(", "));
   return enTabla.length >= 4
     && enTabla.every(m => m[1] === m[2].toLowerCase())
+    && pocasCiudades.length === 0
+    && /export const PAGINAS_POR_LUGAR = 10;/.test(worker)
     && faltan.length === 0
     && leerFuente("scripts/vps/crontab.txt").includes("/root/sync-careerjet-barrido.sh")
     && funcion.includes("source: `CAREERJET_${pais.toUpperCase()}`")
@@ -2236,6 +2242,59 @@ test('Mexico es un pais de la app y "Ciudad de Mexico" se busca como ciudad', as
     ];
     const mal = casos.filter(([dio, quiere]) => dio !== quiere);
     if (mal.length) console.log("      " + mal.map(([dio, quiere]) => `da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// ── COLOMBIA, PAÍS COMPLETO (5 nov 2026) ──────────────────────────────────────
+//
+// Lo mismo que se hizo con México y Brasil, con el código de verdad compilado:
+// país, requisitos, primeros pasos, CV, la vía Mercosur y andina (sin Chile ni
+// Venezuela), la zona horaria y las palabras de allí ("aseo", "bodega").
+test("Colombia es un pais completo: papeles, primeros pasos, CV, Mercosur y palabras de alli", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-colombia-entrada.ts", salida = ".sello-colombia.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { ESTILOS } from "./lib/cv/por-pais";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { expandirPuesto } from "./lib/job-search/sinonimos-puesto";',
+      'export { paisDeZona } from "./lib/origen/donde-estoy";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const co = m.PAISES.CO;
+    const pp = m.getPrimerosPasos("CO");
+    const cv = (m.ESTILOS || []).find(e => e.codigo === "CO");
+    const casos = [
+      ["salario minimo 2026", co?.salarioMinimo, 1750905],
+      ["slug", co?.slug, "colombia"],
+      ["paisPorNombre", m.paisPorNombre("Colombia"), "CO"],
+      ["Guzzi lo detecta", m.detectarPais("busco trabajo en Colombia")?.codigo, "co"],
+      ["requisitos", m.requisitosDe("CO")?.codigo, "CO"],
+      ["primeros pasos con cedula en 15 dias", pp?.papeleo.documentos.some(d => /cédula de extranjería/i.test(d.nombre) && /15 días/.test(d.tiempoObtener)), true],
+      ["CV se llama hoja de vida", cv?.nombreLocal, "Hoja de vida"],
+      ["Peru tiene via regional", m.movilidadDe("PE", "CO").regimen, "acuerdo_regional"],
+      ["Argentina tiene via Mercosur", m.movilidadDe("AR", "CO").regimen, "acuerdo_regional"],
+      ["Chile no (reciprocidad 2019)", m.movilidadDe("CL", "CO").regimen, "visado_general"],
+      ["Venezuela no", m.movilidadDe("VE", "CO").regimen, "visado_general"],
+      ["Espana no", m.movilidadDe("ES", "CO").regimen, "visado_general"],
+      ["zona horaria de Bogota", m.paisDeZona("America/Bogota"), "CO"],
+      ["limpieza encuentra aseo", m.expandirPuesto("limpieza").includes("auxiliar de aseo"), true],
+      ["mozo NO es camarero", m.expandirPuesto("camarero").includes("mozo"), false],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
     return mal.length === 0;
   } catch (e) {
     console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);

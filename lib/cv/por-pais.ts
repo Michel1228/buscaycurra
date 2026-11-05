@@ -29,6 +29,11 @@
  *   · Vagas.com, Zety Brasil y guías de carrera: en Brasil la foto no se
  *     espera, y CPF, RG y estado civil no van en el currículo. La Ley
  *     9.029/1995 castiga la discriminación al contratar.
+ * Colombia, comprobada el 2026-11-05:
+ *   · Allí se llama "hoja de vida". La foto es costumbre, no obligación; las
+ *     plantillas y los formatos oficiales (SIGEP, de Función Pública, para
+ *     empleo público) llevan tipo y número de documento. No hemos encontrado
+ *     una fuente fiable sobre qué datos NO poner, así que no se inventa.
  */
 
 export type UsoFoto = "se_espera" | "opcional" | "mejor_no";
@@ -256,6 +261,17 @@ export const ESTILOS: EstiloCV[] = [
       "Dirección completa: basta la ciudad y el estado",
     ],
     nota: "Allí la foto no se espera: ponla solo si la oferta la pide. Y si la oferta está en portugués, el currículo también.",
+  },
+  {
+    codigo: "CO",
+    pais: "Colombia",
+    bandera: "🇨🇴",
+    foto: "opcional",
+    nombreLocal: "Hoja de vida",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    siPonen: ["Tipo y número de documento: cédula, cédula de extranjería o pasaporte."],
+    nota: "La foto es costumbre pero no obligatoria, y las empresas con selección a ciegas la piden sin ella. Para empleos del Estado se usa el formato del SIGEP o de la convocatoria, no el tuyo.",
   },
 ];
 

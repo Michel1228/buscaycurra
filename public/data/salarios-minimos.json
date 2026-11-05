@@ -139,6 +139,12 @@
       "moneda": "BRL",
       "nota": "Salário mínimo nacional 2026 (Decreto 12.797/2025). Algunos estados fijan un piso regional más alto.",
       "fuente": "Fuente oficial nacional"
+    },
+    "CO": {
+      "salarioMinimo": 1750905,
+      "moneda": "COP",
+      "nota": "Salario mínimo 2026 (Decreto 1469 de 2025; el Decreto 159 de 2026 mantuvo la cifra). Hasta dos mínimos se suman 249.095 $ de auxilio de transporte.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

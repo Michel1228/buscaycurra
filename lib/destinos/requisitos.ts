@@ -480,6 +480,33 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y si alguien te cobra por sacarte el CPF, desconfía: en la Receita Federal y en los consulados es gratis.",
   },
+  // Colombia (5 nov 2026). Fuente: Resolución 5477 de 2022 de la Cancillería,
+  // leída en su texto compilado: art. 71 (visa M Migrante Mercosur), art. 72
+  // (M Migrante Andino), art. 74 (M Trabajador: el empleador acredita ingresos
+  // medios de 100 salarios mínimos en los últimos cuatro meses, y el permiso
+  // vale solo para ese cargo y esa empresa) y art. 118 (cédula de extranjería
+  // en 15 días). Chile NO va en la vía Mercosur: Colombia se la quitó en
+  // febrero de 2019 por reciprocidad (Asuntos Legales, 24 abr 2019) y no
+  // consta que se la haya devuelto. PPT de venezolanos: en mayo de 2026 solo
+  // admitía inscripciones de menores escolarizados (Migración Colombia).
+  {
+    codigo: "CO",
+    nombre: "Colombia",
+    bandera: "🇨🇴",
+    autoridad: { nombre: "Visas — Cancillería de Colombia", url: "https://www.cancilleria.gov.co/atencion-y-servicio-al-ciudadano/tramites-y-servicios/visa" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Colombia. Con pasaporte español puedes entrar sin visa como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "Si eres de Argentina, Brasil, Bolivia, Ecuador, Paraguay, Perú o Uruguay, puedes pedir la visa M Mercosur: dos años, sin necesitar oferta de trabajo, y con ella puedes trabajar en lo que quieras. Bolivia, Ecuador y Perú tienen además la visa M Migrante Andino.",
+      "Si no, hace falta una empresa que te contrate: pide la visa M Trabajador por ti y tiene que demostrar ingresos y explicar por qué contrata a alguien de fuera. Esa visa solo vale para ese puesto y esa empresa; si cambias de trabajo, hace falta otra.",
+      "Con la visa, tienes 15 días naturales desde que entras (o desde que te la dan, si ya estás en Colombia) para pedir la cédula de extranjería en Migración Colombia.",
+      "Si eres de Venezuela, el Permiso por Protección Temporal (PPT) ya no admite inscripciones nuevas de adultos: en mayo de 2026 solo estaba abierto para menores escolarizados. Pregunta en Migración Colombia qué vía tienes.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal, y la empresa que te contrata así se arriesga a multas. Y para alquilar, nadie puede pedirte un depósito en dinero: la ley lo prohíbe (Ley 820 de 2003).",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

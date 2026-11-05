@@ -47,6 +47,9 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   // En Brasil el trabajo temporal va por empresas de "trabalho temporário"
   // (Lei 6.019/1974); para buscar trabajo se dice "agência de empregos".
   BR: ["agência de empregos", "trabalho temporário"],
+  // En Colombia la ETT es la "empresa de servicios temporales" (EST, Ley 50 de
+  // 1990), y las agencias de colocación se anuncian como agencias de empleo.
+  CO: ["empresa de servicios temporales", "agencia de empleo"],
 };
 
 /**

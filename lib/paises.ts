@@ -560,6 +560,36 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["vendedor", "atendente", "motorista", "recepcionista", "cozinheiro"],
     slug: "brasil",
   },
+
+  // Colombia entra el 5 nov 2026, la primera de Latinoamérica por Careerjet
+  // (Adzuna no la cubre): barrido diario en scripts/vps/sync-careerjet-barrido.sh.
+  CO: {
+    codigo: "CO",
+    nombre: "Colombia",
+    nombreLocal: "Colombia",
+    moneda: "COP",
+    simboloMoneda: "$",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇨🇴",
+    // Salario mínimo 2026: 1.750.905 $ al mes (Decreto 1469 de 2025; suspendido
+    // en febrero, el Decreto 159 de 2026 mantuvo la misma cifra). Quien gana
+    // hasta dos mínimos cobra además 249.095 $ de auxilio de transporte.
+    salarioMinimo: 1750905,
+    // Ingreso laboral medio de los asalariados, enero-octubre de 2025: 2.158.174 $ (DANE).
+    salarioMedio: 2158174,
+    // El BCE no publica el peso colombiano: 1,1224 $ por euro (BCE) × 3.221,19
+    // pesos por dólar (TRM del Banco de la República), 5 nov 2026.
+    tasaCambioEUR: 3615,
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    ciudades: ["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Bucaramanga", "Pereira"],
+    // Las cinco con más ofertas en Careerjet Colombia el 5 nov 2026: asesor
+    // comercial 11.911, operario 5.792, call center 5.245, aseo 5.138 y
+    // conductor 4.099. "Bachiller" daba más (26.152), pero es un requisito.
+    keywordsLaborales: ["asesor comercial", "operario", "call center", "aseo", "conductor"],
+    slug: "colombia",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -592,6 +622,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.RO,  // Rumanía — 1.100 EUR/mes
   PAISES.MX,  // México — 20.490 MXN/mes (~975 €)
   PAISES.BR,  // Brasil — 3.722 BRL/mes (~604 €)
+  PAISES.CO,  // Colombia — 2.158.174 COP/mes (~597 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

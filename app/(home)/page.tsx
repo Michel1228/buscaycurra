@@ -82,6 +82,7 @@ export default async function LandingPage() {
     GR: { flag: "🇬🇷", nombre: "Grecia" },
     MX: { flag: "🇲🇽", nombre: "México" },
     BR: { flag: "🇧🇷", nombre: "Brasil" },
+    CO: { flag: "🇨🇴", nombre: "Colombia" },
   };
 
   const PAISES_DATA = stats

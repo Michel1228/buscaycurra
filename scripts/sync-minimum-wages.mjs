@@ -46,6 +46,7 @@ const FUENTES_ALTERNATIVAS = {
   NZ: { salarioMinimo: 4019,  moneda: "NZD", nota: "Minimum Wage: $23.15/h × 40h (Apr 2025)" },
   MX: { salarioMinimo: 9582,  moneda: "MXN", nota: "Zona general: $315,04/día × 30,4 (CONASAMI, ene 2026). Frontera norte: $440,87/día." },
   BR: { salarioMinimo: 1621,  moneda: "BRL", nota: "Salário mínimo nacional 2026 (Decreto 12.797/2025). Algunos estados fijan un piso regional más alto." },
+  CO: { salarioMinimo: 1750905, moneda: "COP", nota: "Salario mínimo 2026 (Decreto 1469 de 2025; el Decreto 159 de 2026 mantuvo la cifra). Hasta dos mínimos se suman 249.095 $ de auxilio de transporte." },
 };
 
 // ─── Mapeo código Eurostat → código BuscayCurra ───────────────────────────────

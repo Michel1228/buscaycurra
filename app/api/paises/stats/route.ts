@@ -37,6 +37,7 @@ const PAISES_MAP: Record<string, { flag: string; nombre: string }> = {
   CZ: { flag: "🇨🇿", nombre: "República Checa" },
   IN: { flag: "🇮🇳", nombre: "India" },
   BR: { flag: "🇧🇷", nombre: "Brasil" },
+  CO: { flag: "🇨🇴", nombre: "Colombia" },
   MX: { flag: "🇲🇽", nombre: "México" },
   SG: { flag: "🇸🇬", nombre: "Singapur" },
   JP: { flag: "🇯🇵", nombre: "Japón" },

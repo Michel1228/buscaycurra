@@ -21,6 +21,12 @@
  * Lo de Brasil va en portugués de allí ("garçom", "encanador", "faxineira"),
  * que tampoco es el de Portugal. Las palabras salen de los títulos reales de
  * 600 ofertas de cada país mirados el 5 nov 2026.
+ *
+ * COLOMBIA Y CHILE (5 nov 2026, 800 títulos de Careerjet de cada país): la
+ * limpieza es "aseo", el almacén "bodega", el camarero chileno "garzón" y el
+ * repartidor "mensajero". Solo entran palabras que en España no signifiquen
+ * otra cosa: "mozo" (camarero en Perú y Argentina) es aquí el mozo de almacén,
+ * y "domiciliario" (repartidor en Colombia) sale en "enfermero domiciliario".
  */
 
 /** Puesto en español -> cómo se dice en las ofertas de otros países. */
@@ -30,7 +36,7 @@ const SINONIMOS: Record<string, string[]> = {
              "empregado de mesa", "ober", "servitor", "bartender", "barista", "barman",
              "wait staff", "food service", "runner", "bar staff",
              "servitør", "servitör", "tarjoilija",
-             "mesero", "mesera", "garçom", "garçonete"],
+             "mesero", "mesera", "garçom", "garçonete", "garzón", "garzona"],
   // OJO: "chef" a secas NO vale. En francés "chef de projet" o "chef de
   // produit" son jefes de proyecto, no cocineros: en París había 2.263 así.
   cocinero: ["cook", "cuisinier", "koch", "cuoco", "cozinheiro", "kok", "kokk",
@@ -47,7 +53,8 @@ const SINONIMOS: Record<string, string[]> = {
   limpieza: ["cleaner", "cleaning", "nettoyage", "agent d'entretien", "reinigung",
              "reinigungskraft", "pulizia", "limpeza", "schoonmaak", "housekeeping",
              "housekeeper", "femme de ménage", "room attendant",
-             "intendencia", "auxiliar de limpieza", "faxineira", "faxineiro", "auxiliar de limpeza", "diarista"],
+             "intendencia", "auxiliar de limpieza", "faxineira", "faxineiro", "auxiliar de limpeza", "diarista",
+             "auxiliar de aseo", "operario de aseo"],
   camarera_piso: ["room attendant", "housekeeping", "femme de chambre",
                   "zimmermädchen", "cameriera ai piani",
              "recamarista", "camareira"],
@@ -93,10 +100,11 @@ const SINONIMOS: Record<string, string[]> = {
               "sjåfør", "chaufför", "chauffør", "kuljettaja",
              "chofer", "chófer", "motorista de caminhão"],
   repartidor: ["delivery", "courier", "livreur", "zusteller", "corriere", "rider",
-             "entregador", "motoboy"],
+             "entregador", "motoboy", "mensajero", "mensajera"],
   almacen: ["warehouse", "warehouse operative", "magasinier", "lagerarbeiter",
             "magazziniere", "picker", "packer", "forklift",
-             "almacenista", "auxiliar de almacén", "estoquista", "almoxarife", "auxiliar de almoxarifado", "conferente"],
+             "almacenista", "auxiliar de almacén", "estoquista", "almoxarife", "auxiliar de almoxarifado", "conferente",
+             "auxiliar de bodega"],
 
   // ── Comercio y oficina ──────────────────────────────────────────────
   dependiente: ["shop assistant", "retail assistant", "sales assistant", "vendeur",

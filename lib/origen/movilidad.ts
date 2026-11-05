@@ -94,6 +94,15 @@ const ACUERDO_AUSTRALIA = new Set([
  */
 const ACUERDO_MERCOSUR = new Set(["AR", "BO", "CL", "CO", "EC", "PY", "PE", "UY"]);
 
+/**
+ * Colombia (Resolución 5477 de 2022): visa M Migrante Mercosur (art. 71, dos
+ * años y permiso abierto de trabajo) y M Migrante Andino (art. 72, Estatuto
+ * Migratorio Andino: Bolivia, Ecuador y Perú). Chile no está en la de
+ * Mercosur: Colombia se la quitó en 2019 por reciprocidad. Venezuela tampoco.
+ */
+const MERCOSUR_EN_COLOMBIA = new Set(["AR", "BR", "BO", "EC", "PY", "PE", "UY"]);
+const ANDINOS_EN_COLOMBIA = new Set(["BO", "EC", "PE"]);
+
 const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   MX: {
     titulo: "Instituto Nacional de Migración — Gobierno de México",
@@ -102,6 +111,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   BR: {
     titulo: "Imigração — Polícia Federal de Brasil",
     url: "https://www.gov.br/pf/pt-br/assuntos/imigracao",
+  },
+  CO: {
+    titulo: "Visas — Cancillería de Colombia",
+    url: "https://www.cancilleria.gov.co/atencion-y-servicio-al-ciudadano/tramites-y-servicios/visa",
   },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
@@ -181,6 +194,17 @@ export function movilidadDe(origen: string | null | undefined, destino: string):
       explicacion:
         "Con tu nacionalidad puedes pedir en Brasil una residencia temporal de dos años sin tener oferta de trabajo (Acuerdo de Residencia del Mercosur), y con ella trabajar. Al llegar, regístrate en la Polícia Federal.",
       enlaceOficial: OFICIAL_POR_DESTINO.BR,
+    };
+  }
+
+  // Colombia: visa M Mercosur o M Migrante Andino, sin oferta de trabajo.
+  if (d === "CO" && (MERCOSUR_EN_COLOMBIA.has(o) || ANDINOS_EN_COLOMBIA.has(o))) {
+    return {
+      regimen: "acuerdo_regional",
+      titulo: ANDINOS_EN_COLOMBIA.has(o) ? "Tienes la vía andina y la del Mercosur" : "Tienes la vía del Mercosur",
+      explicacion:
+        "Con tu nacionalidad puedes pedir en Colombia una visa M de dos años sin tener oferta de trabajo, y con ella trabajar. Al llegar, tienes 15 días para sacar la cédula de extranjería en Migración Colombia.",
+      enlaceOficial: OFICIAL_POR_DESTINO.CO,
     };
   }
 

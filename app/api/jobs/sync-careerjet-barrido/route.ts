@@ -1,13 +1,15 @@
 /**
  * /api/jobs/sync-careerjet-barrido
  *
- * Trae el catálogo de Careerjet de un país latinoamericano paginando por
- * fecha, sin palabras clave ni ciudades. Es el equivalente del barrido de
- * Adzuna para los países que Adzuna no cubre (Colombia, Perú, Chile y
- * Argentina el 5 nov 2026). La lista y el porqué están en
- * CAREERJET_BARRIDO (lib/job-search/sync-worker.ts).
+ * Trae de Careerjet las ofertas más nuevas de un lugar (el país o una de sus
+ * ciudades grandes) de un país latinoamericano, sin palabras clave. Es el
+ * equivalente del barrido de Adzuna para los países que Adzuna no cubre
+ * (Colombia, Perú, Chile y Argentina el 5 nov 2026). La lista de lugares y
+ * por qué se pregunta ciudad por ciudad están en CAREERJET_BARRIDO
+ * (lib/job-search/sync-worker.ts).
  *
- * Lo llama scripts/vps/sync-careerjet-barrido.sh desde el crontab del VPS.
+ * Un lugar por llamada (10 páginas, ~30 s): todos juntos no cabrían en los
+ * 300 s de maxDuration. Lo recorre scripts/vps/sync-careerjet-barrido.sh.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { barrerCareerjet, CAREERJET_BARRIDO } from "@/lib/job-search/sync-worker";
@@ -26,17 +28,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  let body: { country?: string; paginas?: number; desde?: number } = {};
+  let body: { country?: string; lugar?: number } = {};
   try { body = await req.json(); } catch { /* valores por defecto */ }
 
   const country = (body.country || "").toLowerCase();
   if (!CAREERJET_BARRIDO[country]) {
     return NextResponse.json({ error: `País no soportado: ${country}` }, { status: 400 });
   }
-  // Tope de 40 páginas por llamada: cada una son 99 ofertas y ~1-2 s de API
-  // más el guardado; 40 caben con holgura en los 300 s de maxDuration.
-  const paginas = Math.min(Math.max(body.paginas ?? 20, 1), 40);
-  const desde = Math.max(body.desde ?? 1, 1);
+  const lugar = Math.max(0, Math.floor(body.lugar ?? 0));
 
-  return NextResponse.json(await barrerCareerjet(country, paginas, desde));
+  return NextResponse.json(await barrerCareerjet(country, lugar));
 }

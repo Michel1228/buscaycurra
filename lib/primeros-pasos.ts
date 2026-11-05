@@ -1069,6 +1069,47 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── COLOMBIA (5 nov 2026) ────────────────────────────────────────────────
+  // Fuentes: Resolución 5477 de 2022 de la Cancillería (art. 74, visa M
+  // Trabajador; art. 118, cédula en 15 días), Ley 820 de 2003 (arts. 15 y 16:
+  // prohibido el depósito en dinero; solo uno para servicios públicos) según
+  // el concepto de la Secretaría del Hábitat de Bogotá de 2026, y Ciencuadras
+  // (primer trimestre de 2026) para el precio por m² en Bogotá.
+  CO: {
+    codigo: "CO",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Colombia no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Fincaraíz", url: "https://www.fincaraiz.com.co", descripcion: "El portal de arriendos más conocido de Colombia: apartamentos, casas y habitaciones." },
+        { nombre: "Metrocuadrado", url: "https://www.metrocuadrado.com", descripcion: "Arriendos de inmobiliarias y particulares en las ciudades grandes." },
+        { nombre: "Ciencuadras", url: "https://www.ciencuadras.com", descripcion: "Otro de los grandes portales de arriendo, con filtros por estrato." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com.co/s/Colombia/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo. Más caro, pero sin codeudor." },
+      ],
+      consejo: "Para arrendar suelen pedir un codeudor (alguien con ingresos o propiedad en Colombia que responda por ti) o una póliza de arrendamiento de una aseguradora. Lo que no te pueden pedir es un depósito en dinero: la Ley 820 de 2003 lo prohíbe, salvo uno para los servicios públicos. Sin historial en Colombia, lo práctico es empezar por una habitación. El precio de abajo es la media de los apartamentos de Bogotá en el primer trimestre de 2026 según Ciencuadras: uno de 79 m² salía por unos 3,76 millones al mes.",
+      preciosMedios: [
+        { ciudad: "Bogotá (apartamentos)", rango: "47.821", moneda: "$ por m² al mes" },
+      ],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Desde España o el resto de la UE hace falta una empresa colombiana que pida por ti la visa M Trabajador, que vale solo para ese puesto. Si eres de Argentina, Brasil, Bolivia, Ecuador, Paraguay, Perú o Uruguay, tienes la visa M Mercosur: dos años sin oferta de trabajo.",
+      enlaceOficial: "https://www.cancilleria.gov.co/atencion-y-servicio-al-ciudadano/tramites-y-servicios/visa",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Visa", descripcion: "Se pide en línea a la Cancillería y llega como visa electrónica al correo. Con ella entras y trabajas.", tiempoObtener: "La envían en los 10 días hábiles siguientes al pago", obligatorio: true, enlaceOficial: "https://www.cancilleria.gov.co/atencion-y-servicio-al-ciudadano/tramites-y-servicios/visa" },
+        { nombre: "Cédula de extranjería", descripcion: "Tu documento de identidad en Colombia: la piden para el contrato, el banco y la salud. Se tramita en Migración Colombia.", tiempoObtener: "Hay que pedirla en los 15 días naturales desde que entras", obligatorio: true, enlaceOficial: "https://www.migracioncolombia.gov.co" },
+        { nombre: "Afiliación a salud, pensión y riesgos laborales", descripcion: "Con contrato, la empresa te afilia a una EPS (salud), a un fondo de pensiones y a una ARL. La EPS y el fondo los eliges tú.", tiempoObtener: "Al firmar el contrato", obligatorio: true },
+        { nombre: "Cuenta bancaria", descripcion: "Para cobrar la nómina. Los bancos suelen pedir la cédula de extranjería; algunas empresas abren ellas la cuenta.", tiempoObtener: "Depende del banco", obligatorio: false },
+      ],
+      consejo: "El orden: visa (en línea, antes de viajar) → al entrar, cédula de extranjería en Migración Colombia (15 días) → contrato y afiliaciones → cuenta bancaria.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {
