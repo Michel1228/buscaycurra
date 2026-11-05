@@ -260,6 +260,47 @@ const CIUDADES: Record<string, [string, string[]]> = {
   "sao luis": ["BR", ["sao luis", "são luís", "sao luís"]],
   "joao pessoa": ["BR", ["joao pessoa", "joão pessoa"]],
   vitoria: ["BR", ["vitoria", "vitória"]],
+
+  // ── El resto de Latinoamérica (5 nov 2026) ──────────────────────────
+  // De estos países todavía no tenemos ofertas, pero hay que saber de dónde
+  // es la ciudad: "camarera en Lima" se buscaba en España y devolvía ofertas
+  // de toda España. Ahora se sabe que es Perú, y se dice lo que hay allí.
+  lima: ["PE", ["lima"]],
+  arequipa: ["PE", ["arequipa"]],
+  cusco: ["PE", ["cusco", "cuzco"]],
+  cuzco: ["PE", ["cusco", "cuzco"]],
+  chiclayo: ["PE", ["chiclayo"]],
+  piura: ["PE", ["piura"]],
+  bogota: ["CO", ["bogota", "bogotá"]],
+  medellin: ["CO", ["medellin", "medellín"]],
+  cali: ["CO", ["cali"]],
+  barranquilla: ["CO", ["barranquilla"]],
+  bucaramanga: ["CO", ["bucaramanga"]],
+  "buenos aires": ["AR", ["buenos aires"]],
+  rosario: ["AR", ["rosario"]],
+  mendoza: ["AR", ["mendoza"]],
+  "la plata": ["AR", ["la plata"]],
+  "mar del plata": ["AR", ["mar del plata"]],
+  valparaiso: ["CL", ["valparaiso", "valparaíso"]],
+  "vina del mar": ["CL", ["vina del mar", "viña del mar"]],
+  antofagasta: ["CL", ["antofagasta"]],
+  caracas: ["VE", ["caracas"]],
+  maracaibo: ["VE", ["maracaibo"]],
+  barquisimeto: ["VE", ["barquisimeto"]],
+  quito: ["EC", ["quito"]],
+  guayaquil: ["EC", ["guayaquil"]],
+  montevideo: ["UY", ["montevideo"]],
+  asuncion: ["PY", ["asuncion", "asunción"]],
+  cochabamba: ["BO", ["cochabamba"]],
+  "santo domingo": ["DO", ["santo domingo"]],
+  "ciudad de guatemala": ["GT", ["ciudad de guatemala"]],
+  tegucigalpa: ["HN", ["tegucigalpa"]],
+  "san pedro sula": ["HN", ["san pedro sula"]],
+  "san salvador": ["SV", ["san salvador"]],
+  managua: ["NI", ["managua"]],
+  "la habana": ["CU", ["la habana", "habana"]],
+  habana: ["CU", ["la habana", "habana"]],
+  "ciudad de panama": ["PA", ["ciudad de panama", "ciudad de panamá"]],
 };
 
 /**
@@ -290,6 +331,9 @@ const HOMONIMAS: Record<string, string[]> = {
   trujillo: ["PE", "ES", "VE"],
   vitoria: ["ES", "BR"],
   "santa cruz": ["BO", "ES"],
+  cuenca: ["ES", "EC"],
+  "la paz": ["BO", "MX"],
+  "san jose": ["US", "CR"],
   london: ["UK", "CA"],
   londres: ["UK", "CA"],
   perth: ["AU", "UK"],
@@ -312,7 +356,7 @@ export function paisDeCiudad(ciudad: string, paisActual?: string): string | null
   if (!c) return null;
 
   // "Mérida, Yucatán" o "Vitoria-Gasteiz": vale con la primera palabra.
-  const primeraHom = c.split(/[s,-]+/)[0];
+  const primeraHom = c.split(/[\s,\-]+/)[0];
   const varios = HOMONIMAS[c] ?? (primeraHom.length >= 5 ? HOMONIMAS[primeraHom] : undefined);
   if (varios) {
     const actual = (paisActual || "").trim().toUpperCase();

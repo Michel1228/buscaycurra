@@ -23,7 +23,9 @@ import { pideSiguientePaso, respuestaSiguientePaso, cvConContenido, pistaDeCurso
 import { extraerCorreo, empresaDelCorreo, empresaDelTexto, puestoDelTexto, textoPropuesta, propuestaCorreoPendiente, respuestaAPropuesta, type PropuestaCorreo } from "@/lib/guzzi/envio-correo";
 import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { aliasCiudad } from "@/lib/guzzi/ciudades-pais";
-import { LISTA_PAISES } from "@/lib/paises";
+import { LISTA_PAISES, PAISES } from "@/lib/paises";
+import { nacionalidadDe } from "@/lib/origen/nacionalidades";
+import { servicioEmpleoDe } from "@/lib/cursos/plataformas";
 import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import { callGroq, callOpenAI } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
@@ -136,8 +138,11 @@ function parseCVData(raw: string): CVParsed | null {
 
 // `temas`: el conocimiento que toca para esta conversación (ver lib/guzzi/prompts.ts).
 function buildSystemPrompt(cvData?: string, pais?: string, auPairData?: Record<string, unknown> | null, temas = ""): string {
+  // `pais`: dónde está la persona (lo manda el chat, lib/origen/donde-estoy.ts).
   const paisInfo = pais && pais !== "ES"
-    ? `\nEl usuario está buscando trabajo en ${pais}. Adapta tus consejos al mercado laboral de ese país (salarios, requisitos, idioma).\n`
+    ? `\nLa persona está en ${nombreDePais(pais)}. Si no dice otro país, adapta tus consejos al mercado laboral de allí (salarios, requisitos, idioma).`
+      + (esPaisNuestro(pais) ? "" : " De ese país todavía no tenemos ofertas en BuscayCurra: no inventes ninguna. Ofrécele buscar empresas de su ciudad para mandarles el CV, o mirar en los países donde sí hay.")
+      + "\n"
     : "";
 
   // Construir contexto Au Pair si existe
@@ -370,7 +375,7 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
     // Lo que se encontro con la palabra española pero fuera de su ciudad. Se
     // usa solo si el respaldo por sinonimos tampoco encuentra nada mejor.
     let respaldoDelPais: ReturnType<typeof mapRowToJob>[] | null = null;
-    const countryFilter = `%${countryName}%`;
+    const countryFilter = countryMap[isoCode] ? `%${countryName}%` : countryName;
     const N = Math.min(limit * 2, 30);
 
     // ── Consolidated query: strategies 1→2→2.5a→2.5b→3 in ONE query ──
@@ -764,6 +769,27 @@ async function cuentasDeLasOfertas(
   }
 }
 
+/** "GB" (Escocia, Gales...) es el mismo país que "UK" en la app. */
+function esPaisNuestro(codigo: string): boolean {
+  return !!PAISES[codigo === "GB" ? "UK" : codigo];
+}
+
+function nombreDePais(codigo: string): string {
+  return PAISES[codigo]?.nombre ?? nacionalidadDe(codigo)?.nombre ?? codigo;
+}
+
+/**
+ * Para quien busca en un país donde todavía no tenemos ofertas (Perú,
+ * Colombia...): se le dice claro y se le da lo que sí tiene allí, la bolsa
+ * pública de empleo de su país. Vacío si el país es de los nuestros.
+ */
+function avisoPaisSinOfertas(codigo: string): string {
+  if (esPaisNuestro(codigo)) return "";
+  const servicio = servicioEmpleoDe(codigo);
+  return `\n\n🌎 De **${nombreDePais(codigo)}** todavía no tenemos ofertas en BuscayCurra; las estamos preparando.`
+    + (servicio ? ` Mientras, la bolsa pública de empleo de allí es gratis: [${servicio.nombre}](${servicio.url}).` : "");
+}
+
 function fallbackMessage(puesto: string, ciudad: string): string {
   const syn = Object.entries(SINONIMOS_PUESTO).find(([k, v]) =>
     puesto.toLowerCase().includes(k) || v.some(s => puesto.toLowerCase().includes(s))
@@ -1011,7 +1037,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       message, history = [], mode = "chat",
-      cvData: cvDataFromClient, empresa, puesto, userId: bodyUserId, pais,
+      cvData: cvDataFromClient, empresa, puesto, userId: bodyUserId, pais: paisDelChat,
     } = body as {
       message: string;
       history?: Array<{ role: string; text: string }>;
@@ -1022,6 +1048,10 @@ export async function POST(req: NextRequest) {
       userId?: string;
       pais?: string;
     };
+    // Dónde está la persona. Solo se acepta un código de dos letras: va al
+    // prompt y a la búsqueda.
+    const pais = typeof paisDelChat === "string" && /^[A-Za-z]{2}$/.test(paisDelChat)
+      ? paisDelChat.toUpperCase() : undefined;
 
     // ⚠️ Ignorar userId del body, usar el autenticado
     const userId = authUserId;
@@ -1879,10 +1909,16 @@ ${cartaIA}
             } catch { /* sin Google Places, solo mensaje normal */ }
           }
 
+          // De Perú, Colombia... aún no hay ofertas: el consejo de siempre
+          // ("amplía a la provincia", "activa alertas") no sirve allí. Se dice
+          // claro y se da la bolsa pública de empleo de su país.
           return NextResponse.json({
             reply: (puestoDelCV
               ? `Basándome en tu CV (último puesto: **${cvParsed!.ultimoPuesto}**), ` : "") +
-              (googleReply || fallbackMessage(puestoBusqueda, ciudadBusqueda)),
+              (googleReply || (esPaisNuestro(paisBusqueda)
+                ? fallbackMessage(puestoBusqueda, ciudadBusqueda)
+                : `🔍 De **${puestoBusqueda}**${ciudadBusqueda ? ` en **${ciudadBusqueda}**` : ""} no tengo ofertas.`)) +
+              avisoPaisSinOfertas(paisBusqueda),
             action: googleReply ? "search_results" : "no_results",
           });
         }

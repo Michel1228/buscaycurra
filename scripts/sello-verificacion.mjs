@@ -2281,6 +2281,18 @@ test("Latinoamerica: Guadalajara, filtros en varios idiomas, donde estas y Brasi
       ["primeros pasos de México", !!m.getPrimerosPasos("MX"), true],
       ["primeros pasos de Brasil", !!m.getPrimerosPasos("BR"), true],
       ["CV de Brasil", m.estiloDe("BR")?.foto, "mejor_no"],
+      // El resto de Latinoamérica: se sabe de qué país es la ciudad...
+      ["Salamanca de Guanajuato desde México", m.paisDeCiudad("Salamanca, Guanajuato", "MX"), "MX"],
+      ["Lima es Perú, aunque busques desde España", m.paisDeCiudad("Lima", "ES"), "PE"],
+      ["Bogotá es Colombia", m.paisDeCiudad("Bogotá"), "CO"],
+      ["Cuenca desde Ecuador", m.paisDeCiudad("Cuenca", "EC"), "EC"],
+      ["Cuenca desde España", m.paisDeCiudad("Cuenca", "ES"), "ES"],
+      // ...y a quien está allí se le da lo que tiene allí.
+      ["bolsa de empleo de Perú", m.servicioEmpleoDe("PE")?.nombre, "Empleos Perú"],
+      ["bolsa de empleo de Colombia", !!m.servicioEmpleoDe("CO"), true],
+      ["Venezuela, sin inventar una bolsa", m.servicioEmpleoDe("VE"), undefined],
+      ["cursos gratis de Chile", m.plataformasPorPais("CL").some(p => p.id === "sence-cursos-en-linea"), true],
+      ["los de Chile no salen en Perú", m.plataformasPorPais("PE").some(p => p.id === "sence-cursos-en-linea"), false],
     ];
     const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
     if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
@@ -2298,6 +2310,17 @@ test("los filtros del buscador van por lib/job-search/filtros.ts, no por palabra
   const ruta = leerFuente("app/api/jobs/search/route.ts");
   return ruta.includes('regexFiltro("remoto")') && ruta.includes('regexFiltro("parcial")')
     && ruta.includes('regexFiltro("inclusiva")') && !ruta.includes('"%remoto%"') && !ruta.includes('"%parcial%"');
+});
+
+// Guzzi sabe en qué país está la persona. Antes el chat no lo mandaba y
+// buscaba siempre en España: "camarera en Lima" devolvía ofertas españolas.
+test("Guzzi recibe el pais de la persona y no busca en Espana a quien esta fuera", () => {
+  const chat = leerFuente("components/GusiChat.tsx");
+  const ruta = leerFuente("app/api/gusi/chat/route.ts");
+  return chat.includes("pais: dondeEstoy()")
+    && ruta.includes("avisoPaisSinOfertas(paisBusqueda)")
+    && ruta.includes("countryMap[isoCode] ?")
+    && /\[A-Za-z\]\{2\}\$/.test(ruta);
 });
 
 // El buscador ya no empieza siempre en España, y los cursos son del país de cada uno.

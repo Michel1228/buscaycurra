@@ -19,6 +19,7 @@ import GuzziAvatar from "@/components/GuzziAvatar";
 import ChatSendPanel from "@/components/ChatSendPanel";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
+import { dondeEstoy } from "@/lib/origen/donde-estoy";
 import { Zap, Compass, Sparkles, Mic, Plane, Home, Image, Upload, Pin, Mail, Inbox, ChartColumn, Gem, Paperclip, Camera, type LucideIcon, ChevronDown, ChevronUp } from "lucide-react";
 
 // Mapa de palabras clave → id de país en /app/emigrar
@@ -343,6 +344,8 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
           history: nuevosMensajes.slice(-12).map((m) => ({ ...m, foto: undefined })),
           mode: modoEntrevista ? "entrevista" : "chat",
           userId: userId || undefined,
+          // Dónde está la persona: sin esto Guzzi buscaba siempre en España.
+          pais: dondeEstoy() || undefined,
         }),
       });
 

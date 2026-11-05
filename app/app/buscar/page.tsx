@@ -7,6 +7,7 @@ import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
 import InfoTooltip from "@/components/InfoTooltip";
 import CountrySelector from "@/components/CountrySelector";
 import { paisDeCiudad } from "@/lib/guzzi/ciudades-pais";
+import { servicioEmpleoDe } from "@/lib/cursos/plataformas";
 import { PAISES, paisPorNombre, NUM_PAISES } from "@/lib/paises";
 import { dondeEstoy, guardarDondeEstoy } from "@/lib/origen/donde-estoy";
 import { NACIONALIDADES, nacionalidadDe } from "@/lib/origen/nacionalidades";
@@ -19,7 +20,7 @@ import { TrendingUp, Send, Building2, Info, AlertTriangle, MapPin } from "lucide
 
 /** El nombre del pais tal y como lo lee la gente: "Francia", no "FR". */
 function nombrePais(codigo: string): string {
-  const p = PAISES[codigo];
+  const p = PAISES[codigo] ?? nacionalidadDe(codigo);
   return p ? `${p.bandera} ${p.nombre}` : codigo;
 }
 
@@ -87,6 +88,8 @@ function BuscarPageInner() {
   const [fuenteResultados, setFuenteResultados] = useState<string>("");
   // Explica en pantalla por que ha cambiado el pais de la busqueda.
   const [avisoPais, setAvisoPais] = useState("");
+  // La bolsa pública de empleo que acompaña al aviso, cuando la hay.
+  const [enlaceAviso, setEnlaceAviso] = useState<{ nombre: string; url: string } | null>(null);
   // Los filtros llevaban "hidden md:block" desde siempre: en el telefono no
   // habia manera de llegar a ellos. En movil se abren con un boton; en
   // escritorio siguen desplegados, como estaban.
@@ -351,6 +354,7 @@ function BuscarPageInner() {
     // país, se cambia sola y se dice. Nunca se bloquea la búsqueda por esto.
     let paisParaBuscar = valores?.pais ?? paisSeleccionado;
     setAvisoPais("");
+    setEnlaceAviso(null);
     // Un país entero en "¿Dónde?": la bandera pasa a ese país (la API busca en todo él).
     const paisEscrito = paisPorNombre(finalUbicacion);
     if (paisEscrito) {
@@ -358,6 +362,19 @@ function BuscarPageInner() {
       if (paisEscrito !== paisParaBuscar) cambiarPais(paisEscrito);
     } else if (finalUbicacion) {
       const paisDeLaCiudad = paisDeCiudad(finalUbicacion, paisParaBuscar);
+      // Lima, Bogotá, Caracas: sabemos de qué país es, pero de allí todavía no
+      // hay ofertas. Antes se buscaba con la bandera de antes y salían ofertas
+      // de toda España. Se dice claro y se da la bolsa pública de allí.
+      if (paisDeLaCiudad && !PAISES[paisDeLaCiudad]) {
+        const servicio = servicioEmpleoDe(paisDeLaCiudad);
+        setAvisoPais(
+          `${finalUbicacion.charAt(0).toUpperCase() + finalUbicacion.slice(1)} está en ${nombrePais(paisDeLaCiudad)}, y de allí todavía no tenemos ofertas.`
+          + (servicio ? " Mientras, la bolsa pública de empleo de allí es gratis:" : "")
+        );
+        setEnlaceAviso(servicio ? { nombre: servicio.nombre, url: servicio.url } : null);
+        setOfertas([]);
+        return;
+      }
       if (paisDeLaCiudad && paisDeLaCiudad !== paisParaBuscar) {
         paisParaBuscar = paisDeLaCiudad;
         cambiarPais(paisDeLaCiudad);
@@ -491,6 +508,7 @@ function BuscarPageInner() {
   const enMiPais = !!residencia && paisSeleccionado === residencia
     && (!ubicacion.trim() || paisPorNombre(ubicacion) === residencia);
   const fichaResidencia = nacionalidadDe(residencia);
+  const servicioResidencia = residencia && !PAISES[residencia] ? servicioEmpleoDe(residencia) : undefined;
   const nombreResidencia = residencia
     ? `${PAISES[residencia]?.bandera ?? fichaResidencia?.bandera ?? ""} ${PAISES[residencia]?.nombre ?? fichaResidencia?.nombre ?? residencia}`.trim()
     : "";
@@ -604,6 +622,8 @@ function BuscarPageInner() {
             <p className="mt-2 text-xs px-3 py-2 rounded-lg" style={{ background: "#161922", border: "1px solid #2d3142", color: "#94a3b8" }}>
               Todavía no tenemos ofertas de {nombreResidencia}. Las estamos preparando; mientras, puedes
               buscar en los {NUM_PAISES} países donde sí hay: elige uno arriba.
+              {servicioResidencia && <> Y allí tienes gratis la bolsa pública de empleo:{" "}
+                <a href={servicioResidencia.url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#22c55e" }}>{servicioResidencia.nombre}</a>.</>}
             </p>
           )}
 
@@ -611,7 +631,10 @@ function BuscarPageInner() {
             <div className="mt-2 px-3 py-2 rounded-lg text-xs flex items-start gap-2"
               style={{ background: "#161922", border: "1px solid #2d3142", color: "#94a3b8" }}>
               <Info size={14} strokeWidth={2} className="shrink-0 mt-0.5" />
-              <span>{avisoPais}</span>
+              <span>
+                {avisoPais}
+                {enlaceAviso && <> <a href={enlaceAviso.url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#22c55e" }}>{enlaceAviso.nombre}</a></>}
+              </span>
             </div>
           )}
         </div>

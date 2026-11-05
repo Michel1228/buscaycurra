@@ -152,6 +152,58 @@ export const PLATAFORMAS: PlataformaFormacion[] = [
     ],
     actualizado: "2026-11",
   },
+  // Comprobados el 5 nov 2026 en sus webs y en prensa del país (fuentes abajo).
+  {
+    id: "sence-cursos-en-linea",
+    nombre: "SENCE — cursos en línea",
+    resumen:
+      "Capacitación gratuita del Servicio Nacional de Capacitación y Empleo de Chile, en áreas con mucha demanda de trabajo.",
+    url: "https://sence.gob.cl/personas/cursos-en-linea",
+    alcance: { tipo: "paises", codigos: ["CL"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "informática", "atención al cliente", "logística", "administración"],
+    certificado: "no_consta",
+    requisitos: "Mayores de 18 años.",
+    aviso: "Además de los cursos en línea hay cursos presenciales por programa; se buscan en el buscador de cursos del SENCE.",
+    fuentes: [
+      { titulo: "SENCE — Servicio Nacional de Capacitación y Empleo", url: "https://sence.gob.cl/" },
+    ],
+    actualizado: "2026-11",
+  },
+  {
+    id: "ina-costa-rica",
+    nombre: "INA — Instituto Nacional de Aprendizaje",
+    resumen:
+      "La formación técnica pública de Costa Rica: cursos gratuitos, presenciales y virtuales, pensados para lo que piden las empresas.",
+    url: "https://www.ina.ac.cr/BusquedaCursos",
+    alcance: { tipo: "paises", codigos: ["CR"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "técnico", "informática", "turismo", "inglés", "agricultura", "salud ocupacional"],
+    certificado: "no_consta",
+    aviso: "Algunos programas, como el de inglés con Open English, piden ser costarricense o residente con DIMEX.",
+    fuentes: [
+      { titulo: "Explore los 280 cursos gratuitos que el INA ofrece en línea — La Nación", url: "https://www.nacion.com/el-pais/educacion/explore-280-cursos-gratuitos-que-el-ina-ofrece-en/IKQPLSCZBZEOXP7IA7XTRPXI3I/story/" },
+      { titulo: "INA abre 7.000 cupos para cursos gratuitos sobre ciberseguridad — El Observador", url: "https://observador.cr/ina-abre-7-000-cupos-para-cursos-gratuitos-sobre-ciberseguridad/" },
+    ],
+    actualizado: "2026-11",
+  },
+  {
+    id: "snpp-paraguay",
+    nombre: "SNPP — Servicio Nacional de Promoción Profesional",
+    resumen:
+      "Cientos de cursos de oficios gratuitos cada mes en todo Paraguay, presenciales y a distancia, con certificado.",
+    url: "https://www.snpp.edu.py/",
+    alcance: { tipo: "paises", codigos: ["PY"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "costura", "electricidad", "gastronomía", "informática", "emprendimiento"],
+    certificado: "si",
+    requisitos: "Inscripción en línea con la cuenta del sistema Identidad del Ministerio de Trabajo.",
+    fuentes: [
+      { titulo: "SNPP habilita más de 500 cursos formativos gratuitos y con certificación — Última Hora", url: "https://www.ultimahora.com/snpp-habilita-mas-de-500-cursos-formativos-gratuitos-y-con-certificacion" },
+      { titulo: "SNPP — Servicio Nacional de Promoción Profesional", url: "https://www.snpp.edu.py/" },
+    ],
+    actualizado: "2026-11",
+  },
   {
     id: "santander-open-academy",
     nombre: "Santander Open Academy",
@@ -548,6 +600,69 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     url: "https://empregabrasil.mte.gov.br/",
     queHacer:
       "Las ofertas de las agencias del SINE, el servicio público de empleo, con la cuenta gov.br. Las mismas salen en la app Carteira de Trabalho Digital, en «vagas de emprego».",
+    actualizado: "2026-11",
+  },
+  // El resto de Latinoamérica (5 nov 2026). Se le enseñan a quien está allí,
+  // porque de esos países todavía no tenemos ofertas. Venezuela no está: no
+  // hemos encontrado una bolsa de empleo oficial que se pueda comprobar.
+  // Fuentes: Andina y dplnews (Perú); Publimetro y Noticias RCN (Colombia);
+  // Los Andes y BAE Negocios (Argentina); ChileAtiende (Chile); instructivo
+  // del Ministerio del Trabajo (Ecuador); gub.uy (Uruguay); MTSS y Delfino
+  // (Costa Rica).
+  {
+    pais: "PE",
+    nombre: "Empleos Perú",
+    url: "https://www.empleosperu.gob.pe/",
+    queHacer:
+      "La bolsa de trabajo gratuita del Ministerio de Trabajo: te registras con tu DNI, haces tu CV y te postulas. El ministerio nunca contacta por WhatsApp ni Telegram.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "CO",
+    nombre: "Servicio Público de Empleo",
+    url: "https://www.serviciodeempleo.gov.co/",
+    queHacer:
+      "Junta en un buscador las vacantes de toda la red pública y autorizada (cajas de compensación, alcaldías, el SENA). Registras tu hoja de vida y te postulas gratis.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "AR",
+    nombre: "Portal Empleo",
+    url: "https://www.portalempleo.gob.ar/",
+    queHacer:
+      "De la Secretaría de Trabajo: subes tu CV, buscas ofertas y te postulas en línea, gratis. También da acceso a cursos.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "CL",
+    nombre: "Bolsa Nacional de Empleo",
+    url: "https://www.bne.cl/",
+    queHacer:
+      "La bolsa gratuita del Ministerio del Trabajo. Para registrarte hace falta tener 18 años y cédula chilena vigente; también se hace en ChileAtiende o en la OMIL de tu municipio.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "EC",
+    nombre: "Encuentra Empleo",
+    url: "https://encuentraempleo.trabajo.gob.ec/",
+    queHacer:
+      "La plataforma del Ministerio del Trabajo, con vacantes públicas y privadas: te registras con tu cédula, completas tu hoja de vida y te postulas.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "UY",
+    nombre: "Vía Trabajo",
+    url: "https://viatrabajo.mtss.gub.uy/",
+    queHacer:
+      "Del Ministerio de Trabajo, gratis: completas tu «Mi Perfil Laboral» y te postulas a ofertas. También en los Centros Públicos de Empleo de cada departamento.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "CR",
+    nombre: "Agencia Nacional de Empleo",
+    url: "https://www.ane.cr/",
+    queHacer:
+      "Del Ministerio de Trabajo y el INA, gratis: creas tu perfil, lo activas y ves las vacantes al momento.",
     actualizado: "2026-11",
   },
 ];
