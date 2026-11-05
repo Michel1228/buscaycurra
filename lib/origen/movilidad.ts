@@ -111,6 +111,13 @@ const ANDINOS_EN_COLOMBIA = new Set(["BO", "EC", "PE"]);
 const MERCOSUR_EN_PERU = new Set(["AR", "BR", "PY", "UY", "CL", "CO", "EC", "BO"]);
 const ANDINOS_EN_PERU = new Set(["BO", "CO", "EC"]);
 
+/**
+ * Chile: residencia temporal por reciprocidad del Mercosur (Ley 21.325, art.
+ * 70 n.º 13), solo para Argentina, Bolivia, Brasil, Paraguay y Uruguay según
+ * el Servicio Nacional de Migraciones. Perú y Colombia no están.
+ */
+const MERCOSUR_EN_CHILE = new Set(["AR", "BO", "BR", "PY", "UY"]);
+
 const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   MX: {
     titulo: "Instituto Nacional de Migración — Gobierno de México",
@@ -127,6 +134,10 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   PE: {
     titulo: "Superintendencia Nacional de Migraciones — Perú",
     url: "https://www.gob.pe/migraciones",
+  },
+  CL: {
+    titulo: "Servicio Nacional de Migraciones — Chile",
+    url: "https://serviciomigraciones.cl/",
   },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
@@ -228,6 +239,17 @@ export function movilidadDe(origen: string | null | undefined, destino: string):
       explicacion:
         "Con tu nacionalidad puedes pedir en Migraciones una residencia temporal de dos años sin tener oferta de trabajo, y con ella trabajar. Te dan el carné de extranjería.",
       enlaceOficial: OFICIAL_POR_DESTINO.PE,
+    };
+  }
+
+  // Chile: residencia por reciprocidad del Mercosur.
+  if (d === "CL" && MERCOSUR_EN_CHILE.has(o)) {
+    return {
+      regimen: "acuerdo_regional",
+      titulo: "Tienes la vía del Mercosur",
+      explicacion:
+        "Con tu nacionalidad puedes pedir en Chile la residencia temporal por reciprocidad del Mercosur, y con ella trabajar. Con la residencia en vigor, tienes 30 días para sacar la cédula en el Registro Civil.",
+      enlaceOficial: OFICIAL_POR_DESTINO.CL,
     };
   }
 

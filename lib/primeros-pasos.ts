@@ -1150,6 +1150,45 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── CHILE (5 nov 2026) ───────────────────────────────────────────────────
+  // Fuentes: Ley 21.325 (residencia temporal desde el extranjero), Servicio
+  // Nacional de Migraciones, ChileAtiende (cédula en 30 días, se retira en unos
+  // 20 días hábiles). Alquiler: lo que piden los anuncios y las guías (aval, un
+  // mes de garantía, ingresos de unas tres veces el arriendo); sin media
+  // oficial de precios, no se inventa.
+  CL: {
+    codigo: "CL",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Chile no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Portal Inmobiliario", url: "https://www.portalinmobiliario.com", descripcion: "El portal de arriendos más grande de Chile." },
+        { nombre: "TocToc", url: "https://www.toctoc.com", descripcion: "Arriendos de inmobiliarias y particulares en las ciudades grandes." },
+        { nombre: "Yapo", url: "https://www.yapo.cl", descripcion: "Anuncios de particulares, también de piezas (habitaciones)." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.cl/s/Chile/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo. Más caro, pero sin aval." },
+      ],
+      consejo: "Para arrendar suelen pedir un aval (alguien con RUT que responda por ti), un mes de garantía y demostrar ingresos de unas tres veces el arriendo. Sin historial en Chile, lo práctico es empezar por una pieza o un alquiler mensual.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Desde España o el resto de la UE, la residencia temporal para trabajar se pide desde fuera de Chile en el portal del Servicio Nacional de Migraciones, normalmente con una oferta o un contrato. Con nacionalidad de Argentina, Bolivia, Brasil, Paraguay o Uruguay hay residencia por el Mercosur.",
+      enlaceOficial: "https://serviciomigraciones.cl/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Residencia temporal", descripcion: "El permiso para vivir y trabajar en Chile. Se pide en línea al Servicio Nacional de Migraciones antes de viajar.", tiempoObtener: "Antes de entrar a Chile", obligatorio: true, enlaceOficial: "https://serviciomigraciones.cl/" },
+        { nombre: "Cédula de identidad para extranjeros (RUN)", descripcion: "Te la da el Registro Civil y con ella tienes tu RUN, el número para el contrato, el banco y la salud.", tiempoObtener: "Hay que pedirla en los 30 días desde que rige la residencia; se retira en unos 20 días hábiles", obligatorio: true, enlaceOficial: "https://www.chileatiende.gob.cl/fichas/3337-cedula-de-identidad-para-extranjeros" },
+        { nombre: "AFP y salud", descripcion: "Con contrato, la empresa descuenta y paga tu AFP (pensión) y tu salud, en Fonasa o en una Isapre.", tiempoObtener: "Al firmar el contrato", obligatorio: true },
+        { nombre: "Cuenta bancaria", descripcion: "Para cobrar el sueldo. Con el RUN puedes abrir una cuenta en BancoEstado o en un banco digital.", tiempoObtener: "Depende del banco", obligatorio: false },
+      ],
+      consejo: "El orden: residencia temporal (antes de viajar) → al llegar, cédula en el Registro Civil (30 días) → contrato, AFP y salud → cuenta bancaria.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

@@ -53,6 +53,8 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   // En Perú las ETT son "empresas de servicios temporales" (Ley 27626, de
   // intermediación laboral).
   PE: ["empresa de servicios temporales", "agencia de empleo"],
+  // En Chile la ETT es la "empresa de servicios transitorios" (EST, Ley 20.123).
+  CL: ["empresa de servicios transitorios", "agencia de empleo"],
 };
 
 /**

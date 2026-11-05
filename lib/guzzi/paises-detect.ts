@@ -32,6 +32,7 @@ const ALIAS: Record<string, string[]> = {
   BR: ["brasil", "brazil"],
   CO: ["colombia"],
   PE: ["peru"],
+  CL: ["chile"],
   CH: ["suiza", "switzerland", "schweiz"],
   BE: ["belgica", "belgium"],
   AT: ["austria"],
@@ -53,7 +54,14 @@ function normalizar(s: string): string {
 // México" se leía como "camarero en todo México". Se quitan antes de buscar el
 // país, y así se buscan como el sitio que son. Nuevo México es un estado de
 // Estados Unidos.
-const NO_SON_EL_PAIS = ["ciudad de mexico", "estado de mexico", "nuevo mexico"];
+//
+// Y desde que Chile lo es (5 nov 2026), el chile que se come: en México hay
+// empacadoras de chile, y "empacador de chile jalapeño" no es buscar en Chile.
+const NO_SON_EL_PAIS = [
+  "ciudad de mexico", "estado de mexico", "nuevo mexico",
+  "chile jalapeno", "chile habanero", "chile poblano", "chile serrano", "chile verde",
+  "chile seco", "chile en nogada", "chile de arbol", "chile ancho", "chile guajillo",
+];
 
 export interface PaisDetectado {
   codigo: string;   // ISO en minúsculas, como está en la base de datos ("ie")

@@ -39,6 +39,10 @@
  *     exigir el certificado de antecedentes penales (basta declaración jurada)
  *     ni el reporte crediticio. Ley 26772: las ofertas no pueden pedir
  *     requisitos discriminatorios («buena presencia», según la PUCP).
+ * Chile, comprobada el 2026-11-05:
+ *   · Dirección del Trabajo (dt.gob.cl, art. 95023): pedir en una oferta la
+ *     fotografía, la «buena presencia» o antecedentes penales o comerciales
+ *     ajenos al cargo es discriminatorio (art. 2 del Código del Trabajo).
  */
 
 export type UsoFoto = "se_espera" | "opcional" | "mejor_no";
@@ -290,6 +294,19 @@ export const ESTILOS: EstiloCV[] = [
       "Tu reporte de deudas: no pueden exigírtelo ni descartarte por no darlo (Ley 31944)",
     ],
     nota: "En Perú las ofertas no pueden pedir requisitos que discriminen, como «buena presencia» (Ley 26772). Para empleos del Estado se presenta el «CV documentado» con el formato de la convocatoria.",
+  },
+  {
+    codigo: "CL",
+    pais: "Chile",
+    bandera: "🇨🇱",
+    foto: "opcional",
+    nombreLocal: "Currículum (CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [
+      "Certificado de antecedentes: una oferta no puede exigirlo si no tiene que ver con el puesto (Dirección del Trabajo)",
+    ],
+    siPonen: ["Tu RUN, cuando ya tienes cédula chilena."],
+    nota: "Una oferta no puede pedirte foto ni «buena presencia»: la Dirección del Trabajo lo considera discriminación (art. 2 del Código del Trabajo). Ponla solo si quieres.",
   },
 ];
 

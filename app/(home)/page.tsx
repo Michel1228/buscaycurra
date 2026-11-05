@@ -84,6 +84,7 @@ export default async function LandingPage() {
     BR: { flag: "🇧🇷", nombre: "Brasil" },
     CO: { flag: "🇨🇴", nombre: "Colombia" },
     PE: { flag: "🇵🇪", nombre: "Perú" },
+    CL: { flag: "🇨🇱", nombre: "Chile" },
   };
 
   const PAISES_DATA = stats

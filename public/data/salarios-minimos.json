@@ -151,6 +151,12 @@
       "moneda": "PEN",
       "nota": "Remuneración mínima vital desde el 1 oct 2026 (Decreto Supremo 015-2026-TR). Subirá a S/ 1.300 en el primer semestre de 2027.",
       "fuente": "Fuente oficial nacional"
+    },
+    "CL": {
+      "salarioMinimo": 553553,
+      "moneda": "CLP",
+      "nota": "Ingreso mínimo mensual de 18 a 65 años desde el 1 may 2026 (Ley 21.830). Para menores de 18 y mayores de 65 es más bajo.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

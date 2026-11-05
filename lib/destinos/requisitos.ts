@@ -533,6 +533,31 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y en una selección no pueden exigirte el certificado de antecedentes penales (basta una declaración jurada) ni tu reporte de deudas (Ley 31944).",
   },
+  // Chile (5 nov 2026). Fuentes: Ley 21.325 y el dictamen de 2022 (la
+  // residencia temporal se pide desde el extranjero, salvo casos concretos);
+  // Servicio Nacional de Migraciones, subcategoría de reciprocidad
+  // internacional (art. 70 n.º 13: Argentina, Bolivia, Brasil, Paraguay y
+  // Uruguay; a Bolivia no le cobran); ChileAtiende (cédula para extranjeros
+  // en el Registro Civil, 30 días desde que rige la residencia) y la
+  // Dirección del Trabajo (pedir foto, «buena presencia» o antecedentes en una
+  // oferta es discriminatorio, art. 2 del Código del Trabajo).
+  {
+    codigo: "CL",
+    nombre: "Chile",
+    bandera: "🇨🇱",
+    autoridad: { nombre: "Servicio Nacional de Migraciones", url: "https://serviciomigraciones.cl/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Chile. Con pasaporte español entras sin visa como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "Si eres de Argentina, Bolivia, Brasil, Paraguay o Uruguay, puedes pedir la residencia temporal por reciprocidad del Mercosur, y con ella trabajar. A quien es de Bolivia no le cobran el trámite.",
+      "Si no, la residencia temporal para trabajar se pide desde fuera de Chile, en el portal del Servicio Nacional de Migraciones, normalmente con una oferta o un contrato. Entrar como turista y cambiarla dentro casi nunca es posible.",
+      "Con la residencia en vigor, tienes 30 días para pedir la cédula de identidad para extranjeros en el Registro Civil. Si te pasas, hay multa.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y una oferta no puede pedirte foto, «buena presencia» ni antecedentes que no tengan que ver con el puesto: la Dirección del Trabajo lo considera discriminación.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

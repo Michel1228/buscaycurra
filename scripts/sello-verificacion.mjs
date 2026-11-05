@@ -2356,6 +2356,56 @@ test("Peru es un pais completo: papeles, Mercosur con Chile, Ley 31944 y Capacit
   }
 });
 
+// ── CHILE, PAÍS COMPLETO (5 nov 2026) ────────────────────────────────────────
+//
+// Lo propio de Chile: la residencia se pide desde fuera, el Mercosur allí es
+// solo para cinco países (ni Perú ni Colombia), la cédula va en 30 días, y el
+// chile que se come no es el país.
+test("Chile es un pais completo: Mercosur de cinco, cedula en 30 dias y el chile que se come", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-chile-entrada.ts", salida = ".sello-chile.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { ESTILOS } from "./lib/cv/por-pais";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { plataformasPorPais, servicioEmpleoDe } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const cl = m.PAISES.CL;
+    const cv = (m.ESTILOS || []).find(e => e.codigo === "CL");
+    const casos = [
+      ["ingreso minimo mayo 2026", cl?.salarioMinimo, 553553],
+      ["slug", cl?.slug, "chile"],
+      ["paisPorNombre", m.paisPorNombre("Chile"), "CL"],
+      ["Guzzi lo detecta", m.detectarPais("busco trabajo en Chile")?.codigo, "cl"],
+      ["el chile jalapeno no es Chile", m.detectarPais("empacador de chile jalapeño en Sinaloa")?.codigo ?? null, null],
+      ["requisitos", m.requisitosDe("CL")?.codigo, "CL"],
+      ["cedula en 30 dias", m.getPrimerosPasos("CL")?.papeleo.documentos.some(d => /cédula/i.test(d.nombre) && /30 días/.test(d.tiempoObtener)), true],
+      ["CV: antecedentes", (cv?.noPongas || []).some(t => /antecedentes/.test(t)), true],
+      ["Argentina via Mercosur", m.movilidadDe("AR", "CL").regimen, "acuerdo_regional"],
+      ["Peru NO", m.movilidadDe("PE", "CL").regimen, "visado_general"],
+      ["Colombia NO", m.movilidadDe("CO", "CL").regimen, "visado_general"],
+      ["Espana no", m.movilidadDe("ES", "CL").regimen, "visado_general"],
+      ["SENCE en Chile", m.plataformasPorPais("CL").some(p => p.id === "sence-cursos-en-linea"), true],
+      ["bolsa publica", m.servicioEmpleoDe("CL")?.nombre, "Bolsa Nacional de Empleo"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

@@ -619,6 +619,35 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["limpieza", "asesor de ventas", "call center", "operario", "practicante"],
     slug: "peru",
   },
+
+  // Chile entra el 5 nov 2026, por el mismo barrido de Careerjet.
+  CL: {
+    codigo: "CL",
+    nombre: "Chile",
+    nombreLocal: "Chile",
+    moneda: "CLP",
+    simboloMoneda: "$",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇨🇱",
+    // Ingreso mínimo mensual de 18 a 65 años: 553.553 $ desde el 1 may 2026
+    // (Ley 21.830, publicada el 22 jun 2026 con efecto desde mayo).
+    salarioMinimo: 553553,
+    // Ingreso laboral medio de los ocupados en 2025, neto: 962.945 $ (INE,
+    // Encuesta Suplementaria de Ingresos, publicada el 14 jul 2026).
+    salarioMedio: 962945,
+    // El BCE no publica el peso chileno: 1,1267 $ por euro (BCE) × 980,59 pesos
+    // por dólar (dólar observado del Banco Central de Chile), 4 nov 2026.
+    tasaCambioEUR: 1105,
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    ciudades: ["Santiago", "Valparaíso", "Concepción", "Antofagasta", "Viña del Mar", "Temuco", "La Serena"],
+    // De las que más ofertas tienen en Careerjet Chile el 5 nov 2026: operario
+    // 13.765, vendedor 7.073, administrativo 5.415, guardia de seguridad 3.166
+    // y auxiliar de aseo 2.505.
+    keywordsLaborales: ["operario", "vendedor", "administrativo", "guardia de seguridad", "auxiliar de aseo"],
+    slug: "chile",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -653,6 +682,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.BR,  // Brasil — 3.722 BRL/mes (~604 €)
   PAISES.CO,  // Colombia — 2.158.174 COP/mes (~597 €)
   PAISES.PE,  // Perú — 1.887 PEN/mes (~485 €)
+  PAISES.CL,  // Chile — 962.945 CLP/mes (~871 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */
