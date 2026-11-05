@@ -854,6 +854,36 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["atención al cliente", "ejecutivo de ventas", "bodega", "vendedor", "asistente administrativo"],
     slug: "panama",
   },
+
+  // República Dominicana entra el 5 nov 2026, por el barrido de Careerjet.
+  DO: {
+    codigo: "DO",
+    nombre: "República Dominicana",
+    nombreLocal: "República Dominicana",
+    moneda: "DOP",
+    simboloMoneda: "RD$",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇩🇴",
+    // Salario mínimo del sector privado no sectorizado en grandes empresas:
+    // RD$29.988 al mes desde el 1 feb 2026 (Resolución CNS-01-2025 del Comité
+    // Nacional de Salarios). Medianas, RD$27.489,60; pequeñas y micro, menos.
+    salarioMinimo: 29988,
+    // Salario medio cotizable en la Seguridad Social, abril de 2026:
+    // RD$39.565,63 (Tesorería de la Seguridad Social, según elDinero).
+    salarioMedio: 39566,
+    // El BCE no publica el peso dominicano: 1,1267 $ por euro (BCE) × 61,0459
+    // pesos por dólar (tasa de referencia de venta del Banco Central), 4 nov 2026.
+    tasaCambioEUR: 68.78,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Santo Domingo", "Santiago de los Caballeros", "Punta Cana", "La Romana", "San Pedro de Macorís"],
+    // Las que más ofertas tienen en Careerjet República Dominicana el 5 nov
+    // 2026: servicio al cliente 143, almacén 99, chofer 39, vendedor 30 y call
+    // center 23.
+    keywordsLaborales: ["servicio al cliente", "almacén", "chofer", "vendedor", "call center"],
+    slug: "republica-dominicana",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -896,6 +926,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.UY,  // Uruguay — 56.920 UYU/mes (~1.261 €)
   PAISES.SV,  // El Salvador — 437 USD/mes (~388 €)
   PAISES.PA,  // Panamá — 756 PAB/mes, mediana (~671 €)
+  PAISES.DO,  // República Dominicana — 39.566 DOP/mes (~575 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */

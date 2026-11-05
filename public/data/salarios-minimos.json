@@ -199,6 +199,12 @@
       "moneda": "PAB",
       "nota": "En Panamá el mínimo va por hora, actividad y región (Decreto Ejecutivo 13 de 2025, desde el 16 ene 2026). Comercio en gran empresa, región 1: B/.3,02 la hora; unos B/.628 al mes con 48 horas semanales.",
       "fuente": "Fuente oficial nacional"
+    },
+    "DO": {
+      "salarioMinimo": 29988,
+      "moneda": "DOP",
+      "nota": "Salario mínimo del sector privado no sectorizado en grandes empresas desde el 1 feb 2026 (Resolución CNS-01-2025). Medianas, RD$27.489,60; pequeñas y micro, menos.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

@@ -2719,6 +2719,49 @@ test("Panama es un pais completo: Paises Amigos mas permiso de trabajo, minimo p
   }
 });
 
+// ── REPÚBLICA DOMINICANA, PAÍS COMPLETO (5 nov 2026) ─────────────────────────
+//
+// Lo propio: contrato registrado y RT-3, el 80/20 del Código de Trabajo, y que
+// "dominicana" o "argentina" como nacionalidad no se lean como el país.
+test("Republica Dominicana es un pais completo: RT-3, 80/20, y la nacionalidad no es el pais", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-dominicana-entrada.ts", salida = ".sello-dominicana.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, paisPorNombre, SLUG_A_CODIGO } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { servicioEmpleoDe } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const dom = m.PAISES.DO;
+    const casos = [
+      ["minimo gran empresa", dom?.salarioMinimo, 29988],
+      ["slug con guion", m.SLUG_A_CODIGO?.["republica-dominicana"], "DO"],
+      ["paisPorNombre", m.paisPorNombre("República Dominicana"), "DO"],
+      ["Guzzi lo detecta", m.detectarPais("trabajo en República Dominicana")?.codigo, "do"],
+      ["soy dominicana no es el pais", m.detectarPais("soy dominicana y busco trabajo en Madrid") ?? null, null],
+      ["soy argentina no es el pais", m.detectarPais("soy argentina y busco trabajo de camarera en Bilbao") ?? null, null],
+      ["Argentina sigue siendo el pais", m.detectarPais("quiero ofertas en Argentina")?.codigo, "ar"],
+      ["80/20", (m.requisitosDe("DO")?.siNoEresDeLaUE || []).some(t => /80 %/.test(t)), true],
+      ["RT-3", m.getPrimerosPasos("DO")?.papeleo.documentos.some(d => /RT-3/.test(d.nombre)), true],
+      ["bolsa publica", m.servicioEmpleoDe("DO")?.nombre, "Servicio Nacional de Empleo (Ministerio de Trabajo)"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

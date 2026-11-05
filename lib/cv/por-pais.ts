@@ -379,6 +379,16 @@ export const ESTILOS: EstiloCV[] = [
     noPongas: [],
     nota: "No hemos encontrado una norma panameña sobre qué no poner. Muchas ofertas piden inglés: si lo hablas, pon tu nivel real arriba.",
   },
+  {
+    codigo: "DO",
+    pais: "República Dominicana",
+    bandera: "🇩🇴",
+    foto: "opcional",
+    nombreLocal: "Currículum (CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    nota: "No hemos encontrado una norma dominicana sobre qué no poner. En turismo y call center piden mucho inglés: si lo hablas, pon tu nivel real arriba.",
+  },
 ];
 
 /**

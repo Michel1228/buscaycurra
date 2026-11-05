@@ -1444,6 +1444,40 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── REPÚBLICA DOMINICANA (5 nov 2026) ────────────────────────────────────
+  // Fuentes: Dirección General de Migración (RT-3), Diario Libre (Resolución
+  // 001-2026), Código de Trabajo (80/20). Sin una fuente fiable sobre
+  // alquileres, no se afirma nada.
+  DO: {
+    codigo: "DO",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "República Dominicana no tiene una visa de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Dominican-Republic/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en República Dominicana, lo práctico es empezar por un alquiler mensual o una habitación. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Hace falta una empresa que te contrate, con el contrato registrado en el Ministerio de Trabajo, y entrar con visa de negocios para pedir la Residencia Temporal Laboral (RT-3) en la Dirección General de Migración.",
+      enlaceOficial: "https://migracion.gob.do/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Contrato registrado en el Ministerio de Trabajo", descripcion: "Sin contrato formal registrado no se concede ni se renueva el permiso (Resolución 001-2026).", tiempoObtener: "Antes de pedir la residencia", obligatorio: true },
+        { nombre: "Residencia Temporal Laboral (RT-3)", descripcion: "La da la Dirección General de Migración. Se pide con la visa de negocios (NM1) con la que entras.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://migracion.gob.do/" },
+        { nombre: "Cédula de identidad de extranjero", descripcion: "Tu documento como residente; te la dan con la residencia.", tiempoObtener: "Tras la residencia", obligatorio: true },
+        { nombre: "Alta en la Tesorería de la Seguridad Social", descripcion: "Con contrato, la empresa te inscribe en la TSS: salud, pensión y riesgos laborales.", tiempoObtener: "Al empezar a trabajar", obligatorio: true },
+      ],
+      consejo: "El orden: contrato registrado → visa de negocios → Residencia Temporal Laboral (RT-3) → cédula de extranjero → TSS.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

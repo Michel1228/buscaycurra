@@ -721,6 +721,29 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y el Ministerio de Trabajo ha avisado de portales de empleo falsos que se hacen pasar por el suyo: el oficial es empleospanama.gob.pa.",
   },
+  // República Dominicana (5 nov 2026). Fuentes: Dirección General de
+  // Migración (Residencia Temporal Laboral RT-3, con visa de negocios NM1;
+  // permiso de trabajo temporal), Diario Libre (Resolución 001-2026: el
+  // permiso se renueva solo con contrato formal registrado en el Ministerio de
+  // Trabajo, y no vale para trabajos informales como motoconcho o delivery) y
+  // el Código de Trabajo (el 80 % de la plantilla tiene que ser dominicana).
+  {
+    codigo: "DO",
+    nombre: "República Dominicana",
+    bandera: "🇩🇴",
+    autoridad: { nombre: "Dirección General de Migración", url: "https://migracion.gob.do/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en República Dominicana. Con pasaporte español entras como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "Hace falta una empresa que te contrate, con el contrato registrado en el Ministerio de Trabajo: con él se pide la Residencia Temporal Laboral (RT-3) en la Dirección General de Migración, que exige entrar con visa de negocios.",
+      "Por ley, el 80 % de la plantilla de una empresa tiene que ser dominicana, así que cada empresa tiene un cupo para extranjeros.",
+      "El permiso de trabajo no vale para trabajos informales como motoconcho, taxi, venta ambulante, delivery o mensajería.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y desde 2026 el permiso solo se renueva con un contrato formal registrado: una declaración jurada ya no sirve.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

@@ -712,6 +712,14 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     actualizado: "2026-11",
   },
   {
+    pais: "DO",
+    nombre: "Servicio Nacional de Empleo (Ministerio de Trabajo)",
+    url: "https://mt.gob.do/",
+    queHacer:
+      "Del Ministerio de Trabajo, gratis: bolsa de empleo «RD Trabaja», ferias y jornadas de empleo por todo el país. En 2025 registró 17.368 vacantes.",
+    actualizado: "2026-11",
+  },
+  {
     pais: "PA",
     nombre: "Empleos Panamá (MITRADEL)",
     url: "https://www.empleospanama.gob.pa/",

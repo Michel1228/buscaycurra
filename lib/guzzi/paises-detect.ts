@@ -40,6 +40,7 @@ const ALIAS: Record<string, string[]> = {
   UY: ["uruguay"],
   SV: ["el salvador"],
   PA: ["panama"],
+  DO: ["republica dominicana", "dominican republic"],
   CH: ["suiza", "switzerland", "schweiz"],
   BE: ["belgica", "belgium"],
   AT: ["austria"],
@@ -68,6 +69,10 @@ const NO_SON_EL_PAIS = [
   "ciudad de mexico", "estado de mexico", "nuevo mexico", "ciudad de guatemala", "ciudad de panama",
   "chile jalapeno", "chile habanero", "chile poblano", "chile serrano", "chile verde",
   "chile seco", "chile en nogada", "chile de arbol", "chile ancho", "chile guajillo",
+  // "Argentina" y "dominicana" son también la nacionalidad: "soy argentina y
+  // busco trabajo en Madrid" no es buscar en Argentina. Lo normal es que el
+  // modelo entienda el lugar; esto vale para cuando se lee el mensaje entero.
+  "soy argentina", "nacionalidad argentina", "soy dominicana", "nacionalidad dominicana",
 ];
 
 export interface PaisDetectado {
