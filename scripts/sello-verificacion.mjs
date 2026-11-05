@@ -2321,6 +2321,7 @@ test("todo un pais con un filtro para en 1.000 y la pantalla dice 'mas de'", () 
   const buscar = leerFuente("app/app/buscar/page.tsx");
   const tramo = ruta.slice(ruta.indexOf("const paisConFiltro"), ruta.indexOf("let dbResult"));
   return tramo.includes("!keyword && !cityParts")
+    && tramo.includes(`BEGIN READ ONLY`) && tramo.includes(`SET LOCAL work_mem = '64MB'`)
     && /WITH cand AS MATERIALIZED \(\s*SELECT id, "scrapedAt" FROM "JobListing" WHERE \$\{whereClause\} LIMIT \$\{TOPE \+ 1\}/.test(tramo)
     && tramo.includes("LEFT(j.description, 300)")
     && tramo.includes('"database-pais-filtro-tope"')

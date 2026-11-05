@@ -417,34 +417,52 @@ export async function GET(request: NextRequest) {
     // el total es exacto (Brasil + discapacidad, 862); si hay más, el total es
     // "más de 1.000". Se barajan igual que siempre y solo se lee el texto de
     // las de la página. Es la misma idea que "todo el país" sin filtro, arriba.
+    //
+    // Con eso, medido en la web con el servidor tranquilo: EE. UU. parcial
+    // 4,8 s, Reino Unido parcial 6,2 s, Alemania remoto 13,9 s. Francia parcial
+    // seguía cortándose: tiene pocas y hay que recorrerlas todas, y con los
+    // 4 MB de work_mem de la base la lista de candidatas se vuelve "por
+    // páginas" y hay que releer cada página entera. Con 64 MB, solo en esta
+    // consulta, la lista es exacta; para una tabla de 4,5 GB no pasa de ~40 MB.
     const paisConFiltro = !!country && !keyword && !cityParts && !categoria && !salarioMin && !salarioMax
       && (jornada === "parcial" || jornada === "remoto" || inclusiva || experiencia === "sin-experiencia")
       && (!experiencia || experiencia === "sin-experiencia");
     if (paisConFiltro) {
       const TOPE = 1000;
-      const r = await pool.query(
-        `WITH cand AS MATERIALIZED (
-           SELECT id, "scrapedAt" FROM "JobListing" WHERE ${whereClause} LIMIT ${TOPE + 1}
-         )
-         SELECT j.id, j.title, j.company, j.city, j.province, j.salary, LEFT(j.description, 300) AS description,
-                j."sourceUrl" AS sourceurl, j."sourceName" AS sourcename, j."scrapedAt" AS scrapedat,
-                j."contactEmail" AS contactemail, j."contactEmailConfianza" AS contactemailconfianza, j.country,
-                (SELECT count(*) FROM cand) AS total_encontrado
-           FROM cand c JOIN "JobListing" j ON j.id = c.id
-          ORDER BY
-            CASE WHEN c."scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
-                 WHEN c."scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
-                 ELSE 2 END,
-            md5(c.id::text || to_char(NOW(), 'YYYYDDD'))
-          LIMIT $${idx} OFFSET $${idx + 1}`,
-        params
-      );
-      const encontradas = parseInt(String(r.rows[0]?.total_encontrado || "0"), 10);
-      const masDe = encontradas > TOPE;
-      const total = masDe ? TOPE : encontradas;
-      const ofertasPais = deduplicar(r.rows).map(j => rowToOferta(j, location, userSkills));
-      comprobarEnSegundoPlano(ofertasPais.map(o => String(o.id)));
-      return NextResponse.json({ ofertas: ofertasPais, total, masDe, page, hasMore: offset + r.rows.length < total, keyword, location, source: masDe ? "database-pais-filtro-tope" : "database-pais-filtro" });
+      const cliente = await pool.connect();
+      try {
+        await cliente.query("BEGIN READ ONLY");
+        await cliente.query("SET LOCAL work_mem = '64MB'");
+        const r = await cliente.query(
+          `WITH cand AS MATERIALIZED (
+             SELECT id, "scrapedAt" FROM "JobListing" WHERE ${whereClause} LIMIT ${TOPE + 1}
+           )
+           SELECT j.id, j.title, j.company, j.city, j.province, j.salary, LEFT(j.description, 300) AS description,
+                  j."sourceUrl" AS sourceurl, j."sourceName" AS sourcename, j."scrapedAt" AS scrapedat,
+                  j."contactEmail" AS contactemail, j."contactEmailConfianza" AS contactemailconfianza, j.country,
+                  (SELECT count(*) FROM cand) AS total_encontrado
+             FROM cand c JOIN "JobListing" j ON j.id = c.id
+            ORDER BY
+              CASE WHEN c."scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
+                   WHEN c."scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
+                   ELSE 2 END,
+              md5(c.id::text || to_char(NOW(), 'YYYYDDD'))
+            LIMIT $${idx} OFFSET $${idx + 1}`,
+          params
+        );
+        await cliente.query("COMMIT");
+        const encontradas = parseInt(String(r.rows[0]?.total_encontrado || "0"), 10);
+        const masDe = encontradas > TOPE;
+        const total = masDe ? TOPE : encontradas;
+        const ofertasPais = deduplicar(r.rows).map(j => rowToOferta(j, location, userSkills));
+        comprobarEnSegundoPlano(ofertasPais.map(o => String(o.id)));
+        return NextResponse.json({ ofertas: ofertasPais, total, masDe, page, hasMore: offset + r.rows.length < total, keyword, location, source: masDe ? "database-pais-filtro-tope" : "database-pais-filtro" });
+      } catch (e) {
+        await cliente.query("ROLLBACK").catch(() => {});
+        throw e;
+      } finally {
+        cliente.release();
+      }
     }
 
     let dbResult = await pool.query(construirSql(whereClause), params);
