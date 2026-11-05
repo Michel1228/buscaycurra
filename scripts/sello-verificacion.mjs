@@ -2312,6 +2312,14 @@ test("los filtros del buscador van por lib/job-search/filtros.ts, no por palabra
     && ruta.includes('regexFiltro("inclusiva")') && !ruta.includes('"%remoto%"') && !ruta.includes('"%parcial%"');
 });
 
+// "En todo Reino Unido" + "parcial", sin puesto ni ciudad, se cortaba a los
+// 15 s: en los países grandes se recorren las más nuevas con tope de tiempo.
+test("todo un pais grande con un filtro no se corta: mas nuevas primero y con tope de tiempo", () => {
+  const ruta = leerFuente("app/api/jobs/search/route.ts");
+  return ruta.includes("const paisConFiltro") && ruta.includes("SET LOCAL statement_timeout = 9000")
+    && ruta.includes('source: "database-pais-filtro"');
+});
+
 // Guzzi sabe en qué país está la persona. Antes el chat no lo mandaba y
 // buscaba siempre en España: "camarera en Lima" devolvía ofertas españolas.
 test("Guzzi recibe el pais de la persona y no busca en Espana a quien esta fuera", () => {

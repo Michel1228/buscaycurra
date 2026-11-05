@@ -374,6 +374,69 @@ export async function GET(request: NextRequest) {
       LIMIT $${idx} OFFSET $${idx + 1}
     `;
 
+    // TODO UN PAÍS CON UN FILTRO DE TEXTO (5 nov 2026): "En todo Reino Unido"
+    // + "parcial", sin puesto ni ciudad. Ordenar al azar y contar todas obliga
+    // a mirar el título de cada oferta del país, y en los grandes se cortaba a
+    // los 15 s (Alemania tiene 545.000). En los países grandes se recorren las
+    // más nuevas por el índice de fechas, que para en cuanto llena la página,
+    // y se cuentan hasta 1.000 con un tope de tiempo. Los pequeños siguen como
+    // siempre: Brasil daba sus 870 ofertas inclusivas en 2,3 s.
+    const paisConFiltro = !!country && !keyword && !cityParts && !categoria && !salarioMin && !salarioMax
+      && (jornada === "parcial" || jornada === "remoto" || inclusiva || experiencia === "sin-experiencia")
+      && (!experiencia || experiencia === "sin-experiencia");
+    if (paisConFiltro) {
+      const GRANDE = 50000;
+      const tam = await pool.query(
+        `SELECT count(*)::int AS n FROM (SELECT 1 FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND lower("country") = lower($1) LIMIT ${GRANDE + 1}) t`,
+        [country]
+      );
+      if (tam.rows[0].n > GRANDE) {
+        const TOPE = 1000;
+        const cliente = await pool.connect();
+        try {
+          await cliente.query("BEGIN READ ONLY");
+          await cliente.query("SET LOCAL statement_timeout = 9000");
+          const nuevas = await cliente.query(
+            `SELECT id, title, company, city, province, salary, LEFT(description, 300) AS description,
+                    "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
+                    "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza, country
+               FROM "JobListing" WHERE ${whereClause}
+              ORDER BY "createdAt" DESC
+              LIMIT $${idx} OFFSET $${idx + 1}`,
+            params
+          );
+          let total = offset + nuevas.rows.length;
+          let masDe = false;
+          if (nuevas.rows.length === limit) {
+            // Contar cuesta más que llenar la página. Si no da tiempo, el
+            // total es lo visto hasta ahora y hay más páginas.
+            try {
+              await cliente.query("SAVEPOINT cuenta");
+              await cliente.query("SET LOCAL statement_timeout = 4000");
+              const c = await cliente.query(
+                `SELECT count(*)::int AS n FROM (SELECT 1 FROM "JobListing" WHERE ${whereClause} LIMIT ${TOPE + 1}) t`,
+                params.slice(0, -2)
+              );
+              total = Math.min(c.rows[0].n, TOPE);
+              masDe = c.rows[0].n > TOPE;
+            } catch {
+              await cliente.query("ROLLBACK TO SAVEPOINT cuenta");
+              masDe = true;
+            }
+          }
+          await cliente.query("COMMIT");
+          const ofertasPais = deduplicar(nuevas.rows).map(j => rowToOferta(j, location, userSkills));
+          comprobarEnSegundoPlano(ofertasPais.map(o => String(o.id)));
+          return NextResponse.json({ ofertas: ofertasPais, total, masDe, page, hasMore: masDe || offset + nuevas.rows.length < total, keyword, location, source: "database-pais-filtro" });
+        } catch (e) {
+          await cliente.query("ROLLBACK").catch(() => {});
+          throw e;
+        } finally {
+          cliente.release();
+        }
+      }
+    }
+
     // TODO UN PAÍS, SIN PALABRA NI CIUDAD (21 oct 2026): "Ver todas las ofertas
     // en Estados Unidos" desde Emigrar. Ordenar al azar y contar todas las del
     // país tardaba 16 s en EE. UU. (se cortaba a los 15 y salían ofertas de
