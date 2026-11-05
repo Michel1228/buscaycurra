@@ -28,6 +28,7 @@ export const PAIS_TIMEZONE: Record<string, string> = {
   US: "America/New_York",
   CA: "America/Toronto",
   MX: "America/Mexico_City",
+  BR: "America/Sao_Paulo",
 };
 
 /**
@@ -61,7 +62,7 @@ function mapPaisToLocale(pais: string): string {
     GB: "en-GB", IE: "en-IE", NL: "nl-NL", BE: "nl-BE", AT: "de-AT",
     CH: "de-CH", SE: "sv-SE", DK: "da-DK", NO: "nb-NO", FI: "fi-FI",
     PL: "pl-PL", CZ: "cs-CZ", AU: "en-AU", NZ: "en-NZ",
-    US: "en-US", CA: "en-CA", MX: "es-MX",
+    US: "en-US", CA: "en-CA", MX: "es-MX", BR: "pt-BR",
   };
   return map[pais] || "es-ES";
 }

@@ -62,6 +62,8 @@ export function normalizarPais(codigo: string | null | undefined): string {
 export type Regimen =
   | "libre_circulacion"
   | "movilidad_joven"
+  /** Un acuerdo entre países de la región (residencia del Mercosur en Brasil). */
+  | "acuerdo_regional"
   | "visado_general"
   | "desconocido";
 
@@ -85,7 +87,22 @@ const ACUERDO_AUSTRALIA = new Set([
   "BE", "AT", "DK", "SE", "NO", "FI", "PL", "HU", "CZ", "SI", "UK",
 ]);
 
+/**
+ * Acuerdo de Residencia del Mercosur (Decreto 6.975/2009): residencia temporal
+ * de dos años en Brasil sin oferta de trabajo, y con ella se puede trabajar.
+ * Venezuela no está: las fuentes no coinciden y está suspendida desde 2016.
+ */
+const ACUERDO_MERCOSUR = new Set(["AR", "BO", "CL", "CO", "EC", "PY", "PE", "UY"]);
+
 const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
+  MX: {
+    titulo: "Instituto Nacional de Migración — Gobierno de México",
+    url: "https://www.gob.mx/inm",
+  },
+  BR: {
+    titulo: "Imigração — Polícia Federal de Brasil",
+    url: "https://www.gov.br/pf/pt-br/assuntos/imigracao",
+  },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
     url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-finder",
@@ -153,6 +170,17 @@ export function movilidadDe(origen: string | null | undefined, destino: string):
       explicacion:
         "No nos consta que tu país tenga acuerdo de movilidad joven con Australia, así que la vía es un visado de trabajo ordinario, que normalmente exige que una empresa te patrocine.",
       enlaceOficial: OFICIAL_POR_DESTINO.AU,
+    };
+  }
+
+  // Brasil y el Acuerdo de Residencia del Mercosur.
+  if (d === "BR" && ACUERDO_MERCOSUR.has(o)) {
+    return {
+      regimen: "acuerdo_regional",
+      titulo: "Tienes la vía del Mercosur",
+      explicacion:
+        "Con tu nacionalidad puedes pedir en Brasil una residencia temporal de dos años sin tener oferta de trabajo (Acuerdo de Residencia del Mercosur), y con ella trabajar. Al llegar, regístrate en la Polícia Federal.",
+      enlaceOficial: OFICIAL_POR_DESTINO.BR,
     };
   }
 

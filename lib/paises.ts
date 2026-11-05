@@ -527,13 +527,38 @@ export const PAISES: Record<string, PaisConfig> = {
     salarioMinimo: 9582,
     // Salario base de cotización medio del IMSS en julio de 2026: 673,9 $ al día × 30,4.
     salarioMedio: 20490,
-    tasaCambioEUR: 19.8, // agosto de 2026
+    tasaCambioEUR: 21.01, // Banco Central Europeo, 4 nov 2026 (en agosto era 19,8)
     formatoMiles: ",",
     formatoDecimal: ".",
     ciudades: ["Ciudad de México", "Guadalajara", "Monterrey", "Puebla", "Tijuana", "Querétaro", "Mérida"],
     // Las cinco con más ofertas de México el 5 nov 2026 (no traducciones de las españolas).
     keywordsLaborales: ["auxiliar administrativo", "recepcionista", "ayudante general", "mesero", "vendedor"],
     slug: "mexico",
+  },
+
+  // Brasil entra el 5 nov 2026, detrás de México. Adzuna ya traía 78.659 ofertas
+  // vivas, pero solo por el calendario corto (una página por ciudad); desde hoy
+  // entra también en el barrido completo.
+  BR: {
+    codigo: "BR",
+    nombre: "Brasil",
+    nombreLocal: "Brasil",
+    moneda: "BRL",
+    simboloMoneda: "R$",
+    posicionSimbolo: "antes",
+    idioma: "pt",
+    bandera: "🇧🇷",
+    // Salário mínimo 2026: R$ 1.621 al mes (Decreto 12.797/2025, desde el 1 ene 2026).
+    salarioMinimo: 1621,
+    // Rendimiento medio del trabajo, primer trimestre de 2026: R$ 3.722 (IBGE, PNAD Contínua).
+    salarioMedio: 3722,
+    tasaCambioEUR: 6.16, // Banco Central Europeo, 4 nov 2026
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    ciudades: ["São Paulo", "Rio de Janeiro", "Brasília", "Belo Horizonte", "Curitiba", "Porto Alegre", "Salvador", "Recife", "Fortaleza"],
+    // Las cinco con más ofertas en Brasil el 5 nov 2026, en el portugués de allí.
+    keywordsLaborales: ["vendedor", "atendente", "motorista", "recepcionista", "cozinheiro"],
+    slug: "brasil",
   },
 };
 
@@ -565,7 +590,8 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.CZ,  // República Checa — 1.900 EUR/mes
   PAISES.HU,  // Hungría — 1.300 EUR/mes
   PAISES.RO,  // Rumanía — 1.100 EUR/mes
-  PAISES.MX,  // México — 20.490 MXN/mes (~1.035 €)
+  PAISES.MX,  // México — 20.490 MXN/mes (~975 €)
+  PAISES.BR,  // Brasil — 3.722 BRL/mes (~604 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */
@@ -603,6 +629,7 @@ const OTROS_NOMBRES: Record<string, string> = {
   inglaterra: "UK", uk: "UK", "gran bretana": "UK", escocia: "UK", gales: "UK",
   holanda: "NL", "republica checa": "CZ", chequia: "CZ",
   mejico: "MX", "republica mexicana": "MX", "estados unidos mexicanos": "MX",
+  brazil: "BR", "republica federativa do brasil": "BR",
 };
 
 const sinTildes = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[.]/g, " ").replace(/\s+/g, " ").trim();

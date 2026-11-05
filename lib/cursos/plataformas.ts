@@ -76,6 +76,82 @@ export interface PlataformaFormacion {
 // ─── Plataformas abiertas: no dependen de dónde vivas ───────────────────────
 
 export const PLATAFORMAS: PlataformaFormacion[] = [
+  // ── Latinoamérica y Brasil (comprobadas el 5 nov 2026) ──
+  // Solo salen a quien está en ese país: el catálogo de cursos se pinta para
+  // el país de cada uno (ListaCursos, ?pais=).
+  {
+    id: "jovenes-construyendo-el-futuro",
+    nombre: "Jóvenes Construyendo el Futuro",
+    resumen:
+      "Un año aprendiendo un oficio dentro de una empresa, cobrando 9.582,47 pesos al mes y con seguro del IMSS. Del Gobierno de México.",
+    url: "https://jovenesconstruyendoelfuturo.stps.gob.mx/",
+    alcance: { tipo: "paises", codigos: ["MX"] },
+    idiomas: ["Español"],
+    temas: ["primer empleo", "aprendiz", "oficio", "beca", "jóvenes", "sin experiencia"],
+    certificado: "no_consta",
+    requisitos: "De 18 a 29 años, sin estudiar ni trabajar.",
+    aviso:
+      "No es un curso en línea: es capacitación en un centro de trabajo durante 12 meses. Las inscripciones van por convocatorias; mira en la web cuándo abre la siguiente.",
+    fuentes: [
+      { titulo: "Jóvenes Construyendo el Futuro elevará su apoyo mensual a 9,582 pesos en 2026 — Programas para el Bienestar", url: "https://programasparaelbienestar.gob.mx/2025/12/05/" },
+      { titulo: "Así es la cobertura del IMSS para Jóvenes Construyendo el Futuro — Programas para el Bienestar", url: "https://www.programasparaelbienestar.gob.mx/noticias-y-comunicados/noticia/asi-es-la-cobertura-del-imss-para-jovenes-construyendo-el-futuro/" },
+    ],
+    actualizado: "2026-11",
+  },
+  {
+    id: "capacitate-para-el-empleo",
+    nombre: "Capacítate para el Empleo",
+    resumen:
+      "Cursos de oficios gratis y en línea, sin límite de edad ni requisitos: de la Fundación Carlos Slim.",
+    url: "https://capacitateparaelempleo.org/",
+    alcance: { tipo: "paises", codigos: ["MX"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "comercio", "atención al cliente", "seguridad industrial", "primeros auxilios", "cocina", "repostería", "informática"],
+    certificado: "si",
+    aviso:
+      "El certificado se imprime al aprobar todos los cuestionarios del curso. Es de la fundación, no un título oficial (salvo el diplomado de Big Data, que tiene validez de la SEP).",
+    fuentes: [
+      { titulo: "El ABC de cómo inscribirte en Capacítate para el Empleo — Fundación Carlos Slim", url: "https://fundacioncarlosslim.org/abc-inscribirte-en-capacitate-empleo/" },
+      { titulo: "Conoce la plataforma Capacítate para el empleo — Fundación Carlos Slim", url: "https://fundacioncarlosslim.org/conoce-la-plataforma-capacitate-para-el-empleo-de-fundacion-carlos-slim/" },
+    ],
+    actualizado: "2026-11",
+  },
+  {
+    id: "escola-virtual-gov",
+    nombre: "Escola Virtual.Gov (Enap)",
+    resumen:
+      "La escuela en línea del Gobierno de Brasil: cursos gratis para cualquier persona, con certificado al aprobar.",
+    url: "https://www.escolavirtual.gov.br/",
+    alcance: { tipo: "paises", codigos: ["BR"] },
+    idiomas: ["Portugués"],
+    temas: ["informática", "inteligencia artificial", "administración", "logística", "compras", "atención al público", "gestión"],
+    certificado: "si",
+    requisitos: "Entrar con la cuenta gov.br.",
+    aviso:
+      "Mucho catálogo está pensado para funcionarios; filtra por tema antes de apuntarte.",
+    fuentes: [
+      { titulo: "Inscrever-se em cursos autoinstrucionais na Escola Virtual de Governo — gov.br", url: "https://www.gov.br/pt-br/servicos/inscrever-se-em-cursos-autoinstrucionais-na-escola-virtual-de-governo" },
+    ],
+    actualizado: "2026-11",
+  },
+  {
+    id: "sena-sofia-plus",
+    nombre: "SENA — Sofía Plus",
+    resumen:
+      "Los cursos del Servicio Nacional de Aprendizaje de Colombia, cortos y virtuales, sin costo.",
+    url: "https://www.senasofiaplus.edu.co/",
+    alcance: { tipo: "paises", codigos: ["CO"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "inglés", "excel", "servicio al cliente", "seguridad y salud en el trabajo", "técnico", "tecnólogo"],
+    certificado: "no_consta",
+    requisitos: "Registrarse en Sofía Plus con el documento de identidad vigente.",
+    aviso:
+      "Los cursos cortos duran entre 40 horas y tres meses, con inscripción abierta todo el año. Los técnicos y tecnólogos van por convocatorias.",
+    fuentes: [
+      { titulo: "Formación — SENA Regional Distrito Capital", url: "https://www.sena.edu.co/blog/regional-distrito-capital/pagina/rp-form" },
+    ],
+    actualizado: "2026-11",
+  },
   {
     id: "santander-open-academy",
     nombre: "Santander Open Academy",
@@ -464,6 +540,14 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     url: "https://www.empleo.gob.mx/",
     queHacer:
       "Del Servicio Nacional de Empleo (Secretaría del Trabajo y Previsión Social): ofertas, ferias de empleo y orientación gratuita en todo México.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "BR",
+    nombre: "Portal Emprega Brasil (SINE)",
+    url: "https://empregabrasil.mte.gov.br/",
+    queHacer:
+      "Las ofertas de las agencias del SINE, el servicio público de empleo, con la cuenta gov.br. Las mismas salen en la app Carteira de Trabalho Digital, en «vagas de emprego».",
     actualizado: "2026-11",
   },
 ];

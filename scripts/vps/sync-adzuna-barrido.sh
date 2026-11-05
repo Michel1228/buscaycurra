@@ -36,7 +36,7 @@ BASE="http://localhost:8892/api/jobs/sync-adzuna-barrido"
 # publica ~3.900 ofertas diarias = 78 paginas, se dejan 120 de margen.
 # Como primer argumento se puede pasar otro plan, para probar sin gastar la
 # cuota del dia:   bash /root/sync-adzuna-barrido.sh "es:2"
-PLAN=${1:-"es:120 de:100 fr:100 uk:100 it:60 nl:60 ch:60 be:60 at:60 us:40 ca:40 au:40 nz:40 pl:40 sg:40 mx:40"}
+PLAN=${1:-"es:120 de:100 fr:100 uk:100 it:60 nl:60 ch:60 be:60 at:60 us:40 ca:40 au:40 nz:40 pl:40 sg:40 mx:40 br:40"}
 
 if [ -z "$SECRET" ]; then
   echo "$(date -u '+%F %T') ERROR: no hay ADMIN_SECRET en $ENV"

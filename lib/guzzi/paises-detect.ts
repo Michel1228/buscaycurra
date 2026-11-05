@@ -29,6 +29,7 @@ const ALIAS: Record<string, string[]> = {
   AU: ["australia"],
   NZ: ["nueva zelanda", "new zealand"],
   MX: ["mexico", "mejico", "republica mexicana"],
+  BR: ["brasil", "brazil"],
   CH: ["suiza", "switzerland", "schweiz"],
   BE: ["belgica", "belgium"],
   AT: ["austria"],

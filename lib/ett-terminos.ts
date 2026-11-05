@@ -44,6 +44,9 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   // En México no se dice "ETT", y desde la reforma de 2021 la subcontratación de
   // personal está prohibida: las que quedan se anuncian como agencias.
   MX: ["agencia de empleo", "agencia de reclutamiento"],
+  // En Brasil el trabajo temporal va por empresas de "trabalho temporário"
+  // (Lei 6.019/1974); para buscar trabajo se dice "agência de empregos".
+  BR: ["agência de empregos", "trabalho temporário"],
 };
 
 /**

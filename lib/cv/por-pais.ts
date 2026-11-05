@@ -23,6 +23,12 @@
  * Fuentes, comprobadas el 2026-09-01:
  *   · Europass — Comisión Europea (formato europeo de referencia)
  *   · Prácticas de selección recogidas en guías de CV por país
+ * México y Brasil, comprobadas el 2026-11-05:
+ *   · Expansión (23 may 2024): el Estado de México prohíbe pedir CV con foto
+ *     en sus empleos públicos ("currículum ciego").
+ *   · Vagas.com, Zety Brasil y guías de carrera: en Brasil la foto no se
+ *     espera, y CPF, RG y estado civil no van en el currículo. La Ley
+ *     9.029/1995 castiga la discriminación al contratar.
  */
 
 export type UsoFoto = "se_espera" | "opcional" | "mejor_no";
@@ -223,6 +229,33 @@ export const ESTILOS: EstiloCV[] = [
       "Nacionalidad",
     ],
     nota: "Se llama «resume», no «CV»: allí el CV es otra cosa, el documento académico largo. Una sola página y con números.",
+  },
+  {
+    codigo: "MX",
+    pais: "México",
+    bandera: "🇲🇽",
+    foto: "opcional",
+    nombreLocal: "Currículum (CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [
+      "CURP, RFC o número de seguridad social: se dan al contratarte",
+      "Estado civil y si tienes hijos",
+    ],
+    nota: "La foto es habitual en empresas privadas, pero no la pongas si la oferta no la pide: el Estado de México ya la prohíbe en sus empleos públicos y cada vez más empresas la quitan.",
+  },
+  {
+    codigo: "BR",
+    pais: "Brasil",
+    bandera: "🇧🇷",
+    foto: "mejor_no",
+    nombreLocal: "Currículo",
+    paginas: "1 o 2 páginas",
+    noPongas: [
+      "CPF, RG o número de PIS: se dan al contratarte",
+      "Estado civil",
+      "Dirección completa: basta la ciudad y el estado",
+    ],
+    nota: "Allí la foto no se espera: ponla solo si la oferta la pide. Y si la oferta está en portugués, el currículo también.",
   },
 ];
 

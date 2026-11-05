@@ -457,6 +457,29 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Entrar como visitante y ponerte a trabajar no es una vía legal, aunque te lo ofrezcan. Y una oferta de una empresa que no está inscrita ante el INM no sirve para pedir la visa, por buena que sea.",
   },
+  // Brasil (5 nov 2026). Fuentes: Lei de Migração 13.445/2017 y su Decreto
+  // 9.199/2017 (art. 64, registro en 90 días), el Acuerdo de Residencia del
+  // Mercosur (Decreto 6.975/2009), la Polícia Federal y la Receita Federal
+  // (CPF gratuito). Venezuela NO se pone en la vía Mercosur: las fuentes no
+  // coinciden y está suspendida del bloque desde 2016.
+  {
+    codigo: "BR",
+    nombre: "Brasil",
+    bandera: "🇧🇷",
+    autoridad: { nombre: "Polícia Federal — Imigração (Gobierno de Brasil)", url: "https://www.gov.br/pf/pt-br/assuntos/imigracao" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Brasil. Con pasaporte de la UE puedes entrar sin visado como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "Si eres de Argentina, Bolivia, Chile, Colombia, Ecuador, Paraguay, Perú o Uruguay, tienes el Acuerdo de Residencia del Mercosur: pides una residencia temporal de dos años sin necesitar oferta de trabajo, y con ella puedes trabajar.",
+      "Si no, hace falta una oferta de trabajo formal: con ella se pide la autorización de residencia para trabajar (por MigranteWeb, del Ministerio de Justicia) o el visado temporal de trabajo en un consulado de Brasil.",
+      "Con visado temporal, al llegar tienes 90 días para registrarte en la Polícia Federal y sacar la Carteira de Registro Nacional Migratório (CRNM).",
+      "Para cobrar hacen falta el CPF de la Receita Federal (gratis, también en los consulados) y la Carteira de Trabalho Digital, que va con el CPF.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y si alguien te cobra por sacarte el CPF, desconfía: en la Receita Federal y en los consulados es gratis.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

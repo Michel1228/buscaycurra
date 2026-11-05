@@ -985,6 +985,90 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     ],
   },
 
+  // ─── MÉXICO (5 nov 2026) ──────────────────────────────────────────────────
+  // Fuentes: INM y la ficha de la visa de residencia temporal (gob.mx), CURP
+  // (gob.mx/curp), SAT, IMSS. Precios: guía de vivienda para estudiantes de
+  // mayo de 2026 (study-abroad.org), en dólares; no hemos encontrado una media
+  // oficial de cuartos en pesos y no se inventa.
+  MX: {
+    codigo: "MX",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "México no tiene un visado de au pair: cuidar niños en una casa es un trabajo como otro y pide el mismo permiso que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Mercado Libre — cuartos", url: "https://inmuebles.mercadolibre.com.mx/cuartos/", descripcion: "Cuartos en renta en todo México. Un cuarto en departamento compartido es lo más fácil para empezar." },
+        { nombre: "Inmuebles24", url: "https://www.inmuebles24.com", descripcion: "Uno de los portales de renta más grandes del país: departamentos y casas." },
+        { nombre: "Vivanuncios", url: "https://www.vivanuncios.com.mx", descripcion: "Anuncios de particulares e inmobiliarias, también de cuartos." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.mx/s/Mexico/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo. Más caro, pero sin contrato." },
+      ],
+      consejo: "Para rentar un departamento suelen pedir un aval (alguien con una propiedad en la misma ciudad que responda por ti) o una póliza jurídica, además del depósito. Sin historial en México, lo práctico es empezar por un cuarto. Los precios de abajo son una estimación en dólares de una guía de vivienda de mayo de 2026.",
+      preciosMedios: [
+        { ciudad: "Ciudad de México", rango: "300-500", moneda: "US$/mes por cuarto compartido" },
+        { ciudad: "Otras ciudades", rango: "180-400", moneda: "US$/mes por cuarto compartido" },
+      ],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Hace falta una oferta de una empresa inscrita ante el Instituto Nacional de Migración, que es quien pide la autorización. Con ella recoges la visa en un consulado de México y, ya dentro, tienes 30 días naturales para canjearla por la tarjeta de residente.",
+      enlaceOficial: "https://www.gob.mx/tramites/ficha/visa-de-residencia-temporal/SRE138",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Tarjeta de residente", descripcion: "El canje de tu visa en una oficina del INM. Es tu identificación en México y la piden para todo lo demás.", tiempoObtener: "Hay que pedirla en los 30 días naturales desde que entras", obligatorio: true, enlaceOficial: "https://www.gob.mx/inm" },
+        { nombre: "CURP (Clave Única de Registro de Población)", descripcion: "Tu clave personal en México. A quien tiene residencia se le asigna con su documento migratorio; se consulta y se imprime en gob.mx.", tiempoObtener: "Consulta en línea", obligatorio: true, enlaceOficial: "https://www.gob.mx/curp/" },
+        { nombre: "RFC (Registro Federal de Contribuyentes)", descripcion: "Tu número ante Hacienda (SAT). Sin él no te pueden pagar en nómina.", tiempoObtener: "En línea o con cita en el SAT", obligatorio: true, enlaceOficial: "https://www.sat.gob.mx" },
+        { nombre: "NSS (Número de Seguridad Social)", descripcion: "Con él la empresa te da de alta en el IMSS y tienes médico. Se tramita con la CURP.", tiempoObtener: "En línea", obligatorio: true, enlaceOficial: "https://www.imss.gob.mx" },
+        { nombre: "Cuenta bancaria", descripcion: "Muchas empresas abren ellas la cuenta de nómina. Si la abres tú, el banco pedirá la tarjeta de residente.", tiempoObtener: "Depende del banco", obligatorio: false },
+      ],
+      consejo: "El orden: visa en el consulado → al entrar, tarjeta de residente en el INM (30 días) → CURP → RFC y NSS para cobrar en nómina.",
+    },
+  },
+
+  // ─── BRASIL (5 nov 2026) ──────────────────────────────────────────────────
+  // Fuentes: Decreto 9.199/2017 (art. 64: registro en 90 días), Acuerdo de
+  // Residencia del Mercosur (Decreto 6.975/2009), Receita Federal (CPF gratis),
+  // gov.br (Carteira de Trabalho con el CPF), Lei do Inquilinato 8.245/1991
+  // (art. 38: caución de hasta tres meses), índice FipeZap de septiembre de 2026.
+  BR: {
+    codigo: "BR",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "Brasil no tiene un visado de au pair: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "QuintoAndar", url: "https://www.quintoandar.com.br", descripcion: "Alquiler sin fiador, todo por internet. Muy usado en las ciudades grandes." },
+        { nombre: "ZAP Imóveis", url: "https://www.zapimoveis.com.br", descripcion: "De los portales de alquiler más grandes de Brasil." },
+        { nombre: "VivaReal", url: "https://www.vivareal.com.br", descripcion: "Pisos y casas de particulares e inmobiliarias en todo el país." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com.br/s/Brasil/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Para alquilar piden una garantía: un fiador, un seguro-fiança o una caución en dinero, que por ley no puede pasar de tres meses de alquiler. Sin fiador en Brasil, las plataformas que alquilan sin él te ahorran el problema. Los precios son la media por metro cuadrado del índice FipeZap (septiembre de 2026): un piso de 50 m² en São Paulo sale por unos 3.300 reales al mes.",
+      preciosMedios: [
+        { ciudad: "São Paulo", rango: "65,78", moneda: "R$ por m² al mes" },
+        { ciudad: "Rio de Janeiro", rango: "61,86", moneda: "R$ por m² al mes" },
+        { ciudad: "Media de 36 ciudades", rango: "54,77", moneda: "R$ por m² al mes" },
+      ],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Con nacionalidad de Argentina, Bolivia, Chile, Colombia, Ecuador, Paraguay, Perú o Uruguay hay residencia de dos años sin oferta (Acuerdo del Mercosur). Desde España o el resto de la UE hace falta una oferta formal para pedir la autorización de residencia para trabajar o el visado temporal de trabajo.",
+      enlaceOficial: "https://www.gov.br/pf/pt-br/assuntos/imigracao",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "CPF (Cadastro de Pessoas Físicas)", descripcion: "Tu número para todo en Brasil: contrato, banco, móvil. Lo da la Receita Federal, también en los consulados, y es gratis.", tiempoObtener: "Unos días hábiles", obligatorio: true, enlaceOficial: "https://www.gov.br/pt-br/servicos/inscrever-no-cpf" },
+        { nombre: "Registro en la Polícia Federal (CRNM)", descripcion: "La Carteira de Registro Nacional Migratório, tu documento de residente. Con visado temporal es obligatorio pedirla al llegar.", tiempoObtener: "Plazo: 90 días desde que entras", obligatorio: true, enlaceOficial: "https://www.gov.br/pf/pt-br/assuntos/imigracao" },
+        { nombre: "Carteira de Trabalho Digital", descripcion: "Donde la empresa apunta tu contrato. La saca cualquiera que tenga CPF, en la app o en gov.br, y ahí salen también ofertas del SINE.", tiempoObtener: "En línea", obligatorio: true, enlaceOficial: "https://www.gov.br/pt-br/servicos/obter-a-carteira-de-trabalho" },
+        { nombre: "Cuenta bancaria", descripcion: "Con el CPF y tu documento de residente. Los bancos digitales suelen ser lo más rápido.", tiempoObtener: "Depende del banco", obligatorio: false },
+      ],
+      consejo: "El orden: CPF (mejor en el consulado antes de salir) → al llegar, registro en la Polícia Federal → Carteira de Trabalho Digital → cuenta bancaria.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

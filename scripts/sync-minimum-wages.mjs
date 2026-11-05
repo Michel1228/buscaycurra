@@ -45,6 +45,7 @@ const FUENTES_ALTERNATIVAS = {
   AU: { salarioMinimo: 3830,  moneda: "AUD", nota: "National Minimum Wage: $23.23/h × 38h (Jul 2024)" },
   NZ: { salarioMinimo: 4019,  moneda: "NZD", nota: "Minimum Wage: $23.15/h × 40h (Apr 2025)" },
   MX: { salarioMinimo: 9582,  moneda: "MXN", nota: "Zona general: $315,04/día × 30,4 (CONASAMI, ene 2026). Frontera norte: $440,87/día." },
+  BR: { salarioMinimo: 1621,  moneda: "BRL", nota: "Salário mínimo nacional 2026 (Decreto 12.797/2025). Algunos estados fijan un piso regional más alto." },
 };
 
 // ─── Mapeo código Eurostat → código BuscayCurra ───────────────────────────────

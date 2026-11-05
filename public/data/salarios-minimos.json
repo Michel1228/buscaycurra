@@ -133,6 +133,12 @@
       "moneda": "MXN",
       "nota": "Zona general: $315,04/día × 30,4 (CONASAMI, ene 2026). Frontera norte: $440,87/día.",
       "fuente": "Fuente oficial nacional"
+    },
+    "BR": {
+      "salarioMinimo": 1621,
+      "moneda": "BRL",
+      "nota": "Salário mínimo nacional 2026 (Decreto 12.797/2025). Algunos estados fijan un piso regional más alto.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }
