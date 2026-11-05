@@ -11,6 +11,7 @@
 import Link from "next/link";
 import LogoGusano from "@/components/LogoGusano";
 import { GUIAS } from "@/lib/guias/contenido";
+import { NUM_PAISES } from "@/lib/paises";
 
 const COLUMNAS: Array<{ titulo: string; enlaces: Array<{ texto: string; href: string }> }> = [
   {
@@ -115,7 +116,7 @@ export default function PublicFooter() {
           <div className="flex items-center gap-2">
             <LogoGusano size={22} />
             <span className="text-xs" style={{ color: "#64748b" }}>
-              BuscayCurra — búsqueda de empleo en 26 países
+              BuscayCurra — búsqueda de empleo en {NUM_PAISES} países
             </span>
           </div>
           <ul className="flex flex-wrap gap-4">

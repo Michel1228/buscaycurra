@@ -10,16 +10,17 @@ import Link from "next/link";
 import PublicHeader from "@/components/PublicHeader";
 import PublicFooter from "@/components/PublicFooter";
 import { GRUPOS_FUNCIONES, NUM_FUNCIONES } from "@/lib/funciones";
+import { NUM_PAISES } from "@/lib/paises";
 
 export const metadata: Metadata = {
   title: `Todo lo que hace BuscayCurra: ${NUM_FUNCIONES} funciones | BuscayCurra`,
   description:
-    "Enviar el CV a empresas sin oferta publicada, ETTs cerca de ti, buscador de empleo en 26 países, revisión ATS del CV, simulador de entrevista, comparador de salarios y guías por país.",
+    `Enviar el CV a empresas sin oferta publicada, ETTs cerca de ti, buscador de empleo en ${NUM_PAISES} países, revisión ATS del CV, simulador de entrevista, comparador de salarios y guías por país.`,
   alternates: { canonical: "https://buscaycurra.es/funciones" },
   openGraph: {
     title: "Todo lo que hace BuscayCurra",
     description:
-      "La lista completa: envíos de CV, ETTs, buscador en 26 países, CV con revisión ATS, entrevistas y salarios.",
+      `La lista completa: envíos de CV, ETTs, buscador en ${NUM_PAISES} países, CV con revisión ATS, entrevistas y salarios.`,
     url: "https://buscaycurra.es/funciones",
     locale: "es_ES",
     type: "website",

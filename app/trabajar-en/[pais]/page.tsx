@@ -101,7 +101,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
         </h1>
         <p className="text-lg text-[#94a3b8] max-w-2xl mx-auto">
           Encuentra ofertas de empleo en {pais.nombreLocal} con BuscayCurra.
-          Miles de ofertas actualizadas para hispanohablantes que quieren trabajar en Europa.
+          Miles de ofertas actualizadas para hispanohablantes que quieren trabajar en {pais.nombre}.
         </p>
         <Link
           href={`/app/buscar?pais=${codigo}`}
@@ -163,15 +163,16 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
         </div>
       </section>
 
-      {/* Ventajas de BuscayCurra para trabajar en Europa */}
+      {/* Ventajas de BuscayCurra. Decía "trabajar en Europa" también en las páginas de
+          Estados Unidos, Canadá o México; ahora dice el país de la página (5 nov 2026). */}
       <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto">
-        <h2 className="text-xl font-bold mb-6">Por qué usar BuscayCurra para trabajar en Europa</h2>
+        <h2 className="text-xl font-bold mb-6">Por qué usar BuscayCurra para trabajar en {pais.nombre}</h2>
         <div className="grid sm:grid-cols-2 gap-4">
           {[
-            { icon: "🤖", title: "Agente 24/7", desc: "Guzzi busca y envía tus CVs automáticamente a ofertas en toda Europa mientras duermes." },
+            { icon: "🤖", title: "Agente 24/7", desc: `Guzzi busca y envía tus CVs automáticamente a ofertas de los ${NUM_PAISES} países mientras duermes.` },
             { icon: "📧", title: "Envío masivo", desc: "Envía tu CV a decenas de ofertas en un solo click. Sin formularios repetitivos." },
             { icon: "🌍", title: `${NUM_PAISES} países`, desc: "Ofertas en España, EEUU, Canadá, Australia, Reino Unido, Alemania, Suiza y más países." },
-            { icon: "💬", title: "Guzzi multilingüe", desc: "Tu asistente habla español y te ayuda con ofertas en cualquier idioma europeo." },
+            { icon: "💬", title: "Guzzi multilingüe", desc: "Tu asistente habla español y te ayuda con ofertas en otros idiomas." },
             { icon: "💰", title: "Comparador de salarios", desc: `Calcula tu sueldo neto en cada país con la calculadora de impuestos.` },
             { icon: "📊", title: "Skill Gap Analysis", desc: "Compara tu CV con los requisitos de la oferta y recibe recomendaciones." },
           ].map((item) => (

@@ -1485,9 +1485,11 @@ test("Nueva Zelanda es de 18 a 30 para espanoles, no hasta los 35", () =>
 test("Canada ya no dice que Espana no tenga acuerdo de movilidad juvenil", () =>
   !/España no tiene acuerdo de movilidad juvenil con Canadá/.test(puedesIr));
 
-// 4. Que exista ficha de los 26 destinos y se enseñe
-test("hay ficha de requisitos de los 26 destinos", () =>
-  new Set((requisitosSrc.match(/codigo: "([A-Z]{2})"|destinoUE\("([A-Z]{2})"/g) || [])).size === 26);
+// 4. Que exista ficha de cada destino y se enseñe. Eran 26; desde el 5 nov
+// 2026 se cuentan contra lib/paises.ts, para que un país nuevo no entre sin ficha.
+test("hay ficha de requisitos de cada pais de la app", () =>
+  new Set((requisitosSrc.match(/codigo: "([A-Z]{2})"|destinoUE\("([A-Z]{2})"/g) || [])).size ===
+    [...leerFuente("lib/paises.ts").matchAll(/^  ([A-Z][A-Z]): \{/gm)].length);
 test("la ficha de requisitos se pinta en la pagina publica del pais", () =>
   leerFuente("app/trabajar-en/[pais]/page.tsx").includes("<RequisitosPais"));
 test("las fichas separan quien es de la UE de quien no", () =>
@@ -2161,10 +2163,59 @@ const paisesSincronizados = new Set([
   ...paisesCalendario,
 ].filter(Boolean));
 
-test("los 26 paises de la app estan en algun script de sincronizacion del VPS", () => {
+test("todos los paises de la app estan en algun script de sincronizacion del VPS", () => {
   const sinCubrir = paisesApp.filter(p => !paisesSincronizados.has(p));
   if (sinCubrir.length) console.log("      sin sincronizar: " + sinCubrir.join(", "));
-  return paisesApp.length === 26 && sinCubrir.length === 0;
+  // Antes era "=== 26". Ahora: los de PAISES son los mismos que los de la lista.
+  const enLista = (leerFuente("lib/paises.ts").match(/^  PAISES\.[A-Z]{2},/gm) || []).length;
+  return paisesApp.length >= 26 && paisesApp.length === enLista && sinCubrir.length === 0;
+});
+
+// ── LOS PAISES DE LA APP QUE PUBLICA ADZUNA ENTRAN EN SU BARRIDO COMPLETO ─────
+//
+// Mexico estaba en el calendario corto (sync-adzuna-19.sh: palabra por ciudad,
+// solo la pagina 1) pero no en el barrido, que es el que trae el catalogo
+// entero. El 5 nov 2026 tenia 20.700 ofertas vivas de las ~162.000 que Adzuna
+// publica alli.
+const planBarrido = (leerFuente("scripts/vps/sync-adzuna-barrido.sh").match(/^PLAN=\$\{1:-"([^"]+)"\}/m) || [])[1] || "";
+const paisesBarrido = new Set(planBarrido.split(" ").map(e => e.split(":")[0]).filter(Boolean));
+test("los paises de la app que publica Adzuna estan en su barrido diario", () => {
+  const faltan = paisesApp.filter(p => paisesAdzuna.includes(p) && !paisesBarrido.has(p));
+  if (faltan.length) console.log("      fuera del barrido: " + faltan.join(", "));
+  return paisesBarrido.size >= 15 && faltan.length === 0;
+});
+
+// ── MEXICO ES UN PAIS DE LA APP, Y CIUDAD DE MEXICO UNA CIUDAD ─────────────────
+//
+// Al meter Mexico en lib/paises.ts, Guzzi reconoce "Mexico" como pais en lo que
+// escribe la gente, y "camarero en Ciudad de Mexico" pasaba a buscar en todo el
+// pais. Se comprueba con el codigo de verdad, compilado.
+test('Mexico es un pais de la app y "Ciudad de Mexico" se busca como ciudad', async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-mexico-entrada.ts", salida = ".sello-mexico.cjs";
+  try {
+    writeFileSync(entrada, 'export { detectarPais } from "./lib/guzzi/paises-detect";\nexport { paisPorNombre } from "./lib/paises";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const casos = [
+      [m.detectarPais("quiero trabajo en México")?.codigo, "mx"],
+      [m.detectarPais("camarero en Ciudad de México"), null],
+      [m.detectarPais("ofertas en el Estado de México"), null],
+      [m.detectarPais("trabajo en Nuevo México"), null],
+      [m.detectarPais("ofertas de trabajo en Irlanda")?.codigo, "ie"],
+      [m.paisPorNombre("México"), "MX"],
+      [m.paisPorNombre("Ciudad de México"), null],
+    ];
+    const mal = casos.filter(([dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([dio, quiere]) => `da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
 });
 
 // ── LAS TAREAS PROGRAMADAS VIVEN EN EL CRONTAB DEL VPS ─────────────────

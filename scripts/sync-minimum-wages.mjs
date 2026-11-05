@@ -44,6 +44,7 @@ const FUENTES_ALTERNATIVAS = {
   CA: { salarioMinimo: 2752,  moneda: "CAD", nota: "Ontario: $17.20/h. BC: $17.40/h. Varía por provincia." },
   AU: { salarioMinimo: 3830,  moneda: "AUD", nota: "National Minimum Wage: $23.23/h × 38h (Jul 2024)" },
   NZ: { salarioMinimo: 4019,  moneda: "NZD", nota: "Minimum Wage: $23.15/h × 40h (Apr 2025)" },
+  MX: { salarioMinimo: 9582,  moneda: "MXN", nota: "Zona general: $315,04/día × 30,4 (CONASAMI, ene 2026). Frontera norte: $440,87/día." },
 };
 
 // ─── Mapeo código Eurostat → código BuscayCurra ───────────────────────────────

@@ -458,6 +458,14 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
       "El portal oficial de formación de Singapur. El crédito SkillsFuture para pagar cursos es para ciudadanos singapurenses; los cursos se pueden mirar igual.",
     actualizado: "2026-10",
   },
+  {
+    pais: "MX",
+    nombre: "Portal del Empleo",
+    url: "https://www.empleo.gob.mx/",
+    queHacer:
+      "Del Servicio Nacional de Empleo (Secretaría del Trabajo y Previsión Social): ofertas, ferias de empleo y orientación gratuita en todo México.",
+    actualizado: "2026-11",
+  },
 ];
 
 // ─── Reconocer fuera lo que ya tienes ───────────────────────────────────────

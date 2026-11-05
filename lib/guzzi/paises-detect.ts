@@ -28,6 +28,7 @@ const ALIAS: Record<string, string[]> = {
   CA: ["canada"],
   AU: ["australia"],
   NZ: ["nueva zelanda", "new zealand"],
+  MX: ["mexico", "mejico", "republica mexicana"],
   CH: ["suiza", "switzerland", "schweiz"],
   BE: ["belgica", "belgium"],
   AT: ["austria"],
@@ -44,6 +45,13 @@ function normalizar(s: string): string {
   return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 }
 
+// Sitios que llevan el nombre de un país y no son ese país entero. Desde que
+// México es un país de la aplicación (5 nov 2026), "camarero en Ciudad de
+// México" se leía como "camarero en todo México". Se quitan antes de buscar el
+// país, y así se buscan como el sitio que son. Nuevo México es un estado de
+// Estados Unidos.
+const NO_SON_EL_PAIS = ["ciudad de mexico", "estado de mexico", "nuevo mexico"];
+
 export interface PaisDetectado {
   codigo: string;   // ISO en minúsculas, como está en la base de datos ("ie")
   nombre: string;   // "Irlanda", para hablarle al usuario
@@ -56,7 +64,7 @@ export interface PaisDetectado {
  * palabra y para no confundir "us" (Estados Unidos) con cualquier "us" suelto.
  */
 export function detectarPais(texto: string): PaisDetectado | null {
-  const t = normalizar(texto);
+  const t = NO_SON_EL_PAIS.reduce((acc, sitio) => acc.split(sitio).join(" "), normalizar(texto));
   let mejor: { codigo: string; largo: number } | null = null;
 
   const probar = (aguja: string, codigo: string) => {

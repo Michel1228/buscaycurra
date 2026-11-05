@@ -13,6 +13,7 @@
  * cambia ahí, cambia aquí — el sello comprueba que los números coinciden.
  */
 import { LIMITS } from "@/lib/plan-limits";
+import { NUM_PAISES } from "@/lib/paises";
 
 export interface PasoGuia {
   titulo: string;
@@ -119,7 +120,7 @@ export const GUIAS: Guia[] = [
       },
     ],
     avisos: [
-      "Funciona en los 26 países de la aplicación, buscando con el nombre que se usa allí: Zeitarbeitsfirma en Alemania, uitzendbureau en Países Bajos, agence d'intérim en Francia, recruitment agency en Reino Unido e Irlanda.",
+      `Funciona en los ${NUM_PAISES} países de la aplicación, buscando con el nombre que se usa allí: Zeitarbeitsfirma en Alemania, uitzendbureau en Países Bajos, agence d'intérim en Francia, recruitment agency en Reino Unido e Irlanda.`,
       "Apuntarse a una ETT no es firmar nada: es dejar el CV en su bolsa para cuando entre un pedido.",
     ],
     siguiente: [
@@ -131,7 +132,7 @@ export const GUIAS: Guia[] = [
     slug: "buscar-ofertas",
     titulo: "Cómo buscar ofertas y no repetir la misma búsqueda cada día",
     resumen:
-      "Millones de ofertas de 26 países en un solo sitio, con filtros que funcionan y ofertas guardadas para no empezar de cero cada mañana.",
+      `Millones de ofertas de ${NUM_PAISES} países en un solo sitio, con filtros que funcionan y ofertas guardadas para no empezar de cero cada mañana.`,
     paraQuien:
       "Para quien está mirando varios portales a la vez y ya no sabe cuál ha visto.",
     icono: "buscar",

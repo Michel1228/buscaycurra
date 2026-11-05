@@ -127,6 +127,12 @@
       "moneda": "NZD",
       "nota": "Minimum Wage: $23.15/h × 40h (Apr 2025)",
       "fuente": "Fuente oficial nacional"
+    },
+    "MX": {
+      "salarioMinimo": 9582,
+      "moneda": "MXN",
+      "nota": "Zona general: $315,04/día × 30,4 (CONASAMI, ene 2026). Frontera norte: $440,87/día.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

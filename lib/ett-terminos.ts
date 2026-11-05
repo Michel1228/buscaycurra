@@ -9,7 +9,7 @@
  * verdad en cada sitio (Zeitarbeitsfirma, uitzendbureau, agence d'interim...)
  * salen las de la ciudad que pide el usuario.
  *
- * Son los 26 paises de lib/paises.ts. Si algun dia se añade otro y no esta aqui,
+ * Son los paises de lib/paises.ts. Si algun dia se añade otro y no esta aqui,
  * se usa PREDETERMINADO (ingles), que Google entiende en casi todo el mundo.
  */
 
@@ -41,6 +41,9 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   NZ: ["recruitment agency", "labour hire company"],
   JP: ["人材派遣会社", "転職エージェント"],
   SG: ["employment agency", "recruitment agency"],
+  // En México no se dice "ETT", y desde la reforma de 2021 la subcontratación de
+  // personal está prohibida: las que quedan se anuncian como agencias.
+  MX: ["agencia de empleo", "agencia de reclutamiento"],
 };
 
 /**

@@ -12,6 +12,8 @@
  * rápida de perder a quien acababa de confiar.
  */
 
+import { NUM_PAISES } from "@/lib/paises";
+
 export interface Funcion {
   titulo: string;
   /** Qué hace, en una o dos frases, sin palabras de folleto. */
@@ -52,7 +54,7 @@ export const GRUPOS_FUNCIONES: GrupoFunciones[] = [
       {
         titulo: "ETTs cerca de ti",
         descripcion:
-          "Las empresas de trabajo temporal de tu comarca, con la distancia a cada una. Funciona en pueblos pequeños y en los 26 países, buscando con el nombre que se usa allí.",
+          `Las empresas de trabajo temporal de tu comarca, con la distancia a cada una. Funciona en pueblos pequeños y en los ${NUM_PAISES} países, buscando con el nombre que se usa allí.`,
         ruta: "/app/empresas",
         guia: "/guias/ett",
       },
@@ -73,7 +75,7 @@ export const GRUPOS_FUNCIONES: GrupoFunciones[] = [
   },
   {
     titulo: "Buscar ofertas",
-    resumen: "Millones de ofertas de 26 países en un solo sitio, con enlace, fuente y fecha.",
+    resumen: `Millones de ofertas de ${NUM_PAISES} países en un solo sitio, con enlace, fuente y fecha.`,
     funciones: [
       {
         titulo: "Buscador de empleo",
@@ -157,7 +159,7 @@ export const GRUPOS_FUNCIONES: GrupoFunciones[] = [
       {
         titulo: "Guía por país",
         descripcion:
-          "Papeles, primeros pasos, alojamiento y qué se cobra, para cada uno de los 26 países, con enlaces a las fuentes oficiales.",
+          `Papeles y qué se cobra en cada uno de los ${NUM_PAISES} países, y primeros pasos y alojamiento en la mayoría, con enlaces a las fuentes oficiales.`,
         ruta: "/trabajar-en",
         guia: "/guias/emigrar",
       },

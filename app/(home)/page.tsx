@@ -80,6 +80,7 @@ export default async function LandingPage() {
     NZ: { flag: "🇳🇿", nombre: "Nueva Zelanda" },
     FI: { flag: "🇫🇮", nombre: "Finlandia" },
     GR: { flag: "🇬🇷", nombre: "Grecia" },
+    MX: { flag: "🇲🇽", nombre: "México" },
   };
 
   const PAISES_DATA = stats

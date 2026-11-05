@@ -435,6 +435,28 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Singapur publica los umbrales salariales exactos y los actualiza cada año, y son públicos y comprobables. Si una oferta paga por debajo del umbral de su permiso, ese permiso no se va a conceder por mucho que la oferta sea real.",
   },
+
+  // México (5 nov 2026). Comprobado en gob.mx (INM y la ficha de la visa de
+  // residencia temporal), la Ventanilla Única de trámites y los consulados de
+  // México. Sin cuantías ni tasas, por la regla de arriba.
+  {
+    codigo: "MX",
+    nombre: "México",
+    bandera: "🇲🇽",
+    autoridad: { nombre: "Instituto Nacional de Migración (INM) — Gobierno de México", url: "https://www.gob.mx/inm" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en México. Con pasaporte de la UE puedes entrar sin visado como visitante, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "El trámite lo empieza la empresa, no tú: tiene que estar inscrita como empleadora ante el Instituto Nacional de Migración, y es ella quien pide la autorización de visa por oferta de empleo.",
+      "Con la autorización, recoges la visa en un consulado de México. Si el trabajo dura más de 180 días, es de residente temporal; si dura menos, de visitante con permiso para actividades remuneradas.",
+      "Con la visa de residente, al entrar tienes 30 días naturales para canjearla por la tarjeta de residente en una oficina del INM.",
+      "Para cobrar en nómina hacen falta además la CURP, el RFC del SAT y el número de seguridad social del IMSS.",
+    ],
+    ojoCon:
+      "Entrar como visitante y ponerte a trabajar no es una vía legal, aunque te lo ofrezcan. Y una oferta de una empresa que no está inscrita ante el INM no sirve para pedir la visa, por buena que sea.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

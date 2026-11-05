@@ -506,6 +506,35 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["ospătar", "programator", "asistent medical", "vânzător", "administrativ"],
     slug: "rumania",
   },
+
+  // ===== LATINOAMÉRICA =====
+
+  // México entra el 5 nov 2026. Adzuna ya traía sus ofertas cada día (20.700
+  // vivas ese día) y quien buscaba "vendedor" en Monterrey las encontraba, pero
+  // no era un país de la aplicación: sin página, sin ficha de requisitos y fuera
+  // del barrido completo de Adzuna, que solo recorre los países de esta lista.
+  MX: {
+    codigo: "MX",
+    nombre: "México",
+    nombreLocal: "México",
+    moneda: "MXN",
+    simboloMoneda: "MX$",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇲🇽",
+    // Zona general 2026: 315,04 $ al día (CONASAMI) = 9.582 $ al mes. En la Zona
+    // Libre de la Frontera Norte es más alto: 440,87 $ al día.
+    salarioMinimo: 9582,
+    // Salario base de cotización medio del IMSS en julio de 2026: 673,9 $ al día × 30,4.
+    salarioMedio: 20490,
+    tasaCambioEUR: 19.8, // agosto de 2026
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    ciudades: ["Ciudad de México", "Guadalajara", "Monterrey", "Puebla", "Tijuana", "Querétaro", "Mérida"],
+    // Las cinco con más ofertas de México el 5 nov 2026 (no traducciones de las españolas).
+    keywordsLaborales: ["auxiliar administrativo", "recepcionista", "ayudante general", "mesero", "vendedor"],
+    slug: "mexico",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -536,6 +565,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.CZ,  // República Checa — 1.900 EUR/mes
   PAISES.HU,  // Hungría — 1.300 EUR/mes
   PAISES.RO,  // Rumanía — 1.100 EUR/mes
+  PAISES.MX,  // México — 20.490 MXN/mes (~1.035 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */
@@ -572,6 +602,7 @@ const OTROS_NOMBRES: Record<string, string> = {
   eeuu: "US", "ee uu": "US", usa: "US", "estados unidos de america": "US",
   inglaterra: "UK", uk: "UK", "gran bretana": "UK", escocia: "UK", gales: "UK",
   holanda: "NL", "republica checa": "CZ", chequia: "CZ",
+  mejico: "MX", "republica mexicana": "MX", "estados unidos mexicanos": "MX",
 };
 
 const sinTildes = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[.]/g, " ").replace(/\s+/g, " ").trim();
