@@ -67,10 +67,10 @@ pierde toda la fuerza.
 ### Vídeo 2 — El robot que lee tu CV
 
 ```
-0-3s   "Tu currículum no lo lee una persona."
+0-3s   "Tu currículum no siempre lo lee primero una persona."
 
-3-8s   "Lo lee un robot. Y descarta al 75% antes de que
-        nadie lo mire."
+3-8s   "Muchas veces lo pasa antes un programa. Y si no
+        lo entiende, le llega mal a quien decide."
 
 8-15s  "El robot busca palabras concretas y un formato que
         entienda. Si tu CV lleva columnas, iconos o una foto

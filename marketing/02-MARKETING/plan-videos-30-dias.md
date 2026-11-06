@@ -172,9 +172,10 @@ Luego, en casa, grabas la pantalla haciendo el proceso. En CapCut las juntas.
         [PANTALLA] Fondo con código cayendo (busca "matrix" en los
         efectos de CapCut)
 
-[8-14s] [TEXTO] "Y descarta al 75% antes de que nadie lo mire"
+[8-14s] [TEXTO] "Y si no lo entiende, le llega mal a quien decide"
         [VOZ] "Se llaman filtros ATS. Si tu currículum lleva columnas,
-        iconos o tablas, el robot no lo entiende y te descarta."
+        iconos o tablas, el programa lo lee mal." (Sin el "75 %": esa
+        cifra no tiene estudio detrás. Corregido el 6 nov 2026.)
 
 [14-21s][PANTALLA] Pantalla partida: izquierda CV con columnas y
         colores (❌), derecha plantilla ATS limpia (✅)

@@ -92,7 +92,7 @@ export const GRUPOS_FUNCIONES: GrupoFunciones[] = [
       {
         titulo: "Tablero de candidaturas",
         descripcion:
-          "Cada candidatura por fases: apuntada, enviada, entrevista, respuesta. Para saber a quién escribiste y cuándo toca insistir.",
+          "Cada candidatura por fases: apuntada, enviada, entrevista, respuesta. Para saber a quién escribiste y en qué punto está cada una.",
         ruta: "/app/pipeline",
       },
       {
@@ -205,9 +205,9 @@ export const GRUPOS_FUNCIONES: GrupoFunciones[] = [
         ruta: "/app/referidos",
       },
       {
-        titulo: "App para iPhone y iPad",
+        titulo: "App para iPhone, iPad y Android",
         descripcion:
-          "La misma cuenta en el móvil y en el ordenador. En Android se usa desde el navegador y se puede añadir a la pantalla de inicio.",
+          "En la App Store y en Google Play, con la misma cuenta que en el ordenador: lo que guardas en el móvil lo tienes en los dos sitios.",
         ruta: "/descargar",
       },
     ],

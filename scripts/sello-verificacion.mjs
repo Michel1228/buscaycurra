@@ -2966,6 +2966,40 @@ test("ni la IP del servidor ni el token del webhook de Easypanel estan en el rep
     && ipsPublicas.length === 0;
 });
 
+// ── LO QUE LA WEB DICE DE SI MISMA TIENE QUE SER VERDAD (6 nov 2026) ─────────
+//
+// La pagina de funciones decia que en Android se usa desde el navegador (esta
+// en Google Play desde el 20 ago 2026) y que el tablero avisa de "cuando toca
+// insistir" (ese aviso no existe). Y el "75 % de los CVs lo descarta un robot"
+// no tiene estudio detras: Guzzi ya lo tiene prohibido (lib/guzzi/prompts.ts),
+// pero seguia en el marketing.
+test("la web no dice que Android va por el navegador ni promete avisos que no existen", () => {
+  const f = leerFuente("lib/funciones.ts");
+  const enPlay = /const YA_EN_GOOGLE_PLAY = true;/.test(leerFuente("app/descargar/DescargaClient.tsx"));
+  return !f.includes("cuándo toca insistir")
+    && (!enPlay || !/En Android se usa desde el navegador/.test(f))
+    && (!enPlay || f.includes("Google Play"));
+});
+
+test("el mito del '75 % lo descarta un robot' no esta en la web ni en el marketing", () => {
+  const ficheros = [];
+  const recorrer = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const ruta = `${dir}/${e.name}`;
+      if (e.isDirectory()) { if (!["node_modules", ".next"].includes(e.name)) recorrer(ruta); }
+      else if (/\.(tsx?|md)$/.test(e.name)) ficheros.push(ruta);
+    }
+  };
+  for (const d of ["app", "components", "lib", "marketing"]) recorrer(d);
+  const conMito = ficheros
+    .filter(f => f !== "lib/guzzi/prompts.ts")
+    // El aviso de "NO usar" de puntos-fuertes.md no cuenta como uso.
+    .filter(f => /75 ?%[^\n]{0,80}(robot|ATS|descart)|(robot|ATS|descart)[^\n]{0,80}75 ?%/i
+      .test(leerFuente(f).replace(/\(NO usar "el 75 %[^)]*\)/g, "")));
+  if (conMito.length) console.log("      con el mito: " + conMito.join(", "));
+  return ficheros.length > 100 && conMito.length === 0;
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual
@@ -4540,6 +4574,14 @@ test("las ofertas de EURES guardan el nombre del pais, no el codigo", () => {
   const s = leerFuente("app/api/jobs/sync-eures/route.ts");
   return !/city: paisDe\(jv\)\.toUpperCase\(\)/.test(s) && s.includes('new Intl.DisplayNames(["es"], { type: "region" })')
     && s.includes("city: ciudadDe(jv)");
+});
+
+// La UE llama "EL" a Grecia y la aplicacion "GR": el 6 nov 2026 habia 25
+// ofertas griegas de EURES con pais "el" que no salian al buscar en Grecia.
+test("las ofertas griegas de EURES se guardan en Grecia (GR), no en 'EL'", () => {
+  const s = leerFuente("app/api/jobs/sync-eures/route.ts");
+  const funcion = s.slice(s.indexOf("function paisDe("), s.indexOf("async function buscarEures"));
+  return funcion.includes('return pais === "el" ? "gr" : pais;') && s.includes("const pais = paisDe(jv);");
 });
 
 // Auditoria del 3 oct 2026: a una camarera que pedia un puesto de mecanico la

@@ -50,10 +50,15 @@ function limpiarHtml(s: string): string {
     .trim();
 }
 
-/** El locationMap es { "BE": ["BE211"] }: la clave es el país ISO. */
+/**
+ * El locationMap es { "BE": ["BE211"] }: la clave es el país ISO. Salvo Grecia:
+ * la UE la llama "EL" y la aplicación "GR" (lib/paises.ts). El 6 nov 2026 había
+ * 25 ofertas griegas con país "el" que no salían al buscar en Grecia.
+ */
 function paisDe(jv: EuresJV): string {
   const claves = Object.keys(jv.locationMap || {});
-  return claves[0]?.toLowerCase() || "";
+  const pais = claves[0]?.toLowerCase() || "";
+  return pais === "el" ? "gr" : pais;
 }
 
 async function buscarEures(keyword: string, page: number): Promise<EuresJV[]> {

@@ -21,8 +21,10 @@ Verificado en `lib/cv-generator/`. Diez plantillas reales:
 | Oscura | Tecnología, diseño |
 | Folio · Firma | Formatos clásicos |
 
-**El argumento de venta que funciona:** *"El 75% de los CVs los descarta un robot
-antes de que los vea una persona. La plantilla ATS está hecha para pasar ese filtro."*
+**El argumento de venta:** *"Muchas empresas pasan los CVs por un programa (ATS) antes de
+que los lea una persona. Si el CV lleva columnas, iconos o es una imagen, lo lee mal. La
+plantilla ATS está hecha para que lo lea bien."* (NO usar "el 75 % lo descarta un robot":
+esa cifra no tiene estudio detrás; corregido el 6 nov 2026.)
 
 Y algo que casi nadie ofrece: **el CV se adapta a cada oferta con IA**
 (`lib/cv-sender/cv-personalizer.ts`). No es el mismo PDF para todas.

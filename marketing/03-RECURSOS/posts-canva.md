@@ -41,8 +41,8 @@ DIAPO 2
   Texto grande (72pt):
     "Lo lee un robot"
   Debajo (32pt, #94A3B8):
-    "Se llama filtro ATS y descarta
-     al 75% antes de que nadie mire"
+    "Se llama filtro ATS y muchas
+     empresas lo usan antes de mirar"
 
 DIAPO 3
   Título (48pt, #EF4444): "❌ Lo que NO pasa el filtro"
@@ -72,9 +72,9 @@ DIAPO 5 (cierre)
 
 **Texto del post:**
 ```
-El 75% de los currículums no los ve nadie.
+Muchos currículums los lee primero un programa, no una persona.
 
-Los descarta un robot antes. Se llama filtro ATS y busca un formato
+Se llama filtro ATS y busca un formato
 concreto: una columna, texto de verdad y las palabras que aparecen
 en la oferta.
 
