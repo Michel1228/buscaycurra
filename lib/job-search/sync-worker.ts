@@ -839,6 +839,11 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, count
   let refrescadas = 0;
   for (const j of jobs) {
     if (!j.url || !j.title) continue;
+    // Los anuncios de encuestas pagadas no entran por NINGUNA fuente. El 6 nov
+    // 2026 había 81 en la base: 71 de Careerjet y 10 de Adzuna (AT, CA, CH, ES,
+    // NZ) y EURES, en alemán e inglés ("Bezahlte Online-Umfragen", "Paid
+    // Online Survey"). El filtro solo estaba en el barrido de Careerjet.
+    if (NO_SON_OFERTAS.test(`${j.title} ${j.company || ""} ${j.description || ""}`)) continue;
     const id = makeId(j.title, j.company, j.city, j.source);
     const categoria = detectCategoria(j.title);
     try {

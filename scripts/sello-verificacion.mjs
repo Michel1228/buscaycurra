@@ -2807,6 +2807,85 @@ test("Honduras es un pais completo: minimo promedio del SAR, el 90 % y el SENAEH
   }
 });
 
+// ── LOS ANUNCIOS DE ENCUESTAS NO ENTRAN POR NINGUNA FUENTE (6 nov 2026) ─────
+//
+// El filtro estaba solo en el barrido de Careerjet. Al borrar los que ya había
+// salieron 81: 71 de Careerjet y 10 de Adzuna (AT, CA, CH, ES, NZ) y EURES, en
+// alemán e inglés. Se llama a upsertJobsForSync de verdad, con una base falsa
+// que apunta lo que se intenta guardar.
+test("los anuncios de encuestas no entran ni por Adzuna ni por EURES", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-encuestas-entrada.ts", salida = ".sello-encuestas.cjs", pgFalso = ".sello-pg-falso.cjs";
+  try {
+    writeFileSync(entrada, 'export { upsertJobsForSync } from "./lib/job-search/sync-worker";');
+    writeFileSync(pgFalso, [
+      "class Pool {",
+      "  query(sql, params) {",
+      "    (globalThis.__selloGuardadas ||= []).push(params?.[1]);",
+      "    return Promise.resolve({ rows: [{ es_nueva: true }], rowCount: 1 });",
+      "  }",
+      "}",
+      "module.exports = { Pool };",
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--alias:pg=./${pgFalso}`, "--external:ioredis", "--external:bullmq", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    globalThis.__selloGuardadas = [];
+    const nuevas = await m.upsertJobsForSync([
+      { source: "ADZUNA_AT", url: "https://a.example/1", title: "Heimarbeit - Bezahlte Online-Umfragen für die Marktforschung", company: "Proprofitworld", description: "Ein internationales digitales Unternehmen", city: "Wien" },
+      { source: "EURES_SOU", url: "https://a.example/2", title: "Part-time Remote Work - Market Research Assistant", company: "Proprofit Worldwide Ltd", description: "entry no experience", city: "Southampton" },
+      { source: "ADZUNA_CA", url: "https://a.example/3", title: "Remote Paid Online Survey Participant", company: "Clubshop | US", description: "Smart, Savvy Associates", city: "Toronto" },
+      { source: "ADZUNA_AT", url: "https://a.example/4", title: "Kellner/in", company: "Hotel Sacher", description: "Service im Restaurant", city: "Wien" },
+    ], "OTRO", "at");
+    const guardadas = globalThis.__selloGuardadas;
+    const bien = nuevas === 1 && guardadas.length === 1 && guardadas[0] === "Kellner/in";
+    if (!bien) console.log(`      guarda ${guardadas.length} (${guardadas.join(" | ")}), deberia guardar solo "Kellner/in"`);
+    return bien;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida, pgFalso]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// ── EL TÍTULO DE LA PÁGINA DE UN PAÍS DE HABLA HISPANA (6 nov 2026) ──────────
+//
+// Decía "Ofertas de empleo para españoles" también en España, México o
+// Colombia. Allí nombra sus ciudades; en el resto sigue como estaba.
+test("el titulo de un pais de habla hispana no dice 'para españoles'", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-titulo-entrada.ts", salida = ".sello-titulo.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { generateMetadata } from "./app/trabajar-en/[pais]/page";',
+      'export { LISTA_PAISES } from "./lib/paises";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", "--packages=external", "--jsx=automatic", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const titulo = async (slug) => (await m.generateMetadata({ params: Promise.resolve({ pais: slug }) })).title;
+    const casos = [
+      ["Colombia", await titulo("colombia"), "Trabajar en Colombia — Ofertas de empleo en Bogotá, Medellín y Cali 🇨🇴"],
+      ["España", await titulo("espana"), "Trabajar en España — Ofertas de empleo en Madrid, Barcelona y Valencia 🇪🇸"],
+      ["Alemania sigue igual", await titulo("alemania"), "Trabajar en Alemania — Ofertas de empleo para españoles 🇩🇪"],
+    ];
+    const hispanos = m.LISTA_PAISES.filter(p => p.idioma === "es");
+    for (const p of hispanos) {
+      const t = await titulo(p.slug);
+      if (/para españoles|undefined/.test(t)) casos.push([p.nombre, t, "sin 'para españoles' ni huecos"]);
+    }
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0 && hispanos.length >= 14;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

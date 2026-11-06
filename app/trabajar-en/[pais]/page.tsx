@@ -51,8 +51,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const pais = PAISES[codigo];
   if (!pais) return { title: "País no encontrado — BuscayCurra" };
 
+  // En un país de habla hispana "para españoles" sobra (España) o es falso
+  // (Colombia, México...: quien busca allí es sobre todo de allí). En esos se
+  // nombran sus ciudades; en el resto se deja como estaba.
+  const [c1, c2, c3] = pais.ciudades;
+  const titulo = pais.idioma === "es"
+    ? `Trabajar en ${pais.nombre} — Ofertas de empleo en ${c1}, ${c2} y ${c3} ${pais.bandera}`
+    : `Trabajar en ${pais.nombre} — Ofertas de empleo para españoles ${pais.bandera}`;
+
   return {
-    title: `Trabajar en ${pais.nombre} — Ofertas de empleo para españoles ${pais.bandera}`,
+    title: titulo,
     description: `Encuentra trabajo en ${pais.nombre}. ${formatearSalario(pais.salarioMedio, codigo)}/mes de media. Ofertas en ${pais.ciudades.slice(0, 3).join(", ")}. BuscayCurra te ayuda a encontrar empleo en ${pais.nombreLocal}.`,
     openGraph: {
       // Era 🇪🇺 para todos: al compartir la página de Japón o de Colombia salía la bandera de la UE.
