@@ -2966,6 +2966,35 @@ test("ni la IP del servidor ni el token del webhook de Easypanel estan en el rep
     && ipsPublicas.length === 0;
 });
 
+// ── CADA PAIS DE LATINOAMERICA TIENE SU FORMACION PUBLICA GRATIS (6 nov 2026) ─
+//
+// Un pais "completo" son ofertas + papeles + CV + cursos. Argentina,
+// Guatemala, El Salvador, Panama, Republica Dominicana y Honduras entraron sin
+// sus cursos publicos. Se compila de verdad y se pregunta pais por pais.
+test("cada pais de Latinoamerica de la app tiene al menos una plataforma de formacion propia", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-cursos-latam-entrada.ts", salida = ".sello-cursos-latam.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { LISTA_PAISES } from "./lib/paises";',
+      'export { plataformasPorPais } from "./lib/cursos/plataformas";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const latam = ["MX", "BR", "CO", "PE", "CL", "AR", "EC", "GT", "CR", "UY", "SV", "PA", "DO", "HN", "VE", "NI", "PY", "BO"]
+      .filter(c => m.LISTA_PAISES.some(p => p.codigo === c));
+    const sinCursos = latam.filter(c => !m.plataformasPorPais(c).some(p => p.alcance?.tipo === "paises" && p.alcance.codigos.includes(c)));
+    if (sinCursos.length) console.log("      sin formacion propia: " + sinCursos.join(", "));
+    return latam.length >= 14
+      && sinCursos.length === 0
+      && m.plataformasPorPais("PA").some(p => p.id === "inadeh-panama")
+      && !m.plataformasPorPais("GT").some(p => p.id === "inadeh-panama");
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* no existe */ } }
+  }
+});
+
 // ── LO QUE LA WEB DICE DE SI MISMA TIENE QUE SER VERDAD (6 nov 2026) ─────────
 //
 // La pagina de funciones decia que en Android se usa desde el navegador (esta

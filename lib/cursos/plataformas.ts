@@ -28,6 +28,16 @@
  *     general y el catálogo de formación solo ofrece ProFuturo, que es para
  *     docentes. Estaba en el plan original; a 2026-08 ya no es una opción real.
  *
+ * Miradas y que NO entran (2026-11-06):
+ *   · INSAFORP (El Salvador) — disuelto por ley en noviembre de 2023 y
+ *     sustituido por el INCAF; su dominio insaforp.org.sv ya no existe. El
+ *     INCAF solo lista cursos presenciales para plantilla de empresas; para
+ *     particulares va Certifícate.
+ *   · INTECAP (Guatemala) — casi todo su catálogo se paga. Lo gratis (cursos
+ *     abiertos en línea) solo se ve con cuenta; pendiente de comprobar.
+ *   · Capacitar (Ministerio de Economía, Argentina) — gratis y comprobado en
+ *     su web, pero es para pymes y emprendedores, no para quien busca empleo.
+ *
  * Miradas y que NO entran (2026-10-08):
  *   · Aula Mentor (Ministerio de Educación) — es de pago, y su web oficial no
  *     respondía para confirmar el precio. Sin precio comprobado, no se publica.
@@ -258,6 +268,229 @@ export const PLATAFORMAS: PlataformaFormacion[] = [
     ],
     actualizado: "2026-11",
   },
+  // ── Seis países más de Latinoamérica (comprobados el 6 nov 2026) ──
+
+  // ARGENTINA (1/2). Abierto el buscador oficial el 6 nov 2026: responde, se
+  // presenta como «oferta gratuita y oficial» y enseña comisiones con plazas
+  // («Últimos cupos», «Cupo completo») y filtro por municipio. La página del
+  // IPFL en la web del Ministerio de Trabajo bonaerense dice que coordina 223
+  // Centros de Formación Laboral con «cursos y trayectos formativos gratuitos»
+  // y «reconocimiento oficial»: de ahí el certificado "si". Requisitos y la
+  // lista de oficios, de El Destape (26 feb 2026). Es solo para la Provincia de
+  // Buenos Aires (no la Ciudad): lo dice el resumen porque el alcance es por país.
+  {
+    id: "ipfl-provincia-buenos-aires",
+    nombre: "IPFL — formación laboral de la Provincia de Buenos Aires",
+    resumen:
+      "Cursos de oficios gratis y con reconocimiento oficial en 223 centros de la Provincia de Buenos Aires. Solo te sirve si vives allí.",
+    url: "https://cursosipfl.trabajo.gba.gob.ar/",
+    alcance: { tipo: "paises", codigos: ["AR"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "gastronomía", "panadería", "herrería", "manicuría", "ventas", "vigilador", "presencial"],
+    certificado: "si",
+    volumen: "223 centros de formación laboral",
+    requisitos: "Tener más de 16 años y DNI. Algunos cursos piden la primaria o la secundaria terminada.",
+    aviso:
+      "Son presenciales y solo en municipios de la Provincia de Buenos Aires, no en la Ciudad. En el buscador filtras por municipio, ves fechas y horarios y te preinscribes; si pone «Cupo completo», ya no hay plaza.",
+    fuentes: [
+      { titulo: "Instituto Provincial de Formación Laboral — Ministerio de Trabajo de la Provincia de Buenos Aires", url: "https://www.trabajo.gba.gov.ar/ipfl/" },
+      { titulo: "Cursos gratuitos con certificación oficial y salida laboral en la Provincia de Buenos Aires — El Destape (26 feb 2026)", url: "https://www.eldestapeweb.com/sociedad/cursos/cursos-gratuitos-con-certificacion-oficial-y-salida-laboral-en-la-provincia-de-buenos-aires-202622615240" },
+    ],
+    actualizado: "2026-11",
+  },
+
+  // ARGENTINA (2/2). Lo que sigue vivo a nivel nacional en 2026: Formando
+  // Capital Humano, creado en abril de 2026 (Resolución 295/2026) tras cerrar
+  // Volver al Trabajo. La web oficial NO se pudo abrir: da error de certificado
+  // y su cortafuegos bloquea el lector automático («The URL you requested has
+  // been blocked»). Todo sale de prensa seria reciente: La Gaceta (1 sep 2026:
+  // «completamente gratuita», más de 60 cursos en línea, cinco categorías),
+  // Infobae (6 oct 2026: vouchers para plomería, soldadura, electricidad
+  // domiciliaria, carpintería…), El Cronista (27 abr 2026: quién puede pedir
+  // voucher) y BAE Negocios (26 jul 2026). Las cifras de cursos no cuadran entre
+  // medios (46, más de 60, 4.300): ponemos la más reciente. Certificado
+  // "no_consta": BAE habla de una «constancia digital», pero no lo hemos podido
+  // ver en la plataforma. Ojo: la resolución dice que cada curso puede ser
+  // «parcial o totalmente gratuito»; va en el aviso.
+  {
+    id: "formando-capital-humano",
+    nombre: "Formando Capital Humano (Ministerio de Capital Humano)",
+    resumen:
+      "La plataforma de formación del Gobierno argentino: cursos en línea gratis y vouchers para cursos presenciales de oficios.",
+    url: "https://formando.capitalhumano.gob.ar/",
+    alcance: { tipo: "paises", codigos: ["AR"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "plomería", "soldadura", "electricidad", "carpintería", "excel", "canva", "inteligencia artificial", "currículum y entrevista"],
+    certificado: "no_consta",
+    volumen: "Más de 60 cursos en línea",
+    requisitos:
+      "Los cursos en línea, cualquiera con internet. Los vouchers de oficios son para mayores de 18 años sin empleo formal, monotributistas sociales o de categoría A, trabajadoras de casas particulares, trabajadores rurales temporarios y asalariados que cobren hasta tres salarios mínimos.",
+    aviso:
+      "Buena parte de lo que hay en línea es de familia, cuidados y nutrición; lo de trabajo está en «Promoción Humana» y en los vouchers. La norma permite que un curso sea solo «parcialmente gratuito»: mira el detalle antes de apuntarte. El voucher depende de que haya cupo.",
+    fuentes: [
+      { titulo: "El Gobierno ofrece más de 60 cursos de formación profesional gratis y online — La Gaceta (1 sep 2026)", url: "https://www.lagaceta.com.ar/nota/1152126/sociedad/gobierno-ofrece-mas-60-cursos-formacion-profesional-gratis-online-como-inscribirse.html" },
+      { titulo: "Estos son los cursos que ofrecen el Gobierno y las empresas para aprender oficios — Infobae (6 oct 2026)", url: "https://www.infobae.com/economia/2026/10/06/estos-son-los-cursos-que-ofrecen-el-gobierno-y-las-empresas-para-aprender-oficios-quienes-pueden-acceder-y-como-inscribirse/" },
+      { titulo: "Formando Capital Humano: el nuevo programa de empleo del Gobierno y cómo anotarte — El Cronista (27 abr 2026)", url: "https://www.cronista.com/economia-politica/formando-capital-humano-el-nuevo-programa-de-empleo-del-gobierno-y-como-anotarte/" },
+    ],
+    actualizado: "2026-11",
+  },
+
+  // GUATEMALA. Abierta el 6 nov 2026 el aula virtual de la DIGEEX (Dirección
+  // General de Educación Extraescolar, Ministerio de Educación): lista cuatro
+  // NOOC gratuitos de 10 horas, virtuales y a tu ritmo (Habilidades Blandas;
+  // Búsqueda de Empleo y Autoempleo; Herramientas Tecnológicas y Redes
+  // Sociales; y uno solo para técnicos-docentes) y dice que al terminar se da
+  // una «constancia de formación o de participación». Es poco, pero es lo único
+  // gratis y abierto a todo el mundo que hemos podido confirmar en Guatemala.
+  // Las fechas de inicio que enseña no llevan año. Una nota del Gobierno del
+  // 13 oct 2026 (guatemala.gob.gt) los anuncia, pero devuelve 403 al lector
+  // automático: no se cita. INTECAP va en el bloque B.
+  {
+    id: "digeex-aula-virtual",
+    nombre: "Aula Virtual DIGEEX (Ministerio de Educación de Guatemala)",
+    resumen:
+      "Cursos cortos gratis del Ministerio de Educación, en línea y a tu ritmo: búsqueda de empleo, habilidades blandas y redes sociales.",
+    url: "https://aulavirtual.pronea.gt/",
+    alcance: { tipo: "paises", codigos: ["GT"] },
+    idiomas: ["Español"],
+    temas: ["buscar trabajo", "autoempleo", "habilidades blandas", "redes sociales", "herramientas tecnológicas"],
+    certificado: "si",
+    volumen: "4 cursos cortos de 10 horas (uno es solo para docentes)",
+    requisitos: "Crear una cuenta en el aula virtual.",
+    aviso:
+      "Son cursos de 10 horas, no una carrera. Lo que dan al terminar es una constancia de participación del Ministerio de Educación, no un título.",
+    fuentes: [
+      { titulo: "Aula Virtual DIGEEX — Dirección General de Educación Extraescolar (Mineduc)", url: "https://aulavirtual.pronea.gt/" },
+    ],
+    actualizado: "2026-11",
+  },
+
+  // EL SALVADOR. INSAFORP ya no existe: la Asamblea lo disolvió en noviembre de
+  // 2023 y lo sustituyó el INCAF; su dominio insaforp.org.sv no resuelve. El
+  // INCAF tiene un listado con 68 cursos presenciales del 7 nov al 2 dic de
+  // 2026, casi todos para plantilla de empresas (comités de seguridad,
+  // liderazgo, exportación): no lo metemos. Lo que sí sirve es Certifícate:
+  // Platzi pagado por el Gobierno. Su web (certificate.gob.sv redirige a
+  // diaspora.certificate.gob.sv) dice «más de 2000 cursos», gratis «durante el
+  // año 2026 para todos los salvadoreños», sin tarjeta, y que los certificados
+  // son tuyos. El Diario de Hoy (11 ago 2026) habla de 12 meses desde que
+  // activas la cuenta: no cuadra con la web, va en el aviso. Infobae (15 ago
+  // 2026): el INCAF certifica además más de 37 rutas, gratis.
+  {
+    id: "certificate-el-salvador",
+    nombre: "Certifícate (Gobierno de El Salvador y Platzi)",
+    resumen:
+      "Más de 2.000 cursos en línea de Platzi gratis para salvadoreños, pagados por el Gobierno: tecnología, inglés, marketing, finanzas e inteligencia artificial.",
+    url: "https://certificate.gob.sv/",
+    alcance: { tipo: "paises", codigos: ["SV"] },
+    idiomas: ["Español"],
+    temas: ["tecnología", "programación", "inteligencia artificial", "inglés", "marketing digital", "diseño", "finanzas", "emprendimiento"],
+    certificado: "si",
+    volumen: "Más de 2.000 cursos",
+    requisitos:
+      "Registrarte desde El Salvador, sin VPN. Los salvadoreños que viven fuera entran con la identidad digital del Gobierno. Solo piden nombre, apellidos y correo; nada de tarjeta.",
+    aviso:
+      "El acceso gratis caduca: la web lo anuncia para todo 2026 y la prensa habla de 12 meses desde que activas la cuenta. Antes de empezar una ruta larga, mira cuánto te queda. Los certificados que saques son tuyos para siempre, y más de 37 rutas, como la de inglés, las certifica además el INCAF.",
+    fuentes: [
+      { titulo: "Certifícate — Platzi y Presidencia de El Salvador (preguntas frecuentes)", url: "https://diaspora.certificate.gob.sv/" },
+      { titulo: "Más de 1,600 cursos gratis: cómo usar Certifícate en El Salvador — El Diario de Hoy (23 dic 2025)", url: "https://www.elsalvador.com/noticias/nacional/educacion-el-salvador-cursos-de-ingles-certificate/1256061/2025/" },
+      { titulo: "El Salvador le pone sello oficial a la plataforma Certifícate con más de 37 rutas de formación — Infobae (15 ago 2026)", url: "https://www.infobae.com/el-salvador/2026/08/15/el-salvador-le-pone-sello-oficial-a-la-plataforma-certificate-con-mas-de-37-rutas-de-formacion/" },
+    ],
+    actualizado: "2026-11",
+  },
+
+  // PANAMÁ. Abierta la web del INADEH el 6 nov 2026 (noticias de octubre de
+  // 2026, memoria 2025). La preinscripción digital responde. En «Servicios en
+  // línea» dice que en el Portal del Aprendiz «descarga tus certificados
+  // virtuales»: certificado "si". Gratuidad, cifra y requisitos, de Telemetro
+  // (3 oct 2026) y Metro Libre (29 sep 2026): 1.663 cursos y programas
+  // gratuitos en el cuarto y último periodo de 2026, clases desde el 5 oct.
+  {
+    id: "inadeh-panama",
+    nombre: "INADEH — Instituto Nacional de Formación Profesional y Capacitación para el Desarrollo Humano",
+    resumen:
+      "Los cursos de oficios gratis del Gobierno de Panamá, en todo el país: construcción, electricidad, gastronomía, turismo, idiomas y mucho más.",
+    url: "https://digital.inadeh.edu.pa/preinscrip/",
+    alcance: { tipo: "paises", codigos: ["PA"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "construcción", "electricidad", "refrigeración", "mecánica", "logística", "tecnología", "gastronomía", "turismo", "idiomas", "belleza", "energías renovables"],
+    certificado: "si",
+    volumen: "1.663 cursos y programas en el último periodo de 2026",
+    requisitos:
+      "Tener 18 años (de 16 a 17, con el permiso correspondiente) y ser panameño o tener cédula con condición E o N. Para la preinscripción hace falta un correo electrónico.",
+    aviso:
+      "Va por periodos: el último de 2026 empezó a dar clase el 5 de octubre. Las plazas dependen de cada centro; si no hay en el tuyo, mira el siguiente periodo. También te puedes apuntar en cualquier centro del INADEH.",
+    fuentes: [
+      { titulo: "Cursos INADEH 2026: abren preinscripción para 1,663 capacitaciones gratuitas — Telemetro (3 oct 2026)", url: "https://www.telemetro.com/nacionales/cursos-inadeh-2026-abren-preinscripcion-1663-capacitaciones-gratuitas-n6093937" },
+      { titulo: "INADEH abre su último periodo de formación de 2026 con 1,663 cursos gratuitos — Metro Libre (29 sep 2026)", url: "https://www.metrolibre.com/nacionales/inadeh-abre-su-ultimo-periodo-de-formacion-de-2026-con-1663-cursos-gratuitos-en-todo-el-pais-CD26070323" },
+      { titulo: "INADEH — Servicios en línea (preinscripción y certificados)", url: "https://www.inadeh.edu.pa/servicios-en-linea/" },
+    ],
+    actualizado: "2026-11",
+  },
+
+  // REPÚBLICA DOMINICANA. La web general (infotep.gob.do) devuelve 403 al lector
+  // automático. INFOTEP Virtual sí responde: sus preguntas frecuentes dan los
+  // requisitos y que «los certificados se emiten por lo regular, a los 45 días
+  // laborables» (certificado "si"); la página de cupos tenía el 6 nov 2026 doce
+  // cursos con plaza (Secretariado Auxiliar, Operaciones Básicas de Programas de
+  // Oficina, Huawei HCIA) que empiezan entre el 9 y el 16 de noviembre. Diario
+  // Libre (9 oct 2026): 163 ofertas virtuales abiertas ese día, máximo dos
+  // cursos a la vez. Gratuidad: Ensegundos (10 oct 2026) y el comunicado de
+  // INFOTEP en El Nuevo Diario (2023): «no cobra ni un sólo centavo».
+  {
+    id: "infotep-virtual",
+    nombre: "INFOTEP Virtual (Instituto Nacional de Formación Técnico Profesional)",
+    resumen:
+      "Los cursos en línea gratis del INFOTEP dominicano, con certificado: ofimática, secretariado, ventas, marketing digital, Excel e inteligencia artificial.",
+    url: "https://infotepvirtual.com/index.php/component/gestion/?contr=oferta&task=oferta&Itemid=290",
+    alcance: { tipo: "paises", codigos: ["DO"] },
+    idiomas: ["Español"],
+    temas: ["ofimática", "excel", "secretariado", "ventas", "marketing digital", "redes sociales", "inteligencia artificial", "python", "servicio al cliente", "seguridad y salud ocupacional"],
+    certificado: "si",
+    volumen: "163 cursos virtuales abiertos en octubre de 2026",
+    requisitos:
+      "Tener 16 años o más, cédula y una certificación de estudios. Según el curso, piden ser bachiller y haber hecho antes «Operaciones Básicas de Programas de Oficina».",
+    aviso:
+      "Solo puedes estar en dos cursos a la vez y, una vez empezado, no te puedes retirar. Las plazas vuelan: mira «Cupos disponibles». El certificado llega unos 45 días laborables después de terminar. INFOTEP no cobra: si alguien te pide dinero por una plaza, no es INFOTEP.",
+    fuentes: [
+      { titulo: "Infotep abre más de 160 cursos virtuales: conozca las ofertas y cómo inscribirse — Diario Libre (9 oct 2026)", url: "https://www.diariolibre.com/actualidad/educacion/2026/10/09/capacitacion-online-infotep-con-163-ofertas-disponibles/3683070" },
+      { titulo: "163 cursos virtuales gratuitos en INFOTEP: conoce cómo inscribirte — Ensegundos (10 oct 2026)", url: "https://ensegundos.do/2026/10/10/163-cursos-virtuales-gratuitos-en-infotep-conoce-como-inscribirte/" },
+      { titulo: "INFOTEP Virtual — requisitos y certificados (preguntas frecuentes)", url: "https://www.infotepvirtual.com/" },
+      { titulo: "Infotep aclara que los servicios que ofrece son libres de costo — El Nuevo Diario (3 jun 2023)", url: "https://elnuevodiario.com.do/infotep-aclara-servicios-que-ofrece-son-libres-de-costo-llama-a-denunciar-cobro-de-desaprensivos/" },
+    ],
+    actualizado: "2026-11",
+  },
+
+  // HONDURAS. Abiertas el 6 nov 2026 la inscripción (inscripciones.infop.hn:
+  // «Todos nuestros cursos son completamente gratuitos», ser hondureño, mayor
+  // de 15 años, máximo tres cursos), infopvirtual.com («Mas de 80 cursos», todos
+  // marcados «Gratuito») e infop.hn/cursos (110 cursos, los vistos marcados
+  // «Gratis»). Las dos webs tienen un portal de «Certificados» y La Prensa
+  // (27 feb 2026) explica qué hay que aprobar para sacarlo: certificado "si".
+  // El Heraldo (26 mar 2026): Infop Virtual 2026, cursos de 20 horas en dos
+  // semanas, «completamente gratuitos».
+  {
+    id: "infop-honduras",
+    nombre: "INFOP — Instituto Nacional de Formación Profesional",
+    resumen:
+      "Cursos gratis del Gobierno de Honduras: más de 80 en línea y otros presenciales en sus centros de todo el país.",
+    url: "https://inscripciones.infop.hn/",
+    alcance: { tipo: "paises", codigos: ["HN"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "ofimática", "administración", "pymes", "tecnología", "turismo", "gastronomía", "inglés", "inteligencia artificial", "seguridad y salud ocupacional", "servicio al cliente"],
+    certificado: "si",
+    volumen: "Más de 80 cursos en línea",
+    requisitos: "Ser hondureño y mayor de 15 años, con computadora o celular con internet. Máximo tres cursos a la vez.",
+    aviso:
+      "Los cursos en línea suelen ser de 20 horas en dos semanas, y para el certificado hay que hacer todas las actividades y aprobar las evaluaciones. Los presenciales (barbería, carpintería, cocina, reparación de celulares…) están en infop.hn/cursos y se apuntan en el propio centro.",
+    fuentes: [
+      { titulo: "Infop lanza plataforma virtual con más de 40 cursos gratis — El Heraldo (26 mar 2026)", url: "https://www.elheraldo.hn/honduras/infop-lanza-plataforma-virtual-con-mas-40-cursos-gratuitos-distintas-areas-HC29900272" },
+      { titulo: "Así puede matricularse en los cursos gratuitos del Infop — La Prensa (27 feb 2026)", url: "https://www.laprensa.hn/honduras/cursos-gratis-infop-modalidad-linea-matricula-inscripcion-KG29492954" },
+      { titulo: "INFOP — inscripción a cursos virtuales", url: "https://inscripciones.infop.hn/" },
+    ],
+    actualizado: "2026-11",
+  },
+
   {
     id: "santander-open-academy",
     nombre: "Santander Open Academy",
