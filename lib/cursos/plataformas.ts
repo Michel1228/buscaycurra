@@ -491,6 +491,65 @@ export const PLATAFORMAS: PlataformaFormacion[] = [
     actualizado: "2026-11",
   },
 
+  // VENEZUELA. Abierto el campus virtual del INCES el 6 nov 2026: sus preguntas
+  // frecuentes dicen «formaciones gratuitas», «más de 90 formaciones», «todo
+  // público mayor de 14 años», que no hay horario y que el certificado llega
+  // por correo al terminar el trimestre si apruebas con 14 puntos o más. La
+  // portada del INCES tenía noticias del 6 nov 2026. (Otra comprobación del
+  // mismo día lo encontró con error 502: si falla, puede ser pasajero.)
+  {
+    id: "inces-campus-virtual",
+    nombre: "INCES — Campus virtual",
+    resumen:
+      "Más de 90 formaciones virtuales gratuitas del INCES de Venezuela, sin horario fijo y con certificado.",
+    url: "https://campus.inces.edu.ve/",
+    alcance: { tipo: "paises", codigos: ["VE"] },
+    idiomas: ["Español"],
+    temas: ["formación técnica", "competencias digitales", "formación laboral"],
+    certificado: "si",
+    volumen: "Más de 90 formaciones",
+    requisitos: "Mayores de 14 años.",
+    aviso:
+      "El certificado llega por correo al terminar el trimestre, si apruebas con 14 puntos o más. Los cursos presenciales del INCES se buscan aparte, en hacer.inces.gob.ve.",
+    fuentes: [
+      { titulo: "Campus virtual del INCES — preguntas frecuentes (6 nov 2026)", url: "https://campus.inces.edu.ve/" },
+      { titulo: "INCES — portada, con noticias del 6 nov 2026", url: "https://www.inces.gob.ve/" },
+    ],
+    actualizado: "2026-11",
+  },
+
+  // NICARAGUA. Abierta la web del Tecnológico Nacional (el antiguo INATEC) el
+  // 6 nov 2026: se presenta como «Capacitación y Educación Técnica y
+  // Tecnológica gratuita», con noticias de octubre y noviembre de 2026 y un
+  // cartel de «Oferta 2027». Su nota del 6 nov 2025 da la oferta de 2026: 79
+  // carreras técnicas en 73 centros, presencial, virtual, dual y a distancia;
+  // para matricularse, 14 años cumplidos y cédula o partida de nacimiento. La
+  // matrícula en línea responde y pide cédula o partida, foto y diploma o
+  // certificado de notas. Ojo: casi toda la prensa que lo cubre (Canal 4, TN8)
+  // es oficialista; por eso la fuente principal es la propia institución. No
+  // dicen qué título dan: "no_consta".
+  {
+    id: "tecnologico-nacional-nicaragua",
+    nombre: "Tecnológico Nacional (INATEC)",
+    resumen:
+      "La formación técnica pública de Nicaragua: carreras técnicas y cursos gratis en más de 70 centros, presenciales y en línea.",
+    url: "https://serviciosenlinea.tecnacional.edu.ni/academicos/registro/cursos",
+    alcance: { tipo: "paises", codigos: ["NI"] },
+    idiomas: ["Español"],
+    temas: ["oficios", "técnico", "agropecuario", "industria", "construcción", "comercio", "servicios", "inglés", "mecánica"],
+    certificado: "no_consta",
+    volumen: "79 carreras técnicas en 73 centros (oferta de 2026)",
+    requisitos:
+      "Tener 14 años cumplidos y cédula o partida de nacimiento, foto tamaño carné y el diploma o certificado de notas. Las carreras piden noveno grado o bachillerato según el nivel.",
+    aviso:
+      "Las carreras técnicas van por matrícula una o dos veces al año; la de 2026 abrió el 6 de enero. Los cursos cortos de capacitación salen por programas y por municipio: búscalos en la web por departamento.",
+    fuentes: [
+      { titulo: "Oferta Formativa 2026 de Educación Técnica — Tecnológico Nacional (6 nov 2025)", url: "https://www.tecnacional.edu.ni/noticias/oferta-formativa-2026-de-educacion-tecnica-decidite-por-un-futuro-de-oportunidades/" },
+      { titulo: "Educación técnica: carreras y requisitos — Tecnológico Nacional", url: "https://tecnacional.edu.ni/educacion-tecnica/" },
+    ],
+    actualizado: "2026-11",
+  },
+
   // ── India y Sudáfrica (comprobadas el 6 nov 2026) ──
   // Skill India Digital Hub NO entra todavía: su web no se deja leer y las
   // notas del PIB no dicen si los cursos son gratis. Sin precio comprobado, no
@@ -932,6 +991,13 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
   // El resto de Latinoamérica (5 nov 2026). Se le enseñan a quien está allí,
   // porque de esos países todavía no tenemos ofertas. Venezuela no está: no
   // hemos encontrado una bolsa de empleo oficial que se pueda comprobar.
+  // Revisado otra vez el 6 nov 2026: la LOTTT convirtió las agencias públicas
+  // de empleo en «Centros de Encuentro para la Educación y el Trabajo»
+  // (disposición transitoria quinta) y trabajo.gob.ve no responde. Nicaragua
+  // tampoco: el Código del Trabajo (art. 16) manda tener un servicio público
+  // de empleo (el SEPEM), pero mitrab.gob.ni no se abre desde fuera del país y
+  // su última lista de vacantes archivada es de 2018. Sin comprobar que
+  // funciona, no se publica.
   // Fuentes: Andina y dplnews (Perú); Publimetro y Noticias RCN (Colombia);
   // Los Andes y BAE Negocios (Argentina); ChileAtiende (Chile); instructivo
   // del Ministerio del Trabajo (Ecuador); gub.uy (Uruguay); MTSS y Delfino

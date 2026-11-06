@@ -1513,6 +1513,83 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── VENEZUELA (6 nov 2026) ───────────────────────────────────────────────
+  // Fuentes: Exteriores (visado de trabajo; prórroga en el SAIME), Finanzas
+  // Digital (prórroga de la TR-L, 17 feb 2025), LOTTT art. 27, y la Embajada
+  // de España en Caracas (Seguro Social: el trabajador aporta un 4 % y la
+  // empresa entre un 9 y un 11 % según el riesgo). Sin un portal local de
+  // alquiler que se haya podido abrir ni una fuente fiable de precios, solo se
+  // pone el alquiler mensual de Airbnb. La cédula de extranjero y el RIF no se
+  // han podido confirmar para quien entra con visa de trabajo: no se ponen.
+  VE: {
+    codigo: "VE",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "No hemos encontrado una visa de au pair en Venezuela: cuidar niños en una casa pide el mismo permiso de trabajo que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Venezuela/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Venezuela, lo práctico es empezar por un alquiler mensual o una habitación. Pide por escrito cuánto es el depósito, en qué moneda y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Hace falta una empresa que te contrate y una visa de trabajo (transeúnte laboral) de un consulado de Venezuela. Se prorroga cada año en el SAIME.",
+      enlaceOficial: "https://www.saime.gob.ve/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Visa de trabajo (transeúnte laboral, TR-L)", descripcion: "La pides en un consulado de Venezuela, con la empresa que te contrata. Con entrada de turista no puedes trabajar.", tiempoObtener: "Antes de viajar", obligatorio: true },
+        { nombre: "Prórroga en el SAIME", descripcion: "La visa se prorroga por un año en el SAIME, con la autorización laboral renovada (y un poder notariado de la empresa si tramita otra persona).", tiempoObtener: "Antes de que venza", obligatorio: true, enlaceOficial: "https://www.saime.gob.ve/" },
+        { nombre: "Seguro Social (IVSS)", descripcion: "Con contrato cotizas al Seguro Social: a ti te descuentan un 4 % y la empresa pone entre un 9 y un 11 %, según el riesgo del trabajo.", tiempoObtener: "Al empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.ivss.gov.ve/" },
+      ],
+      consejo: "El orden: oferta de una empresa → visa de trabajo en un consulado → al empezar, Seguro Social → prórroga en el SAIME cada año, antes de que venza.",
+    },
+  },
+
+  // ─── NICARAGUA (6 nov 2026) ───────────────────────────────────────────────
+  // Fuentes: Embajada de España en Managua (residencia en la Dirección General
+  // de Migración y Extranjería o en un consulado; temporal de 1 a 3 años;
+  // partida de nacimiento y antecedentes legalizados; depósito del billete de
+  // vuelta), Código del Trabajo (art. 14, 90 %), PRONicaragua (cédula de
+  // residencia en vigor) y La Prensa (afiliados al INSS). Encuentra24 tiene
+  // sección de alquiler en Nicaragua (comprobado por buscador; su web responde
+  // 403 a los robots, como la de Honduras). Sin una fuente fiable de precios,
+  // no se pone ninguno.
+  NI: {
+    codigo: "NI",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "No hemos encontrado una visa de au pair en Nicaragua: cuidar niños en una casa pide la misma residencia que cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Encuentra24", url: "https://www.encuentra24.com/nicaragua-es/bienes-raices-alquiler-apartamentos", descripcion: "Anuncios de apartamentos y habitaciones en alquiler en Nicaragua, sobre todo en Managua." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Nicaragua/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Nicaragua, lo práctico es empezar por un alquiler mensual o una habitación. No pagues nada sin haber visto el sitio, y pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Hace falta una empresa que te contrate y la residencia temporal (de uno a tres años) de la Dirección General de Migración y Extranjería, o de un consulado de Nicaragua si estás fuera.",
+      enlaceOficial: "https://www.migob.gob.ni/migracion/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Partida de nacimiento y antecedentes penales", descripcion: "Legalizados. Los piden para la residencia: tráelos de tu país.", tiempoObtener: "Antes de viajar", obligatorio: true },
+        { nombre: "Residencia temporal", descripcion: "La da la Dirección General de Migración y Extranjería y dura de uno a tres años. Piden además un depósito igual al billete de vuelta a tu país.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.migob.gob.ni/migracion/" },
+        { nombre: "Cédula de residencia", descripcion: "Tu documento como residente. La empresa te la pide para contratarte y tiene que estar en vigor mientras trabajes.", tiempoObtener: "Tras la residencia", obligatorio: true },
+        { nombre: "Seguro social (INSS)", descripcion: "Con contrato formal cotizas al Instituto Nicaragüense de Seguridad Social.", tiempoObtener: "Al empezar a trabajar", obligatorio: true },
+      ],
+      consejo: "El orden: papeles legalizados en tu país → oferta de una empresa → residencia en Migración → cédula de residencia → INSS.",
+    },
+  },
+
   // ─── INDIA (6 nov 2026) ───────────────────────────────────────────────────
   // Fuentes: consulados y embajadas de India (Employment Visa, sin e-Visa,
   // registro en la FRRO en 14 días si pasa de 180 días), e-FRRO del Bureau of

@@ -55,6 +55,8 @@ const PAISES_MAP: Record<string, { flag: string; nombre: string }> = {
   PA: { flag: "🇵🇦", nombre: "Panamá" },
   DO: { flag: "🇩🇴", nombre: "República Dominicana" },
   HN: { flag: "🇭🇳", nombre: "Honduras" },
+  VE: { flag: "🇻🇪", nombre: "Venezuela" },
+  NI: { flag: "🇳🇮", nombre: "Nicaragua" },
   ZA: { flag: "🇿🇦", nombre: "Sudáfrica" },
 };
 

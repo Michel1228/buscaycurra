@@ -94,6 +94,8 @@ export default async function LandingPage() {
     PA: { flag: "🇵🇦", nombre: "Panamá" },
     DO: { flag: "🇩🇴", nombre: "República Dominicana" },
     HN: { flag: "🇭🇳", nombre: "Honduras" },
+    VE: { flag: "🇻🇪", nombre: "Venezuela" },
+    NI: { flag: "🇳🇮", nombre: "Nicaragua" },
     IN: { flag: "🇮🇳", nombre: "India" },
     ZA: { flag: "🇿🇦", nombre: "Sudáfrica" },
   };

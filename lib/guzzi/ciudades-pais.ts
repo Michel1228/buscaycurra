@@ -311,6 +311,7 @@ const CIUDADES: Record<string, [string, string[]]> = {
   caracas: ["VE", ["caracas"]],
   maracaibo: ["VE", ["maracaibo"]],
   barquisimeto: ["VE", ["barquisimeto"]],
+  maracay: ["VE", ["maracay"]],
   quito: ["EC", ["quito"]],
   guayaquil: ["EC", ["guayaquil"]],
   montevideo: ["UY", ["montevideo"]],
@@ -322,6 +323,9 @@ const CIUDADES: Record<string, [string, string[]]> = {
   "san pedro sula": ["HN", ["san pedro sula"]],
   "san salvador": ["SV", ["san salvador"]],
   managua: ["NI", ["managua"]],
+  masaya: ["NI", ["masaya"]],
+  matagalpa: ["NI", ["matagalpa"]],
+  chinandega: ["NI", ["chinandega"]],
   "la habana": ["CU", ["la habana", "habana"]],
   habana: ["CU", ["la habana", "habana"]],
   "ciudad de panama": ["PA", ["ciudad de panama", "ciudad de panamá"]],
@@ -343,7 +347,8 @@ const CIUDADES: Record<string, [string, string[]]> = {
 const HOMONIMAS: Record<string, string[]> = {
   guadalajara: ["MX", "ES"],
   merida: ["MX", "ES", "VE"],
-  leon: ["MX", "ES"],
+  // León de Nicaragua, desde que Nicaragua es un país de la app (6 nov 2026).
+  leon: ["MX", "ES", "NI"],
   cordoba: ["ES", "AR", "MX"],
   salamanca: ["ES", "MX"],
   toledo: ["ES", "US", "BR"],

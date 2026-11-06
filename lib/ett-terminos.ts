@@ -68,6 +68,14 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   PA: ["agencia de empleo", "agencia de reclutamiento"],
   DO: ["agencia de empleo", "agencia de reclutamiento"],
   HN: ["agencia de empleo", "agencia de reclutamiento"],
+  // En Venezuela no hay ETT: la LOTTT (art. 48) prohíbe la tercerización, y
+  // las agencias públicas de empleo pasaron a ser «Centros de Encuentro para la
+  // Educación y el Trabajo» (disposición transitoria quinta). Se busca como
+  // agencias.
+  VE: ["agencia de empleo", "agencia de reclutamiento"],
+  // En Nicaragua el Ministerio del Trabajo autoriza y regula las agencias
+  // privadas de empleo (Código del Trabajo, art. 16).
+  NI: ["agencia de empleo", "agencia de reclutamiento"],
   // En India las agencias se anuncian como "placement consultancy" o "staffing
   // agency" (el portal público NCS habla de "placement organisations" y la
   // patronal es la Indian Staffing Federation). Son términos de búsqueda, no

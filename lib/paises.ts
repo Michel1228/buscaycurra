@@ -916,6 +916,99 @@ export const PAISES: Record<string, PaisConfig> = {
     slug: "honduras",
   },
 
+  // Venezuela entra el 6 nov 2026, por el barrido de Careerjet.
+  VE: {
+    codigo: "VE",
+    nombre: "Venezuela",
+    nombreLocal: "Venezuela",
+    moneda: "VES",
+    simboloMoneda: "Bs.",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇻🇪",
+    // Salario mínimo LEGAL: Bs. 130 al mes desde el 15 mar 2022 (Decreto 4.653,
+    // Gaceta Oficial Extraordinaria 6.691), sin cambios desde entonces. A la
+    // tasa del BCV del 6 nov 2026 son unos 0,15 US$. Lo que cobra de verdad
+    // quien está en el mínimo es el «ingreso mínimo integral»: 240 US$ al mes
+    // desde mayo de 2026 (anuncio del 30 abr; 200 US$ de bono contra la guerra
+    // económica + 40 US$ de cestaticket, en bolívares a la tasa del BCV; sin
+    // Gaceta del ajuste). Son bonos: no cuentan para prestaciones, vacaciones
+    // ni utilidades, que se calculan con los 130 Bs. El bono solo obliga al
+    // sector público (Decreto 4.805, GO Ext. 6.746); a las empresas privadas el
+    // Gobierno les pidió llegar a 240 US$, sin norma que las obligue.
+    // Aquí va el LEGAL, que es lo que dice la etiqueta. En
+    // public/data/salarios-minimos.json va el integral en bolívares (215.069),
+    // porque con 130 Bs el comparador de salarios diría que un camarero cobra
+    // menos de un dólar al mes. La diferencia es a propósito.
+    salarioMinimo: 130,
+    // SIN ESTADÍSTICA OFICIAL: ni el INE ni el BCV publican salarios medios.
+    // Esto es la media del sector privado FORMAL en el primer trimestre de 2026
+    // según una encuesta de la patronal, la Encuesta Cualitativa a Cámaras
+    // Empresariales de Fedecámaras: 283 US$ (obrero 223, profesional 471,
+    // gerente 806; El Nacional, 9 jun 2026), pasados a bolívares con la tasa
+    // del BCV del 6 nov 2026 (896,1225). Deja fuera el empleo informal. La
+    // ENCOVI 2025 de la UCAB (datos de mayo de 2025) daba 230,1 US$ al
+    // asalariado privado y 116,9 al público.
+    salarioMedio: 253603,
+    // El BCE no publica el bolívar: 1,1165 $ por euro (BCE) × 896,1225 Bs por
+    // dólar (BCV, fecha valor 6 nov 2026). El BCV da su propio euro: 1.004,96.
+    // OJO, CADUCA RÁPIDO: de enero a septiembre de 2026 la inflación fue del
+    // 225,3 % (Bloomberg Línea). Este cambio, el salario medio y el integral del
+    // JSON están a la misma tasa: se actualizan juntos, cada mes.
+    tasaCambioEUR: 1000.52,
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    // Por ofertas en la base el 6 nov 2026: Caracas 913, Valencia 325,
+    // Maracaibo 204, Maracay 62 y Barquisimeto 40. Valencia también es de
+    // España: lib/guzzi/ciudades-pais.ts ya la tiene en HOMONIMAS.
+    ciudades: ["Caracas", "Valencia", "Maracaibo", "Maracay", "Barquisimeto"],
+    // Las palabras que más se repiten en los títulos de sus ofertas en la base
+    // el 6 nov 2026: ventas 241, analista 216, asesor 133, asistente 117 y
+    // administrativo 73. Vendedor (76) se queda fuera porque ya va "ventas".
+    keywordsLaborales: ["ventas", "analista", "asesor", "asistente", "administrativo"],
+    slug: "venezuela",
+  },
+
+  // Nicaragua entra el 6 nov 2026, por el barrido de Careerjet.
+  NI: {
+    codigo: "NI",
+    nombre: "Nicaragua",
+    nombreLocal: "Nicaragua",
+    moneda: "NIO",
+    simboloMoneda: "C$",
+    posicionSimbolo: "antes",
+    idioma: "es",
+    bandera: "🇳🇮",
+    // Salario mínimo PROMEDIO del 1 mar 2026 al 28 feb 2027: C$9.237,84, la
+    // media simple de los nueve sectores del Acta 1 CNSM-05/03/2026 de la
+    // Comisión Nacional de Salario Mínimo (Ley 625), sin la zona franca, que va
+    // por su acuerdo quinquenal (C$9.986,46 en 2026). EFE dio C$9.237,86. Cada
+    // sector tiene el suyo: de C$6.188,02 en el campo (más alimentación) a
+    // C$13.848,23 en construcción y finanzas; comercio, restaurantes, hoteles y
+    // transporte, C$11.350,08. Se toma el promedio, como en Honduras.
+    salarioMinimo: 9238,
+    // Salario promedio de los afiliados al INSS en enero y febrero de 2026:
+    // C$16.447 (BCN, según La Prensa, 14 may 2026). Es solo el empleo formal:
+    // 813.056 afiliados.
+    salarioMedio: 16447,
+    // El BCE no publica el córdoba: 1,1165 $ por euro (BCE) × 36,6243 córdobas
+    // por dólar (tipo oficial del BCN), 6 nov 2026. El BCN da el mismo valor
+    // para todos los días de noviembre: lo tiene fijo.
+    tasaCambioEUR: 40.89,
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    // Por ofertas en la base el 6 nov 2026: Managua 866, León 43, Masaya 42,
+    // Matagalpa 37 y Chinandega 36. León también es de México y de España (ver
+    // HOMONIMAS en lib/guzzi/ciudades-pais.ts).
+    ciudades: ["Managua", "León", "Masaya", "Matagalpa", "Chinandega"],
+    // Las palabras que más se repiten en los títulos de sus ofertas en la base
+    // el 6 nov 2026: ventas 159, auxiliar 144, supervisor 67, conductor 48 y
+    // bodega 33. Ejecutivo (62) y asesor (58) también salen; se dejan fuera
+    // para que haya oficios distintos (decisión nuestra).
+    keywordsLaborales: ["ventas", "auxiliar", "supervisor", "conductor", "bodega"],
+    slug: "nicaragua",
+  },
+
   // India entra el 6 nov 2026. Adzuna ya traía 45.406 ofertas vivas, en inglés;
   // desde hoy entra también en el barrido completo (in:20).
   IN: {
@@ -1042,7 +1135,9 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.SV,  // El Salvador — 437 USD/mes (~388 €)
   PAISES.PA,  // Panamá — 756 PAB/mes, mediana (~671 €)
   PAISES.DO,  // República Dominicana — 39.566 DOP/mes (~575 €)
+  PAISES.NI,  // Nicaragua — 16.447 NIO/mes, afiliados al INSS (~402 €)
   PAISES.HN,  // Honduras — 10.356 HNL/mes (~341 €)
+  PAISES.VE,  // Venezuela — 253.603 VES/mes, privado formal según Fedecámaras (~253 €)
   PAISES.IN,  // India — 22.699 INR/mes (~216 €)
 ];
 

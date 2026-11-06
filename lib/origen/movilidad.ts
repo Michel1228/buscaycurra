@@ -142,6 +142,33 @@ const ANDINOS_EN_ECUADOR = new Set(["CO", "PE", "BO"]);
  */
 const MERCOSUR_EN_URUGUAY = new Set(["AR", "BR", "PY", "BO", "CL", "CO", "EC", "PE", "VE"]);
 
+/**
+ * Venezuela y Nicaragua como país de ORIGEN (6 nov 2026).
+ *
+ * Colombia: el Permiso por Protección Temporal (PPT) del Estatuto Temporal de
+ * Protección ya solo se abre a niños, niñas y adolescentes venezolanos, y el
+ * PEP Tutor (para sus padres, madres, cuidadores y tutores) se puede pedir
+ * hasta el 31 dic 2026 (Migración Colombia, nota del 22 jul 2026; El Diario,
+ * 6 sep 2026). Para los demás, la visa ordinaria (M Trabajador).
+ *
+ * España: la residencia por razones humanitarias que se daba a venezolanos con
+ * el asilo denegado se cerró en junio de 2026; las que ya existen valen hasta
+ * que caducan, pero no se renuevan solas (El Nacional, 19 jun 2026). La
+ * regularización extraordinaria (Real Decreto 316/2026) se pidió del 16 abr
+ * al 30 jun 2026 (La Moncloa, 21 abr 2026): ya no está abierta. Sigue en pie
+ * lo de siempre: a los iberoamericanos les bastan dos años de residencia legal
+ * para pedir la nacionalidad (Código Civil, art. 22.1).
+ *
+ * Costa Rica: categoría especial temporal complementaria (Resolución
+ * DG-0064-05-2026, La Gaceta 98, alcance 65) para nicaragüenses, venezolanos,
+ * cubanos y colombianos que pidieron refugio entre el 1 jun 2014 y el 7 may
+ * 2026 y lo tienen pendiente o denegado (Delfino, 1 jun 2026). Dos años
+ * renovables y 95 US$; se pide desde el 1 sep 2026 (Observador, 10 ago 2026).
+ * La fecha de cierre sale distinta en la misma noticia y no se ha encontrado
+ * si deja trabajar: no se afirma ninguna de las dos cosas.
+ */
+const CATEGORIA_ESPECIAL_COSTA_RICA = new Set(["NI", "VE", "CU", "CO"]);
+
 const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   MX: {
     titulo: "Instituto Nacional de Migración — Gobierno de México",
@@ -198,6 +225,14 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
   HN: {
     titulo: "Instituto Nacional de Migración — Honduras",
     url: "https://inm.gob.hn/",
+  },
+  VE: {
+    titulo: "SAIME — Migración y Extranjería de Venezuela",
+    url: "https://www.saime.gob.ve/",
+  },
+  NI: {
+    titulo: "Dirección General de Migración y Extranjería — Nicaragua",
+    url: "https://www.migob.gob.ni/migracion/",
   },
   IN: {
     titulo: "Visados de India — portal oficial de solicitud",
@@ -361,6 +396,49 @@ export function movilidadDe(origen: string | null | undefined, destino: string):
       explicacion:
         "Con tu nacionalidad puedes pedir en Uruguay la residencia permanente (Ley 19.254), sin oferta de trabajo y gratis. Cancillería tiene 30 días hábiles para resolver, y al empezar el trámite te dan una cédula provisoria.",
       enlaceOficial: OFICIAL_POR_DESTINO.UY,
+    };
+  }
+
+  // Venezuela → Colombia: el PPT ya solo se abre a menores; PEP Tutor para sus familias.
+  if (d === "CO" && o === "VE") {
+    return {
+      regimen: "visado_general",
+      titulo: "El PPT ya solo se abre a menores",
+      explicacion:
+        "El Permiso por Protección Temporal (PPT) ya solo admite a niños, niñas y adolescentes venezolanos. Si eres su padre, madre, cuidador o tutor, puedes pedir el PEP Tutor hasta el 31 de diciembre de 2026. Si no, la vía es la de cualquier extranjero: una empresa que te contrate y pida por ti la visa M Trabajador.",
+      enlaceOficial: OFICIAL_POR_DESTINO.CO,
+    };
+  }
+
+  // Venezuela o Nicaragua → España: sin vía humanitaria ni regularización
+  // abierta; nacionalidad a los dos años. Va antes de la rama general de la UE,
+  // que si no se la come.
+  if (d === "ES" && (o === "VE" || o === "NI")) {
+    return {
+      regimen: "visado_general",
+      titulo: "Necesitas permiso de trabajo",
+      explicacion:
+        (o === "VE"
+          ? "La residencia por razones humanitarias que España daba a venezolanos con el asilo denegado se cerró en junio de 2026, y la regularización extraordinaria terminó el 30 de junio. "
+          : "La regularización extraordinaria de 2026 terminó el 30 de junio. ") +
+        "Para trabajar hace falta visado y permiso de trabajo, normalmente con una empresa que te contrate desde tu país. Lo que sí tienes por ser de Iberoamérica: con dos años de residencia legal en España puedes pedir la nacionalidad española.",
+      noTeAplica: [
+        "La acreditación de competencias por experiencia pide nacionalidad española o de la UE, o permiso de residencia y trabajo en vigor.",
+        "El formulario U2 para llevarte el paro solo vale si ya estabas cobrando prestación en un país de la UE.",
+        "Los derechos del Acuerdo Europeo de au pair se reclaman en los países que lo ratificaron, no desde fuera.",
+      ],
+      enlaceOficial: { titulo: "Migraciones — Ministerio de Inclusión, Seguridad Social y Migraciones", url: "https://www.inclusion.gob.es/web/migraciones" },
+    };
+  }
+
+  // Nicaragua o Venezuela (y Cuba, Colombia) → Costa Rica: categoría especial si ya pediste refugio allí.
+  if (d === "CR" && CATEGORIA_ESPECIAL_COSTA_RICA.has(o)) {
+    return {
+      regimen: "visado_general",
+      titulo: "Necesitas residencia, salvo un caso",
+      explicacion:
+        "Para ir a trabajar a Costa Rica hace falta, como a cualquier extranjero, una categoría de residencia ligada a una empresa. El caso aparte: si ya estás allí y pediste refugio entre el 1 de junio de 2014 y el 7 de mayo de 2026, y lo tienes pendiente o te lo denegaron, Migración abrió en 2026 una categoría especial temporal de dos años renovables, que se pide desde el 1 de septiembre de 2026. Confirma en Migración hasta cuándo se puede pedir y qué te permite.",
+      enlaceOficial: OFICIAL_POR_DESTINO.CR,
     };
   }
 

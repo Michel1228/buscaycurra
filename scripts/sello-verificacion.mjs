@@ -3170,6 +3170,104 @@ test("las senales de estafa avisan de las malas y no tocan las buenas", async ()
   }
 });
 
+// ── VENEZUELA Y NICARAGUA, PAÍSES 43 Y 44 (6 nov 2026) ───────────────────────
+//
+// Lo propio de cada uno: en Venezuela el mínimo legal (130 Bs) y el ingreso
+// integral (240 US$ en bonos) son cosas distintas y van en sitios distintos A
+// PROPÓSITO, y el salario medio no es oficial y se dice. En Nicaragua, el
+// promedio de los nueve sectores. Ninguno tiene bolsa pública comprobada, y no
+// se inventa. Y para quien ES de allí: PEP Tutor en Colombia, España sin vía
+// humanitaria, la categoría especial de Costa Rica.
+test("Venezuela y Nicaragua son paises completos: minimo legal e integral separados, sin bolsa inventada y sus vias de origen", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-ve-ni-entrada.ts", salida = ".sello-ve-ni.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, LISTA_PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { paisDeCiudad } from "./lib/guzzi/ciudades-pais";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { PLATAFORMAS, plataformasPorPais, servicioEmpleoDe } from "./lib/cursos/plataformas";',
+      'export { estiloDe } from "./lib/cv/por-pais";',
+      'export { estiloEntrevistaDe } from "./lib/entrevistas/por-pais";',
+      'export { PAIS_TIMEZONE } from "./lib/timezone";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const fuente = leerFuente("lib/paises.ts");
+    const json = JSON.parse(leerFuente("public/data/salarios-minimos.json")).paises;
+    const ids = m.PLATAFORMAS.map(p => p.id);
+    const casos = [
+      // Venezuela: el legal en la ficha, el integral en el comparador, y se explica.
+      ["VE minimo legal", m.PAISES.VE?.salarioMinimo, 130],
+      ["VE integral en el JSON", json.VE?.salarioMinimo, 215069],
+      ["el JSON dice que no es el legal", /^NO es el salario mínimo legal/.test(json.VE?.nota || ""), true],
+      ["se explica por que van separados", fuente.includes("Aquí va el LEGAL"), true],
+      ["VE medio Fedecamaras", m.PAISES.VE?.salarioMedio, 253603],
+      ["se dice que no hay estadistica oficial", fuente.includes("SIN ESTADÍSTICA OFICIAL"), true],
+      ["NI minimo promedio", m.PAISES.NI?.salarioMinimo, 9238],
+      ["NI medio INSS", m.PAISES.NI?.salarioMedio, 16447],
+      ["NI en el JSON", json.NI?.salarioMinimo, 9238],
+      ["slug VE", m.PAISES.VE?.slug, "venezuela"],
+      ["slug NI", m.PAISES.NI?.slug, "nicaragua"],
+      ["los dos en la lista", m.LISTA_PAISES.filter(p => p.codigo === "VE" || p.codigo === "NI").length, 2],
+      ["palabras de VE", m.PAISES.VE?.keywordsLaborales[0], "ventas"],
+      ["palabras de NI", m.PAISES.NI?.keywordsLaborales.includes("bodega"), true],
+      ["Venezuela por su nombre", m.paisPorNombre("Venezuela"), "VE"],
+      ["Nicaragua por su nombre", m.paisPorNombre("Nicaragua"), "NI"],
+      ["Guzzi detecta Nicaragua", m.detectarPais("busco trabajo en Nicaragua")?.codigo, "ni"],
+      ["Guzzi detecta Venezuela", m.detectarPais("quiero trabajar en Venezuela")?.codigo, "ve"],
+      ["venezolana no es el pais", m.detectarPais("soy venezolana y busco trabajo en Madrid"), null],
+      // Ciudades que se llaman igual en varios sitios.
+      ["Valencia desde España", m.paisDeCiudad("Valencia", "ES"), "ES"],
+      ["Valencia desde Venezuela", m.paisDeCiudad("Valencia", "VE"), "VE"],
+      ["León sin pais", m.paisDeCiudad("León"), "MX"],
+      ["León desde España", m.paisDeCiudad("León", "ES"), "ES"],
+      ["León desde Nicaragua", m.paisDeCiudad("León", "NI"), "NI"],
+      ["Maracay es VE", m.paisDeCiudad("Maracay"), "VE"],
+      ["Masaya es NI", m.paisDeCiudad("Masaya"), "NI"],
+      // Papeles.
+      ["VE el 90 %", (m.requisitosDe("VE")?.siNoEresDeLaUE || []).some(t => /90 %/.test(t)), true],
+      ["NI el 90 %", (m.requisitosDe("NI")?.siNoEresDeLaUE || []).some(t => /90 %/.test(t)), true],
+      ["VE SAIME", m.getPrimerosPasos("VE")?.papeleo.documentos.some(d => /SAIME/.test(d.nombre)), true],
+      ["NI cedula de residencia", m.getPrimerosPasos("NI")?.papeleo.documentos.some(d => /Cédula de residencia/.test(d.nombre)), true],
+      ["España a Venezuela", m.movilidadDe("ES", "VE").regimen, "visado_general"],
+      ["España a Nicaragua", m.movilidadDe("ES", "NI").regimen, "visado_general"],
+      // Como país de origen.
+      ["venezolano a Colombia: PEP Tutor", /PEP Tutor/.test(m.movilidadDe("VE", "CO").explicacion), true],
+      ["venezolano a Colombia sigue sin acuerdo", m.movilidadDe("VE", "CO").regimen, "visado_general"],
+      ["venezolano a España: se cerro la via humanitaria", /razones humanitarias/.test(m.movilidadDe("VE", "ES").explicacion), true],
+      ["nicaraguense a España: sin la humanitaria", /razones humanitarias/.test(m.movilidadDe("NI", "ES").explicacion), false],
+      ["iberoamericano: nacionalidad a los dos años", /dos años de residencia legal/.test(m.movilidadDe("NI", "ES").explicacion), true],
+      ["venezolano a Alemania, la rama general", m.movilidadDe("VE", "DE").noTeAplica?.length, 3],
+      ["nicaraguense a Costa Rica", /7 de mayo de 2026/.test(m.movilidadDe("NI", "CR").explicacion), true],
+      ["español a Costa Rica, como antes", /7 de mayo de 2026/.test(m.movilidadDe("ES", "CR").explicacion), false],
+      // Ni bolsa inventada ni cursos repetidos.
+      ["Venezuela sin bolsa inventada", m.servicioEmpleoDe("VE"), undefined],
+      ["Nicaragua sin el SEPEM sin comprobar", m.servicioEmpleoDe("NI"), undefined],
+      ["INCES en Venezuela", m.plataformasPorPais("VE").some(p => p.id === "inces-campus-virtual"), true],
+      ["Tecnologico Nacional en Nicaragua", m.plataformasPorPais("NI").some(p => p.id === "tecnologico-nacional-nicaragua"), true],
+      ["una sola formacion propia por pais", ["VE", "NI"].every(c => m.plataformasPorPais(c).filter(p => p.alcance.tipo === "paises").length === 1), true],
+      ["sin ids repetidos", new Set(ids).size, ids.length],
+      ["CV de Venezuela", m.estiloDe("VE")?.nombreLocal, "Currículum vitae (CV)"],
+      ["entrevista latina", m.estiloEntrevistaDe("NI") === m.estiloEntrevistaDe("ES"), true],
+      ["hora de Caracas", m.PAIS_TIMEZONE.VE, "America/Caracas"],
+      ["hora de Managua", m.PAIS_TIMEZONE.NI, "America/Managua"],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual
@@ -5169,7 +5267,13 @@ test("las ofertas públicas entran sin empresa inventada ni correo, y solo se re
 // en ninguna página (la de cursos solo enseñaba el de España), el de Reino
 // Unido llevaba "GB" cuando la app usa "UK", y a 19 de los 26 países no les
 // correspondía ninguno. Ahora hay uno por país y se elige en /cursos.
-test("cada país de la app tiene su servicio oficial de formación y se puede elegir en /cursos", async () => {
+//
+// Salvo Venezuela y Nicaragua (6 nov 2026): de ninguno se ha podido comprobar
+// una bolsa pública que funcione, y no se inventa (lib/cursos/plataformas.ts).
+// La página dice "Todavía no tenemos el servicio oficial". Son esos dos y solo
+// esos: cualquier otro país sin servicio sigue tumbando la prueba.
+const SIN_BOLSA_COMPROBADA = ["VE", "NI"];
+test("cada país de la app tiene su servicio oficial de formación (salvo los que no se han podido comprobar) y se puede elegir en /cursos", async () => {
   const { execFileSync } = await import("node:child_process");
   const { unlinkSync, writeFileSync } = await import("node:fs");
   const entrada = ".sello-servicios-entrada.ts", salida = ".sello-servicios.cjs";
@@ -5177,10 +5281,11 @@ test("cada país de la app tiene su servicio oficial de formación y se puede el
     writeFileSync(entrada, 'export { LISTA_PAISES } from "./lib/paises";\nexport { servicioEmpleoDe } from "./lib/cursos/plataformas";\n');
     execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
     const m = await import(`../${salida}`);
-    const sin = m.LISTA_PAISES.filter(p => !m.servicioEmpleoDe(p.codigo)).map(p => p.codigo);
+    const sin = m.LISTA_PAISES.filter(p => !m.servicioEmpleoDe(p.codigo) && !SIN_BOLSA_COMPROBADA.includes(p.codigo)).map(p => p.codigo);
     if (sin.length) console.log("     ↳ sin servicio: " + sin.join(", "));
     const lista = leerFuente("components/cursos/ListaCursos.tsx");
-    return sin.length === 0 && m.LISTA_PAISES.length >= 26 && lista.includes("<FormacionPorPais");
+    const aviso = leerFuente("components/cursos/FormacionPorPais.tsx").includes("Todavía no tenemos el servicio oficial");
+    return sin.length === 0 && m.LISTA_PAISES.length >= 26 && lista.includes("<FormacionPorPais") && aviso;
   } catch (e) {
     console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
     return false;

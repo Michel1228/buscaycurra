@@ -212,6 +212,18 @@
       "nota": "Salario mínimo promedio vigente en 2026 (comunicado SAR-19-2026, Acuerdo Ejecutivo SETRASS 233-2026). Cada sector y tamaño de empresa tiene el suyo.",
       "fuente": "Fuente oficial nacional"
     },
+    "VE": {
+      "salarioMinimo": 215069,
+      "moneda": "VES",
+      "nota": "NO es el salario mínimo legal (Bs. 130 desde el 15 mar 2022, Decreto 4.653, GO Ext. 6.691; unos 0,15 US$). Es el ingreso mínimo integral de 240 US$ (200 de bono contra la guerra económica + 40 de cestaticket) pasado a bolívares a la tasa del BCV del 6 nov 2026 (896,1225). Son bonos: no cuentan para prestaciones. El bono solo obliga al sector público. Caduca con el bolívar: actualizar cada mes.",
+      "fuente": "Fuente oficial nacional"
+    },
+    "NI": {
+      "salarioMinimo": 9238,
+      "moneda": "NIO",
+      "nota": "Salario mínimo promedio de los nueve sectores, del 1 mar 2026 al 28 feb 2027 (Acta 1 CNSM-05/03/2026, Ley 625), sin zona franca. Cada sector tiene el suyo: de C$6.188,02 en el campo a C$13.848,23 en construcción y finanzas; comercio, restaurantes y hoteles, C$11.350,08.",
+      "fuente": "Fuente oficial nacional"
+    },
     "IN": {
       "salarioMinimo": 21502,
       "moneda": "INR",

@@ -43,6 +43,15 @@
  *   · Dirección del Trabajo (dt.gob.cl, art. 95023): pedir en una oferta la
  *     fotografía, la «buena presencia» o antecedentes penales o comerciales
  *     ajenos al cargo es discriminatorio (art. 2 del Código del Trabajo).
+ * Venezuela y Nicaragua, comprobadas el 2026-11-06:
+ *   · No hemos encontrado una norma sobre qué NO poner en el CV en ninguno de
+ *     los dos, así que no se inventa. Lo que sí hay: la LOTTT venezolana (art.
+ *     21) prohíbe discriminar al dar trabajo por raza, sexo, edad, estado
+ *     civil, religión, opiniones políticas, nacionalidad, orientación sexual,
+ *     discapacidad u origen social; y el Código del Trabajo nicaragüense (art.
+ *     17.b) prohíbe cobrar por dar un empleo y hacer listas discriminatorias.
+ *     Tampoco hemos encontrado qué nombre se usa más para el documento en cada
+ *     país: va "Currículum vitae (CV)".
  * India y Sudáfrica, comprobadas el 2026-11-06 (guías de empleo, no leyes):
  *   · Monster (actualizada el 6 may 2026): en India la foto es habitual pero
  *     opcional, y en multinacionales mejor sin ella; el «biodata» (fecha de
@@ -408,6 +417,26 @@ export const ESTILOS: EstiloCV[] = [
     paginas: "1 o 2 páginas",
     noPongas: [],
     nota: "No hemos encontrado una norma hondureña sobre qué no poner. Los call center bilingües piden inglés: si lo hablas, pon tu nivel real arriba.",
+  },
+  {
+    codigo: "VE",
+    pais: "Venezuela",
+    bandera: "🇻🇪",
+    foto: "opcional",
+    nombreLocal: "Currículum vitae (CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    nota: "No hemos encontrado una norma venezolana sobre qué no poner. La ley prohíbe descartarte por edad, sexo, estado civil, religión, opiniones políticas, nacionalidad u origen (LOTTT, art. 21): si una oferta lo pide sin motivo, desconfía.",
+  },
+  {
+    codigo: "NI",
+    pais: "Nicaragua",
+    bandera: "🇳🇮",
+    foto: "opcional",
+    nombreLocal: "Currículum vitae (CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    nota: "No hemos encontrado una norma nicaragüense sobre qué no poner. Por ley, ninguna empresa puede cobrarte por darte trabajo (Código del Trabajo, art. 17): si te piden dinero para contratarte, es una estafa.",
   },
   {
     codigo: "IN",

@@ -765,6 +765,69 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y la empresa que contrata a alguien sin permiso se arriesga a una multa de la Secretaría de Trabajo.",
   },
+  // Venezuela (6 nov 2026). Fuentes: Exteriores, recomendaciones de viaje
+  // (actualizadas el 17 sep 2026): con pasaporte español, sin visado hasta 90
+  // días como turista; para trabajar Venezuela exige visado de trabajo; la
+  // prórroga se pide en el SAIME antes de los 90 días, y quien se pasa se
+  // arriesga a multa y a no poder entrar en 3 a 5 años. Embajada de España en
+  // Caracas: los permisos de residencia y trabajo los tramita el consulado de
+  // Venezuela. Finanzas Digital (17 feb 2025): la visa de transeúnte laboral
+  // (TR-L) se prorroga por un año en el SAIME con la autorización laboral
+  // renovada. LOTTT (Gaceta Oficial Ext. 6.076, 7 may 2012), art. 27: con
+  // diez trabajadores o más, al menos el 90 % tiene que ser venezolano y los
+  // sueldos de los extranjeros no pueden pasar del 20 % del total. No se ha
+  // encontrado una vía regional que hoy deje trabajar en Venezuela, así que no
+  // se promete ninguna.
+  {
+    codigo: "VE",
+    nombre: "Venezuela",
+    bandera: "🇻🇪",
+    autoridad: { nombre: "SAIME — Servicio Administrativo de Identificación, Migración y Extranjería", url: "https://www.saime.gob.ve/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Venezuela. Con pasaporte español entras sin visa como turista hasta 90 días, pero para trabajar Venezuela exige visa de trabajo.",
+    ],
+    siNoEresDeLaUE: [
+      "Hace falta una empresa que te contrate y una visa de trabajo (transeúnte laboral), que se pide en un consulado de Venezuela. Se prorroga cada año en el SAIME, con la autorización laboral renovada.",
+      "Por ley, si la empresa tiene diez trabajadores o más, al menos el 90 % tiene que ser venezolano, y los sueldos de los extranjeros no pueden pasar del 20 % del total.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y si te quedas más de 90 días sin pedir la prórroga en el SAIME, te arriesgas a una multa y a no poder volver a entrar en 3 a 5 años.",
+  },
+  // Nicaragua (6 nov 2026). Fuentes: Exteriores, recomendaciones de viaje
+  // (actualizadas el 26 may 2026): sin visado hasta 90 días, 10 US$ de
+  // entrada, y entrar o salir de forma irregular se castiga con 2 a 6 años de
+  // prisión. Embajada de España en Managua: la residencia, y en su caso el
+  // permiso de trabajo, se pide en la Dirección General de Migración y
+  // Extranjería si ya estás en Nicaragua, o en un consulado si estás fuera; la
+  // temporal dura de 1 a 3 años; piden partida de nacimiento y antecedentes
+  // penales legalizados y, a los temporales, un depósito igual al billete de
+  // vuelta; los españoles tienen un régimen equivalente al de los
+  // centroamericanos y la nacionalidad a los dos años, sin renunciar a la
+  // suya. Código del Trabajo (Ley 185, art. 14): al menos el 90 % de la
+  // plantilla, nicaragüense, salvo excepción del Ministerio del Trabajo por
+  // razones técnicas. PRONicaragua: la empresa tiene que pedirte la cédula de
+  // residencia en vigor. No se ha encontrado una vía regional para trabajar
+  // (el CA-4 es para viajar), así que no se promete ninguna.
+  {
+    codigo: "NI",
+    nombre: "Nicaragua",
+    bandera: "🇳🇮",
+    autoridad: { nombre: "Dirección General de Migración y Extranjería", url: "https://www.migob.gob.ni/migracion/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Nicaragua. Con pasaporte español entras sin visa como turista hasta 90 días, pagando 10 US$ al llegar, pero para trabajar hace falta la residencia.",
+      "Si eres de España, tienes el mismo trato que un centroamericano: a los dos años de residencia puedes pedir la nacionalidad nicaragüense sin perder la española.",
+    ],
+    siNoEresDeLaUE: [
+      "Hace falta una empresa que te contrate y la residencia temporal, de uno a tres años, que se pide en la Dirección General de Migración y Extranjería si ya estás en Nicaragua, o en un consulado nicaragüense si estás fuera.",
+      "Te piden la partida de nacimiento y el certificado de antecedentes penales legalizados y, para la residencia temporal, un depósito igual a lo que cuesta el billete de vuelta a tu país.",
+      "Por ley, al menos el 90 % de la plantilla tiene que ser nicaragüense; el Ministerio del Trabajo solo hace excepciones por razones técnicas.",
+      "La empresa te pedirá la cédula de residencia, y tiene que estar en vigor mientras trabajes.",
+    ],
+    ojoCon:
+      "Trabajar con entrada de turista no es legal. Y entrar o salir por un paso no habilitado se castiga con dos a seis años de cárcel; a los extranjeros la ley les prohíbe además participar en actividades políticas, manifestaciones incluidas.",
+  },
   // India (6 nov 2026). Fuentes: páginas del Employment Visa de los consulados
   // de India en Edimburgo y San Francisco y de las embajadas en Atenas y La
   // Haya: profesional cualificado, sueldo mínimo anual (Rs 16,25 lakh en esas
