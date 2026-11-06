@@ -16,7 +16,7 @@ set -uo pipefail
 ENV=/root/.openclaw/workspace/buscaycurra-unified/.env.local
 SECRET=$(grep -E '^ADMIN_SECRET=' "$ENV" | head -1 | cut -d= -f2- | tr -d '\r\042\047')
 BASE="http://localhost:8892/api/jobs/sync-careerjet-barrido"
-PLAN=${1:-"mx co pe cl ar ec gt cr ve pa uy sv hn ni do py bo"}
+PLAN=${1:-"mx co pe cl ar ec gt cr ve pa uy sv hn ni do py bo br in za sk si mt cy"}
 
 if [ -z "$SECRET" ]; then
   echo "$(date -u '+%F %T') ERROR: no hay ADMIN_SECRET en $ENV"

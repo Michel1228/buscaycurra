@@ -715,6 +715,36 @@ export const CAREERJET_BARRIDO: Record<string, { locale: string; lugares: string
     "Sinaloa", "San Luis Potosi", "Hidalgo", "Chiapas", "Baja California Sur", "Los Cabos", "Oaxaca", "Aguascalientes",
     "Guerrero", "Tabasco", "Nayarit", "Durango", "Colima", "Zacatecas", "Tlaxcala", "Campeche", "Puebla",
   ] },
+  // FUERA DE LA LATINOAMÉRICA HISPANA (6 nov 2026). Careerjet publica mucho más
+  // que lo que entraba por Adzuna o EURES, y con la ciudad: Brasil 333.229
+  // (Adzuna daba 80.639), India 142.412 (45.406), Sudáfrica 55.815 (44.854),
+  // Eslovenia 8.902, Malta 4.309, Eslovaquia 3.178 y Chipre 2.118. EURES solo
+  // da la región NUTS y guardaba el país como ciudad: buscar en Liubliana o en
+  // Limasol daba 0. Mismo método: país, estados o provincias y ciudades grandes
+  // (São Paulo 76.815, Bangalore 27.661, Gauteng 22.714, Minas Gerais 28.615).
+  br: { locale: "pt_BR", lugares: [
+    "Brasil", "Sao Paulo", "Guarulhos", "Osasco", "Barueri", "Campinas", "Sao Jose dos Campos", "Santos",
+    "Rio de Janeiro", "Minas Gerais", "Belo Horizonte", "Uberlandia", "Parana", "Curitiba", "Londrina",
+    "Rio Grande do Sul", "Porto Alegre", "Santa Catarina", "Joinville", "Florianopolis", "Bahia", "Salvador",
+    "Pernambuco", "Recife", "Ceara", "Fortaleza", "Goias", "Goiania", "Distrito Federal", "Espirito Santo",
+    "Para", "Belem", "Amazonas", "Manaus", "Maranhao", "Mato Grosso", "Mato Grosso do Sul", "Paraiba",
+    "Rio Grande do Norte", "Alagoas", "Piaui", "Sergipe", "Rondonia", "Tocantins", "Acre", "Amapa", "Roraima",
+  ] },
+  in: { locale: "en_IN", lugares: [
+    "India", "Bangalore", "Mumbai", "Thane", "Navi Mumbai", "Hyderabad", "Pune", "Chennai", "Gurgaon", "Delhi",
+    "New Delhi", "Noida", "Ahmedabad", "Kolkata", "Jaipur", "Coimbatore", "Surat", "Vadodara", "Kochi", "Indore",
+    "Nagpur", "Lucknow", "Chandigarh", "Bhubaneswar", "Visakhapatnam", "Mysore",
+  ] },
+  za: { locale: "en_ZA", lugares: [
+    "South Africa", "Gauteng", "Johannesburg", "Pretoria", "Sandton", "Midrand", "Centurion", "Western Cape",
+    "Cape Town", "Stellenbosch", "KwaZulu-Natal", "Durban", "Pietermaritzburg", "Eastern Cape", "Gqeberha",
+    "East London", "Free State", "Bloemfontein", "Limpopo", "Polokwane", "Mpumalanga", "Nelspruit", "North West",
+    "Rustenburg", "Northern Cape",
+  ] },
+  sk: { locale: "sk_SK", lugares: ["Slovensko", "Bratislava", "Kosice", "Nitra", "Presov", "Zilina", "Trnava", "Banska Bystrica", "Trencin"] },
+  si: { locale: "sl_SI", lugares: ["Slovenija", "Ljubljana", "Maribor", "Kranj", "Novo mesto", "Celje", "Nova Gorica", "Koper"] },
+  mt: { locale: "en_MT", lugares: ["Malta", "Valletta", "Sliema", "St Julians", "Birkirkara", "Msida", "Gzira", "Qormi", "Mosta", "Gozo"] },
+  cy: { locale: "en_CY", lugares: ["Cyprus", "Limassol", "Nicosia", "Larnaca", "Paphos", "Ayia Napa"] },
 };
 
 /** Pasadas las 10 páginas de 99, Careerjet repite: no vale la pena pedir más. */
@@ -727,7 +757,11 @@ export const PAGINAS_POR_LUGAR = 10;
  * eran 203 de 792 títulos de Argentina en Careerjet, y también salían en
  * Colombia, Perú y Chile. No entran.
  */
-export const NO_SON_OFERTAS = /surveoo|proprofit|clubshop/i;
+// 6 nov 2026: los de "Apex Focus Group" son lo mismo con otro nombre: "Data
+// Entry Clerk" o "Call Taker" que en realidad es apuntarse a focus groups y
+// ensayos clínicos pagados ("earn up to $750 per week"). En 60.000 ofertas al
+// azar, eran las 12 que marcaron las señales de estafa.
+export const NO_SON_OFERTAS = /surveoo|proprofit|clubshop|apex\s?focus\s?group/i;
 
 export async function barrerCareerjet(
   countryCode: string,

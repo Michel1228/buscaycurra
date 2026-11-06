@@ -2199,7 +2199,7 @@ test("el barrido de Careerjet de Latinoamerica esta completo, en el crontab y si
   const worker = leerFuente("lib/job-search/sync-worker.ts");
   const tabla = worker.slice(worker.indexOf("export const CAREERJET_BARRIDO"), worker.indexOf("export async function barrerCareerjet"));
   const funcion = worker.slice(worker.indexOf("export async function barrerCareerjet"), worker.indexOf("/** Auto-detecta categoria"));
-  const enTabla = [...tabla.matchAll(/^  ([a-z]{2}): \{ locale: "es_([A-Z]{2})", lugares: \[([^\]]*)\]/gm)];
+  const enTabla = [...tabla.matchAll(/^  ([a-z]{2}): \{ locale: "[a-z]{2}_([A-Z]{2})", lugares: \[([^\]]*)\]/gm)];
   // Cada búsqueda da como mucho ~1.000 distintas (repite pasada la página 10):
   // hacen falta varias ciudades por país y no más de 10 páginas por lugar.
   const pocasCiudades = enTabla.filter(m => (m[3].match(/"/g) || []).length / 2 < 6).map(m => m[1]);
@@ -2857,6 +2857,7 @@ test("los anuncios de encuestas no entran ni por Adzuna ni por el Careerjet de f
     const nuevas = await m.upsertJobsForSync([
       { source: "ADZUNA_AT", url: "https://a.example/1", title: "Heimarbeit - Bezahlte Online-Umfragen für die Marktforschung", company: "Proprofitworld", description: "Ein internationales digitales Unternehmen", city: "Wien" },
       { source: "EURES_SOU", url: "https://a.example/2", title: "Part-time Remote Work - Market Research Assistant", company: "Proprofit Worldwide Ltd", description: "entry no experience", city: "Southampton" },
+      { source: "EURES_NEW", url: "https://a.example/5", title: "Remote Work From Home Data Entry Clerk - Part Time", company: "Apex Focus Group", description: "Earn up to $750 per week part-time working from home.", city: "New York" },
       { source: "ADZUNA_CA", url: "https://a.example/3", title: "Remote Paid Online Survey Participant", company: "Clubshop | US", description: "Smart, Savvy Associates", city: "Toronto" },
       { source: "ADZUNA_AT", url: "https://a.example/4", title: "Kellner/in", company: "Hotel Sacher", description: "Service im Restaurant", city: "Wien" },
     ], "OTRO", "at");
@@ -3120,6 +3121,52 @@ test("India y Sudafrica son paises completos: minimos explicados, puntos, profes
     return false;
   } finally {
     for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// ── SEÑALES DE ESTAFA EN CADA OFERTA (6 nov 2026) ─────────────────────────────
+//
+// Juntamos ofertas de terceros de 40 paises y con ellas entran estafas. Se
+// avisa (no se acusa ni se borra) cuando la oferta te pide pagar, te pide datos
+// del banco o codigos, o promete dinero facil desde casa. Lo mas importante es
+// NO marcar una oferta buena: medido el 6 nov 2026 sobre 60.000 ofertas reales
+// al azar, marco 12 y las 12 eran paneles de "focus groups" pagados disfrazados
+// de "Data Entry Clerk" (como los de encuestas). Se compila el codigo de verdad.
+test("las senales de estafa avisan de las malas y no tocan las buenas", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-senales-estafa.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/job-search/senales-estafa.ts", "--bundle", "--format=cjs", "--platform=node",
+      `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const { senalesDeEstafa } = await import(`../${salida}`);
+    const cod = (titulo, descripcion) => senalesDeEstafa({ titulo, descripcion }).map(s => s.codigo).join(",");
+    const casos = [
+      // Malas: la campaña de INCIBE y Guardia Civil (jul 2026), la FTC y lo que entro de verdad
+      ["examen medico de pago", cod("Socorrista verano", "Para darte de alta debes abonar 45 € del examen médico."), "pago"],
+      ["codigo por SMS", cod("Auxiliar administrativo", "Envíanos tu número de cuenta y el código que te llegue por SMS."), "datos"],
+      ["dinero facil", cod("Trabajo desde casa", "Gana 150 € al día desde casa sin experiencia, solo con tu móvil."), "dinero_facil"],
+      ["kit de inicio", cod("Customer agent", "There is a registration fee of $50 for the starter kit."), "pago"],
+      ["likes pagados", cod("Asistente", "Tareas pagadas: dando likes a productos de tiendas online."), "dinero_facil"],
+      ["focus group real", cod("Remote Work From Home Data Entry Clerk", "Work part-time from home and earn up to $750 per week. Data Entry experience not required."), "dinero_facil"],
+      // Buenas que se parecen: no pueden dar nada
+      ["CV por WhatsApp", cod("Camarero/a", "Envía tu CV por WhatsApp al 600 000 000. Salario 1.400 € al mes."), ""],
+      ["la empresa paga el curso", cod("Carretillero", "La empresa paga la formación y el curso de carretillero."), ""],
+      ["copia de cedula", cod("Operario", "Requisitos: copia de cédula, antecedentes y dos referencias laborales."), ""],
+      ["no hay que pagar", cod("Recepcionista", "No hay que pagar nada para participar. Sin coste de inscripción."), ""],
+      ["no registration fee", cod("Travel agent", "No registration fee. Training provided by the company."), ""],
+      ["repartidor con furgoneta", cod("Repartidor", "Gana hasta 80 € al día con tu propia furgoneta. Experiencia mínima de un año."), ""],
+      ["reconocimiento a cargo", cod("Dependienta", "El reconocimiento médico corre a cargo de la empresa."), ""],
+      ["community manager", cod("Community manager", "Gestionarás redes sociales: likes, comentarios y campañas de la marca."), ""],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da "${dio}", deberia "${quiere}"`).join(" · "));
+    const ficha = leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx");
+    return mal.length === 0
+      && ficha.includes("senalesDeEstafa({") && ficha.includes("{senales.length > 0 && (")
+      && leerFuente("components/JobCard.tsx").includes("senalesDeEstafa({ titulo, empresa, descripcion })");
+  } finally {
+    try { unlinkSync(salida); } catch { /* no existe */ }
   }
 });
 

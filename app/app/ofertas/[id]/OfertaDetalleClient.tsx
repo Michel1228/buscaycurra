@@ -11,6 +11,7 @@ import { CheckCircle2, FileText, Users, ClipboardList, Bookmark, ArrowLeft } fro
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { servicioOficial } from "@/lib/job-search/fuente-oficial";
 import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
+import { senalesDeEstafa } from "@/lib/job-search/senales-estafa";
 
 export interface OfertaDetalle {
   id: string;
@@ -125,6 +126,13 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   const encaje = useMemo(
     () => (cvDatos && !oficial && !esAuPair ? encajeConPuestos(cvDatos, [oferta.titulo], (oferta.country || "es").toUpperCase()) : null),
     [cvDatos, oficial, esAuPair, oferta.titulo, oferta.country]
+  );
+
+  // Señales que se repiten en las estafas (pagar por empezar, datos del banco,
+  // dinero fácil desde casa). Avisa, no acusa: lib/job-search/senales-estafa.ts.
+  const senales = useMemo(
+    () => senalesDeEstafa({ titulo: oferta.titulo, empresa: oferta.empresa, descripcion: oferta.descripcion }),
+    [oferta.titulo, oferta.empresa, oferta.descripcion]
   );
 
   async function checkAuPairProfile() {
@@ -467,6 +475,21 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
                 <Link href={`/cursos/${encaje.curso.slug}`} className="underline font-medium" style={{ color: "#22c55e" }}>Dónde sacarlo</Link>
               </p>
             )}
+          </div>
+        )}
+
+        {senales.length > 0 && (
+          <div role="note" className="mt-4 rounded-xl p-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.35)" }}>
+            <p className="text-sm font-semibold mb-2" style={{ color: "#f87171" }}>
+              Ojo: esta oferta tiene señales que se repiten en las estafas
+            </p>
+            <ul className="text-sm space-y-1.5 list-disc pl-5" style={{ color: "#f1f5f9" }}>
+              {senales.map(s => <li key={s.codigo}>{s.texto}</li>)}
+            </ul>
+            <p className="text-xs mt-3" style={{ color: "#94a3b8" }}>
+              Nunca pagues para conseguir un trabajo ni des datos del banco antes de firmar un contrato.
+              {(oferta.country || "es").toLowerCase() === "es" ? " Si dudas, llama gratis al 017, la línea de ayuda en ciberseguridad de INCIBE." : ""}
+            </p>
           </div>
         )}
 

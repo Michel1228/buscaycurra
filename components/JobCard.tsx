@@ -12,6 +12,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { servicioOficial } from "@/lib/job-search/fuente-oficial";
 import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
+import { senalesDeEstafa } from "@/lib/job-search/senales-estafa";
 
 export interface PropiedadesJobCard {
   id: string;
@@ -69,6 +70,8 @@ export default function JobCard({
   // un error histórico (fetchCareerjetGlobal). EURES de verdad es "EURES" a secas.
   const fuenteVisible = (() => { if (/^EURES_/i.test(fuente)) return "Careerjet"; const base = fuente.split("_")[0]; return base === "ADZUNA" ? "Adzuna" : base === "CAREERJET" ? "Careerjet" : base; })();
   const matchColor = match !== undefined ? colorMatch(match) : "#64748b";
+  // Señales que se repiten en las estafas: el detalle está en la ficha.
+  const conSenales = senalesDeEstafa({ titulo, empresa, descripcion }).length > 0;
 
   // Las ofertas en vivo (Jooble/APIs) llevan id sintético con prefijo y NO existen
   // en la BD → /app/ofertas/[id] mostraría "Oferta no encontrada". Para esas,
@@ -191,6 +194,11 @@ export default function JobCard({
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
             style={{ background: fc.bg, color: fc.text }}>{fuenteVisible}</span>
+          {conSenales && (
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+              title="Tiene señales que se repiten en las estafas. Míralo en la ficha antes de dar ningún dato."
+              style={{ background: "rgba(239,68,68,0.12)", color: "#f87171" }}>Ojo: señales de estafa</span>
+          )}
           {modalidad && (
             <span className="text-[11px] font-medium px-2.5 py-1 rounded-full capitalize"
               style={{ background: "rgba(112,106,88,0.1)", color: "#94a3b8" }}>{modalidad}</span>
