@@ -545,7 +545,7 @@ async function fetchCareerjet(keyword: string, city: string, page = 1): Promise<
   const keyInfo = await getCareerjetKey();
   if (!keyInfo) return [];
   try {
-    const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(city + " Espana")}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F1.0&pagesize=20&page=${page}&sort=relevance`;
+    const url = `http://public.api.careerjet.net/search?locale_code=es_ES&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(city + " Espana")}&affid=${keyInfo.key}&user_ip=127.0.0.1&user_agent=BuscayCurra%2F1.0&pagesize=20&page=${page}&sort=relevance`;
     const res = await fetch(url, {
       headers: { "Referer": "https://buscaycurra.es" },
       signal: AbortSignal.timeout(15000),
@@ -608,7 +608,7 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
 
   for (const page of [1, 2, 3]) { // Reducido de 10→3 páginas para no exceder maxDuration=300s
     try {
-      const url = `http://public.api.careerjet.net/search?locale_code=${locale}&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=187.124.37.183&user_agent=BuscayCurra%2F3.0&pagesize=50&page=${page}&sort=relevance`;
+      const url = `http://public.api.careerjet.net/search?locale_code=${locale}&keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(countryLocation)}&affid=${keyInfo.key}&user_ip=127.0.0.1&user_agent=BuscayCurra%2F3.0&pagesize=50&page=${page}&sort=relevance`;
       const res = await fetch(url, {
         headers: { "Referer": "https://buscaycurra.es" },
         signal: AbortSignal.timeout(15000),
@@ -626,6 +626,9 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
         source: `EURES_${countryLocation.slice(0, 3).toUpperCase()}`,
         url: j.url || "",
         title: (j.title || keyword).replace(/<[^>]+>/g, "").slice(0, 200),
+        // "Empresa europea" es un relleno, no una empresa (también sale en ofertas
+        // de EE. UU. o Japón). No se cambia aquí porque forma parte del id
+        // (makeId) y se duplicarían; lo que se enseña lo arregla empresaVisible().
         company: (j.company || "Empresa europea").slice(0, 200),
         city: (j.locations || countryLocation).slice(0, 100),
         description: (j.description || "").replace(/<[^>]+>/g, "").slice(0, 1000),
@@ -691,6 +694,27 @@ export const CAREERJET_BARRIDO: Record<string, { locale: string; lugares: string
   do: { locale: "es_DO", lugares: ["Republica Dominicana", "Santo Domingo", "Santiago de los Caballeros", "Punta Cana", "La Romana", "San Pedro de Macoris"] },
   py: { locale: "es_PY", lugares: ["Paraguay", "Asuncion", "Ciudad del Este", "Encarnacion", "San Lorenzo", "Luque"] },
   bo: { locale: "es_BO", lugares: ["Bolivia", "Santa Cruz", "La Paz", "Cochabamba", "El Alto", "Sucre"] },
+  // México (6 nov 2026). Adzuna daba 22.483 vivas y Careerjet publica 163.700
+  // sin palabra clave: siete veces más. Como cada búsqueda se queda en ~1.000,
+  // se pregunta por el país, los 32 estados y, donde un estado pasa de 1.000,
+  // por sus alcaldías y municipios grandes (medido ese día: Ciudad de México
+  // 32.207, Estado de México 21.686, Jalisco 15.583, Nuevo León 12.155,
+  // Miguel Hidalgo 7.925, Coyoacán 5.950, Guadalajara 5.600, Tlaquepaque
+  // 5.577). Sin tildes porque así responde Careerjet; "Juarez" a secas es
+  // ambiguo (Oaxaca o Chihuahua) y "Cuauhtemoc, Ciudad de Mexico" da 2, así
+  // que esos van con su estado o no van.
+  mx: { locale: "es_MX", lugares: [
+    "Mexico", "Ciudad de Mexico", "Miguel Hidalgo", "Coyoacan", "Azcapotzalco", "Iztacalco", "Gustavo A. Madero",
+    "Iztapalapa", "Xochimilco", "Tlalpan", "Cuajimalpa", "Magdalena Contreras", "Alvaro Obregon",
+    "Estado de Mexico", "Naucalpan", "Tlalnepantla", "Cuautitlan Izcalli", "Metepec", "Toluca", "Tultitlan", "Ecatepec",
+    "Jalisco", "Guadalajara", "Tlaquepaque", "Zapopan", "Tlajomulco", "Puerto Vallarta",
+    "Nuevo Leon", "Monterrey", "Apodaca", "San Pedro Garza Garcia", "Guadalupe, Nuevo León", "San Nicolas de los Garza", "Santa Catarina",
+    "Veracruz", "Baja California", "Tijuana", "Mexicali", "Queretaro", "Coahuila", "Saltillo", "Torreon",
+    "Yucatan", "Merida", "Sonora", "Hermosillo", "Quintana Roo", "Cancun", "Playa del Carmen", "Tamaulipas", "Reynosa",
+    "Morelos", "Michoacan", "Chihuahua", "Ciudad Juárez, Chihuahua", "Guanajuato", "Leon", "Celaya",
+    "Sinaloa", "San Luis Potosi", "Hidalgo", "Chiapas", "Baja California Sur", "Los Cabos", "Oaxaca", "Aguascalientes",
+    "Guerrero", "Tabasco", "Nayarit", "Durango", "Colima", "Zacatecas", "Tlaxcala", "Campeche", "Puebla",
+  ] },
 };
 
 /** Pasadas las 10 páginas de 99, Careerjet repite: no vale la pena pedir más. */
@@ -840,8 +864,9 @@ export async function upsertJobsForSync(jobs: RawJob[], sector: JobSector, count
   for (const j of jobs) {
     if (!j.url || !j.title) continue;
     // Los anuncios de encuestas pagadas no entran por NINGUNA fuente. El 6 nov
-    // 2026 había 81 en la base: 71 de Careerjet y 10 de Adzuna (AT, CA, CH, ES,
-    // NZ) y EURES, en alemán e inglés ("Bezahlte Online-Umfragen", "Paid
+    // 2026 había 81 en la base: 71 del barrido de Careerjet, 8 de Adzuna (AT,
+    // CA, CH, ES, NZ) y 2 del Careerjet de fuera (el que se guarda como
+    // "EURES_xxx"), en alemán e inglés ("Bezahlte Online-Umfragen", "Paid
     // Online Survey"). El filtro solo estaba en el barrido de Careerjet.
     if (NO_SON_OFERTAS.test(`${j.title} ${j.company || ""} ${j.description || ""}`)) continue;
     const id = makeId(j.title, j.company, j.city, j.source);

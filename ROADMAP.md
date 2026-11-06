@@ -65,8 +65,8 @@
 ## 🔐 CREDENCIALES Y ACCESOS
 
 ### VPS Hostinger
-- IP: 187.124.37.183
-- SSH: `ssh -i ~/.ssh/hostinger_openclaw root@187.124.37.183`
+- IP: en el fichero de credenciales local (este repositorio es público)
+- SSH: `ssh -i ~/.ssh/hostinger_openclaw root@<IP del VPS>`
 - **Hermes workspace**: `/root/.openclaw/workspace/buscaycurra-unified/`
 - **Rama**: `unified-production`
 - **Repo**: `Michel1228/buscaycurra`

@@ -30,15 +30,14 @@ export interface OfertaDetalle {
   country?: string;
 }
 
-/** Limpia nombres de fuente: EURES_ESP → EURES España, ADZUNA_ES → Adzuna */
+/** Limpia nombres de fuente: ADZUNA_ES → Adzuna, EURES_MAD → Careerjet */
 function formatSource(raw: string): string {
+  // "EURES_ESP", "EURES_UNI", "EURES_SEA"... NO son EURES: son Careerjet,
+  // guardado así por un error histórico (fetchCareerjetGlobal). Aquí ponía
+  // "EURES España" o "EURES Europa" en ofertas de Careerjet, también en las de
+  // Estados Unidos o Japón. EURES de verdad es "EURES" a secas.
+  if (/^EURES_/i.test(raw || "")) return "Careerjet";
   const m: Record<string, string> = {
-    "EURES_ESP": "EURES España",
-    "EURES_UNI": "EURES Europa",
-    "EURES_UK": "EURES Reino Unido",
-    "EURES_DE": "EURES Alemania",
-    "EURES_FR": "EURES Francia",
-    "EURES_IT": "EURES Italia",
     "ADZUNA_ES": "Adzuna",
     "ADZUNA_UK": "Adzuna UK",
     "ADZUNA_US": "Adzuna USA",

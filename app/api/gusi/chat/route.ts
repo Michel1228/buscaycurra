@@ -29,6 +29,7 @@ import { servicioEmpleoDe } from "@/lib/cursos/plataformas";
 import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import { callGroq, callOpenAI } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
+import { empresaVisible } from "@/lib/job-search/empresa-visible";
 
 // Llamadas del servidor a sí mismo. 127.0.0.1 y no "localhost": en Node,
 // localhost puede resolverse primero a ::1 (IPv6) y el servidor escucha en IPv4.
@@ -335,7 +336,7 @@ function mapRowToJob(j: DbJobRow, cityFallback: string) {
   return {
     id: `db-${j.id}`,
     titulo: j.title as string,
-    empresa: (j.company as string) || "Ver en oferta",
+    empresa: empresaVisible(j.company),
     ubicacion: (j.city || j.province || cityFallback) as string,
     salario: (j.salary as string) || "Ver en oferta",
     fuente: (j.sourceName as string) || "BuscayCurra",

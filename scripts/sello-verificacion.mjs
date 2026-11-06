@@ -2218,6 +2218,29 @@ test("el barrido de Careerjet de Latinoamerica esta completo, en el crontab y si
     && leerFuente("components/JobCard.tsx").includes('base === "CAREERJET" ? "Careerjet"');
 });
 
+// ── MEXICO TAMBIEN SE BARRE POR CAREERJET, ESTADO A ESTADO (6 nov 2026) ───────
+//
+// Adzuna daba 22.483 ofertas vivas de Mexico y Careerjet publica 163.700. Como
+// cada busqueda se queda en ~1.000, hace falta preguntar por los 32 estados y
+// por las alcaldias y municipios grandes; con cinco ciudades se perderia casi todo.
+test("Mexico se barre por Careerjet: pais, sus 32 estados y las alcaldias grandes", () => {
+  const worker = leerFuente("lib/job-search/sync-worker.ts");
+  const tabla = worker.slice(worker.indexOf("export const CAREERJET_BARRIDO"), worker.indexOf("export async function barrerCareerjet"));
+  const m = tabla.match(/^  mx: \{ locale: "es_MX", lugares: \[([^\]]*)\]/m);
+  const lugares = m ? [...m[1].matchAll(/"([^"]+)"/g)].map(x => x[1]) : [];
+  const estados = ["Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas", "Chihuahua",
+    "Coahuila", "Colima", "Durango", "Estado de Mexico", "Guanajuato", "Guerrero", "Hidalgo", "Jalisco", "Michoacan",
+    "Morelos", "Nayarit", "Nuevo Leon", "Oaxaca", "Puebla", "Queretaro", "Quintana Roo", "San Luis Potosi", "Sinaloa",
+    "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatan", "Zacatecas", "Ciudad de Mexico"];
+  const faltan = estados.filter(e => !lugares.includes(e));
+  if (faltan.length) console.log("      estados que faltan: " + faltan.join(", "));
+  return lugares[0] === "Mexico"
+    && faltan.length === 0
+    && ["Miguel Hidalgo", "Coyoacan", "Guadalajara", "Monterrey", "Tijuana"].every(c => lugares.includes(c))
+    && new Set(lugares).size === lugares.length
+    && planBarridoCj.split(" ").includes("mx");
+});
+
 // ── MEXICO ES UN PAIS DE LA APP, Y CIUDAD DE MEXICO UNA CIUDAD ─────────────────
 //
 // Al meter Mexico en lib/paises.ts, Guzzi reconoce "Mexico" como pais en lo que
@@ -2810,10 +2833,10 @@ test("Honduras es un pais completo: minimo promedio del SAR, el 90 % y el SENAEH
 // ── LOS ANUNCIOS DE ENCUESTAS NO ENTRAN POR NINGUNA FUENTE (6 nov 2026) ─────
 //
 // El filtro estaba solo en el barrido de Careerjet. Al borrar los que ya había
-// salieron 81: 71 de Careerjet y 10 de Adzuna (AT, CA, CH, ES, NZ) y EURES, en
-// alemán e inglés. Se llama a upsertJobsForSync de verdad, con una base falsa
+// salieron 81: 71 del barrido de Careerjet, 8 de Adzuna (AT, CA, CH, ES, NZ) y
+// 2 del Careerjet de fuera (guardado como "EURES_xxx"), en alemán e inglés. Se llama a upsertJobsForSync de verdad, con una base falsa
 // que apunta lo que se intenta guardar.
-test("los anuncios de encuestas no entran ni por Adzuna ni por EURES", async () => {
+test("los anuncios de encuestas no entran ni por Adzuna ni por el Careerjet de fuera", async () => {
   const { execFileSync } = await import("node:child_process");
   const { unlinkSync, writeFileSync } = await import("node:fs");
   const entrada = ".sello-encuestas-entrada.ts", salida = ".sello-encuestas.cjs", pgFalso = ".sello-pg-falso.cjs";
@@ -2884,6 +2907,63 @@ test("el titulo de un pais de habla hispana no dice 'para españoles'", async ()
   } finally {
     for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
   }
+});
+
+// ── CAREERJET NO SE DISFRAZA DE EURES NI INVENTA UNA "EMPRESA EUROPEA" (6 nov 2026)
+//
+// fetchCareerjetGlobal guarda sus ofertas como "EURES_xxx" (error histórico:
+// el nombre forma parte del id y no se cambia en la base) y, si Careerjet no
+// dice la empresa, "Empresa europea", también en EE. UU. o Japón. Lo que se
+// enseña decía "EURES", "EURES España" o "EURES Europa" en ~595.000 ofertas que
+// no vienen de EURES, y "Empresa europea" en ~9.000, también a Google.
+test("las ofertas de Careerjet no dicen que vienen de EURES ni de una 'Empresa europea'", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salidaE = ".sello-empresa-visible.cjs", salidaG = ".sello-job-posting.cjs";
+  try {
+    for (const [ent, sal] of [["lib/job-search/empresa-visible.ts", salidaE], ["lib/seo/job-posting.ts", salidaG]]) {
+      execFileSync("npx", ["esbuild", ent, "--bundle", "--format=cjs", "--platform=node", "--packages=external",
+        `--outfile=${sal}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    }
+    const { empresaVisible } = await import(`../${salidaE}`);
+    const { empresaParaGoogle } = await import(`../${salidaG}`);
+    const rutas = ["app/api/jobs/search/route.ts", "app/api/jobs/detail/route.ts", "app/api/jobs/by-ids/route.ts",
+      "app/api/gusi/chat/route.ts", "app/api/email/retention/route.ts"];
+    const sinArreglar = rutas.filter(r => !leerFuente(r).includes("empresaVisible("));
+    if (sinArreglar.length) console.log("      sin empresaVisible: " + sinArreglar.join(", "));
+    const detalle = leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx");
+    return empresaVisible("Empresa europea") === "Ver en oferta"
+      && empresaVisible("  ") === "Ver en oferta"
+      && empresaVisible("Mercadona") === "Mercadona"
+      && empresaParaGoogle("Empresa europea") === null
+      && empresaParaGoogle("Mercadona") === "Mercadona"
+      && sinArreglar.length === 0
+      && leerFuente("components/JobCard.tsx").includes('if (/^EURES_/i.test(fuente)) return "Careerjet";')
+      && leerFuente("app/empleo/oferta/[id]/page.tsx").includes('if (/^EURES_/i.test((s || "").trim())) return "Careerjet";')
+      && detalle.includes('if (/^EURES_/i.test(raw || "")) return "Careerjet";')
+      && !detalle.includes('"EURES_ESP":') && !detalle.includes('"EURES_UNI":');
+  } finally {
+    for (const f of [salidaE, salidaG]) { try { unlinkSync(f); } catch { /* no existe */ } }
+  }
+});
+
+// ── NI LA IP DEL SERVIDOR NI EL TOKEN DE DESPLIEGUE EN EL REPOSITORIO PÚBLICO ──
+//
+// El 6 nov 2026 la IP del VPS estaba en el código (user_ip de Careerjet), en
+// ROADMAP.md y PROGRESS.md, y el webhook de Easypanel CON SU TOKEN en
+// .github/workflows/deploy.yml. Careerjet acepta user_ip=127.0.0.1.
+test("ni la IP del servidor ni el token del webhook de Easypanel estan en el repositorio", () => {
+  const userIps = ["lib/job-search/sync-worker.ts", "lib/job-search/real-search.ts"]
+    .flatMap(f => [...leerFuente(f).matchAll(/user_ip=([^&`"'\s]+)/g)].map(m => m[1]));
+  const flujos = readdirSync(".github/workflows").map(f => leerFuente(`.github/workflows/${f}`)).join("\n");
+  const docs = ["ROADMAP.md", "PROGRESS.md", "CLAUDE.md"].map(f => leerFuente(f)).join("\n") + flujos;
+  const ipsPublicas = (docs.match(/\b(\d{1,3}\.){3}\d{1,3}\b/g) || [])
+    .filter(ip => !/^(127\.|0\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip));
+  if (ipsPublicas.length) console.log("      IP publica en documentos o flujos: " + ipsPublicas.length);
+  return userIps.length >= 3
+    && userIps.every(v => v === "127.0.0.1")
+    && !/\/api\/deploy\/[0-9a-f]{20,}/.test(flujos)
+    && ipsPublicas.length === 0;
 });
 
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
@@ -4427,7 +4507,7 @@ test("las ofertas guardadas se pueden quitar y la ficha recuerda si lo estan", (
 test("el buscador no inventa resultados ni se salta los filtros", () => {
   const s = leerFuente("app/api/jobs/search/route.ts");
   const fallos = [];
-  if (/const company = \([^;]*\)\.toLowerCase\(\)/.test(s) || !s.includes("empresa: empresaOriginal")) fallos.push("la empresa sale en minusculas");
+  if (/const company = \([^;]*\)\.toLowerCase\(\)/.test(s) || !s.includes("empresa: empresaVisible(empresaOriginal)")) fallos.push("la empresa sale en minusculas");
   if (/descripcion: description\.slice/.test(s)) fallos.push("la descripcion sale en minusculas");
   if (/await buscarOfertasReales\(keyword, location, 50\);\s*return NextResponse/.test(s)) fallos.push("las ofertas externas no se filtran por puesto");
   if (!/tituloCoincide\(o\.titulo/.test(s) || !/setTimeout\(\(\) => ok\(\[\]\), 8000\)/.test(s)) fallos.push("sin filtro por titulo o sin tope de tiempo");

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
+import { empresaVisible } from "@/lib/job-search/empresa-visible";
 
 export const dynamic = "force-dynamic";
 
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest) {
       const ofertas = rows.map(r => ({
         id: r.id,
         titulo: r.title,
-        empresa: r.company || "Ver en oferta",
+        empresa: empresaVisible(r.company),
         ubicacion: r.city || r.province || "Espana",
       }));
 

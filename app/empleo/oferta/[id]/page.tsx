@@ -14,8 +14,13 @@ function sueldoDe(s: string | null): string | null {
   return t && !/^(ver en oferta|consultar|a convenir|no especificado|n\/?d|-)$/i.test(t) ? t : null;
 }
 
-/** "EURES_GIJ" → "EURES", "ADZUNA_ES" → "Adzuna": el código interno no se enseña. */
+/**
+ * "ADZUNA_ES" → "Adzuna": el código interno no se enseña. Y "EURES_GIJ" →
+ * "Careerjet": las "EURES_xxx" son de Careerjet, guardadas así por un error
+ * histórico (fetchCareerjetGlobal); EURES de verdad es "EURES" a secas.
+ */
 function nombreFuente(s: string | null): string | null {
+  if (/^EURES_/i.test((s || "").trim())) return "Careerjet";
   const base = (s || "").split("_")[0].trim();
   if (!base) return null;
   return base.length <= 5 && base === base.toUpperCase() ? base : base[0].toUpperCase() + base.slice(1).toLowerCase();

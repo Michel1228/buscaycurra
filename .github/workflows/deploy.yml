@@ -39,11 +39,13 @@ jobs:
             NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51TL2FqPsw6T9Raor1NRKN1KAsx6nd9ex8bpNfotXsfykewT6BGlwOeoNb3j3wxQ3JzFisSirGzjPcLD4m6BziBhH00NLexB96S
             NEXT_PUBLIC_VAPID_PUBLIC_KEY=BDy57EXay3f97rznP-2QOJOrs2KWYqgWAK-PtQ9oF8W9Yxpu9ri_kqbYKKVgHByP5wOnoEfyTLigsaLRuawblZo
 
+      # La URL del webhook lleva su token: va en los secretos del repositorio,
+      # no aqui (el repositorio es publico).
       - name: Deploy to Easypanel via webhook
         run: |
           echo "== Triggering Easypanel deploy webhook =="
           RESP=$(curl -s --connect-timeout 20 --max-time 40 -X POST \
-            "http://187.124.37.183:3000/api/deploy/c7c99010e8adb8f3e060fded0b83e8392519d1f5c5ec0931" \
+            "${{ secrets.EASYPANEL_DEPLOY_URL }}" \
             || echo "curl_failed")
           echo "Webhook response: $RESP"
           if [ "$RESP" = "curl_failed" ]; then

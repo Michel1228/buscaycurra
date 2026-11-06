@@ -18,6 +18,9 @@
 const NO_ES_EMPRESA = new Set([
   "", "empresa", "ver en oferta", "confidencial", "empresa confidencial", "confidential",
   "company", "n/a", "na", "sin especificar", "no especificado", "-", ".",
+  // Relleno de fetchCareerjetGlobal cuando Careerjet no dice la empresa, también
+  // en ofertas de EE. UU. o Japón (6 nov 2026: unas 9.000 vivas).
+  "empresa europea",
 ]);
 
 /** El nombre de la empresa si es de verdad una empresa; si no, null. */

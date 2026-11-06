@@ -326,7 +326,12 @@ async function buscarCareerjet(puesto: string, ubicacion: string, limit = 50): P
 
   try {
     const auth = Buffer.from(`${pooled.key}:`).toString("base64");
-    const url = `https://search.api.careerjet.net/v4/query?locale_code=es_ES&keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ubicacion)}&page_size=${limit}&page=1&sort=relevance&user_ip=187.124.37.183&user_agent=BuscayCurra/1.0`;
+    // OJO (6 nov 2026): esta API v4 responde "Unauthorized access from IP" al
+    // servidor, con cualquier user_ip: hay que autorizar la IP del VPS en la
+    // cuenta de Careerjet. Mientras, esta búsqueda en vivo devuelve 0 y el resto
+    // de fuentes la cubren. user_ip va como 127.0.0.1 (como en el barrido): la
+    // IP del servidor no se escribe en un repositorio público.
+    const url = `https://search.api.careerjet.net/v4/query?locale_code=es_ES&keywords=${encodeURIComponent(puesto)}&location=${encodeURIComponent(ubicacion)}&page_size=${limit}&page=1&sort=relevance&user_ip=127.0.0.1&user_agent=BuscayCurra/1.0`;
 
     const res = await fetch(url, {
       headers: { "Authorization": `Basic ${auth}` },

@@ -24,7 +24,7 @@ El rechazo de Apple fue por **Directriz 2.2 (Pruebas Beta)** — la cuenta de re
 | Agente Telegram (Kimi K2.6) | ✅ UP | @MichellBG_Bot |
 | Worker BullMQ | ✅ UP | tsx scripts/worker-entry.ts |
 
-**VPS:** 187.124.37.183 (Hostinger)  
+**VPS:** Hostinger (la IP está en el fichero de credenciales local)  
 **Repo GitHub:** Michel1228/buscaycurra (rama: main)  
 **Supabase:** ojesordjedovnpyxspxi.supabase.co
 
@@ -143,7 +143,7 @@ El rechazo de Apple fue por **Directriz 2.2 (Pruebas Beta)** — la cuenta de re
 git push origin main
 
 # 2. En el VPS
-ssh -i "C:/Users/miche/.ssh/hostinger_openclaw" root@187.124.37.183
+ssh -i "C:/Users/miche/.ssh/hostinger_openclaw" root@<IP del VPS>
 cd /root/.openclaw/workspace/buscaycurra-unified
 git pull origin main
 

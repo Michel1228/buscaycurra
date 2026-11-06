@@ -9,6 +9,7 @@ import { comprobarEnSegundoPlano } from "@/lib/job-search/oferta-viva";
 import { salarioMinimoSql } from "@/lib/job-search/salario-sql";
 import { paisPorNombre } from "@/lib/paises";
 import { correoCreibleParaOferta } from "@/lib/job-search/correo-oferta";
+import { empresaVisible } from "@/lib/job-search/empresa-visible";
 
 /**
  * Ofertas de las APIs externas, solo cuando la base no tiene nada.
@@ -80,7 +81,7 @@ function rowToOferta(j: Record<string, unknown>, location: string, userSkills: s
   return {
     id: j.id,
     titulo: title,
-    empresa: empresaOriginal || "Ver en oferta",
+    empresa: empresaVisible(empresaOriginal),
     ubicacion: (j.city as string) || (j.province as string) || location,
     salario: (j.salary as string) && (j.salary as string) !== "Ver en oferta" ? (j.salary as string) : "",
     descripcion: descripcionOriginal.slice(0, 200),

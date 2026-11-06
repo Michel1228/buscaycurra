@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { empresaVisible } from "@/lib/job-search/empresa-visible";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
       oferta: {
         id: j.id,
         titulo: j.title,
-        empresa: j.company || "Ver en oferta",
+        empresa: empresaVisible(j.company),
         ubicacion: j.city || j.province || "España",
         salario: j.salary || "Ver en oferta",
         descripcion: j.description || "",
