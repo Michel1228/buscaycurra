@@ -43,6 +43,16 @@
  *   · Dirección del Trabajo (dt.gob.cl, art. 95023): pedir en una oferta la
  *     fotografía, la «buena presencia» o antecedentes penales o comerciales
  *     ajenos al cargo es discriminatorio (art. 2 del Código del Trabajo).
+ * India y Sudáfrica, comprobadas el 2026-11-06 (guías de empleo, no leyes):
+ *   · Monster (actualizada el 6 may 2026): en India la foto es habitual pero
+ *     opcional, y en multinacionales mejor sin ella; el «biodata» (fecha de
+ *     nacimiento, estado civil) se usa cada vez menos en la empresa privada;
+ *     las notas van en porcentaje o sobre 10 (CGPA). Kickresume dice que la
+ *     foto «suele animarse»: las guías no coinciden, por eso queda en opcional.
+ *   · Fundiconnect y Africarrières: en Sudáfrica, sin foto salvo que la
+ *     pidan; el número de identidad y la fecha de nacimiento, solo si lo
+ *     piden (GoCareers, en cambio, pide poner el ID). La Ley de Inmigración
+ *     (art. 38) obliga a la empresa a comprobar que puedes trabajar allí.
  */
 
 export type UsoFoto = "se_espera" | "opcional" | "mejor_no";
@@ -398,6 +408,33 @@ export const ESTILOS: EstiloCV[] = [
     paginas: "1 o 2 páginas",
     noPongas: [],
     nota: "No hemos encontrado una norma hondureña sobre qué no poner. Los call center bilingües piden inglés: si lo hablas, pon tu nivel real arriba.",
+  },
+  {
+    codigo: "IN",
+    pais: "India",
+    bandera: "🇮🇳",
+    foto: "opcional",
+    nombreLocal: "Resume (o CV)",
+    paginas: "1 o 2 páginas",
+    noPongas: [
+      "Fecha de nacimiento, estado civil o nombre del padre, salvo que la oferta lo pida: es el «biodata» de antes, y en la empresa privada cada vez se usa menos",
+    ],
+    siPonen: ["Las notas de tus estudios, en porcentaje o sobre 10 (CGPA)."],
+    nota: "La foto es habitual pero no obligatoria; en multinacionales, mejor sin ella salvo que la pidan. Los estudios se cuentan con más detalle que en España.",
+  },
+  {
+    codigo: "ZA",
+    pais: "Sudáfrica",
+    bandera: "🇿🇦",
+    foto: "mejor_no",
+    nombreLocal: "CV",
+    paginas: "2 páginas",
+    noPongas: [
+      "Foto, salvo que la pidan",
+      "Número de pasaporte o de identidad y fecha de nacimiento: solo si la oferta lo pide",
+    ],
+    siPonen: ["Si ya puedes trabajar en Sudáfrica o necesitas que te tramiten el visado.", "Los idiomas que hablas y a qué nivel."],
+    nota: "Por ley, la empresa tiene que comprobar que puedes trabajar allí antes de contratarte: dilo arriba y te ahorras un descarte.",
   },
 ];
 

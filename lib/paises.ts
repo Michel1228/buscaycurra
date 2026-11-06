@@ -915,6 +915,89 @@ export const PAISES: Record<string, PaisConfig> = {
     keywordsLaborales: ["atención al cliente", "vendedor", "bodega", "call center", "cajero"],
     slug: "honduras",
   },
+
+  // India entra el 6 nov 2026. Adzuna ya traía 45.406 ofertas vivas, en inglés;
+  // desde hoy entra también en el barrido completo (in:20).
+  IN: {
+    codigo: "IN",
+    nombre: "India",
+    nombreLocal: "India",
+    moneda: "INR",
+    simboloMoneda: "₹",
+    posicionSimbolo: "antes",
+    idioma: "en",
+    bandera: "🇮🇳",
+    // India NO tiene un salario mínimo nacional. El Code on Wages, en vigor
+    // desde el 21 nov 2025 (PIB, 5 feb 2026), manda fijar un "floor wage"
+    // nacional, pero el 10 ago 2026 el Gobierno seguía sin dar cifra (Lok
+    // Sabha, pregunta 3467). Cada estado fija los suyos.
+    // Se pone el mínimo del Gobierno central para un trabajador no cualificado
+    // en zona A, la de las grandes ciudades donde están las ofertas (Bangalore,
+    // Hyderabad, Mumbai, Chennai, Ahmedabad, Pune y Delhi, entre otras): 523 +
+    // 304 = 827 ₹ al día desde el 1 abr 2026 (orden de la Chief Labour
+    // Commissioner de 30 mar 2026) × 26 días (Wages (Central) Rules 2026) =
+    // 21.502 ₹ al mes. Solo obliga en los empleos de la esfera central; los
+    // estados fijan otros.
+    // OJO: sale casi igual que el salario medio, porque este es el mínimo de
+    // las ciudades grandes y el medio es de todo el país, campo incluido.
+    salarioMinimo: 21502,
+    // Ganancia media mensual de los asalariados fijos en 2025: 22.699 ₹ (PLFS
+    // 2025, MoSPI). La nota oficial del 26 mar 2026 da 24.217 ₹ los hombres y
+    // 18.353 ₹ las mujeres; el total es la tabla 7.1 que saca India Labour
+    // Observatory de los microdatos oficiales, y cuadra con esas dos cifras.
+    salarioMedio: 22699,
+    tasaCambioEUR: 104.86, // Banco Central Europeo, 6 nov 2026 (104,8645)
+    // En India los miles se agrupan a su manera (1,00,000 es cien mil), pero
+    // formatearSalario solo sabe agrupar de tres en tres: se deja la coma.
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    // Las que más ofertas tienen en la base el 6 nov 2026: Bangalore 5.712,
+    // Hyderabad 4.701, Mumbai 4.490, Chennai 4.056, Ahmedabad 3.070, Pune
+    // 2.888, Kolkata 2.464 y Delhi 2.368.
+    ciudades: ["Bangalore", "Hyderabad", "Mumbai", "Chennai", "Ahmedabad", "Pune", "Kolkata", "Delhi"],
+    // Las palabras que más se repiten en los títulos de sus ofertas en la base
+    // el 6 nov 2026: engineer 6.870, sales 4.434, executive 3.954, developer
+    // 3.623 y assistant 1.919. "Data" (1.941) va por delante de assistant, pero
+    // no es un puesto: sale en "data analyst" o "data engineer".
+    keywordsLaborales: ["engineer", "sales", "executive", "developer", "assistant"],
+    slug: "india",
+  },
+
+  // Sudáfrica entra el 6 nov 2026. Adzuna ya traía 44.854 ofertas vivas, en
+  // inglés; desde hoy entra también en el barrido completo (za:20).
+  ZA: {
+    codigo: "ZA",
+    nombre: "Sudáfrica",
+    nombreLocal: "South Africa",
+    moneda: "ZAR",
+    simboloMoneda: "R",
+    posicionSimbolo: "antes",
+    idioma: "en",
+    bandera: "🇿🇦",
+    // National Minimum Wage: R30,23 por hora ordinaria desde el 1 mar 2026
+    // (Gaceta 54075, GN R.7083, 3 feb 2026). Al mes, con el criterio de la
+    // propia ley (BCEA, art. 35: 45 horas a la semana × 4⅓ semanas):
+    // R5.894,85. Vale también para el campo y el servicio doméstico; el
+    // programa de obras públicas (EPWP) tiene uno más bajo, R16,62 la hora.
+    salarioMinimo: 5895,
+    // Ganancia media mensual en el sector formal no agrícola, mayo de 2026:
+    // R30.611 (Stats SA, QES del 2.º trimestre, publicado a finales de sep
+    // 2026). Es una media, y deja fuera el empleo informal y el campo.
+    salarioMedio: 30611,
+    tasaCambioEUR: 18.46, // Banco Central Europeo, 6 nov 2026 (18,4649)
+    // Como escriben Stats SA y el Gobierno: "R30 611" y "R30,23".
+    formatoMiles: " ",
+    formatoDecimal: ",",
+    // Las que más ofertas tienen en la base el 6 nov 2026: Pretoria 5.878,
+    // Cape Town 5.548, Durban 5.494, East London 4.644, Johannesburg 4.616 y
+    // Bloemfontein 4.252.
+    ciudades: ["Pretoria", "Cape Town", "Durban", "East London", "Johannesburg", "Bloemfontein"],
+    // Las palabras que más se repiten en los títulos de sus ofertas en la base
+    // el 6 nov 2026: engineer 5.939, sales 2.588, assistant 2.134, technician
+    // 1.774 y analyst 1.753.
+    keywordsLaborales: ["engineer", "sales", "assistant", "technician", "analyst"],
+    slug: "sudafrica",
+  },
 };
 
 /** Lista plana de países ordenados por mayor salario medio */
@@ -939,6 +1022,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.IT,  // Italia — 2.500 EUR/mes
   PAISES.JP,  // Japón — 398.000 JPY/mes (~2.412 €)
   PAISES.ES,  // España — 2.100 EUR/mes
+  PAISES.ZA,  // Sudáfrica — 30.611 ZAR/mes (~1.658 €)
   PAISES.GR,  // Grecia — 1.600 EUR/mes
   PAISES.PT,  // Portugal — 1.600 EUR/mes
   PAISES.PL,  // Polonia — 8.000 PLN/mes
@@ -959,6 +1043,7 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.PA,  // Panamá — 756 PAB/mes, mediana (~671 €)
   PAISES.DO,  // República Dominicana — 39.566 DOP/mes (~575 €)
   PAISES.HN,  // Honduras — 10.356 HNL/mes (~341 €)
+  PAISES.IN,  // India — 22.699 INR/mes (~216 €)
 ];
 
 /** Número oficial de países que soporta BuscayCurra */
@@ -997,6 +1082,8 @@ const OTROS_NOMBRES: Record<string, string> = {
   holanda: "NL", "republica checa": "CZ", chequia: "CZ",
   mejico: "MX", "republica mexicana": "MX", "estados unidos mexicanos": "MX",
   brazil: "BR", "republica federativa do brasil": "BR",
+  bharat: "IN",
+  surafrica: "ZA", "sud africa": "ZA", "republica de sudafrica": "ZA",
 };
 
 const sinTildes = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[.]/g, " ").replace(/\s+/g, " ").trim();

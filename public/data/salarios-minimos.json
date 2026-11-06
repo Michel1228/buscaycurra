@@ -211,6 +211,18 @@
       "moneda": "HNL",
       "nota": "Salario mínimo promedio vigente en 2026 (comunicado SAR-19-2026, Acuerdo Ejecutivo SETRASS 233-2026). Cada sector y tamaño de empresa tiene el suyo.",
       "fuente": "Fuente oficial nacional"
+    },
+    "IN": {
+      "salarioMinimo": 21502,
+      "moneda": "INR",
+      "nota": "India no tiene mínimo nacional: el floor wage del Code on Wages sigue sin cifra. Mínimo del Gobierno central para un no cualificado en zona A (grandes ciudades): 827 ₹ al día desde el 1 abr 2026 × 26 días. Cada estado fija el suyo.",
+      "fuente": "Fuente oficial nacional"
+    },
+    "ZA": {
+      "salarioMinimo": 5895,
+      "moneda": "ZAR",
+      "nota": "National Minimum Wage: R30,23 la hora desde el 1 mar 2026 (GN R.7083) × 45 horas × 4⅓ semanas (BCEA, art. 35). Vale también para el campo y el servicio doméstico.",
+      "fuente": "Fuente oficial nacional"
     }
   }
 }

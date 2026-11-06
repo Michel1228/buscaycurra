@@ -36,6 +36,12 @@ const ZONA_A_PAIS: Record<string, string> = {
   "America/Santo_Domingo": "DO", "America/Guatemala": "GT", "America/El_Salvador": "SV",
   "America/Tegucigalpa": "HN", "America/Managua": "NI", "America/Costa_Rica": "CR",
   "America/Panama": "PA", "America/Puerto_Rico": "PR", "Africa/Casablanca": "MA",
+  // Asia/Calcutta es el nombre antiguo de Asia/Kolkata (tzdb, "backward").
+  "Asia/Kolkata": "IN", "Asia/Calcutta": "IN",
+  // OJO: Africa/Johannesburg es también la hora de Lesoto y Esuatini (tzdb,
+  // zone1970.tab: ZA,LS,SZ). Quien esté allí saldrá como Sudáfrica, y se
+  // cambia con un toque.
+  "Africa/Johannesburg": "ZA",
 };
 
 /** Zonas que empiezan igual y son todas del mismo país. */

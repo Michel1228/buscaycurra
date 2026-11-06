@@ -67,6 +67,10 @@ const LATINO: EstiloEntrevista = {
 const ESTILO_POR_PAIS: Record<string, EstiloEntrevista> = {
   UK: COMPETENCIAS, IE: COMPETENCIAS, NL: COMPETENCIAS, US: COMPETENCIAS,
   CA: COMPETENCIAS, AU: COMPETENCIAS, NZ: COMPETENCIAS, SG: COMPETENCIAS,
+  // India y Sudáfrica (6 nov 2026): sin fuente fiable sobre cómo entrevistan.
+  // Se elige COMPETENCIAS porque un extranjero entra casi siempre por una
+  // multinacional; es una decisión nuestra, no un dato.
+  IN: COMPETENCIAS, ZA: COMPETENCIAS,
   DE: FORMAL_CENTROEUROPA, AT: FORMAL_CENTROEUROPA, CH: FORMAL_CENTROEUROPA,
   CZ: FORMAL_CENTROEUROPA, PL: FORMAL_CENTROEUROPA, HU: FORMAL_CENTROEUROPA,
   JP: FORMAL_CENTROEUROPA,

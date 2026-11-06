@@ -1513,6 +1513,79 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── INDIA (6 nov 2026) ───────────────────────────────────────────────────
+  // Fuentes: consulados y embajadas de India (Employment Visa, sin e-Visa,
+  // registro en la FRRO en 14 días si pasa de 180 días), e-FRRO del Bureau of
+  // Immigration y el Income Tax Department (PAN). Sin una fuente fiable sobre
+  // alquileres, no se afirma nada de precios.
+  IN: {
+    codigo: "IN",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "India no tiene visado de au pair: no está entre sus tipos de visado. Cuidar niños en una casa pide el Employment Visa, como cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "NoBroker", url: "https://www.nobroker.in/", descripcion: "Pisos y habitaciones de particulares en las ciudades grandes, sin agente de por medio." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/India/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en India, lo práctico es empezar por un alquiler mensual o una habitación compartida. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Employment Visa: una empresa de India te contrata y lo pides en la embajada o el consulado (no hay e-Visa de empleo). Es para profesionales cualificados con sueldo alto; los profesores de idiomas que no sean de inglés y los traductores no tienen que llegar a ese sueldo.",
+      enlaceOficial: "https://indianvisaonline.gov.in/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Employment Visa", descripcion: "Con la carta de la empresa, en la embajada o el consulado de India de tu país. Las prórrogas se hacen ya en India.", tiempoObtener: "Antes de viajar", obligatorio: true, enlaceOficial: "https://indianvisaonline.gov.in/" },
+        { nombre: "Registro en la FRRO (e-FRRO)", descripcion: "La oficina de extranjeros. Si tu visado es de más de 180 días, es obligatorio y se hace en línea.", tiempoObtener: "En los 14 días desde que llegas", obligatorio: true, enlaceOficial: "https://indianfrro.gov.in/efrro/" },
+        { nombre: "PAN (Permanent Account Number)", descripcion: "Tu número ante Hacienda (Income Tax Department), para la nómina y los impuestos. Los extranjeros no pueden sacarlo al momento con Aadhaar: se pide por la vía normal.", tiempoObtener: "Al empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.incometax.gov.in/iec/foportal/" },
+        { nombre: "Cuenta bancaria", descripcion: "Para cobrar la nómina. El banco pedirá el pasaporte con el visado y el registro.", tiempoObtener: "Depende del banco", obligatorio: false },
+      ],
+      consejo: "El orden: oferta y carta de la empresa → Employment Visa en la embajada → al llegar, registro en la FRRO (14 días) → PAN y cuenta bancaria.",
+    },
+  },
+
+  // ─── SUDÁFRICA (6 nov 2026) ───────────────────────────────────────────────
+  // Fuentes: listas de requisitos de Home Affairs (Critical Skills y General
+  // Work, en vigor desde el 9 oct 2024; se entregan en VFS Global), SAQA y
+  // SARS. Sin una fuente fiable sobre alquileres, no se afirma nada de precios.
+  ZA: {
+    codigo: "ZA",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "No hemos encontrado un visado de au pair entre los de Home Affairs: cuidar niños en una casa pide un visado de trabajo, como cualquier empleo.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Property24", url: "https://www.property24.com/to-rent", descripcion: "De los portales de alquiler más grandes de Sudáfrica: pisos y casas en todo el país." },
+        { nombre: "Private Property", url: "https://www.privateproperty.co.za/to-rent", descripcion: "Alquileres de particulares e inmobiliarias." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/South-Africa/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Sudáfrica, lo práctico es empezar por un alquiler mensual o una habitación. Pide el contrato por escrito y un recibo del depósito.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "visado-trabajo",
+      descripcion: "Critical Skills Work Visa si tu profesión está en la lista oficial; si no, General Work Visa. Los dos piden oferta de empresa y 100 puntos, y se entregan en VFS Global.",
+      enlaceOficial: "https://www.dha.gov.za/index.php/immigration-services",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Visado de trabajo", descripcion: "Critical Skills o General Work, de Home Affairs. Hasta cinco años.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.dha.gov.za/index.php/immigration-services" },
+        { nombre: "Evaluación del título en SAQA", descripcion: "SAQA comprueba tu título extranjero, traducido por un traductor jurado. Si el resultado no ha llegado, el visado se da por un año.", tiempoObtener: "Antes de pedir el visado", obligatorio: true, enlaceOficial: "https://www.saqa.org.za/" },
+        { nombre: "Certificados médico y de antecedentes penales", descripcion: "De cada país donde hayas vivido más de un año en los últimos cinco.", tiempoObtener: "No más de seis meses de antigüedad al entregarlos", obligatorio: true },
+        { nombre: "Número de contribuyente (SARS)", descripcion: "Para la nómina. La empresa puede pedirlo por ti en eFiling, o lo pides tú en SARS.", tiempoObtener: "Al empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.sars.gov.za/individuals/how-do-i-register-for-tax/" },
+        { nombre: "Cuenta bancaria", descripcion: "Para cobrar la nómina. El banco pedirá pasaporte con visado y justificante de domicilio.", tiempoObtener: "Depende del banco", obligatorio: false },
+      ],
+      consejo: "El orden: oferta → título en SAQA (y colegio profesional si toca) → visado en VFS Global → al empezar, número de SARS y cuenta bancaria.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {

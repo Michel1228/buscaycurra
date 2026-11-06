@@ -491,6 +491,46 @@ export const PLATAFORMAS: PlataformaFormacion[] = [
     actualizado: "2026-11",
   },
 
+  // ── India y Sudáfrica (comprobadas el 6 nov 2026) ──
+  // Skill India Digital Hub NO entra todavía: su web no se deja leer y las
+  // notas del PIB no dicen si los cursos son gratis. Sin precio comprobado, no
+  // se publica.
+  {
+    id: "swayam",
+    nombre: "SWAYAM (Ministerio de Educación de India)",
+    resumen:
+      "Cursos en línea gratis de universidades e institutos públicos de India, desde secundaria hasta posgrado.",
+    url: "https://swayam.gov.in/",
+    alcance: { tipo: "paises", codigos: ["IN"] },
+    idiomas: ["Inglés"],
+    temas: ["ingeniería", "informática", "gestión", "comercio", "derecho", "salud", "diseño", "humanidades"],
+    certificado: "si",
+    aviso:
+      "Los cursos son gratis, pero el certificado no: hay que apuntarse a un examen presencial de pago, en un centro y en fecha fija.",
+    fuentes: [
+      { titulo: "About SWAYAM — Ministerio de Educación de India", url: "https://swayam.gov.in/about" },
+    ],
+    actualizado: "2026-11",
+  },
+  {
+    id: "nemisa",
+    nombre: "NEMISA (National Electronic Media Institute of South Africa)",
+    resumen:
+      "Instituto público de Sudáfrica para habilidades digitales y de medios: la mayoría de sus cursos son gratis, y muchos se hacen en línea.",
+    url: "https://www.nemisa.co.za/",
+    alcance: { tipo: "paises", codigos: ["ZA"] },
+    idiomas: ["Inglés"],
+    temas: ["habilidades digitales", "informática", "radio", "televisión y cine", "animación", "diseño"],
+    certificado: "no_consta",
+    requisitos: "Pensado para quien vive en Sudáfrica: para apuntarte piden copia del documento de identidad, notas y justificante de domicilio.",
+    aviso:
+      "Da prioridad a jóvenes, mujeres, personas con discapacidad y zonas rurales. Dice que sus cursos están acreditados; si necesitas el certificado, confírmalo en cada curso.",
+    fuentes: [
+      { titulo: "NEMISA — preguntas frecuentes de su web", url: "https://www.nemisa.co.za/" },
+    ],
+    actualizado: "2026-11",
+  },
+
   {
     id: "santander-open-academy",
     nombre: "Santander Open Academy",
@@ -990,6 +1030,25 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     url: "https://www.ane.cr/",
     queHacer:
       "Del Ministerio de Trabajo y el INA, gratis: creas tu perfil, lo activas y ves las vacantes al momento.",
+    actualizado: "2026-11",
+  },
+  // India y Sudáfrica (6 nov 2026). Fuentes: la portada del NCS (Ministerio
+  // de Trabajo y Empleo de India) y la guía oficial de ESSA del Departamento
+  // de Empleo y Trabajo de Sudáfrica.
+  {
+    pais: "IN",
+    nombre: "National Career Service (NCS)",
+    url: "https://www.ncs.gov.in/",
+    queHacer:
+      "Del Ministerio de Trabajo y Empleo de India, gratis: ofertas públicas y privadas, ferias de empleo y orientación. En noviembre de 2026 anunciaba unas 390.000 vacantes activas.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "ZA",
+    nombre: "ESSA (Employment Services of South Africa)",
+    url: "https://essa.labour.gov.za/EssaOnline/WebBeans/",
+    queHacer:
+      "La bolsa pública del Departamento de Empleo y Trabajo. Para registrarte en línea piden el número de identidad sudafricano; sin él, pregunta en un labour centre.",
     actualizado: "2026-11",
   },
 ];

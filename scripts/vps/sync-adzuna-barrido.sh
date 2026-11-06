@@ -22,9 +22,9 @@
 # `dias=1` pide lo publicado en las ultimas 24 h: lanzarlo mas de una vez al dia
 # solo volveria a bajarse las mismas paginas.
 #
-# NO estan India ni Sudafrica aunque Adzuna los cubra: no son paises de la
-# aplicacion. Mexico y Brasil si lo son desde el 5 nov 2026 y entran con 40
-# paginas cada uno, como los paises medianos.
+# Mexico y Brasil son paises de la aplicacion desde el 5 nov 2026 y entran con
+# 40 paginas cada uno, como los paises medianos. India y Sudafrica lo son desde
+# el 6 nov 2026 y entran con 20 paginas cada uno, para no gastar mucho cupo.
 
 set -uo pipefail
 
@@ -36,7 +36,7 @@ BASE="http://localhost:8892/api/jobs/sync-adzuna-barrido"
 # publica ~3.900 ofertas diarias = 78 paginas, se dejan 120 de margen.
 # Como primer argumento se puede pasar otro plan, para probar sin gastar la
 # cuota del dia:   bash /root/sync-adzuna-barrido.sh "es:2"
-PLAN=${1:-"es:120 de:100 fr:100 uk:100 it:60 nl:60 ch:60 be:60 at:60 us:40 ca:40 au:40 nz:40 pl:40 sg:40 mx:40 br:40"}
+PLAN=${1:-"es:120 de:100 fr:100 uk:100 it:60 nl:60 ch:60 be:60 at:60 us:40 ca:40 au:40 nz:40 pl:40 sg:40 mx:40 br:40 in:20 za:20"}
 
 if [ -z "$SECRET" ]; then
   echo "$(date -u '+%F %T') ERROR: no hay ADMIN_SECRET en $ENV"

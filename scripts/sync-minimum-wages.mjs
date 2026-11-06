@@ -46,6 +46,8 @@ const FUENTES_ALTERNATIVAS = {
   NZ: { salarioMinimo: 4019,  moneda: "NZD", nota: "Minimum Wage: $23.15/h × 40h (Apr 2025)" },
   MX: { salarioMinimo: 9582,  moneda: "MXN", nota: "Zona general: $315,04/día × 30,4 (CONASAMI, ene 2026). Frontera norte: $440,87/día." },
   BR: { salarioMinimo: 1621,  moneda: "BRL", nota: "Salário mínimo nacional 2026 (Decreto 12.797/2025). Algunos estados fijan un piso regional más alto." },
+  IN: { salarioMinimo: 21502, moneda: "INR", nota: "India no tiene mínimo nacional: el floor wage del Code on Wages sigue sin cifra. Mínimo del Gobierno central para un no cualificado en zona A (grandes ciudades): 827 ₹ al día desde el 1 abr 2026 × 26 días. Cada estado fija el suyo." },
+  ZA: { salarioMinimo: 5895, moneda: "ZAR", nota: "National Minimum Wage: R30,23 la hora desde el 1 mar 2026 (GN R.7083) × 45 horas × 4⅓ semanas (BCEA, art. 35). Vale también para el campo y el servicio doméstico." },
   HN: { salarioMinimo: 14917, moneda: "HNL", nota: "Salario mínimo promedio vigente en 2026 (comunicado SAR-19-2026, Acuerdo Ejecutivo SETRASS 233-2026). Cada sector y tamaño de empresa tiene el suyo." },
   DO: { salarioMinimo: 29988, moneda: "DOP", nota: "Salario mínimo del sector privado no sectorizado en grandes empresas desde el 1 feb 2026 (Resolución CNS-01-2025). Medianas, RD$27.489,60; pequeñas y micro, menos." },
   PA: { salarioMinimo: 628, moneda: "PAB", nota: "En Panamá el mínimo va por hora, actividad y región (Decreto Ejecutivo 13 de 2025, desde el 16 ene 2026). Comercio en gran empresa, región 1: B/.3,02 la hora; unos B/.628 al mes con 48 horas semanales." },

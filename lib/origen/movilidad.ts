@@ -199,6 +199,14 @@ const OFICIAL_POR_DESTINO: Record<string, { titulo: string; url: string }> = {
     titulo: "Instituto Nacional de Migración — Honduras",
     url: "https://inm.gob.hn/",
   },
+  IN: {
+    titulo: "Visados de India — portal oficial de solicitud",
+    url: "https://indianvisaonline.gov.in/",
+  },
+  ZA: {
+    titulo: "Inmigración — Department of Home Affairs de Sudáfrica",
+    url: "https://www.dha.gov.za/index.php/immigration-services",
+  },
   AU: {
     titulo: "Buscador de visados — Departamento de Interior de Australia",
     url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-finder",

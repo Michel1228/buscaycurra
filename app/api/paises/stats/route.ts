@@ -55,6 +55,7 @@ const PAISES_MAP: Record<string, { flag: string; nombre: string }> = {
   PA: { flag: "🇵🇦", nombre: "Panamá" },
   DO: { flag: "🇩🇴", nombre: "República Dominicana" },
   HN: { flag: "🇭🇳", nombre: "Honduras" },
+  ZA: { flag: "🇿🇦", nombre: "Sudáfrica" },
 };
 
 function formatNumber(n: number): string {

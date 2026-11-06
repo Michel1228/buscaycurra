@@ -765,6 +765,56 @@ export const REQUISITOS: RequisitosDestino[] = [
     ojoCon:
       "Trabajar con entrada de turista no es legal. Y la empresa que contrata a alguien sin permiso se arriesga a una multa de la Secretaría de Trabajo.",
   },
+  // India (6 nov 2026). Fuentes: páginas del Employment Visa de los consulados
+  // de India en Edimburgo y San Francisco y de las embajadas en Atenas y La
+  // Haya: profesional cualificado, sueldo mínimo anual (Rs 16,25 lakh en esas
+  // páginas; no se pone aquí, por la regla de arriba), exentos los profesores
+  // de idiomas que no sean de inglés y los traductores, se pide desde el país
+  // de origen o de residencia de más de dos años, no hay e-Visa de empleo y,
+  // si pasa de 180 días, registro en 14 días.
+  {
+    codigo: "IN",
+    nombre: "India",
+    bandera: "🇮🇳",
+    autoridad: { nombre: "Bureau of Immigration — Ministerio del Interior de India", url: "https://boi.gov.in/" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da ningún derecho a trabajar en India: hace falta el Employment Visa, igual que a cualquiera.",
+    ],
+    siNoEresDeLaUE: [
+      "La vía es el Employment Visa: una empresa de India te contrata y, con su carta, lo pides en la embajada o el consulado de India. No se puede pedir como e-Visa.",
+      "Es para profesionales cualificados, y pide un sueldo anual mínimo muy por encima del sueldo medio de allí. Eso deja fuera casi todos los empleos corrientes.",
+      "Ese mínimo no se aplica a los profesores de idiomas que no sean de inglés ni a los traductores. Para un hispanohablante, enseñar español o traducir es la puerta más realista.",
+      "Se pide desde tu país o desde el país donde vives hace más de dos años.",
+      "Si el visado es de más de 180 días, al llegar tienes 14 días para registrarte en la oficina de extranjeros (FRRO). Se hace en línea.",
+    ],
+    ojoCon:
+      "Trabajar con un visado de turista o de negocios no es legal, aunque te lo ofrezcan. Y el visado va con esa empresa: si cambias de trabajo, hay que pedir uno nuevo con el contrato nuevo.",
+  },
+  // Sudáfrica (6 nov 2026). Fuentes: listas de requisitos de Home Affairs del
+  // Critical Skills Work Visa y del General Work Visa (en vigor desde el 9 oct
+  // 2024), el sistema por puntos (Gaceta 51416, GN 5448, 18 oct 2024: 100
+  // puntos; la profesión en la lista de habilidades críticas da los 100), la
+  // lista de países exentos de visado de Home Affairs (España: 90 días) y la
+  // Ley de Inmigración, arts. 38 y 49(3) (Labour Guide).
+  {
+    codigo: "ZA",
+    nombre: "Sudáfrica",
+    bandera: "🇿🇦",
+    autoridad: { nombre: "Department of Home Affairs — Sudáfrica", url: "https://www.dha.gov.za/index.php/immigration-services" },
+    libreCirculacion: false,
+    siEresDeLaUE: [
+      "Ser de la UE no da derecho a trabajar en Sudáfrica. Con pasaporte español entras sin visado hasta 90 días como turista, pero esa estancia no permite trabajar.",
+    ],
+    siNoEresDeLaUE: [
+      "Hace falta un visado de trabajo y una oferta de empresa: el de habilidades críticas (Critical Skills Work Visa) si tu profesión está en la lista oficial; si no, el general (General Work Visa).",
+      "Van por puntos y hacen falta 100. Estar en la lista de habilidades críticas da los 100. Si no, se suman con un sueldo alto, título universitario, años de experiencia y hablar una lengua oficial.",
+      "Tu título tiene que evaluarlo SAQA, y si tu profesión tiene colegio profesional, hay que pedir el registro.",
+      "Piden también certificado médico y de antecedentes penales, de menos de seis meses. La solicitud se entrega en VFS Global.",
+    ],
+    ojoCon:
+      "Trabajar con la entrada de turista no es legal, y la empresa que contrata a sabiendas a alguien sin permiso comete un delito. Ojo también con los sueldos: los de atención al cliente o de hostelería quedan muy lejos de lo que da puntos.",
+  },
 ];
 
 export const ACTUALIZADO = "2026-09";

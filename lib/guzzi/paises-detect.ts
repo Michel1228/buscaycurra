@@ -42,6 +42,8 @@ const ALIAS: Record<string, string[]> = {
   PA: ["panama"],
   DO: ["republica dominicana", "dominican republic"],
   HN: ["honduras"],
+  IN: ["india", "bharat"],
+  ZA: ["sudafrica", "surafrica", "south africa", "sud africa"],
   CH: ["suiza", "switzerland", "schweiz"],
   BE: ["belgica", "belgium"],
   AT: ["austria"],
@@ -74,6 +76,9 @@ const NO_SON_EL_PAIS = [
   // busco trabajo en Madrid" no es buscar en Argentina. Lo normal es que el
   // modelo entienda el lugar; esto vale para cuando se lee el mensaje entero.
   "soy argentina", "nacionalidad argentina", "soy dominicana", "nacionalidad dominicana",
+  // "India" es también el adjetivo: "cocinero de comida india en Madrid" no es
+  // buscar en India, ni "soy india y busco en Madrid" (6 nov 2026).
+  "comida india", "cocina india", "soy india", "nacionalidad india",
 ];
 
 export interface PaisDetectado {

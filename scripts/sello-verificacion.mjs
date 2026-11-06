@@ -3029,6 +3029,100 @@ test("el mito del '75 % lo descarta un robot' no esta en la web ni en el marketi
   return ficheros.length > 100 && conMito.length === 0;
 });
 
+// ── INDIA Y SUDÁFRICA, PAÍSES 41 Y 42 (6 nov 2026) ───────────────────────────
+//
+// Lo propio de cada uno: India no tiene mínimo nacional (se pone el central de
+// zona A y se dice), los profesores de idiomas no pagan el umbral del visado y
+// "comida india" o "soy india" no son el país; Sudáfrica va por puntos y su
+// mínimo mensual sale de la hora con el criterio de la ley. Los dos entran en
+// el barrido diario de Adzuna.
+test("India y Sudafrica son paises completos: minimos explicados, puntos, profesores de idiomas y 'india' no es siempre el pais", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-in-za-entrada.ts", salida = ".sello-in-za.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, LISTA_PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { paisDeCiudad } from "./lib/guzzi/ciudades-pais";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { paisDeZona } from "./lib/origen/donde-estoy";',
+      'export { plataformasPorPais, servicioEmpleoDe } from "./lib/cursos/plataformas";',
+      'export { estiloDe } from "./lib/cv/por-pais";',
+      'export { estiloEntrevistaDe } from "./lib/entrevistas/por-pais";',
+      'export { TERMINOS_ETT } from "./lib/ett-terminos";',
+      'export { PAIS_TIMEZONE } from "./lib/timezone";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const fuente = leerFuente("lib/paises.ts");
+    const plan = (leerFuente("scripts/vps/sync-adzuna-barrido.sh").match(/^PLAN=\$\{1:-"([^"]+)"\}/m) || [])[1] || "";
+    const casos = [
+      ["IN minimo central zona A", m.PAISES.IN?.salarioMinimo, 21502],
+      ["IN medio PLFS", m.PAISES.IN?.salarioMedio, 22699],
+      ["IN se dice que no hay minimo nacional", fuente.includes("India NO tiene un salario mínimo nacional"), true],
+      ["ZA minimo 30,23 x 45 x 4 1/3", m.PAISES.ZA?.salarioMinimo, 5895],
+      ["ZA medio QES", m.PAISES.ZA?.salarioMedio, 30611],
+      ["slug IN", m.PAISES.IN?.slug, "india"],
+      ["slug ZA", m.PAISES.ZA?.slug, "sudafrica"],
+      ["los dos en la lista", m.LISTA_PAISES.filter(p => p.codigo === "IN" || p.codigo === "ZA").length, 2],
+      ["Kolkata entre las ciudades", m.PAISES.IN?.ciudades.includes("Kolkata"), true],
+      ["palabras en ingles", m.PAISES.ZA?.keywordsLaborales[0], "engineer"],
+      ["India por su nombre", m.paisPorNombre("India"), "IN"],
+      ["Surafrica", m.paisPorNombre("Suráfrica"), "ZA"],
+      // Guzzi: el país sí; el adjetivo, no.
+      ["Guzzi detecta India", m.detectarPais("busco trabajo en India")?.codigo, "in"],
+      ["Guzzi detecta la India", m.detectarPais("quiero trabajar en la India")?.codigo, "in"],
+      ["comida india no es el pais", m.detectarPais("cocinero de comida india en Madrid"), null],
+      ["soy india no es el pais", m.detectarPais("soy india y busco trabajo en Bilbao"), null],
+      ["Guzzi detecta Sudafrica", m.detectarPais("trabajo en Sudáfrica")?.codigo, "za"],
+      ["sudafricana no es el pais", m.detectarPais("soy sudafricana y busco en Valencia"), null],
+      // Ciudades: East London es de Sudáfrica, salvo para quien ya busca en el Reino Unido.
+      ["Durban es ZA", m.paisDeCiudad("Durban"), "ZA"],
+      ["Kolkata es IN", m.paisDeCiudad("Kolkata"), "IN"],
+      ["East London es ZA", m.paisDeCiudad("East London"), "ZA"],
+      ["East London desde el Reino Unido", m.paisDeCiudad("East London", "UK"), "UK"],
+      ["London sigue siendo UK", m.paisDeCiudad("London"), "UK"],
+      ["zona de Calcuta", m.paisDeZona("Asia/Calcutta"), "IN"],
+      ["zona de Johannesburgo", m.paisDeZona("Africa/Johannesburg"), "ZA"],
+      // Papeles.
+      ["profesores de idiomas", (m.requisitosDe("IN")?.siNoEresDeLaUE || []).some(t => /profesores de idiomas/.test(t)), true],
+      ["el umbral del visado no va en cifra", (m.requisitosDe("IN")?.siNoEresDeLaUE || []).some(t => /lakh|16,25/.test(t)), false],
+      ["ZA por puntos", (m.requisitosDe("ZA")?.siNoEresDeLaUE || []).some(t => /100/.test(t)), true],
+      ["IN FRRO", m.getPrimerosPasos("IN")?.papeleo.documentos.some(d => /FRRO/.test(d.nombre)), true],
+      ["ZA SAQA", m.getPrimerosPasos("ZA")?.papeleo.documentos.some(d => /SAQA/.test(d.nombre)), true],
+      ["Espana a India", m.movilidadDe("ES", "IN").regimen, "visado_general"],
+      ["Mexico a Sudafrica", m.movilidadDe("MX", "ZA").regimen, "visado_general"],
+      // Bolsa, cursos, CV, entrevista, agencias y hora.
+      ["bolsa IN", m.servicioEmpleoDe("IN")?.nombre, "National Career Service (NCS)"],
+      ["bolsa ZA", m.servicioEmpleoDe("ZA")?.nombre, "ESSA (Employment Services of South Africa)"],
+      ["SWAYAM en India", m.plataformasPorPais("IN").some(p => p.id === "swayam"), true],
+      ["SWAYAM no sale en España", m.plataformasPorPais("ES").some(p => p.id === "swayam"), false],
+      ["NEMISA en Sudafrica", m.plataformasPorPais("ZA").some(p => p.id === "nemisa"), true],
+      ["Skill India sin precio comprobado no entra", m.plataformasPorPais("IN").some(p => /skill-india/.test(p.id)), false],
+      ["CV de Sudafrica sin foto", m.estiloDe("ZA")?.foto, "mejor_no"],
+      ["CV de India", m.estiloDe("IN")?.foto, "opcional"],
+      ["entrevista por competencias", m.estiloEntrevistaDe("IN") === m.estiloEntrevistaDe("UK") && m.estiloEntrevistaDe("ZA") === m.estiloEntrevistaDe("UK"), true],
+      ["labour broker", m.TERMINOS_ETT.ZA?.[0], "labour broker"],
+      ["hora de India", m.PAIS_TIMEZONE.IN, "Asia/Kolkata"],
+      ["hora de Sudafrica", m.PAIS_TIMEZONE.ZA, "Africa/Johannesburg"],
+      // Adzuna: en el barrido diario, con 20 páginas.
+      ["barrido de India", plan.split(" ").includes("in:20"), true],
+      ["barrido de Sudafrica", plan.split(" ").includes("za:20"), true],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

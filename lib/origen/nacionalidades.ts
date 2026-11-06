@@ -121,6 +121,7 @@ export const NACIONALIDADES: Nacionalidad[] = [
   { codigo: "SN", nombre: "Senegal", bandera: "🇸🇳", grupo: "resto" },
   { codigo: "RS", nombre: "Serbia", bandera: "🇷🇸", grupo: "resto" },
   { codigo: "SG", nombre: "Singapur", bandera: "🇸🇬", grupo: "resto" },
+  { codigo: "ZA", nombre: "Sudáfrica", bandera: "🇿🇦", grupo: "resto" },
   { codigo: "TW", nombre: "Taiwán", bandera: "🇹🇼", grupo: "resto" },
   { codigo: "TH", nombre: "Tailandia", bandera: "🇹🇭", grupo: "resto" },
   { codigo: "TR", nombre: "Turquía", bandera: "🇹🇷", grupo: "resto" },

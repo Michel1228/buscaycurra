@@ -238,6 +238,30 @@ const CIUDADES: Record<string, [string, string[]]> = {
   mumbai: ["IN", ["mumbai", "bombay"]],
   bangalore: ["IN", ["bangalore", "bengaluru"]],
   delhi: ["IN", ["delhi", "new delhi", "nueva delhi"]],
+  // India: las que más ofertas tienen en la base el 6 nov 2026.
+  bengaluru: ["IN", ["bangalore", "bengaluru"]],
+  hyderabad: ["IN", ["hyderabad"]],
+  chennai: ["IN", ["chennai", "madras"]],
+  madras: ["IN", ["chennai", "madras"]],
+  ahmedabad: ["IN", ["ahmedabad"]],
+  pune: ["IN", ["pune"]],
+  kolkata: ["IN", ["kolkata", "calcutta", "calcuta"]],
+  calcuta: ["IN", ["kolkata", "calcutta", "calcuta"]],
+  "new delhi": ["IN", ["delhi", "new delhi", "nueva delhi"]],
+  "nueva delhi": ["IN", ["delhi", "new delhi", "nueva delhi"]],
+
+  // ── Sudáfrica ───────────────────────────────────────────────────────
+  // Las que más ofertas tienen en la base el 6 nov 2026. "East London" va
+  // entera: "london" es Reino Unido o Canadá (HOMONIMAS) y "east" es corta
+  // para la búsqueda por primera palabra.
+  pretoria: ["ZA", ["pretoria"]],
+  "cape town": ["ZA", ["cape town", "ciudad del cabo"]],
+  "ciudad del cabo": ["ZA", ["cape town", "ciudad del cabo"]],
+  durban: ["ZA", ["durban"]],
+  johannesburg: ["ZA", ["johannesburg", "johannesburgo"]],
+  johannesburgo: ["ZA", ["johannesburg", "johannesburgo"]],
+  "east london": ["ZA", ["east london"]],
+  bloemfontein: ["ZA", ["bloemfontein"]],
 
   // ── Brasil ──────────────────────────────────────────────────────────
   "sao paulo": ["BR", ["sao paulo", "são paulo"]],
@@ -336,6 +360,9 @@ const HOMONIMAS: Record<string, string[]> = {
   "san jose": ["US", "CR"],
   london: ["UK", "CA"],
   londres: ["UK", "CA"],
+  // East London es también la parte este de Londres: quien ya busca en el
+  // Reino Unido se queda allí (6 nov 2026).
+  "east london": ["ZA", "UK"],
   perth: ["AU", "UK"],
   birmingham: ["UK", "US"],
 };

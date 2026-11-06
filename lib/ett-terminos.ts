@@ -68,6 +68,14 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   PA: ["agencia de empleo", "agencia de reclutamiento"],
   DO: ["agencia de empleo", "agencia de reclutamiento"],
   HN: ["agencia de empleo", "agencia de reclutamiento"],
+  // En India las agencias se anuncian como "placement consultancy" o "staffing
+  // agency" (el portal público NCS habla de "placement organisations" y la
+  // patronal es la Indian Staffing Federation). Son términos de búsqueda, no
+  // nombres legales.
+  IN: ["placement consultancy", "staffing agency"],
+  // En Sudáfrica la ETT es un "temporary employment service" (TES, art. 198 de
+  // la Labour Relations Act), que allí casi todo el mundo llama "labour broker".
+  ZA: ["labour broker", "recruitment agency"],
 };
 
 /**
