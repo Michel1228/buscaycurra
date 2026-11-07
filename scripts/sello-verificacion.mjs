@@ -2408,6 +2408,27 @@ test("diseño de neón: se conserva lo que había (autorrellenos, envíos, pipel
   return malos.length === 0;
 });
 
+// El menú de las tres rayas (y "Más" en el móvil) pasó a grupos con color el
+// 7 nov 2026. Que ninguna entrada se quede fuera al agruparlas.
+test("diseño de neón: el menú por grupos lleva todas las entradas, Admin, descargar y cerrar sesión", () => {
+  const nav = leerFuente("components/AppNavWrapper.tsx");
+  const bloque = (nombre) => nav.slice(nav.indexOf(`const ${nombre}`), nav.indexOf("];", nav.indexOf(`const ${nombre}`)));
+  const todas = [...bloque("SECCIONES").matchAll(/href: "([^"]+)"/g), ...bloque("MAS").matchAll(/href: "([^"]+)"/g)].map((m) => m[1]);
+  const grupos = bloque("GRUPOS_MENU");
+  const fuera = todas.filter((h) => h !== "/app/bienvenida" && h !== "/app/gusi" && !grupos.includes(`"${h}"`));
+  const checks = {
+    [`entradas fuera de los grupos (${fuera.join(", ")})`]: fuera.length === 0,
+    "Inicio y Guzzi arriba": nav.includes('<FilaMenu href="/app/bienvenida"') && nav.includes('<Link href="/app/gusi" onClick={() => setMobileOpen(false)}'),
+    "los cuatro grupos con su color": ["Buscar", "Tu candidatura", "Formación", "Cuenta"].every((g) => grupos.includes(`titulo: "${g}"`)),
+    "Admin, descargar la app, región, idioma y cerrar sesión": nav.includes('href="/app/admin"') && nav.includes('href="/descargar"')
+      && nav.includes('aria-label="País"') && nav.includes('aria-label="Idioma"') && nav.includes("cerrarSesion()"),
+    "filas de 48 px con el icono en su círculo": nav.includes("min-h-[48px]") && nav.includes("<NavIcon name={icon} size={16} activo={activo} enCirculo />"),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
 // ── QUIEN VIENE DE LA APP NO SE QUEDA ATRAPADO NI VE "NO HAY OFERTAS" (7 nov) ─
 //
 // Michel abrio una oferta, pulso "Donde sacarlo" (el curso que le falta) y
