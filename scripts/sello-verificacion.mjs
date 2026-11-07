@@ -1635,8 +1635,11 @@ test("el respaldo de icono desconocido avisa en vez de callarse", () =>
 const navSrc = leerFuente("components/AppNavWrapper.tsx");
 test("los iconos del menu ya no llevan glow de neon", () =>
   !navSrc.includes("filter: `drop-shadow"));
+// Lo que se protege es que el color dependa SOLO de si estas en la seccion.
+// Con el diseño de neon (7 nov 2026) el verde de "activo" es el lima #a3e635
+// de los bocetos; la regla es la misma: un color si estas, el gris si no.
 test("el color del icono del menu depende de si la seccion esta activa", () =>
-  navSrc.includes('const color = activo ? "#22c55e" : "#94a3b8"'));
+  /const color = activo \? "#[0-9a-f]{6}" : "#94a3b8"/.test(navSrc));
 
 // Guzzi NO se toca: es la mascota. Lo que se cambio fue el marco.
 test("Guzzi sigue siendo la misma imagen de siempre", () =>
@@ -2241,6 +2244,170 @@ test("Mexico se barre por Careerjet: pais, sus 32 estados y las alcaldias grande
     && planBarridoCj.split(" ").includes("mx");
 });
 
+// ── EL DISEÑO DE NEÓN (7 nov 2026): BONITO, PERO TODO DE VERDAD ───────────────
+//
+// Michel trajo bocetos hechos con ChatGPT: le gustaba el aspecto, pero traían
+// cifras sin fuente ("68 % de respuesta", "+12 %", "3,8 días"), tarjetas sin
+// nada detrás ("Empresas top", "Nuevas tendencias"), un cajero a 90.000-140.000
+// (el fallo de Adzuna) y "Visto" como si fuera seguro. Estas pruebas cuidan
+// que el diseño nuevo siga enlazando a pantallas que existen y no invente nada.
+const PANTALLAS_NEON = [
+  "app/app/bienvenida/BienvenidaClient.tsx", "app/app/pipeline/page.tsx", "app/app/envios/page.tsx",
+  "app/app/explorar/page.tsx", "components/AppNavWrapper.tsx", "components/neon/Neon.tsx",
+];
+/** ¿Hay una página en app/ para esta ruta? Con [segmentos] y (grupos) de Next. */
+function existePagina(ruta) {
+  const partes = ruta.split("?")[0].split("#")[0].replace(/\/$/, "").split("/").filter(Boolean);
+  const buscar = (dir, resto) => {
+    let entradas;
+    try { entradas = readdirSync(dir, { withFileTypes: true }); } catch { return false; }
+    if (!resto.length) {
+      if (entradas.some((e) => e.isFile() && /^page\.(tsx|ts|jsx|js)$/.test(e.name))) return true;
+      return entradas.some((e) => e.isDirectory() && /^\(.+\)$/.test(e.name) && buscar(`${dir}/${e.name}`, resto));
+    }
+    return entradas.some((e) => e.isDirectory() && (
+      e.name === resto[0] ? buscar(`${dir}/${e.name}`, resto.slice(1))
+        : /^\[.+\]$/.test(e.name) ? buscar(`${dir}/${e.name}`, resto.slice(1))
+        : /^\(.+\)$/.test(e.name) ? buscar(`${dir}/${e.name}`, resto) : false));
+  };
+  return buscar("app", partes);
+}
+test("diseño de neón: cada enlace de las pantallas nuevas lleva a una pantalla que existe", () => {
+  const rotos = [];
+  for (const f of PANTALLAS_NEON) {
+    const src = leerFuente(f);
+    if (!src) { rotos.push(`${f} no se puede leer`); continue; }
+    const rutas = [
+      ...[...src.matchAll(/href(?:=|:\s*)["'`](\/[^"'`]*)["'`]/g)].map((m) => m[1]),
+      ...[...src.matchAll(/href=\{`(\/[^`]*)`\}/g)].map((m) => m[1]),
+      ...[...src.matchAll(/router\.push\(\s*[`"'](\/[^`"']*)/g)].map((m) => m[1]),
+    ];
+    for (const r of rutas) {
+      // Lo que se arma con variables se comprueba hasta la variable:
+      // "/app/ofertas/${id}" → /app/ofertas/[id]; "/app/buscar${query}" → /app/buscar.
+      const antes = r.includes("${") ? r.slice(0, r.indexOf("${")) : r;
+      const fija = r.includes("${") && antes.endsWith("/") ? antes + "x" : antes;
+      if (!existePagina(fija)) rotos.push(`${r} (en ${f})`);
+    }
+  }
+  if (rotos.length) console.log("     ↳ " + [...new Set(rotos)].join(" · "));
+  return rotos.length === 0;
+});
+test("diseño de neón: las seis secciones del menú y todo lo de «Más» existen", () => {
+  const nav = leerFuente("components/AppNavWrapper.tsx");
+  const bloque = (nombre) => nav.slice(nav.indexOf(`const ${nombre}`), nav.indexOf("];", nav.indexOf(`const ${nombre}`)));
+  const secciones = [...bloque("SECCIONES").matchAll(/href: "([^"]+)"/g)].map((m) => m[1]);
+  const mas = [...bloque("MAS").matchAll(/href: "([^"]+)"/g)].map((m) => m[1]);
+  const esperadas = ["/app/bienvenida", "/app/explorar", "/app/curriculum", "/app/pipeline", "/app/envios", "/app/entrevistas"];
+  const faltan = [...secciones, ...mas].filter((r) => !existePagina(r));
+  if (faltan.length) console.log("     ↳ no existen: " + faltan.join(", "));
+  return JSON.stringify(secciones) === JSON.stringify(esperadas) && mas.includes("/app/gusi") && mas.length >= 10 && faltan.length === 0
+    && nav.includes('aria-label="Más"') === false && nav.includes(">Más<") && nav.includes("SIN_BARRA_ABAJO");
+});
+test("diseño de neón: ninguna pantalla nueva enseña las cifras inventadas del boceto", () => {
+  const prohibidas = ["68 %", "68%", "+12 %", "+12%", "42 %", "3,8 días", "48 % mejor", "+32 %", "Empresas top", "Nuevas tendencias",
+    "21.800", "Tasa de respuesta", "Tiempo medio de respuesta", "Sectores con más futuro", "Postula a más", "Campañas inteligentes", "Busca y Curra"];
+  const malas = [];
+  for (const f of PANTALLAS_NEON) {
+    // Sin los comentarios: ahí se explica qué traía el boceto y por qué no está.
+    const src = leerFuente(f).replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/.*$/gm, "$1");
+    for (const p of prohibidas) if (src.includes(p)) malas.push(`«${p}» en ${f}`);
+    // Una cifra grande nunca lleva un número escrito a mano: sale de los datos.
+    if (/<CifraGrande[^>]*valor=\{\d/.test(src)) malas.push(`cifra escrita a mano en ${f}`);
+  }
+  if (malas.length) console.log("     ↳ " + malas.join(" · "));
+  return malas.length === 0;
+});
+test("diseño de neón: «visto» no se da por seguro y la barra de abajo no tapa nada", () => {
+  const css = leerFuente("app/globals.css");
+  const checks = {
+    "envíos: «Quizá visto»": leerFuente("app/app/envios/page.tsx").includes('visto: "Quizá visto"'),
+    "pipeline: «Quizá visto» con la explicación": /label: "Quizá visto"[^\n]*no es seguro/.test(leerFuente("app/app/pipeline/page.tsx")),
+    "hueco de la barra en el body": css.includes("--barra-inferior: calc(64px + env(safe-area-inset-bottom, 0px))") && css.includes("padding-bottom: var(--barra-inferior)"),
+    "lo fijo abajo sube por encima": ["app/app/curriculum/Content.tsx", "app/app/au-pair/page.tsx", "app/app/buscar/page.tsx"].every((f) => leerFuente(f).includes("var(--barra-inferior)")),
+    "el chat de Guzzi sin barra de abajo (tiene su caja de escribir)": /SIN_BARRA_ABAJO = \["\/app\/gusi"/.test(leerFuente("components/AppNavWrapper.tsx")),
+    "botones de 44 px en la barra": leerFuente("components/AppNavWrapper.tsx").includes("w-11 h-11") && leerFuente("components/NotificationBell.tsx").includes("w-11 h-11"),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+test("diseño de neón: el fondo de oleaje es ligero, se para oculto y queda quieto con «reducir movimiento»", () => {
+  const css = leerFuente("app/globals.css");
+  const fondo = leerFuente("components/FondoOleaje.tsx");
+  const keyframes = [...css.matchAll(/@keyframes oleaje-[a-z-]+ \{([\s\S]*?)\n\}/g)].map((m) => m[1]).join("\n");
+  const checks = {
+    "lo monta la navegación de /app": leerFuente("components/AppNavWrapper.tsx").includes("<FondoOleaje />"),
+    "se para con la pestaña oculta": fondo.includes('"visibilitychange"') && fondo.includes("oleaje-quieto") && css.includes(".oleaje-quieto .fondo-oleaje *"),
+    "quieto con reducir movimiento": /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.fondo-oleaje \*[\s\S]*?animation: none !important/.test(css),
+    "solo se anima transform y opacity": keyframes.length > 0 && !/background|filter|mask|width|height|top:|left:/.test(keyframes),
+    "sin librerías: ni canvas ni WebGL": !/canvas|webgl|three|framer-motion/i.test(fondo),
+    "las tarjetas no desenfocan lo de detrás (batería)": !/\.cristal \{[^}]*backdrop-filter/.test(css),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+test("diseño de neón: logos solo con dominio comprobado, sueldos creíbles y Guzzi el de siempre", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-neon-entrada.ts", salida = ".sello-neon.cjs";
+  try {
+    writeFileSync(entrada, 'export { dominioDeLogo, inicialesDe } from "./lib/logo-empresa";\nexport { sueldoCreible } from "./lib/sueldo-visible";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const logo = leerFuente("components/neon/LogoEmpresa.tsx");
+    const neon = leerFuente("components/neon/Neon.tsx");
+    const checks = {
+      "marcas por su nombre exacto": m.dominioDeLogo("Lidl Supermercados S.A.U.") === "lidl.es" && m.dominioDeLogo("Centros Comerciales Carrefour SA") === "carrefour.com",
+      "nada de nombres parecidos": m.dominioDeLogo("Mango") === null && m.dominioDeLogo("HM Hospitales") === null && m.dominioDeLogo("Supermercados Hiber Sa") === null,
+      "el correo solo si lleva el nombre de la empresa": m.dominioDeLogo("Bar Pepe", "info@bar-pepe.es") === "bar-pepe.es"
+        && m.dominioDeLogo("Transportes García", "garcia@gmail.com") === null && m.dominioDeLogo("Hotel Sol", "rrhh@hotelsol.com") === null
+        && m.dominioDeLogo("Panadería Soria", "empleo@adecco.es") === null,
+      "y si no, iniciales": m.inicialesDe("Supermercados Hiber Sa") === "SH",
+      "lo carga el navegador, perezoso y sin referer, con iniciales si falla": logo.includes('loading="lazy"') && logo.includes('referrerPolicy="no-referrer"')
+        && logo.includes("naturalWidth >= 32") && logo.includes("onError") && !logo.includes('from "next/image"'),
+      "un cajero a 90.000-140.000 no se enseña": m.sueldoCreible("90000 - 140000") === null && m.sueldoCreible("18.200 - 20.400") === "18.200-20.400 €"
+        && m.sueldoCreible("1.350 € al mes") === "1.350 € al mes" && m.sueldoCreible("Ver en oferta") === null,
+      "Inicio y las tarjetas de oferta lo usan": leerFuente("app/app/bienvenida/BienvenidaClient.tsx").includes("sueldoCreible(oferta.salario)")
+        && leerFuente("components/JobCard.tsx").includes("sueldoAdzunaImposible"),
+      "Guzzi es la imagen de siempre (el icono de la app)": neon.includes('"/icon-512.png" : "/icon-192.png"') && leerFuente("components/AppNavWrapper.tsx").includes("<LogoGusano"),
+      "la marca se escribe BuscayCurra": leerFuente("components/AppNavWrapper.tsx").includes(">Buscay</span><span className=\"texto-neon\">Curra<"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+test("diseño de neón: se conserva lo que había (autorrellenos, envíos, pipeline y el chat con ?q=)", () => {
+  const envios = leerFuente("app/app/envios/page.tsx");
+  const pipe = leerFuente("app/app/pipeline/page.tsx");
+  const inicio = leerFuente("app/app/bienvenida/BienvenidaClient.tsx");
+  const explorar = leerFuente("app/app/explorar/page.tsx");
+  const chat = leerFuente("components/GusiChat.tsx");
+  const checks = {
+    "autorrellenos de oficio y ciudad donde estaban y en Explorar": ["app/app/buscar/page.tsx", "app/app/perfil/page.tsx", "app/app/salarios/page.tsx", "app/auth/registro/page.tsx"]
+      .every((f) => leerFuente(f).includes("useSugerencias(")) && (explorar.match(/useSugerencias\(/g) || []).length === 2 && explorar.includes("puestosDe(") && explorar.includes("ciudadesDe("),
+    "envíos: cancelar, quitar, vaciar, filtros y detalle": envios.includes('"/api/cv-sender/cancel"') && envios.includes("body: JSON.stringify({ all: true })")
+      && envios.includes("FILTROS.map") && envios.includes("detalle.cover_letter") && envios.includes("<UsageCounter compact />") && envios.includes("<MisAlertas />"),
+    "envíos: el total es el de verdad, no los 20 últimos": envios.includes("resumen.totalEnviados"),
+    "pipeline: arrastrar, mover, notas, apuntar a mano y filtros": pipe.includes("onDragStart") && pipe.includes("moverCandidatura(candidaturaEdit.id, c.id)")
+      && pipe.includes("guardarNotas") && pipe.includes("crearCandidatura") && pipe.includes("setFiltroActivo(activo ? null : s.filtro)") && pipe.includes("setCelebracion(true)"),
+    "inicio: primeros pasos, cifras, las dos formas, ofertas y atajos": inicio.includes("<PrimerDia />") && inicio.includes('fetch("/api/dashboard"')
+      && inicio.includes('href="/app/buscar" className="boton-cristal') && inicio.includes("quickActions.length > 0 ? quickActions"),
+    "el chat deja escrito lo de ?q= y no lo manda solo": chat.includes('params.get("q")') && chat.includes("setInput(q.slice(0, 500))") && !/params\.get\("q"\)[\s\S]{0,300}enviar\(q/.test(chat),
+    "la cámara se ilumina con ?foto=1": chat.includes('params.get("foto") === "1"') && envios.includes('href="/app/gusi?foto=1"'),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
 // ── QUIEN VIENE DE LA APP NO SE QUEDA ATRAPADO NI VE "NO HAY OFERTAS" (7 nov) ─
 //
 // Michel abrio una oferta, pulso "Donde sacarlo" (el curso que le falta) y
@@ -2260,6 +2427,275 @@ test("con sesion la cabecera publica lleva de vuelta a la app, y una busqueda le
 // Y los enlaces a un curso desde dentro de la app van a la ficha de la app
 // (/app/formacion/...), no a la publica: la ficha de oferta, Guzzi y los avisos
 // de cursos del perfil sacaban a la web publica.
+// ── SE ENTRA SIN CONFIRMAR EL CORREO; PARA HACER ALGO HAY QUE VERIFICARLO (7 nov)
+//
+// 93 de 451 cuentas no confirmaban y se quedaban fuera. Michel: "Vamos a
+// dejarles entrar y que luego confirmen el correo, pero cuando quieran hacer
+// algo les pediremos la confirmación. Que no haya ningún escape." Con "Confirm
+// email" apagado, Supabase pone email_confirmed_at al crear la cuenta, así que
+// lo que vale es lib/auth/correo-verificado.ts. Con el código de verdad.
+test("correo verificado: el auto-confirm no vale; confirmar antes del cambio o nuestra marca, sí; y el reenvío tiene tope", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-correo-verificado-entrada.ts", salida = ".sello-correo-verificado.cjs";
+  try {
+    writeFileSync(entrada, 'export * from "./lib/auth/correo-verificado";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const corte = m.CORTE_CONFIRMACION;
+    const iso = (t) => new Date(t).toISOString();
+    const despues = corte + 5 * 86400000;
+    const autoConfirm = { created_at: iso(despues), email_confirmed_at: iso(despues + 4), app_metadata: {} };
+    const casos = [
+      ["auto-confirm (Supabase la da por confirmada al crearla)", m.correoVerificado(autoConfirm), false],
+      ["auto-confirm no cuenta como enlace pulsado", m.confirmoConEnlace(autoConfirm), false],
+      ["confirmado de verdad antes del cambio", m.correoVerificado({ created_at: "2026-10-01T10:00:00Z", email_confirmed_at: "2026-10-01T10:02:00Z" }), true],
+      ["cuenta creada ya confirmada por nosotros antes del cambio (revisión de Apple)", m.correoVerificado({ created_at: "2026-07-01T10:00:00Z", email_confirmed_at: "2026-07-01T10:00:00Z" }), true],
+      ["marca propia, aunque Supabase la diera por confirmada al crearla", m.correoVerificado({ ...autoConfirm, app_metadata: { correo_verificado_en: iso(despues + 90000) } }), true],
+      ["la marca dice desde cuándo", m.correoVerificadoEn({ ...autoConfirm, app_metadata: { correo_verificado_en: "2026-11-12T09:00:00Z" } }), "2026-11-12T09:00:00Z"],
+      ["sin nada", m.correoVerificado({ created_at: iso(despues), email_confirmed_at: null, app_metadata: {} }), false],
+      ["sin cuenta", m.correoVerificado(null), false],
+      // GoTrue, con auto-confirm, confirma una cuenta antigua sin confirmar a quien
+      // se registra otra vez con ese correo, sin pedir la contraseña: días después
+      // del alta. Eso no puede contar como correo verificado.
+      ["confirmación de Supabase tras el cambio (registro repetido): no vale", m.correoVerificado({ created_at: "2026-10-20T10:00:00Z", email_confirmed_at: iso(despues), app_metadata: {} }), false],
+      ["…aunque sí parece un enlace pulsado (no se le dice 'no confirmaste')", m.confirmoConEnlace({ created_at: "2026-10-20T10:00:00Z", email_confirmed_at: iso(despues) }), true],
+      ["reenvío: el primero sale", m.motivoParaNoMandar([], despues), null],
+      ["reenvío: como mucho uno por minuto", m.motivoParaNoMandar([iso(despues - 30000)], despues), "espera"],
+      ["reenvío: pasado el minuto, sí", m.motivoParaNoMandar([iso(despues - 61000)], despues), null],
+      ["reenvío: cinco al día y no más", m.motivoParaNoMandar([1, 2, 3, 4, 5].map((h) => iso(despues - h * 3600000)), despues), "tope_dia"],
+      ["reenvío: los de ayer no cuentan", m.enviosDelDia([iso(despues - 25 * 3600000), iso(despues - 3600000), 7, null], despues).length, 1],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, debería ${quiere}`).join(" · "));
+    // Y en UN solo sitio: nadie más decide con email_confirmed_at (sin contar comentarios).
+    const fuera = [];
+    for (const raiz of ["app", "lib", "components"]) {
+      for (const rel of readdirSync(raiz, { recursive: true })) {
+        const f = raiz + "/" + String(rel).split("\\").join("/");
+        if (!/\.(ts|tsx)$/.test(f) || f === "lib/auth/correo-verificado.ts" || f === "lib/auth-server.ts") continue;
+        const codigo = leerFuente(f).split("\n").filter((l) => !/^\s*(\*|\/\/|\/\*)/.test(l)).join("\n");
+        if (codigo.includes("email_confirmed_at")) fuera.push(f);
+      }
+    }
+    if (fuera.length) console.log("      deciden con email_confirmed_at fuera de lib/auth/correo-verificado.ts: " + fuera.join(", "));
+    return mal.length === 0 && fuera.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// La comprobación del servidor, compilada y con un Supabase de mentira (en otro
+// proceso, para no tocar el fetch de las demás pruebas): 403 confirma_correo a
+// quien tiene sesión y no ha verificado, también si manda el token sin
+// "Bearer " (hay rutas que lo leen con replace o slice(7)); nada a quien no
+// tiene sesión (cada ruta da su 401); y mientras "Confirm email" siga
+// activado, quien confirmó con el enlace de Supabase sigue igual y se le marca.
+test("la comprobación del servidor da 403 confirma_correo a quien no ha verificado, y antes del cambio todo sigue igual", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync, copyFileSync } = await import("node:fs");
+  const entrada = ".sello-guarda-entrada.ts", salida = ".sello-guarda.cjs", salida2 = ".sello-guarda-2.cjs", prueba = ".sello-guarda-prueba.cjs";
+  try {
+    writeFileSync(entrada, 'export { correoSinVerificar } from "./lib/auth-server";\nexport { CORTE_CONFIRMACION } from "./lib/auth/correo-verificado";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    copyFileSync(salida, salida2);
+    writeFileSync(prueba, `
+process.env.NEXT_PUBLIC_SUPABASE_URL = "https://sello.invalid";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-del-sello";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "servicio-del-sello";
+const iso = (t) => new Date(t).toISOString();
+const ahora = Date.now();
+const cuentas = {
+  auto: { id: "0a0a0a0a-1111-4111-8111-000000000001", email: "auto@example.com", created_at: iso(ahora - 60000), email_confirmed_at: iso(ahora - 59996), app_metadata: {} },
+  marca: { id: "0a0a0a0a-1111-4111-8111-000000000002", email: "marca@example.com", created_at: iso(ahora - 60000), email_confirmed_at: iso(ahora - 59996), app_metadata: { correo_verificado_en: iso(ahora - 1000) } },
+  antigua: { id: "0a0a0a0a-1111-4111-8111-000000000003", email: "antigua@example.com", created_at: "2026-09-01T10:00:00Z", email_confirmed_at: "2026-09-01T10:02:00Z", app_metadata: {} },
+  enlace: { id: "0a0a0a0a-1111-4111-8111-000000000004", email: "enlace@example.com", created_at: iso(ahora - 180000), email_confirmed_at: iso(ahora - 60000), app_metadata: {} },
+};
+let autoconfirm = true;
+const escritas = [];
+globalThis.fetch = async (url, init = {}) => {
+  url = String(url);
+  const h = new Headers(init.headers || {});
+  const json = (d, status = 200) => new Response(JSON.stringify(d), { status, headers: { "Content-Type": "application/json" } });
+  if (url.endsWith("/auth/v1/settings")) return json({ mailer_autoconfirm: autoconfirm });
+  if (url.endsWith("/auth/v1/user")) {
+    const c = cuentas[(h.get("authorization") || "").replace("Bearer ", "")];
+    return c ? json(c) : json({ msg: "invalid JWT" }, 401);
+  }
+  const admin = url.match(/\\/auth\\/v1\\/admin\\/users\\/([^/?]+)/);
+  if (admin) {
+    const c = Object.values(cuentas).find((x) => x.id === decodeURIComponent(admin[1]));
+    if ((init.method || "GET") === "PUT") { escritas.push({ id: c.id, ...JSON.parse(init.body) }); return json(c); }
+    return c ? json(c) : json({}, 404);
+  }
+  return json({ error: "no esperada: " + url }, 500);
+};
+const peticion = (cabeceras) => ({ cookies: { getAll: () => [] }, headers: new Headers(cabeceras) });
+const resultado = async (g, cabeceras) => {
+  const r = await g.correoSinVerificar(peticion(cabeceras));
+  if (!r) return "pasa";
+  const d = await r.json();
+  return r.status + ":" + d.error + (d.mensaje ? "+mensaje" : "");
+};
+(async () => {
+  const despues = require("./${salida}");
+  const antes = require("./${salida2}");
+  const out = {};
+  // Después del cambio ("Confirm email" apagado).
+  out.sinSesion = await resultado(despues, {});
+  out.auto = await resultado(despues, { authorization: "Bearer auto" });
+  out.autoSinBearer = await resultado(despues, { authorization: "auto" });
+  out.marca = await resultado(despues, { authorization: "Bearer marca" });
+  out.antigua = await resultado(despues, { authorization: "Bearer antigua" });
+  out.enlaceDespues = await resultado(despues, { authorization: "Bearer enlace" });
+  out.escritasDespues = escritas.length;
+  // Antes del cambio: otra copia del módulo (lo que sabe del ajuste lo guarda un minuto).
+  autoconfirm = false;
+  out.enlaceAntes = await resultado(antes, { authorization: "Bearer enlace" });
+  out.marcada = escritas.some((e) => e.id === cuentas.enlace.id && e.app_metadata?.correo_verificado_en === cuentas.enlace.email_confirmed_at);
+  out.autoAntes = await resultado(antes, { authorization: "Bearer auto" });
+  console.log(JSON.stringify(out));
+})().catch((e) => { console.log(JSON.stringify({ fallo: String(e && e.stack || e).slice(0, 300) })); });
+`);
+    const out = JSON.parse(execFileSync("node", [prueba], { stdio: "pipe" }).toString().trim().split("\n").pop());
+    const quiere = {
+      sinSesion: "pasa", auto: "403:confirma_correo+mensaje", autoSinBearer: "403:confirma_correo+mensaje", marca: "pasa", antigua: "pasa",
+      enlaceDespues: "403:confirma_correo+mensaje", escritasDespues: 0, enlaceAntes: "pasa", marcada: true, autoAntes: "403:confirma_correo+mensaje",
+    };
+    const mal = Object.entries(quiere).filter(([k, v]) => out[k] !== v);
+    if (mal.length) console.log("      " + mal.map(([k, v]) => `${k}: da ${out[k]}, debería ${v}`).join(" · ") + (out.fallo ? " · " + out.fallo : ""));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar o ejecutar: ${e.message?.slice(0, 120)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida, salida2, prueba]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// NINGUNA RUTA QUE HACE ALGO SE ESCAPA. Se recorre app/api/** y cada manejador
+// (GET, POST, PUT, PATCH, DELETE) que no esté en esta lista CERRADA tiene que
+// empezar por la comprobación del correo verificado, antes de esperar a nada:
+//   const sinVerificar = await correoSinVerificar(req);
+//   if (sinVerificar) return sinVerificar;
+// Una ruta nueva que escriba, gaste IA o mande correos falla aquí hasta que la
+// lleve. Para meter una en la lista hay que decir por qué no es una acción.
+const RUTAS_SIN_CORREO_VERIFICADO = {
+  // ── LECTURA: mirar sí. Buscar ofertas, la ficha, salarios, cursos, países,
+  //    explorar negocios y ETT (Places es de pago, pero es mirar; lo que manda
+  //    el CV es cv-sender), y ver lo propio (CV, cartas, envíos, listas).
+  lectura: [
+    "au-pair/agencias GET", "au-pair/ofertas GET", "au-pair/profile GET",
+    "company/extract POST", "company/foto GET",
+    "cursos/aviso GET", "cursos/carnes GET", "cursos/plazas GET", "cursos/progreso GET", "cursos/sugerencias GET",
+    "cursos/ir GET", // lleva al curso y suma un clic sin datos de la persona
+    "cv-cartas GET", "cv-sender/envios-hoy GET", "cv-sender/status GET",
+    "cv/descargar GET", "cv/lista GET", "cv/lista POST" /* leer un CV por id */, "cv/obtener GET",
+    "cv/pdf-template GET", // baja el PDF ya hecho por su id; hacerlo (POST) es acción
+    "dashboard GET", "empresas/zona GET", "empresas/zona POST", "entrevistas/empresa GET", "entrevistas/sector GET", "ett/search POST",
+    "gusi/conversations/[id] GET", "gusi/conversations GET", "gusi/cv GET",
+    "jobs/alertas GET", "jobs/by-ids GET", "jobs/comprobar GET", "jobs/count GET", "jobs/detail GET", "jobs/guardar GET", "jobs/jooble POST", "jobs/search GET",
+    "notifications GET", "ofertas/[id] GET", "ofertas/para-ti GET", "ofertas/resumen GET", "onboarding/estado GET", "paises/stats GET", "ping GET",
+    "referencias GET", "reviews GET", "salarios/calculadora GET", "salarios GET", "usage GET", "user/stats GET",
+    // Estado público de los barridos (sin datos de nadie); lanzarlos (POST) va con x-sync-secret.
+    "jobs/sync-adzuna-barrido GET", "jobs/sync-adzuna-global GET", "jobs/sync-arbeitnow GET", "jobs/sync-arbeitsagentur GET", "jobs/sync-batch GET",
+    "jobs/sync-careerjet-barrido GET", "jobs/sync-careerjet-global GET", "jobs/sync-childcare GET", "jobs/sync-eures GET", "jobs/sync-france-travail GET",
+  ],
+  // ── Lo mínimo para verificar el correo, recuperar la contraseña y registrarse.
+  verificar: ["auth/confirmar GET", "auth/verificar-correo GET", "auth/verificar-correo POST", "auth/recuperar POST", "auth/registro-cortado POST"],
+  // ── Enlaces firmados de los correos, sin sesión: darse de baja y la firma de una referencia.
+  enlaceFirmado: [
+    "alertas/baja GET", "alertas/baja POST", "cursos/aviso/baja GET", "cursos/aviso/baja POST", "cursos/carnes/baja GET", "cursos/carnes/baja POST",
+    "cursos/sugerencias/baja GET", "cursos/sugerencias/baja POST", "referencias/confirmar GET", "referencias/confirmar POST",
+  ],
+  // ── Irse nunca se bloquea: borrar la cuenta y gestionar o cancelar lo que ya se paga.
+  irse: ["cuenta/borrar DELETE", "user/delete-account DELETE", "stripe/portal POST"],
+  // ── El servidor: con x-sync-secret, x-admin-secret, la clave de alertas o la cuenta de administración.
+  servidor: [
+    "admin/centinela GET", "admin/contador GET", "admin/fix-profiles GET", "admin/health GET", "admin/metricas GET", "admin/resumen-diario POST",
+    "admin/setup-notifications GET", "admin/setup-storage GET", "admin/stats GET", "agente/run POST",
+    "auth/bienvenidas-pendientes POST", "auth/recordar-confirmacion POST", "onboarding/recordatorios POST", "email/retention POST", "push/send-alerts GET",
+    "cursos/alertas POST", "cursos/carnes/avisos POST", "cursos/plazas/sync POST", "cursos/sugerencias-cv POST",
+    "jobs/bulk-index GET", "jobs/bulk-index POST", "jobs/extract-emails GET", "jobs/extract-emails POST", "jobs/index GET", "jobs/index POST",
+    "jobs/ingest-batch POST", "jobs/ingest-remote POST", "jobs/retirar-caducadas POST", "jobs/scrape-ats GET",
+    "jobs/sync-adzuna-barrido POST", "jobs/sync-adzuna-global POST", "jobs/sync-arbeitnow POST", "jobs/sync-arbeitsagentur POST", "jobs/sync-batch POST",
+    "jobs/sync-careerjet-barrido POST", "jobs/sync-careerjet-global POST", "jobs/sync-childcare POST", "jobs/sync-eu-apis GET", "jobs/sync-eu-apis POST",
+    "jobs/sync-eures POST", "jobs/sync-france-travail POST", "jobs/sync-global-free GET", "jobs/sync-global-free POST", "jobs/sync-jooble-global POST",
+    "jobs/sync-ofertas-publicas POST", "jobs/sync-remote GET", "jobs/sync-run POST", "jobs/sync-usajobs POST",
+  ],
+  // ── Avisos de fuera, con su firma (Stripe, RevenueCat, Resend, WhatsApp, el píxel de apertura).
+  webhooks: ["stripe/webhook POST", "revenuecat/webhook POST", "cv-sender/entrega POST", "cv-sender/webhook POST", "cv-sender/webhook GET", "whatsapp/webhook GET", "whatsapp/webhook POST"],
+};
+test("ninguna ruta que escribe, gasta IA o manda correos se escapa sin el correo verificado", () => {
+  const libres = new Set(Object.values(RUTAS_SIN_CORREO_VERIFICADO).flat());
+  const vistas = new Set(), sinGuarda = [];
+  let acciones = 0;
+  for (const rel of readdirSync("app/api", { recursive: true })) {
+    const f = "app/api/" + String(rel).split("\\").join("/");
+    if (!f.endsWith("/route.ts")) continue;
+    const ruta = f.slice("app/api/".length, -"/route.ts".length);
+    const s = leerFuente(f);
+    const importada = /import \{[^}]*\bcorreoSinVerificar\b[^}]*\} from "@\/lib\/auth-server";/.test(s);
+    for (const m of s.matchAll(/export (?:async )?function (GET|POST|PUT|PATCH|DELETE)\b|export const (GET|POST|PUT|PATCH|DELETE)\b/g)) {
+      const nombre = `${ruta} ${m[1] || m[2]}`;
+      vistas.add(nombre);
+      if (libres.has(nombre)) continue;
+      acciones++;
+      const sig = s.indexOf("export ", m.index + 10);
+      const cuerpo = s.slice(m.index, sig < 0 ? s.length : sig);
+      const guarda = /const (\w+) = await correoSinVerificar\(\w+\);\s*if \(\1\) return \1;/.exec(cuerpo);
+      const otraEspera = cuerpo.search(/await (?!correoSinVerificar\()/);
+      if (!m[1] || !importada || !guarda || (otraEspera >= 0 && otraEspera < guarda.index)) sinGuarda.push(nombre);
+    }
+  }
+  const sobran = [...libres].filter((n) => !vistas.has(n));
+  if (sinGuarda.length) console.log("      sin la comprobación al principio: " + sinGuarda.join(", "));
+  if (sobran.length) console.log("      en la lista pero ya no existen: " + sobran.join(", "));
+  return sinGuarda.length === 0 && sobran.length === 0 && acciones >= 70;
+});
+
+test("se entra sin confirmar: registro y enlace dejan dentro, la app lo explica sin tocar cada pantalla y los correos dicen 'usar'", () => {
+  const reg = leerFuente("app/auth/registro/page.tsx");
+  const conf = leerFuente("app/api/auth/confirmar/route.ts");
+  const ver = leerFuente("app/api/auth/verificar-correo/route.ts");
+  const aviso = leerFuente("components/ConfirmaCorreo.tsx");
+  const smtp = leerFuente("lib/email/smtp-sender.ts");
+  const verificar = smtp.slice(smtp.indexOf("export async function sendVerificarCorreoEmail"), smtp.indexOf("// ─── Te falta confirmar el correo"));
+  const recordatorio = smtp.slice(smtp.indexOf("export async function sendConfirmarCorreoEmail"), smtp.indexOf("// ─── Bienvenida que llegó tarde"));
+  const rec = leerFuente("app/api/auth/recordar-confirmacion/route.ts");
+  const checks = {
+    "con sesión, a la app y a lo que venía a ver; sin ella, a confirmar como siempre": /if \(data\?\.session\) \{[\s\S]{0,400}"\/api\/auth\/verificar-correo"[\s\S]{0,300}window\.location\.assign\(destinoCuenta \|\| "\/app\/bienvenida"\)/.test(reg)
+      && reg.indexOf("if (data?.session)") < reg.indexOf("setRegistrado(true);") && reg.includes("Confirma tu correo"),
+    "el freno de erratas va antes de crear la cuenta": reg.indexOf("sugerenciaCorreo(email)") < reg.indexOf("auth.signUp"),
+    "el enlace firmado marca el correo, da la bienvenida y deja dentro": conf.includes("firmaConfirmarValida(userId")
+      && conf.includes("correo_verificado_en: new Date().toISOString()") && conf.includes("await darBienvenida(userId)")
+      && conf.indexOf("correo_verificado_en: new Date") < conf.indexOf("await darBienvenida(userId)")
+      && conf.includes("if (await sesionDe(req, userId)) return aLaApp;") && conf.includes('generateLink({ type: "magiclink"'),
+    "y ya verificado no es una llave para entrar": conf.includes("if (correoVerificado(cuenta)) return (await sesionDe(req, userId)) ? aLaApp : alLogin;"),
+    "el reenvío va a la dirección de la cuenta y con tope": ver.includes("motivoParaNoMandar(envios, ahora)") && !ver.includes("req.json(")
+      && ver.includes("email: cuenta.email") && ver.includes("verificacion_enviada: [...envios"),
+    "la ventana sale sola con cualquier confirma_correo, desde el layout de /app": leerFuente("app/app/layout.tsx").includes("<ConfirmaCorreo />")
+      && aviso.includes("window.fetch = escuchado") && aviso.includes("ERROR_CONFIRMA_CORREO") && aviso.includes("Confirma tu correo para usar todo BuscayCurra")
+      && aviso.includes("Reenviar") && leerFuente("components/ConfirmaCorreoVentana.tsx").includes("Ya lo he confirmado"),
+    "el de registrarse sale en el momento; los recordatorios esperan": !verificar.includes("puedeEsperar") && verificar.includes("params.enlace")
+      && recordatorio.includes("puedeEsperar: true"),
+    "los correos dicen 'para usar', no 'para entrar'": verificar.includes("para usar BuscayCurra") && recordatorio.includes("para usar BuscayCurra")
+      && !recordatorio.includes("para entrar en BuscayCurra") && !recordatorio.includes("todavía no has podido entrar"),
+    "recordar: solo a quien nunca confirmó, ni con nuestro enlace ni con el de Supabase": rec.includes("!correoVerificado(u) && !confirmoConEnlace(u)"),
+    "la empresa también pide el correo verificado, aunque pague": (() => {
+      const c = leerFuente("lib/empresas/cuenta.ts");
+      return c.indexOf("if (!u.confirmado) return null;") > 0 && c.indexOf("if (!u.confirmado) return null;") < c.indexOf("if (await esEmpresa(u.id))");
+    })(),
+    "el recorrido del centinela usa una cuenta marcada (si no, todo daría 403)": leerFuente("lib/centinela/recorrido.ts").includes("correo_verificado_en: new Date().toISOString()"),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
 // ── SEGUNDO Y ULTIMO AVISO A QUIEN NO CONFIRMO EL CORREO, SIN ROMPER LO PROMETIDO (7 nov)
 //
 // 93 de 451 cuentas sin confirmar; quien confirma lo hace en 1-3 minutos y el
@@ -3217,6 +3653,10 @@ test("la web no dice que Android va por el navegador ni promete avisos que no ex
     && (!enPlay || !/En Android se usa desde el navegador/.test(f))
     && (!enPlay || f.includes("Google Play"));
 });
+
+// La descripcion para Google decia que Guzzi envia candidaturas "24/7": los
+// envios salen en horario de oficina y con el visto bueno de la persona (7 nov).
+test("la descripcion de la web no promete envios 24/7", () => !leerFuente("app/layout.tsx").includes("24/7"));
 
 test("el mito del '75 % lo descarta un robot' no esta en la web ni en el marketing", () => {
   const ficheros = [];
@@ -6533,20 +6973,21 @@ test("confirmar el correo: lo que falta en grande, erratas avisadas y un recorda
       "el enlace del correo va firmado y solo vale para esa cuenta": firmas,
       "tras registrarse, lo que falta en grande y sin «Ir al login»": registro.includes("Confirma tu correo") && !/>\s*¡Cuenta creada!/.test(registro)
         && !registro.includes("Ir al login") && registro.includes("Corrígelo") && registro.includes("sugerenciaCorreo(email)"),
-      "el botón solo sirve sin confirmar, con enlace recién hecho": confirmar.includes("email_confirmed_at) return alLogin")
+      // 7 nov 2026: "sin confirmar" es sin el correo verificado (lib/auth/correo-verificado.ts).
+      "el botón solo sirve sin confirmar, con enlace recién hecho": confirmar.includes("if (correoVerificado(cuenta)) return (await sesionDe(req, userId)) ? aLaApp : alLogin;")
         && confirmar.includes('generateLink({ type: "magiclink"')
         // 22 oct 2026: se canjea en el servidor (en el navegador, el reintento de
         // Supabase gastaba el enlace y salía "Algo no fue bien" con la cuenta dentro).
         && confirmar.includes("publico.auth.verifyOtp(") && confirmar.includes("/auth/callback#") && !confirmar.includes("/auth/callback?token_hash=")
         && leerFuente("app/auth/callback/page.tsx").includes("if (error && !(await supabase.auth.getSession()).data.session)"),
-      "recordatorio: sin confirmar, de 1 a 30 días, una vez y solo si salió": recordar.includes("!u.email_confirmed_at") && recordar.includes("dias >= 1 && dias <= 30")
+      "recordatorio: sin confirmar, de 1 a 30 días, una vez y solo si salió": recordar.includes("!correoVerificado(u) && !confirmoConEnlace(u)") && recordar.includes("dias >= 1 && dias <= 30")
         && recordar.includes("!u.app_metadata?.recordatorio_confirmar_en")
         && recordar.indexOf("if (!salio) continue;") > 0 && recordar.indexOf("if (!salio) continue;") < recordar.indexOf("recordatorio_confirmar_en: new Date"),
       "a media mañana entre semana y nunca a cuentas de prueba": recordar.includes("!enHorarioDeAviso()") && recordar.includes("resend\\.dev")
         && leerFuente("scripts/vps/crontab.txt").includes("45 8,9 * * 1-5 /usr/bin/flock -n /tmp/recordar-confirmacion.lock"),
       // Las ofertas piden entrar, y sin confirmar no se puede: el único enlace es el botón.
       "el correo no se come el cupo y su único enlace es el botón": correo.includes("puedeEsperar: true") && !correo.includes("x.url") && correo.includes("params.enlace"),
-      "el del primer día ya no va a quien no puede entrar": leerFuente("app/api/onboarding/recordatorios/route.ts").includes("!u.email_confirmed_at) continue;"),
+      "el del primer día ya no va a quien no puede hacer ningún paso": leerFuente("app/api/onboarding/recordatorios/route.ts").includes("!correoVerificado(u)) continue;"),
     };
     const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
     if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);

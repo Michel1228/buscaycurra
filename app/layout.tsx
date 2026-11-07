@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   // ("busca y curra") y sin esa variante Google no relaciona las dos consultas.
   title: `BuscayCurra (Busca y Curra) — Agente IA que busca trabajo por ti`,
   description:
-    `Deja de enviar CVs al vacío. Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países, 24/7. Busca trabajo de au pair, live-in nanny, o cualquier sector. Tu agente personal de búsqueda de empleo.`,
+    `Deja de enviar CVs al vacío. Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países. Busca trabajo de au pair, live-in nanny, o cualquier sector. Tu agente personal de búsqueda de empleo.`,
   keywords: [
     "buscar trabajo",
     "empleo",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "BuscayCurra — El agente IA que busca trabajo por ti",
     description:
-      `Guzzi busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países, 24/7. Deja de enviar CVs al vacío. Tu agente personal de búsqueda de empleo.`,
+      `Guzzi busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países. Deja de enviar CVs al vacío. Tu agente personal de búsqueda de empleo.`,
     url: "https://buscaycurra.es",
     locale: "es_ES",
     type: "website",
@@ -83,7 +83,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BuscayCurra — Agente IA que busca trabajo por ti",
     description:
-      `Guzzi busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países. 24/7.`,
+      `Guzzi busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países.`,
     images: ["/og-image.png"],
   },
   // CANONICAL "./": CADA PÁGINA, LA SUYA (22 oct 2026). Un canonical "/" aquí
@@ -176,7 +176,7 @@ export default function RootLayout({
               name: "BuscayCurra",
               url: "https://buscaycurra.es",
               description:
-                `Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países, 24/7. Tu agente personal de búsqueda de empleo.`,
+                `Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países. Tu agente personal de búsqueda de empleo.`,
               applicationCategory: "BusinessApplication",
               operatingSystem: "Web, Android, iOS",
               offers: {
@@ -208,7 +208,7 @@ export default function RootLayout({
               alternateName: ["Busca y Curra", "Busca y curra", "busca y curra"],
               url: "https://buscaycurra.es",
               description:
-                `Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países, 24/7.`,
+                `Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países.`,
               potentialAction: {
                 "@type": "SearchAction",
                 target: {
