@@ -49,7 +49,7 @@ const FUENTES_ALTERNATIVAS = {
   IN: { salarioMinimo: 21502, moneda: "INR", nota: "India no tiene mínimo nacional: el floor wage del Code on Wages sigue sin cifra. Mínimo del Gobierno central para un no cualificado en zona A (grandes ciudades): 827 ₹ al día desde el 1 abr 2026 × 26 días. Cada estado fija el suyo." },
   ZA: { salarioMinimo: 5895, moneda: "ZAR", nota: "National Minimum Wage: R30,23 la hora desde el 1 mar 2026 (GN R.7083) × 45 horas × 4⅓ semanas (BCEA, art. 35). Vale también para el campo y el servicio doméstico." },
   // Venezuela: el integral en bolívares, NO el legal (130 Bs, que va en lib/paises.ts). Ver el comentario de PAISES.VE.
-  VE: { salarioMinimo: 215069, moneda: "VES", nota: "NO es el salario mínimo legal (Bs. 130 desde el 15 mar 2022, Decreto 4.653, GO Ext. 6.691; unos 0,15 US$). Es el ingreso mínimo integral de 240 US$ (200 de bono contra la guerra económica + 40 de cestaticket) pasado a bolívares a la tasa del BCV del 6 nov 2026 (896,1225). Son bonos: no cuentan para prestaciones. El bono solo obliga al sector público. Caduca con el bolívar: actualizar cada mes." },
+  VE: { salarioMinimo: 215069, moneda: "VES", nota: "NO es el salario mínimo legal (Bs. 130 desde el 15 mar 2022, Decreto 4.653, GO Ext. 6.691; unos 0,15 US$). Es el ingreso mínimo integral de 240 US$ (200 de bono contra la guerra económica + 40 de cestaticket) pasado a bolívares a la tasa del BCV del 6 nov 2026 (896,1225). Son bonos: no cuentan para prestaciones. El bono solo obliga al sector público. Caduca con el bolívar: actualizar cada mes.", fuente: "Anuncio del Gobierno (30 abr 2026), sin Gaceta Oficial" },
   NI: { salarioMinimo: 9238, moneda: "NIO", nota: "Salario mínimo promedio de los nueve sectores, del 1 mar 2026 al 28 feb 2027 (Acta 1 CNSM-05/03/2026, Ley 625), sin zona franca. Cada sector tiene el suyo: de C$6.188,02 en el campo a C$13.848,23 en construcción y finanzas; comercio, restaurantes y hoteles, C$11.350,08." },
   HN: { salarioMinimo: 14917, moneda: "HNL", nota: "Salario mínimo promedio vigente en 2026 (comunicado SAR-19-2026, Acuerdo Ejecutivo SETRASS 233-2026). Cada sector y tamaño de empresa tiene el suyo." },
   DO: { salarioMinimo: 29988, moneda: "DOP", nota: "Salario mínimo del sector privado no sectorizado en grandes empresas desde el 1 feb 2026 (Resolución CNS-01-2025). Medianas, RD$27.489,60; pequeñas y micro, menos." },
@@ -182,9 +182,11 @@ async function main() {
   // Luego las fuentes alternativas (para países no cubiertos por Eurostat)
   for (const [codigo, datos] of Object.entries(FUENTES_ALTERNATIVAS)) {
     if (!resultado.paises[codigo]) {
+      // Cada país puede decir su fuente: el ingreso de Venezuela se anunció sin
+      // Gaceta, y llamarlo "Fuente oficial nacional" exageraba.
       resultado.paises[codigo] = {
         ...datos,
-        fuente: "Fuente oficial nacional",
+        fuente: datos.fuente || "Fuente oficial nacional",
       };
     }
   }
