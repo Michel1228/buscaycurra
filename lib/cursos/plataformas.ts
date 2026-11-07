@@ -590,6 +590,33 @@ export const PLATAFORMAS: PlataformaFormacion[] = [
     actualizado: "2026-11",
   },
 
+  // ── Malta (comprobada el 6 nov 2026) ──
+  // La portada de Jobsplus dice «hundreds of online and onsite training
+  // courses» y marca como «Free» los dos que enseña; su buscador de cursos los
+  // agrupa en las categorías de `temas`. No dice que todos sean gratis. De
+  // Eslovaquia, Eslovenia y Chipre no hemos encontrado cursos públicos abiertos
+  // que se puedan comprobar: no se pone nada.
+  {
+    id: "jobsplus-cursos",
+    nombre: "Jobsplus — cursos",
+    resumen:
+      "Cientos de cursos del servicio público de empleo de Malta, presenciales y en línea; los de su portada, gratis.",
+    url: "https://jobsplus.gov.mt/jobseeker-courses",
+    alcance: { tipo: "paises", codigos: ["MT"] },
+    idiomas: ["Inglés"],
+    temas: ["cuidados", "habilidades para el empleo", "habilidades digitales", "informática", "idiomas", "construcción", "ventas y marketing", "hostelería y atención al cliente", "salud y seguridad", "oficios"],
+    certificado: "no_consta",
+    volumen: "«Hundreds of online and onsite training courses»",
+    requisitos:
+      "Ser maltés; ser de la UE y vivir y trabajar en Malta; o ser de fuera de la UE, trabajar en Malta y tener permiso de trabajo en vigor.",
+    aviso: "Mira en la ficha de cada curso si es gratis: no lo dicen de todos.",
+    fuentes: [
+      { titulo: "Jobsplus — portada (Find a Course)", url: "https://jobsplus.gov.mt/" },
+      { titulo: "Jobsplus — Courses (quién puede apuntarse)", url: "https://jobsplus.gov.mt/knowledge-base/courses" },
+    ],
+    actualizado: "2026-11",
+  },
+
   {
     id: "santander-open-academy",
     nombre: "Santander Open Academy",
@@ -1115,6 +1142,40 @@ export const SERVICIOS_EMPLEO: ServicioEmpleo[] = [
     url: "https://essa.labour.gov.za/EssaOnline/WebBeans/",
     queHacer:
       "La bolsa pública del Departamento de Empleo y Trabajo. Para registrarte en línea piden el número de identidad sudafricano; sin él, pregunta en un labour centre.",
+    actualizado: "2026-11",
+  },
+  // Malta, Eslovaquia, Eslovenia y Chipre (6 nov 2026): las cuatro direcciones
+  // respondían por HTTP ese día.
+  {
+    pais: "MT",
+    nombre: "Jobsplus",
+    url: "https://jobsplus.gov.mt/",
+    queHacer:
+      "El servicio público de empleo de Malta: ofertas, alta como demandante y cientos de cursos, presenciales y en línea.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "SK",
+    nombre: "ÚPSVaR (Ústredie práce, sociálnych vecí a rodiny)",
+    url: "https://www.upsvr.gov.sk/",
+    queHacer:
+      "Las oficinas públicas de empleo de Eslovaquia. Las ofertas están en el portal Služby zamestnanosti del Ministerio de Trabajo (sluzbyzamestnanosti.gov.sk): 152.807 el 6 nov 2026.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "SI",
+    nombre: "Zavod RS za zaposlovanje (ZRSZ)",
+    url: "https://www.ess.gov.si/",
+    queHacer:
+      "El servicio de empleo de Eslovenia: ofertas y, si ya vives allí, alta como demandante y programas de formación y empleo.",
+    actualizado: "2026-11",
+  },
+  {
+    pais: "CY",
+    nombre: "Servicio Público de Empleo de Chipre (Departamento de Trabajo)",
+    url: "https://www.pescps.dl.mlsi.gov.cy/",
+    queHacer:
+      "Su plataforma en línea: ofertas abiertas a quien vive en Chipre de forma legal, con o sin pasaporte de la UE, y alta de desempleados y trabajadores.",
     actualizado: "2026-11",
   },
 ];

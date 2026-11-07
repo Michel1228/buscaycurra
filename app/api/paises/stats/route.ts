@@ -58,6 +58,10 @@ const PAISES_MAP: Record<string, { flag: string; nombre: string }> = {
   VE: { flag: "🇻🇪", nombre: "Venezuela" },
   NI: { flag: "🇳🇮", nombre: "Nicaragua" },
   ZA: { flag: "🇿🇦", nombre: "Sudáfrica" },
+  MT: { flag: "🇲🇹", nombre: "Malta" },
+  SK: { flag: "🇸🇰", nombre: "Eslovaquia" },
+  SI: { flag: "🇸🇮", nombre: "Eslovenia" },
+  CY: { flag: "🇨🇾", nombre: "Chipre" },
 };
 
 function formatNumber(n: number): string {

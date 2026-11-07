@@ -3268,6 +3268,139 @@ test("Venezuela y Nicaragua son paises completos: minimo legal e integral separa
   }
 });
 
+// ── MALTA, ESLOVAQUIA, ESLOVENIA Y CHIPRE, PAÍSES 45 A 48 (6 nov 2026) ───────
+//
+// Lo propio de cada uno: Eslovaquia pide avisar a la policía en 10 días hábiles
+// aunque seas de la UE; Chipre avisa del norte; Malta, el Single Permit. Y la
+// búsqueda entiende los títulos en eslovaco, esloveno y griego: en Eslovaquia
+// van en plural ("Kuchári"), y la palabra en singular tiene que encontrarlos.
+test("Malta, Eslovaquia, Eslovenia y Chipre son paises completos y se buscan en su idioma", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-mt-sk-si-cy-entrada.ts", salida = ".sello-mt-sk-si-cy.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export { PAISES, LISTA_PAISES, paisPorNombre } from "./lib/paises";',
+      'export { detectarPais } from "./lib/guzzi/paises-detect";',
+      'export { paisDeCiudad } from "./lib/guzzi/ciudades-pais";',
+      'export { requisitosDe } from "./lib/destinos/requisitos";',
+      'export { getPrimerosPasos } from "./lib/primeros-pasos";',
+      'export { movilidadDe } from "./lib/origen/movilidad";',
+      'export { paisDeZona } from "./lib/origen/donde-estoy";',
+      'export { plataformasPorPais, servicioEmpleoDe } from "./lib/cursos/plataformas";',
+      'export { estiloDe } from "./lib/cv/por-pais";',
+      'export { estiloEntrevistaDe } from "./lib/entrevistas/por-pais";',
+      'export { PAIS_TIMEZONE } from "./lib/timezone";',
+      'export { expandirPuesto } from "./lib/job-search/sinonimos-puesto";',
+      'export { coincideFiltro } from "./lib/job-search/filtros";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const json = JSON.parse(leerFuente("public/data/salarios-minimos.json")).paises;
+    const sync = leerFuente("scripts/sync-minimum-wages.mjs");
+    const casos = [
+      ["minimo Malta (Eurostat)", m.PAISES.MT?.salarioMinimo, 994],
+      ["minimo Eslovaquia", m.PAISES.SK?.salarioMinimo, 915],
+      ["minimo Eslovenia", m.PAISES.SI?.salarioMinimo, 1482],
+      ["minimo Chipre", m.PAISES.CY?.salarioMinimo, 1088],
+      ["medio Eslovenia (SURS)", m.PAISES.SI?.salarioMedio, 2536],
+      ["los cuatro en la lista", m.LISTA_PAISES.filter(p => ["MT", "SK", "SI", "CY"].includes(p.codigo)).length, 4],
+      ["el JSON igual que Eurostat", ["MT", "SK", "SI", "CY"].map(c => json[c]?.salarioMinimo).join(","), "994,915,1482,1088"],
+      ["el script los pide a Eurostat", /MT: "MT"/.test(sync) && /SI: "SI", SK: "SK"/.test(sync) && /CY: "CY"/.test(sync), true],
+      ["Chipre por su nombre", m.paisPorNombre("Chipre"), "CY"],
+      ["Slovakia", m.paisPorNombre("Slovakia"), "SK"],
+      ["Guzzi detecta Eslovenia", m.detectarPais("busco trabajo en Eslovenia")?.codigo, "si"],
+      ["Guzzi detecta Malta", m.detectarPais("quiero trabajar en Malta")?.codigo, "mt"],
+      ["Pony Malta no es el pais", m.detectarPais("repartidor de Pony Malta en Caracas"), null],
+      ["Košice es SK", m.paisDeCiudad("Košice"), "SK"],
+      ["Nicosia es CY", m.paisDeCiudad("Nicosia"), "CY"],
+      ["Nicosia desde Italia", m.paisDeCiudad("Nicosia", "IT"), "IT"],
+      ["zona de Nicosia", m.paisDeZona("Asia/Nicosia"), "CY"],
+      ["el norte de Chipre no", m.paisDeZona("Asia/Famagusta"), null],
+      // Papeles.
+      ["Eslovaquia: 10 dias habiles", (m.requisitosDe("SK")?.siEresDeLaUE || []).some(t => /10 días hábiles/.test(t)), true],
+      ["Chipre: el norte", /norte/.test(m.requisitosDe("CY")?.ojoCon || ""), true],
+      ["Malta: Single Permit", (m.requisitosDe("MT")?.siNoEresDeLaUE || []).some(t => /Single Permit/.test(t)), true],
+      ["Malta: Jobsplus", m.getPrimerosPasos("MT")?.papeleo.documentos.some(d => /Jobsplus/.test(d.nombre)), true],
+      ["Eslovaquia: aviso de llegada", m.getPrimerosPasos("SK")?.papeleo.documentos.some(d => /Aviso de llegada/.test(d.nombre)), true],
+      ["España a Malta, libre", m.movilidadDe("ES", "MT").regimen, "libre_circulacion"],
+      ["Colombia a Chipre, permiso", m.movilidadDe("CO", "CY").regimen, "visado_general"],
+      ["bolsa publica Malta", m.servicioEmpleoDe("MT")?.nombre, "Jobsplus"],
+      ["bolsa publica Eslovenia", !!m.servicioEmpleoDe("SI"), true],
+      ["cursos de Malta", m.plataformasPorPais("MT").some(p => p.id === "jobsplus-cursos"), true],
+      ["los de Malta no salen en Chipre", m.plataformasPorPais("CY").some(p => p.id === "jobsplus-cursos"), false],
+      ["CV de Eslovenia: foto opcional, recomendada", m.estiloDe("SI")?.foto, "opcional"],
+      ["entrevista de Malta por competencias", m.estiloEntrevistaDe("MT") === m.estiloEntrevistaDe("UK"), true],
+      ["hora de Chipre", m.PAIS_TIMEZONE.CY, "Asia/Nicosia"],
+      // Las palabras de búsqueda en singular encuentran los títulos en plural.
+      ...[["kuchár", "kuchári"], ["čašník", "čašníci"], ["upratovačka", "upratovačky"], ["vodič", "vodiči"], ["operátor", "operátori"]]
+        .map(([singular, plural]) => [`${singular} encuentra ${plural}`, m.PAISES.SK?.keywordsLaborales.includes(singular) && m.expandirPuesto(singular).includes(plural), true]),
+      ["camarero en eslovaco", m.expandirPuesto("camarero").includes("čašník"), true],
+      ["camarero en griego", m.expandirPuesto("camarero").includes("σερβιτόρος"), true],
+      ["griego sin tilde (los títulos en mayúsculas la pierden)", m.expandirPuesto("limpieza").includes("καθαριστης"), true],
+      ["parcial en griego", m.coincideFiltro("parcial", "Σερβιτόρος μερικής απασχόλησης"), true],
+      ["remoto en esloveno", m.coincideFiltro("remoto", "Delo na daljavo"), true],
+      ["ZTP sin tilde", m.coincideFiltro("inclusiva", "Pracovník ZTP"), true],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// ── LA CIUDAD SE ENCUENTRA CON TILDES Y SIN ELLAS (6 nov 2026) ───────────────
+//
+// La base compara translate(city, <tildes españolas>, …): solo quita las del
+// español. El buscador le quitaba TODAS a lo que escribía la persona, y en
+// producción "vendedor" en Brasil daba 353 con "Paulo" y 0 con "São Paulo" o
+// "Sao Paulo" (la base guarda "São Paulo, Estado de São Paulo"). Se compila el
+// código de verdad y se simula la base con la misma translate().
+test("la ciudad se encuentra con y sin tildes: São Paulo, Košice y Málaga", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-ciudad-busqueda.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/job-search/ciudad-busqueda.ts", "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    // ILIKE '%forma%' sobre translate(city, …) en la base.
+    const encuentra = (enLaBase, escrito) => m.formasDeCiudad(escrito)
+      .some(f => m.quitarTildesComoLaBase(enLaBase).toLowerCase().includes(f.toLowerCase()));
+    const ruta = leerFuente("app/api/jobs/search/route.ts");
+    const indice = `translate(city, '${m.ACCENT_FROM}', '${m.ACCENT_TO}')`;
+    const casos = [
+      ["São Paulo", encuentra("São Paulo, Estado de São Paulo", "São Paulo"), true],
+      ["Sao Paulo", encuentra("São Paulo, Estado de São Paulo", "Sao Paulo"), true],
+      ["Košice", encuentra("Košice", "Košice"), true],
+      ["Kosice", encuentra("Košice", "Kosice"), true],
+      ["Málaga", encuentra("Málaga", "Málaga"), true],
+      ["Malaga", encuentra("Málaga", "Malaga"), true],
+      ["lo de antes sigue: Sao Paulo sin tilde en la base", encuentra("Sao Paulo", "São Paulo"), true],
+      ["no encuentra lo que no es", encuentra("Bratislava", "Košice"), false],
+      // En España, una sola forma: la búsqueda no se alarga.
+      ["Madrid, una forma", m.formasDeCiudad("Madrid").length, 1],
+      ["Málaga, una forma", m.formasDeCiudad("Málaga").length, 1],
+      ["A Coruña, una forma", m.formasDeCiudad("A Coruña").length, 1],
+      // La misma expresión que el índice, y el buscador la usa en sus tres consultas.
+      ["la expresion es la del indice", leerFuente("lib/job-search/ofertas-parecidas.ts").includes(indice), true],
+      ["el buscador usa las formas", (ruta.match(/condicionCiudad\(/g) || []).length, 3],
+      ["sin el quitatildes de antes", /function stripAccents/.test(ruta), false],
+    ];
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+});
+
 // ── LATINOAMÉRICA Y EL RESTO DEL MUNDO (5 nov 2026) ──────────────────────────
 //
 // Se comprueba con el código de verdad, compilado: ciudades que se llaman igual

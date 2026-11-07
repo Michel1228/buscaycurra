@@ -56,6 +56,30 @@
       "periodo": "2026-S2",
       "fuente": "Eurostat earn_mw_cur"
     },
+    "MT": {
+      "salarioMinimo": 994,
+      "moneda": "EUR",
+      "periodo": "2026-S2",
+      "fuente": "Eurostat earn_mw_cur"
+    },
+    "SK": {
+      "salarioMinimo": 915,
+      "moneda": "EUR",
+      "periodo": "2026-S2",
+      "fuente": "Eurostat earn_mw_cur"
+    },
+    "SI": {
+      "salarioMinimo": 1482,
+      "moneda": "EUR",
+      "periodo": "2026-S2",
+      "fuente": "Eurostat earn_mw_cur"
+    },
+    "CY": {
+      "salarioMinimo": 1088,
+      "moneda": "EUR",
+      "periodo": "2026-S2",
+      "fuente": "Eurostat earn_mw_cur"
+    },
     "SE": {
       "salarioMinimo": 25000,
       "moneda": "SEK",

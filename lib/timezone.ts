@@ -45,6 +45,10 @@ export const PAIS_TIMEZONE: Record<string, string> = {
   NI: "America/Managua",
   IN: "Asia/Kolkata",
   ZA: "Africa/Johannesburg",
+  MT: "Europe/Malta",
+  SK: "Europe/Bratislava",
+  SI: "Europe/Ljubljana",
+  CY: "Asia/Nicosia",
 };
 
 /**
@@ -79,6 +83,7 @@ function mapPaisToLocale(pais: string): string {
     CH: "de-CH", SE: "sv-SE", DK: "da-DK", NO: "nb-NO", FI: "fi-FI",
     PL: "pl-PL", CZ: "cs-CZ", AU: "en-AU", NZ: "en-NZ",
     US: "en-US", CA: "en-CA", MX: "es-MX", BR: "pt-BR", CO: "es-CO", PE: "es-PE", CL: "es-CL", AR: "es-AR", EC: "es-EC", GT: "es-GT", CR: "es-CR", UY: "es-UY", SV: "es-SV", PA: "es-PA", DO: "es-DO", HN: "es-HN", VE: "es-VE", NI: "es-NI", IN: "en-IN", ZA: "en-ZA",
+    MT: "en-MT", SK: "sk-SK", SI: "sl-SI", CY: "el-CY",
   };
   return map[pais] || "es-ES";
 }

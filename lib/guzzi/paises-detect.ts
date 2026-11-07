@@ -56,6 +56,10 @@ const ALIAS: Record<string, string[]> = {
   PL: ["polonia", "poland", "polska"],
   LU: ["luxemburgo", "luxembourg"],
   CZ: ["republica checa", "chequia", "czechia"],
+  MT: ["malta"],
+  SK: ["eslovaquia", "slovakia", "slovensko", "republica eslovaca"],
+  SI: ["eslovenia", "slovenia", "slovenija"],
+  CY: ["chipre", "cyprus", "kypros"],
 };
 
 function normalizar(s: string): string {
@@ -81,6 +85,8 @@ const NO_SON_EL_PAIS = [
   // "India" es también el adjetivo: "cocinero de comida india en Madrid" no es
   // buscar en India, ni "soy india y busco en Madrid" (6 nov 2026).
   "comida india", "cocina india", "soy india", "nacionalidad india",
+  // "Malta" es también la bebida de cebada (Pony Malta en Colombia y Venezuela).
+  "pony malta", "bebida de malta",
 ];
 
 export interface PaisDetectado {

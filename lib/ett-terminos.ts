@@ -84,6 +84,19 @@ export const TERMINOS_ETT: Record<string, string[]> = {
   // En Sudáfrica la ETT es un "temporary employment service" (TES, art. 198 de
   // la Labour Relations Act), que allí casi todo el mundo llama "labour broker".
   ZA: ["labour broker", "recruitment agency"],
+  // Malta: las agencias se anuncian en inglés (EURES: «private employment
+  // agencies», y cada vez más contratación temporal por agencias).
+  MT: ["recruitment agency", "employment agency"],
+  // Eslovaquia: la ETT es la «agentúra dočasného zamestnávania» (ley 5/2004,
+  // § 29: necesita permiso del ÚPSVaR).
+  SK: ["agentúra dočasného zamestnávania", "personálna agentúra"],
+  // Eslovenia: «zaposlitvena agencija» y «agencija za zagotavljanje dela» son
+  // como se anuncian. Son términos de búsqueda: el nombre exacto que usa la
+  // ley de mercado de trabajo (ZUTD) no lo hemos comprobado.
+  SI: ["zaposlitvena agencija", "agencija za zagotavljanje dela"],
+  // Chipre: «γραφείο εξεύρεσης εργασίας» es el nombre de la ley de agencias
+  // privadas de colocación; en Limassol y Nicosia muchas se anuncian en inglés.
+  CY: ["recruitment agency", "γραφείο εξεύρεσης εργασίας"],
 };
 
 /**

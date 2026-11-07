@@ -76,6 +76,11 @@ const ESTILO_POR_PAIS: Record<string, EstiloEntrevista> = {
   JP: FORMAL_CENTROEUROPA,
   SE: NORDICO, NO: NORDICO, DK: NORDICO, FI: NORDICO,
   ES: LATINO, PT: LATINO, IT: LATINO, FR: LATINO, GR: LATINO, RO: LATINO, BE: LATINO,
+  // Malta, Eslovaquia, Eslovenia y Chipre (6 nov 2026): criterio nuestro, no un
+  // dato. Malta con los de tradición británica (sus empresas de iGaming y
+  // servicios entrevistan en inglés); Eslovaquia y Eslovenia con Chequia,
+  // Polonia y Hungría; Chipre con Grecia.
+  MT: COMPETENCIAS, SK: FORMAL_CENTROEUROPA, SI: FORMAL_CENTROEUROPA, CY: LATINO,
   MX: LATINO, BR: LATINO, CO: LATINO, PE: LATINO, CL: LATINO, AR: LATINO, EC: LATINO, GT: LATINO, CR: LATINO, UY: LATINO, SV: LATINO, PA: LATINO, DO: LATINO, HN: LATINO, VE: LATINO, NI: LATINO,
 };
 

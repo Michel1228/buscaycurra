@@ -507,6 +507,138 @@ export const PAISES: Record<string, PaisConfig> = {
     slug: "rumania",
   },
 
+  // ===== UE: MALTA, ESLOVAQUIA, ESLOVENIA Y CHIPRE (6 nov 2026) =====
+  // Sus ofertas ya entraban por EURES (6 nov 2026: Malta 4.575 vivas,
+  // Eslovaquia 4.205, Eslovenia 3.785 y Chipre 1.978), pero no eran países de
+  // la aplicación. EURES solo da la región (código NUTS), así que en la base la
+  // ciudad de todas ellas es el nombre del país.
+
+  MT: {
+    codigo: "MT",
+    nombre: "Malta",
+    nombreLocal: "Malta",
+    moneda: "EUR",
+    simboloMoneda: "€",
+    posicionSimbolo: "antes", // €1,234.56, como en inglés
+    // Las ofertas de Malta están en inglés. OJO: con "en", al elegir Malta en el
+    // menú la interfaz se pasa al inglés (AppNavWrapper), como con Irlanda.
+    idioma: "en",
+    bandera: "🇲🇹",
+    // Salario mínimo desde los 18 años: 229,44 € a la semana desde el 1 ene 2026
+    // (L.N. 289 of 2025, National Minimum Wage National Standard Order). En mes,
+    // 994 € según Eurostat (earn_mw_cur, 2026-S2). Los convenios de cada sector
+    // (Wage Regulation Orders) pueden fijar más.
+    salarioMinimo: 994,
+    // Salario BASE medio mensual de los asalariados, segundo trimestre de 2026:
+    // 2.282 € (NSO, Labour Force Survey, nota 160/2026). Sin horas extra, primas
+    // ni pluses. La web de NSO no deja descargar la nota (403): la cifra se ha
+    // leído en sebsauerborn.com, que la cita con su número.
+    salarioMedio: 2282,
+    tasaCambioEUR: 1, // Malta usa el euro
+    formatoMiles: ",",
+    formatoDecimal: ".",
+    // No hemos podido abrir un dato de empleo por localidad (NSO bloquea la
+    // descarga). La capital y los núcleos de oficinas y hostelería; el orden
+    // no está medido.
+    ciudades: ["Valletta", "Sliema", "St Julian's", "Birkirkara", "Msida"],
+    // Las palabras que más se repiten en los títulos de sus ofertas en la base
+    // el 6 nov 2026: cleaner 388, driver 279, sales 210, chef 159 y waiter 93.
+    keywordsLaborales: ["cleaner", "driver", "sales", "chef", "waiter"],
+    slug: "malta",
+  },
+
+  SK: {
+    codigo: "SK",
+    nombre: "Eslovaquia",
+    nombreLocal: "Slovensko",
+    moneda: "EUR",
+    simboloMoneda: "€",
+    posicionSimbolo: "despues",
+    idioma: "sk",
+    bandera: "🇸🇰",
+    // Salario mínimo 2026: 915 € al mes y 5,259 € la hora (Oznámenie del
+    // Ministerio de Trabajo 245/2025 Z. z.). Eurostat, 915 € (2026-S2).
+    salarioMinimo: 915,
+    // Salario medio nominal mensual de 2025: 1.620 € (Oficina de Estadística,
+    // ŠÚ SR, publicado el 3 mar 2026, según TASR).
+    salarioMedio: 1620,
+    tasaCambioEUR: 1, // Eslovaquia usa el euro
+    formatoMiles: " ",
+    formatoDecimal: ",",
+    // Las capitales de las cinco regiones con más empleo en 2024 (Eurostat,
+    // nama_10r_3empers): Bratislava 478.030, Žilina 324.900, Nitra 294.230,
+    // Košice 292.390 y Prešov 283.240 ocupados.
+    ciudades: ["Bratislava", "Žilina", "Nitra", "Košice", "Prešov"],
+    // Las palabras que más se repiten en los títulos de sus ofertas en la base
+    // el 6 nov 2026, que allí van en plural (el nombre de la ocupación): kuchári
+    // 292, operátori 244, čašníci 182, upratovačky 162 y vodiči 122. Aquí van en
+    // singular; la búsqueda es por palabra entera, así que los plurales están
+    // en lib/job-search/sinonimos-puesto.ts y "kuchár" encuentra "Kuchári".
+    keywordsLaborales: ["kuchár", "operátor", "čašník", "upratovačka", "vodič"],
+    slug: "eslovaquia",
+  },
+
+  SI: {
+    codigo: "SI",
+    nombre: "Eslovenia",
+    nombreLocal: "Slovenija",
+    moneda: "EUR",
+    simboloMoneda: "€",
+    posicionSimbolo: "despues",
+    idioma: "sl",
+    bandera: "🇸🇮",
+    // Salario mínimo 2026: 1.481,88 € brutos al mes (Ministerio de Trabajo,
+    // 28 ene 2026; publicado en el Uradni list el 30 ene 2026). Eurostat, 1.482 €.
+    salarioMinimo: 1482,
+    // Salario medio mensual bruto de 2025: 2.536,03 € (1.602,05 € netos). SURS,
+    // tabla 0701023S de SiStat.
+    salarioMedio: 2536,
+    tasaCambioEUR: 1, // Eslovenia usa el euro
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    // Los cinco municipios con más ocupados por lugar de trabajo en 2025 (SURS,
+    // tabla 0775341S): Ljubljana 249.390, Maribor 65.193, Celje 32.201, Koper
+    // 25.379 y Novo mesto 25.157 (Kranj, 24.829, se queda fuera por poco).
+    ciudades: ["Ljubljana", "Maribor", "Celje", "Koper", "Novo mesto"],
+    // Las palabras que más se repiten en los títulos de sus ofertas en la base
+    // el 6 nov 2026: medicinska sestra 844, učitelj 686, čistilec 179,
+    // varnostnik 148 y kuhar 121.
+    keywordsLaborales: ["medicinska sestra", "učitelj", "čistilec", "varnostnik", "kuhar"],
+    slug: "eslovenia",
+  },
+
+  CY: {
+    codigo: "CY",
+    nombre: "Chipre",
+    nombreLocal: "Κύπρος",
+    moneda: "EUR",
+    simboloMoneda: "€",
+    posicionSimbolo: "despues",
+    idioma: "el",
+    bandera: "🇨🇾",
+    // Salario mínimo desde el 1 ene 2026: 1.088 € al mes tras seis meses con la
+    // misma empresa, y 979 € hasta entonces (Consejo de Ministros, 23 dic 2025,
+    // para 2026 y 2027). No cubre a hoteles, empleo doméstico, agricultura ni
+    // marinos. Eurostat, 1.088 € (2026-S2).
+    salarioMinimo: 1088,
+    // Ganancia media bruta mensual de los asalariados en 2025: 2.605 €
+    // (CYSTAT, provisional; mediana, 1.968 €). Leído en Cyprus Inform, 27 abr 2026.
+    salarioMedio: 2605,
+    tasaCambioEUR: 1, // Chipre usa el euro
+    formatoMiles: ".",
+    formatoDecimal: ",",
+    // Por población del distrito (censo 2021): Nicosia 350.035, Limassol
+    // 262.157, Larnaca 155.765, Paphos 101.106 y Famagusta, la parte bajo
+    // control del Gobierno, 54.318. No es un dato de empleo. Ayia Napa, por
+    // Famagusta, es elección nuestra.
+    ciudades: ["Nicosia", "Limassol", "Larnaca", "Paphos", "Ayia Napa"],
+    // Las palabras que más se repiten en los títulos de sus ofertas en la base
+    // el 6 nov 2026 (casi todos en griego): καθαριστής (limpiador) 82, πωλητής
+    // (vendedor) 61, cook 45, μάγειρας (cocinero) 26 y waiter 26.
+    keywordsLaborales: ["καθαριστής", "πωλητής", "cook", "μάγειρας", "waiter"],
+    slug: "chipre",
+  },
+
   // ===== LATINOAMÉRICA =====
 
   // México entra el 5 nov 2026. Adzuna ya traía sus ofertas cada día (20.700
@@ -1112,10 +1244,14 @@ export const LISTA_PAISES: PaisConfig[] = [
   PAISES.BE,  // Bélgica — 3.700 EUR/mes
   PAISES.FI,  // Finlandia — 3.500 EUR/mes
   PAISES.UK,  // Reino Unido — 3.100 GBP/mes
+  PAISES.CY,  // Chipre — 2.605 EUR/mes
+  PAISES.SI,  // Eslovenia — 2.536 EUR/mes
   PAISES.IT,  // Italia — 2.500 EUR/mes
   PAISES.JP,  // Japón — 398.000 JPY/mes (~2.412 €)
+  PAISES.MT,  // Malta — 2.282 EUR/mes, salario base
   PAISES.ES,  // España — 2.100 EUR/mes
   PAISES.ZA,  // Sudáfrica — 30.611 ZAR/mes (~1.658 €)
+  PAISES.SK,  // Eslovaquia — 1.620 EUR/mes
   PAISES.GR,  // Grecia — 1.600 EUR/mes
   PAISES.PT,  // Portugal — 1.600 EUR/mes
   PAISES.PL,  // Polonia — 8.000 PLN/mes
@@ -1179,6 +1315,8 @@ const OTROS_NOMBRES: Record<string, string> = {
   brazil: "BR", "republica federativa do brasil": "BR",
   bharat: "IN",
   surafrica: "ZA", "sud africa": "ZA", "republica de sudafrica": "ZA",
+  "republica eslovaca": "SK", slovakia: "SK", slovenia: "SI", cyprus: "CY",
+  "republica de chipre": "CY",
 };
 
 const sinTildes = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[.]/g, " ").replace(/\s+/g, " ").trim();

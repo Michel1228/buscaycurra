@@ -26,12 +26,18 @@ export const TERMINOS = {
     "remote", "work from home", "fully remote", "télétravail", "teletravail",
     "da remoto", "smart working", "thuiswerk", "thuiswerken", "praca zdalna",
     "zdalnie", "trabalho remoto", "fjernarbeid", "distansarbete", "etätyö",
+    // Eslovaco, esloveno y griego (6 nov 2026).
+    "práca z domu", "práca na diaľku", "delo od doma", "delo na daljavo",
+    "τηλεργασία", "εξ αποστάσεως",
   ],
   parcial: [
     "parcial", "media jornada", "medio tiempo", "part time", "parttime",
     "teilzeit", "minijob", "temps partiel", "meio período", "meio periodo",
     "tempo parziale", "part-time", "deeltijd", "deltid", "osa-aikainen",
     "pół etatu", "niepełny etat",
+    "čiastočný úväzok", "skrátený úväzok", "polovičný úväzok", "kratší pracovný čas",
+    "krajši delovni čas", "krajšim delovnim časom", "polovični delovni čas",
+    "μερική απασχόληση", "μερικής απασχόλησης", "μερικό ωράριο",
   ],
   sinExperiencia: [
     "sin experiencia", "becario", "becaria", "prácticas", "practicante", "trainee",
@@ -40,6 +46,11 @@ export const TERMINOS = {
     "apprentice", "apprenticeship", "berufseinsteiger", "praktikum", "ausbildung",
     "werkstudent", "stagiaire", "alternance", "débutant", "apprenti",
     "tirocinio", "stagista", "stagiair", "praktykant", "staż",
+    // "absolvent" y "praktikant" son también alemanes (graduado, becario):
+    // encajan con lo que ya hacen "graduate" y "praktikum".
+    "bez praxe", "absolvent", "absolventa", "absolventov", "stáž", "stážista", "praktikant",
+    "brez izkušenj", "pripravnik", "pripravnica", "pripravništvo",
+    "χωρίς εμπειρία", "χωρίς προϋπηρεσία", "πρακτική άσκηση", "ασκούμενος", "ασκούμενη", "νέοι απόφοιτοι",
   ],
   // Solo lo que dice que la oferta es PARA personas con discapacidad. Nada de
   // "disability" a secas: todas las ofertas de Estados Unidos lo llevan en la
@@ -48,6 +59,11 @@ export const TERMINOS = {
     "pcd", "pcds", "pessoa com deficiência", "pessoas com deficiência",
     "vaga afirmativa", "certificado de discapacidad", "persona con discapacidad",
     "personas con discapacidad", "diversidad funcional", "discapacidad igual o superior",
+    // "ZŤP" es la sigla eslovaca; sin tilde también casa "ZTP". En esloveno no
+    // va "invalid" suelto: en inglés sale en descripciones que no tienen nada que ver.
+    "ZŤP", "zdravotným postihnutím", "chránená dielňa",
+    "invalidi", "invalidne osebe", "za invalide", "invalidsko podjetje",
+    "ΑμεΑ", "άτομα με αναπηρία", "ατόμων με αναπηρία",
   ],
 } as const;
 

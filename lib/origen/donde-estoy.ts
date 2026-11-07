@@ -42,6 +42,9 @@ const ZONA_A_PAIS: Record<string, string> = {
   // zone1970.tab: ZA,LS,SZ). Quien esté allí saldrá como Sudáfrica, y se
   // cambia con un toque.
   "Africa/Johannesburg": "ZA",
+  // Asia/Famagusta se deja fuera a propósito: es la zona del norte de Chipre.
+  "Europe/Malta": "MT", "Europe/Bratislava": "SK", "Europe/Ljubljana": "SI",
+  "Asia/Nicosia": "CY", "Europe/Nicosia": "CY",
 };
 
 /** Zonas que empiezan igual y son todas del mismo país. */

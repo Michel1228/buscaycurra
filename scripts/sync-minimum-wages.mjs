@@ -66,12 +66,14 @@ const FUENTES_ALTERNATIVAS = {
 };
 
 // ─── Mapeo código Eurostat → código BuscayCurra ───────────────────────────────
+// MT, SK, SI y CY entran el 6 nov 2026; los cuatro usan el euro, así que no
+// hace falta MONEDA_NACIONAL.
 const EUROSTAT_MAP = {
   BE: "BE", BG: null, CZ: null, DE: "DE", EE: null,
   IE: "IE", EL: "GR", ES: "ES", FR: "FR", HR: null,
-  LT: null, LU: null, LV: null, MT: null, NL: "NL",
-  PL: "PL", PT: "PT", RO: null, SI: null, SK: null,
-  HU: null,
+  LT: null, LU: null, LV: null, MT: "MT", NL: "NL",
+  PL: "PL", PT: "PT", RO: null, SI: "SI", SK: "SK",
+  HU: null, CY: "CY",
 };
 
 // De los que se usan, el unico que no tiene el euro.

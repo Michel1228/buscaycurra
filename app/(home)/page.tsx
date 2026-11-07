@@ -98,6 +98,10 @@ export default async function LandingPage() {
     NI: { flag: "🇳🇮", nombre: "Nicaragua" },
     IN: { flag: "🇮🇳", nombre: "India" },
     ZA: { flag: "🇿🇦", nombre: "Sudáfrica" },
+    MT: { flag: "🇲🇹", nombre: "Malta" },
+    SK: { flag: "🇸🇰", nombre: "Eslovaquia" },
+    SI: { flag: "🇸🇮", nombre: "Eslovenia" },
+    CY: { flag: "🇨🇾", nombre: "Chipre" },
   };
 
   const PAISES_DATA = stats

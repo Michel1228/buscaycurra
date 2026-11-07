@@ -65,7 +65,7 @@ export interface RequisitosDestino {
 }
 
 /**
- * Lo que vale igual en los diecinueve destinos europeos. Se escribe una vez y se
+ * Lo que vale igual en los veintitrés destinos europeos. Se escribe una vez y se
  * reutiliza, que es justo el motivo de hacerlo por destino: dentro de la UE los
  * requisitos son casi los mismos y solo cambia el nombre de la oficina.
  */
@@ -124,7 +124,7 @@ const UK_YMS_SORTEO = ["HK", "TW"];
 const CA_IEC = ["AD", "AU", "AT", "BE", "CL", "CR", "HR", "CZ", "DK", "EE", "FR", "DE", "GR", "HK", "IS", "IE", "IT", "JP", "KR", "LV", "LT", "LU", "MX", "NL", "NZ", "NO", "PL", "PT", "SM", "SK", "SI", "ES", "SE", "CH", "TW", "UK"];
 
 export const REQUISITOS: RequisitosDestino[] = [
-  // ── Los diecinueve destinos del espacio europeo ────────────────────────────
+  // ── Los veintitrés destinos del espacio europeo ────────────────────────────
   destinoUE("ES", "España", "🇪🇸", {
     nombre: "Portal de Inmigración — Ministerio de Inclusión",
     url: "https://www.inclusion.gob.es/web/migraciones/home",
@@ -240,6 +240,68 @@ export const REQUISITOS: RequisitosDestino[] = [
     nombre: "Inspectoratul General pentru Imigrări",
     url: "https://igi.mai.gov.ro/en/",
   }),
+
+  // Malta (6 nov 2026). Fuentes: Identità — eResidence de ciudadanos de la UE
+  // por empleo, y Single Permit (quién puede pedirlo y cómo), comprobadas el
+  // 6 nov 2026; EURES, «Living and working conditions: Malta» (18 may 2026).
+  destinoUE("MT", "Malta", "🇲🇹", {
+    nombre: "Identità — Unidad de Expatriados del Gobierno de Malta",
+    url: "https://identita.gov.mt/",
+  }, [
+    "En Malta el permiso es el Single Permit, residencia y trabajo en uno. Solo lo puede pedir la empresa que te contrata, por internet, y tiene que estar registrada en Jobsplus: tú no puedes pedirlo por tu cuenta.",
+    "El permiso te ata a esa empresa: no puedes trabajar para otra ni hacer tareas distintas de las de tu solicitud.",
+    "Si eres de fuera de la UE y empezaste a trabajar desde el 1 oct 2025, tu sueldo tiene que llegarte por transferencia a una cuenta a tu nombre.",
+  ]),
+
+  // Eslovaquia (6 nov 2026). Va sin destinoUE() porque la frase común «los tres
+  // primeros meses no hay que hacer nada» aquí no vale: hay que avisar a la
+  // policía de extranjería en 10 días hábiles. Fuentes: slovensko.sk (estancia
+  // de ciudadanos de la UE e inicio de un empleo) y la pregunta 16 del
+  // Ministerio del Interior (residencia temporal por empleo, jul 2025).
+  {
+    codigo: "SK",
+    nombre: "Eslovaquia",
+    bandera: "🇸🇰",
+    autoridad: {
+      nombre: "Policía de Fronteras y Extranjería — Ministerio del Interior de Eslovaquia",
+      url: "https://www.minv.sk/?uhcp",
+    },
+    libreCirculacion: true,
+    siEresDeLaUE: [
+      "No necesitas visado ni permiso de trabajo. Puedes entrar, buscar trabajo y firmar un contrato como cualquier eslovaco.",
+      "Aquí sí hay que hacer algo al llegar: en los 10 días hábiles siguientes tienes que avisar de tu estancia a la policía de extranjería, salvo que lo haga tu alojamiento.",
+      "Si te quedas más de tres meses, tienes 30 días más para registrar la residencia, en persona y gratis, en la policía de extranjería.",
+      "Al empezar a trabajar, la empresa te da de alta en la Seguridad Social (Sociálna poisťovňa), en una aseguradora de salud y en Hacienda.",
+    ],
+    siNoEresDeLaUE: [
+      ...UE_SI_NO_ERES_DE_LA_UE,
+      "La residencia temporal para trabajar se pide en persona en la embajada de Eslovaquia, o en la policía de extranjería si ya estás en el país de forma legal. Antes, la oficina de empleo (ÚPSVaR) tiene que confirmar que ese puesto se puede cubrir contigo.",
+      "Piden antecedentes penales de menos de 90 días y prueba de alojamiento; y en los 30 días siguientes a recibir el permiso, un certificado médico.",
+    ],
+    ojoCon: UE_OJO_TURISTA,
+  },
+
+  // Eslovenia (6 nov 2026). Fuentes: gov.si, «Zaposlovanje in delo tujcev»
+  // (actualizado el 4 jun 2026), y la ficha del certificado de registro de
+  // residencia para ciudadanos de la UE.
+  destinoUE("SI", "Eslovenia", "🇸🇮", {
+    nombre: "Empleo y trabajo de extranjeros — Gobierno de Eslovenia",
+    url: "https://www.gov.si/teme/zaposlovanje-in-delo-tujcev/",
+  }, [
+    "Para vivir y trabajar en Eslovenia hace falta el permiso único de residencia y trabajo (enotno dovoljenje). Lo da la oficina administrativa (upravna enota), que pide por su cuenta el visto bueno del servicio de empleo (ZRSZ).",
+  ]),
+
+  // Chipre (6 nov 2026). Fuentes: Departamento de Trabajo, «Employment of
+  // non-EU citizens — General information»; Cyprus Mail, 27 sep 2026 («Cyprus
+  // labour shortages: who can legally work?»); EURES, «Living and working
+  // conditions: Cyprus» (11 mar 2026), sobre el norte de la isla.
+  destinoUE("CY", "Chipre", "🇨🇾", {
+    nombre: "Departamento de Trabajo de Chipre — empleo de ciudadanos de fuera de la UE",
+    url: "https://www.mlsi.gov.cy/mlsi/dl/dl.nsf/page5a_en/page5a_en",
+  }, [
+    "La empresa pide permiso al Departamento de Trabajo, que solo lo da si no hay nadie de Chipre o de la UE para ese puesto. Si lo aprueba, sella el contrato y Migración te da el permiso de residencia y trabajo.",
+    "La vía general se usa sobre todo en agricultura y ganadería, reparto de comida, industria y comercio. El empleo doméstico va aparte, y los perfiles muy cualificados de empresas extranjeras tienen programas propios.",
+  ], "Todo esto vale para la parte de la isla que controla la República de Chipre. En el norte, el 36,2 % del país, el Gobierno no ejerce el control y el derecho de la UE está suspendido: la libre circulación no te sirve allí."),
 
   destinoUE("CH", "Suiza", "🇨🇭", {
     nombre: "SEM — Secretaría de Estado de Migración de Suiza",

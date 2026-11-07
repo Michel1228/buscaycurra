@@ -52,6 +52,18 @@
  *     17.b) prohíbe cobrar por dar un empleo y hacer listas discriminatorias.
  *     Tampoco hemos encontrado qué nombre se usa más para el documento en cada
  *     país: va "Currículum vitae (CV)".
+ * Malta, Eslovaquia, Eslovenia y Chipre, comprobadas el 2026-11-06 en las
+ * fichas «Living and working conditions» de EURES:
+ *   · Malta: CV en inglés, formato Europass recomendado, dos páginas como mucho.
+ *   · Eslovaquia: carta y CV; carta firmada a mano, con tu consentimiento para
+ *     tratar tus datos personales; la solicitud, una hoja A4.
+ *   · Eslovenia: solicitud en esloveno (muchas aceptan inglés), CV de una o
+ *     dos páginas y «una fotografía adecuada», que EURES recomienda: va como
+ *     foto opcional y se dice, no como «se espera».
+ *   · Chipre: no hay CV estándar, pero el Europass se extiende rápido; carta
+ *     con el puesto y dónde viste el anuncio; entrevista en inglés si no hablas
+ *     griego.
+ *   De la foto, EURES solo habla en Eslovenia: en los otros tres no se afirma nada.
  * India y Sudáfrica, comprobadas el 2026-11-06 (guías de empleo, no leyes):
  *   · Monster (actualizada el 6 may 2026): en India la foto es habitual pero
  *     opcional, y en multinacionales mejor sin ella; el «biodata» (fecha de
@@ -464,6 +476,51 @@ export const ESTILOS: EstiloCV[] = [
     ],
     siPonen: ["Si ya puedes trabajar en Sudáfrica o necesitas que te tramiten el visado.", "Los idiomas que hablas y a qué nivel."],
     nota: "Por ley, la empresa tiene que comprobar que puedes trabajar allí antes de contratarte: dilo arriba y te ahorras un descarte.",
+  },
+  {
+    codigo: "MT",
+    pais: "Malta",
+    bandera: "🇲🇹",
+    foto: "opcional",
+    nombreLocal: "CV",
+    paginas: "2 páginas como máximo",
+    noPongas: [],
+    nota: "Va en inglés y en formato Europass, que es el que recomienda EURES. De la foto no dicen nada: si la pones, que sea profesional.",
+  },
+  {
+    codigo: "SK",
+    pais: "Eslovaquia",
+    bandera: "🇸🇰",
+    foto: "opcional",
+    nombreLocal: "Životopis",
+    paginas: "Sin norma; la carta, una hoja A4",
+    noPongas: [],
+    siPonen: [
+      "Carta de presentación firmada a mano.",
+      "Tu consentimiento para que traten tus datos personales, adjunto a la solicitud.",
+    ],
+    nota: "EURES pide estilo formal y cero faltas. Si puedes, CV en eslovaco; las empresas internacionales aceptan inglés.",
+  },
+  {
+    codigo: "SI",
+    pais: "Eslovenia",
+    bandera: "🇸🇮",
+    foto: "opcional",
+    nombreLocal: "Življenjepis",
+    paginas: "1 o 2 páginas",
+    noPongas: [],
+    siPonen: ["Una foto adecuada: EURES lo recomienda."],
+    nota: "La solicitud, en esloveno; muchas empresas aceptan inglés. Los certificados originales se llevan a la entrevista, no se adjuntan.",
+  },
+  {
+    codigo: "CY",
+    pais: "Chipre",
+    bandera: "🇨🇾",
+    foto: "opcional",
+    nombreLocal: "Βιογραφικό σημείωμα (CV)",
+    paginas: "Sin norma",
+    noPongas: [],
+    nota: "No hay un formato fijo, pero el Europass se usa cada vez más. Acompáñalo de una carta con el puesto y dónde viste el anuncio. Si no hablas griego, la entrevista suele ser en inglés.",
   },
 ];
 

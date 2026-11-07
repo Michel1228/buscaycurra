@@ -10,6 +10,7 @@ import { salarioMinimoSql } from "@/lib/job-search/salario-sql";
 import { paisPorNombre } from "@/lib/paises";
 import { correoCreibleParaOferta } from "@/lib/job-search/correo-oferta";
 import { empresaVisible } from "@/lib/job-search/empresa-visible";
+import { formasDeCiudad, condicionCiudad } from "@/lib/job-search/ciudad-busqueda";
 
 /**
  * Ofertas de las APIs externas, solo cuando la base no tiene nada.
@@ -27,19 +28,6 @@ async function ofertasExternasDelPuesto(keyword: string, location: string) {
 }
 
 export const dynamic = "force-dynamic";
-
-const ACCENT_FROM = "áéíóúñüÁÉÍÓÚÑÜàèìòùÀÈÌÒÙ";
-const ACCENT_TO   = "aeiounuAEIOUNUaeiouAEIOU";
-
-// Normaliza una cadena quitando acentos (para comparar ciudad sin tildes)
-function stripAccents(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ñ/gi, "n").replace(/ü/gi, "u");
-}
-
-// Clausula SQL insensible a acentos usando translate() de Postgres
-function cityLike(col: string, idx: number): string {
-  return `translate(${col}, '${ACCENT_FROM}', '${ACCENT_TO}') ILIKE $${idx}`;
-}
 
 
 /**
@@ -238,18 +226,22 @@ export async function GET(request: NextRequest) {
       for (const parte of partes) {
         const parteLower = parte.toLowerCase();
         if (!provincias.some(p => parteLower.includes(p) || p.includes(parteLower))) {
-          cityParts = stripAccents(parte);
+          cityParts = parte;
           break;
         }
       }
       if (!cityParts && partes.length > 0) {
-        cityParts = stripAccents(partes[0]);
+        cityParts = partes[0];
       }
     }
-    if (cityParts) {
-      conditions.push(`(${cityLike("city", idx)} OR ${cityLike("province", idx)})`);
-      params.push(`%${cityParts}%`);
-      idx++;
+    // "São Paulo" y "Sao Paulo", "Košice" y "Kosice": la ciudad se busca en
+    // varias formas a la vez, con la misma expresión del índice
+    // (lib/job-search/ciudad-busqueda.ts). Para una ciudad española, una sola.
+    const formasCiudad = cityParts ? formasDeCiudad(cityParts) : [];
+    if (formasCiudad.length) {
+      conditions.push(condicionCiudad(idx, formasCiudad.length));
+      for (const f of formasCiudad) params.push(`%${f}%`);
+      idx += formasCiudad.length;
     }
 
     // LOS FILTROS, EN LOS IDIOMAS DE LAS OFERTAS (lib/job-search/filtros.ts).
@@ -511,14 +503,14 @@ export async function GET(request: NextRequest) {
       // El recuento tiene que filtrar por lo mismo que la consulta de abajo. Si
       // cuenta sin el pais, cuenta los Toledo de Ohio y decide que hay material
       // de sobra para lanzar el respaldo cuando en realidad no lo hay.
-      const paramsCuenta: string[] = [`%${cityParts}%`];
+      const paramsCuenta: string[] = formasCiudad.map(f => `%${f}%`);
       let condPaisCuenta = "";
       if (country) {
         paramsCuenta.push(country);
         condPaisCuenta = ` AND lower("country") = lower($${paramsCuenta.length})`;
       }
       const locCount = await pool.query(
-        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})${condPaisCuenta}`,
+        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND ${condicionCiudad(1, formasCiudad.length)}${condPaisCuenta}`,
         paramsCuenta
       );
       const locTotal = parseInt(locCount.rows[0].count);
@@ -534,7 +526,7 @@ export async function GET(request: NextRequest) {
         // usuario deja de fiarse del buscador.
         const { expandirPuesto: expandir } = await import("@/lib/job-search/sinonimos-puesto");
         const variantesLoc = expandir(keyword);
-        const locParams: (string | number)[] = [`%${cityParts}%`];
+        const locParams: (string | number)[] = formasCiudad.map(f => `%${f}%`);
 
         // EL RESPALDO AMPLIA LA ZONA, PERO NO SE SALTA EL PAIS.
         //
@@ -567,7 +559,7 @@ export async function GET(request: NextRequest) {
                   COUNT(*) OVER() AS total_encontrado
              FROM "JobListing"
             WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
-              AND (${cityLike("city", 1)} OR ${cityLike("province", 1)})
+              AND ${condicionCiudad(1, formasCiudad.length)}
               AND (${orsLoc.join(" OR ")})${condPais}
             ORDER BY
               CASE WHEN "scrapedAt" > NOW() - INTERVAL '7 days' THEN 0

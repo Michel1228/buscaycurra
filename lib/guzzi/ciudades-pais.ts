@@ -263,6 +263,36 @@ const CIUDADES: Record<string, [string, string[]]> = {
   "east london": ["ZA", ["east london"]],
   bloemfontein: ["ZA", ["bloemfontein"]],
 
+  // ── Malta, Eslovaquia, Eslovenia y Chipre (6 nov 2026) ────────────────
+  // OJO: hoy todas sus ofertas vienen de EURES con el nombre del país como
+  // ciudad. Esto sirve para saber de qué país es la ciudad que pide alguien.
+  valletta: ["MT", ["valletta", "la valeta", "il-belt valletta"]],
+  "la valeta": ["MT", ["valletta", "la valeta", "il-belt valletta"]],
+  sliema: ["MT", ["sliema", "tas-sliema"]],
+  "st julian's": ["MT", ["st julian's", "st. julian's", "st julians", "san giljan"]],
+  "san giljan": ["MT", ["st julian's", "st. julian's", "st julians", "san giljan"]],
+  birkirkara: ["MT", ["birkirkara"]],
+  msida: ["MT", ["msida"]],
+  bratislava: ["SK", ["bratislava"]],
+  kosice: ["SK", ["košice", "kosice"]],
+  zilina: ["SK", ["žilina", "zilina"]],
+  nitra: ["SK", ["nitra"]],
+  presov: ["SK", ["prešov", "presov"]],
+  liubliana: ["SI", ["ljubljana", "liubliana"]],
+  ljubljana: ["SI", ["ljubljana", "liubliana"]],
+  maribor: ["SI", ["maribor"]],
+  celje: ["SI", ["celje"]],
+  koper: ["SI", ["koper", "capodistria"]],
+  "novo mesto": ["SI", ["novo mesto"]],
+  // Nicosia es también un pueblo de Sicilia: ver HOMONIMAS.
+  nicosia: ["CY", ["nicosia", "lefkosia", "λευκωσία"]],
+  limasol: ["CY", ["limassol", "limasol", "lemesos", "λεμεσός"]],
+  limassol: ["CY", ["limassol", "limasol", "lemesos", "λεμεσός"]],
+  larnaca: ["CY", ["larnaca", "larnaka", "lárnaca", "λάρνακα"]],
+  pafos: ["CY", ["paphos", "pafos", "πάφος"]],
+  paphos: ["CY", ["paphos", "pafos", "πάφος"]],
+  "ayia napa": ["CY", ["ayia napa", "agia napa", "αγία νάπα"]],
+
   // ── Brasil ──────────────────────────────────────────────────────────
   "sao paulo": ["BR", ["sao paulo", "são paulo"]],
   "rio de janeiro": ["BR", ["rio de janeiro"]],
@@ -368,6 +398,8 @@ const HOMONIMAS: Record<string, string[]> = {
   // East London es también la parte este de Londres: quien ya busca en el
   // Reino Unido se queda allí (6 nov 2026).
   "east london": ["ZA", "UK"],
+  // Nicosia de Chipre y el pueblo de Sicilia (6 nov 2026).
+  nicosia: ["CY", "IT"],
   perth: ["AU", "UK"],
   birmingham: ["UK", "US"],
 };

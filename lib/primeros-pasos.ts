@@ -1663,6 +1663,152 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
   },
 
+  // ─── MALTA (6 nov 2026) ──────────────────────────────────────────────────
+  // Fuentes: Identità (eResidence por empleo para ciudadanos de la UE) y EURES,
+  // «Living and working conditions: Malta» (18 may 2026). Sin una fuente
+  // fiable sobre alquileres, no se dan precios.
+  MT: {
+    codigo: "MT",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "No hemos comprobado un programa de au pair en Malta.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "MaltaPark", url: "https://www.maltapark.com/", descripcion: "Los anuncios clasificados de Malta, con pisos y habitaciones de particulares." },
+        { nombre: "RE/MAX Malta", url: "https://www.remax-malta.com/", descripcion: "Inmobiliaria con pisos en alquiler en toda la isla." },
+        { nombre: "Frank Salt", url: "https://www.franksalt.com.mt/", descripcion: "Otra de las inmobiliarias grandes de Malta, con alquileres." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Malta/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Malta, lo práctico es empezar por una habitación o un alquiler mensual. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "ue-libre",
+      descripcion: "Ciudadano UE: libre circulación. Si te quedas más de tres meses, pide el documento de residencia (eResidence) en el portal de Expatriados de Identità: hace falta que tu empresa te haya dado de alta en Jobsplus. Tarda unos 30 días hábiles.",
+      enlaceOficial: "https://identita.gov.mt/expatriates-unit-main-page/eu-nationals/eresidence-document-application/employment/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Alta en Jobsplus", descripcion: "Tu empresa comunica a Jobsplus que empiezas a trabajar. Sin esa alta no puedes pedir la residencia.", tiempoObtener: "Al empezar a trabajar", obligatorio: true, enlaceOficial: "https://jobsplus.gov.mt/" },
+        { nombre: "Número de la Seguridad Social", descripcion: "Con el contrato firmado, tienes que registrarte para tener número de la Seguridad Social.", tiempoObtener: "Al empezar a trabajar", obligatorio: true },
+        { nombre: "Documento de residencia (eResidence)", descripcion: "Si te quedas más de tres meses. Se pide en el portal de Expatriados de Identità con el pasaporte o el DNI, el contrato y el alta en Jobsplus; después, cita para la foto y las huellas.", tiempoObtener: "Unos 30 días hábiles", obligatorio: true, enlaceOficial: "https://identita.gov.mt/expatriates-unit-main-page/eu-nationals/eresidence-document-application/employment/" },
+        { nombre: "Cuenta bancaria", descripcion: "Para cobrar la nómina. Si eres de fuera de la UE y empezaste desde el 1 oct 2025, el sueldo tiene que ir por transferencia a una cuenta a tu nombre.", tiempoObtener: "Al llegar", obligatorio: true },
+      ],
+      consejo: "El orden: contrato → alta en Jobsplus (la hace la empresa) → número de la Seguridad Social → eResidence en Identità si te quedas más de tres meses.",
+    },
+  },
+
+  // ─── ESLOVAQUIA (6 nov 2026) ─────────────────────────────────────────────
+  // Fuentes: slovensko.sk (estancia de ciudadanos de la UE; inicio de un
+  // empleo) y EURES, «Living and working conditions: Slovakia» (3 jul 2026).
+  // Sin una fuente fiable sobre alquileres, no se dan precios.
+  SK: {
+    codigo: "SK",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "No hemos comprobado un programa de au pair en Eslovaquia.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Nehnuteľnosti.sk", url: "https://www.nehnutelnosti.sk/", descripcion: "El portal inmobiliario de Eslovaquia, con pisos en alquiler (prenájom)." },
+        { nombre: "Bazoš.sk", url: "https://www.bazos.sk/", descripcion: "Anuncios clasificados con pisos y habitaciones de particulares." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Slovakia/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Eslovaquia, lo práctico es empezar por una habitación o un alquiler mensual. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "ue-libre",
+      descripcion: "Ciudadano UE: libre circulación, pero en los 10 días hábiles siguientes a llegar hay que avisar a la policía de extranjería (salvo que lo haga tu alojamiento). Si te quedas más de tres meses, tienes 30 días más para registrar la residencia, en persona y gratis.",
+      enlaceOficial: "https://www.slovensko.sk/sk/zivotne-situacie/zivotna-situacia/_pobyt-obcana-unie-a-jeho-rodin/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Aviso de llegada", descripcion: "Comunicar a la policía de extranjería dónde te alojas. Si lo hace el hotel o el alojamiento, no tienes que ir tú.", tiempoObtener: "En 10 días hábiles", obligatorio: true, enlaceOficial: "https://www.slovensko.sk/sk/zivotne-situacie/zivotna-situacia/_pobyt-obcana-unie-a-jeho-rodin/" },
+        { nombre: "Registro de residencia", descripcion: "Si te quedas más de tres meses. En persona, en la policía de extranjería, y gratis.", tiempoObtener: "En los 30 días siguientes a cumplir tres meses", obligatorio: true },
+        { nombre: "Alta en Seguridad Social, salud y Hacienda", descripcion: "La hace la empresa: Sociálna poisťovňa, una aseguradora de salud y Hacienda. La aseguradora te da tu número y tu tarjeta de asegurado.", tiempoObtener: "Al empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.slovensko.sk/sk/zivotne-situacie/zivotna-situacia/_nastup-do-zamestnania-na-slove/" },
+        { nombre: "Cuenta bancaria", descripcion: "Las empresas pagan la nómina en cuenta.", tiempoObtener: "Al llegar", obligatorio: true },
+      ],
+      consejo: "El orden: aviso de llegada en 10 días hábiles → contrato (la empresa te da de alta en Seguridad Social, salud y Hacienda) → registro de residencia antes de que pasen tres meses y 30 días.",
+    },
+  },
+
+  // ─── ESLOVENIA (6 nov 2026) ──────────────────────────────────────────────
+  // Fuentes: gov.si (certificado de registro de residencia para ciudadanos de
+  // la UE), Administración Financiera (número fiscal para extranjeros) y EURES,
+  // «Living and working conditions: Slovenia». Sin una fuente fiable sobre
+  // alquileres, no se dan precios.
+  SI: {
+    codigo: "SI",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "No hemos comprobado un programa de au pair en Eslovenia.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Nepremičnine.net", url: "https://www.nepremicnine.net/", descripcion: "El portal inmobiliario de Eslovenia, con pisos en alquiler (oddaja)." },
+        { nombre: "Bolha.com", url: "https://www.bolha.com/", descripcion: "Anuncios clasificados, también de pisos y habitaciones." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Slovenia/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Sin historial en Eslovenia, lo práctico es empezar por una habitación o un alquiler mensual. Pide por escrito cuánto es el depósito y cuándo te lo devuelven.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "ue-libre",
+      descripcion: "Ciudadano UE: libre circulación. Para quedarte más de tres meses, pide el certificado de registro de residencia en la oficina administrativa (upravna enota); vale cinco años. Después tienes 8 días para registrar tu domicilio.",
+      enlaceOficial: "https://www.gov.si/zbirke/storitve/pridobitev-potrdila-o-prijavi-prebivanja-za-drzavljana-eu/",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Número fiscal (davčna številka)", descripcion: "Lo da la Administración Financiera (FURS). Si aún no tienes residencia, con el formulario DR-02 en cualquier oficina financiera. Sin él no te abren una cuenta.", tiempoObtener: "8 días", obligatorio: true, enlaceOficial: "https://www.fu.gov.si/en/life_events_individuals/obtaining_a_tax_identification_number_for_a_foreign_natural_person" },
+        { nombre: "Certificado de registro de residencia", descripcion: "Potrdilo o prijavi prebivanja. En la upravna enota, con el DNI o el pasaporte, seguro médico, medios para vivir y una declaración de la empresa de que te contrata.", tiempoObtener: "Antes de cumplir tres meses", obligatorio: true, enlaceOficial: "https://www.gov.si/zbirke/storitve/pridobitev-potrdila-o-prijavi-prebivanja-za-drzavljana-eu/" },
+        { nombre: "Registro del domicilio", descripcion: "En la oficina administrativa, en los 8 días siguientes a recibir el certificado de residencia.", tiempoObtener: "En 8 días", obligatorio: true },
+        { nombre: "EMŠO (número personal)", descripcion: "Te lo asigna el Registro Central de Población en tu primer trámite con la administración.", tiempoObtener: "Con el primer trámite", obligatorio: true },
+        { nombre: "Cuenta bancaria", descripcion: "En cualquier banco, con tu documento de identidad y el número fiscal.", tiempoObtener: "1-5 días", obligatorio: true },
+      ],
+      consejo: "El orden: número fiscal → contrato → certificado de residencia en la upravna enota → registro del domicilio en 8 días.",
+    },
+  },
+
+  // ─── CHIPRE (6 nov 2026) ─────────────────────────────────────────────────
+  // Fuentes: EURES, «Living and working conditions: Cyprus» (11 mar 2026);
+  // Business in Cyprus (gov.cy), alta en la Seguridad Social por ERGANI.
+  // El número de identificación fiscal no se ha podido comprobar y no se pone.
+  CY: {
+    codigo: "CY",
+    auPair: {
+      disponible: false,
+      plataformas: [],
+      requisitos: "No hemos comprobado un programa de au pair en Chipre.",
+    },
+    alojamiento: {
+      plataformas: [
+        { nombre: "Bazaraki", url: "https://www.bazaraki.com/", descripcion: "Los anuncios clasificados de Chipre, con pisos y habitaciones en alquiler." },
+        { nombre: "Airbnb mensual", url: "https://www.airbnb.com/s/Cyprus/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo." },
+      ],
+      consejo: "Lo normal es dejar dos meses de alquiler de fianza, que te devuelven si no hay daños. Pregunta a tu empresa: suele conocer bien la zona.",
+      preciosMedios: [],
+    },
+    visado: {
+      tipo: "ue-libre",
+      descripcion: "Ciudadano UE: libre circulación. Tienes que registrarte en Migración en los cuatro meses siguientes a llegar (certificado de registro MEU1, la «yellow slip»). Todo esto vale para la zona que controla la República de Chipre, no para el norte.",
+      enlaceOficial: "https://eures.europa.eu/living-and-working/living-and-working-conditions/living-and-working-conditions-cyprus_en",
+    },
+    papeleo: {
+      documentos: [
+        { nombre: "Certificado de registro (MEU1)", descripcion: "La «yellow slip» de los ciudadanos de la UE. En el Departamento de Migración, con el pasaporte o el DNI y la confirmación de empleo.", tiempoObtener: "En los 4 primeros meses", obligatorio: true },
+        { nombre: "Alta en la Seguridad Social", descripcion: "Tu empresa comunica tu contratación a Social Insurance Services por el sistema ERGANI, como tarde el día antes de empezar.", tiempoObtener: "Antes de empezar a trabajar", obligatorio: true, enlaceOficial: "https://www.businessincyprus.gov.cy/social-insurance-registration-and-contributions/" },
+        { nombre: "Sistema Nacional de Salud (GESY)", descripcion: "Para usarlo hay que inscribirse y elegir médico de cabecera, por internet o en su consulta. Si eres de la UE, antes tienes que estar en el registro de Migración o en la Seguridad Social.", tiempoObtener: "Tras el registro", obligatorio: false, enlaceOficial: "https://www.gesy.org.cy/" },
+        { nombre: "Número ARC en la Seguridad Social", descripcion: "Si tienes certificado de registro de extranjero (ARC), añade ese número a tu ficha de la Seguridad Social en cuanto lo tengas.", tiempoObtener: "En cuanto tengas el ARC", obligatorio: true },
+      ],
+      consejo: "El orden: contrato (la empresa te da de alta por ERGANI) → registro en Migración antes de cuatro meses → GESY con médico de cabecera.",
+    },
+  },
+
 };
 
 export function getPrimerosPasos(codigo: string): PrimerosPasosInfo | null {
