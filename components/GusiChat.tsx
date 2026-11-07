@@ -255,6 +255,16 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
     }, 2000);
   }, [mensajes, userId]);
   const [input, setInput] = useState("");
+  // LO QUE SE ESCRIBIÓ ANTES DE ENTRAR (7 nov 2026). Inicio y el buscador
+  // abren el chat con ?q=: aquí se deja escrito en la caja, sin mandarlo. Lo
+  // manda la persona (y así tampoco se manda otra vez al recargar). Antes el
+  // buscador ya enlazaba con ?q= y el texto se perdía.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (!q) return;
+    setInput(q.slice(0, 500));
+    window.history.replaceState(window.history.state, "", window.location.pathname);
+  }, []);
   const [cargando, setCargando] = useState(false);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(true);
   const [modoEntrevista, setModoEntrevista] = useState(false);

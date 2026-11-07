@@ -76,3 +76,34 @@ export function sueldoVisible(texto: string, pais?: string | null): string {
   const simbolo = moneda === "EUR" ? "€" : moneda || simboloEscrito;
   return [cifra, simbolo, periodo].filter(Boolean).join(" ");
 }
+
+// Lo que puede cobrar alguien en España, según cómo venga dicho. Fuera de esto
+// la cifra es un error de la fuente: Adzuna, por ejemplo, ha dado cajeros a
+// "90.000-140.000" (sueldos por hora mal multiplicados). Sin periodo se lee
+// como al año.
+const RANGO_CREIBLE: Record<string, [number, number]> = {
+  "la hora": [5, 60],
+  "al día": [30, 400],
+  "a la semana": [150, 2000],
+  "al mes": [500, 8000],
+  "al año": [9000, 70000],
+};
+
+/**
+ * El sueldo para una tarjeta, o null si no hay cifra o la cifra no es creíble.
+ * Mejor no enseñar sueldo que enseñar uno imposible (rediseño del 7 nov 2026).
+ * Solo para ofertas en euros (las de "Ofertas según tu CV" son de España).
+ */
+export function sueldoCreible(texto: string | null | undefined, pais = "ES"): string | null {
+  const t = (texto || "").trim();
+  if (!t || /^(ver en oferta|consultar|a convenir|no especificado|n\/?d|-)$/i.test(t)) return null;
+  const visible = sueldoVisible(t, pais);
+  if (!visible.includes("€")) return null;
+  const numeros = (visible.match(/\d[\d.]*(,\d+)?/g) || []).map((n) => Number(n.replace(/\./g, "").replace(",", ".")));
+  if (!numeros.length || numeros.some((n) => !Number.isFinite(n))) return null;
+  const periodo = Object.keys(RANGO_CREIBLE).find((p) => visible.endsWith(p)) || "al año";
+  const [min, max] = RANGO_CREIBLE[periodo];
+  if (numeros.some((n) => n < min || n > max)) return null;
+  if (Math.max(...numeros) / Math.min(...numeros) > 3) return null;
+  return visible;
+}
