@@ -2241,6 +2241,44 @@ test("Mexico se barre por Careerjet: pais, sus 32 estados y las alcaldias grande
     && planBarridoCj.split(" ").includes("mx");
 });
 
+// ── QUIEN VIENE DE LA APP NO SE QUEDA ATRAPADO NI VE "NO HAY OFERTAS" (7 nov) ─
+//
+// Michel abrio una oferta, pulso "Donde sacarlo" (el curso que le falta) y
+// acabo en /cursos/... con "Empezar gratis" y sin el menu de la app. Y
+// buscando en Colombia vio "no hay ofertas": la pantalla cortaba a los 15 s,
+// justo cuando la base se corta y la API iba a contestar con un aviso.
+test("con sesion la cabecera publica lleva de vuelta a la app, y una busqueda lenta no se disfraza de 'no hay ofertas'", () => {
+  const h = leerFuente("components/PublicHeader.tsx");
+  const b = leerFuente("app/app/buscar/page.tsx");
+  return h.includes("getSupabaseBrowser().auth.getSession()")
+    && (h.match(/conSesion \?/g) || []).length >= 3
+    && h.includes("Volver a la app") && h.includes("window.history.back()")
+    && b.includes("AbortSignal.timeout(25000)") && !b.includes("AbortSignal.timeout(15000)")
+    && b.includes("La búsqueda ha tardado demasiado");
+});
+
+// ── COLOMBIA TAMBIEN SE BARRE DEPARTAMENTO A DEPARTAMENTO (7 nov 2026) ────────
+//
+// Con 13 lugares Colombia se quedaba en ~9.000 ofertas vivas de las 129.767
+// que publica Careerjet (Antioquia sola 25.798). Hacen falta sus 32
+// departamentos y los municipios con oferta propia.
+test("Colombia se barre por Careerjet: pais, sus 32 departamentos y sus municipios", () => {
+  const worker = leerFuente("lib/job-search/sync-worker.ts");
+  const tabla = worker.slice(worker.indexOf("export const CAREERJET_BARRIDO"), worker.indexOf("export async function barrerCareerjet"));
+  const m = tabla.match(/^  co: \{ locale: "es_CO", lugares: \[([^\]]*)\]/m);
+  const lugares = m ? [...m[1].matchAll(/"([^"]+)"/g)].map(x => x[1]) : [];
+  const departamentos = ["Antioquia", "Cundinamarca", "Valle del Cauca", "Atlantico", "Santander", "Bolivar", "Risaralda",
+    "Caldas", "Tolima", "Norte de Santander", "Meta", "Boyaca", "Cordoba", "Cesar", "Magdalena", "Huila", "Narino", "Quindio",
+    "Cauca", "Sucre", "La Guajira", "Casanare", "Choco", "Caqueta", "Arauca", "Putumayo", "San Andres", "Amazonas", "Guaviare",
+    "Vichada", "Vaupes", "Guainia"];
+  const faltan = departamentos.filter(d => !lugares.includes(d));
+  if (faltan.length) console.log("      departamentos que faltan: " + faltan.join(", "));
+  return lugares[0] === "Colombia" && faltan.length === 0
+    && ["Bogota", "Medellin", "Envigado", "Soacha", "Zipaquira"].every(c => lugares.includes(c))
+    && new Set(lugares).size === lugares.length
+    && planBarridoCj.split(" ").includes("co");
+});
+
 // ── MEXICO ES UN PAIS DE LA APP, Y CIUDAD DE MEXICO UNA CIUDAD ─────────────────
 //
 // Al meter Mexico en lib/paises.ts, Guzzi reconoce "Mexico" como pais en lo que

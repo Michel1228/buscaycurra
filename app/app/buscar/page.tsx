@@ -412,9 +412,14 @@ function BuscarPageInner() {
         // Si la búsqueda se corta (503), la API dice qué hacer ("prueba con una
         // palabra o una ciudad"). Antes se tiraba y se veía una lista vacía
         // sin explicación: pasa con un filtro en todo un país grande.
-        fetch(`/api/jobs/search?${params.toString()}`, { signal: AbortSignal.timeout(15000) })
+        // 25 s y no 15 (7 nov 2026): la consulta de la base se corta a los 15 s y
+        // entonces la API contesta con un aviso de qué hacer; cortando aquí
+        // también a los 15, ese aviso no llegaba nunca y se veía "no hay
+        // ofertas" en Colombia, que sí las tiene. Si aun así no contesta, se
+        // dice que ha tardado, no que no hay.
+        fetch(`/api/jobs/search?${params.toString()}`, { signal: AbortSignal.timeout(25000) })
           .then(r => r.ok ? r.json() : r.json().then((d: { error?: string }) => ({ ofertas: [], error: d?.error })).catch(() => ({ ofertas: [] })))
-          .catch(() => ({ ofertas: [] })),
+          .catch(() => ({ ofertas: [], error: "La búsqueda ha tardado demasiado y no ha llegado a terminar. Vuelve a intentarlo en unos segundos, o añade una ciudad o un puesto para acotarla." })),
         jooblePromise,
       ]);
 

@@ -672,7 +672,20 @@ export async function fetchCareerjetGlobal(keyword: string, countryLocation: str
  * servidor no se escribe en un repositorio público.
  */
 export const CAREERJET_BARRIDO: Record<string, { locale: string; lugares: string[] }> = {
-  co: { locale: "es_CO", lugares: ["Colombia", "Bogota", "Medellin", "Cali", "Barranquilla", "Cartagena", "Bucaramanga", "Pereira", "Cucuta", "Ibague", "Manizales", "Santa Marta", "Villavicencio"] },
+  // Colombia a fondo (7 nov 2026): con 13 lugares se quedaba en ~9.000 vivas de
+  // las 129.767 que publica Careerjet. Ahora el país, sus 32 departamentos y los
+  // municipios con oferta propia (medido ese día: Antioquia 25.798, Valle del
+  // Cauca 11.564, Cundinamarca 9.459, Funza 2.840, Sabaneta 1.980, Itagüí
+  // 1.979). "Mosquera" a secas es ambiguo (Cundinamarca o Nariño).
+  co: { locale: "es_CO", lugares: [
+    "Colombia", "Bogota", "Medellin", "Cali", "Barranquilla", "Cartagena", "Bucaramanga", "Pereira", "Cucuta", "Ibague", "Manizales", "Santa Marta", "Villavicencio",
+    "Antioquia", "Cundinamarca", "Valle del Cauca", "Atlantico", "Santander", "Bolivar", "Risaralda", "Caldas", "Tolima", "Norte de Santander",
+    "Meta", "Boyaca", "Cordoba", "Cesar", "Magdalena", "Huila", "Narino", "Quindio", "Cauca", "Sucre", "La Guajira", "Casanare", "Choco",
+    "Caqueta", "Arauca", "Putumayo", "San Andres", "Amazonas", "Guaviare", "Vichada", "Vaupes", "Guainia",
+    "Envigado", "Itagui", "Bello", "Rionegro", "Sabaneta", "Soacha", "Chia", "Zipaquira", "Funza", "Mosquera, Cundinamarca", "Cota", "Facatativa",
+    "Tunja", "Duitama", "Sogamoso", "Palmira", "Yumbo", "Jamundi", "Buenaventura", "Tulua", "Soledad", "Floridablanca", "Giron", "Piedecuesta",
+    "Neiva", "Pasto", "Popayan", "Armenia", "Monteria", "Valledupar", "Sincelejo", "Riohacha", "Yopal", "Barrancabermeja",
+  ] },
   pe: { locale: "es_PE", lugares: ["Peru", "Lima", "Arequipa", "Trujillo", "Chiclayo", "Piura", "Cusco", "Huancayo", "Iquitos", "Ica", "Tacna"] },
   cl: { locale: "es_CL", lugares: ["Chile", "Santiago", "Valparaiso", "Concepcion", "Antofagasta", "Vina del Mar", "Temuco", "La Serena", "Rancagua", "Puerto Montt", "Iquique"] },
   ar: { locale: "es_AR", lugares: ["Argentina", "Buenos Aires", "Cordoba", "Rosario", "Mendoza", "La Plata", "Mar del Plata", "Tucuman", "Neuquen", "Salta", "Santa Fe"] },

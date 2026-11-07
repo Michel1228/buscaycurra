@@ -1,12 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, BookOpen, LayoutGrid, LogIn, Megaphone, Sparkles, Smartphone, Tag } from "lucide-react";
 import LogoGusano from "@/components/LogoGusano";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export default function PublicHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  // CON SESIÓN, ESTA CABECERA NO PUEDE DECIR "EMPEZAR GRATIS" (7 nov 2026).
+  // Las páginas públicas (cursos, guías, países...) se abren también desde la
+  // app: "Dónde sacarlo" en la ficha de una oferta lleva a /cursos/... Quien ya
+  // tenía cuenta se encontraba "Entrar" y "Empezar gratis", sin el menú de la
+  // app, y tenía que volver por ajustes. Ahora ve "Volver a la app", que le
+  // devuelve a la pantalla de la que venía.
+  const [conSesion, setConSesion] = useState(false);
+  useEffect(() => {
+    getSupabaseBrowser().auth.getSession()
+      .then(({ data }) => setConSesion(!!data.session))
+      .catch(() => { /* sin sesión: cabecera pública */ });
+  }, []);
+  function volverALaApp(e: React.MouseEvent) {
+    setMenuOpen(false);
+    // Si venía de una pantalla de la app (la ficha de la oferta), vuelve a ella.
+    try {
+      const ref = document.referrer ? new URL(document.referrer) : null;
+      if (ref && ref.host === window.location.host && ref.pathname.startsWith("/app") && window.history.length > 1) {
+        e.preventDefault();
+        window.history.back();
+      }
+    } catch { /* se va a /app */ }
+  }
 
   return (
     <header
@@ -70,36 +94,50 @@ export default function PublicHeader() {
           >
             Para empresas
           </Link>
-          <Link
-            href="/auth/login"
-            className="text-sm font-medium transition hover:opacity-80"
-            style={{ color: "#94a3b8" }}
-          >
-            Entrar
-          </Link>
-          <Link
-            href="/auth/registro"
-            className="text-sm font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
-            style={{
-              background: "linear-gradient(135deg, #22c55e, #16a34a)",
-              color: "#fff",
-            }}
-          >
-            Empezar gratis
-          </Link>
+          {conSesion ? (
+            <Link
+              href="/app"
+              onClick={volverALaApp}
+              className="text-sm font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+            >
+              Volver a la app
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/auth/login"
+                className="text-sm font-medium transition hover:opacity-80"
+                style={{ color: "#94a3b8" }}
+              >
+                Entrar
+              </Link>
+              <Link
+                href="/auth/registro"
+                className="text-sm font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
+                style={{
+                  background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                  color: "#fff",
+                }}
+              >
+                Empezar gratis
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile: hamburger + CTA */}
         <div className="flex sm:hidden items-center gap-2">
           <Link
-            href="/auth/registro"
+            href={conSesion ? "/app" : "/auth/registro"}
+            onClick={conSesion ? volverALaApp : undefined}
             className="text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:opacity-90"
             style={{
               background: "linear-gradient(135deg, #22c55e, #16a34a)",
               color: "#fff",
             }}
           >
-            Empezar gratis
+            {conSesion ? "Volver a la app" : "Empezar gratis"}
           </Link>
 
           <button
@@ -185,23 +223,36 @@ export default function PublicHeader() {
               >
                 <Building2 size={14} strokeWidth={1.8} className="inline mr-1.5" />Para empresas
               </Link>
-              <Link
-                href="/auth/login"
-                onClick={() => setMenuOpen(false)}
-                className="px-4 py-3 rounded-lg text-sm transition"
-                style={{ color: "#94a3b8" }}
-              >
-                <LogIn size={14} strokeWidth={1.8} className="inline mr-1.5" />Entrar
-              </Link>
-              <div style={{ height: "1px", background: "#252836", margin: "4px 0" }} />
-              <Link
-                href="/auth/registro"
-                onClick={() => setMenuOpen(false)}
-                className="px-4 py-3 rounded-lg text-sm font-semibold transition"
-                style={{ color: "#22c55e" }}
-              >
-                <Sparkles size={14} strokeWidth={1.8} className="inline mr-1.5" />Crear cuenta gratis
-              </Link>
+              {conSesion ? (
+                <Link
+                  href="/app"
+                  onClick={volverALaApp}
+                  className="px-4 py-3 rounded-lg text-sm font-semibold transition"
+                  style={{ color: "#22c55e" }}
+                >
+                  <LayoutGrid size={14} strokeWidth={1.8} className="inline mr-1.5" />Volver a la app
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setMenuOpen(false)}
+                    className="px-4 py-3 rounded-lg text-sm transition"
+                    style={{ color: "#94a3b8" }}
+                  >
+                    <LogIn size={14} strokeWidth={1.8} className="inline mr-1.5" />Entrar
+                  </Link>
+                  <div style={{ height: "1px", background: "#252836", margin: "4px 0" }} />
+                  <Link
+                    href="/auth/registro"
+                    onClick={() => setMenuOpen(false)}
+                    className="px-4 py-3 rounded-lg text-sm font-semibold transition"
+                    style={{ color: "#22c55e" }}
+                  >
+                    <Sparkles size={14} strokeWidth={1.8} className="inline mr-1.5" />Crear cuenta gratis
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
         </div>
