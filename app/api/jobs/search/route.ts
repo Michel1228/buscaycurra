@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { buscarOfertasReales } from "@/lib/job-search/real-search";
-import { tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
+import { tituloCoincide, expresionesDePalabraEntera } from "@/lib/job-search/sinonimos-puesto";
 import { comprobarEnSegundoPlano } from "@/lib/job-search/oferta-viva";
 import { salarioMinimoSql } from "@/lib/job-search/salario-sql";
 import { paisPorNombre } from "@/lib/paises";
@@ -30,20 +30,14 @@ async function ofertasExternasDelPuesto(keyword: string, location: string) {
 export const dynamic = "force-dynamic";
 
 
-/**
- * Convierte un término en una expresión regular de Postgres con límite de
- * palabra (\m = inicio, \M = fin).
- *
- * Con ILIKE '%conductor%' salían 255 ofertas de SEMIconductor: puestos de
- * ingeniería en una búsqueda de chófer. Verificado que `~*` con límite de
- * palabra SIGUE usando el índice trigram (Bitmap Index Scan), así que no
- * cuesta rendimiento.
+/*
+ * Los puestos se buscan como palabra entera, con expresiones regulares de
+ * Postgres (\m = inicio, \M = fin): con ILIKE '%conductor%' salían 255 ofertas
+ * de SEMIconductor. `~*` con límite de palabra SIGUE usando el índice trigram.
+ * Las variantes van juntas en como mucho 16 expresiones
+ * (expresionesDePalabraEntera, lib/job-search/sinonimos-puesto.ts): con más de
+ * 32, Postgres las recompila en cada fila y la búsqueda se hunde.
  */
-function palabraExacta(termino: string): string {
-  // Escapar lo que Postgres interpretaría como sintaxis de expresión regular
-  const limpio = termino.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return "\\m" + limpio + "\\M";
-}
 
 function rowToOferta(j: Record<string, unknown>, location: string, userSkills: string[] = []) {
   let match = 0;
@@ -191,8 +185,8 @@ export async function GET(request: NextRequest) {
         const esPuestoConocido = variantes.length > 1;
         const orsLigeros: string[] = [];
         const orsCompletos: string[] = [];
-        for (const v of variantes) {
-          params.push(palabraExacta(v));
+        for (const expresion of expresionesDePalabraEntera(variantes)) {
+          params.push(expresion);
           const i = idx++;
           orsLigeros.push(esPuestoConocido ? `title ~* $${i}` : `title ~* $${i} OR company ~* $${i}`);
           orsCompletos.push(`title ~* $${i} OR description ~* $${i} OR company ~* $${i}`);
@@ -207,8 +201,10 @@ export async function GET(request: NextRequest) {
    // Filtro por pais (case-insensitive: DB tiene 'uk' y 'UK' mezclados).
    // lower() = lower() y no ILIKE: así entra por el índice
    // idx_joblisting_country_lower_vivas. ILIKE no puede usar un btree.
+   let condicionPais = "";
    if (country) {
-      conditions.push(`lower("country") = lower($${idx})`);
+      condicionPais = `lower("country") = lower($${idx})`;
+      conditions.push(condicionPais);
      params.push(country);
      idx++;
    }
@@ -345,26 +341,44 @@ export async function GET(request: NextRequest) {
     const whereClause = conditions.join(" AND ");
     params.push(limit, offset);
 
-    // El total va en la misma consulta con COUNT(*) OVER(). Antes se lanzaba un
-    // COUNT(*) aparte con el WHERE completo justo antes del SELECT: el mismo
-    // escaneo hecho dos veces, y sobre 3,5M filas eso es el doble de trabajo.
-    const construirSql = (where: string) => `
-      SELECT id, title, company, city, province, salary,
-             -- Solo el principio: mapJob() ya recorta a 200 caracteres, pero se
-             -- traian descripciones enteras de hasta 1.000 y con 500 filas por
-             -- busqueda eso son megabytes de JSON en cada peticion.
-             LEFT(description, 300) AS description,
-             "sourceUrl" AS sourceurl, "sourceName" AS sourcename, "scrapedAt" AS scrapedat,
-             "contactEmail" AS contactemail, "contactEmailConfianza" AS contactemailconfianza, country,
-             COUNT(*) OVER() AS total_encontrado
-      FROM "JobListing"
-      WHERE ${where}
-      ORDER BY
-        CASE WHEN "scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
-             WHEN "scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
+    // LA CONSULTA, EN TRES PASOS (7 nov 2026). Mismas ofertas, mismo orden y
+    // mismo total que el SELECT con COUNT(*) OVER() de antes, pero:
+    //
+    // 1. Primero solo el id y la fecha de las que cumplen (cand). Antes se
+    //    sacaba la descripción de TODAS para contar y barajar, y solo se
+    //    enseñan las de la página.
+    // 2. Con ciudad Y país, el país se mira fuera de cand. Dentro, Postgres
+    //    cruzaba el índice del país con el de la ciudad y leía del disco todas
+    //    las ofertas de Madrid (24.253 páginas, 6,8 s) para mirarles el
+    //    título: cree que el país deja 1 de cada 200 (su índice es parcial y
+    //    no tiene estadísticas) y no sabe que Madrid está entera en España.
+    //    Sin el país dentro, cruza la ciudad con los títulos y lee 330 páginas:
+    //    "camarero" en Madrid, de 10,5-16 s a 2,3 s, con las mismas 210. En una
+    //    ciudad pequeña (Tudela) va directo por la ciudad: 26 ms.
+    // 3. Se ordena, se corta la página y solo de esas se lee el texto.
+    const paisFuera = !!condicionPais && formasCiudad.length > 0;
+    const orden = (a: string) => `
+        CASE WHEN ${a}"scrapedAt" > NOW() - INTERVAL '7 days' THEN 0
+             WHEN ${a}"scrapedAt" > NOW() - INTERVAL '30 days' THEN 1
              ELSE 2 END,
-        md5(id::text || to_char(NOW(), 'YYYYDDD'))
-      LIMIT $${idx} OFFSET $${idx + 1}
+        md5(${a}id::text || to_char(NOW(), 'YYYYDDD'))`;
+    const construirSql = (conds: string[]) => `
+      WITH cand AS MATERIALIZED (
+        SELECT id, "scrapedAt"${paisFuera ? ", country" : ""} FROM "JobListing"
+         WHERE ${(paisFuera ? conds.filter(c => c !== condicionPais) : conds).join(" AND ")}
+      ), vale AS MATERIALIZED (
+        SELECT id, "scrapedAt" FROM cand${paisFuera ? ` WHERE ${condicionPais}` : ""}
+      ), pagina AS (
+        SELECT id, "scrapedAt" FROM vale ORDER BY ${orden("")} LIMIT $${idx} OFFSET $${idx + 1}
+      )
+      SELECT j.id, j.title, j.company, j.city, j.province, j.salary,
+             -- Solo el principio: mapJob() ya recorta a 200 caracteres.
+             LEFT(j.description, 300) AS description,
+             j."sourceUrl" AS sourceurl, j."sourceName" AS sourcename, j."scrapedAt" AS scrapedat,
+             j."contactEmail" AS contactemail, j."contactEmailConfianza" AS contactemailconfianza, j.country,
+             (SELECT count(*) FROM vale) AS total_encontrado
+        FROM pagina p JOIN "JobListing" j ON j.id = p.id
+       ORDER BY ${orden("p.")}
     `;
 
     // TODO UN PAÍS, SIN PALABRA NI CIUDAD (21 oct 2026): "Ver todas las ofertas
@@ -458,17 +472,53 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    let dbResult = await pool.query(construirSql(whereClause), params);
+    // En una transacción de solo lectura con work_mem a 64 MB, como "todo un
+    // país con un filtro": con los 4 MB de la base, la lista de las 577.000
+    // ofertas de Alemania se volvía "por páginas" y había que releer 14.613
+    // páginas enteras. "camarero" en Alemania: 16,9 s → 4,8 s (7 nov 2026).
+    let dbResult: { rows: Record<string, unknown>[] };
+    let descripcionCortada = false;
+    const cliente = await pool.connect();
+    try {
+      await cliente.query("BEGIN READ ONLY");
+      await cliente.query("SET LOCAL work_mem = '64MB'");
+      dbResult = await cliente.query(construirSql(conditions), params);
 
-    // Segunda pasada: si buscando por título y empresa no sale bastante, se
-    // amplía a la descripción. Es la consulta cara (recorre la tabla entera),
-    // así que solo se paga cuando de verdad hace falta.
-    if (condicionKeywordCompleta && dbResult.rows.length < Math.min(limit, 10)) {
-      const whereAmpliado = conditions
-        .map(c => (c === condicionKeywordLigera ? condicionKeywordCompleta : c))
-        .join(" AND ");
-      console.log(`[search] "${keyword}": ${dbResult.rows.length} por titulo, amplio a descripcion`);
-      dbResult = await pool.query(construirSql(whereAmpliado), params);
+      // Segunda pasada: si buscando por título y empresa no sale bastante, se
+      // amplía a la descripción. Es la consulta cara (la descripción no tiene
+      // índice: se lee la de todas las ofertas del país o de la ciudad), así
+      // que solo se paga cuando de verdad hace falta.
+      //
+      // Y con tope propio de 5 s (7 nov 2026). Medido en producción con el
+      // servidor tranquilo: en una ciudad pequeña tarda 0,2 s (soldador en
+      // Tudela) y en un país pequeño 5 s (jardinero en Colombia), pero en
+      // Madrid 12 s (fontanero) y en todo México o toda España más de 25 s
+      // (mesero, albañil). Antes podía gastar los 15 s enteros y, si no
+      // acababa, se perdían también las del título: la pantalla decía "no hay
+      // ofertas" con "mesero" en todo México. Si no acaba a tiempo, se enseñan
+      // las que ya salieron por el título. Si no había ninguna, sigue siendo
+      // un error ("ha tardado"), no un "no hay".
+      if (condicionKeywordCompleta && dbResult.rows.length < Math.min(limit, 10)) {
+        const ampliadas = conditions.map(c => (c === condicionKeywordLigera ? condicionKeywordCompleta : c));
+        console.log(`[search] "${keyword}": ${dbResult.rows.length} por titulo, amplio a descripcion`);
+        await cliente.query("SET LOCAL statement_timeout = '5s'");
+        try {
+          dbResult = await cliente.query(construirSql(ampliadas), params);
+        } catch (e) {
+          // 57014 = cancelada por tiempo. Cualquier otro error, para arriba.
+          if (dbResult.rows.length === 0 || (e as { code?: string }).code !== "57014") throw e;
+          descripcionCortada = true;
+          console.log(`[search] "${keyword}": la descripcion no acabo en 5 s, se dan las ${dbResult.rows.length} del titulo`);
+        }
+      }
+      // Si la segunda pasada se canceló, la transacción ya está abortada y
+      // COMMIT la cierra sin error.
+      await cliente.query("COMMIT");
+    } catch (e) {
+      await cliente.query("ROLLBACK").catch(() => {});
+      throw e;
+    } finally {
+      cliente.release();
     }
 
     const totalDB = parseInt(String(dbResult.rows[0]?.total_encontrado || "0"), 10);
@@ -499,7 +549,9 @@ export async function GET(request: NextRequest) {
     // "insuficiente" y saltaba al respaldo igualmente.
     // Con filtro de jornada o experiencia tampoco: el respaldo no los aplica, y
     // "jornada parcial" devolvía las mismas ofertas que sin filtro.
-    if (keyword && cityParts && dbResult.rows.length < Math.min(10, limit) && !categoria && !jornada && !experiencia && !inclusiva) {
+    // Si la descripción no acabó a tiempo, tampoco: este respaldo vuelve a leer
+    // las descripciones de la misma ciudad (fontanero en Madrid: otros 11,7 s).
+    if (keyword && cityParts && !descripcionCortada && dbResult.rows.length < Math.min(10, limit) && !categoria && !jornada && !experiencia && !inclusiva) {
       // El recuento tiene que filtrar por lo mismo que la consulta de abajo. Si
       // cuenta sin el pais, cuenta los Toledo de Ohio y decide que hay material
       // de sobra para lanzar el respaldo cuando en realidad no lo hay.
@@ -509,8 +561,11 @@ export async function GET(request: NextRequest) {
         paramsCuenta.push(country);
         condPaisCuenta = ` AND lower("country") = lower($${paramsCuenta.length})`;
       }
+      // Solo hace falta saber si hay más de las que ya salieron + 5: se cuenta
+      // hasta ahí. Contar las 32.000 de Madrid enteras costaba 6 s de disco.
+      const bastan = dbResult.rows.length + 6;
       const locCount = await pool.query(
-        `SELECT COUNT(*) FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND ${condicionCiudad(1, formasCiudad.length)}${condPaisCuenta}`,
+        `SELECT COUNT(*) FROM (SELECT 1 FROM "JobListing" WHERE "isActive" = true AND ("expiresAt" > NOW() OR "expiresAt" IS NULL) AND ${condicionCiudad(1, formasCiudad.length)}${condPaisCuenta} LIMIT ${bastan}) t`,
         paramsCuenta
       );
       const locTotal = parseInt(locCount.rows[0].count);
@@ -543,8 +598,8 @@ export async function GET(request: NextRequest) {
         }
 
         const orsLoc: string[] = [];
-        for (const v of variantesLoc) {
-          locParams.push(palabraExacta(v));
+        for (const expresion of expresionesDePalabraEntera(variantesLoc)) {
+          locParams.push(expresion);
           const i = locParams.length;
           orsLoc.push(`title ~* $${i} OR description ~* $${i}`);
         }

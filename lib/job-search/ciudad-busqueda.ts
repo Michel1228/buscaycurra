@@ -54,9 +54,35 @@ for (const pais of Object.values(PAISES)) {
   }
 }
 
+/**
+ * LOS NOMBRES CORTOS DE LAS CAPITALES (7 nov 2026, prueba desde Colombia y
+ * México). "CDMX", "DF" o "Distrito Federal" daban 0 ofertas, y Ciudad de
+ * México tiene más de 5.000: en la base se guardan como "Cuauhtémoc, Ciudad de
+ * México" y ninguna dice CDMX ni DF. "Bogotá D.C." también daba 0, porque se
+ * guarda "Bogotá DC" (sin puntos). Se busca por el nombre con el que se guardan.
+ * La clave va sin tildes, en minúsculas y sin puntos: "D.F." → "df".
+ */
+const ALIAS_DE_CIUDAD: Record<string, string> = {
+  "cdmx": "Ciudad de México",
+  "df": "Ciudad de México",
+  "distrito federal": "Ciudad de México",
+  "mexico df": "Ciudad de México",
+  "ciudad de mexico df": "Ciudad de México",
+  "bogota dc": "Bogotá",
+  "bogota d c": "Bogotá",
+  "santa fe de bogota": "Bogotá",
+};
+
+/** "CDMX" → "Ciudad de México", "Bogotá D.C." → "Bogotá"; lo demás, tal cual. */
+export function ciudadSinAlias(escrito: string): string {
+  const texto = (escrito || "").trim();
+  const clave = sinNingunaTilde(texto).toLowerCase().replace(/\./g, "").replace(/\s+/g, " ").trim();
+  return ALIAS_DE_CIUDAD[clave] ?? texto;
+}
+
 /** Las formas en que se busca la ciudad escrita (una, dos o tres). */
 export function formasDeCiudad(escrito: string): string[] {
-  const texto = (escrito || "").trim();
+  const texto = ciudadSinAlias(escrito);
   if (!texto) return [];
   const candidatas = [
     CIUDAD_DE_LAS_FICHAS.get(sinNingunaTilde(texto).toLowerCase()),

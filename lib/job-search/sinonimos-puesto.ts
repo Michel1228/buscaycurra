@@ -297,6 +297,39 @@ export function expandirPuesto(termino: string): string[] {
   return [...resultado];
 }
 
+/**
+ * Las variantes de un puesto como expresiones regulares de palabra entera
+ * (\m…\M) para Postgres, en como mucho `max` expresiones.
+ *
+ * POR QUÉ (7 nov 2026). Postgres guarda compiladas solo las 32 últimas
+ * expresiones regulares (MAX_CACHED_RES en regexp.c). Con una por variante,
+ * "camarero" llevaba 44 y "camarera" 61, y al pasar de 32 Postgres recompila
+ * cada expresión en cada fila. Medido en producción sobre las mismas 2.000
+ * ofertas: 32 expresiones, 0,2 s; 33, 14 s; 44, 52 s. Por eso, desde que el
+ * 6 nov entraron el eslovaco, el esloveno y el griego, casi todas las
+ * búsquedas de camarero, limpieza, enfermera, conductor o almacén agotaban
+ * los 15 s.
+ *
+ * Se juntan en grupos pequeños: \m(?:waiter|waitress|kellner)\M es lo mismo
+ * que las tres por separado unidas con OR. Grupos de 2-4 cuestan lo mismo que
+ * sueltas; de 8 o más se vuelven lentas (1,9 s frente a 0,2 en la misma
+ * prueba), así que se reparten en `max` grupos como mucho. Hasta 16 variantes
+ * sale exactamente lo mismo que antes: una expresión por variante.
+ */
+export const MAX_EXPRESIONES_PUESTO = 16;
+
+export function expresionesDePalabraEntera(variantes: string[], max = MAX_EXPRESIONES_PUESTO): string[] {
+  // Se escapa lo que Postgres leería como sintaxis de expresión regular.
+  const escapar = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const porGrupo = Math.max(1, Math.ceil(variantes.length / Math.max(1, max)));
+  const salida: string[] = [];
+  for (let i = 0; i < variantes.length; i += porGrupo) {
+    const grupo = variantes.slice(i, i + porGrupo).map(escapar);
+    salida.push(grupo.length === 1 ? `\\m${grupo[0]}\\M` : `\\m(?:${grupo.join("|")})\\M`);
+  }
+  return salida;
+}
+
 /** ¿Este título de oferta corresponde de verdad a lo que se buscó? */
 export function tituloCoincide(titulo: string, termino: string): boolean {
   const t = normalizar(titulo);
