@@ -26,15 +26,17 @@ const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 // Cada sección apunta a una pantalla que YA existía:
 //  - Inicio → /app/bienvenida. Es el resumen del día, la pantalla a la que uno
 //    quiere volver (antes no estaba en ningún menú y se perdía).
-//  - Ofertas → /app/buscar. Sigue encendida en /app/empresas: son las dos
-//    mitades de "buscar y enviar CV" (antes eran dos entradas separadas y
-//    nadie llegaba a la segunda).
+//  - Ofertas → /app/explorar, la puerta: el buscador (que lleva a /app/buscar)
+//    y los accesos a negocios de la zona, ETTs, salarios, emigrar y cursos.
+//    Sigue encendida en /app/buscar y /app/empresas, que son las dos mitades
+//    de "buscar y enviar CV" (antes eran dos entradas separadas y nadie
+//    llegaba a la segunda).
 //  - Automatizaciones → /app/envios: los envíos programados en la cola, lo
 //    enviado y las alertas.
 const SECCIONES: { href: string; label: string; icon: string; title: string; tambien?: string[] }[] = [
   { href: "/app/bienvenida", label: "Inicio",      icon: "inicio",      title: "Tu resumen del día" },
-  { href: "/app/buscar",     label: "Ofertas",     icon: "ofertas",     title: "Buscar ofertas y empresas a las que enviar tu CV",
-    tambien: ["/app/empresas", "/app/ofertas", "/app/guardados"] },
+  { href: "/app/explorar",   label: "Ofertas",     icon: "ofertas",     title: "Buscar ofertas y empresas a las que enviar tu CV",
+    tambien: ["/app/buscar", "/app/empresas", "/app/ofertas", "/app/guardados"] },
   { href: "/app/curriculum", label: "Mi CV",       icon: "cv",          title: "Mi currículum" },
   { href: "/app/pipeline",   label: "Pipeline",    icon: "pipeline",    title: "Cómo van tus candidaturas" },
   { href: "/app/envios",     label: "Automatizaciones", icon: "automatizaciones", title: "Envíos programados, lo enviado y tus alertas" },
@@ -61,7 +63,7 @@ const MAS: { href: string; label: string; icon: string; title: string }[] = [
 
 // La barra de abajo del móvil: cinco huecos. Guzzi en el centro, que es lo
 // que más se usa; "Más" abre el menú con el resto.
-const BARRA_ABAJO = ["/app/bienvenida", "/app/buscar", "GUZZI", "/app/curriculum", "MAS"] as const;
+const BARRA_ABAJO = ["/app/bienvenida", "/app/explorar", "GUZZI", "/app/curriculum", "MAS"] as const;
 
 // Donde la barra de abajo estorba: el chat de Guzzi tiene su propia caja de
 // escribir abajo (como WhatsApp dentro de una conversación).

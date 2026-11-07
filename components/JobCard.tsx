@@ -6,6 +6,8 @@
  * Badge de fuente, barra de match, botón enviar CV (envío directo inline)
  */
 
+import LogoEmpresa from "@/components/neon/LogoEmpresa";
+import { sueldoCreible } from "@/lib/sueldo-visible";
 import { useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -70,6 +72,9 @@ export default function JobCard({
   // un error histórico (fetchCareerjetGlobal). EURES de verdad es "EURES" a secas.
   const fuenteVisible = (() => { if (/^EURES_/i.test(fuente)) return "Careerjet"; const base = fuente.split("_")[0]; return base === "ADZUNA" ? "Adzuna" : base === "CAREERJET" ? "Careerjet" : base; })();
   const matchColor = match !== undefined ? colorMatch(match) : "#64748b";
+  // Adzuna España da a veces sueldos imposibles (un cajero a "90000 - 140000":
+  // horas mal multiplicadas). De esa fuente, sin cifra creíble, no se enseña.
+  const sueldoAdzunaImposible = /^ADZUNA_ES$/i.test(fuente) && !!salario && sueldoCreible(salario) === null;
   // Señales que se repiten en las estafas: el detalle está en la ficha.
   const conSenales = senalesDeEstafa({ titulo, empresa, descripcion }).length > 0;
 
@@ -216,12 +221,19 @@ export default function JobCard({
 
       {/* Content */}
       <div>
-        <h3 className="font-bold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{titulo}</h3>
-        <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{oficial ? `Publicada por ${oficial.corto}` : empresa}</p>
+        {/* El logo solo con dominio comprobado (marca verificada o el correo
+            que la empresa puso en la oferta); si no, sus iniciales. */}
+        <div className="flex items-start gap-3">
+          <LogoEmpresa empresa={oficial ? oficial.corto : empresa} correo={emailConfianza === "alta" ? emailEmpresa : null} tono="verde" size={40} />
+          <div className="min-w-0">
+            <h3 className="font-bold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{titulo}</h3>
+            <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{oficial ? `Publicada por ${oficial.corto}` : empresa}</p>
+          </div>
+        </div>
         <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: "#64748b" }}>
           <span>📍</span><span>{ubicacion}</span>
         </div>
-        {salario && (
+        {salario && !sueldoAdzunaImposible && (
           <div className="flex items-center gap-1 mt-1 text-xs font-semibold" style={{ color: "#22c55e" }}>
             <span>💰</span><span>{salario}</span>
           </div>
