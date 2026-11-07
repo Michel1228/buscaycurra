@@ -8,8 +8,12 @@
  * mande solo a la gente que le falta por confirmar.
  *
  * REGLAS, las mismas que el recordatorio del primer día:
- *  - UNA SOLA VEZ por persona: app_metadata.recordatorio_confirmar_en, que se
- *    escribe DESPUÉS de que Resend acepte el correo.
+ *  - Como mucho DOS veces por persona (7 nov 2026): el primero
+ *    (app_metadata.recordatorio_confirmar_en, version 2) avisa de que habrá
+ *    uno más, y el segundo y último sale a los 5 días
+ *    (recordatorio_confirmar_2_en). A quien recibió el primero antiguo, que
+ *    decía "solo te escribimos esto una vez", no se le manda el segundo. Las
+ *    marcas se escriben DESPUÉS de que Resend acepte el correo.
  *  - Entre 1 y 30 días desde el registro: antes es dar la turra, después ya no
  *    es un recordatorio, es publicidad.
  *  - De lunes a viernes, entre las 10 y las 12 de Madrid (enHorarioDeAviso), y
@@ -44,6 +48,11 @@ export async function POST(req: NextRequest) {
   const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   const ahora = Date.now();
   const pendientes = [];
+  // SEGUNDO Y ÚLTIMO AVISO (7 nov 2026). Quien confirma lo hace en 1-3 minutos;
+  // el primer aviso convenció a 4 de 47. Va 5 días después del primero y SOLO a
+  // quien recibió el primero nuevo, que dice "te lo recordaremos una vez más":
+  // el antiguo prometía "solo te escribimos esto una vez" y se cumple.
+  const segundos = [];
   for (let pagina = 1; pagina <= 50; pagina++) {
     const { data, error } = await admin.auth.admin.listUsers({ page: pagina, perPage: 1000 });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -51,10 +60,13 @@ export async function POST(req: NextRequest) {
       const dias = (ahora - new Date(u.created_at).getTime()) / DIA;
       if (u.email && !u.email_confirmed_at && !DE_PRUEBA.test(u.email) && dias >= 1 && dias <= 30
         && !u.app_metadata?.recordatorio_confirmar_en) pendientes.push(u);
+      else if (u.email && !u.email_confirmed_at && !DE_PRUEBA.test(u.email) && dias <= 30
+        && u.app_metadata?.recordatorio_confirmar_version === 2 && !u.app_metadata?.recordatorio_confirmar_2_en
+        && ahora - new Date(u.app_metadata.recordatorio_confirmar_en).getTime() >= 5 * DIA) segundos.push(u);
     }
     if (data.users.length < 1000) break;
   }
-  if (probar) return NextResponse.json({ probar: true, pendientes: pendientes.length });
+  if (probar) return NextResponse.json({ probar: true, pendientes: pendientes.length, segundos: segundos.length });
 
   let enviados = 0;
   for (const u of pendientes.slice(0, MAX_POR_PASADA)) {
@@ -68,14 +80,35 @@ export async function POST(req: NextRequest) {
       enlace,
       ciudad,
       ofertas: ciudad ? await ofertasRecientesEn(ciudad) : null,
+      vez: 1,
     });
     // Si no salió (cupo del día, dirección que rebota), se queda para la siguiente pasada.
     if (!salio) continue;
     await admin.auth.admin.updateUserById(u.id, {
-      app_metadata: { ...u.app_metadata, recordatorio_confirmar_en: new Date().toISOString() },
+      app_metadata: { ...u.app_metadata, recordatorio_confirmar_en: new Date().toISOString(), recordatorio_confirmar_version: 2 },
     });
     enviados++;
   }
-  console.log(`[recordar-confirmacion] ${enviados} de ${pendientes.length} avisados`);
-  return NextResponse.json({ pendientes: pendientes.length, enviados });
+  let enviadosSegundo = 0;
+  for (const u of segundos.slice(0, Math.max(0, MAX_POR_PASADA - enviados))) {
+    const enlace = enlaceConfirmar(u.id);
+    if (!enlace) break;
+    const ciudad = String(u.user_metadata?.ciudad || "").trim();
+    const salio = await sendConfirmarCorreoEmail({
+      email: u.email!,
+      nombre: String(u.user_metadata?.full_name || ""),
+      fechaAlta: new Date(u.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "long", timeZone: "Europe/Madrid" }),
+      enlace,
+      ciudad,
+      ofertas: ciudad ? await ofertasRecientesEn(ciudad) : null,
+      vez: 2,
+    });
+    if (!salio) continue;
+    await admin.auth.admin.updateUserById(u.id, {
+      app_metadata: { ...u.app_metadata, recordatorio_confirmar_2_en: new Date().toISOString() },
+    });
+    enviadosSegundo++;
+  }
+  console.log(`[recordar-confirmacion] ${enviados} de ${pendientes.length} avisados; segundo aviso: ${enviadosSegundo} de ${segundos.length}`);
+  return NextResponse.json({ pendientes: pendientes.length, enviados, segundos: segundos.length, enviadosSegundo });
 }

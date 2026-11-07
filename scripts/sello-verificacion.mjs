@@ -2260,6 +2260,25 @@ test("con sesion la cabecera publica lleva de vuelta a la app, y una busqueda le
 // Y los enlaces a un curso desde dentro de la app van a la ficha de la app
 // (/app/formacion/...), no a la publica: la ficha de oferta, Guzzi y los avisos
 // de cursos del perfil sacaban a la web publica.
+// ── SEGUNDO Y ULTIMO AVISO A QUIEN NO CONFIRMO EL CORREO, SIN ROMPER LO PROMETIDO (7 nov)
+//
+// 93 de 451 cuentas sin confirmar; quien confirma lo hace en 1-3 minutos y el
+// primer aviso convencio a 4. El segundo sale a los 5 dias, pero el aviso que
+// ya se mando decia "solo te escribimos esto una vez": a esas personas no se
+// les escribe otra vez. Como mucho dos correos, y el segundo dice que es el ultimo.
+test("aviso de confirmar el correo: como mucho dos, el segundo a los 5 dias y nunca a quien se le prometio uno", () => {
+  const r = leerFuente("app/api/auth/recordar-confirmacion/route.ts");
+  const smtp = leerFuente("lib/email/smtp-sender.ts");
+  const correo = smtp.slice(smtp.indexOf("export async function sendConfirmarCorreoEmail"), smtp.indexOf("// ─── Bienvenida que llegó tarde"));
+  return r.includes("u.app_metadata?.recordatorio_confirmar_version === 2 && !u.app_metadata?.recordatorio_confirmar_2_en")
+    && r.includes(">= 5 * DIA") && r.includes("recordatorio_confirmar_version: 2 }")
+    && r.includes("vez: 2,") && r.includes("recordatorio_confirmar_2_en: new Date")
+    && r.indexOf("if (!salio) continue;", r.indexOf("vez: 2,")) < r.indexOf("recordatorio_confirmar_2_en: new Date")
+    && !correo.includes("Solo te escribimos esto una vez")
+    && correo.includes("Te lo recordaremos una sola vez más") && correo.includes("Es el último correo que te mandamos sobre esto")
+    && correo.includes("puedeEsperar: true");
+});
+
 // Guzzi buscaba con una expresion por sinonimo, como el buscador: pasadas 32,
 // PostgreSQL las recompila en cada fila ("camarero" tiene 44 y tardaba 52 s).
 test("Guzzi busca el oficio con como mucho 16 expresiones, como el buscador", () => {

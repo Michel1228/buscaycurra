@@ -382,17 +382,28 @@ export async function sendConfirmarCorreoEmail(params: {
   enlace: string;
   ciudad?: string | null;
   ofertas?: OfertasCiudad | null;
+  /**
+   * 1 = primer aviso; 2 = el segundo y último, a los 5 días (7 nov 2026). El
+   * primero dice que habrá uno más; a quien recibió el antiguo, que prometía
+   * "solo una vez", no le llega el segundo (lo controla recordar-confirmacion).
+   */
+  vez?: 1 | 2;
 }): Promise<boolean> {
   const primerNombre = esc((params.nombre || "").trim().split(" ")[0]);
   const ciudad = params.ofertas?.lugar || capitalizar((params.ciudad || "").trim());
   const conOfertas = !!(ciudad && params.ofertas && params.ofertas.total > 0 && params.ofertas.ofertas.length);
   const o = conOfertas ? frasesOfertas(ciudad, params.ofertas!) : null;
+  const ultimo = params.vez === 2;
 
-  const asunto = `${primerNombre ? `${primerNombre}, te` : "Te"} falta confirmar tu correo para entrar en BuscayCurra`;
+  const asunto = ultimo
+    ? `${primerNombre ? `${primerNombre}, último` : "Último"} aviso: tu cuenta de BuscayCurra sigue sin activar`
+    : `${primerNombre ? `${primerNombre}, te` : "Te"} falta confirmar tu correo para entrar en BuscayCurra`;
 
   const cuerpo = `
 <p ${P}>Hola${primerNombre ? ` ${primerNombre}` : ""}:</p>
-<p ${P}>Te registraste en BuscayCurra el ${esc(params.fechaAlta)}, pero no llegaste a confirmar tu correo, así que todavía no has podido entrar.</p>
+<p ${P}>${ultimo
+    ? `Hace unos días te recordamos que te registraste en BuscayCurra el ${esc(params.fechaAlta)} y que te faltaba confirmar tu correo. Es normal que se pase: muchas veces cae en Promociones o en Spam.`
+    : `Te registraste en BuscayCurra el ${esc(params.fechaAlta)}, pero no llegaste a confirmar tu correo, así que todavía no has podido entrar.`}</p>
 ${o ? `<p ${P}>${o.texto}</p><ul style="margin:0 0 16px;padding-left:20px;">${params.ofertas!.ofertas
     .map((x) => `<li style="margin:0 0 6px;">${esc(x.titulo)}${x.empresa ? ` — ${esc(x.empresa)}` : ""}</li>`).join("")}</ul>` : ""}
 <p ${P}><a href="${params.enlace}" ${ENLACE}>Confirmar mi correo y entrar →</a> Es un toque: entras directamente, sin escribir la contraseña.</p>
@@ -401,7 +412,9 @@ ${o ? `<p ${P}>${o.texto}</p><ul style="margin:0 0 16px;padding-left:20px;">${pa
   return enviarCorreo(
     params.email,
     asunto,
-    plantillaSencilla(cuerpo, "Solo te escribimos esto una vez. Si no fuiste tú quien se registró, no hagas nada: sin confirmar, la cuenta no se activa."),
+    plantillaSencilla(cuerpo, ultimo
+      ? "Es el último correo que te mandamos sobre esto. Si no fuiste tú quien se registró, no hagas nada: sin confirmar, la cuenta no se activa."
+      : "Te lo recordaremos una sola vez más, dentro de unos días, y nada más. Si no fuiste tú quien se registró, no hagas nada: sin confirmar, la cuenta no se activa."),
     { puedeEsperar: true }
   );
 }
