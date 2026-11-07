@@ -21,7 +21,7 @@ import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact
 import { textoNegociosLocales, propuestaPendiente, negocioElegido } from "@/lib/guzzi/envio-local";
 import { pideSiguientePaso, respuestaSiguientePaso, cvConContenido, pistaDeCurso } from "@/lib/guzzi/siguiente-paso";
 import { extraerCorreo, empresaDelCorreo, empresaDelTexto, puestoDelTexto, textoPropuesta, propuestaCorreoPendiente, respuestaAPropuesta, type PropuestaCorreo } from "@/lib/guzzi/envio-correo";
-import { anotarOficio, expandirPuesto, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
+import { anotarOficio, expandirPuesto, expresionesDePalabraEntera, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
 import { aliasCiudad } from "@/lib/guzzi/ciudades-pais";
 import { LISTA_PAISES, PAISES } from "@/lib/paises";
 import { nacionalidadDe } from "@/lib/origen/nacionalidades";
@@ -577,9 +577,12 @@ async function searchJobsReal(query: string, city: string, limit = 5, countryCod
         // con "Barcelona", "barrera" o "colaborar": pidiendo camarero en Berlín
         // salía un "Freelance Full-Stack Developer" porque en su descripción
         // aparecía la palabra. El título es donde está el oficio de verdad.
-        const synPatterns = allSynonyms.map(s =>
-          "\\m" + s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\M"
-        );
+        // En grupos y como mucho 16 (7 nov 2026): PostgreSQL solo guarda 32
+        // expresiones compiladas y, pasadas 32, las recompila en cada fila.
+        // "camarero" tiene 44 sinónimos desde el eslovaco, el esloveno y el
+        // griego, y la consulta pasaba de 0,5 s a 52 s. Mismo resultado: un
+        // grupo de palabras enteras equivale a buscarlas una a una.
+        const synPatterns = expresionesDePalabraEntera(allSynonyms);
         const synOrClauses = synPatterns.map((_, i) => `title ~* $${i + 1}`).join(" OR ");
         // EL PAÍS, SEGÚN DÓNDE. Medido el 10 oct 2026 con 28 sinónimos de
         // camarero: en España (68.000 ofertas) entrar por el índice del país

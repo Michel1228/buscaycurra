@@ -2260,6 +2260,15 @@ test("con sesion la cabecera publica lleva de vuelta a la app, y una busqueda le
 // Y los enlaces a un curso desde dentro de la app van a la ficha de la app
 // (/app/formacion/...), no a la publica: la ficha de oferta, Guzzi y los avisos
 // de cursos del perfil sacaban a la web publica.
+// Guzzi buscaba con una expresion por sinonimo, como el buscador: pasadas 32,
+// PostgreSQL las recompila en cada fila ("camarero" tiene 44 y tardaba 52 s).
+test("Guzzi busca el oficio con como mucho 16 expresiones, como el buscador", () => {
+  const g = leerFuente("app/api/gusi/chat/route.ts");
+  return g.includes("const synPatterns = expresionesDePalabraEntera(allSynonyms);")
+    && !/allSynonyms\.map\(s =>\s*"\\\\m"/.test(g)
+    && /export const MAX_EXPRESIONES_PUESTO = 16;/.test(leerFuente("lib/job-search/sinonimos-puesto.ts"));
+});
+
 test("los enlaces a cursos desde la app se quedan dentro de la app", () => {
   const ficheros = ["app/app/ofertas/[id]/OfertaDetalleClient.tsx", "lib/guzzi/consejo-encaje.ts", "components/MisAvisosCursos.tsx"];
   return ficheros.every(f => leerFuente(f).includes("/app/formacion/${") && !leerFuente(f).includes("/cursos/${"));
@@ -2956,6 +2965,139 @@ test("el titulo de un pais de habla hispana no dice 'para españoles'", async ()
   }
 });
 
+// ── CADA UNO EN SU SITIO: AUTORRELLENOS Y NADA DE ESPAÑA POR DEFECTO (7 nov 2026)
+//
+// Prueba desde Colombia y México: no había autorrellenos, el registro decía
+// "Ej: Madrid, Barcelona...", salarios empezaba en España, la portada proponía
+// Madrid, las páginas /empleo de Medellín sugerían "vendedor en madrid" y los
+// sueldos salían como "9451 - 11000 per month". Y la app no sabía de qué país
+// eran Soacha, Zipaquirá o Coyoacán. Se compila el código de verdad.
+test("cada uno en su sitio: ciudades y oficios de su pais, municipios del barrido y sueldos con moneda", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-su-sitio-entrada.ts", salida = ".sello-su-sitio.cjs";
+  try {
+    writeFileSync(entrada, [
+      'export * from "./lib/sugerencias";',
+      'export { sueldoVisible } from "./lib/sueldo-visible";',
+      'export { paisDeCiudad, paisesDeCiudad } from "./lib/guzzi/ciudades-pais";',
+    ].join("\n"));
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const ciudad = (pais, escrito) => m.filtrarSugerencias(m.ciudadesDe(pais), escrito);
+    const puesto = (pais, escrito, persona) => m.filtrarSugerencias(m.puestosDe(pais, persona ?? pais), escrito);
+    const textos = (pais) => m.ciudadesDe(pais).map(s => s.texto);
+    const casos = [
+      // Autorrellenos de ciudad: del país, con tildes, aunque se escriban sin ellas.
+      ["Bogotá primero", ciudad("CO", "bog")[0], "Bogotá"],
+      ["zipa → Zipaquirá", ciudad("CO", "zipa")[0], "Zipaquirá"],
+      ["itagui → Itagüí", ciudad("CO", "itagui").includes("Itagüí"), true],
+      ["queretaro sin tilde", ciudad("MX", "queretaro")[0], "Querétaro"],
+      ["coyoa → Coyoacán", ciudad("MX", "coyoa").includes("Coyoacán"), true],
+      ["por palabra: garza", ciudad("MX", "garza").includes("San Pedro Garza García"), true],
+      ["en México no sale Madrid", ciudad("MX", "ma").includes("Madrid"), false],
+      ["en España sí", ciudad("ES", "ma").includes("Madrid"), true],
+      ["bien escritas (CO)", ["Facatativá", "Cúcuta", "Ibagué", "Popayán", "Montería", "Tuluá", "Jamundí", "Chía"].every(c => textos("CO").includes(c)), true],
+      ["bien escritas (MX)", ["Álvaro Obregón", "San Nicolás de los Garza", "Gustavo A. Madero", "Cuautitlán Izcalli", "Torreón", "Tlajomulco de Zúñiga", "Ciudad de México"].every(c => textos("MX").includes(c)), true],
+      ["una letra no sugiere", ciudad("CO", "b").length, 0],
+      // Oficios como se dicen allí.
+      ["mesero en México", puesto("MX", "mes").includes("mesero"), true],
+      ["camarero no en México", puesto("MX", "cama").includes("camarero"), false],
+      ["chofer, almacenista y ayudante general", ["chofer", "almacenista", "ayudante general"].every(p => m.puestosDe("MX", "MX").includes(p)), true],
+      ["Colombia: conductor y auxiliar", puesto("CO", "cond").includes("conductor") && puesto("CO", "auxi").includes("auxiliar de bodega"), true],
+      ["camarero en España", puesto("ES", "cam").includes("camarero"), true],
+      ["mesero no en España", m.puestosDe("ES", "ES").includes("mesero"), false],
+      ["Alemania para quien está en México", puesto("DE", "kel", "MX").includes("Kellner") && puesto("DE", "mes", "MX").includes("mesero"), true],
+      // Ejemplos y portada.
+      ["ejemplo España", m.ejemploCiudades("ES"), "Ej: Madrid, Barcelona..."],
+      ["ejemplo Colombia", m.ejemploCiudades("CO"), "Ej: Bogotá, Medellín..."],
+      ["ejemplo México", m.ejemploCiudades("MX"), "Ej: Ciudad de México, Guadalajara..."],
+      ["oficios de ejemplo en México", /mesero/.test(m.ejemploPuestos("MX")) && !/camarera/.test(m.ejemploPuestos("MX")), true],
+      ["portada desde Bogotá", m.ciudadPorDefecto("CO"), "Bogotá"],
+      ["portada desde CDMX", m.ciudadPorDefecto("MX"), "Ciudad de México"],
+      ["portada sin pais", m.ciudadPorDefecto(null), "Madrid"],
+      // De qué país es cada municipio, sin romper los homónimos.
+      ...[["Soacha", "CO"], ["Zipaquirá", "CO"], ["Bello", "CO"], ["Envigado", "CO"], ["Itagüí", "CO"], ["Apodaca", "MX"], ["Tlaquepaque", "MX"], ["San Pedro Tlaquepaque", "MX"], ["Coyoacán", "MX"]]
+        .map(([c, p]) => [`${c} es ${p}`, m.paisDeCiudad(c), p]),
+      ["Guadalajara desde España", m.paisDeCiudad("Guadalajara", "ES"), "ES"],
+      ["Guadalupe desde España", m.paisDeCiudad("Guadalupe", "ES"), "ES"],
+      ["Guadalupe sin bandera", m.paisDeCiudad("Guadalupe"), "MX"],
+      ["Durango desde España", m.paisDeCiudad("Durango", "ES"), "ES"],
+      ["Santa Catarina sin bandera es Brasil", m.paisDeCiudad("Santa Catarina"), "BR"],
+      ["Santa Catarina desde México", m.paisDeCiudad("Santa Catarina", "MX"), "MX"],
+      ["Valencia sigue siendo España", m.paisDeCiudad("Valencia", "ES"), "ES"],
+      ["la pagina de Guadalajara duda", m.paisesDeCiudad("guadalajara").length > 1, true],
+      ["mesero aclara Guadalajara", m.paisPorVocabulario(m.paisesDeCiudad("guadalajara"), "mesero"), "MX"],
+      ["camarero no la aclara", m.paisPorVocabulario(m.paisesDeCiudad("guadalajara"), "camarero"), null],
+      // Los sueldos, en español y con su moneda; sin inventar.
+      ["per month en México", m.sueldoVisible("9451 - 11000 per month", "MX"), "9.451-11.000 MXN al mes"],
+      ["sin periodo en Colombia", m.sueldoVisible("156000 - 156000", "CO"), "156.000 COP"],
+      ["con $ en México", m.sueldoVisible("$12,000 - $15,000 a month", "MX"), "12.000-15.000 MXN al mes"],
+      ["año en España", m.sueldoVisible("30000 - 35000 per year", "ES"), "30.000-35.000 € al año"],
+      ["con decimales por hora", m.sueldoVisible("12,50 €/hora", "ES"), "12,50 € la hora"],
+      ["sin país, sin moneda inventada", m.sueldoVisible("9451 - 11000 per month", null), "9.451-11.000 al mes"],
+      ["sin país, la que traía", m.sueldoVisible("18.000 € - 22.000 €", null), "18.000-22.000 €"],
+      ["lo que no entiende, tal cual", m.sueldoVisible("Salario competitivo + comisiones", "MX"), "Salario competitivo + comisiones"],
+      ["oficios de una página de Colombia", m.puestosParecidos("CO").includes("camarero") || m.puestosParecidos("CO").includes("dependiente"), false],
+    ];
+    // TODOS los municipios del barrido de Careerjet de México y Colombia: de
+    // qué país son (con su bandera puesta) y que salen en los autorrellenos.
+    const worker = leerFuente("lib/job-search/sync-worker.ts");
+    const REGIONES = new Set(["colombia", "mexico", "antioquia", "cundinamarca", "valle del cauca", "atlantico", "santander", "bolivar",
+      "risaralda", "caldas", "tolima", "norte de santander", "meta", "boyaca", "cordoba", "cesar", "magdalena", "huila", "narino",
+      "quindio", "cauca", "sucre", "la guajira", "casanare", "choco", "caqueta", "arauca", "putumayo", "san andres", "amazonas",
+      "guaviare", "vichada", "vaupes", "guainia", "estado de mexico", "jalisco", "nuevo leon", "baja california", "coahuila",
+      "yucatan", "sonora", "quintana roo", "tamaulipas", "morelos", "michoacan", "sinaloa", "hidalgo", "chiapas",
+      "baja california sur", "guerrero", "tabasco", "nayarit"]);
+    const faltan = [];
+    for (const [cc, pais] of [["co", "CO"], ["mx", "MX"]]) {
+      const bloque = (worker.match(new RegExp(`\\n  ${cc}: \\{ locale: "es_${pais}", lugares: \\[([\\s\\S]*?)\\] \\}`)) || [])[1] || "";
+      const lugares = [...bloque.matchAll(/"([^"]+)"/g)].map(x => x[1].split(",")[0].trim());
+      if (lugares.length < 40) faltan.push(`${pais}: no se pudo leer el barrido`);
+      for (const l of lugares.filter(l => !REGIONES.has(m.sinTildes(l)))) {
+        const enSugerencias = m.ciudadesDe(pais).some(s => s.claves.includes(m.sinTildes(l)));
+        if (m.paisDeCiudad(l, pais) !== pais || !enSugerencias) faltan.push(`${l} (${pais})`);
+      }
+    }
+    if (faltan.length) casos.push(["municipios del barrido", faltan.join(", "), ""]);
+    const mal = casos.filter(([, dio, quiere]) => dio !== quiere);
+    if (mal.length) console.log("      " + mal.map(([n, dio, quiere]) => `${n}: da ${dio}, deberia ${quiere}`).join(" · "));
+    return mal.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// Y que las pantallas lo usen: los cuatro campos con su lista accesible, el
+// registro y salarios con el país de la persona, la portada sin Madrid fijo y
+// /empleo con los oficios y el sueldo del país.
+test("los autorrellenos y el pais de la persona llegan a las pantallas", () => {
+  const buscar = leerFuente("app/app/buscar/page.tsx");
+  const perfil = leerFuente("app/app/perfil/page.tsx");
+  const registro = leerFuente("app/auth/registro/page.tsx");
+  const salarios = leerFuente("app/app/salarios/page.tsx");
+  const apiSalarios = leerFuente("app/api/salarios/route.ts");
+  const portada = leerFuente("components/BuscadorPublico.tsx");
+  const empleo = leerFuente("app/empleo/[puesto]/[ciudad]/page.tsx");
+  const lista = leerFuente("components/Sugerencias.tsx");
+  const checks = {
+    "lista accesible y de dedo": lista.includes('role: "combobox"') && lista.includes('role="listbox"') && lista.includes('role="option"') && lista.includes("minHeight: 44"),
+    "buscador: puesto y ciudad": /id="buscar-keyword"[\s\S]{0,200}\{\.\.\.sugPuesto\.propsCampo\}/.test(buscar) && /id="buscar-ubicacion"[\s\S]{0,250}\{\.\.\.sugCiudad\.propsCampo\}/.test(buscar) && buscar.includes("ciudadesDe(paisSeleccionado"),
+    "perfil: ciudad": /id="perfil-ciudad"[\s\S]{0,200}\{\.\.\.sugCiudad\.propsCampo\}/.test(perfil) && perfil.includes("dondeEstoy()"),
+    "registro: ciudad y ejemplos del país": /id="ciudad"[\s\S]{0,250}\{\.\.\.sugCiudad\.propsCampo\}/.test(registro) && registro.includes("placeholder={ejemploCiudades(paisDeAqui)}") && !registro.includes('placeholder="Ej: Madrid, Barcelona..."') && registro.includes("placeholder={ejemploPuestos(paisDeAqui)}"),
+    "salarios: país de la persona, sus oficios y su moneda": salarios.includes("dondeEstoy()") && salarios.includes("puestosDe(") && !salarios.includes("PUESTOS_POPULARES") && salarios.includes('country.code === "ES" ? "€" : country.currency') && salarios.includes('!topCargando && country.code === "ES"'),
+    "salarios: mesero casa con camarero": (apiSalarios.match(/claveDeReferencia\(/g) || []).length === 3,
+    "portada sin Madrid fijo": !portada.includes('useState("Madrid")') && portada.includes("ciudadPorDefecto(dondeEstoy())"),
+    "/empleo con el país de la ciudad": empleo.includes("paisesDeCiudad(ciudadFmt)") && empleo.includes("sueldoVisible(") && empleo.includes("puestosParecidos(paisPagina)"),
+  };
+  const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
+  if (fallos.length) console.log("      " + fallos.join(" · "));
+  return fallos.length === 0;
+});
+
 // ── CAREERJET NO SE DISFRAZA DE EURES NI INVENTA UNA "EMPRESA EUROPEA" (6 nov 2026)
 //
 // fetchCareerjetGlobal guarda sus ofertas como "EURES_xxx" (error histórico:
@@ -3444,6 +3586,177 @@ test("la ciudad se encuentra con y sin tildes: São Paulo, Košice y Málaga", a
     return false;
   } finally {
     try { unlinkSync(salida); } catch { /* da igual */ }
+  }
+});
+
+// ── LA BÚSQUEDA, DEPRISA Y CON LAS MISMAS OFERTAS (7 nov 2026) ──────────────
+//
+// Desde el 6 nov casi todas las búsquedas agotaban los 15 s. Postgres guarda
+// compiladas solo 32 expresiones regulares y "camarero" ya llevaba 44 variantes
+// ("camarera", 61): al pasar de 32 las recompila en cada fila (2.000 ofertas:
+// 0,2 s con 32, 14 s con 33). Ahora van juntas en 16 como mucho y encuentran
+// lo mismo. Con ciudad y país, el país se mira fuera de las candidatas para que
+// Postgres cruce ciudad y título (camarero en Madrid: 10-16 s → 2,3 s). La
+// descripción tiene su propio tope y, si no llega, se dan las del
+// título (5 s; si se corta, no se relee en el respaldo por ciudad). Las fichas
+// públicas, que los rastreadores abren a miles, no pasan de
+// 3 consultas a la vez ni repiten la misma. Y "CDMX", "DF" y "Bogotá D.C."
+// encuentran su capital. Todo con el código de verdad compilado y la base
+// simulada: se mira qué SQL lanza, no se ejecuta nada.
+const SIMULADOS_RENDIMIENTO = {
+  "next/server": `export const NextResponse = { json: (b, i) => new Response(JSON.stringify(b), { status: (i && i.status) || 200, headers: { "content-type": "application/json" } }) }; export class NextRequest {}`,
+  "@/lib/db": `export function getPool() {
+    const g = globalThis.__selloRend;
+    const query = async (sql, params) => {
+      g.consultas.push({ sql, params: params || [] });
+      g.activas++; g.maxActivas = Math.max(g.maxActivas, g.activas);
+      try {
+        await new Promise((r) => setTimeout(r, g.espera || 0));
+        const r = g.responder(sql, params || []);
+        if (r instanceof Error) throw r;
+        return { rows: r };
+      } finally { g.activas--; }
+    };
+    return { query, connect: async () => ({ query, release() {} }) };
+  }`,
+  "@/lib/cache/redis-client": `export async function get() { return null; } export async function set() { return true; }`,
+  "@/lib/job-search/oferta-viva": `export function comprobarEnSegundoPlano() {}`,
+  "@/lib/job-search/real-search": `export async function buscarOfertasReales() { return []; }`,
+};
+async function compilarRendimiento(nombre, codigo) {
+  const { build } = await import("esbuild");
+  const { writeFileSync, unlinkSync } = await import("node:fs");
+  const entrada = `.sello-rend-${nombre}.ts`, salida = `.sello-rend-${nombre}.cjs`;
+  writeFileSync(entrada, codigo);
+  try {
+    await build({
+      entryPoints: [entrada], bundle: true, format: "cjs", platform: "node", outfile: salida,
+      tsconfig: "tsconfig.json", logLevel: "silent", external: ["pg", "redis", "ioredis", "bullmq"],
+      plugins: [{ name: "simulados", setup(b) {
+        const filtro = new RegExp("^(" + Object.keys(SIMULADOS_RENDIMIENTO).map((n) => n.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")).join("|") + ")$");
+        b.onResolve({ filter: filtro }, (a) => ({ path: a.path, namespace: "simulado" }));
+        b.onLoad({ filter: /.*/, namespace: "simulado" }, (a) => ({ contents: SIMULADOS_RENDIMIENTO[a.path], loader: "js" }));
+      } }],
+    });
+    return await import(`../${salida}?${Date.now()}`);
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+}
+globalThis.__selloRend = { consultas: [], activas: 0, maxActivas: 0, espera: 0, responder: () => [] };
+
+test("los sinónimos van en 16 expresiones como mucho y encuentran lo mismo; CDMX, DF y Bogotá D.C. son su capital", async () => {
+  try {
+    const m = await compilarRendimiento("puestos", 'export { expandirPuesto, expresionesDePalabraEntera } from "./lib/job-search/sinonimos-puesto";\nexport { formasDeCiudad, quitarTildesComoLaBase } from "./lib/job-search/ciudad-busqueda";\nexport { ciudadParaBuscar } from "./lib/job-search/ofertas-parecidas";\n');
+    // \m y \M de Postgres (principio y final de palabra), en JavaScript.
+    const aJs = (e) => new RegExp(e.replace(/\\m/g, "(?<![\\p{L}\\p{N}_])(?=[\\p{L}\\p{N}_])").replace(/\\M/g, "(?<=[\\p{L}\\p{N}_])(?![\\p{L}\\p{N}_])"), "iu");
+    const fallos = [];
+    for (const puesto of ["camarero", "camarera", "limpieza", "enfermera", "conductor", "almacen", "operario", "mesero", "chofer", "vendedor", "cocinero", "electricista"]) {
+      const v = m.expandirPuesto(puesto);
+      const juntas = m.expresionesDePalabraEntera(v);
+      const sueltas = m.expresionesDePalabraEntera(v, v.length);
+      if (juntas.length > 16) fallos.push(`${puesto}: ${juntas.length} expresiones`);
+      if (v.length <= 16 && juntas.join("|") !== sueltas.join("|")) fallos.push(`${puesto}: con 16 o menos ya no es una por variante`);
+      const [rj, rs] = [juntas.map(aJs), sueltas.map(aJs)];
+      const titulos = v.flatMap((x) => [`${x} (m/w/d)`, `SENIOR ${x.toUpperCase()}`, `${x}s y más`, `super${x}`, `Ayudante-${x}`])
+        .concat(["Ingeniero de software", "Semiconductor engineer", "Barcelona centro"]);
+      for (const t of titulos) if (rj.some((r) => r.test(t)) !== rs.some((r) => r.test(t))) fallos.push(`${puesto}: "${t}" cambia`);
+    }
+    const encuentra = (enLaBase, escrito) => m.formasDeCiudad(escrito).some((f) => m.quitarTildesComoLaBase(enLaBase).toLowerCase().includes(f.toLowerCase()));
+    for (const [nombre, dio, quiere] of [
+      ["CDMX", encuentra("Cuauhtémoc, Ciudad de México", "CDMX"), true],
+      ["DF", encuentra("Miguel Hidalgo, Ciudad de México", "DF"), true],
+      ["México D.F.", encuentra("Ciudad de México, México", "México D.F."), true],
+      ["Distrito Federal", encuentra("Ciudad de México", "Distrito Federal"), true],
+      ["Bogotá D.C.", encuentra("Bogotá DC", "Bogotá D.C."), true],
+      ["Bogota DC", encuentra("Fontibón, Bogotá DC", "Bogota DC"), true],
+      ["Madrid sigue igual", m.formasDeCiudad("Madrid").join("|"), "Madrid"],
+      ["la ficha pública también", m.ciudadParaBuscar("cdmx"), "Ciudad de Mexico"],
+    ]) if (dio !== quiere) fallos.push(`${nombre}: da ${dio}, debería ${quiere}`);
+    fallos.slice(0, 8).forEach((f) => console.log(`     ↳ ${f}`));
+    return fallos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  }
+});
+
+test("la búsqueda cruza ciudad y título, la descripción no se come las del título y las fichas públicas no saturan la base", async () => {
+  const g = globalThis.__selloRend;
+  try {
+    const m = await compilarRendimiento("busca", 'export { GET } from "./app/api/jobs/search/route";\nexport { ofertasParecidas } from "./lib/job-search/ofertas-parecidas";\nexport { expandirPuesto } from "./lib/job-search/sinonimos-puesto";\n');
+    const filas = (n) => Array.from({ length: n }, (_, i) => ({ id: `o${i}`, title: `Puesto ${i}`, company: `Empresa ${i}`, city: "Ciudad", total_encontrado: n }));
+    const buscar = async (q) => {
+      g.consultas = [];
+      const res = await m.GET({ url: `https://buscaycurra.es/api/jobs/search?${q}&limit=20`, headers: new Headers() });
+      return { res, cuerpo: await res.json(), sqls: g.consultas.map((c) => c.sql.replace(/\s+/g, " ").trim()), consultas: g.consultas };
+    };
+    const tramo = (sql, desde, hasta) => sql.slice(sql.indexOf(desde), sql.indexOf(hasta));
+    const checks = {};
+
+    g.espera = 0;
+    g.responder = (sql) => (sql.includes("WITH cand") ? filas(20) : []);
+    let r = await buscar("keyword=camarero&location=Madrid&country=ES");
+    const principal = r.consultas.find((c) => c.sql.includes("WITH cand"));
+    const sqlP = principal ? principal.sql.replace(/\s+/g, " ") : "";
+    const expresiones = (principal?.params || []).filter((p) => typeof p === "string" && p.startsWith("\\m"));
+    const variantes = m.expandirPuesto("camarero");
+    checks["camarero: 16 expresiones como mucho y con sus 44 variantes"] = variantes.length > 32 && expresiones.length <= 16
+      && variantes.every((v) => expresiones.some((e) => e.includes(v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))));
+    checks["con ciudad, el país se mira fuera de las candidatas"] = !!principal && !tramo(sqlP, "WITH cand", "vale AS").includes('lower("country")')
+      && tramo(sqlP, "vale AS", "pagina AS").includes('lower("country")');
+    const iBegin = r.sqls.indexOf("BEGIN READ ONLY");
+    checks["en transacción de solo lectura con 64 MB"] = iBegin >= 0 && r.sqls.includes("SET LOCAL work_mem = '64MB'") && iBegin < r.sqls.findIndex((s) => s.includes("WITH cand"));
+    checks["el texto solo de las de la página, y el total de todas"] = /pagina AS \( SELECT id, "scrapedAt" FROM vale ORDER BY .* LIMIT \$\d+ OFFSET \$\d+ \)/.test(sqlP)
+      && sqlP.includes('FROM pagina p JOIN "JobListing" j') && r.cuerpo.total === 20 && r.cuerpo.ofertas?.length === 20;
+
+    r = await buscar("keyword=camarero&country=ES");
+    const p2 = (r.consultas.find((c) => c.sql.includes("WITH cand"))?.sql || "").replace(/\s+/g, " ");
+    checks["sin ciudad, el país dentro (va por su índice)"] = tramo(p2, "WITH cand", "vale AS").includes('lower("country")');
+
+    const cancelada = () => Object.assign(new Error("canceling statement due to statement timeout"), { code: "57014" });
+    g.responder = (sql) => (sql.includes("WITH cand") ? (sql.includes("description ~*") ? cancelada() : filas(3)) : []);
+    r = await buscar("keyword=mesero&country=MX");
+    checks["la descripción no acaba en 5 s: salen las 3 del título"] = r.res.status === 200 && r.cuerpo.ofertas?.length === 3
+      && r.sqls.includes("SET LOCAL statement_timeout = '5s'");
+    r = await buscar("keyword=mesero&location=Guadalajara&country=MX");
+    checks["y con ciudad no relee las descripciones en el respaldo"] = r.res.status === 200 && r.cuerpo.ofertas?.length === 3
+      && !r.sqls.some((s) => s.startsWith("SELECT COUNT(*) FROM (SELECT 1"));
+    g.responder = (sql) => (sql.includes("WITH cand") ? (sql.includes("description ~*") ? cancelada() : []) : []);
+    r = await buscar("keyword=mesero&country=MX");
+    checks["sin ninguna del título sigue siendo 'ha tardado', no 'no hay'"] = r.res.status === 503;
+
+    g.responder = (sql) => (sql.includes("WITH cand") ? filas(3) : sql.includes("SELECT COUNT(*) FROM (SELECT 1") ? [{ count: "9" }] : []);
+    r = await buscar("keyword=camarero&location=Tudela&country=ES");
+    checks["el respaldo por ciudad cuenta hasta 9, no la ciudad entera"] = r.sqls.some((s) => s.startsWith("SELECT COUNT(*) FROM (SELECT 1") && s.includes("LIMIT 9"));
+
+    // Fichas públicas.
+    g.espera = 15; g.maxActivas = 0; g.consultas = []; g.puestoVacio = false;
+    g.responder = (sql) => (sql.includes("WITH zona") ? [{ en_ciudad: 7, de_la_ciudad: [{ id: "c1", title: "Otra", company: null, city: "X", salary: null }] }]
+      : g.puestoVacio ? [] : [{ id: "p1", title: "Camarero", company: "Bar", city: "X", salary: null, n: 4 }]);
+    const ciudades = ["Gijon", "Oviedo", "Leon", "Burgos", "Soria", "Teruel", "Huesca", "Lleida", "Girona", "Tarragona", "Castellon", "Cuenca"];
+    const varias = await Promise.all(ciudades.map((c) => m.ofertasParecidas("Camarero de sala", c)));
+    checks["fichas: como mucho 3 consultas a la vez"] = g.maxActivas <= 3 && varias.every((p) => p?.ofertas.length === 1 && p.deEsePuesto === 4);
+    checks["fichas: con ofertas del puesto no se lee la ciudad entera"] = !g.consultas.some((c) => c.sql.includes("WITH zona"));
+    g.consultas = [];
+    await Promise.all(Array.from({ length: 10 }, () => m.ofertasParecidas("Camarero de sala", "Palencia")));
+    checks["fichas: diez a la vez de lo mismo, una sola consulta"] = g.consultas.length === 1;
+    g.consultas = []; g.puestoVacio = true;
+    const sinPuesto = await m.ofertasParecidas("Camarero de sala", "Tudela", { excluirId: "p1" });
+    checks["fichas: sin nada del puesto, la ciudad (una consulta)"] = g.consultas.filter((c) => c.sql.includes("WITH zona")).length === 1
+      && sinPuesto?.enLaCiudad === 7 && sinPuesto.deLaCiudad.length === 1;
+    g.consultas = []; g.puestoVacio = false;
+    await m.ofertasParecidas("Vendedor", "cdmx");
+    checks["fichas: cdmx busca Ciudad de México"] = g.consultas[0]?.params?.[0] === "%Ciudad de Mexico%";
+
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar o falló: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    g.espera = 0;
   }
 });
 
