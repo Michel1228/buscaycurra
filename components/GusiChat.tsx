@@ -107,6 +107,11 @@ const SUGERENCIAS: SugerenciaItem[] = [
   { Icon: Gem,      label: "Guardadas", desc: "Ofertas que guardé", color: "#22c55e", href: "/app/guardados" },
 ];
 
+// El color de cada atajo, como tono del diseño de neón (globals.css, tono-*).
+const TONO_DE_COLOR: Record<string, string> = {
+  "#22c55e": "verde", "#3b82f6": "azul", "#f59e0b": "ambar", "#a855f7": "morado", "#06b6d4": "cian", "#ec4899": "rosa",
+};
+
 function sanitizeGusiHtml(html: string): string {
   return html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
@@ -1003,16 +1008,16 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
           <div className="px-4 pt-3 pb-2 shrink-0" style={{ background: "#111827", borderTop: "1px solid #1e212b" }}>
             <div className="flex items-center gap-2">
               <button onClick={() => fileRef.current?.click()} title="Subir CV (PDF)" aria-label="Adjuntar archivo"
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
-                style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
+                className="w-10 h-10 rounded-full flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
+                style={{ background: "rgba(255,255,255,0.04)", color: "#a7b3c6", border: "1px solid rgba(148,163,184,0.22)" }}>
                 <Paperclip className="w-5 h-5" />
               </button>
               <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleFile} />
               <button onClick={() => { setResaltarCamara(false); imageRef.current?.click(); }} title="Foto de cartel/tienda (OCR)" aria-label="Hacer foto"
-                className={`w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0 ${resaltarCamara ? "animate-pulse" : ""}`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-base transition hover:opacity-80 shrink-0 ${resaltarCamara ? "animate-pulse" : ""}`}
                 style={resaltarCamara
                   ? { background: "rgba(163,230,53,0.15)", color: "#d9f99d", border: "1px solid #a3e635", boxShadow: "0 0 0 3px rgba(163,230,53,0.25), 0 0 18px rgba(163,230,53,0.6)" }
-                  : { background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
+                  : { background: "rgba(255,255,255,0.04)", color: "#a7b3c6", border: "1px solid rgba(148,163,184,0.22)" }}>
                 <Camera className="w-5 h-5" />
               </button>
               <input ref={imageRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImage} />
@@ -1033,8 +1038,8 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                 onClick={() => enviar(input)}
                 disabled={!input.trim() || cargando}
                 aria-label="Enviar mensaje"
-                className="w-9 h-9 rounded-lg flex items-center justify-center transition disabled:opacity-30 hover:opacity-90 active:scale-95 shrink-0"
-                style={{ background: input.trim() ? "#22c55e" : "#1e212b", color: input.trim() ? "#0a1208" : "#64748b", border: "1px solid #2d3142" }}>
+                className="w-10 h-10 rounded-full flex items-center justify-center transition disabled:opacity-30 hover:opacity-90 active:scale-95 shrink-0"
+                style={{ background: input.trim() ? "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)" : "rgba(255,255,255,0.04)", color: input.trim() ? "#0b1406" : "#a7b3c6", border: "1px solid rgba(148,163,184,0.22)" }}>
                 ➤
               </button>
             </div>
@@ -1084,17 +1089,16 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                         que no significaban nada. Ahora todos usan el acabado
                         suave de la aplicacion: fondo tenido al 6% y borde al 18%. */}
                     {SUGERENCIAS.map((s, i) => (
+                      // Con el diseño de neón (7 nov 2026): cada atajo con su icono en un
+                      // círculo de cristal del color que ya tenía en SUGERENCIAS.
                       <button key={i} onClick={() => s.href ? router.push(s.href) : enviar(s.msg ?? "")}
-                        className="flex flex-col items-start shrink-0 w-[130px] px-3 py-2.5 rounded-xl text-left transition hover:opacity-80 active:scale-[0.98]"
-                        style={{
-                          background: "rgba(34,197,94,0.06)",
-                          border: "1px solid rgba(34,197,94,0.18)",
-                        }}>
-                        <s.Icon size={16} className="mb-1" style={{ color: "#22c55e" }} />
-                        <p className="text-[10px] font-semibold leading-tight" style={{ color: "#f1f5f9" }}>
+                        className={`cristal cristal-enlace tono-${TONO_DE_COLOR[s.color] || "verde"} flex flex-col items-start shrink-0 w-[148px] px-3 py-3 text-left active:scale-[0.98]`}
+                        style={{ borderRadius: 16 }}>
+                        <span className="icono-circulo mb-1.5" style={{ width: 32, height: 32 }} aria-hidden="true"><s.Icon size={15} /></span>
+                        <p className="text-[12px] font-semibold leading-tight" style={{ color: "#f1f5f9" }}>
                           {s.label}
                         </p>
-                        <p className="text-[9px] leading-tight mt-0.5" style={{ color: "#64748b" }}>
+                        <p className="text-[11px] leading-tight mt-0.5" style={{ color: "#a7b3c6" }}>
                           {s.desc}
                         </p>
                       </button>

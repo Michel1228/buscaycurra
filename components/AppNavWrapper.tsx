@@ -96,6 +96,54 @@ function seccionActiva(pathname: string, s: { href: string; tambien?: string[] }
   return [s.href, ...(s.tambien || [])].some((r) => pathname === r || pathname.startsWith(r + "/"));
 }
 
+/** Como seccionActiva, pero las que llevan ?tab= (Mi Plan) no se encienden por la ruta sola. */
+function entradaActiva(pathname: string, e: { href: string; tambien?: string[] }): boolean {
+  if (e.href.includes("?")) return false;
+  return seccionActiva(pathname, e);
+}
+
+// EL MENÚ, POR GRUPOS (7 nov 2026). Eran dieciséis filas seguidas sin orden.
+// Ahora cada entrada va en su grupo con el color de las tarjetas del diseño
+// (Buscar azul, Tu candidatura verde, Formación morado, Cuenta ámbar). Son las
+// mismas entradas y las mismas rutas de SECCIONES y MAS; Inicio y Guzzi van
+// arriba, aparte, porque son a las que más se vuelve.
+type TonoMenu = "azul" | "verde" | "morado" | "ambar" | "rosa";
+const GRUPOS_MENU: { titulo: string; tono: TonoMenu; hrefs: string[] }[] = [
+  { titulo: "Buscar", tono: "azul", hrefs: ["/app/explorar", "/app/guardados", "/app/emigrar", "/app/au-pair", "/app/salarios", "/app/reviews"] },
+  { titulo: "Tu candidatura", tono: "verde", hrefs: ["/app/curriculum", "/app/envios", "/app/pipeline", "/app/entrevistas"] },
+  { titulo: "Formación", tono: "morado", hrefs: ["/app/formacion"] },
+  { titulo: "Cuenta", tono: "ambar", hrefs: ["/app/perfil?tab=plan", "/app/referidos", "/app/ayuda"] },
+];
+const ENTRADA_POR_HREF = new Map<string, { href: string; label: string; icon: string; title: string; tambien?: string[] }>(
+  [...SECCIONES, ...MAS].map((e) => [e.href, e])
+);
+
+/** Una fila del menú: el icono en su círculo de cristal del color del grupo; la activa, en lima. */
+function FilaMenu({ href, label, title, icon, tono, activo, onClick }: {
+  href: string; label: string; title?: string; icon: string; tono: TonoMenu; activo: boolean; onClick: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      title={title}
+      onClick={onClick}
+      aria-current={activo ? "page" : undefined}
+      className="flex items-center gap-2.5 px-2.5 min-h-[48px] rounded-xl text-[13.5px] font-medium transition-colors hover:bg-white/[0.05]"
+      style={{
+        background: activo ? "rgba(163,230,53,0.1)" : "rgba(255,255,255,0.025)",
+        border: `1px solid ${activo ? "rgba(163,230,53,0.45)" : "rgba(148,163,184,0.1)"}`,
+        boxShadow: activo ? "0 0 18px -8px rgba(163,230,53,0.8)" : "none",
+        color: activo ? "#ecfccb" : "#dbe3ee",
+      }}
+    >
+      <span className={`icono-circulo tono-${activo ? "lima" : tono}`} style={{ width: 32, height: 32 }} aria-hidden="true">
+        <NavIcon name={icon} size={16} activo={activo} enCirculo />
+      </span>
+      <span className="truncate">{label}</span>
+    </Link>
+  );
+}
+
 /**
  * POR QUE LOS ICONOS DEL MENU NO SON DE COLORES.
  *
@@ -109,13 +157,15 @@ function seccionActiva(pathname: string, s: { href: string; tambien?: string[] }
  * 7 nov 2026) si estas en esa seccion, gris si no. El mismo gris que la
  * etiqueta, para que icono y texto vayan juntos.
  */
-function NavIcon({ name, size = 22, activo = false }: { name: string; size?: number; activo?: boolean }) {
+function NavIcon({ name, size = 22, activo = false, enCirculo = false }: { name: string; size?: number; activo?: boolean; enCirculo?: boolean }) {
   const s = size;
   const color = activo ? "#a3e635" : "#94a3b8";
+  // Dentro de un círculo del menú, el trazo toma el color del círculo (su grupo, o lima si está activa).
+  const trazo = enCirculo ? "currentColor" : color;
 
   const base = {
     width: s, height: s, viewBox: "0 0 24 24",
-    fill: "none", stroke: color, strokeWidth: "1.8",
+    fill: "none", stroke: trazo, strokeWidth: "1.8",
     strokeLinecap: "round" as const, strokeLinejoin: "round" as const,
     "aria-hidden": true,
     className: "nav-icon shrink-0",
@@ -145,13 +195,15 @@ function NavIcon({ name, size = 22, activo = false }: { name: string; size?: num
     case "guardados":
       return <svg {...base}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
     case "reviews":
-      return <svg {...base} fill={color + "20"}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+      return <svg {...base} fill={enCirculo ? "none" : color + "20"}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
     case "referidos":
       return <svg {...base}><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>;
     case "ayuda":
       return <svg {...base}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
     case "plan":
       return <svg {...base}><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>;
+    case "descargar":
+      return <svg {...base}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>;
     case "mas":
       return <svg {...base}><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>;
     default:
@@ -393,66 +445,56 @@ export default function AppNavWrapper() {
             role="dialog"
             aria-label="Menú"
           >
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] px-2 pt-1 pb-2" style={{ color: "var(--texto-tenue)" }}>Secciones</p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {SECCIONES.map((s) => {
-                const activo = seccionActiva(pathname, s);
-                return (
-                  <Link
-                    key={s.href}
-                    href={s.href}
-                    onClick={() => setMobileOpen(false)}
-                    aria-current={activo ? "page" : undefined}
-                    className="flex items-center gap-2.5 px-3 min-h-[48px] rounded-xl text-[14px] font-medium"
-                    style={{
-                      background: activo ? "rgba(163,230,53,0.1)" : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${activo ? "rgba(163,230,53,0.4)" : "rgba(148,163,184,0.12)"}`,
-                      color: activo ? "#ecfccb" : "#dbe3ee",
-                    }}
-                  >
-                    <NavIcon name={s.icon} size={20} activo={activo} />
-                    <span className="truncate">{navLabel(s.label)}</span>
-                  </Link>
-                );
-              })}
+            {/* Arriba, las dos a las que más se vuelve: Inicio y Guzzi. */}
+            <div className="grid grid-cols-2 gap-2">
+              <FilaMenu href="/app/bienvenida" label={navLabel("Inicio")} icon="inicio" tono="verde"
+                activo={pathname === "/app/bienvenida"} onClick={() => setMobileOpen(false)} />
+              <Link href="/app/gusi" onClick={() => setMobileOpen(false)} title="Guzzi - Asistente IA"
+                aria-current={pathname === "/app/gusi" ? "page" : undefined}
+                className="flex items-center gap-2.5 px-2.5 min-h-[48px] rounded-xl text-[14px] font-semibold"
+                style={{ background: "rgba(163,230,53,0.08)", border: "1px solid rgba(163,230,53,0.35)", color: "#ecfccb" }}>
+                <span className="guzzi-aro inline-flex" style={{ padding: 2 }}>
+                  <span className="block overflow-hidden rounded-full" style={{ width: 30, height: 30, background: "#f6efd8" }}>
+                    <GuzziAvatar size={30} className="scale-[1.2]" />
+                  </span>
+                </span>
+                {navLabel("Guzzi")}
+              </Link>
             </div>
 
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] px-2 pt-4 pb-1" style={{ color: "var(--texto-tenue)" }}>Más</p>
-            {MAS.map((item) => {
-              const activo =
-                pathname === item.href ||
-                (item.href !== "/app" && pathname.startsWith(item.href + "/"));
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  title={item.title}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-sm transition"
-                  style={{
-                    background: activo ? "rgba(163,230,53,0.08)" : "transparent",
-                    color: activo ? "#ecfccb" : "#a7b3c6",
-                  }}
-                >
-                  {item.href === "/app/gusi" ? (
-                    <GuzziAvatar size={22} />
-                  ) : (
-                    <NavIcon name={item.icon} size={20} activo={activo} />
+            {/* El resto, por grupos con su color (como las tarjetas): cada
+                entrada de antes está en uno, con la misma ruta. */}
+            {GRUPOS_MENU.map((g) => (
+              <div key={g.titulo} className="pt-3 mt-3" style={{ borderTop: "1px solid rgba(148,163,184,0.12)" }}>
+                <p className={`tono-${g.tono} flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] px-1 pb-2`} style={{ color: "var(--tono-texto)" }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: "rgb(var(--tono))", boxShadow: "0 0 8px rgb(var(--tono))" }} aria-hidden="true" />
+                  {g.titulo}
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {g.hrefs.map((href) => {
+                    const e = ENTRADA_POR_HREF.get(href);
+                    if (!e) return null;
+                    const activo = entradaActiva(pathname, e);
+                    return (
+                      <FilaMenu key={href} href={href} label={navLabel(e.label)} title={e.title} icon={e.icon} tono={g.tono}
+                        activo={activo} onClick={() => setMobileOpen(false)} />
+                    );
+                  })}
+                  {g.titulo === "Cuenta" && (
+                    <>
+                      {/* Acceso a la descarga: en iPhone lleva a la App Store y en
+                          Android a instalarla desde el navegador. */}
+                      <FilaMenu href="/descargar" label="Descargar app" icon="descargar" tono={g.tono} activo={false} onClick={() => setMobileOpen(false)} />
+                      {esAdmin && (
+                        <FilaMenu href="/app/admin" label="Admin" icon="reviews" tono="rosa" activo={pathname === "/app/admin"} onClick={() => setMobileOpen(false)} />
+                      )}
+                    </>
                   )}
-                  <span>{navLabel(item.label)}</span>
-                </Link>
-              );
-            })}
-            {esAdmin && (
-              <Link href="/app/admin" onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-sm transition"
-                style={{ background: pathname === "/app/admin" ? "rgba(245,158,11,0.08)" : "transparent", color: "#f59e0b" }}>
-                <NavIcon name="reviews" size={20} activo={pathname.startsWith("/app/reviews")} />
-                <span>Admin</span>
-              </Link>
-            )}
+                </div>
+              </div>
+            ))}
 
-            <div style={{ height: "1px", background: "rgba(148,163,184,0.14)", margin: "10px 0" }} />
+            <div style={{ height: "1px", background: "rgba(148,163,184,0.12)", margin: "12px 0 10px" }} />
 
             {/* Región e idioma */}
             <div className="mb-2">
@@ -505,29 +547,19 @@ export default function AppNavWrapper() {
               </div>
             </div>
 
-            <div style={{ height: "1px", background: "rgba(148,163,184,0.14)", margin: "6px 0" }} />
-            {/* Acceso a la descarga: en iPhone lleva a la App Store y en
-                Android a instalarla desde el navegador (mismas funciones,
-                mientras no esté en Google Play). */}
-            <Link href="/descargar" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-sm transition"
-              style={{ color: "#a7b3c6" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                <line x1="12" y1="18" x2="12.01" y2="18"/>
-              </svg>
-              <span>Descargar app</span>
-            </Link>
+            <div style={{ height: "1px", background: "rgba(148,163,184,0.12)", margin: "8px 0" }} />
             <button
               onClick={() => { setMobileOpen(false); cerrarSesion(); }}
-              className="w-full flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-sm transition"
-              style={{ color: "#f87171" }}
+              className="w-full flex items-center gap-3 px-2.5 min-h-[48px] rounded-xl text-sm font-semibold transition"
+              style={{ color: "#fca5a5", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.22)" }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <span className="icono-circulo tono-rosa" style={{ width: 32, height: 32, color: "#fca5a5", background: "radial-gradient(circle at 30% 25%, rgba(239,68,68,0.32), rgba(239,68,68,0.08) 72%)", borderColor: "rgba(239,68,68,0.4)", boxShadow: "none" }} aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                 <polyline points="16 17 21 12 16 7"/>
                 <line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
+              </span>
               <span>Cerrar sesión</span>
             </button>
           </div>

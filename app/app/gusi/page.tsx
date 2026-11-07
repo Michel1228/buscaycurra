@@ -34,7 +34,7 @@ export default function GusiPage() {
               { Icon: Trophy, stat: "x4", desc: "más respuestas que en portales", color: "#a855f7" },
             ].map(item => (
               <div key={item.stat} className="flex items-center gap-2.5">
-                <item.Icon size={16} style={{ color: item.color }} />
+                <span className="icono-circulo shrink-0" style={{ width: 30, height: 30, color: item.color, background: `radial-gradient(circle at 30% 25%, ${item.color}55, ${item.color}12 72%)`, borderColor: `${item.color}66`, boxShadow: "none" }} aria-hidden="true"><item.Icon size={14} /></span>
                 <div>
                   <span className="text-sm font-bold" style={{ color: "#22c55e" }}>{item.stat}</span>
                   <span className="text-[11px] ml-1" style={{ color: "#64748b" }}>{item.desc}</span>

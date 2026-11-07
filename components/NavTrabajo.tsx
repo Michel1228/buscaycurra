@@ -39,6 +39,12 @@ export const SECCIONES: Seccion[] = [
   { id: "historial", label: "Lo que he enviado",   ayuda: "A quién, cuándo y si han contestado",    Icon: ClipboardList, pagina: "empresas" },
 ];
 
+// Con el diseño de neón (7 nov 2026): cada sección con su icono en un círculo
+// de cristal de su color, como las tarjetas y el menú.
+const TONO_SECCION: Record<SeccionTrabajo, string> = {
+  ofertas: "azul", zona: "verde", buscar: "morado", ett: "ambar", envio: "lima", historial: "cian",
+};
+
 export default function NavTrabajo({
   activa, paginaActual, onCambiar,
 }: {
@@ -57,13 +63,15 @@ export default function NavTrabajo({
         const esActiva = s.id === activa;
         const contenido = (
           <>
-            <s.Icon size={15} className="mt-0.5 shrink-0" />
+            <span className={`icono-circulo tono-${esActiva ? "lima" : TONO_SECCION[s.id]} shrink-0`} style={{ width: 30, height: 30 }} aria-hidden="true">
+              <s.Icon size={14} />
+            </span>
             <span className="min-w-0">
               <span className="block font-medium">{s.label}</span>
               {/* La frase de ayuda solo cabe en pantalla grande. En el móvil,
                   con dos columnas, solo entra el nombre. */}
-              <span className="hidden md:block text-[10px] leading-tight mt-0.5"
-                style={{ color: esActiva ? "rgba(34,197,94,0.75)" : "#64748b" }}>
+              <span className="hidden md:block text-[11px] leading-tight mt-0.5"
+                style={{ color: esActiva ? "#d9f99d" : "#a7b3c6" }}>
                 {s.ayuda}
               </span>
             </span>
@@ -77,14 +85,15 @@ export default function NavTrabajo({
         // mismo borde que el resto de la aplicacion, y la activa se distingue
         // por el verde, no por ser la unica que se ve.
         const estilo = {
-          background: esActiva ? "rgba(34,197,94,0.12)" : "#1e212b",
-          border: `1px solid ${esActiva ? "rgba(34,197,94,0.35)" : "#2d3142"}`,
-          color: esActiva ? "#22c55e" : "#94a3b8",
+          background: esActiva ? "rgba(163,230,53,0.1)" : "rgba(12,15,22,0.86)",
+          border: `1px solid ${esActiva ? "rgba(163,230,53,0.45)" : "rgba(148,163,184,0.16)"}`,
+          boxShadow: esActiva ? "0 0 18px -8px rgba(163,230,53,0.8)" : "none",
+          color: esActiva ? "#ecfccb" : "#dbe3ee",
         };
         const clases =
-          "flex items-start gap-2 md:gap-2.5 px-2.5 md:px-3 py-2.5 rounded-lg " +
-          "text-[11px] md:text-xs transition text-left leading-tight " +
-          (esActiva ? "" : "hover:border-[#22c55e]/40 hover:text-[#f1f5f9]");
+          "flex items-center gap-2 md:gap-2.5 px-2.5 md:px-3 min-h-[48px] py-2 rounded-xl " +
+          "text-[12px] md:text-[13px] transition text-left leading-tight " +
+          (esActiva ? "" : "hover:border-[#a3e635]/40 hover:text-[#f1f5f9]");
 
         // Las secciones de la otra página son enlaces de verdad: se navega,
         // no se duplica el codigo de una pantalla dentro de la otra.
@@ -105,12 +114,12 @@ export default function NavTrabajo({
 
       {/* Guzzi cierra la lista: es la otra forma de hacer todo esto, hablando. */}
       <Link href="/app/gusi"
-        className="flex items-start gap-2 md:gap-2.5 px-2.5 md:px-3 py-2.5 rounded-lg text-[11px] md:text-xs transition col-span-2 md:col-span-1 md:mt-2 leading-tight"
-        style={{ background: "rgba(34,197,94,0.07)", border: "1px dashed rgba(34,197,94,0.38)", color: "#22c55e" }}>
-        <Bot size={15} className="mt-0.5 shrink-0" />
+        className="flex items-center gap-2 md:gap-2.5 px-2.5 md:px-3 min-h-[48px] py-2 rounded-xl text-[12px] md:text-[13px] transition col-span-2 md:col-span-1 md:mt-2 leading-tight"
+        style={{ background: "rgba(163,230,53,0.07)", border: "1px dashed rgba(163,230,53,0.45)", color: "#d9f99d" }}>
+        <span className="icono-circulo tono-lima shrink-0" style={{ width: 30, height: 30 }} aria-hidden="true"><Bot size={14} /></span>
         <span className="min-w-0">
           <span className="block font-medium">Que lo haga Guzzi</span>
-          <span className="hidden md:block text-[10px] leading-tight mt-0.5" style={{ color: "#64748b" }}>
+          <span className="hidden md:block text-[11px] leading-tight mt-0.5" style={{ color: "#a7b3c6" }}>
             Se lo pides hablando y lo busca él
           </span>
         </span>
