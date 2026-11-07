@@ -92,7 +92,7 @@ export function textoEncaje(e: Encaje | null, puestos: string[], hayCv: boolean)
   }
   if (e.curso) {
     const porque = `lo piden para ${e.curso.para.toLowerCase()}${e.curso.obligatorio ? " (es un curso obligatorio por ley)" : ""}`;
-    lineas.push(`🎓 **Te daría ventaja:** ${e.curso.nombre}: ${porque} y tu CV no lo nombra. Si ya lo tienes, ponlo en tu CV. [Dónde sacarlo](/cursos/${e.curso.slug})`);
+    lineas.push(`🎓 **Te daría ventaja:** ${e.curso.nombre}: ${porque} y tu CV no lo nombra. Si ya lo tienes, ponlo en tu CV. [Dónde sacarlo](/app/formacion/${e.curso.slug})`);
   }
   return lineas.join("\n");
 }

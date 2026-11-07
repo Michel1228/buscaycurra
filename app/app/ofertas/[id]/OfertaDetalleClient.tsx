@@ -472,7 +472,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
               <p>
                 <strong style={{ color: "#f1f5f9" }}>Te daría ventaja:</strong> {encaje.curso.nombre}. Lo piden para este puesto
                 {encaje.curso.obligatorio ? " (es un curso obligatorio por ley)" : ""} y tu CV no lo nombra.{" "}
-                <Link href={`/cursos/${encaje.curso.slug}`} className="underline font-medium" style={{ color: "#22c55e" }}>Dónde sacarlo</Link>
+                <Link href={`/app/formacion/${encaje.curso.slug}`} className="underline font-medium" style={{ color: "#22c55e" }}>Dónde sacarlo</Link>
               </p>
             )}
           </div>

@@ -117,7 +117,7 @@ export default function MisAvisosCursos() {
         <ul className="space-y-2">
           {avisos.map((a) => (
             <li key={a.slug} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2" style={{ background: "#1e212b" }}>
-              <a href={`/cursos/${a.slug}`} className="text-sm truncate hover:underline" style={{ color: "#f1f5f9" }}>{a.nombre}</a>
+              <a href={`/app/formacion/${a.slug}`} className="text-sm truncate hover:underline" style={{ color: "#f1f5f9" }}>{a.nombre}</a>
               <button onClick={() => cambiar(a.slug, false)} disabled={ocupado !== null}
                 className="text-xs px-3 py-1.5 rounded-lg flex-shrink-0 disabled:opacity-50"
                 style={{ color: "#94a3b8", border: "1px solid #2d3142" }}

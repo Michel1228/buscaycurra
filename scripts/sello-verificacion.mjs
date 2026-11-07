@@ -2257,6 +2257,14 @@ test("con sesion la cabecera publica lleva de vuelta a la app, y una busqueda le
     && b.includes("La búsqueda ha tardado demasiado");
 });
 
+// Y los enlaces a un curso desde dentro de la app van a la ficha de la app
+// (/app/formacion/...), no a la publica: la ficha de oferta, Guzzi y los avisos
+// de cursos del perfil sacaban a la web publica.
+test("los enlaces a cursos desde la app se quedan dentro de la app", () => {
+  const ficheros = ["app/app/ofertas/[id]/OfertaDetalleClient.tsx", "lib/guzzi/consejo-encaje.ts", "components/MisAvisosCursos.tsx"];
+  return ficheros.every(f => leerFuente(f).includes("/app/formacion/${") && !leerFuente(f).includes("/cursos/${"));
+});
+
 // ── COLOMBIA TAMBIEN SE BARRE DEPARTAMENTO A DEPARTAMENTO (7 nov 2026) ────────
 //
 // Con 13 lugares Colombia se quedaba en ~9.000 ofertas vivas de las 129.767
@@ -4156,7 +4164,7 @@ test("Guzzi dice si encajas y qué te daría ventaja, en la foto y en la oferta,
     const ruta = leerFuente("app/api/gusi/analyze-image/route.ts");
     const checks = {
       "encaja por lo que ha trabajado, con dónde": a.encaja[0]?.suyo === "Reponedora" && a.encaja[0]?.empresa === "Eroski" && /has trabajado de reponedora en Eroski/.test(textoEncaje(a, super_, true)),
-      "el curso que piden y su CV no nombra": a.curso?.slug === "manipulador-alimentos" && textoEncaje(a, super_, true).includes("[Dónde sacarlo](/cursos/manipulador-alimentos)"),
+      "el curso que piden y su CV no nombra": a.curso?.slug === "manipulador-alimentos" && textoEncaje(a, super_, true).includes("[Dónde sacarlo](/app/formacion/manipulador-alimentos)"),
       "no se le recomienda lo que ya tiene": b.encaja.length === 1 && b.curso === null,
       "sin nada en común no se le inventa experiencia": c.encaja.length === 0 && /en tu CV no aparece/.test(textoEncaje(c, ["reponedor", "cajero"], true)) && !/Encajas/.test(textoEncaje(c, ["reponedor", "cajero"], true)),
       "sin CV, que lo suba": /Si subes tu CV/.test(textoEncaje(null, ["camarero"], false)) && encajeConPuestos(null, ["camarero"]) === null,
