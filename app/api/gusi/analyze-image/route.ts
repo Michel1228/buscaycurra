@@ -28,6 +28,7 @@ import { createClient } from "@supabase/supabase-js";
 import { planEfectivoDeUsuario } from "@/lib/plan-limits";
 import { leerFoto, responderFoto, lista } from "@/lib/camara/analizar-foto";
 import { encajeConPuestos, textoEncaje } from "@/lib/guzzi/consejo-encaje";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,8 @@ export const dynamic = "force-dynamic";
 const ACCIONES_CON_CONSEJO = new Set(["company_info", "business_not_found", "job_sign_detected", "object_brand_found", "object_to_sector"]);
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   // 🔒 Verificar autenticación (NO confiar en userId del body)
   const { getUserId } = await import("@/lib/auth-server");
   const authUserId = await getUserId(req);

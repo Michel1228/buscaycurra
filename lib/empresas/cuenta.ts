@@ -62,6 +62,10 @@ const normal = (email: string) => email.trim().toLowerCase();
  */
 export async function cuentaEmpresa(u: { id: string; email?: string; confirmado?: boolean } | null): Promise<CuentaEmpresa | null> {
   if (!u?.id) return null;
+  // Sin el correo verificado no hay empresa, tampoco para quien paga (7 nov
+  // 2026): con "Confirm email" apagado se entra sin confirmar, y lo de la
+  // empresa (abrir candidatos, invitar, el equipo) es hacer, no mirar.
+  if (!u.confirmado) return null;
   if (await esEmpresa(u.id)) return { empresaId: u.id, titular: true };
   if (!u.email || !u.confirmado) return null;
   await asegurarTablasEmpresa();

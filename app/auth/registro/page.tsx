@@ -8,7 +8,7 @@ import { NUM_PAISES } from "@/lib/paises";
 import Image from "next/image";
 import { Globe, Target, Clock, Mail } from "lucide-react";
 import { palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
-import { destinoSeguro } from "@/lib/auth/destino";
+import { destinoSeguro, marcarQueTieneCuenta } from "@/lib/auth/destino";
 import { sugerenciaCorreo } from "@/lib/auth/sugerencia-correo";
 import { llegadaDeEstaVisita, COMO_NOS_CONOCIO } from "@/lib/origen/llegada";
 import { dondeEstoy } from "@/lib/origen/donde-estoy";
@@ -181,6 +181,21 @@ function RegistroPageInner() {
       // comprobación mostrábamos "¡Cuenta creada!" y el email nunca llegaba.
       if (data?.user && data.user.identities?.length === 0) {
         setError("Este email ya está registrado. Entra con tu contraseña o recupérala.");
+        return;
+      }
+      // CON SESIÓN, DENTRO (7 nov 2026). Con "Confirm email" apagado en
+      // Supabase la cuenta nace con la sesión abierta: a la app, a lo que
+      // venía a ver, y el correo se confirma después. Le mandamos nosotros
+      // "Confirma tu correo" (uno; el reenvío tiene tope): para HACER algo (el
+      // CV, enviarlo, Guzzi) el servidor pide el correo verificado
+      // (lib/auth/correo-verificado.ts). Sin sesión, como siempre: a confirmar.
+      if (data?.session) {
+        await fetch("/api/auth/verificar-correo", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+        }).catch(() => { /* el aviso de la app deja reenviarlo */ });
+        marcarQueTieneCuenta();
+        window.location.assign(destinoCuenta || "/app/bienvenida");
         return;
       }
       setRegistrado(true);

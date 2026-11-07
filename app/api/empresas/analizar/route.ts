@@ -5,8 +5,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { extraerInfoEmpresa } from "@/lib/company-extractor";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export async function GET(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   const url = new URL(request.url).searchParams.get("url") || "";
 
   if (!url.trim()) {

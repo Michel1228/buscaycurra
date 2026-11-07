@@ -6,13 +6,15 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { planEfectivoDeUsuario } from "@/lib/plan-limits";
 
 export const dynamic = "force-dynamic";
 
 // ─── POST: guardar o quitar oferta ────────────────────────────────────────────
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   try {
     const userId = await getUserId(request);
 

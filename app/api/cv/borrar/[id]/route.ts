@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 

@@ -4,12 +4,14 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const userId = await getUserId(req);
 

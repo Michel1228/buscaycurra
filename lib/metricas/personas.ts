@@ -10,6 +10,7 @@
  */
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { COMO_NOS_CONOCIO } from "@/lib/origen/llegada";
+import { correoVerificado } from "@/lib/auth/correo-verificado";
 
 export function esCuentaDePrueba(email: string): boolean {
   return /@resend\.dev$/i.test(email) || /^(audit|qa|test|prueba|demo)[\w.+-]*@/i.test(email)
@@ -111,8 +112,10 @@ export async function resumenPersonas(sb: SupabaseClient): Promise<ResumenPerson
   const canal = (u: User) => canalDe((u.user_metadata || {}) as Record<string, unknown>);
   return {
     reales: reales.length,
-    confirmadas: reales.filter((u) => u.email_confirmed_at).length,
-    sinConfirmar: reales.filter((u) => !u.email_confirmed_at).length,
+    // Con "Confirm email" apagado, email_confirmed_at se pone al crear la cuenta:
+    // lo que cuenta es el correo verificado (lib/auth/correo-verificado.ts).
+    confirmadas: reales.filter((u) => correoVerificado(u)).length,
+    sinConfirmar: reales.filter((u) => !correoVerificado(u)).length,
     hoy: reales.filter((u) => altaDe(u) === hoy).length,
     ayer: reales.filter((u) => altaDe(u) === ayer).length,
     ultimos7: reales.filter((u) => hace(u, 7)).length,

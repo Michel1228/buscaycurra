@@ -21,7 +21,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { generateCVPdf } from "@/lib/cv-generator/generate-pdf";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { Redis } from "ioredis";
 import { randomBytes } from "crypto";
 
@@ -70,6 +70,8 @@ function getRedis(): Redis | null {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     // Exigir sesión: antes era público → cualquiera podía lanzar Chromium (hasta 60s)
     // renderizando HTML arbitrario con carga de recursos externos (DoS/SSRF).

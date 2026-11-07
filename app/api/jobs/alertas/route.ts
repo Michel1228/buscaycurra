@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
-import { getUserFromToken as getUser, extractToken } from "@/lib/auth-server";
+import { getUserFromToken as getUser, extractToken, correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +31,8 @@ const MAX_TEXTO = 80;
 
 // ─── POST: crear alerta ───────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   try {
     const user = await getUserFromToken(request);
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -106,6 +108,8 @@ export async function GET(request: NextRequest) {
 
 // ─── DELETE: eliminar alerta ──────────────────────────────────────────────────
 export async function DELETE(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   try {
     const user = await getUserFromToken(request);
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });

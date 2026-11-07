@@ -1,6 +1,6 @@
 import { planEfectivoDeUsuario } from "@/lib/plan-limits";
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 import { promptDePais } from "@/lib/entrevistas/por-pais";
 import { normalizarPais } from "@/lib/origen/movilidad";
@@ -14,6 +14,8 @@ interface Mensaje {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     // Autenticación obligatoria
     const userId = await getUserId(req);

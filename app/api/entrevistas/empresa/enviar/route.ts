@@ -7,13 +7,15 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { getPool } from "@/lib/db";
 import { invitacionPorId, mandarRespuestas } from "@/lib/entrevistas/empresa";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const body = (await req.json().catch(() => ({}))) as { id?: string; respuestas?: unknown };

@@ -30,6 +30,7 @@ import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import { callGroq, callOpenAI } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 import { empresaVisible } from "@/lib/job-search/empresa-visible";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 // Llamadas del servidor a sí mismo. 127.0.0.1 y no "localhost": en Node,
 // localhost puede resolverse primero a ::1 (IPv6) y el servidor escucha en IPv4.
@@ -1018,6 +1019,8 @@ function localReply(intent: string, cv?: CVParsed | null): string {
 // --- Handler principal --------------------------------------------------------
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   // Rate limiting: por IP o userId
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || req.headers.get("x-real-ip")

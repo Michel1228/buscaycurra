@@ -14,6 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 // ─── Estados que se consideran "terminados" y se pueden borrar ────────────────
 // Estos estados corresponden a envíos completados o fallidos definitivamente.
@@ -23,6 +24,8 @@ const ESTADOS_BORRAR = ["completed", "failed", "enviado", "fallido", "cancelado"
 // ─── DELETE /api/cuenta/limpiar-historial ────────────────────────────────────
 
 export async function DELETE(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   // ─── Cliente con clave anónima (para verificar sesión del usuario) ──────
   const supabasePublico = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

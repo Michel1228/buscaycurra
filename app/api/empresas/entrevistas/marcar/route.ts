@@ -6,13 +6,15 @@
  * (lib/entrevistas/empresa.ts). Solo con Plan Empresa.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUsuario } from "@/lib/auth-server";
+import { getUsuario, correoSinVerificar } from "@/lib/auth-server";
 import { cuentaEmpresa } from "@/lib/empresas/cuenta";
 import { guardarMarcas, invitacionPorId, notaDeMarcas } from "@/lib/entrevistas/empresa";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const usuario = await getUsuario(req);
   if (!usuario) return NextResponse.json({ error: "Entra con tu cuenta de empresa" }, { status: 401 });
   const cuenta = await cuentaEmpresa(usuario).catch(() => null);

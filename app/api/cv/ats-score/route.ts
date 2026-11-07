@@ -10,7 +10,7 @@
  * Jobscan/Teal, aquí en español y con el CV que ya tenemos en BD).
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { getPool } from "@/lib/db";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 import { enrutarPeticionIA } from "@/lib/ai/ai-router";
@@ -42,6 +42,8 @@ function cvCompacto(fd: Record<string, unknown>): string {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const userId = await getUserId(req);
     if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });

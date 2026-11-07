@@ -4,7 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { htmlDelCV } from "@/lib/cv-generator/html-guardado";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +89,8 @@ export async function GET(req: NextRequest) {
 
 // POST - Guardar CV
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const userId = await getUserId(req);
 
@@ -142,6 +144,8 @@ export async function POST(req: NextRequest) {
 
 // DELETE - Eliminar CV
 export async function DELETE(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const userId = await getUserId(req);
 

@@ -23,6 +23,7 @@ import { randomBytes } from "node:crypto";
 import { getPool } from "@/lib/db";
 import { htmlDelCV } from "@/lib/cv-generator/html-guardado";
 import { TABLAS_VPS, TABLAS_SUPABASE } from "@/lib/cuenta/borrar-datos";
+import { correoVerificado, correoVerificadoEn } from "@/lib/auth/correo-verificado";
 
 type Anota = (nombre: string, bien: boolean, detalle: string, nacioDe: string) => void;
 
@@ -48,12 +49,21 @@ async function prepararCuenta(admin: SupabaseClient): Promise<{ token: string; u
     const { data, error } = await admin.auth.admin.createUser({
       email: CUENTA, password: randomBytes(24).toString("base64url"), email_confirm: true,
       user_metadata: { full_name: "Recorrido Diario", ciudad: "Tudela" },
-      app_metadata: { bienvenida_en: new Date().toISOString(), comprobacion: true },
+      app_metadata: { bienvenida_en: new Date().toISOString(), comprobacion: true, correo_verificado_en: new Date().toISOString() },
     });
     if (error || !data.user) throw new Error("no se pudo crear la cuenta de comprobación: " + error?.message);
     usuario = data.user;
   }
   const userId = usuario.id;
+  // Desde el 7 nov 2026 las acciones piden el correo verificado
+  // (lib/auth/correo-verificado.ts). Esta cuenta se creó ya confirmada desde el
+  // servidor, que no cuenta como verificar: sin la marca, el recorrido daría
+  // 403 en todo y una falsa alarma. Es nuestra y su buzón existe (Resend).
+  if (!correoVerificado(usuario)) {
+    await admin.auth.admin.updateUserById(userId, {
+      app_metadata: { ...usuario.app_metadata, correo_verificado_en: new Date().toISOString() },
+    });
+  }
   // Plan Pro: con el gratuito (3 CVs al día) pasar el centinela varias veces el
   // mismo día agotaba el cupo y daba una falsa alarma en R10 (6 oct 2026). La
   // comprobación "todo plan de pago viene de un pago" ignora las @resend.dev.
@@ -167,9 +177,11 @@ export async function recorridoDeUsuario(anota: Anota): Promise<void> {
     const { data } = await admin.auth.admin.listUsers({ perPage: 1000 });
     const haceUnaSemana = Date.now() - 7 * 86400000;
     // Solo cuentas confirmadas hace más de una hora (da tiempo a que llegue) y de la última semana.
-    const recientes = data.users.filter((u) => u.email_confirmed_at && !/@resend\.dev$/.test(u.email || "")
+    // Confirmadas = con el correo verificado: desde el 7 nov 2026 se entra sin
+    // confirmar y la bienvenida llega al verificar (lib/auth/correo-verificado.ts).
+    const recientes = data.users.filter((u) => correoVerificadoEn(u) && !/@resend\.dev$/.test(u.email || "")
       && new Date(u.created_at).getTime() > haceUnaSemana
-      && Date.now() - new Date(u.email_confirmed_at).getTime() > 3600000);
+      && Date.now() - new Date(correoVerificadoEn(u)!).getTime() > 3600000);
     const sin = recientes.filter((u) => !u.app_metadata?.bienvenida_en);
     anota("quien confirma su cuenta recibe la bienvenida", sin.length === 0,
       `${sin.length} de ${recientes.length} cuentas confirmadas esta semana sin bienvenida`,

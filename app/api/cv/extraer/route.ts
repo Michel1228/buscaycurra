@@ -9,8 +9,11 @@ import { writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { createClient } from "@supabase/supabase-js";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   // ── Auth obligatoria ────────────────────────────────────────────────────
   const authHeader = request.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {

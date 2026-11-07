@@ -7,7 +7,7 @@
  * DELETE ?id=                               → quitarla (las invitaciones ya hechas guardan su copia)
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUsuario } from "@/lib/auth-server";
+import { getUsuario, correoSinVerificar } from "@/lib/auth-server";
 import { getPool } from "@/lib/db";
 import { cuentaEmpresa } from "@/lib/empresas/cuenta";
 import { entrevistasDe, guardarEntrevista, invitacionesDeEmpresa, quitarEntrevista, validarPreguntas } from "@/lib/entrevistas/empresa";
@@ -27,6 +27,8 @@ async function empresa(req: NextRequest): Promise<string | NextResponse> {
 }
 
 export async function GET(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const id = await empresa(req);
   if (typeof id !== "string") return id;
   try {
@@ -61,6 +63,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const id = await empresa(req);
   if (typeof id !== "string") return id;
   const body = (await req.json().catch(() => ({}))) as { id?: string; empresa?: string; puesto?: string; preguntas?: unknown };
@@ -79,6 +83,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const id = await empresa(req);
   if (typeof id !== "string") return id;
   const cual = new URL(req.url).searchParams.get("id") || "";

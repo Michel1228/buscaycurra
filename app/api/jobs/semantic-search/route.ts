@@ -6,10 +6,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import Groq from "groq-sdk";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   // Era publico y por cada llamada lanzaba varias consultas con
   // "description ILIKE '%...%'" sobre 3,5 millones de filas, ademas de una
   // llamada a Groq. Un bucle desde fuera tumbaba el servidor (2 nucleos).

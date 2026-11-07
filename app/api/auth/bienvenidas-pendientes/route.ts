@@ -12,6 +12,9 @@
  *
  * Solo cuentas confirmadas hace más de 2 minutos (para no pisarse con el
  * navegador) y de la última semana. ?probar=1 dice a quién sin hacer nada.
+ * Confirmadas = con el correo verificado (lib/auth/correo-verificado.ts): desde
+ * el 7 nov 2026 se entra sin confirmar, y la bienvenida (correo, aviso de
+ * ofertas, premio del referido) es para quien ha demostrado que el correo es suyo.
  *
  * ?antiguas=1 — BIENVENIDAS ATRASADAS (23 oct 2026, aprobado por Michel). Había
  * 81 cuentas confirmadas de antes de esta red de seguridad que nunca la
@@ -29,6 +32,7 @@ import { secretIguales } from "@/lib/secret-compare";
 import { darBienvenida } from "@/lib/onboarding/dar-bienvenida";
 import { enHorarioDeAviso } from "@/lib/cursos/carnes";
 import { quedaSitioParaLoQuePuedeEsperar } from "@/lib/email/presupuesto-diario";
+import { correoVerificadoEn } from "@/lib/auth/correo-verificado";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -50,10 +54,10 @@ export async function POST(req: NextRequest) {
 
   const ahora = Date.now();
   let pendientes = data.users.filter((u) =>
-    u.email_confirmed_at
+    correoVerificadoEn(u)
     && !u.app_metadata?.bienvenida_en
     && !/@resend\.dev$/i.test(u.email || "")
-    && ahora - new Date(u.email_confirmed_at).getTime() > 2 * 60 * 1000
+    && ahora - new Date(correoVerificadoEn(u)!).getTime() > 2 * 60 * 1000
     && (antiguas
       ? ahora - new Date(u.created_at).getTime() >= SEMANA && !DE_PRUEBA.test(u.email || "")
       : ahora - new Date(u.created_at).getTime() < SEMANA));

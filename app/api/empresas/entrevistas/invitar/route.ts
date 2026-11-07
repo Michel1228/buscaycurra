@@ -7,7 +7,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getUsuario } from "@/lib/auth-server";
+import { getUsuario, correoSinVerificar } from "@/lib/auth-server";
 import { cuentaEmpresa } from "@/lib/empresas/cuenta";
 import { invitar } from "@/lib/entrevistas/empresa";
 
@@ -16,6 +16,8 @@ export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const usuario = await getUsuario(req);
   if (!usuario) return NextResponse.json({ error: "Entra con tu cuenta de empresa" }, { status: 401 });
   // Plan Empresa propio o el de la empresa que le ha dado acceso: invita a nombre de la empresa.

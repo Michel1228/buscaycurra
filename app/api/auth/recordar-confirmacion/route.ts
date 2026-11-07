@@ -19,15 +19,22 @@
  *  - De lunes a viernes, entre las 10 y las 12 de Madrid (enHorarioDeAviso), y
  *    como lo que puede esperar: no se come el cupo diario de correos.
  *  - Nunca a cuentas de prueba.
+ *  - SIN CONFIRMAR ES SIN EL CORREO VERIFICADO (7 nov 2026). Con "Confirm
+ *    email" apagado en Supabase se entra sin confirmar y email_confirmed_at se
+ *    pone al crear la cuenta: se mira lib/auth/correo-verificado.ts. Al
+ *    registrarse ya sale un correo (/api/auth/verificar-correo), así que en
+ *    total son tres como mucho: ese y estos dos. A quien Supabase dice que
+ *    pulsó un enlace no se le escribe "no confirmaste": lo hizo.
  *
  * La llama el crontab del servidor (scripts/vps/recordar-confirmacion.sh).
  * ?probar=1 dice a cuántos se mandaría, sin mandar nada.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type User } from "@supabase/supabase-js";
 import { secretIguales } from "@/lib/secret-compare";
 import { enHorarioDeAviso } from "@/lib/cursos/carnes";
 import { enlaceConfirmar } from "@/lib/auth/confirmar-correo";
+import { correoVerificado, confirmoConEnlace } from "@/lib/auth/correo-verificado";
 import { sendConfirmarCorreoEmail } from "@/lib/email/smtp-sender";
 import { ofertasRecientesEn } from "@/lib/email/ofertas-para-correo";
 
@@ -53,14 +60,16 @@ export async function POST(req: NextRequest) {
   // quien recibió el primero nuevo, que dice "te lo recordaremos una vez más":
   // el antiguo prometía "solo te escribimos esto una vez" y se cumple.
   const segundos = [];
+  const sinConfirmar = (u: User) =>
+    !!u.email && !correoVerificado(u) && !confirmoConEnlace(u) && !DE_PRUEBA.test(u.email);
   for (let pagina = 1; pagina <= 50; pagina++) {
     const { data, error } = await admin.auth.admin.listUsers({ page: pagina, perPage: 1000 });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     for (const u of data.users) {
       const dias = (ahora - new Date(u.created_at).getTime()) / DIA;
-      if (u.email && !u.email_confirmed_at && !DE_PRUEBA.test(u.email) && dias >= 1 && dias <= 30
+      if (sinConfirmar(u) && dias >= 1 && dias <= 30
         && !u.app_metadata?.recordatorio_confirmar_en) pendientes.push(u);
-      else if (u.email && !u.email_confirmed_at && !DE_PRUEBA.test(u.email) && dias <= 30
+      else if (sinConfirmar(u) && dias <= 30
         && u.app_metadata?.recordatorio_confirmar_version === 2 && !u.app_metadata?.recordatorio_confirmar_2_en
         && ahora - new Date(u.app_metadata.recordatorio_confirmar_en).getTime() >= 5 * DIA) segundos.push(u);
     }

@@ -3,7 +3,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
 
 // POST - Crear o actualizar conversación
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const userId = await getUserId(req);
 
@@ -80,6 +82,8 @@ export async function POST(req: NextRequest) {
 
 // DELETE - Eliminar conversación
 export async function DELETE(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const userId = await getUserId(req);
 

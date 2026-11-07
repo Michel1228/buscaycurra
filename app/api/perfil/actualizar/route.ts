@@ -23,7 +23,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +42,8 @@ const CAMPOS_PERMITIDOS = [
 const MAX_LARGO = 200;
 
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(request);
   if (!userId) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });

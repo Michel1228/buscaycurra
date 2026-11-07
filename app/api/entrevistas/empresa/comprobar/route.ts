@@ -8,7 +8,7 @@
  * No gasta del cupo de entrevistas del plan gratis: le ha invitado la empresa.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 import { apuntarEnsayo, invitacionPorId } from "@/lib/entrevistas/empresa";
 import { leerPuntos, promptPuntos } from "@/lib/entrevistas/puntos";
@@ -16,6 +16,8 @@ import { leerPuntos, promptPuntos } from "@/lib/entrevistas/puntos";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   if (!(await checkUserRateLimit("entrevista-empresa", userId, 60, 3600))) {

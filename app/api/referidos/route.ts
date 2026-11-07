@@ -8,13 +8,15 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getUserFromToken, extractToken } from "@/lib/auth-server";
+import { getUserFromToken, extractToken, correoSinVerificar } from "@/lib/auth-server";
 import { aplicarReferido, amigosEsteMes, premiosDe, AMIGOS_CON_PREMIO_AL_MES, ENVIOS_DEL_INVITADO } from "@/lib/referidos/premios";
 
 export const dynamic = "force-dynamic";
 
 // ─── GET: obtener mi código y estadísticas ──────────────────────────────────
 export async function GET(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -81,6 +83,8 @@ export async function GET(request: NextRequest) {
 
 // ─── POST: canjear código de referido ───────────────────────────────────────
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!

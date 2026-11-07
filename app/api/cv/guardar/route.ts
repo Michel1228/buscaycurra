@@ -3,10 +3,13 @@ import { createClient } from "@supabase/supabase-js";
 import { getPool } from "@/lib/db";
 import { getPlanLimits, planEfectivoDeUsuario } from "@/lib/plan-limits";
 import { htmlDelCV } from "@/lib/cv-generator/html-guardado";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 

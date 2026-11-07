@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { canSendToCompany } from "@/lib/cv-sender/tracker";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     // Extraer userId de forma segura desde la sesión/token, no del body
     const userId = await getUserId(req);

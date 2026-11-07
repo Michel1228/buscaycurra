@@ -7,7 +7,7 @@
  * Las sugerencias las manda /api/cursos/sugerencias-cv (lib/cursos/sugerencia-cv.ts).
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { ponerSugerencias, quiereSugerencias } from "@/lib/cursos/sugerencia-cv-baja";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const body = (await req.json().catch(() => ({}))) as { activas?: boolean };

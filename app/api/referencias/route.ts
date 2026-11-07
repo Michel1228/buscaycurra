@@ -11,7 +11,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { getPool } from "@/lib/db";
 import { sendReferenciaConfirmarEmail } from "@/lib/email/smtp-sender";
 import {
@@ -39,6 +39,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(req);
   if (!userId) return error("Entra para subir tu carta", 401);
 
@@ -105,6 +107,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(req);
   if (!userId) return error("No autorizado", 401);
   const id = new URL(req.url).searchParams.get("id") || "";

@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { getUserFromToken as getUser, extractToken } from "@/lib/auth-server";
+import { getUserFromToken as getUser, extractToken, correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,8 @@ async function verificarAuth(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const user = await verificarAuth(req);
   if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -47,6 +49,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const user = await verificarAuth(req);
   if (!user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });

@@ -1,13 +1,15 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { getUsuario } from "@/lib/auth-server";
+import { getUsuario, correoSinVerificar } from "@/lib/auth-server";
 import { asegurarTablasReferencias } from "@/lib/referencias/referencias";
 import { cuentaEmpresa, cupoDelMes, yaAbiertos } from "@/lib/empresas/cuenta";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   // Autenticación obligatoria
   const usuario = await getUsuario(req);
   if (!usuario) {

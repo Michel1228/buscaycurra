@@ -12,6 +12,7 @@ import type { AuPairProfile, AuPairReference } from "@/lib/au-pair";
 import { PAISES_AU_PAIR_LEGAL, calcularCosteFamilia } from "@/lib/au-pair-legal-data";
 import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
 import { getPlanLimits, type PlanTier, getPlanEfectivo } from "@/lib/plan-limits";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -433,6 +434,8 @@ function buildAuPairEmailHTML(
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   try {
     // ── Auth ──────────────────────────────────────────────────────────────
     const authHeader = request.headers.get("Authorization");

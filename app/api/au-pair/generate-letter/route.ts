@@ -3,6 +3,7 @@
  * Guzzi IA genera una carta "Dear Family" personalizada
  */
 import { NextRequest, NextResponse } from "next/server";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,8 @@ Kind regards,
 };
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const body = await req.json() as {
       nombre?: string;

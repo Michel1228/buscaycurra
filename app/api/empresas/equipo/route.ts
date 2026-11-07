@@ -7,7 +7,7 @@
  * DELETE ?email=     → quitárselo
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUsuario } from "@/lib/auth-server";
+import { getUsuario, correoSinVerificar } from "@/lib/auth-server";
 import { LIMITES_EMPRESA } from "@/lib/plan-limits";
 import { anadirMiembro, cuentaEmpresa, cupoDelMes, miembrosDe, quitarMiembro, type CuentaEmpresa } from "@/lib/empresas/cuenta";
 
@@ -36,6 +36,8 @@ async function estado(cuenta: CuentaEmpresa) {
 }
 
 export async function GET(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const q = await quien(req);
   if (q instanceof NextResponse) return q;
   try {
@@ -47,6 +49,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const q = await quien(req);
   if (q instanceof NextResponse) return q;
   if (!q.cuenta.titular) return error("Solo quien paga el Plan Empresa puede añadir personas.", 403);
@@ -62,6 +66,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const q = await quien(req);
   if (q instanceof NextResponse) return q;
   if (!q.cuenta.titular) return error("Solo quien paga el Plan Empresa puede quitar personas.", 403);

@@ -8,7 +8,7 @@
  * Solo carnés con la renovación confirmada (lib/cursos/carnes.ts).
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { tipoPorSlug } from "@/lib/cursos/tipos";
 import { calcularCaducidad, carnesDe, fechaValida, guardarCarne, quitarCarne } from "@/lib/cursos/carnes";
 import { carnesEnElCv } from "@/lib/cursos/carnes-en-cv";
@@ -38,6 +38,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Entra para guardar tu carné" }, { status: 401 });
 
@@ -66,6 +68,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const slug = new URL(req.url).searchParams.get("slug");

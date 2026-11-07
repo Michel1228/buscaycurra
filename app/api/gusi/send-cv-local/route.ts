@@ -6,7 +6,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { addCVJob } from "@/lib/cv-sender/queue";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { findEmail } from "@/lib/email-finder";
 import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { canSendToCompany } from "@/lib/cv-sender/tracker";
@@ -15,6 +15,8 @@ import { motivoParaNoEnviar } from "@/lib/cv-sender/direccion-segura";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const userId = await getUserId(req);
     if (!userId) {

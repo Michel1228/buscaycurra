@@ -7,7 +7,7 @@
  * está explicado en lib/cv-generator/traducir.ts.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 import { enrutarPeticionIA } from "@/lib/ai/ai-router";
 import { esIdiomaCV } from "@/lib/cv-generator/idiomas-cv";
@@ -41,6 +41,8 @@ function sanear(raw: any): CVData | null {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "Inicia sesión para traducir tu CV." }, { status: 401 });
   if (!(await checkUserRateLimit("cv-traducir", userId, 15, 3600))) {

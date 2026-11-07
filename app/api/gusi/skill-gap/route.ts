@@ -30,10 +30,13 @@ import Groq from "groq-sdk";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 import { leerCVUsuario } from "@/lib/cv/leer-cv";
 import { TIPOS_CURSO } from "@/lib/cursos/tipos";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const { jobId } = await req.json();
     if (!jobId) return NextResponse.json({ error: "jobId requerido" }, { status: 400 });

@@ -8,8 +8,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { type CVData } from "@/lib/cv-generator/cv-template";
 import { generarCV } from "@/lib/cv-generator/plantillas";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   // Auth — requiere sesión válida para generar HTML del CV
   const supabasePublico = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

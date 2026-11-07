@@ -6,7 +6,7 @@
  * to: idioma destino (default: "es")
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +20,8 @@ function cacheKey(text: string, from: string, to: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     // Exigir sesión: antes era público → cualquiera podía quemar Groq en bucle.
     const userId = await getUserId(req);

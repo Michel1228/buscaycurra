@@ -24,6 +24,7 @@ import { addCVJob } from "@/lib/cv-sender/queue";
 import { canSendToCompany } from "@/lib/cv-sender/tracker";
 import { motivoParaNoEnviar } from "@/lib/cv-sender/direccion-segura";
 import { secretIguales } from "@/lib/secret-compare";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 // ─── Programa empresas adicionales en background para "cada4días" ─────────────
 async function programarEmpresasAdicionales(opts: {
@@ -111,6 +112,8 @@ async function programarEmpresasAdicionales(opts: {
 // ─── POST /api/cv-sender/send ─────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   try {
     // ── Verificar autenticación ───────────────────────────────────────────
     const authHeader = request.headers.get("Authorization");

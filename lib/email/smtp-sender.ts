@@ -368,12 +368,40 @@ ${o ? `<p ${P}>${o.texto}</p>${listaOfertas(params.ofertas!)}` : ""}
   );
 }
 
+// ─── Confirma tu correo (al registrarse) ─────────────────────────────────────
+
+/**
+ * Lo mandamos nosotros al registrarse, ya con la sesión abierta (7 nov 2026):
+ * desde que en Supabase está apagado "Confirm email" se entra sin confirmar,
+ * pero para HACER algo (el CV, enviarlo, Guzzi) hay que confirmar. El enlace es
+ * el firmado de siempre (lib/auth/confirmar-correo.ts) y deja dentro.
+ * Sale en el momento: quien confirma lo hace en 1-3 minutos. Como mucho uno por
+ * minuto y cinco al día por persona (/api/auth/verificar-correo).
+ */
+export async function sendVerificarCorreoEmail(params: { email: string; nombre: string; enlace: string }): Promise<boolean> {
+  const primerNombre = esc((params.nombre || "").trim().split(" ")[0]);
+  const cuerpo = `
+<p ${P}>Hola${primerNombre ? ` ${primerNombre}` : ""}:</p>
+<p ${P}>Ya tienes cuenta en BuscayCurra y puedes mirar ofertas, salarios y cursos. Para crear tu CV, enviarlo a las empresas o hablar con Guzzi falta un paso: confirmar que este correo es tuyo.</p>
+<p style="margin:0 0 20px;"><a href="${params.enlace}" style="display:inline-block;background:#16a34a;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:10px;">Confirmar mi correo</a></p>
+<p ${P}>Es un toque: te deja dentro, sin escribir la contraseña.</p>
+<p style="margin:0;">Un saludo,<br>Guzzi 🐛 y el equipo de BuscayCurra</p>`;
+  return enviarCorreo(
+    params.email,
+    `${primerNombre ? `${primerNombre}, confirma` : "Confirma"} tu correo para usar BuscayCurra`,
+    plantillaSencilla(cuerpo, "Si no te has registrado tú en buscaycurra.es, no hagas nada: sin confirmar, la cuenta no se puede usar.")
+  );
+}
+
 // ─── Te falta confirmar el correo ────────────────────────────────────────────
 
 /**
  * A quien se registró y no confirmó el correo (ver /api/auth/recordar-confirmacion).
- * Las ofertas van sin enlace: abrirlas pide entrar, y sin confirmar no se puede.
- * El único enlace es el botón, que confirma y deja dentro (/api/auth/confirmar).
+ * Desde el 7 nov 2026 se entra sin confirmar, pero no se puede USAR nada (el CV,
+ * enviarlo, Guzzi): el texto dice "para usar", no "para entrar". Las cuentas de
+ * antes que nunca confirmaron siguen sin poder entrar con la contraseña. Las
+ * ofertas van sin enlace: el único enlace es el botón, que confirma y deja
+ * dentro (/api/auth/confirmar).
  */
 export async function sendConfirmarCorreoEmail(params: {
   email: string;
@@ -396,14 +424,14 @@ export async function sendConfirmarCorreoEmail(params: {
   const ultimo = params.vez === 2;
 
   const asunto = ultimo
-    ? `${primerNombre ? `${primerNombre}, último` : "Último"} aviso: tu cuenta de BuscayCurra sigue sin activar`
-    : `${primerNombre ? `${primerNombre}, te` : "Te"} falta confirmar tu correo para entrar en BuscayCurra`;
+    ? `${primerNombre ? `${primerNombre}, último` : "Último"} aviso: tu correo de BuscayCurra sigue sin confirmar`
+    : `${primerNombre ? `${primerNombre}, te` : "Te"} falta confirmar tu correo para usar BuscayCurra`;
 
   const cuerpo = `
 <p ${P}>Hola${primerNombre ? ` ${primerNombre}` : ""}:</p>
 <p ${P}>${ultimo
     ? `Hace unos días te recordamos que te registraste en BuscayCurra el ${esc(params.fechaAlta)} y que te faltaba confirmar tu correo. Es normal que se pase: muchas veces cae en Promociones o en Spam.`
-    : `Te registraste en BuscayCurra el ${esc(params.fechaAlta)}, pero no llegaste a confirmar tu correo, así que todavía no has podido entrar.`}</p>
+    : `Te registraste en BuscayCurra el ${esc(params.fechaAlta)}, pero no llegaste a confirmar tu correo, y sin eso no puedes usar BuscayCurra: ni crear tu CV ni enviarlo a las empresas.`}</p>
 ${o ? `<p ${P}>${o.texto}</p><ul style="margin:0 0 16px;padding-left:20px;">${params.ofertas!.ofertas
     .map((x) => `<li style="margin:0 0 6px;">${esc(x.titulo)}${x.empresa ? ` — ${esc(x.empresa)}` : ""}</li>`).join("")}</ul>` : ""}
 <p ${P}><a href="${params.enlace}" ${ENLACE}>Confirmar mi correo y entrar →</a> Es un toque: entras directamente, sin escribir la contraseña.</p>
@@ -413,8 +441,8 @@ ${o ? `<p ${P}>${o.texto}</p><ul style="margin:0 0 16px;padding-left:20px;">${pa
     params.email,
     asunto,
     plantillaSencilla(cuerpo, ultimo
-      ? "Es el último correo que te mandamos sobre esto. Si no fuiste tú quien se registró, no hagas nada: sin confirmar, la cuenta no se activa."
-      : "Te lo recordaremos una sola vez más, dentro de unos días, y nada más. Si no fuiste tú quien se registró, no hagas nada: sin confirmar, la cuenta no se activa."),
+      ? "Es el último correo que te mandamos sobre esto. Si no fuiste tú quien se registró, no hagas nada: sin confirmar, la cuenta no se puede usar."
+      : "Te lo recordaremos una sola vez más, dentro de unos días, y nada más. Si no fuiste tú quien se registró, no hagas nada: sin confirmar, la cuenta no se puede usar."),
     { puedeEsperar: true }
   );
 }

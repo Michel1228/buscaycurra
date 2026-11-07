@@ -19,6 +19,7 @@ import { Lock, User, MapPin, Wrench, Briefcase, GraduationCap, Globe, Mail, Phon
 import { getPool } from "@/lib/db";
 import { enlaceCarta, referenciasVerificadas } from "@/lib/referencias/referencias";
 import { abrirCandidato, cuentaEmpresa } from "@/lib/empresas/cuenta";
+import { correoVerificado } from "@/lib/auth/correo-verificado";
 import InvitarEntrevista from "@/components/empresas/InvitarEntrevista";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ async function quienMira(): Promise<{ id: string; email: string; confirmado: boo
     // página no salga el correo de quien firma una referencia buscando el campo
     // email de "r", y el correo del usuario escrito con "user" da un falso aviso.
     const sesion = (await supabase.auth.getUser()).data.user;
-    return sesion?.id ? { id: sesion.id, email: sesion.email || "", confirmado: !!sesion.email_confirmed_at } : null;
+    return sesion?.id ? { id: sesion.id, email: sesion.email || "", confirmado: correoVerificado(sesion) } : null;
   } catch {
     return null;
   }

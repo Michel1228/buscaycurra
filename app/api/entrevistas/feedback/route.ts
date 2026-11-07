@@ -7,10 +7,13 @@ import { normalizarPais } from "@/lib/origen/movilidad";
 import { PAISES } from "@/lib/paises";
 import { partesDelFeedback } from "@/lib/entrevistas/feedback";
 import { usarEntrevista } from "@/lib/entrevistas/cupo";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.replace("Bearer ", "");

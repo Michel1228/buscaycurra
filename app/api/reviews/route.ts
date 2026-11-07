@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getUserFromToken, extractToken, getUserId } from "@/lib/auth-server";
+import { getUserFromToken, extractToken, getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
 
 export const dynamic = "force-dynamic";
@@ -110,6 +110,8 @@ export async function GET(request: NextRequest) {
 
 // ─── POST: crear review ─────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!

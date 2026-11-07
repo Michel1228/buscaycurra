@@ -4,6 +4,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,8 @@ export async function GET(request: NextRequest) {
 // ─── POST — Crear/actualizar perfil (UPSERT) ───────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   try {
     // ── Auth ──────────────────────────────────────────────────────────────
     const authHeader = request.headers.get("Authorization");

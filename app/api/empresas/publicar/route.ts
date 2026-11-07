@@ -6,11 +6,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { sendOfertaEmpresaAvisoEmail } from "@/lib/email/smtp-sender";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   // Autenticación obligatoria
   const userId = await getUserId(request);
   if (!userId) {

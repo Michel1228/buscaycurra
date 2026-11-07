@@ -13,10 +13,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { enrutarMejoraCV, enrutarPeticionIA } from "@/lib/ai/ai-router";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 // ─── Handler POST ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   // ── Verificar autenticación del usuario ───────────────────────────────────
   // Usar cliente público para verificar token, cliente admin para operaciones de DB
   const supabasePublico = createClient(

@@ -10,7 +10,7 @@
  * son su forma de valorar. Si las pide, se le dan como cualquier dato suyo.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { invitacionPorId, invitacionesDeCandidato, quitarInvitacion, type Invitacion } from "@/lib/entrevistas/empresa";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +39,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const id = new URL(req.url).searchParams.get("id") || "";

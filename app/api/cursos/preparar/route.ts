@@ -16,7 +16,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { callGroq, callOpenAI } from "@/lib/guzzi/llm";
 import { tipoPorSlug } from "@/lib/cursos/tipos";
 import { leerCVUsuario } from "@/lib/cv/leer-cv";
@@ -49,6 +49,8 @@ REGLAS:
 - Devuelve SOLO la carta, sin comentarios tuyos.`;
 
 export async function POST(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   const userId = await getUserId(request);
   if (!userId) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });

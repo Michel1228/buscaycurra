@@ -15,10 +15,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { cancelJob } from "@/lib/cv-sender/scheduler";
 import { updateSendStatus } from "@/lib/cv-sender/tracker";
+import { correoSinVerificar } from "@/lib/auth-server";
 
 // ─── DELETE /api/cv-sender/cancel ─────────────────────────────────────────────
 
 export async function DELETE(request: NextRequest) {
+  const sinVerificar = await correoSinVerificar(request);
+  if (sinVerificar) return sinVerificar;
   try {
     // ── Verificar autenticación ───────────────────────────────────────────
     const authHeader = request.headers.get("Authorization");

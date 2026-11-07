@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/auth-server";
+import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { darBienvenida } from "@/lib/onboarding/dar-bienvenida";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const sinVerificar = await correoSinVerificar(req);
+  if (sinVerificar) return sinVerificar;
   try {
     // Autenticación obligatoria: extraer userId del token, no del body
     const userId = await getUserId(req);
