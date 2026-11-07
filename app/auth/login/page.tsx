@@ -5,6 +5,8 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import FondoOleaje from "@/components/FondoOleaje";
+import { GuzziBrillo } from "@/components/neon/Neon";
 import { Globe, Target, Clock } from "lucide-react";
 import { NUM_PAISES } from "@/lib/paises";
 import { pedirBienvenida } from "@/lib/onboarding/pedir-bienvenida";
@@ -90,11 +92,13 @@ function LoginPageInner() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#0f1117" }}>
+    <div className="ui-neon min-h-screen flex flex-col lg:flex-row" style={{ background: "transparent" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 7 nov 2026) */}
+      <FondoOleaje />
 
       {/* Panel marketing — arriba en móvil, izquierda en desktop */}
       <div className={`w-full lg:w-1/2 ${searchParams.get("redirect") ? "hidden lg:flex" : "flex"} flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden`}
-        style={{ background: "linear-gradient(135deg, #0a1f0e 0%, #0f1117 60%, #111827 100%)" }}>
+        style={{ background: "linear-gradient(135deg, rgba(10,31,14,0.55) 0%, rgba(6,9,11,0.45) 70%)", borderRight: "1px solid rgba(163,230,53,0.1)" }}>
 
         {/* Glow de fondo */}
         <div className="absolute inset-0 pointer-events-none">
@@ -107,16 +111,16 @@ function LoginPageInner() {
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-2 mb-6 lg:mb-10">
             <Image src="/icon-192.png" alt="Guzzi" width={28} height={28} style={{ borderRadius: "50%" }} />
-            <span className="font-bold text-lg" style={{ color: "#22c55e" }}>BuscayCurra</span>
+            <span className="font-extrabold text-lg tracking-tight"><span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span></span>
           </Link>
 
           {/* Hero — siempre visible */}
-          <h2 className="text-2xl lg:text-3xl font-bold leading-tight mb-2" style={{ color: "#f1f5f9" }}>
+          <h2 className="text-[28px] lg:text-5xl font-extrabold tracking-tight leading-[1.08] mb-3" style={{ color: "#f8fafc" }}>
             Deja de enviar CVs<br />
-            <span style={{ color: "#22c55e" }}>al vacío.</span>
+            <span className="texto-neon">al vacío.</span>
           </h2>
-          <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            {`Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países. 24/7. Tú solo vas a la entrevista.`}
+          <p className="text-sm mb-6" style={{ color: "#a7b3c6" }}>
+            {`Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas en ${NUM_PAISES} países. Tú das el visto bueno a cada envío.`}
           </p>
 
           {/* 3 puntos fuertes — siempre visibles */}
@@ -125,13 +129,12 @@ function LoginPageInner() {
               { Icon: Globe, titulo: `${NUM_PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi traduce tu CV a 6 idiomas y te explica cómo es el CV en cada país." },
               { Icon: Target, titulo: "Una carta para cada empresa", desc: "Guzzi escribe una carta distinta para cada empresa y te dice qué le falta a tu CV para cada oferta." },
               { Icon: Clock, titulo: "Enviado cuando toca", desc: "Tu candidatura sale en horario laboral, cuando de verdad se leen los correos." },
-            ].map(p => (
-              <div key={p.titulo} className="flex items-start gap-3 p-3 rounded-xl"
-                style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
-                <p.Icon size={20} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
+            ].map((p, i) => (
+              <div key={p.titulo} className={`cristal tono-${["lima", "azul", "morado"][i]} flex items-start gap-3 p-3.5`}>
+                <span className="icono-circulo" style={{ width: 40, height: 40 }} aria-hidden="true"><p.Icon size={19} /></span>
                 <div>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.titulo}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{p.desc}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#a7b3c6" }}>{p.desc}</p>
                 </div>
               </div>
             ))}
@@ -139,9 +142,9 @@ function LoginPageInner() {
 
           {/* Lo que hace BuscayCurra — solo en desktop. Antes era una tabla contra
               InfoJobs y LinkedIn: contamos lo nuestro sin hundir a nadie (19 oct 2026). */}
-          <div className="hidden lg:block rounded-xl overflow-hidden mb-6" style={{ border: "1px solid #2d3142" }}>
+          <div className="hidden lg:block cristal tono-neutro overflow-hidden mb-6">
             <div className="px-4 py-2 text-[10px] font-bold"
-              style={{ background: "#161922", color: "#22c55e" }}>
+              style={{ background: "rgba(163,230,53,0.08)", color: "#bef264" }}>
               Con BuscayCurra
             </div>
             {[
@@ -151,7 +154,7 @@ function LoginPageInner() {
             ].map((row, i) => (
               <div key={row.label}
                 className="px-4 py-2 grid grid-cols-2 gap-2 text-[11px] items-center"
-                style={{ background: i % 2 === 0 ? "#0f1117" : "#0a0c10", borderTop: "1px solid #1a1d27" }}>
+                style={{ background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent", borderTop: "1px solid rgba(148,163,184,0.1)" }}>
                 <span style={{ color: "#94a3b8" }}>{row.label}</span>
                 <span className="text-center font-semibold" style={{ color: "#22c55e" }}>✓ {row.nosotros}</span>
               </div>
@@ -160,12 +163,12 @@ function LoginPageInner() {
 
           <div className="flex items-center gap-2 text-xs" style={{ color: "#6b7280" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-            {`Millones de ofertas · ${NUM_PAISES} países · 24/7 trabajando por ti`}
+            {`Millones de ofertas · ${NUM_PAISES} países · Tú apruebas cada envío`}
           </div>
         </div>
 
         <div className="relative z-10 hidden lg:flex items-center justify-between mt-8">
-          <p className="text-xs" style={{ color: "#2d3142" }}>{`© 2026 BuscayCurra · Sin permanencia · ${NUM_PAISES} países`}</p>
+          <p className="text-xs" style={{ color: "#8b98ad" }}>{`© 2026 BuscayCurra · Sin permanencia · ${NUM_PAISES} países`}</p>
           <Link href="/empresas" className="text-xs hover:underline" style={{ color: "#6b7280" }}>
             ¿Eres empresa o recruiter? →
           </Link>
@@ -174,7 +177,7 @@ function LoginPageInner() {
 
       {/* Panel derecho — formulario */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10"
-        style={{ background: "#0f1117" }}>
+        style={{ background: "transparent" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             {/* Quien llega aquí desde un botón de la web suele no tener cuenta
@@ -188,8 +191,9 @@ function LoginPageInner() {
                 <span className="inline-block text-xs font-semibold mt-2" style={{ color: "#22c55e" }}>Crear cuenta gratis →</span>
               </Link>
             )}
-            <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Bienvenido de vuelta</h1>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>Sigue tu búsqueda donde la dejaste</p>
+            <div className="flex justify-center mb-4"><GuzziBrillo size={72} decorativo /></div>
+            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Bienvenido de <span className="texto-neon">vuelta</span></h1>
+            <p className="text-xs mt-1" style={{ color: "#a7b3c6" }}>Sigue tu búsqueda donde la dejaste</p>
           </div>
 
           <div className="card-game p-6">
@@ -214,7 +218,7 @@ function LoginPageInner() {
                     style={inputStyle} />
                   <button type="button" onClick={() => setVerContrasena(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 transition hover:opacity-80"
-                    style={{ color: "#64748b" }} tabIndex={-1} aria-label={verContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}>
+                    style={{ color: "#a7b3c6" }} tabIndex={-1} aria-label={verContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}>
                     {verContrasena ? (
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
@@ -263,7 +267,7 @@ function LoginPageInner() {
             </form>
           </div>
 
-          <p className="text-center text-xs mt-5" style={{ color: "#64748b" }}>
+          <p className="text-center text-xs mt-5" style={{ color: "#a7b3c6" }}>
             ¿No tienes cuenta?{" "}
             <Link href="/auth/registro" className="font-semibold hover:underline" style={{ color: "#22c55e" }}>Regístrate gratis</Link>
           </p>

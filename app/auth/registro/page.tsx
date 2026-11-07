@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { NUM_PAISES } from "@/lib/paises";
 import Image from "next/image";
+import FondoOleaje from "@/components/FondoOleaje";
+import { GuzziBrillo } from "@/components/neon/Neon";
 import { Globe, Target, Clock, Mail } from "lucide-react";
 import { palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
 import { destinoSeguro, marcarQueTieneCuenta } from "@/lib/auth/destino";
@@ -219,10 +221,12 @@ function RegistroPageInner() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row" style={{ background: "#0f1117" }}>
+    <div className="ui-neon min-h-screen flex flex-col lg:flex-row" style={{ background: "transparent" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 7 nov 2026) */}
+      <FondoOleaje />
       {/* Panel marketing — arriba en móvil, izquierda en desktop */}
       <div className={`w-full lg:w-1/2 ${ofertaId || desde || destinoParam || registrado ? "hidden lg:flex" : "flex"} flex-col justify-between px-6 py-8 lg:p-12 relative overflow-hidden`}
-        style={{ background: "linear-gradient(135deg, #0a1f0e 0%, #0f1117 60%, #111827 100%)" }}>
+        style={{ background: "linear-gradient(135deg, rgba(10,31,14,0.55) 0%, rgba(6,9,11,0.45) 70%)", borderRight: "1px solid rgba(163,230,53,0.1)" }}>
         <div className="absolute inset-0 pointer-events-none">
           <div style={{
             position: "absolute", top: "10%", left: "-5%", width: "70%", height: "60%",
@@ -233,48 +237,48 @@ function RegistroPageInner() {
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-2 mb-6 lg:mb-10">
             <Image src="/icon-192.png" alt="Guzzi" width={28} height={28} style={{ borderRadius: "50%" }} />
-            <span className="font-bold text-lg" style={{ color: "#22c55e" }}>BuscayCurra</span>
+            <span className="font-extrabold text-lg tracking-tight"><span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span></span>
           </Link>
 
-          <h2 className="text-2xl lg:text-3xl font-bold leading-tight mb-2" style={{ color: "#f1f5f9" }}>
+          <h2 className="text-[28px] lg:text-5xl font-extrabold tracking-tight leading-[1.08] mb-3" style={{ color: "#f8fafc" }}>
             Deja de enviar CVs<br />
-            <span style={{ color: "#22c55e" }}>al vacío.</span>
+            <span className="texto-neon">al vacío.</span>
           </h2>
-          <p className="text-sm mb-6" style={{ color: "#64748b" }}>
+          <p className="text-sm mb-6" style={{ color: "#a7b3c6" }}>
             {`En 30 segundos tienes cuenta. Guzzi empieza a buscar trabajo por ti en ${NUM_PAISES} países al instante.`}
           </p>
 
           {/* 3 puntos fuertes */}
           <div className="space-y-3">
             {[
-              { icon: "🌍", title: `${NUM_PAISES} países, un solo agente`, desc: "Busca en España o emigra. Guzzi traduce tu CV a 6 idiomas y te explica cómo es el CV en cada país." },
-              { icon: "🎯", title: "Una carta para cada empresa", desc: "Guzzi escribe una carta distinta para cada empresa y te dice qué le falta a tu CV para cada oferta." },
-              { icon: "⏰", title: "Enviado cuando toca", desc: "Tu candidatura sale en horario laboral, cuando de verdad se leen los correos." },
-            ].map(p => (
-              <div key={p.title} className="flex items-start gap-3 p-3 rounded-xl"
-                style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.12)" }}>
-                <span className="text-lg shrink-0 mt-0.5">{p.icon}</span>
+              { icon: Globe, title: `${NUM_PAISES} países, un solo agente`, desc: "Busca en España o emigra. Guzzi traduce tu CV a 6 idiomas y te explica cómo es el CV en cada país." },
+              { icon: Target, title: "Una carta para cada empresa", desc: "Guzzi escribe una carta distinta para cada empresa y te dice qué le falta a tu CV para cada oferta." },
+              { icon: Clock, title: "Enviado cuando toca", desc: "Tu candidatura sale en horario laboral, cuando de verdad se leen los correos." },
+            ].map((p, i) => (
+              <div key={p.title} className={`cristal tono-${["lima", "azul", "morado"][i]} flex items-start gap-3 p-3.5`}>
+                <span className="icono-circulo" style={{ width: 40, height: 40 }} aria-hidden="true"><p.icon size={19} /></span>
                 <div>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.title}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{p.desc}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#a7b3c6" }}>{p.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="relative z-10 hidden lg:block text-xs mt-8" style={{ color: "#2d3142" }}>
+        <p className="relative z-10 hidden lg:block text-xs mt-8" style={{ color: "#8b98ad" }}>
           {`© 2026 BuscayCurra · Sin permanencia · ${NUM_PAISES} países · Cancela cuando quieras`}
         </p>
       </div>
 
       {/* Panel derecho — formulario */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10"
-        style={{ background: "#0f1117" }}>
+        style={{ background: "transparent" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>{registrado ? "Te falta un paso" : ofertaId ? "Un paso y mandas tu CV" : "Crea tu cuenta"}</h1>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>{registrado ? "Sin confirmar tu correo no puedes entrar" : ofertaId ? "Gratis. Se tarda un minuto." : destinoParam ? "Gratis. Al terminar te llevamos a lo que estabas viendo." : "Empieza a buscar trabajo con Guzzi"}</p>
+            <div className="flex justify-center mb-4"><GuzziBrillo size={72} decorativo /></div>
+            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>{registrado ? "Te falta un paso" : ofertaId ? "Un paso y mandas tu CV" : "Crea tu cuenta"}</h1>
+            <p className="text-xs mt-1" style={{ color: "#a7b3c6" }}>{registrado ? "Sin confirmar tu correo no puedes entrar" : ofertaId ? "Gratis. Se tarda un minuto." : destinoParam ? "Gratis. Al terminar te llevamos a lo que estabas viendo." : "Empieza a buscar trabajo con Guzzi"}</p>
           </div>
 
           {/* Quien ya tiene cuenta y llega aquí desde otro móvil: entrar está arriba. */}
@@ -343,7 +347,7 @@ function RegistroPageInner() {
                     </p>
                   ) : (
                     <>
-                      <p className="text-xs mb-2" style={{ color: "#64748b" }}>¿No te ha llegado?</p>
+                      <p className="text-xs mb-2" style={{ color: "#a7b3c6" }}>¿No te ha llegado?</p>
                       <button
                         type="button"
                         onClick={reenviarConfirmacion}
@@ -360,7 +364,7 @@ function RegistroPageInner() {
                       )}
                     </>
                   )}
-                  <p className="text-xs mt-4" style={{ color: "#64748b" }}>
+                  <p className="text-xs mt-4" style={{ color: "#a7b3c6" }}>
                     ¿Ya lo has confirmado? <Link href="/auth/login" className="underline" style={{ color: "#94a3b8" }}>Entra aquí</Link>
                   </p>
                 </div>
@@ -388,7 +392,7 @@ function RegistroPageInner() {
                 </div>
 
                 <div>
-                  <label htmlFor="ciudad" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>Ciudad <span style={{ color: "#64748b" }}>(opcional)</span></label>
+                  <label htmlFor="ciudad" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>Ciudad <span style={{ color: "#a7b3c6" }}>(opcional)</span></label>
                   <div className="relative">
                     <input id="ciudad" type="text" value={ciudad} onChange={(e) => setCiudad(e.target.value)}
                       placeholder={ejemploCiudades(paisDeAqui)}
@@ -396,16 +400,16 @@ function RegistroPageInner() {
                       className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
                     {sugCiudad.lista}
                   </div>
-                  <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>Te avisaremos cuando haya ofertas en tu zona</p>
+                  <p className="text-[11px] mt-1" style={{ color: "#a7b3c6" }}>Te avisaremos cuando haya ofertas en tu zona</p>
                 </div>
 
                 <div>
-                  <label htmlFor="oficio" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>¿De qué buscas trabajo? <span style={{ color: "#64748b" }}>(opcional)</span></label>
+                  <label htmlFor="oficio" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>¿De qué buscas trabajo? <span style={{ color: "#a7b3c6" }}>(opcional)</span></label>
                   <input id="oficio" type="text" value={oficio} onChange={(e) => setOficio(e.target.value)}
                     placeholder={ejemploPuestos(paisDeAqui)}
                     maxLength={80} autoComplete="organization-title"
                     className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
-                  <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>Así Guzzi te dice qué curso te piden y dónde sacarlo gratis</p>
+                  <p className="text-[11px] mt-1" style={{ color: "#a7b3c6" }}>Así Guzzi te dice qué curso te piden y dónde sacarlo gratis</p>
                 </div>
 
                 <div>
@@ -416,7 +420,7 @@ function RegistroPageInner() {
                       className="w-full rounded-lg px-3.5 py-2.5 pr-10 text-sm" style={inputStyle} />
                     <button type="button" onClick={() => setVerContrasena(v => !v)} tabIndex={-1}
                       className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-80 transition"
-                      style={{ color: "#64748b" }} aria-label={verContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}>
+                      style={{ color: "#a7b3c6" }} aria-label={verContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}>
                       {verContrasena ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
@@ -449,7 +453,7 @@ function RegistroPageInner() {
                 </div>
 
                 <div>
-                  <label htmlFor="conocio" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>¿Cómo nos has conocido? <span style={{ color: "#64748b" }}>(opcional)</span></label>
+                  <label htmlFor="conocio" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>¿Cómo nos has conocido? <span style={{ color: "#a7b3c6" }}>(opcional)</span></label>
                   <select id="conocio" value={conocio} onChange={(e) => setConocio(e.target.value)}
                     className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle}>
                     <option value="">Elige una opción</option>
@@ -469,7 +473,7 @@ function RegistroPageInner() {
                 </button>
                 {/* El RGPD obliga a informar al recoger los datos. Las páginas
                     existían, pero el registro no las enlazaba (auditoría del 3 oct 2026). */}
-                <p className="text-[11px] text-center leading-relaxed" style={{ color: "#64748b" }}>
+                <p className="text-[11px] text-center leading-relaxed" style={{ color: "#a7b3c6" }}>
                   Al crear la cuenta aceptas las{" "}
                   <Link href="/terminos" className="underline" style={{ color: "#94a3b8" }}>condiciones de uso</Link>{" "}
                   y la{" "}
@@ -480,7 +484,7 @@ function RegistroPageInner() {
           </div>
 
           {!registrado && (
-            <p className="text-center text-xs mt-5" style={{ color: "#64748b" }}>
+            <p className="text-center text-xs mt-5" style={{ color: "#a7b3c6" }}>
               ¿Ya tienes cuenta?{" "}
               <Link href={`/auth/login${destinoCuenta ? `?redirect=${encodeURIComponent(destinoCuenta)}` : ""}`} className="font-semibold hover:underline" style={{ color: "#22c55e" }}>Iniciar sesión</Link>
             </p>
