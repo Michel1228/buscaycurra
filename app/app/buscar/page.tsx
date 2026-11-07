@@ -927,7 +927,7 @@ function BuscarPageInner() {
 
       {alertaCreada && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-xl text-xs font-medium"
-          style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}>
+          style={{ bottom: "calc(var(--barra-inferior) + 16px)", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}>
           Alerta creada. Te avisaremos de nuevas ofertas.
         </div>
       )}

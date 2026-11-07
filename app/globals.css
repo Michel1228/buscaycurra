@@ -306,3 +306,273 @@ label {
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
   overscroll-behavior: contain;
 }
+
+/* ═══════ SISTEMA NEÓN (7 nov 2026) ═══════════════════════════════════════
+ *
+ * Los bocetos de Michel: fondo casi negro, verde lima de neón con brillo,
+ * tarjetas de cristal con borde y degradado según el tipo, iconos en círculo
+ * y ondas de luz. Las piezas de React están en components/neon/Neon.tsx y el
+ * fondo en components/FondoOleaje.tsx.
+ *
+ * El color de cada tarjeta es UNA variable, --tono (r, g, b): borde,
+ * degradado, icono y brillo salen de ella. Se pone con las clases tono-*.
+ *
+ * Contraste: #64748b sobre este fondo se queda en 4,1:1 y no llega al 4,5 que
+ * pide el texto pequeño; el texto tenue de estas pantallas es --texto-tenue.
+ */
+:root {
+  --neon: #a3e635;
+  --neon-claro: #bef264;
+  --texto-tenue: #8b98ad;
+  /* Alto de la barra de abajo del móvil (0 donde no la hay). Lo que vaya fijo
+     abajo debe sumarlo para no quedar tapado: bottom: calc(var(--barra-inferior) + 16px). */
+  --barra-inferior: 0px;
+}
+.tono-azul   { --tono: 59, 130, 246;  --tono-texto: #93c5fd; }
+.tono-verde  { --tono: 34, 197, 94;   --tono-texto: #86efac; }
+.tono-morado { --tono: 168, 85, 247;  --tono-texto: #d8b4fe; }
+.tono-ambar  { --tono: 245, 158, 11;  --tono-texto: #fcd34d; }
+.tono-lima   { --tono: 163, 230, 53;  --tono-texto: #d9f99d; }
+.tono-cian   { --tono: 45, 212, 191;  --tono-texto: #99f6e4; }
+.tono-rosa   { --tono: 236, 72, 153;  --tono-texto: #f9a8d4; }
+.tono-neutro { --tono: 148, 163, 184; --tono-texto: #cbd5e1; }
+
+/* Foco visible en todo lo que se pulsa dentro de estas pantallas. */
+.ui-neon a:focus-visible,
+.ui-neon button:focus-visible,
+.ui-neon [tabindex]:focus-visible,
+.barra-app a:focus-visible,
+.barra-app button:focus-visible {
+  outline: 2px solid var(--neon);
+  outline-offset: 3px;
+}
+
+/* Tarjeta de cristal. Sin backdrop-filter A PROPÓSITO: con el fondo en
+   movimiento detrás, el desenfoque se recalcula en cada fotograma por cada
+   tarjeta, y en un móvil modesto eso se nota en la batería. El efecto de
+   cristal sale del degradado, el borde y el reflejo de arriba. */
+/* Sin "position" ni "display": esas las ponen las clases de Tailwind (relative,
+   absolute, hidden...), que van antes en el fichero y perderían contra estas. */
+.cristal {
+  background:
+    linear-gradient(155deg, rgba(var(--tono, 148, 163, 184), 0.17) 0%, rgba(var(--tono, 148, 163, 184), 0.05) 42%, rgba(10, 13, 19, 0) 100%),
+    rgba(12, 15, 22, 0.86);
+  border: 1px solid rgba(var(--tono, 148, 163, 184), 0.32);
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 18px 40px -26px rgba(var(--tono, 148, 163, 184), 0.6);
+}
+.cristal-enlace {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.cristal-enlace:hover {
+  border-color: rgba(var(--tono, 148, 163, 184), 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 20px 46px -20px rgba(var(--tono, 148, 163, 184), 0.75);
+  transform: translateY(-2px);
+}
+
+.icono-circulo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  color: var(--tono-texto, #cbd5e1);
+  background: radial-gradient(circle at 30% 25%, rgba(var(--tono, 148, 163, 184), 0.38), rgba(var(--tono, 148, 163, 184), 0.08) 72%);
+  border: 1px solid rgba(var(--tono, 148, 163, 184), 0.42);
+  box-shadow: 0 0 18px -4px rgba(var(--tono, 148, 163, 184), 0.55);
+}
+
+/* Botón principal: uno por pantalla. */
+.boton-neon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.5rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  color: #0b1406;
+  background: linear-gradient(180deg, #d9f99d 0%, #a3e635 55%, #84cc16 100%);
+  box-shadow: inset 0 0 0 1px rgba(217, 249, 157, 0.55), 0 8px 28px -8px rgba(163, 230, 53, 0.7);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.boton-neon:hover { filter: brightness(1.06); box-shadow: inset 0 0 0 1px rgba(217, 249, 157, 0.7), 0 10px 34px -6px rgba(163, 230, 53, 0.85); }
+.boton-neon:active { transform: scale(0.98); }
+
+/* Botón secundario: misma forma, sin relleno. */
+.boton-cristal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--tono, 163, 230, 53), 0.42);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.boton-cristal:hover { background: rgba(var(--tono, 163, 230, 53), 0.1); border-color: rgba(var(--tono, 163, 230, 53), 0.7); }
+
+.texto-neon { color: var(--neon-claro); text-shadow: 0 0 22px rgba(163, 230, 53, 0.45); }
+
+/* Guzzi con su aro de luz: respira despacio. */
+.guzzi-aro {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  padding: 3px;
+  background: conic-gradient(from 210deg, #d9f99d, #a3e635, #22c55e, #a3e635, #d9f99d);
+  box-shadow: 0 0 0 4px rgba(163, 230, 53, 0.1), 0 0 26px 0 rgba(163, 230, 53, 0.4);
+  animation: guzzi-respira 5s ease-in-out infinite;
+}
+.guzzi-aro > img { display: block; background: #f6efd8; }
+@keyframes guzzi-respira {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(163, 230, 53, 0.1), 0 0 22px 0 rgba(163, 230, 53, 0.32); }
+  50%      { box-shadow: 0 0 0 5px rgba(163, 230, 53, 0.16), 0 0 38px 4px rgba(163, 230, 53, 0.55); }
+}
+
+/* Ondas de luz de las cabeceras (SVG decorativo). */
+.ondas-cabecera path { animation: onda-deriva 18s ease-in-out infinite alternate; transform-origin: center; }
+.ondas-cabecera path:nth-child(2) { animation-duration: 24s; }
+@keyframes onda-deriva {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-40px, 8px, 0); }
+}
+
+/* ── Fondo de oleaje (components/FondoOleaje.tsx) ──────────────────────────
+ *
+ * Bandas de luz verde y lima sobre negro que se mezclan y ondulan muy
+ * despacio, hilos finos de luz y facetas en ángulo "tipo corte de diamante"
+ * que brillan cuando pasa la ola.
+ *
+ * TODO SE MUEVE CON transform U opacity, que el navegador hace en la tarjeta
+ * gráfica sin volver a pintar: nada de animar degradados, máscaras ni
+ * desenfoques. Las capas grandes se pintan una vez y luego solo se desplazan.
+ *
+ * El destello de las facetas: las rayas son verticales DENTRO de una franja
+ * girada, y la franja se desplaza a lo largo de las propias rayas. Unas rayas
+ * movidas en su misma dirección se ven quietas; lo que avanza es la franja de
+ * luz que las ilumina. Así brillan al pasar la ola sin repintar nada.
+ */
+.fondo-oleaje {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 0%, #0a1009 0%, #06090b 55%, #040607 100%);
+  contain: strict;
+}
+.fondo-oleaje > * { position: absolute; will-change: transform; }
+.oleaje-banda { border-radius: 50%; }
+.oleaje-banda-1 {
+  width: 150vmax; height: 62vmax; top: -30vmax; right: -60vmax;
+  background: radial-gradient(closest-side, rgba(163, 230, 53, 0.42), rgba(132, 204, 22, 0.14) 55%, transparent 78%);
+  animation: oleaje-a 42s ease-in-out infinite alternate;
+}
+.oleaje-banda-2 {
+  width: 140vmax; height: 58vmax; bottom: -32vmax; left: -55vmax;
+  background: radial-gradient(closest-side, rgba(34, 197, 94, 0.36), rgba(21, 128, 61, 0.12) 58%, transparent 78%);
+  animation: oleaje-b 50s ease-in-out infinite alternate;
+}
+.oleaje-banda-3 {
+  width: 110vmax; height: 24vmax; top: 34%; left: -10vmax;
+  background: radial-gradient(closest-side, rgba(16, 185, 129, 0.2), transparent 72%);
+  animation: oleaje-c 58s ease-in-out infinite alternate;
+}
+@keyframes oleaje-a {
+  from { transform: translate3d(0, 0, 0) rotate(-16deg) scale(1); }
+  to   { transform: translate3d(-9vmax, 7vmax, 0) rotate(-8deg) scale(1.08); }
+}
+@keyframes oleaje-b {
+  from { transform: translate3d(0, 0, 0) rotate(12deg) scale(1.04); }
+  to   { transform: translate3d(10vmax, -6vmax, 0) rotate(4deg) scale(0.96); }
+}
+@keyframes oleaje-c {
+  from { transform: translate3d(-6vmax, 3vmax, 0) rotate(-6deg); opacity: 0.6; }
+  to   { transform: translate3d(8vmax, -4vmax, 0) rotate(5deg); opacity: 1; }
+}
+/* Hilos de luz: el dibujo se repite cada mitad, así que desplazarlo media
+   anchura no deja costura. */
+.oleaje-hilos {
+  top: 8%; left: 0; width: 200%; height: 70%;
+  opacity: 0.7;
+  animation: oleaje-hilos 90s linear infinite;
+}
+@keyframes oleaje-hilos {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+/* Facetas quietas: un enrejado finísimo, solo arriba a la derecha y abajo. */
+.oleaje-facetas {
+  inset: 0;
+  will-change: auto;
+  background:
+    repeating-linear-gradient(118deg, rgba(217, 249, 157, 0.035) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(62deg, rgba(217, 249, 157, 0.025) 0 1px, transparent 1px 58px);
+  -webkit-mask-image: radial-gradient(80% 60% at 85% 10%, #000 0%, transparent 70%), radial-gradient(70% 50% at 10% 95%, #000 0%, transparent 70%);
+  mask-image: radial-gradient(80% 60% at 85% 10%, #000 0%, transparent 70%), radial-gradient(70% 50% at 10% 95%, #000 0%, transparent 70%);
+}
+.oleaje-destello {
+  width: 170vmax; height: 34vmax; left: 50%; top: 50%;
+  margin: -17vmax 0 0 -85vmax;
+  background: repeating-linear-gradient(90deg, rgba(217, 249, 157, 0.16) 0 1px, transparent 1px 40px);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 45%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 45%, #000 55%, transparent 100%);
+  opacity: 0.9;
+  animation: oleaje-destello 26s ease-in-out infinite;
+}
+@keyframes oleaje-destello {
+  0%   { transform: rotate(-28deg) translate3d(0, -70vmax, 0); opacity: 0; }
+  12%  { opacity: 0.9; }
+  55%  { transform: rotate(-28deg) translate3d(0, 70vmax, 0); opacity: 0.9; }
+  62%, 100% { transform: rotate(-28deg) translate3d(0, 70vmax, 0); opacity: 0; }
+}
+/* Velo: oscurece el centro, que es donde va el texto. */
+.oleaje-velo {
+  inset: 0;
+  will-change: auto;
+  background: radial-gradient(70% 55% at 50% 45%, rgba(4, 6, 8, 0.55), rgba(4, 6, 8, 0) 100%);
+}
+/* Pestaña oculta o app en segundo plano: quieto (lo pone FondoOleaje). */
+.oleaje-quieto .fondo-oleaje *,
+.oleaje-quieto .ondas-cabecera path,
+.oleaje-quieto .guzzi-aro { animation-play-state: paused; }
+
+/* Las páginas de /app pintaban su propio fondo, del mismo color que el body,
+   y tapaban el oleaje. Con el oleaje puesto, ese fondo sobra: se deja
+   transparente SOLO cuando es exactamente ese color (#0f1117), para no tocar
+   ninguna página que pinte otro a propósito. */
+body.con-oleaje .min-h-screen[style*="#0f1117"],
+body.con-oleaje .min-h-screen[style*="rgb(15, 17, 23)"],
+body.con-oleaje .min-h-screen.bg-\[\#0f1117\] {
+  background: transparent !important;
+}
+
+/* ── Barra de abajo del móvil (AppNavWrapper) ── */
+@media (max-width: 1023px) {
+  body.con-barra-inferior {
+    --barra-inferior: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: var(--barra-inferior);
+  }
+}
+
+/* Movimiento reducido: todo quieto. La imagen fija es la misma composición. */
+@media (prefers-reduced-motion: reduce) {
+  .fondo-oleaje *,
+  .ondas-cabecera path,
+  .guzzi-aro { animation: none !important; }
+  .oleaje-destello { opacity: 0 !important; }
+  .cristal-enlace,
+  .boton-neon { transition: none; }
+  .cristal-enlace:hover { transform: none; }
+}

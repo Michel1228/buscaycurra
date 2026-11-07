@@ -1378,7 +1378,7 @@ export default function AuPairProfilePage() {
             móvil: la persona pulsaba y "no pasaba nada", y si salía antes de
             llegar al paso 4 perdía lo escrito (auditoría del 3 oct 2026). */}
         <div className="sticky bottom-0 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 flex items-center gap-3"
-          style={{ background: "#0f1117", borderTop: "1px solid #2d3142" }}>
+          style={{ bottom: "var(--barra-inferior)", background: "#0f1117", borderTop: "1px solid #2d3142" }}>
           <p role="status" aria-live="polite" className="flex-1 text-xs" style={{ color: error ? "#ef4444" : "#22c55e" }}>
             {error || mensaje}
           </p>

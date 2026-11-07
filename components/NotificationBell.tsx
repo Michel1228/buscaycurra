@@ -176,8 +176,9 @@ export default function NotificationBell({ userId }: { userId: string }) {
         // navega a ciegas.
         aria-label={sinLeer > 0 ? `Notificaciones, ${sinLeer} sin leer` : "Notificaciones"}
         aria-expanded={open}
-        className="relative flex items-center justify-center w-9 h-9 rounded-lg transition"
-        style={{ color: sinLeer > 0 ? badgeColor : "#64748b" }}
+        // 44 px: lo mínimo para acertar con el dedo (rediseño del 7 nov 2026).
+        className="relative flex items-center justify-center w-11 h-11 rounded-full transition"
+        style={{ color: sinLeer > 0 ? badgeColor : "#94a3b8" }}
       >
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>

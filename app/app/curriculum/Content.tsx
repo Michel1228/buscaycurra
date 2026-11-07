@@ -1510,7 +1510,8 @@ export default function CurriculumPage() {
         <button
           onClick={() => setFullscreen(true)}
           className="lg:hidden fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm shadow-lg"
-          style={{ background: "#22c55e", color: "#0f1117", boxShadow: "0 8px 24px rgba(34,197,94,0.35)" }}
+          // Por encima de la barra de abajo del móvil (--barra-inferior, globals.css).
+          style={{ bottom: "calc(var(--barra-inferior) + 20px)", background: "#22c55e", color: "#0f1117", boxShadow: "0 8px 24px rgba(34,197,94,0.35)" }}
         >
           👁️ Ver mi CV
         </button>
