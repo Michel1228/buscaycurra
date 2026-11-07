@@ -55,13 +55,13 @@ export default function CookieBanner() {
     <div
       ref={caja}
       className="fixed bottom-0 left-0 right-0 z-50 border-t"
-      style={{ background: "#1e212b", borderColor: "#2d3142" }}
+      style={{ background: "rgba(8,11,16,0.96)", borderColor: "rgba(163,230,53,0.2)", backdropFilter: "blur(14px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       role="dialog"
       aria-live="polite"
       aria-label="Aviso de cookies"
     >
       <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs sm:text-[13px] leading-snug flex-1 min-w-[180px]" style={{ color: "#94a3b8" }}>
+        <p className="text-xs sm:text-[13px] leading-snug flex-1 min-w-[180px]" style={{ color: "#cbd5e1" }}>
           Solo usamos cookies necesarias para que el servicio funcione. Ninguna de publicidad.{" "}
           <Link href="/cookies" className="underline hover:no-underline" style={{ color: "#22c55e" }}>
             Más información
@@ -71,15 +71,15 @@ export default function CookieBanner() {
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => decidir("necessary")}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg transition hover:opacity-80"
-            style={{ color: "#94a3b8", border: "1px solid #2d3142" }}
+            className="px-3.5 min-h-[40px] text-xs font-medium rounded-full transition hover:opacity-80"
+            style={{ color: "#cbd5e1", border: "1px solid rgba(148,163,184,0.3)" }}
           >
             Solo necesarias
           </button>
           <button
             onClick={() => decidir("accepted")}
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition hover:opacity-90"
-            style={{ background: "#22c55e", color: "#0f1117" }}
+            className="px-4 min-h-[40px] text-xs font-bold rounded-full transition hover:opacity-90"
+            style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
           >
             Aceptar
           </button>

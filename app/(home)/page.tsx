@@ -6,7 +6,8 @@ import PublicHeader from "@/components/PublicHeader";
 import { ofertasPorPais } from "@/lib/job-search/ofertas-por-pais";
 import { NUM_PAISES } from "@/lib/paises";
 import { LIMITS, LIMITES_EMPRESA } from "@/lib/plan-limits";
-import { Bot, BarChart3, DollarSign, Mail, Check, X } from "lucide-react";
+import { BarChart3, DollarSign, Mail, Check, X, FileText, Sparkles, Globe2, Languages, ArrowRight } from "lucide-react";
+import { GuzziBrillo, OndasCabecera } from "@/components/neon/Neon";
 
 // La landing se CACHEA y se regenera cada 30 min (ISR con stale-while-revalidate).
 // Antes era force-dynamic → ejecutaba la query pesada de getRealStats (GROUP BY sobre
@@ -233,7 +234,7 @@ export default async function LandingPage() {
     { titulo: `${PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi traduce tu CV al inglés, alemán, francés, portugués, italiano o neerlandés y te explica cómo es el CV en cada país. De España a Alemania, de Irlanda a Australia.", acento: "#22c55e" },
     { titulo: "Una carta distinta para cada empresa. Cero spam.", desc: "Tu CV no se dispara a lo loco. Guzzi escribe una carta para cada empresa y cada puesto, y el análisis de encaje te dice qué palabras clave le faltan a tu CV para esa oferta.", acento: "#f59e0b" },
     { titulo: "Enviado en horario laboral", desc: "Tu candidatura sale un día laborable entre las 9:00 y las 18:00 (hora de España), repartida para no llegar en bloque. No a las 3 de la madrugada de un sábado.", acento: "#a855f7" },
-    { titulo: "24/7. No duerme. No se cansa. No se rinde.", desc: "Mientras tú vives tu vida, Guzzi revisa las ofertas nuevas que encajan con tus alertas y te avisa, y los envíos que dejaste programados salen solos.", acento: "#e07850" },
+    { titulo: "Vigila las ofertas por ti", desc: "Mientras tú vives tu vida, Guzzi revisa las ofertas nuevas que encajan con tus alertas y te avisa, y los envíos que dejaste programados salen solos.", acento: "#e07850" },
     { titulo: "Pipeline visual: sabes dónde está cada CV", desc: "Deja de preguntarte \"¿lo habrán leído?\". Ve en tiempo real el estado de cada candidatura: enviada, abierta, en revisión, entrevista, oferta. Sin agujeros negros.", acento: "#3b82f6" },
     { titulo: "Comparador de salarios reales", desc: "¿Cuánto pagan por tu puesto en Berlín vs Barcelona? ¿Merece la pena emigrar? Datos reales de cientos de miles de ofertas. Decide con números, no con intuición.", acento: "#f59e0b" },
   ];
@@ -290,130 +291,85 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
 
       <main>
         {/* ═══════════ HERO ═══════════ */}
-        <section className="relative py-20 md:py-28 px-6 overflow-hidden">
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(ellipse at 50% -10%, rgba(34,197,94,0.12) 0%, transparent 55%)",
-            }}
-          />
+        {/* Con el diseño de neón (7 nov 2026, boceto de Michel), pero sin lo
+            que el boceto inventaba: fuera "El 95 % de los CVs no los lee nadie"
+            (sin fuente), "12 idiomas" (el CV se traduce a 6) y "24 horas al
+            día, sin que muevas un dedo": cada envío lleva tu visto bueno. */}
+        <section className="relative pt-14 pb-16 md:pt-20 md:pb-24 px-5 overflow-hidden">
+          <OndasCabecera className="left-0 top-6 w-full h-auto opacity-70" />
           <div className="max-w-3xl mx-auto text-center relative">
-            {/* Mascota */}
+            {/* Mascota: Guzzi de siempre, con su aro de luz */}
             <div className="flex justify-center mb-6">
-              {/* GUZZI NO SE TOCA. Lo que cambia es el marco, no la mascota.
-                  Llevaba un glow difuso de 80px, que es el efecto de neon de
-                  cualquier portada generada, y encima dejaba el circulo crema
-                  de la imagen flotando sin borde sobre el fondo oscuro: parecia
-                  una pegatina pegada encima, no parte de la pagina.
-                  Ahora lleva un aro definido en el verde de la marca. El mismo
-                  gusano, presentado como un medallon: con borde, con intencion
-                  y sin neon. */}
-              <div
-                className="relative rounded-full p-[3px]"
-                style={{
-                  background: "linear-gradient(145deg, rgba(34,197,94,0.55), rgba(34,197,94,0.12))",
-                  boxShadow: "0 0 0 1px rgba(34,197,94,0.18), 0 10px 30px rgba(0,0,0,0.45)",
-                }}
-              >
-                <div className="rounded-full" style={{ background: "#0f1117", padding: 2 }}>
-                  <LogoGusano size={84} animated />
-                </div>
-              </div>
-            </div>
-
-            {/* Badge */}
-            <div className="flex justify-center mb-6">
-              <span
-                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-medium"
-                style={{
-                  background: "rgba(239,68,68,0.08)",
-                  border: "1px solid rgba(239,68,68,0.15)",
-                  color: "#ef4444",
-                }}
-              >
-                El 95% de los CVs no los lee nadie. Esto se acaba hoy.
-              </span>
+              <GuzziBrillo size={120} />
             </div>
 
             {/* Headline */}
             <h1
-              className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.08] mb-5 tracking-tight"
-              style={{ color: "#f1f5f9" }}
+              className="text-[40px] md:text-6xl lg:text-7xl font-extrabold leading-[1.05] mb-5 tracking-tight"
+              style={{ color: "#f8fafc" }}
             >
               Deja de enviar CVs
               <br />
-              <span style={{ color: "#22c55e" }}>al vacío.</span>
+              <span className="texto-neon">al vacío.</span>
             </h1>
 
             {/* Subheadline */}
             <p
-              className="text-base md:text-lg mb-4 leading-relaxed max-w-xl mx-auto"
+              className="text-base md:text-lg mb-6 leading-relaxed max-w-xl mx-auto"
               // textWrap balance reparte las lineas para que no caiga una
-              // palabra suelta al final. Sin esto, en escritorio quedaba
-              // "...candidaturas por / ti." con dos letras solas y centradas.
-              style={{ color: "#94a3b8", textWrap: "balance" }}
+              // palabra suelta al final.
+              style={{ color: "#a7b3c6", textWrap: "balance" }}
             >
               Guzzi es un agente de IA que busca ofertas, escribe una carta para cada empresa y envía tus candidaturas.
               <br />
-              <strong style={{ color: "#cbd5e1" }}>
-                En {PAISES} países. 24 horas al día. Sin que muevas un dedo.
+              <strong style={{ color: "#e2e8f0" }}>
+                En {PAISES} países. Y tú das el visto bueno a cada envío.
               </strong>
             </p>
 
-            {/* Trust bar */}
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mb-6">
+            {/* Cifras: las de la base (OFERTAS, PAISES) y las del producto */}
+            <div className="cristal tono-lima grid grid-cols-2 sm:grid-cols-4 mb-5 py-4"
+              style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(163,230,53,0.12), 0 24px 60px -30px rgba(163,230,53,0.7)" }}>
               {[
-                { num: OFERTAS, label: "ofertas activas" },
-                { num: PAISES, label: "países" },
-                { num: "24/7", label: "trabajando por ti" },
-                { num: "12", label: "idiomas" },
-              ].map((s) => (
-                <div key={s.label} className="text-center">
-                  <div className="text-lg font-extrabold" style={{ color: "#22c55e" }}>
-                    {s.num}
-                  </div>
-                  <div className="text-[10px]" style={{ color: "#64748b" }}>
-                    {s.label}
-                  </div>
+                { Icono: Sparkles, num: OFERTAS, label: "ofertas activas" },
+                { Icono: Globe2, num: PAISES, label: "países" },
+                { Icono: Languages, num: "6", label: "idiomas para tu CV" },
+                { Icono: Check, num: "0 €", label: "para empezar" },
+              ].map((s, i) => (
+                <div key={s.label} className={`text-center px-2 py-1 ${i % 2 === 1 ? "border-l" : ""} ${i === 2 ? "sm:border-l" : ""}`}
+                  style={{ borderColor: "rgba(163,230,53,0.18)" }}>
+                  <s.Icono size={20} className="mx-auto mb-1" style={{ color: "#bef264" }} aria-hidden="true" />
+                  <div className="text-xl font-extrabold" style={{ color: "#d9f99d" }}>{s.num}</div>
+                  <div className="text-[12px]" style={{ color: "#a7b3c6" }}>{s.label}</div>
                 </div>
               ))}
             </div>
 
-            {/* Ventajas rápidas — visible sin scroll */}
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 mb-6 text-[11px] font-medium" style={{ color: "#94a3b8" }}>
-              <span><Bot className="w-3.5 h-3.5 inline" /> CV personalizado con IA</span>
-              <span style={{ color: "#2d3142" }}>·</span>
-              <span><Mail className="w-3.5 h-3.5 inline" /> Envío automático 24/7</span>
-              <span style={{ color: "#2d3142" }}>·</span>
-              <span>{PAISES} países</span>
-              <span style={{ color: "#2d3142" }}>·</span>
-              <span><BarChart3 className="w-3.5 h-3.5 inline" /> Pipeline visual</span>
-              <span style={{ color: "#2d3142" }}>·</span>
-              <span><DollarSign className="w-3.5 h-3.5 inline" /> Comparador de salarios</span>
+            {/* Lo que hace — visible sin scroll */}
+            <div className="grid grid-cols-2 gap-2.5 mb-7 text-left">
+              {[
+                { Icono: FileText, tono: "lima", texto: "Una carta con IA para cada empresa" },
+                { Icono: Mail, tono: "azul", texto: "Envío en horario laboral" },
+                { Icono: BarChart3, tono: "morado", texto: "Pipeline visual" },
+                { Icono: DollarSign, tono: "ambar", texto: "Comparador de salarios" },
+              ].map((v) => (
+                <div key={v.texto} className={`cristal tono-${v.tono} flex items-center gap-3 p-3 sm:p-3.5`}>
+                  <span className="icono-circulo" style={{ width: 40, height: 40, borderRadius: 12 }} aria-hidden="true"><v.Icono size={18} /></span>
+                  <span className="text-[13px] sm:text-sm font-semibold leading-snug" style={{ color: "#e2e8f0" }}>{v.texto}</span>
+                </div>
+              ))}
             </div>
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                href="/auth/registro"
-                className="text-center text-sm font-semibold py-3.5 px-10 rounded-xl transition hover:opacity-90"
-                style={{
-                  background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                  color: "#fff",
-                }}
-              >
-                Activar mi agente IA — gratis
+              <Link href="/auth/registro" className="boton-neon text-base sm:px-10" style={{ minHeight: 54 }}>
+                Activar mi agente IA — gratis <ArrowRight size={18} aria-hidden="true" />
               </Link>
-              <Link
-                href="/auth/login"
-                className="text-center text-sm font-medium py-3.5 px-8 rounded-xl transition hover:bg-[#1e212b]"
-                style={{ border: "1px solid #2d3142", color: "#94a3b8" }}
-              >
+              <Link href="/auth/login" className="boton-cristal tono-neutro sm:px-8" style={{ minHeight: 54 }}>
                 Ya tengo cuenta → Entrar
               </Link>
             </div>
-            <p className="mt-3 text-[11px]" style={{ color: "#6b7280" }}>
+            <p className="mt-3 text-[12px]" style={{ color: "#8b98ad" }}>
               Sin tarjeta de crédito. En 30 segundos.
             </p>
             <div className="mt-4">
@@ -765,7 +721,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
               <Link
                 href="/app/au-pair"
                 className="px-6 py-3 rounded-xl text-sm font-semibold transition-all"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", borderRadius: 9999, boxShadow: "0 8px 24px -10px rgba(163,230,53,0.7)", }}
               >
                 Perfil Au Pair
               </Link>
@@ -868,8 +824,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                     style={
                       plan.destacado
                         ? {
-                            background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                            color: "#fff",
+                            background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", borderRadius: 9999, boxShadow: "0 8px 24px -10px rgba(163,230,53,0.7)",
                           }
                         : { border: "1px solid #2d3142", color: "#94a3b8" }
                     }
@@ -909,16 +864,14 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             <p className="text-sm mb-2" style={{ color: "#22c55e" }}>
               Guzzi lo encuentra mientras tú descansas.
             </p>
-            <p className="text-xs mb-8" style={{ color: "#64748b" }}>
-              En {PAISES} países. 24/7. Con una carta para cada empresa. El trabajo viene a ti, no
-              al revés.
+            <p className="text-xs mb-8" style={{ color: "#a7b3c6" }}>
+              En {PAISES} países. Con una carta para cada empresa y tu visto bueno en cada envío.
             </p>
             <Link
               href="/auth/registro"
               className="inline-block text-sm font-semibold py-3.5 px-12 rounded-xl transition hover:opacity-90"
               style={{
-                background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                color: "#fff",
+                background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", borderRadius: 9999, boxShadow: "0 8px 24px -10px rgba(163,230,53,0.7)",
               }}
             >
               Activar Guzzi gratis →
@@ -945,7 +898,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                 </span>
               </div>
               <p className="text-[11px] leading-relaxed max-w-xs" style={{ color: "#6b7280" }}>
-                Un agente de IA que busca trabajo por ti. {PAISES} países, 24/7, cero spam.
+                Un agente de IA que busca trabajo por ti. {PAISES} países, cero spam.
                 Tu agente personal de búsqueda de empleo.
               </p>
             </div>

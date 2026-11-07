@@ -54,7 +54,7 @@ const LEGAL = [
 
 export default function PublicFooter() {
   return (
-    <footer style={{ borderTop: "1px solid #2d3142", background: "#0f1117" }}>
+    <footer style={{ borderTop: "1px solid rgba(163,230,53,0.14)", background: "rgba(6,9,11,0.82)" }}>
       <div className="max-w-5xl mx-auto px-4 py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Guías primero: es lo que busca quien llega sin conocernos. */}

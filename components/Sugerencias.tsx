@@ -73,8 +73,8 @@ export function useSugerencias({ id, valor, opciones, onElegir }: Opciones) {
 
   const elementoLista = visible ? (
     <ul id={id} role="listbox" aria-label="Sugerencias"
-      className="absolute left-0 right-0 top-full mt-1 z-50 rounded-lg overflow-y-auto py-1"
-      style={{ background: "#1e212b", border: "1px solid #2d3142", maxHeight: 264, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+      className="absolute left-0 right-0 top-full mt-1 z-50 rounded-2xl overflow-y-auto py-1"
+      style={{ background: "rgba(10,13,19,0.98)", border: "1px solid rgba(163,230,53,0.3)", maxHeight: 264, boxShadow: "0 16px 40px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(163,230,53,0.08)" }}>
       {lista.map((texto, i) => (
         <li key={texto} id={`${id}-${i}`} role="option" aria-selected={i === activa}
           onMouseDown={(e) => e.preventDefault()}

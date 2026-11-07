@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Building2, BookOpen, LayoutGrid, LogIn, Megaphone, Sparkles, Smartphone, Tag } from "lucide-react";
 import LogoGusano from "@/components/LogoGusano";
+import FondoOleaje from "@/components/FondoOleaje";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export default function PublicHeader() {
@@ -33,20 +34,25 @@ export default function PublicHeader() {
   }
 
   return (
+    <>
+    {/* El mismo fondo de oleaje que dentro de la app (7 nov 2026): la web
+        pública y la app se ven como una sola cosa. */}
+    <FondoOleaje />
     <header
-      className="sticky top-0 z-50"
+      className="barra-app sticky top-0 z-50"
       style={{
-        background: "rgba(15,17,23,0.95)",
-        backdropFilter: "blur(10px)",
-        borderBottom: "1px solid rgba(45,49,66,0.4)",
+        background: "rgba(6,9,11,0.84)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        borderBottom: "1px solid rgba(163,230,53,0.12)",
       }}
     >
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <LogoGusano size={28} />
-          <span className="font-bold text-sm tracking-tight" style={{ color: "#22c55e" }}>
-            BuscayCurra
+          <LogoGusano size={30} />
+          <span className="font-extrabold text-[17px] tracking-tight">
+            <span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span>
           </span>
         </div>
 
@@ -57,7 +63,7 @@ export default function PublicHeader() {
           <Link
             href="/descargar"
             className="text-sm font-medium transition hover:opacity-80"
-            style={{ color: "#64748b" }}
+            style={{ color: "#a7b3c6" }}
           >
             Descargar app
           </Link>
@@ -69,28 +75,28 @@ export default function PublicHeader() {
           <Link
             href="/funciones"
             className="text-sm font-medium transition hover:opacity-80"
-            style={{ color: "#64748b" }}
+            style={{ color: "#a7b3c6" }}
           >
             Funciones
           </Link>
           <Link
             href="/guias"
             className="text-sm font-medium transition hover:opacity-80"
-            style={{ color: "#64748b" }}
+            style={{ color: "#a7b3c6" }}
           >
             Guías
           </Link>
           <Link
             href="/precios"
             className="text-sm font-medium transition hover:opacity-80"
-            style={{ color: "#64748b" }}
+            style={{ color: "#a7b3c6" }}
           >
             Precios
           </Link>
           <Link
             href="/empresas"
             className="text-sm font-medium transition hover:opacity-80"
-            style={{ color: "#64748b" }}
+            style={{ color: "#a7b3c6" }}
           >
             Para empresas
           </Link>
@@ -98,8 +104,8 @@ export default function PublicHeader() {
             <Link
               href="/app"
               onClick={volverALaApp}
-              className="text-sm font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
-              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+              className="text-sm font-bold px-4 py-2 rounded-full transition hover:opacity-90"
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", boxShadow: "0 6px 20px -8px rgba(163,230,53,0.7)", }}
             >
               Volver a la app
             </Link>
@@ -114,10 +120,9 @@ export default function PublicHeader() {
               </Link>
               <Link
                 href="/auth/registro"
-                className="text-sm font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
+                className="text-sm font-bold px-4 py-2 rounded-full transition hover:opacity-90"
                 style={{
-                  background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                  color: "#fff",
+                  background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", boxShadow: "0 6px 20px -8px rgba(163,230,53,0.7)",
                 }}
               >
                 Empezar gratis
@@ -131,10 +136,9 @@ export default function PublicHeader() {
           <Link
             href={conSesion ? "/app" : "/auth/registro"}
             onClick={conSesion ? volverALaApp : undefined}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:opacity-90"
+            className="text-xs font-bold px-3.5 py-2 rounded-full transition hover:opacity-90"
             style={{
-              background: "linear-gradient(135deg, #22c55e, #16a34a)",
-              color: "#fff",
+              background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", boxShadow: "0 6px 20px -8px rgba(163,230,53,0.7)",
             }}
           >
             {conSesion ? "Volver a la app" : "Empezar gratis"}
@@ -142,7 +146,7 @@ export default function PublicHeader() {
 
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center justify-center w-9 h-9 rounded-lg"
+            className="flex items-center justify-center w-11 h-11 rounded-full"
             style={{ color: "#94a3b8" }}
             aria-label="Menú"
           >
@@ -258,5 +262,6 @@ export default function PublicHeader() {
         </div>
       )}
     </header>
+    </>
   );
 }

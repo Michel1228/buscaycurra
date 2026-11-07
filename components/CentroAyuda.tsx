@@ -95,8 +95,8 @@ export default function CentroAyuda() {
   return (
     <div className="py-10 px-4 text-center" style={{ borderBottom: "1px solid #2d3142" }}>
       <div>
-        <h1 className="text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Centro de ayuda</h1>
-        <p className="text-sm mb-6" style={{ color: "#64748b" }}>
+        <h1 className="text-3xl font-extrabold tracking-tight mb-2" style={{ color: "#f8fafc" }}>Centro de <span className="texto-neon">ayuda</span></h1>
+        <p className="text-sm mb-6" style={{ color: "#a7b3c6" }}>
           Encuentra respuesta a tus preguntas sobre BuscayCurra y Guzzi
         </p>
         <div className="max-w-md mx-auto">
@@ -106,7 +106,7 @@ export default function CentroAyuda() {
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Busca tu pregunta..."
             className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-            style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
+            style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(163,230,53,0.3)", color: "#f1f5f9" }}
           />
         </div>
       </div>
@@ -114,18 +114,18 @@ export default function CentroAyuda() {
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-8 text-left">
         {filtradas.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-sm" style={{ color: "#64748b" }}>
+            <p className="text-sm" style={{ color: "#a7b3c6" }}>
               No encontramos resultados para &ldquo;{busqueda}&rdquo;.
             </p>
-            <p className="text-xs mt-2" style={{ color: "#6b7280" }}>
+            <p className="text-xs mt-2" style={{ color: "#a7b3c6" }}>
               Escríbenos a{" "}
-              <a href="mailto:soporte@buscaycurra.es" style={{ color: "#22c55e" }}>soporte@buscaycurra.es</a>
+              <a href="mailto:soporte@buscaycurra.es" style={{ color: "#bef264" }}>soporte@buscaycurra.es</a>
             </p>
           </div>
         ) : (
           filtradas.map((cat) => (
             <div key={cat.categoria}>
-              <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#22c55e" }}>
+              <h2 className="text-xs font-bold uppercase tracking-[0.16em] mb-3" style={{ color: "#bef264" }}>
                 {cat.categoria}
               </h2>
               <div className="space-y-2">
@@ -133,17 +133,17 @@ export default function CentroAyuda() {
                   const key = `${cat.categoria}-${idx}`;
                   const open = !!abiertos[key];
                   return (
-                    <div key={key} className="rounded-xl overflow-hidden" style={{ border: "1px solid #2d3142", background: "#1e212b" }}>
+                    <div key={key} className="cristal tono-neutro overflow-hidden" style={{ borderRadius: 16 }}>
                       <button
                         onClick={() => toggle(key)}
                         className="w-full text-left px-5 py-4 flex items-center justify-between gap-3 text-sm font-medium"
                         style={{ color: "#f1f5f9" }}
                       >
                         <span>{item.q}</span>
-                        <span style={{ color: "#22c55e", display: "inline-block", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0, fontSize: "10px" }}>▼</span>
+                        <span style={{ color: "#bef264", display: "inline-block", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0, fontSize: "10px" }}>▼</span>
                       </button>
                       {open && (
-                        <div className="px-5 pb-4 text-sm leading-relaxed" style={{ color: "#94a3b8", borderTop: "1px solid #2d3142" }}>
+                        <div className="px-5 pb-4 text-sm leading-relaxed" style={{ color: "#cbd5e1", borderTop: "1px solid rgba(148,163,184,0.16)" }}>
                           <p className="pt-3">{item.a}</p>
                         </div>
                       )}
@@ -155,13 +155,12 @@ export default function CentroAyuda() {
           ))
         )}
 
-        <div className="rounded-xl p-6 text-center" style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.15)" }}>
+        <div className="cristal tono-lima p-6 text-center">
           <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>¿No encuentras lo que buscas?</p>
-          <p className="text-xs mb-4" style={{ color: "#64748b" }}>Nuestro equipo responde en menos de 24 horas en días laborables.</p>
+          <p className="text-xs mb-4" style={{ color: "#a7b3c6" }}>Nuestro equipo responde en menos de 24 horas en días laborables.</p>
           <a
             href="mailto:soporte@buscaycurra.es"
-            className="inline-block text-sm font-semibold px-6 py-2.5 rounded-lg"
-            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+            className="boton-neon text-sm"
           >
             Escribir a soporte
           </a>
@@ -174,7 +173,7 @@ export default function CentroAyuda() {
             { href: "/cookies", label: "Cookies" },
             { href: "/sobre-nosotros", label: "Sobre nosotros" },
           ].map((l) => (
-            <Link key={l.href} href={l.href} className="text-xs hover:underline" style={{ color: "#6b7280" }}>
+            <Link key={l.href} href={l.href} className="text-xs hover:underline" style={{ color: "#a7b3c6" }}>
               {l.label}
             </Link>
           ))}

@@ -137,28 +137,34 @@ label {
 }
 
 /* ── Tarjetas profesionales ────────────────────────────────────────────── */
+/* Desde el 7 nov 2026, con el aspecto de cristal del diseño de neón: así lo
+   tienen de golpe las ~90 tarjetas de toda la aplicación y de la web. */
 .card-game {
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio-xl);
-  box-shadow: var(--sombra-card);
-  transition: all 0.25s ease;
+  background:
+    linear-gradient(155deg, rgba(148, 163, 184, 0.1) 0%, rgba(148, 163, 184, 0.02) 42%, rgba(10, 13, 19, 0) 100%),
+    rgba(12, 15, 22, 0.86);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 18px 40px -28px rgba(0, 0, 0, 0.9);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .card-game:hover {
-  border-color: var(--color-borde-hover);
-  box-shadow: var(--sombra-card-hover);
+  border-color: rgba(163, 230, 53, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 20px 46px -24px rgba(163, 230, 53, 0.45);
   transform: translateY(-2px);
 }
 
 /* ── Botón principal ───────────────────────────────────────────────────── */
+/* El botón principal de toda la aplicación, con el verde lima de neón (7 nov
+   2026). Texto oscuro: sobre el lima, el blanco no llega al contraste. */
 .btn-game {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: #ffffff;
-  font-weight: 600;
-  border-radius: 10px;
+  background: linear-gradient(180deg, #d9f99d 0%, #a3e635 55%, #84cc16 100%);
+  color: #0b1406;
+  font-weight: 700;
+  border-radius: 9999px;
   padding: 0.75rem 1.5rem;
-  box-shadow: var(--sombra-boton);
-  transition: all 0.2s ease;
+  box-shadow: inset 0 0 0 1px rgba(217, 249, 157, 0.55), 0 8px 24px -10px rgba(163, 230, 53, 0.7);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
   border: none;
   cursor: pointer;
   position: relative;
@@ -166,7 +172,8 @@ label {
 }
 .btn-game:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(34,197,94,0.35);
+  filter: brightness(1.05);
+  box-shadow: inset 0 0 0 1px rgba(217, 249, 157, 0.7), 0 10px 30px -8px rgba(163, 230, 53, 0.85);
 }
 .btn-game:active {
   transform: translateY(0);
@@ -174,18 +181,18 @@ label {
 
 /* ── Botón secundario ──────────────────────────────────────────────────── */
 .btn-game-outline {
-  background: transparent;
-  color: var(--color-verde-claro);
-  font-weight: 500;
-  border: 1.5px solid rgba(34, 197, 94, 0.3);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #d9f99d;
+  font-weight: 600;
+  border: 1.5px solid rgba(163, 230, 53, 0.35);
+  border-radius: 9999px;
   padding: 0.75rem 1.5rem;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 .btn-game-outline:hover {
-  border-color: var(--color-verde);
-  background: rgba(34, 197, 94, 0.08);
+  border-color: #a3e635;
+  background: rgba(163, 230, 53, 0.08);
 }
 
 /* ── Badge/Pill ────────────────────────────────────────────────────────── */
@@ -200,9 +207,9 @@ label {
   letter-spacing: 0.02em;
 }
 .badge-verde {
-  background: rgba(34,197,94,0.12);
-  color: #22c55e;
-  border: 1px solid rgba(34,197,94,0.2);
+  background: rgba(163,230,53,0.12);
+  color: #d9f99d;
+  border: 1px solid rgba(163,230,53,0.3);
 }
 .badge-dorado {
   background: rgba(245,158,11,0.12);
@@ -568,6 +575,8 @@ body.con-oleaje .min-h-screen.bg-\[\#0f1117\] {
 
 /* Movimiento reducido: todo quieto. La imagen fija es la misma composición. */
 @media (prefers-reduced-motion: reduce) {
+  .card-game:hover,
+  .btn-game:hover { transform: none; }
   .fondo-oleaje *,
   .ondas-cabecera path,
   .guzzi-aro { animation: none !important; }

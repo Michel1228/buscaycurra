@@ -193,8 +193,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
       </button>
 
       {open && (
-        <div className="fixed sm:absolute top-14 sm:top-11 left-2 right-2 sm:left-auto sm:right-0 sm:w-80 rounded-xl shadow-2xl z-50 overflow-hidden"
-          style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+        <div className="cristal tono-lima fixed sm:absolute top-14 sm:top-12 left-2 right-2 sm:left-auto sm:right-0 sm:w-80 shadow-2xl z-50 overflow-hidden"
+          style={{ background: "rgba(10,13,19,0.97)" }}>
 
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3"

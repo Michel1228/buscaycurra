@@ -127,7 +127,7 @@ export default function ConfirmaCorreo() {
     <>
       <div className="fixed left-1/2 -translate-x-1/2 z-30 max-w-[94vw]" style={{ top: 62 }} role="status">
         <div className="flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs shadow-lg"
-          style={{ background: "rgba(30,33,43,0.96)", border: "1px solid rgba(245,158,11,0.45)", color: "#f1f5f9" }}>
+          style={{ background: "rgba(12,15,22,0.94)", border: "1px solid rgba(245,158,11,0.5)", color: "#f1f5f9", boxShadow: "0 10px 30px -12px rgba(245,158,11,0.6)", backdropFilter: "blur(12px)" }}>
           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "#f59e0b" }} />
           {reenvio.tipo === "hecho" ? (
             <span>Te lo hemos mandado a <strong>{reenvio.texto}</strong>. Mira también en Spam.</span>
@@ -137,9 +137,9 @@ export default function ConfirmaCorreo() {
                 className="text-left hover:underline">
                 Confirma tu correo para usar todo BuscayCurra
               </button>
-              <span style={{ color: "#64748b" }}>·</span>
+              <span style={{ color: "#8b98ad" }}>·</span>
               <button type="button" onClick={reenviar} disabled={reenvio.tipo === "enviando"}
-                className="font-semibold underline disabled:opacity-50 shrink-0" style={{ color: "#22c55e" }}>
+                className="font-semibold underline disabled:opacity-50 shrink-0" style={{ color: "#bef264" }}>
                 {reenvio.tipo === "enviando" ? "Enviando…" : "Reenviar"}
               </button>
             </>

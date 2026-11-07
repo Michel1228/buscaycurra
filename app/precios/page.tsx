@@ -19,6 +19,10 @@ import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 import { Bot, Zap, Building2, Sprout, Egg, Star, CreditCard, Check, X, Apple } from "lucide-react";
 import { NUM_PAISES } from "@/lib/paises";
 import PublicFooter from "@/components/PublicFooter";
+import FondoOleaje from "@/components/FondoOleaje";
+
+// El color de cada plan en el diseño de neón (7 nov 2026).
+const TONO_PLAN: Record<string, string> = { free: "neutro", esencial: "verde", pro: "lima", empresa: "ambar" };
 
 const PLANES = [
   {
@@ -152,28 +156,22 @@ export default function PreciosPage() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-16 relative overflow-hidden"
-      style={{ background: "linear-gradient(180deg, #0f1a0a, #1a1a12, #15200e)" }}>
+    <div className="ui-neon min-h-screen px-4 py-16 relative overflow-hidden" style={{ background: "transparent" }}>
 
-      {/* Fondo */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div style={{ position: "absolute", top: "-10%", left: "10%", width: "40%", height: "50%",
-          background: "radial-gradient(ellipse, rgba(126,213,111,0.06) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", bottom: "0", right: "10%", width: "40%", height: "40%",
-          background: "radial-gradient(ellipse, rgba(240,192,64,0.04) 0%, transparent 70%)" }} />
-      </div>
+      {/* Fondo: el oleaje de toda la aplicación */}
+      <FondoOleaje />
 
       <div className="max-w-5xl mx-auto relative z-10">
         {/* Header */}
         <div className="text-center mb-14">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <LogoGusano size={36} animated />
-            <span className="font-bold" style={{ color: "#22c55e" }}>BuscayCurra</span>
+            <span className="font-extrabold text-lg tracking-tight"><span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span></span>
           </Link>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#f1f5f9" }}>
-            Planes y precios
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
+            Planes y <span className="texto-neon">precios</span>
           </h1>
-          <p className="text-base" style={{ color: "#64748b" }}>
+          <p className="text-base" style={{ color: "#a7b3c6" }}>
             Sin permanencia. Cancela cuando quieras. Evoluciona a tu ritmo.
           </p>
         </div>
@@ -185,7 +183,7 @@ export default function PreciosPage() {
             <p className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>
               Pago seguro con tu cuenta de Apple
             </p>
-            <p className="text-xs" style={{ color: "#64748b" }}>
+            <p className="text-xs" style={{ color: "#a7b3c6" }}>
               La suscripción se renueva automáticamente y puedes cancelarla cuando quieras desde Ajustes.
             </p>
           </div>
@@ -202,8 +200,8 @@ export default function PreciosPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
           {PLANES.map((plan) => (
             <div key={plan.id}
-              className={`card-game p-7 text-center relative flex flex-col ${plan.dest ? "scale-[1.03]" : ""}`}
-              style={plan.dest ? { borderColor: "#22c55e", boxShadow: "0 0 40px rgba(126,213,111,0.12)" } : {}}>
+              className={`cristal tono-${TONO_PLAN[plan.id] || "neutro"} p-7 text-center relative flex flex-col ${plan.dest ? "lg:scale-[1.03]" : ""}`}
+              style={plan.dest ? { borderColor: "rgba(163,230,53,0.6)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(163,230,53,0.2), 0 24px 60px -24px rgba(163,230,53,0.8)" } : {}}>
 
               {plan.dest && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -213,36 +211,36 @@ export default function PreciosPage() {
 
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="text-[10px] px-3 py-0.5 rounded-full font-medium"
-                    style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}>
+                  <span className="text-[10px] px-3 py-0.5 rounded-full font-medium whitespace-nowrap"
+                    style={{ background: "rgba(20,10,12,0.95)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.4)" }}>
                     {plan.badge}
                   </span>
                 </div>
               )}
 
               <div className="flex justify-center mb-3">
-                <plan.PlanIcon size={36} style={{ color: plan.dest ? "#22c55e" : "#94a3b8" }} />
+                <span className="icono-circulo" style={{ width: 60, height: 60 }} aria-hidden="true"><plan.PlanIcon size={28} /></span>
               </div>
-              <h2 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>{plan.nombre}</h2>
-              <p className="text-xs mt-1 mb-4" style={{ color: "#64748b" }}>{plan.desc}</p>
+              <h2 className="text-xl font-bold" style={{ color: "#f8fafc" }}>{plan.nombre}</h2>
+              <p className="text-xs mt-1 mb-4" style={{ color: "#a7b3c6" }}>{plan.desc}</p>
 
               <div className="mb-5">
-                <span className="text-4xl font-black" style={{ color: plan.dest ? "#22c55e" : "#f1f5f9" }}>
+                <span className="text-4xl font-black" style={{ color: plan.dest ? "#d9f99d" : "var(--tono-texto)" }}>
                   {plan.precio}
                 </span>
-                <span className="text-sm ml-1" style={{ color: "#64748b" }}>{plan.periodo}</span>
+                <span className="text-sm ml-1" style={{ color: "#a7b3c6" }}>{plan.periodo}</span>
               </div>
 
               <ul className="space-y-2.5 mb-6 text-left flex-1">
                 {plan.items.map((item) => {
-                  const itemColor = item.highlight ? "#f1f5f9" : item.ok ? "#94a3b8" : "#64748b";
+                  const itemColor = item.highlight ? "#f1f5f9" : item.ok ? "#cbd5e1" : "#8b98ad";
                   const itemWeight = item.highlight ? 600 : 400;
                   return (
                   <li key={item.t} className="flex items-start gap-2 text-sm">
                     <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{
-                        background: item.ok ? "rgba(126,213,111,0.15)" : "rgba(80,74,58,0.3)",
-                        color: item.ok ? "#22c55e" : "#64748b",
+                        background: item.ok ? "rgba(163,230,53,0.15)" : "rgba(148,163,184,0.12)",
+                        color: item.ok ? "#bef264" : "#8b98ad",
                       }}>
                       {item.ok ? <Check size={10} strokeWidth={3} /> : <X size={10} strokeWidth={3} />}
                     </span>
@@ -269,7 +267,7 @@ export default function PreciosPage() {
         </div>
 
         {!iosNativo && (
-          <p className="text-center text-xs mt-10 flex items-center justify-center gap-1.5" style={{ color: "#64748b" }}>
+          <p className="text-center text-xs mt-10 flex items-center justify-center gap-1.5" style={{ color: "#a7b3c6" }}>
             <CreditCard size={12} />Pago seguro con Stripe · Sin permanencia · Cancela cuando quieras
           </p>
         )}
@@ -277,7 +275,7 @@ export default function PreciosPage() {
         {iosNativo && <RestaurarComprasBoton className="mt-10" />}
 
         <div className="text-center mt-6">
-          <Link href="/" className="text-sm hover:underline" style={{ color: "#64748b" }}>
+          <Link href="/" className="text-sm hover:underline" style={{ color: "#a7b3c6" }}>
             ← Volver a la landing
           </Link>
         </div>

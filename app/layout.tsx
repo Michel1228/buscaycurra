@@ -255,9 +255,9 @@ export default function RootLayout({
           <PolyfillBanderas />
           <ApuntarLlegada />
         </BodyWrapper>
-        <div id="pwa-update-banner" style={{ display: "none", position: "fixed", bottom: 0, left: 0, right: 0, background: "#111827", borderTop: "2px solid #22c55e", padding: "12px 16px", zIndex: 9999, textAlign: "center", fontSize: "14px", color: "#f1f5f9" }}>
+        <div id="pwa-update-banner" style={{ display: "none", position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(8,11,16,0.97)", borderTop: "1px solid rgba(163,230,53,0.45)", padding: "12px 16px calc(12px + env(safe-area-inset-bottom, 0px))", zIndex: 9999, textAlign: "center", fontSize: "14px", color: "#f1f5f9" }}>
           <RefreshCw size={16} strokeWidth={2} style={{ display: "inline", marginRight: "6px", verticalAlign: "middle" }} />Nueva versión disponible —{" "}
-          <button id="pwa-reload-btn" style={{ background: "#22c55e", color: "#000", border: "none", padding: "6px 16px", borderRadius: "6px", fontWeight: 700, cursor: "pointer", marginLeft: "8px" }}>
+          <button id="pwa-reload-btn" style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", border: "none", padding: "8px 18px", borderRadius: "9999px", fontWeight: 700, cursor: "pointer", marginLeft: "8px" }}>
             Actualizar ahora
           </button>
         </div>
