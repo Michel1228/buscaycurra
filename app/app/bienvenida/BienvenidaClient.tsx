@@ -191,13 +191,12 @@ export default function BienvenidaClient() {
     );
   }
 
-  // Las sugerencias para el chat salen de su CV cuando lo hay.
-  const puesto = puestosRecomendadas[0]?.toLowerCase();
+  // Los mismos atajos que el chat (components/GusiChat.tsx): nombre y mensaje.
   const pedidos = [
-    puesto ? `Busca ofertas de ${puesto} cerca de mí` : "Ayúdame a buscar trabajo cerca de mí",
-    "Mejora mi CV",
-    "Escríbeme una carta de presentación",
-    "Prepárame para una entrevista",
+    { label: "Buscar trabajo", msg: "Quiero buscar trabajo, ¿me ayudas?" },
+    { label: "Au Pair", msg: "Quiero información sobre el programa Au Pair en el extranjero" },
+    { label: "Preparar entrevista", msg: "Quiero preparar una entrevista de trabajo" },
+    { label: "Emigrar", msg: "Quiero emigrar al extranjero, ¿qué opciones tengo?" },
   ];
 
   const acciones = quickActions.length > 0 ? quickActions : [
@@ -213,7 +212,6 @@ export default function BienvenidaClient() {
 
         <CabeceraPantalla
           guzzi
-          antetitulo="Centro de mando de Guzzi"
           titulo={`¡Hola${userName ? `, ${userName}` : ""}! Soy`}
           resaltado="Guzzi"
           subtitulo="Tu asistente de empleo con IA. ¿Qué quieres hacer hoy?"
@@ -259,7 +257,7 @@ export default function BienvenidaClient() {
                 type="text"
                 value={pedido}
                 onChange={(e) => setPedido(e.target.value)}
-                placeholder="Cuéntame qué necesitas…"
+                placeholder="Escribe un mensaje..."
                 maxLength={500}
                 className="flex-1 min-w-0 min-h-[48px]"
                 style={{ borderRadius: 9999, background: "rgba(6,9,11,0.7)", borderColor: "rgba(163,230,53,0.35)" }}
@@ -269,13 +267,13 @@ export default function BienvenidaClient() {
               </button>
             </form>
             <div>
-              <p className="text-[13px] mb-2" style={{ color: "var(--texto-tenue)" }}>O pídele directamente:</p>
+              <p className="text-[13px] mb-2" style={{ color: "var(--texto-tenue)" }}>O pulsa uno de los atajos:</p>
               <div className="flex flex-wrap gap-2">
                 {pedidos.map((p) => (
-                  <Link key={p} href={`/app/gusi?q=${encodeURIComponent(p)}`}
+                  <Link key={p.label} href={`/app/gusi?q=${encodeURIComponent(p.msg)}`}
                     className="inline-flex items-center min-h-[44px] px-4 rounded-full text-[13px] font-medium transition-colors"
                     style={{ background: "rgba(163,230,53,0.07)", border: "1px solid rgba(163,230,53,0.25)", color: "#dbe7c9" }}>
-                    {p}
+                    {p.label}
                   </Link>
                 ))}
               </div>
@@ -287,7 +285,7 @@ export default function BienvenidaClient() {
               <span className="icono-circulo tono-azul" style={{ width: 56, height: 56, borderRadius: 18 }} aria-hidden="true"><Search size={26} /></span>
               <div>
                 <h2 className="text-2xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Modo manual</h2>
-                <p className="text-[14px]" style={{ color: "#a7b3c6" }}>Control total de tu búsqueda</p>
+                <p className="text-[14px]" style={{ color: "#a7b3c6" }}>Control total</p>
               </div>
             </div>
             <ul className="grid gap-1">

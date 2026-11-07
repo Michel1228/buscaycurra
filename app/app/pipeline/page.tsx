@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import InfoTooltip from "@/components/InfoTooltip";
 import {
-  PartyPopper, Inbox, AtSign, Send, Eye, Hourglass, CalendarCheck, Trophy, XCircle, Layers,
+  PartyPopper, Inbox, AtSign, Send, Eye, Hourglass, CalendarCheck, Trophy, XCircle,
   BarChart3, Plus, ChevronDown, ChevronUp, Clock, MessageCircle, Wallet, Mic, ArrowRight, TrendingUp, X,
   type LucideIcon,
 } from "lucide-react";
@@ -358,8 +358,7 @@ export default function PipelinePage() {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-10 space-y-7 sm:space-y-9">
-        <CabeceraPantalla Icono={BarChart3} titulo="Pipeline y" resaltado="analítica"
-          subtitulo="Sigue tus candidaturas y mira cómo va tu búsqueda.">
+        <CabeceraPantalla Icono={BarChart3} titulo="Pipeline de" resaltado="candidaturas">
           <div className="relative mt-4 flex flex-wrap items-center gap-3">
             <button onClick={() => setModalNueva(true)} className="boton-cristal tono-lima">
               <Plus size={17} aria-hidden="true" /> Nueva candidatura
@@ -411,7 +410,7 @@ export default function PipelinePage() {
             <div className="xl:col-span-9 space-y-7 sm:space-y-9 min-w-0">
               {/* ── El tablero ── */}
               <section aria-labelledby="titulo-tablero">
-                <TituloSeccion id="titulo-tablero" Icono={Layers} titulo="Tu pipeline de candidaturas" subtitulo="Cada candidatura en la columna de cómo va." />
+                <h2 id="titulo-tablero" className="sr-only">Columnas del pipeline</h2>
                 {filtroActivo && (
                   <div className="mb-3 flex items-center gap-2">
                     <span className="text-[13px]" style={{ color: "#a7b3c6" }}>
@@ -490,7 +489,7 @@ export default function PipelinePage() {
 
               {/* ── Analítica: solo lo que se puede contar ── */}
               <section aria-labelledby="titulo-analitica">
-                <TituloSeccion id="titulo-analitica" Icono={BarChart3} titulo="Analítica de tu búsqueda" subtitulo="Contado con tus candidaturas, nada estimado." />
+                <TituloSeccion id="titulo-analitica" Icono={BarChart3} titulo="Cómo va tu búsqueda" subtitulo="Contado con tus candidaturas." />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="cristal tono-verde p-4 lg:col-span-2">
                     <p className="text-[14px] font-semibold flex items-center gap-2" style={{ color: "#f1f5f9" }}><Send size={16} style={{ color: "var(--tono-texto)" }} aria-hidden="true" /> Candidaturas por semana</p>
@@ -560,7 +559,7 @@ export default function PipelinePage() {
                   <GuzziBrillo size={56} decorativo />
                   <div>
                     <h2 id="titulo-guzzi-recomienda" className="text-lg font-extrabold leading-tight" style={{ color: "#f8fafc" }}>
-                      <span className="texto-neon">Guzzi</span> te recomienda
+                      Lo que <span className="texto-neon">Guzzi</span> te propone
                     </h2>
                     <p className="text-[12px]" style={{ color: "#a7b3c6" }}>Según cómo van tus candidaturas.</p>
                   </div>
