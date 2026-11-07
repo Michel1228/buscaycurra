@@ -7,6 +7,7 @@ import { empresaParaGoogle, jobPostingDe } from "@/lib/seo/job-posting";
 import { servicioOficial } from "@/lib/job-search/fuente-oficial";
 import { ofertasParecidas, slug } from "@/lib/job-search/ofertas-parecidas";
 import { DATOS } from "@/lib/datos-reales";
+import { sueldoVisible } from "@/lib/sueldo-visible";
 
 /** "Ver en oferta", "Consultar"…: no es un sueldo, y no se enseña como si lo fuera. */
 function sueldoDe(s: string | null): string | null {
@@ -165,7 +166,7 @@ export default async function OfertaPublicaPage({
 
           <div className="flex flex-wrap gap-4 mb-5 text-sm" style={{ color: "#94a3b8" }}>
             <span>{row.city}</span>
-            {sueldo && <span>{sueldo}</span>}
+            {sueldo && <span>{sueldoVisible(sueldo, row.country)}</span>}
             {row.createdAt && (
               <span>📅 {new Date(row.createdAt).toLocaleDateString("es-ES")}</span>
             )}
@@ -224,7 +225,7 @@ export default async function OfertaPublicaPage({
                   style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{o.title}</p>
                   <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
-                    {[o.company, (o.city || "").split(",")[0], sueldoDe(o.salary)].filter(Boolean).join(" · ")}
+                    {[o.company, (o.city || "").split(",")[0], sueldoDe(o.salary) && sueldoVisible(sueldoDe(o.salary)!, null)].filter(Boolean).join(" · ")}
                   </p>
                 </Link>
               ))}

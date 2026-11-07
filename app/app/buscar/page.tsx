@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useCallback, useRef } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef, useMemo } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter, useSearchParams } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
@@ -17,6 +17,8 @@ import EmpresasDeLaZona from "@/components/EmpresasDeLaZona";
 import NavTrabajo from "@/components/NavTrabajo";
 import Link from "next/link";
 import { TrendingUp, Send, Building2, Info, AlertTriangle, MapPin } from "lucide-react";
+import { useSugerencias } from "@/components/Sugerencias";
+import { ciudadesDe, puestosDe } from "@/lib/sugerencias";
 
 /** El nombre del pais tal y como lo lee la gente: "Francia", no "FR". */
 function nombrePais(codigo: string): string {
@@ -122,6 +124,17 @@ function BuscarPageInner() {
   const [ciudadPerfil, setCiudadPerfil] = useState("");
   const [cambiandoResidencia, setCambiandoResidencia] = useState(false);
   useEffect(() => { setResidencia(dondeEstoy()); }, []);
+
+  // AUTORRELLENOS (7 nov 2026): las ciudades del país de la bandera y los
+  // oficios como se dicen allí (lib/sugerencias.ts). Datos estáticos: no se
+  // pregunta nada a la base mientras se escribe.
+  const opcionesCiudad = useMemo(() => ciudadesDe(paisSeleccionado || residencia), [paisSeleccionado, residencia]);
+  const opcionesPuesto = useMemo(() => puestosDe(paisSeleccionado, residencia), [paisSeleccionado, residencia]);
+  const sugPuesto = useSugerencias({ id: "sugerencias-keyword", valor: keyword, opciones: opcionesPuesto, onElegir: setKeyword });
+  const sugCiudad = useSugerencias({
+    id: "sugerencias-ubicacion", valor: ubicacion, opciones: opcionesCiudad,
+    onElegir: (c) => { setUbicacion(c); setGeoDetected(false); setAvisoPais(""); },
+  });
   function cambiarPais(codigo: string) {
     setPaisSeleccionado(codigo);
     paisCambiadoPorUsuario.current = true;
@@ -548,14 +561,20 @@ function BuscarPageInner() {
           </p>
           <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-2">
             <label className="sr-only" htmlFor="buscar-keyword">Palabra clave</label>
-            <input id="buscar-keyword" type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
-              placeholder="¿Qué trabajo buscas?" className="flex-1 px-4 py-2.5 rounded-lg text-sm"
-              style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+            <div className="relative flex-1">
+              <input id="buscar-keyword" type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
+                {...sugPuesto.propsCampo}
+                placeholder="¿Qué trabajo buscas?" className="w-full px-4 py-2.5 rounded-lg text-sm"
+                style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+              {sugPuesto.lista}
+            </div>
             <div className="relative w-full sm:w-56">
               <label className="sr-only" htmlFor="buscar-ubicacion">Ubicación</label>
               <input id="buscar-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); setAvisoPais(""); }}
+                {...sugCiudad.propsCampo}
                 placeholder="¿Dónde? (o déjalo vacío)" className="w-full px-4 py-2.5 rounded-lg text-sm"
                 style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+              {sugCiudad.lista}
               {/* El aviso de autorrelleno era un "Auto" de 10 px que nadie
                   veía: la gente buscaba sin darse cuenta de que el campo
                   llevaba su ciudad puesta. Ahora se ve y se quita de un clic. */}

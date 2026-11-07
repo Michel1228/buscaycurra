@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { BarChart2, Search, Frown } from "lucide-react";
+import { dondeEstoy } from "@/lib/origen/donde-estoy";
+import { puestosDe } from "@/lib/sugerencias";
+import { useSugerencias } from "@/components/Sugerencias";
 
 interface SalarioData {
   puesto: string;
@@ -42,13 +45,6 @@ type OcupacionCard = {
   min_salary: number;
   max_salary: number;
 };
-
-const PUESTOS_POPULARES = [
-  "camarero", "cocinero", "limpieza", "conductor", "electricista",
-  "dependiente", "programador", "enfermero", "administrativo", "mecanico",
-  "albanil", "almacen", "soldador", "fontanero", "peluquero",
-  "cuidador", "operario", "repartidor", "cajero", "vendedor",
-];
 
 // Fallback: ocupaciones destacadas si la API no devuelve "top"
 const TOP_FALLBACK: OcupacionCard[] = [
@@ -223,6 +219,24 @@ export default function SalariosPage() {
   // mirar lo que dice la propia respuesta.
   const [topMedido, setTopMedido] = useState(false);
 
+  // EMPIEZA EN EL PAÍS DE LA PERSONA (7 nov 2026). Empezaba siempre en España,
+  // con "camarero, fontanero, albanil": desde Bogotá se veían sueldos españoles
+  // y oficios que allí no se dicen así. Ahora arranca donde está
+  // (lib/origen/donde-estoy.ts) y propone los oficios de allí (lib/sugerencias.ts).
+  const [paisDeAqui, setPaisDeAqui] = useState<string | null>(null);
+  useEffect(() => {
+    const aqui = dondeEstoy();
+    setPaisDeAqui(aqui);
+    const codigo = aqui === "UK" ? "GB" : aqui;
+    const encontrado = PAISES.find(p => p.code === codigo);
+    if (encontrado) setCountry(encontrado);
+  }, []);
+  const puestosPopulares = useMemo(
+    () => puestosDe(country.code === "GB" ? "UK" : country.code, paisDeAqui),
+    [country, paisDeAqui]
+  );
+  const sugPuesto = useSugerencias({ id: "sugerencias-salarios-puesto", valor: puesto, opciones: puestosPopulares, onElegir: setPuesto });
+
   // Precargar top ocupaciones al montar — NUNCA mostrar resultados hasta que el usuario busque
   useEffect(() => {
     async function cargarTop() {
@@ -276,9 +290,12 @@ export default function SalariosPage() {
     }
   }
 
+  // Fuera de España la API da la cifra en la moneda de allí: ponía "€" a
+  // los pesos mexicanos o colombianos.
   function formatMoney(val: number | null): string {
     if (!val) return "N/D";
-    return val >= 1000 ? `${(val / 1000).toFixed(1)}k €` : `${Math.round(val)} €`;
+    const moneda = country.code === "ES" ? "€" : country.currency;
+    return val >= 1000 ? `${(val / 1000).toFixed(1)}k ${moneda}` : `${Math.round(val)} ${moneda}`;
   }
 
   const isSpain = country.code === "ES";
@@ -294,7 +311,7 @@ export default function SalariosPage() {
 
       <main className="max-w-3xl mx-auto px-4 py-6">
         {/* Top ocupaciones precargadas — siempre visibles (fallback si la API no devuelve top) */}
-        {!topCargando && (
+        {!topCargando && country.code === "ES" && (
           (() => {
             // Cuando no hay bastantes datos medidos se enseña la lista de
             // referencia. Ahí el recuento de ofertas NO se puede pintar: esos
@@ -354,12 +371,13 @@ export default function SalariosPage() {
             </div>
             <div className="flex-1">
               <label className="text-[11px] block mb-1" style={{ color: "#94a3b8" }}>Puesto</label>
-              <input type="text" value={puesto} onChange={e => setPuesto(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") { void buscar(); } }}
-                placeholder="Ej: camarero, electricista..." className="w-full text-sm" list="puestos-list" />
-              <datalist id="puestos-list">
-                {PUESTOS_POPULARES.map(p => <option key={p} value={p} />)}
-              </datalist>
+              <div className="relative">
+                <input type="text" value={puesto} onChange={e => setPuesto(e.target.value)}
+                  {...sugPuesto.propsCampo}
+                  onKeyDown={e => { sugPuesto.propsCampo.onKeyDown(e); if (!e.defaultPrevented && e.key === "Enter") { void buscar(); } }}
+                  placeholder={`Ej: ${puestosPopulares.slice(0, 2).join(", ")}...`} className="w-full text-sm" />
+                {sugPuesto.lista}
+              </div>
             </div>
             <div className="sm:w-44">
               <label className="text-[11px] block mb-1" style={{ color: "#94a3b8" }}>
@@ -378,7 +396,7 @@ export default function SalariosPage() {
           </div>
 
           <div className="flex flex-wrap gap-1.5 mt-3">
-            {PUESTOS_POPULARES.slice(0, 8).map(p => (
+            {puestosPopulares.slice(0, 8).map(p => (
               <button key={p} onClick={() => { setPuesto(p); void buscar(p); }}
                 className="px-2 py-0.5 rounded-md text-[10px] transition hover:opacity-80"
                 style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", color: "#22c55e" }}>

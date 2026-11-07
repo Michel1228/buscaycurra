@@ -5,7 +5,7 @@
  * Foto de perfil genérica (avatar), no la foto profesional del CV
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import InfoTooltip from "@/components/InfoTooltip";
@@ -16,6 +16,9 @@ import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
 import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 import MisAlertas from "@/components/MisAlertas";
 import MisAvisosCursos from "@/components/MisAvisosCursos";
+import { useSugerencias } from "@/components/Sugerencias";
+import { ciudadesDe } from "@/lib/sugerencias";
+import { dondeEstoy } from "@/lib/origen/donde-estoy";
 
 interface PerfilData {
   nombre: string;
@@ -169,6 +172,15 @@ export default function PerfilPage() {
     tocadoRef.current = true;
     setPerfil(prev => ({ ...prev, [field]: value }));
   }
+
+  // Al escribir la ciudad, las del país donde está la persona (lib/sugerencias.ts).
+  const [paisDeAqui, setPaisDeAqui] = useState<string | null>(null);
+  useEffect(() => { setPaisDeAqui(dondeEstoy()); }, []);
+  const opcionesCiudad = useMemo(() => ciudadesDe(paisDeAqui), [paisDeAqui]);
+  const sugCiudad = useSugerencias({
+    id: "sugerencias-perfil-ciudad", valor: perfil.ciudad, opciones: opcionesCiudad,
+    onElegir: (c) => updateField("ciudad", c),
+  });
 
   async function cambiarPassword() {
     if (nuevaPassword.length < 8) {
@@ -417,10 +429,13 @@ export default function PerfilPage() {
                   style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#64748b" }}
                   title="El email no se puede cambiar desde aquí" />
                 <label className="sr-only" htmlFor="perfil-ciudad">Ciudad</label>
-                <input id="perfil-ciudad" placeholder="Ciudad" value={perfil.ciudad} onChange={e => updateField("ciudad", e.target.value)}
-                  autoComplete="off"
-                  className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                <div className="relative">
+                  <input id="perfil-ciudad" placeholder="Ciudad" value={perfil.ciudad} onChange={e => updateField("ciudad", e.target.value)}
+                    {...sugCiudad.propsCampo}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
+                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  {sugCiudad.lista}
+                </div>
                 <label className="sr-only" htmlFor="perfil-provincia">Provincia</label>
                 <input id="perfil-provincia" placeholder="Provincia" value={perfil.provincia} onChange={e => updateField("provincia", e.target.value)}
                   autoComplete="off"

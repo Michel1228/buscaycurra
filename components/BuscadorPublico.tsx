@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { dondeEstoy } from "@/lib/origen/donde-estoy";
+import { ciudadPorDefecto } from "@/lib/sugerencias";
 
 interface Oferta {
   id: string;
@@ -15,14 +17,17 @@ interface Oferta {
 
 export default function BuscadorPublico() {
   const [puesto, setPuesto] = useState("");
-  const [ciudad, setCiudad] = useState("Madrid");
+  // La ciudad de partida es la del país donde está quien entra (7 nov 2026):
+  // proponía "Madrid" también desde Bogotá o Ciudad de México. Se decide en el
+  // navegador (lib/origen/donde-estoy.ts); sin país conocido, Madrid.
+  const [ciudad, setCiudad] = useState("");
   const [ofertas, setOfertas] = useState<Oferta[]>([]);
   const [cargando, setCargando] = useState(true);
 
   async function buscar(p: string, c: string) {
     setCargando(true);
     try {
-      const params = new URLSearchParams({ keyword: p || "operario", location: c || "Madrid", limit: "6" });
+      const params = new URLSearchParams({ keyword: p || "operario", location: c || ciudadPorDefecto(dondeEstoy()), limit: "6" });
       const res = await fetch(`/api/jobs/search?${params}`);
       if (res.ok) {
         const data = await res.json();
@@ -35,7 +40,11 @@ export default function BuscadorPublico() {
     }
   }
 
-  useEffect(() => { buscar("", "Madrid"); }, []);
+  useEffect(() => {
+    const inicial = ciudadPorDefecto(dondeEstoy());
+    setCiudad(inicial);
+    buscar("", inicial);
+  }, []);
 
   function handleBuscar(e: React.FormEvent) {
     e.preventDefault();

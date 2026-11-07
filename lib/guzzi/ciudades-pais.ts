@@ -211,6 +211,53 @@ const CIUDADES: Record<string, [string, string[]]> = {
   saltillo: ["MX", ["saltillo"]],
   "san luis potosi": ["MX", ["san luis potosi", "san luis potosí"]],
   "ciudad juarez": ["MX", ["ciudad juarez", "ciudad juárez", "juarez", "juárez"]],
+  // Los municipios y alcaldías del barrido de Careerjet (CAREERJET_BARRIDO en
+  // lib/job-search/sync-worker.ts, 7 nov 2026), escritos con sus tildes. Los
+  // estados no van: no son ciudades y muchos se llaman como otra cosa
+  // (Hidalgo, Guerrero, Morelos, Tabasco). Guadalupe, Durango y Santa Catarina
+  // existen también en otros países: ver HOMONIMAS.
+  "miguel hidalgo": ["MX", ["miguel hidalgo"]],
+  coyoacan: ["MX", ["coyoacán", "coyoacan"]],
+  azcapotzalco: ["MX", ["azcapotzalco"]],
+  iztacalco: ["MX", ["iztacalco"]],
+  "gustavo a. madero": ["MX", ["gustavo a. madero", "gustavo a madero"]],
+  "gustavo a madero": ["MX", ["gustavo a. madero", "gustavo a madero"]],
+  iztapalapa: ["MX", ["iztapalapa"]],
+  xochimilco: ["MX", ["xochimilco"]],
+  tlalpan: ["MX", ["tlalpan"]],
+  cuajimalpa: ["MX", ["cuajimalpa"]],
+  "magdalena contreras": ["MX", ["magdalena contreras", "la magdalena contreras"]],
+  "alvaro obregon": ["MX", ["álvaro obregón", "alvaro obregon"]],
+  naucalpan: ["MX", ["naucalpan"]],
+  tlalnepantla: ["MX", ["tlalnepantla"]],
+  "cuautitlan izcalli": ["MX", ["cuautitlán izcalli", "cuautitlan izcalli"]],
+  metepec: ["MX", ["metepec"]],
+  tultitlan: ["MX", ["tultitlán", "tultitlan"]],
+  ecatepec: ["MX", ["ecatepec"]],
+  tlaquepaque: ["MX", ["tlaquepaque", "san pedro tlaquepaque"]],
+  "san pedro tlaquepaque": ["MX", ["tlaquepaque", "san pedro tlaquepaque"]],
+  tlajomulco: ["MX", ["tlajomulco de zúñiga", "tlajomulco", "tlajomulco de zuniga"]],
+  "tlajomulco de zuniga": ["MX", ["tlajomulco de zúñiga", "tlajomulco", "tlajomulco de zuniga"]],
+  "puerto vallarta": ["MX", ["puerto vallarta"]],
+  apodaca: ["MX", ["apodaca"]],
+  "san pedro garza garcia": ["MX", ["san pedro garza garcía", "san pedro garza garcia"]],
+  guadalupe: ["MX", ["guadalupe"]],
+  "san nicolas de los garza": ["MX", ["san nicolás de los garza", "san nicolas de los garza"]],
+  "santa catarina": ["MX", ["santa catarina"]],
+  veracruz: ["MX", ["veracruz"]],
+  mexicali: ["MX", ["mexicali"]],
+  torreon: ["MX", ["torreón", "torreon"]],
+  "playa del carmen": ["MX", ["playa del carmen"]],
+  reynosa: ["MX", ["reynosa"]],
+  guanajuato: ["MX", ["guanajuato"]],
+  celaya: ["MX", ["celaya"]],
+  "los cabos": ["MX", ["los cabos"]],
+  oaxaca: ["MX", ["oaxaca"]],
+  durango: ["MX", ["durango"]],
+  colima: ["MX", ["colima"]],
+  zacatecas: ["MX", ["zacatecas"]],
+  tlaxcala: ["MX", ["tlaxcala"]],
+  campeche: ["MX", ["campeche"]],
 
   // ── Oceanía ─────────────────────────────────────────────────────────
   sidney: ["AU", ["sydney", "sidney"]],
@@ -330,6 +377,49 @@ const CIUDADES: Record<string, [string, string[]]> = {
   cali: ["CO", ["cali"]],
   barranquilla: ["CO", ["barranquilla"]],
   bucaramanga: ["CO", ["bucaramanga"]],
+  // Colombia: los municipios del barrido de Careerjet (7 nov 2026), con sus
+  // tildes. Los departamentos no van (Santander, Bolívar, Sucre o Córdoba son
+  // también ciudades de otros países). Cartagena está en HOMONIMAS.
+  pereira: ["CO", ["pereira"]],
+  cucuta: ["CO", ["cúcuta", "cucuta"]],
+  ibague: ["CO", ["ibagué", "ibague"]],
+  manizales: ["CO", ["manizales"]],
+  "santa marta": ["CO", ["santa marta"]],
+  villavicencio: ["CO", ["villavicencio"]],
+  envigado: ["CO", ["envigado"]],
+  itagui: ["CO", ["itagüí", "itagui"]],
+  bello: ["CO", ["bello"]],
+  rionegro: ["CO", ["rionegro"]],
+  sabaneta: ["CO", ["sabaneta"]],
+  soacha: ["CO", ["soacha"]],
+  chia: ["CO", ["chía", "chia"]],
+  zipaquira: ["CO", ["zipaquirá", "zipaquira"]],
+  funza: ["CO", ["funza"]],
+  mosquera: ["CO", ["mosquera"]],
+  cota: ["CO", ["cota"]],
+  facatativa: ["CO", ["facatativá", "facatativa"]],
+  tunja: ["CO", ["tunja"]],
+  duitama: ["CO", ["duitama"]],
+  sogamoso: ["CO", ["sogamoso"]],
+  palmira: ["CO", ["palmira"]],
+  yumbo: ["CO", ["yumbo"]],
+  jamundi: ["CO", ["jamundí", "jamundi"]],
+  buenaventura: ["CO", ["buenaventura"]],
+  tulua: ["CO", ["tuluá", "tulua"]],
+  soledad: ["CO", ["soledad"]],
+  floridablanca: ["CO", ["floridablanca"]],
+  giron: ["CO", ["girón", "giron"]],
+  piedecuesta: ["CO", ["piedecuesta"]],
+  neiva: ["CO", ["neiva"]],
+  pasto: ["CO", ["pasto"]],
+  popayan: ["CO", ["popayán", "popayan"]],
+  armenia: ["CO", ["armenia"]],
+  monteria: ["CO", ["montería", "monteria"]],
+  valledupar: ["CO", ["valledupar"]],
+  sincelejo: ["CO", ["sincelejo"]],
+  riohacha: ["CO", ["riohacha"]],
+  yopal: ["CO", ["yopal"]],
+  barrancabermeja: ["CO", ["barrancabermeja"]],
   "buenos aires": ["AR", ["buenos aires"]],
   rosario: ["AR", ["rosario"]],
   mendoza: ["AR", ["mendoza"]],
@@ -400,6 +490,12 @@ const HOMONIMAS: Record<string, string[]> = {
   "east london": ["ZA", "UK"],
   // Nicosia de Chipre y el pueblo de Sicilia (6 nov 2026).
   nicosia: ["CY", "IT"],
+  // Municipios de México que también existen en España o en Brasil (7 nov
+  // 2026): Guadalupe (Cáceres), Durango (Vizcaya) y el estado brasileño de
+  // Santa Catarina, que tiene muchas más ofertas que el municipio de Nuevo León.
+  guadalupe: ["MX", "ES"],
+  durango: ["MX", "ES"],
+  "santa catarina": ["BR", "MX"],
   perth: ["AU", "UK"],
   birmingham: ["UK", "US"],
 };
@@ -449,4 +545,38 @@ export function aliasCiudad(ciudad: string): string[] {
   if (!entrada) return [c];
   // El nombre tal y como lo escribió el usuario va incluido siempre.
   return [...new Set([c, ...entrada[1].map(v => v.toLowerCase())])];
+}
+
+/**
+ * Los países que pueden ser esta ciudad: varios si se llama igual en varios
+ * sitios (HOMONIMAS), uno si no hay duda, ninguno si no la conocemos. Para las
+ * páginas públicas, que no tienen bandera: solo con uno se puede afirmar el país.
+ */
+export function paisesDeCiudad(ciudad: string): string[] {
+  const c = normalizar(ciudad);
+  if (!c) return [];
+  const primeraHom = c.split(/[\s,\-]+/)[0];
+  const varios = HOMONIMAS[c] ?? (primeraHom.length >= 5 ? HOMONIMAS[primeraHom] : undefined);
+  if (varios) return [...varios];
+  const pais = paisDeCiudad(c);
+  return pais ? [pais] : [];
+}
+
+/**
+ * Las ciudades de la tabla de un país, cada una con todas sus formas (para los
+ * autorrellenos de lib/sugerencias.ts). Las claves que son la misma ciudad
+ * ("cdmx" y "ciudad de mexico") salen una sola vez.
+ */
+export function ciudadesDePais(pais: string): string[][] {
+  const p = (pais || "").trim().toUpperCase();
+  const vistas = new Set<string>();
+  const grupos: string[][] = [];
+  for (const [clave, [codigo, formas]] of Object.entries(CIUDADES)) {
+    if (codigo !== p) continue;
+    const id = [...formas].sort().join("|");
+    if (vistas.has(id)) continue;
+    vistas.add(id);
+    grupos.push([...new Set([...formas, clave])]);
+  }
+  return grupos;
 }

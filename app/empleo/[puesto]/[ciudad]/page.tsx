@@ -5,7 +5,11 @@
  */
 
 import { Metadata } from "next";
-import { ofertasParecidas, type OfertaCorta } from "@/lib/job-search/ofertas-parecidas";
+import { ofertasParecidas, slug, type OfertaCorta } from "@/lib/job-search/ofertas-parecidas";
+import { paisesDeCiudad } from "@/lib/guzzi/ciudades-pais";
+import { paisPorVocabulario, puestosParecidos } from "@/lib/sugerencias";
+import { sueldoVisible } from "@/lib/sueldo-visible";
+import { PAISES } from "@/lib/paises";
 import Link from "next/link";
 import { DollarSign, Search } from "lucide-react";
 
@@ -82,17 +86,31 @@ export default async function EmpleoPage({
     console.error("[EmpleoPage] Error:", (e as Error).message);
   }
 
-  // Puestos relacionados
-  const puestosRelacionados = [
-    "camarero", "cocinero", "limpieza", "conductor", "electricista",
-    "dependiente", "programador", "enfermero", "administrativo",
-  ].filter(p => p !== puesto).slice(0, 6);
+  // DE QUÉ PAÍS ES LA PÁGINA (7 nov 2026). Proponía "vendedor en madrid" y
+  // "camarero" también en Medellín o Guadalajara (Jalisco). El país sale de la
+  // tabla de ciudades, sin consultar la base. Si la ciudad existe en varios
+  // países, decide el oficio ("mesero" no se dice en España) y, si no lo
+  // aclara, se queda como estaba (España). La moneda del sueldo solo se pone
+  // cuando la ciudad es de un país sin duda: si no, la cifra va sin moneda.
+  const candidatos = paisesDeCiudad(ciudadFmt);
+  const paisSeguro = candidatos.length === 1 ? candidatos[0] : null;
+  const paisPagina = paisSeguro
+    ?? (candidatos.length > 1 ? paisPorVocabulario(candidatos, puestoFmt) ?? (candidatos.includes("ES") ? "ES" : candidatos[0]) : "ES");
 
-  // Ciudades cercanas
-  const ciudadesCercanas = [
-    "madrid", "barcelona", "valencia", "sevilla", "zaragoza",
-    "bilbao", "malaga", "murcia", "valladolid", "alicante",
-  ].filter(c => c !== ciudad).slice(0, 6);
+  // Puestos relacionados y ciudades cercanas: en España, los de siempre.
+  const puestosRelacionados: { slug: string; nombre: string }[] = paisPagina === "ES"
+    ? [
+        "camarero", "cocinero", "limpieza", "conductor", "electricista",
+        "dependiente", "programador", "enfermero", "administrativo",
+      ].filter(p => p !== puesto).slice(0, 6).map(p => ({ slug: p, nombre: p }))
+    : puestosParecidos(paisPagina).map(p => ({ slug: slug(p), nombre: p })).filter(p => p.slug !== puesto).slice(0, 6);
+
+  const ciudadesCercanas: { slug: string; nombre: string }[] = paisPagina === "ES"
+    ? [
+        "madrid", "barcelona", "valencia", "sevilla", "zaragoza",
+        "bilbao", "malaga", "murcia", "valladolid", "alicante",
+      ].filter(c => c !== ciudad).slice(0, 6).map(c => ({ slug: c, nombre: c.replace(/-/g, " ") }))
+    : (PAISES[paisPagina]?.ciudades ?? []).map(c => ({ slug: slug(c), nombre: c })).filter(c => c.slug !== ciudad).slice(0, 6);
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #0f1a0a, #1a1a12)" }}>
@@ -146,7 +164,7 @@ export default async function EmpleoPage({
                     <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>{o.title}</h3>
                     <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{[o.company, (o.city || "").split(",")[0]].filter(Boolean).join(" · ")}</p>
                     {sueldoValido(o.salary) && (
-                      <p className="text-xs font-semibold mt-1 flex items-center gap-1" style={{ color: "#22c55e" }}><DollarSign size={11} />{sueldoValido(o.salary)}</p>
+                      <p className="text-xs font-semibold mt-1 flex items-center gap-1" style={{ color: "#22c55e" }}><DollarSign size={11} />{sueldoVisible(sueldoValido(o.salary)!, paisSeguro)}</p>
                     )}
                   </div>
                   <Link href={`/empleo/oferta/${o.id}`}
@@ -185,10 +203,10 @@ export default async function EmpleoPage({
           </h3>
           <div className="flex flex-wrap gap-2">
             {puestosRelacionados.map(p => (
-              <Link key={p} href={`/empleo/${p}/${ciudad}`}
+              <Link key={p.slug} href={`/empleo/${p.slug}/${ciudad}`}
                 className="px-3 py-1.5 rounded-lg text-xs transition hover:opacity-80"
                 style={{ background: "rgba(126,213,111,0.08)", border: "1px solid rgba(126,213,111,0.15)", color: "#22c55e" }}>
-                {p} en {ciudadFmt}
+                {p.nombre} en {ciudadFmt}
               </Link>
             ))}
           </div>
@@ -201,10 +219,10 @@ export default async function EmpleoPage({
           </h3>
           <div className="flex flex-wrap gap-2">
             {ciudadesCercanas.map(c => (
-              <Link key={c} href={`/empleo/${puesto}/${c}`}
+              <Link key={c.slug} href={`/empleo/${puesto}/${c.slug}`}
                 className="px-3 py-1.5 rounded-lg text-xs transition hover:opacity-80"
                 style={{ background: "rgba(240,192,64,0.08)", border: "1px solid rgba(240,192,64,0.15)", color: "#f0c040" }}>
-                {puestoFmt} en {c.replace(/-/g, " ")}
+                {puestoFmt} en {c.nombre}
               </Link>
             ))}
           </div>

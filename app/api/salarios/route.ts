@@ -8,6 +8,17 @@ import { normalizarPais } from "@/lib/origen/movilidad";
 import { readFileSync } from "fs";
 import { resumirSalarios } from "@/lib/salarios/anual";
 import { join } from "path";
+import { expandirPuesto } from "@/lib/job-search/sinonimos-puesto";
+
+/**
+ * "mesero" → "camarero", "chofer" → "conductor", "plomero" → "fontanero": la
+ * clave de la tabla de referencia para los oficios como se dicen fuera de
+ * España (7 nov 2026). Sin esto, quien buscaba "mesero" en México se llevaba la
+ * cifra genérica de cualquier oficio. Solo se usa si nada casaba antes.
+ */
+function claveDeReferencia(puesto: string, referencias: Record<string, unknown>): string | undefined {
+  return expandirPuesto(puesto).find((v) => Object.prototype.hasOwnProperty.call(referencias, v));
+}
 
 export const dynamic = "force-dynamic";
 
@@ -335,6 +346,10 @@ function obtenerDatosReferencia(puesto: string): {
       }
     }
   }
+  if (!match) {
+    const clave = claveDeReferencia(puestoNorm, referencias);
+    if (clave) match = referencias[clave];
+  }
   if (!match) match = { min: 18000, avg: 24000, max: 36000 };
 
   // Generar datos por provincia usando salario mínimo real de España como base
@@ -452,6 +467,10 @@ function obtenerDatosReferenciaPais(puesto: string, pais: string): {
         break;
       }
     }
+  }
+  if (!match) {
+    const clave = claveDeReferencia(puestoClean, referencias);
+    if (clave) match = referencias[clave];
   }
   if (!match) match = { min: 18000, avg: 24000, max: 36000 };
 

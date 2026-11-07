@@ -12,6 +12,8 @@ import { destinoSeguro } from "@/lib/auth/destino";
 import { sugerenciaCorreo } from "@/lib/auth/sugerencia-correo";
 import { llegadaDeEstaVisita, COMO_NOS_CONOCIO } from "@/lib/origen/llegada";
 import { dondeEstoy } from "@/lib/origen/donde-estoy";
+import { useSugerencias } from "@/components/Sugerencias";
+import { ciudadesDe, ejemploCiudades, ejemploPuestos } from "@/lib/sugerencias";
 import { plataforma } from "@/lib/utils/platform";
 
 /** La bandeja de entrada de los correos más comunes, para confirmar con un toque. */
@@ -65,6 +67,14 @@ function RegistroPageInner() {
   const [registrado, setRegistrado] = useState(false);
   const [error, setError] = useState("");
   const [reenvio, setReenvio] = useState<"" | "enviando" | "hecho" | "error">("");
+
+  // Los ejemplos y las ciudades sugeridas, del país donde está la persona: "Ej:
+  // Madrid, Barcelona..." solo en España (lib/sugerencias.ts). Se mira en el
+  // navegador, después de pintar, para que no cambie el HTML del servidor.
+  const [paisDeAqui, setPaisDeAqui] = useState<string | null>(null);
+  useEffect(() => { setPaisDeAqui(dondeEstoy()); }, []);
+  const opcionesCiudad = useMemo(() => ciudadesDe(paisDeAqui), [paisDeAqui]);
+  const sugCiudad = useSugerencias({ id: "sugerencias-ciudad", valor: ciudad, opciones: opcionesCiudad, onElegir: setCiudad });
 
   /** Si el email de confirmación se pierde o cae en spam, sin esto el usuario
    *  se quedaba atrapado: el registro no lo reenvía y el login solo dice
@@ -364,17 +374,20 @@ function RegistroPageInner() {
 
                 <div>
                   <label htmlFor="ciudad" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>Ciudad <span style={{ color: "#64748b" }}>(opcional)</span></label>
-                  <input id="ciudad" type="text" value={ciudad} onChange={(e) => setCiudad(e.target.value)}
-                    placeholder="Ej: Madrid, Barcelona..."
-                    autoComplete="off"
-                    className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
+                  <div className="relative">
+                    <input id="ciudad" type="text" value={ciudad} onChange={(e) => setCiudad(e.target.value)}
+                      placeholder={ejemploCiudades(paisDeAqui)}
+                      {...sugCiudad.propsCampo}
+                      className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
+                    {sugCiudad.lista}
+                  </div>
                   <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>Te avisaremos cuando haya ofertas en tu zona</p>
                 </div>
 
                 <div>
                   <label htmlFor="oficio" className="block text-xs font-medium mb-1.5" style={{ color: "#94a3b8" }}>¿De qué buscas trabajo? <span style={{ color: "#64748b" }}>(opcional)</span></label>
                   <input id="oficio" type="text" value={oficio} onChange={(e) => setOficio(e.target.value)}
-                    placeholder="Ej: camarera, mozo de almacén, cuidador…"
+                    placeholder={ejemploPuestos(paisDeAqui)}
                     maxLength={80} autoComplete="organization-title"
                     className="w-full rounded-lg px-3.5 py-2.5 text-sm" style={inputStyle} />
                   <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>Así Guzzi te dice qué curso te piden y dónde sacarlo gratis</p>
