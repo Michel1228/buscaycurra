@@ -125,10 +125,9 @@ export default function EnviosPage() {
       const { data: { session } } = await getSupabaseBrowser().auth.getSession();
       if (!session) { router.push("/auth/login"); return; }
 
-      const cabeceras = { "Authorization": `Bearer ${session.access_token}` };
       const [res, resAlertas] = await Promise.all([
-        fetch("/api/cv-sender/status", { headers: cabeceras }),
-        fetch("/api/jobs/alertas", { headers: cabeceras }).catch(() => null),
+        fetch("/api/cv-sender/status", { headers: { "Authorization": `Bearer ${session.access_token}` } }),
+        fetch("/api/jobs/alertas", { headers: { "Authorization": `Bearer ${session.access_token}` } }).catch(() => null),
       ]);
       if (res.ok) {
         const data = await res.json();
