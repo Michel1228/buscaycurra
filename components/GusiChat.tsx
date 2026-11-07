@@ -259,10 +259,19 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
   // abren el chat con ?q=: aquí se deja escrito en la caja, sin mandarlo. Lo
   // manda la persona (y así tampoco se manda otra vez al recargar). Antes el
   // buscador ya enlazaba con ?q= y el texto se perdía.
+  // Y con ?foto=1 (el "Probar con una foto" de Automatizaciones) se ilumina el
+  // botón de la cámara un rato: el navegador no deja abrirla sin que se toque.
+  const [resaltarCamara, setResaltarCamara] = useState(false);
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("q");
-    if (!q) return;
-    setInput(q.slice(0, 500));
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    const foto = params.get("foto") === "1";
+    if (!q && !foto) return;
+    if (q) setInput(q.slice(0, 500));
+    if (foto) {
+      setResaltarCamara(true);
+      setTimeout(() => setResaltarCamara(false), 12000);
+    }
     window.history.replaceState(window.history.state, "", window.location.pathname);
   }, []);
   const [cargando, setCargando] = useState(false);
@@ -999,9 +1008,11 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                 <Paperclip className="w-5 h-5" />
               </button>
               <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleFile} />
-              <button onClick={() => imageRef.current?.click()} title="Foto de cartel/tienda (OCR)" aria-label="Hacer foto"
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0"
-                style={{ background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
+              <button onClick={() => { setResaltarCamara(false); imageRef.current?.click(); }} title="Foto de cartel/tienda (OCR)" aria-label="Hacer foto"
+                className={`w-9 h-9 rounded-lg flex items-center justify-center text-base transition hover:opacity-80 shrink-0 ${resaltarCamara ? "animate-pulse" : ""}`}
+                style={resaltarCamara
+                  ? { background: "rgba(163,230,53,0.15)", color: "#d9f99d", border: "1px solid #a3e635", boxShadow: "0 0 0 3px rgba(163,230,53,0.25), 0 0 18px rgba(163,230,53,0.6)" }
+                  : { background: "#1e212b", color: "#64748b", border: "1px solid #2d3142" }}>
                 <Camera className="w-5 h-5" />
               </button>
               <input ref={imageRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImage} />

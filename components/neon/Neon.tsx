@@ -178,9 +178,10 @@ export function CifraGrande({ tono, Icono, valor, etiqueta, href, nota }: {
 }) {
   const contenido = (
     <>
-      <IconoCirculo Icono={Icono} tono={tono} size={40} />
+      <span className="sm:hidden"><IconoCirculo Icono={Icono} tono={tono} size={34} /></span>
+      <span className="hidden sm:inline-flex"><IconoCirculo Icono={Icono} tono={tono} size={40} /></span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[26px] sm:text-[30px] font-extrabold leading-none tracking-tight tabular-nums" style={{ color: "var(--tono-texto)" }}>
+        <span className="block text-[24px] sm:text-[30px] font-extrabold leading-none tracking-tight tabular-nums" style={{ color: "var(--tono-texto)" }}>
           {typeof valor === "number" ? cifra(valor) : valor}
         </span>
         <span className="block mt-1.5 text-[13px] leading-tight" style={{ color: "#cbd5e1" }}>{etiqueta}</span>
@@ -189,7 +190,7 @@ export function CifraGrande({ tono, Icono, valor, etiqueta, href, nota }: {
       {href && <ChevronRight size={18} className="hidden sm:block shrink-0 opacity-60" aria-hidden="true" />}
     </>
   );
-  const clases = `cristal tono-${tono} flex flex-col items-start gap-3 sm:flex-row sm:items-center p-4 min-h-[96px]`;
+  const clases = `cristal tono-${tono} flex items-center gap-2.5 sm:gap-3 p-3.5 sm:p-4 min-h-[84px] sm:min-h-[96px]`;
   return href ? (
     <Link href={href} className={`${clases} cristal-enlace`}>{contenido}</Link>
   ) : (

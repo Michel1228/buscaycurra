@@ -564,6 +564,10 @@ export default function AppNavWrapper() {
                 );
               }
               if (hueco === "MAS") {
+                // "Más" se enciende también cuando estás en una sección que no
+                // tiene hueco abajo (Pipeline, Automatizaciones…): así se sabe dónde estás.
+                const fuera = !SECCIONES.some((x) => (BARRA_ABAJO as readonly string[]).includes(x.href) && seccionActiva(pathname, x));
+                const masActivo = mobileOpen || fuera;
                 return (
                   <li key={hueco}>
                     <button
@@ -572,8 +576,8 @@ export default function AppNavWrapper() {
                       aria-expanded={mobileOpen}
                       className="w-full h-full flex flex-col items-center justify-center gap-1"
                     >
-                      <NavIcon name="mas" size={22} activo={mobileOpen} />
-                      <span className="text-[11px] font-medium" style={{ color: mobileOpen ? "#d9f99d" : "#a7b3c6" }}>Más</span>
+                      <NavIcon name="mas" size={22} activo={masActivo} />
+                      <span className="text-[11px] font-medium" style={{ color: masActivo ? "#d9f99d" : "#a7b3c6" }}>Más</span>
                     </button>
                   </li>
                 );

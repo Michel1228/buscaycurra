@@ -382,12 +382,13 @@ export default function PipelinePage() {
                 onClick={() => setFiltroActivo(activo ? null : s.filtro)}
                 title={s.tooltip}
                 aria-pressed={activo}
-                className={`cristal cristal-enlace tono-${s.tono} flex flex-col items-start gap-3 sm:flex-row sm:items-center p-4 min-h-[96px] text-left`}
+                className={`cristal cristal-enlace tono-${s.tono} flex items-center gap-2.5 sm:gap-3 p-3.5 sm:p-4 min-h-[84px] sm:min-h-[96px] text-left`}
                 style={{ opacity: filtroActivo && !activo ? 0.55 : 1, borderColor: activo ? "rgba(var(--tono),0.8)" : undefined }}
               >
-                <IconoCirculo Icono={s.Icono} tono={s.tono} size={40} />
+                <span className="sm:hidden"><IconoCirculo Icono={s.Icono} tono={s.tono} size={34} /></span>
+                <span className="hidden sm:inline-flex"><IconoCirculo Icono={s.Icono} tono={s.tono} size={40} /></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[26px] sm:text-[30px] font-extrabold leading-none tabular-nums" style={{ color: "var(--tono-texto)" }}>{cifra(s.valor)}</span>
+                  <span className="block text-[24px] sm:text-[30px] font-extrabold leading-none tabular-nums" style={{ color: "var(--tono-texto)" }}>{cifra(s.valor)}</span>
                   <span className="block mt-1.5 text-[13px]" style={{ color: "#cbd5e1" }}>{s.label}</span>
                   {s.filtro === "entrevista" && s.valor === 0 && (
                     <span className="block text-[11px] mt-0.5" style={{ color: "var(--texto-tenue)" }}>0 entrevistas</span>
