@@ -27,9 +27,10 @@
 export const VERIFICADO_EL = "10 de octubre de 2026";
 
 export const DATOS = {
-  /** 2.919.004 ofertas activas el 10 oct 2026. Se enseña "2,9 millones". */
-  ofertasActivas: 2_900_000,
-  ofertasActivasTexto: "2,9 millones",
+  /** 3.771.047 ofertas activas el 7 nov 2026 (contadas en la base de producción;
+   *  el 10 oct eran 2.919.004). Se enseña "3,7 millones". */
+  ofertasActivas: 3_700_000,
+  ofertasActivasTexto: "3,7 millones",
 
   /** 454.639 nuevas en los últimos 7 días → 64.948 al día. */
   ofertasNuevasDia: 60_000,
