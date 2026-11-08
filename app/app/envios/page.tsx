@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import Link from "next/link";
 import UsageCounter from "@/components/UsageCounter";
+import InfoTooltip from "@/components/InfoTooltip";
 import MisAlertas from "@/components/MisAlertas";
 import { CabeceraPantalla, CifraGrande, TituloSeccion, AccionRapida, IconoCirculo, cifra, type Tono } from "@/components/neon/Neon";
 import LogoEmpresa from "@/components/neon/LogoEmpresa";
@@ -73,9 +74,10 @@ const STATUS_COLOR: Record<string, string> = {
 // "entregado" y "rebotado" los pone el aviso de entrega de Resend (017_cv_sends_entrega):
 // antes salían en minúscula, sin color y fuera de los filtros.
 // "Visto" lo pone una imagen invisible en el correo que muchos programas
-// bloquean o abren solos: se dice "Quizá visto", porque no es seguro.
+// bloquean o abren solos. Se dice "Visto", como siempre, con un ⓘ al lado que
+// lo explica (EXPLICACION_VISTO): es orientativo.
 const STATUS_TEXTO: Record<string, string> = {
-  pendiente: "Programado", enviado: "Enviado", entregado: "Entregado", visto: "Quizá visto",
+  pendiente: "Programado", enviado: "Enviado", entregado: "Entregado", visto: "Visto",
   respondido: "Respondido", fallido: "Falló", rebotado: "No llegó", cancelado: "Cancelado",
 };
 /** Cada filtro y los estados que recoge: "Enviado" incluye los ya entregados. */
@@ -87,6 +89,7 @@ const FILTROS: { id: string; estados: string[] }[] = [
   { id: "respondido", estados: ["respondido"] },
   { id: "fallido", estados: ["fallido", "rebotado"] },
 ];
+const EXPLICACION_VISTO = "Lo sabemos cuando su programa de correo carga las imágenes; algunos lo hacen solos y otros lo bloquean, así que es orientativo.";
 const textoEstado = (s: string) => STATUS_TEXTO[s] ?? s.charAt(0).toUpperCase() + s.slice(1);
 
 // Cómo va una candidatura de principio a fin. Cada paso es algo que la
@@ -308,7 +311,7 @@ export default function EnviosPage() {
             <TituloSeccion id="titulo-lista" Icono={Send} titulo="Lo que he enviado" />
 
             {/* Filtros */}
-            <div className="flex gap-2 flex-wrap mb-4" role="group" aria-label="Filtrar envíos">
+            <div className="flex gap-2 flex-wrap items-center mb-4" role="group" aria-label="Filtrar envíos">
               {FILTROS.map(({ id: f }) => (
                 <button key={f} onClick={() => setFiltro(f)}
                   aria-pressed={filtro === f}
@@ -323,6 +326,9 @@ export default function EnviosPage() {
                   {f !== "todos" && contadores[f] ? ` (${contadores[f]})` : ""}
                 </button>
               ))}
+              <span className="inline-flex items-center gap-1 text-[12px]" style={{ color: "var(--texto-tenue)" }}>
+                «Visto» <InfoTooltip text={EXPLICACION_VISTO} position="bottom" />
+              </span>
             </div>
 
             {/* Lista */}
@@ -354,10 +360,13 @@ export default function EnviosPage() {
                       </span>
                     </button>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-bold"
-                        style={{ background: `${STATUS_COLOR[envio.status] ?? "#94a3b8"}22`, color: STATUS_COLOR[envio.status] ?? "#94a3b8" }}>
-                        <StatusIcon status={envio.status} size={12} />
-                        {textoEstado(envio.status)}
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-bold"
+                          style={{ background: `${STATUS_COLOR[envio.status] ?? "#94a3b8"}22`, color: STATUS_COLOR[envio.status] ?? "#94a3b8" }}>
+                          <StatusIcon status={envio.status} size={12} />
+                          {textoEstado(envio.status)}
+                        </span>
+                        {envio.status === "visto" && <InfoTooltip text={EXPLICACION_VISTO} position="left" />}
                       </span>
                       <div className="flex gap-1">
                         {envio.status === "pendiente" && (

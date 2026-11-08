@@ -45,10 +45,12 @@ interface Candidatura {
 }
 
 // "Visto" lo pone una imagen invisible en el correo, y muchos programas de
-// correo la bloquean o la abren solos: no es seguro, y la columna lo dice.
+// correo la bloquean o la abren solos: no es seguro. La etiqueta es la de
+// siempre ("Visto por empresa"; Michel no quiere la versión con "quizá", 8 nov 2026) y
+// el ⓘ de la columna lo explica en una frase.
 const COLUMNAS: { id: EstadoCandidatura; label: string; tono: Tono; Icono: LucideIcon; tip: string }[] = [
   { id: "enviado", label: "Enviado", tono: "verde", Icono: Send, tip: "CV enviado. Acabas de aplicar a esta oferta y estás esperando respuesta." },
-  { id: "visto_empresa", label: "Quizá visto", tono: "morado", Icono: Eye, tip: "Se pone sola si el correo parece abierto, pero no es seguro: lo detecta una imagen invisible que muchos programas de correo bloquean o abren solos. También puedes moverla tú." },
+  { id: "visto_empresa", label: "Visto por empresa", tono: "morado", Icono: Eye, tip: "Lo sabemos cuando su programa de correo carga las imágenes; algunos lo hacen solos y otros lo bloquean, así que es orientativo." },
   { id: "en_revision", label: "En revisión", tono: "cian", Icono: Hourglass, tip: "La empresa está revisando tu candidatura. ¡Buen momento para prepararte con Guzzi!" },
   { id: "entrevista", label: "Entrevista", tono: "ambar", Icono: CalendarCheck, tip: "Te han contactado para una entrevista. Prepara respuestas y negocia con datos reales de salarios." },
   { id: "oferta", label: "Oferta", tono: "lima", Icono: Trophy, tip: "La empresa te ha hecho una oferta económica. Negocia con datos reales del mercado." },
