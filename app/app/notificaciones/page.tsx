@@ -311,7 +311,7 @@ export default function NotificacionesPage() {
            style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}>
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: "#22c55e" }}>Notificaciones</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Notificaciones</h1>
             <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
               {notifs.length} notificación{notifs.length !== 1 ? "es" : ""} · {sinLeer} sin leer · {enviadosHoy}/{limiteDiario} envíos hoy
             </p>
@@ -364,7 +364,7 @@ export default function NotificacionesPage() {
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>
               {filtro === "no_leidas" ? "No tienes notificaciones pendientes" : "No tienes notificaciones"}
             </p>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>Las alertas de empleo aparecerán aquí</p>
+            <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Las alertas de empleo aparecerán aquí</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -395,11 +395,11 @@ export default function NotificacionesPage() {
                           <h4 className="text-xs font-semibold" style={{ color: n.leida ? "#94a3b8" : "#f1f5f9" }}>
                             {n.titulo}
                           </h4>
-                          <span className="text-[10px] shrink-0" style={{ color: "#6b7280" }}>
+                          <span className="text-[10px] shrink-0" style={{ color: "#8b98ad" }}>
                             {formatFecha(n.created_at)}
                           </span>
                         </div>
-                        <p className="text-[11px] mt-1 leading-relaxed" style={{ color: "#64748b" }}>
+                        <p className="text-[11px] mt-1 leading-relaxed" style={{ color: "#8b98ad" }}>
                           {n.mensaje}
                         </p>
                         {alerta && (
@@ -411,7 +411,7 @@ export default function NotificacionesPage() {
                                 : <><ChevronDown size={10} />Ver {datos.total || ""} oferta{parseInt(datos.total || "1") !== 1 ? "s" : ""}</>}
                             </span>
                             {datos.keyword && (
-                              <span className="text-[10px]" style={{ color: "#6b7280" }}>
+                              <span className="text-[10px]" style={{ color: "#8b98ad" }}>
                                 "{datos.keyword}"{datos.location ? ` · ${datos.location}` : ""}
                               </span>
                             )}
@@ -431,7 +431,7 @@ export default function NotificacionesPage() {
                         <div className="flex items-center gap-2 py-4">
                           <div className="animate-spin rounded-full h-4 w-4"
                             style={{ border: "2px solid #2d3142", borderTopColor: "#22c55e" }} />
-                          <span className="text-[11px]" style={{ color: "#64748b" }}>Cargando ofertas...</span>
+                          <span className="text-[11px]" style={{ color: "#8b98ad" }}>Cargando ofertas...</span>
                         </div>
                       ) : ofertas.length === 0 ? (
                         // Decia "prueba a buscar en el buscador" sin nada que
@@ -439,13 +439,13 @@ export default function NotificacionesPage() {
                         // notificacion: dejarlo con un consejo y ninguna salida
                         // es perderlo en el ultimo paso.
                         <div className="py-3">
-                          <p className="text-[11px]" style={{ color: "#64748b" }}>
+                          <p className="text-[11px]" style={{ color: "#8b98ad" }}>
                             Estas ofertas ya se han cerrado. Pasa a menudo: duran poco.
                           </p>
                           <button
                             onClick={(e) => { e.stopPropagation(); router.push("/app/buscar"); }}
                             className="mt-2 text-[11px] font-medium px-3 py-2 rounded-lg"
-                            style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#22c55e" }}>
+                            style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#22c55e" }}>
                             Buscar ofertas parecidas
                           </button>
                         </div>
@@ -487,7 +487,7 @@ export default function NotificacionesPage() {
                                   <button
                                     onClick={() => router.push(`/app/ofertas/${encodeURIComponent(o.id)}`)}
                                     className="text-[10px] px-2.5 py-1.5 rounded-lg font-medium flex items-center gap-1 transition"
-                                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid #2d3142", color: "#94a3b8" }}
+                                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}
                                   >
                                     <ExternalLink size={10} />Ver
                                   </button>

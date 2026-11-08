@@ -125,8 +125,8 @@ function ReviewsPageInner() {
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.08), rgba(168,85,247,0.05))" }}>
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Reviews de empresas</h1>
-          <p className="text-xs mt-1" style={{ color: "#64748b" }}>Opiniones reales de quienes han trabajado o aplicado</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Reviews de empresas</h1>
+          <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Opiniones reales de quienes han trabajado o aplicado</p>
         </div>
       </div>
 
@@ -146,12 +146,12 @@ function ReviewsPageInner() {
           </div>
           {!company && (
             <div className="mt-3">
-              <p className="text-[10px] mb-2" style={{ color: "#6b7280" }}>Empresas más buscadas:</p>
+              <p className="text-[10px] mb-2" style={{ color: "#8b98ad" }}>Empresas más buscadas:</p>
               <div className="flex flex-wrap gap-1.5">
                 {EMPRESAS_POPULARES.map(emp => (
                   <button key={emp} onClick={() => setCompany(emp)}
                     className="text-[11px] px-2.5 py-1 rounded-md transition hover:opacity-80"
-                    style={{ background: "#161922", border: "1px solid #2d3142", color: "#94a3b8" }}>
+                    style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
                     {emp}
                   </button>
                 ))}
@@ -166,7 +166,7 @@ function ReviewsPageInner() {
               <div className="text-center">
                 <p className="text-3xl font-bold" style={{ color: "#f59e0b" }}>{stats.avgRating}</p>
                 <div className="flex justify-center mt-0.5">{renderStars(Math.round(parseFloat(stats.avgRating)))}</div>
-                <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>{stats.total} reviews</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#8b98ad" }}>{stats.total} reviews</p>
               </div>
               <div className="flex-1 min-w-[180px]">
                 {[5, 4, 3, 2, 1].map(star => {
@@ -174,19 +174,19 @@ function ReviewsPageInner() {
                   const pct = stats.total > 0 ? (count / stats.total) * 100 : 0;
                   return (
                     <div key={star} className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[10px] w-2" style={{ color: "#64748b" }}>{star}</span>
+                      <span className="text-[10px] w-2" style={{ color: "#8b98ad" }}>{star}</span>
                       <Star size={12} strokeWidth={0} fill="#f59e0b" />
                       <div className="flex-1 h-1 rounded-full" style={{ background: "#252836" }}>
                         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "#f59e0b" }} />
                       </div>
-                      <span className="text-[10px] w-5 text-right" style={{ color: "#6b7280" }}>{count}</span>
+                      <span className="text-[10px] w-5 text-right" style={{ color: "#8b98ad" }}>{count}</span>
                     </div>
                   );
                 })}
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold" style={{ color: "#22c55e" }}>{stats.recommendPct}%</p>
-                <p className="text-[10px]" style={{ color: "#64748b" }}>Recomiendan</p>
+                <p className="text-[10px]" style={{ color: "#8b98ad" }}>Recomiendan</p>
               </div>
             </div>
           </div>
@@ -219,7 +219,7 @@ function ReviewsPageInner() {
               Recomendaría esta empresa
             </label>
             <div className="flex gap-2">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2 rounded-lg text-[11px]" style={{ border: "1px solid #2d3142", color: "#64748b" }}>Cancelar</button>
+              <button onClick={() => setShowForm(false)} className="flex-1 py-2 rounded-lg text-[11px]" style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#8b98ad" }}>Cancelar</button>
               <button onClick={submitReview} disabled={submitting || !rating} className="flex-1 btn-game text-[11px] disabled:opacity-50">
                 {submitting ? "Enviando..." : "Publicar"}
               </button>
@@ -232,13 +232,13 @@ function ReviewsPageInner() {
             <div key={r.id} className="card-game p-4">
               <div className="flex items-center justify-between mb-2">
                 {renderStars(r.rating)}
-                <span className="text-[10px]" style={{ color: "#6b7280" }}>{new Date(r.created_at).toLocaleDateString("es-ES")}</span>
+                <span className="text-[10px]" style={{ color: "#8b98ad" }}>{new Date(r.created_at).toLocaleDateString("es-ES")}</span>
               </div>
               {r.title && <p className="font-semibold text-xs mb-1" style={{ color: "#f1f5f9" }}>{r.title}</p>}
               {r.comment && <p className="text-xs mb-2" style={{ color: "#94a3b8" }}>{r.comment}</p>}
               <div className="flex gap-3 text-[11px]">
-                {r.pros && <div className="flex items-start gap-1"><Check size={12} strokeWidth={2.5} style={{ color: "#22c55e" }} className="shrink-0 mt-0.5" /><span style={{ color: "#64748b" }}>{r.pros}</span></div>}
-                {r.cons && <div className="flex items-start gap-1"><X size={12} strokeWidth={2.5} style={{ color: "#ef4444" }} className="shrink-0 mt-0.5" /><span style={{ color: "#64748b" }}>{r.cons}</span></div>}
+                {r.pros && <div className="flex items-start gap-1"><Check size={12} strokeWidth={2.5} style={{ color: "#22c55e" }} className="shrink-0 mt-0.5" /><span style={{ color: "#8b98ad" }}>{r.pros}</span></div>}
+                {r.cons && <div className="flex items-start gap-1"><X size={12} strokeWidth={2.5} style={{ color: "#ef4444" }} className="shrink-0 mt-0.5" /><span style={{ color: "#8b98ad" }}>{r.cons}</span></div>}
               </div>
               {r.would_recommend !== null && (
                 <p className="text-[10px] mt-1.5" style={{ color: r.would_recommend ? "#22c55e" : "#ef4444" }}>
@@ -253,7 +253,7 @@ function ReviewsPageInner() {
           <div className="card-game p-8 text-center">
             <Star size={36} strokeWidth={0} fill="#f59e0b" className="mx-auto mb-2" />
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Sin reviews todavía</p>
-            <p className="text-xs" style={{ color: "#64748b" }}>Sé el primero en opinar sobre {company}</p>
+            <p className="text-xs" style={{ color: "#8b98ad" }}>Sé el primero en opinar sobre {company}</p>
           </div>
         )}
       </main>

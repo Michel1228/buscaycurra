@@ -94,7 +94,7 @@ function ReferidosPageInner() {
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(245,158,11,0.05))" }}>
         <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-xl font-bold mb-1" style={{ color: "#f1f5f9" }}>Invita a un amigo y ganáis los dos</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Invita a un amigo y ganáis los dos</h1>
           <p className="text-xs" style={{ color: "#94a3b8" }}>Para quien también esté buscando trabajo</p>
         </div>
       </div>
@@ -116,7 +116,7 @@ function ReferidosPageInner() {
               <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Por llegar con tu enlace.</p>
             </div>
           </div>
-          <p className="text-[11px] mt-3" style={{ color: "#64748b" }}>
+          <p className="text-[11px] mt-3" style={{ color: "#8b98ad" }}>
             Los extras se usan cuando se te acaban los de tu plan y no caducan. Hasta {datos?.topeAlMes ?? 10} amigos al mes.
           </p>
         </div>
@@ -130,7 +130,7 @@ function ReferidosPageInner() {
             ].map(c => (
               <div key={c.t} className="card-game p-3 text-center">
                 <p className="text-xl font-bold" style={{ color: "#22c55e" }}>{c.n}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>{c.t}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "#8b98ad" }}>{c.t}</p>
               </div>
             ))}
           </div>
@@ -149,7 +149,7 @@ function ReferidosPageInner() {
             </a>
             <button onClick={copiarLink}
               className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition hover:opacity-80"
-              style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}>
+              style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}>
               {copiado ? "¡Copiado!" : "Copiar enlace"}
             </button>
           </div>
@@ -171,7 +171,7 @@ function ReferidosPageInner() {
               Canjear
             </button>
           </div>
-          <p className="text-[11px] mt-2" style={{ color: "#64748b" }}>Para cuentas creadas en el último mes.</p>
+          <p className="text-[11px] mt-2" style={{ color: "#8b98ad" }}>Para cuentas creadas en el último mes.</p>
           {canjearMsg && <p className="text-[11px] mt-2" style={{ color: "#22c55e" }}>{canjearMsg}</p>}
           {canjearError && <p className="text-[11px] mt-2" style={{ color: "#ef4444" }}>{canjearError}</p>}
         </div>

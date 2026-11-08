@@ -39,9 +39,9 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
   const textSize = compact ? "text-[10px]" : "text-[11px]";
 
   return (
-    <div className="px-3 py-1.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+    <div className="px-3 py-1.5" style={{ borderBottom: "1px solid rgba(163,230,53,0.12)", background: "rgba(8,11,16,0.82)" }}>
       {!compact && (
-        <p className="text-[10px] font-medium mb-1.5" style={{ color: "#6b7280" }}>
+        <p className="text-[10px] font-medium mb-1.5" style={{ color: "#8b98ad" }}>
           Plan {usage.planName}
         </p>
       )}
@@ -49,7 +49,7 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
       {/* Guzzi consultas */}
       {!usage.guzzi.unlimited && usage.guzzi.max && (
         <div className="flex items-center gap-2 mb-1">
-          <span className={textSize + " w-16 flex-shrink-0"} style={{ color: "#64748b" }}>
+          <span className={textSize + " w-16 flex-shrink-0"} style={{ color: "#8b98ad" }}>
             Guzzi
           </span>
           <div className="flex-1 rounded-full overflow-hidden" style={{ height: barH, background: "rgba(255,255,255,0.05)" }}>
@@ -63,7 +63,7 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
               }}
             />
           </div>
-          <span className={textSize + " w-14 text-right flex-shrink-0"} style={{ color: "#64748b" }}>
+          <span className={textSize + " w-14 text-right flex-shrink-0"} style={{ color: "#8b98ad" }}>
             {usage.guzzi.remaining !== null ? `${usage.guzzi.remaining} quedan` : "∞"}
           </span>
         </div>
@@ -72,7 +72,7 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
       {/* Envíos CV hoy */}
       {usage.envios.maxDia > 0 && (
         <div className="flex items-center gap-2">
-          <span className={textSize + " w-16 flex-shrink-0"} style={{ color: "#64748b" }}>
+          <span className={textSize + " w-16 flex-shrink-0"} style={{ color: "#8b98ad" }}>
             Envíos
           </span>
           <div className="flex-1 rounded-full overflow-hidden" style={{ height: barH, background: "rgba(255,255,255,0.05)" }}>
@@ -86,7 +86,7 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
               }}
             />
           </div>
-          <span className={textSize + " text-right flex-shrink-0 whitespace-nowrap"} style={{ color: "#64748b" }}>
+          <span className={textSize + " text-right flex-shrink-0 whitespace-nowrap"} style={{ color: "#8b98ad" }}>
             {enviosQuedan} quedan{usage.envios.extra ? ` · +${usage.envios.extra} extra` : ""}
           </span>
         </div>
