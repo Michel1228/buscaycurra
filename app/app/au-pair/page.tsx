@@ -638,15 +638,15 @@ export default function AuPairProfilePage() {
     <main className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
       {/* Hero con pestañas Au Pair / Live-in Nanny */}
       <section className="pt-20 pb-10 px-4 sm:px-6 max-w-3xl mx-auto text-center">
-        <div className="flex justify-center mb-4"><Users size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
+        <div className="flex justify-center mb-4"><span className="icono-circulo tono-rosa" style={{ width: 72, height: 72 }} aria-hidden="true"><Users size={32} strokeWidth={1.4} /></span></div>
         
         {/* Pestañas */}
-        <div className="inline-flex bg-[#111827] border border-[#2d3142] rounded-xl p-1 mb-6">
+        <div className="inline-flex bg-[#111827] border border-[rgba(148,163,184,0.18)] rounded-xl p-1 mb-6">
           <button
             onClick={() => setModo("au_pair")}
             className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
               modo === "au_pair"
-                ? "bg-[#22c55e] text-black shadow-lg shadow-[#22c55e]/20"
+                ? "fondo-lima shadow-lg shadow-[#a3e635]/30"
                 : "text-[#94a3b8] hover:text-[#f1f5f9]"
             }`}
           >
@@ -656,7 +656,7 @@ export default function AuPairProfilePage() {
             onClick={() => setModo("live_in_nanny")}
             className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
               modo === "live_in_nanny"
-                ? "bg-[#22c55e] text-black shadow-lg shadow-[#22c55e]/20"
+                ? "fondo-lima shadow-lg shadow-[#a3e635]/30"
                 : "text-[#94a3b8] hover:text-[#f1f5f9]"
             }`}
           >
@@ -666,7 +666,7 @@ export default function AuPairProfilePage() {
 
         {modo === "au_pair" ? (
           <>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Tu Perfil Au Pair</h1>
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2">Tu Perfil Au Pair</h1>
             <p className="text-[#94a3b8] max-w-lg mx-auto text-sm">
               Las familias no buscan un CV. Buscan conocerte. Crea tu perfil completo con fotos
               y tu carta de presentación para aplicar a ofertas au pair.
@@ -674,7 +674,7 @@ export default function AuPairProfilePage() {
           </>
         ) : (
           <>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Tu Perfil Live-in Nanny</h1>
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2">Tu Perfil Live-in Nanny</h1>
             <p className="text-[#94a3b8] max-w-lg mx-auto text-sm">
               Trabaja como niñera profesional interna. Cuida niños, vive con la familia y cobra un salario.
               Crea tu perfil con experiencia y referencias para aplicar a ofertas live-in nanny.
@@ -687,7 +687,7 @@ export default function AuPairProfilePage() {
               <span>Envíos {modo === "au_pair" ? "au pair" : "live-in nanny"} hoy</span>
               <span className="tabular-nums">{auPairStats.hoy}/{auPairStats.limiteHoy}</span>
             </div>
-            <div className="h-1 rounded-full bg-[#1e212b]">
+            <div className="h-1 rounded-full bg-[rgba(12,15,22,0.86)]">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
@@ -808,37 +808,37 @@ export default function AuPairProfilePage() {
 
         {seccion === "datos" && (<>
         {/* ── Datos personales ── */}
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <User size={13} strokeWidth={1.8} /> Datos personales
           </h3>
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <label className="text-xs text-[#64748b] block mb-1">Nombre completo</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">Nombre completo</label>
               <input
                 type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="María García López"
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">Edad</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">Edad</label>
               <input
                 type="number"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
                 placeholder="18"
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">Nacionalidad (pasaporte)</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">Nacionalidad (pasaporte)</label>
               <select
                 value={nationality}
                 onChange={(e) => setNationality(e.target.value)}
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 {NACIONALIDADES.map((n) => (
                   <option key={n.code} value={n.code}>{n.bandera} {n.nombre}</option>
@@ -846,11 +846,11 @@ export default function AuPairProfilePage() {
               </select>
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">País de residencia actual</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">País de residencia actual</label>
               <select
                 value={residencia}
                 onChange={(e) => setResidencia(e.target.value)}
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 {NACIONALIDADES.map((n) => (
                   <option key={n.code} value={n.code}>{n.bandera} {nombrePaisEs(n.code)}</option>
@@ -858,11 +858,11 @@ export default function AuPairProfilePage() {
               </select>
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">Estatus legal en país de residencia</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">Estatus legal en país de residencia</label>
               <select
                 value={estatusResidencia}
                 onChange={(e) => setEstatusResidencia(e.target.value)}
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 <option value="">Seleccionar...</option>
                 {ESTATUS_RESIDENCIA.map((s) => (
@@ -870,27 +870,27 @@ export default function AuPairProfilePage() {
                 ))}
               </select>
               {estatusResidencia && (
-                <p className="text-[10px] text-[#64748b] mt-1">
+                <p className="text-[10px] text-[#8b98ad] mt-1">
                   {ESTATUS_RESIDENCIA.find(s => s.value === estatusResidencia)?.desc}
                 </p>
               )}
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">Ciudad</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">Ciudad</label>
               <input
                 type="text"
                 value={ciudad}
                 onChange={(e) => setCiudad(e.target.value)}
                 placeholder="Madrid"
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">País de destino</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">País de destino</label>
               <select
                 value={paisDestino}
                 onChange={(e) => setPaisDestino(e.target.value)}
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 {PAISES_AU_PAIR.map((code) => (
                   <option key={code} value={code}>{PAISES[code]?.bandera || ""} {PAISES[code]?.nombre || code}</option>
@@ -898,11 +898,11 @@ export default function AuPairProfilePage() {
               </select>
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">Nivel educativo</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">Nivel educativo</label>
               <select
                 value={nivelEducativo}
                 onChange={(e) => setNivelEducativo(e.target.value)}
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 <option value="">Seleccionar...</option>
                 <option value="ESO / Secundaria">ESO / Secundaria</option>
@@ -915,11 +915,11 @@ export default function AuPairProfilePage() {
               </select>
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">Duración preferida</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">Duración preferida</label>
               <select
                 value={duracionPreferida}
                 onChange={(e) => setDuracionPreferida(e.target.value)}
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               >
                 <option value="">Seleccionar...</option>
                 <option value="3-6 meses">3-6 meses (verano)</option>
@@ -929,28 +929,28 @@ export default function AuPairProfilePage() {
               </select>
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">Disponible desde</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">Disponible desde</label>
               <input
                 type="date"
                 value={availableFrom}
                 onChange={(e) => setAvailableFrom(e.target.value)}
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-xs text-[#64748b] block mb-1">Disponible hasta</label>
+              <label className="text-xs text-[#8b98ad] block mb-1">Disponible hasta</label>
               <input
                 type="date"
                 value={availableTo}
                 onChange={(e) => setAvailableTo(e.target.value)}
-                className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+                className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* ── Aptitudes (toggles) ── */}
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <Check size={13} strokeWidth={1.8} /> Aptitudes
           </h3>
@@ -961,14 +961,14 @@ export default function AuPairProfilePage() {
               { label: "Primeros auxilios", state: primerosAuxilios, set: setPrimerosAuxilios },
               { label: "Sabe nadar", state: sabeNadar, set: setSabeNadar },
             ].map((item, i) => (
-              <label key={i} className="flex items-center gap-3 bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 cursor-pointer hover:border-[#22c55e]/30 transition-colors">
+              <label key={i} className="flex items-center gap-3 bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-4 py-3 cursor-pointer hover:border-[#22c55e]/30 transition-colors">
                 <input
                   type="checkbox"
                   checked={item.state}
                   onChange={(e) => item.set(item.invert ? !e.target.checked : e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${item.state ? "bg-[#22c55e] border-[#22c55e]" : "border-[#2d3142]"}`}>
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${item.state ? "bg-[#22c55e] border-[#22c55e]" : "border-[rgba(148,163,184,0.18)]"}`}>
                   {item.state && <Check size={12} strokeWidth={3} />}
                 </div>
                 <span className="text-sm text-[#94a3b8] peer-checked:text-[#e2e8f0]">{item.label}</span>
@@ -978,7 +978,7 @@ export default function AuPairProfilePage() {
         </div>
 
         {/* ── Idiomas ── */}
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <Globe size={13} strokeWidth={1.8} /> Idiomas
           </h3>
@@ -989,31 +989,31 @@ export default function AuPairProfilePage() {
               onChange={(e) => setLangInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addLanguage()}
               placeholder="Ej: Inglés avanzado"
-              className="flex-1 bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+              className="flex-1 bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
             />
             <button
               onClick={addLanguage}
-              className="bg-[#22c55e] hover:bg-[#1ea34d] text-black font-medium px-4 py-2.5 rounded-lg text-sm transition-colors"
+              className="fondo-lima hover:brightness-105 font-medium px-4 py-2.5 rounded-lg text-sm transition-colors"
             >
               Añadir
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
             {languages.map((lang) => (
-              <span key={lang} className="inline-flex items-center gap-1.5 bg-[#252839] border border-[#2d3142] rounded-full px-3 py-1 text-xs text-[#e2e8f0]">
+              <span key={lang} className="inline-flex items-center gap-1.5 bg-[#252839] border border-[rgba(148,163,184,0.18)] rounded-full px-3 py-1 text-xs text-[#e2e8f0]">
                 {lang}
-                <button onClick={() => removeLanguage(lang)} className="text-[#64748b] hover:text-[#ef4444] transition-colors">×</button>
+                <button onClick={() => removeLanguage(lang)} className="text-[#8b98ad] hover:text-[#ef4444] transition-colors">×</button>
               </span>
             ))}
           </div>
         </div>
 
         {/* ── Fotos ── */}
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
-            <Camera size={13} strokeWidth={1.8} /> Fotos <span className="text-[10px] text-[#64748b] font-normal">({photos.length}/{MAX_FOTOS})</span>
+            <Camera size={13} strokeWidth={1.8} /> Fotos <span className="text-[10px] text-[#8b98ad] font-normal">({photos.length}/{MAX_FOTOS})</span>
           </h3>
-          <p className="text-xs text-[#64748b] mb-4">
+          <p className="text-xs text-[#8b98ad] mb-4">
             Las familias quieren verte. Sube fotos tuyas haciendo actividades; si salen niños, solo con permiso de sus padres.
             La primera foto será tu foto de portada.
           </p>
@@ -1022,7 +1022,7 @@ export default function AuPairProfilePage() {
           {photos.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
               {photos.map((url, idx) => (
-                <div key={url} className="relative group aspect-[4/3] rounded-lg overflow-hidden bg-[#0f1117] border border-[#2d3142]">
+                <div key={url} className="relative group aspect-[4/3] rounded-lg overflow-hidden bg-[#0f1117] border border-[rgba(148,163,184,0.18)]">
                   <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" width={400} height={300} loading="lazy" />
                   {idx === 0 && (
                     <span className="absolute top-1.5 left-1.5 bg-[#22c55e] text-black text-[9px] font-bold px-1.5 py-0.5 rounded">PORTADA</span>
@@ -1052,7 +1052,7 @@ export default function AuPairProfilePage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingPhoto}
-                className="flex items-center gap-2 bg-[#0f1117] border-2 border-dashed border-[#2d3142] hover:border-[#22c55e]/40 rounded-xl px-5 py-4 text-sm text-[#94a3b8] hover:text-[#22c55e] transition-all disabled:opacity-50 w-full justify-center"
+                className="flex items-center gap-2 bg-[#0f1117] border-2 border-dashed border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-xl px-5 py-4 text-sm text-[#94a3b8] hover:text-[#22c55e] transition-all disabled:opacity-50 w-full justify-center"
               >
                 {uploadingPhoto ? (
                   <>Subiendo...</>
@@ -1067,7 +1067,7 @@ export default function AuPairProfilePage() {
         </>)}
         {seccion === "historia" && (<>
         {/* ── Experiencia con niños ── */}
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <Users size={13} strokeWidth={1.8} /> Experiencia con niños
           </h3>
@@ -1076,12 +1076,12 @@ export default function AuPairProfilePage() {
             onChange={(e) => setChildcareExperience(e.target.value)}
             placeholder="Describe tu experiencia: ¿qué edades? ¿en qué contexto? ¿por cuánto tiempo? ¿qué actividades hacías? Sé específica — esto es lo que más miran las familias."
             rows={5}
-            className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none resize-y"
+            className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-4 py-3 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none resize-y"
           />
         </div>
 
         {/* ── Hobbies ── */}
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <Star size={13} strokeWidth={1.8} /> Sobre ti
           </h3>
@@ -1090,45 +1090,45 @@ export default function AuPairProfilePage() {
             onChange={(e) => setHobbies(e.target.value)}
             placeholder="Hobbies, intereses, qué te gusta hacer en tu tiempo libre, cómo eres como persona..."
             rows={3}
-            className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none resize-y"
+            className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-4 py-3 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none resize-y"
           />
           <input
             type="text"
             value={dietaryInfo}
             onChange={(e) => setDietaryInfo(e.target.value)}
             placeholder="Restricciones alimentarias (opcional)"
-            className="w-full mt-3 bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+            className="w-full mt-3 bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
           />
         </div>
 
         {/* ── Referencias ── */}
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
             <ClipboardList size={13} strokeWidth={1.8} /> Referencias
           </h3>
           {references.length > 0 && (
             <div className="space-y-2 mb-4">
               {references.map((ref, idx) => (
-                <div key={idx} className="flex justify-between items-center bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5">
+                <div key={idx} className="flex justify-between items-center bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5">
                   <div className="text-sm">
                     <span className="text-[#e2e8f0] font-medium">{ref.nombre}</span>
-                    <span className="text-[#64748b] mx-2">—</span>
+                    <span className="text-[#8b98ad] mx-2">—</span>
                     <span className="text-[#94a3b8]">{ref.relacion}</span>
-                    <span className="text-[#64748b] text-xs block">{ref.email}</span>
+                    <span className="text-[#8b98ad] text-xs block">{ref.email}</span>
                   </div>
-                  <button onClick={() => removeReference(idx)} className="text-[#64748b] hover:text-[#ef4444] transition-colors text-lg">×</button>
+                  <button onClick={() => removeReference(idx)} className="text-[#8b98ad] hover:text-[#ef4444] transition-colors text-lg">×</button>
                 </div>
               ))}
             </div>
           )}
           {showRefForm ? (
-            <div className="space-y-3 bg-[#0f1117]/60 rounded-lg p-4 border border-[#2d3142]">
-              <input type="text" value={refNombre} onChange={(e) => setRefNombre(e.target.value)} placeholder="Nombre" className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
-              <input type="email" value={refEmail} onChange={(e) => setRefEmail(e.target.value)} placeholder="Email" className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
-              <input type="text" value={refTelefono} onChange={(e) => setRefTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
-              <input type="text" value={refRelacion} onChange={(e) => setRefRelacion(e.target.value)} placeholder="Relación (ej: ex-empleadora, madre de niños que cuidé)" className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
+            <div className="space-y-3 bg-[#0f1117]/60 rounded-lg p-4 border border-[rgba(148,163,184,0.18)]">
+              <input type="text" value={refNombre} onChange={(e) => setRefNombre(e.target.value)} placeholder="Nombre" className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
+              <input type="email" value={refEmail} onChange={(e) => setRefEmail(e.target.value)} placeholder="Email" className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
+              <input type="text" value={refTelefono} onChange={(e) => setRefTelefono(e.target.value)} placeholder="Teléfono" className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
+              <input type="text" value={refRelacion} onChange={(e) => setRefRelacion(e.target.value)} placeholder="Relación (ej: ex-empleadora, madre de niños que cuidé)" className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-3 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none" />
               <div className="flex gap-2">
-                <button onClick={addReference} className="bg-[#22c55e] hover:bg-[#1ea34d] text-black font-medium px-4 py-2 rounded-lg text-sm transition-colors">Guardar referencia</button>
+                <button onClick={addReference} className="fondo-lima hover:brightness-105 font-medium px-4 py-2 rounded-lg text-sm transition-colors">Guardar referencia</button>
                 <button onClick={() => setShowRefForm(false)} className="bg-[#252836] hover:bg-[#3d4152] text-[#94a3b8] font-medium px-4 py-2 rounded-lg text-sm transition-colors">Cancelar</button>
               </div>
             </div>
@@ -1138,13 +1138,13 @@ export default function AuPairProfilePage() {
         </div>
 
         {/* ── Dear Family Letter ── */}
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
           <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
               <Mail size={13} strokeWidth={1.8} /> Dear Family Letter
             </h3>
             <div className="flex gap-2 flex-wrap">
-              <button onClick={generarCarta} className="text-[11px] bg-[#252839] hover:bg-[#252836] border border-[#2d3142] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><FileText size={11} strokeWidth={1.8} /> Plantilla</button>
+              <button onClick={generarCarta} className="text-[11px] bg-[#252839] hover:bg-[#252836] border border-[rgba(148,163,184,0.18)] text-[#22c55e] px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"><FileText size={11} strokeWidth={1.8} /> Plantilla</button>
               <button
                 onClick={generarConIA}
                 disabled={generandoIA}
@@ -1179,7 +1179,7 @@ export default function AuPairProfilePage() {
             ))}
           </div>
 
-          <p className="text-xs text-[#64748b] mb-3">
+          <p className="text-xs text-[#8b98ad] mb-3">
             Rellena tus datos y fotos arriba, elige tu perfil, y pulsa <strong>IA</strong> para que Guzzi genere tu carta perfecta.
           </p>
 
@@ -1188,12 +1188,12 @@ export default function AuPairProfilePage() {
             onChange={(e) => setLetterText(e.target.value)}
             placeholder={"Dear Host Family,\n\nMy name is... (o pulsa IA para generarla automáticamente)"}
             rows={14}
-            className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-3 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none resize-y font-serif leading-relaxed"
+            className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-4 py-3 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none resize-y font-serif leading-relaxed"
           />
 
           <div className="mt-3 flex flex-wrap gap-1.5">
             {["Añade anécdotas personales", "Sube fotos haciendo actividades", "Sé auténtica, no genérica", "Menciona por qué ese país"].map(tip => (
-              <span key={tip} className="text-[9px] px-2 py-1 rounded-full bg-[#252839] text-[#94a3b8] border border-[#2d3142]">{tip}</span>
+              <span key={tip} className="text-[9px] px-2 py-1 rounded-full bg-[#252839] text-[#94a3b8] border border-[rgba(148,163,184,0.18)]">{tip}</span>
             ))}
           </div>
         </div>
@@ -1202,25 +1202,25 @@ export default function AuPairProfilePage() {
         {/* ── Plantilla en vivo ── */}
         </>)}
         {seccion === "plantilla" && (<>
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h3 className="text-sm font-semibold text-[#e2e8f0] flex items-center gap-2">
               <FileText size={13} strokeWidth={1.8} /> Plantilla profesional <span className="text-[10px] text-[#4ade80] font-normal">(vista previa en vivo)</span>
             </h3>
             <div className="flex gap-2">
-              <button onClick={() => setShowPlantilla(!showPlantilla)} className="text-xs px-3 py-1.5 rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+              <button onClick={() => setShowPlantilla(!showPlantilla)} className="text-xs px-3 py-1.5 rounded-lg" style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
                 {showPlantilla ? "Ocultar" : "Mostrar"}
               </button>
               <button onClick={() => setVistaCompleta("plantilla")} className="text-xs px-3 py-1.5 rounded-lg" style={{ border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}>
                 ⛶ Pantalla completa
               </button>
-              <button onClick={descargarCarta} disabled={descargandoCarta} className="text-xs font-semibold px-4 py-1.5 rounded-lg disabled:opacity-60" style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+              <button onClick={descargarCarta} disabled={descargandoCarta} className="text-xs font-semibold px-4 py-1.5 rounded-lg disabled:opacity-60" style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 {descargandoCarta ? "Generando PDF..." : "⬇ Descargar PDF"}
               </button>
             </div>
           </div>
           {showPlantilla && (
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #2d3142", maxHeight: "80vh", overflowY: "auto" }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(148,163,184,0.18)", maxHeight: "80vh", overflowY: "auto" }}>
               <AuPairPlantilla
                 nombre={nombre}
                 age={age}
@@ -1251,11 +1251,11 @@ export default function AuPairProfilePage() {
         </>)}
         {seccion === "enviar" && (<>
         {/* ── Enviar perfil a familia ── */}
-        <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+        <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
             <Upload size={13} strokeWidth={1.8} /> Enviar perfil a una familia
           </h3>
-          <p className="text-xs text-[#64748b] mb-4">
+          <p className="text-xs text-[#8b98ad] mb-4">
             Introduce el email de la familia o agencia para enviarles tu {T.perfil} completo.
           </p>
 
@@ -1288,7 +1288,7 @@ export default function AuPairProfilePage() {
                 <button
                   key={i}
                   onClick={() => { setFamilyEmail(a.email); setFamilyName(a.nombre); }}
-                  className="w-full text-left bg-[#0f1117] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg px-3 py-2.5 transition-all group"
+                  className="w-full text-left bg-[#0f1117] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-lg px-3 py-2.5 transition-all group"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm text-[#e2e8f0] font-medium truncate">{a.nombre}</span>
@@ -1300,7 +1300,7 @@ export default function AuPairProfilePage() {
                       <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>{a.ofertas}</span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-[10px] text-[#64748b]">
+                  <div className="flex items-center gap-3 mt-1 text-[10px] text-[#8b98ad]">
                     <span>{a.pais}</span>
                     <span className="truncate">{a.email}</span>
                   </div>
@@ -1338,14 +1338,14 @@ export default function AuPairProfilePage() {
               value={familyEmail}
               onChange={(e) => setFamilyEmail(e.target.value)}
               placeholder="Email de la familia o agencia *"
-              className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+              className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-4 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
             />
             <input
               type="text"
               value={familyName}
               onChange={(e) => setFamilyName(e.target.value)}
               placeholder="Nombre de la familia (opcional)"
-              className="w-full bg-[#0f1117] border border-[#2d3142] rounded-lg px-4 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
+              className="w-full bg-[#0f1117] border border-[rgba(148,163,184,0.18)] rounded-lg px-4 py-2.5 text-sm text-[#f1f5f9] focus:border-[#22c55e]/40 focus:outline-none"
             />
             <button
               onClick={verPerfilFinal}
@@ -1378,11 +1378,11 @@ export default function AuPairProfilePage() {
             móvil: la persona pulsaba y "no pasaba nada", y si salía antes de
             llegar al paso 4 perdía lo escrito (auditoría del 3 oct 2026). */}
         <div className="sticky bottom-0 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 flex items-center gap-3"
-          style={{ bottom: "var(--barra-inferior)", background: "#0f1117", borderTop: "1px solid #2d3142" }}>
+          style={{ bottom: "var(--barra-inferior)", background: "#0f1117", borderTop: "1px solid rgba(148,163,184,0.14)" }}>
           <p role="status" aria-live="polite" className="flex-1 text-xs" style={{ color: error ? "#ef4444" : "#22c55e" }}>
             {error || mensaje}
           </p>
-          <button onClick={guardar} disabled={saving} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#22c55e] hover:bg-[#1ea34d] text-black transition-colors disabled:opacity-50 flex-shrink-0">
+          <button onClick={guardar} disabled={saving} className="px-5 py-2.5 rounded-xl text-sm font-semibold fondo-lima hover:brightness-105 transition-colors disabled:opacity-50 flex-shrink-0">
             {saving ? "Guardando..." : <><Save size={14} strokeWidth={1.8} className="inline mr-1.5" />{T.guardarPerfil}</>}
           </button>
         </div>
@@ -1401,29 +1401,29 @@ export default function AuPairProfilePage() {
       {/* ── MODAL: Preview antes de enviar perfil Au Pair ── */}
       {showPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #2d3142" }}>
+          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "rgba(10,13,19,0.9)", border: "1px solid rgba(148,163,184,0.18)" }}>
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold flex items-center gap-2" style={{ color: "#f1f5f9" }}><FileText size={14} strokeWidth={1.8} /> Previsualizar envío</h3>
-              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#64748b" }}><X size={16} strokeWidth={1.8} /></button>
+              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#8b98ad" }}><X size={16} strokeWidth={1.8} /></button>
             </div>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
-                <span style={{ color: "#64748b" }}>Para:</span>
+                <span style={{ color: "#8b98ad" }}>Para:</span>
                 <span className="font-medium" style={{ color: "#22c55e" }}>{familyEmail}</span>
               </div>
               {familyName && (
                 <div className="flex items-center gap-2">
-                  <span style={{ color: "#64748b" }}>Familia:</span>
+                  <span style={{ color: "#8b98ad" }}>Familia:</span>
                   <span style={{ color: "#94a3b8" }}>{familyName}</span>
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <span style={{ color: "#64748b" }}>Asunto:</span>
+                <span style={{ color: "#8b98ad" }}>Asunto:</span>
                 <span style={{ color: "#94a3b8" }}>{previewSubject}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span style={{ color: "#64748b" }}>Adjunto:</span>
+                <span style={{ color: "#8b98ad" }}>Adjunto:</span>
                 <span style={{ color: "#94a3b8" }}>{T.perfilCompleto}</span>
                 <button onClick={verPerfilFinal} disabled={cargandoPerfilFinal}
                   className="ml-auto font-semibold underline disabled:opacity-50" style={{ color: "#22c55e" }}>
@@ -1441,7 +1441,7 @@ export default function AuPairProfilePage() {
             </div>
 
             {/* Acciones */}
-            <div className="flex gap-3 pt-2" style={{ borderTop: "1px solid #2d3142" }}>
+            <div className="flex gap-3 pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
               <button
                 onClick={() => setShowPreview(false)}
                 className="flex-1 py-2.5 rounded-lg text-xs font-medium transition"
@@ -1452,7 +1452,7 @@ export default function AuPairProfilePage() {
               <button
                 onClick={confirmarEnvioAuPair}
                 className="flex-1 py-2.5 rounded-lg text-xs font-bold transition"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
               >
                 <Check size={13} strokeWidth={2.5} className="inline mr-1" />Confirmar envío
               </button>
@@ -1464,17 +1464,17 @@ export default function AuPairProfilePage() {
       {/* ── PANTALLA COMPLETA: la plantilla en vivo o la carta ── */}
       {vistaCompleta && (
         <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: "#0f1117" }}>
-          <div className="flex items-center justify-between gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid #2d3142" }}>
+          <div className="flex items-center justify-between gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(148,163,184,0.14)" }}>
             <p className="text-sm font-bold truncate" style={{ color: "#f1f5f9" }}>
               {vistaCompleta === "carta" ? "Tu carta" : modo === "live_in_nanny" ? "Tu perfil Live-in Nanny" : "Tu perfil Au Pair"}
             </p>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button onClick={descargarCarta} disabled={descargandoCarta}
                 className="text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-60"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 {descargandoCarta ? "Generando…" : "⬇ PDF"}
               </button>
-              <button onClick={() => setVistaCompleta(null)} aria-label="Cerrar" className="p-1.5 rounded-lg" style={{ color: "#94a3b8", border: "1px solid #2d3142" }}>
+              <button onClick={() => setVistaCompleta(null)} aria-label="Cerrar" className="p-1.5 rounded-lg" style={{ color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
                 <X size={18} strokeWidth={1.8} />
               </button>
             </div>
@@ -1519,11 +1519,11 @@ export default function AuPairProfilePage() {
       {perfilFinal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-3" style={{ background: "rgba(0,0,0,0.8)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setPerfilFinal(""); }}>
-          <div className="w-full max-w-3xl h-[90vh] flex flex-col rounded-xl overflow-hidden" style={{ background: "#111827", border: "1px solid #2d3142" }}>
-            <div className="flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: "1px solid #2d3142" }}>
+          <div className="w-full max-w-3xl h-[90vh] flex flex-col rounded-xl overflow-hidden" style={{ background: "rgba(10,13,19,0.9)", border: "1px solid rgba(148,163,184,0.18)" }}>
+            <div className="flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: "1px solid rgba(148,163,184,0.14)" }}>
               <div className="min-w-0">
                 <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Así lo recibirá la familia</p>
-                <p className="text-[11px]" style={{ color: "#64748b" }}>Es el PDF que va adjunto, con lo que tienes guardado.</p>
+                <p className="text-[11px]" style={{ color: "#8b98ad" }}>Es el PDF que va adjunto, con lo que tienes guardado.</p>
               </div>
               <button onClick={() => setPerfilFinal("")} aria-label="Cerrar" style={{ color: "#94a3b8" }}><X size={18} strokeWidth={1.8} /></button>
             </div>
@@ -1535,7 +1535,7 @@ export default function AuPairProfilePage() {
       {/* ── MODAL: Confirmación post-envío ── */}
       {showConfirm && confirmData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #22c55e" }}>
+          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "rgba(10,13,19,0.9)", border: "1px solid #22c55e" }}>
             <div className="text-center">
               <CheckCircle2 size={32} strokeWidth={1.5} style={{ color: "#22c55e", margin: "0 auto" }} />
               <h3 className="text-lg font-bold mt-2" style={{ color: "#22c55e" }}>{T.perfilEnviado}</h3>
@@ -1544,15 +1544,15 @@ export default function AuPairProfilePage() {
             <div className="space-y-3">
               <div className="rounded-lg p-4 space-y-2" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.1)" }}>
                 <div className="flex justify-between text-xs">
-                  <span style={{ color: "#64748b" }}>Familia:</span>
+                  <span style={{ color: "#8b98ad" }}>Familia:</span>
                   <span className="font-medium" style={{ color: "#f1f5f9" }}>{confirmData.familyName}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span style={{ color: "#64748b" }}>Email:</span>
+                  <span style={{ color: "#8b98ad" }}>Email:</span>
                   <span className="font-medium" style={{ color: "#22c55e" }}>{confirmData.email}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span style={{ color: "#64748b" }}>Asunto:</span>
+                  <span style={{ color: "#8b98ad" }}>Asunto:</span>
                   <span className="font-medium" style={{ color: "#94a3b8" }}>{confirmData.subject}</span>
                 </div>
               </div>
@@ -1569,7 +1569,7 @@ export default function AuPairProfilePage() {
             <button
               onClick={() => setShowConfirm(false)}
               className="w-full py-2.5 rounded-lg text-sm font-bold transition"
-              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
             >
               Entendido
             </button>

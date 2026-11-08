@@ -57,7 +57,7 @@ export default function AuPairComparativaLegal() {
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                 sortBy === k
                   ? "border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e]"
-                  : "border-[#2d3142] text-[#94a3b8] hover:border-[#22c55e]/50"
+                  : "border-[rgba(148,163,184,0.18)] text-[#94a3b8] hover:border-[#22c55e]/50"
               }`}
             >
               <ArrowUpDown className="w-3 h-3 inline mr-1" />
@@ -76,7 +76,7 @@ export default function AuPairComparativaLegal() {
             className={`text-xs px-2.5 py-1.5 rounded-full border transition-all ${
               selectedPaises.has(p.codigo)
                 ? "border-[#22c55e] bg-[#22c55e]/15 text-[#f1f5f9]"
-                : "border-[#2d3142] text-[#64748b] hover:border-[#3d4152]"
+                : "border-[rgba(148,163,184,0.18)] text-[#8b98ad] hover:border-[#3d4152]"
             }`}
           >
             {p.bandera} {p.nombre}
@@ -88,8 +88,8 @@ export default function AuPairComparativaLegal() {
       <div className="overflow-x-auto -mx-4 sm:mx-0">
         <table className="w-full text-sm min-w-[700px]">
           <thead>
-            <tr className="border-b border-[#2d3142]">
-              <th className="text-left p-3 text-[#94a3b8] font-medium sticky left-0 bg-[#1e212b] z-10">Requisito</th>
+            <tr className="border-b border-[rgba(148,163,184,0.18)]">
+              <th className="text-left p-3 text-[#94a3b8] font-medium sticky left-0 bg-[rgba(12,15,22,0.86)] z-10">Requisito</th>
               {paisesVisibles.map(p => (
                 <th key={p.codigo} className="text-center p-3 min-w-[140px]">
                   <span className="text-lg">{p.bandera}</span>
@@ -100,8 +100,8 @@ export default function AuPairComparativaLegal() {
           </thead>
           <tbody>
             {/* Edad */}
-            <tr className="border-b border-[#2d3142]/50 hover:bg-[#111827]/50">
-              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[#1e212b]">
+            <tr className="border-b border-[rgba(148,163,184,0.18)]/50 hover:bg-[#111827]/50">
+              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <Clock className="w-4 h-4 text-[#22c55e]" /> Edad
               </td>
               {paisesVisibles.map(p => (
@@ -112,8 +112,8 @@ export default function AuPairComparativaLegal() {
             </tr>
 
             {/* Horas semanales */}
-            <tr className="border-b border-[#2d3142]/50 hover:bg-[#111827]/50">
-              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[#1e212b]">
+            <tr className="border-b border-[rgba(148,163,184,0.18)]/50 hover:bg-[#111827]/50">
+              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <Clock className="w-4 h-4 text-[#f59e0b]" /> Horas/semana
               </td>
               {paisesVisibles.map(p => (
@@ -127,8 +127,8 @@ export default function AuPairComparativaLegal() {
             </tr>
 
             {/* Salario */}
-            <tr className="border-b border-[#2d3142]/50 hover:bg-[#111827]/50">
-              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[#1e212b]">
+            <tr className="border-b border-[rgba(148,163,184,0.18)]/50 hover:bg-[#111827]/50">
+              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <Banknote className="w-4 h-4 text-[#22c55e]" /> Salario/mes
               </td>
               {paisesVisibles.map(p => (
@@ -139,8 +139,8 @@ export default function AuPairComparativaLegal() {
             </tr>
 
             {/* Curso idioma */}
-            <tr className="border-b border-[#2d3142]/50 hover:bg-[#111827]/50">
-              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[#1e212b]">
+            <tr className="border-b border-[rgba(148,163,184,0.18)]/50 hover:bg-[#111827]/50">
+              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <GraduationCap className="w-4 h-4 text-[#8b5cf6]" /> Curso idioma
               </td>
               {paisesVisibles.map(p => (
@@ -153,8 +153,8 @@ export default function AuPairComparativaLegal() {
             </tr>
 
             {/* Visado UE */}
-            <tr className="border-b border-[#2d3142]/50 hover:bg-[#111827]/50">
-              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[#1e212b]">
+            <tr className="border-b border-[rgba(148,163,184,0.18)]/50 hover:bg-[#111827]/50">
+              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <Shield className="w-4 h-4 text-[#3b82f6]" /> Visado (UE)
               </td>
               {paisesVisibles.map(p => (
@@ -167,8 +167,8 @@ export default function AuPairComparativaLegal() {
             </tr>
 
             {/* Visado No-UE */}
-            <tr className="border-b border-[#2d3142]/50 hover:bg-[#111827]/50">
-              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[#1e212b]">
+            <tr className="border-b border-[rgba(148,163,184,0.18)]/50 hover:bg-[#111827]/50">
+              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <Shield className="w-4 h-4 text-[#f59e0b]" /> Visado (no-UE)
               </td>
               {paisesVisibles.map(p => (
@@ -179,8 +179,8 @@ export default function AuPairComparativaLegal() {
             </tr>
 
             {/* Vacaciones */}
-            <tr className="border-b border-[#2d3142]/50 hover:bg-[#111827]/50">
-              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[#1e212b]">
+            <tr className="border-b border-[rgba(148,163,184,0.18)]/50 hover:bg-[#111827]/50">
+              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <Calendar className="w-4 h-4 text-[#ec4899]" /> Vacaciones
               </td>
               {paisesVisibles.map(p => (
@@ -191,8 +191,8 @@ export default function AuPairComparativaLegal() {
             </tr>
 
             {/* Seguro médico */}
-            <tr className="border-b border-[#2d3142]/50 hover:bg-[#111827]/50">
-              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[#1e212b]">
+            <tr className="border-b border-[rgba(148,163,184,0.18)]/50 hover:bg-[#111827]/50">
+              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <Heart className="w-4 h-4 text-[#ef4444]" /> Seguro médico
               </td>
               {paisesVisibles.map(p => (
@@ -203,8 +203,8 @@ export default function AuPairComparativaLegal() {
             </tr>
 
             {/* Duración máxima */}
-            <tr className="border-b border-[#2d3142]/50 hover:bg-[#111827]/50">
-              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[#1e212b]">
+            <tr className="border-b border-[rgba(148,163,184,0.18)]/50 hover:bg-[#111827]/50">
+              <td className="p-3 text-[#f1f5f9] flex items-center gap-2 sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <MapPin className="w-4 h-4 text-[#06b6d4]" /> Duración máx
               </td>
               {paisesVisibles.map(p => (
@@ -216,7 +216,7 @@ export default function AuPairComparativaLegal() {
 
             {/* Coste familia */}
             <tr className="hover:bg-[#111827]/50 bg-[#0f1117]/30">
-              <td className="p-3 text-[#22c55e] flex items-center gap-2 font-medium sticky left-0 bg-[#1e212b]">
+              <td className="p-3 text-[#22c55e] flex items-center gap-2 font-medium sticky left-0 bg-[rgba(12,15,22,0.86)]">
                 <Banknote className="w-4 h-4" /> Coste total familia/mes
               </td>
               {paisesVisibles.map(p => (
@@ -231,7 +231,7 @@ export default function AuPairComparativaLegal() {
 
       {/* Tooltip / info extra */}
       {tooltipPais && (
-        <div className="mt-4 p-4 rounded-lg bg-[#111827] border border-[#2d3142]">
+        <div className="mt-4 p-4 rounded-lg bg-[#111827] border border-[rgba(148,163,184,0.18)]">
           {(() => {
             const pais = PAISES_AU_PAIR_LEGAL.find(p => p.codigo === tooltipPais);
             if (!pais) return null;
@@ -240,7 +240,7 @@ export default function AuPairComparativaLegal() {
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">{pais.bandera}</span>
                   <span className="font-bold text-[#f1f5f9]">{pais.nombre}</span>
-                  <span className="text-xs text-[#64748b]">— {pais.notaAdicional}</span>
+                  <span className="text-xs text-[#8b98ad]">— {pais.notaAdicional}</span>
                 </div>
                 <p className="text-sm text-[#94a3b8]"><strong>Documentación:</strong> {pais.documentacion}</p>
               </div>
@@ -249,7 +249,7 @@ export default function AuPairComparativaLegal() {
         </div>
       )}
 
-      <p className="text-xs text-[#64748b] mt-4 flex items-center gap-1">
+      <p className="text-xs text-[#8b98ad] mt-4 flex items-center gap-1">
         <Info className="w-3 h-3" />
         Datos orientativos. Verifica siempre los requisitos actualizados en la web oficial del país de destino.
       </p>

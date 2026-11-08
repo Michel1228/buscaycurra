@@ -29,7 +29,7 @@ export default function ParoEuropeo({ base }: { base: string }) {
   return (
     <>
       <Link href={base} className="inline-flex items-center gap-1.5 text-xs mb-6 hover:opacity-80"
-            style={{ color: "#64748b", textDecoration: "none" }}>
+            style={{ color: "#8b98ad", textDecoration: "none" }}>
         <ArrowLeft size={13} strokeWidth={1.9} />
         Volver a Emigrar
       </Link>
@@ -42,7 +42,7 @@ export default function ParoEuropeo({ base }: { base: string }) {
             Hasta 6 meses
           </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 leading-tight">
           Si te vas a buscar trabajo fuera, puedes llevarte el paro
         </h1>
         <p className="text-sm sm:text-base leading-relaxed" style={{ color: "#94a3b8" }}>
@@ -72,14 +72,14 @@ export default function ParoEuropeo({ base }: { base: string }) {
         <div className="flex flex-col gap-3">
           {U2.plazos.map(p => (
             <div key={p.cuanto} className="rounded-xl p-4"
-                 style={{ background: "#1e212b", border: "1px solid rgba(245,158,11,0.25)" }}>
+                 style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(245,158,11,0.25)" }}>
               <div className="flex items-center gap-2 mb-1.5">
                 <Clock size={14} strokeWidth={1.9} style={{ color: "#f59e0b" }} />
                 <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>{p.cuanto}</span>
               </div>
               <p className="text-xs leading-relaxed mb-2" style={{ color: "#94a3b8" }}>{p.que}</p>
               <p className="text-[11px] leading-relaxed pt-2 flex gap-2 items-start"
-                 style={{ color: "#ef4444", borderTop: "1px solid #2d3142" }}>
+                 style={{ color: "#ef4444", borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                 <AlertTriangle size={12} strokeWidth={2} className="shrink-0 mt-0.5" />
                 <span>{p.siFallas}</span>
               </p>
@@ -92,7 +92,7 @@ export default function ParoEuropeo({ base }: { base: string }) {
         <p className="text-sm leading-relaxed mb-3" style={{ color: "#94a3b8" }}>
           {U2.queEs} Antes se llamaba {U2.antesSeLlamaba}. Lo pides tú al SEPE, antes de irte.
         </p>
-        <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#64748b" }}>
+        <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#8b98ad" }}>
           Hace falta cumplir las tres
         </p>
         <ul className="flex flex-col gap-2 mb-4">
@@ -102,13 +102,13 @@ export default function ParoEuropeo({ base }: { base: string }) {
             </li>
           ))}
         </ul>
-        <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#64748b" }}>
+        <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#8b98ad" }}>
           Y esto conviene saberlo
         </p>
         <ul className="flex flex-col gap-2">
           {U2.avisos.map(a => (
             <li key={a} className="text-xs leading-relaxed pl-3 relative" style={{ color: "#94a3b8" }}>
-              <span className="absolute left-0" style={{ color: "#64748b" }}>·</span>{a}
+              <span className="absolute left-0" style={{ color: "#8b98ad" }}>·</span>{a}
             </li>
           ))}
         </ul>
@@ -116,9 +116,9 @@ export default function ParoEuropeo({ base }: { base: string }) {
 
       {/* ── El de la vuelta ── */}
       <Seccion titulo={`Y para cuando vuelvas: el ${U1.nombre}`}>
-        <div className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+        <div className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
           <p className="text-sm leading-relaxed mb-3" style={{ color: "#94a3b8" }}>{U1.porQueImporta}</p>
-          <p className="text-xs leading-relaxed mb-3" style={{ color: "#64748b" }}>
+          <p className="text-xs leading-relaxed mb-3" style={{ color: "#8b98ad" }}>
             {U1.queEs} Se pide {U1.quienLoPide.toLowerCase()}
           </p>
           <ul className="flex flex-col gap-2">
@@ -137,7 +137,7 @@ export default function ParoEuropeo({ base }: { base: string }) {
           {[U2.enlaceSepe, U2.enlace, U1.enlace].map(e => (
             <a key={e.url} href={e.url} target="_blank" rel="noopener noreferrer"
                className="rounded-xl p-4 flex items-center justify-between gap-3 hover:opacity-90"
-               style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}>
+               style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}>
               <span className="text-sm" style={{ color: "#f1f5f9" }}>{e.titulo}</span>
               <ArrowRight size={14} strokeWidth={1.9} className="shrink-0" style={{ color: "#22c55e" }} />
             </a>
@@ -146,7 +146,7 @@ export default function ParoEuropeo({ base }: { base: string }) {
       </Seccion>
 
       <div className="rounded-xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-3"
-           style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+           style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
         <Wallet size={20} strokeWidth={1.8} className="shrink-0" style={{ color: "#22c55e" }} />
         <div className="flex-1">
           <p className="text-sm font-semibold mb-0.5" style={{ color: "#f1f5f9" }}>
@@ -161,10 +161,10 @@ export default function ParoEuropeo({ base }: { base: string }) {
         </Link>
       </div>
 
-      <div className="pt-6" style={{ borderTop: "1px solid #2d3142" }}>
+      <div className="pt-6" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
         <div className="flex items-center gap-1.5 mb-2.5">
-          <Globe size={12} strokeWidth={1.9} style={{ color: "#64748b" }} />
-          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#64748b" }}>
+          <Globe size={12} strokeWidth={1.9} style={{ color: "#8b98ad" }} />
+          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#8b98ad" }}>
             De dónde sale esta información
           </span>
         </div>
@@ -172,7 +172,7 @@ export default function ParoEuropeo({ base }: { base: string }) {
           {FUENTES.map(f => (
             <li key={f.url}>
               <a href={f.url} target="_blank" rel="noopener noreferrer"
-                 className="text-xs hover:underline" style={{ color: "#64748b" }}>
+                 className="text-xs hover:underline" style={{ color: "#8b98ad" }}>
                 {f.titulo}
               </a>
             </li>

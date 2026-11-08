@@ -17,7 +17,7 @@ interface EmigrarContentProps {
 function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosInfo }) {
   if (!info.auPair.disponible) {
     return (
-      <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6 text-center">
+      <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6 text-center">
         <div className="flex justify-center mb-4"><Users size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">Programa Au Pair</h3>
         <p className="text-sm text-[#94a3b8]">
@@ -41,21 +41,21 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
         </p>
         <Link
           href="/app/au-pair"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl text-sm transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 fondo-lima hover:brightness-105 font-semibold rounded-xl text-sm transition-colors"
         >
           <PenLine size={14} strokeWidth={1.8} className="inline mr-1.5" />Crear/Editar mi perfil Au Pair
         </Link>
       </div>
 
-      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
+      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[rgba(148,163,184,0.18)] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
           <Users size={18} strokeWidth={1.8} /> Programa Au Pair en {pais?.nombre || paisCode}
         </h3>
-        <div className="bg-[#0f1117]/50 rounded-lg p-4 mb-4 border border-[#2d3142]">
-          <p className="text-xs text-[#64748b] uppercase tracking-wider mb-1">Requisitos</p>
+        <div className="bg-[#0f1117]/50 rounded-lg p-4 mb-4 border border-[rgba(148,163,184,0.18)]">
+          <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-1">Requisitos</p>
           <p className="text-sm text-[#e2e8f0] leading-relaxed">{info.auPair.requisitos}</p>
         </div>
-        <p className="text-xs text-[#64748b] uppercase tracking-wider mb-2">Agencias y plataformas verificadas</p>
+        <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-2">Agencias y plataformas verificadas</p>
         <div className="space-y-2">
           {info.auPair.plataformas.map((p) => (
             <a
@@ -63,7 +63,7 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
               href={p.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block bg-[#252839] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg p-4 transition-colors group"
+              className="block bg-[#252839] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-lg p-4 transition-colors group"
             >
               <span className="text-sm font-medium text-[#22c55e] group-hover:underline">
                 {p.nombre} →
@@ -76,7 +76,7 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
 
       <Link
         href={`/app/buscar?keyword=au%20pair&pais=${paisCode}`}
-        className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl text-sm transition-colors"
+        className="inline-flex items-center gap-2 px-4 py-2.5 fondo-lima hover:brightness-105 font-semibold rounded-xl text-sm transition-colors"
       >
         <Search size={14} strokeWidth={1.8} className="inline mr-1.5" />Buscar ofertas de Au Pair en {pais?.nombre || paisCode}
       </Link>
@@ -88,11 +88,11 @@ function AlojamientoTab({ paisCode, info }: { paisCode: string; info: PrimerosPa
   const pais = PAISES[paisCode];
   return (
     <div>
-      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
+      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[rgba(148,163,184,0.18)] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
           <Home size={18} strokeWidth={1.8} /> Alojamiento en {pais?.nombre || paisCode}
         </h3>
-        <p className="text-xs text-[#64748b] uppercase tracking-wider mb-2">Portales de alquiler verificados</p>
+        <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-2">Portales de alquiler verificados</p>
         <div className="grid sm:grid-cols-2 gap-2 mb-4">
           {info.alojamiento.plataformas.map((p) => (
             <a
@@ -100,7 +100,7 @@ function AlojamientoTab({ paisCode, info }: { paisCode: string; info: PrimerosPa
               href={p.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#252839] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg p-4 transition-colors group"
+              className="bg-[#252839] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-lg p-4 transition-colors group"
             >
               <span className="text-sm font-medium text-[#22c55e] group-hover:underline block">
                 {p.nombre} →
@@ -109,15 +109,15 @@ function AlojamientoTab({ paisCode, info }: { paisCode: string; info: PrimerosPa
             </a>
           ))}
         </div>
-        <div className="bg-[#0f1117]/50 rounded-lg p-4 border border-[#2d3142]">
-          <p className="text-xs text-[#64748b] uppercase tracking-wider mb-1 flex items-center gap-1"><Lightbulb size={11} strokeWidth={1.8} /> Consejo local</p>
+        <div className="bg-[#0f1117]/50 rounded-lg p-4 border border-[rgba(148,163,184,0.18)]">
+          <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-1 flex items-center gap-1"><Lightbulb size={11} strokeWidth={1.8} /> Consejo local</p>
           <p className="text-sm text-[#e2e8f0] leading-relaxed">{info.alojamiento.consejo}</p>
         </div>
       </div>
 
       <Link
         href={`/app/buscar?pais=${paisCode}`}
-        className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl text-sm transition-colors"
+        className="inline-flex items-center gap-2 px-4 py-2.5 fondo-lima hover:brightness-105 font-semibold rounded-xl text-sm transition-colors"
       >
         <Search size={14} strokeWidth={1.8} className="inline mr-1.5" />Ver todas las ofertas en {pais?.nombre || paisCode}
       </Link>
@@ -137,7 +137,7 @@ function VisadoTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
 
   return (
     <div>
-      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
+      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[rgba(148,163,184,0.18)] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
           <ClipboardList size={18} strokeWidth={1.8} /> Visado para {pais?.nombre || paisCode}
         </h3>
@@ -148,7 +148,7 @@ function VisadoTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
           <span>{tipo.icon}</span>
           <span>{tipo.label}</span>
         </div>
-        <div className="bg-[#0f1117]/50 rounded-lg p-4 mb-4 border border-[#2d3142]">
+        <div className="bg-[#0f1117]/50 rounded-lg p-4 mb-4 border border-[rgba(148,163,184,0.18)]">
           <p className="text-sm text-[#e2e8f0] leading-relaxed">{info.visado.descripcion}</p>
         </div>
         {info.visado.enlaceOficial && (
@@ -156,7 +156,7 @@ function VisadoTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
             href={info.visado.enlaceOficial}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#252839] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-xl text-sm font-medium text-[#22c55e] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#252839] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-xl text-sm font-medium text-[#22c55e] transition-colors"
           >
             <Globe size={14} strokeWidth={1.8} className="inline mr-1.5" />Web oficial de inmigración →
           </a>
@@ -170,7 +170,7 @@ function ProgramasTab({ paisCode, info }: { paisCode: string; info: PrimerosPaso
   const pais = PAISES[paisCode];
   if (!info.programasExtra || info.programasExtra.length === 0) {
     return (
-      <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6 text-center">
+      <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6 text-center">
         <div className="flex justify-center mb-4"><Star size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">Programas especiales</h3>
         <p className="text-sm text-[#94a3b8]">
@@ -182,7 +182,7 @@ function ProgramasTab({ paisCode, info }: { paisCode: string; info: PrimerosPaso
 
   return (
     <div>
-      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[#2d3142] rounded-xl p-6 mb-4">
+      <div className="bg-gradient-to-br from-[#1e212b] to-[#1e2538] border border-[rgba(148,163,184,0.18)] rounded-xl p-6 mb-4">
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-4 flex items-center gap-2">
           <Star size={18} strokeWidth={1.8} /> Programas especiales en {pais?.nombre || paisCode}
         </h3>
@@ -193,7 +193,7 @@ function ProgramasTab({ paisCode, info }: { paisCode: string; info: PrimerosPaso
               href={p.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#252839] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-xl p-5 transition-colors group"
+              className="bg-[#252839] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-xl p-5 transition-colors group"
             >
               <span className="text-sm font-semibold text-[#e2e8f0] group-hover:text-[#22c55e] transition-colors block">
                 {p.nombre}
@@ -254,9 +254,9 @@ export default function EmigrarPage() {
     <main className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
       {/* Hero */}
       <section className="relative pt-20 pb-12 px-4 sm:px-6 max-w-4xl mx-auto text-center">
-        <div className="flex justify-center mb-4"><Globe size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-3">
-          Emigrar al extranjero
+        <div className="flex justify-center mb-4"><span className="icono-circulo tono-morado" style={{ width: 72, height: 72 }} aria-hidden="true"><Globe size={34} strokeWidth={1.4} /></span></div>
+        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3">
+          Emigrar al <span style={{ color: "#d8b4fe", textShadow: "0 0 22px rgba(192,132,252,0.55)" }}>extranjero</span>
         </h1>
         <p className="text-[#94a3b8] max-w-xl mx-auto leading-relaxed">
           Toda la información que necesitas para trabajar fuera de España: visados, alojamiento, programas au pair y más. Guía completa por país.
@@ -313,7 +313,7 @@ export default function EmigrarPage() {
 
       {/* Tabs */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 mb-6">
-        <div className="flex gap-1 bg-[#1e212b] border border-[#2d3142] rounded-xl p-1">
+        <div className="flex gap-1 bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-1">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -335,7 +335,7 @@ export default function EmigrarPage() {
       {/* Content */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
         {!primerosPasos ? (
-          <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-8 text-center">
+          <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-8 text-center">
             <div className="flex justify-center mb-4"><AlertTriangle size={40} strokeWidth={1.2} style={{ color: "#f59e0b" }} /></div>
             <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">Información en construcción</h3>
             <p className="text-sm text-[#94a3b8]">
@@ -343,7 +343,7 @@ export default function EmigrarPage() {
             </p>
             <Link
               href={`/app/buscar?pais=${paisCode}`}
-              className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl text-sm transition-colors"
+              className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 fondo-lima hover:brightness-105 font-semibold rounded-xl text-sm transition-colors"
             >
               <Search size={14} strokeWidth={1.8} className="inline mr-1.5" />Buscar ofertas en {pais.nombre}
             </Link>
@@ -359,7 +359,7 @@ export default function EmigrarPage() {
       </section>
 
       {/* Quick links to job search */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 border-t border-[#2d3142] pt-10">
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 border-t border-[rgba(148,163,184,0.18)] pt-10">
         <h2 className="text-lg font-semibold mb-4 text-center">
           ¿Listo para buscar trabajo en {pais.nombre}? {pais.bandera}
         </h2>
@@ -371,7 +371,7 @@ export default function EmigrarPage() {
             <Link
               key={kw}
               href={`/app/buscar?keyword=${encodeURIComponent(kw)}&pais=${paisCode}`}
-              className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-full px-4 py-2 text-sm text-[#94a3b8] transition-colors"
+              className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-full px-4 py-2 text-sm text-[#94a3b8] transition-colors"
             >
               {kw}
             </Link>

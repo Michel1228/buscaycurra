@@ -198,7 +198,7 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
         <button
           onClick={irABuscador}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-          style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+          style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
         >
           Ver todas <ArrowRight className="w-4 h-4" />
         </button>
@@ -215,7 +215,7 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
             return (
               <div
                 key={i}
-                className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-[#0f1117] border border-[#2d3142] hover:border-[#22c55e]/30 transition-colors"
+                className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-[#0f1117] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/30 transition-colors"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -227,7 +227,7 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-[#64748b]">
+                  <div className="flex items-center gap-3 mt-1 text-xs text-[#8b98ad]">
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
                       {o.city && o.city !== "Ver en oferta" ? `${o.city}, ` : ""}{nombrePais(o.country)}
@@ -270,13 +270,13 @@ export default function AuPairOfertasRecientes({ modo = "au_pair" }: Props) {
           })}
         </div>
       ) : (
-        <p className="text-sm text-[#64748b] text-center py-4">
+        <p className="text-sm text-[#8b98ad] text-center py-4">
           Cargando ofertas {modo === "live_in_nanny" ? "live-in nanny" : "au pair"}...
         </p>
       )}
 
       {/* Link al buscador */}
-      <div className="mt-4 pt-4 border-t border-[#2d3142] text-center">
+      <div className="mt-4 pt-4 border-t border-[rgba(148,163,184,0.18)] text-center">
         <button
           onClick={irABuscador}
           className="text-sm text-[#22c55e] hover:underline"

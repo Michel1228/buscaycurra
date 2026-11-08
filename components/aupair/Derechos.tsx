@@ -36,7 +36,7 @@ export default function DerechosAuPair({ base }: { base: string }) {
   return (
     <>
       <Link href={base} className="inline-flex items-center gap-1.5 text-xs mb-6 hover:opacity-80"
-            style={{ color: "#64748b", textDecoration: "none" }}>
+            style={{ color: "#8b98ad", textDecoration: "none" }}>
         <ArrowLeft size={13} strokeWidth={1.9} />
         Volver a Au Pair
       </Link>
@@ -49,7 +49,7 @@ export default function DerechosAuPair({ base }: { base: string }) {
             Tus derechos
           </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 leading-tight">
           ¿Lo que te están pidiendo sigue siendo ser au pair?
         </h1>
         <p className="text-sm sm:text-base leading-relaxed" style={{ color: "#94a3b8" }}>
@@ -85,14 +85,14 @@ export default function DerechosAuPair({ base }: { base: string }) {
       {/* ── El dinero, que es el argumento que convence ── */}
       <Seccion titulo="Lo que va de una cosa a la otra">
         <div className="grid sm:grid-cols-2 gap-3 mb-3">
-          <div className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-            <p className="text-[10px] uppercase tracking-wide font-semibold mb-1.5" style={{ color: "#64748b" }}>
+          <div className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+            <p className="text-[10px] uppercase tracking-wide font-semibold mb-1.5" style={{ color: "#8b98ad" }}>
               Au pair · dinero de bolsillo
             </p>
             <p className="text-xl font-bold" style={{ color: "#94a3b8" }}>
               ~{euros(SI_ES_TRABAJO.bolsilloAuPairTipico)} € <span className="text-xs font-normal">al mes</span>
             </p>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>
+            <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>
               Unos {euros(SI_ES_TRABAJO.bolsilloAuPairTipico * 12)} € al año. No cotizas.
             </p>
           </div>
@@ -116,7 +116,7 @@ export default function DerechosAuPair({ base }: { base: string }) {
       </Seccion>
 
       <Seccion titulo="Si es un trabajo, esto es lo que te toca">
-        <div className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+        <div className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
           <div className="flex items-center gap-2 mb-3">
             <Scale size={15} strokeWidth={1.9} style={{ color: "#22c55e" }} />
             <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{SI_ES_TRABAJO.regimen}</span>
@@ -147,7 +147,7 @@ export default function DerechosAuPair({ base }: { base: string }) {
         <div className="flex flex-col gap-3">
           {REALIDAD_POR_PAIS.map(p => (
             <div key={p.codigo} className="rounded-xl p-4"
-                 style={{ background: "#1e212b", border: `1px solid ${p.dificultad === "dificil" ? "rgba(239,68,68,0.25)" : "#2d3142"}` }}>
+                 style={{ background: "rgba(12,15,22,0.86)", border: `1px solid ${p.dificultad === "dificil" ? "rgba(239,68,68,0.25)" : "#2d3142"}` }}>
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span className="text-base leading-none">{p.bandera}</span>
                 <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{p.nombre}</span>
@@ -160,12 +160,12 @@ export default function DerechosAuPair({ base }: { base: string }) {
               <ul className="flex flex-col gap-1 mb-2">
                 {p.comoSePuede.map(c => (
                   <li key={c} className="text-[11px] leading-relaxed pl-3 relative" style={{ color: "#94a3b8" }}>
-                    <span className="absolute left-0" style={{ color: "#64748b" }}>·</span>{c}
+                    <span className="absolute left-0" style={{ color: "#8b98ad" }}>·</span>{c}
                   </li>
                 ))}
               </ul>
               {p.cuidadoCon && (
-                <p className="text-[11px] leading-relaxed pt-2" style={{ color: "#ef4444", borderTop: "1px solid #2d3142" }}>
+                <p className="text-[11px] leading-relaxed pt-2" style={{ color: "#ef4444", borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                   {p.cuidadoCon}
                 </p>
               )}
@@ -200,10 +200,10 @@ export default function DerechosAuPair({ base }: { base: string }) {
               </li>
             ))}
           </ul>
-          <div className="flex flex-wrap gap-3 mt-3 pt-3" style={{ borderTop: "1px solid #2d3142" }}>
+          <div className="flex flex-wrap gap-3 mt-3 pt-3" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
             {REINO_UNIDO_INTERNAS.fuentes.map(f => (
               <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer"
-                 className="text-[11px] hover:underline" style={{ color: "#64748b" }}>
+                 className="text-[11px] hover:underline" style={{ color: "#8b98ad" }}>
                 {f.titulo}
               </a>
             ))}
@@ -219,14 +219,14 @@ export default function DerechosAuPair({ base }: { base: string }) {
         </p>
         <div className="flex flex-col gap-3">
           {DERECHOS_ACUERDO.map(d => (
-            <div key={d.articulo} className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+            <div key={d.articulo} className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-baseline gap-2 mb-1.5 flex-wrap">
                 <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{d.titulo}</span>
-                <span className="text-[10px] font-mono" style={{ color: "#64748b" }}>{d.articulo}</span>
+                <span className="text-[10px] font-mono" style={{ color: "#8b98ad" }}>{d.articulo}</span>
               </div>
               <p className="text-xs leading-relaxed mb-2" style={{ color: "#94a3b8" }}>{d.enCristiano}</p>
               <p className="text-[11px] leading-relaxed pt-2 italic"
-                 style={{ color: "#64748b", borderTop: "1px solid #2d3142" }}>
+                 style={{ color: "#8b98ad", borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                 «{d.texto}»
               </p>
             </div>
@@ -259,7 +259,7 @@ export default function DerechosAuPair({ base }: { base: string }) {
         <div className="flex flex-col gap-2">
           {PAISES_SIN_ACUERDO.map(p => (
             <div key={p.codigo} className="rounded-lg p-3"
-                 style={{ background: "#161922", border: "1px solid #2d3142" }}>
+                 style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <span className="text-xs font-semibold" style={{ color: "#f59e0b" }}>{p.nombre}</span>
               <p className="text-[11px] leading-relaxed mt-0.5" style={{ color: "#94a3b8" }}>{p.motivo}</p>
             </div>
@@ -269,7 +269,7 @@ export default function DerechosAuPair({ base }: { base: string }) {
 
       {/* ── Y de vuelta a lo nuestro ── */}
       <div className="rounded-xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-3"
-           style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+           style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
         <ShieldCheck size={20} strokeWidth={1.8} className="shrink-0" style={{ color: "#22c55e" }} />
         <div className="flex-1">
           <p className="text-sm font-semibold mb-0.5" style={{ color: "#f1f5f9" }}>
@@ -284,10 +284,10 @@ export default function DerechosAuPair({ base }: { base: string }) {
         </Link>
       </div>
 
-      <div className="pt-6" style={{ borderTop: "1px solid #2d3142" }}>
+      <div className="pt-6" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
         <div className="flex items-center gap-1.5 mb-2.5">
-          <Globe size={12} strokeWidth={1.9} style={{ color: "#64748b" }} />
-          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#64748b" }}>
+          <Globe size={12} strokeWidth={1.9} style={{ color: "#8b98ad" }} />
+          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#8b98ad" }}>
             De dónde sale esta información
           </span>
         </div>
@@ -295,7 +295,7 @@ export default function DerechosAuPair({ base }: { base: string }) {
           {FUENTES.map(f => (
             <li key={f.url}>
               <a href={f.url} target="_blank" rel="noopener noreferrer"
-                 className="text-xs hover:underline" style={{ color: "#64748b" }}>
+                 className="text-xs hover:underline" style={{ color: "#8b98ad" }}>
                 {f.titulo}
               </a>
             </li>

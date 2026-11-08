@@ -36,7 +36,7 @@ export default function AuPairCalculadoraCostes() {
             className={`text-xs px-3 py-2 rounded-lg border transition-all ${
               paisCodigo === p.codigo
                 ? "border-[#22c55e] bg-[#22c55e]/15 text-[#f1f5f9] shadow-[0_0_12px_rgba(34,197,94,0.15)]"
-                : "border-[#2d3142] text-[#94a3b8] hover:border-[#3d4152]"
+                : "border-[rgba(148,163,184,0.18)] text-[#94a3b8] hover:border-[#3d4152]"
             }`}
           >
             {p.bandera} {p.nombre}
@@ -45,16 +45,16 @@ export default function AuPairCalculadoraCostes() {
       </div>
 
       {/* Tarjeta de resultados */}
-      <div className="bg-[#0f1117] rounded-xl border border-[#2d3142] p-5 mb-6">
+      <div className="bg-[#0f1117] rounded-xl border border-[rgba(148,163,184,0.18)] p-5 mb-6">
         <div className="text-center mb-4">
           <span className="text-3xl">{pais.bandera}</span>
           <h3 className="text-lg font-bold text-[#f1f5f9] mt-1">{pais.nombre}</h3>
-          <p className="text-xs text-[#64748b]">{pais.notaAdicional}</p>
+          <p className="text-xs text-[#8b98ad]">{pais.notaAdicional}</p>
         </div>
 
         <div className="space-y-3">
           {/* Salario */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e212b]/50">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[rgba(12,15,22,0.86)]/50">
             <div className="flex items-center gap-2">
               <Banknote className="w-4 h-4 text-[#22c55e]" />
               <span className="text-sm text-[#f1f5f9]">Salario (pocket money)</span>
@@ -63,7 +63,7 @@ export default function AuPairCalculadoraCostes() {
           </div>
 
           {/* Comida + alojamiento */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e212b]/50">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[rgba(12,15,22,0.86)]/50">
             <div className="flex items-center gap-2">
               <Utensils className="w-4 h-4 text-[#f59e0b]" />
               <span className="text-sm text-[#f1f5f9]">Comida + alojamiento (estimado)</span>
@@ -72,12 +72,12 @@ export default function AuPairCalculadoraCostes() {
           </div>
 
           {/* Curso idioma */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e212b]/50">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[rgba(12,15,22,0.86)]/50">
             <div className="flex items-center gap-2">
               <GraduationCap className="w-4 h-4 text-[#8b5cf6]" />
               <span className="text-sm text-[#f1f5f9]">
                 Curso de idioma
-                <span className="text-xs text-[#64748b] ml-1">
+                <span className="text-xs text-[#8b98ad] ml-1">
                   ({pais.cursoIdioma.includes("Obligatorio") ? "obligatorio" : "recomendado"})
                 </span>
               </span>
@@ -86,7 +86,7 @@ export default function AuPairCalculadoraCostes() {
           </div>
 
           {/* Seguro */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e212b]/50">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[rgba(12,15,22,0.86)]/50">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-[#ef4444]" />
               <span className="text-sm text-[#f1f5f9]">Seguro médico</span>
@@ -95,7 +95,7 @@ export default function AuPairCalculadoraCostes() {
           </div>
 
           {/* Transporte */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e212b]/50">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[rgba(12,15,22,0.86)]/50">
             <div className="flex items-center gap-2">
               <Car className="w-4 h-4 text-[#3b82f6]" />
               <span className="text-sm text-[#f1f5f9]">Transporte local</span>
@@ -104,7 +104,7 @@ export default function AuPairCalculadoraCostes() {
           </div>
 
           {/* Ajustes */}
-          <div className="border-t border-[#2d3142] pt-3 space-y-2">
+          <div className="border-t border-[rgba(148,163,184,0.18)] pt-3 space-y-2">
             <label className="flex items-center justify-between text-xs text-[#94a3b8]">
               Curso extra (materiales, universidad…)
               <input
@@ -139,7 +139,7 @@ export default function AuPairCalculadoraCostes() {
               <div className="text-sm font-bold text-[#22c55e] flex items-center gap-1">
                 <ArrowRight className="w-4 h-4" /> Coste TOTAL mensual
               </div>
-              <div className="text-xs text-[#64748b]">Salario + manutención + curso + seguro + transporte</div>
+              <div className="text-xs text-[#8b98ad]">Salario + manutención + curso + seguro + transporte</div>
             </div>
             <span className="text-2xl font-black text-[#22c55e]">{costes.total}€</span>
           </div>
@@ -147,7 +147,7 @@ export default function AuPairCalculadoraCostes() {
       </div>
 
       {/* Info adicional */}
-      <div className="p-4 rounded-lg bg-[#111827] border border-[#2d3142]">
+      <div className="p-4 rounded-lg bg-[#111827] border border-[rgba(148,163,184,0.18)]">
         <h4 className="text-sm font-bold text-[#f1f5f9] mb-2">Documentación necesaria</h4>
         <p className="text-xs text-[#94a3b8]">{pais.documentacion}</p>
         <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#94a3b8]">

@@ -431,6 +431,8 @@ label {
 .boton-cristal:hover { background: rgba(var(--tono, 163, 230, 53), 0.1); border-color: rgba(var(--tono, 163, 230, 53), 0.7); }
 
 .texto-neon { color: var(--neon-claro); text-shadow: 0 0 22px rgba(163, 230, 53, 0.45); }
+/* Relleno lima para botones hechos con clases de Tailwind (au pair, emigrar). */
+.fondo-lima { background: linear-gradient(180deg, #d9f99d 0%, #a3e635 55%, #84cc16 100%); color: #0b1406; }
 
 /* Guzzi con su aro de luz: respira despacio. */
 .guzzi-aro {
