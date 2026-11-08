@@ -5,6 +5,7 @@
  * Foto de perfil genérica (avatar), no la foto profesional del CV
  */
 
+import { User, Gem, Lock, Sprout, KeyRound, LogOut, AlertTriangle } from "lucide-react";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
@@ -350,14 +351,14 @@ export default function PerfilPage() {
       <div className="px-4 py-8" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.05))" }}>
         <div className="max-w-2xl mx-auto flex items-center gap-5">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+            style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
             {iniciales()}
           </div>
           <div>
-            <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>
               {perfil.nombre ? `${perfil.nombre} ${perfil.apellidos}` : "Mi Perfil"}
             </h1>
-            <p className="text-sm" style={{ color: "#64748b" }}>{email}</p>
+            <p className="text-sm" style={{ color: "#8b98ad" }}>{email}</p>
           </div>
           {guardando && !errorGuardar && (
             <span className="ml-auto text-xs font-medium px-3 py-1 rounded-full" style={{ background: "rgba(148,163,184,0.12)", color: "#94a3b8" }}>
@@ -381,20 +382,23 @@ export default function PerfilPage() {
       </div>
 
       {/* Tabs */}
-      <div className="sticky top-14 z-10" style={{ background: "#0f1117", borderBottom: "1px solid #2d3142" }}>
+      <div className="sticky top-14 z-10" style={{ background: "#0f1117", borderBottom: "1px solid rgba(148,163,184,0.14)" }}>
         <div className="max-w-2xl mx-auto px-4 flex">
           {[
-            { id: "perfil" as const, label: "Mi Perfil", icon: "👤" },
-            { id: "plan" as const, label: "Mi Plan", icon: "💎" },
-            { id: "seguridad" as const, label: "Seguridad", icon: "🔒" },
+            { id: "perfil" as const, label: "Mi Perfil", Icono: User, tono: "azul" },
+            { id: "plan" as const, label: "Mi Plan", Icono: Gem, tono: "ambar" },
+            { id: "seguridad" as const, label: "Seguridad", Icono: Lock, tono: "morado" },
           ].map(t => (
+            // Pestañas con el diseño de neón (7 nov 2026): icono en círculo de
+            // su color y la elegida en lima; antes eran emoji.
             <button key={t.id} onClick={() => setTab(t.id)}
-              className="flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition"
+              aria-pressed={tab === t.id}
+              className="flex items-center gap-2 px-3 min-h-[48px] text-sm font-semibold border-b-2 transition"
               style={{
-                borderColor: tab === t.id ? "#22c55e" : "transparent",
-                color: tab === t.id ? "#22c55e" : "#64748b",
+                borderColor: tab === t.id ? "#a3e635" : "transparent",
+                color: tab === t.id ? "#ecfccb" : "#a7b3c6",
               }}>
-              <span>{t.icon}</span>
+              <span className={`icono-circulo tono-${tab === t.id ? "lima" : t.tono}`} style={{ width: 30, height: 30 }} aria-hidden="true"><t.Icono size={14} /></span>
               <span>{t.label}</span>
             </button>
           ))}
@@ -405,50 +409,50 @@ export default function PerfilPage() {
       <main className="max-w-2xl mx-auto px-4 py-8">
         {tab === "perfil" && (
           <div className="space-y-6">
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>👤 Datos personales</h2>
-              <p className="text-xs mb-4" style={{ color: "#64748b" }}>
+            <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
+              <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}><span className="icono-circulo tono-azul align-middle mr-2" style={{ width: 28, height: 28 }} aria-hidden="true"><User size={14} /></span>Datos personales</h2>
+              <p className="text-xs mb-4" style={{ color: "#8b98ad" }}>
                 Estos datos se usan para personalizar tu experiencia. El CV completo (foto, experiencia, formación) está en <button onClick={() => router.push("/app/curriculum")} className="underline" style={{ color: "#22c55e" }}>Mi CV</button>.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="sr-only" htmlFor="perfil-nombre">Nombre</label>
                 <input id="perfil-nombre" placeholder="Nombre" value={perfil.nombre} onChange={e => updateField("nombre", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="perfil-apellidos">Apellidos</label>
                 <input id="perfil-apellidos" placeholder="Apellidos" value={perfil.apellidos} onChange={e => updateField("apellidos", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="perfil-telefono">Teléfono</label>
                 <input id="perfil-telefono" placeholder="Teléfono" value={perfil.telefono} onChange={e => updateField("telefono", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="perfil-email">Email</label>
                 <input id="perfil-email" placeholder="Email" value={perfil.email} readOnly
                   className="w-full px-4 py-2.5 rounded-lg text-sm cursor-default"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#64748b" }}
+                  style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#8b98ad" }}
                   title="El email no se puede cambiar desde aquí" />
                 <label className="sr-only" htmlFor="perfil-ciudad">Ciudad</label>
                 <div className="relative">
                   <input id="perfil-ciudad" placeholder="Ciudad" value={perfil.ciudad} onChange={e => updateField("ciudad", e.target.value)}
                     {...sugCiudad.propsCampo}
                     className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                   {sugCiudad.lista}
                 </div>
                 <label className="sr-only" htmlFor="perfil-provincia">Provincia</label>
                 <input id="perfil-provincia" placeholder="Provincia" value={perfil.provincia} onChange={e => updateField("provincia", e.target.value)}
                   autoComplete="off"
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="perfil-cpostal">Código Postal</label>
                 <input id="perfil-cpostal" placeholder="Código Postal" value={perfil.codigo_postal} onChange={e => updateField("codigo_postal", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 <label className="sr-only" htmlFor="perfil-sector">Sector / Profesión</label>
                 <input id="perfil-sector" placeholder="Sector / Profesión" value={perfil.sector} onChange={e => updateField("sector", e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
               </div>
             </div>
 
@@ -483,18 +487,18 @@ export default function PerfilPage() {
             </div>
 
             {/* Link al CV */}
-            <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
                 style={{ background: "rgba(59,130,246,0.15)" }}>
                 📄
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Tu CV completo</h3>
-                <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Foto profesional, experiencia, formación, habilidades...</p>
+                <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>Foto profesional, experiencia, formación, habilidades...</p>
               </div>
               <button onClick={() => router.push("/app/curriculum")}
                 className="px-4 py-2 text-xs font-semibold rounded-lg transition"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 Ir a Mi CV →
               </button>
             </div>
@@ -508,7 +512,7 @@ export default function PerfilPage() {
 
         {tab === "plan" && (() => {
           const PLANES_INFO = {
-            free:     { emoji: "🥚", nombre: "Gratis",   color: "#64748b", desc: "Plan gratuito — 3 CVs/día" },
+            free:     { emoji: "🥚", nombre: "Gratis",   color: "#8b98ad", desc: "Plan gratuito — 3 CVs/día" },
             basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Carta IA personalizada" },
             esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Carta IA personalizada" },
             pro:      { emoji: "⚡", nombre: "Pro",      color: "#a855f7", desc: "50 CVs/día · 350 CVs/semana · 100 consultas a Guzzi al día" },
@@ -518,11 +522,11 @@ export default function PerfilPage() {
           return (
             <div className="space-y-5">
               {/* Plan actual */}
-              <div className="rounded-xl p-5" style={{ background: "#161922", border: `1px solid ${info.color}30` }}>
+              <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: `1px solid ${info.color}30` }}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="text-3xl">{info.emoji}</div>
                   <div>
-                    <p className="text-xs font-medium" style={{ color: "#64748b" }}>Plan actual</p>
+                    <p className="text-xs font-medium" style={{ color: "#8b98ad" }}>Plan actual</p>
                     <h2 className="text-lg font-bold" style={{ color: info.color }}>Plan {info.nombre}</h2>
                   </div>
                   <span className="ml-auto text-[11px] font-semibold px-3 py-1 rounded-full"
@@ -554,7 +558,7 @@ export default function PerfilPage() {
                       ? "Gestionar en App Store →"
                       : cargandoPortal ? "Cargando..." : "Gestionar suscripción →"}
                   </button>
-                  <p className="text-[11px] text-center mt-1.5" style={{ color: "#6b7280" }}>
+                  <p className="text-[11px] text-center mt-1.5" style={{ color: "#8b98ad" }}>
                     Cambiar plan, método de pago o cancelar
                   </p>
                 </div>
@@ -570,20 +574,20 @@ export default function PerfilPage() {
               {planActual !== "empresa" && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <p className="text-xs font-semibold" style={{ color: "#64748b" }}>Mejorar plan</p>
+                    <p className="text-xs font-semibold" style={{ color: "#8b98ad" }}>Mejorar plan</p>
                     {!iosNativo && <InfoTooltip text="El pago se procesa con Stripe (seguro). Puedes cancelar en cualquier momento desde el portal de facturación. El cambio es inmediato." position="right" />}
                   </div>
                   {iosNativo && (
-                    <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>
+                    <p className="text-[11px] leading-relaxed" style={{ color: "#8b98ad" }}>
                       🍎 El pago se realiza de forma segura con tu cuenta de Apple. La suscripción se renueva automáticamente; puedes cancelarla cuando quieras desde Ajustes.
                     </p>
                   )}
                   {planActual === "free" && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
-                      style={{ background: "#161922", border: "1px solid #2d3142" }}>
+                      style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>🌱 Plan Esencial — 2,99€/mes</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>15 CVs/día · 100 CVs/semana · Carta IA personalizada</p>
+                        <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}><Sprout size={14} className="inline mr-1 align-[-2px]" style={{ color: "#86efac" }} aria-hidden="true" />Plan Esencial — 2,99€/mes</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>15 CVs/día · 100 CVs/semana · Carta IA personalizada</p>
                       </div>
                       <button onClick={() => contratar("esencial")}
                         disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
@@ -594,10 +598,10 @@ export default function PerfilPage() {
                   )}
                   {(planActual === "free" || planActual === "esencial") && (
                     <div className="rounded-xl p-4 flex items-center justify-between"
-                      style={{ background: "#161922", border: "1px solid #2d3142" }}>
+                      style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Plan Pro — 9,99€/mes</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>50 CVs/día · 350 CVs/semana · 100 consultas a Guzzi al día</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>50 CVs/día · 350 CVs/semana · 100 consultas a Guzzi al día</p>
                       </div>
                       <button onClick={() => contratar("pro")}
                         disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
@@ -607,10 +611,10 @@ export default function PerfilPage() {
                     </div>
                   )}
                   <div className="rounded-xl p-4 flex items-center justify-between"
-                    style={{ background: "#161922", border: "1px solid #2d3142" }}>
+                    style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
                     <div>
                       <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Plan Empresa — 49,99€/mes</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>200 CVs/día · Guzzi sin límite · Soporte 24/7</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>200 CVs/día · Guzzi sin límite · Soporte 24/7</p>
                     </div>
                     <button onClick={() => contratar("empresa")}
                       disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
@@ -625,7 +629,7 @@ export default function PerfilPage() {
               {iosNativo && planActual === "empresa" && <RestaurarComprasBoton className="pt-1" />}
 
               {/* Link a precios */}
-              <p className="text-xs text-center" style={{ color: "#6b7280" }}>
+              <p className="text-xs text-center" style={{ color: "#8b98ad" }}>
                 <button onClick={() => router.push("/precios")} className="underline hover:opacity-80" style={{ color: "#22c55e" }}>
                   Ver comparativa completa de planes →
                 </button>
@@ -637,9 +641,9 @@ export default function PerfilPage() {
         {tab === "seguridad" && (
           <div className="space-y-5">
             {/* Cambiar contraseña */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-              <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🔑 Cambiar contraseña</h2>
-              <p className="text-xs mb-4" style={{ color: "#64748b" }}>Mínimo 8 caracteres.</p>
+            <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
+              <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}><span className="icono-circulo tono-morado align-middle mr-2" style={{ width: 28, height: 28 }} aria-hidden="true"><KeyRound size={14} /></span>Cambiar contraseña</h2>
+              <p className="text-xs mb-4" style={{ color: "#8b98ad" }}>Mínimo 8 caracteres.</p>
               <div className="space-y-3">
                 <input
                   type="password"
@@ -647,7 +651,7 @@ export default function PerfilPage() {
                   value={nuevaPassword}
                   onChange={e => setNuevaPassword(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+                  style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
                 />
                 <input
                   type="password"
@@ -655,7 +659,7 @@ export default function PerfilPage() {
                   value={confirmarPassword}
                   onChange={e => setConfirmarPassword(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                  style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }}
+                  style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
                 />
                 {msgSeguridad && (
                   <p className="text-xs px-3 py-2 rounded-lg"
@@ -671,7 +675,7 @@ export default function PerfilPage() {
                   onClick={cambiarPassword}
                   disabled={cargandoPassword || !nuevaPassword}
                   className="w-full py-2.5 text-sm font-semibold rounded-lg transition disabled:opacity-50"
-                  style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+                  style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
                 >
                   {cargandoPassword ? "Guardando..." : "Actualizar contraseña"}
                 </button>
@@ -679,9 +683,9 @@ export default function PerfilPage() {
             </div>
 
             {/* Sesiones */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-              <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🚪 Cerrar sesión en todos los dispositivos</h2>
-              <p className="text-xs mb-4" style={{ color: "#64748b" }}>Cierra sesión en todos los dispositivos donde hayas iniciado sesión.</p>
+            <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
+              <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}><span className="icono-circulo tono-ambar align-middle mr-2" style={{ width: 28, height: 28 }} aria-hidden="true"><LogOut size={14} /></span>Cerrar sesión en todos los dispositivos</h2>
+              <p className="text-xs mb-4" style={{ color: "#8b98ad" }}>Cierra sesión en todos los dispositivos donde hayas iniciado sesión.</p>
               <button
                 onClick={cerrarTodasLasSesiones}
                 className="px-5 py-2.5 text-sm font-semibold rounded-lg transition"
@@ -692,21 +696,21 @@ export default function PerfilPage() {
             </div>
 
             {/* Legal — Política de privacidad y términos */}
-            <div className="rounded-xl p-4 flex gap-4 text-xs" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-4 flex gap-4 text-xs" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <a href="/privacidad" target="_blank" rel="noopener noreferrer"
-                className="hover:underline" style={{ color: "#6b7280" }}>
+                className="hover:underline" style={{ color: "#8b98ad" }}>
                 Política de privacidad
               </a>
-              <span style={{ color: "#2d3142" }}>·</span>
+              <span style={{ color: "#8b98ad" }}>·</span>
               <a href="/terminos" target="_blank" rel="noopener noreferrer"
-                className="hover:underline" style={{ color: "#6b7280" }}>
+                className="hover:underline" style={{ color: "#8b98ad" }}>
                 Términos de uso
               </a>
             </div>
 
             {/* Zona de peligro */}
             <div className="rounded-xl p-5" style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)" }}>
-              <h2 className="font-semibold text-sm mb-1" style={{ color: "#ef4444" }}>⚠️ Zona de peligro</h2>
+              <h2 className="font-semibold text-sm mb-1" style={{ color: "#ef4444" }}><AlertTriangle size={15} className="inline mr-1.5 align-[-2px]" aria-hidden="true" />Zona de peligro</h2>
               <p className="text-xs mb-4" style={{ color: "#94a3b8" }}>
                 Elimina tu cuenta y todos tus datos de forma permanente. Si tienes un plan activo, se cancelará automáticamente. Esta acción no se puede deshacer.
               </p>
@@ -729,7 +733,7 @@ export default function PerfilPage() {
           style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setModalEliminar(false); }}
         >
-          <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "#161922", border: "1px solid rgba(239,68,68,0.2)" }}>
+          <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(239,68,68,0.2)" }}>
 
             {/* Cabecera */}
             <div className="flex items-start gap-3 mb-5">
@@ -739,7 +743,7 @@ export default function PerfilPage() {
               </div>
               <div>
                 <h2 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Eliminar cuenta y datos</h2>
-                <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Esta acción es permanente e irreversible.</p>
+                <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>Esta acción es permanente e irreversible.</p>
               </div>
             </div>
 
@@ -764,7 +768,7 @@ export default function PerfilPage() {
 
             {/* Input de confirmación */}
             <div className="mb-4">
-              <p className="text-xs mb-2" style={{ color: "#64748b" }}>
+              <p className="text-xs mb-2" style={{ color: "#8b98ad" }}>
                 Escribe <strong style={{ color: "#f1f5f9" }}>ELIMINAR</strong> para confirmar:
               </p>
               <input

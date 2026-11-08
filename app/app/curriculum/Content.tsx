@@ -16,7 +16,7 @@ import Link from "next/link";
  * 6. Auto-guardado
  */
 
-import { Trash2, Save, Check, Palette } from "lucide-react";
+import { Trash2, Save, Check, Palette, User, GraduationCap, PenLine, Globe, FileText } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { descargarCVComoPDF } from "@/lib/cv-generator/descargar-pdf";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -819,14 +819,14 @@ export default function CurriculumPage() {
   // Quien llega con su CV de siempre empieza por aquí: si el CV está casi vacío,
   // subirlo va lo primero, antes de plantillas y colores.
   const bloqueSubirPDF = (
-    <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+    <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
       <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
         style={{ background: "rgba(59,130,246,0.15)" }}>
         📎
       </div>
       <div className="flex-1">
         <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¿Ya tienes un CV en PDF?</h3>
-        <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Súbelo y extraigo los datos automáticamente</p>
+        <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>Súbelo y extraigo los datos automáticamente</p>
       </div>
       <label className={`shrink-0 px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
         style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }}>
@@ -862,7 +862,7 @@ export default function CurriculumPage() {
             baja debajo del titulo cuando no cabe, en vez de desbordarse. */}
         <div className="max-w-[100rem] mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold" style={{ color: "#22c55e" }}>Mi Currículum</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Mi Currículum</h1>
             <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Completa tus datos — la plantilla se actualiza en vivo</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -873,10 +873,10 @@ export default function CurriculumPage() {
                   value={cvActivoId}
                   onChange={(e) => { const id = e.target.value; if (id) cargarCVporId(id); }}
                   className="px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
-                  style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9", maxWidth: "180px" }}
+                  style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9", maxWidth: "180px" }}
                 >
                   {listaCVs.map(cv => (
-                    <option key={cv.id} value={cv.id} style={{ background: "#1e212b", color: "#f1f5f9" }}>
+                    <option key={cv.id} value={cv.id} style={{ background: "rgba(12,15,22,0.86)", color: "#f1f5f9" }}>
                       {cv.nombre || "Sin nombre"}
                     </option>
                   ))}
@@ -894,7 +894,7 @@ export default function CurriculumPage() {
               onClick={guardarComoNuevo}
               disabled={guardando}
               className="text-[10px] px-2 py-1.5 rounded-lg font-medium transition disabled:opacity-50"
-              style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}
+              style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
             >
               {guardando ? "..." : (
                 <span className="inline-flex items-center gap-1.5">
@@ -922,15 +922,15 @@ export default function CurriculumPage() {
                   onChange={e => setIdiomaDestino(e.target.value)}
                   aria-label="Idioma al que traducir el CV"
                   className="px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
-                  style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}
+                  style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
                 >
                   {IDIOMAS_CV.map(i => (
-                    <option key={i.codigo} value={i.codigo} style={{ background: "#1e212b", color: "#f1f5f9" }}>{i.nombre}</option>
+                    <option key={i.codigo} value={i.codigo} style={{ background: "rgba(12,15,22,0.86)", color: "#f1f5f9" }}>{i.nombre}</option>
                   ))}
                 </select>
                 <button onClick={traducirCV} disabled={traduciendo}
                   className="px-3 py-2 text-xs font-semibold rounded-xl disabled:opacity-50"
-                  style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}>
+                  style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}>
                   {traduciendo ? "Traduciendo..." : "🌍 Traducir"}
                 </button>
               </div>
@@ -962,7 +962,7 @@ export default function CurriculumPage() {
 
       {/* Barra de completitud */}
       <div className="px-4 py-3 max-w-[100rem] mx-auto">
-        <div className="rounded-xl p-4" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+        <div className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
               Tu CV
@@ -1033,7 +1033,7 @@ export default function CurriculumPage() {
             {pct < 50 && bloqueSubirPDF}
 
             {/* Selector de plantilla */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}><Palette size={14} strokeWidth={1.9} /> Plantilla del CV</h2>
                 <InfoTooltip text="La Clásica (dos columnas con foto) es visual e ideal para hostelería, comercio y trato con cliente. La Profesional ATS (una columna) está optimizada para pasar los filtros automáticos que usan la mayoría de empresas medianas y grandes." />
@@ -1100,7 +1100,7 @@ export default function CurriculumPage() {
               </button>
 
               {/* Selector de color de acento */}
-              <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
+              <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                 <p className="text-xs font-semibold mb-2.5" style={{ color: "#f1f5f9" }}>Color del CV</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   {[
@@ -1131,7 +1131,7 @@ export default function CurriculumPage() {
                     );
                   })}
                 </div>
-                <p className="text-[10px] mt-2" style={{ color: "#64748b" }}>Se aplica a la plantilla elegida. La <b>Ejecutiva</b> y la <b>Coqueta</b> son las que más lo lucen.</p>
+                <p className="text-[10px] mt-2" style={{ color: "#8b98ad" }}>Se aplica a la plantilla elegida. La <b>Ejecutiva</b> y la <b>Coqueta</b> son las que más lo lucen.</p>
               </div>
             </div>
 
@@ -1151,7 +1151,7 @@ export default function CurriculumPage() {
                     <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
                       Visible para empresas
                     </p>
-                    <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                    <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>
                       {visibleEmpresas
                         ? "Tu perfil aparece en el portal de empresas"
                         : "Activa esto para que empresas y ETTs puedan encontrarte"}
@@ -1182,7 +1182,7 @@ export default function CurriculumPage() {
             {pct >= 50 && bloqueSubirPDF}
 
             {/* Foto profesional */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <h2 className="font-semibold text-sm mb-4" style={{ color: "#f1f5f9" }}>Foto profesional para tu CV</h2>
               
               <div className="flex items-center gap-4 mb-4">
@@ -1190,16 +1190,16 @@ export default function CurriculumPage() {
                   {fotoUrl ? (
                     <img src={fotoUrl} alt="Foto CV" className="w-full h-full object-cover" width={80} height={80} loading="lazy" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl" style={{ background: "#1e212b", color: "#6b7280" }}>👤</div>
+                    <div className="w-full h-full flex items-center justify-center text-3xl" style={{ background: "rgba(12,15,22,0.86)", color: "#8b98ad" }}>👤</div>
                   )}
                 </div>
                 <div>
                   <label className={`inline-block px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer transition ${subiendoFoto ? "opacity-50" : ""}`}
-                    style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                    style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                     {subiendoFoto ? "Subiendo…" : fotoUrl ? "Cambiar foto" : "Subir foto"}
                     <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && subirFoto(e.target.files[0])} />
                   </label>
-                  <p className="text-[10px] mt-1.5" style={{ color: "#64748b" }}>JPG/PNG, máx 3MB</p>
+                  <p className="text-[10px] mt-1.5" style={{ color: "#8b98ad" }}>JPG/PNG, máx 3MB</p>
                 </div>
               </div>
 
@@ -1215,7 +1215,7 @@ export default function CurriculumPage() {
                 className="p-3 rounded-lg flex items-start gap-2.5 mb-3 hover:opacity-90"
                 style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", textDecoration: "none" }}
               >
-                <span className="text-sm shrink-0">🌍</span>
+                <Globe size={15} className="shrink-0" style={{ color: "#93c5fd" }} aria-hidden="true" />
                 <div>
                   <p className="text-xs font-semibold mb-0.5" style={{ color: "#f59e0b" }}>
                     ¿A qué país mandas el CV?
@@ -1230,7 +1230,7 @@ export default function CurriculumPage() {
               <div className="p-3 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)" }}>
                 <p className="text-xs font-semibold mb-2" style={{ color: "#22c55e" }}>Truco: Foto profesional gratis con IA</p>
                 <p className="text-[11px] mb-2" style={{ color: "#94a3b8" }}>Hazte un selfie, copia este texto y pégalo en ChatGPT junto con tu foto:</p>
-                <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid #2d3142" }}>
+                <div className="p-2.5 rounded-md text-[10px] leading-relaxed font-mono" style={{ background: "#0a0c10", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
                   Utiliza este personaje, pero en tamaño carnet, desde los hombros hacia arriba. Ponme una camisa blanca y adáptalo para un currículum. Que sea fiel a las características de mi rostro.
                 </div>
                 <div className="mt-2 flex gap-2">
@@ -1238,7 +1238,7 @@ export default function CurriculumPage() {
                     onClick={() => {
                       navigator.clipboard.writeText("Utiliza este personaje, pero en tamaño carnet, desde los hombros hacia arriba. Ponme una camisa blanca y adáptalo para un currículum. Que sea fiel a las características de mi rostro.");
                     }}
-                    className="px-3 py-1 text-[10px] font-semibold rounded-md" style={{ background: "#22c55e", color: "#fff" }}>
+                    className="px-3 py-1 text-[10px] font-semibold rounded-md" style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                     1. Copiar el texto
                   </button>
                   <button
@@ -1255,9 +1255,9 @@ export default function CurriculumPage() {
             </div>
 
             {/* Datos personales */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>👤 Datos personales</h2>
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}><span className="icono-circulo tono-azul align-middle mr-2" style={{ width: 28, height: 28 }} aria-hidden="true"><User size={14} /></span>Datos personales</h2>
                 <InfoTooltip text="Tu nombre, teléfono, email y ciudad aparecen en la cabecera del CV. El título profesional resume tu perfil (ej: 'Camarero con 5 años de experiencia')." />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1265,50 +1265,50 @@ export default function CurriculumPage() {
                   <label htmlFor="cv-nombre" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Nombre</label>
                   <input id="cv-nombre" placeholder="Nombre" value={form.nombre} onChange={e => f("nombre", e.target.value)}
                     className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 </div>
                 <div>
                   <label htmlFor="cv-apellidos" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Apellidos</label>
                   <input id="cv-apellidos" placeholder="Apellidos" value={form.apellidos} onChange={e => f("apellidos", e.target.value)}
                     className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="cv-subtitulo" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Tu oficio o el puesto que buscas</label>
                   <input id="cv-subtitulo" placeholder="Título profesional" value={form.subtitulo} onChange={e => f("subtitulo", e.target.value)}
                     className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 </div>
                 <div>
                   <label htmlFor="cv-telefono" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Teléfono</label>
                   <input id="cv-telefono" placeholder="Teléfono" value={form.telefono} onChange={e => f("telefono", e.target.value)}
                     className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 </div>
                 <div>
                   <label htmlFor="cv-email" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Correo electrónico</label>
                   <input id="cv-email" placeholder="Email" value={form.email} onChange={e => f("email", e.target.value)}
                     className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="cv-ciudad" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Ciudad</label>
                   <input id="cv-ciudad" placeholder="Ciudad" value={form.ciudad} onChange={e => f("ciudad", e.target.value)}
                     autoComplete="off"
                     className="w-full px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30 transition"
-                    style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 </div>
               </div>
             </div>
 
             {/* Experiencia */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Experiencia laboral</h2>
                 <InfoTooltip text="Añade tus trabajos del más reciente al más antiguo. Incluye fechas, puesto, empresa y una descripción breve de tus tareas con verbos de acción (Gestioné, Coordiné...)." />
               </div>
               {form.experiencia.map((exp, i) => (
-                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid #2d3142" }}>
+                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)" }}>
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] font-semibold" style={{ color: "#22c55e" }}>Experiencia {i + 1}</span>
                     {form.experiencia.length > 1 && (
@@ -1320,30 +1320,30 @@ export default function CurriculumPage() {
                     <label htmlFor={`cv-exp-fechas-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Fechas</label>
                     <input id={`cv-exp-fechas-${i}`} placeholder="Fechas (ej: 2020 - 2023)" value={exp.fechas}
                       onChange={e => updExp(i, "fechas", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label htmlFor={`cv-exp-puesto-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Puesto</label>
                       <input id={`cv-exp-puesto-${i}`} placeholder="Puesto" value={exp.puesto} onChange={e => updExp(i, "puesto", e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                     </div>
                     <div>
                       <label htmlFor={`cv-exp-empresa-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Empresa</label>
                       <input id={`cv-exp-empresa-${i}`} placeholder="Empresa" value={exp.empresa} onChange={e => updExp(i, "empresa", e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                     </div>
                   </div>
                   <div>
                     <label htmlFor={`cv-exp-ubicacion-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Ciudad</label>
                     <input id={`cv-exp-ubicacion-${i}`} placeholder="Ubicación" value={exp.ubicacion} onChange={e => updExp(i, "ubicacion", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                   </div>
                   <div>
                     <label htmlFor={`cv-exp-descripcion-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Qué hacías (una tarea por línea)</label>
                     <textarea id={`cv-exp-descripcion-${i}`} placeholder="Descripción de tareas (una por línea)" value={exp.descripcion} rows={3}
                       onChange={e => updExp(i, "descripcion", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg text-sm resize-none" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                      className="w-full px-4 py-2 rounded-lg text-sm resize-none" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                   </div>
                 </div>
               ))}
@@ -1352,13 +1352,13 @@ export default function CurriculumPage() {
             </div>
 
             {/* Formación */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>🎓 Formación</h2>
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}><span className="icono-circulo tono-morado align-middle mr-2" style={{ width: 28, height: 28 }} aria-hidden="true"><GraduationCap size={14} /></span>Formación</h2>
                 <InfoTooltip text="Tus estudios y cursos relevantes. Incluye el título (ej: ESO, FP, Grado), el centro educativo y la ciudad." />
               </div>
               {form.formacion.map((edu, i) => (
-                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid #2d3142" }}>
+                <div key={i} className="p-3 rounded-lg space-y-2.5 mb-3" style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)" }}>
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] font-semibold" style={{ color: "#f59e0b" }}>Formación {i + 1}</span>
                     {form.formacion.length > 1 && (
@@ -1370,18 +1370,18 @@ export default function CurriculumPage() {
                     <label htmlFor={`cv-edu-titulo-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Estudios o curso</label>
                     <input id={`cv-edu-titulo-${i}`} placeholder="Título / Estudios" value={edu.titulo}
                       onChange={e => updEdu(i, "titulo", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                      className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label htmlFor={`cv-edu-centro-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Centro</label>
                       <input id={`cv-edu-centro-${i}`} placeholder="Centro" value={edu.centro} onChange={e => updEdu(i, "centro", e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                     </div>
                     <div>
                       <label htmlFor={`cv-edu-ubicacion-${i}`} className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Ciudad</label>
                       <input id={`cv-edu-ubicacion-${i}`} placeholder="Ubicación" value={edu.ubicacion} onChange={e => updEdu(i, "ubicacion", e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                        className="w-full px-4 py-2 rounded-lg text-sm" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                     </div>
                   </div>
                 </div>
@@ -1392,7 +1392,7 @@ export default function CurriculumPage() {
 
             {/* Habilidades e idiomas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+              <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
                 <div className="flex items-center gap-2 mb-3">
                   <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Habilidades</h2>
                   <InfoTooltip text="Tus puntos fuertes separados por comas. Ej: Trabajo en equipo, Excel, Liderazgo, Resolución de problemas." position="right" />
@@ -1401,10 +1401,10 @@ export default function CurriculumPage() {
                   <label htmlFor="cv-aptitudes" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Lo que sabes hacer (separado por comas)</label>
                   <input id="cv-aptitudes" placeholder="Separadas por comas" value={form.aptitudes}
                     onChange={e => f("aptitudes", e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                    className="w-full px-4 py-2.5 rounded-lg text-sm" style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
                 </div>
               </div>
-              <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+              <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
                 <div className="flex items-center gap-2 mb-3">
                   <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Idiomas</h2>
                   <InfoTooltip text="Cada idioma que hablas y con qué soltura. En el CV sale como una barra." position="left" />
@@ -1414,16 +1414,16 @@ export default function CurriculumPage() {
             </div>
 
             {/* Perfil profesional */}
-            <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-center gap-2 mb-3">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>📝 Perfil profesional (opcional)</h2>
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}><span className="icono-circulo tono-ambar align-middle mr-2" style={{ width: 28, height: 28 }} aria-hidden="true"><PenLine size={14} /></span>Perfil profesional (opcional)</h2>
                 <InfoTooltip text="2-3 frases que resumen quién eres como profesional. Si lo dejas vacío, la IA lo generará automáticamente a partir de tu experiencia." />
               </div>
               <div>
                 <label htmlFor="cv-perfil-profesional" className="block text-[11px] font-medium mb-1" style={{ color: "#94a3b8" }}>Cuéntalo en dos o tres frases</label>
                 <textarea id="cv-perfil-profesional" placeholder="Breve descripción de ti como profesional... (la IA lo mejorará)"
                   value={form.perfilProfesional} onChange={e => f("perfilProfesional", e.target.value)} rows={3}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm resize-none" style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                  className="w-full px-4 py-2.5 rounded-lg text-sm resize-none" style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
               </div>
             </div>
           </div>
@@ -1438,7 +1438,7 @@ export default function CurriculumPage() {
           <div className="hidden lg:block lg:flex-1 lg:min-w-0 lg:sticky lg:top-20 lg:max-w-[50%]">
             <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #22c55e40", background: "#fff" }}>
               {/* Cabecera de la preview */}
-              <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "#161922", borderBottom: "1px solid #2d3142" }}>
+              <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "rgba(12,15,22,0.78)", borderBottom: "1px solid rgba(148,163,184,0.14)" }}>
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
                   <span className="text-xs font-semibold" style={{ color: "#22c55e" }}>
@@ -1475,7 +1475,7 @@ export default function CurriculumPage() {
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 px-6" style={{ background: "#f8fafc", minHeight: "400px" }}>
-                  <div className="text-5xl mb-4 opacity-30">📄</div>
+                  <div className="mb-4 opacity-40 flex justify-center"><FileText size={44} strokeWidth={1.3} aria-hidden="true" /></div>
                   <p className="text-sm font-medium text-slate-400 mb-1">Tu CV aparecerá aquí</p>
                   <p className="text-xs text-slate-300 text-center max-w-xs">
                     Escribe tu nombre y completa los campos de la izquierda para ver la plantilla en tiempo real
@@ -1488,12 +1488,12 @@ export default function CurriculumPage() {
             <div className="mt-4 flex gap-3 flex-wrap">
               <button onClick={generarYMejorar} disabled={procesando || !form.nombre.trim()}
                 className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 {procesando ? "✨ Mejorando..." : "✨ Mejorar con IA"}
               </button>
               <button onClick={descargarPDF} disabled={descargando || !previewHTML}
                 className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
-                style={{ background: "#1e212b", border: "1.5px solid #22c55e", color: "#22c55e" }}>
+                style={{ background: "rgba(12,15,22,0.86)", border: "1.5px solid #22c55e", color: "#22c55e" }}>
                 {descargando ? "Generando PDF..." : "⬇ Descargar PDF"}
               </button>
             </div>
@@ -1511,7 +1511,7 @@ export default function CurriculumPage() {
           onClick={() => setFullscreen(true)}
           className="lg:hidden fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm shadow-lg"
           // Por encima de la barra de abajo del móvil (--barra-inferior, globals.css).
-          style={{ bottom: "calc(var(--barra-inferior) + 20px)", background: "#22c55e", color: "#0f1117", boxShadow: "0 8px 24px rgba(34,197,94,0.35)" }}
+          style={{ bottom: "calc(var(--barra-inferior) + 20px)", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", boxShadow: "0 8px 24px rgba(34,197,94,0.35)" }}
         >
           👁️ Ver mi CV
         </button>
@@ -1523,7 +1523,7 @@ export default function CurriculumPage() {
           style={{ background: "#0f1117" }}
         >
           {/* Toolbar */}
-          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#161922", borderBottom: "1px solid #2d3142" }}>
+          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "rgba(12,15,22,0.78)", borderBottom: "1px solid rgba(148,163,184,0.14)" }}>
             <div className="flex items-center gap-3">
               <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
               <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>
@@ -1542,7 +1542,7 @@ export default function CurriculumPage() {
                 onClick={descargarPDF}
                 disabled={descargando}
                 className="text-xs px-4 py-1.5 rounded-lg font-semibold transition disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
               >
                 {descargando ? "Generando..." : "⬇ Descargar PDF"}
               </button>
@@ -1563,12 +1563,12 @@ export default function CurriculumPage() {
       {/* ── EJEMPLO DE PLANTILLA (pantalla completa) ── */}
       {ejemploVista && (
         <div className="fixed inset-0 z-[9999] flex flex-col" style={{ background: "#0f1117" }}>
-          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#161922", borderBottom: "1px solid #2d3142" }}>
+          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "rgba(12,15,22,0.78)", borderBottom: "1px solid rgba(148,163,184,0.14)" }}>
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>
                 Ejemplo — {PLANTILLAS[ejemploVista].nombre}
               </span>
-              <span className="text-[11px] hidden sm:inline" style={{ color: "#64748b" }}>
+              <span className="text-[11px] hidden sm:inline" style={{ color: "#8b98ad" }}>
                 Datos de muestra · así quedará tu CV con esta plantilla
               </span>
             </div>
@@ -1576,7 +1576,7 @@ export default function CurriculumPage() {
               <button
                 onClick={() => { setTemplateId(ejemploVista); setEjemploVista(null); }}
                 className="text-xs px-4 py-1.5 rounded-lg font-semibold transition hover:scale-105"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
               >
                 ✓ Usar esta plantilla
               </button>

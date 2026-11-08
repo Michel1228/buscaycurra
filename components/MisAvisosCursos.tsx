@@ -78,18 +78,18 @@ export default function MisAvisosCursos() {
   const disponibles = tiposPorPais("ES").filter((t) => !activos.has(t.slug));
 
   return (
-    <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+    <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
       <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🎓 Mis avisos de cursos</h2>
-      <p className="text-xs mb-4" style={{ color: "#64748b" }}>
+      <p className="text-xs mb-4" style={{ color: "#8b98ad" }}>
         Aparte de las alertas de empleo: te avisamos cuando hay trabajo que pide el curso que te interesa.
       </p>
 
       {sugerencias !== null && (
-        <label className="flex items-start gap-3 rounded-lg px-3 py-2.5 mb-4 cursor-pointer" style={{ background: "#1e212b" }}>
+        <label className="flex items-start gap-3 rounded-lg px-3 py-2.5 mb-4 cursor-pointer" style={{ background: "rgba(12,15,22,0.86)" }}>
           <input type="checkbox" checked={sugerencias} onChange={(e) => cambiarSugerencias(e.target.checked)} className="mt-0.5" />
           <span>
             <span className="block text-sm" style={{ color: "#f1f5f9" }}>Sugerirme cursos según mi CV</span>
-            <span className="block text-[11px]" style={{ color: "#64748b" }}>
+            <span className="block text-[11px]" style={{ color: "#8b98ad" }}>
               Si para lo que has trabajado piden un curso que no tienes, te avisamos cuando haya plaza gratis. Como mucho, uno cada dos semanas.
             </span>
           </span>
@@ -110,17 +110,17 @@ export default function MisAvisosCursos() {
 
       {error && <p className="text-xs mb-3" style={{ color: "#ef4444" }}>{error}</p>}
       {avisos === null ? (
-        <p className="text-xs" style={{ color: "#64748b" }}>Cargando…</p>
+        <p className="text-xs" style={{ color: "#8b98ad" }}>Cargando…</p>
       ) : avisos.length === 0 ? (
-        <p className="text-xs" style={{ color: "#64748b" }}>No tienes avisos de cursos.</p>
+        <p className="text-xs" style={{ color: "#8b98ad" }}>No tienes avisos de cursos.</p>
       ) : (
         <ul className="space-y-2">
           {avisos.map((a) => (
-            <li key={a.slug} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2" style={{ background: "#1e212b" }}>
+            <li key={a.slug} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2" style={{ background: "rgba(12,15,22,0.86)" }}>
               <a href={`/app/formacion/${a.slug}`} className="text-sm truncate hover:underline" style={{ color: "#f1f5f9" }}>{a.nombre}</a>
               <button onClick={() => cambiar(a.slug, false)} disabled={ocupado !== null}
                 className="text-xs px-3 py-1.5 rounded-lg flex-shrink-0 disabled:opacity-50"
-                style={{ color: "#94a3b8", border: "1px solid #2d3142" }}
+                style={{ color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}
                 aria-label={`Quitar el aviso de ${a.nombre}`}>
                 {ocupado === a.slug ? "Quitando…" : "Quitar"}
               </button>

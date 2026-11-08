@@ -97,13 +97,13 @@ export default function MisAlertas() {
   const titulo = (a: Alerta) => [a.keyword, a.location].filter(Boolean).join(" en ") || "Ofertas nuevas";
 
   return (
-    <div className="rounded-xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
+    <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
       <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🔔 Mis alertas de empleo</h2>
-      <p className="text-xs mb-4" style={{ color: "#64748b" }}>
+      <p className="text-xs mb-4" style={{ color: "#8b98ad" }}>
         Te avisamos de ofertas nuevas que encajan. Como mucho, un correo al día.
       </p>
 
-      <form onSubmit={crear} className="rounded-lg p-3 mb-4 space-y-2" style={{ background: "#1e212b" }}>
+      <form onSubmit={crear} className="rounded-lg p-3 mb-4 space-y-2" style={{ background: "rgba(12,15,22,0.86)" }}>
         <p className="text-xs font-medium" style={{ color: "#f1f5f9" }}>Añadir una alerta</p>
         <div className="grid sm:grid-cols-2 gap-2">
           <div>
@@ -123,7 +123,7 @@ export default function MisAlertas() {
               className="text-[11px] px-2.5 py-1 rounded-full"
               style={puesto === s
                 ? { color: "#22c55e", border: "1px solid rgba(34,197,94,0.4)", background: "rgba(34,197,94,0.08)" }
-                : { color: "#94a3b8", border: "1px solid #2d3142" }}>
+                : { color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
               {s}
             </button>
           ))}
@@ -144,20 +144,20 @@ export default function MisAlertas() {
       {aviso && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{aviso}</p>}
       {error && <p className="text-xs mb-3" style={{ color: "#ef4444" }}>{error}</p>}
       {alertas === null ? (
-        <p className="text-xs" style={{ color: "#64748b" }}>Cargando…</p>
+        <p className="text-xs" style={{ color: "#8b98ad" }}>Cargando…</p>
       ) : alertas.length === 0 ? (
-        <p className="text-xs" style={{ color: "#64748b" }}>No tienes ninguna alerta.</p>
+        <p className="text-xs" style={{ color: "#8b98ad" }}>No tienes ninguna alerta.</p>
       ) : (
         <ul className="space-y-2">
           {alertas.map((a) => (
-            <li key={a.id} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2" style={{ background: "#1e212b" }}>
+            <li key={a.id} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2" style={{ background: "rgba(12,15,22,0.86)" }}>
               <div className="min-w-0">
                 <p className="text-sm truncate" style={{ color: "#f1f5f9" }}>{titulo(a)}</p>
-                <p className="text-[11px]" style={{ color: "#64748b" }}>{a.frequency === "weekly" ? "Semanal" : "Diaria"}</p>
+                <p className="text-[11px]" style={{ color: "#8b98ad" }}>{a.frequency === "weekly" ? "Semanal" : "Diaria"}</p>
               </div>
               <button onClick={() => quitar(a.id)} disabled={quitando !== null}
                 className="text-xs px-3 py-1.5 rounded-lg flex-shrink-0 disabled:opacity-50"
-                style={{ color: "#94a3b8", border: "1px solid #2d3142" }}
+                style={{ color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}
                 aria-label={`Quitar la alerta ${titulo(a)}`}>
                 {quitando === a.id ? "Quitando…" : "Quitar"}
               </button>
