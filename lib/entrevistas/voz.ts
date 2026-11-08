@@ -19,6 +19,17 @@ let audio: HTMLAudioElement | null = null;
 let cola: Clip[] = [];
 let alAcabar: (() => void) | null = null;
 
+/**
+ * SI EL NAVEGADOR NO DEJA SONAR (8 nov 2026). Antes se quedaba mudo sin decir
+ * nada: en el ordenador de Michel la entrevista no se oía. Ahora la pantalla
+ * se entera y enseña "Pulsa para oír al entrevistador"; ese toque es el gesto
+ * que el navegador pide, y la voz sigue desde el clip que no pudo sonar.
+ */
+let alBloquear: ((reintentar: () => void) => void) | null = null;
+export function siLaVozSeBloquea(cb: ((reintentar: () => void) => void) | null) {
+  alBloquear = cb;
+}
+
 function elemento(): HTMLAudioElement {
   if (!audio) {
     audio = new Audio();
@@ -56,10 +67,18 @@ function siguiente() {
   a.onended = siguiente;
   a.onerror = () => leerConElMovil(c.texto, siguiente);
   a.src = `/voz/entrevista/${c.id}.mp3`;
-  // Si el navegador no deja sonar (no ha habido ningún toque todavía), se
-  // queda en silencio: el texto sigue en pantalla y el altavoz lo repite.
+  // Si el navegador no deja sonar, se avisa a la pantalla para que pida un
+  // toque y se reanuda desde este clip. Sin pantalla que escuche, silencio:
+  // el texto sigue escrito.
   a.play().catch((e: unknown) => {
-    if ((e as Error)?.name !== "AbortError") terminar();
+    const nombre = (e as Error)?.name;
+    if (nombre === "AbortError") return;
+    if (nombre === "NotAllowedError" && alBloquear) {
+      const pendiente = [c, ...cola];
+      alBloquear(() => { cola = pendiente; siguiente(); });
+      return;
+    }
+    terminar();
   });
 }
 

@@ -15,7 +15,7 @@ import {
   type SectorEntrevista, type IdFrase,
 } from "@/lib/entrevistas/preguntas";
 import type { PartesFeedback } from "@/lib/entrevistas/feedback";
-import { hablar, parar, type Clip } from "@/lib/entrevistas/voz";
+import { hablar, parar, siLaVozSeBloquea, type Clip } from "@/lib/entrevistas/voz";
 
 type Respuesta = { pregunta: string; respuesta: string; feedback: string; partes?: PartesFeedback | null };
 
@@ -96,6 +96,14 @@ export default function EntrevistasPage() {
   // Que no siga hablando al salir de la pantalla.
   useEffect(() => () => parar(), []);
 
+  // Si el navegador no deja sonar la voz, se enseña un botón para oírla: antes
+  // la entrevista se quedaba muda sin decir nada (8 nov 2026, en un ordenador).
+  const [reintentarVoz, setReintentarVoz] = useState<null | (() => void)>(null);
+  useEffect(() => {
+    siLaVozSeBloquea((reintentar) => setReintentarVoz(() => reintentar));
+    return () => siLaVozSeBloquea(null);
+  }, []);
+
   /** El entrevistador dice estos clips, si la voz está puesta. */
   const decir = useCallback((clips: Clip[]) => {
     if (!voz) return;
@@ -106,7 +114,7 @@ export default function EntrevistasPage() {
   }, [voz]);
 
   const cambiarSector = (s: SectorEntrevista) => {
-    parar();
+    parar(); setReintentarVoz(null);
     setSector(s); setIdx(0); setEmpezado(false); setSesion(null);
     setTexto(""); setFeedback(""); setPartes(null); setHistorial([]); setFinalizado(false);
   };
@@ -122,6 +130,7 @@ export default function EntrevistasPage() {
 
   const empezar = () => {
     if (sinCupo) return;
+    setReintentarVoz(null);
     // Cada "Empezar" abre una entrevista nueva: es lo que cuenta el cupo del plan gratis.
     setSesion(typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
     setEmpezado(true);
@@ -130,7 +139,7 @@ export default function EntrevistasPage() {
 
   const analizar = async () => {
     if (!texto.trim()) return;
-    parar();
+    parar(); setReintentarVoz(null);
     // Una entrevista retomada de antes de existir el cupo no trae sesión: se abre aquí.
     const sesionActual = sesion ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
     if (!sesion) setSesion(sesionActual);
@@ -322,7 +331,14 @@ export default function EntrevistasPage() {
             <div>
               <div className="flex justify-between text-xs mb-1" style={{ color: "#8b98ad" }}>
                 <span>Pregunta {idx + 1} de {preguntas.length}</span>
-                {hablando && (
+                {reintentarVoz ? (
+                  <button
+                    onClick={() => { const r = reintentarVoz; setReintentarVoz(null); r(); }}
+                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold"
+                    style={{ background: "#22c55e", color: "#0f1117" }}>
+                    <Volume2 size={13} strokeWidth={2.2} /> Pulsa para oír al entrevistador
+                  </button>
+                ) : hablando && (
                   <button onClick={() => parar()} className="flex items-center gap-1" style={{ color: "#22c55e" }}>
                     <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#22c55e" }} />
                     Hablando · parar <Square size={10} strokeWidth={2.2} />
