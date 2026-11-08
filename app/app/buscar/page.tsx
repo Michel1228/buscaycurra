@@ -548,13 +548,12 @@ function BuscarPageInner() {
           de la tarjeta de "microfono bloqueado": fondo tenido al 6%, borde al
           18% y esquinas redondeadas. Se lee mejor y el verde vuelve a ser un
           acento en vez de una pared. */}
-      <div className="py-6 px-4 mx-3 mt-3 rounded-2xl"
-           style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)", color: "#f1f5f9" }}>
+      <div className="cristal tono-lima py-6 px-4 mx-3 mt-3" style={{ color: "#f1f5f9" }}>
         <div className="max-w-4xl mx-auto">
           {/* El titulo dice las DOS cosas que se hacen aquí. Poniendo solo
               "Buscar ofertas", la mitad de enviar el CV a la empresa —que es
               lo que nos diferencia— no se intuía por ninguna parte. */}
-          <h1 className="text-xl font-bold" style={{ color: "#22c55e" }}>Buscar trabajo y enviar tu CV</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Buscar trabajo y <span className="texto-neon">enviar tu CV</span></h1>
           <p className="text-xs mb-4 mt-1" style={{ color: "#94a3b8" }}>
             Las ofertas publicadas y, además, las empresas de tu zona a las que
             escribir aunque no hayan publicado nada.
@@ -565,7 +564,7 @@ function BuscarPageInner() {
               <input id="buscar-keyword" type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
                 {...sugPuesto.propsCampo}
                 placeholder="¿Qué trabajo buscas?" className="w-full px-4 py-2.5 rounded-lg text-sm"
-                style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
               {sugPuesto.lista}
             </div>
             <div className="relative w-full sm:w-56">
@@ -573,7 +572,7 @@ function BuscarPageInner() {
               <input id="buscar-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setGeoDetected(false); setAvisoPais(""); }}
                 {...sugCiudad.propsCampo}
                 placeholder="¿Dónde? (o déjalo vacío)" className="w-full px-4 py-2.5 rounded-lg text-sm"
-                style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }} />
+                style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }} />
               {sugCiudad.lista}
               {/* El aviso de autorrelleno era un "Auto" de 10 px que nadie
                   veía: la gente buscaba sin darse cuenta de que el campo
@@ -583,14 +582,14 @@ function BuscarPageInner() {
                   onClick={() => { setUbicacion(""); setGeoDetected(false); }}
                   title="Quitar mi ciudad y buscar en todas partes"
                   className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-semibold hover:opacity-80"
-                  style={{ background: "#0f1117", color: "#94a3b8", border: "1px solid #2d3142" }}>
+                  style={{ background: "#0f1117", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
                   tu ciudad
                 </button>
               )}
             </div>
             <button type="submit" disabled={cargando}
               className="px-6 py-2.5 font-semibold rounded-lg text-sm transition disabled:opacity-50"
-              style={{ background: "#22c55e", color: "#0f1117" }}>
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
               {cargando ? "Buscando..." : "Buscar"}
             </button>
           </form>
@@ -608,7 +607,7 @@ function BuscarPageInner() {
               <button type="button" onClick={() => trabajarEn("ciudad")} disabled={cargando}
                 aria-pressed={enMiCiudad}
                 className="px-2.5 py-1 rounded-full text-xs font-semibold hover:opacity-90 disabled:opacity-50"
-                style={enMiCiudad ? { background: "#22c55e", color: "#0f1117", border: "1px solid #22c55e" } : { background: "#161922", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+                style={enMiCiudad ? { background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", border: "1px solid #22c55e" } : { background: "rgba(12,15,22,0.78)", color: "#f1f5f9", border: "1px solid rgba(148,163,184,0.18)" }}>
                 <MapPin size={12} strokeWidth={2.2} className="inline -mt-0.5 mr-1" />En {ciudadPerfil}
               </button>
             )}
@@ -616,7 +615,7 @@ function BuscarPageInner() {
               <button type="button" onClick={() => trabajarEn("pais")} disabled={cargando}
                 aria-pressed={enMiPais}
                 className="px-2.5 py-1 rounded-full text-xs font-semibold hover:opacity-90 disabled:opacity-50"
-                style={enMiPais ? { background: "#22c55e", color: "#0f1117", border: "1px solid #22c55e" } : { background: "#161922", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+                style={enMiPais ? { background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", border: "1px solid #22c55e" } : { background: "rgba(12,15,22,0.78)", color: "#f1f5f9", border: "1px solid rgba(148,163,184,0.18)" }}>
                 {PAISES[residencia].bandera} En todo {PAISES[residencia].nombre}
               </button>
             )}
@@ -627,12 +626,12 @@ function BuscarPageInner() {
           </div>
 
           {/* Dónde está ahora. Se detecta solo; si no acierta, se cambia aquí. */}
-          <div className="mt-1.5 text-[11px] flex flex-wrap items-center gap-1.5" style={{ color: "#64748b" }}>
+          <div className="mt-1.5 text-[11px] flex flex-wrap items-center gap-1.5" style={{ color: "#8b98ad" }}>
             {cambiandoResidencia ? (
               <>
                 <label htmlFor="donde-estoy">¿En qué país estás ahora?</label>
                 <select id="donde-estoy" autoFocus defaultValue={residencia || ""} onChange={(e) => cambiarResidencia(e.target.value)}
-                  className="text-xs px-2 py-1 rounded" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}>
+                  className="text-xs px-2 py-1 rounded" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}>
                   <option value="">Elige…</option>
                   {NACIONALIDADES.map(n => <option key={n.codigo} value={n.codigo}>{n.bandera} {n.nombre}</option>)}
                 </select>
@@ -649,7 +648,7 @@ function BuscarPageInner() {
             )}
           </div>
           {residencia && !PAISES[residencia] && (
-            <p className="mt-2 text-xs px-3 py-2 rounded-lg" style={{ background: "#161922", border: "1px solid #2d3142", color: "#94a3b8" }}>
+            <p className="mt-2 text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
               Todavía no tenemos ofertas de {nombreResidencia}. Las estamos preparando; mientras, puedes
               buscar en los {NUM_PAISES} países donde sí hay: elige uno arriba.
               {servicioResidencia && <> Y allí tienes gratis la bolsa pública de empleo:{" "}
@@ -659,7 +658,7 @@ function BuscarPageInner() {
 
           {avisoPais && (
             <div className="mt-2 px-3 py-2 rounded-lg text-xs flex items-start gap-2"
-              style={{ background: "#161922", border: "1px solid #2d3142", color: "#94a3b8" }}>
+              style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
               <Info size={14} strokeWidth={2} className="shrink-0 mt-0.5" />
               <span>
                 {avisoPais}
@@ -671,30 +670,30 @@ function BuscarPageInner() {
       </div>
 
       {/* Franja SEO: por qué BuscayCurra */}
-      <div className="border-b" style={{ background: "#111827", borderColor: "#1e212b" }}>
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-4 md:gap-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 mt-3">
+        <div className="cristal tono-neutro px-4 py-3.5 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
           <div className="flex items-center gap-2.5">
-            <TrendingUp size={18} strokeWidth={1.9} className="shrink-0" style={{ color: "#94a3b8" }} />
+            <span className="icono-circulo tono-azul" style={{ width: 36, height: 36 }} aria-hidden="true"><TrendingUp size={17} strokeWidth={1.9} /></span>
             <div>
               {/* Decia "2.400+ personas ya encontraron trabajo" habiendo 51
                   usuarios. Esto esta contado contra la base de datos. */}
               <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>{DATOS.ofertasNuevasDiaTexto} ofertas nuevas al día</p>
-              <p className="text-[10px]" style={{ color: "#64748b" }}>{Math.floor(DATOS.ofertasNuevasDia / 1440)} cada minuto, de medio mundo</p>
+              <p className="text-[11px]" style={{ color: "#a7b3c6" }}>{Math.floor(DATOS.ofertasNuevasDia / 1440)} cada minuto, de medio mundo</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">
-            <Send size={18} strokeWidth={1.9} className="shrink-0" style={{ color: "#22c55e" }} />
+            <span className="icono-circulo tono-lima" style={{ width: 36, height: 36 }} aria-hidden="true"><Send size={17} strokeWidth={1.9} /></span>
             <div>
               {/* Aquí había una cifra sin ninguna fuente detrás: fuera (auditoría del 19 oct 2026). */}
-              <p className="text-xs font-bold" style={{ color: "#22c55e" }}>Tu CV, directo a la empresa</p>
-              <p className="text-[10px]" style={{ color: "#64748b" }}>por correo y con una carta escrita para cada una</p>
+              <p className="text-xs font-bold" style={{ color: "#d9f99d" }}>Tu CV, directo a la empresa</p>
+              <p className="text-[11px]" style={{ color: "#a7b3c6" }}>por correo y con una carta escrita para cada una</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5">
-            <Building2 size={18} strokeWidth={1.9} className="shrink-0" style={{ color: "#94a3b8" }} />
+            <span className="icono-circulo tono-morado" style={{ width: 36, height: 36 }} aria-hidden="true"><Building2 size={17} strokeWidth={1.9} /></span>
             <div>
               <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>Contacto directo con la empresa</p>
-              <p className="text-[10px]" style={{ color: "#64748b" }}>sin esperar a que alguien en un portal te encuentre</p>
+              <p className="text-[11px]" style={{ color: "#a7b3c6" }}>sin esperar a que alguien en un portal te encuentre</p>
             </div>
           </div>
         </div>
@@ -719,7 +718,7 @@ function BuscarPageInner() {
 
             <button onClick={() => setFiltrosAbiertos(v => !v)}
               className="md:hidden w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium"
-              style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8" }}>
+              style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
               <span>Filtros{(jornada || experiencia || inclusiva || salarioMin || salarioMax) ? " · activos" : ""}</span>
               <span>{filtrosAbiertos ? "▲" : "▼"}</span>
             </button>
@@ -746,7 +745,7 @@ function BuscarPageInner() {
                   y portugués (lib/job-search/filtros.ts). */}
               <label className="mb-4 flex items-start gap-2 text-xs cursor-pointer" style={{ color: "#94a3b8" }}>
                 <input type="checkbox" checked={inclusiva} onChange={(e) => setInclusiva(e.target.checked)} className="mt-0.5" />
-                <span>Para personas con discapacidad <span style={{ color: "#64748b" }}>(ofertas en español y portugués)</span></span>
+                <span>Para personas con discapacidad <span style={{ color: "#8b98ad" }}>(ofertas en español y portugués)</span></span>
               </label>
               <div className="mb-4">
                 <label htmlFor="filtro-salario" className="block text-xs mb-1.5" style={{ color: "#94a3b8" }}>Salario mínimo ({PAISES[paisSeleccionado]?.simboloMoneda ?? "€"}/año)</label>
@@ -793,7 +792,7 @@ function BuscarPageInner() {
               <div>
                 <div className="mb-3">
                   <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Ofertas según tu CV</h2>
-                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                  <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>
                     De lo que has trabajado ({paraTi.puestos.join(", ").toLowerCase()}), primero las de tu zona.
                   </p>
                 </div>
@@ -836,20 +835,20 @@ function BuscarPageInner() {
                   {ubicacion && (
                     <button onClick={() => { setUbicacion(""); setGeoDetected(false); setTimeout(() => buscar(), 0); }}
                       className="px-3 py-2 rounded-lg text-xs font-semibold"
-                      style={{ background: "#22c55e", color: "#0f1117" }}>
+                      style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                       Buscar en todo el país
                     </button>
                   )}
                   {(jornada || experiencia || inclusiva || salarioMin || salarioMax) && (
                     <button onClick={() => { setJornada(""); setExperiencia(""); setInclusiva(false); setSalarioMin(""); setSalarioMax(""); setTimeout(() => buscar(), 0); }}
                       className="px-3 py-2 rounded-lg text-xs font-semibold"
-                      style={{ background: "#1e212b", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+                      style={{ background: "rgba(12,15,22,0.86)", color: "#f1f5f9", border: "1px solid rgba(148,163,184,0.18)" }}>
                       Quitar los filtros
                     </button>
                   )}
                   <button onClick={() => router.push(`/app/gusi?q=${encodeURIComponent(`${keyword} en ${ubicacion}`.trim())}`)}
                     className="px-3 py-2 rounded-lg text-xs font-semibold"
-                    style={{ background: "#1e212b", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+                    style={{ background: "rgba(12,15,22,0.86)", color: "#f1f5f9", border: "1px solid rgba(148,163,184,0.18)" }}>
                     Que lo busque Guzzi
                   </button>
                 </div>
@@ -861,10 +860,10 @@ function BuscarPageInner() {
               <>
                 <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <p className="text-xs" style={{ color: "#64748b" }}>
+                    <p className="text-xs" style={{ color: "#8b98ad" }}>
                       {esEnTiempoReal ? `${ofertas.length} ofertas` : `${ofertas.length} de ${totalEsMinimo ? "más de " : ""}${(totalResultados > ofertas.length ? totalResultados : ofertas.length).toLocaleString("es-ES")} ofertas`}
                     </p>
-                    {esEnTiempoReal && <p className="text-[10px]" style={{ color: "#6b7280" }}>Resultados en tiempo real</p>}
+                    {esEnTiempoReal && <p className="text-[10px]" style={{ color: "#8b98ad" }}>Resultados en tiempo real</p>}
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
@@ -892,10 +891,10 @@ function BuscarPageInner() {
                     {cargandoMas && (
                       <div className="flex items-center gap-2 py-4">
                         <div className="animate-spin rounded-full h-5 w-5 border-2" style={{ borderColor: "#2d3142", borderTopColor: "#22c55e" }} />
-                        <span className="text-xs" style={{ color: "#64748b" }}>Cargando más ofertas...</span>
+                        <span className="text-xs" style={{ color: "#8b98ad" }}>Cargando más ofertas...</span>
                       </div>
                     )}
-                    <p className="text-[10px]" style={{ color: "#6b7280" }}>
+                    <p className="text-[10px]" style={{ color: "#8b98ad" }}>
                       Mostrando {ofertas.length.toLocaleString("es-ES")} de {totalEsMinimo ? "más de " : ""}{totalResultados.toLocaleString("es-ES")} ofertas
                     </p>
                   </div>
@@ -965,9 +964,9 @@ function AlertaModal({ keyword, location, onClose, onCreada }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div className="w-full max-w-sm rounded-xl p-5 space-y-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }} onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-sm rounded-xl p-5 space-y-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }} onClick={e => e.stopPropagation()}>
         <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Crear alerta de empleo</h3>
-        <p className="text-xs" style={{ color: "#64748b" }}>Te avisaremos cuando haya nuevas ofertas para:</p>
+        <p className="text-xs" style={{ color: "#8b98ad" }}>Te avisaremos cuando haya nuevas ofertas para:</p>
         <div className="p-2.5 rounded-lg" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
           <p className="text-xs font-medium" style={{ color: "#22c55e" }}>{keyword || "Cualquier puesto"} {location ? `en ${location}` : ""}</p>
         </div>
@@ -989,7 +988,7 @@ function AlertaModal({ keyword, location, onClose, onCreada }: {
         </div>
         {error && <p className="text-[11px]" style={{ color: "#ef4444" }}>{error}</p>}
         <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="px-4 py-2 text-[11px] rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>Cancelar</button>
+          <button onClick={onClose} className="px-4 py-2 text-[11px] rounded-lg" style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>Cancelar</button>
           <button onClick={crear} disabled={loading} className="btn-game px-5 py-2 text-[11px] disabled:opacity-50">{loading ? "Creando..." : "Crear"}</button>
         </div>
       </div>

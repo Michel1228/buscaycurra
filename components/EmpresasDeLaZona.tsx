@@ -97,7 +97,7 @@ export default function EmpresasDeLaZona({
       </div>
 
       {cargando && (
-        <p className="text-xs mt-4" style={{ color: "#64748b" }}>
+        <p className="text-xs mt-4" style={{ color: "#8b98ad" }}>
           Buscando en Google Maps…
         </p>
       )}
@@ -107,7 +107,7 @@ export default function EmpresasDeLaZona({
       )}
 
       {!cargando && pedido && !error && empresas.length === 0 && (
-        <p className="text-xs mt-4" style={{ color: "#64748b" }}>
+        <p className="text-xs mt-4" style={{ color: "#8b98ad" }}>
           No he encontrado {info.sitios} en {ciudad}. Prueba con la capital de tu provincia.
         </p>
       )}
@@ -116,7 +116,7 @@ export default function EmpresasDeLaZona({
         <div className="grid gap-3 mt-4 sm:grid-cols-2">
           {empresas.map((e, i) => (
             <div key={e.placeId || `${e.nombre}-${i}`} className="rounded-lg overflow-hidden"
-              style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+              style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
               {/* La foto entra la primera: un bar se reconoce por la foto
                   antes que por el nombre, y da confianza para escribirles. */}
               {e.fotos?.[0] && (
@@ -129,12 +129,12 @@ export default function EmpresasDeLaZona({
                   <p className="font-semibold text-xs" style={{ color: "#f1f5f9" }}>{e.nombre}</p>
                   {typeof e.googleRating === "number" && (
                     <span className="text-[10px] whitespace-nowrap" style={{ color: "#f59e0b" }}>{e.googleRating}
-                      {e.googleReviews ? <span style={{ color: "#64748b" }}> ({e.googleReviews})</span> : null}
+                      {e.googleReviews ? <span style={{ color: "#8b98ad" }}> ({e.googleReviews})</span> : null}
                     </span>
                   )}
                 </div>
                 {e.googleAddress && (
-                  <p className="text-[10px] mt-1" style={{ color: "#64748b" }}>{e.googleAddress}</p>
+                  <p className="text-[10px] mt-1" style={{ color: "#8b98ad" }}>{e.googleAddress}</p>
                 )}
                 {e.abiertoAhora === true && (
                   <p className="text-[10px] mt-1" style={{ color: "#22c55e" }}>● Abierto ahora</p>
@@ -142,20 +142,20 @@ export default function EmpresasDeLaZona({
                 <div className="flex flex-wrap gap-2 mt-2.5">
                   {e.telefono && (
                     <a href={`tel:${e.telefono}`} className="text-[10px] px-2 py-1 rounded"
-                      style={{ background: "#22c55e", color: "#0f1117", fontWeight: 600 }}>
+                      style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 600 }}>
                       📞 Llamar
                     </a>
                   )}
                   {(e.emailRrhh || e.emailContacto) && (
                     <a href={`/app/empresas?empresa=${encodeURIComponent(e.nombre)}&ciudad=${encodeURIComponent(ciudad)}`}
                       className="text-[10px] px-2 py-1 rounded"
-                      style={{ background: "#1e212b", color: "#f1f5f9", border: "1px solid #2d3142" }}>Enviar mi CV
+                      style={{ background: "rgba(12,15,22,0.86)", color: "#f1f5f9", border: "1px solid rgba(148,163,184,0.18)" }}>Enviar mi CV
                     </a>
                   )}
                   {e.googleMapsUrl && (
                     <a href={e.googleMapsUrl} target="_blank" rel="noopener noreferrer"
                       className="text-[10px] px-2 py-1 rounded"
-                      style={{ background: "#1e212b", color: "#94a3b8", border: "1px solid #2d3142" }}>
+                      style={{ background: "rgba(12,15,22,0.86)", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
                       Mapa
                     </a>
                   )}

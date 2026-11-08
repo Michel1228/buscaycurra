@@ -503,7 +503,7 @@ export default function EmpresasPage() {
         style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}
       >
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-xl font-bold" style={{ color: "#22c55e" }}>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>
             Enviar CV a empresas
           </h1>
           <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
@@ -610,7 +610,7 @@ export default function EmpresasPage() {
               </div>
 
               {(!stats.recientes || stats.recientes.length === 0) ? (
-                <p className="text-[11px]" style={{ color: "#64748b" }}>
+                <p className="text-[11px]" style={{ color: "#8b98ad" }}>
                   Aún no has enviado ningún CV esta semana.
                 </p>
               ) : (
@@ -621,18 +621,18 @@ export default function EmpresasPage() {
                       className="flex items-center gap-2 p-2 rounded text-[11px]"
                       style={{ background: "rgba(255,255,255,0.03)" }}
                     >
-                      <Mail size={14} style={{ color: "#64748b", flexShrink: 0 }} />
+                      <Mail size={14} style={{ color: "#8b98ad", flexShrink: 0 }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate" style={{ color: "#f1f5f9" }}>{r.empresa}</p>
-                        <p className="truncate" style={{ color: "#64748b" }}>{r.puesto || r.email}</p>
+                        <p className="truncate" style={{ color: "#8b98ad" }}>{r.puesto || r.email}</p>
                       </div>
-                      <span className="text-[10px] shrink-0" style={{ color: "#64748b" }}>
+                      <span className="text-[10px] shrink-0" style={{ color: "#8b98ad" }}>
                         {r.fecha ? new Date(r.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : ""}
                       </span>
                     </div>
                   ))}
                   {stats.recientes.length > 5 && (
-                    <p className="text-[10px] text-center" style={{ color: "#64748b" }}>
+                    <p className="text-[10px] text-center" style={{ color: "#8b98ad" }}>
                       +{stats.recientes.length - 5} envíos más
                     </p>
                   )}
@@ -725,7 +725,7 @@ export default function EmpresasPage() {
                             </span>
                           )}
                           {emp.googleAddress && (
-                            <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#64748b" }}>
+                            <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#8b98ad" }}>
                               {emp.googleAddress}
                             </span>
                           )}
@@ -735,7 +735,7 @@ export default function EmpresasPage() {
                         <div className="text-right shrink-0 ml-3">
                           <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{emp.googleRating}</span>
                           {emp.googleReviews && (
-                            <p className="text-[10px]" style={{ color: "#64748b" }}>({emp.googleReviews})</p>
+                            <p className="text-[10px]" style={{ color: "#8b98ad" }}>({emp.googleReviews})</p>
                           )}
                         </div>
                       )}
@@ -760,7 +760,7 @@ export default function EmpresasPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>{empresaSeleccionada.nombre}</h2>
-                    <p className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
+                    <p className="text-[11px] mt-0.5" style={{ color: "#8b98ad" }}>
                       {empresaSeleccionada.sector && `${empresaSeleccionada.sector} · `}
                       Google Places
                     </p>
@@ -768,7 +768,7 @@ export default function EmpresasPage() {
                   {empresaSeleccionada.googleRating && (
                     <div className="text-right shrink-0">
                       <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{empresaSeleccionada.googleRating}</span>
-                      <p className="text-[10px]" style={{ color: "#64748b" }}>{empresaSeleccionada.googleReviews} reseñas</p>
+                      <p className="text-[10px]" style={{ color: "#8b98ad" }}>{empresaSeleccionada.googleReviews} reseñas</p>
                     </div>
                   )}
                 </div>
@@ -780,7 +780,7 @@ export default function EmpresasPage() {
                       <img key={i} src={src} alt={`${empresaSeleccionada.nombre} ${i + 1}`}
                         loading="lazy"
                         className="h-24 w-32 shrink-0 rounded-lg object-cover"
-                        style={{ border: "1px solid #2d3142" }}
+                        style={{ border: "1px solid rgba(148,163,184,0.18)" }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                     ))}
                   </div>
@@ -800,7 +800,7 @@ export default function EmpresasPage() {
                 <div className="space-y-2 text-xs">
                   {empresaSeleccionada.emailRrhh && (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="flex items-center gap-1" style={{ color: "#64748b" }}><Mail size={12} /> Email:</span>
+                      <span className="flex items-center gap-1" style={{ color: "#8b98ad" }}><Mail size={12} /> Email:</span>
                       <span style={{ color: "#22c55e" }} className="font-medium">{empresaSeleccionada.emailRrhh}</span>
                       {empresaSeleccionada.emailConfianza === "alta" && (
                         <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
@@ -837,7 +837,7 @@ export default function EmpresasPage() {
                             .filter(e => e !== empresaSeleccionada.emailRrhh)
                             .map((e, i) => (
                               <div key={i} className="flex items-center gap-2">
-                                <span className="text-[10px]" style={{ color: "#6b7280" }}>{e}</span>
+                                <span className="text-[10px]" style={{ color: "#8b98ad" }}>{e}</span>
                                 <button
                                   onClick={() => handleEnviarCV(e)}
                                   className="text-[9px] px-1.5 py-0.5 rounded font-medium"
@@ -854,7 +854,7 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.urlWeb && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Web:</span>
+                      <span style={{ color: "#8b98ad" }}>Web:</span>
                       <a href={empresaSeleccionada.urlWeb} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         {empresaSeleccionada.urlWeb.replace(/^https?:\/\//, "").replace(/\/$/, "")}
@@ -864,21 +864,21 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.telefono && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Tel:</span>
+                      <span style={{ color: "#8b98ad" }}>Tel:</span>
                       <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.telefono}</span>
                     </div>
                   )}
 
                   {empresaSeleccionada.googleAddress && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Dir:</span>
+                      <span style={{ color: "#8b98ad" }}>Dir:</span>
                       <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.googleAddress}</span>
                     </div>
                   )}
 
                   {empresaSeleccionada.googleMapsUrl && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Maps:</span>
+                      <span style={{ color: "#8b98ad" }}>Maps:</span>
                       <a href={empresaSeleccionada.googleMapsUrl} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         Ver en Google Maps →
@@ -888,7 +888,7 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.paginaEmpleo && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Empleo:</span>
+                      <span style={{ color: "#8b98ad" }}>Empleo:</span>
                       <a href={empresaSeleccionada.paginaEmpleo} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         Ver ofertas →
@@ -899,7 +899,7 @@ export default function EmpresasPage() {
 
                 {/* Acciones de envío */}
                 {empresaSeleccionada.emailRrhh ? (
-                  <div className="pt-2 space-y-3" style={{ borderTop: "1px solid #2d3142" }}>
+                  <div className="pt-2 space-y-3" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                     {/* Selector de estrategia */}
                     <div>
                       <label className="block text-xs font-medium mb-2" style={{ color: "#94a3b8" }}>
@@ -917,7 +917,7 @@ export default function EmpresasPage() {
                               border: sendStrategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
                             }}>
                             <div className="text-[11px] font-semibold" style={{ color: sendStrategy === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
-                            <div className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>{s.sub}</div>
+                            <div className="text-[9px] mt-0.5" style={{ color: "#8b98ad" }}>{s.sub}</div>
                           </button>
                         ))}
                       </div>
@@ -941,10 +941,10 @@ export default function EmpresasPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="pt-2" style={{ borderTop: "1px solid #2d3142" }}>
+                  <div className="pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                     <div className="rounded-lg p-3" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)" }}>
                       <p className="text-xs font-medium mb-1" style={{ color: "#f59e0b" }}>Email no encontrado</p>
-                      <p className="text-[11px]" style={{ color: "#64748b" }}>
+                      <p className="text-[11px]" style={{ color: "#8b98ad" }}>
                         Google no proporciona el email corporativo. Ve a la pestaña <button onClick={() => { setEnvioPrefillName(empresaSeleccionada.nombre); setEnvioTabKey(prev => prev + 1); setActiveTab("envio"); }} className="font-medium underline" style={{ color: "#22c55e" }}>"Envío personalizado"</button> para buscar por URL o introducirlo manualmente.
                       </p>
                     </div>
@@ -963,7 +963,7 @@ export default function EmpresasPage() {
               <label className="block text-xs font-semibold mb-2" style={{ color: "#94a3b8" }}>
                 Empresas de tu zona
               </label>
-              <p className="text-[10px] mb-3" style={{ color: "#6b7280" }}>
+              <p className="text-[10px] mb-3" style={{ color: "#8b98ad" }}>
                 Encuentra negocios reales cerca de ti <strong>aunque no tengan ninguna oferta publicada</strong>.
                 La mayoría contrata sin publicar: llegar antes es la ventaja.
               </p>
@@ -977,7 +977,7 @@ export default function EmpresasPage() {
                 className="w-full text-sm mb-3"
               />
 
-              <p className="text-[10px] mb-2" style={{ color: "#6b7280" }}>Sector:</p>
+              <p className="text-[10px] mb-2" style={{ color: "#8b98ad" }}>Sector:</p>
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {SECTORES_ZONA.map(s => (
                   <button
@@ -986,7 +986,7 @@ export default function EmpresasPage() {
                     className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition"
                     style={zonaSector === s.id
                       ? { background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.35)" }
-                      : { background: "#1e212b", color: "#94a3b8", border: "1px solid #2d3142" }}
+                      : { background: "rgba(12,15,22,0.86)", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}
                   >
                     {s.emoji} {s.etiqueta}
                   </button>
@@ -1010,7 +1010,7 @@ export default function EmpresasPage() {
             {zonaBuscando && (
               <div className="card-game p-8 flex flex-col items-center gap-3">
                 <div className="animate-spin rounded-full h-8 w-8" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
-                <p className="text-[11px] text-center" style={{ color: "#64748b" }}>
+                <p className="text-[11px] text-center" style={{ color: "#8b98ad" }}>
                   Buscando negocios y comprobando sus emails...<br />puede tardar unos segundos
                 </p>
               </div>
@@ -1029,7 +1029,7 @@ export default function EmpresasPage() {
                   <strong style={{ color: "#f1f5f9" }}>{zonaInfo.total} empresas</strong> encontradas ·{" "}
                   <span style={{ color: "#22c55e" }}>{zonaInfo.conEmailFiable} con email verificado</span>
                 </p>
-                <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>
+                <p className="text-[10px] mt-1" style={{ color: "#8b98ad" }}>
                   Ordenadas por fiabilidad del email: las primeras son las que más posibilidades tienen de llegar.
                 </p>
               </div>
@@ -1064,7 +1064,7 @@ export default function EmpresasPage() {
                             </span>
                           )}
                           {emp.googleAddress && (
-                            <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#64748b" }}>
+                            <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#8b98ad" }}>
                               {emp.googleAddress}
                             </span>
                           )}
@@ -1074,7 +1074,7 @@ export default function EmpresasPage() {
                         <div className="text-right shrink-0 ml-3">
                           <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{emp.googleRating}</span>
                           {emp.googleReviews && (
-                            <p className="text-[10px]" style={{ color: "#64748b" }}>({emp.googleReviews})</p>
+                            <p className="text-[10px]" style={{ color: "#8b98ad" }}>({emp.googleReviews})</p>
                           )}
                         </div>
                       )}
@@ -1093,7 +1093,7 @@ export default function EmpresasPage() {
               <label className="block text-xs font-semibold mb-2" style={{ color: "#94a3b8" }}>
                 Buscar ETTs en tu ciudad
               </label>
-              <p className="text-[10px] mb-3" style={{ color: "#6b7280" }}>
+              <p className="text-[10px] mb-3" style={{ color: "#8b98ad" }}>
                 Encuentra agencias de empleo temporal (ETTs) cerca de ti. Envíales tu CV con carta adaptada.
                 Vale tu pueblo aunque sea pequeño: se buscan también las de al lado. Si el nombre se repite
                 en España, añade la provincia (&quot;Cabanillas, Navarra&quot;).
@@ -1173,7 +1173,7 @@ export default function EmpresasPage() {
                 </p>
                 {/* Qué sitio se ha entendido: hay dos Cabanillas, dos Villanueva... */}
                 {ettZona && (
-                  <p className="text-[10px] -mt-2" style={{ color: "#64748b" }}>
+                  <p className="text-[10px] -mt-2" style={{ color: "#8b98ad" }}>
                     Buscando cerca de {ettZona}. ¿No es ese sitio? Escribe también la provincia.
                   </p>
                 )}
@@ -1198,7 +1198,7 @@ export default function EmpresasPage() {
                             </span>
                           )}
                           {emp.googleAddress && (
-                            <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#64748b" }}>
+                            <span className="text-[10px] truncate max-w-[200px]" style={{ color: "#8b98ad" }}>
                               {emp.googleAddress}
                             </span>
                           )}
@@ -1208,7 +1208,7 @@ export default function EmpresasPage() {
                         <div className="text-right shrink-0 ml-3">
                           <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{emp.googleRating}</span>
                           {emp.googleReviews && (
-                            <p className="text-[10px]" style={{ color: "#64748b" }}>({emp.googleReviews})</p>
+                            <p className="text-[10px]" style={{ color: "#8b98ad" }}>({emp.googleReviews})</p>
                           )}
                         </div>
                       )}
@@ -1233,7 +1233,7 @@ export default function EmpresasPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>{empresaSeleccionada.nombre}</h2>
-                    <p className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
+                    <p className="text-[11px] mt-0.5" style={{ color: "#8b98ad" }}>
                       {empresaSeleccionada.sector && `${empresaSeleccionada.sector} · `}
                       Google Places
                     </p>
@@ -1241,7 +1241,7 @@ export default function EmpresasPage() {
                   {empresaSeleccionada.googleRating && (
                     <div className="text-right shrink-0">
                       <span className="flex items-center gap-1 text-sm font-bold" style={{ color: "#f59e0b" }}><Star size={12} fill="#f59e0b" />{empresaSeleccionada.googleRating}</span>
-                      <p className="text-[10px]" style={{ color: "#64748b" }}>{empresaSeleccionada.googleReviews} reseñas</p>
+                      <p className="text-[10px]" style={{ color: "#8b98ad" }}>{empresaSeleccionada.googleReviews} reseñas</p>
                     </div>
                   )}
                 </div>
@@ -1253,7 +1253,7 @@ export default function EmpresasPage() {
                       <img key={i} src={src} alt={`${empresaSeleccionada.nombre} ${i + 1}`}
                         loading="lazy"
                         className="h-24 w-32 shrink-0 rounded-lg object-cover"
-                        style={{ border: "1px solid #2d3142" }}
+                        style={{ border: "1px solid rgba(148,163,184,0.18)" }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                     ))}
                   </div>
@@ -1273,7 +1273,7 @@ export default function EmpresasPage() {
                 <div className="space-y-2 text-xs">
                   {empresaSeleccionada.emailRrhh && (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="flex items-center gap-1" style={{ color: "#64748b" }}><Mail size={12} /> Email:</span>
+                      <span className="flex items-center gap-1" style={{ color: "#8b98ad" }}><Mail size={12} /> Email:</span>
                       <span style={{ color: "#22c55e" }} className="font-medium">{empresaSeleccionada.emailRrhh}</span>
                       {empresaSeleccionada.emailConfianza === "alta" && (
                         <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
@@ -1310,7 +1310,7 @@ export default function EmpresasPage() {
                             .filter(e => e !== empresaSeleccionada.emailRrhh)
                             .map((e, i) => (
                               <div key={i} className="flex items-center gap-2">
-                                <span className="text-[10px]" style={{ color: "#6b7280" }}>{e}</span>
+                                <span className="text-[10px]" style={{ color: "#8b98ad" }}>{e}</span>
                                 <button
                                   onClick={() => handleEnviarCV(e)}
                                   className="text-[9px] px-1.5 py-0.5 rounded font-medium"
@@ -1327,7 +1327,7 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.urlWeb && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Web:</span>
+                      <span style={{ color: "#8b98ad" }}>Web:</span>
                       <a href={empresaSeleccionada.urlWeb} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         {empresaSeleccionada.urlWeb.replace(/^https?:\/\//, "").replace(/\/$/, "")}
@@ -1337,21 +1337,21 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.telefono && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Tel:</span>
+                      <span style={{ color: "#8b98ad" }}>Tel:</span>
                       <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.telefono}</span>
                     </div>
                   )}
 
                   {empresaSeleccionada.googleAddress && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Dir:</span>
+                      <span style={{ color: "#8b98ad" }}>Dir:</span>
                       <span style={{ color: "#94a3b8" }}>{empresaSeleccionada.googleAddress}</span>
                     </div>
                   )}
 
                   {empresaSeleccionada.googleMapsUrl && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Maps:</span>
+                      <span style={{ color: "#8b98ad" }}>Maps:</span>
                       <a href={empresaSeleccionada.googleMapsUrl} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         Ver en Google Maps →
@@ -1361,7 +1361,7 @@ export default function EmpresasPage() {
 
                   {empresaSeleccionada.paginaEmpleo && (
                     <div className="flex items-center gap-2">
-                      <span style={{ color: "#64748b" }}>Empleo:</span>
+                      <span style={{ color: "#8b98ad" }}>Empleo:</span>
                       <a href={empresaSeleccionada.paginaEmpleo} target="_blank" rel="noopener noreferrer"
                         className="font-medium hover:underline" style={{ color: "#60a5fa" }}>
                         Ver ofertas →
@@ -1372,7 +1372,7 @@ export default function EmpresasPage() {
 
                 {/* Acciones de envío */}
                 {empresaSeleccionada.emailRrhh ? (
-                  <div className="pt-2 space-y-3" style={{ borderTop: "1px solid #2d3142" }}>
+                  <div className="pt-2 space-y-3" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                     {/* Nota: carta adaptada para ETTs */}
                     <div className="rounded-lg p-2" style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.1)" }}>
                       <p className="text-[10px]" style={{ color: "#4ade80" }}>
@@ -1397,7 +1397,7 @@ export default function EmpresasPage() {
                               border: sendStrategy === s.id ? "1.5px solid rgba(34,197,94,0.3)" : "1px solid #2d3142",
                             }}>
                             <div className="text-[11px] font-semibold" style={{ color: sendStrategy === s.id ? "#22c55e" : "#f1f5f9" }}>{s.label}</div>
-                            <div className="text-[9px] mt-0.5" style={{ color: "#6b7280" }}>{s.sub}</div>
+                            <div className="text-[9px] mt-0.5" style={{ color: "#8b98ad" }}>{s.sub}</div>
                           </button>
                         ))}
                       </div>
@@ -1421,10 +1421,10 @@ export default function EmpresasPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="pt-2" style={{ borderTop: "1px solid #2d3142" }}>
+                  <div className="pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                     <div className="rounded-lg p-3" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)" }}>
                       <p className="text-xs font-medium mb-1" style={{ color: "#f59e0b" }}>Email no encontrado</p>
-                      <p className="text-[11px]" style={{ color: "#64748b" }}>
+                      <p className="text-[11px]" style={{ color: "#8b98ad" }}>
                         Google no proporciona el email corporativo. Ve a la pestaña <button onClick={() => { setEnvioPrefillName(empresaSeleccionada.nombre); setEnvioTabKey(prev => prev + 1); setActiveTab("envio"); }} className="font-medium underline" style={{ color: "#22c55e" }}>"Envío personalizado"</button> para buscar por URL o introducirlo manualmente.
                       </p>
                     </div>
@@ -1464,23 +1464,23 @@ export default function EmpresasPage() {
       {/* ── MODAL: Preview de la carta antes de enviar ── */}
       {showPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #2d3142" }}>
+          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "rgba(10,13,19,0.9)", border: "1px solid rgba(148,163,184,0.18)" }}>
             <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-base font-bold" style={{ color: "#f1f5f9" }}><FileText size={16} /> Previsualizar envío</h3>
-              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#64748b" }}>×</button>
+              <button onClick={() => setShowPreview(false)} className="text-sm" style={{ color: "#8b98ad" }}>×</button>
             </div>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
-                <span style={{ color: "#64748b" }}>Para:</span>
+                <span style={{ color: "#8b98ad" }}>Para:</span>
                 <span className="font-medium" style={{ color: "#22c55e" }}>{previewEmail}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span style={{ color: "#64748b" }}>Asunto:</span>
+                <span style={{ color: "#8b98ad" }}>Asunto:</span>
                 <span style={{ color: "#94a3b8" }}>{previewSubject}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span style={{ color: "#64748b" }}>CV:</span>
+                <span style={{ color: "#8b98ad" }}>CV:</span>
                 <span style={{ color: "#94a3b8" }}>Tu CV en PDF adjunto</span>
               </div>
             </div>
@@ -1513,7 +1513,7 @@ export default function EmpresasPage() {
             </div>
 
             {/* Acciones */}
-            <div className="flex gap-3 pt-2" style={{ borderTop: "1px solid #2d3142" }}>
+            <div className="flex gap-3 pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
               <button
                 onClick={() => setShowPreview(false)}
                 className="flex-1 py-2.5 rounded-lg text-xs font-medium transition"
@@ -1537,7 +1537,7 @@ export default function EmpresasPage() {
       {/* ── MODAL: Confirmación post-envío ── */}
       {showConfirm && confirmData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "#111827", border: "1px solid #22c55e" }}>
+          <div className="card-game max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" style={{ background: "rgba(10,13,19,0.9)", border: "1px solid #22c55e" }}>
             <div className="text-center">
               <div className="flex justify-center"><CheckCircle2 size={36} color="#22c55e" /></div>
               <h3 className="text-lg font-bold mt-2" style={{ color: "#22c55e" }}>¡CV enviado!</h3>
@@ -1546,26 +1546,26 @@ export default function EmpresasPage() {
             <div className="space-y-3">
               <div className="rounded-lg p-4 space-y-2" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.1)" }}>
                 <div className="flex justify-between text-xs">
-                  <span style={{ color: "#64748b" }}>Empresa:</span>
+                  <span style={{ color: "#8b98ad" }}>Empresa:</span>
                   <span className="font-medium" style={{ color: "#f1f5f9" }}>{confirmData.empresa}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span style={{ color: "#64748b" }}>Email:</span>
+                  <span style={{ color: "#8b98ad" }}>Email:</span>
                   <span className="font-medium" style={{ color: "#22c55e" }}>{confirmData.email}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span style={{ color: "#64748b" }}>Asunto:</span>
+                  <span style={{ color: "#8b98ad" }}>Asunto:</span>
                   <span className="font-medium" style={{ color: "#94a3b8" }}>{confirmData.subject}</span>
                 </div>
                 {confirmData.estimatedTime && (
                   <div className="flex justify-between text-xs">
-                    <span style={{ color: "#64748b" }}>Envío estimado:</span>
+                    <span style={{ color: "#8b98ad" }}>Envío estimado:</span>
                     <span className="font-medium" style={{ color: "#f59e0b" }}>{confirmData.estimatedTime}</span>
                   </div>
                 )}
                 {confirmData.horaLocal && (
                   <div className="flex justify-between text-xs">
-                    <span style={{ color: "#64748b" }}>Hora local:</span>
+                    <span style={{ color: "#8b98ad" }}>Hora local:</span>
                     <span className="font-medium" style={{ color: "#94a3b8" }}>{confirmData.horaLocal}</span>
                   </div>
                 )}
@@ -1583,7 +1583,7 @@ export default function EmpresasPage() {
             <button
               onClick={() => setShowConfirm(false)}
               className="w-full py-2.5 rounded-lg text-sm font-bold transition"
-              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
             >
               Entendido
             </button>

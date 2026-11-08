@@ -157,7 +157,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-2.5 rounded-full" style={{ background: "#1e212b" }}>
+            <div className="flex-1 h-2.5 rounded-full" style={{ background: "rgba(12,15,22,0.86)" }}>
               <div className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: rateLimit.limiteHoy === null ? "5%" : `${Math.min(100, (rateLimit.enviadosHoy / (rateLimit.limiteHoy || 1)) * 100)}%`,
@@ -196,7 +196,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
       {/* Pending */}
       <div className="card-game overflow-hidden">
         <div className="px-5 py-4 flex items-center justify-between"
-          style={{ borderBottom: "1px solid #2d3142" }}>
+          style={{ borderBottom: "1px solid rgba(148,163,184,0.14)" }}>
           <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>
             ⏳ Pendientes
             {pendingJobs.length > 0 && (
@@ -210,7 +210,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
         </div>
         {pendingJobs.length === 0 ? (
           <div className="px-5 py-8 text-center">
-            <p className="text-sm" style={{ color: "#64748b" }}>No tienes envíos pendientes</p>
+            <p className="text-sm" style={{ color: "#8b98ad" }}>No tienes envíos pendientes</p>
           </div>
         ) : (
           <ul>
@@ -240,12 +240,12 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
 
       {/* History */}
       <div className="card-game overflow-hidden">
-        <div className="px-5 py-4" style={{ borderBottom: "1px solid #2d3142" }}>
+        <div className="px-5 py-4" style={{ borderBottom: "1px solid rgba(148,163,184,0.14)" }}>
           <h3 className="font-bold text-sm" style={{ color: "#f1f5f9" }}>Historial</h3>
         </div>
         {history.length === 0 ? (
           <div className="px-5 py-8 text-center">
-            <p className="text-sm" style={{ color: "#64748b" }}>Aún no has enviado ningún CV</p>
+            <p className="text-sm" style={{ color: "#8b98ad" }}>Aún no has enviado ningún CV</p>
           </div>
         ) : (
           <ul>
@@ -259,7 +259,7 @@ export default function CVSenderDashboard({ userId, userPlan = "free" }: CVSende
                     <p className="font-semibold text-sm truncate" style={{ color: "#f1f5f9" }}>{rec.companyName}</p>
                     {rec.jobTitle && <p className="text-[10px] truncate" style={{ color: "#94a3b8" }}>{rec.jobTitle}</p>}
                     {rec.sentAt && (
-                      <p className="text-[10px]" style={{ color: "#64748b" }}>
+                      <p className="text-[10px]" style={{ color: "#8b98ad" }}>
                         {new Date(rec.sentAt).toLocaleDateString("es-ES", {
                           day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
                         })}

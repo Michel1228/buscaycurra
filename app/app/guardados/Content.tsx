@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Bookmark, Lightbulb } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import JobCard, { type PropiedadesJobCard } from "@/components/JobCard";
@@ -153,8 +154,8 @@ export default function GuardadosPage() {
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(239,68,68,0.08), rgba(34,197,94,0.05))" }}>
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Ofertas guardadas</h1>
-          <p className="text-xs mt-1" style={{ color: "#64748b" }}>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Ofertas guardadas</h1>
+          <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>
             {guardados.length} oferta{guardados.length !== 1 ? "s" : ""} guardada{guardados.length !== 1 ? "s" : ""}
           </p>
         </div>
@@ -176,7 +177,7 @@ export default function GuardadosPage() {
             </p>
             <button onClick={() => quitar(perdidas)} disabled={quitando !== null}
               className="text-xs font-medium px-3 py-2 rounded-lg disabled:opacity-50"
-              style={{ color: "#f1f5f9", border: "1px solid #2d3142" }}>
+              style={{ color: "#f1f5f9", border: "1px solid rgba(148,163,184,0.18)" }}>
               {perdidas.length === 1 ? "Quitarla" : "Quitarlas"}
             </button>
           </div>
@@ -185,25 +186,25 @@ export default function GuardadosPage() {
         {ofertas.length === 0 && recomendaciones.length === 0 && perdidas.length > 0 ? null
         : ofertas.length === 0 && recomendaciones.length === 0 ? (
           <div className="card-game p-10 text-center">
-            <p className="text-4xl mb-3">🤍</p>
+            <div className="flex justify-center mb-3"><span className="icono-circulo tono-verde" style={{ width: 56, height: 56 }} aria-hidden="true"><Bookmark size={24} /></span></div>
             <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No tienes ofertas guardadas</p>
-            <p className="text-xs mt-1 mb-4" style={{ color: "#64748b" }}>Guarda las ofertas que te interesen desde el buscador</p>
+            <p className="text-xs mt-1 mb-4" style={{ color: "#8b98ad" }}>Guarda las ofertas que te interesen desde el buscador</p>
             <button onClick={() => router.push("/app/buscar")} className="btn-game text-xs">Buscar ofertas</button>
           </div>
         ) : ofertas.length === 0 && recomendaciones.length > 0 ? (
           <div className="space-y-6">
             {/* Mensaje sutil de que no hay guardados */}
             <div className="card-game p-6 text-center">
-              <p className="text-2xl mb-2">🤍</p>
+              <div className="flex justify-center mb-2"><span className="icono-circulo tono-verde" style={{ width: 44, height: 44 }} aria-hidden="true"><Bookmark size={20} /></span></div>
               <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>No tienes ofertas guardadas aún</p>
-              <p className="text-xs mt-1" style={{ color: "#64748b" }}>Guarda las que te interesen desde el buscador</p>
+              <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Guarda las que te interesen desde el buscador</p>
               <button onClick={() => router.push("/app/buscar")} className="btn-game text-xs mt-3">Buscar ofertas</button>
             </div>
 
             {/* Recomendaciones basadas en tu perfil */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">💡</span>
+                <span className="icono-circulo tono-ambar" style={{ width: 32, height: 32 }} aria-hidden="true"><Lightbulb size={15} /></span>
                 <h2 className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Recomendaciones para ti</h2>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
@@ -220,7 +221,7 @@ export default function GuardadosPage() {
                 <JobCard {...oferta} />
                 <button onClick={() => quitar([jobId])} disabled={quitando !== null}
                   className="self-end text-xs px-3 py-1.5 rounded-lg disabled:opacity-50"
-                  style={{ color: "#94a3b8", border: "1px solid #2d3142" }}
+                  style={{ color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}
                   aria-label={`Quitar de guardadas: ${oferta.titulo}`}>
                   {quitando === jobId ? "Quitando..." : "Quitar de guardadas"}
                 </button>
