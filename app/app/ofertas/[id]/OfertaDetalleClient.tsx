@@ -1,5 +1,6 @@
 "use client";
 
+import LogoEmpresa from "@/components/neon/LogoEmpresa";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -317,19 +318,23 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
           else router.push("/app/buscar");
         }}
         aria-label="Volver"
-        className="mb-4 inline-flex items-center gap-2 rounded-xl px-3 text-sm font-medium transition hover:opacity-80"
-        style={{ color: "#94a3b8", minHeight: "44px", background: "#1e212b", border: "1px solid #2d3142" }}>
+        className="mb-4 inline-flex items-center gap-2 rounded-full px-4 text-sm font-medium transition hover:opacity-80"
+        style={{ color: "#94a3b8", minHeight: "44px", background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
         <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
         Volver
       </button>
 
-      <div className="rounded-xl p-6" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+      <div className="cristal tono-lima p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          {/* Logo solo con dominio comprobado (marca verificada o el correo
+              que la empresa puso en la oferta); si no, sus iniciales. */}
+          <LogoEmpresa empresa={oficial ? oficial.corto : oferta.empresa}
+            correo={oferta.email_confianza === "alta" ? oferta.email_empresa : null} tono="lima" size={52} />
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>
+            <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight leading-tight" style={{ color: "#f8fafc" }}>
               {oferta.titulo}
             </h1>
-            <p className="text-base mt-1 font-medium" style={{ color: "#22c55e" }}>
+            <p className="text-base mt-1 font-semibold" style={{ color: "#bef264" }}>
               {oficial ? `Publicada por ${oficial.nombre}` : oferta.empresa}
             </p>
           </div>
@@ -445,7 +450,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
             className="text-sm font-medium px-5 py-2.5 rounded-lg transition flex items-center gap-2 disabled:opacity-50"
             style={guardado
               ? { background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }
-              : { background: "transparent", color: "#94a3b8", border: "1px solid #2d3142" }}
+              : { background: "transparent", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}
           >
             {guardando ? (
               <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-[#94a3b8]" />
@@ -494,7 +499,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         )}
 
         {oferta.descripcion && (
-          <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
+          <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
             <h2 className="text-sm font-semibold mb-3 flex items-center gap-1.5" style={{ color: "#f1f5f9" }}>
               <ClipboardList size={14} />Descripción
             </h2>
@@ -510,7 +515,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         <AlojamientoOferta country={oferta.country} />
 
         {(oferta.sector || oferta.email_empresa) && (
-          <div className="mt-4 pt-4 flex flex-wrap gap-4 text-xs" style={{ borderTop: "1px solid #2d3142", color: "#6b7280" }}>
+          <div className="mt-4 pt-4 flex flex-wrap gap-4 text-xs" style={{ borderTop: "1px solid rgba(148,163,184,0.14)", color: "#8b98ad" }}>
             {oferta.sector && (
               <span>Sector: <strong style={{ color: "#94a3b8" }}>{oferta.sector}</strong></span>
             )}

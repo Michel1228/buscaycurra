@@ -9,6 +9,7 @@
 import LogoEmpresa from "@/components/neon/LogoEmpresa";
 import { sueldoCreible } from "@/lib/sueldo-visible";
 import { useState } from "react";
+import { Loader2, Check, Send } from "lucide-react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
@@ -230,7 +231,7 @@ export default function JobCard({
             <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{oficial ? `Publicada por ${oficial.corto}` : empresa}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: "#64748b" }}>
+        <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: "#8b98ad" }}>
           <span>📍</span><span>{ubicacion}</span>
         </div>
         {salario && !sueldoAdzunaImposible && (
@@ -249,7 +250,7 @@ export default function JobCard({
           </div>
         )}
         {descripcion && (
-          <p className="text-[11px] mt-2 line-clamp-2 leading-relaxed" style={{ color: "#64748b" }}>{descripcion}</p>
+          <p className="text-[11px] mt-2 line-clamp-2 leading-relaxed" style={{ color: "#8b98ad" }}>{descripcion}</p>
         )}
       </div>
 
@@ -305,39 +306,42 @@ export default function JobCard({
       <div className="flex gap-2 mt-auto">
         {esSintetica && url ? (
           <a href={url} target="_blank" rel="noopener noreferrer"
-            className="flex-1 text-center py-2.5 text-xs font-medium rounded-xl transition hover:opacity-80"
-            style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#94a3b8" }}>
+            className="flex-1 inline-flex items-center justify-center min-h-[44px] text-center text-xs font-semibold rounded-full transition hover:bg-white/[0.05]"
+            style={{ border: "1.5px solid rgba(148,163,184,0.25)", color: "#dbe3ee" }}>
             Ver oferta
           </a>
         ) : (
           <Link href={`/app/ofertas/${encodeURIComponent(id)}`}
-            className="flex-1 text-center py-2.5 text-xs font-medium rounded-xl transition hover:opacity-80"
-            style={{ border: "1.5px solid rgba(126,213,111,0.2)", color: "#94a3b8" }}>
+            className="flex-1 inline-flex items-center justify-center min-h-[44px] text-center text-xs font-semibold rounded-full transition hover:bg-white/[0.05]"
+            style={{ border: "1.5px solid rgba(148,163,184,0.25)", color: "#dbe3ee" }}>
             Ver oferta
           </Link>
         )}
         {oficial && url ? (
           <a href={url} target="_blank" rel="noopener noreferrer"
-            className="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition hover:opacity-90"
-            style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}>
+            className="flex-1 inline-flex items-center justify-center min-h-[44px] text-center text-xs font-bold rounded-full transition hover:opacity-90"
+            style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", boxShadow: "0 6px 20px -8px rgba(163,230,53,0.7)" }}>
             Inscribirme en {oficial.corto}
           </a>
         ) : (
           <button
             onClick={enviarCV}
             disabled={enviando}
-            className="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition hover:opacity-90 disabled:opacity-60"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[44px] text-center text-xs font-bold rounded-full transition hover:opacity-90 disabled:opacity-60"
             style={{
               background: estadoEnvio === "ok"
-                ? "linear-gradient(135deg, #22c55e, #16a34a)"
-                : "linear-gradient(135deg, #22c55e, #5cb848)",
-              color: "#1a1a12",
+                ? "rgba(34,197,94,0.18)"
+                : "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)",
+              color: estadoEnvio === "ok" ? "#86efac" : "#0b1406",
+              border: estadoEnvio === "ok" ? "1px solid rgba(34,197,94,0.45)" : "none",
+              boxShadow: estadoEnvio === "ok" ? "none" : "0 6px 20px -8px rgba(163,230,53,0.7)",
             }}>
+            {/* Iconos de trazo en vez de emoji (diseño de neón, 7 nov 2026). */}
             {enviando
-              ? "⏳ Enviando..."
+              ? <><Loader2 size={14} className="animate-spin" aria-hidden="true" />Enviando...</>
               : estadoEnvio === "ok"
-                ? "✅ Enviado"
-                : "📧 Enviar CV"}
+                ? <><Check size={14} aria-hidden="true" />Enviado</>
+                : <><Send size={14} aria-hidden="true" />Enviar CV</>}
           </button>
         )}
       </div>
