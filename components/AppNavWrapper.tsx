@@ -35,11 +35,11 @@ const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 //    enviado y las alertas.
 const SECCIONES: { href: string; label: string; icon: string; title: string; tambien?: string[] }[] = [
   { href: "/app/bienvenida", label: "Inicio",      icon: "inicio",      title: "Tu resumen del día" },
-  { href: "/app/explorar",   label: "Ofertas",     icon: "ofertas",     title: "Buscar ofertas y empresas a las que enviar tu CV",
+  { href: "/app/explorar",   label: "Ofertas",     icon: "ofertas",     title: "Buscar ofertas, encontrar empresas y enviarles tu CV",
     tambien: ["/app/buscar", "/app/empresas", "/app/ofertas", "/app/guardados"] },
   { href: "/app/curriculum", label: "Mi CV",       icon: "cv",          title: "Mi currículum" },
-  { href: "/app/pipeline",   label: "Pipeline",    icon: "pipeline",    title: "Cómo van tus candidaturas" },
-  { href: "/app/envios",     label: "Automatizaciones", icon: "automatizaciones", title: "Envíos programados, lo enviado y tus alertas" },
+  { href: "/app/pipeline",   label: "Pipeline",    icon: "pipeline",    title: "Pipeline de candidaturas" },
+  { href: "/app/envios",     label: "Automatizaciones", icon: "automatizaciones", title: "Estado de los CVs enviados" },
   { href: "/app/entrevistas",label: "Entrevistas", icon: "entrevistas", title: "Simulador de entrevistas" },
 ];
 
@@ -488,6 +488,28 @@ export default function AppNavWrapper() {
                       {esAdmin && (
                         <FilaMenu href="/app/admin" label="Admin" icon="reviews" tono="rosa" activo={pathname === "/app/admin"} onClick={() => setMobileOpen(false)} />
                       )}
+                      {/* CERRAR SESIÓN, DENTRO DE "CUENTA" Y CON CONFIRMACIÓN (8 nov
+                          2026). Era la última fila del menú, pegada a la barra de
+                          abajo: justo donde se busca "volver", y Michel lo tocaba. */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!window.confirm("¿Cerrar sesión? Tendrás que volver a entrar con tu correo y contraseña.")) return;
+                          setMobileOpen(false);
+                          cerrarSesion();
+                        }}
+                        className="flex items-center gap-2.5 px-2.5 min-h-[48px] rounded-xl text-[13.5px] font-medium transition-colors hover:bg-white/[0.05] text-left"
+                        style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}
+                      >
+                        <span className="icono-circulo" style={{ width: 32, height: 32, color: "#fca5a5", background: "radial-gradient(circle at 30% 25%, rgba(239,68,68,0.32), rgba(239,68,68,0.08) 72%)", borderColor: "rgba(239,68,68,0.4)", boxShadow: "none" }} aria-hidden="true">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                          </svg>
+                        </span>
+                        <span className="truncate">Cerrar sesión</span>
+                      </button>
                     </>
                   )}
                 </div>
@@ -547,20 +569,13 @@ export default function AppNavWrapper() {
               </div>
             </div>
 
-            <div style={{ height: "1px", background: "rgba(148,163,184,0.12)", margin: "8px 0" }} />
+            {/* Al final, lo que se busca al final: salir del menú. */}
             <button
-              onClick={() => { setMobileOpen(false); cerrarSesion(); }}
-              className="w-full flex items-center gap-3 px-2.5 min-h-[48px] rounded-xl text-sm font-semibold transition"
-              style={{ color: "#fca5a5", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.22)" }}
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="boton-cristal tono-lima w-full mt-3"
             >
-              <span className="icono-circulo tono-rosa" style={{ width: 32, height: 32, color: "#fca5a5", background: "radial-gradient(circle at 30% 25%, rgba(239,68,68,0.32), rgba(239,68,68,0.08) 72%)", borderColor: "rgba(239,68,68,0.4)", boxShadow: "none" }} aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-              </span>
-              <span>Cerrar sesión</span>
+              Cerrar el menú
             </button>
           </div>
         </div>

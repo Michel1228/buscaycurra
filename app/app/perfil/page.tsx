@@ -5,7 +5,7 @@
  * Foto de perfil genérica (avatar), no la foto profesional del CV
  */
 
-import { User, Gem, Lock, Sprout, KeyRound, LogOut, AlertTriangle } from "lucide-react";
+import { User, Gem, Lock, Sprout, KeyRound, LogOut, AlertTriangle, ArrowLeft } from "lucide-react";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
@@ -211,6 +211,8 @@ export default function PerfilPage() {
   }
 
   async function cerrarTodasLasSesiones() {
+    // Con confirmación: cierra también el móvil y el ordenador (8 nov 2026).
+    if (!window.confirm("¿Cerrar la sesión en todos tus dispositivos? Tendrás que volver a entrar con tu correo y contraseña en cada uno.")) return;
     await getSupabaseBrowser().auth.signOut({ scope: "global" });
     router.push("/auth/login");
   }
@@ -347,6 +349,21 @@ export default function PerfilPage() {
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
+      {/* VOLVER, BIEN A LA VISTA (8 nov 2026). Michel entraba en "Mi Plan"
+          desde el menú y no veía cómo salir; abajo lo que encontraba era
+          "Cerrar sesión". En la app del iPhone no hay botón de atrás del
+          sistema: esta flecha lo es. Si no hay historial, a Inicio. */}
+      <div className="max-w-2xl mx-auto px-4 pt-3">
+        <button
+          type="button"
+          onClick={() => { if (window.history.length > 1) router.back(); else router.push("/app/bienvenida"); }}
+          className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full text-sm font-medium transition hover:opacity-80"
+          style={{ color: "#dbe3ee", background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.2)" }}
+          aria-label="Volver"
+        >
+          <ArrowLeft size={17} aria-hidden="true" /> Volver
+        </button>
+      </div>
       {/* Header */}
       <div className="px-4 py-8" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.05))" }}>
         <div className="max-w-2xl mx-auto flex items-center gap-5">
@@ -516,7 +533,7 @@ export default function PerfilPage() {
             basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Carta IA personalizada" },
             esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Carta IA personalizada" },
             pro:      { emoji: "⚡", nombre: "Pro",      color: "#a855f7", desc: "50 CVs/día · 350 CVs/semana · 100 consultas a Guzzi al día" },
-            empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "200 CVs/día · Guzzi sin límite · Soporte 24/7" },
+            empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "200 CVs/día · Guzzi sin límite · Ver candidatos" },
           };
           const info = PLANES_INFO[planActual];
           return (
@@ -614,7 +631,7 @@ export default function PerfilPage() {
                     style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
                     <div>
                       <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Plan Empresa — 49,99€/mes</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>200 CVs/día · Guzzi sin límite · Soporte 24/7</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>200 CVs/día · Guzzi sin límite · Ver candidatos</p>
                     </div>
                     <button onClick={() => contratar("empresa")}
                       disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}
