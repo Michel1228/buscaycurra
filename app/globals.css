@@ -486,17 +486,17 @@ label {
 .oleaje-banda-1 {
   width: 150vmax; height: 62vmax; top: -30vmax; right: -60vmax;
   background: radial-gradient(closest-side, rgba(163, 230, 53, 0.42), rgba(132, 204, 22, 0.14) 55%, transparent 78%);
-  animation: oleaje-a 42s ease-in-out infinite alternate;
+  animation: oleaje-a 16s ease-in-out infinite alternate;
 }
 .oleaje-banda-2 {
   width: 140vmax; height: 58vmax; bottom: -32vmax; left: -55vmax;
   background: radial-gradient(closest-side, rgba(34, 197, 94, 0.36), rgba(21, 128, 61, 0.12) 58%, transparent 78%);
-  animation: oleaje-b 50s ease-in-out infinite alternate;
+  animation: oleaje-b 19s ease-in-out infinite alternate;
 }
 .oleaje-banda-3 {
   width: 110vmax; height: 24vmax; top: 34%; left: -10vmax;
   background: radial-gradient(closest-side, rgba(16, 185, 129, 0.2), transparent 72%);
-  animation: oleaje-c 58s ease-in-out infinite alternate;
+  animation: oleaje-c 14s ease-in-out infinite alternate;
 }
 @keyframes oleaje-a {
   from { transform: translate3d(0, 0, 0) rotate(-16deg) scale(1); }
@@ -515,7 +515,7 @@ label {
 .oleaje-hilos {
   top: 8%; left: 0; width: 200%; height: 70%;
   opacity: 0.7;
-  animation: oleaje-hilos 90s linear infinite;
+  animation: oleaje-hilos 36s linear infinite;
 }
 @keyframes oleaje-hilos {
   from { transform: translate3d(0, 0, 0); }
@@ -538,7 +538,7 @@ label {
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 45%, #000 55%, transparent 100%);
   mask-image: linear-gradient(180deg, transparent 0%, #000 45%, #000 55%, transparent 100%);
   opacity: 0.9;
-  animation: oleaje-destello 26s ease-in-out infinite;
+  animation: oleaje-destello 14s ease-in-out infinite;
 }
 @keyframes oleaje-destello {
   0%   { transform: rotate(-28deg) translate3d(0, -70vmax, 0); opacity: 0; }
@@ -552,6 +552,12 @@ label {
   will-change: auto;
   background: radial-gradient(70% 55% at 50% 45%, rgba(4, 6, 8, 0.55), rgba(4, 6, 8, 0) 100%);
 }
+/* El shader (8 nov 2026): cuando hay WebGL pinta él solo y las capas CSS,
+   que son el respaldo, se apagan para no gastar el doble. */
+.oleaje-lienzo { inset: 0; width: 100%; height: 100%; display: none; will-change: auto; }
+.fondo-oleaje[data-webgl="1"] .oleaje-lienzo { display: block; }
+.fondo-oleaje[data-webgl="1"] > :not(.oleaje-lienzo) { display: none; }
+
 /* Pestaña oculta o app en segundo plano: quieto (lo pone FondoOleaje). */
 .oleaje-quieto .fondo-oleaje *,
 .oleaje-quieto .ondas-cabecera path,
