@@ -187,7 +187,7 @@ export default function EntrevistasPage() {
       <div className="min-h-screen pt-24 pb-8 px-4 flex items-center justify-center" style={{ background: "#0f1117" }}>
         <div className="text-center">
           <div className="flex justify-center mb-3"><Mic size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
-          <p className="text-sm" style={{ color: "#6b7280" }}>Cargando simulador...</p>
+          <p className="text-sm" style={{ color: "#8b98ad" }}>Cargando simulador...</p>
         </div>
       </div>
     );
@@ -242,7 +242,7 @@ export default function EntrevistasPage() {
         {/* Cabecera */}
         <div className="text-center pt-2">
           <div className="flex justify-center mb-2"><Mic size={34} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
-          <h1 className="text-xl font-bold text-white">Simulador de entrevistas</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Simulador de entrevistas</h1>
           <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
             Ensaya con calma: aquí no hay respuestas perfectas.
           </p>
@@ -253,8 +253,8 @@ export default function EntrevistasPage() {
 
         {/* Qué preguntas y para qué país */}
         <div className="grid grid-cols-2 gap-2.5">
-          <label className="rounded-xl px-3 py-2 block" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-            <span className="text-[10px] uppercase tracking-wide font-semibold block" style={{ color: "#64748b" }}>Preguntas de</span>
+          <label className="rounded-xl px-3 py-2 block" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+            <span className="text-[10px] uppercase tracking-wide font-semibold block" style={{ color: "#8b98ad" }}>Preguntas de</span>
             <select
               id="sector-entrevista"
               value={sector}
@@ -262,11 +262,11 @@ export default function EntrevistasPage() {
               className="w-full bg-transparent text-sm outline-none mt-0.5"
               style={{ color: "#f1f5f9" }}
             >
-              {SECTORES_ENTREVISTA.map(s => <option key={s.id} value={s.id} style={{ background: "#1e212b" }}>{s.label}</option>)}
+              {SECTORES_ENTREVISTA.map(s => <option key={s.id} value={s.id} style={{ background: "rgba(12,15,22,0.86)" }}>{s.label}</option>)}
             </select>
           </label>
-          <label className="rounded-xl px-3 py-2 block" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-            <span className="text-[10px] uppercase tracking-wide font-semibold block" style={{ color: "#64748b" }}>Entrevista en</span>
+          <label className="rounded-xl px-3 py-2 block" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+            <span className="text-[10px] uppercase tracking-wide font-semibold block" style={{ color: "#8b98ad" }}>Entrevista en</span>
             <select
               id="pais-entrevista"
               value={paisEntrevista}
@@ -274,19 +274,19 @@ export default function EntrevistasPage() {
               className="w-full bg-transparent text-sm outline-none mt-0.5"
               style={{ color: "#f1f5f9" }}
             >
-              {LISTA_PAISES.map(p => <option key={p.codigo} value={p.codigo} style={{ background: "#1e212b" }}>{p.bandera} {p.nombre}</option>)}
+              {LISTA_PAISES.map(p => <option key={p.codigo} value={p.codigo} style={{ background: "rgba(12,15,22,0.86)" }}>{p.bandera} {p.nombre}</option>)}
             </select>
           </label>
         </div>
         {delCv && delCv.sector === sector && (
-          <p className="text-xs -mt-2" style={{ color: "#64748b" }}>Elegidas por tu CV: {delCv.puesto}.</p>
+          <p className="text-xs -mt-2" style={{ color: "#8b98ad" }}>Elegidas por tu CV: {delCv.puesto}.</p>
         )}
 
         {!empezado ? (
           // ─── Antes de empezar ─────────────────────────────────────
           // El botón no es un trámite: el móvil solo deja sonar audio después
           // de un toque, y con él el entrevistador puede saludar y preguntar.
-          <div className="rounded-2xl p-5 space-y-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+          <div className="rounded-2xl p-5 space-y-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
             <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>
               Te haré {preguntas.length} preguntas. Contesta hablando o escribiendo, como te sea más cómodo.
               Después de cada una te diré lo que te ha salido bien y un detalle que pulir.
@@ -309,7 +309,7 @@ export default function EntrevistasPage() {
                 onClick={cambiarVoz}
                 aria-pressed={voz}
                 className="rounded-xl px-3 py-3 text-xs flex items-center gap-1.5"
-                style={{ background: "#0f1117", border: "1px solid #2d3142", color: voz ? "#22c55e" : "#64748b" }}
+                style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: voz ? "#22c55e" : "#64748b" }}
               >
                 {voz ? <Volume2 size={15} strokeWidth={1.9} /> : <VolumeX size={15} strokeWidth={1.9} />}
                 {voz ? "Con voz" : "Sin voz"}
@@ -320,7 +320,7 @@ export default function EntrevistasPage() {
           <>
             {/* Progreso */}
             <div>
-              <div className="flex justify-between text-xs mb-1" style={{ color: "#64748b" }}>
+              <div className="flex justify-between text-xs mb-1" style={{ color: "#8b98ad" }}>
                 <span>Pregunta {idx + 1} de {preguntas.length}</span>
                 {hablando && (
                   <button onClick={() => parar()} className="flex items-center gap-1" style={{ color: "#22c55e" }}>
@@ -329,13 +329,13 @@ export default function EntrevistasPage() {
                   </button>
                 )}
               </div>
-              <div className="h-1.5 rounded-full" style={{ background: "#1e212b" }}>
+              <div className="h-1.5 rounded-full" style={{ background: "rgba(12,15,22,0.86)" }}>
                 <div className="h-1.5 rounded-full transition-all" style={{ background: "#22c55e", width: `${(idx / preguntas.length) * 100}%` }} />
               </div>
             </div>
 
             {/* Pregunta */}
-            <div className="rounded-2xl p-5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+            <div className="rounded-2xl p-5" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-start justify-between gap-3">
                 <p className="text-base font-medium text-white leading-relaxed flex-1">{preguntas[idx].texto}</p>
                 <div className="flex gap-1.5 shrink-0">

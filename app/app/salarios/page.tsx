@@ -304,8 +304,8 @@ export default function SalariosPage() {
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.08), rgba(34,197,94,0.05))" }}>
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-xl font-bold" style={{ color: "#f1f5f9" }}>Comparador de salarios</h1>
-          <p className="text-xs mt-1" style={{ color: "#64748b" }}>Descubre cuánto se cobra en tu sector con datos reales del mercado</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Comparador de salarios</h1>
+          <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Descubre cuánto se cobra en tu sector con datos reales del mercado</p>
         </div>
       </div>
 
@@ -336,7 +336,7 @@ export default function SalariosPage() {
                         <span className="text-[10px]" style={{ color: "#ef4444" }}>↓{formatMoney(o.min_salary)}</span>
                         <span className="text-[10px]" style={{ color: "#3b82f6" }}>↑{formatMoney(o.max_salary)}</span>
                       </div>
-                      <p className="text-[10px] mt-1" style={{ color: "#6b7280" }}>
+                      <p className="text-[10px] mt-1" style={{ color: "#8b98ad" }}>
                         {medidos ? `${o.total.toLocaleString("es-ES")} ofertas` : "estimación"}
                       </p>
                     </button>
@@ -411,7 +411,7 @@ export default function SalariosPage() {
           <div className="card-game p-8 text-center">
             <div className="flex justify-center mb-3"><Search size={40} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
             <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Selecciona una ocupación o escribe un puesto</p>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>Te mostraremos el rango salarial, media y desglose por provincia</p>
+            <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Te mostraremos el rango salarial, media y desglose por provincia</p>
           </div>
         )}
 
@@ -420,7 +420,7 @@ export default function SalariosPage() {
           <div className="card-game p-8 text-center">
             <div className="flex justify-center mb-3"><Frown size={40} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
             <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Sin datos para "{puesto}"</p>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>Prueba con otro puesto o revisa la ortografía</p>
+            <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Prueba con otro puesto o revisa la ortografía</p>
           </div>
         )}
 
@@ -428,7 +428,7 @@ export default function SalariosPage() {
         {loading && (
           <div className="card-game p-8 text-center">
             <p className="text-lg" style={{ color: "#22c55e" }}>⏳ Buscando datos salariales...</p>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>Consultando {puesto}{provincia ? ` en ${provincia}` : ` en ${country.name}`}</p>
+            <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Consultando {puesto}{provincia ? ` en ${provincia}` : ` en ${country.name}`}</p>
           </div>
         )}
 
@@ -469,7 +469,7 @@ export default function SalariosPage() {
               ].map((s, i) => (
                 <div key={s.label} className="card-game p-3 text-center relative">
                   <p className="text-lg font-bold" style={{ color: s.color }}>{s.valor}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>{s.label}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "#8b98ad" }}>{s.label}</p>
                   {"badge" in s && (
                     <span className="absolute top-1 right-1 text-[8px] px-1 py-0.5 rounded" style={{
                       background: data.fuente === "ofertas" ? "rgba(34,197,94,0.12)" : "rgba(59,130,246,0.12)",
@@ -482,14 +482,14 @@ export default function SalariosPage() {
               ))}
             </div>
             {data.fuente === "ofertas" && (
-              <p className="text-[10px] text-center" style={{ color: "#64748b" }}>
+              <p className="text-[10px] text-center" style={{ color: "#8b98ad" }}>
                 Sueldo bruto anual de las ofertas que lo publican. La mitad cobra menos que el típico y la otra mitad más; entre bajo y alto está la mitad de las ofertas.
               </p>
             )}
 
             {/* Indicador cuando es referencia: mostrar que provincia se ignora */}
             {data.fuente === "referencia" && provincia && isSpain && (
-              <p className="text-[10px] text-center" style={{ color: "#64748b" }}>
+              <p className="text-[10px] text-center" style={{ color: "#8b98ad" }}>
                 {country.flag} Estimación nacional — el desglose por provincia sale de un índice de coste de vida, no de ofertas filtradas por "{provincia}"
               </p>
             )}
@@ -517,7 +517,7 @@ export default function SalariosPage() {
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #22c55e, #16a34a)" }} />
                         </div>
                         <span className="text-[11px] font-semibold w-14 text-right" style={{ color: "#f1f5f9" }}>{formatMoney(p.avg_salary)}</span>
-                        <span className="text-[10px] w-8 text-right" style={{ color: "#6b7280" }}>{p.count}</span>
+                        <span className="text-[10px] w-8 text-right" style={{ color: "#8b98ad" }}>{p.count}</span>
                       </div>
                     );
                   })}
@@ -528,7 +528,7 @@ export default function SalariosPage() {
             <div className="card-game p-4 flex items-center justify-between gap-4">
               <div>
                 <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¿Buscas trabajo de {data.puesto}?</p>
-                <p className="text-[11px]" style={{ color: "#64748b" }}>Guzzi puede enviar tu CV automáticamente</p>
+                <p className="text-[11px]" style={{ color: "#8b98ad" }}>Guzzi puede enviar tu CV automáticamente</p>
               </div>
               <button onClick={() => router.push(`/app/buscar?keyword=${encodeURIComponent(data.puesto)}${data.provincia ? `&location=${encodeURIComponent(data.provincia)}` : ""}`)}
                 className="btn-game text-xs whitespace-nowrap">Buscar →</button>

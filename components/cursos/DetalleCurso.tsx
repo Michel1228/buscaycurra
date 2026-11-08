@@ -28,8 +28,8 @@ function Dato({ icono, etiqueta, valor, destacado }: {
   icono: React.ReactNode; etiqueta: string; valor: string; destacado?: boolean;
 }) {
   return (
-    <div className="rounded-xl p-3" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-      <div className="flex items-center gap-1.5 mb-1" style={{ color: "#64748b" }}>
+    <div className="rounded-xl p-3" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+      <div className="flex items-center gap-1.5 mb-1" style={{ color: "#8b98ad" }}>
         {icono}
         <span className="text-[10px] uppercase tracking-wide font-semibold">{etiqueta}</span>
       </div>
@@ -78,7 +78,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
       <Link
         href={base}
         className="inline-flex items-center gap-1.5 text-xs mb-6 hover:opacity-80"
-        style={{ color: "#64748b", textDecoration: "none" }}
+        style={{ color: "#8b98ad", textDecoration: "none" }}
       >
         <ArrowLeft size={13} strokeWidth={1.9} />
         Todos los cursos
@@ -103,7 +103,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
           )}
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">{t.nombre}</h1>
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 leading-tight">{t.nombre}</h1>
         <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>{t.resumen}</p>
       </div>
 
@@ -137,8 +137,8 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
         {/* El coste va con las DOS cifras. "Gratis o hasta 1500 €" se lee
             como "gratis" y se olvida el resto; aquí lo que puede costarte
             está a la misma altura que lo que puede salirte gratis. */}
-        <div className="rounded-xl p-3" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-          <div className="flex items-center gap-1.5 mb-1" style={{ color: "#64748b" }}>
+        <div className="rounded-xl p-3" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+          <div className="flex items-center gap-1.5 mb-1" style={{ color: "#8b98ad" }}>
             <Euro size={12} strokeWidth={1.9} />
             <span className="text-[10px] uppercase tracking-wide font-semibold">Cuánto cuesta</span>
           </div>
@@ -173,7 +173,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
         ) : null}
       </div>
 
-      <p className="text-xs mb-2 -mt-4" style={{ color: "#64748b" }}>
+      <p className="text-xs mb-2 -mt-4" style={{ color: "#8b98ad" }}>
         <span style={{ color: COLOR_FINANCIACION[financiacionDe(t)], fontWeight: 600 }}>
           {NOMBRE_FINANCIACION[financiacionDe(t)]}
         </span>
@@ -181,7 +181,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
         {EXPLICA_FINANCIACION[financiacionDe(t)]}
       </p>
       {t.precio.nota && (
-        <p className="text-xs mb-8" style={{ color: "#64748b" }}>{t.precio.nota}</p>
+        <p className="text-xs mb-8" style={{ color: "#8b98ad" }}>{t.precio.nota}</p>
       )}
 
       <Seccion titulo="Qué es">
@@ -190,7 +190,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
 
       <Seccion titulo="Para qué te sirve">
         <p className="text-sm leading-relaxed mb-4" style={{ color: "#94a3b8" }}>{t.paraQueSirve}</p>
-        <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#64748b" }}>
+        <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#8b98ad" }}>
           Puestos que lo piden
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -199,7 +199,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
               key={p}
               href={`/app/buscar?keyword=${encodeURIComponent(p)}`}
               className="text-[11px] px-2.5 py-1 rounded-full hover:opacity-80"
-              style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8", textDecoration: "none" }}
+              style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8", textDecoration: "none" }}
             >
               {p}
             </Link>
@@ -223,7 +223,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>{o.nombre}</span>
                   {o.certificado && (
-                    <span className="text-[10px] shrink-0" style={{ color: "#64748b" }}>con certificado</span>
+                    <span className="text-[10px] shrink-0" style={{ color: "#8b98ad" }}>con certificado</span>
                   )}
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{o.descripcion}</p>
@@ -248,7 +248,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
             target="_blank"
             rel="sponsored noopener noreferrer nofollow"
             className="rounded-xl p-4 block hover:opacity-90"
-            style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+            style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
           >
             <div className="flex items-center justify-between gap-2 mb-1">
               <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Cursos en español en Coursera</span>
@@ -260,7 +260,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
               lo ves en cada curso antes de apuntarte.
             </p>
           </a>
-          <p className="text-[11px] mt-2 leading-relaxed" style={{ color: "#64748b" }}>
+          <p className="text-[11px] mt-2 leading-relaxed" style={{ color: "#8b98ad" }}>
             Si te apuntas desde este enlace, BuscayCurra puede recibir una comisión. A ti no te cuesta más.
           </p>
         </Seccion>
@@ -313,14 +313,14 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
                 <div
                   key={eq.pais}
                   className="rounded-xl p-3.5"
-                  style={{ background: "#1e212b", border: "1px solid #2d3142" }}
+                  style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-base leading-none">{pais?.bandera ?? "🌍"}</span>
                     <span className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
                       {pais?.nombre ?? eq.pais}
                     </span>
-                    <span className="text-xs" style={{ color: "#64748b" }}>·</span>
+                    <span className="text-xs" style={{ color: "#8b98ad" }}>·</span>
                     <span className="text-xs font-medium" style={{ color: "#3b82f6" }}>{eq.nombre}</span>
                   </div>
                   <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{eq.nota}</p>
@@ -358,19 +358,19 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-xl p-4 block hover:opacity-90"
-                  style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+                  style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <span className="text-sm font-semibold" style={{ color: "#22c55e" }}>{p.nombre}</span>
-                    <span className="text-[10px] shrink-0 mt-0.5" style={{ color: "#64748b" }}>
+                    <span className="text-[10px] shrink-0 mt-0.5" style={{ color: "#8b98ad" }}>
                       {p.gratuito ? "gratis" : p.tarda || ""}
                     </span>
                   </div>
                   <p className="text-xs leading-relaxed mb-1.5" style={{ color: "#94a3b8" }}>{p.paraQue}</p>
-                  <p className="text-[11px]" style={{ color: "#64748b" }}>{p.donde}</p>
+                  <p className="text-[11px]" style={{ color: "#8b98ad" }}>{p.donde}</p>
                   {p.truco && (
                     <p className="text-[11px] leading-relaxed mt-2 pt-2"
-                       style={{ color: "#f59e0b", borderTop: "1px solid #2d3142" }}>
+                       style={{ color: "#f59e0b", borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                       {p.truco}
                     </p>
                   )}
@@ -390,7 +390,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
       {/* ── Y una vez lo tenga, el trabajo ── */}
       <div
         className="rounded-xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-3"
-        style={{ background: "#1e212b", border: "1px solid #2d3142" }}
+        style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}
       >
         <Sparkles size={20} strokeWidth={1.8} className="shrink-0" style={{ color: "#22c55e" }} />
         <div className="flex-1">
@@ -407,10 +407,10 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
       </div>
 
       {/* ── Fuentes: cada dato de arriba sale de aquí ── */}
-      <div className="pt-6" style={{ borderTop: "1px solid #2d3142" }}>
+      <div className="pt-6" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
         <div className="flex items-center gap-1.5 mb-2.5">
-          <Globe size={12} strokeWidth={1.9} style={{ color: "#64748b" }} />
-          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#64748b" }}>
+          <Globe size={12} strokeWidth={1.9} style={{ color: "#8b98ad" }} />
+          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#8b98ad" }}>
             De dónde sale esta información
           </span>
         </div>
@@ -422,7 +422,7 @@ export default function DetalleCurso({ slug, base }: { slug: string; base: strin
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs hover:underline"
-                style={{ color: "#64748b" }}
+                style={{ color: "#8b98ad" }}
               >
                 {f.titulo}
               </a>

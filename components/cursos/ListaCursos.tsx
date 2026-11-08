@@ -59,7 +59,7 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
           <GraduationCap size={22} strokeWidth={1.8} style={{ color: "#22c55e" }} />
           <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#22c55e" }}>Formación</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 leading-tight">
           El curso que te piden para el trabajo que quieres
         </h1>
         <p className="text-sm sm:text-base leading-relaxed" style={{ color: "#94a3b8" }}>
@@ -80,7 +80,7 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
         <Link
           href={`${base}/mis-cursos`}
           className="rounded-xl p-3.5 mb-4 flex items-center gap-3 hover:opacity-90"
-          style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+          style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
         >
           <FolderOpen size={17} strokeWidth={1.8} className="shrink-0" style={{ color: "#94a3b8" }} />
           <div className="flex-1 min-w-0">
@@ -122,7 +122,7 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
         <Link
           href={`${base}/plazas`}
           className="rounded-xl p-4 mb-8 flex items-start gap-3 hover:opacity-90"
-          style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+          style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
         >
           <CalendarDays size={19} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
           <div>
@@ -142,7 +142,7 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
         <Link
           href={`${base}/renovar`}
           className="rounded-xl px-4 py-3 mb-8 -mt-5 flex items-center gap-3 hover:opacity-90"
-          style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+          style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
         >
           <RefreshCw size={16} strokeWidth={1.9} className="shrink-0" style={{ color: "#22c55e" }} />
           <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
@@ -162,7 +162,7 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
       <FormacionPorPais paises={paisesFuera} base={base} />
 
       <div className="rounded-xl p-4 text-xs leading-relaxed"
-           style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8" }}>
+           style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
         ¿Te vas a trabajar fuera y no sabes si tu título vale allí? Se comprueba en{" "}
         <a href={EUROPASS.url} target="_blank" rel="noopener noreferrer" style={{ color: "#22c55e" }}>
           {EUROPASS.nombre}

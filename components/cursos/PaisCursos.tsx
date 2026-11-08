@@ -34,7 +34,7 @@ export default function PaisCursos({ actual }: { actual: string }) {
       <label htmlFor="cursos-pais">Cursos para quien está en</label>
       <select id="cursos-pais" value={actual}
         onChange={(e) => router.push(`${ruta}?pais=${e.target.value}`, { scroll: false })}
-        className="text-xs px-2 py-1 rounded" style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}>
+        className="text-xs px-2 py-1 rounded" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}>
         {NACIONALIDADES.map(n => <option key={n.codigo} value={n.codigo}>{n.bandera} {n.nombre}</option>)}
       </select>
     </div>

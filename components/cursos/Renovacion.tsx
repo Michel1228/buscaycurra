@@ -23,8 +23,8 @@ export function CasillasRenovacion({ r }: { r: Renovacion }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {r.casillas.map(c => (
-          <div key={c.titulo} className="rounded-xl p-3.5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-            <p className="text-[10px] uppercase tracking-wide font-semibold mb-1" style={{ color: "#64748b" }}>
+          <div key={c.titulo} className="rounded-xl p-3.5" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+            <p className="text-[10px] uppercase tracking-wide font-semibold mb-1" style={{ color: "#8b98ad" }}>
               {c.titulo}
             </p>
             <p className="text-xs leading-relaxed" style={{ color: "#cbd5e1" }}>{c.texto}</p>
@@ -45,12 +45,12 @@ export function CasillasRenovacion({ r }: { r: Renovacion }) {
         </a>
       )}
 
-      <p className="text-[11px] leading-relaxed mt-2.5" style={{ color: "#64748b" }}>
+      <p className="text-[11px] leading-relaxed mt-2.5" style={{ color: "#8b98ad" }}>
         Fuente:{" "}
         {r.fuentes.map((f, i) => (
           <span key={f.url}>
             {i > 0 && " · "}
-            <a href={f.url} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: "#64748b" }}>
+            <a href={f.url} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: "#8b98ad" }}>
               {f.titulo}
             </a>
           </span>
@@ -78,7 +78,7 @@ export function ListaRenovaciones({ base }: { base: string }) {
       <Link
         href={base}
         className="inline-flex items-center gap-1.5 text-xs mb-6 hover:opacity-80"
-        style={{ color: "#64748b", textDecoration: "none" }}
+        style={{ color: "#8b98ad", textDecoration: "none" }}
       >
         <ArrowLeft size={13} strokeWidth={1.9} />
         Todos los cursos
@@ -89,7 +89,7 @@ export function ListaRenovaciones({ base }: { base: string }) {
           <RefreshCw size={20} strokeWidth={1.8} style={{ color: "#22c55e" }} />
           <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#22c55e" }}>Renovaciones</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">¿Se te caduca el carné?</h1>
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 leading-tight">¿Se te caduca el carné?</h1>
         <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
           Cada cuánto hay que renovarlo y qué te piden. Con la fuente oficial de cada dato.
         </p>
@@ -101,7 +101,7 @@ export function ListaRenovaciones({ base }: { base: string }) {
             key={t.slug}
             href={dentroDeLaApp ? `${base}/${t.slug}#renovacion` : `${base}/${t.slug}/renovar`}
             className="rounded-xl p-3 flex flex-col justify-between gap-1.5 hover:opacity-90"
-            style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+            style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
           >
             <p className="text-xs font-semibold leading-snug" style={{ color: "#f1f5f9" }}>{queSeRenueva(t)}</p>
             <p className="text-sm font-bold" style={{ color: "#22c55e" }}>{t.renovacion!.cada}</p>
@@ -109,7 +109,7 @@ export function ListaRenovaciones({ base }: { base: string }) {
         ))}
       </div>
 
-      <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>
+      <p className="text-xs leading-relaxed" style={{ color: "#8b98ad" }}>
         ¿No está el tuyo? Solo ponemos los plazos que hemos podido confirmar en una fuente oficial.
         Si un título no caduca, aquí no sale.
       </p>

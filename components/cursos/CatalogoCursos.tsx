@@ -60,7 +60,7 @@ function Coste({ t }: { t: TipoCurso }) {
   return (
     <span className="flex items-baseline gap-1.5 min-w-0">
       <span className="font-semibold whitespace-nowrap" style={{ color }}>{etiqueta}</span>
-      {detalle && <span className="truncate" style={{ color: "#64748b" }}>{detalle}</span>}
+      {detalle && <span className="truncate" style={{ color: "#8b98ad" }}>{detalle}</span>}
     </span>
   );
 }
@@ -80,7 +80,7 @@ function TarjetaCurso({ t, base }: { t: TipoCurso; base: string }) {
       <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{t.resumen}</p>
       <div className="flex items-center justify-between gap-3 mt-auto pt-1 text-[11px]">
         <Coste t={t} />
-        <span className="flex items-center gap-1 shrink-0" style={{ color: "#64748b" }}>
+        <span className="flex items-center gap-1 shrink-0" style={{ color: "#8b98ad" }}>
           <Clock size={11} strokeWidth={1.8} />
           {duracionResumida(t)}
         </span>
@@ -95,11 +95,11 @@ function TarjetaPlataforma({ p }: { p: PlataformaFormacion }) {
        className="card-game p-4 flex flex-col gap-2" style={{ textDecoration: "none" }}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{p.nombre}</h3>
-        <ExternalLink size={13} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#64748b" }} />
+        <ExternalLink size={13} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#8b98ad" }} />
       </div>
       <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{p.resumen}</p>
       {p.volumen && <p className="text-[11px] font-medium" style={{ color: "#22c55e" }}>{p.volumen}</p>}
-      {p.aviso && <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>{p.aviso}</p>}
+      {p.aviso && <p className="text-[11px] leading-relaxed" style={{ color: "#8b98ad" }}>{p.aviso}</p>}
     </a>
   );
 }
@@ -162,7 +162,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
   return (
     <>
       {sinFichas && (
-        <div className="rounded-xl p-4 mb-8 text-sm leading-relaxed" style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8" }}>
+        <div className="rounded-xl p-4 mb-8 text-sm leading-relaxed" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
           Las fichas de cursos obligatorios y carnés, una a una, son de España por ahora. Para tu país
           tienes aquí abajo los cursos gratis que sirven allí y la puerta del servicio oficial de empleo.
         </div>
@@ -174,7 +174,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
         <div className="relative">
           <Search size={16} strokeWidth={1.9}
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                  style={{ color: "#64748b" }} />
+                  style={{ color: "#8b98ad" }} />
           <input
             type="search"
             value={q}
@@ -182,12 +182,12 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
             placeholder="Carretillero, inglés, limpieza…"
             aria-label="Buscar curso"
             className="input-con-icono w-full rounded-xl py-3 pl-10 pr-10 text-sm outline-none"
-            style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
+            style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
           />
           {q && (
             <button onClick={() => setQ("")} aria-label="Borrar búsqueda"
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full"
-                    style={{ color: "#64748b" }}>
+                    style={{ color: "#8b98ad" }}>
               <X size={14} strokeWidth={2} />
             </button>
           )}
@@ -224,7 +224,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
 
       {/* La diferencia entre gratis y subvencionado dicha con todas las letras:
           es justo lo que la gente no sabe y donde se lleva el disgusto. */}
-      <p className="text-[11px] mb-8 leading-relaxed" style={{ color: "#64748b" }}>
+      <p className="text-[11px] mb-8 leading-relaxed" style={{ color: "#8b98ad" }}>
         {filtro === "todos"
           ? "Gratis es gratis siempre. Subvencionado es gratis si sale convocatoria en tu zona; si no, lo pagas tú."
           : EXPLICA_FINANCIACION[filtro]}
@@ -236,7 +236,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
         <section className="mb-10">
           {cursosEncontrados.length > 0 && (
             <>
-              <h2 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#64748b" }}>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#8b98ad" }}>
                 {cursosEncontrados.length}{" "}
                 {cursosEncontrados.length === 1 ? "curso nuestro" : "cursos nuestros"}
               </h2>
@@ -248,7 +248,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
 
           {plataformasEncontradas.length > 0 && (
             <>
-              <h2 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#64748b" }}>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#8b98ad" }}>
                 Sitios donde buscarlo
               </h2>
               <div className="grid sm:grid-cols-2 gap-3">
@@ -258,7 +258,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
           )}
 
           {nadaEncontrado && (
-            <div className="rounded-xl p-5 text-center" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-5 text-center" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>
                 No tenemos ficha de eso todavía
               </p>
@@ -304,7 +304,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
               </p>
               {sectoresVisibles.map(({ sector, cursos: delSector }) => (
                 <div key={sector} className="mb-7">
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#64748b" }}>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#8b98ad" }}>
                     {NOMBRE_SECTOR[sector]}
                   </h3>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -316,7 +316,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
           )}
 
           {!sinFichas && obligatoriosVisibles.length === 0 && sectoresVisibles.length === 0 && (
-            <div className="rounded-xl p-5 mb-10 text-center" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-5 mb-10 text-center" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <p className="text-sm" style={{ color: "#94a3b8" }}>
                 Todavía no tenemos ninguna ficha de ese tipo. Prueba con otro filtro o mira las plataformas de abajo.
               </p>
@@ -350,7 +350,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
                  className="card-game p-4 flex flex-col gap-1.5" style={{ textDecoration: "none" }}>
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-semibold text-sm" style={{ color: "#22c55e" }}>{servicio.nombre}</span>
-                  <ExternalLink size={13} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#64748b" }} />
+                  <ExternalLink size={13} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#8b98ad" }} />
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{servicio.queHacer}</p>
               </a>

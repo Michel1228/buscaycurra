@@ -75,7 +75,7 @@ export default function MiCarne({ slug, nombre, anios, dentroDeLaApp }: {
       <Link
         href={`/app/formacion/${slug}`}
         className="mt-2.5 rounded-xl p-3.5 flex items-center gap-3 hover:opacity-90"
-        style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+        style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
       >
         <BellRing size={18} strokeWidth={1.8} className="shrink-0" style={{ color: "#22c55e" }} />
         <span className="text-sm" style={{ color: "#f1f5f9" }}>
@@ -141,14 +141,14 @@ export default function MiCarne({ slug, nombre, anios, dentroDeLaApp }: {
   if (carne && !editando) {
     const e = estadoCarne(carne.caduca_en);
     return (
-      <div className="mt-2.5 rounded-xl p-3.5" style={{ background: "#1e212b", border: `1px solid ${e.color}55` }}>
+      <div className="mt-2.5 rounded-xl p-3.5" style={{ background: "rgba(12,15,22,0.86)", border: `1px solid ${e.color}55` }}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-wide font-semibold mb-0.5" style={{ color: e.color }}>{e.etiqueta}</p>
             <p className="text-base font-bold" style={{ color: "#f1f5f9" }}>Caduca el {fechaEs(carne.caduca_en)}</p>
             <p className="text-xs" style={{ color: "#94a3b8" }}>{e.queda}</p>
           </div>
-          <button onClick={quitar} aria-label="Quitar este carné" className="p-1.5 rounded-lg shrink-0" style={{ color: "#64748b" }}>
+          <button onClick={quitar} aria-label="Quitar este carné" className="p-1.5 rounded-lg shrink-0" style={{ color: "#8b98ad" }}>
             <Trash2 size={14} strokeWidth={1.8} />
           </button>
         </div>
@@ -159,7 +159,7 @@ export default function MiCarne({ slug, nombre, anios, dentroDeLaApp }: {
             {carne.avisos ? "Te avisaremos 3 meses y 1 mes antes" : "Sin avisos"}
           </button>
           <button onClick={abrirEdicion} className="text-[11px] px-2.5 py-1 rounded-full"
-                  style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+                  style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
             Cambiar fechas
           </button>
         </div>
@@ -172,7 +172,7 @@ export default function MiCarne({ slug, nombre, anios, dentroDeLaApp }: {
     return (
       <button onClick={abrirEdicion}
               className="mt-2.5 w-full rounded-xl p-3.5 flex items-center gap-3 text-left hover:opacity-90"
-              style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+              style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
         <CalendarCheck size={18} strokeWidth={1.8} className="shrink-0" style={{ color: "#22c55e" }} />
         <span className="text-sm" style={{ color: "#f1f5f9" }}>
           <strong>Ya lo tengo.</strong> Avísame antes de que caduque.
@@ -182,31 +182,31 @@ export default function MiCarne({ slug, nombre, anios, dentroDeLaApp }: {
   }
 
   return (
-    <div className="mt-2.5 rounded-xl p-3.5 space-y-3" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+    <div className="mt-2.5 rounded-xl p-3.5 space-y-3" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
       <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{nombre}</p>
       <label className="block">
-        <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#64748b" }}>Lo sacaste el</span>
+        <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#8b98ad" }}>Lo sacaste el</span>
         <input id={`obtenido-${slug}`} type="date" value={obtenido} max={new Date().toISOString().slice(0, 10)}
                onChange={e => setObtenido(e.target.value)}
                className="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
-               style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9", colorScheme: "dark" }} />
+               style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9", colorScheme: "dark" }} />
       </label>
 
       {anios && !otraFecha ? (
         <p className="text-xs" style={{ color: "#94a3b8" }}>
           {caducaPrevista ? <>Caduca el <strong style={{ color: "#f1f5f9" }}>{fechaEs(caducaPrevista)}</strong>. </> : null}
-          <button type="button" onClick={() => setOtraFecha(true)} className="underline" style={{ color: "#64748b" }}>
+          <button type="button" onClick={() => setOtraFecha(true)} className="underline" style={{ color: "#8b98ad" }}>
             ¿Tu tarjeta dice otra fecha?
           </button>
         </p>
       ) : (
         <label className="block">
-          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#64748b" }}>
+          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#8b98ad" }}>
             Caduca el {anios ? "" : "(la que diga tu certificado)"}
           </span>
           <input id={`caduca-${slug}`} type="date" value={caducaManual} onChange={e => setCaducaManual(e.target.value)}
                  className="mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none"
-                 style={{ background: "#0f1117", border: "1px solid #2d3142", color: "#f1f5f9", colorScheme: "dark" }} />
+                 style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9", colorScheme: "dark" }} />
         </label>
       )}
 
@@ -222,7 +222,7 @@ export default function MiCarne({ slug, nombre, anios, dentroDeLaApp }: {
           {guardando ? <Loader2 size={14} className="animate-spin inline" /> : "Guardar"}
         </button>
         <button onClick={() => setEditando(false)} className="px-4 py-2.5 rounded-xl text-sm"
-                style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+                style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
           Cancelar
         </button>
       </div>

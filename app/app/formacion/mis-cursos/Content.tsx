@@ -39,7 +39,7 @@ interface Progreso {
 }
 
 const ESTADOS: { id: string; etiqueta: string; color: string }[] = [
-  { id: "guardado",  etiqueta: "Guardado",    color: "#64748b" },
+  { id: "guardado",  etiqueta: "Guardado",    color: "#8b98ad" },
   { id: "preparado", etiqueta: "Preparado",   color: "#3b82f6" },
   { id: "inscrito",  etiqueta: "Inscrito",    color: "#a855f7" },
   { id: "haciendo",  etiqueta: "Haciéndolo",  color: "#f59e0b" },
@@ -124,16 +124,16 @@ export default function MisCursosContent() {
   if (cursos === null) {
     return (
       <div className="flex items-center gap-2 py-12 justify-center">
-        <Loader2 size={18} className="animate-spin" style={{ color: "#64748b" }} />
-        <span className="text-sm" style={{ color: "#64748b" }}>Cargando tus cursos…</span>
+        <Loader2 size={18} className="animate-spin" style={{ color: "#8b98ad" }} />
+        <span className="text-sm" style={{ color: "#8b98ad" }}>Cargando tus cursos…</span>
       </div>
     );
   }
 
   if (cursos.length === 0) {
     return (
-      <div className="rounded-xl p-6 text-center" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-        <GraduationCap size={26} strokeWidth={1.6} className="mx-auto mb-3" style={{ color: "#64748b" }} />
+      <div className="rounded-xl p-6 text-center" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+        <GraduationCap size={26} strokeWidth={1.6} className="mx-auto mb-3" style={{ color: "#8b98ad" }} />
         <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>
           Todavía no tienes ningún curso guardado
         </p>
@@ -175,7 +175,7 @@ export default function MisCursosContent() {
                   {c.curso_nombre || c.curso_slug}
                 </Link>
                 {docs.length > 0 && (
-                  <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: "#8b98ad" }}>
                     {hechos.size} de {docs.length} papeles conseguidos
                   </p>
                 )}
@@ -184,7 +184,7 @@ export default function MisCursosContent() {
                 onClick={() => quitar(c.curso_slug)}
                 aria-label={`Quitar ${c.curso_nombre || c.curso_slug} de mi lista`}
                 className="shrink-0 p-1.5 rounded-lg"
-                style={{ color: "#64748b" }}
+                style={{ color: "#8b98ad" }}
               >
                 <Trash2 size={14} strokeWidth={1.8} />
               </button>
@@ -211,7 +211,7 @@ export default function MisCursosContent() {
                 );
               })}
               {guardando === c.curso_slug && (
-                <Loader2 size={13} className="animate-spin self-center" style={{ color: "#64748b" }} />
+                <Loader2 size={13} className="animate-spin self-center" style={{ color: "#8b98ad" }} />
               )}
             </div>
 
@@ -227,12 +227,12 @@ export default function MisCursosContent() {
             </button>
 
             {estaAbierto && (
-              <div className="mt-3 pt-3 flex flex-col gap-5" style={{ borderTop: "1px solid #2d3142" }}>
+              <div className="mt-3 pt-3 flex flex-col gap-5" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
 
                 {/* ── Papeles, con casilla ── */}
                 {docs.length > 0 && (
                   <div>
-                    <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#64748b" }}>
+                    <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#8b98ad" }}>
                       Lo que te van a pedir
                     </p>
                     <div className="flex flex-col gap-1.5">
@@ -278,18 +278,18 @@ export default function MisCursosContent() {
                 {/* ── Dónde se sacan ── */}
                 {papeles.length > 0 && (
                   <div>
-                    <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#64748b" }}>
+                    <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#8b98ad" }}>
                       Dónde se sacan
                     </p>
                     <div className="flex flex-col gap-2">
                       {papeles.map(p => (
                         <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer"
                            className="rounded-lg p-3 block"
-                           style={{ background: "#161922", border: "1px solid #2d3142", textDecoration: "none" }}>
+                           style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}>
                           <div className="flex items-center justify-between gap-2 mb-0.5">
                             <span className="text-xs font-semibold" style={{ color: "#22c55e" }}>{p.nombre}</span>
                             {p.gratuito && (
-                              <span className="text-[10px] shrink-0" style={{ color: "#64748b" }}>gratis</span>
+                              <span className="text-[10px] shrink-0" style={{ color: "#8b98ad" }}>gratis</span>
                             )}
                           </div>
                           <p className="text-[11px] leading-relaxed" style={{ color: "#94a3b8" }}>{p.donde}</p>
@@ -306,13 +306,13 @@ export default function MisCursosContent() {
                 {c.carta && (
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: "#64748b" }}>
+                      <p className="text-[11px] uppercase tracking-wide font-semibold" style={{ color: "#8b98ad" }}>
                         Tu carta de solicitud
                       </p>
                       <button
                         onClick={() => copiar(c.curso_slug, c.carta!)}
                         className="text-[11px] flex items-center gap-1 px-2 py-1 rounded-lg"
-                        style={{ border: "1px solid #2d3142", color: copiado === c.curso_slug ? "#22c55e" : "#94a3b8" }}
+                        style={{ border: "1px solid rgba(148,163,184,0.18)", color: copiado === c.curso_slug ? "#22c55e" : "#94a3b8" }}
                       >
                         {copiado === c.curso_slug
                           ? <><Check size={11} strokeWidth={2.5} /> Copiada</>
@@ -320,7 +320,7 @@ export default function MisCursosContent() {
                       </button>
                     </div>
                     <div className="rounded-lg p-3 text-xs leading-relaxed whitespace-pre-wrap"
-                         style={{ background: "#161922", border: "1px solid #2d3142", color: "#94a3b8" }}>
+                         style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
                       {c.carta}
                     </div>
                   </div>
@@ -328,7 +328,7 @@ export default function MisCursosContent() {
 
                 {/* ── Sus notas ── */}
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#64748b" }}>
+                  <p className="text-[11px] uppercase tracking-wide font-semibold mb-2" style={{ color: "#8b98ad" }}>
                     Tus notas
                   </p>
                   <textarea
@@ -341,7 +341,7 @@ export default function MisCursosContent() {
                     placeholder="Llamé al centro, me dijeron que en septiembre…"
                     rows={3}
                     className="w-full rounded-lg p-3 text-xs outline-none resize-y"
-                    style={{ background: "#161922", border: "1px solid #2d3142", color: "#f1f5f9" }}
+                    style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
                   />
                 </div>
 

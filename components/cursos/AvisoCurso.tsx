@@ -82,8 +82,8 @@ export default function AvisoCurso({ slug, nombre }: { slug: string; nombre: str
   if (estado === "cargando") {
     return (
       <div className="rounded-xl p-4 mb-8 flex items-center gap-2.5" style={marco}>
-        <Loader2 size={16} className="animate-spin" style={{ color: "#64748b" }} />
-        <span className="text-xs" style={{ color: "#64748b" }}>Comprobando…</span>
+        <Loader2 size={16} className="animate-spin" style={{ color: "#8b98ad" }} />
+        <span className="text-xs" style={{ color: "#8b98ad" }}>Comprobando…</span>
       </div>
     );
   }

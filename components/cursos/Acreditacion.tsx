@@ -31,7 +31,7 @@ export default function Acreditacion({ base }: { base: string }) {
   return (
     <>
       <Link href={base} className="inline-flex items-center gap-1.5 text-xs mb-6 hover:opacity-80"
-            style={{ color: "#64748b", textDecoration: "none" }}>
+            style={{ color: "#8b98ad", textDecoration: "none" }}>
         <ArrowLeft size={13} strokeWidth={1.9} />
         Todos los cursos
       </Link>
@@ -45,7 +45,7 @@ export default function Acreditacion({ base }: { base: string }) {
             Gratis · Sin volver a estudiar
           </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 leading-tight">
           ¿Llevas años trabajando y no tienes el título?
         </h1>
         <p className="text-sm sm:text-base leading-relaxed" style={{ color: "#94a3b8" }}>
@@ -66,8 +66,8 @@ export default function Acreditacion({ base }: { base: string }) {
           { icono: <Clock size={12} strokeWidth={1.9} />, etiqueta: "Cuándo", valor: "Todo el año" },
           { icono: <MapPin size={12} strokeWidth={1.9} />, etiqueta: "Dónde vale", valor: "Toda España" },
         ].map(d => (
-          <div key={d.etiqueta} className="rounded-xl p-3" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-            <div className="flex items-center gap-1.5 mb-1" style={{ color: "#64748b" }}>
+          <div key={d.etiqueta} className="rounded-xl p-3" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+            <div className="flex items-center gap-1.5 mb-1" style={{ color: "#8b98ad" }}>
               {d.icono}
               <span className="text-[10px] uppercase tracking-wide font-semibold">{d.etiqueta}</span>
             </div>
@@ -87,10 +87,10 @@ export default function Acreditacion({ base }: { base: string }) {
       <Seccion titulo="Si llegas a esto, te vale">
         <div className="flex flex-col gap-3">
           {REQUISITOS.map(r => (
-            <div key={r.nivel} className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+            <div key={r.nivel} className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-center justify-between gap-2 mb-2">
                 <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{r.nivel}</span>
-                <span className="text-[11px]" style={{ color: "#64748b" }}>desde {r.edadMinima} años</span>
+                <span className="text-[11px]" style={{ color: "#8b98ad" }}>desde {r.edadMinima} años</span>
               </div>
               <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
                 <span style={{ color: "#22c55e", fontWeight: 600 }}>
@@ -99,14 +99,14 @@ export default function Acreditacion({ base }: { base: string }) {
                 {" "}y {r.experiencia.horas.toLocaleString("es-ES")} horas en total,
                 dentro de los últimos {r.experiencia.ventanaAnios} años.
               </p>
-              <p className="text-xs leading-relaxed mt-1.5" style={{ color: "#64748b" }}>
+              <p className="text-xs leading-relaxed mt-1.5" style={{ color: "#8b98ad" }}>
                 Si no llegas por experiencia, también vale con {r.formacionHoras} horas de formación
                 en los últimos {r.formacionVentanaAnios} años.
               </p>
             </div>
           ))}
         </div>
-        <p className="text-xs mt-3 leading-relaxed" style={{ color: "#64748b" }}>
+        <p className="text-xs mt-3 leading-relaxed" style={{ color: "#8b98ad" }}>
           Tres años a jornada completa pasan de las 2.000 horas de sobra. Si has trabajado a media
           jornada o por temporadas, echa la cuenta con la vida laboral en la mano.
         </p>
@@ -132,7 +132,7 @@ export default function Acreditacion({ base }: { base: string }) {
         <div className="flex flex-col gap-2">
           {DOCUMENTOS.map(d => (
             <div key={d} className="flex gap-2.5 items-start">
-              <FileText size={13} strokeWidth={1.8} className="shrink-0 mt-1" style={{ color: "#64748b" }} />
+              <FileText size={13} strokeWidth={1.8} className="shrink-0 mt-1" style={{ color: "#8b98ad" }} />
               <span className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>{d}</span>
             </div>
           ))}
@@ -168,7 +168,7 @@ export default function Acreditacion({ base }: { base: string }) {
           </a>
           <a href={ENLACES.ministerio.url} target="_blank" rel="noopener noreferrer"
              className="rounded-xl p-4 block hover:opacity-90"
-             style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}>
+             style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}>
             <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>
               La explicación del Ministerio
             </p>
@@ -181,7 +181,7 @@ export default function Acreditacion({ base }: { base: string }) {
 
       {/* ── Y de vuelta a lo nuestro ── */}
       <div className="rounded-xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-3"
-           style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+           style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
         <BadgeCheck size={20} strokeWidth={1.8} className="shrink-0" style={{ color: "#22c55e" }} />
         <div className="flex-1">
           <p className="text-sm font-semibold mb-0.5" style={{ color: "#f1f5f9" }}>
@@ -197,10 +197,10 @@ export default function Acreditacion({ base }: { base: string }) {
       </div>
 
       {/* ── Fuentes ── */}
-      <div className="pt-6" style={{ borderTop: "1px solid #2d3142" }}>
+      <div className="pt-6" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
         <div className="flex items-center gap-1.5 mb-2.5">
-          <Globe size={12} strokeWidth={1.9} style={{ color: "#64748b" }} />
-          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#64748b" }}>
+          <Globe size={12} strokeWidth={1.9} style={{ color: "#8b98ad" }} />
+          <span className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#8b98ad" }}>
             De dónde sale esta información
           </span>
         </div>
@@ -208,7 +208,7 @@ export default function Acreditacion({ base }: { base: string }) {
           {FUENTES.map(f => (
             <li key={f.url}>
               <a href={f.url} target="_blank" rel="noopener noreferrer"
-                 className="text-xs hover:underline" style={{ color: "#64748b" }}>
+                 className="text-xs hover:underline" style={{ color: "#8b98ad" }}>
                 {f.titulo}
               </a>
             </li>

@@ -20,7 +20,7 @@ export default function MisCursosPage() {
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Link href="/app/formacion"
               className="inline-flex items-center gap-1.5 text-xs mb-6 hover:opacity-80"
-              style={{ color: "#64748b", textDecoration: "none" }}>
+              style={{ color: "#8b98ad", textDecoration: "none" }}>
           <ArrowLeft size={13} strokeWidth={1.9} />
           Todos los cursos
         </Link>
@@ -32,7 +32,7 @@ export default function MisCursosPage() {
               Mis cursos
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 leading-tight">
             Lo que llevas hecho
           </h1>
           <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>

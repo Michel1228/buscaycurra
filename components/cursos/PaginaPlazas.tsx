@@ -19,7 +19,7 @@ export default function PaginaPlazas({ base, ficha }: { base: string; ficha?: st
       <Link
         href={tipo ? `${base}/${tipo.slug}` : base}
         className="inline-flex items-center gap-1.5 text-xs mb-6 hover:opacity-80"
-        style={{ color: "#64748b", textDecoration: "none" }}
+        style={{ color: "#8b98ad", textDecoration: "none" }}
       >
         <ArrowLeft size={13} strokeWidth={1.9} />
         {tipo ? `Volver a ${tipo.nombre}` : "Todos los cursos"}
@@ -30,7 +30,7 @@ export default function PaginaPlazas({ base, ficha }: { base: string; ficha?: st
           <CalendarDays size={20} strokeWidth={1.8} style={{ color: "#22c55e" }} />
           <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#22c55e" }}>Plazas gratis</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 leading-tight">
           {tipo ? `Plazas gratis de ${etiquetaPlazas(tipo.slug, tipo.nombre)}` : "Cursos gratis que empiezan pronto"}
         </h1>
         <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>

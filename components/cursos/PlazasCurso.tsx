@@ -90,7 +90,7 @@ function TarjetaPlaza({ p }: { p: Plaza }) {
     : [p.municipio, p.provinciaNombre && p.provinciaNombre.toLowerCase() !== (p.municipio ?? "").toLowerCase() ? p.provinciaNombre : null]
         .filter(Boolean).join(", ");
   return (
-    <article className="rounded-xl p-4 flex flex-col gap-2.5" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+    <article className="rounded-xl p-4 flex flex-col gap-2.5" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-sm font-semibold leading-snug" style={{ color: "#f1f5f9" }}>{p.titulo}</h3>
         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
@@ -121,7 +121,7 @@ function TarjetaPlaza({ p }: { p: Plaza }) {
       {(p.dirigido || p.certificado) && (
         <div className="flex flex-wrap gap-1.5">
           {p.dirigido && NOMBRE_DIRIGIDO[p.dirigido] && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#151821", border: "1px solid #2d3142", color: "#94a3b8" }}>
+            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#151821", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
               {NOMBRE_DIRIGIDO[p.dirigido]}
             </span>
           )}
@@ -134,7 +134,7 @@ function TarjetaPlaza({ p }: { p: Plaza }) {
       )}
 
       {p.centro && (
-        <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>
+        <p className="text-[11px] leading-relaxed" style={{ color: "#8b98ad" }}>
           {centroLegible(p.centro)}{p.direccion && p.modalidad !== "online" ? ` · ${p.direccion}` : ""}
         </p>
       )}
@@ -142,18 +142,18 @@ function TarjetaPlaza({ p }: { p: Plaza }) {
       <div className="flex flex-wrap items-center gap-2 pt-1">
         <a href={p.url} target="_blank" rel="noopener noreferrer"
            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90"
-           style={{ background: "#22c55e", color: "#0f1117", textDecoration: "none" }}>
+           style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", textDecoration: "none" }}>
           Apuntarse en {p.fuenteNombre} <ExternalLink size={11} strokeWidth={2.2} />
         </a>
         {p.telefono && (
           <a href={`tel:${p.telefono}`} className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg hover:opacity-90"
-             style={{ background: "#151821", border: "1px solid #2d3142", color: "#94a3b8", textDecoration: "none" }}>
+             style={{ background: "#151821", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8", textDecoration: "none" }}>
             <Phone size={11} strokeWidth={2} /> {p.telefono}
           </a>
         )}
         {p.email && (
           <a href={`mailto:${p.email}`} className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg hover:opacity-90"
-             style={{ background: "#151821", border: "1px solid #2d3142", color: "#94a3b8", textDecoration: "none" }}>
+             style={{ background: "#151821", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8", textDecoration: "none" }}>
             <Mail size={11} strokeWidth={2} /> Escribir al centro
           </a>
         )}
@@ -165,7 +165,7 @@ function TarjetaPlaza({ p }: { p: Plaza }) {
 function Cobertura({ cobertura }: { cobertura: string[] }) {
   if (cobertura.length === 0) return null;
   return (
-    <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>
+    <p className="text-[11px] leading-relaxed" style={{ color: "#8b98ad" }}>
       De momento tenemos las plazas de {cobertura.join(", ").replace(/, ([^,]*)$/, " y $1")}: son las comunidades
       que publican sus cursos como datos abiertos. Si vives en otra, búscalos en el{" "}
       <a href="https://experienciafundae.es/buscador" target="_blank" rel="noopener noreferrer"
@@ -271,7 +271,7 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
       onChange={e => cambiarProvincia(e.target.value)}
       aria-label="Provincia"
       className="rounded-lg py-2 px-3 text-xs outline-none"
-      style={{ background: "#151821", border: "1px solid #2d3142", color: "#f1f5f9" }}
+      style={{ background: "#151821", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
     >
       <option value="">Todas las provincias</option>
       {datos.provincias.map(p => (
@@ -297,7 +297,7 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
           </div>
           {selectorProvincia}
         </div>
-        {cargando && <p className="text-xs" style={{ color: "#64748b" }}>Buscando plazas…</p>}
+        {cargando && <p className="text-xs" style={{ color: "#8b98ad" }}>Buscando plazas…</p>}
         {!cargando && plazas.length === 0 && (
           <p className="text-xs mb-3" style={{ color: "#94a3b8" }}>
             Ahora mismo no hay plazas de este curso en esa provincia. Prueba con todas las provincias.
@@ -323,7 +323,7 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
         onSubmit={e => { e.preventDefault(); setQAplicada(q); }}
       >
         <div className="relative flex-1">
-          <Search size={15} strokeWidth={1.9} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#64748b" }} />
+          <Search size={15} strokeWidth={1.9} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#8b98ad" }} />
           <input
             type="search"
             value={q}
@@ -332,7 +332,7 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
             placeholder="Soldadura, inglés, carretillas, cocina…"
             aria-label="Buscar plaza por nombre del curso"
             className="input-con-icono w-full rounded-lg py-2.5 pr-3 text-sm outline-none"
-            style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}
+            style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
           />
         </div>
         <button type="submit" className="btn-game text-xs px-4">Buscar</button>
@@ -345,7 +345,7 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
           onChange={e => setModalidad(e.target.value)}
           aria-label="Modalidad"
           className="rounded-lg py-2 px-3 text-xs outline-none"
-          style={{ background: "#151821", border: "1px solid #2d3142", color: "#f1f5f9" }}
+          style={{ background: "#151821", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
         >
           <option value="">Presencial y online</option>
           <option value="presencial">Solo presencial</option>
@@ -361,14 +361,14 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
           No hemos podido cargar las plazas. Vuelve a intentarlo en un momento.
         </p>
       )}
-      {cargando && <p className="text-sm" style={{ color: "#64748b" }}>Buscando plazas…</p>}
+      {cargando && <p className="text-sm" style={{ color: "#8b98ad" }}>Buscando plazas…</p>}
       {!cargando && datos && (
-        <p className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#64748b" }}>
+        <p className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#8b98ad" }}>
           {datos.total === 1 ? "1 plaza" : `${datos.total.toLocaleString("es-ES")} plazas`} por empezar
         </p>
       )}
       {!cargando && datos?.total === 0 && (
-        <div className="rounded-xl p-5 text-center mb-6" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+        <div className="rounded-xl p-5 text-center mb-6" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
           <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>No hay plazas con esos filtros</p>
           <p className="text-xs" style={{ color: "#94a3b8" }}>Quita algún filtro o prueba con otra palabra.</p>
         </div>
@@ -381,13 +381,13 @@ export default function PlazasCurso({ ficha, nombre, compacto = false, base = "/
       {datos && datos.total > plazas.length && (
         <div className="text-center mb-8">
           <button onClick={masPlazas} className="text-xs font-semibold px-4 py-2 rounded-lg"
-                  style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#f1f5f9" }}>
+                  style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}>
             Ver más plazas
           </button>
         </div>
       )}
 
-      <p className="text-[11px] leading-relaxed pt-5" style={{ color: "#4b5563", borderTop: "1px solid #2d3142" }}>
+      <p className="text-[11px] leading-relaxed pt-5" style={{ color: "#4b5563", borderTop: "1px solid rgba(148,163,184,0.14)" }}>
         Datos abiertos de Lanbide (Servicio Vasco de Empleo), Servicio Regional de Empleo y Formación de la
         Región de Murcia, Servei Públic d&apos;Ocupació de Catalunya, Consorci per a la Formació Contínua de
         Catalunya, Servicio Público de Empleo de Castilla y León y Servicio Navarro de Empleo. Se actualizan cada día. La inscripción, las fechas y los

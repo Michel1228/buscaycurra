@@ -71,7 +71,7 @@ export default function FormacionPorPais({ paises, base }: { paises: PaisFormaci
         onChange={e => elegir(e.target.value)}
         aria-label="País al que te vas"
         className="mt-4 mb-4 rounded-lg py-2 px-3 text-sm outline-none w-full sm:w-auto"
-        style={{ background: "#151821", border: "1px solid #2d3142", color: "#f1f5f9" }}
+        style={{ background: "#151821", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
       >
         <option value="">Elige un país…</option>
         {paises.map(p => (
@@ -88,7 +88,7 @@ export default function FormacionPorPais({ paises, base }: { paises: PaisFormaci
                 <span className="font-semibold text-sm" style={{ color: "#22c55e" }}>
                   {pais.bandera} {pais.servicio.nombre}
                 </span>
-                <ExternalLink size={13} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#64748b" }} />
+                <ExternalLink size={13} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#8b98ad" }} />
               </div>
               <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>{pais.servicio.queHacer}</p>
             </a>
@@ -99,7 +99,7 @@ export default function FormacionPorPais({ paises, base }: { paises: PaisFormaci
           )}
 
           {pais.idioma && (
-            <div className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+            <div className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-start justify-between gap-2 mb-1.5">
                 <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
                   Curso oficial de {pais.idioma.idioma}: {pais.idioma.nombre}
@@ -136,8 +136,8 @@ export default function FormacionPorPais({ paises, base }: { paises: PaisFormaci
           )}
 
           {pais.equivalencias.length > 0 && (
-            <div className="rounded-xl p-4" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
-              <p className="text-[11px] uppercase tracking-wide font-semibold mb-2.5" style={{ color: "#64748b" }}>
+            <div className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+              <p className="text-[11px] uppercase tracking-wide font-semibold mb-2.5" style={{ color: "#8b98ad" }}>
                 Lo que te piden allí
               </p>
               <ul className="flex flex-col gap-2.5">
