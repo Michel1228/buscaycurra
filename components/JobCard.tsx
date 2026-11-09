@@ -8,7 +8,7 @@
 
 import LogoEmpresa from "@/components/neon/LogoEmpresa";
 import { sueldoCreible } from "@/lib/sueldo-visible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Check, Send } from "lucide-react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -16,6 +16,9 @@ import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { servicioOficial } from "@/lib/job-search/fuente-oficial";
 import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
 import { senalesDeEstafa } from "@/lib/job-search/senales-estafa";
+import { esOfertaDePortal } from "@/lib/job-search/portales-empleo";
+import { marcaDeOferta, fechaCorta, type MarcaEnvio } from "@/lib/cv-sender/marca-envio";
+import { misEnvios, olvidarMisEnvios } from "@/lib/cv-sender/mis-envios-cliente";
 
 export interface PropiedadesJobCard {
   id: string;
@@ -86,9 +89,23 @@ export default function JobCard({
   // Lanbide y SEF Murcia: se solicitan en su web. "Enviar CV" deducía
   // empleo@web.lanbide.eus y mandaba el CV a la administración.
   const oficial = servicioOficial(fuente);
+  // Domestiko, Cronoshare...: portales, no quien contrata. El CV no se manda al
+  // portal por correo; la oferta se solicita en su web (portales-empleo.ts).
+  const portal = !oficial && esOfertaDePortal({ empresa, correo: emailEmpresa });
+  const aWeb = !!oficial || portal;
 
   const [enviando, setEnviando] = useState(false);
   const [estadoEnvio, setEstadoEnvio] = useState<"idle" | "ok" | "sin-email">("idle");
+
+  // Qué se le dice a ESTA persona de ESTA oferta (marca-envio.ts): enviada, o de
+  // una empresa a la que ya escribió hace menos de 15 días. Sus envíos, no los de otros.
+  const [marca, setMarca] = useState<MarcaEnvio>(null);
+  useEffect(() => {
+    if (aWeb) return;
+    let vivo = true;
+    misEnvios().then((lista) => { if (vivo) setMarca(marcaDeOferta(lista, { url, titulo, empresa, correo: emailEmpresa })); });
+    return () => { vivo = false; };
+  }, [aWeb, url, titulo, empresa, emailEmpresa]);
 
   // ── Score ATS (encaje profundo con IA) ──
   const [ats, setAts] = useState<{ score: number; resumen: string; faltan: string[]; consejos: string[] } | null>(null);
@@ -127,7 +144,7 @@ export default function JobCard({
 
   async function enviarCV(e: React.MouseEvent) {
     e.preventDefault();
-    if (enviando || estadoEnvio === "ok") return;
+    if (enviando || estadoEnvio === "ok" || marca) return;
     setEnviando(true);
 
     try {
@@ -180,6 +197,8 @@ export default function JobCard({
       });
 
       if (res.ok) {
+        olvidarMisEnvios();
+        setMarca({ tipo: "esta-oferta", fecha: new Date() });
         setEstadoEnvio("ok");
         setTimeout(() => setEstadoEnvio("idle"), 4000);
       } else {
@@ -244,7 +263,7 @@ export default function JobCard({
             <span>{distancia}</span>
           </div>
         )}
-        {emailEmpresa && (
+        {emailEmpresa && !portal && (
           <div className="flex items-center gap-1 mt-1 text-[11px]" style={{ color: "#f0c040" }}>
             <span>✉️</span><span>{emailEmpresa}</span>
           </div>
@@ -302,6 +321,15 @@ export default function JobCard({
         </p>
       )}
 
+      {portal && (
+        <p className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>
+          Oferta de un portal de empleo: el CV no va al portal, te inscribes desde la propia oferta.
+        </p>
+      )}
+      {marca?.tipo === "misma-empresa" && (
+        <p className="text-[11px] leading-snug" style={{ color: "#f0c040" }}>{marca.texto}</p>
+      )}
+
       {/* Actions */}
       <div className="flex gap-2 mt-auto">
         {esSintetica && url ? (
@@ -317,28 +345,32 @@ export default function JobCard({
             Ver oferta
           </Link>
         )}
-        {oficial && url ? (
+        {aWeb && url ? (
           <a href={url} target="_blank" rel="noopener noreferrer"
             className="flex-1 inline-flex items-center justify-center min-h-[44px] text-center text-xs font-bold rounded-full transition hover:opacity-90"
             style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", boxShadow: "0 6px 20px -8px rgba(163,230,53,0.7)" }}>
-            Inscribirme en {oficial.corto}
+            {oficial ? <>Inscribirme en {oficial.corto}</> : "Inscribirme en la oferta"}
           </a>
-        ) : (
+        ) : aWeb ? null : (
           <button
             onClick={enviarCV}
-            disabled={enviando}
+            disabled={enviando || !!marca}
             className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[44px] text-center text-xs font-bold rounded-full transition hover:opacity-90 disabled:opacity-60"
             style={{
-              background: estadoEnvio === "ok"
+              background: estadoEnvio === "ok" || marca
                 ? "rgba(34,197,94,0.18)"
                 : "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)",
-              color: estadoEnvio === "ok" ? "#86efac" : "#0b1406",
-              border: estadoEnvio === "ok" ? "1px solid rgba(34,197,94,0.45)" : "none",
-              boxShadow: estadoEnvio === "ok" ? "none" : "0 6px 20px -8px rgba(163,230,53,0.7)",
+              color: estadoEnvio === "ok" || marca ? "#86efac" : "#0b1406",
+              border: estadoEnvio === "ok" || marca ? "1px solid rgba(34,197,94,0.45)" : "none",
+              boxShadow: estadoEnvio === "ok" || marca ? "none" : "0 6px 20px -8px rgba(163,230,53,0.7)",
             }}>
             {/* Iconos de trazo en vez de emoji (diseño de neón, 7 nov 2026). */}
             {enviando
               ? <><Loader2 size={14} className="animate-spin" aria-hidden="true" />Enviando...</>
+              : marca?.tipo === "esta-oferta"
+                ? <><Check size={14} aria-hidden="true" />Enviado el {fechaCorta(marca.fecha)}</>
+              : marca?.tipo === "misma-empresa"
+                ? <>{marca.puedeEl.getTime() > marca.fecha.getTime() ? `Podrás el ${fechaCorta(marca.puedeEl)}` : "En cola"}</>
               : estadoEnvio === "ok"
                 ? <><Check size={14} aria-hidden="true" />Enviado</>
                 : <><Send size={14} aria-hidden="true" />Enviar CV</>}

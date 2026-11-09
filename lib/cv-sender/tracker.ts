@@ -88,6 +88,8 @@ export async function recordSent(
     status,
     sent_at: status === "enviado" ? new Date().toISOString() : undefined,
     ...(extras?.job_title   && { job_title:   extras.job_title }),
+    // La URL de la oferta: con ella se marca "enviado" SOLO esa oferta (marca-envio.ts).
+    ...(extras?.company_url && { company_url: extras.company_url }),
     ...(extras?.job_id      && { job_id:      extras.job_id }),
   };
 
@@ -323,6 +325,20 @@ export async function canSendToCompany(
   }
 
   return true;
+}
+
+/** Cuándo fue el último CV de esta persona a esta dirección (para decirle la fecha), o null. */
+export async function ultimoEnvioAEmpresa(userId: string, companyEmail: string): Promise<Date | null> {
+  const { data } = await getSupabase()
+    .from("cv_sends")
+    .select("sent_at, created_at")
+    .eq("user_id", userId)
+    .eq("company_email", companyEmail.trim().toLowerCase())
+    .in("status", ESTADOS_QUE_GASTAN_CUOTA)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const f = data?.[0]?.sent_at ?? data?.[0]?.created_at;
+  return f ? new Date(f) : null;
 }
 
 /**

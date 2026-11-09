@@ -18,6 +18,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { promises as dns } from "node:dns";
 import { esCorreoDeServicioOficial } from "@/lib/job-search/fuente-oficial";
+import { motivoPortalDeEmpleo } from "@/lib/job-search/portales-empleo";
 import { esDireccionGenerica } from "@/lib/cv-sender/direccion-generica";
 import { frenoDeRebotesActivo } from "@/lib/cv-sender/freno-rebotes";
 
@@ -115,6 +116,7 @@ export async function motivoParaNoEnviar(email: string): Promise<string | null> 
   }
   // Correos deducidos del enlace de una oferta de Lanbide o SEF Murcia: no son
   // de la empresa, son de la administración (lib/job-search/fuente-oficial.ts).
+  if (motivoPortalDeEmpleo(email)) return motivoPortalDeEmpleo(email);
   if (esCorreoDeServicioOficial(email)) {
     return `«${email}» es del servicio público de empleo, no de la empresa. Esta oferta se solicita inscribiéndote en su web oficial: pulsa "Inscribirme" en la oferta.`;
   }

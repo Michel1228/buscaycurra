@@ -14,7 +14,8 @@
 
 import { addCVJob, getCvSenderQueue, CVJobData } from "./queue";
 import { checkRateLimit, getUserPlan } from "./rate-limiter";
-import { canSendToCompany, recordSent } from "./tracker";
+import { canSendToCompany, recordSent, ultimoEnvioAEmpresa } from "./tracker";
+import { avisoMismaEmpresa } from "./marca-envio";
 
 // ─── Festivos Nacionales de España ───────────────────────────────────────────
 /**
@@ -213,8 +214,13 @@ export async function scheduleCV(
   // ── 2. Verificar historial con esta empresa ──────────────────────────────
   const puedeEnviar = await canSendToCompany(userId, companyData.email);
   if (!puedeEnviar) {
+    // Con la fecha: "Ya mandaste tu CV a esta empresa el 3 nov; podrás volver a
+    // escribirles el 18 nov." Es otra oferta, pero el freno es por dirección.
+    const ultimo = await ultimoEnvioAEmpresa(userId, companyData.email);
     return {
-      error: `Ya enviaste tu CV a ${companyData.name} hace menos de 15 días. Por favor espera antes de volver a intentarlo.`,
+      error: ultimo
+        ? avisoMismaEmpresa(ultimo).texto
+        : `Ya enviaste tu CV a ${companyData.name} hace menos de 15 días. Por favor espera antes de volver a intentarlo.`,
     };
   }
 

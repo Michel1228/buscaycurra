@@ -13,6 +13,8 @@
  * Lo que la empresa escribió en la propia oferta (confianza "alta") vale siempre.
  */
 
+import { esCorreoDePortal } from "./portales-empleo";
+
 // Dominios de dos letras que se usan como genéricos, no por el país.
 const CC_GENERICOS = new Set(["io", "ai", "co", "cc", "me", "tv", "eu", "ly", "fm", "gg", "to", "ws", "so", "sh", "ac", "la", "app"]);
 
@@ -68,6 +70,8 @@ export function correoCreibleParaOferta(
 ): boolean {
   const dominio = (email || "").trim().toLowerCase().split("@")[1];
   if (!dominio) return false;
+  // Un portal de empleo (domestiko.com...) no es quien contrata: ni con confianza alta.
+  if (esCorreoDePortal(email)) return false;
   if (confianza === "alta") return true;
 
   const { nombre, pais: tld } = nombreDelDominio(dominio);

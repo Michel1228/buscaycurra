@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Bell, Briefcase, Upload, Pin, BellOff, ClipboardList, ChevronDown, ChevronUp, ExternalLink, Send, Star, RefreshCw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
+import { esOfertaDePortal } from "@/lib/job-search/portales-empleo";
 
 interface Notif {
   id: string;
@@ -190,6 +191,11 @@ export default function NotificacionesPage() {
   }
 
   async function enviarCV(oferta: Oferta) {
+    // Portal de empleo (Domestiko...): no es quien contrata; se solicita en su web.
+    if (esOfertaDePortal({ empresa: oferta.empresa })) {
+      if (oferta.url) window.open(oferta.url, "_blank", "noopener,noreferrer");
+      return;
+    }
     if (enviadosHoy >= limiteDiario) {
       setToastError(`Límite diario alcanzado (${limiteDiario} envíos). Mejora tu plan para más.`);
       setTimeout(() => setToastError(""), 5000);

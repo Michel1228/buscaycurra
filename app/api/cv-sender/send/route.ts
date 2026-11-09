@@ -23,6 +23,7 @@ import { checkRateLimit, getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { addCVJob } from "@/lib/cv-sender/queue";
 import { canSendToCompany } from "@/lib/cv-sender/tracker";
 import { motivoParaNoEnviar } from "@/lib/cv-sender/direccion-segura";
+import { esOfertaDePortal, motivoPortalDeEmpleo } from "@/lib/job-search/portales-empleo";
 import { secretIguales } from "@/lib/secret-compare";
 import { correoSinVerificar } from "@/lib/auth-server";
 
@@ -63,6 +64,7 @@ async function programarEmpresasAdicionales(opts: {
     // Filtrar: con email, no contactada recientemente, distinta a la ya programada
     const candidatas = ofertas.filter(o =>
       o.emailEmpresa &&
+      !esOfertaDePortal({ empresa: o.empresa, correo: o.emailEmpresa }) &&
       o.emailEmpresa !== opts.companyEmail
     );
 
@@ -196,6 +198,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Direcciones que se sabe que no van a llegar (ver lib/cv-sender/direccion-segura.ts)
+    // Un portal de empleo no es quien contrata: ni por su correo ni por su nombre.
+    const motivoPortal = motivoPortalDeEmpleo(companyEmail, companyName);
+    if (motivoPortal) {
+      return NextResponse.json({ error: motivoPortal }, { status: 400 });
+    }
     const motivoNoEnviar = await motivoParaNoEnviar(companyEmail);
     if (motivoNoEnviar) {
       return NextResponse.json({ error: motivoNoEnviar }, { status: 400 });

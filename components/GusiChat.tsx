@@ -20,6 +20,7 @@ import ChatSendPanel from "@/components/ChatSendPanel";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
 import { dondeEstoy } from "@/lib/origen/donde-estoy";
+import { esOfertaDePortal } from "@/lib/job-search/portales-empleo";
 import { Zap, Compass, Sparkles, Mic, Plane, Home, Image, Upload, Pin, Mail, Inbox, ChartColumn, Gem, Paperclip, Camera, type LucideIcon, ChevronDown, ChevronUp } from "lucide-react";
 
 // Mapa de palabras clave → id de país en /app/emigrar
@@ -626,7 +627,9 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
     setCargando(false);
   };
 
-  const enviarATodas = async (jobs: Oferta[]) => {
+  const enviarATodas = async (todas: Oferta[]) => {
+    // Las de portales (Domestiko...) no se mandan por correo: se solicitan en su web.
+    const jobs = todas.filter(j => !esOfertaDePortal({ empresa: j.empresa }));
     if (enviandoATodas || !jobs.length) return;
     setEnviandoATodas(true);
     addMsg("user", `Enviar mi CV a ${jobs.length} empresa${jobs.length > 1 ? "s" : ""}`);
@@ -907,6 +910,13 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                                   <p className="text-[11px] font-semibold mt-1" style={{ color: "#22c55e" }}>{job.salario}</p>
                                 )}
                               </div>
+                              {esOfertaDePortal({ empresa: job.empresa }) ? (
+                              <a href={job.url} target="_blank" rel="noopener noreferrer"
+                                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition hover:opacity-90 shrink-0"
+                                style={{ background: "#22c55e", color: "#0a1208" }}>
+                                Inscribirme en la oferta
+                              </a>
+                              ) : (
                               <button
                                 onClick={async () => {
                                   const { data: { session } } = await getSupabaseBrowser().auth.getSession();
@@ -917,6 +927,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                                 style={{ background: "#22c55e", color: "#0a1208" }}>
                                 Enviar CV
                               </button>
+                              )}
                             </div>
                             {job.match > 0 && (
                               <div className="mt-2 flex items-center gap-2">
@@ -931,7 +942,7 @@ Dime qué necesitas, o pulsa uno de los atajos de abajo.` }]);
                       })}
                       <button
                         onClick={async () => {
-                          const first = m.jobs![0];
+                          const first = m.jobs!.find(j => !esOfertaDePortal({ empresa: j.empresa })) ?? m.jobs![0];
                           const { data: { session } } = await getSupabaseBrowser().auth.getSession();
                           setSessionToken(session?.access_token || "");
                           setSendTarget({ empresa: first.empresa, titulo: first.titulo, url: first.url, ubicacion: first.ubicacion });

@@ -24,6 +24,7 @@ import { personalizeForCompany } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
 import { recordSent, updateSendStatus, getSendIdByJobId } from "./tracker";
 import { getPool } from "../db";
+import { motivoPortalDeEmpleo } from "../job-search/portales-empleo";
 import { normalizar } from "../cv-generator/normalizar";
 import { generarCV } from "../cv-generator/plantillas";
 import { generateCVPdf } from "../cv-generator/generate-pdf";
@@ -73,6 +74,16 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   const { userId, companyName, companyEmail, companyUrl, jobTitle, useAIPersonalization } = job.data;
 
   console.log(`[Worker] Procesando job ${job.id}: ${userId} → ${companyName} (${companyEmail})`);
+
+  // Lo que ya estaba en la cola antes de cerrar el paso a los portales de empleo
+  // (Domestiko...) tampoco sale: el CV no se manda al portal. Al fallar se
+  // marca "fallido", que devuelve la cuota (ver el evento "failed" de abajo).
+  const portal = motivoPortalDeEmpleo(companyEmail, companyName);
+  if (portal) {
+    await updateSendStatus(jobId, "fallido", portal);
+    console.warn(`[Worker] Job ${jobId} descartado: ${companyEmail} es de un portal de empleo`);
+    return;
+  }
 
   // Actualizamos el progreso del job (visible en el dashboard)
   await job.updateProgress(10);

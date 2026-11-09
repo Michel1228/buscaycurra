@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
+import { esOfertaDePortal, AVISO_PORTAL } from "@/lib/job-search/portales-empleo";
 
 interface SendTarget {
   empresa: string;
@@ -60,6 +61,10 @@ export default function ChatSendPanel({ target, userId, sessionToken, onClose, o
   }, []);
 
   const handleSend = async () => {
+    if (esOfertaDePortal({ empresa: target.empresa, correo: target.email })) {
+      setError(AVISO_PORTAL);
+      return;
+    }
     setEnviando(true);
     setError("");
     try {

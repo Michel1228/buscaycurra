@@ -13,6 +13,9 @@ import { confirmarEnvioADireccion } from "@/lib/confirmar-direccion";
 import { servicioOficial } from "@/lib/job-search/fuente-oficial";
 import { ciudadParaBuscarEmpresa } from "@/lib/job-search/ciudad-oferta";
 import { senalesDeEstafa } from "@/lib/job-search/senales-estafa";
+import { esOfertaDePortal, AVISO_PORTAL } from "@/lib/job-search/portales-empleo";
+import { marcaDeOferta, fechaCorta, type MarcaEnvio } from "@/lib/cv-sender/marca-envio";
+import { misEnvios, olvidarMisEnvios } from "@/lib/cv-sender/mis-envios-cliente";
 
 export interface OfertaDetalle {
   id: string;
@@ -95,6 +98,19 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   // Lanbide y SEF Murcia no dicen la empresa: se solicitan en su web oficial.
   // Mandar el CV aquí acababa en un correo deducido de la administración.
   const oficial = servicioOficial(oferta.fuente);
+  // Domestiko, Cronoshare...: portales, no quien contrata. El CV no se manda al
+  // portal por correo; la oferta se solicita en su web (portales-empleo.ts).
+  const portal = !oficial && esOfertaDePortal({ empresa: oferta.empresa, correo: oferta.email_empresa });
+  const aWeb = !!oficial || portal;
+
+  // Qué se le dice a ESTA persona de ESTA oferta (marca-envio.ts).
+  const [marca, setMarca] = useState<MarcaEnvio>(null);
+  useEffect(() => {
+    if (aWeb) return;
+    let vivo = true;
+    misEnvios().then((lista) => { if (vivo) setMarca(marcaDeOferta(lista, { url: oferta.url, titulo: oferta.titulo, empresa: oferta.empresa, correo: oferta.email_empresa })); });
+    return () => { vivo = false; };
+  }, [aWeb, oferta.url, oferta.titulo, oferta.empresa, oferta.email_empresa]);
 
   function showToast(msg: string, type: "error" | "success" = "error") {
     setToast({ msg, type });
@@ -154,7 +170,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
   }
 
   async function enviarCV() {
-    if (!oferta || enviando || retirada) return;
+    if (!oferta || enviando || retirada || aWeb || marca) return;
     setEnviando(true);
     try {
       const supabase = getSupabaseBrowser();
@@ -215,6 +231,8 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         }),
       });
       if (res.ok) {
+        olvidarMisEnvios();
+        setMarca({ tipo: "esta-oferta", fecha: new Date() });
         setEnviado(true);
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => setEnviado(false), 3000);
@@ -378,15 +396,15 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         )}
 
         <div className="flex flex-wrap gap-3 mb-5">
-          {oficial && oferta.url ? (
+          {aWeb ? (oferta.url ? (
             <a
               href={oferta.url}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-game text-sm font-semibold px-5 py-2.5 rounded-lg flex items-center gap-2">
-              Inscribirme en {oficial.corto}
+              {oficial ? <>Inscribirme en {oficial.corto}</> : "Inscribirme en la oferta"}
             </a>
-          ) : esAuPair ? (
+          ) : null) : esAuPair ? (
             <>
               <button
                 onClick={enviarCV}
@@ -418,10 +436,15 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
               <button
                 onClick={enviarCV}
                 disabled={enviando || !cvListo || retirada}
+                aria-disabled={!!marca}
                 className="btn-game text-sm font-semibold px-5 py-2.5 rounded-lg disabled:opacity-50 flex items-center gap-2"
-                style={enviado ? { background: "#22c55e" } : {}}>
+                style={enviado ? { background: "#22c55e" } : marca ? { opacity: 0.75, cursor: "default" } : {}}>
                 {enviando ? (
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white" />
+                ) : marca?.tipo === "esta-oferta" ? (
+                  <><CheckCircle2 size={16} className="inline mr-1" />CV enviado el {fechaCorta(marca.fecha)}</>
+                ) : marca?.tipo === "misma-empresa" ? (
+                  <>{marca.puedeEl.getTime() > marca.fecha.getTime() ? `Podrás el ${fechaCorta(marca.puedeEl)}` : "En cola"}</>
                 ) : enviado ? (
                   <><CheckCircle2 size={16} className="inline mr-1" />CV Enviado</>
                 ) : (
@@ -461,6 +484,17 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
             )}
           </button>
         </div>
+
+        {portal && (
+          <div role="note" className="rounded-lg px-4 py-3 mb-5 text-sm" style={{ background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.25)", color: "#cbd5e1" }}>
+            {AVISO_PORTAL}
+          </div>
+        )}
+        {marca?.tipo === "misma-empresa" && (
+          <div role="note" className="rounded-lg px-4 py-3 mb-5 text-sm" style={{ background: "rgba(240,192,64,0.1)", border: "1px solid rgba(240,192,64,0.3)", color: "#f0c040" }}>
+            {marca.texto}
+          </div>
+        )}
 
         {encaje && (
           <div className="rounded-lg px-4 py-3 mb-5 text-sm space-y-2" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", color: "#94a3b8" }}>
@@ -514,12 +548,12 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
         {/* Alojamiento en el país de destino (solo si no es España) */}
         <AlojamientoOferta country={oferta.country} />
 
-        {(oferta.sector || oferta.email_empresa) && (
+        {(oferta.sector || (oferta.email_empresa && !portal)) && (
           <div className="mt-4 pt-4 flex flex-wrap gap-4 text-xs" style={{ borderTop: "1px solid rgba(148,163,184,0.14)", color: "#8b98ad" }}>
             {oferta.sector && (
               <span>Sector: <strong style={{ color: "#94a3b8" }}>{oferta.sector}</strong></span>
             )}
-            {oferta.email_empresa && (
+            {oferta.email_empresa && !portal && (
               <span className="inline-flex items-center gap-1.5 flex-wrap">
                 Email: <strong style={{ color: "#94a3b8" }}>{oferta.email_empresa}</strong>
                 {/* Distinguir un email real de un patrón deducido: sin esto el

@@ -15,6 +15,7 @@ import { createClient } from "@supabase/supabase-js";
 import { buscarOfertasReales } from "@/lib/job-search/real-search";
 import type { OfertaReal } from "@/lib/job-search/real-search";
 import { secretIguales } from "@/lib/secret-compare";
+import { esOfertaDePortal } from "@/lib/job-search/portales-empleo";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
         // 4. Enviar CV a las ofertas (máx 5 por ronda para no saturar)
         for (const oferta of ofertas.slice(0, 5)) {
           if (!oferta.emailEmpresa) continue;
+          if (esOfertaDePortal({ empresa: oferta.empresa, correo: oferta.emailEmpresa })) continue; // portal: no es quien contrata
 
           try {
             await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "https://buscaycurra.es"}/api/cv-sender/send`, {

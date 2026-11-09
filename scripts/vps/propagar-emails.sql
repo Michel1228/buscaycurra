@@ -25,6 +25,16 @@ mejor_por_empresa AS (
        'empresa europea','empresa','company','ver en oferta','confidencial',
        'confidential','n/a','na','sin especificar','no especificado','private',
        'empresa confidencial','recruiter','recruitment','agency','ett','-','.')
+     -- PORTALES DE EMPLEO (8 nov 2026): su correo no es el de quien contrata, y
+     -- repartirlo a las ofertas "Domestiko" sin correo las volvería a llenar.
+     -- Misma lista que lib/job-search/portales-empleo.ts.
+     AND split_part("contactEmail",'@',2) NOT IN (
+       'superprof.com','placements24.com','domestiko.com','fonction-publique.gouv.fr','nlwerkt.nl',
+       'direct-emploi.com','free-work.com','jobgether.com','france-travail.com','cronoshare.com',
+       'ernesto.com','ernesto.de','ernesto.it','ernesto.pt','sitly.com','collective.work',
+       'collectivework.com','collectiveworks.net','banen.com','mercor.com','jobbydoo.com','jobbydoo.it',
+       'jobtome.com','yoopies.com','infegy.com','talantir.ai','babysits.com','directemploi.com',
+       'hosteleo.com','gserviceaccount.com','ziprecruiter.com','francetravail.fr','studentjob.co.uk','meteojob.com')
      AND NOT EXISTS (SELECT 1 FROM promiscuos p
                      WHERE p.dom = split_part(j."contactEmail",'@',2)
                        AND p.dom NOT IN ('gmail.com','hotmail.com','outlook.com','yahoo.com'))
