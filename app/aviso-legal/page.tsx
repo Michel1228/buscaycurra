@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import type { Metadata } from "next";
+import FondoOleaje from "@/components/FondoOleaje";
 
 // ─── Página de Aviso Legal ────────────────────────────────────────────────────
 
@@ -27,7 +28,9 @@ export const metadata: Metadata = {
 
 export default function AvisoLegalPage() {
   return (
-    <div className="min-h-screen" style={{ background: "#1a1a12", color: "#f1f5f9" }}>
+    <div className="min-h-screen" style={{ background: "transparent", color: "#f1f5f9" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
 
       {/* ── Cabecera ─────────────────────────────────────────────────── */}
       <header className="glass-warm sticky top-0 z-50">

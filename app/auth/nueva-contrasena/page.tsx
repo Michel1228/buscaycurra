@@ -15,6 +15,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { pedirBienvenida } from "@/lib/onboarding/pedir-bienvenida";
+import FondoOleaje from "@/components/FondoOleaje";
+import { GuzziBrillo } from "@/components/neon/Neon";
 
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
@@ -135,17 +137,15 @@ export default function NuevaContrasenaPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       <div className="w-full max-w-md">
 
         {/* ── Logotipo y título ──────────────────────────────────────── */}
         <div className="text-center mb-8">
-          <div
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white text-2xl font-bold mb-4"
-            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}
-          >
-            B
-          </div>
-          <h1 className="text-2xl font-bold text-[#f1f5f9]">Nueva contraseña</h1>
+          {/* Guzzi con su aro, como en entrar y registrarse (antes, una "B" en un cuadro). */}
+          <div className="flex justify-center mb-4"><GuzziBrillo size={72} decorativo /></div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#f8fafc]">Nueva contraseña</h1>
           <p className="text-[#94a3b8] text-sm mt-1">
             Elige una contraseña segura para tu cuenta
           </p>
@@ -159,7 +159,7 @@ export default function NuevaContrasenaPage() {
             <div className="text-center">
               <div
                 className="inline-flex items-center justify-center w-16 h-16 rounded-full text-white mb-4"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
               >
                 <Check size={28} strokeWidth={2.5} />
               </div>
@@ -250,7 +250,7 @@ export default function NuevaContrasenaPage() {
                 type="submit"
                 disabled={cargando || !nuevaContrasena || !confirmarContrasena}
                 className="w-full text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#ffffff" }}
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
               >
                 {cargando ? "Guardando..." : "Guardar nueva contraseña"}
               </button>

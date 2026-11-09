@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Mail, Search, BarChart2, Smartphone, Bot, Apple, type LucideIcon } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import LogoGusano from "@/components/LogoGusano";
+import FondoOleaje from "@/components/FondoOleaje";
 
 /** Ficha de la app en la App Store (publicada en agosto de 2026). */
 const APP_STORE_URL = "https://apps.apple.com/app/buscaycurra-empleo-con-ia/id6775232067";
@@ -60,7 +61,9 @@ export default function DescargaClient() {
   const [androidModalAbierto, setAndroidModalAbierto] = useState(false);
 
   return (
-    <div style={{ background: "#0a0c10", minHeight: "100vh", color: "#f1f5f9", fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
+    <div style={{ background: "transparent", minHeight: "100vh", color: "#f1f5f9", fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
 
       {/* ── Hero ── */}
       <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "88px 24px 40px", overflow: "hidden" }}>
@@ -108,26 +111,26 @@ export default function DescargaClient() {
           {/* CTA */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
             {isInstalled ? (
-              <Link href="/app/gusi" style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", textDecoration: "none", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
+              <Link href="/app/gusi" style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", textDecoration: "none", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
                 Abrir BuscayCurra →
               </Link>
             ) : canInstall ? (
-              <button onClick={install} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
+              <button onClick={install} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
                 <Smartphone size={20} strokeWidth={1.4} />
                 Instalar gratis
               </button>
             ) : isIOS ? (
-              <button onClick={() => setIosModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
+              <button onClick={() => setIosModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
                 <Smartphone size={20} strokeWidth={1.4} />
                 Instalar en iPhone
               </button>
             ) : (
-              <button onClick={() => setAndroidModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
+              <button onClick={() => setAndroidModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
                 <Smartphone size={20} strokeWidth={1.4} />
                 Instalar gratis
               </button>
             )}
-            <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>Sin tarjeta. Sin compromisos. Solo resultados.</p>
+            <p style={{ fontSize: "13px", color: "#8b98ad", margin: 0 }}>Sin tarjeta. Sin compromisos. Solo resultados.</p>
           </div>
 
           {/* ── Descarga desde la App Store + QR ──────────────────────────
@@ -138,7 +141,7 @@ export default function DescargaClient() {
               exactamente las mismas funciones porque la app carga la web. */}
           <div style={{ marginTop: "44px", display: "flex", flexWrap: "wrap", gap: "28px", justifyContent: "center", alignItems: "center" }}>
             <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: "12px", color: "#64748b", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
+              <p style={{ fontSize: "12px", color: "#8b98ad", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
                 Descárgala en tu móvil
               </p>
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
@@ -146,7 +149,7 @@ export default function DescargaClient() {
                   href={APP_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: "inline-flex", alignItems: "center", gap: "9px", background: "#000", color: "#fff", fontWeight: 600, fontSize: "15px", padding: "13px 22px", borderRadius: "12px", textDecoration: "none", border: "1px solid #2d3142" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "9px", background: "#000", color: "#fff", fontWeight: 600, fontSize: "15px", padding: "13px 22px", borderRadius: "12px", textDecoration: "none", border: "1px solid rgba(148,163,184,0.18)" }}
                 >
                   <Apple size={20} strokeWidth={1.6} />
                   <span style={{ textAlign: "left", lineHeight: 1.15 }}>
@@ -159,7 +162,7 @@ export default function DescargaClient() {
                 <a
                   href={YA_EN_GOOGLE_PLAY ? GOOGLE_PLAY_URL : "#instalar-movil"}
                   {...(YA_EN_GOOGLE_PLAY ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "9px", background: YA_EN_GOOGLE_PLAY ? "#0f1117" : "#1e212b", color: "#f1f5f9", fontWeight: 600, fontSize: "15px", padding: "13px 22px", borderRadius: "12px", textDecoration: "none", border: "1px solid #2d3142" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "9px", background: YA_EN_GOOGLE_PLAY ? "#0f1117" : "#1e212b", color: "#f1f5f9", fontWeight: 600, fontSize: "15px", padding: "13px 22px", borderRadius: "12px", textDecoration: "none", border: "1px solid rgba(148,163,184,0.18)" }}
                 >
                   <Smartphone size={20} strokeWidth={1.6} />
                   <span style={{ textAlign: "left", lineHeight: 1.15 }}>
@@ -182,7 +185,7 @@ export default function DescargaClient() {
                   style={{ display: "block", width: "112px", height: "112px" }}
                 />
               </div>
-              <p style={{ fontSize: "12px", color: "#64748b", margin: "10px 0 0", maxWidth: "150px" }}>
+              <p style={{ fontSize: "12px", color: "#8b98ad", margin: "10px 0 0", maxWidth: "150px" }}>
                 Escanéalo con la cámara del móvil
               </p>
             </div>
@@ -197,7 +200,7 @@ export default function DescargaClient() {
             ].map((s) => (
               <div key={s.label} style={{ textAlign: "center" }}>
                 <p style={{ fontSize: "22px", fontWeight: 800, color: "#f1f5f9", margin: "0 0 2px", letterSpacing: "-0.02em" }}>{s.valor}</p>
-                <p style={{ fontSize: "12px", color: "#64748b", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</p>
+                <p style={{ fontSize: "12px", color: "#8b98ad", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</p>
               </div>
             ))}
           </div>
@@ -217,7 +220,7 @@ export default function DescargaClient() {
           <h2 style={{ fontSize: "clamp(26px, 5vw, 40px)", fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 12px", color: "#f1f5f9" }}>
             Todo lo que necesitas para encontrar trabajo
           </h2>
-          <p style={{ fontSize: "16px", color: "#64748b", margin: 0 }}>En el bolsillo. Sin esfuerzo extra.</p>
+          <p style={{ fontSize: "16px", color: "#8b98ad", margin: 0 }}>En el bolsillo. Sin esfuerzo extra.</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
           {FEATURES.map((f) => (
@@ -226,7 +229,7 @@ export default function DescargaClient() {
                 <f.Icon size={22} strokeWidth={1.4} style={{ color: "#22c55e" }} />
               </div>
               <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#f1f5f9", margin: "0 0 10px", letterSpacing: "-0.01em" }}>{f.titulo}</h3>
-              <p style={{ fontSize: "14px", color: "#64748b", lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
+              <p style={{ fontSize: "14px", color: "#8b98ad", lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
             </div>
           ))}
         </div>
@@ -238,12 +241,12 @@ export default function DescargaClient() {
           <p style={{ fontSize: "13px", fontWeight: 600, color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 12px" }}>Empieza por menos de un café</p>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: "6px", marginBottom: "8px" }}>
             <span style={{ fontSize: "52px", fontWeight: 900, color: "#f1f5f9", letterSpacing: "-0.04em" }}>2,99</span>
-            <span style={{ fontSize: "22px", fontWeight: 600, color: "#64748b" }}>€/mes</span>
+            <span style={{ fontSize: "22px", fontWeight: 600, color: "#8b98ad" }}>€/mes</span>
           </div>
-          <p style={{ fontSize: "14px", color: "#64748b", margin: "0 0 28px", lineHeight: 1.6 }}>
+          <p style={{ fontSize: "14px", color: "#8b98ad", margin: "0 0 28px", lineHeight: 1.6 }}>
             Plan Esencial — 60 candidaturas al mes, IA avanzada,<br />buscador completo y más.
           </p>
-          <Link href="/precios" style={{ display: "inline-block", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "15px", padding: "14px 32px", borderRadius: "12px", textDecoration: "none", letterSpacing: "-0.01em" }}>
+          <Link href="/precios" style={{ display: "inline-block", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "15px", padding: "14px 32px", borderRadius: "12px", textDecoration: "none", letterSpacing: "-0.01em" }}>
             Ver todos los planes →
           </Link>
         </div>
@@ -258,7 +261,7 @@ export default function DescargaClient() {
           {/* El texto cambia solo cuando la ficha esté publicada. Instalar
               desde el navegador seguirá siendo válido: la app es la misma web,
               así que ambas vías dan exactamente las mismas funciones. */}
-          <p style={{ fontSize: "15px", color: "#64748b", margin: 0 }}>
+          <p style={{ fontSize: "15px", color: "#8b98ad", margin: 0 }}>
             {YA_EN_GOOGLE_PLAY
               ? "En Google Play, o directo desde el navegador si lo prefieres: las dos vías dan lo mismo."
               : "En Android, directo desde el navegador: mismas funciones, sin pasar por Google Play."}
@@ -311,8 +314,8 @@ export default function DescargaClient() {
         <div style={{ marginBottom: "8px" }}>
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#22c55e" }}>BuscayCurra</span>
         </div>
-        <p style={{ fontSize: "12px", color: "#2d3142", margin: 0 }}>
-          © 2026 BuscayCurra · <Link href="/precios" style={{ color: "#6b7280", textDecoration: "none" }}>Precios</Link> · <Link href="/auth/login" style={{ color: "#6b7280", textDecoration: "none" }}>Acceder</Link>
+        <p style={{ fontSize: "12px", color: "#8b98ad", margin: 0 }}>
+          © 2026 BuscayCurra · <Link href="/precios" style={{ color: "#8b98ad", textDecoration: "none" }}>Precios</Link> · <Link href="/auth/login" style={{ color: "#8b98ad", textDecoration: "none" }}>Acceder</Link>
         </p>
       </footer>
 
@@ -324,11 +327,11 @@ export default function DescargaClient() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: "#161a28", border: "1px solid #2d3142", borderRadius: "24px", padding: "32px 28px", width: "100%", maxWidth: "440px" }}
+            style={{ background: "#161a28", border: "1px solid rgba(148,163,184,0.18)", borderRadius: "24px", padding: "32px 28px", width: "100%", maxWidth: "440px" }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
               <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#f1f5f9", margin: 0 }}>Instalar en Android</h3>
-              <button onClick={() => setAndroidModalAbierto(false)} style={{ background: "none", border: "none", color: "#64748b", fontSize: "22px", cursor: "pointer", lineHeight: 1 }}>×</button>
+              <button onClick={() => setAndroidModalAbierto(false)} style={{ background: "none", border: "none", color: "#8b98ad", fontSize: "22px", cursor: "pointer", lineHeight: 1 }}>×</button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {[
@@ -345,7 +348,7 @@ export default function DescargaClient() {
             </div>
             <button
               onClick={() => setAndroidModalAbierto(false)}
-              style={{ marginTop: "28px", width: "100%", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "15px", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer" }}
+              style={{ marginTop: "28px", width: "100%", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "15px", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer" }}
             >
               Entendido
             </button>
@@ -361,11 +364,11 @@ export default function DescargaClient() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: "#161a28", border: "1px solid #2d3142", borderRadius: "24px", padding: "32px 28px", width: "100%", maxWidth: "440px" }}
+            style={{ background: "#161a28", border: "1px solid rgba(148,163,184,0.18)", borderRadius: "24px", padding: "32px 28px", width: "100%", maxWidth: "440px" }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
               <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#f1f5f9", margin: 0 }}>Instalar en iPhone</h3>
-              <button onClick={() => setIosModalAbierto(false)} style={{ background: "none", border: "none", color: "#64748b", fontSize: "22px", cursor: "pointer", lineHeight: 1 }}>×</button>
+              <button onClick={() => setIosModalAbierto(false)} style={{ background: "none", border: "none", color: "#8b98ad", fontSize: "22px", cursor: "pointer", lineHeight: 1 }}>×</button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {[
@@ -384,7 +387,7 @@ export default function DescargaClient() {
             </div>
             <button
               onClick={() => setIosModalAbierto(false)}
-              style={{ marginTop: "28px", width: "100%", background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontWeight: 700, fontSize: "15px", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer" }}
+              style={{ marginTop: "28px", width: "100%", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "15px", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer" }}
             >
               Entendido
             </button>

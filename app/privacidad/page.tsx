@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FondoOleaje from "@/components/FondoOleaje";
 
 export const metadata = {
   title: "Política de Privacidad — BuscayCurra",
@@ -16,14 +17,16 @@ const S = ({ titulo, children }: { titulo: string; children: React.ReactNode }) 
 
 export default function PrivacidadPage() {
   return (
-    <div style={{ minHeight: "100vh", background: "#090c10", padding: "60px 20px" }}>
+    <div style={{ minHeight: "100vh", background: "transparent", padding: "60px 20px" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <div style={{ marginBottom: 48 }}>
           <Link href="/" style={{ color: "#22c55e", fontSize: 13, textDecoration: "none", display: "inline-block", marginBottom: 24 }}>
             ← Volver a BuscayCurra
           </Link>
           <h1 style={{ color: "#f1f5f9", fontSize: 28, fontWeight: 800, margin: "0 0 8px" }}>Política de Privacidad</h1>
-          <p style={{ color: "#6b7280", fontSize: 13, margin: 0 }}>Última actualización: noviembre de 2026</p>
+          <p style={{ color: "#8b98ad", fontSize: 13, margin: 0 }}>Última actualización: noviembre de 2026</p>
         </div>
 
         <S titulo="1. Responsable del tratamiento">
@@ -111,7 +114,7 @@ export default function PrivacidadPage() {
         </S>
 
         <div style={{ background: "#111520", border: "1px solid #1e2538", borderRadius: 14, padding: "20px 24px", marginTop: 40 }}>
-          <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>
+          <p style={{ margin: 0, color: "#8b98ad", fontSize: 13 }}>
             ¿Preguntas? <a href="mailto:privacidad@buscaycurra.es" style={{ color: "#22c55e", textDecoration: "none" }}>privacidad@buscaycurra.es</a>
           </p>
         </div>

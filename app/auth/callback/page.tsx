@@ -7,6 +7,7 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { pedirBienvenida } from "@/lib/onboarding/pedir-bienvenida";
 import { destinoSeguro, marcarQueTieneCuenta } from "@/lib/auth/destino";
+import FondoOleaje from "@/components/FondoOleaje";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -162,6 +163,8 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1117" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       <div className="w-full max-w-sm px-6">
         <div className="card-game p-8 text-center">
           {estado === "cargando" && (
@@ -169,7 +172,7 @@ export default function AuthCallbackPage() {
               <div className="w-12 h-12 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4"
                 style={{ borderColor: "#22c55e", borderTopColor: "transparent" }} />
               <h2 className="text-base font-bold mb-2" style={{ color: "#f1f5f9" }}>Confirmando tu cuenta...</h2>
-              <p className="text-xs" style={{ color: "#64748b" }}>Un momento, por favor.</p>
+              <p className="text-xs" style={{ color: "#8b98ad" }}>Un momento, por favor.</p>
             </>
           )}
 
@@ -183,7 +186,7 @@ export default function AuthCallbackPage() {
               </div>
               <h2 className="text-lg font-bold mb-2" style={{ color: "#22c55e" }}>¡Cuenta confirmada!</h2>
               <p className="text-sm mb-1" style={{ color: "#f1f5f9" }}>Ya puedes usar BuscayCurra.</p>
-              <p className="text-xs mt-3 animate-pulse" style={{ color: "#64748b" }}>Entrando a tu panel...</p>
+              <p className="text-xs mt-3 animate-pulse" style={{ color: "#8b98ad" }}>Entrando a tu panel...</p>
             </>
           )}
 
