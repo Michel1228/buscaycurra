@@ -365,7 +365,7 @@ export default function PerfilPage() {
         </button>
       </div>
       {/* Header */}
-      <div className="px-4 py-8" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.05))" }}>
+      <div className="">
         <div className="max-w-2xl mx-auto flex items-center gap-5">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
             style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>

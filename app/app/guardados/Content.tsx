@@ -152,7 +152,7 @@ export default function GuardadosPage() {
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
-      <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(239,68,68,0.08), rgba(34,197,94,0.05))" }}>
+      <div className="">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Ofertas guardadas</h1>
           <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>

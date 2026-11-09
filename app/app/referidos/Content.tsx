@@ -92,7 +92,7 @@ function ReferidosPageInner() {
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
-      <div className="py-8 px-4" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(245,158,11,0.05))" }}>
+      <div className="">
         <div className="max-w-2xl mx-auto text-center">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Invita a un amigo y ganáis los dos</h1>
           <p className="text-xs" style={{ color: "#94a3b8" }}>Para quien también esté buscando trabajo</p>
