@@ -12,6 +12,7 @@ import { sueldoVisible } from "@/lib/sueldo-visible";
 import { PAISES } from "@/lib/paises";
 import Link from "next/link";
 import { DollarSign, Search } from "lucide-react";
+import FondoOleaje from "@/components/FondoOleaje";
 
 const sueldoValido = (s: string | null) => (s && !/^(ver en oferta|consultar|a convenir)$/i.test(s.trim()) ? s : null);
 
@@ -113,11 +114,13 @@ export default async function EmpleoPage({
     : (PAISES[paisPagina]?.ciudades ?? []).map(c => ({ slug: slug(c), nombre: c })).filter(c => c.slug !== ciudad).slice(0, 6);
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(180deg, #0f1a0a, #1a1a12)" }}>
+    <div className="min-h-screen" style={{ background: "transparent" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       {/* Header SEO */}
       <div className="py-12 px-4" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}>
         <div className="max-w-4xl mx-auto">
-          <nav className="text-xs mb-4" style={{ color: "#64748b" }}>
+          <nav className="text-xs mb-4" style={{ color: "#8b98ad" }}>
             <Link href="/">Inicio</Link> → <Link href="/empleo">Empleo</Link> → {puestoFmt} → {ciudadFmt}
           </nav>
           <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: "#22c55e" }}>
@@ -141,7 +144,7 @@ export default async function EmpleoPage({
             <p className="font-bold text-lg" style={{ color: "#f1f5f9" }}>
               Manda tu CV a estas empresas
             </p>
-            <p className="text-sm" style={{ color: "#64748b" }}>
+            <p className="text-sm" style={{ color: "#8b98ad" }}>
               Crea tu cuenta gratis: Guzzi te ayuda con el CV y la carta para cada oferta de {ciudadFmt}.
             </p>
           </div>
@@ -184,9 +187,9 @@ export default async function EmpleoPage({
           </div>
         ) : (
           <div className="card-game p-10 text-center mb-10">
-            <Search size={40} className="mx-auto mb-3" style={{ color: "#64748b" }} />
+            <Search size={40} className="mx-auto mb-3" style={{ color: "#8b98ad" }} />
             <p className="font-semibold" style={{ color: "#f1f5f9" }}>No hay ofertas en este momento</p>
-            <p className="text-sm mt-1" style={{ color: "#64748b" }}>
+            <p className="text-sm mt-1" style={{ color: "#8b98ad" }}>
               Crea tu cuenta gratis y te avisamos cuando salga una de {puestoFmt} en {ciudadFmt}.
             </p>
             <Link href={`/auth/registro?desde=${encodeURIComponent(`empleo/${puesto}/${ciudad}`)}`}
@@ -198,7 +201,7 @@ export default async function EmpleoPage({
 
         {/* Puestos relacionados */}
         <div className="mb-8">
-          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#8b98ad" }}>
             Empleos similares en {ciudadFmt}
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -214,7 +217,7 @@ export default async function EmpleoPage({
 
         {/* Ciudades cercanas */}
         <div className="mb-8">
-          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#64748b" }}>
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "#8b98ad" }}>
             {puestoFmt} en otras ciudades
           </h3>
           <div className="flex flex-wrap gap-2">

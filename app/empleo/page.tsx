@@ -5,6 +5,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { Search } from "lucide-react";
+import FondoOleaje from "@/components/FondoOleaje";
 
 export const metadata: Metadata = {
   title: "Ofertas de empleo en España | BuscayCurra",
@@ -46,10 +47,12 @@ const CIUDADES_POPULARES = [
 export default function EmpleoPage() {
   return (
     <div className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Hero */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4">
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4">
             Encuentra trabajo en España
           </h1>
           <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
@@ -59,7 +62,7 @@ export default function EmpleoPage() {
           <div className="mt-6">
             <Link
               href="/app/buscar"
-              className="inline-flex items-center gap-2 bg-[#22c55e] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
+              className="inline-flex items-center gap-2 fondo-lima px-6 py-3 rounded-full font-semibold hover:brightness-105 transition-colors"
             >
               <Search size={16} />Buscar ofertas ahora
             </Link>
@@ -74,7 +77,7 @@ export default function EmpleoPage() {
               <Link
                 key={puesto}
                 href={`/empleo/${puesto}/madrid`}
-                className="bg-[#1e212b] border border-[#2d3142] rounded-lg px-4 py-3 hover:border-[#22c55e]/30 transition-colors text-sm"
+                className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-lg px-4 py-3 hover:border-[#22c55e]/30 transition-colors text-sm"
               >
                 {puesto.charAt(0).toUpperCase() + puesto.slice(1)}
               </Link>
@@ -92,7 +95,7 @@ export default function EmpleoPage() {
               <Link
                 key={ciudad}
                 href={`/empleo/camarero/${ciudad}`}
-                className="bg-[#1e212b] border border-[#2d3142] rounded-lg px-4 py-3 hover:border-[#22c55e]/30 transition-colors text-sm"
+                className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-lg px-4 py-3 hover:border-[#22c55e]/30 transition-colors text-sm"
               >
                 {ciudad.charAt(0).toUpperCase() + ciudad.slice(1).replace(/-/g, " ")}
               </Link>
@@ -101,7 +104,7 @@ export default function EmpleoPage() {
         </section>
 
         {/* CTA */}
-        <div className="text-center bg-[#1e212b] border border-[#2d3142] rounded-xl p-8">
+        <div className="text-center bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-8">
           <h2 className="text-2xl font-bold mb-3">
             ¿Buscas trabajo activamente?
           </h2>
@@ -111,7 +114,7 @@ export default function EmpleoPage() {
           </p>
           <Link
             href="/auth/registro"
-            className="inline-block bg-[#22c55e] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
+            className="inline-block fondo-lima px-6 py-3 rounded-full font-semibold hover:brightness-105 transition-colors"
           >
             Probar Guzzi gratis →
           </Link>

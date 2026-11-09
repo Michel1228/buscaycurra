@@ -35,7 +35,7 @@ export default function FuncionesPage() {
       <PublicHeader />
 
       <main className="max-w-3xl mx-auto px-4 py-10 sm:py-14">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight tracking-tight">
           Todo lo que hace BuscayCurra
         </h1>
         <p className="mt-3 text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
@@ -47,7 +47,7 @@ export default function FuncionesPage() {
           {GRUPOS_FUNCIONES.map((grupo) => (
             <section key={grupo.titulo}>
               <h2 className="text-lg font-bold tracking-tight">{grupo.titulo}</h2>
-              <p className="mt-1 text-xs leading-relaxed" style={{ color: "#64748b" }}>
+              <p className="mt-1 text-xs leading-relaxed" style={{ color: "#8b98ad" }}>
                 {grupo.resumen}
               </p>
 
@@ -98,14 +98,14 @@ export default function FuncionesPage() {
             <Link
               href="/auth/registro"
               className="px-4 py-2 rounded-lg text-xs font-semibold"
-              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
             >
               Empezar gratis
             </Link>
             <Link
               href="/precios"
               className="px-4 py-2 rounded-lg text-xs font-semibold"
-              style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8" }}
+              style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}
             >
               Ver precios
             </Link>

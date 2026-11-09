@@ -8,6 +8,7 @@ import { servicioOficial } from "@/lib/job-search/fuente-oficial";
 import { ofertasParecidas, slug } from "@/lib/job-search/ofertas-parecidas";
 import { DATOS } from "@/lib/datos-reales";
 import { sueldoVisible } from "@/lib/sueldo-visible";
+import FondoOleaje from "@/components/FondoOleaje";
 
 /** "Ver en oferta", "Consultar"…: no es un sueldo, y no se enseña como si lo fuera. */
 function sueldoDe(s: string | null): string | null {
@@ -123,6 +124,8 @@ export default async function OfertaPublicaPage({
 
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       {jobPostingSchema && (
         <script
           type="application/ld+json"
@@ -131,7 +134,7 @@ export default async function OfertaPublicaPage({
       )}
       
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <Link href="/" className="text-xs mb-6 inline-block hover:underline" style={{ color: "#64748b" }}>
+        <Link href="/" className="text-xs mb-6 inline-block hover:underline" style={{ color: "#8b98ad" }}>
           ← BuscayCurra
         </Link>
 
@@ -150,13 +153,13 @@ export default async function OfertaPublicaPage({
             <Link
               href={`/app/buscar?keyword=${encodeURIComponent(row.title || "")}&location=${encodeURIComponent(row.city || "")}`}
               className="text-xs px-4 py-2 rounded-lg font-medium inline-block"
-              style={{ background: "#22c55e", color: "#0f1117" }}>
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
               Ver ofertas abiertas de {row.title}
             </Link>
           </div>
         )}
 
-        <div className="rounded-xl p-6" style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+        <div className="rounded-xl p-6" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
           <h1 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
             {row.title}
           </h1>
@@ -173,7 +176,7 @@ export default async function OfertaPublicaPage({
           </div>
 
           {row.description && (
-            <div className="mt-4 pt-4" style={{ borderTop: "1px solid #2d3142" }}>
+            <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
               <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>Descripción</h2>
               <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "#94a3b8" }}>
                 {row.description}
@@ -186,7 +189,7 @@ export default async function OfertaPublicaPage({
               que pedía entrar. De Google llegan unas 80 personas al día y se
               registraban 2 o 3. Ahora el botón dice a quién se manda el CV y
               el registro te devuelve a esta oferta con el envío preparado. */}
-          <div className="mt-6 pt-5" style={{ borderTop: "1px solid #2d3142" }}>
+          <div className="mt-6 pt-5" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
             {oficial && row.sourceUrl ? (
               <a href={row.sourceUrl} target="_blank" rel="noopener noreferrer"
                 className="btn-game text-sm px-5 py-3 rounded-lg font-semibold inline-block">
@@ -205,7 +208,7 @@ export default async function OfertaPublicaPage({
             ) : null}
             {row.sourceUrl && !oficial && (
               <a href={row.sourceUrl} target="_blank" rel="nofollow noopener noreferrer"
-                className="text-xs mt-4 inline-block hover:underline" style={{ color: "#64748b" }}>
+                className="text-xs mt-4 inline-block hover:underline" style={{ color: "#8b98ad" }}>
                 Ver la oferta original{nombreFuente(row.sourceName) ? ` en ${nombreFuente(row.sourceName)}` : ""} ↗
               </a>
             )}
@@ -222,7 +225,7 @@ export default async function OfertaPublicaPage({
               {listaParecidas.map((o) => (
                 <Link key={o.id} href={`/empleo/oferta/${o.id}`}
                   className="block rounded-xl px-4 py-3 transition hover:opacity-90"
-                  style={{ background: "#1e212b", border: "1px solid #2d3142" }}>
+                  style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{o.title}</p>
                   <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
                     {[o.company, (o.city || "").split(",")[0], sueldoDe(o.salary) && sueldoVisible(sueldoDe(o.salary)!, null)].filter(Boolean).join(" · ")}
@@ -248,11 +251,11 @@ export default async function OfertaPublicaPage({
           </p>
           <div className="flex flex-wrap gap-2 mt-3">
             <a href={APP_STORE} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-2 rounded-lg font-semibold"
-              style={{ background: "#0f1117", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+              style={{ background: "#0f1117", color: "#f1f5f9", border: "1px solid rgba(148,163,184,0.18)" }}>
               App para iPhone
             </a>
             <a href={GOOGLE_PLAY} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-2 rounded-lg font-semibold"
-              style={{ background: "#0f1117", color: "#f1f5f9", border: "1px solid #2d3142" }}>
+              style={{ background: "#0f1117", color: "#f1f5f9", border: "1px solid rgba(148,163,184,0.18)" }}>
               App para Android
             </a>
           </div>

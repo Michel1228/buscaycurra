@@ -62,7 +62,7 @@ export default function BuscadorPublico() {
           value={puesto}
           onChange={e => setPuesto(e.target.value)}
           className="flex-1 px-4 py-3 rounded-xl text-sm outline-none"
-          style={{ background: "#1a1d24", border: "1px solid #2d3142", color: "#f1f5f9" }}
+          style={{ background: "#1a1d24", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
         />
         <input
           type="text"
@@ -71,12 +71,12 @@ export default function BuscadorPublico() {
           value={ciudad}
           onChange={e => setCiudad(e.target.value)}
           className="w-full sm:w-40 px-4 py-3 rounded-xl text-sm outline-none"
-          style={{ background: "#1a1d24", border: "1px solid #2d3142", color: "#f1f5f9" }}
+          style={{ background: "#1a1d24", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
         />
         <button
           type="submit"
           className="px-6 py-3 rounded-xl text-sm font-semibold transition hover:opacity-90"
-          style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+          style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
         >
           Buscar
         </button>
@@ -96,25 +96,25 @@ export default function BuscadorPublico() {
               key={o.id}
               href="/auth/registro"
               className="group block p-4 rounded-xl transition hover:border-green-500/30"
-              style={{ background: "#1a1d24", border: "1px solid #2d3142" }}
+              style={{ background: "#1a1d24", border: "1px solid rgba(148,163,184,0.18)" }}
             >
               <p className="text-xs font-semibold mb-1 line-clamp-2 group-hover:text-green-400 transition" style={{ color: "#f1f5f9" }}>
                 {o.titulo}
               </p>
-              <p className="text-[11px] mb-2" style={{ color: "#64748b" }}>{o.empresa}</p>
+              <p className="text-[11px] mb-2" style={{ color: "#8b98ad" }}>{o.empresa}</p>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e" }}>
                   {o.ubicacion}
                 </span>
                 {o.salario && (
-                  <span className="text-[10px]" style={{ color: "#64748b" }}>{o.salario}</span>
+                  <span className="text-[10px]" style={{ color: "#8b98ad" }}>{o.salario}</span>
                 )}
               </div>
             </Link>
           ))}
         </div>
       ) : (
-        <p className="text-center text-sm py-8" style={{ color: "#64748b" }}>
+        <p className="text-center text-sm py-8" style={{ color: "#8b98ad" }}>
           No se encontraron ofertas. Prueba con otro término.
         </p>
       )}

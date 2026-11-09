@@ -4,6 +4,7 @@ import { ofertasPorPais, ofertasDe } from "@/lib/job-search/ofertas-por-pais";
 import { getPrimerosPasos } from "@/lib/primeros-pasos";
 import RequisitosPais from "@/components/destinos/RequisitosPais";
 import Link from "next/link";
+import FondoOleaje from "@/components/FondoOleaje";
 
 // MISMA LECCION QUE LA PORTADA, QUE YA LA APRENDIO EN SU DIA.
 //
@@ -101,11 +102,13 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       <HreflangTags currentCode={codigo} path="trabajar-en/" />
       {/* Hero */}
       <section className="relative py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
         <span className="text-5xl mb-4 block">{pais.bandera}</span>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-3">
+        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3">
           Trabajar en {pais.nombre}
         </h1>
         <p className="text-lg text-[#94a3b8] max-w-2xl mx-auto">
@@ -114,7 +117,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
         </p>
         <Link
           href={`/app/buscar?pais=${codigo}`}
-          className="inline-block mt-6 px-6 py-3 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-semibold rounded-xl transition-colors"
+          className="inline-block mt-6 px-6 py-3 fondo-lima hover:brightness-105 font-semibold rounded-xl transition-colors"
         >Buscar ofertas en {pais.nombre}
         </Link>
       </section>
@@ -122,21 +125,21 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
       {/* Stats */}
       <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5 text-center">
+          <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-5 text-center">
             <p className="text-2xl font-bold text-[#22c55e]">{totalOfertas ? totalOfertas.toLocaleString("es-ES") : "Miles"}</p>
-            <p className="text-xs text-[#64748b] mt-1">Ofertas activas</p>
+            <p className="text-xs text-[#8b98ad] mt-1">Ofertas activas</p>
           </div>
-          <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5 text-center">
+          <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-5 text-center">
             <p className="text-2xl font-bold text-[#22c55e]">{formatearSalario(pais.salarioMedio, codigo)}</p>
-            <p className="text-xs text-[#64748b] mt-1">Salario medio/mes</p>
+            <p className="text-xs text-[#8b98ad] mt-1">Salario medio/mes</p>
           </div>
-          <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5 text-center">
+          <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-5 text-center">
             <p className="text-2xl font-bold text-[#22c55e]">{pais.moneda}</p>
-            <p className="text-xs text-[#64748b] mt-1">Moneda local</p>
+            <p className="text-xs text-[#8b98ad] mt-1">Moneda local</p>
           </div>
-          <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5 text-center">
+          <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-5 text-center">
             <p className="text-2xl font-bold text-[#22c55e]">{pais.ciudades.length}</p>
-            <p className="text-xs text-[#64748b] mt-1">Ciudades principales</p>
+            <p className="text-xs text-[#8b98ad] mt-1">Ciudades principales</p>
           </div>
         </div>
       </section>
@@ -149,7 +152,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             <Link
               key={ciudad}
               href={`/app/buscar?ubicacion=${encodeURIComponent(ciudad)}&pais=${codigo}`}
-              className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg px-4 py-3 text-sm text-[#e2e8f0] transition-colors"
+              className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-lg px-4 py-3 text-sm text-[#e2e8f0] transition-colors"
             >{ciudad}
             </Link>
           ))}
@@ -164,7 +167,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             <Link
               key={kw}
               href={`/app/buscar?keyword=${encodeURIComponent(kw)}&pais=${codigo}`}
-              className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-full px-4 py-1.5 text-sm text-[#94a3b8] transition-colors"
+              className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-full px-4 py-1.5 text-sm text-[#94a3b8] transition-colors"
             >
               {kw}
             </Link>
@@ -185,7 +188,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             { icon: "💰", title: "Comparador de salarios", desc: `Calcula tu sueldo neto en cada país con la calculadora de impuestos.` },
             { icon: "📊", title: "Skill Gap Analysis", desc: "Compara tu CV con los requisitos de la oferta y recibe recomendaciones." },
           ].map((item) => (
-            <div key={item.title} className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5 flex gap-4">
+            <div key={item.title} className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-5 flex gap-4">
               <span className="text-2xl flex-shrink-0">{item.icon}</span>
               <div>
                 <h3 className="font-semibold text-[#e2e8f0]">{item.title}</h3>
@@ -198,14 +201,14 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
 
       {/* Primeros pasos en el país */}
       {primerosPasos && (
-        <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#2d3142]">
+        <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[rgba(148,163,184,0.18)]">
           <h2 className="text-xl font-bold mb-2">Primeros pasos en {pais.nombre}</h2>
           <p className="text-sm text-[#94a3b8] mb-8">Todo lo que necesitas saber para aterrizar: au pair, alojamiento y visados.</p>
 
           <div className="grid sm:grid-cols-2 gap-6">
             {/* Au Pair */}
             {primerosPasos.auPair.disponible && (
-              <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+              <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
                 <h3 className="font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
                   <span className="text-xl">🧒</span> Programa Au Pair
                 </h3>
@@ -227,7 +230,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             )}
 
             {/* Alojamiento */}
-            <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+            <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
               <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
                 <span className="text-xl">🏠</span> Alojamiento temporal
               </h3>
@@ -239,12 +242,12 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
                   </a>
                 ))}
               </div>
-              <p className="text-xs text-[#64748b] mt-3 border-t border-[#2d3142] pt-3">{primerosPasos.alojamiento.consejo}</p>
+              <p className="text-xs text-[#8b98ad] mt-3 border-t border-[rgba(148,163,184,0.18)] pt-3">{primerosPasos.alojamiento.consejo}</p>
             </div>
 
             {/* Precios de alojamiento por ciudad */}
             {primerosPasos.alojamiento.preciosMedios && primerosPasos.alojamiento.preciosMedios.length > 0 && (
-              <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6">
+              <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6">
                 <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
                   <span className="text-xl">💶</span> Precios de alquiler
                 </h3>
@@ -260,7 +263,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
             )}
 
             {/* Visado */}
-            <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
+            <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6 sm:col-span-2">
               <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
                 <span className="text-xl">📋</span> Requisitos legales y visado
               </h3>
@@ -275,11 +278,11 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
 
             {/* Papeleo — documentos obligatorios */}
             {primerosPasos.papeleo && primerosPasos.papeleo.documentos.length > 0 && (
-              <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
+              <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6 sm:col-span-2">
                 <h3 className="font-semibold text-[#e2e8f0] mb-1 flex items-center gap-2">
                   <span className="text-xl">📄</span> Documentos y trámites al llegar
                 </h3>
-                <p className="text-xs text-[#64748b] mb-4">{primerosPasos.papeleo.consejo}</p>
+                <p className="text-xs text-[#8b98ad] mb-4">{primerosPasos.papeleo.consejo}</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {primerosPasos.papeleo.documentos.map((doc) => (
                     <div key={doc.nombre}
@@ -298,7 +301,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
                       </div>
                       <p className="text-xs text-[#94a3b8] mb-2">{doc.descripcion}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-[#64748b]">⏱ {doc.tiempoObtener}</span>
+                        <span className="text-[11px] text-[#8b98ad]">⏱ {doc.tiempoObtener}</span>
                         {doc.enlaceOficial && (
                           <a href={doc.enlaceOficial} target="_blank" rel="noopener"
                             className="text-[11px] text-[#22c55e] hover:underline">
@@ -314,7 +317,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
 
             {/* Programas extra */}
             {primerosPasos.programasExtra && primerosPasos.programasExtra.length > 0 && (
-              <div className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-6 sm:col-span-2">
+              <div className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-6 sm:col-span-2">
                 <h3 className="font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
                   <span className="text-xl">🌟</span> Otros programas
                 </h3>
@@ -339,18 +342,18 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
       <RequisitosPais codigo={codigo} />
 
       {/* Otros países */}
-      <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#2d3142]">
+      <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[rgba(148,163,184,0.18)]">
         <h2 className="text-xl font-bold mb-4">También puedes trabajar en...</h2>
         <div className="flex flex-wrap gap-3">
           {LISTA_PAISES.filter((p) => p.codigo !== codigo).map((p) => (
             <Link
               key={p.codigo}
               href={`/trabajar-en/${p.codigo.toLowerCase()}`}
-              className="bg-[#1e212b] border border-[#2d3142] hover:border-[#22c55e]/40 rounded-lg px-4 py-2.5 text-sm transition-colors flex items-center gap-2"
+              className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] hover:border-[#22c55e]/40 rounded-lg px-4 py-2.5 text-sm transition-colors flex items-center gap-2"
             >
               <span>{p.bandera}</span>
               <span className="text-[#e2e8f0]">{p.nombre}</span>
-              <span className="text-[#64748b] text-xs">{p.simboloMoneda}</span>
+              <span className="text-[#8b98ad] text-xs">{p.simboloMoneda}</span>
             </Link>
           ))}
         </div>
@@ -367,7 +370,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
           </p>
           <Link
             href="/auth/registro"
-            className="inline-block px-8 py-3 bg-[#22c55e] hover:bg-[#1ea34d] text-black font-bold rounded-xl transition-colors"
+            className="inline-block px-8 py-3 fondo-lima hover:brightness-105 font-bold rounded-xl transition-colors"
           >Crear cuenta gratis
           </Link>
         </div>

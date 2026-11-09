@@ -18,7 +18,7 @@
 
 import { REQUISITOS, type RequisitosDestino } from "@/lib/destinos/requisitos";
 
-const CAJA = { background: "#1e212b", border: "1px solid #2d3142" };
+const CAJA = { background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" };
 
 function Lista({ items, color }: { items: string[]; color: string }) {
   return (
@@ -45,7 +45,7 @@ export default function RequisitosPais({ codigo }: { codigo: string }) {
       <h2 className="text-xl font-bold mb-1" style={{ color: "#f1f5f9" }}>
         Qué te piden para trabajar en {ficha.nombre}
       </h2>
-      <p className="text-sm mb-6" style={{ color: "#64748b" }}>
+      <p className="text-sm mb-6" style={{ color: "#8b98ad" }}>
         Lo que hace falta depende de tu nacionalidad, no de dónde vivas ahora. Mira el caso que sea el
         tuyo.
       </p>
@@ -81,7 +81,7 @@ export default function RequisitosPais({ codigo }: { codigo: string }) {
           <h3 className="font-semibold text-sm mb-1" style={{ color: "#22c55e" }}>
             {mj.nombre} · {mj.edad}
           </h3>
-          <p className="text-xs mb-3" style={{ color: "#64748b" }}>
+          <p className="text-xs mb-3" style={{ color: "#8b98ad" }}>
             Una vía pensada para gente joven, que no necesita que una empresa te patrocine.
           </p>
           <Lista items={mj.condiciones} color="#22c55e" />
@@ -110,7 +110,7 @@ export default function RequisitosPais({ codigo }: { codigo: string }) {
 
       {/* La autoridad. Es el enlace más útil de toda la sección. */}
       <div className="rounded-xl p-4 mt-4 flex flex-wrap items-center justify-between gap-3" style={CAJA}>
-        <p className="text-xs" style={{ color: "#64748b" }}>
+        <p className="text-xs" style={{ color: "#8b98ad" }}>
           Las cuantías, las tasas y los cupos cambian. Quien manda es la administración del país:
         </p>
         <a href={ficha.autoridad.url} target="_blank" rel="noopener noreferrer"

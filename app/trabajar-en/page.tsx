@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { LISTA_PAISES, NUM_PAISES } from "@/lib/paises";
 import PublicFooter from "@/components/PublicFooter";
+import FondoOleaje from "@/components/FondoOleaje";
 
 export const metadata: Metadata = {
   title: "Trabajar en el extranjero — Guías por país | BuscayCurra",
@@ -41,10 +42,12 @@ const PAISES = LISTA_PAISES.map((pais) => ({
 export default function TrabajarEnPage() {
   return (
     <div className="min-h-screen bg-[#0f1117] text-[#f1f5f9]">
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       <div className="max-w-5xl mx-auto px-4 py-12">
         {/* Hero */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4">Trabajar en el extranjero
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4">Trabajar en el extranjero
           </h1>
           <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
             {`Guías completas para trabajar fuera de España: requisitos de visado,
@@ -53,12 +56,12 @@ export default function TrabajarEnPage() {
           <div className="mt-6 flex gap-3 justify-center flex-wrap">
             <Link
               href="/app/emigrar"
-              className="inline-block bg-[#22c55e] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
+              className="inline-block fondo-lima px-6 py-3 rounded-full font-semibold hover:brightness-105 transition-colors"
             >Guía para emigrar →
             </Link>
             <Link
               href="/app/buscar"
-              className="inline-block bg-[#1e212b] border border-[#2d3142] text-white px-6 py-3 rounded-lg font-medium hover:border-[#22c55e]/30 transition-colors"
+              className="inline-block bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] text-white px-6 py-3 rounded-lg font-medium hover:border-[#22c55e]/30 transition-colors"
             >Buscar ofertas
             </Link>
           </div>
@@ -70,7 +73,7 @@ export default function TrabajarEnPage() {
             <Link
               key={pais.codigo}
               href={`/trabajar-en/${pais.codigo}`}
-              className="bg-[#1e212b] border border-[#2d3142] rounded-xl p-5 hover:border-[#22c55e]/30 transition-all hover:bg-[#1a1d28] group"
+              className="bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-5 hover:border-[#22c55e]/30 transition-all hover:bg-[#1a1d28] group"
             >
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">{pais.bandera}</span>
@@ -87,7 +90,7 @@ export default function TrabajarEnPage() {
         </div>
 
         {/* Por qué BuscayCurra */}
-        <div className="text-center bg-[#1e212b] border border-[#2d3142] rounded-xl p-8">
+        <div className="text-center bg-[rgba(12,15,22,0.86)] border border-[rgba(148,163,184,0.18)] rounded-xl p-8">
           <h2 className="text-2xl font-bold mb-3">
             ¿Por qué BuscayCurra para trabajar fuera?
           </h2>
@@ -117,7 +120,7 @@ export default function TrabajarEnPage() {
           <div className="mt-8">
             <Link
               href="/auth/registro"
-              className="inline-block bg-[#22c55e] text-white px-8 py-3 rounded-lg font-medium hover:bg-[#16a34a] transition-colors"
+              className="inline-block fondo-lima px-8 py-3 rounded-full font-semibold hover:brightness-105 transition-colors"
             >
               Empezar gratis →
             </Link>

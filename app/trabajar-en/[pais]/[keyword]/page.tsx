@@ -7,6 +7,7 @@ import { Metadata } from "next";
 import { getPool } from "@/lib/db";
 import { PAISES, LISTA_PAISES, SLUG_A_CODIGO, formatearSalario } from "@/lib/paises";
 import Link from "next/link";
+import FondoOleaje from "@/components/FondoOleaje";
 
 interface Props {
   params: Promise<{ pais: string; keyword: string }>;
@@ -132,6 +133,8 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
 
   return (
     <main style={{ background: "#0f1117", color: "#f1f5f9" }} className="min-h-screen">
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       {/* hreflang tags */}
       {hreflangTags.map((h) => (
         <link key={h.codigo} rel="alternate" hrefLang={h.idioma} href={h.url} />
@@ -140,7 +143,7 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
       {/* Hero */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
         <span className="text-4xl mb-3 block">{pais.bandera}</span>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-3">
+        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3">
           Trabajo de {keywordCapitalized} en {pais.nombre}
         </h1>
         <p className="text-lg" style={{ color: "#94a3b8", maxWidth: "42rem", margin: "0 auto" }}>
@@ -152,7 +155,7 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
         <Link
           href={`/app/buscar?keyword=${encodeURIComponent(keywordFmt)}&pais=${codigo}`}
           className="inline-block mt-6 px-6 py-3 rounded-xl font-semibold transition-colors"
-          style={{ background: "#22c55e", color: "#000" }}
+          style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
         >Buscar ofertas de {keywordFmt} en {pais.nombre}
         </Link>
       </section>
@@ -169,7 +172,7 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
                 key={oferta.id}
                 href={`/empleo/oferta/${oferta.id}`}
                 className="block rounded-xl p-4 transition-colors hover:border-[#22c55e]/40"
-                style={{ background: "#1e212b", border: "1px solid #2d3142" }}
+                style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
@@ -206,10 +209,10 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
             <div
               key={stat.label}
               className="rounded-xl p-4 text-center"
-              style={{ background: "#1e212b", border: "1px solid #2d3142" }}
+              style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}
             >
               <p className="text-xl font-bold" style={{ color: "#22c55e" }}>{stat.value}</p>
-              <p className="text-xs mt-1" style={{ color: "#64748b" }}>{stat.label}</p>
+              <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>{stat.label}</p>
             </div>
           ))}
         </div>
@@ -227,8 +230,8 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
                 href={`/trabajar-en/${paisParam.toLowerCase()}/${kw}`}
                 className="rounded-full px-4 py-1.5 text-sm transition-colors"
                 style={{
-                  background: "#1e212b",
-                  border: "1px solid #2d3142",
+                  background: "rgba(12,15,22,0.86)",
+                  border: "1px solid rgba(148,163,184,0.18)",
                   color: "#94a3b8",
                 }}
               >
@@ -250,8 +253,8 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
               href={`/trabajar-en/${p.codigo.toLowerCase()}/${encodeURIComponent(decodeURIComponent(keyword).toLowerCase())}`}
               className="rounded-lg px-4 py-2.5 text-sm flex items-center gap-2 transition-colors"
               style={{
-                background: "#1e212b",
-                border: "1px solid #2d3142",
+                background: "rgba(12,15,22,0.86)",
+                border: "1px solid rgba(148,163,184,0.18)",
                 color: "#e2e8f0",
               }}
             >

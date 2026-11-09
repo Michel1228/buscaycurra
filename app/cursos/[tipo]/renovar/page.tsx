@@ -60,13 +60,13 @@ export default async function RenovarCarne({ params }: { params: Promise<{ tipo:
         <Link
           href="/cursos/renovar"
           className="inline-flex items-center gap-1.5 text-xs mb-6 hover:opacity-80"
-          style={{ color: "#64748b", textDecoration: "none" }}
+          style={{ color: "#8b98ad", textDecoration: "none" }}
         >
           <ArrowLeft size={13} strokeWidth={1.9} />
           Todas las renovaciones
         </Link>
 
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2 leading-tight">{queSeRenueva(t)}: cómo se renueva</h1>
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2 leading-tight">{queSeRenueva(t)}: cómo se renueva</h1>
         <p className="text-sm leading-relaxed mb-6" style={{ color: "#94a3b8" }}>
           Cada cuánto caduca, qué te piden y dónde se hace.
         </p>
@@ -88,7 +88,7 @@ export default async function RenovarCarne({ params }: { params: Promise<{ tipo:
           <Link
             href={`/cursos/${t.slug}`}
             className="rounded-xl p-4 block hover:opacity-90"
-            style={{ background: "#1e212b", border: "1px solid #2d3142", textDecoration: "none" }}
+            style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
           >
             <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>¿Aún no lo tienes?</p>
             <p className="text-xs" style={{ color: "#94a3b8" }}>Cuánto cuesta y dónde sacarlo gratis</p>

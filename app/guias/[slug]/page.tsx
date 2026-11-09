@@ -69,7 +69,7 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
       <PublicHeader />
 
       <article className="max-w-2xl mx-auto px-4 py-10 sm:py-14">
-        <Link href="/guias" className="text-xs" style={{ color: "#64748b" }}>
+        <Link href="/guias" className="text-xs" style={{ color: "#8b98ad" }}>
           ← Todas las guías
         </Link>
 
@@ -87,7 +87,7 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
 
         <p
           className="mt-5 rounded-lg p-3 text-xs leading-relaxed"
-          style={{ background: "#1e212b", border: "1px solid #2d3142", color: "#94a3b8" }}
+          style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}
         >
           {guia.paraQuien}
         </p>
@@ -116,7 +116,7 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
 
         {guia.avisos && guia.avisos.length > 0 && (
           <section className="mt-9">
-            <h2 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>
+            <h2 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#8b98ad" }}>
               Conviene saber
             </h2>
             <ul className="mt-3 space-y-2">
@@ -145,7 +145,7 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
           <Link
             href="/auth/registro"
             className="inline-block mt-4 px-4 py-2 rounded-lg text-xs font-semibold"
-            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+            style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
           >
             Crear cuenta gratis
           </Link>
@@ -153,7 +153,7 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
 
         {guia.siguiente && guia.siguiente.length > 0 && (
           <nav className="mt-9">
-            <h2 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>
+            <h2 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#8b98ad" }}>
               Sigue por aquí
             </h2>
             <ul className="mt-3 space-y-2">

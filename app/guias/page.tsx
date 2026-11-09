@@ -35,7 +35,7 @@ export default function GuiasIndice() {
       <PublicHeader />
 
       <main className="max-w-3xl mx-auto px-4 py-10 sm:py-14">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight tracking-tight">
           Guías de BuscayCurra
         </h1>
         <p className="mt-3 text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
@@ -85,7 +85,7 @@ export default function GuiasIndice() {
           <Link
             href="/auth/registro"
             className="inline-block mt-4 px-4 py-2 rounded-lg text-xs font-semibold"
-            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}
+            style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
           >
             Empezar gratis
           </Link>
