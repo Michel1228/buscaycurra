@@ -498,15 +498,12 @@ export default function EmpresasPage() {
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       {/* ── Header compartido ── */}
-      <div
-        className="py-8 px-4"
-        style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}
-      >
+      <div className="cristal tono-lima py-8 px-4 mx-3 mt-3">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>
             Enviar CV a empresas
           </h1>
-          <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+          <p className="text-sm mt-1" style={{ color: "#a7b3c6" }}>
             Cualquier empresa vale: Mercadona, el taller del polígono o el bar de debajo de tu casa.
             Buscamos su teléfono y su email, y le mandamos tu CV con una carta escrita por IA.
           </p>
@@ -531,8 +528,7 @@ export default function EmpresasPage() {
             <button
               onClick={() => { setActiveTab("buscar"); handleBuscar(); }}
               disabled={buscando || nombre.trim().length < 2}
-              className="px-6 py-2.5 rounded-lg text-sm font-semibold transition disabled:opacity-50"
-              style={{ background: "#fff", color: "#16a34a" }}
+              className="btn-game px-6 min-h-[44px] text-sm disabled:opacity-50"
             >
               {buscando ? "Buscando…" : "Buscar"}
             </button>

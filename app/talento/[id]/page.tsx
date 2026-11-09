@@ -21,6 +21,7 @@ import { enlaceCarta, referenciasVerificadas } from "@/lib/referencias/referenci
 import { abrirCandidato, cuentaEmpresa } from "@/lib/empresas/cuenta";
 import { correoVerificado } from "@/lib/auth/correo-verificado";
 import InvitarEntrevista from "@/components/empresas/InvitarEntrevista";
+import FondoOleaje from "@/components/FondoOleaje";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +67,7 @@ function Aviso({ titulo, mensaje, enlace, boton }: { titulo: string; mensaje: st
       <div className="text-center p-10 max-w-md">
         <div className="flex justify-center mb-4"><Lock size={48} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
         <h1 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>{titulo}</h1>
-        <p className="text-sm" style={{ color: "#64748b" }}>{mensaje}</p>
+        <p className="text-sm" style={{ color: "#8b98ad" }}>{mensaje}</p>
         <Link href={enlace} className="inline-block mt-4 text-sm" style={{ color: "#22c55e" }}>{boton}</Link>
       </div>
     </div>
@@ -137,10 +138,12 @@ export default async function TalentoPage({ params }: Props) {
     return { id: r.id, empresa: r.empresa, firmante: r.firmante, cargo: r.cargo, fecha, carta };
   }));
 
-  const caja = { background: "#161922", border: "1px solid #2d3142" };
+  const caja = { background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" };
 
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       {esElMismo && (
         <p className="text-center text-xs py-2" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
           Así ven tu CV las empresas con Plan Empresa.
@@ -182,7 +185,7 @@ export default async function TalentoPage({ params }: Props) {
         {referencias.length > 0 && (
           <div className="p-5 rounded-xl" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)" }}>
             <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-1" style={{ color: "#22c55e" }}><BadgeCheck size={14} strokeWidth={1.8} />Referencias verificadas</h2>
-            <p className="text-xs mb-3" style={{ color: "#64748b" }}>Quien firmó cada carta ha confirmado que es suya desde el correo de su empresa.</p>
+            <p className="text-xs mb-3" style={{ color: "#8b98ad" }}>Quien firmó cada carta ha confirmado que es suya desde el correo de su empresa.</p>
             <div className="space-y-3">
               {referencias.map((r) => (
                 <div key={r.id}>
@@ -231,7 +234,7 @@ export default async function TalentoPage({ params }: Props) {
               {experiencia.map((e, i) => (
                 <div key={i}>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{[e.puesto, e.empresa].filter(Boolean).join(" · ")}</p>
-                  {(e.fechas || e.ubicacion) && <p className="text-xs" style={{ color: "#64748b" }}>{[e.fechas, e.ubicacion].filter(Boolean).join(" · ")}</p>}
+                  {(e.fechas || e.ubicacion) && <p className="text-xs" style={{ color: "#8b98ad" }}>{[e.fechas, e.ubicacion].filter(Boolean).join(" · ")}</p>}
                   {e.descripcion && <p className="text-sm whitespace-pre-wrap mt-1" style={{ color: "#94a3b8" }}>{e.descripcion}</p>}
                 </div>
               ))}
@@ -247,7 +250,7 @@ export default async function TalentoPage({ params }: Props) {
               {formacion.map((f, i) => (
                 <div key={i}>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{f.titulo}</p>
-                  {(f.centro || f.ubicacion) && <p className="text-xs" style={{ color: "#64748b" }}>{[f.centro, f.ubicacion].filter(Boolean).join(" · ")}</p>}
+                  {(f.centro || f.ubicacion) && <p className="text-xs" style={{ color: "#8b98ad" }}>{[f.centro, f.ubicacion].filter(Boolean).join(" · ")}</p>}
                 </div>
               ))}
             </div>

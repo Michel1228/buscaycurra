@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import FondoOleaje from "@/components/FondoOleaje";
 
 interface Cupo { usados: number; maximo: number }
 interface Estado {
@@ -17,15 +18,15 @@ interface Estado {
   cupo: { candidatos: Cupo; invitaciones: Cupo };
 }
 
-const caja = { background: "#1e212b", border: "1px solid #2d3142" };
+const caja = { background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" };
 
 function Barra({ titulo, c }: { titulo: string; c: Cupo }) {
   const lleno = c.usados >= c.maximo;
   return (
     <div className="rounded-xl p-4" style={caja}>
-      <p className="text-[10px] uppercase tracking-wide font-semibold mb-1" style={{ color: "#64748b" }}>{titulo}</p>
+      <p className="text-[10px] uppercase tracking-wide font-semibold mb-1" style={{ color: "#8b98ad" }}>{titulo}</p>
       <p className="text-xl font-bold tabular-nums" style={{ color: lleno ? "#f59e0b" : "#f1f5f9" }}>
-        {c.usados} <span className="text-xs font-normal" style={{ color: "#64748b" }}>de {c.maximo}</span>
+        {c.usados} <span className="text-xs font-normal" style={{ color: "#8b98ad" }}>de {c.maximo}</span>
       </p>
       <div className="w-full h-1.5 rounded-full mt-2" style={{ background: "#0f1117" }}>
         <div className="h-full rounded-full" style={{ width: `${Math.min(100, (100 * c.usados) / c.maximo)}%`, background: lleno ? "#f59e0b" : "#22c55e" }} />
@@ -89,7 +90,7 @@ export default function EquipoEmpresaPage() {
         <Link href="/empresas" className="flex items-center gap-2.5">
           <img src="/icon-192.png" alt="Guzzi" width={24} height={24} style={{ borderRadius: "50%" }} />
           <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
-          <span className="hidden sm:inline text-xs" style={{ color: "#6b7280" }}>/ Tu equipo</span>
+          <span className="hidden sm:inline text-xs" style={{ color: "#8b98ad" }}>/ Tu equipo</span>
         </Link>
         <Link href="/empresas/candidatos" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Candidatos →</Link>
       </div>
@@ -117,11 +118,13 @@ export default function EquipoEmpresaPage() {
 
   return (
     <div className="min-h-screen pb-16" style={{ background: "#0f1117" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       {cabecera}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-10">
         <section>
-          <h1 className="text-xl font-bold mb-1" style={{ color: "#f1f5f9" }}>Este mes</h1>
-          <p className="text-xs mb-5 max-w-2xl" style={{ color: "#64748b" }}>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Este mes</h1>
+          <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
             El cupo es de toda la empresa, lo use quien lo use, y se renueva el día 1. Un candidato que ya habéis abierto sigue abierto y no vuelve a contar.
           </p>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -133,9 +136,9 @@ export default function EquipoEmpresaPage() {
         {datos.titular ? (
           <section>
             <h2 className="text-lg font-bold mb-1" style={{ color: "#f1f5f9" }}>
-              Tu equipo <span className="text-sm font-normal" style={{ color: "#64748b" }}>· {datos.usuarios.usados} de {datos.usuarios.maximo} personas</span>
+              Tu equipo <span className="text-sm font-normal" style={{ color: "#8b98ad" }}>· {datos.usuarios.usados} de {datos.usuarios.maximo} personas</span>
             </h2>
-            <p className="text-xs mb-5 max-w-2xl" style={{ color: "#64748b" }}>
+            <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
               Cada persona entra con su propia cuenta de BuscayCurra, registrada con el correo que pongas aquí, y ve los candidatos y las entrevistas de la empresa.
               Así nadie tiene que pasarse la contraseña. Para entrar, que abra buscaycurra.es/empresas/candidatos.
             </p>

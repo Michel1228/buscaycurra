@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import FondoOleaje from "@/components/FondoOleaje";
 
 interface Pregunta { texto: string; puntos: string[] }
 interface Entrevista { id: string; empresa: string; puesto: string; preguntas: Pregunta[] }
@@ -21,7 +22,7 @@ interface Invitacion {
 interface Borrador { id?: string; empresa: string; puesto: string; preguntas: { texto: string; puntos: string }[] }
 
 const vacio = (empresa = ""): Borrador => ({ empresa, puesto: "", preguntas: [{ texto: "", puntos: "" }] });
-const caja = { background: "#1e212b", border: "1px solid #2d3142" };
+const caja = { background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" };
 const fecha = (s: string) => new Date(s).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 
 export default function EntrevistasEmpresaPage() {
@@ -104,7 +105,7 @@ export default function EntrevistasEmpresaPage() {
         <Link href="/empresas" className="flex items-center gap-2.5">
           <img src="/icon-192.png" alt="Guzzi" width={24} height={24} style={{ borderRadius: "50%" }} />
           <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
-          <span className="hidden sm:inline text-xs" style={{ color: "#6b7280" }}>/ Entrevistas</span>
+          <span className="hidden sm:inline text-xs" style={{ color: "#8b98ad" }}>/ Entrevistas</span>
         </Link>
         <div className="flex items-center gap-4">
           <Link href="/empresas/equipo" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tu equipo</Link>
@@ -132,11 +133,13 @@ export default function EntrevistasEmpresaPage() {
 
   return (
     <div className="min-h-screen pb-16" style={{ background: "#0f1117" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       {cabecera}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-10">
         <section>
-          <h1 className="text-xl font-bold mb-1" style={{ color: "#f1f5f9" }}>Candidatos invitados</h1>
-          <p className="text-xs mb-5 max-w-2xl" style={{ color: "#64748b" }}>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Candidatos invitados</h1>
+          <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
             En el perfil de un candidato, pulsa «Me interesa» para invitarle a preparar tu entrevista. Ensaya con tus preguntas y, cuando quiere, te manda sus respuestas.
             Aquí no llega ninguna nota automática: la valoración la haces tú, marcando lo que ha cubierto en cada respuesta.
           </p>
@@ -148,7 +151,7 @@ export default function EntrevistasEmpresaPage() {
                 <div key={inv.id} className="rounded-xl p-4" style={caja}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{inv.nombre} <span className="font-normal" style={{ color: "#64748b" }}>{inv.ciudad && `· ${inv.ciudad}`}</span></p>
+                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{inv.nombre} <span className="font-normal" style={{ color: "#8b98ad" }}>{inv.ciudad && `· ${inv.ciudad}`}</span></p>
                       <p className="text-xs" style={{ color: "#94a3b8" }}>{inv.puesto} · {inv.intentos} {inv.intentos === 1 ? "ensayo" : "ensayos"}</p>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {inv.referencias > 0 && (
@@ -156,13 +159,13 @@ export default function EntrevistasEmpresaPage() {
                             ✓ {inv.referencias > 1 ? `${inv.referencias} referencias verificadas` : "Referencia verificada"}
                           </span>
                         )}
-                        <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#0f1117", color: inv.respuestas ? "#22c55e" : "#94a3b8", border: "1px solid #2d3142" }}>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#0f1117", color: inv.respuestas ? "#22c55e" : "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
                           {inv.respuestas ? `Respuestas del ${fecha(inv.enviadaEn!)}` : "Preparándose"}
                         </span>
                       </div>
                     </div>
                     <div className="text-right">
-                      {inv.nota !== null && <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>{inv.nota}<span className="text-xs" style={{ color: "#64748b" }}>/100</span></p>}
+                      {inv.nota !== null && <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>{inv.nota}<span className="text-xs" style={{ color: "#8b98ad" }}>/100</span></p>}
                       <div className="flex gap-3 justify-end mt-1">
                         {/* <a> y no <Link>: Next precarga los <Link>, y abrir un CV nuevo gasta cupo del mes. */}
                         <a href={`/talento/${inv.candidatoId}`} className="text-xs" style={{ color: "#94a3b8" }}>Ver CV</a>
@@ -176,12 +179,12 @@ export default function EntrevistasEmpresaPage() {
                   </div>
 
                   {abierta === inv.id && inv.respuestas && (
-                    <div className="mt-4 pt-4 space-y-4" style={{ borderTop: "1px solid #2d3142" }}>
+                    <div className="mt-4 pt-4 space-y-4" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                       {inv.preguntas.map((p, i) => (
                         <div key={i}>
                           <p className="text-xs font-semibold mb-1" style={{ color: "#22c55e" }}>{i + 1}. {p.texto}</p>
                           <p className="text-sm whitespace-pre-wrap mb-2" style={{ color: "#e2e8f0" }}>{inv.respuestas![i]}</p>
-                          <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "#64748b" }}>Marca lo que ha cubierto</p>
+                          <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "#8b98ad" }}>Marca lo que ha cubierto</p>
                           {p.puntos.map((pt, k) => (
                             <label key={k} className="flex items-start gap-2 text-xs mb-1 cursor-pointer" style={{ color: "#cbd5e1" }}>
                               <input type="checkbox" className="mt-0.5" style={{ accentColor: "#22c55e" }} checked={!!marcas[inv.id]?.[i]?.[k]}
@@ -192,7 +195,7 @@ export default function EntrevistasEmpresaPage() {
                         </div>
                       ))}
                       <button onClick={() => void valorar(inv)} className="btn-game text-xs px-4 py-2">Guardar valoración</button>
-                      <p className="text-[10px]" style={{ color: "#64748b" }}>La nota es la parte de los puntos que has marcado, de 0 a 100. Valora solo lo que ha contestado, no cómo habla.</p>
+                      <p className="text-[10px]" style={{ color: "#8b98ad" }}>La nota es la parte de los puntos que has marcado, de 0 a 100. Valora solo lo que ha contestado, no cómo habla.</p>
                     </div>
                   )}
                 </div>
@@ -206,7 +209,7 @@ export default function EntrevistasEmpresaPage() {
             <h2 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>Tus entrevistas</h2>
             {!borrador && <button onClick={() => setBorrador(vacio(entrevistas[0]?.empresa))} className="btn-game text-xs px-4 py-2">+ Nueva entrevista</button>}
           </div>
-          <p className="text-xs mb-5 max-w-2xl" style={{ color: "#64748b" }}>
+          <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
             Las preguntas que haces en tus entrevistas y, en cada una, qué esperas oír. El candidato verá esos puntos después de contestar en su ensayo, para saber qué buscas.
           </p>
 
@@ -219,7 +222,7 @@ export default function EntrevistasEmpresaPage() {
                   <input value={borrador.puesto} maxLength={120} placeholder="Ej.: Camarero/a de sala" onChange={(e) => setBorrador({ ...borrador, puesto: e.target.value })} className="w-full text-sm" /></label>
               </div>
               {borrador.preguntas.map((p, i) => (
-                <div key={i} className="rounded-lg p-3 space-y-2" style={{ background: "#0f1117", border: "1px solid #2d3142" }}>
+                <div key={i} className="rounded-lg p-3 space-y-2" style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)" }}>
                   <div className="flex justify-between items-center">
                     <span className="text-[11px] font-semibold" style={{ color: "#22c55e" }}>Pregunta {i + 1}</span>
                     {borrador.preguntas.length > 1 && (
@@ -241,7 +244,7 @@ export default function EntrevistasEmpresaPage() {
               {error && <p className="text-xs" style={{ color: "#ef4444" }}>{error}</p>}
               <div className="flex gap-2">
                 <button onClick={() => void guardar()} disabled={guardando} className="btn-game text-xs px-4 py-2">{guardando ? "Guardando…" : "Guardar"}</button>
-                <button onClick={() => { setBorrador(null); setError(""); }} className="text-xs px-4 py-2 rounded-lg" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>Cancelar</button>
+                <button onClick={() => { setBorrador(null); setError(""); }} className="text-xs px-4 py-2 rounded-lg" style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>Cancelar</button>
               </div>
             </div>
           )}
@@ -253,7 +256,7 @@ export default function EntrevistasEmpresaPage() {
               {entrevistas.map((e) => (
                 <div key={e.id} className="rounded-xl p-4" style={caja}>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{e.puesto}</p>
-                  <p className="text-xs mb-3" style={{ color: "#64748b" }}>{e.empresa} · {e.preguntas.length} {e.preguntas.length === 1 ? "pregunta" : "preguntas"}</p>
+                  <p className="text-xs mb-3" style={{ color: "#8b98ad" }}>{e.empresa} · {e.preguntas.length} {e.preguntas.length === 1 ? "pregunta" : "preguntas"}</p>
                   <div className="flex gap-4">
                     <button onClick={() => setBorrador({ id: e.id, empresa: e.empresa, puesto: e.puesto, preguntas: e.preguntas.map((p) => ({ texto: p.texto, puntos: p.puntos.join("\n") })) })}
                       className="text-xs font-semibold" style={{ color: "#22c55e" }}>Editar</button>

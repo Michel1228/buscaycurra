@@ -8,6 +8,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Building2, Check, Mail, PartyPopper, FileText, Rocket, AlertTriangle, Briefcase } from "lucide-react";
+import FondoOleaje from "@/components/FondoOleaje";
 
 const SECTORES = [
   "Hostelería y turismo", "Construcción", "Tecnología", "Sanidad",
@@ -67,7 +68,9 @@ export default function PublicarOfertaPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "#1a1a12" }}>
+    <div className="min-h-screen" style={{ background: "transparent" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
       {/* Header */}
       <div className="py-12 px-4" style={{ background: "linear-gradient(135deg, rgba(126,213,111,0.1), rgba(240,192,64,0.05))" }}>
         <div className="max-w-2xl mx-auto text-center">
@@ -127,7 +130,7 @@ export default function PublicarOfertaPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-1.5" style={{ color: "#94a3b8" }}>
-                    Web <span className="font-normal" style={{ color: "#64748b" }}>(opcional)</span>
+                    Web <span className="font-normal" style={{ color: "#8b98ad" }}>(opcional)</span>
                   </label>
                   <input type="url" value={webEmpresa} onChange={e => setWebEmpresa(e.target.value)}
                     placeholder="https://www.miempresa.es" className="w-full" />
@@ -207,7 +210,7 @@ export default function PublicarOfertaPage() {
               {enviando ? "Enviando..." : <><Rocket size={13} className="inline mr-1" />Enviar oferta gratis</>}
             </button>
 
-            <p className="text-xs text-center" style={{ color: "#64748b" }}>
+            <p className="text-xs text-center" style={{ color: "#8b98ad" }}>
               La revisamos antes de publicarla y te contestamos por correo. Sin coste.
             </p>
           </form>

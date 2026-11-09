@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { LIMITES_EMPRESA } from "@/lib/plan-limits";
+import FondoOleaje from "@/components/FondoOleaje";
 
 interface Candidato {
   id: string;
@@ -85,6 +86,8 @@ export default function CandidatosPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
 
       {/* Header */}
       <header className="sticky top-0 z-50" style={{ background: "rgba(15,17,23,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(45,49,66,0.4)" }}>
@@ -92,12 +95,12 @@ export default function CandidatosPage() {
           <Link href="/empresas" className="flex items-center gap-2.5">
             <img src="/icon-192.png" alt="Guzzi" width={24} height={24} style={{ borderRadius: "50%", objectFit: "cover" }} />
             <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
-            <span className="hidden sm:inline text-xs" style={{ color: "#6b7280" }}>/ Candidatos</span>
+            <span className="hidden sm:inline text-xs" style={{ color: "#8b98ad" }}>/ Candidatos</span>
           </Link>
           {!esEmpresa && (
             <Link href="/precios"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:opacity-90"
-              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
               💎 Plan Empresa — Ver contactos
             </Link>
           )}
@@ -117,8 +120,8 @@ export default function CandidatosPage() {
 
         {/* Título + búsqueda */}
         <div className="mb-8">
-          <h1 className="text-xl font-bold mb-1" style={{ color: "#f1f5f9" }}>Candidatos disponibles</h1>
-          <p className="text-xs mb-6" style={{ color: "#64748b" }}>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Candidatos disponibles</h1>
+          <p className="text-xs mb-6" style={{ color: "#8b98ad" }}>
             Profesionales buscando trabajo activamente en España. CVs optimizados con IA.
             {!esEmpresa && <> <Link href="/precios" style={{ color: "#22c55e" }}> Activa Plan Empresa</Link> para ver contacto completo.</>}
           </p>
@@ -144,7 +147,7 @@ export default function CandidatosPage() {
             />
             <button onClick={buscar}
               className="px-5 py-2 text-sm font-semibold rounded-lg transition hover:opacity-90"
-              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
               Buscar
             </button>
           </div>
@@ -171,11 +174,11 @@ export default function CandidatosPage() {
             style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
             <div>
               <p className="text-sm font-semibold" style={{ color: "#22c55e" }}>Estás viendo perfiles anonimizados</p>
-              <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Con Plan Empresa (49,99€/mes) ves el nombre de cada candidato y abres el email, el teléfono y el CV entero de hasta {LIMITES_EMPRESA.candidatosMes} al mes.</p>
+              <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>Con Plan Empresa (49,99€/mes) ves el nombre de cada candidato y abres el email, el teléfono y el CV entero de hasta {LIMITES_EMPRESA.candidatosMes} al mes.</p>
             </div>
             <Link href="/precios"
               className="flex-shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
-              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
               Contratar acceso →
             </Link>
           </div>
@@ -190,18 +193,18 @@ export default function CandidatosPage() {
                   <div className="w-11 h-11 rounded-full" style={{ background: "#252836" }} />
                   <div className="flex-1 space-y-2">
                     <div className="h-3 rounded" style={{ background: "#252836", width: "60%" }} />
-                    <div className="h-2.5 rounded" style={{ background: "#1e212b", width: "40%" }} />
+                    <div className="h-2.5 rounded" style={{ background: "rgba(12,15,22,0.86)", width: "40%" }} />
                   </div>
                 </div>
-                <div className="h-2.5 rounded mb-2" style={{ background: "#1e212b" }} />
-                <div className="h-2.5 rounded" style={{ background: "#1e212b", width: "70%" }} />
+                <div className="h-2.5 rounded mb-2" style={{ background: "rgba(12,15,22,0.86)" }} />
+                <div className="h-2.5 rounded" style={{ background: "rgba(12,15,22,0.86)", width: "70%" }} />
               </div>
             ))}
           </div>
         ) : necesitaEntrar ? (
           <div className="text-center py-20">
             <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Entra con tu cuenta para ver los perfiles</p>
-            <p className="text-xs mb-4" style={{ color: "#64748b" }}>Los perfiles de candidatos solo se enseñan a usuarios registrados.</p>
+            <p className="text-xs mb-4" style={{ color: "#8b98ad" }}>Los perfiles de candidatos solo se enseñan a usuarios registrados.</p>
             <Link href="/auth/login?redirect=%2Fempresas%2Fcandidatos" className="btn-game text-sm px-5 py-2.5 rounded-lg inline-block">
               Entrar
             </Link>
@@ -210,7 +213,7 @@ export default function CandidatosPage() {
           <div className="text-center py-20">
             <div className="text-4xl mb-3">🔍</div>
             <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Sin resultados</p>
-            <p className="text-xs" style={{ color: "#64748b" }}>Prueba con otra ciudad o perfil diferente.</p>
+            <p className="text-xs" style={{ color: "#8b98ad" }}>Prueba con otra ciudad o perfil diferente.</p>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -225,7 +228,7 @@ export default function CandidatosPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate" style={{ color: "#f1f5f9" }}>{c.nombre}</p>
-                    <p className="text-[11px]" style={{ color: "#64748b" }}>{c.ciudad}</p>
+                    <p className="text-[11px]" style={{ color: "#8b98ad" }}>{c.ciudad}</p>
                   </div>
                 </div>
 
@@ -271,7 +274,7 @@ export default function CandidatosPage() {
                       </a>
                     )}
                     {!c.email && !c.telefono && (
-                      <p className="text-[10px]" style={{ color: "#6b7280" }}>Sin contacto en CV</p>
+                      <p className="text-[10px]" style={{ color: "#8b98ad" }}>Sin contacto en CV</p>
                     )}
                     <a href={`/talento/${c.id}`} className="inline-block text-[11px] font-semibold pt-1 hover:opacity-80 transition"
                       style={{ color: "#22c55e" }}>
@@ -288,7 +291,7 @@ export default function CandidatosPage() {
                           style={{ color: "#22c55e" }}>
                           Abrir contacto y CV →
                         </a>
-                        <p className="text-[10px] mt-0.5" style={{ color: "#6b7280" }}>Cuenta como 1 de los {cupo?.maximo ?? LIMITES_EMPRESA.candidatosMes} de este mes.</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: "#8b98ad" }}>Cuenta como 1 de los {cupo?.maximo ?? LIMITES_EMPRESA.candidatosMes} de este mes.</p>
                       </>
                     )}
                   </div>
@@ -324,13 +327,13 @@ export default function CandidatosPage() {
             {pagina > 1 && (
               <button onClick={() => cargar(pagina - 1)}
                 className="px-4 py-2 text-xs rounded-lg transition hover:opacity-80"
-                style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+                style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
                 ← Anterior
               </button>
             )}
             <button onClick={() => cargar(pagina + 1)}
               className="px-4 py-2 text-xs rounded-lg transition hover:opacity-80"
-              style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+              style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
               Siguiente →
             </button>
           </div>

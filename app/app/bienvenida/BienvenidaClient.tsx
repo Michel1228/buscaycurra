@@ -226,7 +226,7 @@ export default function BienvenidaClient() {
         <section aria-label="Tu resumen de hoy" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <CifraGrande tono="azul" Icono={Sparkles} valor={stats.ofertasNuevasHoy} etiqueta="Ofertas nuevas hoy" href="/app/buscar" />
           <CifraGrande tono="verde" Icono={Mail} valor={stats.cvsEnviadosHoy} etiqueta="CVs enviados hoy" href="/app/envios" />
-          <CifraGrande tono="morado" Icono={BarChart3} valor={stats.pipelineActivo} etiqueta="Candidaturas" href="/app/pipeline" />
+          <CifraGrande tono="morado" Icono={BarChart3} valor={stats.pipelineActivo} etiqueta="Pipeline activo" href="/app/pipeline" />
           <CifraGrande tono="ambar" Icono={Target} valor={stats.entrevistasPendientes ?? 0} etiqueta="Entrevistas" href="/app/entrevistas" />
         </section>
 

@@ -3,6 +3,7 @@ import LogoGusano from "@/components/LogoGusano";
 import { Target, Bot, MapPin, Banknote, Zap, RefreshCw, Star, Check, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { LIMITES_EMPRESA } from "@/lib/plan-limits";
+import FondoOleaje from "@/components/FondoOleaje";
 
 // Cuánto incluye el plan (4 nov 2026): cupo de candidatos al mes y personas
 // con acceso. Sale de lib/plan-limits.ts, lo mismo que aplica el servidor.
@@ -111,6 +112,8 @@ const FAQ_EMPRESAS = [
 export default function EmpresasLandingPage() {
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
+      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
+      <FondoOleaje />
 
       {/* Header */}
       <header className="sticky top-0 z-50" style={{ background: "rgba(15,17,23,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(45,49,66,0.4)" }}>
@@ -125,7 +128,7 @@ export default function EmpresasLandingPage() {
               Ver candidatos
             </Link>
             <Link href="/precios" className="text-sm font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
-              style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
               Contratar acceso
             </Link>
           </div>
@@ -161,12 +164,12 @@ export default function EmpresasLandingPage() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
               <Link href="/empresas/candidatos"
                 className="text-center text-sm font-semibold py-3.5 px-10 rounded-xl transition hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 Ver candidatos disponibles →
               </Link>
               <Link href="/empresas/publicar"
                 className="text-center text-sm font-medium py-3.5 px-8 rounded-xl transition hover:bg-[#1e212b]"
-                style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+                style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
                 Mandar una oferta gratis
               </Link>
             </div>
@@ -181,7 +184,7 @@ export default function EmpresasLandingPage() {
               ].map(s => (
                 <div key={s.label} className="text-center">
                   <div className="text-2xl font-extrabold" style={{ color: s.color }}>{s.num}</div>
-                  <div className="text-[11px]" style={{ color: "#64748b" }}>{s.label}</div>
+                  <div className="text-[11px]" style={{ color: "#8b98ad" }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -193,14 +196,14 @@ export default function EmpresasLandingPage() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Por qué las empresas eligen BuscayCurra</h2>
-              <p className="text-sm" style={{ color: "#64748b" }}>Contratar no debería ser caro ni lento.</p>
+              <p className="text-sm" style={{ color: "#8b98ad" }}>Contratar no debería ser caro ni lento.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-5">
               {VENTAJAS.map(v => (
                 <div key={v.titulo} className="card-game p-6">
                   <v.Icon size={32} strokeWidth={1.3} className="mb-4" style={{ color: "#22c55e" }} />
                   <h3 className="text-sm font-bold mb-2" style={{ color: "#f1f5f9" }}>{v.titulo}</h3>
-                  <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{v.desc}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: "#8b98ad" }}>{v.desc}</p>
                 </div>
               ))}
             </div>
@@ -212,16 +215,16 @@ export default function EmpresasLandingPage() {
         <section className="py-16 px-6" style={{ background: "rgba(15,17,23,0.6)", borderTop: "1px solid rgba(45,49,66,0.4)" }}>
           <div className="max-w-5xl mx-auto">
             <h2 className="text-xl font-bold text-center mb-2" style={{ color: "#f1f5f9" }}>Lo que dicen las empresas</h2>
-            <p className="text-sm text-center mb-10" style={{ color: "#64748b" }}>Resultados reales de reclutadores que ya usan BuscayCurra</p>
+            <p className="text-sm text-center mb-10" style={{ color: "#8b98ad" }}>Resultados reales de reclutadores que ya usan BuscayCurra</p>
             <div className="grid md:grid-cols-3 gap-5">
               {TESTIMONIOS.map(t => (
                 <div key={t.nombre} className="rounded-2xl p-6 flex flex-col gap-4"
-                  style={{ background: "#161922", border: "1px solid #2d3142" }}>
+                  style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
                   <div className="flex gap-0.5">{[1,2,3,4,5].map(i => <Star key={i} size={13} strokeWidth={0} fill="#f59e0b" />)}</div>
                   <p className="text-sm leading-relaxed flex-1" style={{ color: "#94a3b8" }}>"{t.texto}"</p>
                   <div>
                     <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>{t.nombre}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>{t.cargo}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "#8b98ad" }}>{t.cargo}</p>
                   </div>
                 </div>
               ))}
@@ -234,13 +237,13 @@ export default function EmpresasLandingPage() {
         <section className="py-16 px-6">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Un precio. Todo incluido.</h2>
-            <p className="text-sm mb-10" style={{ color: "#64748b" }}>Sin sorpresas y sin coste por oferta ni por candidato</p>
-            <div className="rounded-2xl p-8" style={{ background: "#161922", border: "2px solid rgba(34,197,94,0.3)" }}>
+            <p className="text-sm mb-10" style={{ color: "#8b98ad" }}>Sin sorpresas y sin coste por oferta ni por candidato</p>
+            <div className="rounded-2xl p-8" style={{ background: "rgba(12,15,22,0.78)", border: "2px solid rgba(34,197,94,0.3)" }}>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="text-5xl font-black" style={{ color: "#22c55e" }}>49,99€</span>
-                <span className="text-sm" style={{ color: "#64748b" }}>/mes</span>
+                <span className="text-sm" style={{ color: "#8b98ad" }}>/mes</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "#64748b" }}>Sin permanencia · Cancela cuando quieras</p>
+              <p className="text-xs mb-6" style={{ color: "#8b98ad" }}>Sin permanencia · Cancela cuando quieras</p>
               <div className="grid sm:grid-cols-2 gap-2 text-left mb-8">
                 {[
                   "Todos los candidatos visibles, con nombre",
@@ -258,7 +261,7 @@ export default function EmpresasLandingPage() {
               </div>
               <Link href="/precios"
                 className="block text-center text-sm font-bold py-3 rounded-xl transition hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 Contratar Plan Empresa →
               </Link>
             </div>
@@ -272,20 +275,20 @@ export default function EmpresasLandingPage() {
             <div className="space-y-3">
               {FAQ_EMPRESAS.map((faq, i) => (
                 <details key={i} className="rounded-xl overflow-hidden group"
-                  style={{ border: "1px solid #2d3142" }}>
+                  style={{ border: "1px solid rgba(148,163,184,0.18)" }}>
                   <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none"
-                    style={{ background: "#161922" }}>
+                    style={{ background: "rgba(12,15,22,0.78)" }}>
                     <span className="text-sm font-medium" style={{ color: "#f1f5f9" }}>{faq.q}</span>
                     <span className="text-base ml-3 flex-shrink-0" style={{ color: "#22c55e" }}>+</span>
                   </summary>
-                  <div className="px-5 py-4" style={{ background: "rgba(34,197,94,0.02)", borderTop: "1px solid #2d3142" }}>
+                  <div className="px-5 py-4" style={{ background: "rgba(34,197,94,0.02)", borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                     <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>{faq.a}</p>
                   </div>
                 </details>
               ))}
             </div>
             <div className="text-center mt-8">
-              <p className="text-xs" style={{ color: "#6b7280" }}>
+              <p className="text-xs" style={{ color: "#8b98ad" }}>
                 ¿Más preguntas? Escríbenos a{" "}
                 <a href="mailto:empresas@buscaycurra.es" className="underline" style={{ color: "#22c55e" }}>
                   empresas@buscaycurra.es
@@ -321,16 +324,16 @@ export default function EmpresasLandingPage() {
               Empieza a contratar diferente
             </h2>
             <p className="text-sm mb-2" style={{ color: "#22c55e" }}>Candidatos reales que han pedido que les encuentren.</p>
-            <p className="text-xs mb-8" style={{ color: "#64748b" }}>Mira sus perfiles sin nombre antes de pagar.</p>
+            <p className="text-xs mb-8" style={{ color: "#8b98ad" }}>Mira sus perfiles sin nombre antes de pagar.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/empresas/candidatos"
                 className="text-sm font-semibold py-3.5 px-10 rounded-xl transition hover:opacity-90"
-                style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 Ver candidatos gratis →
               </Link>
               <Link href="/empresas/publicar"
                 className="text-sm font-medium py-3.5 px-8 rounded-xl transition hover:bg-[#1e212b]"
-                style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>
+                style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
                 Mandar una oferta
               </Link>
             </div>
@@ -340,7 +343,7 @@ export default function EmpresasLandingPage() {
       </main>
 
       <footer className="py-6 px-6 text-center" style={{ background: "#0a0c10", borderTop: "1px solid rgba(45,49,66,0.5)" }}>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-[11px]" style={{ color: "#2d3142" }}>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-[11px]" style={{ color: "#8b98ad" }}>
           <Link href="/" className="hover:opacity-80">← Volver a BuscayCurra</Link>
           <span className="hidden sm:block">·</span>
           <Link href="/empresas/publicar" className="hover:opacity-80">Mandar una oferta gratis</Link>
