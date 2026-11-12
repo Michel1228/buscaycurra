@@ -16,7 +16,7 @@ import Link from "next/link";
  * 6. Auto-guardado
  */
 
-import { Trash2, Save, Check, Palette, User, GraduationCap, PenLine, Globe, FileText } from "lucide-react";
+import { Trash2, Save, Check, Palette, User, GraduationCap, PenLine, Globe, FileText, Paperclip, Sparkles, Eye, Lock } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { descargarCVComoPDF } from "@/lib/cv-generator/descargar-pdf";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -820,17 +820,14 @@ export default function CurriculumPage() {
   // subirlo va lo primero, antes de plantillas y colores.
   const bloqueSubirPDF = (
     <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
-      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-        style={{ background: "rgba(59,130,246,0.15)" }}>
-        📎
-      </div>
+      <span className="icono-circulo tono-azul" style={{ width: 48, height: 48 }} aria-hidden="true"><Paperclip size={20} /></span>
       <div className="flex-1">
         <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>¿Ya tienes un CV en PDF?</h3>
         <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>Súbelo y extraigo los datos automáticamente</p>
       </div>
-      <label className={`shrink-0 px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
-        style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff" }}>
-        {subiendoPDF ? "Procesando…" : "📎 Subir PDF"}
+      <label className={`shrink-0 inline-flex items-center gap-1.5 px-4 min-h-[44px] text-xs font-bold rounded-full cursor-pointer transition ${subiendoPDF ? "opacity-50 pointer-events-none" : ""}`}
+        style={{ background: "linear-gradient(180deg, #93c5fd, #3b82f6 60%, #2563eb)", color: "#06122a" }}>
+        {subiendoPDF ? "Procesando…" : <><Paperclip size={14} aria-hidden="true" />Subir PDF</>}
         <input type="file" accept="application/pdf,.pdf" className="hidden"
           onChange={e => e.target.files?.[0] && subirPDF(e.target.files[0])}
           disabled={subiendoPDF} />
@@ -909,9 +906,9 @@ export default function CurriculumPage() {
             )}
             {!mejoradoHTML && !traducido && (
               <button onClick={generarYMejorar} disabled={procesando}
-                className="px-4 py-2 text-xs font-semibold rounded-xl transition disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #fff, #e2e8f0)", color: "#16a34a" }}>
-                {procesando ? "Mejorando..." : "✨ Mejorar con IA"}
+                className="inline-flex items-center gap-1.5 px-4 min-h-[40px] text-xs font-bold rounded-full transition disabled:opacity-50"
+                style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
+                {procesando ? "Mejorando..." : <><Sparkles size={14} aria-hidden="true" />Mejorar con IA</>}
               </button>
             )}
             {/* Traducir el CV para trabajar fuera (lib/cv-generator/traducir.ts). */}
@@ -929,9 +926,9 @@ export default function CurriculumPage() {
                   ))}
                 </select>
                 <button onClick={traducirCV} disabled={traduciendo}
-                  className="px-3 py-2 text-xs font-semibold rounded-xl disabled:opacity-50"
-                  style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}>
-                  {traduciendo ? "Traduciendo..." : "🌍 Traducir"}
+                  className="inline-flex items-center gap-1.5 px-3 min-h-[40px] text-xs font-semibold rounded-full disabled:opacity-50"
+                  style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.25)", color: "#f1f5f9" }}>
+                  {traduciendo ? "Traduciendo..." : <><Globe size={14} aria-hidden="true" />Traducir</>}
                 </button>
               </div>
             )}
@@ -1143,10 +1140,9 @@ export default function CurriculumPage() {
             }}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                    style={{ background: visibleEmpresas ? "rgba(34,197,94,0.15)" : "rgba(100,116,139,0.15)" }}>
-                    {visibleEmpresas ? "👁️" : "🔒"}
-                  </div>
+                  <span className={`icono-circulo tono-${visibleEmpresas ? "verde" : "neutro"}`} style={{ width: 40, height: 40 }} aria-hidden="true">
+                    {visibleEmpresas ? <Eye size={18} /> : <Lock size={18} />}
+                  </span>
                   <div>
                     <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
                       Visible para empresas
@@ -1190,7 +1186,7 @@ export default function CurriculumPage() {
                   {fotoUrl ? (
                     <img src={fotoUrl} alt="Foto CV" className="w-full h-full object-cover" width={80} height={80} loading="lazy" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl" style={{ background: "rgba(12,15,22,0.86)", color: "#8b98ad" }}>👤</div>
+                    <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(12,15,22,0.86)", color: "#8b98ad" }}><User size={30} aria-hidden="true" /></div>
                   )}
                 </div>
                 <div>
@@ -1489,7 +1485,7 @@ export default function CurriculumPage() {
               <button onClick={generarYMejorar} disabled={procesando || !form.nombre.trim()}
                 className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
                 style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
-                {procesando ? "✨ Mejorando..." : "✨ Mejorar con IA"}
+                {procesando ? "Mejorando..." : <span className="inline-flex items-center gap-1.5"><Sparkles size={15} aria-hidden="true" />Mejorar con IA</span>}
               </button>
               <button onClick={descargarPDF} disabled={descargando || !previewHTML}
                 className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition disabled:opacity-50"
@@ -1513,7 +1509,7 @@ export default function CurriculumPage() {
           // Por encima de la barra de abajo del móvil (--barra-inferior, globals.css).
           style={{ bottom: "calc(var(--barra-inferior) + 20px)", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", boxShadow: "0 8px 24px rgba(34,197,94,0.35)" }}
         >
-          👁️ Ver mi CV
+          <Eye size={17} aria-hidden="true" /> Ver mi CV
         </button>
       )}
 
