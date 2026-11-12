@@ -442,9 +442,6 @@ export default function PipelinePage() {
                           <span className="ml-auto text-xl font-extrabold tabular-nums" style={{ color: "var(--tono-texto)" }}>{items.length}</span>
                         </div>
                         <div className="space-y-2 min-h-[56px] flex-1">
-                          {items.length === 0 && (
-                            <p className="text-[12px] px-1 py-3" style={{ color: "var(--texto-tenue)" }}>Nada aquí todavía.</p>
-                          )}
                           {visibles.map(item => {
                             const dias = diasDesde(item.fecha);
                             const necesitaAtencion = dias > 2 && item.estado !== "descartado" && item.estado !== "oferta";
@@ -652,7 +649,6 @@ export default function PipelinePage() {
 
             {/* Mover a columna */}
             <div>
-              <p className="text-[11px] font-semibold mb-1.5" style={{ color: "#a7b3c6" }}>Mover a</p>
               <div className="flex gap-2 flex-wrap">
                 {COLUMNAS.filter(c => c.id !== candidaturaEdit.estado).map(c => (
                   <button key={c.id} onClick={() => { moverCandidatura(candidaturaEdit.id, c.id); setModalAbierto(false); }}
@@ -681,7 +677,6 @@ export default function PipelinePage() {
           <div className="ui-neon cristal tono-lima w-full max-w-sm p-5 space-y-3" style={{ background: "rgba(10,13,19,0.98)" }} onClick={e => e.stopPropagation()}
             role="dialog" aria-modal="true" aria-labelledby="titulo-nueva">
             <h3 id="titulo-nueva" className="font-semibold text-[15px]" style={{ color: "#f1f5f9" }}>Nueva candidatura</h3>
-            <p className="text-[12px]" style={{ color: "#a7b3c6" }}>Para apuntar las que has hecho por tu cuenta. No gasta envíos.</p>
             <label className="sr-only" htmlFor="nueva-empresa">Empresa</label>
             <input
               id="nueva-empresa"
