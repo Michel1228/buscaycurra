@@ -8,6 +8,9 @@ import { getPool } from "@/lib/db";
 import { ESTADOS_QUE_GASTAN_CUOTA } from "@/lib/cv-sender/rate-limiter";
 import { ofertasParaTi } from "@/lib/job-search/ofertas-para-ti";
 import { patronesDelCv, puestosDelCv } from "@/lib/job-search/puestos-del-cv";
+import { ofertasNuevasHoy } from "@/lib/metricas/ofertas-nuevas-hoy";
+import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
+import { createHash } from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -51,15 +54,10 @@ export async function GET(request: NextRequest) {
       { count: pipelineActivo },
       { data: profile },
     ] = await Promise.all([
-      // Ofertas nuevas hoy desde la BD local (JobListing PostgreSQL)
-      getPool()
-        .query<{ count: string }>(
-          `SELECT COUNT(*)::int AS count FROM "JobListing"
-           WHERE "isActive" = true AND "createdAt" >= $1`,
-          [hoy.toISOString()]
-        )
-        .then((res) => parseInt(res.rows[0]?.count || "0", 10))
-        .catch(() => 0), // fallback a 0 si la BD local no está disponible
+      // Ofertas nuevas hoy: la misma cifra para todos, guardada en Redis
+      // (lib/metricas/ofertas-nuevas-hoy.ts). Contarla en cada apertura
+      // tardaba hasta 17,5 s y la pantalla de Inicio esperaba (12 nov 2026).
+      ofertasNuevasHoy(),
 
       // CVs enviados (total y hoy)
       supabaseAdmin
@@ -125,7 +123,17 @@ export async function GET(request: NextRequest) {
         "SELECT form_data FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1",
         [userId]
       );
-      ofertasRecomendadas = await ofertasParaTi(cvs[0]?.form_data ?? null, profile?.ciudad);
+      // Guardadas 20 min por persona, CV y ciudad: se recalculaban en cada
+      // apertura con consultas de varios segundos (12 nov 2026). Si cambia el
+      // CV o la ciudad, cambia la clave y se calculan de nuevo.
+      const claveParaTi = `para-ti:${userId}:${createHash("md5").update(JSON.stringify([patronesDelCv(cvs[0]?.form_data ?? null), profile?.ciudad ?? ""])).digest("hex")}`;
+      const guardadas = await cacheGet(claveParaTi).catch(() => null);
+      if (guardadas) {
+        ofertasRecomendadas = JSON.parse(guardadas);
+      } else {
+        ofertasRecomendadas = await ofertasParaTi(cvs[0]?.form_data ?? null, profile?.ciudad);
+        await cacheSet(claveParaTi, ofertasRecomendadas, 20 * 60).catch(() => false);
+      }
       estadoRecomendadas = !patronesDelCv(cvs[0]?.form_data ?? null).length ? "sin-cv" : ofertasRecomendadas.length ? "ok" : "sin-ofertas";
       puestosRecomendadas = puestosDelCv(cvs[0]?.form_data ?? null).slice(0, 3);
     } catch (e) {

@@ -1624,8 +1624,10 @@ test("los cuatro atajos del panel llevan iconos distintos", () => {
 });
 // El panel es lo primero que se ve al entrar y tardaba 6,8 s (30 sep 2026):
 // seis consultas independientes, una detras de otra, cinco de ellas a Supabase.
+// 12 nov 2026: la cifra de ofertas de hoy sale de ofertasNuevasHoy() (Redis),
+// que sigue yendo dentro del mismo Promise.all que el resto.
 test("el panel lanza sus consultas a la vez, no en fila", () =>
-  /await Promise\.all\(\[[\s\S]{0,300}getPool\(\)/.test(dashSrc) &&
+  /await Promise\.all\(\[[\s\S]{0,400}(getPool\(\)|ofertasNuevasHoy\(\))/.test(dashSrc) &&
   !/await supabaseAdmin\s*\.from\("cv_sends"\)/.test(dashSrc));
 test("el respaldo de icono desconocido avisa en vez de callarse", () =>
   leerFuente("app/app/bienvenida/BienvenidaClient.tsx").includes("icono desconocido"));
@@ -1993,8 +1995,9 @@ test("el sincronizador se planta si el pais no esta en Adzuna", () =>
 // cualquiera aparecia "Oferta no encontrada". Es lo primero que se ve al entrar.
 const panelSrc = leerFuente("app/api/dashboard/route.ts");
 
+// 12 nov 2026: el recuento de JobListing vive en lib/metricas/ofertas-nuevas-hoy.ts.
 test("la portada lee las ofertas de JobListing, no de Supabase", () =>
-  panelSrc.includes('FROM "JobListing"') && !panelSrc.includes('.from("ofertas")'));
+  (panelSrc + leerFuente("lib/metricas/ofertas-nuevas-hoy.ts")).includes('FROM "JobListing"') && !panelSrc.includes('.from("ofertas")'));
 
 test("un fallo leyendo las ofertas de la portada se ve en el registro", () =>
   panelSrc.includes("[dashboard] No se pudieron leer las ofertas"));
@@ -2477,6 +2480,21 @@ test("logos de empresa: BM, Mercadona, Lidl, Carrefour, México y Colombia; ni p
   } finally {
     for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
   }
+});
+
+// ── INICIO NO ESPERA A CONTAR 3,7 MILLONES DE OFERTAS (12 nov 2026) ──────────
+//
+// /api/dashboard contaba en cada apertura las ofertas nuevas de hoy (17,5 s en
+// frio) y la pantalla de Inicio no salia hasta acabar. Ahora la cifra se guarda
+// en Redis (fresca 15 min; si es vieja se da al momento y se recuenta detras)
+// y las recomendaciones de cada persona se guardan 20 min.
+test("Inicio no cuenta las ofertas de hoy en cada apertura y guarda las recomendaciones", () => {
+  const d = leerFuente("app/api/dashboard/route.ts");
+  const h = leerFuente("lib/metricas/ofertas-nuevas-hoy.ts");
+  return !d.includes('COUNT(*)::int AS count FROM "JobListing"') && d.includes("ofertasNuevasHoy(),")
+    && d.includes("cacheSet(claveParaTi, ofertasRecomendadas, 20 * 60)")
+    && h.includes("ofertas-nuevas-hoy:fresco:") && h.includes("contar(dia).catch(() => {});")
+    && h.includes("SET LOCAL statement_timeout");
 });
 
 // ── LA FICHA PUBLICA DE OFERTA: EL BOTON A LA VISTA Y LAS VISITAS CONTADAS (12 nov)
