@@ -11,6 +11,7 @@
 import Link from "next/link";
 import { Check, Globe, Compass, RefreshCw } from "lucide-react";
 import FondoOleaje from "@/components/FondoOleaje";
+import LogoGusano from "@/components/LogoGusano";
 
 // ─── Página de Política de Cookies ───────────────────────────────────────────
 
@@ -32,17 +33,12 @@ export default function CookiesPage() {
       <header className="glass-warm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}
-            >
-              B
-            </div>
-            <span className="font-bold text-lg" style={{ color: "#22c55e" }}>BuscayCurra</span>
+            <LogoGusano size={30} />
+            <span className="font-extrabold text-lg"><span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span></span>
           </Link>
           <Link
             href="/"
-            className="text-sm text-gray-500 hover:text-gray-900 transition"
+            className="text-sm text-[#8b98ad] hover:text-white transition"
           >
             ← Volver al inicio
           </Link>
@@ -56,20 +52,20 @@ export default function CookiesPage() {
         <div className="mb-10">
           <h1
             className="text-4xl font-extrabold mb-3"
-            style={{ color: "#22c55e" }}
+            style={{ color: "#a3e635" }}
           >
             Política de Cookies
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-[#8b98ad] text-sm">
             Última actualización: Abril 2026
           </p>
         </div>
 
-        <div className="space-y-10 text-gray-700 leading-relaxed">
+        <div className="space-y-10 text-[#cbd5e1] leading-relaxed">
 
           {/* 1. ¿Qué son las cookies? */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               1. ¿Qué son las cookies?
             </h2>
             <p>
@@ -87,7 +83,7 @@ export default function CookiesPage() {
 
           {/* 2. Cookies que usamos */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               2. Cookies que utilizamos
             </h2>
             <p className="mb-4">
@@ -98,11 +94,11 @@ export default function CookiesPage() {
 
             {/* Tabla de cookies */}
             <div className="overflow-x-auto">
-              <table className="w-full text-sm border border-gray-200 rounded-xl overflow-hidden">
+              <table className="w-full text-sm border border-white/10 rounded-xl overflow-hidden">
                 <thead>
                   <tr
                     className="text-white text-left"
-                    style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}
+                    style={{ background: "linear-gradient(135deg, #a3e635, #84cc16)", color: "#0b1406" }}
                   >
                     <th className="px-4 py-3 font-semibold">Cookie</th>
                     <th className="px-4 py-3 font-semibold">Tipo</th>
@@ -111,53 +107,53 @@ export default function CookiesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-t border-gray-100 bg-white">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800">
+                  <tr className="border-t border-white/[0.06] bg-[rgba(12,15,22,0.86)]">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#e2e8f0]">
                       supabase-auth-token
                     </td>
                     <td className="px-4 py-3">
-                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                      <span className="bg-[rgba(163,230,53,0.14)] text-[#d9f99d] px-2 py-0.5 rounded-full text-xs font-medium">
                         Necesaria
                       </span>
                     </td>
                     <td className="px-4 py-3">Mantener la sesión iniciada en la plataforma</td>
-                    <td className="px-4 py-3 text-gray-500">Sesión</td>
+                    <td className="px-4 py-3 text-[#8b98ad]">Sesión</td>
                   </tr>
-                  <tr className="border-t border-gray-100 bg-gray-50">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800">
+                  <tr className="border-t border-white/[0.06] bg-white/[0.03]">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#e2e8f0]">
                       cookie-consent
                     </td>
                     <td className="px-4 py-3">
-                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                      <span className="bg-[rgba(163,230,53,0.14)] text-[#d9f99d] px-2 py-0.5 rounded-full text-xs font-medium">
                         Necesaria
                       </span>
                     </td>
                     <td className="px-4 py-3">Recordar tu elección de consentimiento de cookies</td>
-                    <td className="px-4 py-3 text-gray-500">1 año</td>
+                    <td className="px-4 py-3 text-[#8b98ad]">1 año</td>
                   </tr>
-                  <tr className="border-t border-gray-100 bg-white">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800">
+                  <tr className="border-t border-white/[0.06] bg-[rgba(12,15,22,0.86)]">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#e2e8f0]">
                       _stripe_*
                     </td>
                     <td className="px-4 py-3">
-                      <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                      <span className="bg-[rgba(59,130,246,0.16)] text-[#bfdbfe] px-2 py-0.5 rounded-full text-xs font-medium">
                         Funcional
                       </span>
                     </td>
                     <td className="px-4 py-3">Gestión segura de pagos a través de Stripe</td>
-                    <td className="px-4 py-3 text-gray-500">Sesión</td>
+                    <td className="px-4 py-3 text-[#8b98ad]">Sesión</td>
                   </tr>
-                  <tr className="border-t border-gray-100 bg-gray-50">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-800">
+                  <tr className="border-t border-white/[0.06] bg-white/[0.03]">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#e2e8f0]">
                       _vercel_*
                     </td>
                     <td className="px-4 py-3">
-                      <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                      <span className="bg-white/[0.05] text-[#cbd5e1] px-2 py-0.5 rounded-full text-xs font-medium">
                         Técnica
                       </span>
                     </td>
                     <td className="px-4 py-3">Infraestructura de despliegue (Vercel)</td>
-                    <td className="px-4 py-3 text-gray-500">Sesión</td>
+                    <td className="px-4 py-3 text-[#8b98ad]">Sesión</td>
                   </tr>
                 </tbody>
               </table>
@@ -166,11 +162,11 @@ export default function CookiesPage() {
 
           {/* 3. Lo que NO hacemos */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               3. Lo que NO hacemos con cookies
             </h2>
-            <div className="bg-green-50 border border-green-200 rounded-xl p-5">
-              <ul className="space-y-2 text-green-800">
+            <div className="cristal tono-lima p-5">
+              <ul className="space-y-2 text-[#e2e8f0]">
                 <li className="flex items-start gap-2">
                   <Check size={14} strokeWidth={2.5} className="mt-0.5 flex-shrink-0 text-green-500" />
                   <span>No utilizamos cookies publicitarias ni de seguimiento.</span>
@@ -193,7 +189,7 @@ export default function CookiesPage() {
 
           {/* 4. Cómo gestionar las cookies */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               4. Cómo gestionar las cookies en tu navegador
             </h2>
             <p className="mb-4">
@@ -205,9 +201,9 @@ export default function CookiesPage() {
 
             <div className="grid md:grid-cols-3 gap-4">
               {/* Chrome */}
-              <div className="border border-gray-200 rounded-xl p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Globe size={14} strokeWidth={1.8} className="text-blue-500" />Google Chrome</h3>
-                <ol className="list-decimal pl-4 text-sm space-y-1 text-gray-600">
+              <div className="border border-white/10 rounded-xl p-4">
+                <h3 className="font-semibold text-[#f1f5f9] mb-2 flex items-center gap-1.5"><Globe size={14} strokeWidth={1.8} className="text-blue-500" />Google Chrome</h3>
+                <ol className="list-decimal pl-4 text-sm space-y-1 text-[#a7b3c6]">
                   <li>Menú → Configuración</li>
                   <li>Privacidad y seguridad</li>
                   <li>Cookies y otros datos de sitios</li>
@@ -215,9 +211,9 @@ export default function CookiesPage() {
               </div>
 
               {/* Firefox */}
-              <div className="border border-gray-200 rounded-xl p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Globe size={14} strokeWidth={1.8} className="text-orange-500" />Mozilla Firefox</h3>
-                <ol className="list-decimal pl-4 text-sm space-y-1 text-gray-600">
+              <div className="border border-white/10 rounded-xl p-4">
+                <h3 className="font-semibold text-[#f1f5f9] mb-2 flex items-center gap-1.5"><Globe size={14} strokeWidth={1.8} className="text-orange-500" />Mozilla Firefox</h3>
+                <ol className="list-decimal pl-4 text-sm space-y-1 text-[#a7b3c6]">
                   <li>Menú → Configuración</li>
                   <li>Privacidad y seguridad</li>
                   <li>Cookies y datos del sitio</li>
@@ -225,9 +221,9 @@ export default function CookiesPage() {
               </div>
 
               {/* Safari */}
-              <div className="border border-gray-200 rounded-xl p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Compass size={14} strokeWidth={1.8} className="text-blue-400" />Safari</h3>
-                <ol className="list-decimal pl-4 text-sm space-y-1 text-gray-600">
+              <div className="border border-white/10 rounded-xl p-4">
+                <h3 className="font-semibold text-[#f1f5f9] mb-2 flex items-center gap-1.5"><Compass size={14} strokeWidth={1.8} className="text-blue-400" />Safari</h3>
+                <ol className="list-decimal pl-4 text-sm space-y-1 text-[#a7b3c6]">
                   <li>Preferencias</li>
                   <li>Privacidad</li>
                   <li>Gestionar datos de sitios web</li>
@@ -238,7 +234,7 @@ export default function CookiesPage() {
 
           {/* 5. Retirar consentimiento */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               5. Retirar o cambiar tu consentimiento
             </h2>
             <p className="mb-4">
@@ -249,7 +245,7 @@ export default function CookiesPage() {
             </p>
             <button
               onClick={resetearConsentimiento}
-              className="px-6 py-3 rounded-xl font-semibold text-sm border-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+              className="px-6 py-3 rounded-xl font-semibold text-sm border-2 border-white/15 text-[#cbd5e1] hover:bg-white/[0.04] transition"
             >
               <RefreshCw size={14} strokeWidth={1.8} className="inline mr-1.5" />Restablecer preferencias de cookies
             </button>
@@ -258,27 +254,27 @@ export default function CookiesPage() {
         </div>
 
         {/* ── Navegación legal ─────────────────────────────────────────── */}
-        <div className="mt-14 pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-500 mb-4">Documentos legales relacionados:</p>
+        <div className="mt-14 pt-8 border-t border-white/10">
+          <p className="text-sm text-[#8b98ad] mb-4">Documentos legales relacionados:</p>
           <div className="flex flex-wrap gap-4 text-sm">
             <Link
               href="/privacidad"
               className="hover:underline"
-              style={{ color: "#22c55e" }}
+              style={{ color: "#a3e635" }}
             >
               Política de Privacidad
             </Link>
             <Link
               href="/terminos"
               className="hover:underline"
-              style={{ color: "#22c55e" }}
+              style={{ color: "#a3e635" }}
             >
               Términos y Condiciones
             </Link>
             <Link
               href="/aviso-legal"
               className="hover:underline"
-              style={{ color: "#22c55e" }}
+              style={{ color: "#a3e635" }}
             >
               Aviso Legal
             </Link>
@@ -288,7 +284,7 @@ export default function CookiesPage() {
       </main>
 
       {/* ── Footer mínimo ────────────────────────────────────────────── */}
-      <footer className="bg-gray-900 text-gray-400 py-8 px-4 mt-16">
+      <footer className="bg-[rgba(6,9,11,0.82)] text-[#8b98ad] py-8 px-4 mt-16">
         <div className="max-w-4xl mx-auto text-center text-sm">
           © {new Date().getFullYear()} BuscayCurra —{" "}
           <a

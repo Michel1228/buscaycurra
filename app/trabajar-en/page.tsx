@@ -83,7 +83,7 @@ export default function TrabajarEnPage() {
               </div>
               <div className="flex gap-4 text-sm text-[#94a3b8]">
                 <span>{pais.salario}/mes</span>
-                <span>{pais.ofertas} ofertas</span>
+                <span>ofertas {pais.ofertas}</span>
               </div>
             </Link>
           ))}

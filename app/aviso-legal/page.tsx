@@ -10,6 +10,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import FondoOleaje from "@/components/FondoOleaje";
+import LogoGusano from "@/components/LogoGusano";
 
 // ─── Página de Aviso Legal ────────────────────────────────────────────────────
 
@@ -36,17 +37,12 @@ export default function AvisoLegalPage() {
       <header className="glass-warm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}
-            >
-              B
-            </div>
-            <span className="font-bold text-lg" style={{ color: "#22c55e" }}>BuscayCurra</span>
+            <LogoGusano size={30} />
+            <span className="font-extrabold text-lg"><span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span></span>
           </Link>
           <Link
             href="/"
-            className="text-sm text-gray-500 hover:text-gray-900 transition"
+            className="text-sm text-[#8b98ad] hover:text-white transition"
           >
             ← Volver al inicio
           </Link>
@@ -60,89 +56,89 @@ export default function AvisoLegalPage() {
         <div className="mb-10">
           <h1
             className="text-4xl font-extrabold mb-3"
-            style={{ color: "#22c55e" }}
+            style={{ color: "#a3e635" }}
           >
             Aviso Legal
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-[#8b98ad] text-sm">
             Última actualización: Abril 2026
           </p>
         </div>
 
-        <div className="space-y-10 text-gray-700 leading-relaxed">
+        <div className="space-y-10 text-[#cbd5e1] leading-relaxed">
 
           {/* 1. Datos identificativos */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-4">
               1. Datos identificativos del titular
             </h2>
-            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-white/[0.03] rounded-xl border border-white/10 overflow-hidden">
               <table className="w-full text-sm">
                 <tbody>
-                  <tr className="border-b border-gray-200">
-                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100 w-40">
+                  <tr className="border-b border-white/10">
+                    <td className="px-5 py-3 font-semibold text-[#a7b3c6] bg-white/[0.05] w-40">
                       Titular
                     </td>
-                    <td className="px-5 py-3 text-gray-800">Michel Batista González</td>
+                    <td className="px-5 py-3 text-[#e2e8f0]">Michel Batista González</td>
                   </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                  <tr className="border-b border-white/10">
+                    <td className="px-5 py-3 font-semibold text-[#a7b3c6] bg-white/[0.05]">
                       NIF
                     </td>
-                    <td className="px-5 py-3 text-gray-800">X9784910-C</td>
+                    <td className="px-5 py-3 text-[#e2e8f0]">X9784910-C</td>
                   </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                  <tr className="border-b border-white/10">
+                    <td className="px-5 py-3 font-semibold text-[#a7b3c6] bg-white/[0.05]">
                       Domicilio
                     </td>
-                    <td className="px-5 py-3 text-gray-800">
+                    <td className="px-5 py-3 text-[#e2e8f0]">
                       Calle Melchor Enríco Camediografo, 9, 2.º A<br />31500 Tudela (Navarra), España
                     </td>
                   </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                  <tr className="border-b border-white/10">
+                    <td className="px-5 py-3 font-semibold text-[#a7b3c6] bg-white/[0.05]">
                       Nombre comercial
                     </td>
-                    <td className="px-5 py-3 text-gray-800">BuscayCurra</td>
+                    <td className="px-5 py-3 text-[#e2e8f0]">BuscayCurra</td>
                   </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                  <tr className="border-b border-white/10">
+                    <td className="px-5 py-3 font-semibold text-[#a7b3c6] bg-white/[0.05]">
                       Dominio
                     </td>
-                    <td className="px-5 py-3 text-gray-800">buscaycurra.es</td>
+                    <td className="px-5 py-3 text-[#e2e8f0]">buscaycurra.es</td>
                   </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                  <tr className="border-b border-white/10">
+                    <td className="px-5 py-3 font-semibold text-[#a7b3c6] bg-white/[0.05]">
                       Email
                     </td>
                     <td className="px-5 py-3">
                       <a
                         href="mailto:privacidad@buscaycurra.es"
                         className="font-medium hover:underline"
-                        style={{ color: "#22c55e" }}
+                        style={{ color: "#a3e635" }}
                       >
                         privacidad@buscaycurra.es
                       </a>
                     </td>
                   </tr>
-                  <tr className="border-b border-gray-200">
-                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                  <tr className="border-b border-white/10">
+                    <td className="px-5 py-3 font-semibold text-[#a7b3c6] bg-white/[0.05]">
                       País
                     </td>
-                    <td className="px-5 py-3 text-gray-800">España</td>
+                    <td className="px-5 py-3 text-[#e2e8f0]">España</td>
                   </tr>
                   <tr>
-                    <td className="px-5 py-3 font-semibold text-gray-600 bg-gray-100">
+                    <td className="px-5 py-3 font-semibold text-[#a7b3c6] bg-white/[0.05]">
                       Actividad
                     </td>
-                    <td className="px-5 py-3 text-gray-800">
+                    <td className="px-5 py-3 text-[#e2e8f0]">
                       Plataforma de búsqueda de empleo con inteligencia artificial
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-4 text-sm text-[#8b98ad]">
               En cumplimiento con el artículo 10 de la Ley 34/2002, de 11 de
               julio, de Servicios de la Sociedad de la Información y de
               Comercio Electrónico (LSSI-CE).
@@ -151,7 +147,7 @@ export default function AvisoLegalPage() {
 
           {/* 2. Objeto y ámbito */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               2. Objeto y ámbito de aplicación
             </h2>
             <p>
@@ -169,7 +165,7 @@ export default function AvisoLegalPage() {
 
           {/* 3. Propiedad intelectual */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               3. Propiedad intelectual e industrial
             </h2>
             <p>
@@ -202,11 +198,11 @@ export default function AvisoLegalPage() {
 
           {/* 4. Exclusión de responsabilidad */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               4. Exclusión de responsabilidad
             </h2>
 
-            <h3 className="text-lg font-semibold text-gray-800 mb-2 mt-4">
+            <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2 mt-4">
               4.1 Disponibilidad del servicio
             </h3>
             <p>
@@ -216,7 +212,7 @@ export default function AvisoLegalPage() {
               interrupciones en el funcionamiento del sitio web.
             </p>
 
-            <h3 className="text-lg font-semibold text-gray-800 mb-2 mt-4">
+            <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2 mt-4">
               4.2 Contenidos y enlaces externos
             </h3>
             <p>
@@ -228,7 +224,7 @@ export default function AvisoLegalPage() {
               enlazados.
             </p>
 
-            <h3 className="text-lg font-semibold text-gray-800 mb-2 mt-4">
+            <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2 mt-4">
               4.3 Uso del servicio
             </h3>
             <p>
@@ -243,7 +239,7 @@ export default function AvisoLegalPage() {
 
           {/* 5. Política de privacidad y cookies */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               5. Política de privacidad y cookies
             </h2>
             <p>
@@ -252,7 +248,7 @@ export default function AvisoLegalPage() {
               <Link
                 href="/privacidad"
                 className="font-medium hover:underline"
-                style={{ color: "#22c55e" }}
+                style={{ color: "#a3e635" }}
               >
                 Política de Privacidad
               </Link>
@@ -260,7 +256,7 @@ export default function AvisoLegalPage() {
               <Link
                 href="/cookies"
                 className="font-medium hover:underline"
-                style={{ color: "#22c55e" }}
+                style={{ color: "#a3e635" }}
               >
                 Política de Cookies
               </Link>
@@ -270,7 +266,7 @@ export default function AvisoLegalPage() {
 
           {/* 6. Ley aplicable */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               6. Ley aplicable y jurisdicción
             </h2>
             <p>
@@ -293,27 +289,27 @@ export default function AvisoLegalPage() {
         </div>
 
         {/* ── Navegación legal ─────────────────────────────────────────── */}
-        <div className="mt-14 pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-500 mb-4">Documentos legales relacionados:</p>
+        <div className="mt-14 pt-8 border-t border-white/10">
+          <p className="text-sm text-[#8b98ad] mb-4">Documentos legales relacionados:</p>
           <div className="flex flex-wrap gap-4 text-sm">
             <Link
               href="/privacidad"
               className="hover:underline"
-              style={{ color: "#22c55e" }}
+              style={{ color: "#a3e635" }}
             >
               Política de Privacidad
             </Link>
             <Link
               href="/terminos"
               className="hover:underline"
-              style={{ color: "#22c55e" }}
+              style={{ color: "#a3e635" }}
             >
               Términos y Condiciones
             </Link>
             <Link
               href="/cookies"
               className="hover:underline"
-              style={{ color: "#22c55e" }}
+              style={{ color: "#a3e635" }}
             >
               Política de Cookies
             </Link>
@@ -323,7 +319,7 @@ export default function AvisoLegalPage() {
       </main>
 
       {/* ── Footer mínimo ────────────────────────────────────────────── */}
-      <footer className="bg-gray-900 text-gray-400 py-8 px-4 mt-16">
+      <footer className="bg-[rgba(6,9,11,0.82)] text-[#8b98ad] py-8 px-4 mt-16">
         <div className="max-w-4xl mx-auto text-center text-sm">
           © {new Date().getFullYear()} BuscayCurra —{" "}
           <a

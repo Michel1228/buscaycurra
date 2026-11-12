@@ -10,6 +10,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { LIMITS } from "@/lib/plan-limits";
 import FondoOleaje from "@/components/FondoOleaje";
+import LogoGusano from "@/components/LogoGusano";
 
 // ─── Página de Términos y Condiciones ────────────────────────────────────────
 
@@ -36,17 +37,12 @@ export default function TerminosPage() {
       <header className="glass-warm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}
-            >
-              B
-            </div>
-            <span className="font-bold text-lg" style={{ color: "#22c55e" }}>BuscayCurra</span>
+            <LogoGusano size={30} />
+            <span className="font-extrabold text-lg"><span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span></span>
           </Link>
           <Link
             href="/"
-            className="text-sm text-gray-500 hover:text-gray-900 transition"
+            className="text-sm text-[#8b98ad] hover:text-white transition"
           >
             ← Volver al inicio
           </Link>
@@ -60,20 +56,20 @@ export default function TerminosPage() {
         <div className="mb-10">
           <h1
             className="text-4xl font-extrabold mb-3"
-            style={{ color: "#22c55e" }}
+            style={{ color: "#a3e635" }}
           >
             Términos y Condiciones
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-[#8b98ad] text-sm">
             Última actualización: Octubre 2026
           </p>
         </div>
 
-        <div className="space-y-10 text-gray-700 leading-relaxed">
+        <div className="space-y-10 text-[#cbd5e1] leading-relaxed">
 
           {/* 1. Descripción del servicio */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               1. Descripción del servicio
             </h2>
             <p>
@@ -92,7 +88,7 @@ export default function TerminosPage() {
 
           {/* 2. Registro y cuenta */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               2. Registro y cuenta de usuario
             </h2>
             <ul className="list-disc pl-6 space-y-2">
@@ -123,17 +119,17 @@ export default function TerminosPage() {
 
           {/* 3. Planes y pagos */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               3. Planes y condiciones de pago
             </h2>
 
             {/* Tabla de planes */}
             <div className="overflow-x-auto mb-6">
-              <table className="w-full text-sm border border-gray-200 rounded-xl overflow-hidden">
+              <table className="w-full text-sm border border-white/10 rounded-xl overflow-hidden">
                 <thead>
                   <tr
                     className="text-white text-left"
-                    style={{ background: "linear-gradient(135deg, #22c55e, #5cb848)", color: "#1a1a12" }}
+                    style={{ background: "linear-gradient(135deg, #a3e635, #84cc16)", color: "#0b1406" }}
                   >
                     <th className="px-4 py-3 font-semibold">Plan</th>
                     <th className="px-4 py-3 font-semibold">Precio</th>
@@ -145,35 +141,35 @@ export default function TerminosPage() {
                     servidor y que anuncia /precios. Aquí ponía "2 CVs / día"
                     (Free) y "10 CVs / día" (Pro), y faltaba el plan Esencial. */}
                 <tbody>
-                  <tr className="border-t border-gray-100 bg-white">
+                  <tr className="border-t border-white/[0.06] bg-[rgba(12,15,22,0.86)]">
                     <td className="px-4 py-3 font-medium">Free</td>
                     <td className="px-4 py-3">Gratis</td>
                     <td className="px-4 py-3">{LIMITS.free.enviosCVDia} CVs / día ({LIMITS.free.enviosCVSemana} / semana)</td>
-                    <td className="px-4 py-3 text-gray-500">Sin tarjeta</td>
+                    <td className="px-4 py-3 text-[#8b98ad]">Sin tarjeta</td>
                   </tr>
-                  <tr className="border-t border-gray-100 bg-white">
-                    <td className="px-4 py-3 font-medium" style={{ color: "#22c55e" }}>
+                  <tr className="border-t border-white/[0.06] bg-[rgba(12,15,22,0.86)]">
+                    <td className="px-4 py-3 font-medium" style={{ color: "#a3e635" }}>
                       Esencial
                     </td>
                     <td className="px-4 py-3">2,99 € / mes</td>
                     <td className="px-4 py-3">{LIMITS.esencial.enviosCVDia} CVs / día ({LIMITS.esencial.enviosCVSemana} / semana)</td>
-                    <td className="px-4 py-3 text-gray-500">Renovación mensual</td>
+                    <td className="px-4 py-3 text-[#8b98ad]">Renovación mensual</td>
                   </tr>
-                  <tr className="border-t border-gray-100 bg-blue-50">
-                    <td className="px-4 py-3 font-medium" style={{ color: "#22c55e" }}>
+                  <tr className="border-t border-white/[0.06] bg-[rgba(59,130,246,0.08)]">
+                    <td className="px-4 py-3 font-medium" style={{ color: "#a3e635" }}>
                       Pro
                     </td>
                     <td className="px-4 py-3">9,99 € / mes</td>
                     <td className="px-4 py-3">{LIMITS.pro.enviosCVDia} CVs / día ({LIMITS.pro.enviosCVSemana} / semana)</td>
-                    <td className="px-4 py-3 text-gray-500">Renovación mensual</td>
+                    <td className="px-4 py-3 text-[#8b98ad]">Renovación mensual</td>
                   </tr>
-                  <tr className="border-t border-gray-100 bg-white">
+                  <tr className="border-t border-white/[0.06] bg-[rgba(12,15,22,0.86)]">
                     <td className="px-4 py-3 font-medium" style={{ color: "#F97316" }}>
                       Empresa
                     </td>
                     <td className="px-4 py-3">49,99 € / mes</td>
                     <td className="px-4 py-3">{LIMITS.empresa.enviosCVDia} CVs / día ({LIMITS.empresa.enviosCVSemana.toLocaleString("es-ES")} / semana)</td>
-                    <td className="px-4 py-3 text-gray-500">Renovación mensual</td>
+                    <td className="px-4 py-3 text-[#8b98ad]">Renovación mensual</td>
                   </tr>
                 </tbody>
               </table>
@@ -205,7 +201,7 @@ export default function TerminosPage() {
 
           {/* 4. Uso aceptable */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               4. Uso aceptable del servicio
             </h2>
             <p>El usuario se compromete a no utilizar BuscayCurra para:</p>
@@ -224,7 +220,7 @@ export default function TerminosPage() {
 
           {/* 5. Contenido del usuario */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               5. Contenido del usuario
             </h2>
             <ul className="list-disc pl-6 space-y-2">
@@ -251,7 +247,7 @@ export default function TerminosPage() {
 
           {/* 6. Limitación de responsabilidad */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               6. Limitación de responsabilidad
             </h2>
             <ul className="list-disc pl-6 space-y-2">
@@ -279,7 +275,7 @@ export default function TerminosPage() {
 
           {/* 7. Derecho de desistimiento */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               7. Derecho de desistimiento (14 días)
             </h2>
             <p>
@@ -294,7 +290,7 @@ export default function TerminosPage() {
               <a
                 href="mailto:privacidad@buscaycurra.es"
                 className="font-medium hover:underline"
-                style={{ color: "#22c55e" }}
+                style={{ color: "#a3e635" }}
               >
                 privacidad@buscaycurra.es
               </a>{" "}
@@ -303,7 +299,7 @@ export default function TerminosPage() {
               solicitud, utilizando el mismo medio de pago empleado en la
               compra.
             </p>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-[#8b98ad]">
               Nota: si el usuario ha hecho uso efectivo del servicio (envíos
               de CV realizados, uso de la IA), el derecho de desistimiento
               puede quedar limitado conforme al artículo 103.m) del RDL
@@ -314,7 +310,7 @@ export default function TerminosPage() {
 
           {/* 8. Cancelación */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               8. Cancelación de suscripción
             </h2>
             <p>
@@ -332,7 +328,7 @@ export default function TerminosPage() {
               <a
                 href="mailto:privacidad@buscaycurra.es"
                 className="font-medium hover:underline"
-                style={{ color: "#22c55e" }}
+                style={{ color: "#a3e635" }}
               >
                 privacidad@buscaycurra.es
               </a>
@@ -342,7 +338,7 @@ export default function TerminosPage() {
 
           {/* 9. Modificaciones */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               9. Modificaciones del servicio y condiciones
             </h2>
             <p>
@@ -356,7 +352,7 @@ export default function TerminosPage() {
 
           {/* 10. Ley aplicable */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-3">
               10. Ley aplicable y jurisdicción
             </h2>
             <p>
@@ -372,27 +368,27 @@ export default function TerminosPage() {
         </div>
 
         {/* ── Navegación legal ─────────────────────────────────────────── */}
-        <div className="mt-14 pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-500 mb-4">Documentos legales relacionados:</p>
+        <div className="mt-14 pt-8 border-t border-white/10">
+          <p className="text-sm text-[#8b98ad] mb-4">Documentos legales relacionados:</p>
           <div className="flex flex-wrap gap-4 text-sm">
             <Link
               href="/privacidad"
               className="hover:underline"
-              style={{ color: "#22c55e" }}
+              style={{ color: "#a3e635" }}
             >
               Política de Privacidad
             </Link>
             <Link
               href="/cookies"
               className="hover:underline"
-              style={{ color: "#22c55e" }}
+              style={{ color: "#a3e635" }}
             >
               Política de Cookies
             </Link>
             <Link
               href="/aviso-legal"
               className="hover:underline"
-              style={{ color: "#22c55e" }}
+              style={{ color: "#a3e635" }}
             >
               Aviso Legal
             </Link>
@@ -402,7 +398,7 @@ export default function TerminosPage() {
       </main>
 
       {/* ── Footer mínimo ────────────────────────────────────────────── */}
-      <footer className="bg-gray-900 text-gray-400 py-8 px-4 mt-16">
+      <footer className="bg-[rgba(6,9,11,0.82)] text-[#8b98ad] py-8 px-4 mt-16">
         <div className="max-w-4xl mx-auto text-center text-sm">
           © {new Date().getFullYear()} BuscayCurra —{" "}
           <a
