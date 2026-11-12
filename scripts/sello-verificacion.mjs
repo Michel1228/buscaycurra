@@ -1751,9 +1751,10 @@ test("los fallos del sincronizador se cuentan en vez de perderse", () => {
 // detras de veinte entradas.
 const cssGlobal = leerFuente("app/globals.css");
 test("el menu del movil mide con dvh, que es lo que de verdad se ve", () =>
-  cssGlobal.includes("max-height: calc(100dvh - 80px)"));
+  // 12 nov 2026: acaba por encima de la barra de abajo, no a 80 px fijos.
+  cssGlobal.includes("max-height: calc(100dvh - 72px - var(--barra-inferior, 0px))"));
 test("y deja vh de respaldo, para no quedarse sin altura en navegadores viejos", () =>
-  cssGlobal.includes("max-height: calc(100vh - 80px)"));
+  cssGlobal.includes("max-height: calc(100vh - 72px - var(--barra-inferior, 0px))"));
 test("el menu respeta la barra inferior del iPhone", () =>
   cssGlobal.includes("env(safe-area-inset-bottom"));
 test("con el menu abierto el fondo no se mueve", () =>
@@ -2480,6 +2481,30 @@ test("logos de empresa: BM, Mercadona, Lidl, Carrefour, México y Colombia; ni p
   } finally {
     for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
   }
+});
+
+// ── LO QUE PARECE PULSABLE SE PULSA, Y RESPONDE AL DEDO (12 nov 2026) ────────
+//
+// Michel: "parece que tengo que pincharle aqui, y no da, no abre ni nada", y
+// "Cerrar sesion se me queda a mitad". Auditado con Playwright en 20 pantallas:
+// el menu acababa DETRAS de la barra de abajo; las tarjetas solo reaccionaban
+// al raton (:hover); ~80 botones median menos de 32 px; y habia tarjetas
+// iguales que las que se pulsan sin nada detras (los seis pasos de
+// Automatizaciones, sus cifras, las filas de "Lo ultimo").
+test("lo que parece pulsable se pulsa: menu entero, respuesta al tocar, zona tactil y tarjetas con destino", () => {
+  const css = leerFuente("app/globals.css");
+  const neon = leerFuente("components/neon/Neon.tsx");
+  const envios = leerFuente("app/app/envios/page.tsx");
+  const pasos = envios.slice(envios.indexOf("const PASOS"), envios.indexOf("];", envios.indexOf("const PASOS")));
+  const filasPasos = pasos.split("\n").filter(l => l.includes("{ Icono:") && l.includes('titulo: "'));
+  return css.includes("max-height: calc(100dvh - 72px - var(--barra-inferior, 0px));")
+    && css.includes(".cristal-enlace:active {") && css.includes("@media (pointer: coarse)")
+    && css.includes("clip-path: polygon(evenodd,") && css.includes(".menu-movil::after {")
+    && neon.includes("const pulsable = !!(href || onClick);") && neon.includes('className="sm:hidden absolute top-2 right-2 opacity-60"')
+    && filasPasos.length === 6 && filasPasos.every(l => /href: "\/app\//.test(l) || /filtro: "/.test(l))
+    && envios.includes('onClick={() => verEnLista("pendiente")}') && envios.includes('id="lista-envios"')
+    && leerFuente("app/app/bienvenida/BienvenidaClient.tsx").includes('<Link href="/app/envios" className="fila-pulsable')
+    && leerFuente("components/cursos/ListaCursos.tsx").includes("<CabeceraPantalla");
 });
 
 // ── INICIO NO ESPERA A CONTAR 3,7 MILLONES DE OFERTAS (12 nov 2026) ──────────

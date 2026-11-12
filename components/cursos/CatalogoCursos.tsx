@@ -67,7 +67,7 @@ function Coste({ t }: { t: TipoCurso }) {
 
 function TarjetaCurso({ t, base }: { t: TipoCurso; base: string }) {
   return (
-    <Link href={`${base}/${t.slug}`} className="card-game p-4 flex flex-col gap-2" style={{ textDecoration: "none" }}>
+    <Link href={`${base}/${t.slug}`} className={`cristal cristal-enlace tono-${t.familia === "obligatorio" ? "ambar" : "verde"} p-4 flex flex-col gap-2`} style={{ textDecoration: "none" }}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{t.nombre}</h3>
         {t.obligatorioLegal && (
@@ -92,7 +92,7 @@ function TarjetaCurso({ t, base }: { t: TipoCurso; base: string }) {
 function TarjetaPlataforma({ p }: { p: PlataformaFormacion }) {
   return (
     <a href={p.url} target="_blank" rel="noopener noreferrer"
-       className="card-game p-4 flex flex-col gap-2" style={{ textDecoration: "none" }}>
+       className="cristal cristal-enlace tono-azul p-4 flex flex-col gap-2" style={{ textDecoration: "none" }}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold text-sm leading-snug" style={{ color: "#f1f5f9" }}>{p.nombre}</h3>
         <ExternalLink size={13} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#8b98ad" }} />
@@ -236,7 +236,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
         <section className="mb-10">
           {cursosEncontrados.length > 0 && (
             <>
-              <h2 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#8b98ad" }}>
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] mb-3" style={{ color: "var(--neon-claro)" }}>
                 {cursosEncontrados.length}{" "}
                 {cursosEncontrados.length === 1 ? "curso nuestro" : "cursos nuestros"}
               </h2>
@@ -248,7 +248,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
 
           {plataformasEncontradas.length > 0 && (
             <>
-              <h2 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#8b98ad" }}>
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] mb-3" style={{ color: "var(--neon-claro)" }}>
                 Sitios donde buscarlo
               </h2>
               <div className="grid sm:grid-cols-2 gap-3">
@@ -282,7 +282,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
               <div className="flex items-start gap-2.5 mb-1">
                 <AlertCircle size={17} strokeWidth={1.9} className="shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
                 <div>
-                  <h2 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Sin esto no te contratan</h2>
+                  <h2 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "#f1f5f9" }}>Sin esto no te contratan</h2>
                   <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
                     Los pide la ley o el convenio. Es lo primero que te van a preguntar.
                   </p>
@@ -296,7 +296,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
 
           {sectoresVisibles.length > 0 && (
             <section className="mb-12">
-              <h2 className="text-base font-bold mb-1" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight mb-1" style={{ color: "#f1f5f9" }}>
                 Para que te cojan a ti y no a otro
               </h2>
               <p className="text-xs mb-5" style={{ color: "#94a3b8" }}>
@@ -304,7 +304,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
               </p>
               {sectoresVisibles.map(({ sector, cursos: delSector }) => (
                 <div key={sector} className="mb-7">
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wide mb-3" style={{ color: "#8b98ad" }}>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] mb-3" style={{ color: "var(--neon-claro)" }}>
                     {NOMBRE_SECTOR[sector]}
                   </h3>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -325,7 +325,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
 
           {/* ── Miles de cursos que no son nuestros pero son gratis ── */}
           <section className="mb-10">
-            <h2 className="text-base font-bold mb-1" style={{ color: "#f1f5f9" }}>
+            <h2 className="text-lg sm:text-xl font-extrabold tracking-tight mb-1" style={{ color: "#f1f5f9" }}>
               Miles de cursos gratis, en cualquier país
             </h2>
             <p className="text-xs mb-5 leading-relaxed" style={{ color: "#94a3b8" }}>
@@ -339,7 +339,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
 
           {servicio && (
             <section className="mb-10">
-              <h2 className="text-base font-bold mb-1" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight mb-1" style={{ color: "#f1f5f9" }}>
                 Lo subvencionado de tu país
               </h2>
               <p className="text-xs mb-4 leading-relaxed" style={{ color: "#94a3b8" }}>
@@ -347,7 +347,7 @@ export default function CatalogoCursos({ obligatorios, porSector, plataformas, s
                 la zona y el mes. Esta es la puerta oficial:
               </p>
               <a href={servicio.url} target="_blank" rel="noopener noreferrer"
-                 className="card-game p-4 flex flex-col gap-1.5" style={{ textDecoration: "none" }}>
+                 className="cristal cristal-enlace tono-cian p-4 flex flex-col gap-1.5" style={{ textDecoration: "none" }}>
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-semibold text-sm" style={{ color: "#22c55e" }}>{servicio.nombre}</span>
                   <ExternalLink size={13} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#8b98ad" }} />

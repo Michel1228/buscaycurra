@@ -412,13 +412,18 @@ export default function BienvenidaClient() {
                   {movimientos.map((m) => {
                     const { texto, Icono, tono } = queFue(m);
                     return (
-                      <li key={m.id} className="flex items-center gap-3 px-2.5 py-2.5 rounded-xl">
-                        <span className={`icono-circulo tono-${tono}`} style={{ width: 34, height: 34 }} aria-hidden="true"><Icono size={15} /></span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[14px] leading-snug truncate" style={{ color: "#e2e8f0" }}>{texto}</p>
-                          {m.job_title && <p className="text-[12px] truncate" style={{ color: "var(--texto-tenue)" }}>{m.job_title}</p>}
-                        </div>
-                        <span className="text-[12px] shrink-0" style={{ color: "var(--texto-tenue)" }}>{haceCuanto(m.created_at)}</span>
+                      // Cada fila lleva a su envío en el historial (12 nov 2026):
+                      // parecían pulsables y no hacían nada.
+                      <li key={m.id}>
+                        <Link href="/app/envios" className="fila-pulsable flex items-center gap-3 px-2.5 py-2.5 rounded-xl min-h-[52px]">
+                          <span className={`icono-circulo tono-${tono}`} style={{ width: 34, height: 34 }} aria-hidden="true"><Icono size={15} /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[14px] leading-snug truncate" style={{ color: "#e2e8f0" }}>{texto}</span>
+                            {m.job_title && <span className="block text-[12px] truncate" style={{ color: "var(--texto-tenue)" }}>{m.job_title}</span>}
+                          </span>
+                          <span className="text-[12px] shrink-0" style={{ color: "var(--texto-tenue)" }}>{haceCuanto(m.created_at)}</span>
+                          <ChevronRight size={15} className="shrink-0 opacity-50" aria-hidden="true" />
+                        </Link>
                       </li>
                     );
                   })}

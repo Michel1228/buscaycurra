@@ -72,7 +72,7 @@ export default function AlojamientoOferta({ country }: { country?: string }) {
 
       <Link
         href={`/app/emigrar?pais=${codigo}`}
-        className="inline-flex items-center gap-1 text-[11px] mt-3 font-medium hover:underline"
+        className="inline-flex items-center gap-1 min-h-[44px] text-[12px] mt-1 font-medium hover:underline"
         style={{ color: "#22c55e" }}
       >
         Ver guía completa de {nombrePais} (visado, au pair, programas) →

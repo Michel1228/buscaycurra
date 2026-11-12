@@ -289,9 +289,18 @@ function plantillaSencilla(cuerpo: string, pie: string): string {
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#ffffff;">
-<div style="max-width:560px;margin:0 auto;padding:28px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f2937;">
+<div style="max-width:560px;margin:0 auto;padding:24px 20px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f2937;">
+<!-- 12 nov 2026: sigue siendo un correo sencillo y en blanco (es lo que se
+     lee: con la plantilla oscura de marca, 78 avisos dieron 0 CVs), pero ya
+     no es anónimo: Guzzi y el nombre arriba, y el verde de la aplicación. -->
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border-collapse:collapse;"><tr>
+<td style="padding:0 10px 0 0;vertical-align:middle;"><img src="https://buscaycurra.es/icon-192.png" width="36" height="36" alt="" style="display:block;border-radius:50%;border:2px solid #84cc16;"></td>
+<td style="vertical-align:middle;font-size:17px;font-weight:800;letter-spacing:-0.2px;color:#0f172a;">Buscay<span style="color:#65a30d;">Curra</span></td>
+</tr></table>
+<div style="border-left:3px solid #a3e635;padding-left:16px;">
 ${cuerpo}
-<p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.6;color:#6b7280;">${pie}</p>
+</div>
+<p style="margin:28px 0 0;padding-top:14px;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.6;color:#6b7280;">${pie}</p>
 </div>
 </body>
 </html>`;

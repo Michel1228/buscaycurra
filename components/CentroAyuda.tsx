@@ -173,7 +173,7 @@ export default function CentroAyuda() {
             { href: "/cookies", label: "Cookies" },
             { href: "/sobre-nosotros", label: "Sobre nosotros" },
           ].map((l) => (
-            <Link key={l.href} href={l.href} className="text-xs hover:underline" style={{ color: "#a7b3c6" }}>
+            <Link key={l.href} href={l.href} className="zona-tactil text-xs hover:underline" style={{ color: "#a7b3c6" }}>
               {l.label}
             </Link>
           ))}

@@ -32,7 +32,7 @@ import LogoEmpresa from "@/components/neon/LogoEmpresa";
 import {
   Mail, MailCheck, MailX, Eye, MessageCircle, Clock, X, Ban, FileText, Briefcase, Send,
   CalendarClock, Building2, Bell, Camera, MapPin, Users, Bot, ShieldCheck, Search, PenLine,
-  CheckCircle2, BarChart3, ArrowRight, Zap, type LucideIcon,
+  CheckCircle2, BarChart3, ArrowRight, ChevronRight, Zap, type LucideIcon,
 } from "lucide-react";
 import { formatLocalDate } from "@/lib/timezone";
 
@@ -95,13 +95,16 @@ const textoEstado = (s: string) => STATUS_TEXTO[s] ?? s.charAt(0).toUpperCase() 
 // Cómo va una candidatura de principio a fin. Cada paso es algo que la
 // aplicación hace de verdad (cámara de Guzzi, buscador, Mi CV, carta con IA,
 // cola en horario laboral, pipeline).
-const PASOS: { Icono: LucideIcon; tono: Tono; titulo: string; texto: string }[] = [
-  { Icono: Camera, tono: "verde", titulo: "Foto o búsqueda", texto: "Una foto al cartel o la tienda, o busca el oficio" },
-  { Icono: Building2, tono: "azul", titulo: "La empresa", texto: "Guzzi localiza el negocio y su correo" },
-  { Icono: FileText, tono: "morado", titulo: "Tu CV", texto: "Mejora tu CV con IA" },
-  { Icono: PenLine, tono: "ambar", titulo: "Su carta", texto: "Con carta escrita por IA para cada una" },
-  { Icono: CheckCircle2, tono: "lima", titulo: "Tu visto bueno", texto: "Tú apruebas cada envío; sale en horario laboral, repartido" },
-  { Icono: BarChart3, tono: "cian", titulo: "Seguimiento", texto: "A quién, cuándo y si han contestado" },
+// Cada paso lleva al sitio de la app donde se hace (12 nov 2026): eran seis
+// tarjetas iguales que las que se pulsan y no hacían nada. `filtro` es para
+// los que se quedan en esta pantalla: enseña esa parte de la lista de abajo.
+const PASOS: { Icono: LucideIcon; tono: Tono; titulo: string; texto: string; href?: string; filtro?: string }[] = [
+  { Icono: Camera, tono: "verde", titulo: "Foto o búsqueda", texto: "Una foto al cartel o la tienda, o busca el oficio", href: "/app/gusi?foto=1" },
+  { Icono: Building2, tono: "azul", titulo: "La empresa", texto: "Guzzi localiza el negocio y su correo", href: "/app/empresas" },
+  { Icono: FileText, tono: "morado", titulo: "Tu CV", texto: "Mejora tu CV con IA", href: "/app/curriculum" },
+  { Icono: PenLine, tono: "ambar", titulo: "Su carta", texto: "Con carta escrita por IA para cada una", href: "/app/empresas?seccion=envio" },
+  { Icono: CheckCircle2, tono: "lima", titulo: "Tu visto bueno", texto: "Tú apruebas cada envío; sale en horario laboral, repartido", filtro: "pendiente" },
+  { Icono: BarChart3, tono: "cian", titulo: "Seguimiento", texto: "A quién, cuándo y si han contestado", href: "/app/pipeline" },
 ];
 
 // Lo que la cola hace para que los CV lleguen y nadie nos tome por correo
@@ -121,6 +124,11 @@ export default function EnviosPage() {
   const [alertas, setAlertas] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<string>("todos");
+  /** Enseña esa parte de «Lo que he enviado» y baja hasta la lista. */
+  const verEnLista = (f: string) => {
+    setFiltro(f);
+    document.getElementById("lista-envios")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const [detalle, setDetalle] = useState<Envio | null>(null);
 
   useEffect(() => {
@@ -230,8 +238,8 @@ export default function EnviosPage() {
 
         {/* ── Cifras ── */}
         <section aria-label="Resumen de tus envíos" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <CifraGrande tono="azul" Icono={CalendarClock} valor={loading ? "…" : programados} etiqueta="Programados" nota="Salen en horario laboral" />
-          <CifraGrande tono="verde" Icono={Send} valor={resumen ? resumen.enviadosEsteMes : "…"} etiqueta="Enviados este mes" />
+          <CifraGrande tono="azul" Icono={CalendarClock} valor={loading ? "…" : programados} etiqueta="Programados" nota="Salen en horario laboral" onClick={() => verEnLista("pendiente")} />
+          <CifraGrande tono="verde" Icono={Send} valor={resumen ? resumen.enviadosEsteMes : "…"} etiqueta="Enviados este mes" onClick={() => verEnLista("enviado")} />
           <CifraGrande tono="morado" Icono={Building2} valor={resumen ? resumen.empresasContactadas : "…"} etiqueta="Empresas contactadas" href="/app/pipeline" />
           <CifraGrande tono="ambar" Icono={Bell} valor={alertas ?? "…"} etiqueta="Alertas activas" href="#alertas" />
         </section>
@@ -291,23 +299,34 @@ export default function EnviosPage() {
         <section aria-labelledby="titulo-pasos">
           <TituloSeccion id="titulo-pasos" Icono={Zap} titulo="Cómo funciona" />
           <ol className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-            {PASOS.map((p, i) => (
-              <li key={p.titulo} className={`cristal tono-${p.tono} p-4 flex flex-col items-start gap-2.5`}>
-                <div className="flex items-center gap-2">
-                  <IconoCirculo Icono={p.Icono} tono={p.tono} size={40} />
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[12px] font-bold"
-                    style={{ background: "rgba(var(--tono),0.2)", color: "var(--tono-texto)" }} aria-hidden="true">{i + 1}</span>
-                </div>
-                <p className="text-[15px] font-bold leading-tight" style={{ color: "#f1f5f9" }}>{p.titulo}</p>
-                <p className="text-[12.5px] leading-snug" style={{ color: "#a7b3c6" }}>{p.texto}</p>
-              </li>
-            ))}
+            {PASOS.map((p, i) => {
+              const clases = `cristal cristal-enlace tono-${p.tono} relative p-4 flex flex-col items-start gap-2.5 w-full h-full text-left`;
+              const dentro = (
+                <>
+                  <span className="flex items-center gap-2">
+                    <IconoCirculo Icono={p.Icono} tono={p.tono} size={40} />
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[12px] font-bold"
+                      style={{ background: "rgba(var(--tono),0.2)", color: "var(--tono-texto)" }} aria-hidden="true">{i + 1}</span>
+                  </span>
+                  <span className="block text-[15px] font-bold leading-tight" style={{ color: "#f1f5f9" }}>{p.titulo}</span>
+                  <span className="block text-[12.5px] leading-snug" style={{ color: "#a7b3c6" }}>{p.texto}</span>
+                  <ChevronRight size={15} className="absolute top-3 right-3 opacity-60" aria-hidden="true" />
+                </>
+              );
+              return (
+                <li key={p.titulo}>
+                  {p.href
+                    ? <Link href={p.href} className={clases}>{dentro}</Link>
+                    : <button type="button" onClick={() => verEnLista(p.filtro!)} className={clases}>{dentro}</button>}
+                </li>
+              );
+            })}
           </ol>
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* ── Lo que has enviado (la lista de siempre) ── */}
-          <section className="lg:col-span-8 min-w-0" aria-labelledby="titulo-lista">
+          <section id="lista-envios" className="lg:col-span-8 min-w-0 scroll-mt-20" aria-labelledby="titulo-lista">
             <TituloSeccion id="titulo-lista" Icono={Send} titulo="Lo que he enviado" />
 
             {/* Filtros */}
@@ -398,10 +417,13 @@ export default function EnviosPage() {
 
           {/* ── El plan y las alertas ── */}
           <aside className="lg:col-span-4 space-y-5">
-            <div className="cristal tono-neutro p-2">
-              {/* Contador de uso del plan */}
+            {/* Lo que te queda hoy; al pulsarlo, tu plan. */}
+            <Link href="/app/perfil?tab=plan" className="cristal cristal-enlace tono-neutro block p-2" aria-label="Lo que te queda hoy en tu plan. Ver mi plan">
               <UsageCounter compact />
-            </div>
+              <span className="flex items-center justify-end gap-1 px-3 pt-1.5 pb-1 text-[12px] font-semibold" style={{ color: "var(--neon-claro)" }}>
+                Ver mi plan <ChevronRight size={14} aria-hidden="true" />
+              </span>
+            </Link>
             {/* Las alertas de ofertas (el mismo componente que en el perfil). */}
             <div id="alertas" className="scroll-mt-20">
               <MisAlertas />

@@ -11,7 +11,8 @@
  */
 import { Suspense } from "react";
 import Link from "next/link";
-import { BadgeCheck, CalendarDays, FolderOpen, GraduationCap, RefreshCw } from "lucide-react";
+import { BadgeCheck, CalendarDays, ChevronRight, FolderOpen, GraduationCap, RefreshCw } from "lucide-react";
+import { CabeceraPantalla, IconoCirculo } from "@/components/neon/Neon";
 import {
   tiposPorPais, ordenarPorUrgencia, sectoresConCursos, tiposPorSector,
 } from "@/lib/cursos/tipos";
@@ -54,18 +55,16 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
 
   return (
     <>
+      {/* Cabecera y accesos con el diseño de neón (12 nov 2026): Cursos se
+          había quedado en cajas grises y texto plano. Los textos, los de siempre. */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
-          <GraduationCap size={22} strokeWidth={1.8} style={{ color: "#22c55e" }} />
-          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#22c55e" }}>Formación</span>
-        </div>
-        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 leading-tight">
-          El curso que te piden para el trabajo que quieres
-        </h1>
-        <p className="text-sm sm:text-base leading-relaxed" style={{ color: "#94a3b8" }}>
-          Cuánto cuesta de verdad, cuánto dura y dónde sacarlo gratis.
-          Sin rodeos y con la fuente oficial de cada dato.
-        </p>
+        <CabeceraPantalla
+          Icono={GraduationCap}
+          antetitulo="Formación"
+          titulo="El curso que te piden para el trabajo que"
+          resaltado="quieres"
+          subtitulo="Cuánto cuesta de verdad, cuánto dura y dónde sacarlo gratis. Sin rodeos y con la fuente oficial de cada dato."
+        />
       </div>
 
       {/* El catálogo es del país donde está cada uno (?pais=MX). */}
@@ -79,16 +78,17 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
       {base.startsWith("/app") && (
         <Link
           href={`${base}/mis-cursos`}
-          className="rounded-xl p-3.5 mb-4 flex items-center gap-3 hover:opacity-90"
-          style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
+          className="cristal cristal-enlace tono-azul p-4 mb-4 flex items-center gap-3.5"
+          style={{ textDecoration: "none" }}
         >
-          <FolderOpen size={17} strokeWidth={1.8} className="shrink-0" style={{ color: "#94a3b8" }} />
+          <IconoCirculo Icono={FolderOpen} tono="azul" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Mis cursos</p>
-            <p className="text-xs" style={{ color: "#94a3b8" }}>
+            <p className="text-[15px] font-bold" style={{ color: "#f1f5f9" }}>Mis cursos</p>
+            <p className="text-[13px] leading-snug" style={{ color: "#a7b3c6" }}>
               Tus cartas guardadas, los papeles que te faltan y por dónde vas.
             </p>
           </div>
+          <ChevronRight size={18} className="shrink-0 opacity-60" aria-hidden="true" />
         </Link>
       )}
 
@@ -100,19 +100,20 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
       {/* La acreditación es un procedimiento de España: fuera no se ofrece. */}
       {pais === "ES" && <Link
         href={`${base}/acreditar`}
-        className="rounded-xl p-4 mb-8 flex items-start gap-3 hover:opacity-90"
-        style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)", textDecoration: "none" }}
+        className="cristal cristal-enlace tono-lima p-4 mb-4 flex items-center gap-3.5"
+        style={{ textDecoration: "none" }}
       >
-        <BadgeCheck size={19} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
-        <div>
-          <p className="text-sm font-semibold mb-0.5" style={{ color: "#22c55e" }}>
+        <IconoCirculo Icono={BadgeCheck} tono="lima" />
+        <div className="flex-1 min-w-0">
+          <p className="text-[15px] font-bold mb-0.5 texto-neon">
             ¿Llevas años trabajando y no tienes el título?
           </p>
-          <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+          <p className="text-[13px] leading-snug" style={{ color: "#a7b3c6" }}>
             Se puede acreditar oficialmente lo que ya sabes hacer, gratis y sin volver a clase.
             Mira si cumples los requisitos antes de pagar ningún curso.
           </p>
         </div>
+        <ChevronRight size={18} className="shrink-0 opacity-60" aria-hidden="true" />
       </Link>}
 
       {/* ── Plazas con fecha: lo que de verdad se puede hacer ya ──
@@ -121,19 +122,20 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
       {pais === "ES" && (
         <Link
           href={`${base}/plazas`}
-          className="rounded-xl p-4 mb-8 flex items-start gap-3 hover:opacity-90"
-          style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
+          className="cristal cristal-enlace tono-ambar p-4 mb-4 flex items-center gap-3.5"
+          style={{ textDecoration: "none" }}
         >
-          <CalendarDays size={19} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
-          <div>
-            <p className="text-sm font-semibold mb-0.5" style={{ color: "#f1f5f9" }}>
+          <IconoCirculo Icono={CalendarDays} tono="ambar" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[15px] font-bold mb-0.5" style={{ color: "#f1f5f9" }}>
               Plazas gratis que empiezan pronto
             </p>
-            <p className="text-xs leading-relaxed" style={{ color: "#94a3b8" }}>
+            <p className="text-[13px] leading-snug" style={{ color: "#a7b3c6" }}>
               Miles de cursos con fecha, horario y centro, publicados por los servicios públicos de
               empleo de Euskadi, Cataluña, Castilla y León, Murcia y Navarra. Busca el tuyo y apúntate.
             </p>
           </div>
+          <ChevronRight size={18} className="shrink-0 opacity-60" aria-hidden="true" />
         </Link>
       )}
 
@@ -141,13 +143,14 @@ export default function ListaCursos({ base, pais = "ES" }: { base: string; pais?
       {pais === "ES" && (
         <Link
           href={`${base}/renovar`}
-          className="rounded-xl px-4 py-3 mb-8 -mt-5 flex items-center gap-3 hover:opacity-90"
-          style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)", textDecoration: "none" }}
+          className="cristal cristal-enlace tono-morado px-4 py-3 mb-8 flex items-center gap-3.5"
+          style={{ textDecoration: "none" }}
         >
-          <RefreshCw size={16} strokeWidth={1.9} className="shrink-0" style={{ color: "#22c55e" }} />
-          <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>
+          <IconoCirculo Icono={RefreshCw} tono="morado" size={38} />
+          <span className="flex-1 text-[15px] font-bold" style={{ color: "#f1f5f9" }}>
             ¿Se te caduca el carné? Cada cuánto y cómo renovarlo
           </span>
+          <ChevronRight size={18} className="shrink-0 opacity-60" aria-hidden="true" />
         </Link>
       )}
 

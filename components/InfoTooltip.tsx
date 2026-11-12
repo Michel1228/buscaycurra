@@ -37,7 +37,7 @@ export default function InfoTooltip({ text, position = "top" }: InfoTooltipProps
         onMouseLeave={() => setVisible(false)}
         className="inline-flex items-center justify-center rounded-full text-[10px] font-bold transition hover:opacity-80"
         style={{
-          width: 16, height: 16,
+          width: 22, height: 22,
           background: "rgba(100,116,139,0.15)",
           border: "1px solid rgba(100,116,139,0.3)",
           color: "#64748b",

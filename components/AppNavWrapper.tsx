@@ -128,7 +128,7 @@ function FilaMenu({ href, label, title, icon, tono, activo, onClick }: {
       title={title}
       onClick={onClick}
       aria-current={activo ? "page" : undefined}
-      className="flex items-center gap-2.5 px-2.5 min-h-[48px] rounded-xl text-[13.5px] font-medium transition-colors hover:bg-white/[0.05]"
+      className="flex items-center gap-2 px-2 min-h-[48px] rounded-xl text-[13.5px] font-medium tracking-tight transition-colors hover:bg-white/[0.05]"
       style={{
         background: activo ? "rgba(163,230,53,0.1)" : "rgba(255,255,255,0.025)",
         border: `1px solid ${activo ? "rgba(163,230,53,0.45)" : "rgba(148,163,184,0.1)"}`,
@@ -430,7 +430,8 @@ export default function AppNavWrapper() {
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40"
-          style={{ background: "rgba(0,0,0,0.55)" }}
+          // Más oscuro y desenfocado: lo de detrás (un botón de neón) se colaba.
+          style={{ background: "rgba(2,4,6,0.78)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
           onClick={() => setMobileOpen(false)}
         >
           <div

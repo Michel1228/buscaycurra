@@ -167,15 +167,21 @@ export function TarjetaCristal({ tono = "neutro", href, className = "", children
  * Cifra grande de arriba de la pantalla. `valor` ya viene contado: esta pieza
  * no inventa ni redondea nada.
  */
-export function CifraGrande({ tono, Icono, valor, etiqueta, href, nota }: {
+export function CifraGrande({ tono, Icono, valor, etiqueta, href, onClick, nota }: {
   tono: Tono;
   Icono: LucideIcon;
   valor: number | string;
   etiqueta: string;
   href?: string;
+  /** Si no lleva a otra pantalla pero hace algo aquí (filtrar la lista de abajo). */
+  onClick?: () => void;
   /** Una línea pequeña debajo, si hace falta aclarar de dónde sale. */
   nota?: string;
 }) {
+  // Toda cifra que se pueda pulsar lo dice con su flecha, también en el móvil
+  // (12 nov 2026): antes la flecha solo salía en el ordenador y en el móvil las
+  // que se pulsan y las que no eran idénticas.
+  const pulsable = !!(href || onClick);
   const contenido = (
     <>
       <span className="sm:hidden"><IconoCirculo Icono={Icono} tono={tono} size={34} /></span>
@@ -187,15 +193,14 @@ export function CifraGrande({ tono, Icono, valor, etiqueta, href, nota }: {
         <span className="block mt-1.5 text-[13px] leading-tight" style={{ color: "#cbd5e1" }}>{etiqueta}</span>
         {nota && <span className="block mt-0.5 text-[11px] leading-tight" style={{ color: "var(--texto-tenue)" }}>{nota}</span>}
       </span>
-      {href && <ChevronRight size={18} className="hidden sm:block shrink-0 opacity-60" aria-hidden="true" />}
+      {pulsable && <ChevronRight size={18} className="hidden sm:block shrink-0 opacity-60" aria-hidden="true" />}
+      {pulsable && <ChevronRight size={14} className="sm:hidden absolute top-2 right-2 opacity-60" aria-hidden="true" />}
     </>
   );
-  const clases = `cristal tono-${tono} flex items-center gap-2.5 sm:gap-3 p-3.5 sm:p-4 min-h-[84px] sm:min-h-[96px]`;
-  return href ? (
-    <Link href={href} className={`${clases} cristal-enlace`}>{contenido}</Link>
-  ) : (
-    <div className={clases}>{contenido}</div>
-  );
+  const clases = `cristal tono-${tono} relative flex items-center gap-2.5 sm:gap-3 p-3.5 sm:p-4 min-h-[84px] sm:min-h-[96px]`;
+  if (href) return <Link href={href} className={`${clases} cristal-enlace`}>{contenido}</Link>;
+  if (onClick) return <button type="button" onClick={onClick} className={`${clases} cristal-enlace w-full text-left`}>{contenido}</button>;
+  return <div className={clases}>{contenido}</div>;
 }
 
 /** Fila de "Acciones rápidas": icono en círculo, texto y flecha. 60 px de alto. */

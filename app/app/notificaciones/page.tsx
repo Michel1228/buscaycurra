@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { destinoDeNotificacion, esAlertaDesplegable } from "@/lib/notificaciones/destino";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -370,6 +371,10 @@ export default function NotificacionesPage() {
               {filtro === "no_leidas" ? "No tienes notificaciones pendientes" : "No tienes notificaciones"}
             </p>
             <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Las alertas de empleo aparecerán aquí</p>
+            {/* Sin salida, esta pantalla vacía era un callejón (12 nov 2026). */}
+            <Link href="/app/envios#alertas" className="boton-cristal tono-lima mt-5 inline-flex">
+              Crear una alerta de empleo
+            </Link>
           </div>
         ) : (
           <div className="space-y-2">
