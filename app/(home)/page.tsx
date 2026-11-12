@@ -6,8 +6,8 @@ import PublicHeader from "@/components/PublicHeader";
 import { ofertasPorPais } from "@/lib/job-search/ofertas-por-pais";
 import { NUM_PAISES } from "@/lib/paises";
 import { LIMITS, LIMITES_EMPRESA } from "@/lib/plan-limits";
-import { BarChart3, DollarSign, Mail, Check, X, FileText, Sparkles, Globe2, Languages, ArrowRight } from "lucide-react";
-import { GuzziBrillo, OndasCabecera } from "@/components/neon/Neon";
+import { BarChart3, DollarSign, Mail, Check, X, FileText, Sparkles, Globe2, Languages, ArrowRight, Clock, Bell } from "lucide-react";
+import { GuzziBrillo, OndasCabecera, IconoCirculo, type Tono } from "@/components/neon/Neon";
 
 // La landing se CACHEA y se regenera cada 30 min (ISR con stale-while-revalidate).
 // Antes era force-dynamic → ejecutaba la query pesada de getRealStats (GROUP BY sobre
@@ -231,12 +231,12 @@ export default async function LandingPage() {
 
   // ── Superpotencias ──
   const superpotencias = [
-    { titulo: `${PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi traduce tu CV al inglés, alemán, francés, portugués, italiano o neerlandés y te explica cómo es el CV en cada país. De España a Alemania, de Irlanda a Australia.", acento: "#22c55e" },
-    { titulo: "Una carta distinta para cada empresa. Cero spam.", desc: "Tu CV no se dispara a lo loco. Guzzi escribe una carta para cada empresa y cada puesto, y el análisis de encaje te dice qué palabras clave le faltan a tu CV para esa oferta.", acento: "#f59e0b" },
-    { titulo: "Enviado en horario laboral", desc: "Tu candidatura sale un día laborable entre las 9:00 y las 18:00 (hora de España), repartida para no llegar en bloque. No a las 3 de la madrugada de un sábado.", acento: "#a855f7" },
-    { titulo: "Vigila las ofertas por ti", desc: "Mientras tú vives tu vida, Guzzi revisa las ofertas nuevas que encajan con tus alertas y te avisa, y los envíos que dejaste programados salen solos.", acento: "#e07850" },
-    { titulo: "Pipeline visual: sabes dónde está cada CV", desc: "Deja de preguntarte \"¿lo habrán leído?\". Ve en tiempo real el estado de cada candidatura: enviada, abierta, en revisión, entrevista, oferta. Sin agujeros negros.", acento: "#3b82f6" },
-    { titulo: "Comparador de salarios reales", desc: "¿Cuánto pagan por tu puesto en Berlín vs Barcelona? ¿Merece la pena emigrar? Datos reales de cientos de miles de ofertas. Decide con números, no con intuición.", acento: "#f59e0b" },
+    { titulo: `${PAISES} países, un solo agente`, desc: "Busca trabajo en España o emigra. Guzzi traduce tu CV al inglés, alemán, francés, portugués, italiano o neerlandés y te explica cómo es el CV en cada país. De España a Alemania, de Irlanda a Australia.", Icono: Globe2, tono: "verde" as Tono },
+    { titulo: "Una carta distinta para cada empresa. Cero spam.", desc: "Tu CV no se dispara a lo loco. Guzzi escribe una carta para cada empresa y cada puesto, y el análisis de encaje te dice qué palabras clave le faltan a tu CV para esa oferta.", Icono: FileText, tono: "ambar" as Tono },
+    { titulo: "Enviado en horario laboral", desc: "Tu candidatura sale un día laborable entre las 9:00 y las 18:00 (hora de España), repartida para no llegar en bloque. No a las 3 de la madrugada de un sábado.", Icono: Clock, tono: "morado" as Tono },
+    { titulo: "Vigila las ofertas por ti", desc: "Mientras tú vives tu vida, Guzzi revisa las ofertas nuevas que encajan con tus alertas y te avisa, y los envíos que dejaste programados salen solos.", Icono: Bell, tono: "rosa" as Tono },
+    { titulo: "Pipeline visual: sabes dónde está cada CV", desc: "Deja de preguntarte \"¿lo habrán leído?\". Ve en tiempo real el estado de cada candidatura: enviada, abierta, en revisión, entrevista, oferta. Sin agujeros negros.", Icono: BarChart3, tono: "azul" as Tono },
+    { titulo: "Comparador de salarios reales", desc: "¿Cuánto pagan por tu puesto en Berlín vs Barcelona? ¿Merece la pena emigrar? Datos reales de cientos de miles de ofertas. Decide con números, no con intuición.", Icono: DollarSign, tono: "cian" as Tono },
   ];
 
   // ── La verdad incómoda ──
@@ -496,8 +496,9 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             </div>
             <div className="grid md:grid-cols-3 gap-5">
               {superpotencias.map((s) => (
-                <div key={s.titulo} className="card-game p-6">
-                  <h3 className="text-sm font-bold mb-3" style={{ color: s.acento }}>
+                <div key={s.titulo} className={`cristal tono-${s.tono} p-6`}>
+                  <div className="mb-4"><IconoCirculo Icono={s.Icono} tono={s.tono} size={44} /></div>
+                  <h3 className="text-base font-bold mb-2" style={{ color: "var(--tono-texto)" }}>
                     {s.titulo}
                   </h3>
                   <p className="text-xs leading-relaxed" style={{ color: "#a7b3c6" }}>
@@ -889,8 +890,8 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <LogoGusano size={24} />
-                <span className="font-bold text-sm" style={{ color: "#22c55e" }}>
-                  BuscayCurra
+                <span className="font-extrabold text-sm">
+                  <span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span>
                 </span>
               </div>
               <p className="text-[11px] leading-relaxed max-w-xs" style={{ color: "#8b98ad" }}>

@@ -61,7 +61,7 @@ export default function DescargaClient() {
   const [androidModalAbierto, setAndroidModalAbierto] = useState(false);
 
   return (
-    <div style={{ background: "transparent", minHeight: "100vh", color: "#f1f5f9", fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}>
+    <div style={{ background: "transparent", minHeight: "100vh", color: "#f1f5f9" }}>
       {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
       <FondoOleaje />
 
@@ -69,8 +69,8 @@ export default function DescargaClient() {
       <section style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "88px 24px 40px", overflow: "hidden" }}>
 
         {/* Fondo: glow verde sutil */}
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34,197,94,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translateX(-50%)", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(34,197,94,0.04) 0%, transparent 70%)", pointerEvents: "none", borderRadius: "50%" }} />
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(163,230,53,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translateX(-50%)", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(163,230,53,0.04) 0%, transparent 70%)", pointerEvents: "none", borderRadius: "50%" }} />
 
         {/* Nombre de la marca. Aqui iba tambien un Guzzi pequeno, y como esta
             cabecera va flotando (position absolute) mientras el contenido se
@@ -79,7 +79,7 @@ export default function DescargaClient() {
             el nombre y parte del grande. Con una mascota sobra, y la que manda
             es la grande. */}
         <div style={{ position: "absolute", top: "28px", left: "50%", transform: "translateX(-50%)" }}>
-          <span style={{ fontSize: "16px", fontWeight: 700, color: "#22c55e", letterSpacing: "-0.02em" }}>BuscayCurra</span>
+          <span style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.02em" }}><span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span></span>
         </div>
 
         {/* Contenido central */}
@@ -87,20 +87,20 @@ export default function DescargaClient() {
 
           {/* Guzzi hero */}
           <div style={{ display: "flex", justifyContent: "center", marginBottom: "28px" }}>
-            <div style={{ filter: "drop-shadow(0 12px 40px rgba(34,197,94,0.35))", animation: "float-gentle 3s ease-in-out infinite" }}>
+            <div style={{ filter: "drop-shadow(0 12px 40px rgba(163,230,53,0.35))", animation: "float-gentle 3s ease-in-out infinite" }}>
               <LogoGusano size={96} animated />
             </div>
           </div>
 
           {/* Badge precio */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "100px", padding: "6px 14px", marginBottom: "28px" }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
-            <span style={{ fontSize: "13px", color: "#22c55e", fontWeight: 600 }}>Gratis · Planes desde 2,99 €/mes</span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.25)", borderRadius: "100px", padding: "6px 14px", marginBottom: "28px" }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#a3e635", display: "inline-block" }} />
+            <span style={{ fontSize: "13px", color: "#d9f99d", fontWeight: 600 }}>Gratis · Planes desde 2,99 €/mes</span>
           </div>
 
           <h1 style={{ fontSize: "clamp(36px, 8vw, 64px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.03em", margin: "0 0 20px", color: "#f8fafc" }}>
             Tu próximo trabajo,<br />
-            <span style={{ color: "#22c55e" }}>enviado por Guzzi</span>
+            <span className="texto-neon">enviado por Guzzi</span>
           </h1>
 
           <p style={{ fontSize: "clamp(16px, 2.5vw, 19px)", color: "#94a3b8", lineHeight: 1.65, margin: "0 0 40px", maxWidth: "520px", marginLeft: "auto", marginRight: "auto" }}>
@@ -111,21 +111,21 @@ export default function DescargaClient() {
           {/* CTA */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
             {isInstalled ? (
-              <Link href="/app/gusi" style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", textDecoration: "none", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
+              <Link href="/app/gusi" style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", textDecoration: "none", boxShadow: "0 8px 32px rgba(163,230,53,0.3)", letterSpacing: "-0.01em" }}>
                 Abrir BuscayCurra →
               </Link>
             ) : canInstall ? (
-              <button onClick={install} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
+              <button onClick={install} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(163,230,53,0.3)", letterSpacing: "-0.01em" }}>
                 <Smartphone size={20} strokeWidth={1.4} />
                 Instalar gratis
               </button>
             ) : isIOS ? (
-              <button onClick={() => setIosModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
+              <button onClick={() => setIosModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(163,230,53,0.3)", letterSpacing: "-0.01em" }}>
                 <Smartphone size={20} strokeWidth={1.4} />
                 Instalar en iPhone
               </button>
             ) : (
-              <button onClick={() => setAndroidModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(34,197,94,0.3)", letterSpacing: "-0.01em" }}>
+              <button onClick={() => setAndroidModalAbierto(true)} style={{ display: "inline-flex", alignItems: "center", gap: "10px", background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", fontWeight: 700, fontSize: "17px", padding: "16px 36px", borderRadius: "14px", border: "none", cursor: "pointer", boxShadow: "0 8px 32px rgba(163,230,53,0.3)", letterSpacing: "-0.01em" }}>
                 <Smartphone size={20} strokeWidth={1.4} />
                 Instalar gratis
               </button>
@@ -225,8 +225,8 @@ export default function DescargaClient() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
           {FEATURES.map((f) => (
             <div key={f.titulo} style={{ background: "#111520", border: "1px solid #1e2334", borderRadius: "20px", padding: "32px 28px", transition: "border-color 0.2s" }}>
-              <div style={{ width: "48px", height: "48px", background: "rgba(34,197,94,0.1)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" }}>
-                <f.Icon size={22} strokeWidth={1.4} style={{ color: "#22c55e" }} />
+              <div style={{ width: "48px", height: "48px", background: "rgba(163,230,53,0.1)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" }}>
+                <f.Icon size={22} strokeWidth={1.4} style={{ color: "#a3e635" }} />
               </div>
               <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#f1f5f9", margin: "0 0 10px", letterSpacing: "-0.01em" }}>{f.titulo}</h3>
               <p style={{ fontSize: "14px", color: "#8b98ad", lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
@@ -237,8 +237,8 @@ export default function DescargaClient() {
 
       {/* ── Precio ── */}
       <section style={{ padding: "0 24px 80px", maxWidth: "560px", margin: "0 auto", textAlign: "center" }}>
-        <div style={{ background: "linear-gradient(135deg, #0f1a0f, #111520)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "24px", padding: "40px 36px" }}>
-          <p style={{ fontSize: "13px", fontWeight: 600, color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 12px" }}>Empieza por menos de un café</p>
+        <div style={{ background: "linear-gradient(135deg, #0f1a0f, #111520)", border: "1px solid rgba(163,230,53,0.2)", borderRadius: "24px", padding: "40px 36px" }}>
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "#a3e635", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 12px" }}>Empieza por menos de un café</p>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: "6px", marginBottom: "8px" }}>
             <span style={{ fontSize: "52px", fontWeight: 900, color: "#f1f5f9", letterSpacing: "-0.04em" }}>2,99</span>
             <span style={{ fontSize: "22px", fontWeight: 600, color: "#8b98ad" }}>€/mes</span>
@@ -272,7 +272,7 @@ export default function DescargaClient() {
           {/* Android */}
           <div style={{ background: "#111520", border: "1px solid #1e2334", borderRadius: "20px", padding: "32px 28px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-              <Bot size={26} strokeWidth={1.3} style={{ color: "#22c55e" }} />
+              <Bot size={26} strokeWidth={1.3} style={{ color: "#a3e635" }} />
               <span style={{ fontSize: "16px", fontWeight: 700, color: "#f1f5f9" }}>Android (Chrome)</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -282,7 +282,7 @@ export default function DescargaClient() {
                 'Selecciona "Añadir a pantalla de inicio"',
               ].map((paso, i) => (
                 <div key={i} style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
-                  <span style={{ minWidth: "26px", height: "26px", borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#22c55e" }}>{i + 1}</span>
+                  <span style={{ minWidth: "26px", height: "26px", borderRadius: "50%", background: "rgba(163,230,53,0.12)", border: "1px solid rgba(163,230,53,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#a3e635" }}>{i + 1}</span>
                   <span style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.55, paddingTop: "2px" }}>{paso}</span>
                 </div>
               ))}
@@ -298,7 +298,7 @@ export default function DescargaClient() {
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {IOS_STEPS.map((paso, i) => (
                 <div key={i} style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
-                  <span style={{ minWidth: "26px", height: "26px", borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#22c55e" }}>{paso.num}</span>
+                  <span style={{ minWidth: "26px", height: "26px", borderRadius: "50%", background: "rgba(163,230,53,0.12)", border: "1px solid rgba(163,230,53,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#a3e635" }}>{paso.num}</span>
                   <span style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.55, paddingTop: "2px" }}>{paso.texto}</span>
                 </div>
               ))}
@@ -312,7 +312,7 @@ export default function DescargaClient() {
         {/* Aqui habia otro Guzzi pequeno. En una pagina que ya tiene la mascota
             grande de protagonista, repetirla en el pie no anade nada. Una sola. */}
         <div style={{ marginBottom: "8px" }}>
-          <span style={{ fontSize: "14px", fontWeight: 700, color: "#22c55e" }}>BuscayCurra</span>
+          <span style={{ fontSize: "14px", fontWeight: 800 }}><span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span></span>
         </div>
         <p style={{ fontSize: "12px", color: "#8b98ad", margin: 0 }}>
           © 2026 BuscayCurra · <Link href="/precios" style={{ color: "#8b98ad", textDecoration: "none" }}>Precios</Link> · <Link href="/auth/login" style={{ color: "#8b98ad", textDecoration: "none" }}>Acceder</Link>
@@ -341,7 +341,7 @@ export default function DescargaClient() {
                 { num: "4", icon: "✅", texto: 'Toca "Instalar". ¡Aparecerá como una app normal!' },
               ].map((paso) => (
                 <div key={paso.num} style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                  <span style={{ minWidth: "32px", height: "32px", borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: "#22c55e" }}>{paso.num}</span>
+                  <span style={{ minWidth: "32px", height: "32px", borderRadius: "50%", background: "rgba(163,230,53,0.12)", border: "1px solid rgba(163,230,53,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: "#a3e635" }}>{paso.num}</span>
                   <span style={{ fontSize: "15px", color: "#e2e8f0", lineHeight: 1.55, paddingTop: "4px" }}>{paso.texto}</span>
                 </div>
               ))}
@@ -378,7 +378,7 @@ export default function DescargaClient() {
                 { num: "4", icon: "✅", texto: 'Toca "Añadir" arriba a la derecha. ¡Listo!' },
               ].map((paso) => (
                 <div key={paso.num} style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                  <span style={{ minWidth: "32px", height: "32px", borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: "#22c55e" }}>{paso.num}</span>
+                  <span style={{ minWidth: "32px", height: "32px", borderRadius: "50%", background: "rgba(163,230,53,0.12)", border: "1px solid rgba(163,230,53,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: "#a3e635" }}>{paso.num}</span>
                   <div style={{ paddingTop: "4px" }}>
                     <span style={{ fontSize: "15px", color: "#e2e8f0", lineHeight: 1.55 }}>{paso.texto}</span>
                   </div>
