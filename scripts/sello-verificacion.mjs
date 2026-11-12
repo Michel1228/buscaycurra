@@ -2321,8 +2321,13 @@ test("diseño de neón: ninguna pantalla nueva enseña las cifras inventadas del
 test("diseño de neón: «visto» no se da por seguro y la barra de abajo no tapa nada", () => {
   const css = leerFuente("app/globals.css");
   const checks = {
-    "envíos: «Quizá visto»": leerFuente("app/app/envios/page.tsx").includes('visto: "Quizá visto"'),
-    "pipeline: «Quizá visto» con la explicación": /label: "Quizá visto"[^\n]*no es seguro/.test(leerFuente("app/app/pipeline/page.tsx")),
+    // 8 nov 2026: Michel quiere la etiqueta de siempre ("Visto"), no "Quizá
+    // visto"; lo que se protege es que al lado se explique que es orientativo.
+    "envíos: «Visto» con su ⓘ que dice que es orientativo": leerFuente("app/app/envios/page.tsx").includes('visto: "Visto"')
+      && leerFuente("app/app/envios/page.tsx").includes("algunos lo hacen solos y otros lo bloquean, así que es orientativo")
+      && (leerFuente("app/app/envios/page.tsx").match(/<InfoTooltip text=\{EXPLICACION_VISTO\}/g) || []).length >= 2,
+    "pipeline: «Visto por empresa» con la misma explicación": /label: "Visto por empresa"[^\n]*así que es orientativo/.test(leerFuente("app/app/pipeline/page.tsx"))
+      && !/Quizá vist/.test(leerFuente("app/app/pipeline/page.tsx") + leerFuente("app/app/envios/page.tsx")),
     "hueco de la barra en el body": css.includes("--barra-inferior: calc(64px + env(safe-area-inset-bottom, 0px))") && css.includes("padding-bottom: var(--barra-inferior)"),
     "lo fijo abajo sube por encima": ["app/app/curriculum/Content.tsx", "app/app/au-pair/page.tsx", "app/app/buscar/page.tsx"].every((f) => leerFuente(f).includes("var(--barra-inferior)")),
     "el chat de Guzzi sin barra de abajo (tiene su caja de escribir)": /SIN_BARRA_ABAJO = \["\/app\/gusi"/.test(leerFuente("components/AppNavWrapper.tsx")),
@@ -2341,7 +2346,12 @@ test("diseño de neón: el fondo de oleaje es ligero, se para oculto y queda qui
     "se para con la pestaña oculta": fondo.includes('"visibilitychange"') && fondo.includes("oleaje-quieto") && css.includes(".oleaje-quieto .fondo-oleaje *"),
     "quieto con reducir movimiento": /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.fondo-oleaje \*[\s\S]*?animation: none !important/.test(css),
     "solo se anima transform y opacity": keyframes.length > 0 && !/background|filter|mask|width|height|top:|left:/.test(keyframes),
-    "sin librerías: ni canvas ni WebGL": !/canvas|webgl|three|framer-motion/i.test(fondo),
+    // Desde el 8 nov 2026 el fondo es un shader WebGL propio (Michel: "que se
+    // vea de calidad"): se permite el canvas, pero sin librerías, a 30 fps como
+    // mucho, a resolución reducida, y quieto con "reducir movimiento".
+    "sin librerías y con el shader contenido": !/from ["'](three|framer-motion|pixi|ogl|regl|@react-three)/.test(fondo)
+      && fondo.includes("const FPS_MAX = 30") && fondo.includes("PIXELES_MAX") && fondo.includes('"(prefers-reduced-motion: reduce)"')
+      && fondo.includes('"webglcontextlost"') && css.includes('.fondo-oleaje[data-webgl="1"] > :not(.oleaje-lienzo) { display: none; }'),
     "las tarjetas no desenfocan lo de detrás (batería)": !/\.cristal \{[^}]*backdrop-filter/.test(css),
   };
   const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
@@ -2427,6 +2437,46 @@ test("diseño de neón: el menú por grupos lleva todas las entradas, Admin, des
   const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
   if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
   return malos.length === 0;
+});
+
+// ── LOGOS DE EMPRESA: CIENTOS DE MARCAS, CADA UNA CON SU DOMINIO (8-12 nov) ──
+// Michel: "faltan muchos, por ejemplo BM". La lista grande (lib/logo-empresa-marcas.ts)
+// salió de las empresas con más ofertas por país, con el dominio y el icono
+// comprobados uno a uno. Aquí: casos reales de España, México y Colombia, que un
+// portal no lleva logo de marca y que un nombre parecido no coge el de otra.
+test("logos de empresa: BM, Mercadona, Lidl, Carrefour, México y Colombia; ni portales ni parecidos", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-logos-entrada.ts", salida = ".sello-logos.cjs";
+  try {
+    writeFileSync(entrada, 'export { dominioDeLogo } from "./lib/logo-empresa";\nexport { MARCAS_CONOCIDAS } from "./lib/logo-empresa-marcas";\nexport { esNombreDePortal } from "./lib/job-search/portales-empleo";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const d = m.dominioDeLogo;
+    const nombres = m.MARCAS_CONOCIDAS.flatMap(([, n]) => n);
+    const checks = {
+      "BM Supermercados (el logo amarillo del carrito, el de 2023)": d("BM Supermercados") === "bmsupermercados.es" && d("Bm Supermercados S.A.") === "bmsupermercados.es",
+      "Mercadona, Lidl y Carrefour": d("MERCADONA S.A.") === "mercadona.es" && d("Lidl España") === "lidl.es" && d("Carrefour Express") === "carrefour.com",
+      "México: Coppel S.A. de C.V. y Megacable": d("Coppel S.A. de C.V.") === "coppel.com" && d("Megacable") === "megacable.com.mx",
+      "Colombia: Alkosto y Bancolombia": d("Alkosto") === "alkosto.com" && d("Bancolombia S.A.") === "www.bancolombia.com",
+      "el país detrás no lo rompe (Santander México, Indra Group)": d("Santander México") === "santander.com.mx" && d("Indra Group") === "indracompany.com",
+      "un portal no lleva logo de marca": d("Domestiko.com", "ofertas@domestiko.com") === null && d("Superprof") === null && d("Jobgether") === null,
+      "ni con un correo de portal": d("Cuidados Ana", "ana@cuidadosana.jobgether.com") === null,
+      "un nombre parecido no coge el logo de otra": d("BM Vagas") === null && d("BM Abogados") === null && d("Coppelia") === null
+        && d("Mercadona Bar") === null && d("Supermercados Hiber") === null && d("Mango") === null && d("HM Hospitales") === null,
+      "la lista es grande, sin portales y con dominios válidos": m.MARCAS_CONOCIDAS.length >= 300
+        && !nombres.some((n) => m.esNombreDePortal(n))
+        && m.MARCAS_CONOCIDAS.every(([dom]) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(dom)),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 100)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
 });
 
 // ── QUIEN VIENE DE LA APP NO SE QUEDA ATRAPADO NI VE "NO HAY OFERTAS" (7 nov) ─
@@ -3574,6 +3624,106 @@ test("los autorrellenos y el pais de la persona llegan a las pantallas", () => {
   return fallos.length === 0;
 });
 
+// ── PORTALES DE EMPLEO (Domestiko...) NO SON QUIEN CONTRATA (8 nov 2026) ─────
+//
+// 12.231 ofertas vivas tenían como empresa Domestiko.com y un correo
+// @domestiko.com: "Enviar CV" mandaba el currículum al portal, y como el freno
+// de 15 días es por dirección, al escribir a una se tachaban todas. Ahora un
+// portal no ofrece envío por correo (pantalla Y servidor Y cola), la marca de
+// "enviado" es por oferta y por persona, y el aviso de la misma empresa dice la
+// fecha en que podrá volver a escribirles.
+test("los portales de empleo no reciben CVs y 'enviado' se marca por oferta y por persona", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-portales-entrada.ts", salida = ".sello-portales.cjs";
+  try {
+    writeFileSync(entrada, 'export * from "./lib/job-search/portales-empleo";\nexport * from "./lib/cv-sender/marca-envio";\nexport { correoCreibleParaOferta } from "./lib/job-search/correo-oferta";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}`);
+    const checks = {};
+
+    // 1. Qué es un portal y qué no (una ETT real SÍ recibe CV).
+    checks["Domestiko, en sus tres grafías y por su correo, es un portal"] =
+      ["domestiko.com", "Domestiko.Com", "Domestiko"].every((e) => m.esOfertaDePortal({ empresa: e }))
+      && m.esOfertaDePortal({ correo: "jobs@domestiko.com" }) && m.esOfertaDePortal({ correo: "info@mail.domestiko.com" });
+    checks["Cronoshare, Superprof y Placements24 también"] =
+      m.esOfertaDePortal({ empresa: "Cronoshare.com" }) && m.esOfertaDePortal({ empresa: "SuperProf" }) && m.esOfertaDePortal({ correo: "support@placements24.com" });
+    checks["Adecco, Randstad, Manpower, Michael Page y una empresa corriente NO lo son"] =
+      ["Adecco", "Randstad", "Manpower", "Michael Page", "Hays", "Gi Group", "Crit Interim España ETT", "Bar Pepe", "Job-Room"].every((e) => !m.esOfertaDePortal({ empresa: e }))
+      && !m.esOfertaDePortal({ correo: "seleccion@randstad.es" }) && !m.esOfertaDePortal({ correo: "rrhh@notdomestiko.com" });
+
+    // 2. El correo del portal no se vuelve a dar como correo de la empresa (búsqueda, ficha, para ti, extractor).
+    checks["correoCreibleParaOferta rechaza el correo del portal, incluso con confianza alta"] =
+      !m.correoCreibleParaOferta("jobs@domestiko.com", "Domestiko.Com", "es", "alta")
+      && !m.correoCreibleParaOferta("jobs@domestiko.com", "domestiko.com", "es", "media")
+      && m.correoCreibleParaOferta("rrhh@acciona.es", "Acciona", "es", "media");
+
+    // 3. Servidor: la ruta, la cola y motivoParaNoEnviar lo paran.
+    checks["motivoPortalDeEmpleo devuelve motivo para el portal y null para una empresa real"] =
+      !!m.motivoPortalDeEmpleo("jobs@domestiko.com", "Lo que sea") && !!m.motivoPortalDeEmpleo("rrhh@empresa.es", "Domestiko.com")
+      && m.motivoPortalDeEmpleo("rrhh@acciona.es", "Acciona") === null;
+    const ruta = leerFuente("app/api/cv-sender/send/route.ts");
+    const worker = leerFuente("lib/cv-sender/worker.ts");
+    const ds = leerFuente("lib/cv-sender/direccion-segura.ts");
+    checks["la ruta de envío lo rechaza (correo o nombre) antes de nada"] =
+      ruta.includes("motivoPortalDeEmpleo(companyEmail, companyName)") && ruta.indexOf("motivoPortalDeEmpleo(companyEmail, companyName)") < ruta.indexOf("await motivoParaNoEnviar(companyEmail)");
+    checks["el auto-envío 'cada 4 días' no programa portales"] = /esOfertaDePortal\(\{ empresa: o\.empresa, correo: o\.emailEmpresa \}\)/.test(ruta);
+    checks["el worker de la cola descarta lo que ya estaba encolado, antes de mandar nada"] =
+      worker.includes("motivoPortalDeEmpleo(companyEmail, companyName)") && worker.indexOf("motivoPortalDeEmpleo(companyEmail, companyName)") < worker.indexOf("sendCVEmail(");
+    checks["motivoParaNoEnviar (Guzzi, envío local) también lo para"] = ds.includes("if (motivoPortalDeEmpleo(email)) return motivoPortalDeEmpleo(email);");
+    checks["el agente automático salta los portales"] = leerFuente("app/api/agente/run/route.ts").includes("esOfertaDePortal({ empresa: oferta.empresa, correo: oferta.emailEmpresa })");
+    checks["la propagación de correos del servidor no reparte los de portales"] =
+      ["domestiko.com", "cronoshare.com", "superprof.com", "placements24.com"].every((d) => leerFuente("scripts/vps/propagar-emails.sql").includes(`'${d}'`));
+
+    // 4. Pantalla: tarjeta, ficha, chat de Guzzi y notificaciones ofrecen la web, no el correo.
+    const tarjeta = leerFuente("components/JobCard.tsx"), ficha = leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx");
+    checks["la tarjeta ofrece 'Inscribirme en la oferta' y no el botón de correo"] =
+      tarjeta.includes("esOfertaDePortal({ empresa, correo: emailEmpresa })") && tarjeta.includes('"Inscribirme en la oferta"') && tarjeta.includes("aWeb ? null : (");
+    checks["la ficha ofrece 'Inscribirme en la oferta' y no el botón de correo"] =
+      ficha.includes("esOfertaDePortal({ empresa: oferta.empresa, correo: oferta.email_empresa })") && ficha.includes('"Inscribirme en la oferta"') && ficha.includes("aWeb ? (oferta.url ? (") && ficha.includes("|| aWeb || marca) return;");
+    checks["Guzzi (lista, envío a todas, panel) y notificaciones no mandan CV a portales"] =
+      leerFuente("components/GusiChat.tsx").includes("todas.filter(j => !esOfertaDePortal({ empresa: j.empresa }))")
+      && leerFuente("components/GusiChat.tsx").includes("Inscribirme en la oferta")
+      && leerFuente("components/ChatSendPanel.tsx").includes("esOfertaDePortal({ empresa: target.empresa, correo: target.email })")
+      && leerFuente("app/app/notificaciones/page.tsx").includes("esOfertaDePortal({ empresa: oferta.empresa })");
+
+    // 5. La marca de 'enviado' es por oferta y por persona; la misma empresa dice la fecha.
+    const envio = { company_email: "rrhh@acme.es", company_url: "https://www.adzuna.es/details/111", company_name: "Acme", job_title: "Camarero", status: "entregado", sent_at: "2026-11-03T10:00:00Z", created_at: "2026-11-03T10:00:00Z" };
+    const hoy = new Date("2026-11-08T10:00:00Z");
+    const esa = m.marcaDeOferta([envio], { url: "https://adzuna.es/details/111?utm=x", titulo: "Camarero", empresa: "Acme", correo: "rrhh@acme.es" }, hoy);
+    const otra = m.marcaDeOferta([envio], { url: "https://www.adzuna.es/details/222", titulo: "Cocinero", empresa: "Acme", correo: "rrhh@acme.es" }, hoy);
+    const otraEmpresa = m.marcaDeOferta([envio], { url: "https://www.adzuna.es/details/333", titulo: "Camarero", empresa: "Beta", correo: "rrhh@beta.es" }, hoy);
+    const otraPersona = m.marcaDeOferta([], { url: "https://www.adzuna.es/details/111", titulo: "Camarero", empresa: "Acme", correo: "rrhh@acme.es" }, hoy);
+    const pasados15 = m.marcaDeOferta([envio], { url: "https://www.adzuna.es/details/222", titulo: "Cocinero", empresa: "Acme", correo: "rrhh@acme.es" }, new Date("2026-11-20T10:00:00Z"));
+    const antiguo = m.marcaDeOferta([{ ...envio, company_url: null }], { url: "https://www.adzuna.es/details/999", titulo: "camarero", empresa: "ACME", correo: "" }, hoy);
+    const fallido = m.marcaDeOferta([{ ...envio, status: "fallido" }], { url: envio.company_url, titulo: "Camarero", empresa: "Acme", correo: "rrhh@acme.es" }, hoy);
+    checks["marca SOLO la oferta a la que se mandó el CV (misma URL aunque cambie el rastreo)"] = esa?.tipo === "esta-oferta";
+    checks["otra oferta de la misma empresa NO se da por enviada: dice el 3 nov y el 18 nov"] =
+      otra?.tipo === "misma-empresa" && /3 nov/.test(otra.texto) && /18 nov/.test(otra.texto) && /podrás volver a escribirles/.test(otra.texto);
+    checks["otra empresa, otra persona sin envíos, pasados 15 días y un envío fallido: sin marca"] =
+      otraEmpresa === null && otraPersona === null && pasados15 === null && fallido === null;
+    checks["los envíos antiguos sin URL se reconocen por puesto y empresa"] = antiguo?.tipo === "esta-oferta";
+
+    // 6. Por persona: se lee con su sesión (RLS) y la caché no pasa de una persona a otra.
+    const cli = leerFuente("lib/cv-sender/mis-envios-cliente.ts");
+    checks["los envíos salen de la sesión de cada persona, con RLS y caché por persona"] =
+      cli.includes('.eq("user_id", userId)') && cli.includes("guardado.userId === userId")
+      && /CREATE POLICY "cv_sends_select_own"[\s\S]*USING \(auth\.uid\(\) = user_id\)/.test(leerFuente("supabase/migrations/012_blindar_plan_y_envios.sql"));
+    checks["el envío guarda la URL de la oferta y el servidor responde con la fecha"] =
+      leerFuente("lib/cv-sender/tracker.ts").includes("...(extras?.company_url && { company_url: extras.company_url })")
+      && leerFuente("lib/cv-sender/scheduler.ts").includes("avisoMismaEmpresa(ultimo).texto");
+
+    const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
+    if (fallos.length) console.log("      " + fallos.join("\n      "));
+    return fallos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
 // ── CAREERJET NO SE DISFRAZA DE EURES NI INVENTA UNA "EMPRESA EUROPEA" (6 nov 2026)
 //
 // fetchCareerjetGlobal guarda sus ofertas como "EURES_xxx" (error histórico:
@@ -3673,6 +3823,45 @@ test("la web no dice que Android va por el navegador ni promete avisos que no ex
   return !f.includes("cuándo toca insistir")
     && (!enPlay || !/En Android se usa desde el navegador/.test(f))
     && (!enPlay || f.includes("Google Play"));
+});
+
+// ── LA VOZ DE LA ENTREVISTA NO SE QUEDA MUDA SIN AVISAR (8 nov 2026) ─────────
+//
+// En el ordenador de Michel la entrevista no se oia: si el navegador no deja
+// sonar (NotAllowedError), voz.ts terminaba en silencio. Ahora avisa a la
+// pantalla, que ensena "Pulsa para oir al entrevistador", y con ese toque
+// sigue desde el clip que no sono. Se compila voz.ts y se le da un Audio falso.
+test("si el navegador bloquea la voz de la entrevista, se pide un toque y sigue desde ese clip", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = ".sello-voz.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/entrevistas/voz.ts", "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const sonados = []; let bloquear = true;
+    class AudioFalso {
+      constructor() { this.src = ""; this.onended = null; this.onerror = null; }
+      play() {
+        if (bloquear) { const e = new Error("bloqueado"); e.name = "NotAllowedError"; return Promise.reject(e); }
+        sonados.push(this.src); setTimeout(() => this.onended && this.onended(), 0); return Promise.resolve();
+      }
+      pause() {}
+    }
+    globalThis.Audio = AudioFalso; globalThis.window = { speechSynthesis: { cancel() {} } };
+    const v = await import(`../${salida}`);
+    let reintentar = null; let fin = false;
+    v.siLaVozSeBloquea((r) => { reintentar = r; });
+    v.hablar([{ id: "bienvenida", texto: "a" }, { id: "p1", texto: "b" }], () => { fin = true; });
+    await new Promise(r => setTimeout(r, 20));
+    const avisado = typeof reintentar === "function" && sonados.length === 0 && !fin;
+    bloquear = false; reintentar();
+    await new Promise(r => setTimeout(r, 50));
+    const pagina = leerFuente("app/app/entrevistas/page.tsx");
+    return avisado && fin && sonados.length === 2 && sonados[0].endsWith("/bienvenida.mp3") && sonados[1].endsWith("/p1.mp3")
+      && pagina.includes("siLaVozSeBloquea(") && pagina.includes("Pulsa para oír al entrevistador");
+  } finally {
+    try { unlinkSync(salida); } catch { /* no existe */ }
+    delete globalThis.Audio; delete globalThis.window;
+  }
 });
 
 // La descripcion para Google decia que Guzzi envia candidaturas "24/7": los
