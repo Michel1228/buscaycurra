@@ -9,6 +9,8 @@ import { ofertasParecidas, slug } from "@/lib/job-search/ofertas-parecidas";
 import { DATOS } from "@/lib/datos-reales";
 import { sueldoVisible } from "@/lib/sueldo-visible";
 import FondoOleaje from "@/components/FondoOleaje";
+import MedirFicha from "@/components/MedirFicha";
+import { esOfertaDePortal } from "@/lib/job-search/portales-empleo";
 
 /** "Ver en oferta", "Consultar"…: no es un sueldo, y no se enseña como si lo fuera. */
 function sueldoDe(s: string | null): string | null {
@@ -78,7 +80,11 @@ export async function generateMetadata({
       ? `Esta oferta de ${titulo} ya no está disponible. Busca ofertas parecidas en BuscayCurra.`
       : oficial
         ? `Trabajo de ${titulo}, publicada por ${oficial.nombre}. Se solicita en su web oficial.`
-        : `Trabajo de ${titulo}. Envía tu CV automáticamente con IA.`,
+        // 12 nov 2026: prometía mandar el CV "automáticamente": los envíos llevan
+        // el visto bueno de la persona, y a un portal no se manda el CV.
+        : esOfertaDePortal({ empresa: row.company })
+          ? `Oferta de trabajo de ${titulo}. Prepara tu CV gratis con IA y apúntate en un minuto.`
+          : `Oferta de trabajo de ${titulo}. Envía tu CV gratis en un minuto: Guzzi te prepara la carta con IA y tú das el visto bueno.`,
     ...(caducada && { robots: { index: false, follow: true } }),
   };
 }
@@ -121,11 +127,23 @@ export default async function OfertaPublicaPage({
   const ciudadCorta = (row.city || "").split(",")[0].trim();
   const listaParecidas = parecidas ? (parecidas.ofertas.length ? parecidas.ofertas : parecidas.deLaCiudad) : [];
   const sonDelPuesto = !!parecidas?.ofertas.length;
+  // EL BOTÓN, A LA VISTA (12 nov 2026). Nueve de cada diez altas entran por
+  // una ficha como esta, pero el botón estaba al final, debajo de toda la
+  // descripción: en el móvil había que bajar mucho para verlo. Ahora va
+  // arriba, junto al título, y en el móvil también fijo abajo. En las ofertas
+  // de un portal (Domestiko…) no se manda el CV al portal: se dice la verdad.
+  const dePortal = esOfertaDePortal({ empresa: row.company });
+  const textoBoton = dePortal ? "Prepara tu CV y apúntate a esta oferta" : <>Envía tu CV a {empresa ?? "esta empresa"}</>;
+  const textoDebajo = dePortal
+    ? "Gratis y sin tarjeta. Guzzi, nuestro asistente con IA, te ayuda con el CV y te lleva a la oferta para que te apuntes."
+    : "Gratis y sin tarjeta. Guzzi, nuestro asistente con IA, te prepara la carta para esta oferta y tú das el visto bueno antes de enviarla.";
+  const conBoton = !oficial && !caducada;
 
   return (
     <div className="min-h-screen" style={{ background: "#0f1117" }}>
       {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
       <FondoOleaje />
+      <MedirFicha />
       {jobPostingSchema && (
         <script
           type="application/ld+json"
@@ -133,7 +151,7 @@ export default async function OfertaPublicaPage({
         />
       )}
       
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className={`max-w-3xl mx-auto px-4 py-8${conBoton ? " pb-28 sm:pb-8" : ""}`}>
         <Link href="/" className="text-xs mb-6 inline-block hover:underline" style={{ color: "#8b98ad" }}>
           ← BuscayCurra
         </Link>
@@ -175,6 +193,16 @@ export default async function OfertaPublicaPage({
             )}
           </div>
 
+          {conBoton && (
+            <div className="mb-2">
+              <Link href={`/auth/registro?oferta=${encodeURIComponent(row.id)}`} data-medir="clic"
+                className="btn-game text-base px-6 py-3 rounded-xl font-bold block text-center sm:inline-block">
+                {textoBoton}
+              </Link>
+              <p className="text-xs mt-2" style={{ color: "#94a3b8" }}>{textoDebajo}</p>
+            </div>
+          )}
+
           {row.description && (
             <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
               <h2 className="text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}>Descripción</h2>
@@ -197,13 +225,11 @@ export default async function OfertaPublicaPage({
               </a>
             ) : !caducada ? (
               <>
-                <Link href={`/auth/registro?oferta=${encodeURIComponent(row.id)}`}
+                <Link href={`/auth/registro?oferta=${encodeURIComponent(row.id)}`} data-medir="clic"
                   className="btn-game text-base px-6 py-3 rounded-xl font-bold block text-center sm:inline-block">
-                  Envía tu CV a {empresa ?? "esta empresa"}
+                  {textoBoton}
                 </Link>
-                <p className="text-xs mt-3" style={{ color: "#94a3b8" }}>
-                  Gratis. Guzzi, nuestro asistente con IA, te prepara la carta para esta oferta y te ayuda a mandarla.
-                </p>
+                <p className="text-xs mt-3" style={{ color: "#94a3b8" }}>{textoDebajo}</p>
               </>
             ) : null}
             {row.sourceUrl && !oficial && (
@@ -261,6 +287,17 @@ export default async function OfertaPublicaPage({
           </div>
         </div>
       </div>
+
+      {/* En el móvil, el botón siempre a mano mientras se lee la oferta. */}
+      {conBoton && (
+        <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 px-4 pt-6 pb-4"
+          style={{ background: "linear-gradient(180deg, rgba(15,17,23,0), rgba(15,17,23,0.96) 40%)" }}>
+          <Link href={`/auth/registro?oferta=${encodeURIComponent(row.id)}`} data-medir="clic"
+            className="btn-game text-sm px-5 py-3 rounded-xl font-bold block text-center">
+            {textoBoton}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

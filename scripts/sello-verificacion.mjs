@@ -2479,6 +2479,25 @@ test("logos de empresa: BM, Mercadona, Lidl, Carrefour, México y Colombia; ni p
   }
 });
 
+// ── LA FICHA PUBLICA DE OFERTA: EL BOTON A LA VISTA Y LAS VISITAS CONTADAS (12 nov)
+//
+// Nueve de cada diez altas entran por /empleo/oferta/[id], pero el boton de
+// registrarse estaba al final, debajo de toda la descripcion, y las visitas no
+// se contaban. Ahora va arriba y fijo abajo en el movil; a un portal (Domestiko)
+// no se le promete mandar el CV; y cada vista y clic suma en Redis sin datos.
+test("la ficha publica pone el boton arriba y fijo en el movil, y cuenta visitas y clics", () => {
+  const f = leerFuente("app/empleo/oferta/[id]/page.tsx");
+  const r = leerFuente("app/api/metricas/visita-ficha/route.ts");
+  const arriba = f.indexOf("{conBoton && (") > 0 && f.indexOf("{conBoton && (") < f.indexOf("{row.description && (");
+  return arriba
+    && f.includes('<div className="sm:hidden fixed bottom-0 inset-x-0 z-40')
+    && (f.match(/data-medir="clic"/g) || []).length >= 3
+    && f.includes("<MedirFicha />")
+    && f.includes('dePortal ? "Prepara tu CV y apúntate a esta oferta"')
+    && !f.includes("Envía tu CV automáticamente")
+    && r.includes("ROBOT.test(") && r.includes("x-admin-secret");
+});
+
 // ── QUIEN VIENE DE LA APP NO SE QUEDA ATRAPADO NI VE "NO HAY OFERTAS" (7 nov) ─
 //
 // Michel abrio una oferta, pulso "Donde sacarlo" (el curso que le falta) y
@@ -2663,6 +2682,7 @@ const RUTAS_SIN_CORREO_VERIFICADO = {
     "company/extract POST", "company/foto GET",
     "cursos/aviso GET", "cursos/carnes GET", "cursos/plazas GET", "cursos/progreso GET", "cursos/sugerencias GET",
     "cursos/ir GET", // lleva al curso y suma un clic sin datos de la persona
+    "metricas/visita-ficha POST", "metricas/visita-ficha GET", // suma 1 vista o clic de la ficha pública, sin datos de la persona (GET, con x-admin-secret)
     "cv-cartas GET", "cv-sender/envios-hoy GET", "cv-sender/status GET",
     "cv/descargar GET", "cv/lista GET", "cv/lista POST" /* leer un CV por id */, "cv/obtener GET",
     "cv/pdf-template GET", // baja el PDF ya hecho por su id; hacerlo (POST) es acción
