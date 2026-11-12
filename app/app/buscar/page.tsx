@@ -548,7 +548,7 @@ function BuscarPageInner() {
           de la tarjeta de "microfono bloqueado": fondo tenido al 6%, borde al
           18% y esquinas redondeadas. Se lee mejor y el verde vuelve a ser un
           acento en vez de una pared. */}
-      <div className="cristal tono-lima py-6 px-4 mx-3 mt-3" style={{ color: "#f1f5f9" }}>
+      <div className="cristal tono-lima py-6 px-4 mx-3 sm:mx-4 xl:mx-auto xl:max-w-[1120px] mt-3" style={{ color: "#f1f5f9" }}>
         <div className="max-w-4xl mx-auto">
           {/* El titulo dice las DOS cosas que se hacen aquí. Poniendo solo
               "Buscar ofertas", la mitad de enviar el CV a la empresa —que es

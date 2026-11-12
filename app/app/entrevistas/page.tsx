@@ -16,6 +16,7 @@ import {
 } from "@/lib/entrevistas/preguntas";
 import type { PartesFeedback } from "@/lib/entrevistas/feedback";
 import { hablar, parar, siLaVozSeBloquea, type Clip } from "@/lib/entrevistas/voz";
+import { IconoCirculo } from "@/components/neon/Neon";
 
 type Respuesta = { pregunta: string; respuesta: string; feedback: string; partes?: PartesFeedback | null };
 
@@ -250,8 +251,8 @@ export default function EntrevistasPage() {
       <div className="max-w-2xl mx-auto space-y-5">
         {/* Cabecera */}
         <div className="text-center pt-2">
-          <div className="flex justify-center mb-2"><Mic size={34} strokeWidth={1.2} style={{ color: "#22c55e" }} /></div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Simulador de entrevistas</h1>
+          <div className="flex justify-center mb-3"><IconoCirculo Icono={Mic} tono="lima" size={56} /></div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Simulador de <span className="texto-neon">entrevistas</span></h1>
           <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
             Ensaya con calma: aquí no hay respuestas perfectas.
           </p>

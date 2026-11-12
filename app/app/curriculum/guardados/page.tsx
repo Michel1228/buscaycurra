@@ -153,16 +153,14 @@ export default function MisCurriculumsPage() {
     <div className="min-h-screen pt-16">
       {/* Cabecera */}
       {/* Mismo acabado suave que el resto de la aplicacion. */}
-      <div className="py-6 px-4 mx-3 mt-3 rounded-2xl"
-           style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}>
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <div className="cristal tono-lima py-6 px-4 mx-3 sm:mx-4 lg:mx-auto lg:max-w-[864px] mt-3">
+        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold" style={{ color: "#22c55e" }}><FolderOpen size={22} strokeWidth={1.8} />Mis currículums</h1>
+            <h1 className="flex items-center gap-2 text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}><FolderOpen size={24} strokeWidth={1.8} style={{ color: "#a3e635" }} aria-hidden="true" />Mis currículums</h1>
             <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>Tus CVs guardados para distintos trabajos</p>
           </div>
           <button onClick={() => router.push("/app/curriculum")}
-            className="px-5 py-2.5 text-sm font-semibold rounded-xl transition"
-            style={{ background: "rgba(0,0,0,0.15)", color: "#1a1a12" }}>
+            className="boton-neon text-sm">
             + Crear nuevo
           </button>
         </div>

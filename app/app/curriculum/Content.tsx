@@ -1032,7 +1032,7 @@ export default function CurriculumPage() {
             {/* Selector de plantilla */}
             <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
               <div className="flex items-center gap-2 mb-3">
-                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}><Palette size={14} strokeWidth={1.9} /> Plantilla del CV</h2>
+                <h2 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}><Palette size={14} strokeWidth={1.9} className="inline mr-1.5 align-[-2px]" aria-hidden="true" />Plantilla del CV</h2>
                 <InfoTooltip text="La Clásica (dos columnas con foto) es visual e ideal para hostelería, comercio y trato con cliente. La Profesional ATS (una columna) está optimizada para pasar los filtros automáticos que usan la mayoría de empresas medianas y grandes." />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

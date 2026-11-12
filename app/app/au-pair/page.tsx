@@ -732,7 +732,9 @@ export default function AuPairProfilePage() {
       </section>
 
       {/* ── Ofertas Au Pair en vivo ── */}
-      <AuPairOfertasRecientes modo={modo} />
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+        <AuPairOfertasRecientes modo={modo} />
+      </div>
 
       {/* ── Alojamiento en el país de destino elegido ── */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6">

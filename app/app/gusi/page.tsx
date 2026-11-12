@@ -20,8 +20,8 @@ export default function GusiPage() {
         style={{ borderRight: "1px solid #1a1d27", padding: "16px 12px", gap: "16px" }}>
 
         {/* Stats */}
-        <div className="rounded-xl p-3" style={{ background: "#161922", border: "1px solid #1e2130" }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#2d3142" }}>
+        <div className="cristal tono-neutro p-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#8b98ad" }}>
             BuscayCurra en cifras
           </p>
           <div className="space-y-2">
@@ -36,8 +36,8 @@ export default function GusiPage() {
               <div key={item.stat} className="flex items-center gap-2.5">
                 <span className="icono-circulo shrink-0" style={{ width: 30, height: 30, color: item.color, background: `radial-gradient(circle at 30% 25%, ${item.color}55, ${item.color}12 72%)`, borderColor: `${item.color}66`, boxShadow: "none" }} aria-hidden="true"><item.Icon size={14} /></span>
                 <div>
-                  <span className="text-sm font-bold" style={{ color: "#22c55e" }}>{item.stat}</span>
-                  <span className="text-[11px] ml-1" style={{ color: "#64748b" }}>{item.desc}</span>
+                  <span className="text-sm font-bold" style={{ color: "#bef264" }}>{item.stat}</span>
+                  <span className="text-[11px] ml-1" style={{ color: "#8b98ad" }}>{item.desc}</span>
                 </div>
               </div>
             ))}
@@ -45,18 +45,18 @@ export default function GusiPage() {
         </div>
 
         {/* Tagline */}
-        <div className="rounded-xl p-3 text-center" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(245,158,11,0.05))", border: "1px solid rgba(34,197,94,0.12)" }}>
+        <div className="cristal tono-lima p-3 text-center">
           <p className="text-xs font-bold" style={{ color: "#f1f5f9" }}>Los portales son de 2005</p>
-          <p className="text-xs font-bold" style={{ color: "#22c55e" }}>BuscayCurra es 2026</p>
-          <p className="text-[10px] mt-1.5" style={{ color: "#64748b" }}>
+          <p className="text-xs font-bold texto-neon">BuscayCurra es 2026</p>
+          <p className="text-[10px] mt-1.5" style={{ color: "#8b98ad" }}>
             IA que trabaja por ti, no un portal que te deja solo
           </p>
         </div>
 
 
         {/* Diferenciadores clave */}
-        <div className="rounded-xl p-3" style={{ background: "#161922", border: "1px solid #1e2130" }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#2d3142" }}>
+        <div className="cristal tono-neutro p-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#8b98ad" }}>
             Por qué BuscayCurra
           </p>
           <div className="space-y-2">
@@ -68,7 +68,7 @@ export default function GusiPage() {
               "Sin colas, sin esperas",
             ].map(item => (
               <div key={item} className="flex items-start gap-2">
-                <span className="text-[10px] mt-0.5" style={{ color: "#22c55e" }}>✓</span>
+                <span className="text-[10px] mt-0.5" style={{ color: "#a3e635" }}>✓</span>
                 <p className="text-[11px]" style={{ color: "#94a3b8" }}>{item}</p>
               </div>
             ))}
@@ -77,8 +77,8 @@ export default function GusiPage() {
 
         {/* CTA mejorar plan — en iOS lleva al perfil (compra In-App); en web a /precios */}
         <Link href={iosNativo ? "/app/perfil?tab=plan" : "/precios"}
-          className="block rounded-xl p-3 text-center transition hover:opacity-80"
-          style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+          className="block rounded-2xl p-3 text-center transition hover:brightness-105"
+          style={{ background: "linear-gradient(180deg, #d9f99d 0%, #a3e635 55%, #84cc16 100%)", color: "#0b1406", boxShadow: "inset 0 0 0 1px rgba(217,249,157,0.55), 0 8px 28px -8px rgba(163,230,53,0.7)" }}>
           <p className="text-xs font-bold">Ver planes de pago</p>
           <p className="text-[10px] mt-0.5 opacity-80">Esencial · Pro · Empresa desde 2,99 €</p>
         </Link>

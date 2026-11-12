@@ -498,7 +498,7 @@ export default function EmpresasPage() {
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       {/* ── Header compartido ── */}
-      <div className="cristal tono-lima py-8 px-4 mx-3 mt-3">
+      <div className="cristal tono-lima py-8 px-4 mx-3 sm:mx-4 lg:mx-auto lg:max-w-[992px] mt-3">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>
             Enviar CV a empresas

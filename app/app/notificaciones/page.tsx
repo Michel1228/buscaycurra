@@ -313,13 +313,12 @@ export default function NotificacionesPage() {
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
       {/* Cabecera */}
       {/* Mismo acabado suave que el resto de la aplicacion. */}
-      <div className="py-6 px-4 mx-3 mt-3 rounded-2xl"
-           style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}>
+      <div className="cristal tono-lima py-6 px-4 mx-3 sm:mx-4 lg:mx-auto lg:max-w-[640px] mt-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Notificaciones</h1>
             <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
-              {notifs.length} notificación{notifs.length !== 1 ? "es" : ""} · {sinLeer} sin leer · {enviadosHoy}/{limiteDiario} envíos hoy
+              {notifs.length} {notifs.length === 1 ? "notificación" : "notificaciones"} · {sinLeer} sin leer · {enviadosHoy}/{limiteDiario} envíos hoy
             </p>
           </div>
           {sinLeer > 0 && (
