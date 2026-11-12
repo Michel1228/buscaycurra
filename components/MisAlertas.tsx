@@ -16,6 +16,7 @@
  */
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { Bell } from "lucide-react";
 
 type Alerta = { id: number; keyword: string; location: string; frequency: string };
 
@@ -98,7 +99,7 @@ export default function MisAlertas() {
 
   return (
     <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
-      <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🔔 Mis alertas de empleo</h2>
+      <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}><Bell size={14} strokeWidth={1.9} className="inline mr-1.5 align-[-2px]" style={{ color: "#fbbf24" }} aria-hidden="true" />Mis alertas de empleo</h2>
       <p className="text-xs mb-4" style={{ color: "#8b98ad" }}>
         Te avisamos de ofertas nuevas que encajan. Como mucho, un correo al día.
       </p>
@@ -108,12 +109,12 @@ export default function MisAlertas() {
         <div className="grid sm:grid-cols-2 gap-2">
           <div>
             <label htmlFor="alerta-puesto" className="sr-only">Puesto o sector</label>
-            <input id="alerta-puesto" value={puesto} onChange={(e) => setPuesto(e.target.value)} maxLength={80}
+            <input id="alerta-puesto" type="text" value={puesto} onChange={(e) => setPuesto(e.target.value)} maxLength={80}
               placeholder="Puesto o sector (ej: camarero, logística)" className="w-full text-sm" />
           </div>
           <div>
             <label htmlFor="alerta-ciudad" className="sr-only">Ciudad</label>
-            <input id="alerta-ciudad" value={ciudad} onChange={(e) => setCiudad(e.target.value)} maxLength={80}
+            <input id="alerta-ciudad" type="text" value={ciudad} onChange={(e) => setCiudad(e.target.value)} maxLength={80}
               placeholder="Ciudad (opcional)" className="w-full text-sm" />
           </div>
         </div>

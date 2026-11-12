@@ -31,7 +31,7 @@ import AlojamientoOferta from "@/components/AlojamientoOferta";
 import { fotoParaSubir } from "@/lib/imagen/foto-para-subir";
 import {
   Users, Sparkles, User, Check, Globe, Camera, Star, ClipboardList,
-  Mail, FileText, Eye, Upload, Save, X, CheckCircle2, ShieldCheck,
+  Mail, FileText, Eye, Upload, Save, X, CheckCircle2, ShieldCheck, Home,
 } from "lucide-react";
 
 const MAX_FOTOS = 6;
@@ -1285,7 +1285,7 @@ export default function AuPairProfilePage() {
           {/* ── Agencias disponibles ── */}
           {!cargandoAgencias && agencias.length > 0 && (
             <div className="mb-4 space-y-2">
-              <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider">🏠 Agencias disponibles</p>
+              <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider"><Home size={12} strokeWidth={2} className="inline mr-1 align-[-1px]" aria-hidden="true" />Agencias disponibles</p>
               {agencias.map((a, i) => (
                 <button
                   key={i}

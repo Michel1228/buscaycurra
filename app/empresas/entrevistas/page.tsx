@@ -217,9 +217,9 @@ export default function EntrevistasEmpresaPage() {
             <div className="rounded-xl p-5 mb-5 space-y-4" style={caja}>
               <div className="grid sm:grid-cols-2 gap-3">
                 <label className="block"><span className="block text-[11px] font-semibold mb-1" style={{ color: "#94a3b8" }}>Empresa</span>
-                  <input value={borrador.empresa} maxLength={120} onChange={(e) => setBorrador({ ...borrador, empresa: e.target.value })} className="w-full text-sm" /></label>
+                  <input type="text" value={borrador.empresa} maxLength={120} onChange={(e) => setBorrador({ ...borrador, empresa: e.target.value })} className="w-full text-sm" /></label>
                 <label className="block"><span className="block text-[11px] font-semibold mb-1" style={{ color: "#94a3b8" }}>Puesto</span>
-                  <input value={borrador.puesto} maxLength={120} placeholder="Ej.: Camarero/a de sala" onChange={(e) => setBorrador({ ...borrador, puesto: e.target.value })} className="w-full text-sm" /></label>
+                  <input type="text" value={borrador.puesto} maxLength={120} placeholder="Ej.: Camarero/a de sala" onChange={(e) => setBorrador({ ...borrador, puesto: e.target.value })} className="w-full text-sm" /></label>
               </div>
               {borrador.preguntas.map((p, i) => (
                 <div key={i} className="rounded-lg p-3 space-y-2" style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)" }}>

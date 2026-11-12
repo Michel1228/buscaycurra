@@ -14,6 +14,7 @@
  */
 import { useEffect, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { GraduationCap } from "lucide-react";
 import { tiposPorPais } from "@/lib/cursos/tipos";
 
 type Aviso = { slug: string; nombre: string };
@@ -79,7 +80,7 @@ export default function MisAvisosCursos() {
 
   return (
     <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
-      <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}>🎓 Mis avisos de cursos</h2>
+      <h2 className="font-semibold text-sm mb-1" style={{ color: "#f1f5f9" }}><GraduationCap size={15} strokeWidth={1.9} className="inline mr-1.5 align-[-2px]" style={{ color: "#c084fc" }} aria-hidden="true" />Mis avisos de cursos</h2>
       <p className="text-xs mb-4" style={{ color: "#8b98ad" }}>
         Aparte de las alertas de empleo: te avisamos cuando hay trabajo que pide el curso que te interesa.
       </p>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { destinoDeNotificacion } from "@/lib/notificaciones/destino";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { BellOff } from "lucide-react";
 
 interface Notif {
   id: string;
@@ -211,9 +212,9 @@ export default function NotificationBell({ userId }: { userId: string }) {
           <div className="max-h-80 overflow-y-auto">
             {notifs.length === 0 ? (
               <div className="py-10 text-center">
-                <p className="text-2xl mb-2">🔔</p>
+                <BellOff size={26} strokeWidth={1.5} className="mx-auto mb-2" style={{ color: "#8b98ad" }} aria-hidden="true" />
                 <p className="text-xs" style={{ color: "#6b7280" }}>Sin notificaciones</p>
-                <p className="text-[10px] mt-1" style={{ color: "#2d3142" }}>
+                <p className="text-[10px] mt-1" style={{ color: "#8b98ad" }}>
                   Te avisaremos cuando Guzzi envíe tu CV o haya nuevas ofertas.
                 </p>
               </div>

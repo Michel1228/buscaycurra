@@ -5,7 +5,7 @@
  * Foto de perfil genérica (avatar), no la foto profesional del CV
  */
 
-import { User, Gem, Lock, Sprout, KeyRound, LogOut, AlertTriangle, ArrowLeft } from "lucide-react";
+import { User, Gem, Lock, Sprout, KeyRound, LogOut, AlertTriangle, ArrowLeft, FileText, Trash2 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
@@ -487,10 +487,9 @@ export default function PerfilPage() {
             <div className="rounded-xl p-5 flex items-center gap-4 cursor-pointer hover:opacity-90 transition"
               onClick={() => setTab("plan")}
               style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.12), rgba(34,197,94,0.06))", border: "1px solid rgba(168,85,247,0.25)" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                style={{ background: "rgba(168,85,247,0.15)" }}>
-                💎
-              </div>
+              <span className="icono-circulo tono-morado flex-shrink-0" style={{ width: 48, height: 48 }} aria-hidden="true">
+                <Gem size={21} strokeWidth={1.9} />
+              </span>
               <div className="flex-1">
                 <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Mi Plan</h3>
                 <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
@@ -505,10 +504,9 @@ export default function PerfilPage() {
 
             {/* Link al CV */}
             <div className="rounded-xl p-5 flex items-center gap-4" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                style={{ background: "rgba(59,130,246,0.15)" }}>
-                📄
-              </div>
+              <span className="icono-circulo tono-azul flex-shrink-0" style={{ width: 48, height: 48 }} aria-hidden="true">
+                <FileText size={21} strokeWidth={1.9} />
+              </span>
               <div className="flex-1">
                 <h3 className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>Tu CV completo</h3>
                 <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>Foto profesional, experiencia, formación, habilidades...</p>
@@ -754,9 +752,9 @@ export default function PerfilPage() {
 
             {/* Cabecera */}
             <div className="flex items-start gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                style={{ background: "rgba(239,68,68,0.1)" }}>
-                🗑️
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", color: "#f87171" }} aria-hidden="true">
+                <Trash2 size={18} strokeWidth={1.9} />
               </div>
               <div>
                 <h2 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Eliminar cuenta y datos</h2>

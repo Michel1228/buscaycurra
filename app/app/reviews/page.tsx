@@ -207,11 +207,11 @@ function ReviewsPageInner() {
               <label className="text-[11px] block mb-1" style={{ color: "#94a3b8" }}>Valoración</label>
               {renderStars(rating, true)}
             </div>
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Título (opcional)" className="w-full text-sm" />
+            <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Título (opcional)" className="w-full text-sm" />
             <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Tu experiencia..." rows={3} className="w-full text-sm resize-none" />
             <div className="grid grid-cols-2 gap-2">
-              <input value={pros} onChange={e => setPros(e.target.value)} placeholder="Pros" className="text-sm" />
-              <input value={cons} onChange={e => setCons(e.target.value)} placeholder="Contras" className="text-sm" />
+              <input type="text" value={pros} onChange={e => setPros(e.target.value)} placeholder="Pros" className="text-sm" />
+              <input type="text" value={cons} onChange={e => setCons(e.target.value)} placeholder="Contras" className="text-sm" />
             </div>
             <label className="flex items-center gap-2 text-xs" style={{ color: "#94a3b8" }}>
               <input type="checkbox" checked={wouldRecommend} onChange={e => setWouldRecommend(e.target.checked)}
