@@ -19,9 +19,18 @@
  * servicio de iconos: para Carrefour, carrefour.com (el de carrefour.es solo
  * tiene 16 px). Comprobado uno a uno el 7 nov 2026.
  *
+ * Desde el 8 nov 2026 la lista grande (varios cientos de marcas, por país, sacadas
+ * de las empresas con más ofertas) está en lib/logo-empresa-marcas.ts; se admite
+ * "Santander México" o "Indra Group" si "Santander"/"Indra" están en la lista.
+ * Los portales de empleo (lib/job-search/portales-empleo.ts) nunca llevan logo.
+ *
  * Lo demás lleva un círculo con sus iniciales (components/neon/LogoEmpresa.tsx).
  */
 
+import { MARCAS_CONOCIDAS } from "./logo-empresa-marcas";
+import { esCorreoDePortal, esNombreDePortal } from "./job-search/portales-empleo";
+
+// Las de aquí (comprobadas a mano el 7 nov) mandan sobre las del fichero grande.
 const MARCAS: [dominio: string, nombres: string[]][] = [
   ["lidl.es", ["lidl", "lidl espana", "lidl supermercados"]],
   ["carrefour.com", ["carrefour", "carrefour espana", "centros comerciales carrefour", "carrefour express", "carrefour market"]],
@@ -72,7 +81,10 @@ const MARCAS: [dominio: string, nombres: string[]][] = [
 ];
 
 // Lo que se quita del final del nombre: la forma jurídica.
-const FORMA_JURIDICA = new Set(["s", "a", "l", "u", "v", "sa", "sl", "slu", "sau", "sll", "slne", "sc", "coop", "scoop", "cb", "sociedad", "anonima", "limitada", "cooperativa"]);
+// Desde el 8 nov también las de Latinoamérica ("S.A. de C.V.", "S.A.S.", "Ltda.",
+// "S.A.C.") y las de fuera ("GmbH", "Inc.", "Ltd", "PLC", "AG", "SE").
+const FORMA_JURIDICA = new Set(["s", "a", "l", "u", "v", "sa", "sl", "slu", "sau", "sll", "slne", "sc", "coop", "scoop", "cb", "sociedad", "anonima", "limitada", "cooperativa",
+  "c", "r", "p", "i", "cv", "rl", "sapi", "sab", "sas", "ltda", "sac", "eirl", "srl", "spa", "gmbh", "inc", "llc", "ltd", "plc", "ag", "se", "nv", "bv", "co", "corp", "&"]);
 
 /** "Lidl Supermercados S.A.U." → "lidl supermercados". El "&" se queda (H&M). */
 export function nombreNormalizado(nombre: string): string {
@@ -83,12 +95,22 @@ export function nombreNormalizado(nombre: string): string {
     .trim()
     .split(" ")
     .filter(Boolean);
-  while (palabras.length > 1 && FORMA_JURIDICA.has(palabras[palabras.length - 1])) palabras.pop();
+  // El "de" de "S.A. de C.V." solo se quita si detrás iba forma jurídica.
+  let quitada = false;
+  while (palabras.length > 1) {
+    const ultima = palabras[palabras.length - 1];
+    if (FORMA_JURIDICA.has(ultima) || (quitada && ultima === "de")) { palabras.pop(); quitada = true; } else break;
+  }
   return palabras.join(" ");
 }
 
 const POR_NOMBRE = new Map<string, string>();
+for (const [dominio, nombres] of MARCAS_CONOCIDAS) for (const n of nombres) POR_NOMBRE.set(n, dominio);
 for (const [dominio, nombres] of MARCAS) for (const n of nombres) POR_NOMBRE.set(n, dominio);
+
+// "Santander México", "Indra Group", "Heineken Colombia": el mismo nombre con el país
+// o "group" detrás. Solo se quita del FINAL y solo si el resto es una marca de la lista.
+const SUFIJO_PAIS = /( de| del)? (espana|spain|iberica|iberia|mexico|colombia|argentina|chile|peru|portugal|latam|latinoamerica|international|internacional|group)$/;
 
 // Correos que no son de ninguna empresa en concreto.
 const CORREO_GENERICO = /^(gmail|googlemail|hotmail|outlook|live|msn|yahoo|ymail|icloud|me|mac|aol|gmx|protonmail|proton|telefonica|movistar|orange|vodafone|ono|jazztel|terra|yandex|mail|zoho)\./;
@@ -103,12 +125,14 @@ const PALABRAS_VACIAS = new Set(["grupo", "group", "empresa", "servicios", "serv
  */
 export function dominioDeLogo(empresa: string | null | undefined, correo?: string | null): string | null {
   if (!empresa?.trim()) return null;
+  // Un portal de empleo (Domestiko, Superprof...) no es quien contrata: sin logo.
+  if (esNombreDePortal(empresa)) return null;
   const nombre = nombreNormalizado(empresa);
-  const deMarca = POR_NOMBRE.get(nombre) || POR_NOMBRE.get(nombre.replace(/ (espana|spain|iberica)$/, ""));
+  const deMarca = POR_NOMBRE.get(nombre) || POR_NOMBRE.get(nombre.replace(SUFIJO_PAIS, ""));
   if (deMarca) return deMarca;
 
   const dominio = (correo || "").trim().toLowerCase().split("@")[1]?.replace(/^www\./, "");
-  if (!dominio || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dominio) || CORREO_GENERICO.test(dominio)) return null;
+  if (!dominio || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dominio) || CORREO_GENERICO.test(dominio) || esCorreoDePortal(correo)) return null;
   // "rrhh.lidl.es" → "lidl": la etiqueta que va antes del final.
   const partes = dominio.split(".");
   const etiqueta = (partes.length >= 3 && partes[partes.length - 2].length <= 3 ? partes[partes.length - 3] : partes[partes.length - 2]) || "";
