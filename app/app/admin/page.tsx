@@ -20,7 +20,7 @@ interface Stats {
 }
 
 const PLAN_LABELS: Record<string, { label: string; color: string; precio: number }> = {
-  free:    { label: "Free",    color: "#64748b", precio: 0 },
+  free:    { label: "Free",    color: "#8b98ad", precio: 0 },
   esencial:{ label: "Esencial",color: "#60a5fa", precio: 2.99 },
   pro:     { label: "Pro",     color: "#22c55e", precio: 9.99 },
   empresa: { label: "Empresa", color: "#f59e0b", precio: 49.99 },
@@ -72,8 +72,8 @@ export default function AdminPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: "#f1f5f9" }}>Panel de control</h1>
-            <p className="text-sm mt-0.5" style={{ color: "#64748b" }}>Métricas en tiempo real — BuscayCurra</p>
+            <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Panel de <span className="texto-neon">control</span></h1>
+            <p className="text-sm mt-0.5" style={{ color: "#8b98ad" }}>Métricas en tiempo real — BuscayCurra</p>
           </div>
           <button onClick={() => void (async () => {
             const { data: { session } } = await getSupabaseBrowser().auth.getSession();
@@ -81,7 +81,7 @@ export default function AdminPage() {
             const res = await fetch("/api/admin/stats", { headers: { Authorization: `Bearer ${session.access_token}` } });
             if (res.ok) setStats(await res.json() as Stats);
           })()}
-            className="text-xs px-3 py-1.5 rounded-lg" style={{ background: "#1e212b", color: "#94a3b8", border: "1px solid #2d3142" }}>
+            className="text-xs px-3 py-1.5 rounded-lg" style={{ background: "rgba(12,15,22,0.86)", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
             Actualizar
           </button>
         </div>
@@ -102,8 +102,8 @@ export default function AdminPage() {
         </div>
 
         {/* Distribución por plan */}
-        <div className="rounded-2xl p-6" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-          <h2 className="text-sm font-semibold mb-4" style={{ color: "#94a3b8" }}>Usuarios por plan</h2>
+        <div className="cristal tono-neutro p-6">
+          <h2 className="text-base font-bold mb-4" style={{ color: "#f1f5f9" }}>Usuarios por plan</h2>
           <div className="space-y-3">
             {Object.entries(PLAN_LABELS).map(([key, info]) => {
               const count = stats.porPlan[key] ?? 0;
@@ -111,13 +111,13 @@ export default function AdminPage() {
               const pct = Math.round((count / total) * 100);
               return (
                 <div key={key} className="flex items-center gap-3">
-                  <span className="text-xs w-16 text-right" style={{ color: "#64748b" }}>{info.label}</span>
-                  <div className="flex-1 h-5 rounded-full overflow-hidden" style={{ background: "#1e212b" }}>
+                  <span className="text-xs w-16 text-right" style={{ color: "#8b98ad" }}>{info.label}</span>
+                  <div className="flex-1 h-5 rounded-full overflow-hidden" style={{ background: "rgba(12,15,22,0.86)" }}>
                     <div className="h-full rounded-full transition-all duration-500"
                       style={{ width: `${pct}%`, background: info.color, opacity: 0.8 }} />
                   </div>
                   <span className="text-sm font-semibold w-8 text-right" style={{ color: "#f1f5f9" }}>{count}</span>
-                  <span className="text-xs w-8" style={{ color: "#64748b" }}>{pct}%</span>
+                  <span className="text-xs w-8" style={{ color: "#8b98ad" }}>{pct}%</span>
                 </div>
               );
             })}
@@ -125,8 +125,8 @@ export default function AdminPage() {
         </div>
 
         {/* Tendencia 30 días */}
-        <div className="rounded-2xl p-6" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-          <h2 className="text-sm font-semibold mb-4" style={{ color: "#94a3b8" }}>Nuevos registros — últimos 30 días</h2>
+        <div className="cristal tono-neutro p-6">
+          <h2 className="text-base font-bold mb-4" style={{ color: "#f1f5f9" }}>Nuevos registros — últimos 30 días</h2>
           <div className="flex items-end gap-1" style={{ height: "100px" }}>
             {stats.tendencia.map((d) => (
               <div key={d.fecha} className="flex-1 flex flex-col items-center justify-end group relative" style={{ height: "100%" }}>
@@ -145,19 +145,19 @@ export default function AdminPage() {
             ))}
           </div>
           <div className="flex justify-between mt-2">
-            <span className="text-[10px]" style={{ color: "#64748b" }}>{stats.tendencia[0]?.fecha.slice(5)}</span>
-            <span className="text-[10px]" style={{ color: "#64748b" }}>{stats.tendencia[stats.tendencia.length - 1]?.fecha.slice(5)}</span>
+            <span className="text-[10px]" style={{ color: "#8b98ad" }}>{stats.tendencia[0]?.fecha.slice(5)}</span>
+            <span className="text-[10px]" style={{ color: "#8b98ad" }}>{stats.tendencia[stats.tendencia.length - 1]?.fecha.slice(5)}</span>
           </div>
         </div>
 
         {/* CV envíos */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-2xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-            <p className="text-xs mb-1" style={{ color: "#64748b" }}>CVs enviados hoy</p>
+          <div className="cristal tono-neutro p-5">
+            <p className="text-xs mb-1" style={{ color: "#8b98ad" }}>CVs enviados hoy</p>
             <p className="text-3xl font-black" style={{ color: "#a78bfa" }}>{stats.enviosHoy}</p>
           </div>
-          <div className="rounded-2xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-            <p className="text-xs mb-1" style={{ color: "#64748b" }}>CVs enviados (total)</p>
+          <div className="cristal tono-neutro p-5">
+            <p className="text-xs mb-1" style={{ color: "#8b98ad" }}>CVs enviados (total)</p>
             <p className="text-3xl font-black" style={{ color: "#a78bfa" }}>{stats.totalEnvios}</p>
           </div>
         </div>
@@ -169,8 +169,8 @@ export default function AdminPage() {
 
 function KpiCard({ label, value, color }: { label: string; value: number | string; color: string }) {
   return (
-    <div className="rounded-2xl p-5" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-      <p className="text-xs mb-2" style={{ color: "#64748b" }}>{label}</p>
+    <div className="cristal tono-neutro p-5">
+      <p className="text-xs mb-2" style={{ color: "#8b98ad" }}>{label}</p>
       <p className="text-3xl font-black" style={{ color }}>{value}</p>
     </div>
   );
@@ -178,8 +178,8 @@ function KpiCard({ label, value, color }: { label: string; value: number | strin
 
 function MiniCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl p-4 text-center" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-      <p className="text-xs mb-1" style={{ color: "#64748b" }}>{label}</p>
+    <div className="cristal tono-neutro p-4 text-center">
+      <p className="text-xs mb-1" style={{ color: "#8b98ad" }}>{label}</p>
       <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>+{value}</p>
     </div>
   );

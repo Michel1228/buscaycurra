@@ -116,18 +116,18 @@ export default function EmpresasLandingPage() {
       <FondoOleaje />
 
       {/* Header */}
-      <header className="sticky top-0 z-50" style={{ background: "rgba(15,17,23,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(45,49,66,0.4)" }}>
+      <header className="barra-app sticky top-0 z-50" style={{ background: "rgba(6,9,11,0.84)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid rgba(163,230,53,0.12)" }}>
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <LogoGusano size={26} />
-            <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
+            <LogoGusano size={28} />
+            <span className="font-extrabold text-[16px] tracking-tight hidden min-[380px]:inline"><span style={{ color: "#f8fafc" }}>Buscay</span><span className="texto-neon">Curra</span></span>
             <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>Para empresas</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/empresas/candidatos" className="text-sm font-medium transition hover:opacity-80 hidden sm:block" style={{ color: "#94a3b8" }}>
               Ver candidatos
             </Link>
-            <Link href="/precios" className="text-sm font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
+            <Link href="/precios" className="text-sm font-bold px-4 min-h-[44px] inline-flex items-center rounded-full transition hover:opacity-90"
               style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
               Contratar acceso
             </Link>
@@ -144,15 +144,15 @@ export default function EmpresasLandingPage() {
 
             <div className="flex justify-center mb-5">
               <span className="flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-medium"
-                style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", color: "#22c55e" }}>
+                style={{ background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.35)", color: "#d9f99d" }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-current inline-block animate-pulse" />
                 Ver los perfiles es gratis
               </span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-5 tracking-tight" style={{ color: "#f1f5f9" }}>
+            <h1 className="text-[40px] md:text-6xl font-extrabold leading-[1.05] mb-5 tracking-tight" style={{ color: "#f8fafc" }}>
               El talento que necesitas.<br />
-              <span style={{ color: "#22c55e" }}>Sin intermediarios.</span>
+              <span className="texto-neon">Sin intermediarios.</span>
             </h1>
 
             <p className="text-base md:text-lg mb-8 leading-relaxed max-w-2xl mx-auto" style={{ color: "#94a3b8" }}>
@@ -163,12 +163,12 @@ export default function EmpresasLandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
               <Link href="/empresas/candidatos"
-                className="text-center text-sm font-semibold py-3.5 px-10 rounded-xl transition hover:opacity-90"
+                className="text-center text-sm font-semibold min-h-[48px] inline-flex items-center justify-center px-10 rounded-full transition hover:opacity-90"
                 style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 Ver candidatos disponibles →
               </Link>
               <Link href="/empresas/publicar"
-                className="text-center text-sm font-medium py-3.5 px-8 rounded-xl transition hover:bg-[#1e212b]"
+                className="text-center text-sm font-medium min-h-[48px] inline-flex items-center justify-center px-8 rounded-full transition hover:bg-white/[0.05]"
                 style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
                 Mandar una oferta gratis
               </Link>
@@ -195,13 +195,13 @@ export default function EmpresasLandingPage() {
         <section className="py-16 px-6">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Por qué las empresas eligen BuscayCurra</h2>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-2" style={{ color: "#f8fafc" }}>Por qué las empresas eligen BuscayCurra</h2>
               <p className="text-sm" style={{ color: "#8b98ad" }}>Contratar no debería ser caro ni lento.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-5">
               {VENTAJAS.map(v => (
                 <div key={v.titulo} className="card-game p-6">
-                  <v.Icon size={32} strokeWidth={1.3} className="mb-4" style={{ color: "#22c55e" }} />
+                  <span className="icono-circulo tono-lima mb-4" style={{ width: 52, height: 52 }} aria-hidden="true"><v.Icon size={24} strokeWidth={1.6} /></span>
                   <h3 className="text-sm font-bold mb-2" style={{ color: "#f1f5f9" }}>{v.titulo}</h3>
                   <p className="text-xs leading-relaxed" style={{ color: "#8b98ad" }}>{v.desc}</p>
                 </div>
@@ -212,14 +212,13 @@ export default function EmpresasLandingPage() {
 
         {/* Testimonios: solo si los hay de verdad (el array está vacío a propósito) */}
         {TESTIMONIOS.length > 0 && (
-        <section className="py-16 px-6" style={{ background: "rgba(15,17,23,0.6)", borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+        <section className="py-16 px-6" style={{ background: "transparent", borderTop: "1px solid rgba(163,230,53,0.1)" }}>
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-xl font-bold text-center mb-2" style={{ color: "#f1f5f9" }}>Lo que dicen las empresas</h2>
+            <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight text-center mb-2" style={{ color: "#f8fafc" }}>Lo que dicen las empresas</h2>
             <p className="text-sm text-center mb-10" style={{ color: "#8b98ad" }}>Resultados reales de reclutadores que ya usan BuscayCurra</p>
             <div className="grid md:grid-cols-3 gap-5">
               {TESTIMONIOS.map(t => (
-                <div key={t.nombre} className="rounded-2xl p-6 flex flex-col gap-4"
-                  style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
+                <div key={t.nombre} className="cristal tono-neutro p-6 flex flex-col gap-4">
                   <div className="flex gap-0.5">{[1,2,3,4,5].map(i => <Star key={i} size={13} strokeWidth={0} fill="#f59e0b" />)}</div>
                   <p className="text-sm leading-relaxed flex-1" style={{ color: "#94a3b8" }}>"{t.texto}"</p>
                   <div>
@@ -236,11 +235,11 @@ export default function EmpresasLandingPage() {
         {/* Precios para empresas */}
         <section className="py-16 px-6">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>Un precio. Todo incluido.</h2>
+            <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-2" style={{ color: "#f8fafc" }}>Un precio. Todo incluido.</h2>
             <p className="text-sm mb-10" style={{ color: "#8b98ad" }}>Sin sorpresas y sin coste por oferta ni por candidato</p>
-            <div className="rounded-2xl p-8" style={{ background: "rgba(12,15,22,0.78)", border: "2px solid rgba(34,197,94,0.3)" }}>
+            <div className="cristal tono-lima p-8" style={{ borderWidth: 2, borderColor: "rgba(163,230,53,0.5)" }}>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="text-5xl font-black" style={{ color: "#22c55e" }}>49,99€</span>
+                <span className="text-5xl font-black texto-neon">49,99€</span>
                 <span className="text-sm" style={{ color: "#8b98ad" }}>/mes</span>
               </div>
               <p className="text-xs mb-6" style={{ color: "#8b98ad" }}>Sin permanencia · Cancela cuando quieras</p>
@@ -260,7 +259,7 @@ export default function EmpresasLandingPage() {
                 ))}
               </div>
               <Link href="/precios"
-                className="block text-center text-sm font-bold py-3 rounded-xl transition hover:opacity-90"
+                className="block text-center text-sm font-bold min-h-[48px] flex items-center justify-center rounded-full transition hover:opacity-90"
                 style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 Contratar Plan Empresa →
               </Link>
@@ -269,19 +268,17 @@ export default function EmpresasLandingPage() {
         </section>
 
         {/* FAQ empresas */}
-        <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+        <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(163,230,53,0.1)" }}>
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-xl font-bold text-center mb-8" style={{ color: "#f1f5f9" }}>Preguntas frecuentes</h2>
+            <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight text-center mb-8" style={{ color: "#f8fafc" }}>Preguntas frecuentes</h2>
             <div className="space-y-3">
               {FAQ_EMPRESAS.map((faq, i) => (
-                <details key={i} className="rounded-xl overflow-hidden group"
-                  style={{ border: "1px solid rgba(148,163,184,0.18)" }}>
-                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none"
-                    style={{ background: "rgba(12,15,22,0.78)" }}>
+                <details key={i} className="cristal tono-neutro overflow-hidden group" style={{ borderRadius: 16 }}>
+                  <summary className="flex items-center justify-between px-5 min-h-[52px] py-3 cursor-pointer list-none">
                     <span className="text-sm font-medium" style={{ color: "#f1f5f9" }}>{faq.q}</span>
-                    <span className="text-base ml-3 flex-shrink-0" style={{ color: "#22c55e" }}>+</span>
+                    <span className="text-base ml-3 flex-shrink-0" style={{ color: "#bef264" }}>+</span>
                   </summary>
-                  <div className="px-5 py-4" style={{ background: "rgba(34,197,94,0.02)", borderTop: "1px solid rgba(148,163,184,0.14)" }}>
+                  <div className="px-5 py-4" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
                     <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>{faq.a}</p>
                   </div>
                 </details>
@@ -299,10 +296,10 @@ export default function EmpresasLandingPage() {
         </section>
 
         {/* Para ETTs */}
-        <section className="py-12 px-6" style={{ background: "rgba(245,158,11,0.04)", borderTop: "1px solid rgba(245,158,11,0.12)", borderBottom: "1px solid rgba(245,158,11,0.12)" }}>
-          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-6">
+        <section className="py-12 px-6">
+          <div className="cristal tono-ambar max-w-4xl mx-auto p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6">
             <div className="flex-1">
-              <h2 className="text-lg font-bold mb-2" style={{ color: "#f59e0b" }}>¿Eres una ETT o consultora de RRHH?</h2>
+              <h2 className="text-xl font-extrabold tracking-tight mb-2" style={{ color: "#fcd34d" }}>¿Eres una ETT o consultora de RRHH?</h2>
               <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
                 Ves a todos los candidatos que han activado «Visible para empresas», los buscas por ciudad y
                 perfil y abres el contacto y el CV completo de hasta {CANDIDATOS_MES} al mes —{" "}
@@ -310,8 +307,8 @@ export default function EmpresasLandingPage() {
               </p>
             </div>
             <Link href="/precios"
-              className="flex-shrink-0 text-sm font-semibold px-6 py-3 rounded-xl transition hover:opacity-90"
-              style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff" }}>
+              className="flex-shrink-0 text-sm font-semibold px-6 min-h-[48px] flex items-center justify-center rounded-full transition hover:opacity-90"
+              style={{ background: "linear-gradient(180deg, #fcd34d, #f59e0b 60%, #d97706)", color: "#1c1003" }}>
               Ver plan Empresa →
             </Link>
           </div>
@@ -320,19 +317,19 @@ export default function EmpresasLandingPage() {
         {/* CTA final */}
         <section className="py-24 px-6 text-center">
           <div className="max-w-xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-extrabold mb-3" style={{ color: "#f1f5f9" }}>
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
               Empieza a contratar diferente
             </h2>
             <p className="text-sm mb-2" style={{ color: "#22c55e" }}>Candidatos reales que han pedido que les encuentren.</p>
             <p className="text-xs mb-8" style={{ color: "#8b98ad" }}>Mira sus perfiles sin nombre antes de pagar.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/empresas/candidatos"
-                className="text-sm font-semibold py-3.5 px-10 rounded-xl transition hover:opacity-90"
+                className="text-sm font-semibold min-h-[48px] inline-flex items-center justify-center px-10 rounded-full transition hover:opacity-90"
                 style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
                 Ver candidatos gratis →
               </Link>
               <Link href="/empresas/publicar"
-                className="text-sm font-medium py-3.5 px-8 rounded-xl transition hover:bg-[#1e212b]"
+                className="text-sm font-medium min-h-[48px] inline-flex items-center justify-center px-8 rounded-full transition hover:bg-white/[0.05]"
                 style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
                 Mandar una oferta
               </Link>
@@ -342,7 +339,7 @@ export default function EmpresasLandingPage() {
 
       </main>
 
-      <footer className="py-6 px-6 text-center" style={{ background: "#0a0c10", borderTop: "1px solid rgba(45,49,66,0.5)" }}>
+      <footer className="py-6 px-6 text-center" style={{ background: "rgba(6,9,11,0.82)", borderTop: "1px solid rgba(163,230,53,0.1)" }}>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-[11px]" style={{ color: "#8b98ad" }}>
           <Link href="/" className="hover:opacity-80">← Volver a BuscayCurra</Link>
           <span className="hidden sm:block">·</span>

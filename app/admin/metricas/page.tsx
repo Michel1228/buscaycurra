@@ -38,7 +38,7 @@ function Tarjeta({ titulo, valor, pie, color = "#22c55e" }: {
   titulo: string; valor: string | number; pie?: string; color?: string;
 }) {
   return (
-    <div className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+    <div className="cristal tono-neutro p-4">
       <p className="text-[11px] uppercase tracking-wide mb-1" style={{ color: "#8b98ad" }}>{titulo}</p>
       <p className="text-3xl font-bold leading-none" style={{ color }}>{valor}</p>
       {pie && <p className="text-[11px] mt-1.5" style={{ color: "#94a3b8" }}>{pie}</p>}
@@ -56,7 +56,7 @@ function TarjetaTienda({ nombre, datos, enlace }: {
 }) {
   const listo = datos?.configurado;
   return (
-    <div className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+    <div className="cristal tono-neutro p-4">
       <div className="flex items-baseline justify-between mb-1">
         <p className="text-[11px] uppercase tracking-wide" style={{ color: "#8b98ad" }}>{nombre}</p>
         <a href={enlace} target="_blank" rel="noopener noreferrer"
@@ -91,7 +91,7 @@ function Barras({ datos }: { datos: Record<string, number> }) {
   const dias = Object.keys(datos);
   const max = Math.max(1, ...Object.values(datos));
   return (
-    <div className="rounded-xl p-4" style={{ background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" }}>
+    <div className="cristal tono-neutro p-4">
       <p className="text-[11px] uppercase tracking-wide mb-3" style={{ color: "#8b98ad" }}>
         Altas de los últimos 30 días
       </p>
@@ -154,7 +154,7 @@ export default function PanelMetricas() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#0f1117" }}>
         <div className="w-full max-w-sm text-center">
-          <h1 className="text-lg font-bold mb-2" style={{ color: "#f1f5f9" }}>Métricas de BuscayCurra</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight mb-2" style={{ color: "#f8fafc" }}>Métricas de BuscayCurra</h1>
 
           {cargando && (
             <p className="text-xs" style={{ color: "#8b98ad" }}>Cargando…</p>
@@ -198,7 +198,7 @@ export default function PanelMetricas() {
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>Cómo va BuscayCurra</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Cómo va <span className="texto-neon">BuscayCurra</span></h1>
             <p className="text-[11px]" style={{ color: "#8b98ad" }}>
               {new Date(d.generado).toLocaleString("es-ES")} · se actualiza solo cada minuto
             </p>

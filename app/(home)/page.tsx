@@ -390,7 +390,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         >
           <div className="max-w-4xl mx-auto">
             <div className="mb-8">
-              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
                 La verdad que nadie te cuenta sobre buscar trabajo
               </h2>
               <p className="text-sm" style={{ color: "#94a3b8" }}>
@@ -418,14 +418,14 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                   <div className="text-[11px] leading-tight mb-2" style={{ color: "#94a3b8" }}>
                     {v.label}
                   </div>
-                  <div className="text-[9px]" style={{ color: "#6b7280" }}>
+                  <div className="text-[9px]" style={{ color: "#8b98ad" }}>
                     Fuente: {v.fuente}
                   </div>
                 </div>
               ))}
             </div>
 
-            <p className="text-center mt-6 text-xs" style={{ color: "#64748b" }}>
+            <p className="text-center mt-6 text-xs" style={{ color: "#a7b3c6" }}>
               Fuentes: Informe Randstad 2025, Encuesta Adecco Candidatos, datos públicos InfoJobs,
               Infoempleo 2025.
             </p>
@@ -437,10 +437,10 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         <section className="py-20 px-6">
           <div className="max-w-3xl mx-auto">
             <div className="mb-12">
-              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
                 3 pasos. El resto lo hace Guzzi.
               </h2>
-              <p className="text-sm" style={{ color: "#64748b" }}>
+              <p className="text-sm" style={{ color: "#a7b3c6" }}>
                 Tú solo apareces a la entrevista.
               </p>
             </div>
@@ -448,26 +448,18 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
               {pasos.map((paso) => (
                 <div
                   key={paso.num}
-                  className="flex items-start gap-4 p-5 rounded-xl"
-                  style={{
-                    background: "rgba(255,255,255,0.02)",
-                    border: "1px solid rgba(255,255,255,0.04)",
-                  }}
+                  className="flex items-start gap-4 p-5 cristal tono-neutro"
                 >
                   <div
-                    className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg"
-                    style={{
-                      background: "rgba(34,197,94,0.10)",
-                      border: "1px solid rgba(34,197,94,0.2)",
-                    }}
+                    className="icono-circulo tono-lima"
                   >
-                    <span className="text-sm font-bold" style={{ color: "#22c55e" }}>{paso.num}</span>
+                    <span className="text-sm font-extrabold">{paso.num}</span>
                   </div>
                   <div className="flex-1 pt-0.5">
                     <h3 className="text-sm font-bold mb-1" style={{ color: "#f1f5f9" }}>
                       {paso.titulo}
                     </h3>
-                    <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>
+                    <p className="text-xs leading-relaxed" style={{ color: "#a7b3c6" }}>
                       {paso.desc}
                     </p>
                   </div>
@@ -487,18 +479,18 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         <section
           className="py-16 px-6"
           style={{
-            background: "rgba(15,17,23,0.5)",
-            borderTop: "1px solid rgba(45,49,66,0.4)",
+            background: "transparent",
+            borderTop: "1px solid rgba(163,230,53,0.1)",
           }}
         >
           <div className="max-w-5xl mx-auto">
             <div className="mb-12">
-              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
                 No somos un portal de empleo.
                 <br />
                 Somos tu agente de búsqueda personal.
               </h2>
-              <p className="text-sm" style={{ color: "#64748b" }}>
+              <p className="text-sm" style={{ color: "#a7b3c6" }}>
                 6 cosas que Guzzi hace y los portales tradicionales no.
               </p>
             </div>
@@ -508,7 +500,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                   <h3 className="text-sm font-bold mb-3" style={{ color: s.acento }}>
                     {s.titulo}
                   </h3>
-                  <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>
+                  <p className="text-xs leading-relaxed" style={{ color: "#a7b3c6" }}>
                     {s.desc}
                   </p>
                 </div>
@@ -521,17 +513,17 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         <section
           className="py-16 px-6"
           style={{
-            background: "rgba(15,17,23,0.6)",
-            borderTop: "1px solid rgba(45,49,66,0.4)",
+            background: "transparent",
+            borderTop: "1px solid rgba(163,230,53,0.1)",
             borderBottom: "1px solid rgba(45,49,66,0.4)",
           }}
         >
           <div className="max-w-5xl mx-auto">
             <div className="mb-8">
-              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
                 {OFERTAS} ofertas. {PAISES} países. Sin registrarte.
               </h2>
-              <p className="text-sm" style={{ color: "#64748b" }}>
+              <p className="text-sm" style={{ color: "#a7b3c6" }}>
                 Explora ofertas reales en toda Europa y el mundo. Para enviar candidaturas con IA,
                 crea tu cuenta gratis.
               </p>
@@ -544,12 +536,12 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         <section className="py-16 px-6">
           <div className="max-w-5xl mx-auto">
             <div className="mb-10">
-              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
                 Busca en España. O emigra.
                 <br />
                 Guzzi está en los dos lados.
               </h2>
-              <p className="text-sm" style={{ color: "#64748b" }}>
+              <p className="text-sm" style={{ color: "#a7b3c6" }}>
                 Si te planteas irte, Guzzi te busca curro antes de que hagas la maleta.
               </p>
             </div>
@@ -588,16 +580,16 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         <section
           className="py-16 px-6"
           style={{
-            background: "rgba(15,17,23,0.5)",
-            borderTop: "1px solid rgba(45,49,66,0.4)",
+            background: "transparent",
+            borderTop: "1px solid rgba(163,230,53,0.1)",
           }}
         >
           <div className="max-w-2xl mx-auto">
-            <div className="p-6 rounded-2xl" style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.12)" }}>
-              <h2 className="text-lg font-bold mb-2 text-center" style={{ color: "#f1f5f9" }}>
+            <div className="cristal tono-lima p-6">
+              <h2 className="text-xl md:text-2xl font-extrabold tracking-tight mb-2 text-center" style={{ color: "#f8fafc" }}>
                 Los portales de empleo son del pasado
               </h2>
-              <p className="text-center text-xs mb-5" style={{ color: "#64748b" }}>
+              <p className="text-center text-xs mb-5" style={{ color: "#a7b3c6" }}>
                 Tablones de anuncios del 2005 vs. agente IA del 2025.
               </p>
               <div className="grid grid-cols-2 gap-1.5 mb-4">
@@ -647,16 +639,19 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         </section>
 
         {/* ═══════════ TESTIMONIOS ═══════════ */}
+        {/* Solo si hay testimonios de verdad: con la lista vacía salía el
+            título «Gente real. Resultados reales.» sobre un hueco. */}
+        {testimonios.length > 0 && (
         <section
           className="py-16 px-6"
           style={{
-            background: "rgba(15,17,23,0.4)",
-            borderTop: "1px solid rgba(45,49,66,0.4)",
+            background: "transparent",
+            borderTop: "1px solid rgba(163,230,53,0.1)",
           }}
         >
           <div className="max-w-5xl mx-auto">
             <div className="mb-10">
-              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
                 Gente real. Resultados reales.
               </h2>
             </div>
@@ -670,7 +665,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                     <p className="text-xs font-semibold" style={{ color: "#f1f5f9" }}>
                       {t.nombre}
                     </p>
-                    <p className="text-[11px]" style={{ color: "#64748b" }}>
+                    <p className="text-[11px]" style={{ color: "#a7b3c6" }}>
                       {t.puesto} · {t.ciudad}
                     </p>
                   </div>
@@ -679,12 +674,13 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             </div>
           </div>
         </section>
+        )}
 
         {/* ═══════════ FAQ ═══════════ */}
-        <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+        <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(163,230,53,0.1)" }}>
           <div className="max-w-3xl mx-auto">
             <div className="mb-10">
-              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
                 Preguntas frecuentes
               </h2>
             </div>
@@ -694,7 +690,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                   <h3 className="text-sm font-semibold mb-2" style={{ color: "#f1f5f9" }}>
                     {item.q}
                   </h3>
-                  <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>
+                  <p className="text-xs leading-relaxed" style={{ color: "#a7b3c6" }}>
                     {item.a}
                   </p>
                 </div>
@@ -704,12 +700,12 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
         </section>
 
         {/* ═══════════ AU PAIR + LIVE-IN NANNY ═══════════ */}
-        <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(45,49,66,0.4)" }}>
+        <section className="py-16 px-6" style={{ borderTop: "1px solid rgba(163,230,53,0.1)" }}>
           <div className="max-w-3xl mx-auto text-center">
             <span className="text-xs font-semibold uppercase tracking-wider mb-3 block" style={{ color: "#22c55e" }}>
               Nuevo en BuscayCurra
             </span>
-            <h2 className="text-xl md:text-2xl font-bold mb-3" style={{ color: "#f1f5f9" }}>
+            <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
               ¿Quieres ser Au Pair o Live-in Nanny?
             </h2>
             <p className="text-sm mb-8 max-w-xl mx-auto" style={{ color: "#94a3b8" }}>
@@ -720,20 +716,20 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             <div className="flex flex-wrap gap-3 justify-center">
               <Link
                 href="/app/au-pair"
-                className="px-6 py-3 rounded-xl text-sm font-semibold transition-all"
+                className="px-6 min-h-[48px] flex items-center justify-center rounded-full text-sm font-semibold transition-all"
                 style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", borderRadius: 9999, boxShadow: "0 8px 24px -10px rgba(163,230,53,0.7)", }}
               >
                 Perfil Au Pair
               </Link>
               <Link
                 href="/auth/registro"
-                className="px-6 py-3 rounded-xl text-sm font-semibold transition-all"
-                style={{ background: "transparent", border: "1px solid rgba(34,197,94,0.3)", color: "#22c55e" }}
+                className="px-6 min-h-[48px] flex items-center justify-center rounded-full text-sm font-semibold transition-all"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(163,230,53,0.4)", color: "#d9f99d", borderRadius: 9999 }}
               >
                 Live-in Nanny
               </Link>
             </div>
-            <p className="text-[10px] mt-4" style={{ color: "#64748b" }}>
+            <p className="text-[10px] mt-4" style={{ color: "#a7b3c6" }}>
               {`+20.000 ofertas au pair/nanny · +19.500 con email · ${NUM_PAISES} países`}
             </p>
           </div>
@@ -744,16 +740,16 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
           id="precios"
           className="py-20 px-6"
           style={{
-            background: "rgba(15,17,23,0.5)",
-            borderTop: "1px solid rgba(45,49,66,0.4)",
+            background: "transparent",
+            borderTop: "1px solid rgba(163,230,53,0.1)",
           }}
         >
           <div className="max-w-5xl mx-auto">
             <div className="mb-12">
-              <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
                 Sin letra pequeña
               </h2>
-              <p className="text-sm" style={{ color: "#64748b" }}>
+              <p className="text-sm" style={{ color: "#a7b3c6" }}>
                 Empieza gratis. Paga solo si necesitas enviar más candidaturas.
               </p>
             </div>
@@ -762,21 +758,21 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
               {planes.map((plan) => (
                 <div
                   key={plan.nombre}
-                  className="rounded-xl p-5 flex flex-col relative h-full"
+                  className="rounded-3xl p-5 flex flex-col relative h-full"
                   style={{
                     background: plan.destacado
-                      ? "rgba(34,197,94,0.06)"
-                      : "rgba(255,255,255,0.02)",
+                      ? "rgba(163,230,53,0.08)"
+                      : "rgba(12,15,22,0.78)",
                     border: plan.destacado
-                      ? "1.5px solid rgba(34,197,94,0.30)"
-                      : "1px solid rgba(255,255,255,0.05)",
+                      ? "1.5px solid rgba(163,230,53,0.5)"
+                      : "1px solid rgba(148,163,184,0.2)",
                   }}
                 >
                   {plan.tag && (
                     <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
                       <span
                         className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                        style={{ background: "#22c55e", color: "#fff" }}
+                        style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}
                       >
                         {plan.tag}
                       </span>
@@ -785,7 +781,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                   <div className="mb-4">
                     <div
                       className="text-[10px] font-semibold uppercase tracking-wider mb-1"
-                      style={{ color: plan.destacado ? "#22c55e" : "#64748b" }}
+                      style={{ color: plan.destacado ? "#bef264" : "#a7b3c6" }}
                     >
                       {plan.nombre}
                     </div>
@@ -793,11 +789,11 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                       <span className="text-2xl font-extrabold" style={{ color: "#f1f5f9" }}>
                         {plan.precio}€
                       </span>
-                      <span className="text-[11px]" style={{ color: "#64748b" }}>
+                      <span className="text-[11px]" style={{ color: "#a7b3c6" }}>
                         {plan.periodo}
                       </span>
                     </div>
-                    <div className="text-[11px] mt-0.5" style={{ color: "#6b7280" }}>
+                    <div className="text-[11px] mt-0.5" style={{ color: "#8b98ad" }}>
                       {plan.desc}
                     </div>
                   </div>
@@ -810,7 +806,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                       >
                         <span
                           className="mt-0.5 flex-shrink-0"
-                          style={{ color: plan.destacado ? "#22c55e" : "#64748b" }}
+                          style={{ color: plan.destacado ? "#bef264" : "#a7b3c6" }}
                         >
                           <Check className="w-3 h-3 inline" />
                         </span>
@@ -826,20 +822,20 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                         ? {
                             background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", borderRadius: 9999, boxShadow: "0 8px 24px -10px rgba(163,230,53,0.7)",
                           }
-                        : { border: "1px solid #2d3142", color: "#94a3b8" }
+                        : { border: "1px solid rgba(148,163,184,0.3)", color: "#dbe3ee", borderRadius: 9999 }
                     }
                   >
                     {plan.cta}
                   </Link>
                   {plan.nota && (
-                    <p className="mt-2 text-center text-[10px]" style={{ color: "#6b7280" }}>
+                    <p className="mt-2 text-center text-[10px]" style={{ color: "#8b98ad" }}>
                       {plan.nota}
                     </p>
                   )}
                 </div>
               ))}
             </div>
-            <p className="text-center mt-6 text-[11px]" style={{ color: "#6b7280" }}>
+            <p className="text-center mt-6 text-[11px]" style={{ color: "#8b98ad" }}>
               Cancela en cualquier momento. Sin permanencia.
             </p>
           </div>
@@ -858,7 +854,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             <div className="flex justify-center mb-6">
               <LogoGusano size={64} animated />
             </div>
-            <h2 className="text-2xl md:text-3xl font-extrabold mb-3" style={{ color: "#f1f5f9" }}>
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-3" style={{ color: "#f8fafc" }}>
               Tu próximo trabajo ya existe.
             </h2>
             <p className="text-sm mb-2" style={{ color: "#22c55e" }}>
@@ -869,14 +865,14 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
             </p>
             <Link
               href="/auth/registro"
-              className="inline-block text-sm font-semibold py-3.5 px-12 rounded-xl transition hover:opacity-90"
+              className="inline-block text-sm font-semibold min-h-[48px] inline-flex items-center justify-center px-12 rounded-full transition hover:opacity-90"
               style={{
                 background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", borderRadius: 9999, boxShadow: "0 8px 24px -10px rgba(163,230,53,0.7)",
               }}
             >
               Activar Guzzi gratis →
             </Link>
-            <p className="mt-3 text-[11px]" style={{ color: "#6b7280" }}>
+            <p className="mt-3 text-[11px]" style={{ color: "#8b98ad" }}>
               Sin tarjeta de crédito. En 30 segundos.
             </p>
           </div>
@@ -886,7 +882,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
       {/* ═══════════ FOOTER ═══════════ */}
       <footer
         className="py-10 px-6"
-        style={{ background: "#0a0c10", borderTop: "1px solid rgba(45,49,66,0.5)" }}
+        style={{ background: "rgba(6,9,11,0.82)", borderTop: "1px solid rgba(163,230,53,0.1)" }}
       >
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-8">
@@ -897,7 +893,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                   BuscayCurra
                 </span>
               </div>
-              <p className="text-[11px] leading-relaxed max-w-xs" style={{ color: "#6b7280" }}>
+              <p className="text-[11px] leading-relaxed max-w-xs" style={{ color: "#8b98ad" }}>
                 Un agente de IA que busca trabajo por ti. {PAISES} países, cero spam.
                 Tu agente personal de búsqueda de empleo.
               </p>
@@ -920,7 +916,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                       key={l.href}
                       href={l.href}
                       className="block text-[11px] hover:opacity-80 transition"
-                      style={{ color: "#64748b" }}
+                      style={{ color: "#a7b3c6" }}
                     >
                       {l.label}
                     </Link>
@@ -943,7 +939,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                       key={l.href}
                       href={l.href}
                       className="block text-[11px] hover:opacity-80 transition"
-                      style={{ color: "#64748b" }}
+                      style={{ color: "#a7b3c6" }}
                     >
                       {l.label}
                     </Link>
@@ -964,7 +960,7 @@ const testimonios: { nombre: string; ciudad: string; puesto: string; texto: stri
                       key={l.href}
                       href={l.href}
                       className="block text-[11px] hover:opacity-80 transition"
-                      style={{ color: "#64748b" }}
+                      style={{ color: "#a7b3c6" }}
                     >
                       {l.label}
                     </Link>

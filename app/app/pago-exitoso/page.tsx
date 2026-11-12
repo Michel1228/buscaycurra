@@ -59,7 +59,7 @@ function PagoExitosoContenido() {
     planActivo === "Empresa"
       // Solo lo que existe de verdad: ni API, ni buscador avanzado, ni "IA
       // avanzada" (auditoría del 3 oct 2026).
-      ? ["200 CVs enviados por día", "1.500 CVs por semana", "Guzzi sin límite", "Soporte 24/7"]
+      ? ["200 CVs enviados por día", "1.500 CVs por semana", "Guzzi sin límite", "Ver candidatos"]
       : planActivo === "Esencial"
       ? ["15 CVs enviados por día", "100 CVs por semana", "Mejora CV con IA", "Carta IA personalizada"]
       : planActivo === "Básico"
@@ -67,36 +67,36 @@ function PagoExitosoContenido() {
       : ["50 CVs enviados por día", "350 CVs por semana", "Carta IA personalizada", "Soporte prioritario"];
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 pt-16" style={{ background: "#0f1117" }}>
-      <div className="w-full max-w-md rounded-2xl p-8 text-center" style={{ background: "#161922", border: "1px solid #2d3142" }}>
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-          style={{ background: "rgba(34,197,94,0.1)", border: "2px solid rgba(34,197,94,0.2)" }}>
-          <PartyPopper size={40} style={{ color: "#22c55e" }} />
-        </div>
+    <div className="ui-neon min-h-screen flex items-center justify-center px-4 pt-16" style={{ background: "transparent" }}>
+      <div className="cristal tono-lima w-full max-w-md p-8 text-center"
+        style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(163,230,53,0.15), 0 24px 60px -30px rgba(163,230,53,0.8)" }}>
+        <span className="icono-circulo tono-lima mx-auto mb-6" style={{ width: 84, height: 84 }} aria-hidden="true">
+          <PartyPopper size={38} />
+        </span>
 
-        <h1 className="text-2xl font-bold mb-2" style={{ color: "#f1f5f9" }}>¡Pago completado!</h1>
-        <p className="text-sm mb-1" style={{ color: "#94a3b8" }}>
-          Ya tienes el plan <strong style={{ color: "#22c55e" }}>{planActivo}</strong> activado.
+        <h1 className="text-3xl font-extrabold tracking-tight mb-2" style={{ color: "#f8fafc" }}>¡Pago <span className="texto-neon">completado</span>!</h1>
+        <p className="text-sm mb-1" style={{ color: "#cbd5e1" }}>
+          Ya tienes el plan <strong style={{ color: "#d9f99d" }}>{planActivo}</strong> activado.
         </p>
-        <p className="text-xs mb-6" style={{ color: "#64748b" }}>
+        <p className="text-xs mb-6" style={{ color: "#a7b3c6" }}>
           {polling ? "⏳ Verificando tu plan..." : "Tu plan estará activo en unos segundos."}
         </p>
 
-        <div className="rounded-xl p-4 mb-6 text-left space-y-2"
-          style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
+        <div className="rounded-2xl p-4 mb-6 text-left space-y-2"
+          style={{ background: "rgba(163,230,53,0.06)", border: "1px solid rgba(163,230,53,0.22)" }}>
           {caracteristicas.map((item) => (
-            <p key={item} className="text-sm flex items-center gap-2" style={{ color: "#94a3b8" }}>
-              <Check size={14} strokeWidth={2.5} style={{ color: "#22c55e", flexShrink: 0 }} /> {item}
+            <p key={item} className="text-sm flex items-center gap-2" style={{ color: "#dbe3ee" }}>
+              <Check size={14} strokeWidth={2.5} style={{ color: "#bef264", flexShrink: 0 }} /> {item}
             </p>
           ))}
         </div>
 
         <button onClick={() => router.push("/app/gusi")}
-          className="btn-game w-full py-3 text-sm font-semibold mb-3">
+          className="boton-neon w-full mb-3">
           Ir a Guzzi →
         </button>
         <button onClick={() => router.push("/app/perfil")}
-          className="text-xs hover:underline" style={{ color: "#64748b" }}>
+          className="text-sm min-h-[44px] hover:underline" style={{ color: "#a7b3c6" }}>
           Ver mi plan en el perfil
         </button>
       </div>
@@ -108,7 +108,7 @@ export default function PagoExitosoPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1117" }}>
-        <div className="animate-spin rounded-full h-10 w-10" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
+        <div className="animate-spin rounded-full h-10 w-10" style={{ border: "3px solid #2d3142", borderTopColor: "#a3e635" }} />
       </div>
     }>
       <PagoExitosoContenido />
