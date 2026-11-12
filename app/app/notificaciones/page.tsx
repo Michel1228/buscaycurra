@@ -317,7 +317,7 @@ export default function NotificacionesPage() {
            style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.18)" }}>
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Notificaciones</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Notificaciones</h1>
             <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
               {notifs.length} notificación{notifs.length !== 1 ? "es" : ""} · {sinLeer} sin leer · {enviadosHoy}/{limiteDiario} envíos hoy
             </p>

@@ -120,7 +120,7 @@ export default function CandidatosPage() {
 
         {/* Título + búsqueda */}
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Candidatos disponibles</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Candidatos disponibles</h1>
           <p className="text-xs mb-6" style={{ color: "#8b98ad" }}>
             Profesionales buscando trabajo activamente en España. CVs optimizados con IA.
             {!esEmpresa && <> <Link href="/precios" style={{ color: "#22c55e" }}> Activa Plan Empresa</Link> para ver contacto completo.</>}

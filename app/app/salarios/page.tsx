@@ -302,9 +302,9 @@ export default function SalariosPage() {
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
-      <div className="">
+      <div className="py-8 px-4">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Comparador de salarios</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Comparador de salarios</h1>
           <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Descubre cuánto se cobra en tu sector con datos reales del mercado</p>
         </div>
       </div>

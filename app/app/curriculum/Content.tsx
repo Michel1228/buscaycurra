@@ -862,7 +862,7 @@ export default function CurriculumPage() {
             baja debajo del titulo cuando no cabe, en vez de desbordarse. */}
         <div className="max-w-[100rem] mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Mi Currículum</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Mi Currículum</h1>
             <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Completa tus datos — la plantilla se actualiza en vivo</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">

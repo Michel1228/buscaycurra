@@ -123,7 +123,7 @@ export default function EquipoEmpresaPage() {
       {cabecera}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-10">
         <section>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Este mes</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Este mes</h1>
           <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
             El cupo es de toda la empresa, lo use quien lo use, y se renueva el día 1. Un candidato que ya habéis abierto sigue abierto y no vuelve a contar.
           </p>

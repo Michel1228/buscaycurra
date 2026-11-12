@@ -500,7 +500,7 @@ export default function EmpresasPage() {
       {/* ── Header compartido ── */}
       <div className="cristal tono-lima py-8 px-4 mx-3 mt-3">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>
             Enviar CV a empresas
           </h1>
           <p className="text-sm mt-1" style={{ color: "#a7b3c6" }}>

@@ -123,9 +123,9 @@ function ReviewsPageInner() {
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117" }}>
-      <div className="">
+      <div className="py-8 px-4">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Reviews de empresas</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Reviews de empresas</h1>
           <p className="text-xs mt-1" style={{ color: "#8b98ad" }}>Opiniones reales de quienes han trabajado o aplicado</p>
         </div>
       </div>

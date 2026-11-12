@@ -138,7 +138,7 @@ export default function EntrevistasEmpresaPage() {
       {cabecera}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-10">
         <section>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Candidatos invitados</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Candidatos invitados</h1>
           <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
             En el perfil de un candidato, pulsa «Me interesa» para invitarle a preparar tu entrevista. Ensaya con tus preguntas y, cuando quiere, te manda sus respuestas.
             Aquí no llega ninguna nota automática: la valoración la haces tú, marcando lo que ha cubierto en cada respuesta.

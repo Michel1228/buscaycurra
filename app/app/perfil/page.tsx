@@ -365,14 +365,14 @@ export default function PerfilPage() {
         </button>
       </div>
       {/* Header */}
-      <div className="">
+      <div className="px-4 py-8">
         <div className="max-w-2xl mx-auto flex items-center gap-5">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
             style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
             {iniciales()}
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>
               {perfil.nombre ? `${perfil.nombre} ${perfil.apellidos}` : "Mi Perfil"}
             </h1>
             <p className="text-sm" style={{ color: "#8b98ad" }}>{email}</p>
