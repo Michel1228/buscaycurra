@@ -34,7 +34,7 @@ interface DescargasTienda {
   aviso?: string;
 }
 
-function Tarjeta({ titulo, valor, pie, color = "#22c55e" }: {
+function Tarjeta({ titulo, valor, pie, color = "#a3e635" }: {
   titulo: string; valor: string | number; pie?: string; color?: string;
 }) {
   return (
@@ -60,7 +60,7 @@ function TarjetaTienda({ nombre, datos, enlace }: {
       <div className="flex items-baseline justify-between mb-1">
         <p className="text-[11px] uppercase tracking-wide" style={{ color: "#8b98ad" }}>{nombre}</p>
         <a href={enlace} target="_blank" rel="noopener noreferrer"
-           className="text-[10px] hover:underline" style={{ color: "#22c55e" }}>abrir panel →</a>
+           className="text-[10px] hover:underline" style={{ color: "#a3e635" }}>abrir panel →</a>
       </div>
 
       {listo ? (
@@ -102,7 +102,7 @@ function Barras({ datos }: { datos: Record<string, number> }) {
             <div key={d} className="flex-1 rounded-t transition-all" title={`${d}: ${v} alta${v === 1 ? "" : "s"}`}
               style={{
                 height: `${Math.max(3, (v / max) * 100)}%`,
-                background: v > 0 ? "#22c55e" : "#2d3142",
+                background: v > 0 ? "linear-gradient(180deg, #d9f99d, #a3e635 60%, #65a30d)" : "#2d3142",
                 opacity: v > 0 ? 1 : 0.4,
               }} />
           );
@@ -213,7 +213,7 @@ export default function PanelMetricas() {
         <p className="text-[11px] uppercase tracking-wide mb-2" style={{ color: "#8b98ad" }}>Usuarios</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
           <Tarjeta titulo="Registrados" valor={d.usuarios.total} />
-          <Tarjeta titulo="Hoy" valor={`+${d.usuarios.alta1}`} color={d.usuarios.alta1 > 0 ? "#22c55e" : "#64748b"} />
+          <Tarjeta titulo="Hoy" valor={`+${d.usuarios.alta1}`} color={d.usuarios.alta1 > 0 ? "#a3e635" : "#64748b"} />
           <Tarjeta titulo="7 días" valor={`+${d.usuarios.alta7}`} />
           <Tarjeta titulo="30 días" valor={`+${d.usuarios.alta30}`} />
         </div>
@@ -224,7 +224,7 @@ export default function PanelMetricas() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
           <Tarjeta titulo="Suscriptores activos" valor={d.suscriptores.activos ?? "—"}
             pie={d.suscriptores.activos === null ? "no se pudo leer Stripe" : "pagando ahora (Stripe + iPhone)"}
-            color={(d.suscriptores.activos ?? 0) > 0 ? "#22c55e" : "#f59e0b"} />
+            color={(d.suscriptores.activos ?? 0) > 0 ? "#a3e635" : "#f59e0b"} />
           <Tarjeta titulo="Han pasado por caja" valor={d.suscriptores.conOrigenPago} pie="alguna vez" />
           <Tarjeta titulo="Cobros" valor={d.cobros.disponible ? d.cobros.numero : "—"} />
           <Tarjeta titulo="Facturado" valor={d.cobros.disponible ? `${d.cobros.importe.toFixed(2)} €` : "—"} />

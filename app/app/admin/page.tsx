@@ -22,7 +22,7 @@ interface Stats {
 const PLAN_LABELS: Record<string, { label: string; color: string; precio: number }> = {
   free:    { label: "Free",    color: "#8b98ad", precio: 0 },
   esencial:{ label: "Esencial",color: "#60a5fa", precio: 2.99 },
-  pro:     { label: "Pro",     color: "#22c55e", precio: 9.99 },
+  pro:     { label: "Pro",     color: "#a3e635", precio: 9.99 },
   empresa: { label: "Empresa", color: "#f59e0b", precio: 49.99 },
 };
 
@@ -51,7 +51,7 @@ export default function AdminPage() {
 
   if (cargando) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1117" }}>
-      <div className="animate-spin rounded-full h-10 w-10" style={{ border: "3px solid #2d3142", borderTopColor: "#22c55e" }} />
+      <div className="animate-spin rounded-full h-10 w-10" style={{ border: "3px solid #2d3142", borderTopColor: "#a3e635" }} />
     </div>
   );
 
@@ -88,7 +88,7 @@ export default function AdminPage() {
 
         {/* KPIs principales */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KpiCard label="Usuarios registrados" value={stats.totalUsuarios} color="#22c55e" />
+          <KpiCard label="Usuarios registrados" value={stats.totalUsuarios} color="#a3e635" />
           <KpiCard label="Suscriptores activos" value={stats.pagando} color="#60a5fa" />
           <KpiCard label="Ingresos estimados/mes" value={`${stats.ingresosMes.toFixed(2)}€`} color="#f59e0b" />
           <KpiCard label="CVs enviados (total)" value={stats.totalEnvios} color="#a78bfa" />
@@ -180,7 +180,7 @@ function MiniCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="cristal tono-neutro p-4 text-center">
       <p className="text-xs mb-1" style={{ color: "#8b98ad" }}>{label}</p>
-      <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>+{value}</p>
+      <p className="text-2xl font-bold" style={{ color: "#a3e635" }}>+{value}</p>
     </div>
   );
 }
