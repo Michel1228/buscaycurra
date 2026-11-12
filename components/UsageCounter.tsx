@@ -58,7 +58,7 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
               style={{
                 width: `${Math.min(100, (usage.guzzi.used / usage.guzzi.max) * 100)}%`,
                 background: usage.guzzi.remaining && usage.guzzi.remaining > 5
-                  ? "linear-gradient(90deg, #22c55e, #16a34a)"
+                  ? "linear-gradient(90deg, #84cc16, #bef264)"
                   : "linear-gradient(90deg, #f59e0b, #ef4444)",
               }}
             />
@@ -81,7 +81,7 @@ export default function UsageCounter({ compact = false }: { compact?: boolean })
               style={{
                 width: `${Math.min(100, (usage.envios.hoy / usage.envios.maxDia) * 100)}%`,
                 background: usage.envios.remainingDia > 3
-                  ? "linear-gradient(90deg, #22c55e, #16a34a)"
+                  ? "linear-gradient(90deg, #84cc16, #bef264)"
                   : "linear-gradient(90deg, #f59e0b, #ef4444)",
               }}
             />
