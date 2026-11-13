@@ -35,49 +35,12 @@ export interface OfertaDetalle {
   country?: string;
 }
 
-/** Limpia nombres de fuente: ADZUNA_ES → Adzuna, EURES_MAD → Careerjet */
-function formatSource(raw: string): string {
-  // "EURES_ESP", "EURES_UNI", "EURES_SEA"... NO son EURES: son Careerjet,
-  // guardado así por un error histórico (fetchCareerjetGlobal). Aquí ponía
-  // "EURES España" o "EURES Europa" en ofertas de Careerjet, también en las de
-  // Estados Unidos o Japón. EURES de verdad es "EURES" a secas.
-  if (/^EURES_/i.test(raw || "")) return "Careerjet";
-  const m: Record<string, string> = {
-    "ADZUNA_ES": "Adzuna",
-    "ADZUNA_UK": "Adzuna UK",
-    "ADZUNA_US": "Adzuna USA",
-    "ADZUNA_DE": "Adzuna DE",
-    "ADZUNA_FR": "Adzuna FR",
-    "ADZUNA_AU": "Adzuna AU",
-    "JOOBLE": "Jooble",
-    "CAREERJET": "Careerjet",
-  };
-  // Latinoamérica entra como CAREERJET_CO, CAREERJET_PE...: se enseña "Careerjet".
-  if (/^CAREERJET_/i.test(raw || "")) return "Careerjet";
-  return m[raw?.toUpperCase()] || raw?.replace(/_/g, " ") || "Desconocida";
-}
-
 /** Separa secciones pegadas en la descripción: "textoRequisitos..." → "texto\nRequisitos..." */
 function formatDescription(desc: string): string {
   if (!desc) return "";
   return desc
     .replace(/([a-záéíóúüñ])(Requisitos|Funciones|Responsabilidades|Experiencia|Formación|Ofrecemos|Beneficios|Se ofrece|Se requiere|Imprescindible|Condiciones|Horario|Contrato|Salario|Incorporación)/g, "$1\n\n$2")
     .replace(/(Requisitos|Funciones|Responsabilidades|Experiencia|Formación|Ofrecemos|Beneficios|Se ofrece|Se requiere|Imprescindible|Condiciones|Horario|Contrato|Salario|Incorporación)([a-záéíóúüñ])/g, "$1: $2");
-}
-
-function colorFuente(fuente: string): { bg: string; text: string } {
-  const mapa: Record<string, { bg: string; text: string }> = {
-    infojobs: { bg: "rgba(59,130,246,0.12)", text: "#60a5fa" },
-    linkedin: { bg: "rgba(10,102,194,0.12)", text: "#0a66c2" },
-    indeed: { bg: "rgba(37,87,167,0.12)", text: "#2557a7" },
-    adzuna: { bg: "rgba(52,211,153,0.12)", text: "#34d399" },
-    jooble: { bg: "rgba(251,146,60,0.12)", text: "#fb923c" },
-    careerjet: { bg: "rgba(96,165,250,0.12)", text: "#60a5fa" },
-    remoteok: { bg: "rgba(168,85,247,0.12)", text: "#a855f7" },
-    arbeitnow: { bg: "rgba(34,197,94,0.12)", text: "#22c55e" },
-  };
-  const key = fuente?.toLowerCase() || "";
-  return mapa[key] ?? { bg: "rgba(148,163,184,0.12)", text: "#94a3b8" };
 }
 
 export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta: OfertaDetalle }) {
@@ -303,7 +266,6 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
     }
   }
 
-  const fuenteStyle = colorFuente(oferta.fuente || "");
 
   return (
     <div className="max-w-3xl mx-auto px-4 pt-20 pb-6">
@@ -356,13 +318,7 @@ export default function OfertaDetalleClient({ oferta: ofertaInicial }: { oferta:
               {oficial ? `Publicada por ${oficial.nombre}` : oferta.empresa}
             </p>
           </div>
-          {oferta.fuente && (
-            <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase"
-              style={{ background: fuenteStyle.bg, color: fuenteStyle.text }}>
-              {formatSource(oferta.fuente || "Desconocida")}
-            </span>
-          )}
+          {/* Sin el nombre del agregador (Adzuna, Careerjet...): Michel, 13 nov 2026. */}
         </div>
 
         <div className="flex flex-wrap gap-4 mb-5 text-sm" style={{ color: "#94a3b8" }}>

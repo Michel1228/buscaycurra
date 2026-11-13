@@ -8,6 +8,7 @@
  *   - Cumplir con RGPD (registro de actividad)
  */
 
+import { esAgenciaPorPuesto, TOPE_DIARIO_AGENCIA } from "@/lib/job-search/portales-empleo";
 import { createClient } from "@supabase/supabase-js";
 import { ESTADOS_QUE_GASTAN_CUOTA } from "./rate-limiter";
 import { CORREO_ANOTACION_MANUAL } from "./anotacion";
@@ -256,13 +257,30 @@ export async function getCompanyHistory(companyEmail: string): Promise<CVSendRec
 export async function canSendToCompany(
   userId: string,
   companyEmail: string,
-  minDays = 15
+  minDays = 15,
+  /** El puesto: en las agencias (Domestiko) el freno es por dirección Y puesto. */
+  jobTitle?: string | null,
 ): Promise<boolean> {
   // El email, siempre en minúsculas. Se guarda normalizado en recordSent, y si
   // aquí se buscara tal cual llega, un "RRHH@empresa.com" venido de Google
   // Places no encontraría el "rrhh@empresa.com" del historial y se saltaría la
   // espera de quince días.
   const email = companyEmail.trim().toLowerCase();
+  const agencia = esAgenciaPorPuesto(email);
+  const puesto = (jobTitle ?? "").trim();
+
+  // Agencia (portales-empleo.ts): como mucho TOPE_DIARIO_AGENCIA CV al día a su
+  // buzón, sean del puesto que sean. Si la consulta falla, no se envía.
+  if (agencia) {
+    const { count, error: errorHoy } = await getSupabase()
+      .from("cv_sends")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("company_email", email)
+      .in("status", ESTADOS_QUE_GASTAN_CUOTA)
+      .gte("created_at", new Date(Date.now() - 24 * 3_600_000).toISOString());
+    if (errorHoy || (count ?? 0) >= TOPE_DIARIO_AGENCIA) return false;
+  }
 
   // "pendiente" también cuenta, y esto faltaba: si el usuario ya tiene un envío
   // encolado para esta empresa y todavía no ha salido, encolar otro le manda a
@@ -273,12 +291,15 @@ export async function canSendToCompany(
   // acaba casi todo envío cuando Resend avisa de que llegó, y como no estaba en
   // la lista, al minuto de llegar se podía mandar el mismo CV otra vez. Se usa
   // la misma lista que el límite del plan para que no vuelvan a separarse.
-  const { data, error } = await getSupabase()
+  let consulta = getSupabase()
     .from("cv_sends")
     .select("sent_at, created_at, status")
     .eq("user_id", userId)
     .eq("company_email", email)
-    .in("status", ESTADOS_QUE_GASTAN_CUOTA)
+    .in("status", ESTADOS_QUE_GASTAN_CUOTA);
+  // En una agencia, los 15 días son por puesto: otro puesto es otra candidatura.
+  if (agencia && puesto) consulta = consulta.eq("job_title", puesto);
+  const { data, error } = await consulta
     .order("created_at", { ascending: false })
     .limit(1);
 

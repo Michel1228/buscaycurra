@@ -87,14 +87,6 @@ function iconoDe(name: string) {
 const TONO_ACCION: Record<string, Tono> = { SPARKLES: "lima", FILETEXT: "ambar", SEARCH: "azul", BARCHART3: "morado", MAIL: "verde", TARGET: "ambar" };
 const TONOS_LOGO: Tono[] = ["verde", "azul", "ambar", "morado", "cian", "rosa"];
 
-/** "ADZUNA_ES" → "Adzuna", "EURES_ZAR" → "Careerjet" (error histórico, ver JobCard). */
-function fuenteVisible(fuente: string): string {
-  if (/^EURES_/i.test(fuente)) return "Careerjet";
-  const base = (fuente || "").split("_")[0];
-  if (!base || base.toLowerCase() === "buscaycurra") return "";
-  return base.length <= 4 && base === base.toUpperCase() ? base : base[0].toUpperCase() + base.slice(1).toLowerCase();
-}
-
 /** "Hace 3 h", "Ayer", "Hace 5 días". */
 function haceCuanto(fecha: string): string {
   const min = Math.max(0, Math.round((Date.now() - new Date(fecha).getTime()) / 60000));
@@ -357,7 +349,6 @@ export default function BienvenidaClient() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {ofertas.slice(0, 6).map((oferta, i) => {
                 const sueldo = sueldoCreible(oferta.salario);
-                const fuente = fuenteVisible(oferta.fuente);
                 return (
                   <Link
                     key={oferta.id}
@@ -370,7 +361,6 @@ export default function BienvenidaClient() {
                       <p className="text-[13px] mt-0.5 truncate" style={{ color: "#a7b3c6" }}>{oferta.empresa}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px]" style={{ color: "var(--texto-tenue)" }}>
                         <span className="inline-flex items-center gap-1"><MapPin size={13} aria-hidden="true" />{oferta.ubicacion || "Sin ubicación"}</span>
-                        {fuente && <span>{fuente}</span>}
                         {sueldo && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full font-semibold"
                             style={{ background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.3)", color: "#d9f99d" }}>

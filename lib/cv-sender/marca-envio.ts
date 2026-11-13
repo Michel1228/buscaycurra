@@ -17,6 +17,7 @@
  * Sin dependencias de servidor: lo usan JobCard, la ficha y el servidor.
  */
 
+import { esAgenciaPorPuesto } from "@/lib/job-search/portales-empleo";
 export const DIAS_ENTRE_ENVIOS = 15;
 
 /** Estados que cuentan como "ya se lo mandé" (los mismos que gastan cuota). */
@@ -93,6 +94,9 @@ export function marcaDeOferta(misEnvios: EnvioPropio[], oferta: OfertaParaMarca,
   //    tacha, se explica el freno.
   const correo = (oferta.correo ?? "").trim().toLowerCase();
   if (!correo) return null;
+  // Una agencia (Domestiko) recibe CV de miles de puestos en la misma dirección:
+  // escribir a uno no frena los demás (portales-empleo.ts, 13 nov 2026).
+  if (esAgenciaPorPuesto(correo)) return null;
   const reciente = enviados
     .filter((e) => (e.company_email ?? "").trim().toLowerCase() === correo)
     .sort((a, b) => fechaDe(b).getTime() - fechaDe(a).getTime())[0];

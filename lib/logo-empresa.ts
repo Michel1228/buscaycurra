@@ -28,7 +28,7 @@
  */
 
 import { MARCAS_CONOCIDAS } from "./logo-empresa-marcas";
-import { esCorreoDePortal, esNombreDePortal } from "./job-search/portales-empleo";
+import { esCorreoDePortal, esNombreDePortal, esAgenciaPorPuesto } from "./job-search/portales-empleo";
 
 // Las de aquí (comprobadas a mano el 7 nov) mandan sobre las del fichero grande.
 const MARCAS: [dominio: string, nombres: string[]][] = [
@@ -132,7 +132,7 @@ export function dominioDeLogo(empresa: string | null | undefined, correo?: strin
   if (deMarca) return deMarca;
 
   const dominio = (correo || "").trim().toLowerCase().split("@")[1]?.replace(/^www\./, "");
-  if (!dominio || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dominio) || CORREO_GENERICO.test(dominio) || esCorreoDePortal(correo)) return null;
+  if (!dominio || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(dominio) || CORREO_GENERICO.test(dominio) || esCorreoDePortal(correo) || esAgenciaPorPuesto(correo)) return null;
   // "rrhh.lidl.es" → "lidl": la etiqueta que va antes del final.
   const partes = dominio.split(".");
   const etiqueta = (partes.length >= 3 && partes[partes.length - 2].length <= 3 ? partes[partes.length - 3] : partes[partes.length - 2]) || "";

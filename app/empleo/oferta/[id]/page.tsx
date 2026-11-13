@@ -18,18 +18,6 @@ function sueldoDe(s: string | null): string | null {
   return t && !/^(ver en oferta|consultar|a convenir|no especificado|n\/?d|-)$/i.test(t) ? t : null;
 }
 
-/**
- * "ADZUNA_ES" → "Adzuna": el código interno no se enseña. Y "EURES_GIJ" →
- * "Careerjet": las "EURES_xxx" son de Careerjet, guardadas así por un error
- * histórico (fetchCareerjetGlobal); EURES de verdad es "EURES" a secas.
- */
-function nombreFuente(s: string | null): string | null {
-  if (/^EURES_/i.test((s || "").trim())) return "Careerjet";
-  const base = (s || "").split("_")[0].trim();
-  if (!base) return null;
-  return base.length <= 5 && base === base.toUpperCase() ? base : base[0].toUpperCase() + base.slice(1).toLowerCase();
-}
-
 const APP_STORE = "https://apps.apple.com/app/buscaycurra-empleo-con-ia/id6775232067";
 const GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=es.buscaycurra.app";
 
@@ -232,12 +220,8 @@ export default async function OfertaPublicaPage({
                 <p className="text-xs mt-3" style={{ color: "#94a3b8" }}>{textoDebajo}</p>
               </>
             ) : null}
-            {row.sourceUrl && !oficial && (
-              <a href={row.sourceUrl} target="_blank" rel="nofollow noopener noreferrer"
-                className="text-xs mt-4 inline-block hover:underline" style={{ color: "#8b98ad" }}>
-                Ver la oferta original{nombreFuente(row.sourceName) ? ` en ${nombreFuente(row.sourceName)}` : ""} ↗
-              </a>
-            )}
+            {/* Sin "Ver la oferta original en Adzuna" (13 nov 2026): quien llega
+                de Google se quedaba a un clic de irse a otro portal. */}
           </div>
         </div>
 

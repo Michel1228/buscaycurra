@@ -25,7 +25,6 @@
 const DOMINIOS_PORTAL: Record<string, number> = {
   "superprof.com": 19277,          // clases particulares, 16 países
   "placements24.com": 13876,       // portal sudafricano
-  "domestiko.com": 12117,          // España: 6.334 títulos, 1.668 ciudades
   "fonction-publique.gouv.fr": 6260, // portal del empleo público francés
   "nlwerkt.nl": 5878,              // agregador neerlandés
   "direct-emploi.com": 4643,
@@ -60,7 +59,6 @@ const DOMINIOS_PORTAL: Record<string, number> = {
 const NOMBRES_PORTAL: Record<string, number> = {
   superprof: 19540, superprofsas: 2099,
   placements24: 13876,
-  domestiko: 12212,                // "domestiko.com" 11.203 + "Domestiko.Com" 914 (+ "Domestiko" 114)
   nlwerkt: 5878,
   directemploi: 4732,
   freework: 4599,
@@ -122,6 +120,30 @@ export function motivoPortalDeEmpleo(email: string, empresa?: string | null): st
   return esCorreoDePortal(email) || esNombreDePortal(empresa)
     ? `${AVISO_PORTAL} Pulsa "Inscribirme en la oferta".`
     : null;
+}
+
+/**
+ * AGENCIAS QUE SÍ RECIBEN EL CV, PERO DE MUCHOS PUESTOS EN LA MISMA DIRECCIÓN
+ * (13 nov 2026). Decisión de Michel: Domestiko es una agencia de empleo; "aunque
+ * tenga muchísimos puestos, cuando mandes el currículum que vaya dirigido a ese
+ * puesto". Ya no está en las listas de portales de arriba, así que se le manda
+ * el CV como a cualquier empresa (jobs@domestiko.com, 12.299 ofertas vivas), y:
+ *  - el asunto y la carta llevan el puesto ("Candidatura para Ayudante de
+ *    cocina — Nombre"; cv-personalizer.ts y worker.ts);
+ *  - el freno de 15 días es por dirección Y PUESTO (tracker.canSendToCompany):
+ *    por dirección sola, un envío "tachaba" sus 12.000 ofertas;
+ *  - y como mucho TOPE_DIARIO_AGENCIA CV al día de una persona a la misma
+ *    agencia, para que su buzón no nos tome por envío masivo.
+ * OJO: las condiciones de Adzuna prohíben contactar a quien le pasa ofertas
+ * ("third party content provider"); Michel lo sabe y lo decidió así.
+ */
+const AGENCIAS_POR_PUESTO = ["domestiko.com"];
+export const TOPE_DIARIO_AGENCIA = 3;
+
+/** ¿Este correo es de una agencia que recibe CV de muchos puestos (freno por puesto)? */
+export function esAgenciaPorPuesto(email: string | null | undefined): boolean {
+  const dominio = (email ?? "").trim().toLowerCase().split("@")[1] ?? "";
+  return !!dominio && AGENCIAS_POR_PUESTO.some((d) => dominio === d || dominio.endsWith("." + d));
 }
 
 /** Texto para decirlo en pantalla. */

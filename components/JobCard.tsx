@@ -43,17 +43,6 @@ function colorMatch(pct: number): string {
   return "#64748b";
 }
 
-function colorFuente(fuente: string): { bg: string; text: string } {
-  const mapa: Record<string, { bg: string; text: string }> = {
-    infojobs: { bg: "rgba(59,130,246,0.12)", text: "#60a5fa" },
-    linkedin: { bg: "rgba(14,165,233,0.12)", text: "#38bdf8" },
-    indeed: { bg: "rgba(168,85,247,0.12)", text: "#c084fc" },
-    tecnoempleo: { bg: "rgba(126,213,111,0.12)", text: "#22c55e" },
-    sepe: { bg: "rgba(240,192,64,0.12)", text: "#f0c040" },
-  };
-  return mapa[fuente.toLowerCase()] || { bg: "rgba(112,106,88,0.12)", text: "#94a3b8" };
-}
-
 // Extrae dominio de la URL de la oferta para construir email fallback
 function buildFallbackEmail(url: string): string {
   try {
@@ -70,11 +59,6 @@ export default function JobCard({
   id, titulo, empresa, ubicacion, salario, fuente = "Otro",
   url, modalidad, descripcion, match, distancia, emailEmpresa, emailConfianza,
 }: PropiedadesJobCard) {
-  const fc = colorFuente(fuente);
-  // "ADZUNA_ES" o "EURES_MAD" son nombres internos: se enseña solo la fuente.
-  // "EURES_MAD", "EURES_SEA"... NO son EURES: son Careerjet, guardado así por
-  // un error histórico (fetchCareerjetGlobal). EURES de verdad es "EURES" a secas.
-  const fuenteVisible = (() => { if (/^EURES_/i.test(fuente)) return "Careerjet"; const base = fuente.split("_")[0]; return base === "ADZUNA" ? "Adzuna" : base === "CAREERJET" ? "Careerjet" : base; })();
   const matchColor = match !== undefined ? colorMatch(match) : "#64748b";
   // Adzuna España da a veces sueldos imposibles (un cajero a "90000 - 140000":
   // horas mal multiplicadas). De esa fuente, sin cifra creíble, no se enseña.
@@ -226,8 +210,8 @@ export default function JobCard({
       {/* Header: fuente + match + modalidad */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: fc.bg, color: fc.text }}>{fuenteVisible}</span>
+          {/* Sin el nombre del agregador (Adzuna, Careerjet...): no se les hace
+              publicidad (Michel, 13 nov 2026). */}
           {conSenales && (
             <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
               title="Tiene señales que se repiten en las estafas. Míralo en la ficha antes de dar ningún dato."

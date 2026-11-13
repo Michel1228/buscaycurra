@@ -75,7 +75,7 @@ async function programarEmpresasAdicionales(opts: {
       if (programadas >= 4) break; // max 4 envíos automáticos adicionales
       if (!oferta.emailEmpresa) continue;
 
-      const puedeEnviar = await canSendToCompany(opts.userId, oferta.emailEmpresa);
+      const puedeEnviar = await canSendToCompany(opts.userId, oferta.emailEmpresa, 15, oferta.titulo);
       if (!puedeEnviar) continue;
       if (await motivoParaNoEnviar(oferta.emailEmpresa)) continue;
 

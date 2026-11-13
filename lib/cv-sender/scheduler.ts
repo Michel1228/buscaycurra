@@ -12,6 +12,7 @@
  *   scheduleBulkCV → programa múltiples envíos distribuyéndolos en el tiempo
  */
 
+import { esAgenciaPorPuesto, TOPE_DIARIO_AGENCIA } from "@/lib/job-search/portales-empleo";
 import { addCVJob, getCvSenderQueue, CVJobData } from "./queue";
 import { checkRateLimit, getUserPlan } from "./rate-limiter";
 import { canSendToCompany, recordSent, ultimoEnvioAEmpresa } from "./tracker";
@@ -212,7 +213,12 @@ export async function scheduleCV(
   }
 
   // ── 2. Verificar historial con esta empresa ──────────────────────────────
-  const puedeEnviar = await canSendToCompany(userId, companyData.email);
+  const puedeEnviar = await canSendToCompany(userId, companyData.email, 15, companyData.jobTitle);
+  if (!puedeEnviar && esAgenciaPorPuesto(companyData.email)) {
+    return {
+      error: `Ya mandaste tu CV a este puesto hace menos de 15 días, o hoy ya llevas ${TOPE_DIARIO_AGENCIA} a ${companyData.name}. Para no saturar a la agencia, mañana puedes seguir con otros puestos.`,
+    };
+  }
   if (!puedeEnviar) {
     // Con la fecha: "Ya mandaste tu CV a esta empresa el 3 nov; podrás volver a
     // escribirles el 18 nov." Es otra oferta, pero el freno es por dirección.
@@ -339,7 +345,7 @@ export async function scheduleBulkCV(
         continue;
       }
 
-      const puedeEnviar = await canSendToCompany(userId, company.email);
+      const puedeEnviar = await canSendToCompany(userId, company.email, 15, company.jobTitle);
       if (!puedeEnviar) {
         resultados.push({
           company: company.name,

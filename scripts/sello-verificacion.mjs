@@ -1017,8 +1017,9 @@ test("de la ficha de oferta al registro y de vuelta a la oferta, sin perderla", 
     "con sesión, el registro de una oferta lleva a la oferta": leerFuente("middleware.ts").includes("NextResponse.redirect(new URL(`/app/ofertas/${oferta}`"),
     "hacer el CV no pierde la oferta": leerFuente("app/app/ofertas/[id]/OfertaDetalleClient.tsx").includes("/app/curriculum?volver=") && leerFuente("app/app/curriculum/Content.tsx").includes("Volver a la oferta"),
     "banner de la App Store en Safari": leerFuente("app/layout.tsx").includes('itunes: { appId: "6775232067" }'),
-    // "Ver la oferta original en EURES_GIJ": el código interno no se enseña.
-    "la fuente se nombra legible": ficha.includes("nombreFuente(row.sourceName)") && !ficha.includes("` en ${row.sourceName}`"),
+    // 13 nov 2026: ya no hay "Ver la oferta original en Adzuna" (quien llega de
+    // Google se iba a otro portal) ni se nombra el agregador.
+    "no manda a la oferta original ni nombra al agregador": (ficha.match(/href=\{row\.sourceUrl\}/g) || []).length === 1 && ficha.includes("{oficial && row.sourceUrl ? (") && !ficha.includes("nombreFuente(") && !/Ver la oferta original\{/.test(ficha),
     // Uno de cada cuatro no confirmaba el correo: botón a su bandeja.
     "botón para abrir el correo y confirmar": registro.includes("bandejaDe(email)") && registro.includes("mail.google.com"),
     // Abría la primera cuenta del móvil y no buscaba en spam.
@@ -2222,7 +2223,7 @@ test("el barrido de Careerjet de Latinoamerica esta completo, en el crontab y si
     && leerFuente("scripts/vps/crontab.txt").includes("/root/sync-careerjet-barrido.sh")
     && funcion.includes("source: `CAREERJET_${pais.toUpperCase()}`")
     && !/\d{2,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(funcion.replace("127.0.0.1", ""))
-    && leerFuente("components/JobCard.tsx").includes('base === "CAREERJET" ? "Careerjet"');
+    && !/fuenteVisible|CAREERJET_|"Careerjet"/.test(leerFuente("components/JobCard.tsx"));
 });
 
 // ── MEXICO TAMBIEN SE BARRE POR CAREERJET, ESTADO A ESTADO (6 nov 2026) ───────
@@ -2464,7 +2465,7 @@ test("logos de empresa: BM, Mercadona, Lidl, Carrefour, México y Colombia; ni p
       "México: Coppel S.A. de C.V. y Megacable": d("Coppel S.A. de C.V.") === "coppel.com" && d("Megacable") === "megacable.com.mx",
       "Colombia: Alkosto y Bancolombia": d("Alkosto") === "alkosto.com" && d("Bancolombia S.A.") === "www.bancolombia.com",
       "el país detrás no lo rompe (Santander México, Indra Group)": d("Santander México") === "santander.com.mx" && d("Indra Group") === "indracompany.com",
-      "un portal no lleva logo de marca": d("Domestiko.com", "ofertas@domestiko.com") === null && d("Superprof") === null && d("Jobgether") === null,
+      "un portal o una agencia de muchos puestos no lleva logo de marca": d("Domestiko.com", "ofertas@domestiko.com") === null && d("Superprof") === null && d("Jobgether") === null,
       "ni con un correo de portal": d("Cuidados Ana", "ana@cuidadosana.jobgether.com") === null,
       "un nombre parecido no coge el logo de otra": d("BM Vagas") === null && d("BM Abogados") === null && d("Coppelia") === null
         && d("Mercadona Bar") === null && d("Supermercados Hiber") === null && d("Mango") === null && d("HM Hospitales") === null,
@@ -2512,12 +2513,38 @@ test("al deslizar no asoma gris ni la página se mueve de lado (web y app nativa
     && css.includes("height: 100lvh;")
     && !cap.includes('"#0f1117"') && (cap.match(/backgroundColor: "#06090b"/g) || []).length === 3;
 });
-test("las ofertas de portales (Domestiko...) se leen en nuestra ficha, no se sale desde la lista", () => {
+test("las ofertas de portales (Superprof, Cronoshare...) se leen en nuestra ficha, no se sale desde la lista", () => {
   const card = leerFuente("components/JobCard.tsx");
   return card.includes("const enNuestraFicha = portal && !oficial && !esSintetica;")
     && card.includes("{enNuestraFicha ? (") && card.includes("Ver la oferta completa")
     && card.includes("{enNuestraFicha ? null : aWeb && url ? (");
 });
+
+// ── DOMESTIKO RECIBE EL CV, DIRIGIDO AL PUESTO; SIN NOMBRE DE ADZUNA (13 nov 2026) ─
+//
+// Michel: "no pongas el nombre de Adzuna; no me abras eso directo; cuando
+// mandes el currículum, aunque sea de Domestiko, que tiene muchísimos puestos
+// porque es una agencia, que vaya dirigido a ese puesto". Domestiko tiene UNA
+// dirección (jobs@domestiko.com) para 12.299 ofertas: con el freno de 15 días
+// por dirección, un envío habría "tachado" todas las demás.
+test("a una agencia (Domestiko) el CV va dirigido al puesto, con freno por puesto y tope diario", () => {
+  const tracker = leerFuente("lib/cv-sender/tracker.ts");
+  const sched = leerFuente("lib/cv-sender/scheduler.ts");
+  const marca = leerFuente("lib/cv-sender/marca-envio.ts");
+  const ruta = leerFuente("app/api/cv-sender/send/route.ts");
+  const worker = leerFuente("lib/cv-sender/worker.ts");
+  return tracker.includes('if (agencia && puesto) consulta = consulta.eq("job_title", puesto);')
+    && tracker.includes("(count ?? 0) >= TOPE_DIARIO_AGENCIA) return false;")
+    && sched.includes("canSendToCompany(userId, companyData.email, 15, companyData.jobTitle)")
+    && sched.includes("canSendToCompany(userId, company.email, 15, company.jobTitle)")
+    && ruta.includes("canSendToCompany(opts.userId, oferta.emailEmpresa, 15, oferta.titulo)")
+    && marca.includes("if (esAgenciaPorPuesto(correo)) return null;")
+    && leerFuente("components/JobCard.tsx").includes("jobTitle: titulo,")
+    && worker.includes("`Candidatura para ${jobTitle} — ${nombre}`");
+});
+test("en pantalla no aparece el nombre de Adzuna (tarjeta, ficha, Inicio, página pública)", () =>
+  ["components/JobCard.tsx", "app/app/ofertas/[id]/OfertaDetalleClient.tsx", "app/app/bienvenida/BienvenidaClient.tsx", "app/empleo/oferta/[id]/page.tsx"]
+    .every((f) => !/"Adzuna"|Adzuna UK|fuenteVisible|formatSource|nombreFuente/.test(leerFuente(f))));
 
 // ── ALOJAMIENTO Y AU PAIR: SOLO ENLACES COMPROBADOS (13 nov 2026) ─────────────
 //
@@ -3765,9 +3792,13 @@ test("los portales de empleo no reciben CVs y 'enviado' se marca por oferta y po
     const checks = {};
 
     // 1. Qué es un portal y qué no (una ETT real SÍ recibe CV).
-    checks["Domestiko, en sus tres grafías y por su correo, es un portal"] =
-      ["domestiko.com", "Domestiko.Com", "Domestiko"].every((e) => m.esOfertaDePortal({ empresa: e }))
-      && m.esOfertaDePortal({ correo: "jobs@domestiko.com" }) && m.esOfertaDePortal({ correo: "info@mail.domestiko.com" });
+    // 13 nov 2026, decisión de Michel: Domestiko es una agencia y SÍ recibe el CV,
+    // dirigido al puesto, con el freno de 15 días por dirección Y puesto.
+    checks["Domestiko, en sus tres grafías, es una agencia que recibe el CV por puesto (no un portal)"] =
+      ["domestiko.com", "Domestiko.Com", "Domestiko"].every((e) => !m.esOfertaDePortal({ empresa: e }))
+      && !m.esOfertaDePortal({ correo: "jobs@domestiko.com" })
+      && m.esAgenciaPorPuesto("jobs@domestiko.com") && m.esAgenciaPorPuesto("info@mail.domestiko.com")
+      && !m.esAgenciaPorPuesto("rrhh@notdomestiko.com") && !m.esAgenciaPorPuesto("rrhh@acciona.es") && m.TOPE_DIARIO_AGENCIA === 3;
     checks["Cronoshare, Superprof y Placements24 también"] =
       m.esOfertaDePortal({ empresa: "Cronoshare.com" }) && m.esOfertaDePortal({ empresa: "SuperProf" }) && m.esOfertaDePortal({ correo: "support@placements24.com" });
     checks["Adecco, Randstad, Manpower, Michael Page y una empresa corriente NO lo son"] =
@@ -3776,13 +3807,14 @@ test("los portales de empleo no reciben CVs y 'enviado' se marca por oferta y po
 
     // 2. El correo del portal no se vuelve a dar como correo de la empresa (búsqueda, ficha, para ti, extractor).
     checks["correoCreibleParaOferta rechaza el correo del portal, incluso con confianza alta"] =
-      !m.correoCreibleParaOferta("jobs@domestiko.com", "Domestiko.Com", "es", "alta")
-      && !m.correoCreibleParaOferta("jobs@domestiko.com", "domestiko.com", "es", "media")
+      !m.correoCreibleParaOferta("ofertas@cronoshare.com", "Cronoshare.com", "es", "alta")
+      && !m.correoCreibleParaOferta("support@placements24.com", "Placements24", "za", "media")
       && m.correoCreibleParaOferta("rrhh@acciona.es", "Acciona", "es", "media");
 
     // 3. Servidor: la ruta, la cola y motivoParaNoEnviar lo paran.
     checks["motivoPortalDeEmpleo devuelve motivo para el portal y null para una empresa real"] =
-      !!m.motivoPortalDeEmpleo("jobs@domestiko.com", "Lo que sea") && !!m.motivoPortalDeEmpleo("rrhh@empresa.es", "Domestiko.com")
+      !!m.motivoPortalDeEmpleo("support@placements24.com", "Lo que sea") && !!m.motivoPortalDeEmpleo("rrhh@empresa.es", "Cronoshare.com")
+      && m.motivoPortalDeEmpleo("jobs@domestiko.com", "Domestiko.Com") === null
       && m.motivoPortalDeEmpleo("rrhh@acciona.es", "Acciona") === null;
     const ruta = leerFuente("app/api/cv-sender/send/route.ts");
     const worker = leerFuente("lib/cv-sender/worker.ts");
@@ -3875,10 +3907,10 @@ test("las ofertas de Careerjet no dicen que vienen de EURES ni de una 'Empresa e
       && empresaParaGoogle("Empresa europea") === null
       && empresaParaGoogle("Mercadona") === "Mercadona"
       && sinArreglar.length === 0
-      && leerFuente("components/JobCard.tsx").includes('if (/^EURES_/i.test(fuente)) return "Careerjet";')
-      && leerFuente("app/empleo/oferta/[id]/page.tsx").includes('if (/^EURES_/i.test((s || "").trim())) return "Careerjet";')
-      && detalle.includes('if (/^EURES_/i.test(raw || "")) return "Careerjet";')
-      && !detalle.includes('"EURES_ESP":') && !detalle.includes('"EURES_UNI":');
+      // 13 nov 2026: ninguna pantalla nombra ya la fuente (ni EURES ni Careerjet ni Adzuna).
+      && !/fuenteVisible|EURES_/.test(leerFuente("components/JobCard.tsx"))
+      && !/nombreFuente|EURES_/.test(leerFuente("app/empleo/oferta/[id]/page.tsx"))
+      && !/formatSource|"EURES_ESP":|"ADZUNA_ES": "Adzuna"/.test(detalle);
   } finally {
     for (const f of [salidaE, salidaG]) { try { unlinkSync(f); } catch { /* no existe */ } }
   }
