@@ -18,7 +18,7 @@ import { PROMPT_BASE, PROMPT_ENTREVISTA, PROMPT_CV_MEJORADO, PROMPT_CARTA, PROMP
 import { entenderMensaje, hayQueEntender, refiereAOfertasMostradas } from "@/lib/guzzi/entender";
 import { respuestaOfertasMostradas, textoEnvioAutomatico, TEXTO_INFO_AU_PAIR, sinVoseo } from "@/lib/guzzi/respuestas-fijas";
 import { detectIntent, extractJobTerm, extractAddress, extractCompanyFromContact } from "@/lib/guzzi/intents";
-import { textoNegociosLocales, propuestaPendiente, negocioElegido } from "@/lib/guzzi/envio-local";
+import { textoNegociosLocales, propuestaPendiente, negociosElegidos } from "@/lib/guzzi/envio-local";
 import { pideSiguientePaso, respuestaSiguientePaso, cvConContenido, pistaDeCurso } from "@/lib/guzzi/siguiente-paso";
 import { extraerCorreo, empresaDelCorreo, empresaDelTexto, puestoDelTexto, textoPropuesta, propuestaCorreoPendiente, respuestaAPropuesta, type PropuestaCorreo } from "@/lib/guzzi/envio-correo";
 import { anotarOficio, expandirPuesto, expresionesDePalabraEntera, tituloCoincide } from "@/lib/job-search/sinonimos-puesto";
@@ -88,6 +88,16 @@ interface CVParsed {
   sector: string;
   habilidades: string;
   resumenTexto: string;
+}
+
+/**
+ * El puesto del CV como se busca: "Carretillero - mantenimiento de limpieza de
+ * maquinaria " → "Carretillero" (13 nov 2026). Con el título entero, "Búscame
+ * ofertas en Madrid" no encontraba nada en Madrid (36.000 ofertas) y se iba a
+ * negocios de Google. El título completo sigue yendo a la IA como contexto.
+ */
+function puestoSencillo(p?: string | null): string {
+  return (p || "").split(/\s[-–—|]\s|[(/,;:]/)[0].replace(/\s+/g, " ").trim();
 }
 
 function parseCVData(raw: string): CVParsed | null {
@@ -308,17 +318,18 @@ async function buscarNegociosLocales(puesto: string, ciudad: string): Promise<Ar
   const results: Array<{ place_id: string; name: string; formatted_address?: string; formatted_phone_number?: string; rating?: number; website?: string; url?: string }> = [];
   const seen = new Set<string>();
   
-  for (const q of queries.slice(0, 3)) {
-    try {
-      const places = await buscarEmpresaGooglePlaces(q, ciudad);
-      for (const p of places) {
-        if (!seen.has(p.place_id) && results.length < 5) {
-          seen.add(p.place_id);
-          results.push(p);
-        }
+  // A la vez y no una detrás de otra (13 nov 2026): cada consulta son dos viajes
+  // a Google y en fila sumaban varios segundos. Cada una devuelve como mucho 2
+  // negocios, así que en fila también se hacían siempre las tres: mismo cupo.
+  const porConsulta = await Promise.all(queries.slice(0, 3).map((q) =>
+    buscarEmpresaGooglePlaces(q, ciudad).catch(() => [] as Awaited<ReturnType<typeof buscarEmpresaGooglePlaces>>)));
+  for (const places of porConsulta) {
+    for (const p of places) {
+      if (!seen.has(p.place_id) && results.length < 5) {
+        seen.add(p.place_id);
+        results.push(p);
       }
-    } catch { /* seguir con la siguiente query */ }
-    if (results.length >= 5) break;
+    }
   }
   
   return results;
@@ -884,6 +895,43 @@ function extractCompanyName(text: string): string | null {
   return null;
 }
 
+/**
+ * Una pregunta o una queja sobre lo que ha hecho Guzzi, que no nombra un
+ * puesto: "¿entonces para qué me enseñas ofertas que no puedo mandar?",
+ * "¿por qué me sale esto?", "no me sirve". La contesta la IA.
+ */
+function esPreguntaOQueja(texto: string): boolean {
+  const t = sinTildes(texto).toLowerCase().replace(/[¿?¡!.,]/g, " ").replace(/\s+/g, " ").trim();
+  if (/\b(ofertas?|trabajo|empleo|curro|puesto)\s+de\s+[a-zñ]{3,}/.test(t)) return false;
+  return /^((y|pues|entonces|pero|vale pero)\s+)*(por\s*que|para\s*que|como\s+es\s+que|que\s+pasa|no\s+entiendo|no\s+me\s+(sirve|vale|funciona|deja)|eso\s+no|esto\s+no|no\s+puedo|eres|estas)\b/.test(t)
+    || /\b(para|por)\s*que\s+me\s+(ensenas|das|pones|mandas|buscas|sacas)\b|\bno\s+(puedo|se\s+puede)\s+(mandar|enviar)\b|\bno\s+(funciona|sirve)\b/.test(t);
+}
+
+/** "¿Hay más ofertas?", "dame más", "otras ofertas", "las siguientes". */
+function pideMasOfertas(texto: string): boolean {
+  const t = sinTildes(texto).toLowerCase();
+  // "¿Hay más ofertas de camarero en Tudela?" es otra búsqueda, no "las siguientes".
+  if (/\b(de|en)\s+(?!(esas|estas|esos|estos|las|los|aqui|ahi|antes)\b)[a-zñ]{3,}/.test(t)) return false;
+  return /\b(hay\s+)?mas\s+ofertas\b|\botras\s+ofertas\b|\bmas\s+resultados\b|\b(ensename|dame|pasame|muestrame|ponme|saca(me)?)\s+mas\b|\bhay\s+mas\b|\blas\s+siguientes\b|\bmas\s+de\s+(esas|estas)\b/.test(t);
+}
+
+/**
+ * Lo que le deja su plan hoy, para que la IA lo diga con naturalidad y sin
+ * inventarlo ("hoy te quedan 2 envíos; mañana se recargan").
+ */
+async function contextoDelPlan(userId: string | null, acceso: { plan?: string | null; planName?: string; remaining?: number } | null): Promise<string> {
+  if (!userId || !acceso?.plan) return "";
+  try {
+    const { canSendCV } = await import("@/lib/usage-tracker");
+    const { getPlanLimits } = await import("@/lib/plan-limits");
+    const limites = getPlanLimits(acceso.plan);
+    const envios = await canSendCV(userId, acceso.plan);
+    return `\n\nPLAN DE ESTA PERSONA: ${acceso.planName || limites.name}. Envíos de CV: ${limites.enviosCVDia} al día y ${limites.enviosCVSemana} a la semana; hoy le quedan ${envios.remainingDay}. Consultas a Guzzi: ${limites.guzziMaxConsultasDia ?? "sin límite"} al día${typeof acceso.remaining === "number" && acceso.remaining >= 0 ? `; hoy le quedan ${acceso.remaining}` : ""}. Se recargan cada día.`;
+  } catch {
+    return "";
+  }
+}
+
 function sinTildes(s: string): string {
   return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 }
@@ -1018,9 +1066,25 @@ function localReply(intent: string, cv?: CVParsed | null): string {
 
 // --- Handler principal --------------------------------------------------------
 
+/**
+ * Cada respuesta de Guzzi deja su tiempo en el registro del servidor
+ * ("[Guzzi] 2340 ms · search_results"). Hasta el 13 nov 2026 no se medía, y
+ * "Guzzi tarda mucho" no se podía comprobar ni saber qué camino tardaba.
+ */
 export async function POST(req: NextRequest) {
   const sinVerificar = await correoSinVerificar(req);
   if (sinVerificar) return sinVerificar;
+  const inicio = Date.now();
+  const res = await responder(req);
+  try {
+    const d = await res.clone().json() as { action?: string; error?: string };
+    console.log(`[Guzzi] ${Date.now() - inicio} ms · ${d.action || (d.error ? "error" : "chat")}`);
+  } catch { console.log(`[Guzzi] ${Date.now() - inicio} ms`); }
+  return res;
+}
+
+async function responder(req: NextRequest): Promise<NextResponse> {
+  // (El correo verificado se comprueba en POST, antes de llegar aquí.)
   // Rate limiting: por IP o userId
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || req.headers.get("x-real-ip")
@@ -1069,9 +1133,11 @@ export async function POST(req: NextRequest) {
     if (!message) return NextResponse.json({ error: "Mensaje requerido" }, { status: 400 });
 
     // -- Verificar límites del plan --
+    let accesoGuzzi: { plan?: string | null; planName?: string; remaining?: number } | null = null;
     if (userId) {
       const { checkGuzziAccess } = await import("@/lib/guzzi-limits");
       const access = await checkGuzziAccess(userId);
+      accesoGuzzi = access;
       if (!access.allowed) {
         return NextResponse.json(
           {
@@ -1689,6 +1755,31 @@ El candidato tiene mucha experiencia.
     // que es otra cosa ("pásame el currículum a PDF"): que conteste la IA.
     else if (entendido?.accion === "otra" && intent === "buscar") intent = "chat";
     const quiereContar = entendido?.accion === "contar_ofertas";
+    // Una pregunta o una queja no es una búsqueda (13 nov 2026): "¿entonces para
+    // qué me enseñas ofertas que no puedo mandar?" volvía a buscar, y en otra
+    // ciudad. Si no nombra un puesto, la contesta la IA con la conversación.
+    if (intent === "buscar" && !enModoCV && esPreguntaOQueja(message)) intent = "chat";
+
+    // -- "¿Hay más ofertas?": las siguientes de la última búsqueda -----------
+    if (!enModoCV && pideMasOfertas(message)) {
+      const anterior = [...history].reverse().find((m) => m.role !== "user" && /🔍 \*\*\d+ ofertas?\*\* de \*\*/.test(m.text || ""));
+      const previa = anterior?.text.match(/🔍 \*\*\d+ ofertas?\*\* de \*\*(.+?)\*\*(?: en \*\*(.+?)\*\*| \(en la provincia de (.+?)\)| \(cerca de (.+?)\))?/);
+      if (previa) {
+        const puestoAnt = previa[1];
+        const ciudadAnt = previa[2] || previa[3] || previa[4] || cvParsed?.ciudad || "";
+        const vistas = new Set((history as Array<{ jobs?: Array<{ id?: unknown }> }>)
+          .flatMap((m) => (Array.isArray(m.jobs) ? m.jobs.map((j) => String(j?.id)) : [])));
+        const res = await searchJobsReal(puestoAnt, ciudadAnt, 25, pais || "ES");
+        const nuevas = (res?.jobs || []).filter((j) => !vistas.has(String(j.id))).slice(0, 5);
+        if (res && nuevas.length) {
+          return NextResponse.json({ reply: "Claro, aquí tienes más:\n\n" + buildJobsText(puestoAnt, ciudadAnt, nuevas, res.scope), jobs: nuevas, action: "search_results" });
+        }
+        return NextResponse.json({
+          reply: `De **${puestoAnt}**${ciudadAnt ? ` en **${ciudadAnt}**` : ""} ya te he enseñado todas las que tengo ahora mismo. ¿Miramos en los alrededores, probamos con un puesto parecido o te aviso cuando salgan nuevas?`,
+          action: "need_keyword",
+        });
+      }
+    }
 
     // -- Intent: buscar au pair ----------------------------------------------
     if (intent === "buscar_au_pair" || mode === "buscar_au_pair") {
@@ -1798,7 +1889,7 @@ ${cartaIA}
       const extractedJob = entendido
         ? (entendido.puesto ? limpiarTerminoBusqueda(entendido.puesto) : null)
         : limpiarTerminoBusqueda(extractJobTerm(message));
-      const puestoBusqueda = extractedJob || cvParsed?.ultimoPuesto || "";
+      const puestoBusqueda = extractedJob || puestoSencillo(cvParsed?.ultimoPuesto) || "";
       // "Basándome en tu CV" solo si el puesto sale del CV: a quien preguntaba
       // por las ofertas de Suiza se le contestaba con su último trabajo.
       const puestoDelCV = !extractedJob && !!cvParsed?.ultimoPuesto;
@@ -1920,9 +2011,9 @@ ${cartaIA}
           // ("amplía a la provincia", "activa alertas") no sirve allí. Se dice
           // claro y se da la bolsa pública de empleo de su país.
           return NextResponse.json({
-            reply: (puestoDelCV
-              ? `Basándome en tu CV (último puesto: **${cvParsed!.ultimoPuesto}**), ` : "") +
-              (googleReply || (esPaisNuestro(paisBusqueda)
+            reply: (googleReply
+              ? `🔍 Ahora mismo no tengo ofertas de **${puestoBusqueda}**${ciudadBusqueda ? ` en **${ciudadBusqueda}**` : ""}${puestoDelCV ? " (he buscado lo de tu último trabajo)" : ""}.${googleReply}${puestoDelCV ? "\n\nSi buscas otra cosa, dime de qué y te lo busco." : ""}`
+              : (puestoDelCV ? `Basándome en tu CV (último puesto: **${puestoBusqueda}**): ` : "") + (esPaisNuestro(paisBusqueda)
                 ? fallbackMessage(puestoBusqueda, ciudadBusqueda)
                 : `🔍 De **${puestoBusqueda}**${ciudadBusqueda ? ` en **${ciudadBusqueda}**` : ""} no tengo ofertas.`)) +
               avisoPaisSinOfertas(paisBusqueda),
@@ -1981,7 +2072,7 @@ ${cartaIA}
           });
         }
         const prefix = puestoDelCV
-          ? `Basándome en tu CV (último puesto: **${cvParsed!.ultimoPuesto}**), aquí tienes lo mejor que encontré:\n\n`
+          ? `Basándome en tu CV (último puesto: **${puestoBusqueda}**), aquí tienes lo mejor que encontré:\n\n`
           : "";
         // Aunque la búsqueda haya acertado con la ciudad, entre los resultados
         // suele haber alguno de la capital o del pueblo de al lado. Se dice lo
@@ -2004,14 +2095,17 @@ ${cartaIA}
       const propuesta = propuestaPendiente(history);
       if (!propuesta) return NextResponse.json({ reply: "¿A qué negocio quieres mandar el CV?", action: "send_cv_flow" });
       const ciudad = propuesta.ciudad || cvParsed?.ciudad || "";
-      const puesto = propuesta.puesto || cvParsed?.ultimoPuesto || "Candidatura espontánea";
-      const pos = negocioElegido(message, propuesta.negocios);
-      const elegido = pos !== null ? propuesta.negocios[pos] : propuesta.negocios.length === 1 ? propuesta.negocios[0] : null;
+      const puesto = propuesta.puesto || puestoSencillo(cvParsed?.ultimoPuesto) || "Candidatura espontánea";
+      // Uno o varios (13 nov 2026): "1 y 3", "a todos", "a los otros que faltan".
+      const posiciones = negociosElegidos(message, propuesta);
+      const elegidos = posiciones.length ? posiciones.map((p) => propuesta.negocios[p])
+        : propuesta.negocios.length === 1 ? [propuesta.negocios[0]] : [];
+      const elegido = elegidos.length === 1 ? elegidos[0] : null;
 
       // Con varios negocios y un "sí" a secas no se elige por la persona.
-      if (!elegido) {
+      if (elegidos.length === 0) {
         return NextResponse.json({
-          reply: textoNegociosLocales(propuesta.negocios, ciudad, puesto, "¿A cuál se lo mando? Estos son los negocios"),
+          reply: textoNegociosLocales(propuesta.negocios, ciudad, puesto, "¿A cuál se lo mando? Puedes decirme uno, varios (\"1 y 3\") o \"a todos\". Estos son los negocios"),
           action: "search_results",
         });
       }
@@ -2019,6 +2113,50 @@ ${cartaIA}
         return NextResponse.json({
           reply: "📧 Para enviar tu CV necesito que lo subas primero.\n\nUsa el clip 📎 de abajo para subir tu CV en PDF o escribe **'crear cv'** y te lo hago paso a paso.",
           action: "send_cv_flow",
+        });
+      }
+
+      // Varios a la vez: uno detrás de otro (así el límite del plan se cuenta
+      // bien) y una sola respuesta con lo que ha pasado con cada uno.
+      if (!elegido) {
+        const authHeader = req.headers.get("authorization");
+        const cookieHeader = req.headers.get("cookie");
+        const lineas: string[] = [];
+        let tope = "";
+        for (const n of elegidos) {
+          if (tope) break;
+          try {
+            const r = await fetch(`${BASE_INTERNA}/api/gusi/send-cv-local`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(authHeader ? { authorization: authHeader } : {}),
+                ...(cookieHeader ? { cookie: cookieHeader } : {}),
+              },
+              body: JSON.stringify({ userId, companyName: n.nombre, companyPhone: n.telefono || "", website: n.web, city: ciudad, puesto }),
+            });
+            const d = await r.json().catch(() => ({}));
+            if (r.status === 429 || r.status === 409) {
+              // 409 = a esa dirección ya se le mandó hace menos de 15 días; 429 = el plan.
+              if (r.status === 429) tope = d.error || "Has llegado al límite de envíos de tu plan.";
+              else lineas.push(`⚠️ **${n.nombre}** — ${d.error || "ya le mandaste tu CV hace poco"}`);
+            } else if (!r.ok) {
+              lineas.push(`⚠️ **${n.nombre}** — no se ha podido enviar ahora`);
+            } else if (d.needsEmail) {
+              lineas.push(`📭 **${n.nombre}** — no tengo un correo fiable${n.telefono ? `; llama al 📞 ${n.telefono}` : ""}`);
+            } else {
+              lineas.push(`📤 **${n.nombre}** — enviado a ${d.companyEmail}`);
+            }
+          } catch {
+            lineas.push(`⚠️ **${n.nombre}** — no se ha podido enviar ahora`);
+          }
+        }
+        const enviados = lineas.filter((l) => l.startsWith("📤")).length;
+        return NextResponse.json({
+          reply: `📬 ${enviados ? `Hecho: ${enviados === 1 ? "1 CV va de camino" : `${enviados} CV van de camino`}.` : "No he podido mandar ninguno."}\n\n${lineas.join("\n")}`
+            + (tope ? `\n\n⛔ ${tope} Los demás no se han mandado.\n👉 [Ver planes](/app/perfil?tab=plan)` : "")
+            + (enviados ? "\n\nLos verás en [tus envíos](/app/envios)." : ""),
+          action: enviados ? "cv_sent_local" : "send_cv_flow",
         });
       }
 
@@ -2097,7 +2235,7 @@ ${cartaIA}
         });
       }
       // Buscar ofertas del perfil del usuario que tengan email para enviar
-      const puestoEnviar = extractJobTerm(message) || cvParsed?.ultimoPuesto || "";
+      const puestoEnviar = extractJobTerm(message) || puestoSencillo(cvParsed?.ultimoPuesto) || "";
       const ciudadEnviar = extractCity(message) || cvParsed?.ciudad || "";
       if (puestoEnviar) {
         if (!ciudadEnviar) {
@@ -2135,12 +2273,15 @@ ${cartaIA}
     // -- Chat normal con IA ---------------------------------------------------
     const anterioresDeLaPersona = history.filter((m) => m.role === "user" && m.text).slice(-3).map((m) => m.text);
     const systemPrompt = buildSystemPrompt(cvData, pais, auPairProfile,
-      temasParaLaConversacion(message, anterioresDeLaPersona) + (mode === "entrevista" ? PROMPT_MODO_CV : ""));
+      temasParaLaConversacion(message, anterioresDeLaPersona) + (mode === "entrevista" ? PROMPT_MODO_CV : "")
+      + await contextoDelPlan(userId, accesoGuzzi));
     // El plan gratuito de Groq admite 8.000 tokens por minuto CONTANDO la
     // respuesta, y las listas de ofertas de Guzzi son largas: con los 14
     // últimos mensajes enteros no cabía. Se recortan los largos y se quitan
     // los más antiguos hasta que el historial quede en unos 8.000 caracteres.
-    const recientes = history.slice(-14)
+    const ultimo = history[history.length - 1];
+    const historialSinElDeAhora = ultimo?.role === "user" && ultimo.text?.trim() === message.trim() ? history.slice(0, -1) : history;
+    const recientes = historialSinElDeAhora.slice(-14)
       .filter((m: { role: string; text: string }) => m.text)
       .map((m: { role: string; text: string }) => ({
         role: (m.role === "gusi" ? "assistant" : "user") as "assistant" | "user",

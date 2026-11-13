@@ -650,6 +650,70 @@ test("Guzzi solo manda el CV a un negocio si se lo acaba de proponer y elige cua
     for (const s of salidas) { try { unlinkSync(s); } catch { /* da igual */ } }
   }
 });
+// 13 nov 2026, la conversación real de Michel del día 12 (cuenta de empresa):
+// "1" mandó a Labarga, pero "mándalos a los otros" buscó de nuevo ("no me sale
+// nada"), "no, que lo mandes a los otros dos que faltaban" lo contestó la IA
+// diciendo que no podía enviar desde el chat, y un "2" con un mensaje en medio
+// ya no se entendía. Y "¿entonces para qué me enseñas ofertas que no puedo
+// mandar?" volvía a buscar negocios, en otra ciudad.
+test("Guzzi entiende 'mándalos', 'a los otros', '1 y 3' y 'a todos', y no confunde una queja con una búsqueda", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salidas = [".sello-intents5.cjs", ".sello-envio-local2.cjs"];
+  try {
+    for (const [entrada, salida] of [["lib/guzzi/intents.ts", salidas[0]], ["lib/guzzi/envio-local.ts", salidas[1]]]) {
+      execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node",
+        `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    }
+    const { detectIntent } = await import(`../${salidas[0]}?${Date.now()}`);
+    const L = await import(`../${salidas[1]}?${Date.now()}`);
+    const MANDA = "send_cv_local_confirm";
+    const lista = L.textoNegociosLocales([{ nombre: "Almacenes Labarga S.L." }, { nombre: "Tudefrigo Logística S L" }, { nombre: "De Heus Tudela" }], "Tudela", "Carretillero");
+    const base = [{ role: "user", text: "Búscame ofertas en Tudela" }, { role: "gusi", text: lista }];
+    const hecho1 = [{ role: "user", text: "1" }, { role: "gusi", text: "📤 **Hecho.** Tu CV va de camino a **Almacenes Labarga S.L.** (expo@labarga.com)." }];
+    const sinCorreo1 = [{ role: "user", text: "1" }, { role: "gusi", text: "No he encontrado un correo fiable de **Almacenes Labarga S.L.**, y no quiero mandar tu CV." }];
+    const fallos = [];
+    const caso = (texto, extra, esperado) => {
+      const h = [...base, ...extra, { role: "user", text: texto }];
+      const intent = detectIntent(texto, h);
+      if (esperado === null) { if (intent === MANDA) fallos.push(`"${texto}" manda el CV`); return; }
+      if (intent !== MANDA) { fallos.push(`"${texto}" no manda (da ${intent})`); return; }
+      const p = L.propuestaPendiente(h);
+      const el = L.negociosElegidos(texto, p).map((i) => p.negocios[i].nombre.split(" ")[0]);
+      if (el.join(",") !== esperado) fallos.push(`"${texto}" elige ${el.join(",")} y debía ser ${esperado}`);
+    };
+    caso("Mándalos años otros", hecho1, "Tudefrigo,De");
+    caso("No que lo mandes a los otros dos que faltaban", hecho1, "Tudefrigo,De");
+    caso("2", sinCorreo1, "Tudefrigo");
+    caso("a todos", [], "Almacenes,Tudefrigo,De");
+    caso("1 y 3", [], "Almacenes,De");
+    caso("mándalos a los 2 que faltan", hecho1, "Tudefrigo,De");
+    caso("vale", hecho1, null);
+    caso("ok gracias", [], null);
+    caso("vale, ahora busca de cocinero en tudela", [], null);
+    caso("¿y de cocinero?", hecho1, null);
+    // El chat: queja → IA; "¿hay más?" → las siguientes; el puesto del CV, limpio.
+    const chat = leerFuente("app/api/gusi/chat/route.ts");
+    if (!chat.includes('if (intent === "buscar" && !enModoCV && esPreguntaOQueja(message)) intent = "chat";')) fallos.push("una queja sigue siendo una búsqueda");
+    if (!chat.includes("if (!enModoCV && pideMasOfertas(message))")) fallos.push("'¿hay más ofertas?' no enseña las siguientes");
+    if (!chat.includes("extractedJob || puestoSencillo(cvParsed?.ultimoPuesto)")) fallos.push("se busca con el título entero del CV");
+    if (!chat.includes("const posiciones = negociosElegidos(message, propuesta);")) fallos.push("el chat no manda a varios negocios");
+    if (!chat.includes("await contextoDelPlan(userId, accesoGuzzi)")) fallos.push("la IA no sabe lo que le deja su plan");
+    if (!chat.includes("historialSinElDeAhora")) fallos.push("el mensaje de ahora le llega dos veces a la IA");
+    if (!/console\.log\(`\[Guzzi\] \$\{Date\.now\(\) - inicio\} ms/.test(chat)) fallos.push("no se mide lo que tarda cada respuesta");
+    if (!chat.includes("const porConsulta = await Promise.all(")) fallos.push("las consultas a Google siguen en fila");
+    const prompt = leerFuente("lib/guzzi/prompts.ts");
+    if (prompt.includes('Si pide "mándalo a todas": que pulse') || !prompt.includes("Nunca le digas que desde el chat no se puede")) fallos.push("las instrucciones siguen diciendo que el chat no envía");
+    fallos.forEach((f) => console.log(`     ↳ ${f}`));
+    return fallos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    for (const s of salidas) { try { unlinkSync(s); } catch { /* da igual */ } }
+  }
+});
+
 // Auditoria del 3 oct 2026: la regla de cursos se tragaba a quien hablaba de su
 // oficio ("carretillero en Tudela", "cuanto cobra un carretillero", "soy
 // carretillero"), "borrar mis datos" iba al editor del CV, las cartas de au
