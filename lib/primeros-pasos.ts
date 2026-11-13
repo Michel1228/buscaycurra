@@ -4,6 +4,17 @@
  * Actualizado: mayo 2026. Fuentes: portales oficiales + Eurostat + embajadas.
  */
 
+/**
+ * Enlaces de alojamiento y de au pair COMPROBADOS uno a uno el 13 nov 2026
+ * (scripts/verificar-enlaces-alojamiento.mjs). Antes había una web de casinos
+ * (Immonet AT), un dominio en venta (Gumtree NZ), dominios que no existían,
+ * una WG de Kaiserslautern como si fuera Viena y unas 50 páginas con error 404.
+ * Si se añade una plataforma, se pasa antes el script.
+ */
+export const ENLACES_COMPROBADOS_EL = "13 nov 2026";
+export const AVISO_ALOJAMIENTO =
+  "Nunca pagues fianza ni reserva sin haber visto la vivienda (en persona o por videollamada) y firmado un contrato. Si te piden dinero por adelantado alguien a quien no conoces, es una estafa.";
+
 export interface PrimerosPasosInfo {
   codigo: string;
   auPair: {
@@ -44,9 +55,9 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "260-320€/mes + 50€ curso de alemán",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/germany", descripcion: "Destino #1 en Europa continental. Más de 50.000 familias alemanas registradas." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/germany.php", descripcion: "Registro gratuito. Miles de familias verificadas en todo el país." },
-        { nombre: "IJAB", url: "https://www.ijab.de/au-pair", descripcion: "Servicio oficial alemán de intercambio juvenil. Muy recomendable para trámites." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Destino #1 en Europa continental. Más de 50.000 familias alemanas registradas." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. Miles de familias verificadas en todo el país." },
+        { nombre: "IJAB", url: "https://ijab.de", descripcion: "Servicio oficial alemán de intercambio juvenil. Muy recomendable para trámites." },
       ],
       requisitos: "18-26 años, alemán A1 mínimo (la familia paga el curso), sin antecedentes penales. Sin visado al ser UE. Contrato oficial obligatorio. Duración: 6-12 meses. La familia cubre el seguro médico y el curso de idioma.",
     },
@@ -55,7 +66,6 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
         { nombre: "WG-Gesucht", url: "https://www.wg-gesucht.de", descripcion: "El portal #1 para compartir piso (WG) en Alemania. Imprescindible para recién llegados." },
         { nombre: "ImmobilienScout24", url: "https://www.immobilienscout24.de", descripcion: "El portal de alquiler más grande del país. Pisos, estudios y habitaciones." },
         { nombre: "Spotahome", url: "https://www.spotahome.com/s/berlin", descripcion: "Alquiler verificado en Berlín, Múnich, Frankfurt y Hamburgo. Reserva 100% online." },
-        { nombre: "Wohnungsboerse", url: "https://www.wohnungsboerse.net", descripcion: "Buena alternativa a ImmobilienScout. Más barato en ciudades medianas." },
       ],
       consejo: "En Alemania los pisos se alquilan SIN muebles (ni cocina). Busca 'möbliert' para amueblado. Necesitarás SCHUFA (historial crediticio) — para recién llegados, una carta de tu empleador vale. Depósito: 2-3 meses de alquiler frío (Kaltmiete).",
       preciosMedios: [
@@ -95,8 +105,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "320-480€/mes (80-120€/semana + alojamiento y comida)",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/ireland", descripcion: "Irlanda es top para au pairs por el inglés y la facilidad al ser UE. Cientos de familias en Dublín y Cork." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/ireland.php", descripcion: "Registro gratuito. Proceso sencillo para ciudadanos UE." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Irlanda es top para au pairs por el inglés y la facilidad al ser UE. Cientos de familias en Dublín y Cork." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. Proceso sencillo para ciudadanos UE." },
       ],
       requisitos: "18-30 años, inglés básico, sin antecedentes. Sin visado (UE). Duración: 6-12 meses. La familia cubre alojamiento, comida y seguro médico básico.",
     },
@@ -138,9 +148,9 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "400-680€/mes (£100-170/semana)",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/united-kingdom", descripcion: "El más grande para UK. Atención: post-Brexit necesitas visado — el proceso ha cambiado." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/united-kingdom.php", descripcion: "Miles de familias británicas. Verificadas y con contratos estándar." },
-        { nombre: "GreatAuPair", url: "https://www.greataupair.com/uk-au-pair.cfm", descripcion: "Opción alternativa con buenas reseñas. También gestiona el proceso de visado." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "El más grande para UK. Atención: post-Brexit necesitas visado — el proceso ha cambiado." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Miles de familias británicas. Verificadas y con contratos estándar." },
+        { nombre: "GreatAuPair", url: "https://www.greataupair.com", descripcion: "Opción alternativa con buenas reseñas. También gestiona el proceso de visado." },
       ],
       requisitos: "POST-BREXIT el visado específico de au pair YA NO EXISTE, desapareció en enero de 2021. Y ojo con el Youth Mobility Scheme, que se cita mucho: NO incluye a España ni a ningún país de la UE, así que esa vía no está disponible (comprobado en gov.uk, septiembre de 2026). Queda el Skilled Worker, que exige una empresa con licencia de patrocinio: una familia particular no puede patrocinarte. Si una familia te propone ir sin papeles, quien se juega la expulsión eres tú.",
     },
@@ -187,7 +197,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "~1.000-1.200€/mes ($250-300/semana + alojamiento, comida y 500$ para estudios)",
       plataformas: [
-        { nombre: "Cultural Care Au Pair", url: "https://www.culturalcare.com", descripcion: "La agencia más grande de EEUU. Gestionan el visado J-1 de principio a fin." },
+        { nombre: "Cultural Care Au Pair", url: "https://www.culturalcare.es", descripcion: "La agencia más grande de EEUU. Gestionan el visado J-1 de principio a fin." },
         { nombre: "AuPairCare", url: "https://www.aupaircare.com", descripcion: "Programa de 12-24 meses con familias verificadas. Coordinador local asignado." },
         { nombre: "AuPair in America", url: "https://www.aupairinamerica.com", descripcion: "Uno de los programas más antiguos y reputados. Muy buena red de apoyo." },
         { nombre: "Go Au Pair", url: "https://www.goaupair.com", descripcion: "Proceso online ágil. Buena comunidad de au pairs españoles en EEUU." },
@@ -238,8 +248,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "600-750€/mes (800-1.000 CAD + alojamiento y comida)",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/canada", descripcion: "Muchas familias en Toronto, Vancouver y Montreal. El programa IEC facilita el visado." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/canada.php", descripcion: "Registro gratuito. Comunidad activa de españoles en Canadá." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Muchas familias en Toronto, Vancouver y Montreal. El programa IEC facilita el visado." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. Comunidad activa de españoles en Canadá." },
       ],
       requisitos: "18-35 años (IEC Working Holiday), inglés o francés funcional, experiencia con niños. Canadá integra el au pair dentro del programa IEC (International Experience Canada). Duración: hasta 12 meses.",
     },
@@ -247,8 +257,6 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       plataformas: [
         { nombre: "Kijiji", url: "https://www.kijiji.ca/b-room-rental/canada", descripcion: "El portal más usado en Canadá para habitaciones. Amplia oferta en todo el país." },
         { nombre: "PadMapper", url: "https://www.padmapper.com", descripcion: "Mapa interactivo de alquileres. Muy visual para elegir barrio." },
-        { nombre: "Spotahome", url: "https://www.spotahome.com/s/canada", descripcion: "Alquiler verificado en Montreal, Toronto y Vancouver. Sin visitas." },
-        { nombre: "Facebook Marketplace", url: "https://www.facebook.com/marketplace/canada/rentals", descripcion: "Muy popular en Canadá para sublets y habitaciones. Muchos españoles lo usan." },
       ],
       consejo: "Toronto y Vancouver están entre las ciudades más caras del mundo. Montreal es hasta un 40% más barata, también habla francés y tiene mucha demanda laboral. El invierno es muy frío — busca alojamiento con calefacción incluida (heating included).",
       preciosMedios: [
@@ -282,9 +290,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "120-210€/semana (200-350 AUD + alojamiento y comida)",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/australia", descripcion: "Con la Working Holiday Visa el proceso es muy sencillo. Muchas familias en Sídney y Melbourne." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Con la Working Holiday Visa el proceso es muy sencillo. Muchas familias en Sídney y Melbourne." },
         { nombre: "Smart Au Pairs", url: "https://www.smartaupairs.com.au", descripcion: "Agencia australiana especializada. Te asignan coordinador local y hacen seguimiento continuo." },
-        { nombre: "Gumtree Au Pair", url: "https://www.gumtree.com.au/s-au-pair+wanted/k0", descripcion: "La versión australiana de Wallapop. Muchas familias buscan au pair directamente aquí." },
       ],
       requisitos: "18-35 años (Working Holiday Visa 417 o 462), inglés funcional, experiencia con niños. La WHV permite trabajar de au pair sin trámite adicional. Duración: 6-12 meses (algunos se renuevan con 88 días de trabajo regional).",
     },
@@ -292,8 +299,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       plataformas: [
         { nombre: "Flatmates.com.au", url: "https://flatmates.com.au", descripcion: "El portal #1 para compartir casa en Australia. Miles de habitaciones en Sídney, Melbourne y Brisbane." },
         { nombre: "Domain", url: "https://www.domain.com.au/rent", descripcion: "Portal de alquiler premium. Más orientado a pisos completos y estancias largas." },
-        { nombre: "Gumtree", url: "https://www.gumtree.com.au/s-flatshare-houseshare/k0", descripcion: "Buena opción para habitaciones baratas. Muy usado por mochileros y backpackers." },
-        { nombre: "Hostelworld Australia", url: "https://www.hostelworld.com/st/hostels/p/australia", descripcion: "Albergues desde 25-40 AUD/noche para los primeros días." },
+        { nombre: "Hostelworld Australia", url: "https://www.hostelworld.com", descripcion: "Albergues desde 25-40 AUD/noche para los primeros días." },
       ],
       consejo: "En Australia el alquiler se paga POR SEMANA (no por mes). Sídney y Melbourne son muy caros. Brisbane, Perth y Adelaide son más asequibles. Los primeros días en un hostel mientras buscas habitación es lo normal entre los recién llegados.",
       preciosMedios: [
@@ -331,8 +337,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "320-380€/mes + alojamiento, comida y curso de francés",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/france", descripcion: "Francia es destino clásico de au pair. Muchas familias en París, Lyon y Burdeos." },
-        { nombre: "Familles.com", url: "https://www.familles.com/au-pair", descripcion: "Portal francés especializado. Las familias son verificadas y los contratos están registrados." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Francia es destino clásico de au pair. Muchas familias en París, Lyon y Burdeos." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Plataforma internacional de au pair: familias y au pairs con perfil y referencias. Gratis para el au pair." },
       ],
       requisitos: "18-30 años, francés básico (A2 recomendado), sin antecedentes. Sin visado (UE). El contrato au pair debe registrarse en la DREETS (inspección de trabajo). Duración: 12 meses. La familia paga el seguro y el curso de idioma.",
     },
@@ -375,8 +381,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "300-340€/mes + alojamiento y comida",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/netherlands", descripcion: "Países Bajos es muy popular: todos hablan inglés, salario bueno y buen ambiente." },
-        { nombre: "Gastouderbureau", url: "https://www.gastouderbureau.nl", descripcion: "Agencia neerlandesa oficial de cuidado de niños. Contratos registrados y seguros." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Países Bajos es muy popular: todos hablan inglés, salario bueno y buen ambiente." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Plataforma internacional de au pair: familias y au pairs con perfil y referencias. Gratis para el au pair." },
       ],
       requisitos: "18-30 años, inglés básico (el neerlandés no es obligatorio), sin antecedentes. Sin visado (UE). Máximo 12 meses. Necesitas BSN (número de registro municipal) para trabajar legalmente.",
     },
@@ -419,8 +425,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "550-800 CHF/mes (580-840€) — el mejor sueldo de au pair en Europa",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/switzerland", descripcion: "Suiza ofrece el mayor sueldo de au pair en Europa. Familias en Zúrich, Ginebra y Basilea." },
-        { nombre: "HelvetiaAuPair", url: "https://www.helvetiaupair.ch", descripcion: "Agencia suiza especializada. Gestionan el permiso de residencia para el au pair." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Suiza ofrece el mayor sueldo de au pair en Europa. Familias en Zúrich, Ginebra y Basilea." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Plataforma internacional de au pair: familias y au pairs con perfil y referencias. Gratis para el au pair." },
       ],
       requisitos: "18-30 años, alemán/francés/italiano básico (según zona), sin antecedentes. Suiza no es UE pero tiene acuerdos — los españoles pueden ser au pair con permiso especial. La familia gestiona el permiso ante la autoridad cantonal. Duración: máximo 12 meses.",
     },
@@ -462,7 +468,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "~320-370€/mes (3.500-4.000 SEK + alojamiento y comida + curso de sueco)",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/sweden", descripcion: "Suecia es uno de los mejores países de Europa para calidad de vida. Muy popular entre au pairs españoles." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Suecia es uno de los mejores países de Europa para calidad de vida. Muy popular entre au pairs españoles." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Plataforma internacional de au pair: familias y au pairs con perfil y referencias. Gratis para el au pair." },
       ],
       requisitos: "18-30 años, inglés básico (el sueco no es obligatorio). Sin visado (UE). La familia paga el seguro y el curso de sueco. Duración: 12 meses máximo.",
     },
@@ -471,7 +478,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
         { nombre: "Blocket Bostad", url: "https://bostad.blocket.se", descripcion: "El portal de alquiler más popular de Suecia. Habitaciones, estudios y pisos en todo el país." },
         { nombre: "Qasa", url: "https://qasa.se", descripcion: "Plataforma moderna con contratos digitales en inglés. Muy usada por internacionales." },
         { nombre: "Samtrygg", url: "https://samtrygg.se", descripcion: "Especializado en subarrendamientos (andrahandsuthyrning). La forma más común de encontrar piso en Suecia." },
-        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/Sweden", descripcion: "Alquiler para expats. Contratos en inglés. Buena opción para empezar." },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/s/Stockholm--Sweden", descripcion: "Alquiler para expats. Contratos en inglés. Buena opción para empezar." },
       ],
       consejo: "Estocolmo tiene una cola de AÑOS para alquiler de primera mano (hyresrätt). La única opción realista es subarrendar (andrahand). Presupuesta 6.000-10.000 SEK/mes para habitación en Estocolmo. Gotemburgo y Malmö son algo más baratas.",
       preciosMedios: [
@@ -504,8 +511,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "~520-560€/mes (5.900-6.200 NOK — sueldo mínimo regulado por ley)",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/norway", descripcion: "Noruega regula el sueldo au pair por ley (5.900 NOK mínimo). Muy buenas condiciones laborales." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/norway.php", descripcion: "Familias verificadas en Oslo, Bergen y Trondheim." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Noruega regula el sueldo au pair por ley (5.900 NOK mínimo). Muy buenas condiciones laborales." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Familias verificadas en Oslo, Bergen y Trondheim." },
       ],
       requisitos: "18-30 años, inglés fluido (noruego básico recomendado), sin antecedentes. Noruega está en el EEE — libre circulación para españoles. El sueldo mínimo está fijado por la UDI (Directorate of Immigration). Duración: máximo 24 meses.",
     },
@@ -546,8 +553,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "250-300€/mes + alojamiento y comida",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/italy", descripcion: "Italia, cerca de España. Ideal para aprender italiano. Familias en Roma, Milán y Florencia." },
-        { nombre: "Bakeca.it", url: "https://www.bakeca.it/annunci/au-pair/", descripcion: "Portal italiano de anuncios. Muchas familias buscan au pair directamente aquí." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Italia, cerca de España. Ideal para aprender italiano. Familias en Roma, Milán y Florencia." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Plataforma internacional de au pair: familias y au pairs con perfil y referencias. Gratis para el au pair." },
       ],
       requisitos: "18-30 años, italiano o inglés básico, sin antecedentes. Sin visado (UE). Duración: 12 meses. La familia paga el seguro médico.",
     },
@@ -589,17 +596,16 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "200-280€/mes + alojamiento y comida",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/portugal", descripcion: "Portugal, el más cercano a España. Vida más barata aunque sueldos bajos. Familias en Lisboa y Oporto." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/portugal.php", descripcion: "Buen portal para encontrar familias en Portugal. Registro gratuito." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Portugal, el más cercano a España. Vida más barata aunque sueldos bajos. Familias en Lisboa y Oporto." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Buen portal para encontrar familias en Portugal. Registro gratuito." },
       ],
       requisitos: "18-30 años, portugués o español (muy similares), sin antecedentes. Sin visado (UE). Duración: 12 meses. Buena opción para quien quiere empezar a emigrar con suavidad.",
     },
     alojamiento: {
       plataformas: [
         { nombre: "Idealista Portugal", url: "https://www.idealista.pt/arrendar-casas", descripcion: "El mismo portal que España. Habitaciones y pisos en Lisboa, Oporto y Faro." },
-        { nombre: "OLX Portugal", url: "https://www.olx.pt/imoveis/arrendamento", descripcion: "Portal de anuncios muy popular para alquileres directos entre particulares." },
-        { nombre: "Imovirtual", url: "https://www.imovirtual.com/arrendamento", descripcion: "Portal profesional de alquiler. Buena cobertura nacional." },
-        { nombre: "Uniplaces", url: "https://www.uniplaces.com/en/rooms/portugal", descripcion: "Habitaciones para jóvenes. Muy usado en Lisboa y Oporto. Contratos cortos disponibles." },
+        { nombre: "Imovirtual", url: "https://www.imovirtual.com", descripcion: "Portal profesional de alquiler. Buena cobertura nacional." },
+        { nombre: "Uniplaces", url: "https://www.uniplaces.com", descripcion: "Habitaciones para jóvenes. Muy usado en Lisboa y Oporto. Contratos cortos disponibles." },
       ],
       consejo: "Lisboa y Oporto se han encarecido mucho. Braga, Coimbra y Aveiro ofrecen excelente calidad de vida a precios razonables. El coste de vida en Portugal es bajo pero los sueldos también — ajusta tus expectativas salariales.",
       preciosMedios: [
@@ -632,17 +638,16 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "70-100€/semana + alojamiento y comida",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/spain", descripcion: "España es un destino muy popular para au pairs. Familias en Madrid, Barcelona, Valencia, Sevilla y zonas costeras." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/spain.php", descripcion: "Registro gratuito. Muchas familias buscan au pairs nativos en inglés, francés o alemán." },
-        { nombre: "Cultural Care", url: "https://www.culturalcare.es/au-pair-en-espana", descripcion: "Agencia con sede en España. Soporte en español durante toda la estancia." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "España es un destino muy popular para au pairs. Familias en Madrid, Barcelona, Valencia, Sevilla y zonas costeras." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. Muchas familias buscan au pairs nativos en inglés, francés o alemán." },
       ],
       requisitos: "17-30 años, español básico (A1), soltero/a y sin hijos. Contrato de al menos 6 meses. La familia debe proporcionar habitación propia, manutención completa y al menos 70€ semanales. El au pair no es un empleado — es un intercambio cultural.",
     },
     alojamiento: {
       plataformas: [
         { nombre: "Idealista", url: "https://www.idealista.com/alquiler-viviendas/", descripcion: "El portal de alquiler líder en España. Amplia cobertura nacional." },
-        { nombre: "Fotocasa", url: "https://www.fotocasa.es/es/alquiler/viviendas/", descripcion: "Segunda opción más popular. Buena interfaz y filtros avanzados." },
-        { nombre: "Habitaclia", url: "https://www.habitaclia.com/alquiler", descripcion: "Especializado en Cataluña y Levante. Muy usado en Barcelona y Valencia." },
+        { nombre: "Fotocasa", url: "https://www.fotocasa.es", descripcion: "Segunda opción más popular. Buena interfaz y filtros avanzados." },
+        { nombre: "Habitaclia", url: "https://www.habitaclia.com", descripcion: "Especializado en Cataluña y Levante. Muy usado en Barcelona y Valencia." },
         { nombre: "Spotahome", url: "https://www.spotahome.com/es/s/madrid", descripcion: "Alquiler verificado en Madrid, Barcelona, Valencia y Sevilla. Sin visitas." },
       ],
       consejo: "Madrid y Barcelona son caras. Valencia, Sevilla, Bilbao, Málaga y Zaragoza ofrecen buena calidad de vida a precios más razonables. En España los pisos suelen alquilarse amueblados, lo que facilita la llegada.",
@@ -685,14 +690,14 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "420-480€/mes + alojamiento y comida",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/belgium", descripcion: "Bélgica tiene buenas condiciones para au pairs. Familias en Bruselas, Amberes y Gante." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/belgium.php", descripcion: "Registro gratuito. El contrato au pair debe registrarse en el RVA/ONEM (empleo)." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Bélgica tiene buenas condiciones para au pairs. Familias en Bruselas, Amberes y Gante." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. El contrato au pair debe registrarse en el RVA/ONEM (empleo)." },
       ],
       requisitos: "18-26 años, inglés o francés/neerlandés básico, sin antecedentes. Sin visado (UE). Contrato oficial requerido y registrado ante las autoridades laborales. Duración: 12 meses máximo.",
     },
     alojamiento: {
       plataformas: [
-        { nombre: "Immoweb", url: "https://www.immoweb.be/es/busqueda/apartamento/en-alquiler", descripcion: "El portal de alquiler #1 de Bélgica. Habitaciones, estudios y pisos en todo el país." },
+        { nombre: "Immoweb", url: "https://www.immoweb.be", descripcion: "El portal de alquiler #1 de Bélgica. Habitaciones, estudios y pisos en todo el país." },
         { nombre: "Zimmo", url: "https://www.zimmo.be/fr/louer", descripcion: "Segunda opción popular. Buena cobertura en Flandes y Bruselas." },
         { nombre: "HousingAnywhere", url: "https://housinganywhere.com/Belgium", descripcion: "Ideal para internacionales. Contratos en inglés. Muy usado en Bruselas por expatriados EU." },
         { nombre: "Spotahome", url: "https://www.spotahome.com/s/brussels", descripcion: "Alquiler verificado en Bruselas y Amberes. Sin visitas previas." },
@@ -727,17 +732,16 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "500-600€/mes + alojamiento y comida",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/austria", descripcion: "Austria es destino poco conocido pero muy bien pagado. Familias en Viena, Graz y Salzburgo." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/austria.php", descripcion: "Registro gratuito. El contrato se registra en el AMS (agencia de empleo)." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Austria es destino poco conocido pero muy bien pagado. Familias en Viena, Graz y Salzburgo." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. El contrato se registra en el AMS (agencia de empleo)." },
       ],
       requisitos: "18-28 años, alemán A2 recomendado (aunque muchas familias hablan inglés), sin antecedentes. Sin visado (UE). Contrato formal registrado ante AMS. Duración: 12 meses.",
     },
     alojamiento: {
       plataformas: [
         { nombre: "Willhaben", url: "https://www.willhaben.at/iad/immobilien/mietwohnungen", descripcion: "El portal de alquiler #1 de Austria. Habitaciones, estudios y pisos en todo el país." },
-        { nombre: "ImmobilienScout24 AT", url: "https://www.immobilienscout24.at/wohnen/mieten", descripcion: "Versión austriaca del portal alemán. Buena cobertura en Viena y Graz." },
-        { nombre: "Immonet", url: "https://www.immonet.at", descripcion: "Alternativa al ImmobilienScout. Más orientado a Viena." },
-        { nombre: "WG-Gesucht Austria", url: "https://www.wg-gesucht.de/wg-zimmer-in-Wien.67.0.1.0.html", descripcion: "El portal alemán funciona también para Austria. Muy usado en Viena." },
+        { nombre: "ImmobilienScout24 AT", url: "https://www.immobilienscout24.at", descripcion: "Versión austriaca del portal alemán. Buena cobertura en Viena y Graz." },
+        { nombre: "WG-Gesucht Austria", url: "https://www.wg-gesucht.de/wg-zimmer-in-Wien.163.0.1.0.html", descripcion: "El portal alemán funciona también para Austria. Muy usado en Viena." },
       ],
       consejo: "Viena tiene un sistema de alquiler público subvencionado (Gemeindebau) con precios bajos, pero las colas son largas. Para recién llegados: WG (piso compartido) es la mejor opción. Graz, Salzburgo e Innsbruck son más asequibles que Viena.",
       preciosMedios: [
@@ -770,8 +774,8 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "~540-600€/mes (4.000-4.500 DKK + alojamiento y comida)",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/denmark", descripcion: "Dinamarca paga bien y tiene excelente calidad de vida. Familias en Copenhague, Aarhus y Odense." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/denmark.php", descripcion: "Registro gratuito. El contrato au pair se registra en la Styrelsen for International Rekruttering." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Dinamarca paga bien y tiene excelente calidad de vida. Familias en Copenhague, Aarhus y Odense." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. El contrato au pair se registra en la Styrelsen for International Rekruttering." },
       ],
       requisitos: "18-30 años, inglés básico (danés no obligatorio), sin antecedentes. Sin visado (UE/EEE). Contrato oficial requerido. Duración: máximo 12 meses.",
     },
@@ -779,8 +783,7 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       plataformas: [
         { nombre: "Boligportal", url: "https://www.boligportal.dk", descripcion: "El portal de alquiler #1 de Dinamarca. Habitaciones y pisos en todo el país." },
         { nombre: "Lejebolig", url: "https://www.lejebolig.dk", descripcion: "Segunda opción popular. Buena cobertura fuera de Copenhague." },
-        { nombre: "BoligerTilLeje", url: "https://www.boligertilleje.dk", descripcion: "Alternativa con muchos anuncios directos de propietarios." },
-        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/Denmark", descripcion: "Ideal para internacionales. Contratos en inglés. Muy usado en Copenhague." },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/s/Copenhagen--Denmark", descripcion: "Ideal para internacionales. Contratos en inglés. Muy usado en Copenhague." },
       ],
       consejo: "Copenhague tiene grave escasez de vivienda y precios muy altos. Aarhus y Odense son más baratas y también tienen mucho trabajo. El transporte público danés es excelente — vivir a 30 min del centro es habitual.",
       preciosMedios: [
@@ -813,17 +816,16 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "350-450€/mes + alojamiento, comida y seguro",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/finland", descripcion: "Finlandia es un destino poco común pero con excelentes condiciones. Familias sobre todo en Helsinki y Tampere." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/finland.php", descripcion: "Registro gratuito. El inglés es suficiente — los finlandeses lo hablan muy bien." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Finlandia es un destino poco común pero con excelentes condiciones. Familias sobre todo en Helsinki y Tampere." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. El inglés es suficiente — los finlandeses lo hablan muy bien." },
       ],
       requisitos: "18-30 años, inglés básico (el finlandés no es obligatorio), sin antecedentes. Sin visado (UE). Duración: 12 meses máximo. La familia cubre el seguro médico.",
     },
     alojamiento: {
       plataformas: [
         { nombre: "Vuokraovi", url: "https://vuokraovi.com/vuokra-asunnot", descripcion: "El portal de alquiler #1 de Finlandia. Habitaciones y pisos en todo el país." },
-        { nombre: "Tori.fi / Oikotie", url: "https://asunnot.oikotie.fi/vuokra-asunnot", descripcion: "Portal de anuncios finlandés. Muy popular para alquileres directos." },
-        { nombre: "Etuovi", url: "https://www.etuovi.com/hae/vuokra-asunnot", descripcion: "Alternativa con buena cobertura en Helsinki y ciudades medianas." },
-        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/Finland", descripcion: "Para internacionales. Contratos en inglés en Helsinki." },
+        { nombre: "Oikotie Asunnot", url: "https://asunnot.oikotie.fi/vuokra-asunnot", descripcion: "Portal de anuncios finlandés. Muy popular para alquileres directos." },
+        { nombre: "HousingAnywhere", url: "https://housinganywhere.com/s/Helsinki--Finland", descripcion: "Para internacionales. Contratos en inglés en Helsinki." },
       ],
       consejo: "Helsinki es más asequible que Estocolmo o Oslo pero los inviernos son extremos (oscuro y frío 5 meses). Tampere, Turku y Oulu son buenas alternativas con costes más bajos. El alojamiento en Finlandia se paga por mes.",
       preciosMedios: [
@@ -857,15 +859,14 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "350-460€/mes (1.500-2.000 PLN + alojamiento y comida)",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/poland", descripcion: "Polonia está creciendo como destino. Familias en Varsovia, Cracovia y Gdańsk. Vida muy asequible." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/poland.php", descripcion: "Registro gratuito. Muchas familias de clase media alta en las grandes ciudades polacas." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Polonia está creciendo como destino. Familias en Varsovia, Cracovia y Gdańsk. Vida muy asequible." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. Muchas familias de clase media alta en las grandes ciudades polacas." },
       ],
       requisitos: "18-30 años, inglés básico, sin antecedentes. Sin visado (UE). Polonia tiene coste de vida muy bajo — el dinero cunde mucho. Duración: 12 meses.",
     },
     alojamiento: {
       plataformas: [
         { nombre: "Otodom", url: "https://www.otodom.pl/wynajem", descripcion: "El portal de alquiler #1 de Polonia. Habitaciones y pisos en todo el país." },
-        { nombre: "OLX Polska", url: "https://www.olx.pl/nieruchomosci/mieszkania/wynajem/", descripcion: "Portal de anuncios muy popular. Muchas ofertas directas de propietarios." },
         { nombre: "Gratka", url: "https://gratka.pl/nieruchomosci/mieszkania/wynajem", descripcion: "Alternativa a Otodom. Buena cobertura en ciudades medianas." },
         { nombre: "Spotahome", url: "https://www.spotahome.com/s/warsaw", descripcion: "Alquiler verificado en Varsovia y Cracovia. Contratos en inglés." },
       ],
@@ -900,18 +901,17 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "120-200€/semana (250-350 NZD + alojamiento y comida)",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/new-zealand", descripcion: "Nueva Zelanda es destino top para quien busca aventura. La WHV lo facilita enormemente." },
-        { nombre: "AuPair.com NZ", url: "https://www.aupair.com/en/au-pair/new-zealand.php", descripcion: "Familias verificadas en Auckland, Wellington y Christchurch." },
-        { nombre: "Gumtree NZ", url: "https://www.gumtree.co.nz", descripcion: "Anuncios clasificados neozelandeses. Muchas familias buscan au pair directamente." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Nueva Zelanda es destino top para quien busca aventura. La WHV lo facilita enormemente." },
+        { nombre: "AuPair.com NZ", url: "https://www.aupair.com", descripcion: "Familias verificadas en Auckland, Wellington y Christchurch." },
       ],
       requisitos: "18-35 años (Working Holiday Visa), inglés funcional, experiencia con niños. La Working Holiday Visa de Nueva Zelanda es fácil de conseguir para españoles. Duración: 6-12 meses.",
     },
     alojamiento: {
       plataformas: [
         { nombre: "TradeMe", url: "https://www.trademe.co.nz/a/property/rentals", descripcion: "El portal de alquiler #1 de Nueva Zelanda. El equivalente neozelandés al Wallapop para todo." },
-        { nombre: "Flatmates NZ", url: "https://www.flatmates.co.nz", descripcion: "Especializado en habitaciones compartidas. Ideal para recién llegados." },
-        { nombre: "Realestate.co.nz", url: "https://www.realestate.co.nz/residential/rent", descripcion: "Portal profesional de alquiler. Más orientado a pisos completos." },
-        { nombre: "Hostelworld NZ", url: "https://www.hostelworld.com/st/hostels/p/new-zealand", descripcion: "Albergues desde 25-40 NZD/noche para los primeros días." },
+        { nombre: "NZ Flatmates", url: "https://www.nzflatmates.co.nz", descripcion: "Especializado en habitaciones compartidas. Ideal para recién llegados." },
+        { nombre: "Realestate.co.nz", url: "https://www.realestate.co.nz", descripcion: "Portal profesional de alquiler. Más orientado a pisos completos." },
+        { nombre: "Hostelworld NZ", url: "https://www.hostelworld.com", descripcion: "Albergues desde 25-40 NZD/noche para los primeros días." },
       ],
       consejo: "Auckland es muy cara y tiene un serio problema de vivienda. Wellington es más manejable. Christchurch, Hamilton y Dunedin son buenas opciones más económicas. Como en Australia, el alquiler se paga por semana.",
       preciosMedios: [
@@ -947,17 +947,16 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       disponible: true,
       sueldoMensual: "200-280€/mes + alojamiento y comida",
       plataformas: [
-        { nombre: "AuPairWorld", url: "https://www.aupairworld.com/en/au-pair/greece", descripcion: "Grecia es popular en verano. Las familias suelen estar en Atenas y Tesalónica. Experiencia de vida única." },
-        { nombre: "AuPair.com", url: "https://www.aupair.com/en/au-pair/greece.php", descripcion: "Registro gratuito. Más demanda en los meses de verano." },
+        { nombre: "AuPairWorld", url: "https://www.aupairworld.com", descripcion: "Grecia es popular en verano. Las familias suelen estar en Atenas y Tesalónica. Experiencia de vida única." },
+        { nombre: "AuPair.com", url: "https://www.aupair.com", descripcion: "Registro gratuito. Más demanda en los meses de verano." },
       ],
       requisitos: "18-30 años, inglés básico (el griego no es obligatorio en muchas familias), sin antecedentes. Sin visado (UE). El sueldo es bajo pero el coste de vida también. Ideal para quien quiere una experiencia mediterránea.",
     },
     alojamiento: {
       plataformas: [
         { nombre: "Spitogatos", url: "https://www.spitogatos.gr/enikiaseis", descripcion: "El portal de alquiler #1 de Grecia. Habitaciones y pisos en Atenas, Tesalónica y las islas." },
-        { nombre: "XE.gr", url: "https://www.xe.gr/property/enikiasi_katoikia", descripcion: "Segunda opción popular. Amplia cobertura en toda Grecia." },
+        { nombre: "XE.gr", url: "https://www.xe.gr", descripcion: "Segunda opción popular. Amplia cobertura en toda Grecia." },
         { nombre: "Airbnb Grecia", url: "https://www.airbnb.es/s/Greece/homes?monthly_stay=true", descripcion: "Para los primeros días o meses. En temporada baja los precios bajan mucho." },
-        { nombre: "Booking mensual", url: "https://www.booking.com/searchresults.es.html?ss=Greece&nflt=review_score%3D70", descripcion: "Apartamentos mensuales fuera de temporada. En invierno Atenas es muy asequible." },
       ],
       consejo: "Atenas y las islas son caras en verano (mayo-septiembre). En invierno los precios bajan un 40-60%. Tesalónica es más barata que Atenas y tiene muy buena calidad de vida. Para vivir bien con poco dinero en la UE, Grecia es una opción excelente.",
       preciosMedios: [
@@ -999,7 +998,6 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     },
     alojamiento: {
       plataformas: [
-        { nombre: "Mercado Libre — cuartos", url: "https://inmuebles.mercadolibre.com.mx/cuartos/", descripcion: "Cuartos en renta en todo México. Un cuarto en departamento compartido es lo más fácil para empezar." },
         { nombre: "Inmuebles24", url: "https://www.inmuebles24.com", descripcion: "Uno de los portales de renta más grandes del país: departamentos y casas." },
         { nombre: "Vivanuncios", url: "https://www.vivanuncios.com.mx", descripcion: "Anuncios de particulares e inmobiliarias, también de cuartos." },
         { nombre: "Airbnb mensual", url: "https://www.airbnb.mx/s/Mexico/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo. Más caro, pero sin contrato." },
@@ -1207,7 +1205,6 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       plataformas: [
         { nombre: "Zonaprop", url: "https://www.zonaprop.com.ar", descripcion: "De los portales de alquiler más usados de Argentina." },
         { nombre: "Argenprop", url: "https://www.argenprop.com", descripcion: "Alquileres de inmobiliarias y particulares; explica también las garantías." },
-        { nombre: "Mercado Libre Inmuebles", url: "https://inmuebles.mercadolibre.com.ar/alquiler/", descripcion: "Muchos anuncios de particulares, también de habitaciones." },
         { nombre: "Airbnb mensual", url: "https://www.airbnb.com.ar/s/Argentina/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo. Sin garantía." },
       ],
       consejo: "Desde 2023 los contratos se pactan casi libres (plazo, ajuste y moneda). Suelen pedir una garantía propietaria (una casa a nombre de alguien que responda por ti) o un seguro de caución, más un depósito y demostrar ingresos de unas tres veces el alquiler. Sin garantía en Argentina, el seguro de caución o un alquiler mensual son lo práctico.",
@@ -1245,7 +1242,6 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
     alojamiento: {
       plataformas: [
         { nombre: "Plusvalía", url: "https://www.plusvalia.com", descripcion: "El portal de alquileres más usado de Ecuador, sobre todo en Quito y Guayaquil." },
-        { nombre: "Properati", url: "https://www.properati.com.ec", descripcion: "Departamentos y casas de inmobiliarias y particulares." },
         { nombre: "Airbnb mensual", url: "https://www.airbnb.com.ec/s/Ecuador/homes?monthly_stay=true", descripcion: "Para el primer mes, mientras buscas algo fijo. Más caro, pero sin garantía." },
       ],
       consejo: "La ley no obliga a dar garantía, pero lo habitual es de uno a dos meses de arriendo, que te deben devolver si dejas la vivienda como la recibiste y sin deudas. Pon en el contrato cuánto es y cuándo te la devuelven.",
@@ -1352,7 +1348,6 @@ const BASE_INFO: Record<string, PrimerosPasosInfo> = {
       plataformas: [
         { nombre: "Gallito", url: "https://www.gallito.com.uy/inmuebles/alquiler", descripcion: "El portal de anuncios de toda la vida en Uruguay, con alquileres en todo el país." },
         { nombre: "InfoCasas", url: "https://www.infocasas.com.uy/alquiler", descripcion: "Alquileres de inmobiliarias y particulares." },
-        { nombre: "Mercado Libre Inmuebles", url: "https://listado.mercadolibre.com.uy/inmuebles/alquiler", descripcion: "Muchos anuncios de particulares." },
       ],
       consejo: "Para alquilar piden una garantía. El Estado da una (Garantía de alquiler del Ministerio de Vivienda con la Contaduría General de la Nación): se paga una comisión mensual del 3 % del alquiler. Si tienes de 18 a 29 años y estudias o trabajas, hay una garantía para jóvenes.",
       preciosMedios: [],

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { PAISES, LISTA_PAISES, NUM_PAISES, SLUG_A_CODIGO, formatearSalario, convertirSalario } from "@/lib/paises";
 import { ofertasPorPais, ofertasDe } from "@/lib/job-search/ofertas-por-pais";
-import { getPrimerosPasos } from "@/lib/primeros-pasos";
+import { getPrimerosPasos, AVISO_ALOJAMIENTO } from "@/lib/primeros-pasos";
 import RequisitosPais from "@/components/destinos/RequisitosPais";
 import Link from "next/link";
 import FondoOleaje from "@/components/FondoOleaje";
@@ -243,6 +243,7 @@ export default async function TrabajarEnPaisPage({ params }: Props) {
                 ))}
               </div>
               <p className="text-xs text-[#8b98ad] mt-3 border-t border-[rgba(148,163,184,0.18)] pt-3">{primerosPasos.alojamiento.consejo}</p>
+              <p className="text-xs mt-2" style={{ color: "#fcd34d" }}>{AVISO_ALOJAMIENTO}</p>
             </div>
 
             {/* Precios de alojamiento por ciudad */}

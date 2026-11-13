@@ -93,6 +93,11 @@ export default function JobCard({
   // portal por correo; la oferta se solicita en su web (portales-empleo.ts).
   const portal = !oficial && esOfertaDePortal({ empresa, correo: emailEmpresa });
   const aWeb = !!oficial || portal;
+  // Las de portales (Domestiko...) se leen enteras en NUESTRA ficha (13 nov 2026):
+  // desde la lista no se sale a ninguna web de fuera. La única salida, si quiere
+  // apuntarse, está al final de la ficha. Las de servicios públicos (Lanbide, SEF)
+  // siguen yendo a su web: se solicitan allí y no son publicidad de nadie.
+  const enNuestraFicha = portal && !oficial && !esSintetica;
 
   const [enviando, setEnviando] = useState(false);
   const [estadoEnvio, setEstadoEnvio] = useState<"idle" | "ok" | "sin-email">("idle");
@@ -213,7 +218,11 @@ export default function JobCard({
   }
 
   return (
-    <div className="card-game p-5 flex flex-col gap-3 group hover:scale-[1.01] transition-transform">
+    // min-w-0 y overflow-wrap (13 nov 2026): un correo o enlace largo sin espacios
+    // estiraba la tarjeta a 472 px en un móvil de 390 y la página entera se salía
+    // de lado (Michel: "pongo Madrid y sale como en grande"). El zoom, solo con ratón:
+    // en el móvil el :hover se queda pegado al tocar y la ensanchaba otro 1 %.
+    <div className="card-game p-5 flex flex-col gap-3 min-w-0 [overflow-wrap:anywhere] group [@media(hover:hover)]:hover:scale-[1.01] transition-transform">
       {/* Header: fuente + match + modalidad */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
@@ -323,7 +332,7 @@ export default function JobCard({
 
       {portal && (
         <p className="text-[11px] leading-snug" style={{ color: "#94a3b8" }}>
-          Oferta de un portal de empleo: el CV no va al portal, te inscribes desde la propia oferta.
+          La empresa recibe las candidaturas en su propia oferta: léela aquí y Guzzi te prepara el CV antes de apuntarte.
         </p>
       )}
       {marca?.tipo === "misma-empresa" && (
@@ -332,7 +341,13 @@ export default function JobCard({
 
       {/* Actions */}
       <div className="flex gap-2 mt-auto">
-        {esSintetica && url ? (
+        {enNuestraFicha ? (
+          <Link href={`/app/ofertas/${encodeURIComponent(id)}`}
+            className="flex-1 inline-flex items-center justify-center min-h-[44px] text-center text-xs font-bold rounded-full transition hover:opacity-90"
+            style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", boxShadow: "0 6px 20px -8px rgba(163,230,53,0.7)" }}>
+            Ver la oferta completa
+          </Link>
+        ) : esSintetica && url ? (
           <a href={url} target="_blank" rel="noopener noreferrer"
             className="flex-1 inline-flex items-center justify-center min-h-[44px] text-center text-xs font-semibold rounded-full transition hover:bg-white/[0.05]"
             style={{ border: "1.5px solid rgba(148,163,184,0.25)", color: "#dbe3ee" }}>
@@ -345,7 +360,7 @@ export default function JobCard({
             Ver oferta
           </Link>
         )}
-        {aWeb && url ? (
+        {enNuestraFicha ? null : aWeb && url ? (
           <a href={url} target="_blank" rel="noopener noreferrer"
             className="flex-1 inline-flex items-center justify-center min-h-[44px] text-center text-xs font-bold rounded-full transition hover:opacity-90"
             style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406", boxShadow: "0 6px 20px -8px rgba(163,230,53,0.7)" }}>

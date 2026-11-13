@@ -263,16 +263,16 @@ function BuscarPageInner() {
   }, [hayMas, cargando, cargandoMas, ofertas.length]);
 
 
-  // Calcula match % entre keyword del usuario y título/descripción de la oferta
-  function calcularMatch(titulo: string, descripcion?: string): number {
-    if (!keyword.trim()) return 0;
-    const kw = keyword.toLowerCase().split(/\s+/);
+  // Calcula match % entre keyword del usuario y título/descripción de la oferta.
+  // Sin oficio escrito no hay con qué comparar: undefined, y la tarjeta no pinta
+  // la barra (13 nov 2026: buscando solo "Madrid" salía "0 %" en TODAS las
+  // ofertas). Las palabras de 1-2 letras ("de", "y") ya no cuentan en la división.
+  function calcularMatch(titulo: string, descripcion?: string): number | undefined {
+    const kw = keyword.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+    if (kw.length === 0) return undefined;
     const texto = ((titulo || "") + " " + (descripcion || "")).toLowerCase();
-    let hits = 0;
-    for (const w of kw) {
-      if (w.length > 2 && texto.includes(w)) hits++;
-    }
-    return kw.length > 0 ? Math.min(99, Math.round((hits / kw.length) * 100)) : 0;
+    const hits = kw.filter((w) => texto.includes(w)).length;
+    return Math.min(99, Math.round((hits / kw.length) * 100));
   }
 
   // Lista de ciudades españolas conocidas para extraer del keyword
@@ -765,7 +765,7 @@ function BuscarPageInner() {
           {/* Resultados */}
           <div className="flex-1 min-w-0">
             {cargando && (
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="card-game p-4 animate-pulse">
                     <div className="h-3 rounded w-1/4 mb-3" style={{ background: "#252836" }} />
@@ -796,7 +796,7 @@ function BuscarPageInner() {
                     De lo que has trabajado ({paraTi.puestos.join(", ").toLowerCase()}), primero las de tu zona.
                   </p>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {paraTi.ofertas.map((o) => <JobCard key={o.id} {...o} />)}
                 </div>
               </div>
@@ -880,7 +880,7 @@ function BuscarPageInner() {
                     </a>
                   </div>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {ofertas.map(oferta => <JobCard key={oferta.id} {...oferta} />)}
                 </div>
                 

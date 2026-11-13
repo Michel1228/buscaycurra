@@ -546,9 +546,25 @@ a, button, [role="button"], summary, label { -webkit-tap-highlight-color: rgba(1
  * movidas en su misma dirección se ven quietas; lo que avanza es la franja de
  * luz que las ilumina. Así brillan al pasar la ola sin repintar nada.
  */
+/* 13 nov 2026 (Michel: "al deslizar hacia abajo se queda la parte de abajo
+   gris y como que se sale la aplicación"). Tres cosas:
+   - lo que asoma al tirar de la página es el fondo de html/body (#0f1117, gris
+     azulado) y no el del oleaje: ahora son del mismo casi negro;
+   - el tirón elástico se quita (overscroll-behavior) en las pantallas de la app;
+   - el oleaje mide lo que mide la pantalla SIN la barra del navegador (lvh): al
+     esconderse la barra al bajar, ya no queda una franja sin fondo.
+   Y overflow-x: clip: si algo se pasa de ancho, se recorta en vez de dejar mover
+   la página de lado (clip no rompe position: sticky, hidden sí). */
+html:has(> body.con-oleaje), body.con-oleaje {
+  background: #06090b;
+  overflow-x: clip;
+}
+html:has(> body.con-oleaje) { overscroll-behavior-y: none; }
 .fondo-oleaje {
   position: fixed;
   inset: 0;
+  height: 100vh;
+  height: 100lvh;
   z-index: -1;
   overflow: hidden;
   pointer-events: none;

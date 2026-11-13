@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PAISES, LISTA_PAISES, formatearSalario } from "@/lib/paises";
-import { getPrimerosPasos, type PrimerosPasosInfo } from "@/lib/primeros-pasos";
+import { getPrimerosPasos, type PrimerosPasosInfo, AVISO_ALOJAMIENTO, ENLACES_COMPROBADOS_EL } from "@/lib/primeros-pasos";
 import { PenLine, Search, Home, Lightbulb, Globe, ClipboardList, GraduationCap, Star, Briefcase, Users, AlertTriangle, Mail, type LucideIcon, Wallet} from "lucide-react";
 
 type Tab = "au-pair" | "alojamiento" | "visado" | "programas";
@@ -55,7 +55,7 @@ function AuPairTab({ paisCode, info }: { paisCode: string; info: PrimerosPasosIn
           <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-1">Requisitos</p>
           <p className="text-sm text-[#e2e8f0] leading-relaxed">{info.auPair.requisitos}</p>
         </div>
-        <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-2">Agencias y plataformas verificadas</p>
+        <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-2">Agencias y plataformas · enlaces comprobados el {ENLACES_COMPROBADOS_EL}</p>
         <div className="space-y-2">
           {info.auPair.plataformas.map((p) => (
             <a
@@ -92,7 +92,7 @@ function AlojamientoTab({ paisCode, info }: { paisCode: string; info: PrimerosPa
         <h3 className="text-lg font-semibold text-[#e2e8f0] mb-3 flex items-center gap-2">
           <Home size={18} strokeWidth={1.8} /> Alojamiento en {pais?.nombre || paisCode}
         </h3>
-        <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-2">Portales de alquiler verificados</p>
+        <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-2">Portales de alquiler · enlaces comprobados el {ENLACES_COMPROBADOS_EL}</p>
         <div className="grid sm:grid-cols-2 gap-2 mb-4">
           {info.alojamiento.plataformas.map((p) => (
             <a
@@ -113,6 +113,7 @@ function AlojamientoTab({ paisCode, info }: { paisCode: string; info: PrimerosPa
           <p className="text-xs text-[#8b98ad] uppercase tracking-wider mb-1 flex items-center gap-1"><Lightbulb size={11} strokeWidth={1.8} /> Consejo local</p>
           <p className="text-sm text-[#e2e8f0] leading-relaxed">{info.alojamiento.consejo}</p>
         </div>
+        <p className="mt-3 text-xs leading-relaxed rounded-lg p-3" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.3)", color: "#fcd34d" }}>{AVISO_ALOJAMIENTO}</p>
       </div>
 
       <Link

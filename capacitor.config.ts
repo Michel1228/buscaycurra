@@ -26,7 +26,7 @@ const config: CapacitorConfig = {
     //
     // La TWA original queda guardada en android-twa-respaldo/ por si hay que
     // volver atras.
-    backgroundColor: "#0f1117",
+    backgroundColor: "#06090b",
     // El teclado no debe tapar los campos al escribir en el chat de Guzzi.
     windowSoftInputMode: "adjustResize",
     // Sin esto, en algunos moviles el WebView deja una franja blanca arriba.
@@ -36,7 +36,7 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: "always",
-    backgroundColor: "#0f1117",
+    backgroundColor: "#06090b",
     // @ts-expect-error — infoPlist es válido en runtime, falta en tipos de capacitor
     infoPlist: {
       // Foto de perfil y fotos en perfil Au Pair
@@ -59,7 +59,7 @@ const config: CapacitorConfig = {
     },
     SplashScreen: {
       launchShowDuration: 1500,
-      backgroundColor: "#0f1117",
+      backgroundColor: "#06090b",
       showSpinner: false,
     },
   },

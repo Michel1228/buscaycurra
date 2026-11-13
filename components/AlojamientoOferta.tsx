@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { dondeEstoy } from "@/lib/origen/donde-estoy";
 import { Home, ExternalLink } from "lucide-react";
-import { getPrimerosPasos } from "@/lib/primeros-pasos";
+import { getPrimerosPasos, AVISO_ALOJAMIENTO } from "@/lib/primeros-pasos";
 import { PAISES } from "@/lib/paises";
 
 export default function AlojamientoOferta({ country }: { country?: string }) {
@@ -69,6 +69,7 @@ export default function AlojamientoOferta({ country }: { country?: string }) {
         <p className="text-[11px] mt-3 rounded-lg p-2.5" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.12)", color: "#94a3b8" }}>{info.alojamiento.consejo}
         </p>
       )}
+      <p className="text-[11px] mt-2 leading-snug" style={{ color: "#fcd34d" }}>{AVISO_ALOJAMIENTO}</p>
 
       <Link
         href={`/app/emigrar?pais=${codigo}`}

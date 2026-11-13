@@ -2483,6 +2483,65 @@ test("logos de empresa: BM, Mercadona, Lidl, Carrefour, México y Colombia; ni p
   }
 });
 
+// ── EL BUSCADOR NO SE SALE DE LA PANTALLA; NADA GRIS AL DESLIZAR (13 nov 2026) ─
+//
+// Michel: "pongo Madrid y sale como en grande; hay descontroles en el buscador"
+// y "al deslizar hacia abajo se queda la parte de abajo gris y se sale la
+// aplicación". Medido con Playwright: la lista de resultados (grid sin columnas)
+// se estiraba a 472 px en un móvil de 390 por un correo/enlace largo de una
+// tarjeta; la página se movía de lado y desaparecían la campana y la barra de
+// abajo. Y el "gris" era el fondo #0f1117 de html/body/app nativa asomando.
+test("el buscador cabe en el móvil: una columna que no se estira y tarjetas que parten lo largo", () => {
+  const buscar = leerFuente("app/app/buscar/page.tsx");
+  const card = leerFuente("components/JobCard.tsx");
+  return (buscar.match(/className="grid grid-cols-1 sm:grid-cols-2 gap-3"/g) || []).length === 3
+    && !buscar.includes('className="grid sm:grid-cols-2 gap-3"')
+    && card.includes("min-w-0 [overflow-wrap:anywhere]")
+    && card.includes("[@media(hover:hover)]:hover:scale-[1.01]") && !/ hover:scale-\[1\.01\]/.test(card);
+});
+test("buscando solo una ciudad no sale '0 %' en todas las ofertas", () => {
+  const buscar = leerFuente("app/app/buscar/page.tsx");
+  return buscar.includes("function calcularMatch(titulo: string, descripcion?: string): number | undefined")
+    && buscar.includes("if (kw.length === 0) return undefined;");
+});
+test("al deslizar no asoma gris ni la página se mueve de lado (web y app nativa)", () => {
+  const css = leerFuente("app/globals.css");
+  const cap = leerFuente("capacitor.config.ts");
+  return css.includes("html:has(> body.con-oleaje), body.con-oleaje {\n  background: #06090b;\n  overflow-x: clip;".replace(/\n/g, css.includes("\r\n") ? "\r\n" : "\n"))
+    && css.includes("html:has(> body.con-oleaje) { overscroll-behavior-y: none; }")
+    && css.includes("height: 100lvh;")
+    && !cap.includes('"#0f1117"') && (cap.match(/backgroundColor: "#06090b"/g) || []).length === 3;
+});
+test("las ofertas de portales (Domestiko...) se leen en nuestra ficha, no se sale desde la lista", () => {
+  const card = leerFuente("components/JobCard.tsx");
+  return card.includes("const enNuestraFicha = portal && !oficial && !esSintetica;")
+    && card.includes("{enNuestraFicha ? (") && card.includes("Ver la oferta completa")
+    && card.includes("{enNuestraFicha ? null : aWeb && url ? (");
+});
+
+// ── ALOJAMIENTO Y AU PAIR: SOLO ENLACES COMPROBADOS (13 nov 2026) ─────────────
+//
+// Michel: "todo el tema de alojamiento son páginas malas y no verificadas".
+// Comprobadas una a una: había una web de casinos (immonet.at), un dominio en
+// venta (gumtree.co.nz), dominios inexistentes, una "WG de Viena" que era de
+// Kaiserslautern, Mercado Libre pidiendo iniciar sesión y unas 50 páginas 404
+// (las de país de AuPairWorld y AuPair.com). El comprobador queda en
+// scripts/verificar-enlaces-alojamiento.mjs (179 enlaces, 0 a revisar).
+test("alojamiento y au pair: fuera las webs muertas, en venta, de casinos o con muro de sesión", () => {
+  const pp = leerFuente("lib/primeros-pasos.ts");
+  const fuera = ["immonet.at", "gumtree.co.nz", "boligertilleje.dk", "helvetiaupair.ch", "familles.com", "gastouderbureau.nl",
+    "wohnungsboerse.net", "mercadolibre.com", "facebook.com/marketplace", "//www.flatmates.co.nz", "spotahome.com/s/canada",
+    "wg-gesucht.de/wg-zimmer-in-Wien.67.", "properati.com.ec", "booking.com/searchresults"];
+  return fuera.every((d) => !pp.includes(d))
+    && !/aupairworld\.com\/en\/au-pair\//.test(pp) && !/aupair\.com\/en\/au-pair\//.test(pp)
+    && !/housinganywhere\.com\/(Denmark|Sweden|Finland)"/.test(pp)
+    && pp.includes('export const ENLACES_COMPROBADOS_EL = "13 nov 2026";')
+    && leerFuente("scripts/verificar-enlaces-alojamiento.mjs").includes('plataformas("auPair")');
+});
+test("donde se enseña alojamiento, va el aviso contra estafas", () =>
+  ["components/AlojamientoOferta.tsx", "app/app/emigrar/page.tsx", "app/trabajar-en/[pais]/page.tsx"]
+    .every((f) => leerFuente(f).includes("{AVISO_ALOJAMIENTO}")));
+
 // ── LO QUE PARECE PULSABLE SE PULSA, Y RESPONDE AL DEDO (12 nov 2026) ────────
 //
 // Michel: "parece que tengo que pincharle aqui, y no da, no abre ni nada", y
