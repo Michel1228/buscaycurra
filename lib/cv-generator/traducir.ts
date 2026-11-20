@@ -14,7 +14,7 @@
  * nunca tiene más experiencia de la que la persona escribió.
  */
 import type { CVData } from "./cv-template";
-import { IDIOMAS_CV, type IdiomaCV } from "./idiomas-cv";
+import { DESTINOS_TRADUCCION, type IdiomaCV } from "./idiomas-cv";
 
 interface Traducible {
   subtitulo: string;
@@ -36,26 +36,32 @@ export function extraerTraducible(cv: CVData): Traducible {
   };
 }
 
-const NOMBRE_IDIOMA: Record<Exclude<IdiomaCV, "es">, string> = {
-  en: "English", de: "German", fr: "French", pt: "European Portuguese", it: "Italian", nl: "Dutch",
+// AL ESPAÑOL TAMBIÉN (20 nov 2026, Michel: "lo del traductor no sale el español"). El CV no siempre está
+// escrito en español: con 40 países hay quien lo escribe en portugués o sube un PDF en inglés, y para
+// trabajar en España o en Latinoamérica lo que necesita es pasarlo al español.
+const NOMBRE_IDIOMA: Record<IdiomaCV, string> = {
+  es: "Spanish", en: "English", de: "German", fr: "French", pt: "European Portuguese", it: "Italian", nl: "Dutch",
 };
 
 /**
  * "Actualidad" en cada idioma. Con un solo ejemplo en inglés, la traducción al
  * alemán devolvía "2021 - Present" (probado en producción el 8 oct 2026).
  */
-const HASTA_HOY: Record<Exclude<IdiomaCV, "es">, string> = {
-  en: "Present", de: "heute", fr: "aujourd'hui", pt: "presente", it: "oggi", nl: "heden",
+const HASTA_HOY: Record<IdiomaCV, string> = {
+  es: "Actualidad", en: "Present", de: "heute", fr: "aujourd'hui", pt: "presente", it: "oggi", nl: "heden",
 };
 
-export function promptTraduccion(cv: CVData, idioma: Exclude<IdiomaCV, "es">): string {
+export function promptTraduccion(cv: CVData, idioma: IdiomaCV): string {
   return [
-    `Translate this CV content from Spanish into ${NOMBRE_IDIOMA[idioma]}, as a native professional recruiter in that country would write it.`,
+    `Translate this CV content into ${NOMBRE_IDIOMA[idioma]}, as a native professional recruiter in that country would write it.`,
+    "The content may be written in any language (usually Spanish): detect it. Text that is already in the target language stays as it is.",
     "Rules:",
     "- Translate faithfully. Do NOT add, remove or invent any experience, task, skill, qualification or achievement.",
-    "- Use the usual job-title names of that country (e.g. 'Camarero/a' -> 'Waiter/Waitress').",
-    `- In dates translate only the words into ${NOMBRE_IDIOMA[idioma]} ('Actualidad' -> '${HASTA_HOY[idioma]}'); keep every number.`,
-    "- Spanish official qualifications: translate the name and keep the Spanish name in brackets the first time (e.g. 'Hospitality technician (Técnico en Cocina)').",
+    idioma === "es"
+      ? "- Use the usual job-title names in Spanish (e.g. 'Waiter/Waitress' -> 'Camarero/a')."
+      : "- Use the usual job-title names of that country (e.g. 'Camarero/a' -> 'Waiter/Waitress').",
+    `- In dates translate only the words into ${NOMBRE_IDIOMA[idioma]} ('Present' or 'Actualidad' -> '${HASTA_HOY[idioma]}'); keep every number.`,
+    ...(idioma === "es" ? [] : ["- Spanish official qualifications: translate the name and keep the Spanish name in brackets the first time (e.g. 'Hospitality technician (Técnico en Cocina)')."]),
     "- Keep the same number of items in every array and the same order.",
     "- Reply ONLY with valid JSON with exactly the same keys and structure as the input. No comments, no markdown.",
     "",
@@ -77,7 +83,7 @@ function parsearJSON(respuesta: string): any | null {
  * cuántos campos se han quedado en español porque la respuesta no cuadraba.
  */
 export function aplicarTraduccion(
-  original: CVData, respuesta: string, idioma: Exclude<IdiomaCV, "es">
+  original: CVData, respuesta: string, idioma: IdiomaCV
 ): { cv: CVData; sinTraducir: number } | null {
   const t = parsearJSON(respuesta);
   if (!t || typeof t !== "object") return null;
@@ -124,5 +130,5 @@ export function aplicarTraduccion(
 }
 
 export function nombreIdioma(codigo: string): string {
-  return IDIOMAS_CV.find(i => i.codigo === codigo)?.nombre ?? codigo;
+  return DESTINOS_TRADUCCION.find(i => i.codigo === codigo)?.nombre ?? codigo;
 }

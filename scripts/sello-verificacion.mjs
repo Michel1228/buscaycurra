@@ -5756,6 +5756,31 @@ test("en Android las franjas de las barras son del fondo de la app, con iconos b
     /SystemBars: \{\s*style: "DARK"/.test(cap);
 });
 
+// 20 nov 2026, Michel, del CV: "se mueve solo", "lo del traductor no sale el
+// espanol" y "tiene como un parpadeo raro". Medido en un movil: la vista previa
+// se recargaba entera con cada letra (en blanco un instante y vuelta arriba);
+// "Guardado" entraba y salia de la fila de botones en cada autoguardado (tambien
+// nada mas abrir); el bloque de subir PDF cambiaba de sitio al cruzar el 50 %
+// escribiendo; y el traductor no tenia el espanol, que necesita quien escribe el
+// CV en portugues o lo sube en ingles.
+test("el CV no se mueve ni parpadea al escribir, y se puede traducir al espanol", () => {
+  const pantalla = leerFuente("app/app/curriculum/Content.tsx");
+  const vista = leerFuente("components/cv/VistaPreviaEnVivo.tsx");
+  const ruta = leerFuente("app/api/cv/traducir/route.ts");
+  const idiomas = leerFuente("lib/cv-generator/idiomas-cv.ts");
+  const traducir = leerFuente("lib/cv-generator/traducir.ts");
+  const fallos = Object.entries({
+    "la vista previa se recarga con cada letra": !(/<VistaPreviaEnVivo\s+html=\{previewHTML\}/.test(pantalla) &&
+      /srcDoc=\{primero\}/.test(vista) && /doc\.write\(h\)/.test(vista) && /scrollTo\(x, y\)/.test(vista)),
+    "Guardado mueve la fila de botones": /\{guardado && \(/.test(pantalla) || !/visibility: guardado \? "visible" : "hidden"/.test(pantalla),
+    "el bloque de subir PDF salta al cruzar el 50 %": /pct (<|>=) 50 && bloqueSubirPDF/.test(pantalla) || !/subirArribaRef\.current === null && cvCargado/.test(pantalla),
+    "el traductor no ofrece el espanol": !(/\{ codigo: "es", nombre: "Español" \}/.test(idiomas) && /DESTINOS_TRADUCCION\.map\(/.test(pantalla) &&
+      !/idioma === "es"\)/.test(ruta) && /es: "Spanish"/.test(traducir)),
+  }).filter(([, mal]) => mal).map(([que]) => que);
+  if (fallos.length) console.log("     ↳ " + fallos.join("; "));
+  return fallos.length === 0;
+});
+
 // ── EL CV QUE SE VE ES EL QUE SE DESCARGA, SE GUARDA Y SE ENVIA ────────────
 //
 // Habia tres conversiones distintas de los datos del formulario al CV, y el
@@ -7314,7 +7339,8 @@ test("los cuatro fuertes, claros y sin afirmaciones falsas (auditoría para las 
       "el CV enseña qué es cada campo": !cv.includes('className="sr-only" htmlFor="cv-') && !cv.includes('className="sr-only" htmlFor={`cv-'),
       "idiomas con nivel en palabras, sin romper los CV hechos": cv.includes("<SelectorIdiomas") && !cv.includes("Formato: Idioma:nivel (0-100)")
         && ida("Español:95, Inglés:60") === "Español:95, Inglés:60" && ida("Inglés B1, Francés:40") === "Inglés B1, Francés:40",
-      "con el CV casi vacío, subir el PDF va lo primero": cv.includes("{pct < 50 && bloqueSubirPDF}") && !cv.includes("Completitud del CV"),
+      // Se decide al abrir el CV (20 nov 2026): decidirlo en cada letra hacía saltar la pantalla al cruzar el 50 %.
+      "con el CV casi vacío, subir el PDF va lo primero": cv.includes("{subirArriba && bloqueSubirPDF}") && cv.includes("subirArribaRef.current = pct < 50") && !cv.includes("Completitud del CV"),
       "envíos: «Entregado» y «No llegó» con nombre y filtro": envios.includes('entregado: "Entregado"') && envios.includes('rebotado: "No llegó"')
         && envios.includes('estados: ["enviado", "entregado"]') && !envios.includes(">\n              Limpiar todo"),
       "contador de envíos en palabras": leerFuente("components/UsageCounter.tsx").includes("{enviosQuedan} quedan"),

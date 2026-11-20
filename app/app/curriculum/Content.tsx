@@ -25,7 +25,8 @@ import { generarCV, LISTA_PLANTILLAS, PLANTILLAS, TEMPLATE_IDS, type TemplateId 
 import { normalizar } from "@/lib/cv-generator/normalizar";
 import { CV_EJEMPLO } from "@/lib/cv-generator/ejemplo";
 import type { CVData } from "@/lib/cv-generator/cv-template";
-import { IDIOMAS_CV } from "@/lib/cv-generator/idiomas-cv";
+import { DESTINOS_TRADUCCION } from "@/lib/cv-generator/idiomas-cv";
+import VistaPreviaEnVivo from "@/components/cv/VistaPreviaEnVivo";
 import InfoTooltip from "@/components/InfoTooltip";
 import { fotoParaSubir } from "@/lib/imagen/foto-para-subir";
 
@@ -113,7 +114,13 @@ export default function CurriculumPage() {
   const [templateId, setTemplateId] = useState<TemplateId>("clasica");
   const [accentColor, setAccentColor] = useState("#16a34a");
   const [ejemploVista, setEjemploVista] = useState<TemplateId | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  /**
+   * Dónde va "¿Ya tienes un CV en PDF?": arriba del todo si al abrir el CV está
+   * por debajo del 50 %, más abajo si no. Se decide UNA vez, al cargar. Antes se
+   * miraba en cada letra y, al cruzar el 50 % escribiendo, el bloque desaparecía
+   * de arriba y todo lo que estabas escribiendo saltaba solo (20 nov 2026).
+   */
+  const subirArribaRef = useRef<boolean | null>(null);
 
   // HTML de ejemplo por plantilla (mismos datos, distinto estilo) — refleja el color elegido
   const ejemplosHTML = useMemo(
@@ -815,6 +822,8 @@ export default function CurriculumPage() {
   const doneCount = completitudChecks.filter(c => c.done).length;
   const pct = Math.round((doneCount / completitudChecks.length) * 100);
   const completitudColor = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
+  if (subirArribaRef.current === null && cvCargado) subirArribaRef.current = pct < 50;
+  const subirArriba = subirArribaRef.current ?? pct < 50;
 
   // Quien llega con su CV de siempre empieza por aquí: si el CV está casi vacío,
   // subirlo va lo primero, antes de plantillas y colores.
@@ -837,7 +846,9 @@ export default function CurriculumPage() {
 
   // ── HTML para la preview (traducido, mejorado con IA o en vivo) ──
   const previewHTML = traducidoHTML || mejoradoHTML || livePreviewHTML;
-  const nombreIdiomaTraducido = traducido ? (IDIOMAS_CV.find(i => i.codigo === traducido.idioma)?.nombre ?? "") : "";
+  const nombreIdiomaTraducido = traducido ? (DESTINOS_TRADUCCION.find(i => i.codigo === traducido.idioma)?.nombre ?? "") : "";
+  // Traducido AL español: lo de antes no era español, así que se vuelve "al original".
+  const alEspanol = traducido?.idioma === "es";
 
   return (
     <div className="min-h-screen pt-16" style={{ background: "#0f1117", overflowX: "hidden" }}>
@@ -860,7 +871,16 @@ export default function CurriculumPage() {
         <div className="max-w-[100rem] mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Mi Currículum</h1>
-            <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Completa tus datos — la plantilla se actualiza en vivo</p>
+            {/* "Guardado" sale en el sitio de esta frase, en la misma celda: no
+                cambia el tamaño de nada. Antes era una pastilla más en la fila de
+                botones y, cada vez que se autoguardaba (también nada más abrir la
+                página), los botones se recolocaban y la pantalla se movía sola. */}
+            <p className="text-xs mt-1 grid" style={{ color: "#94a3b8" }}>
+              <span style={{ gridArea: "1 / 1", visibility: guardado ? "hidden" : "visible" }}>Completa tus datos — la plantilla se actualiza en vivo</span>
+              <span role="status" className="inline-flex items-center gap-1.5 font-medium" style={{ gridArea: "1 / 1", color: "#22c55e", visibility: guardado ? "visible" : "hidden" }}>
+                <Check size={12} strokeWidth={2.5} /> Guardado
+              </span>
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* ── Selector de CVs ── */}
@@ -899,11 +919,6 @@ export default function CurriculumPage() {
                 </span>
               )}
             </button>
-            {guardado && (
-              <span className="text-xs font-medium px-3 py-1 rounded-full inline-flex items-center gap-1.5" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.25)" }}>
-                <Check size={12} strokeWidth={2.5} /> Guardado
-              </span>
-            )}
             {!mejoradoHTML && !traducido && (
               <button onClick={generarYMejorar} disabled={procesando}
                 className="inline-flex items-center gap-1.5 px-4 min-h-[40px] text-xs font-bold rounded-full transition disabled:opacity-50"
@@ -921,7 +936,7 @@ export default function CurriculumPage() {
                   className="px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
                   style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)", color: "#f1f5f9" }}
                 >
-                  {IDIOMAS_CV.map(i => (
+                  {DESTINOS_TRADUCCION.map(i => (
                     <option key={i.codigo} value={i.codigo} style={{ background: "rgba(12,15,22,0.86)", color: "#f1f5f9" }}>{i.nombre}</option>
                   ))}
                 </select>
@@ -936,7 +951,7 @@ export default function CurriculumPage() {
               <button onClick={() => setTraducido(null)}
                 className="px-3 py-2 text-xs rounded-xl"
                 style={{ border: "1px solid rgba(255,255,255,0.2)", color: "#fff" }}>
-                ↶ Volver al español
+                {alEspanol ? "↶ Volver al original" : "↶ Volver al español"}
               </button>
             )}
             {previewHTML && (
@@ -1006,11 +1021,11 @@ export default function CurriculumPage() {
             style={{ background: "rgba(59,130,246,0.08)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}>
             <span>
               Estás viendo tu CV en {nombreIdiomaTraducido.toLowerCase()}. Lo ha traducido la IA: revísalo antes de
-              mandarlo. Tu CV en español no ha cambiado; si lo editas, vuelve a traducirlo.
-              {traducidoSinTraducir > 0 && ` ${traducidoSinTraducir} ${traducidoSinTraducir === 1 ? "apartado se ha quedado" : "apartados se han quedado"} en español porque la traducción no salió bien: vuelve a intentarlo o cámbialo a mano.`}
+              mandarlo. Tu CV {alEspanol ? "original" : "en español"} no ha cambiado; si lo editas, vuelve a traducirlo.
+              {traducidoSinTraducir > 0 && ` ${traducidoSinTraducir} ${traducidoSinTraducir === 1 ? "apartado se ha quedado" : "apartados se han quedado"} ${alEspanol ? "sin traducir" : "en español"} porque la traducción no salió bien: vuelve a intentarlo o cámbialo a mano.`}
             </span>
             <button onClick={() => setTraducido(null)} className="shrink-0 underline" style={{ color: "#94a3b8" }}>
-              Volver al español
+              {alEspanol ? "Volver al original" : "Volver al español"}
             </button>
           </div>
         )}
@@ -1027,7 +1042,7 @@ export default function CurriculumPage() {
         <div className="flex flex-col xl:flex-row gap-6">
           {/* ── COLUMNA IZQUIERDA: Formulario ── */}
           <div className="cv-form-inputs flex-1 min-w-0 xl:max-w-[50%] space-y-5">
-            {pct < 50 && bloqueSubirPDF}
+            {subirArriba && bloqueSubirPDF}
 
             {/* Selector de plantilla */}
             <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
@@ -1175,7 +1190,7 @@ export default function CurriculumPage() {
             {token && <TusReferencias token={token} />}
 
             {/* Subir PDF: aquí si el CV ya está avanzado; si no, arriba del todo */}
-            {pct >= 50 && bloqueSubirPDF}
+            {!subirArriba && bloqueSubirPDF}
 
             {/* Foto profesional */}
             <div className="rounded-xl p-5" style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
@@ -1462,9 +1477,8 @@ export default function CurriculumPage() {
               </div>
 
               {previewHTML ? (
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={previewHTML}
+                <VistaPreviaEnVivo
+                  html={previewHTML}
                   className="w-full bg-white"
                   style={{ height: "1100px", border: "none", maxHeight: "calc(100vh - 200px)" }}
                   title="CV en vivo"

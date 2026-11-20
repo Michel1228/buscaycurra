@@ -22,6 +22,15 @@ export const IDIOMAS_CV: { codigo: Exclude<IdiomaCV, "es">; nombre: string; pais
   { codigo: "nl", nombre: "Neerlandés", paises: "Países Bajos, Bélgica" },
 ];
 
+/**
+ * A qué se puede traducir el CV: el español también (20 nov 2026). Las plantillas ya escriben sus títulos
+ * en español, así que localizarCV() no tiene nada que hacer; lo que se traduce es lo que escribió la persona.
+ */
+export const DESTINOS_TRADUCCION: { codigo: IdiomaCV; nombre: string }[] = [
+  { codigo: "es", nombre: "Español" },
+  ...IDIOMAS_CV,
+];
+
 export function esIdiomaCV(x: unknown): x is IdiomaCV {
   return typeof x === "string" && ["es", "en", "de", "fr", "pt", "it", "nl"].includes(x);
 }

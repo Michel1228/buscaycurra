@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null) as { cv?: unknown; idioma?: unknown } | null;
   const idioma = body?.idioma;
-  if (!esIdiomaCV(idioma) || idioma === "es") {
+  if (!esIdiomaCV(idioma)) {
     return NextResponse.json({ error: "Idioma no válido." }, { status: 400 });
   }
   const cv = sanear(body?.cv);
