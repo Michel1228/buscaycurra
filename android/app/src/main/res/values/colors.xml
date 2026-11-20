@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- El mismo casi negro de la app (android.backgroundColor en capacitor.config.ts y el fondo de oleaje de
+         app/globals.css). Es lo que se ve detrás de la barra de estado y de la de navegación: ver styles.xml. -->
+    <color name="fondo_app">#06090b</color>
+</resources>

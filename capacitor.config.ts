@@ -57,6 +57,12 @@ const config: CapacitorConfig = {
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],
     },
+    // Barras del sistema en Android: iconos en blanco sobre el fondo oscuro de la app (el fondo de las franjas
+    // lo pone android/app/src/main/res/values/styles.xml). Con "DEFAULT" seguían el modo del teléfono y, en
+    // modo claro, salían iconos negros sobre negro.
+    SystemBars: {
+      style: "DARK",
+    },
     SplashScreen: {
       launchShowDuration: 1500,
       backgroundColor: "#06090b",

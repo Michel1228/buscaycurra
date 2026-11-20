@@ -5723,6 +5723,39 @@ test("el enlace del PDF del movil no exige sesion (la abre el navegador del sist
     pantallas.every((f) => /if \(fallo\) setError\(fallo\)/.test(leerFuente(f)));
 });
 
+// 20 nov 2026, Michel: "no descarga los curriculos". En Android el PDF se abria
+// DENTRO de la app (el servidor lo registraba con "; wv)") y el visor interno de
+// Android no ensena PDF: no pasaba nada. Tiene que ir a otro dominio para que la
+// app lo mande a Chrome; en el iPhone sigue igual porque alli si se ve.
+test("en Android el PDF del CV se abre fuera de la app (en Chrome)", () => {
+  const ayuda = leerFuente("lib/cv-generator/descargar-pdf.ts");
+  const dominio = (ayuda.match(/const DOMINIO_FUERA_DE_LA_APP = "([^"]+)"/) || [])[1] || "";
+  const appUrl = (leerFuente("capacitor.config.ts").match(/url: "([^"]+)"/) || [])[1] || "";
+  const host = (u) => { try { return new URL(u).host; } catch { return ""; } };
+  return !!dominio && host(dominio) !== host(appUrl) &&          // si fuera el mismo, se quedaria dentro
+    host(dominio).endsWith(host(appUrl)) &&                      // y es nuestro (www redirige al de siempre)
+    /if \(plataforma\(\) === "android"\) \{\s*window\.location\.href = `\$\{DOMINIO_FUERA_DE_LA_APP\}\$\{ruta\}`/.test(ayuda) &&
+    /window\.open\(ruta, "_blank"\)/.test(ayuda);               // el iPhone, como estaba
+});
+
+// 20 nov 2026, Michel: en Android "rayas grises arriba y espacios en blanco".
+// Desde Android 15 Capacitor deja libres las franjas de las barras del sistema
+// y alli se veia el fondo por defecto del tema. Tienen que ser del fondo de la
+// app (el mismo que capacitor.config.ts) y los iconos de la barra, blancos.
+test("en Android las franjas de las barras son del fondo de la app, con iconos blancos", () => {
+  const estilos = leerFuente("android/app/src/main/res/values/styles.xml");
+  const colores = leerFuente("android/app/src/main/res/values/colors.xml");
+  const cap = leerFuente("capacitor.config.ts");
+  const tema = estilos.slice(estilos.indexOf('name="AppTheme.NoActionBar"'), estilos.indexOf('name="AppTheme.NoActionBarLaunch"'));
+  const fondo = ((colores.match(/name="fondo_app">(#[0-9a-fA-F]{6})</) || [])[1] || "").toLowerCase();
+  const fondoAndroid = ((cap.match(/android: \{[\s\S]*?backgroundColor: "(#[0-9a-fA-F]{6})"/) || [])[1] || "").toLowerCase();
+  return !!fondo && fondo === fondoAndroid &&
+    /name="android:windowBackground">@color\/fondo_app</.test(tema) &&
+    /name="android:windowLightStatusBar">false</.test(tema) &&
+    /name="android:enforceNavigationBarContrast"[^>]*>false</.test(tema) &&
+    /SystemBars: \{\s*style: "DARK"/.test(cap);
+});
+
 // ── EL CV QUE SE VE ES EL QUE SE DESCARGA, SE GUARDA Y SE ENVIA ────────────
 //
 // Habia tres conversiones distintas de los datos del formulario al CV, y el

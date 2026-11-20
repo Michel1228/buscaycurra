@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -9,10 +9,24 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!-- PANTALLA COMPLETA COMO EN EL IPHONE (20 nov 2026, Michel: "rayas grises arriba y espacios en blanco").
+         Desde Android 15 la app ocupa toda la pantalla y Capacitor deja libres la franja de la barra de estado y
+         la de la barra de navegación (SystemBars, ver capacitor.config.ts). En esos huecos se veía el fondo por
+         defecto del tema: gris o blanco. Ahora es el casi negro de la app, como el iPhone detrás de su barra,
+         y los iconos de la barra van en blanco (SystemBars.style = "DARK"). -->
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/fondo_app</item>
+        <!-- Android 14 y anteriores todavía pintan las barras con su color: el mismo fondo. -->
+        <item name="android:statusBarColor">@color/fondo_app</item>
+        <item name="android:navigationBarColor">@color/fondo_app</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+        <!-- Sin el velo gris que Android pone sobre la barra de navegación de tres botones. -->
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="29">false</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="29">false</item>
     </style>
 
 
