@@ -12,7 +12,7 @@ import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import FondoOleaje from "@/components/FondoOleaje";
 import { PLANTILLAS } from "@/lib/empresas/plantillas-entrevista";
-import { SECTORES_EMPRESA, preguntaDiscriminatoria, type SectorEmpresa } from "@/lib/empresas/reglas";
+import { SECTORES_EMPRESA, deTema, preguntaDiscriminatoria, type SectorEmpresa } from "@/lib/empresas/reglas";
 
 interface Pregunta { texto: string; puntos: string[] }
 interface Entrevista { id: string; empresa: string; puesto: string; preguntas: Pregunta[] }
@@ -258,7 +258,7 @@ export default function EntrevistasEmpresaPage() {
                     onChange={(e) => setBorrador({ ...borrador, preguntas: borrador.preguntas.map((q, k) => (k === i ? { ...q, puntos: e.target.value } : q)) })} className="w-full text-xs" />
                   {(() => {
                     const tema = preguntaDiscriminatoria(`${p.texto}\n${p.puntos}`);
-                    return tema ? <p className="text-[11px]" style={{ color: "#ef4444" }}>Esto trata de {tema}: no se puede preguntar en una entrevista. Cámbialo por algo del puesto.</p> : null;
+                    return tema ? <p className="text-[11px]" style={{ color: "#ef4444" }}>Esto trata {deTema(tema)}: no se puede preguntar en una entrevista. Cámbialo por algo del puesto.</p> : null;
                   })()}
                 </div>
               ))}

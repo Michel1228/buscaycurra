@@ -203,6 +203,9 @@ const PROHIBIDAS: [string, RegExp][] = [
   ["la orientación sexual", /orientacion sexual/],
 ];
 
+/** «de la edad», «del embarazo o los hijos»: para escribir el aviso sin «de el». */
+export const deTema = (tema: string) => (tema.startsWith("el ") ? `del ${tema.slice(3)}` : `de ${tema}`);
+
 /** Si la pregunta trata de algo que no se puede preguntar en una entrevista, de qué; si no, null. */
 export function preguntaDiscriminatoria(pregunta: string): string | null {
   const t = sinTildes(pregunta);

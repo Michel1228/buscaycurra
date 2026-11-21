@@ -975,6 +975,8 @@ test("empresas: NIF, alcance por sector, puntuación por hechos y preguntas proh
     for (const q of ["¿Cómo atiendes a un cliente enfadado?", "¿Tienes permiso de trabajo en vigor?", "¿Tienes carné de conducir?", "¿Qué disponibilidad tienes los fines de semana?"]) {
       if (m.preguntaDiscriminatoria(q)) fallos.push(`frena «${q}»`);
     }
+    // El aviso dice «trata del embarazo», no «trata de el embarazo» (visto en producción el 21 nov 2026).
+    if (m.deTema("el embarazo o los hijos") !== "del embarazo o los hijos" || m.deTema("la edad") !== "de la edad") fallos.push("el aviso dice «de el»");
     // Plantillas: una por sector, dentro de los límites de una entrevista y sin nada prohibido.
     for (const { id } of m.SECTORES_EMPRESA) {
       const l = m.PLANTILLAS[id];
