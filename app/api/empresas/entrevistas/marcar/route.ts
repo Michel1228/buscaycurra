@@ -3,7 +3,7 @@
  *
  * La empresa lee las respuestas y marca qué puntos ha cubierto el candidato.
  * La nota de 0 a 100 sale de esas marcas: la pone una persona, no la IA
- * (lib/entrevistas/empresa.ts). Solo con Plan Empresa.
+ * (lib/entrevistas/empresa.ts). Solo para empresas verificadas (lib/empresas/verificacion.ts).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getUsuario, correoSinVerificar } from "@/lib/auth-server";
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   if (!usuario) return NextResponse.json({ error: "Entra con tu cuenta de empresa" }, { status: 401 });
   const cuenta = await cuentaEmpresa(usuario).catch(() => null);
   if (!cuenta) {
-    return NextResponse.json({ error: "Esto es del Plan Empresa" }, { status: 402 });
+    return NextResponse.json({ error: "Esto es para empresas verificadas" }, { status: 402 });
   }
   const empresaId = cuenta.empresaId;
   const body = (await req.json().catch(() => ({}))) as { invitacionId?: string; marcas?: unknown };

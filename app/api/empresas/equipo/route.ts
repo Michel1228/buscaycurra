@@ -19,7 +19,7 @@ async function quien(req: NextRequest): Promise<{ cuenta: CuentaEmpresa; email: 
   const usuario = await getUsuario(req);
   if (!usuario) return error("Entra con tu cuenta de empresa", 401);
   const cuenta = await cuentaEmpresa(usuario).catch(() => null);
-  if (!cuenta) return error("Esto es del Plan Empresa", 402);
+  if (!cuenta) return error("Esto es para empresas verificadas", 402);
   return { cuenta, email: usuario.email };
 }
 
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   if (sinVerificar) return sinVerificar;
   const q = await quien(req);
   if (q instanceof NextResponse) return q;
-  if (!q.cuenta.titular) return error("Solo quien paga el Plan Empresa puede añadir personas.", 403);
+  if (!q.cuenta.titular) return error("Solo la cuenta que dio de alta la empresa puede añadir personas.", 403);
   const body = (await req.json().catch(() => ({}))) as { email?: string };
   try {
     const r = await anadirMiembro(q.cuenta.empresaId, q.email, String(body.email || ""));
@@ -70,7 +70,7 @@ export async function DELETE(req: NextRequest) {
   if (sinVerificar) return sinVerificar;
   const q = await quien(req);
   if (q instanceof NextResponse) return q;
-  if (!q.cuenta.titular) return error("Solo quien paga el Plan Empresa puede quitar personas.", 403);
+  if (!q.cuenta.titular) return error("Solo la cuenta que dio de alta la empresa puede quitar personas.", 403);
   const email = new URL(req.url).searchParams.get("email") || "";
   try {
     if (!(await quitarMiembro(q.cuenta.empresaId, email))) return error("Esa persona no está en tu equipo", 404);

@@ -25,6 +25,7 @@
 import { randomBytes } from "node:crypto";
 import { getPool } from "@/lib/db";
 import { LIMITES_EMPRESA } from "@/lib/plan-limits";
+import { preguntaDiscriminatoria } from "@/lib/empresas/reglas";
 
 export const MAX_PREGUNTAS = 8;
 export const MAX_PUNTOS = 5;
@@ -108,6 +109,11 @@ export function validarPreguntas(v: unknown): { ok: true; preguntas: Pregunta[] 
   if (!preguntas.length) return { ok: false, error: "Escribe al menos una pregunta." };
   if (preguntas.length > MAX_PREGUNTAS) return { ok: false, error: `Como mucho ${MAX_PREGUNTAS} preguntas.` };
   if (preguntas.some((p) => !p.puntos.length)) return { ok: false, error: "En cada pregunta, escribe al menos una cosa que esperas oír." };
+  // Nada de edad, familia, origen, salud… ni en la pregunta ni en lo que se espera oír (21 nov 2026).
+  for (const [i, p] of preguntas.entries()) {
+    const tema = [p.texto, ...p.puntos].map(preguntaDiscriminatoria).find(Boolean);
+    if (tema) return { ok: false, error: `La pregunta ${i + 1} trata de ${tema}: en una entrevista no se puede preguntar, es discriminación. Pregunta por el puesto.` };
+  }
   return { ok: true, preguntas };
 }
 

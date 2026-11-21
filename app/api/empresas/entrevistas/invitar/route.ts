@@ -3,12 +3,14 @@
  *
  * «Me interesa»: la empresa invita a un candidato visible a preparar su
  * entrevista. Al candidato le llega un aviso en la app que le abre el ensayo
- * de esa empresa (lib/entrevistas/empresa.ts). Solo con Plan Empresa.
+ * de esa empresa (lib/entrevistas/empresa.ts). Solo para empresas verificadas (lib/empresas/verificacion.ts).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUsuario, correoSinVerificar } from "@/lib/auth-server";
 import { cuentaEmpresa } from "@/lib/empresas/cuenta";
+import { candidatoVisible } from "@/lib/empresas/candidatos";
+import { puedeVer } from "@/lib/empresas/reglas";
 import { invitar } from "@/lib/entrevistas/empresa";
 
 export const dynamic = "force-dynamic";
@@ -20,10 +22,10 @@ export async function POST(req: NextRequest) {
   if (sinVerificar) return sinVerificar;
   const usuario = await getUsuario(req);
   if (!usuario) return NextResponse.json({ error: "Entra con tu cuenta de empresa" }, { status: 401 });
-  // Plan Empresa propio o el de la empresa que le ha dado acceso: invita a nombre de la empresa.
+  // La empresa verificada propia o la que le ha dado acceso: invita a nombre de la empresa.
   const cuenta = await cuentaEmpresa(usuario).catch(() => null);
   if (!cuenta) {
-    return NextResponse.json({ error: "Esto es del Plan Empresa" }, { status: 402 });
+    return NextResponse.json({ error: "Esto es para empresas verificadas" }, { status: 402 });
   }
   const empresaId = cuenta.empresaId;
   const body = (await req.json().catch(() => ({}))) as { candidatoId?: string; entrevistaId?: string };
@@ -32,6 +34,10 @@ export async function POST(req: NextRequest) {
   if (candidatoId === usuario.id) return NextResponse.json({ error: "No puedes invitarte a ti mismo." }, { status: 400 });
 
   try {
+    // Solo a quien la empresa puede ver: visible y de su sector (las ETT y agencias, de todos).
+    const ficha = await candidatoVisible(candidatoId);
+    if (!ficha) return NextResponse.json({ error: "Este candidato ya no está visible para empresas." }, { status: 404 });
+    if (!puedeVer(cuenta.alcance, ficha.sectores)) return NextResponse.json({ error: "Este candidato no es de vuestro sector." }, { status: 403 });
     const r = await invitar(empresaId, candidatoId, String(body.entrevistaId));
     if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
     // Un aviso por invitación: volver a pulsar no le escribe otra vez.

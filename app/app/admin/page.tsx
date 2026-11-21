@@ -94,6 +94,12 @@ export default function AdminPage() {
           <KpiCard label="CVs enviados (total)" value={stats.totalEnvios} color="#a78bfa" />
         </div>
 
+        {/* Empresas que piden ver candidatos (21 nov 2026) */}
+        <a href="/app/admin/empresas" className="cristal tono-neutro p-4 flex items-center justify-between hover:opacity-90">
+          <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Empresas por verificar</span>
+          <span className="text-xs" style={{ color: "#22c55e" }}>Revisar →</span>
+        </a>
+
         {/* Nuevos usuarios */}
         <div className="grid grid-cols-3 gap-4">
           <MiniCard label="Nuevos hoy" value={stats.nuevosHoy} />

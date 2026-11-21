@@ -68,9 +68,9 @@ function LoginPageInner() {
       // antes de que le pidiéramos entrar. Ignorarlo perdía el destino de
       // cualquier enlace profundo (una oferta, un email, una notificación).
       const destino = searchParams.get("redirect");
-      // Fuera de /app/ solo se admite la página de candidatos (exacta): una
-      // ruta libre aquí permitiría redirigir a cualquier sitio.
-      const valido = destino && (destino.startsWith("/app/") || destino === "/empresas/candidatos");
+      // Fuera de /app/ solo se admiten la página de candidatos y el alta de
+      // empresa (exactas): una ruta libre aquí permitiría redirigir a cualquier sitio.
+      const valido = destino && (destino.startsWith("/app/") || destino === "/empresas/candidatos" || destino === "/empresas/alta");
       // Quien se registró desde una oferta (o un botón de la web) y confirmó
       // el correo en otro navegador entra aquí sin ?redirect=: se le lleva a
       // donde iba la primera semana (el registro guarda el destino en la cuenta).

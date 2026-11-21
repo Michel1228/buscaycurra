@@ -2,6 +2,7 @@
 
 import SelectorIdiomas from "@/components/cv/SelectorIdiomas";
 import TusReferencias from "@/components/cv/TusReferencias";
+import TuPuntuacion from "@/components/cv/TuPuntuacion";
 import Link from "next/link";
 
 /**
@@ -1165,7 +1166,7 @@ export default function CurriculumPage() {
                     <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>
                       {visibleEmpresas
                         ? "Tu perfil aparece en el portal de empresas"
-                        : "Activa esto para que empresas y ETTs puedan encontrarte"}
+                        : "Activa esto para que te encuentren empresas verificadas de tu sector, ETT y agencias de colocación"}
                     </p>
                   </div>
                 </div>
@@ -1181,10 +1182,13 @@ export default function CurriculumPage() {
               </div>
               {visibleEmpresas && (
                 <p className="text-[11px] mt-3 pt-3" style={{ color: "#22c55e", borderTop: "1px solid rgba(34,197,94,0.15)" }}>
-                  ✓ Activo — empresas y ETTs pueden ver tu perfil y contactarte
+                  ✓ Activo — las empresas verificadas de tu sector, las ETT y las agencias de colocación pueden ver tu perfil y contactarte
                 </p>
               )}
             </div>
+
+            {/* La puntuación que ven las empresas, y qué le falta (lib/empresas/reglas.ts) */}
+            {token && <TuPuntuacion token={token} actualizar={guardado} />}
 
             {/* Cartas de recomendación confirmadas por quien las firmó */}
             {token && <TusReferencias token={token} />}

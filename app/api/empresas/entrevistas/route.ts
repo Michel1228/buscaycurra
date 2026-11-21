@@ -1,6 +1,6 @@
 /**
  * /api/empresas/entrevistas — Las entrevistas de una empresa y quién las ha preparado
- * (lib/entrevistas/empresa.ts). Solo con Plan Empresa.
+ * (lib/entrevistas/empresa.ts). Solo para empresas verificadas (lib/empresas/verificacion.ts).
  *
  * GET                                       → { entrevistas, invitaciones }
  * POST { id?, empresa, puesto, preguntas }  → guardar una entrevista
@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUsuario, correoSinVerificar } from "@/lib/auth-server";
 import { getPool } from "@/lib/db";
-import { cuentaEmpresa } from "@/lib/empresas/cuenta";
+import { cuentaEmpresa, type CuentaEmpresa } from "@/lib/empresas/cuenta";
 import { entrevistasDe, guardarEntrevista, invitacionesDeEmpresa, quitarEntrevista, validarPreguntas } from "@/lib/entrevistas/empresa";
 import { asegurarTablasReferencias } from "@/lib/referencias/referencias";
 
@@ -17,20 +17,26 @@ export const dynamic = "force-dynamic";
 
 const error = (mensaje: string, status = 400) => NextResponse.json({ error: mensaje }, { status });
 
-/** La cuenta de la empresa: la de quien paga, también cuando entra alguien de su equipo. */
-async function empresa(req: NextRequest): Promise<string | NextResponse> {
+/** La cuenta de la empresa verificada, también cuando entra alguien de su equipo. */
+async function cuentaDe(req: NextRequest): Promise<CuentaEmpresa | NextResponse> {
   const usuario = await getUsuario(req);
   if (!usuario) return error("Entra con tu cuenta de empresa", 401);
   const cuenta = await cuentaEmpresa(usuario).catch(() => null);
-  if (!cuenta) return error("Esto es del Plan Empresa", 402);
-  return cuenta.empresaId;
+  if (!cuenta) return error("Esto es para empresas verificadas", 402);
+  return cuenta;
+}
+
+async function empresa(req: NextRequest): Promise<string | NextResponse> {
+  const cuenta = await cuentaDe(req);
+  return cuenta instanceof NextResponse ? cuenta : cuenta.empresaId;
 }
 
 export async function GET(req: NextRequest) {
   const sinVerificar = await correoSinVerificar(req);
   if (sinVerificar) return sinVerificar;
-  const id = await empresa(req);
-  if (typeof id !== "string") return id;
+  const cuenta = await cuentaDe(req);
+  if (cuenta instanceof NextResponse) return cuenta;
+  const id = cuenta.empresaId;
   try {
     const [entrevistas, invitaciones] = await Promise.all([entrevistasDe(id), invitacionesDeEmpresa(id)]);
     // Quién es cada candidato y si tiene referencias confirmadas (sello aparte, no suma a la nota).
@@ -50,6 +56,8 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json({
       entrevistas,
+      // Para proponer las preguntas de su sector al crear una entrevista (lib/empresas/plantillas-entrevista.ts).
+      alcance: cuenta.alcance,
       invitaciones: invitaciones.map((i) => ({
         id: i.id, candidatoId: i.user_id, empresa: i.empresa, puesto: i.puesto, preguntas: i.preguntas,
         intentos: i.intentos, respuestas: i.respuestas, enviadaEn: i.enviada_en, marcas: i.marcas, nota: i.nota, creado: i.creado,

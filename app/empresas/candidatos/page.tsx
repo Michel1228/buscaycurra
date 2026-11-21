@@ -18,10 +18,20 @@ interface Candidato {
   abierto?: boolean;
   /** Cartas de recomendación confirmadas por quien las firmó. */
   referencias: number;
+  /** Puntuación por hechos comprobables (lib/empresas/reglas.ts); solo para empresas verificadas. */
+  puntuacion: number | null;
+  nivel: string | null;
   updatedAt: string;
 }
 
 interface Cupo { usados: number; maximo: number }
+interface Alcance { tipo: "empresa" | "ett" | "agencia"; sectores: string[]; razonSocial: string }
+
+const NOMBRE_SECTOR: Record<string, string> = {
+  hosteleria: "Hostelería", almacen: "Almacén y logística", limpieza: "Limpieza", construccion: "Obra y oficios",
+  transporte: "Transporte y reparto", cuidados: "Cuidado de personas", comercio: "Comercio", salud: "Salud",
+  tecnologia: "Tecnología", otro: "Otros sectores",
+};
 
 const SECTORES = [
   "Hostelería", "Construcción", "Logística", "Comercio", "Tecnología",
@@ -43,6 +53,7 @@ export default function CandidatosPage() {
   const [cargando, setCargando] = useState(true);
   const [esEmpresa, setEsEmpresa] = useState(false);
   const [cupo, setCupo] = useState<Cupo | null>(null);
+  const [alcance, setAlcance] = useState<Alcance | null>(null);
   // Sin sesión la API responde 401: no es que no haya candidatos, es que hay que entrar.
   const [necesitaEntrar, setNecesitaEntrar] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -69,10 +80,11 @@ export default function CandidatosPage() {
 
       const res = await fetch(`/api/empresas/candidatos?${params}`);
       setNecesitaEntrar(res.status === 401);
-      const data = await res.json() as { candidatos: Candidato[]; esEmpresa: boolean; cupo?: { candidatos: Cupo } | null };
+      const data = await res.json() as { candidatos: Candidato[]; esEmpresa: boolean; cupo?: { candidatos: Cupo } | null; alcance?: Alcance | null };
       setCandidatos(data.candidatos || []);
       setEsEmpresa(data.esEmpresa || false);
       setCupo(data.cupo?.candidatos ?? null);
+      setAlcance(data.alcance ?? null);
       setPagina(p);
     } catch { /* silencioso */ }
     finally { setCargando(false); }
@@ -98,10 +110,10 @@ export default function CandidatosPage() {
             <span className="hidden sm:inline text-xs" style={{ color: "#8b98ad" }}>/ Candidatos</span>
           </Link>
           {!esEmpresa && (
-            <Link href="/precios"
+            <Link href="/empresas/alta"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:opacity-90"
               style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
-              💎 Plan Empresa — Ver contactos
+              Dar de alta mi empresa (gratis)
             </Link>
           )}
           {esEmpresa && (
@@ -109,7 +121,7 @@ export default function CandidatosPage() {
               <Link href="/empresas/entrevistas" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tus entrevistas</Link>
               <Link href="/empresas/equipo" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tu equipo</Link>
               <span className="hidden sm:inline text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-                ✓ Plan Empresa activo
+                ✓ Empresa verificada
               </span>
             </div>
           )}
@@ -122,9 +134,17 @@ export default function CandidatosPage() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Candidatos disponibles</h1>
           <p className="text-xs mb-6" style={{ color: "#8b98ad" }}>
-            Profesionales buscando trabajo activamente en España. CVs optimizados con IA.
-            {!esEmpresa && <> <Link href="/precios" style={{ color: "#22c55e" }}> Activa Plan Empresa</Link> para ver contacto completo.</>}
+            Personas que buscan trabajo y han pedido que las empresas las encuentren.
+            {!esEmpresa && <> <Link href="/empresas/alta" style={{ color: "#22c55e" }}>Da de alta tu empresa</Link> para ver quién es cada uno y su contacto.</>}
           </p>
+          {esEmpresa && alcance && (
+            <p className="text-xs -mt-3 mb-2" style={{ color: "#94a3b8" }}>
+              {alcance.razonSocial}: {alcance.tipo === "empresa"
+                ? <>veis candidatos de {alcance.sectores.map((s) => NOMBRE_SECTOR[s] || s).join(", ")}.</>
+                : <>como {alcance.tipo === "ett" ? "ETT" : "agencia de colocación"}, veis todos los sectores.</>}
+              {" "}Salen primero los de más puntuación: cartas de recomendación confirmadas, CV completo y al día.
+            </p>
+          )}
           {esEmpresa && cupo && (
             <p className="text-xs -mt-3 mb-5" style={{ color: cupo.usados >= cupo.maximo ? "#f59e0b" : "#94a3b8" }}>
               Este mes habéis abierto <strong className="tabular-nums">{cupo.usados} de {cupo.maximo}</strong> candidatos.
@@ -173,13 +193,13 @@ export default function CandidatosPage() {
           <div className="mb-6 rounded-xl px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between"
             style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#22c55e" }}>Estás viendo perfiles anonimizados</p>
-              <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>Con Plan Empresa (49,99€/mes) ves el nombre de cada candidato y abres el email, el teléfono y el CV entero de hasta {LIMITES_EMPRESA.candidatosMes} al mes.</p>
+              <p className="text-sm font-semibold" style={{ color: "#22c55e" }}>Estás viendo perfiles sin nombre</p>
+              <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>Las empresas, ETT y agencias de colocación verificadas ven quién es cada candidato, su puntuación y su CV entero con el contacto. Es gratis: comprobamos vuestro NIF y os mandamos un código.</p>
             </div>
-            <Link href="/precios"
+            <Link href="/empresas/alta"
               className="flex-shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
               style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
-              Contratar acceso →
+              Dar de alta mi empresa →
             </Link>
           </div>
         )}
@@ -231,6 +251,13 @@ export default function CandidatosPage() {
                     <p className="text-[11px]" style={{ color: "#8b98ad" }}>{c.ciudad}</p>
                   </div>
                 </div>
+
+                {c.puntuacion !== null && (
+                  <p className="text-[11px] self-start tabular-nums" style={{ color: "#cbd5e1" }}
+                    title="Por hechos comprobables: cartas de recomendación confirmadas, CV completo y al día. Sin IA.">
+                    <strong style={{ color: "#22c55e" }}>{c.puntuacion}</strong>/100 · {c.nivel}
+                  </p>
+                )}
 
                 {c.referencias > 0 && (
                   <p className="text-[10px] font-semibold self-start px-2 py-0.5 rounded-full"
@@ -308,7 +335,7 @@ export default function CandidatosPage() {
                           <div className="h-2 w-20 rounded" style={{ background: "rgba(45,49,66,0.8)", filter: "blur(2px)" }} />
                         </div>
                       </div>
-                      <Link href="/precios"
+                      <Link href="/empresas/alta"
                         className="text-[10px] font-semibold px-2.5 py-1 rounded-lg transition hover:opacity-90"
                         style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
                         Ver →

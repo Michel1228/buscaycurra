@@ -17,16 +17,27 @@
  *
  * Las tablas van en la base propia y se crean al primer uso. Borrar la cuenta
  * las limpia (lib/cuenta/borrar-datos.ts).
+ *
+ * EMPRESA VERIFICADA, NO PLAN PAGADO (21 nov 2026, Michel). Quien contrata el
+ * Plan Empresa siendo un usuario normal se queda con lo suyo (envíos y Guzzi
+ * sin límite), pero no ve candidatos. La titular es ahora la cuenta de una
+ * empresa verificada y activa (lib/empresas/verificacion.ts), y su equipo entra
+ * mientras ella lo siga estando. De momento es gratis: el cupo del mes queda
+ * solo como freno contra quien quiera copiar la base.
  */
 import { getPool } from "@/lib/db";
-import { getUserPlan } from "@/lib/cv-sender/rate-limiter";
 import { LIMITES_EMPRESA } from "@/lib/plan-limits";
 import { INICIO_DEL_MES, invitacionesDelMes } from "@/lib/entrevistas/empresa";
+import { alcanceDe } from "@/lib/empresas/verificacion";
+import type { Alcance } from "@/lib/empresas/reglas";
 
 export interface CuentaEmpresa {
-  /** La cuenta que paga: todo lo de la empresa (entrevistas, cupo) va a su nombre. */
+  /** La cuenta de la empresa verificada: todo lo de la empresa (entrevistas, cupo) va a su nombre. */
   empresaId: string;
   titular: boolean;
+  /** Qué candidatos puede ver: ETT y agencias, todos; una empresa, los de sus sectores (lib/empresas/reglas.ts). */
+  alcance: Alcance;
+  razonSocial: string;
 }
 
 let tablasListas = false;
@@ -53,27 +64,29 @@ export async function asegurarTablasEmpresa(): Promise<void> {
   tablasListas = true;
 }
 
-const esEmpresa = async (id: string) => (await getUserPlan(id).catch(() => "free")) === "empresa";
 const normal = (email: string) => email.trim().toLowerCase();
 
 /**
- * La empresa de quien mira: la suya si paga el Plan Empresa, o aquella en la
- * que la titular le ha dado acceso, mientras esa titular siga pagando.
+ * La empresa de quien mira: la suya si es una empresa verificada y activa, o
+ * aquella en la que la titular le ha dado acceso, mientras esa siga activa.
  */
 export async function cuentaEmpresa(u: { id: string; email?: string; confirmado?: boolean } | null): Promise<CuentaEmpresa | null> {
   if (!u?.id) return null;
-  // Sin el correo verificado no hay empresa, tampoco para quien paga (7 nov
-  // 2026): con "Confirm email" apagado se entra sin confirmar, y lo de la
-  // empresa (abrir candidatos, invitar, el equipo) es hacer, no mirar.
+  // Sin el correo verificado no hay empresa (7 nov 2026): con "Confirm email"
+  // apagado se entra sin confirmar, y lo de la empresa (abrir candidatos,
+  // invitar, el equipo) es hacer, no mirar.
   if (!u.confirmado) return null;
-  if (await esEmpresa(u.id)) return { empresaId: u.id, titular: true };
-  if (!u.email || !u.confirmado) return null;
+  const propia = await alcanceDe(u.id);
+  if (propia) return { empresaId: u.id, titular: true, alcance: { tipo: propia.tipo, sectores: propia.sectores }, razonSocial: propia.razonSocial };
+  if (!u.email) return null;
   await asegurarTablasEmpresa();
   const { rows: [m] } = await getPool().query<{ empresa_id: string }>(
     "SELECT empresa_id FROM empresa_miembro WHERE email = $1", [normal(u.email)]
   );
-  if (!m || m.empresa_id === u.id || !(await esEmpresa(m.empresa_id))) return null;
-  return { empresaId: m.empresa_id, titular: false };
+  if (!m || m.empresa_id === u.id) return null;
+  const suya = await alcanceDe(m.empresa_id);
+  if (!suya) return null;
+  return { empresaId: m.empresa_id, titular: false, alcance: { tipo: suya.tipo, sectores: suya.sectores }, razonSocial: suya.razonSocial };
 }
 
 // ── El equipo ─────────────────────────────────────────────────────────────

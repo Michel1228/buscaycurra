@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * /empresas/equipo — Quién de la empresa entra al Plan Empresa y cuánto queda del
+ * /empresas/equipo — Quién de la empresa verificada entra a los candidatos y cuánto queda del
  * cupo del mes (lib/empresas/cuenta.ts). Cada persona entra con su propia
- * cuenta; quien paga añade a las demás por su correo.
+ * cuenta; quien la dio de alta añade a las demás por su correo.
  */
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -101,7 +101,7 @@ export default function EquipoEmpresaPage() {
     const textos = {
       cargando: ["Cargando…", "", ""],
       entrar: ["Entra con tu cuenta de empresa", "/auth/login?redirect=%2Fempresas%2Fcandidatos", "Entrar"],
-      plan: ["El equipo es del Plan Empresa", "/empresas", "Ver Plan Empresa"],
+      plan: ["El equipo es para empresas verificadas (gratis)", "/empresas/alta", "Dar de alta mi empresa"],
       listo: ["No se pudo cargar tu equipo", "", ""],
     }[fase];
     return (
@@ -176,7 +176,7 @@ export default function EquipoEmpresaPage() {
         ) : (
           <section>
             <p className="text-sm" style={{ color: "#94a3b8" }}>
-              Entras con el Plan Empresa de tu empresa. Quien lo paga es quien añade o quita personas.
+              Entras con la cuenta de tu empresa verificada. Quien la dio de alta es quien añade o quita personas.
             </p>
           </section>
         )}

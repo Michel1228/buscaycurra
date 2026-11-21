@@ -587,6 +587,57 @@ export async function sendReferenciaConfirmarEmail(params: {
   return enviarCorreo(params.to, `${params.candidato} le pide que confirme su carta de recomendación`, plantillaSencilla(cuerpo, pie));
 }
 
+// ─── Empresas verificadas (lib/empresas/verificacion.ts) ─────────────────────
+
+/** A Michel: una empresa nueva espera su visto bueno. Con dónde comprobarla. */
+export async function sendAltaEmpresaAdminEmail(params: {
+  to: string;
+  razonSocial: string;
+  nif: string;
+  tipo: string;
+  autorizacion: string | null;
+  sectores: string;
+  correoEmpresa: string;
+  correoCuenta: string;
+  web: string | null;
+  enlacePanel: string;
+  comprobar: { nombre: string; url: string }[];
+}): Promise<boolean> {
+  const fila = (k: string, v: string | null) => (v ? `<p style="margin:0 0 6px;"><strong>${esc(k)}:</strong> ${esc(v)}</p>` : "");
+  const cuerpo = `
+<p ${P}>Una empresa pide acceso a los candidatos:</p>
+${fila("Razón social", params.razonSocial)}${fila("NIF", params.nif)}${fila("Tipo", params.tipo)}${fila("Número de autorización", params.autorizacion)}
+${fila("Sectores", params.sectores)}${fila("Correo de la empresa (recibe el código)", params.correoEmpresa)}${fila("Cuenta", params.correoCuenta)}${fila("Web", params.web)}
+<p ${P}>Dónde comprobarla:</p>
+<ul style="margin:0 0 16px;padding-left:18px;">${params.comprobar.map((c) => `<li><a href="${c.url}">${esc(c.nombre)}</a></li>`).join("")}</ul>
+<p style="margin:0 0 20px;"><a href="${params.enlacePanel}" style="display:inline-block;background:#16a34a;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:10px;">Revisar y aprobar</a></p>`;
+  return enviarCorreo(params.to, `Empresa por verificar: ${params.razonSocial}`, plantillaSencilla(cuerpo, "Aviso interno de BuscayCurra."));
+}
+
+/** A la empresa: está aprobada, y este es su código para entrar a los candidatos. */
+export async function sendCodigoEmpresaEmail(params: { to: string; razonSocial: string; codigo: string; enlace: string; dias: number }): Promise<boolean> {
+  const cuerpo = `
+<p ${P}>Hola:</p>
+<p ${P}>Hemos verificado ${esc(params.razonSocial)} en BuscayCurra. Este es vuestro código para ver a los candidatos:</p>
+<p style="margin:0 0 20px;font-size:28px;font-weight:800;letter-spacing:4px;font-family:monospace;">${esc(params.codigo)}</p>
+<p style="margin:0 0 20px;"><a href="${params.enlace}" style="display:inline-block;background:#16a34a;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:10px;">Meter el código</a></p>
+<p ${P}>Entrad con la cuenta con la que disteis de alta la empresa. El código vale ${params.dias} días y una sola vez; después, el resto de vuestro equipo entra con su propia cuenta desde «Tu equipo».</p>
+<p style="margin:0;">Un saludo,<br>El equipo de BuscayCurra</p>`;
+  const pie = "Os escribimos porque alguien dio de alta esta empresa en buscaycurra.es y puso este correo. Si no fuisteis vosotros, no hagáis nada: sin el código no se entra.";
+  return enviarCorreo(params.to, `Vuestro código de empresa en BuscayCurra: ${params.codigo}`, plantillaSencilla(cuerpo, pie));
+}
+
+/** A quien dio de alta la empresa: no se ha podido verificar, y por qué. */
+export async function sendRechazoEmpresaEmail(params: { to: string; razonSocial: string; motivo: string | null; enlace: string }): Promise<boolean> {
+  const cuerpo = `
+<p ${P}>Hola:</p>
+<p ${P}>No hemos podido verificar ${esc(params.razonSocial)} con los datos que nos disteis.${params.motivo ? ` El motivo: ${esc(params.motivo)}` : ""}</p>
+<p ${P}>Podéis corregirlos y volver a mandarlos aquí:</p>
+<p style="margin:0 0 20px;"><a href="${params.enlace}" style="display:inline-block;background:#16a34a;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:10px;">Revisar los datos</a></p>
+<p style="margin:0;">Un saludo,<br>El equipo de BuscayCurra</p>`;
+  return enviarCorreo(params.to, "No hemos podido verificar vuestra empresa en BuscayCurra", plantillaSencilla(cuerpo, "Os escribimos porque disteis de alta una empresa en buscaycurra.es."));
+}
+
 // ─── Email para cambiar la contraseña ────────────────────────────────────────
 
 /**

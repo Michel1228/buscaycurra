@@ -531,7 +531,7 @@ export default function PerfilPage() {
             basico:   { emoji: "🌱", nombre: "Básico",   color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Carta IA personalizada" },
             esencial: { emoji: "🌱", nombre: "Esencial", color: "#22c55e", desc: "15 CVs/día · 100 CVs/semana · Carta IA personalizada" },
             pro:      { emoji: "⚡", nombre: "Pro",      color: "#a855f7", desc: "50 CVs/día · 350 CVs/semana · 100 consultas a Guzzi al día" },
-            empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "200 CVs/día · Guzzi sin límite · Ver candidatos" },
+            empresa:  { emoji: "🏢", nombre: "Empresa",  color: "#3b82f6", desc: "200 CVs/día · Guzzi sin límite" },
           };
           const info = PLANES_INFO[planActual];
           return (
@@ -629,7 +629,7 @@ export default function PerfilPage() {
                     style={{ background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" }}>
                     <div>
                       <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Plan Empresa — 49,99€/mes</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>200 CVs/día · Guzzi sin límite · Ver candidatos</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>200 CVs/día · Guzzi sin límite</p>
                     </div>
                     <button onClick={() => contratar("empresa")}
                       disabled={iosNativo ? comprandoIAP !== null : cargandoPlan}

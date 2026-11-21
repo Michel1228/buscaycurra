@@ -5,8 +5,13 @@ import type { Metadata } from "next";
 import { LIMITES_EMPRESA } from "@/lib/plan-limits";
 import FondoOleaje from "@/components/FondoOleaje";
 
-// Cuánto incluye el plan (4 nov 2026): cupo de candidatos al mes y personas
-// con acceso. Sale de lib/plan-limits.ts, lo mismo que aplica el servidor.
+// Cuánto incluye (4 nov 2026): cupo de candidatos al mes y personas con
+// acceso. Sale de lib/plan-limits.ts, lo mismo que aplica el servidor.
+//
+// GRATIS PARA EMPRESAS VERIFICADAS (21 nov 2026, Michel). Ver candidatos ya no
+// se paga con el Plan Empresa: es para empresas, ETT y agencias de colocación
+// que verificamos con su NIF (/empresas/alta). El cupo del mes queda como freno
+// contra quien quiera copiar la base, no como precio.
 const CANDIDATOS_MES = LIMITES_EMPRESA.candidatosMes;
 const PERSONAS = LIMITES_EMPRESA.usuarios;
 
@@ -18,11 +23,11 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Para Empresas — BuscayCurra | Accede a talento activo",
   description:
-    "Encuentra a gente que busca trabajo y ha pedido que las empresas la encuentren: nombre, contacto y CV completo. Plan Empresa, 49,99€/mes, sin coste por oferta.",
+    "Encuentra a gente que busca trabajo y ha pedido que las empresas la encuentren: nombre, contacto y CV completo. Gratis para empresas, ETT y agencias de colocación verificadas.",
   openGraph: {
     title: "BuscayCurra para Empresas — Talento real, sin intermediarios",
     description:
-      "Candidatos que han pedido que les encuentren, con su CV completo y contacto directo. 49,99€/mes.",
+      "Candidatos que han pedido que les encuentren, con su CV completo y contacto directo. Gratis para empresas verificadas.",
     url: "https://buscaycurra.es/empresas",
     type: "website",
   },
@@ -53,13 +58,13 @@ const VENTAJAS: { Icon: LucideIcon; titulo: string; desc: string }[] = [
   },
   {
     Icon: Banknote,
-    titulo: "Sin pagar por candidato",
-    desc: `Una cuota al mes, sin coste por oferta ni por contacto, para hasta ${PERSONAS} personas de tu empresa. Sin permanencia.`,
+    titulo: "Gratis para empresas verificadas",
+    desc: `Sin cuota, sin coste por oferta ni por contacto, para hasta ${PERSONAS} personas de tu empresa. Comprobamos vuestro NIF y os mandamos un código.`,
   },
   {
     Icon: Zap,
-    titulo: "Contacto directo",
-    desc: `Con Plan Empresa ves el nombre de cada candidato y abres el email, el teléfono y el CV de hasta ${CANDIDATOS_MES} al mes. Sin intermediarios, sin plataforma de mensajería.`,
+    titulo: "Los mejores, primero",
+    desc: "Salen antes los que tienen cartas de recomendación confirmadas por quien las firmó y el CV completo y al día. Solo cuentan hechos comprobables: ninguna IA juzga a nadie.",
   },
   {
     Icon: RefreshCw,
@@ -83,12 +88,24 @@ const TESTIMONIOS: { nombre: string; ciudad?: string; puesto?: string; texto: st
 
 const FAQ_EMPRESAS = [
   {
+    q: "¿Cuánto cuesta?",
+    a: "Nada. Ver candidatos es gratis para las empresas, ETT y agencias de colocación que verificamos. El Plan Empresa de pago es otra cosa: envíos de CV y Guzzi sin límite para quien busca trabajo, y no da acceso a los candidatos.",
+  },
+  {
+    q: "¿Cómo se verifica mi empresa?",
+    a: "Te das de alta con el NIF y la razón social (y, si sois ETT o agencia de colocación, vuestro número de autorización). Lo comprobamos en los registros oficiales y os mandamos un código al correo de la empresa. Con el código, entráis.",
+  },
+  {
     q: "¿Necesito publicar una oferta para encontrar candidatos?",
-    a: "No. Con el Plan Empresa ves directamente a todos los candidatos que han activado «Visible para empresas», y los buscas por ciudad y perfil sin esperar a que te escriban.",
+    a: "No. Ya verificada, ves directamente a los candidatos que han activado «Visible para empresas», y los buscas por ciudad y perfil sin esperar a que te escriban.",
+  },
+  {
+    q: "¿Por qué solo veo candidatos de mi sector?",
+    a: "Porque cada empresa ve a los de los sectores con los que se dio de alta: así lo pide la protección de datos (solo lo que hace falta) y así los candidatos saben quién los ve. Las ETT y las agencias de colocación, que seleccionan para muchos sectores, ven todos.",
   },
   {
     q: "¿Qué datos de contacto tengo de cada candidato?",
-    a: `Con Plan Empresa ves el nombre completo de todos los candidatos que han activado «Visible para empresas», y abres el email, el teléfono y el CV completo de hasta ${CANDIDATOS_MES} al mes. Uno que ya has abierto sigue abierto y no vuelve a contar. Contacto directo sin intermediarios.`,
+    a: `Ves su nombre, su puntuación y su CV, y abres el email y el teléfono. Para proteger a los candidatos de quien quiera copiar la base, cada empresa abre hasta ${CANDIDATOS_MES} contactos nuevos al mes; uno que ya has abierto sigue abierto y no vuelve a contar.`,
   },
   {
     q: "¿Pueden usarlo varias personas de mi empresa?",
@@ -100,7 +117,7 @@ const FAQ_EMPRESAS = [
   },
   {
     q: "¿Cuántos candidatos hay?",
-    a: "Los que han activado «Visible para empresas» en su CV. Antes de pagar puedes ver sus fichas sin nombre (puesto, ciudad y aptitudes) en el portal de candidatos, y así sabes si hay lo que buscas.",
+    a: "Los que han activado «Visible para empresas» en su CV. Antes de darte de alta puedes ver sus fichas sin nombre (puesto, ciudad y aptitudes) en el portal de candidatos, y así sabes si hay lo que buscas.",
   },
   {
     q: "¿Funcionáis solo en España?",
@@ -127,9 +144,9 @@ export default function EmpresasLandingPage() {
             <Link href="/empresas/candidatos" className="text-sm font-medium transition hover:opacity-80 hidden sm:block" style={{ color: "#94a3b8" }}>
               Ver candidatos
             </Link>
-            <Link href="/precios" className="text-sm font-bold px-4 min-h-[44px] inline-flex items-center rounded-full transition hover:opacity-90"
+            <Link href="/empresas/alta" className="text-sm font-bold px-4 min-h-[44px] inline-flex items-center rounded-full transition hover:opacity-90"
               style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
-              Contratar acceso
+              Dar de alta mi empresa
             </Link>
           </div>
         </div>
@@ -177,9 +194,9 @@ export default function EmpresasLandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
               {[
                 // No se promete un numero de candidatos: seria mentir a
-                // quien va a pagar 49,99 EUR al mes por esto.
-                { num: "0€", label: "Ver perfiles y mandar ofertas", color: "#22c55e" },
-                { num: "49,99€", label: "Al mes, sin permanencia", color: "#f59e0b" },
+                // quien se da de alta para esto.
+                { num: "0€", label: "Para empresas verificadas", color: "#22c55e" },
+                { num: "NIF", label: "Comprobado en registros oficiales", color: "#f59e0b" },
                 { num: "CV", label: "Completo y con contacto", color: "#a855f7" },
               ].map(s => (
                 <div key={s.label} className="text-center">
@@ -235,22 +252,21 @@ export default function EmpresasLandingPage() {
         {/* Precios para empresas */}
         <section className="py-16 px-6">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-2" style={{ color: "#f8fafc" }}>Un precio. Todo incluido.</h2>
-            <p className="text-sm mb-10" style={{ color: "#8b98ad" }}>Sin sorpresas y sin coste por oferta ni por candidato</p>
+            <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-2" style={{ color: "#f8fafc" }}>Gratis. Solo para empresas de verdad.</h2>
+            <p className="text-sm mb-10" style={{ color: "#8b98ad" }}>Comprobamos cada empresa antes de enseñarle un solo candidato</p>
             <div className="cristal tono-lima p-8" style={{ borderWidth: 2, borderColor: "rgba(163,230,53,0.5)" }}>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="text-5xl font-black texto-neon">49,99€</span>
-                <span className="text-sm" style={{ color: "#8b98ad" }}>/mes</span>
+                <span className="text-5xl font-black texto-neon">0€</span>
               </div>
-              <p className="text-xs mb-6" style={{ color: "#8b98ad" }}>Sin permanencia · Cancela cuando quieras</p>
+              <p className="text-xs mb-6" style={{ color: "#8b98ad" }}>Alta con vuestro NIF · Código al correo de la empresa</p>
               <div className="grid sm:grid-cols-2 gap-2 text-left mb-8">
                 {[
-                  "Todos los candidatos visibles, con nombre",
-                  `Email, teléfono y CV completo de hasta ${CANDIDATOS_MES} al mes`,
+                  "Los candidatos de tu sector, con nombre (ETT y agencias: todos)",
+                  "Los mejores primero: referencias confirmadas y CV al día",
+                  `Email, teléfono y CV completo de hasta ${CANDIDATOS_MES} nuevos al mes`,
                   `Hasta ${PERSONAS} personas de tu empresa, cada una con su cuenta`,
-                  "Búsqueda por ciudad y perfil",
+                  "Tu entrevista, con las preguntas habituales de tu sector",
                   "Mandarnos ofertas sin coste",
-                  "Guzzi IA ilimitado",
                 ].map(item => (
                   <div key={item} className="flex items-center gap-2">
                     <Check size={11} strokeWidth={2.5} className="flex-shrink-0" style={{ color: "#22c55e" }} />
@@ -258,10 +274,10 @@ export default function EmpresasLandingPage() {
                   </div>
                 ))}
               </div>
-              <Link href="/precios"
+              <Link href="/empresas/alta"
                 className="block text-center text-sm font-bold min-h-[48px] flex items-center justify-center rounded-full transition hover:opacity-90"
                 style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
-                Contratar Plan Empresa →
+                Dar de alta mi empresa →
               </Link>
             </div>
           </div>
@@ -299,17 +315,17 @@ export default function EmpresasLandingPage() {
         <section className="py-12 px-6">
           <div className="cristal tono-ambar max-w-4xl mx-auto p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6">
             <div className="flex-1">
-              <h2 className="text-xl font-extrabold tracking-tight mb-2" style={{ color: "#fcd34d" }}>¿Eres una ETT o consultora de RRHH?</h2>
+              <h2 className="text-xl font-extrabold tracking-tight mb-2" style={{ color: "#fcd34d" }}>¿Sois una ETT o una agencia de colocación?</h2>
               <p className="text-sm leading-relaxed" style={{ color: "#94a3b8" }}>
-                Ves a todos los candidatos que han activado «Visible para empresas», los buscas por ciudad y
-                perfil y abres el contacto y el CV completo de hasta {CANDIDATOS_MES} al mes —{" "}
-                <strong style={{ color: "#f1f5f9" }}>49,99€/mes, sin coste por candidato.</strong>
+                Daos de alta con vuestro número de autorización o de agencia: lo comprobamos en el listado oficial.
+                Veis a los candidatos de todos los sectores, los mejores primero, y abrís el contacto y el CV completo de hasta {CANDIDATOS_MES} nuevos al mes —{" "}
+                <strong style={{ color: "#f1f5f9" }}>gratis, sin coste por candidato.</strong>
               </p>
             </div>
-            <Link href="/precios"
+            <Link href="/empresas/alta"
               className="flex-shrink-0 text-sm font-semibold px-6 min-h-[48px] flex items-center justify-center rounded-full transition hover:opacity-90"
               style={{ background: "linear-gradient(180deg, #fcd34d, #f59e0b 60%, #d97706)", color: "#1c1003" }}>
-              Ver plan Empresa →
+              Dar de alta la ETT →
             </Link>
           </div>
         </section>
@@ -321,7 +337,7 @@ export default function EmpresasLandingPage() {
               Empieza a contratar diferente
             </h2>
             <p className="text-sm mb-2" style={{ color: "#22c55e" }}>Candidatos reales que han pedido que les encuentren.</p>
-            <p className="text-xs mb-8" style={{ color: "#8b98ad" }}>Mira sus perfiles sin nombre antes de pagar.</p>
+            <p className="text-xs mb-8" style={{ color: "#8b98ad" }}>Mira sus perfiles sin nombre antes de darte de alta.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/empresas/candidatos"
                 className="text-sm font-semibold min-h-[48px] inline-flex items-center justify-center px-10 rounded-full transition hover:opacity-90"

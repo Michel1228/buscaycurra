@@ -13,7 +13,7 @@ import { isNativeIOS } from "@/lib/utils/platform";
 // busquedas por camara" cuando son 2, y "2 consultas a Guzzi (total)" cuando
 // son 15 diarias. Dos sitios escribiendo lo mismo por separado siempre acaban
 // diciendo cosas distintas.
-import { LIMITS, LIMITES_EMPRESA } from "@/lib/plan-limits";
+import { LIMITS } from "@/lib/plan-limits";
 import { useRevenueCat } from "@/lib/hooks/useRevenueCat";
 import RestaurarComprasBoton from "@/components/RestaurarComprasBoton";
 import { Bot, Zap, Building2, Sprout, Egg, Star, CreditCard, Check, X, Apple } from "lucide-react";
@@ -87,17 +87,16 @@ const PLANES = [
     // trabajo ("200 envíos de CV al día") y sin decir lo que una empresa compra:
     // ver a los candidatos. Y "Soporte 24/7" con el tick puesto, cuando no hay
     // nadie de guardia ni un correo que reciba (el dominio no tiene MX).
-    desc: "Para empresas y ETT que buscan candidatos",
+    // 21 nov 2026 (Michel): ver candidatos ya no va con este plan. Es gratis
+    // para empresas, ETT y agencias que verificamos (/empresas/alta); quien
+    // paga el plan se queda con los envíos y Guzzi sin límite.
+    desc: "Envíos de CV y Guzzi sin límite",
     items: [
-      { t: "Ver candidatos con nombre, email y teléfono", ok: true, highlight: true },
-      // 4 nov 2026: el contacto se abre con cupo y cada persona entra con su cuenta (lib/empresas/cuenta.ts).
-      { t: `Contacto y CV completo de hasta ${LIMITES_EMPRESA.candidatosMes} candidatos al mes`, ok: true, highlight: false },
-      { t: `Hasta ${LIMITES_EMPRESA.usuarios} personas de tu empresa, cada una con su cuenta`, ok: true, highlight: false },
-      { t: "Buscar candidatos por ciudad y perfil", ok: true, highlight: false },
-      { t: "Mandarnos ofertas sin coste", ok: true, highlight: false },
+      { t: `${LIMITS.empresa.enviosCVDia} envíos de CV al día`, ok: true, highlight: true },
       { t: "Guzzi IA ilimitado", ok: true, highlight: false },
       { t: `${LIMITS.empresa.camaraMaxUsos} búsquedas/mes por cámara`, ok: true, highlight: false },
       { t: "Todo lo del plan Pro, con más envíos de CV", ok: true, highlight: false },
+      { t: "Ver candidatos: no va con este plan; es gratis para empresas, ETT y agencias verificadas", ok: false, highlight: false },
       // NO SE VENDE LO QUE NO EXISTE. Esto salia con el tick puesto en un plan
       // de 49,99 EUR, y no hay ninguna API para clientes: ni ruta, ni claves,
       // ni forma de darla de alta. Comprobado con grep en todo el proyecto —

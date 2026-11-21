@@ -903,12 +903,14 @@ test("la cámara busca cualquier nombre cerca y el sector de más cerca a más l
 test("las empresas ven a los candidatos visibles y solo ellas saben quién es cada uno", () => {
   const api = leerFuente("app/api/empresas/candidatos/route.ts");
   const talento = leerFuente("app/talento/[id]/page.tsx");
+  // 21 nov 2026: la consulta de los visibles pasó a lib/empresas/candidatos.ts (la usan la lista, /talento y las invitaciones).
+  const lib = leerFuente("lib/empresas/candidatos.ts");
   const checks = {
-    "el portal lee la visibilidad de user_cvs": api.includes("uc.visible_empresas = true") && !api.includes('.from("profiles")'),
+    "el portal lee la visibilidad de user_cvs": lib.includes("uc.visible_empresas = true") && api.includes("candidatosVisibles(") && !api.includes('.from("profiles")'),
     "quien no es empresa no recibe ni el nombre ni el identificador del CV":
-      api.includes("id: esEmpresa ? row.user_id :") && /nombre: esEmpresa \?[^\n]*: "Candidato"/.test(api),
-    "buscar por correo o teléfono no delata a nadie": api.includes("(uc.form_data - 'email' - 'telefono'"),
-    "el CV completo sale de user_cvs": talento.includes("FROM user_cvs") && !talento.includes('.from("cvs")'),
+      api.includes("id: esEmpresa ? c.id :") && /nombre: esEmpresa \?[^\n]*: "Candidato"/.test(api),
+    "buscar por correo o teléfono no delata a nadie": lib.includes("(uc.form_data - 'email' - 'telefono'"),
+    "el CV completo sale de user_cvs": talento.includes("candidatoVisible(id)") && lib.includes("FROM user_cvs") && !talento.includes('.from("cvs")'),
     // Desde el 4 nov 2026 el Plan Empresa se mira con cuentaEmpresa (el propio
     // o el de la empresa que le ha dado acceso), no con el plan de quien mira.
     "el CV completo solo lo ven las empresas y el propio candidato": talento.includes("await cuentaEmpresa(quien)")
@@ -918,6 +920,113 @@ test("las empresas ven a los candidatos visibles y solo ellas saben quién es ca
   if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
   return malos.length === 0;
 });
+// EMPRESAS VERIFICADAS (21 nov 2026, decisiones de Michel). Pagar el Plan
+// Empresa ya no da los candidatos: solo empresas, ETT y agencias que Michel
+// verifica, con un código al correo de la empresa. Cada empresa ve su sector;
+// ETT y agencias, todos. Se ordenan por una puntuación de hechos comprobables
+// (sin IA, sin foto, edad ni origen) y las preguntas discriminatorias no se guardan.
+test("empresas: NIF, alcance por sector, puntuación por hechos y preguntas prohibidas", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync, writeFileSync } = await import("node:fs");
+  const entrada = ".sello-empresas-entrada.ts";
+  const salida = ".sello-empresas.cjs";
+  const fallos = [];
+  try {
+    writeFileSync(entrada, 'export * from "./lib/empresas/reglas";\nexport { PLANTILLAS } from "./lib/empresas/plantillas-entrevista";\n');
+    execFileSync("npx", ["esbuild", entrada, "--bundle", "--format=cjs", "--platform=node",
+      "--packages=external", "--tsconfig=tsconfig.json", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const m = await import(`../${salida}?${Date.now()}`);
+    // NIF: sociedades, autónomos con DNI y NIE; el dígito o la letra de control importan.
+    for (const [nif, ok] of [["B12345674", true], ["B12345675", false], ["b-1234567-4", true], ["12345678Z", true], ["12345678A", false],
+      ["X1234567L", true], ["P1234567D", true], ["P12345674", false], ["Q1234567X", false], ["", false]]) {
+      if (m.nifValido(nif) !== ok) fallos.push(`NIF ${nif || "(vacío)"} ${ok ? "rechazado" : "aceptado"}`);
+    }
+    for (const [tipo, n, ok] of [["ett", "12345678", true], ["ett", "31/0012/95", true], ["ett", "123", false], ["agencia", "9900000123", true], ["agencia", "abc", false]]) {
+      if (m.autorizacionValida(tipo, n) !== ok) fallos.push(`autorización ${tipo} ${n}`);
+    }
+    // Alcance: el sector sale de los puestos del CV.
+    const s = m.sectoresDelCv({ subtitulo: "Camarero", experiencia: [{ puesto: "Mozo de almacén" }] });
+    if (!s.includes("hosteleria") || !s.includes("almacen")) fallos.push(`sectores del CV: ${s}`);
+    if (m.sectoresDelCv({}).join() !== "general") fallos.push("un CV sin puestos no es «general»");
+    const bar = { tipo: "empresa", sectores: ["hosteleria"] };
+    if (m.puedeVer(bar, ["almacen"])) fallos.push("un bar ve a un mozo de almacén");
+    if (!m.puedeVer(bar, ["almacen", "hosteleria"])) fallos.push("un bar no ve a un camarero que también fue mozo");
+    if (!m.puedeVer({ tipo: "ett", sectores: [] }, ["salud"]) || !m.puedeVer({ tipo: "agencia", sectores: [] }, ["general"])) fallos.push("una ETT o agencia no ve todos los sectores");
+    if (m.puedeVer(bar, ["general"]) || !m.puedeVer({ tipo: "empresa", sectores: ["otro"] }, ["general"])) fallos.push("«general» no va con «otro sector»");
+    // Puntuación: hechos comprobables; la carta de recomendación pesa más que la de presentación.
+    const hoy = new Date("2026-11-21T10:00:00Z");
+    const completo = { subtitulo: "Camarera", email: "a@b.es", telefono: "600000000", aptitudes: ["Barra", "Caja", "Cafetera"],
+      idiomas: [{ nombre: "Español", nivel: 5 }], formacion: [{ titulo: "Manipulador de alimentos", centro: "X" }],
+      experiencia: [{ puesto: "Camarera", empresa: "Bar", fechas: "2022 - 2025" }] };
+    const p = (cv, referencias, cartasPresentacion, actualizado) => m.puntuacionCandidato({ cv, referencias, cartasPresentacion, actualizado, ahora: hoy }).total;
+    if (p(completo, 2, 0, "2026-11-20") !== 100) fallos.push(`CV completo con 2 cartas: ${p(completo, 2, 0, "2026-11-20")}`);
+    if (p({}, 0, 0, null) !== 0) fallos.push(`perfil vacío: ${p({}, 0, 0, null)}`);
+    if (!(p(completo, 1, 0, "2026-11-20") > p(completo, 0, 1, "2026-11-20"))) fallos.push("la carta de recomendación no pesa más que la de presentación");
+    if (p(completo, 1, 1, "2026-11-20") !== p(completo, 2, 0, "2026-11-20")) fallos.push("una de recomendación + una de presentación no llenan las cartas");
+    if (p(completo, 0, 0, "2025-01-01") >= p(completo, 0, 0, "2026-11-20")) fallos.push("un CV viejo puntúa igual que uno al día");
+    const conDatosPersonales = { ...completo, fotoUrl: "https://x/foto.jpg", fechaNacimiento: "1990-01-01", nacionalidad: "Colombia", sexo: "mujer" };
+    if (p(conDatosPersonales, 1, 0, "2026-11-20") !== p(completo, 1, 0, "2026-11-20")) fallos.push("la foto, la edad o el origen cambian la puntuación");
+    const r = m.puntuacionCandidato({ cv: {}, referencias: 0, cartasPresentacion: 0, actualizado: null, ahora: hoy });
+    if (r.partes.reduce((a, x) => a + x.max, 0) !== 100 || r.partes.some((x) => !x.consejo)) fallos.push("las partes no suman 100 o falta un consejo");
+    // Preguntas que no se pueden hacer; las del puesto, sí.
+    for (const q of ["¿Tienes hijos?", "¿Qué edad tienes?", "¿De dónde eres?", "¿Estás casada?", "¿Piensas quedarte embarazada pronto?", "¿Estás afiliado a algún sindicato?"]) {
+      if (!m.preguntaDiscriminatoria(q)) fallos.push(`deja pasar «${q}»`);
+    }
+    for (const q of ["¿Cómo atiendes a un cliente enfadado?", "¿Tienes permiso de trabajo en vigor?", "¿Tienes carné de conducir?", "¿Qué disponibilidad tienes los fines de semana?"]) {
+      if (m.preguntaDiscriminatoria(q)) fallos.push(`frena «${q}»`);
+    }
+    // Plantillas: una por sector, dentro de los límites de una entrevista y sin nada prohibido.
+    for (const { id } of m.SECTORES_EMPRESA) {
+      const l = m.PLANTILLAS[id];
+      if (!l || l.length < 3 || l.length > 8) { fallos.push(`plantilla de ${id}: ${l?.length ?? 0} preguntas`); continue; }
+      for (const q of l) {
+        if (q.texto.length > 300 || !q.puntos.length || q.puntos.length > 5 || q.puntos.some((x) => x.length > 160)) fallos.push(`plantilla de ${id} se pasa de largo: ${q.texto.slice(0, 40)}`);
+        if ([q.texto, ...q.puntos].some((x) => m.preguntaDiscriminatoria(x))) fallos.push(`plantilla de ${id} con pregunta prohibida: ${q.texto.slice(0, 40)}`);
+      }
+    }
+  } catch (e) {
+    fallos.push(`no se pudo probar: ${e.message?.slice(0, 120)}`);
+  } finally {
+    for (const f of [entrada, salida]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+  fallos.forEach((f) => console.log(`     ↳ ${f}`));
+  return fallos.length === 0;
+});
+
+test("solo las empresas verificadas ven candidatos, y cada una los de su alcance", () => {
+  const cuenta = leerFuente("lib/empresas/cuenta.ts");
+  const verif = leerFuente("lib/empresas/verificacion.ts");
+  const api = leerFuente("app/api/empresas/candidatos/route.ts");
+  const talento = leerFuente("app/talento/[id]/page.tsx");
+  const invitar = leerFuente("app/api/empresas/entrevistas/invitar/route.ts");
+  const entrevistas = leerFuente("lib/entrevistas/empresa.ts");
+  const admin = leerFuente("app/api/admin/empresas/route.ts");
+  const precios = leerFuente("app/precios/page.tsx");
+  const privacidad = leerFuente("app/privacidad/page.tsx");
+  const borrar = leerFuente("lib/cuenta/borrar-datos.ts");
+  const checks = {
+    "pagar el Plan Empresa ya no abre candidatos": !cuenta.includes("getUserPlan") && cuenta.includes("await alcanceDe(u.id)") && cuenta.includes("await alcanceDe(m.empresa_id)"),
+    "solo cuenta una empresa activa (con el código metido)": /WHERE user_id = \$1 AND estado = 'activa'/.test(verif),
+    "del código solo se guarda la huella, caduca y tiene intentos": verif.includes("codigo_hash") && !/\bcodigo\s+TEXT\b/.test(verif)
+      && verif.includes("timingSafeEqual") && verif.includes("INTENTOS_CODIGO") && verif.includes("codigo_caduca < now()"),
+    "un NIF, una sola cuenta verificada": verif.includes("ON empresa_verificacion (nif) WHERE estado IN ('aprobada', 'activa')"),
+    "la lista aplica el alcance y la valoración es solo para empresas": api.includes("ordenarParaEmpresa(todos, cuenta.alcance)")
+      && api.includes("puntuacion: esEmpresa ? c.puntuacion.total : null") && api.includes("referencias: esEmpresa ? c.referencias : 0"),
+    "el CV completo mira el sector antes de gastar cupo": talento.includes("puedeVer(cuenta.alcance, ficha.sectores)")
+      && talento.indexOf("puedeVer(cuenta.alcance") < talento.indexOf("abrirCandidato(cuenta.empresaId"),
+    "solo se invita a quien se puede ver": invitar.includes("puedeVer(cuenta.alcance, ficha.sectores)"),
+    "las preguntas discriminatorias no se guardan": entrevistas.includes("preguntaDiscriminatoria"),
+    "aprobar es solo de ADMIN_EMAILS con el correo verificado, y el código no vuelve en la respuesta":
+      !admin.includes("RESUMEN_DIARIO_EMAILS") && admin.includes("u?.confirmado") && !/NextResponse\.json\(\{[^}]*codigo/.test(admin),
+    "el Plan Empresa ya no se vende como ver candidatos": !precios.includes("Ver candidatos con nombre") && precios.includes("no va con este plan"),
+    "la privacidad dice quién ve el CV y cómo se puntúa": privacidad.includes("Pagar un plan no da acceso a los candidatos") && privacidad.includes("No la calcula ninguna IA"),
+    "borrar la cuenta borra el alta de la empresa": borrar.includes("empresa_verificacion"),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
+});
+
 // Guzzi con iniciativa (17 oct 2026): "¿qué curso me conviene?" se contesta
 // con su CV, una plaza gratis, las ofertas que lo piden y negocios de la zona;
 // y al enseñar ofertas avisa una vez del curso que le falta. Sin exagerar: el
@@ -1023,7 +1132,9 @@ test("a las empresas se les vende lo que hay y su oferta se guarda", () => {
   const checks = {
     "sin promesas que no existen en /empresas": !/369|Alertas de nuevos candidatos|API de acceso|24\/7|Exporta contactos|optimizado por IA|Guzzi la incluye/.test(empresas),
     "los testimonios solo si los hay": empresas.includes("{TESTIMONIOS.length > 0 && ("),
-    "precios vende ver candidatos y no soporte 24/7": precios.includes("Ver candidatos con nombre, email y teléfono") && !/Soporte 24\/7/.test(precios + portada),
+    // 21 nov 2026: ver candidatos ya no se vende con el Plan Empresa; es gratis para empresas verificadas.
+    "precios no vende candidatos con el plan, ni soporte 24/7": !precios.includes("Ver candidatos con nombre, email y teléfono")
+      && precios.includes("es gratis para empresas, ETT y agencias verificadas") && !empresas.includes("49,99") && !/Soporte 24\/7/.test(precios + portada),
     "la oferta se guarda en nuestra base y avisa al equipo": ruta.includes("INSERT INTO oferta_empresa") && ruta.includes("sendOfertaEmpresaAvisoEmail(")
       && !ruta.includes('from("ofertas_empresas")'),
     "no promete publicarla en minutos": !leerFuente("app/empresas/publicar/page.tsx").includes("publicada en minutos"),
@@ -2879,6 +2990,7 @@ const RUTAS_SIN_CORREO_VERIFICADO = {
     "cv-cartas GET", "cv-sender/envios-hoy GET", "cv-sender/status GET",
     "cv/descargar GET", "cv/lista GET", "cv/lista POST" /* leer un CV por id */, "cv/obtener GET",
     "cv/pdf-template GET", // baja el PDF ya hecho por su id; hacerlo (POST) es acción
+    "empresas/alta GET", "perfil/puntuacion GET", // cómo va el alta de su empresa y su propia puntuación (21 nov 2026)
     "dashboard GET", "empresas/zona GET", "empresas/zona POST", "entrevistas/empresa GET", "entrevistas/sector GET", "ett/search POST",
     "gusi/conversations/[id] GET", "gusi/conversations GET", "gusi/cv GET",
     "jobs/alertas GET", "jobs/by-ids GET", "jobs/comprobar GET", "jobs/count GET", "jobs/detail GET", "jobs/guardar GET", "jobs/jooble POST", "jobs/search GET",
@@ -2901,6 +3013,7 @@ const RUTAS_SIN_CORREO_VERIFICADO = {
   servidor: [
     "admin/centinela GET", "admin/contador GET", "admin/fix-profiles GET", "admin/health GET", "admin/metricas GET", "admin/resumen-diario POST",
     "admin/setup-notifications GET", "admin/setup-storage GET", "admin/stats GET", "agente/run POST",
+    "admin/empresas GET", "admin/empresas POST", // el visto bueno a las empresas: ADMIN_EMAILS con el correo verificado o x-admin-secret
     "auth/bienvenidas-pendientes POST", "auth/recordar-confirmacion POST", "onboarding/recordatorios POST", "email/retention POST", "push/send-alerts GET",
     "cursos/alertas POST", "cursos/carnes/avisos POST", "cursos/plazas/sync POST", "cursos/sugerencias-cv POST",
     "jobs/bulk-index GET", "jobs/bulk-index POST", "jobs/extract-emails GET", "jobs/extract-emails POST", "jobs/index GET", "jobs/index POST",
@@ -2969,9 +3082,9 @@ test("se entra sin confirmar: registro y enlace dejan dentro, la app lo explica 
     "los correos dicen 'para usar', no 'para entrar'": verificar.includes("para usar BuscayCurra") && recordatorio.includes("para usar BuscayCurra")
       && !recordatorio.includes("para entrar en BuscayCurra") && !recordatorio.includes("todavía no has podido entrar"),
     "recordar: solo a quien nunca confirmó, ni con nuestro enlace ni con el de Supabase": rec.includes("!correoVerificado(u) && !confirmoConEnlace(u)"),
-    "la empresa también pide el correo verificado, aunque pague": (() => {
+    "la empresa también pide el correo verificado, aunque esté verificada": (() => {
       const c = leerFuente("lib/empresas/cuenta.ts");
-      return c.indexOf("if (!u.confirmado) return null;") > 0 && c.indexOf("if (!u.confirmado) return null;") < c.indexOf("if (await esEmpresa(u.id))");
+      return c.indexOf("if (!u.confirmado) return null;") > 0 && c.indexOf("if (!u.confirmado) return null;") < c.indexOf("await alcanceDe(u.id)");
     })(),
     "el recorrido del centinela usa una cuenta marcada (si no, todo daría 403)": leerFuente("lib/centinela/recorrido.ts").includes("correo_verificado_en: new Date().toISOString()"),
   };
@@ -5421,7 +5534,9 @@ test("las referencias las confirma quien firmó, desde el correo de su empresa, 
       "no se escribe sin fin a la misma persona": lib.includes("Ya le escribimos a ese correo hace poco") && m.PETICIONES_EN_30_DIAS === 3,
       "si no la reconoce, la carta se borra": lib.includes("SET carta_ruta = NULL") && confirmar.includes('res.estado === "rechazada" && res.cartaRuta'),
       "se borra con la cuenta": borrado.includes('referencia_laboral: "user_id"') && borrado.includes('referencia_peticion: "user_id"'),
-      "las empresas lo ven y salen antes": leerFuente("app/api/empresas/candidatos/route.ts").includes("ORDER BY COALESCE(rv.n, 0) > 0 DESC")
+      // 21 nov 2026: salen antes por la puntuación, donde la carta confirmada es lo que más pesa (lib/empresas/reglas.ts).
+      "las empresas lo ven y salen antes": leerFuente("lib/empresas/candidatos.ts").includes("b.puntuacion.total - a.puntuacion.total")
+        && /const cartas = \(refs >= 1 \? 30 : 0\)/.test(leerFuente("lib/empresas/reglas.ts"))
         && leerFuente("app/empresas/candidatos/page.tsx").includes("Referencia verificada")
         && leerFuente("app/talento/[id]/page.tsx").includes("r.carta_publica && r.carta_ruta"),
       "el correo de quien firma no se enseña": !leerFuente("app/talento/[id]/page.tsx").includes("r.email"),
@@ -5514,25 +5629,29 @@ test("el Plan Empresa va por personas y el cupo del mes es de la empresa", () =>
   const enlacePrecargado = /<Link href=\{`\/talento\//;
   const checks = {
     "los números salen de un solo sitio": /export const LIMITES_EMPRESA = \{[\s\S]*usuarios:[\s\S]*candidatosMes:[\s\S]*invitacionesMes:/.test(leerFuente("lib/plan-limits.ts")),
-    "del equipo, solo con el correo confirmado y mientras la empresa pague": cuenta.includes("if (!u.email || !u.confirmado) return null;")
-      && cuenta.includes("!(await esEmpresa(m.empresa_id))"),
+    // 21 nov 2026: la titular es una empresa verificada y activa, no quien paga el plan.
+    "del equipo, solo con el correo confirmado y mientras la empresa siga verificada": cuenta.indexOf("if (!u.confirmado) return null;") > 0
+      && cuenta.indexOf("if (!u.confirmado) return null;") < cuenta.indexOf("FROM empresa_miembro WHERE email")
+      && /const suya = await alcanceDe\(m\.empresa_id\);\s*if \(!suya\) return null;/.test(cuenta),
     "no se pasa de las personas del plan": cuenta.includes("1 + ya.length >= LIMITES_EMPRESA.usuarios"),
     "solo quien paga añade o quita personas": (equipo.match(/if \(!q\.cuenta\.titular\) return error/g) || []).length === 2,
     "la lista no da el contacto de quien no se ha abierto": api.includes("email: abierto ?") && api.includes("telefono: abierto ?") && !/email: esEmpresa \?/.test(api),
     "abrir un CV nuevo gasta cupo, y uno ya abierto no": talento.includes("await abrirCandidato(cuenta.empresaId, id)")
       && cuenta.includes("if ((await yaAbiertos(empresaId, [candidatoId])).has(candidatoId))"),
     "el cupo se cuenta con la empresa bloqueada": cuenta.includes("pg_advisory_xact_lock") && cuenta.includes("if (r.n >= maximo)"),
-    "no se gasta plaza en un CV que no se puede enseñar": talento.indexOf("if (!fila || !fila.visible_empresas") < talento.indexOf("await abrirCandidato("),
+    "no se gasta plaza en un CV que no se puede enseñar": talento.indexOf("if (!ficha) return noDisponible;") > 0
+      && talento.indexOf("if (!ficha) return noDisponible;") < talento.indexOf("await abrirCandidato(")
+      && leerFuente("lib/empresas/candidatos.ts").includes("uc.visible_empresas = true"),
     "los enlaces al CV no se precargan (gastarían cupo)": !enlacePrecargado.test(leerFuente("app/empresas/candidatos/page.tsx"))
       && !enlacePrecargado.test(leerFuente("app/empresas/entrevistas/page.tsx")),
     "las invitaciones también tienen cupo al mes": entrevistas.includes("(await invitacionesDelMes(empresaId)) >= LIMITES_EMPRESA.invitacionesMes"),
-    "todo va a nombre de la empresa, entre quien entre": leerFuente("app/api/empresas/entrevistas/route.ts").includes("return cuenta.empresaId;")
+    "todo va a nombre de la empresa, entre quien entre": leerFuente("app/api/empresas/entrevistas/route.ts").includes(": cuenta.empresaId;")
       && leerFuente("app/api/empresas/entrevistas/invitar/route.ts").includes("const empresaId = cuenta.empresaId;")
       && leerFuente("app/api/empresas/entrevistas/marcar/route.ts").includes("const empresaId = cuenta.empresaId;"),
     "borrar la cuenta limpia el equipo y lo abierto": borrado.includes("DELETE FROM empresa_candidato_abierto WHERE empresa_id = $1 OR candidato_id = $1")
       && borrado.includes("DELETE FROM empresa_miembro WHERE empresa_id = $1") && borrado.includes("DELETE FROM empresa_miembro WHERE email = $1"),
     "las páginas y la privacidad lo cuentan": empresas.includes("¿Pueden usarlo varias personas de mi empresa?") && !empresas.includes("sin límite de candidatos")
-      && leerFuente("app/privacidad/page.tsx").includes("Si tu empresa te da acceso a su Plan Empresa:"),
+      && leerFuente("app/privacidad/page.tsx").includes("Si tu empresa te da acceso a su cuenta:"),
   };
   const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
   if (fallos.length) console.log("    fallan:", fallos.join(" | "));

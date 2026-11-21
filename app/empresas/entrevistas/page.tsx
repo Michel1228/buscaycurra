@@ -11,6 +11,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import FondoOleaje from "@/components/FondoOleaje";
+import { PLANTILLAS } from "@/lib/empresas/plantillas-entrevista";
+import { SECTORES_EMPRESA, preguntaDiscriminatoria, type SectorEmpresa } from "@/lib/empresas/reglas";
 
 interface Pregunta { texto: string; puntos: string[] }
 interface Entrevista { id: string; empresa: string; puesto: string; preguntas: Pregunta[] }
@@ -35,6 +37,8 @@ export default function EntrevistasEmpresaPage() {
   const [guardando, setGuardando] = useState(false);
   const [abierta, setAbierta] = useState<string | null>(null);
   const [marcas, setMarcas] = useState<Record<string, boolean[][]>>({});
+  // El sector de las preguntas propuestas: el primero de la empresa; las ETT y agencias eligen.
+  const [sectorPlantilla, setSectorPlantilla] = useState<SectorEmpresa>("otro");
 
   const cargar = useCallback(async (t: string) => {
     const r = await fetch("/api/empresas/entrevistas", { headers: { Authorization: `Bearer ${t}` } });
@@ -43,8 +47,18 @@ export default function EntrevistasEmpresaPage() {
     const j = await r.json().catch(() => ({}));
     setEntrevistas(j.entrevistas || []);
     setInvitaciones(j.invitaciones || []);
+    const suyo = j.alcance?.sectores?.[0];
+    if (suyo && suyo in PLANTILLAS) setSectorPlantilla(suyo as SectorEmpresa);
     setEstado("listo");
   }, []);
+
+  /** Pone las preguntas del sector en el borrador: sustituye las vacías y no pasa de 8. */
+  function usarPlantilla() {
+    if (!borrador) return;
+    const propias = borrador.preguntas.filter((p) => p.texto.trim());
+    const nuevas = PLANTILLAS[sectorPlantilla].map((p) => ({ texto: p.texto, puntos: p.puntos.join("\n") }));
+    setBorrador({ ...borrador, preguntas: [...propias, ...nuevas].slice(0, 8) });
+  }
 
   useEffect(() => {
     (async () => {
@@ -119,7 +133,7 @@ export default function EntrevistasEmpresaPage() {
     const textos = {
       cargando: ["Cargando…", "", ""],
       entrar: ["Entra con tu cuenta de empresa", "/auth/login?redirect=%2Fempresas%2Fentrevistas", "Entrar"],
-      plan: ["Las entrevistas son del Plan Empresa", "/empresas", "Ver Plan Empresa"],
+      plan: ["Las entrevistas son para empresas verificadas (gratis)", "/empresas/alta", "Dar de alta mi empresa"],
     }[estado];
     return (
       <div className="min-h-screen" style={{ background: "#0f1117" }}>{cabecera}
@@ -221,6 +235,15 @@ export default function EntrevistasEmpresaPage() {
                 <label className="block"><span className="block text-[11px] font-semibold mb-1" style={{ color: "#94a3b8" }}>Puesto</span>
                   <input type="text" value={borrador.puesto} maxLength={120} placeholder="Ej.: Camarero/a de sala" onChange={(e) => setBorrador({ ...borrador, puesto: e.target.value })} className="w-full text-sm" /></label>
               </div>
+              {/* Las preguntas habituales del sector, con lo que conviene oír: se cambian a gusto. */}
+              <div className="flex flex-wrap items-center gap-2 rounded-lg p-3" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.18)" }}>
+                <span className="text-[11px] font-semibold" style={{ color: "#4ade80" }}>Rellenar con las preguntas habituales de</span>
+                <select value={sectorPlantilla} onChange={(e) => setSectorPlantilla(e.target.value as SectorEmpresa)} className="text-xs" aria-label="Sector de las preguntas">
+                  {SECTORES_EMPRESA.map((s) => <option key={s.id} value={s.id}>{s.id === "otro" ? "cualquier puesto" : s.label}</option>)}
+                </select>
+                <button type="button" onClick={usarPlantilla} className="text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>Usar</button>
+                <span className="text-[10px] w-full" style={{ color: "#8b98ad" }}>Se añaden detrás de las que ya tengas escritas; luego cambia, quita o añade lo que quieras.</span>
+              </div>
               {borrador.preguntas.map((p, i) => (
                 <div key={i} className="rounded-lg p-3 space-y-2" style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)" }}>
                   <div className="flex justify-between items-center">
@@ -233,6 +256,10 @@ export default function EntrevistasEmpresaPage() {
                     onChange={(e) => setBorrador({ ...borrador, preguntas: borrador.preguntas.map((q, k) => (k === i ? { ...q, texto: e.target.value } : q)) })} className="w-full text-sm" />
                   <textarea rows={3} value={p.puntos} placeholder={"Qué esperas oír, una cosa por línea. Ej.:\nPide disculpas y explica el retraso\nOfrece algo mientras esperan\nAvisa al encargado si hace falta"}
                     onChange={(e) => setBorrador({ ...borrador, preguntas: borrador.preguntas.map((q, k) => (k === i ? { ...q, puntos: e.target.value } : q)) })} className="w-full text-xs" />
+                  {(() => {
+                    const tema = preguntaDiscriminatoria(`${p.texto}\n${p.puntos}`);
+                    return tema ? <p className="text-[11px]" style={{ color: "#ef4444" }}>Esto trata de {tema}: no se puede preguntar en una entrevista. Cámbialo por algo del puesto.</p> : null;
+                  })()}
                 </div>
               ))}
               {borrador.preguntas.length < 8 && (

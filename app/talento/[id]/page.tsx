@@ -16,9 +16,10 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import Link from "next/link";
 import { Lock, User, MapPin, Wrench, Briefcase, GraduationCap, Globe, Mail, Phone, BadgeCheck } from "lucide-react";
-import { getPool } from "@/lib/db";
 import { enlaceCarta, referenciasVerificadas } from "@/lib/referencias/referencias";
 import { abrirCandidato, cuentaEmpresa } from "@/lib/empresas/cuenta";
+import { candidatoVisible } from "@/lib/empresas/candidatos";
+import { NIVELES, puedeVer } from "@/lib/empresas/reglas";
 import { correoVerificado } from "@/lib/auth/correo-verificado";
 import InvitarEntrevista from "@/components/empresas/InvitarEntrevista";
 import FondoOleaje from "@/components/FondoOleaje";
@@ -86,21 +87,26 @@ export default async function TalentoPage({ params }: Props) {
       enlace="/auth/login?redirect=%2Fempresas%2Fcandidatos" boton="Entrar →" />;
   }
   const esElMismo = quien.id === id;
-  // El plan se mira antes que el CV: a quien no es empresa no se le dice ni
-  // si ese candidato existe. Vale el Plan Empresa propio o el de la empresa
-  // que le ha dado acceso (lib/empresas/cuenta.ts).
+  // La empresa se mira antes que el CV: a quien no es empresa verificada no se
+  // le dice ni si ese candidato existe. Vale la suya o la de la empresa que le
+  // ha dado acceso (lib/empresas/cuenta.ts). Pagar el Plan Empresa no basta
+  // desde el 21 nov 2026.
   const cuenta = esElMismo ? null : await cuentaEmpresa(quien).catch(() => null);
   if (!esElMismo && !cuenta) {
-    return <Aviso titulo="CV solo para empresas" mensaje="Con el Plan Empresa ves el CV entero de cada candidato, con su correo y su teléfono."
-      enlace="/empresas" boton="Ver Plan Empresa →" />;
+    return <Aviso titulo="CV solo para empresas verificadas" mensaje="Los CV de los candidatos los ven las empresas, ETT y agencias de colocación que hemos verificado. Da de alta la tuya: es gratis."
+      enlace="/empresas/alta" boton="Dar de alta mi empresa →" />;
   }
 
-  const { rows } = await getPool().query(
-    `SELECT form_data, visible_empresas FROM user_cvs WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1`,
-    [id]
-  );
-  const fila = rows[0];
-  if (!fila || !fila.visible_empresas || !fila.form_data) return noDisponible;
+  // Lo de siempre (el CV más reciente y visible de user_cvs), con su puntuación y sus sectores.
+  const ficha = await candidatoVisible(id);
+  if (!ficha) return noDisponible;
+
+  // Cada empresa ve a los de su sector; las ETT y agencias, a todos. Se mira
+  // antes del cupo, para no gastar plaza en un perfil que no puede ver.
+  if (cuenta && !puedeVer(cuenta.alcance, ficha.sectores)) {
+    return <Aviso titulo="Este candidato no es de vuestro sector" mensaje="Cada empresa ve a los candidatos de los sectores con los que se dio de alta."
+      enlace="/empresas/candidatos" boton="← Volver a candidatos" />;
+  }
 
   // Abrir un candidato nuevo gasta una plaza del cupo del mes de la empresa; uno
   // ya abierto, no. Se mira después de saber que el CV existe y es visible, para
@@ -114,15 +120,20 @@ export default async function TalentoPage({ params }: Props) {
     }
   }
 
-  const cv = fila.form_data as Record<string, unknown>;
+  const cv = ficha.cv;
   const nombre = [texto(cv.nombre), texto(cv.apellidos)].filter(Boolean).join(" ") || "Candidato";
   const puesto = texto(cv.subtitulo);
   const ciudad = texto(cv.ciudad);
   const perfil = texto(cv.perfilProfesional);
   const email = texto(cv.email);
   const telefono = texto(cv.telefono);
-  const idiomas = texto(cv.idiomas);
-  const aptitudes = texto(cv.aptitudes).split(/[,;]/).map((h) => h.trim()).filter(Boolean);
+  // El editor guarda idiomas y aptitudes como listas (CVData); los CV antiguos, como texto.
+  const idiomas = Array.isArray(cv.idiomas)
+    ? cv.idiomas.map((i: Record<string, unknown>) => texto(i?.nombre)).filter(Boolean).join(", ")
+    : texto(cv.idiomas);
+  const aptitudes = (Array.isArray(cv.aptitudes) ? cv.aptitudes.map(texto) : texto(cv.aptitudes).split(/[,;]/))
+    .map((h) => h.trim()).filter(Boolean);
+  const nota = ficha.puntuacion;
   const experiencia = (Array.isArray(cv.experiencia) ? cv.experiencia : [])
     .map((e: Record<string, unknown>) => ({ puesto: texto(e.puesto), empresa: texto(e.empresa), fechas: texto(e.fechas), ubicacion: texto(e.ubicacion), descripcion: texto(e.descripcion) }))
     .filter((e) => e.puesto || e.empresa);
@@ -146,7 +157,7 @@ export default async function TalentoPage({ params }: Props) {
       <FondoOleaje />
       {esElMismo && (
         <p className="text-center text-xs py-2" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
-          Así ven tu CV las empresas con Plan Empresa.
+          Así ven tu CV las empresas verificadas de tu sector, las ETT y las agencias de colocación.
         </p>
       )}
       <div className="py-16 px-4" style={{ background: "linear-gradient(135deg, #1a1d28, #0f1117)" }}>
@@ -177,6 +188,27 @@ export default async function TalentoPage({ params }: Props) {
             )}
           </div>
         )}
+
+        {/* Puntuación por hechos comprobables (lib/empresas/reglas.ts): sin IA */}
+        <div className="p-5 rounded-xl" style={caja}>
+          <div className="flex items-baseline justify-between gap-3 flex-wrap">
+            <h2 className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Puntuación BuscayCurra</h2>
+            <p className="text-sm" style={{ color: "#22c55e" }}>
+              <strong className="text-2xl tabular-nums">{nota.total}</strong><span className="text-xs" style={{ color: "#8b98ad" }}>/100 · {NIVELES[nota.nivel]}</span>
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {nota.partes.map((p) => (
+              <span key={p.id} className="text-[11px] px-2.5 py-1 rounded-full tabular-nums"
+                style={{ background: p.puntos === p.max ? "rgba(34,197,94,0.1)" : "#0f1117", color: p.puntos === p.max ? "#4ade80" : "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
+                {p.nombre} {p.puntos}/{p.max}
+              </span>
+            ))}
+          </div>
+          <p className="text-[11px] mt-3" style={{ color: "#8b98ad" }}>
+            Solo cuenta lo que se puede comprobar: cartas de recomendación confirmadas por quien las firmó, lo que tiene el CV y si está al día. Ninguna IA valora a la persona.
+          </p>
+        </div>
 
         {/* «Me interesa»: invitarle a preparar la entrevista de la empresa */}
         {!esElMismo && <InvitarEntrevista candidatoId={id} nombre={nombre} />}
