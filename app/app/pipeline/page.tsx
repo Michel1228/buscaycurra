@@ -600,6 +600,12 @@ export default function PipelinePage() {
             {candidaturaEdit.email && (
               <p className="flex items-center gap-1 text-[12px]" style={{ color: "#fcd34d" }}><AtSign size={11} strokeWidth={1.6} className="shrink-0" />{candidaturaEdit.email}</p>
             )}
+            {/* Lo que se le mandó de verdad: la carta, el CV y cómo ha ido (21 nov 2026). Las anotadas a mano no tienen. */}
+            {candidaturaEdit.email && candidaturaEdit.email !== CORREO_ANOTACION_MANUAL && (
+              <Link href={`/app/envios/${encodeURIComponent(candidaturaEdit.id)}`} className="inline-flex items-center gap-1 text-[12.5px] font-semibold min-h-[36px]" style={{ color: "#d9f99d" }}>
+                Ver lo que le mandaste: carta y CV →
+              </Link>
+            )}
             <div className="space-y-1.5">
               <p className="text-[12px]" style={{ color: "#a7b3c6" }}>
                 <span className="font-medium">Estado:</span> {COLUMNAS.find(c => c.id === candidaturaEdit.estado)?.label}

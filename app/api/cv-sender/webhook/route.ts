@@ -108,7 +108,8 @@ export async function POST(request: NextRequest) {
       await enviarPushAlUsuario(supabase, userId, {
         title: titulo,
         body: mensaje,
-        url: "/app/envios?tab=envios",
+        // Al tocarla, ese envío (21 nov 2026); sin id, la lista.
+        url: envioId ? `/app/envios/${encodeURIComponent(envioId)}` : "/app/envios",
         tag: tipoNotif,
       });
 
@@ -157,12 +158,14 @@ export async function GET(request: NextRequest) {
   if (trackId && uid) {
     try {
       // Verificar que uid es el dueño del envío antes de actualizar
-      const { data: envio } = await supabase.from("cv_sends").select("user_id").eq("id", trackId).single();
+      const { data: envio } = await supabase.from("cv_sends").select("user_id, company_name, job_title").eq("id", trackId).single();
       if (envio && envio.user_id === uid) {
         await supabase.from("cv_sends").update({ status: "visto" }).eq("id", trackId);
 
-        const titulo = "👀 Tu CV fue abierto";
-        const mensaje = "Una empresa ha abierto el email con tu CV. ¡Buena señal!";
+        // Con el nombre de la empresa y el puesto: se sabe de cuál es antes de tocarla (21 nov 2026).
+        const empresa = envio.company_name && envio.company_name !== "Empresa desconocida" ? envio.company_name : "Una empresa";
+        const titulo = `👀 ${empresa} ha abierto tu CV`;
+        const mensaje = `${empresa} ha abierto el correo con tu CV${envio.job_title ? ` para ${envio.job_title}` : ""}. Toca para ver lo que le mandaste.`;
 
         await supabase.from("notificaciones").insert({
           user_id: uid,
@@ -176,7 +179,7 @@ export async function GET(request: NextRequest) {
         await enviarPushAlUsuario(supabase, uid, {
           title: titulo,
           body: mensaje,
-          url: "/app/envios?tab=envios",
+          url: `/app/envios/${encodeURIComponent(trackId)}`,
           tag: "cv_visto",
         });
 

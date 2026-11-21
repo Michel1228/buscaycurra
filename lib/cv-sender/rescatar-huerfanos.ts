@@ -77,7 +77,7 @@ export async function rescatarEnviosHuerfanos(): Promise<number> {
           titulo: `No se pudo enviar tu CV${fila.company_name ? ` a ${fila.company_name}` : ""}`,
           mensaje:
             "El envío se quedó a medias y no llegó a salir. No te ha gastado cuota: puedes volver a intentarlo cuando quieras.",
-          datos: { companyName: fila.company_name, motivo: "envio_huerfano" },
+          datos: { envioId: fila.id, companyName: fila.company_name, motivo: "envio_huerfano" },
           leida: false,
         });
       } catch (e) {

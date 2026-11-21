@@ -210,7 +210,8 @@ export async function POST(req: NextRequest) {
         tipo: "cv_enviado",
         titulo: `Tu CV no llegó a ${fila.company_name || "una empresa"}`,
         mensaje: "El correo rebotó, así que esa empresa no lo tiene. Puedes intentarlo por otra vía.",
-        datos: { url: "/app/envios" },
+        // Ese envío, con su carta y su CV (21 nov 2026): no la lista entera.
+        datos: { envioId: fila.id, url: `/app/envios/${fila.id}` },
       });
     }
   }

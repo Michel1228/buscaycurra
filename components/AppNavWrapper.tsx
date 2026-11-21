@@ -112,6 +112,8 @@ const GRUPOS_MENU: { titulo: string; tono: TonoMenu; hrefs: string[] }[] = [
   { titulo: "Buscar", tono: "azul", hrefs: ["/app/explorar", "/app/guardados", "/app/emigrar", "/app/au-pair", "/app/salarios", "/app/reviews"] },
   { titulo: "Tu candidatura", tono: "verde", hrefs: ["/app/curriculum", "/app/envios", "/app/pipeline", "/app/entrevistas"] },
   { titulo: "Formación", tono: "morado", hrefs: ["/app/formacion"] },
+  // Sus filas dependen de cómo va el alta de la empresa: se pintan aparte (ver «Empresas» abajo).
+  { titulo: "Empresas", tono: "rosa", hrefs: [] },
   { titulo: "Cuenta", tono: "ambar", hrefs: ["/app/perfil?tab=plan", "/app/referidos", "/app/ayuda"] },
 ];
 const ENTRADA_POR_HREF = new Map<string, { href: string; label: string; icon: string; title: string; tambien?: string[] }>(
@@ -206,6 +208,10 @@ function NavIcon({ name, size = 22, activo = false, enCirculo = false }: { name:
       return <svg {...base}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>;
     case "mas":
       return <svg {...base}><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>;
+    case "empresa":
+      return <svg {...base}><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01"/></svg>;
+    case "candidatos":
+      return <svg {...base}><circle cx="11" cy="8" r="4"/><path d="M3 21v-1a6 6 0 0 1 6-6h4"/><circle cx="18" cy="17" r="3"/><path d="m22 21-1.8-1.8"/></svg>;
     default:
       return <svg {...base}><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>;
   }
@@ -216,6 +222,8 @@ export default function AppNavWrapper() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [esAdmin, setEsAdmin] = useState(false);
+  // Cómo va su empresa (lib/empresas/verificacion.ts): se pregunta al abrir el menú, no en cada página.
+  const [empresa, setEmpresa] = useState<string | null | undefined>(undefined);
   const [userId, setUserId] = useState("");
   const [userInicial, setUserInicial] = useState("");
   const [paisSeleccionado, setPaisSeleccionado] = useState("ES");
@@ -252,6 +260,17 @@ export default function AppNavWrapper() {
       document.removeEventListener("keydown", alTeclear);
     };
   }, [mobileOpen]);
+
+  // El grupo «Empresas» del menú (21 nov 2026, Michel): a una empresa verificada
+  // (o de su equipo) le lleva a sus candidatos; a quien tiene el alta a medias, a
+  // cómo va; a los demás, a ver candidatos y darse de alta. Una vez por sesión.
+  useEffect(() => {
+    if (!mobileOpen || empresa !== undefined) return;
+    fetch("/api/empresas/alta")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => setEmpresa(j ? (j.equipo ? "equipo" : j.solicitud?.estado ?? null) : null))
+      .catch(() => setEmpresa(null));
+  }, [mobileOpen, empresa]);
 
   // La barra de abajo ocupa sitio: el body deja ese hueco al final (globals.css,
   // "con-barra-inferior") para que no tape lo último de cada pantalla.
@@ -481,6 +500,22 @@ export default function AppNavWrapper() {
                         activo={activo} onClick={() => setMobileOpen(false)} />
                     );
                   })}
+                  {g.titulo === "Empresas" && (
+                    empresa === "activa" || empresa === "equipo" ? (
+                      <>
+                        <FilaMenu href="/empresas/candidatos" label="Candidatos" title="Los candidatos de tu sector, los mejores primero" icon="candidatos" tono={g.tono} activo={false} onClick={() => setMobileOpen(false)} />
+                        <FilaMenu href="/empresas/entrevistas" label="Entrevistas de empresa" title="Tus preguntas y los candidatos invitados" icon="entrevistas" tono={g.tono} activo={false} onClick={() => setMobileOpen(false)} />
+                        <FilaMenu href="/empresas/equipo" label="Tu equipo" title="Quién de tu empresa entra" icon="empresa" tono={g.tono} activo={false} onClick={() => setMobileOpen(false)} />
+                      </>
+                    ) : (
+                      <>
+                        <FilaMenu href="/empresas/candidatos" label="Ver candidatos" title="Para empresas, ETT y agencias de colocación" icon="candidatos" tono={g.tono} activo={false} onClick={() => setMobileOpen(false)} />
+                        <FilaMenu href="/empresas/alta" icon="empresa" tono={g.tono} activo={false} onClick={() => setMobileOpen(false)}
+                          label={empresa === "aprobada" ? "Meter mi código" : empresa === "pendiente" ? "Alta en revisión" : "Alta de empresa"}
+                          title="Las empresas verificadas ven a los candidatos gratis" />
+                      </>
+                    )
+                  )}
                   {g.titulo === "Cuenta" && (
                     <>
                       {/* Acceso a la descarga: en iPhone lleva a la App Store y en

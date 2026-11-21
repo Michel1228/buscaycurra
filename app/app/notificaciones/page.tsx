@@ -78,6 +78,15 @@ export default function NotificacionesPage() {
       if (!notifRes.ok) throw new Error("Error cargando notificaciones");
       const data = (await notifRes.json()) as { notificaciones: Notif[] };
       setNotifs(data.notificaciones || []);
+      // Viene de la campana o de un aviso con ?abrir=<id>: esa notificación,
+      // ya desplegada con sus ofertas y a la vista (21 nov 2026).
+      const abrir = new URLSearchParams(window.location.search).get("abrir");
+      const objetivo = abrir ? (data.notificaciones || []).find((x) => x.id === abrir) : null;
+      if (objetivo) {
+        if (esAlertaDesplegable(objetivo)) void toggleExpand(objetivo);
+        else if (!objetivo.leida) marcarLeida(objetivo.id);
+        setTimeout(() => document.getElementById(`notif-${objetivo.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+      }
 
       if (enviosRes.ok) {
         const ev = (await enviosRes.json()) as { enviados: number; limite: number };
@@ -129,7 +138,7 @@ export default function NotificacionesPage() {
     );
   }
 
-  const isAlerta = (n: Notif) => esAlertaDesplegable(n.tipo);
+  const isAlerta = (n: Notif) => esAlertaDesplegable(n);
 
   // Esta función era una copia recortada de la de la campana y conocía
   // cinco tipos frente a los quince de aquella. Ahora las dos usan la
@@ -387,7 +396,7 @@ export default function NotificacionesPage() {
               const datos = n.datos || {};
 
               return (
-                <div key={n.id}>
+                <div key={n.id} id={`notif-${n.id}`} className="scroll-mt-20">
                   {/* Cabecera de notificación */}
                   <div
                     onClick={() => handleClick(n)}

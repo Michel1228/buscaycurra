@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
  * correo masivo.
  *
  * Se conserva todo lo de "Mis envíos": la lista con sus filtros y contadores,
- * cancelar lo programado, quitar de la lista, vaciarla, y el detalle con la
- * carta y el CV que se mandó. Y el contador del plan.
+ * cancelar lo programado, quitar de la lista y vaciarla. Cada envío abre su
+ * ficha (/app/envios/[id]) con la carta y el CV que se mandó. Y el contador del plan.
  *
  * Las cifras salen de /api/cv-sender/status (la de siempre) y de
  * /api/jobs/alertas. Antes ponía "{n} envíos en total" contando solo los
@@ -129,7 +129,6 @@ export default function EnviosPage() {
     setFiltro(f);
     document.getElementById("lista-envios")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  const [detalle, setDetalle] = useState<Envio | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -166,6 +165,10 @@ export default function EnviosPage() {
         setEnvios([...pending, ...historial]);
         setProgramados(pending.length);
         if (data.stats) setResumen(data.stats);
+        // Un aviso antiguo, sin el id del envío, trae la empresa: se abre su último envío (21 nov 2026).
+        const empresa = new URLSearchParams(window.location.search).get("empresa");
+        const suyo = empresa ? [...pending, ...historial].find((e) => (e.company_name || "").toLowerCase() === empresa.toLowerCase()) : null;
+        if (suyo) { router.replace(`/app/envios/${encodeURIComponent(suyo.id)}`); return; }
       }
       if (resAlertas?.ok) {
         const d = await resAlertas.json() as { alertas?: unknown[] };
@@ -366,7 +369,8 @@ export default function EnviosPage() {
                 {filtrados.map(envio => (
                   <div key={envio.id}
                     className="cristal tono-neutro flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
-                    <button type="button" onClick={() => setDetalle(envio)} className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 text-left"
+                    {/* Cada envío abre el suyo: a quién, cómo ha ido, la carta y el CV (21 nov 2026). */}
+                    <Link href={`/app/envios/${encodeURIComponent(envio.id)}`} className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 text-left"
                       aria-label={`Ver el envío a ${envio.company_name}`}>
                       <LogoEmpresa empresa={envio.company_name} correo={envio.company_email} tono="neutro" size={40} />
                       <span className="flex-1 min-w-0">
@@ -377,7 +381,7 @@ export default function EnviosPage() {
                           {formatLocalDate(envio.sent_at || envio.created_at)}
                         </span>
                       </span>
-                    </button>
+                    </Link>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       <span className="inline-flex items-center gap-1">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-bold"
@@ -443,64 +447,6 @@ export default function EnviosPage() {
         </section>
       </div>
 
-      {/* Modal detalle de envío */}
-      {detalle && (
-        <div className="fixed inset-0 z-[55] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}
-          onClick={() => setDetalle(null)}>
-          <div className="ui-neon cristal tono-lima w-full max-w-lg max-h-[85vh] overflow-y-auto p-6" style={{ background: "rgba(10,13,19,0.98)" }}
-            onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="titulo-detalle-envio">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <LogoEmpresa empresa={detalle.company_name} correo={detalle.company_email} tono="lima" size={40} />
-                <h2 id="titulo-detalle-envio" className="text-lg font-bold truncate" style={{ color: "#f8fafc" }}>{detalle.company_name}</h2>
-              </div>
-              <button onClick={() => setDetalle(null)} className="inline-flex items-center justify-center w-10 h-10 rounded-full shrink-0" style={{ color: "#a7b3c6" }} aria-label="Cerrar"><X size={18} /></button>
-            </div>
-
-            <div className="space-y-3 text-sm mb-4">
-              {detalle.job_title && (
-                <div><span style={{ color: "#a7b3c6" }}>Puesto:</span> <span style={{ color: "#f1f5f9" }}>{detalle.job_title}</span></div>
-              )}
-              <div><span style={{ color: "#a7b3c6" }}>Email:</span> <span style={{ color: "#f1f5f9" }}>{detalle.company_email}</span></div>
-              <div><span style={{ color: "#a7b3c6" }}>Estado:</span> <span className="font-semibold" style={{ color: STATUS_COLOR[detalle.status] }}>{textoEstado(detalle.status)}</span></div>
-              <div><span style={{ color: "#a7b3c6" }}>Fecha:</span> <span style={{ color: "#f1f5f9" }}>
-                {formatLocalDate(detalle.sent_at || detalle.created_at, "ES", { month: "long" })}
-              </span></div>
-            </div>
-
-            {detalle.cover_letter && (
-              <div className="mb-4">
-                <h3 className="flex items-center gap-1.5 text-sm font-semibold mb-2" style={{ color: "#d9f99d" }}><FileText size={14} /> Carta de presentación</h3>
-                <div className="rounded-xl p-4 text-sm whitespace-pre-line" style={{ background: "rgba(6,9,11,0.8)", border: "1px solid rgba(148,163,184,0.18)", color: "#cbd5e1" }}>
-                  {detalle.cover_letter}
-                </div>
-              </div>
-            )}
-
-            {detalle.cv_snapshot && (() => {
-              try {
-                const cv = JSON.parse(detalle.cv_snapshot);
-                return (
-                  <div>
-                    <h3 className="text-sm font-semibold mb-2" style={{ color: "#d9f99d" }}>CV enviado</h3>
-                    <div className="rounded-xl p-4 text-sm space-y-2" style={{ background: "rgba(6,9,11,0.8)", border: "1px solid rgba(148,163,184,0.18)" }}>
-                      {cv.nombre && <p className="font-semibold" style={{ color: "#f1f5f9" }}>{cv.nombre} {cv.apellidos || ""}</p>}
-                      {cv.ciudad && <p style={{ color: "#a7b3c6" }}>{cv.ciudad}{cv.provincia ? `, ${cv.provincia}` : ""}</p>}
-                      {cv.telefono && <p style={{ color: "#a7b3c6" }}>📞 {cv.telefono}</p>}
-                      {cv.email && <p style={{ color: "#a7b3c6" }}>{cv.email}</p>}
-                      {cv.perfil && <p className="mt-2 italic" style={{ color: "#cbd5e1" }}>"{cv.perfil}"</p>}
-                    </div>
-                  </div>
-                );
-              } catch { return null; }
-            })()}
-
-            {!detalle.cover_letter && !detalle.cv_snapshot && (
-              <p className="text-sm text-center py-4" style={{ color: "var(--texto-tenue)" }}>Este envío no tiene detalle guardado (se envió antes de esta actualización).</p>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

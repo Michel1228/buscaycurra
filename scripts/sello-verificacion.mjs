@@ -2220,23 +2220,43 @@ test("destinoDeNotificacion no manda a una oferta inventada", async () => {
   execFileSync("npx", ["esbuild", "lib/notificaciones/destino.ts", "--bundle",
     "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
     { stdio: "pipe", shell: true });
-  const { destinoDeNotificacion } = await import(`../${salida}`);
+  const { destinoDeNotificacion, esAlertaDesplegable } = await import(`../${salida}`);
 
+  // 21 nov 2026 (Michel): lo que se pulsa es lo que se abre. Un aviso de envío
+  // lleva a ESE envío (/app/envios/<id>, con su carta y su CV), no a la lista;
+  // una alerta de una sola oferta, a esa oferta; la de varias, desplegada.
   const casos = [
-    // Lo que rompia: identificador de la cola, no de una oferta.
-    [{ tipo: "cv_enviado", datos: { companyName: "Acme", colaJobId: "cv-8f3a-1757" } }, "/app/envios"],
-    // Y las que ya estan guardadas con el nombre viejo, que tambien se reparan.
-    [{ tipo: "cv_enviado", datos: { companyName: "Acme", jobId: "cv-8f3a-1757" } }, "/app/envios"],
+    // Lo que rompia: identificador de la cola, no de una oferta. Ahora abre ese envío.
+    [{ tipo: "cv_enviado", datos: { companyName: "Acme", colaJobId: "cv-8f3a-1757" } }, "/app/envios/cv-8f3a-1757"],
+    // Las que ya estan guardadas con el nombre viejo: nunca una oferta; el último envío a esa empresa.
+    [{ tipo: "cv_enviado", datos: { companyName: "Acme", jobId: "cv-8f3a-1757" } }, "/app/envios?empresa=Acme"],
     // Una oferta de verdad si tiene que llevar a la oferta.
     [{ tipo: "cv_enviado", datos: { jobId: "d92fd96823e08edc626d0c07" } }, "/app/ofertas/d92fd96823e08edc626d0c07"],
-    // Y el destino explicito manda por encima de todo.
+    // Y el destino explicito manda cuando no hay un envío concreto.
     [{ tipo: "cv_enviado", datos: { url: "/app/pipeline" } }, "/app/pipeline"],
+    // «Han visto tu CV» y «No llegó»: ese envío, aunque el aviso viejo trajera la lista.
+    [{ tipo: "cv_visto", datos: { envioId: "0b6f2c1e-1111-4222-8333-944455556666" } }, "/app/envios/0b6f2c1e-1111-4222-8333-944455556666"],
+    [{ tipo: "cv_enviado", datos: { envioId: "0b6f2c1e-1111-4222-8333-944455556666", url: "/app/envios" } }, "/app/envios/0b6f2c1e-1111-4222-8333-944455556666"],
+    [{ tipo: "cv_fallido", datos: { companyName: "Bar Pepe", colaJobId: "cv-u1-1757" } }, "/app/envios/cv-u1-1757"],
+    // Alertas: una oferta → esa oferta; varias → el listado con esa alerta abierta.
+    [{ id: "n1", tipo: "alerta_empleo", datos: { job_id: "abc", job_ids: "abc" } }, "/app/ofertas/abc"],
+    [{ id: "n1", tipo: "alerta_empleo", datos: { job_id: "abc", job_ids: "abc,def,ghi" } }, "/app/notificaciones?abrir=n1"],
+    // «Guzzi mandó tu CV a N empresas»: lo que mandó, no el chat.
+    [{ tipo: "agente_auto", datos: {} }, "/app/envios"],
   ];
 
   let bien = true;
   for (const [n, esperado] of casos) {
     const r = destinoDeNotificacion(n);
     if (r !== esperado) { console.log(`      ${JSON.stringify(n.datos)} -> ${r} (se esperaba ${esperado})`); bien = false; }
+  }
+  if (esAlertaDesplegable({ tipo: "alerta_empleo", datos: { job_ids: "abc" } }) || !esAlertaDesplegable({ tipo: "alerta_empleo", datos: { job_ids: "a,b" } })) {
+    console.log("      una alerta de una sola oferta se despliega en vez de abrir la oferta"); bien = false;
+  }
+  // La ficha del envío existe, solo la ve su dueño y enseña la carta y el CV.
+  const api = leer("app/api/cv-sender/envio/route.ts"), ficha = leer("app/app/envios/[id]/page.tsx");
+  if (!api.includes('.eq("user_id", userId)') || !ficha.includes("envio.carta") || !ficha.includes("El CV que se envió")) {
+    console.log("      la ficha del envío no filtra por su dueño o no enseña la carta y el CV"); bien = false;
   }
   try { unlinkSync(salida); } catch {}
   return bien;
@@ -2586,7 +2606,9 @@ test("diseño de neón: se conserva lo que había (autorrellenos, envíos, pipel
     "autorrellenos de oficio y ciudad donde estaban y en Explorar": ["app/app/buscar/page.tsx", "app/app/perfil/page.tsx", "app/app/salarios/page.tsx", "app/auth/registro/page.tsx"]
       .every((f) => leerFuente(f).includes("useSugerencias(")) && (explorar.match(/useSugerencias\(/g) || []).length === 2 && explorar.includes("puestosDe(") && explorar.includes("ciudadesDe("),
     "envíos: cancelar, quitar, vaciar, filtros y detalle": envios.includes('"/api/cv-sender/cancel"') && envios.includes("body: JSON.stringify({ all: true })")
-      && envios.includes("FILTROS.map") && envios.includes("detalle.cover_letter") && envios.includes("<UsageCounter compact />") && envios.includes("<MisAlertas />"),
+      // 21 nov 2026: el detalle es ahora la ficha de cada envío (/app/envios/[id]), con la carta y el CV.
+      && envios.includes("FILTROS.map") && envios.includes("href={`/app/envios/${encodeURIComponent(envio.id)}`}")
+      && leerFuente("app/app/envios/[id]/page.tsx").includes("envio.carta") && envios.includes("<UsageCounter compact />") && envios.includes("<MisAlertas />"),
     "envíos: el total es el de verdad, no los 20 últimos": envios.includes("resumen.totalEnviados"),
     "pipeline: arrastrar, mover, notas, apuntar a mano y filtros": pipe.includes("onDragStart") && pipe.includes("moverCandidatura(candidaturaEdit.id, c.id)")
       && pipe.includes("guardarNotas") && pipe.includes("crearCandidatura") && pipe.includes("setFiltroActivo(activo ? null : s.filtro)") && pipe.includes("setCelebracion(true)"),
@@ -2993,6 +3015,7 @@ const RUTAS_SIN_CORREO_VERIFICADO = {
     "cv/descargar GET", "cv/lista GET", "cv/lista POST" /* leer un CV por id */, "cv/obtener GET",
     "cv/pdf-template GET", // baja el PDF ya hecho por su id; hacerlo (POST) es acción
     "empresas/alta GET", "perfil/puntuacion GET", // cómo va el alta de su empresa y su propia puntuación (21 nov 2026)
+    "cv-sender/envio GET", // ver uno de sus envíos, con la carta y el CV (21 nov 2026)
     "dashboard GET", "empresas/zona GET", "empresas/zona POST", "entrevistas/empresa GET", "entrevistas/sector GET", "ett/search POST",
     "gusi/conversations/[id] GET", "gusi/conversations GET", "gusi/cv GET",
     "jobs/alertas GET", "jobs/by-ids GET", "jobs/comprobar GET", "jobs/count GET", "jobs/detail GET", "jobs/guardar GET", "jobs/jooble POST", "jobs/search GET",
