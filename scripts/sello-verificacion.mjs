@@ -7875,6 +7875,38 @@ test("web pública: canonical igual que el mapa del sitio y títulos propios", (
     && leerFuente("app/cookies/layout.tsx").includes('title: "Política de cookies — BuscayCurra"');
 });
 
+// 22 NOV 2026, Michel: «no me muestra el PDF de mi CV». La empresa recibe el PDF
+// con la plantilla, pero la ficha del envío enseñaba un resumen en texto. Y la
+// plantilla clásica (266 de 348 CV) ponía «📷 Foto» en ese PDF si no había foto.
+test("la ficha del envío enseña el CV con su plantilla y la clásica sin foto pone la inicial", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-plantillas-envio.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/cv-generator/plantillas.ts", "--bundle",
+      "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"],
+      { stdio: "pipe", shell: true });
+    const { generarCV } = await import(`../${salida}`);
+    const sinFoto = generarCV({ nombre: "ana", templateId: "clasica" });
+    const ficha = leerFuente("app/app/envios/[id]/page.tsx");
+    const worker = leerFuente("lib/cv-sender/worker.ts");
+    const checks = {
+      "la clásica sin foto no pone «📷 Foto»": !sinFoto.includes("📷") && sinFoto.includes('class="photo-placeholder">A<'),
+      "el worker adjunta el PDF de la plantilla": worker.includes("const html = generarCV(cvData);") && worker.includes("cvBuffer = await generateCVPdf(html);"),
+      "la ficha monta el CV igual que el worker": ficha.includes("generarCV(normalizar(envio.cv))") && ficha.includes("srcDoc={htmlVista}"),
+      "y se puede descargar en PDF": ficha.includes("descargarCVComoPDF(htmlCV"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo probar: ${e.message?.slice(0, 80)}`);
+    return false;
+  } finally {
+    try { unlinkSync(salida); } catch {}
+  }
+});
+
 await Promise.all(pendientes);
 
 console.log(`\n${'═'.repeat(50)}`);

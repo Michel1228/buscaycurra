@@ -101,9 +101,11 @@ export function generarCVHTML(data: CVData): string {
 
   // Validar foto URL — https o imagen embebida (data:image/, usada por el CV de ejemplo)
   const fotoUrlSafe = data.fotoUrl && /^(https?:\/\/|data:image\/)/.test(data.fotoUrl) ? data.fotoUrl : null;
+  // Sin foto, la inicial, como en las demás plantillas. Antes ponía «📷 Foto»,
+  // y eso llegaba tal cual a las empresas en el PDF (22 nov 2026).
   const fotoSection = fotoUrlSafe
     ? `<img src="${escapeHtml(fotoUrlSafe)}" alt="Foto" />`
-    : `<div class="photo-placeholder">📷<br>Foto</div>`;
+    : `<div class="photo-placeholder">${escapeHtml((data.nombre || "?").trim().charAt(0).toUpperCase())}</div>`;
 
   const contactItems = [
     data.telefono ? `<li><span class="contact-icon">■</span>${escapeHtml(data.telefono)}</li>` : "",
@@ -132,7 +134,7 @@ export function generarCVHTML(data: CVData): string {
   .left-column { width: 30%; background: #1B2845; padding: 35px 22px 30px; display: flex; flex-direction: column; align-items: center; }
   .photo-wrapper { width: 155px; height: 155px; border-radius: 50%; border: 3px solid ${accent}; overflow: hidden; margin-bottom: 18px; }
   .photo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-  .photo-placeholder { width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 10px; text-align: center; border-radius: 50%; }
+  .photo-placeholder { width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.85); font-size: 64px; font-weight: 700; text-align: center; border-radius: 50%; }
   .name-block { text-align: center; margin-bottom: 8px; }
   .name-block .first-name { font-size: 21px; font-style: italic; font-weight: 600; color: #ffffff; line-height: 1.2; }
   .name-block .last-name { font-size: 21px; font-style: italic; font-weight: 700; color: ${accent}; line-height: 1.2; }

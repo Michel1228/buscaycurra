@@ -12,13 +12,16 @@
  * a paso (programado, enviado, entregado, visto, respondido; o falló / no
  * llegó, con el motivo), la carta y el CV tal y como salieron.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import LogoEmpresa from "@/components/neon/LogoEmpresa";
 import { formatLocalDate } from "@/lib/timezone";
-import { ArrowLeft, Briefcase, CheckCircle2, Circle, Clock, ExternalLink, Eye, FileText, Mail, MailCheck, MailX, MessageCircle, X, Ban, Copy } from "lucide-react";
+import { normalizar } from "@/lib/cv-generator/normalizar";
+import { generarCV } from "@/lib/cv-generator/plantillas";
+import { descargarCVComoPDF } from "@/lib/cv-generator/descargar-pdf";
+import { ArrowLeft, Briefcase, CheckCircle2, Circle, Clock, Download, ExternalLink, Eye, FileText, Mail, MailCheck, MailX, MessageCircle, X, Ban, Copy } from "lucide-react";
 
 interface Envio {
   id: string; colaJobId: string | null; empresa: string; correo: string; oferta: string | null; puesto: string | null;
@@ -35,7 +38,6 @@ const COLOR: Record<string, string> = {
   fallido: "#f87171", rebotado: "#f87171", cancelado: "#94a3b8",
 };
 const caja = { background: "rgba(6,9,11,0.8)", border: "1px solid rgba(148,163,184,0.18)" };
-const t = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 const fecha = (s: string | null) => (s ? formatLocalDate(s, "ES", { month: "long" }) : "");
 
 /** Lo que significa cada estado, en palabras de la persona. */
@@ -60,6 +62,44 @@ export default function EnvioPage() {
   const [error, setError] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+  const [descargando, setDescargando] = useState(false);
+  const [avisoPDF, setAvisoPDF] = useState("");
+  const marco = useRef<HTMLDivElement>(null);
+  const [ancho, setAncho] = useState(0);
+  const [alto, setAlto] = useState(1123);
+
+  // EL CV CON SU PLANTILLA, NO UN RESUMEN EN TEXTO (22 nov 2026, Michel: «no me
+  // muestra el PDF de mi CV»). La empresa recibe un PDF montado con la plantilla
+  // que la persona eligió (lib/cv-sender/worker.ts: normalizar → generarCV →
+  // generateCVPdf). Aquí se monta igual, con la copia guardada al enviar.
+  const htmlCV = useMemo(() => {
+    if (!envio?.cv) return "";
+    try { return generarCV(normalizar(envio.cv)); } catch { return ""; }
+  }, [envio?.cv]);
+
+  // Para verlo como en el PDF: sin el fondo gris ni el margen que la plantilla
+  // pone en pantalla (generate-pdf.ts los quita igual al montar el PDF).
+  const htmlVista = htmlCV.replace("</head>", "<style>html,body{margin:0!important;padding:0!important;background:#fff!important;display:block!important}.cv-page{margin:0!important;box-shadow:none!important}</style></head>");
+
+  // La hoja es A4 (794 px de ancho): se encoge al ancho de la pantalla.
+  useEffect(() => {
+    const el = marco.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setAncho(e.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [htmlCV]);
+
+  async function descargar() {
+    if (!envio) return;
+    setDescargando(true);
+    setAvisoPDF("");
+    try {
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      const fallo = await descargarCVComoPDF(htmlCV, session?.access_token ?? "", `CV_${envio.empresa.replace(/\s+/g, "_")}`);
+      if (fallo) setAvisoPDF(fallo);
+    } finally { setDescargando(false); }
+  }
 
   useEffect(() => {
     (async () => {
@@ -120,13 +160,7 @@ export default function EnvioPage() {
       ]),
   ];
 
-  const cv = envio.cv || {};
-  const experiencia = (Array.isArray(cv.experiencia) ? cv.experiencia : []) as Record<string, unknown>[];
-  const formacion = (Array.isArray(cv.formacion) ? cv.formacion : []) as Record<string, unknown>[];
-  const aptitudes = Array.isArray(cv.aptitudes) ? (cv.aptitudes as unknown[]).map(t).filter(Boolean) : t(cv.aptitudes).split(/[,;]/).map((s) => s.trim()).filter(Boolean);
-  const idiomas = Array.isArray(cv.idiomas) ? (cv.idiomas as Record<string, unknown>[]).map((i) => t(i?.nombre)).filter(Boolean) : t(cv.idiomas) ? [t(cv.idiomas)] : [];
-  const perfil = t(cv.perfilProfesional) || t(cv.perfil);
-  const descripcion = (d: unknown) => (Array.isArray(d) ? d.map(t).filter(Boolean).join("\n") : t(d));
+  const escala = ancho ? ancho / 794 : 0;
 
   return (
     <div className="ui-neon min-h-screen pt-16">
@@ -203,40 +237,32 @@ export default function EnvioPage() {
 
         {/* El CV tal y como salió */}
         <section className="cristal tono-neutro p-5">
-          <h2 className="text-[15px] font-bold mb-3" style={{ color: "#d9f99d" }}>El CV que se envió</h2>
-          {envio.cv ? (
-            <div className="rounded-xl p-4 space-y-3 text-[13.5px]" style={caja}>
-              <div>
-                <p className="font-bold text-[15px]" style={{ color: "#f1f5f9" }}>{[t(cv.nombre), t(cv.apellidos)].filter(Boolean).join(" ")}</p>
-                {t(cv.subtitulo) && <p style={{ color: "#cbd5e1" }}>{t(cv.subtitulo)}</p>}
-                <p className="text-[12.5px]" style={{ color: "#a7b3c6" }}>{[t(cv.ciudad), t(cv.email), t(cv.telefono)].filter(Boolean).join(" · ")}</p>
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <h2 className="text-[15px] font-bold" style={{ color: "#d9f99d" }}>El CV que se envió</h2>
+            {htmlCV && (
+              <button type="button" onClick={() => void descargar()} disabled={descargando}
+                className="inline-flex items-center gap-1 text-[12px] min-h-[36px] px-2 disabled:opacity-50" style={{ color: "#a7b3c6" }}>
+                <Download size={13} aria-hidden="true" /> {descargando ? "Preparando…" : "Descargar PDF"}
+              </button>
+            )}
+          </div>
+          {htmlCV ? (
+            <>
+              <p className="text-[12.5px] mb-3" style={{ color: "#a7b3c6" }}>La empresa lo recibió en PDF, con tu plantilla, junto a la carta.</p>
+              {avisoPDF && <p className="text-[12px] mb-2" style={{ color: "#fca5a5" }}>{avisoPDF}</p>}
+              <div ref={marco} className="rounded-xl overflow-hidden bg-white" style={{ height: escala ? alto * escala : undefined, aspectRatio: escala ? undefined : "794 / 1123" }}>
+                {escala > 0 && (
+                  <iframe
+                    srcDoc={htmlVista}
+                    title={`CV enviado a ${envio.empresa}`}
+                    tabIndex={-1}
+                    scrolling="no"
+                    onLoad={(e) => { const h = e.currentTarget.contentDocument?.documentElement.scrollHeight; if (h) setAlto(Math.max(1123, h)); }}
+                    style={{ width: 794, height: alto, border: "none", transformOrigin: "top left", transform: `scale(${escala})`, pointerEvents: "none" }}
+                  />
+                )}
               </div>
-              {perfil && <p className="leading-relaxed" style={{ color: "#cbd5e1" }}>{perfil}</p>}
-              {experiencia.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: "#a7b3c6" }}>Experiencia</p>
-                  <ul className="space-y-2">
-                    {experiencia.map((x, i) => (
-                      <li key={i}>
-                        <p className="font-semibold" style={{ color: "#f1f5f9" }}>{[t(x.puesto), t(x.empresa)].filter(Boolean).join(" · ")}</p>
-                        {(t(x.fechas) || t(x.ubicacion)) && <p className="text-[12px]" style={{ color: "#a7b3c6" }}>{[t(x.fechas), t(x.ubicacion)].filter(Boolean).join(" · ")}</p>}
-                        {descripcion(x.descripcion) && <p className="text-[12.5px] whitespace-pre-line" style={{ color: "#cbd5e1" }}>{descripcion(x.descripcion)}</p>}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {formacion.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: "#a7b3c6" }}>Formación</p>
-                  <ul className="space-y-1">
-                    {formacion.map((f, i) => <li key={i} style={{ color: "#dbe3ee" }}>{[t(f.titulo), t(f.centro)].filter(Boolean).join(" · ")}</li>)}
-                  </ul>
-                </div>
-              )}
-              {aptitudes.length > 0 && <p style={{ color: "#cbd5e1" }}><span className="font-semibold" style={{ color: "#a7b3c6" }}>Aptitudes: </span>{aptitudes.join(", ")}</p>}
-              {idiomas.length > 0 && <p style={{ color: "#cbd5e1" }}><span className="font-semibold" style={{ color: "#a7b3c6" }}>Idiomas: </span>{idiomas.join(", ")}</p>}
-            </div>
+            </>
           ) : (
             <p className="text-[13px]" style={{ color: "#a7b3c6" }}>
               {envio.estado === "pendiente" ? "Se adjunta tu CV tal y como esté cuando salga." : "Este envío no guardó la copia del CV (es de antes de que se guardara)."}{" "}
