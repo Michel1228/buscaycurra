@@ -58,9 +58,11 @@ export async function GET(req: NextRequest) {
       entrevistas,
       // Para proponer las preguntas de su sector al crear una entrevista (lib/empresas/plantillas-entrevista.ts).
       alcance: cuenta.alcance,
+      // El nombre que verá el candidato al crear una entrevista nueva.
+      razonSocial: cuenta.razonSocial,
       invitaciones: invitaciones.map((i) => ({
         id: i.id, candidatoId: i.user_id, empresa: i.empresa, puesto: i.puesto, preguntas: i.preguntas,
-        intentos: i.intentos, respuestas: i.respuestas, enviadaEn: i.enviada_en, marcas: i.marcas, nota: i.nota, creado: i.creado,
+        respuestas: i.respuestas, enviadaEn: i.enviada_en, marcas: i.marcas, nota: i.nota, creado: i.creado,
         ...(datos.get(i.user_id) ?? { nombre: "Candidato", ciudad: "", referencias: 0 }),
       })),
     });

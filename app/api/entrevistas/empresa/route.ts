@@ -8,6 +8,8 @@
  *
  * Al candidato no se le devuelven las marcas ni la nota que pone la empresa:
  * son su forma de valorar. Si las pide, se le dan como cualquier dato suyo.
+ * Tampoco lo que la empresa espera oír en cada pregunta (23 nov 2026): es una
+ * entrevista de verdad, con las mismas reglas para todos, no un ensayo.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId, correoSinVerificar } from "@/lib/auth-server";
@@ -16,8 +18,8 @@ import { invitacionPorId, invitacionesDeCandidato, quitarInvitacion, type Invita
 export const dynamic = "force-dynamic";
 
 const paraElCandidato = (i: Invitacion) => ({
-  id: i.id, empresa: i.empresa, puesto: i.puesto, preguntas: i.preguntas,
-  intentos: i.intentos, respuestas: i.respuestas, enviadaEn: i.enviada_en, creado: i.creado,
+  id: i.id, empresa: i.empresa, puesto: i.puesto, preguntas: i.preguntas.map((p) => ({ texto: p.texto })),
+  respuestas: i.respuestas, enviadaEn: i.enviada_en, creado: i.creado,
   leida: i.marcas !== null,
 });
 

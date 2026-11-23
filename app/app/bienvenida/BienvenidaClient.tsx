@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import PrimerDia from "@/components/PrimerDia";
+import InvitacionesEmpresa from "@/components/VoiceInterview/InvitacionesEmpresa";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { CORREO_ANOTACION_MANUAL } from "@/lib/cv-sender/anotacion";
 import { sueldoCreible } from "@/lib/sueldo-visible";
@@ -213,6 +214,9 @@ export default function BienvenidaClient() {
             quien acaba de llegar cuatro ceros no le dicen nada: lo que necesita
             es saber por donde se empieza. Desaparece sola al completarlos. */}
         <PrimerDia />
+
+        {/* Las entrevistas que te ha mandado una empresa y aún no has hecho. */}
+        <InvitacionesEmpresa soloPendientes />
 
         {/* ── Las cuatro cifras (de /api/dashboard) ── */}
         <section aria-label="Tu resumen de hoy" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

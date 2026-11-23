@@ -12,17 +12,18 @@
  */
 
 import { Metadata } from "next";
+import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import Link from "next/link";
-import { Lock, User, MapPin, Wrench, Briefcase, GraduationCap, Globe, Mail, Phone, BadgeCheck } from "lucide-react";
+import { MapPin, Wrench, Briefcase, GraduationCap, Globe, Mail, Phone, BadgeCheck, Gauge, UserRound, FileText, ArrowLeft } from "lucide-react";
 import { enlaceCarta, referenciasVerificadas } from "@/lib/referencias/referencias";
 import { abrirCandidato, cuentaEmpresa } from "@/lib/empresas/cuenta";
 import { candidatoVisible } from "@/lib/empresas/candidatos";
 import { NIVELES, puedeVer } from "@/lib/empresas/reglas";
 import { correoVerificado } from "@/lib/auth/correo-verificado";
 import InvitarEntrevista from "@/components/empresas/InvitarEntrevista";
-import FondoOleaje from "@/components/FondoOleaje";
+import { AvatarPersona, AvisoContratacion, MarcoContratacion } from "@/components/empresas/AreaContratacion";
+import { Etiqueta } from "@/components/neon/Neon";
 
 export const dynamic = "force-dynamic";
 
@@ -62,17 +63,9 @@ function texto(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
+/** Lo que sale cuando el CV no se puede enseñar: en el marco del área de contratación. */
 function Aviso({ titulo, mensaje, enlace, boton }: { titulo: string; mensaje: string; enlace: string; boton: string }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1117" }}>
-      <div className="text-center p-10 max-w-md">
-        <div className="flex justify-center mb-4"><Lock size={48} strokeWidth={1.2} style={{ color: "#94a3b8" }} /></div>
-        <h1 className="text-xl font-bold mb-2" style={{ color: "#f1f5f9" }}>{titulo}</h1>
-        <p className="text-sm" style={{ color: "#8b98ad" }}>{mensaje}</p>
-        <Link href={enlace} className="inline-block mt-4 text-sm" style={{ color: "#22c55e" }}>{boton}</Link>
-      </div>
-    </div>
-  );
+  return <AvisoContratacion titulo={titulo} texto={mensaje} enlace={enlace} boton={boton} />;
 }
 
 export default async function TalentoPage({ params }: Props) {
@@ -149,156 +142,137 @@ export default async function TalentoPage({ params }: Props) {
     return { id: r.id, empresa: r.empresa, firmante: r.firmante, cargo: r.cargo, fecha, carta };
   }));
 
-  const caja = { background: "rgba(12,15,22,0.78)", border: "1px solid rgba(148,163,184,0.18)" };
+  // Las tarjetas de cada parte del CV: el mismo cristal que el resto de la app.
+  const Bloque = ({ Icono, titulo, tono = "neutro", children }: { Icono: typeof Briefcase; titulo: string; tono?: string; children: ReactNode }) => (
+    <section className={`cristal tono-${tono} p-5`}>
+      <h2 className="flex items-center gap-2 text-[15px] font-bold mb-3" style={{ color: "#f8fafc" }}>
+        <Icono size={18} strokeWidth={1.9} style={{ color: "var(--tono-texto)" }} aria-hidden="true" />{titulo}
+      </h2>
+      {children}
+    </section>
+  );
 
-  return (
-    <div className="min-h-screen" style={{ background: "#0f1117" }}>
-      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
-      <FondoOleaje />
-      {esElMismo && (
-        <p className="text-center text-xs py-2" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e" }}>
-          Así ven tu CV las empresas verificadas de tu sector, las ETT y las agencias de colocación.
-        </p>
-      )}
-      <div className="py-16 px-4" style={{ background: "linear-gradient(135deg, #1a1d28, #0f1117)" }}>
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.2), rgba(59,130,246,0.2))", border: "2px solid rgba(34,197,94,0.3)" }}>
-            <User size={40} strokeWidth={1.2} style={{ color: "#22c55e" }} />
+  const contenido = (
+    <>
+      {/* Quién es, de un vistazo: inicial, nombre, puesto, ciudad, puntuación y cómo contactar. */}
+      <section className="cristal tono-cian p-5 sm:p-6">
+        <div className="flex items-center gap-4">
+          <AvatarPersona id={id} nombre={nombre} size={64} />
+          <div className="flex-1 min-w-0">
+            <h2 className="text-[22px] sm:text-[26px] font-extrabold leading-tight" style={{ color: "#f8fafc" }}>{nombre}</h2>
+            {puesto && <p className="text-[14px] font-semibold mt-0.5 line-clamp-2" style={{ color: "#99f6e4" }}>{puesto}</p>}
+            {ciudad && <p className="flex items-center gap-1 text-[13px] mt-1" style={{ color: "#a7b3c6" }}><MapPin size={13} aria-hidden="true" />{ciudad}</p>}
           </div>
-          <h1 className="text-3xl font-bold mb-1" style={{ color: "#f1f5f9" }}>{nombre}</h1>
-          {puesto && <p className="text-lg mb-3" style={{ color: "#22c55e" }}>{puesto}</p>}
-          {ciudad && <p className="flex items-center justify-center gap-1 text-sm" style={{ color: "#94a3b8" }}><MapPin size={13} strokeWidth={1.8} />{ciudad}</p>}
         </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-        {/* Contacto */}
+        <div className="flex flex-wrap gap-1.5 mt-4">
+          <Etiqueta tono="cian"><Gauge size={12} aria-hidden="true" />{nota.total}/100 · {NIVELES[nota.nivel]}</Etiqueta>
+          {referencias.length > 0 && (
+            <Etiqueta tono="verde"><BadgeCheck size={12} aria-hidden="true" />{referencias.length > 1 ? `${referencias.length} referencias verificadas` : "Referencia verificada"}</Etiqueta>
+          )}
+        </div>
         {(email || telefono) && (
-          <div className="p-5 rounded-xl flex flex-wrap gap-x-6 gap-y-2" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
-            {email && (
-              <a href={`mailto:${email}`} className="flex items-center gap-1.5 text-sm hover:opacity-80" style={{ color: "#22c55e" }}>
-                <Mail size={14} strokeWidth={1.8} />{email}
-              </a>
-            )}
-            {telefono && (
-              <a href={`tel:${telefono}`} className="flex items-center gap-1.5 text-sm hover:opacity-80" style={{ color: "#f1f5f9" }}>
-                <Phone size={14} strokeWidth={1.8} />{telefono}
-              </a>
-            )}
+          <div className="grid grid-cols-2 gap-2.5 mt-4">
+            {email && <a href={`mailto:${email}`} className="boton-cristal tono-cian px-3"><Mail size={16} aria-hidden="true" />Escribir</a>}
+            {telefono && <a href={`tel:${telefono}`} className="boton-cristal tono-cian px-3"><Phone size={16} aria-hidden="true" />Llamar</a>}
+            <p className="col-span-2 text-[12.5px] break-all" style={{ color: "#a7b3c6" }}>{[email, telefono].filter(Boolean).join(" · ")}</p>
           </div>
         )}
+      </section>
 
-        {/* Puntuación por hechos comprobables (lib/empresas/reglas.ts): sin IA */}
-        <div className="p-5 rounded-xl" style={caja}>
-          <div className="flex items-baseline justify-between gap-3 flex-wrap">
-            <h2 className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Puntuación BuscayCurra</h2>
-            <p className="text-sm" style={{ color: "#22c55e" }}>
-              <strong className="text-2xl tabular-nums">{nota.total}</strong><span className="text-xs" style={{ color: "#8b98ad" }}>/100 · {NIVELES[nota.nivel]}</span>
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {nota.partes.map((p) => (
-              <span key={p.id} className="text-[11px] px-2.5 py-1 rounded-full tabular-nums"
-                style={{ background: p.puntos === p.max ? "rgba(34,197,94,0.1)" : "#0f1117", color: p.puntos === p.max ? "#4ade80" : "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
-                {p.nombre} {p.puntos}/{p.max}
-              </span>
+      {/* Invitarle a la entrevista de la empresa: lo primero que se puede hacer con él. */}
+      {!esElMismo && <InvitarEntrevista candidatoId={id} nombre={nombre} />}
+
+      {/* Puntuación por hechos comprobables (lib/empresas/reglas.ts): sin IA */}
+      <Bloque Icono={Gauge} titulo="Puntuación BuscayCurra" tono="cian">
+        <div className="flex items-end gap-2 mb-3">
+          <span className="text-[40px] font-extrabold leading-none tabular-nums" style={{ color: "#99f6e4" }}>{nota.total}</span>
+          <span className="text-[13px] pb-1" style={{ color: "var(--texto-tenue)" }}>/100 · {NIVELES[nota.nivel]}</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {nota.partes.map((p) => (
+            <Etiqueta key={p.id} tono={p.puntos === p.max ? "verde" : "neutro"}>{p.nombre} {p.puntos}/{p.max}</Etiqueta>
+          ))}
+        </div>
+        <p className="text-[12px] mt-3" style={{ color: "var(--texto-tenue)" }}>Solo hechos comprobables. Ninguna IA valora a la persona.</p>
+      </Bloque>
+
+      {/* Referencias verificadas */}
+      {referencias.length > 0 && (
+        <Bloque Icono={BadgeCheck} titulo="Referencias verificadas" tono="verde">
+          <div className="space-y-3">
+            {referencias.map((r) => (
+              <div key={r.id} className="rounded-xl p-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                <p className="text-[14px] font-semibold" style={{ color: "#f1f5f9" }}>{r.empresa}</p>
+                <p className="text-[12.5px]" style={{ color: "#a7b3c6" }}>{r.firmante}, {r.cargo}{r.fecha ? ` · ${r.fecha}` : ""}</p>
+                {r.carta && (
+                  <a href={r.carta} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-[13px] font-semibold mt-1.5" style={{ color: "#86efac" }}>
+                    <FileText size={14} aria-hidden="true" />Leer la carta
+                  </a>
+                )}
+              </div>
             ))}
           </div>
-          <p className="text-[11px] mt-3" style={{ color: "#8b98ad" }}>
-            Solo cuenta lo que se puede comprobar: cartas de recomendación confirmadas por quien las firmó, lo que tiene el CV y si está al día. Ninguna IA valora a la persona.
-          </p>
+        </Bloque>
+      )}
+
+      {perfil && (
+        <Bloque Icono={UserRound} titulo="Perfil">
+          <p className="text-[14px] leading-relaxed whitespace-pre-wrap" style={{ color: "#cbd5e1" }}>{perfil}</p>
+        </Bloque>
+      )}
+
+      {experiencia.length > 0 && (
+        <Bloque Icono={Briefcase} titulo="Experiencia" tono="azul">
+          <ol className="space-y-4">
+            {experiencia.map((e, i) => (
+              <li key={i} className="pl-4" style={{ borderLeft: "2px solid rgba(59,130,246,0.45)" }}>
+                <p className="text-[14.5px] font-semibold" style={{ color: "#f1f5f9" }}>{e.puesto || e.empresa}</p>
+                {e.puesto && e.empresa && <p className="text-[13px]" style={{ color: "#93c5fd" }}>{e.empresa}</p>}
+                {(e.fechas || e.ubicacion) && <p className="text-[12px]" style={{ color: "var(--texto-tenue)" }}>{[e.fechas, e.ubicacion].filter(Boolean).join(" · ")}</p>}
+                {e.descripcion && <p className="text-[13.5px] whitespace-pre-wrap mt-1.5 leading-relaxed" style={{ color: "#a7b3c6" }}>{e.descripcion}</p>}
+              </li>
+            ))}
+          </ol>
+        </Bloque>
+      )}
+
+      {formacion.length > 0 && (
+        <Bloque Icono={GraduationCap} titulo="Formación" tono="morado">
+          <ul className="space-y-3">
+            {formacion.map((f, i) => (
+              <li key={i}>
+                <p className="text-[14.5px] font-semibold" style={{ color: "#f1f5f9" }}>{f.titulo}</p>
+                {(f.centro || f.ubicacion) && <p className="text-[12.5px]" style={{ color: "#a7b3c6" }}>{[f.centro, f.ubicacion].filter(Boolean).join(" · ")}</p>}
+              </li>
+            ))}
+          </ul>
+        </Bloque>
+      )}
+
+      {(aptitudes.length > 0 || idiomas) && (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {aptitudes.length > 0 && (
+            <Bloque Icono={Wrench} titulo="Aptitudes" tono="ambar">
+              <div className="flex flex-wrap gap-1.5">{aptitudes.map((h) => <Etiqueta key={h} tono="ambar">{h}</Etiqueta>)}</div>
+            </Bloque>
+          )}
+          {idiomas && (
+            <Bloque Icono={Globe} titulo="Idiomas" tono="rosa">
+              <p className="text-[14px]" style={{ color: "#cbd5e1" }}>{idiomas}</p>
+            </Bloque>
+          )}
         </div>
+      )}
 
-        {/* «Me interesa»: invitarle a preparar la entrevista de la empresa */}
-        {!esElMismo && <InvitarEntrevista candidatoId={id} nombre={nombre} />}
+      <a href="/empresas/candidatos" className="boton-cristal tono-neutro"><ArrowLeft size={16} aria-hidden="true" />Volver a candidatos</a>
+    </>
+  );
 
-        {/* Referencias verificadas */}
-        {referencias.length > 0 && (
-          <div className="p-5 rounded-xl" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)" }}>
-            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-1" style={{ color: "#22c55e" }}><BadgeCheck size={14} strokeWidth={1.8} />Referencias verificadas</h2>
-            <p className="text-xs mb-3" style={{ color: "#8b98ad" }}>Quien firmó cada carta ha confirmado que es suya desde el correo de su empresa.</p>
-            <div className="space-y-3">
-              {referencias.map((r) => (
-                <div key={r.id}>
-                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{r.empresa}</p>
-                  <p className="text-xs" style={{ color: "#94a3b8" }}>
-                    Firmada por {r.firmante}, {r.cargo}{r.fecha ? ` · confirmada en ${r.fecha}` : ""}
-                  </p>
-                  {r.carta && (
-                    <a href={r.carta} target="_blank" rel="noopener" className="inline-block text-xs font-semibold mt-1 hover:opacity-80" style={{ color: "#22c55e" }}>
-                      Leer la carta →
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Perfil */}
-        {perfil && (
-          <div className="p-5 rounded-xl" style={caja}>
-            <p className="text-sm whitespace-pre-wrap" style={{ color: "#94a3b8" }}>{perfil}</p>
-          </div>
-        )}
-
-        {/* Aptitudes */}
-        {aptitudes.length > 0 && (
-          <div className="p-5 rounded-xl" style={caja}>
-            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><Wrench size={13} strokeWidth={1.8} />Aptitudes</h2>
-            <div className="flex flex-wrap gap-2">
-              {aptitudes.map((h) => (
-                <span key={h} className="px-3 py-1.5 rounded-lg text-xs"
-                  style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", color: "#22c55e" }}>
-                  {h}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Experiencia */}
-        {experiencia.length > 0 && (
-          <div className="p-5 rounded-xl" style={caja}>
-            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><Briefcase size={13} strokeWidth={1.8} />Experiencia</h2>
-            <div className="space-y-4">
-              {experiencia.map((e, i) => (
-                <div key={i}>
-                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{[e.puesto, e.empresa].filter(Boolean).join(" · ")}</p>
-                  {(e.fechas || e.ubicacion) && <p className="text-xs" style={{ color: "#8b98ad" }}>{[e.fechas, e.ubicacion].filter(Boolean).join(" · ")}</p>}
-                  {e.descripcion && <p className="text-sm whitespace-pre-wrap mt-1" style={{ color: "#94a3b8" }}>{e.descripcion}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Formación */}
-        {formacion.length > 0 && (
-          <div className="p-5 rounded-xl" style={caja}>
-            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><GraduationCap size={13} strokeWidth={1.8} />Formación</h2>
-            <div className="space-y-3">
-              {formacion.map((f, i) => (
-                <div key={i}>
-                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{f.titulo}</p>
-                  {(f.centro || f.ubicacion) && <p className="text-xs" style={{ color: "#8b98ad" }}>{[f.centro, f.ubicacion].filter(Boolean).join(" · ")}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Idiomas */}
-        {idiomas && (
-          <div className="p-5 rounded-xl" style={caja}>
-            <h2 className="flex items-center gap-1.5 text-sm font-semibold mb-3" style={{ color: "#f1f5f9" }}><Globe size={13} strokeWidth={1.8} />Idiomas</h2>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>{idiomas}</p>
-          </div>
-        )}
-
-        <Link href="/empresas/candidatos" className="inline-block text-sm" style={{ color: "#22c55e" }}>← Volver a candidatos</Link>
-      </div>
-    </div>
+  // El propio candidato ve su ficha tal cual la ven las empresas, sin las pestañas de empresa.
+  return (
+    <MarcoContratacion seccion="candidatos" titulo={esElMismo ? "Así te ven las empresas" : "Ficha del candidato"} Icono={UserRound}
+      empresa={esElMismo ? "Las empresas verificadas de tu sector, las ETT y las agencias de colocación" : cuenta?.razonSocial} pestanas={!esElMismo}>
+      {contenido}
+    </MarcoContratacion>
   );
 }

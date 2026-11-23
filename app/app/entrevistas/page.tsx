@@ -258,7 +258,7 @@ export default function EntrevistasPage() {
           </p>
         </div>
 
-        {/* Las empresas que le han invitado a preparar su entrevista */}
+        {/* Las entrevistas que le han mandado las empresas: arriba, antes del simulador */}
         {token && <InvitacionesEmpresa token={token} />}
 
         {/* Qué preguntas y para qué país */}

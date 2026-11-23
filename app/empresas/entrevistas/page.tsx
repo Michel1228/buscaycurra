@@ -1,16 +1,28 @@
 "use client";
 
 /**
- * /empresas/entrevistas — Las preguntas de entrevista de una empresa y lo que han
- * contestado los candidatos invitados (lib/entrevistas/empresa.ts). Plan Empresa.
+ * /empresas/entrevistas — Las entrevistas de la empresa y las respuestas de los
+ * candidatos invitados (lib/entrevistas/empresa.ts). Empresas verificadas.
  *
- * La nota de cada candidato la pone la empresa marcando lo que ha cubierto: aquí
- * no llega ninguna nota de la IA. La referencia verificada va aparte, como sello.
+ * 23 nov 2026 (Michel): «sin que la empresa tenga que trabajar mucho para meter
+ * las preguntas» y «que no sea un montón de letras». Crear una entrevista es
+ * poner el puesto: las preguntas de su sector salen ya marcadas
+ * (lib/empresas/plantillas-entrevista.ts) y se quitan, cambian o añaden con un
+ * toque; «qué esperas oír» es opcional. El candidato la hace desde la app y la
+ * nota la pone una persona de la empresa, tocando lo que ha cubierto.
+ *
+ * Enlaces que llegan aquí: ?nueva=1 (abre la creación), &invitar=<id>&nombre=
+ * (al guardar, invita a ese candidato: viene de su ficha) y ?ver=<invitación>
+ * (viene del aviso de que alguien ha contestado).
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import {
+  Check, CheckCircle2, ChevronDown, Clock, FileText, MessagesSquare, Mic, PenLine, Plus, Send, Sparkles, Trash2, Users, X,
+} from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import FondoOleaje from "@/components/FondoOleaje";
+import { CifraGrande, Etiqueta } from "@/components/neon/Neon";
+import { AvatarPersona, AvisoContratacion, MarcoContratacion } from "@/components/empresas/AreaContratacion";
 import { PLANTILLAS } from "@/lib/empresas/plantillas-entrevista";
 import { SECTORES_EMPRESA, deTema, preguntaDiscriminatoria, type SectorEmpresa } from "@/lib/empresas/reglas";
 
@@ -18,47 +30,79 @@ interface Pregunta { texto: string; puntos: string[] }
 interface Entrevista { id: string; empresa: string; puesto: string; preguntas: Pregunta[] }
 interface Invitacion {
   id: string; candidatoId: string; nombre: string; ciudad: string; referencias: number;
-  empresa: string; puesto: string; preguntas: Pregunta[]; intentos: number;
+  empresa: string; puesto: string; preguntas: Pregunta[];
   respuestas: string[] | null; enviadaEn: string | null; marcas: boolean[][] | null; nota: number | null;
 }
-interface Borrador { id?: string; empresa: string; puesto: string; preguntas: { texto: string; puntos: string }[] }
+interface PreguntaBorrador { texto: string; puntos: string; abierta?: boolean }
+interface Borrador { id?: string; empresa: string; puesto: string; preguntas: PreguntaBorrador[] }
 
-const vacio = (empresa = ""): Borrador => ({ empresa, puesto: "", preguntas: [{ texto: "", puntos: "" }] });
-const caja = { background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" };
+const MAXIMO = 8;
 const fecha = (s: string) => new Date(s).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+const deSugerencia = (p: { texto: string; puntos: string[] }): PreguntaBorrador => ({ texto: p.texto, puntos: p.puntos.join("\n") });
+
+/** El número de cada paso, en su círculo. */
+function Paso({ n, titulo, extra }: { n: number; titulo: string; extra?: string }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-3">
+      <span className="icono-circulo tono-cian text-[14px] font-extrabold" style={{ width: 30, height: 30 }} aria-hidden="true">{n}</span>
+      <h2 className="text-[16px] font-bold" style={{ color: "#f8fafc" }}>{titulo}</h2>
+      {extra && <span className="ml-auto text-[13px] font-semibold tabular-nums" style={{ color: "#99f6e4" }}>{extra}</span>}
+    </div>
+  );
+}
 
 export default function EntrevistasEmpresaPage() {
   const [token, setToken] = useState("");
   const [estado, setEstado] = useState<"cargando" | "entrar" | "plan" | "listo">("cargando");
   const [entrevistas, setEntrevistas] = useState<Entrevista[]>([]);
   const [invitaciones, setInvitaciones] = useState<Invitacion[]>([]);
+  const [razonSocial, setRazonSocial] = useState("");
+  const [sectorPlantilla, setSectorPlantilla] = useState<SectorEmpresa>("otro");
   const [borrador, setBorrador] = useState<Borrador | null>(null);
+  const [cambiarNombre, setCambiarNombre] = useState(false);
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [abierta, setAbierta] = useState<string | null>(null);
   const [marcas, setMarcas] = useState<Record<string, boolean[][]>>({});
-  // El sector de las preguntas propuestas: el primero de la empresa; las ETT y agencias eligen.
-  const [sectorPlantilla, setSectorPlantilla] = useState<SectorEmpresa>("otro");
+  const [hecho, setHecho] = useState("");
+  // El candidato al que invitar al guardar (viene de su ficha).
+  const invitarA = useRef<{ id: string; nombre: string } | null>(null);
+
+  /** Una entrevista nueva con las preguntas del sector ya puestas: basta con escribir el puesto. */
+  const nueva = useCallback((empresa: string, sector: SectorEmpresa) => {
+    setBorrador({ empresa, puesto: "", preguntas: PLANTILLAS[sector].map(deSugerencia) });
+    setCambiarNombre(false); setError("");
+  }, []);
 
   const cargar = useCallback(async (t: string) => {
     const r = await fetch("/api/empresas/entrevistas", { headers: { Authorization: `Bearer ${t}` } });
     if (r.status === 401) { setEstado("entrar"); return; }
     if (r.status === 402) { setEstado("plan"); return; }
     const j = await r.json().catch(() => ({}));
-    setEntrevistas(j.entrevistas || []);
+    const lista: Entrevista[] = j.entrevistas || [];
+    setEntrevistas(lista);
     setInvitaciones(j.invitaciones || []);
+    const nombre = j.razonSocial || lista[0]?.empresa || "";
+    setRazonSocial(nombre);
     const suyo = j.alcance?.sectores?.[0];
-    if (suyo && suyo in PLANTILLAS) setSectorPlantilla(suyo as SectorEmpresa);
+    const sector: SectorEmpresa = suyo && suyo in PLANTILLAS ? suyo : "otro";
+    setSectorPlantilla(sector);
     setEstado("listo");
-  }, []);
 
-  /** Pone las preguntas del sector en el borrador: sustituye las vacías y no pasa de 8. */
-  function usarPlantilla() {
-    if (!borrador) return;
-    const propias = borrador.preguntas.filter((p) => p.texto.trim());
-    const nuevas = PLANTILLAS[sectorPlantilla].map((p) => ({ texto: p.texto, puntos: p.puntos.join("\n") }));
-    setBorrador({ ...borrador, preguntas: [...propias, ...nuevas].slice(0, 8) });
-  }
+    // Lo que pide el enlace por el que se ha llegado.
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("invitar")) invitarA.current = { id: q.get("invitar")!, nombre: q.get("nombre") || "el candidato" };
+    if (q.get("nueva")) nueva(nombre, sector);
+    const ver = q.get("ver");
+    if (ver) {
+      const inv = (j.invitaciones as Invitacion[] | undefined)?.find((i) => i.id === ver);
+      if (inv) {
+        setAbierta(inv.id);
+        setMarcas((m) => ({ ...m, [inv.id]: inv.marcas ?? inv.preguntas.map((p) => p.puntos.map(() => false)) }));
+        setTimeout(() => document.getElementById(`inv-${inv.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+      }
+    }
+  }, [nueva]);
 
   useEffect(() => {
     (async () => {
@@ -69,6 +113,23 @@ export default function EntrevistasEmpresaPage() {
     })();
   }, [cargar]);
 
+  // ── Crear y editar ───────────────────────────────────────────────────────
+  const cambiarPregunta = (i: number, cambio: Partial<PreguntaBorrador>) =>
+    borrador && setBorrador({ ...borrador, preguntas: borrador.preguntas.map((p, k) => (k === i ? { ...p, ...cambio } : p)) });
+
+  function alternarSugerencia(s: { texto: string; puntos: string[] }) {
+    if (!borrador) return;
+    const esta = borrador.preguntas.some((p) => p.texto === s.texto);
+    if (esta) setBorrador({ ...borrador, preguntas: borrador.preguntas.filter((p) => p.texto !== s.texto) });
+    else if (borrador.preguntas.length < MAXIMO) setBorrador({ ...borrador, preguntas: [...borrador.preguntas, deSugerencia(s)] });
+  }
+
+  function escribirUna() {
+    if (!borrador || borrador.preguntas.length >= MAXIMO) return;
+    setBorrador({ ...borrador, preguntas: [...borrador.preguntas, { texto: "", puntos: "" }] });
+    setTimeout(() => document.getElementById(`pregunta-${borrador.preguntas.length}`)?.focus(), 50);
+  }
+
   async function guardar() {
     if (!borrador) return;
     setGuardando(true); setError("");
@@ -78,13 +139,32 @@ export default function EntrevistasEmpresaPage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           id: borrador.id, empresa: borrador.empresa, puesto: borrador.puesto,
-          preguntas: borrador.preguntas.map((p) => ({ texto: p.texto, puntos: p.puntos.split("\n").map((s) => s.trim()).filter(Boolean) })),
+          preguntas: borrador.preguntas.filter((p) => p.texto.trim())
+            .map((p) => ({ texto: p.texto, puntos: p.puntos.split("\n").map((s) => s.trim()).filter(Boolean) })),
         }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { setError(j.error || "No se pudo guardar."); return; }
       setEntrevistas(j.entrevistas || []);
+      const puesto = borrador.puesto;
       setBorrador(null);
+      window.history.replaceState(null, "", "/empresas/entrevistas");
+      // Venía de la ficha de un candidato: se le invita a esta entrevista recién hecha.
+      const quien = invitarA.current;
+      if (quien && j.id) {
+        invitarA.current = null;
+        const ri = await fetch("/api/empresas/entrevistas/invitar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ candidatoId: quien.id, entrevistaId: j.id }),
+        });
+        const ji = await ri.json().catch(() => ({}));
+        if (ri.ok) { setHecho(`${quien.nombre} está invitado a tu entrevista de ${puesto}.`); await cargar(token); }
+        else setHecho(`Entrevista guardada. No se pudo invitar a ${quien.nombre}: ${ji.error || "inténtalo desde su ficha"}.`);
+      } else {
+        setHecho(`Entrevista de ${puesto} guardada. Invita desde la ficha de cualquier candidato.`);
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setGuardando(false);
     }
@@ -97,10 +177,14 @@ export default function EntrevistasEmpresaPage() {
     if (r.ok) setEntrevistas(j.entrevistas || []);
   }
 
+  // ── Valorar ──────────────────────────────────────────────────────────────
   function abrir(inv: Invitacion) {
     setAbierta(abierta === inv.id ? null : inv.id);
     if (!marcas[inv.id]) setMarcas({ ...marcas, [inv.id]: inv.marcas ?? inv.preguntas.map((p) => p.puntos.map(() => false)) });
   }
+
+  const alternarMarca = (invId: string, i: number, k: number) =>
+    setMarcas({ ...marcas, [invId]: marcas[invId].map((f, a) => (a === i ? f.map((x, b) => (b === k ? !x : x)) : f)) });
 
   async function valorar(inv: Invitacion) {
     const r = await fetch("/api/empresas/entrevistas/marcar", {
@@ -109,192 +193,305 @@ export default function EntrevistasEmpresaPage() {
       body: JSON.stringify({ invitacionId: inv.id, marcas: marcas[inv.id] }),
     });
     const j = await r.json().catch(() => ({}));
-    if (r.ok) setInvitaciones(invitaciones.map((i) => (i.id === inv.id ? { ...i, nota: j.nota, marcas: marcas[inv.id] } : i)));
+    if (r.ok) { setInvitaciones(invitaciones.map((i) => (i.id === inv.id ? { ...i, nota: j.nota, marcas: marcas[inv.id] } : i))); setAbierta(null); }
     else setError(j.error || "No se pudo guardar la valoración.");
   }
 
-  const cabecera = (
-    <header className="sticky top-0 z-50" style={{ background: "rgba(15,17,23,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(45,49,66,0.4)" }}>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link href="/empresas" className="flex items-center gap-2.5">
-          <img src="/icon-192.png" alt="Guzzi" width={24} height={24} style={{ borderRadius: "50%" }} />
-          <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
-          <span className="hidden sm:inline text-xs" style={{ color: "#8b98ad" }}>/ Entrevistas</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/empresas/equipo" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tu equipo</Link>
-          <Link href="/empresas/candidatos" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Candidatos →</Link>
-        </div>
-      </div>
-    </header>
-  );
+  if (estado === "cargando") return <AvisoContratacion titulo="Cargando tus entrevistas…" />;
+  if (estado === "entrar") return <AvisoContratacion titulo="Entra con tu cuenta de empresa" enlace="/auth/login?redirect=%2Fempresas%2Fentrevistas" boton="Entrar" />;
+  if (estado === "plan") return <AvisoContratacion titulo="Para empresas verificadas" texto="Es gratis: comprobamos vuestro NIF y os mandamos un código." enlace="/empresas/alta" boton="Dar de alta mi empresa" />;
 
-  if (estado !== "listo") {
-    const textos = {
-      cargando: ["Cargando…", "", ""],
-      entrar: ["Entra con tu cuenta de empresa", "/auth/login?redirect=%2Fempresas%2Fentrevistas", "Entrar"],
-      plan: ["Las entrevistas son para empresas verificadas (gratis)", "/empresas/alta", "Dar de alta mi empresa"],
-    }[estado];
+  const porValorar = invitaciones.filter((i) => i.respuestas && i.nota === null);
+  const ordenadas = [...porValorar, ...invitaciones.filter((i) => !i.respuestas), ...invitaciones.filter((i) => i.respuestas && i.nota !== null)];
+
+  // ── Creando o editando una entrevista: la pantalla entera es para eso ────
+  if (borrador) {
+    const sugeridas = PLANTILLAS[sectorPlantilla];
+    const llenas = borrador.preguntas.filter((p) => p.texto.trim()).length;
+    const quien = invitarA.current;
     return (
-      <div className="min-h-screen" style={{ background: "#0f1117" }}>{cabecera}
-        <div className="text-center py-24 px-4">
-          <p className="text-sm font-semibold mb-4" style={{ color: "#f1f5f9" }}>{textos[0]}</p>
-          {textos[1] && <Link href={textos[1]} className="btn-game text-sm px-5 py-2.5 rounded-lg inline-block">{textos[2]}</Link>}
+      <MarcoContratacion seccion="entrevistas" titulo={borrador.id ? "Editar entrevista" : "Nueva entrevista"} Icono={Sparkles} empresa={razonSocial} pestanas={false}>
+        <section className="cristal tono-cian p-5">
+          <Paso n={1} titulo="¿Para qué puesto?" />
+          <label className="block">
+            <span className="sr-only">Puesto</span>
+            <input type="text" value={borrador.puesto} maxLength={120} placeholder="Ej.: Camarero/a de sala" autoFocus={!borrador.id}
+              onChange={(e) => setBorrador({ ...borrador, puesto: e.target.value })} className="w-full" />
+          </label>
+          {cambiarNombre ? (
+            <label className="block mt-3">
+              <span className="block text-[12px] font-semibold mb-1" style={{ color: "#a7b3c6" }}>Nombre que verá el candidato</span>
+              <input type="text" value={borrador.empresa} maxLength={120} onChange={(e) => setBorrador({ ...borrador, empresa: e.target.value })} className="w-full" />
+            </label>
+          ) : (
+            <button type="button" onClick={() => setCambiarNombre(true)} className="mt-2.5 inline-flex items-center gap-1.5 text-[13px] min-h-[36px]" style={{ color: "#a7b3c6" }}>
+              <PenLine size={14} aria-hidden="true" />La verá como <strong style={{ color: "#e2e8f0" }}>{borrador.empresa || "tu empresa"}</strong>
+            </button>
+          )}
+        </section>
+
+        <section className="cristal tono-neutro p-5">
+          <Paso n={2} titulo="Preguntas sugeridas" />
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" role="radiogroup" aria-label="Sector de las preguntas" style={{ scrollbarWidth: "none" }}>
+            {SECTORES_EMPRESA.map((s) => {
+              const si = s.id === sectorPlantilla;
+              return (
+                <button key={s.id} type="button" role="radio" aria-checked={si} onClick={() => setSectorPlantilla(s.id)}
+                  className="shrink-0 text-[13px] font-semibold px-3.5 min-h-[36px] rounded-full"
+                  style={si
+                    ? { background: "rgba(45,212,191,0.18)", color: "#99f6e4", border: "1px solid rgba(45,212,191,0.55)" }
+                    : { background: "rgba(255,255,255,0.03)", color: "#a7b3c6", border: "1px solid rgba(148,163,184,0.2)" }}>
+                  {s.id === "otro" ? "Cualquier puesto" : s.label}
+                </button>
+              );
+            })}
+          </div>
+          <ul className="grid gap-2 mt-1">
+            {sugeridas.map((s) => {
+              const esta = borrador.preguntas.some((p) => p.texto === s.texto);
+              const lleno = !esta && borrador.preguntas.length >= MAXIMO;
+              return (
+                <li key={s.texto}>
+                  <button type="button" onClick={() => alternarSugerencia(s)} disabled={lleno} aria-pressed={esta}
+                    className="w-full text-left flex items-start gap-3 rounded-2xl p-3.5 transition-colors disabled:opacity-40"
+                    style={esta
+                      ? { background: "rgba(45,212,191,0.1)", border: "1px solid rgba(45,212,191,0.5)" }
+                      : { background: "rgba(255,255,255,0.025)", border: "1px solid rgba(148,163,184,0.18)" }}>
+                    <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full inline-flex items-center justify-center"
+                      style={esta ? { background: "#2dd4bf", color: "#04201c" } : { border: "1.5px solid rgba(148,163,184,0.45)", color: "#a7b3c6" }} aria-hidden="true">
+                      {esta ? <Check size={15} strokeWidth={3} /> : <Plus size={14} />}
+                    </span>
+                    <span className="flex-1 text-[14px] leading-snug" style={{ color: esta ? "#f1f5f9" : "#cbd5e1" }}>{s.texto}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        <section className="cristal tono-neutro p-5">
+          <Paso n={3} titulo="Tu entrevista" extra={`${llenas}/${MAXIMO}`} />
+          {borrador.preguntas.length === 0 && (
+            <p className="text-[13.5px] mb-3" style={{ color: "#a7b3c6" }}>Marca preguntas arriba o escribe las tuyas.</p>
+          )}
+          <ol className="space-y-2.5">
+            {borrador.preguntas.map((p, i) => {
+              const tema = preguntaDiscriminatoria(`${p.texto}\n${p.puntos}`);
+              return (
+                <li key={i} className="rounded-2xl p-3.5" style={{ background: "rgba(6,9,11,0.6)", border: `1px solid ${tema ? "rgba(239,68,68,0.5)" : "rgba(148,163,184,0.18)"}` }}>
+                  <div className="flex items-start gap-2.5">
+                    <span className="shrink-0 mt-2 text-[13px] font-extrabold tabular-nums w-5 text-center" style={{ color: "#99f6e4" }}>{i + 1}</span>
+                    <label className="flex-1 min-w-0">
+                      <span className="sr-only">Pregunta {i + 1}</span>
+                      <textarea id={`pregunta-${i}`} rows={2} maxLength={300} value={p.texto} placeholder="Escribe tu pregunta"
+                        onChange={(e) => cambiarPregunta(i, { texto: e.target.value })} className="w-full" />
+                    </label>
+                    <button type="button" onClick={() => setBorrador({ ...borrador, preguntas: borrador.preguntas.filter((_, k) => k !== i) })}
+                      className="shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-full" style={{ color: "#a7b3c6" }} aria-label={`Quitar la pregunta ${i + 1}`}>
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <button type="button" onClick={() => cambiarPregunta(i, { abierta: !p.abierta })} aria-expanded={!!p.abierta}
+                    className="ml-7 mt-1 inline-flex items-center gap-1 text-[12.5px] min-h-[32px]" style={{ color: "#a7b3c6" }}>
+                    <ChevronDown size={14} className={p.abierta ? "rotate-180" : ""} aria-hidden="true" />
+                    Qué esperas oír {p.puntos.trim() ? `(${p.puntos.split("\n").filter((x) => x.trim()).length})` : "(opcional)"}
+                  </button>
+                  {p.abierta && (
+                    <textarea rows={3} value={p.puntos} placeholder={"Una cosa por línea. Ej.:\nPide disculpas\nOfrece una solución"}
+                      onChange={(e) => cambiarPregunta(i, { puntos: e.target.value })} className="w-full mt-1.5 text-sm" aria-label={`Qué esperas oír en la pregunta ${i + 1}`} />
+                  )}
+                  {tema && <p className="ml-7 mt-1.5 text-[12.5px]" style={{ color: "#fca5a5" }}>Esto trata {deTema(tema)}: no se puede preguntar. Pregunta por el puesto.</p>}
+                </li>
+              );
+            })}
+          </ol>
+          {borrador.preguntas.length < MAXIMO && (
+            <button type="button" onClick={escribirUna} className="boton-cristal tono-cian w-full mt-3"><Plus size={17} aria-hidden="true" />Escribir una pregunta</button>
+          )}
+          <p className="text-[12px] mt-3 leading-relaxed" style={{ color: "#fcd34d" }}>
+            Pregunta solo por el puesto. Nada de edad, origen, religión, salud, embarazo o hijos: es discriminación.
+          </p>
+        </section>
+
+        {error && <p role="alert" className="text-[13.5px]" style={{ color: "#fca5a5" }}>{error}</p>}
+        <div className="grid sm:grid-cols-[1fr_auto] gap-2.5">
+          <button type="button" onClick={() => void guardar()} disabled={guardando || !borrador.puesto.trim() || llenas === 0} className="boton-neon disabled:opacity-50">
+            {guardando ? "Guardando…" : quien ? `Guardar e invitar a ${quien.nombre}` : "Guardar entrevista"}
+          </button>
+          <button type="button" onClick={() => { setBorrador(null); setError(""); window.history.replaceState(null, "", "/empresas/entrevistas"); }} className="boton-cristal tono-neutro">Cancelar</button>
         </div>
-      </div>
+      </MarcoContratacion>
     );
   }
 
+  // ── La pantalla normal ───────────────────────────────────────────────────
   return (
-    <div className="min-h-screen pb-16" style={{ background: "#0f1117" }}>
-      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
-      <FondoOleaje />
-      {cabecera}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-10">
-        <section>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Candidatos invitados</h1>
-          <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
-            En el perfil de un candidato, pulsa «Me interesa» para invitarle a preparar tu entrevista. Ensaya con tus preguntas y, cuando quiere, te manda sus respuestas.
-            Aquí no llega ninguna nota automática: la valoración la haces tú, marcando lo que ha cubierto en cada respuesta.
-          </p>
-          {invitaciones.length === 0 ? (
-            <p className="text-sm" style={{ color: "#94a3b8" }}>Todavía no has invitado a nadie. <Link href="/empresas/candidatos" style={{ color: "#22c55e" }}>Ver candidatos →</Link></p>
-          ) : (
-            <div className="space-y-3">
-              {invitaciones.map((inv) => (
-                <div key={inv.id} className="rounded-xl p-4" style={caja}>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{inv.nombre} <span className="font-normal" style={{ color: "#8b98ad" }}>{inv.ciudad && `· ${inv.ciudad}`}</span></p>
-                      <p className="text-xs" style={{ color: "#94a3b8" }}>{inv.puesto} · {inv.intentos} {inv.intentos === 1 ? "ensayo" : "ensayos"}</p>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {inv.referencias > 0 && (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }}>
-                            ✓ {inv.referencias > 1 ? `${inv.referencias} referencias verificadas` : "Referencia verificada"}
-                          </span>
-                        )}
-                        <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#0f1117", color: inv.respuestas ? "#22c55e" : "#94a3b8", border: "1px solid rgba(148,163,184,0.18)" }}>
-                          {inv.respuestas ? `Respuestas del ${fecha(inv.enviadaEn!)}` : "Preparándose"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {inv.nota !== null && <p className="text-2xl font-bold" style={{ color: "#22c55e" }}>{inv.nota}<span className="text-xs" style={{ color: "#8b98ad" }}>/100</span></p>}
-                      <div className="flex gap-3 justify-end mt-1">
-                        {/* <a> y no <Link>: Next precarga los <Link>, y abrir un CV nuevo gasta cupo del mes. */}
-                        <a href={`/talento/${inv.candidatoId}`} className="text-xs" style={{ color: "#94a3b8" }}>Ver CV</a>
-                        {inv.respuestas && (
-                          <button onClick={() => abrir(inv)} className="text-xs font-semibold" style={{ color: "#22c55e" }}>
-                            {abierta === inv.id ? "Cerrar" : inv.nota === null ? "Leer y valorar" : "Ver valoración"}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+    <MarcoContratacion seccion="entrevistas" titulo="Entrevistas" Icono={MessagesSquare} empresa={razonSocial} porValorar={porValorar.length}>
+      {hecho && (
+        <div className="cristal tono-verde p-4 flex items-center gap-3" role="status">
+          <span className="icono-circulo" style={{ width: 40, height: 40 }} aria-hidden="true"><CheckCircle2 size={20} /></span>
+          <p className="flex-1 text-[14px] font-semibold" style={{ color: "#dcfce7" }}>{hecho}</p>
+          <button type="button" onClick={() => setHecho("")} className="w-10 h-10 inline-flex items-center justify-center" style={{ color: "#86efac" }} aria-label="Cerrar"><X size={18} /></button>
+        </div>
+      )}
 
-                  {abierta === inv.id && inv.respuestas && (
-                    <div className="mt-4 pt-4 space-y-4" style={{ borderTop: "1px solid rgba(148,163,184,0.14)" }}>
-                      {inv.preguntas.map((p, i) => (
-                        <div key={i}>
-                          <p className="text-xs font-semibold mb-1" style={{ color: "#22c55e" }}>{i + 1}. {p.texto}</p>
-                          <p className="text-sm whitespace-pre-wrap mb-2" style={{ color: "#e2e8f0" }}>{inv.respuestas![i]}</p>
-                          <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: "#8b98ad" }}>Marca lo que ha cubierto</p>
-                          {p.puntos.map((pt, k) => (
-                            <label key={k} className="flex items-start gap-2 text-xs mb-1 cursor-pointer" style={{ color: "#cbd5e1" }}>
-                              <input type="checkbox" className="mt-0.5" style={{ accentColor: "#22c55e" }} checked={!!marcas[inv.id]?.[i]?.[k]}
-                                onChange={(e) => setMarcas({ ...marcas, [inv.id]: marcas[inv.id].map((f, a) => (a === i ? f.map((x, b) => (b === k ? e.target.checked : x)) : f)) })} />
-                              {pt}
-                            </label>
-                          ))}
-                        </div>
-                      ))}
-                      <button onClick={() => void valorar(inv)} className="btn-game text-xs px-4 py-2">Guardar valoración</button>
-                      <p className="text-[10px]" style={{ color: "#8b98ad" }}>La nota es la parte de los puntos que has marcado, de 0 a 100. Valora solo lo que ha contestado, no cómo habla.</p>
-                    </div>
+      {entrevistas.length === 0 ? (
+        // Todavía no tiene ninguna: lo primero es crearla, y que se vea lo fácil que es.
+        <section className="cristal tono-cian p-6 sm:p-8 flex flex-col gap-5">
+          <div className="flex items-center gap-4">
+            <span className="icono-circulo" style={{ width: 60, height: 60, borderRadius: 20 }} aria-hidden="true"><Mic size={28} /></span>
+            <div>
+              <h2 className="text-[22px] sm:text-[26px] font-extrabold leading-tight" style={{ color: "#f8fafc" }}>Tu primera <span style={{ color: "#99f6e4" }}>entrevista</span></h2>
+              <p className="text-[13.5px] mt-0.5" style={{ color: "#a7b3c6" }}>Lista en un minuto.</p>
+            </div>
+          </div>
+          <ul className="grid gap-2.5 sm:grid-cols-3">
+            {[
+              { Icono: Sparkles, texto: "Preguntas de tu sector, ya escritas" },
+              { Icono: Mic, texto: "El candidato contesta desde la app" },
+              { Icono: CheckCircle2, texto: "Tú lees y valoras" },
+            ].map(({ Icono, texto }) => (
+              <li key={texto} className="flex items-center gap-2.5 rounded-2xl px-3.5 py-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(45,212,191,0.2)" }}>
+                <Icono size={19} style={{ color: "#99f6e4" }} aria-hidden="true" className="shrink-0" />
+                <span className="text-[14px] font-semibold" style={{ color: "#e2e8f0" }}>{texto}</span>
+              </li>
+            ))}
+          </ul>
+          <button type="button" onClick={() => nueva(razonSocial, sectorPlantilla)} className="boton-neon w-full sm:w-auto sm:self-start">
+            <Plus size={18} aria-hidden="true" />Crear entrevista
+          </button>
+        </section>
+      ) : (
+        <section className="grid grid-cols-3 gap-2.5 sm:gap-3" aria-label="Resumen">
+          <CifraGrande tono={porValorar.length ? "ambar" : "neutro"} Icono={FileText} valor={porValorar.length} etiqueta="Por valorar" />
+          <CifraGrande tono="cian" Icono={Clock} valor={invitaciones.filter((i) => !i.respuestas).length} etiqueta="Esperando" />
+          <CifraGrande tono="verde" Icono={CheckCircle2} valor={invitaciones.filter((i) => i.nota !== null).length} etiqueta="Valoradas" />
+        </section>
+      )}
+
+      {/* Los candidatos invitados y lo que han contestado */}
+      {entrevistas.length > 0 && (
+        <section aria-labelledby="titulo-invitados" className="space-y-3">
+          <h2 id="titulo-invitados" className="flex items-center gap-2 text-[18px] font-bold" style={{ color: "#f8fafc" }}>
+            <Users size={20} style={{ color: "#99f6e4" }} aria-hidden="true" />Candidatos
+          </h2>
+          {ordenadas.length === 0 ? (
+            <Link href="/empresas/candidatos" className="cristal cristal-enlace tono-neutro p-4 flex items-center gap-3">
+              <span className="icono-circulo tono-cian" style={{ width: 44, height: 44 }} aria-hidden="true"><Users size={20} /></span>
+              <span className="flex-1">
+                <span className="block text-[15px] font-semibold" style={{ color: "#f1f5f9" }}>Invita a tu primer candidato</span>
+                <span className="block text-[13px]" style={{ color: "#a7b3c6" }}>Desde su ficha, «Invitar»</span>
+              </span>
+            </Link>
+          ) : ordenadas.map((inv) => {
+            const valorada = inv.nota !== null;
+            const abiertaEsta = abierta === inv.id;
+            const m = marcas[inv.id];
+            const total = inv.preguntas.reduce((a, p) => a + p.puntos.length, 0);
+            const marcados = m ? m.flat().filter(Boolean).length : 0;
+            return (
+              <article key={inv.id} id={`inv-${inv.id}`} className={`cristal ${inv.respuestas && !valorada ? "tono-ambar" : valorada ? "tono-verde" : "tono-neutro"} p-4 sm:p-5`}>
+                <div className="flex items-center gap-3">
+                  <AvatarPersona id={inv.candidatoId} nombre={inv.nombre} size={46} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15.5px] font-bold truncate" style={{ color: "#f8fafc" }}>{inv.nombre}</p>
+                    <p className="text-[12.5px] truncate" style={{ color: "#a7b3c6" }}>{inv.puesto}{inv.ciudad ? ` · ${inv.ciudad}` : ""}</p>
+                  </div>
+                  {valorada ? (
+                    <p className="text-right shrink-0"><span className="text-[26px] font-extrabold tabular-nums" style={{ color: "#86efac" }}>{inv.nota}</span><span className="text-[11px]" style={{ color: "var(--texto-tenue)" }}>/100</span></p>
+                  ) : inv.respuestas ? (
+                    <Etiqueta tono="ambar"><Send size={12} aria-hidden="true" />{fecha(inv.enviadaEn!)}</Etiqueta>
+                  ) : (
+                    <Etiqueta tono="neutro"><Clock size={12} aria-hidden="true" />Invitado</Etiqueta>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {inv.referencias > 0 && <Etiqueta tono="verde">✓ {inv.referencias > 1 ? `${inv.referencias} referencias verificadas` : "Referencia verificada"}</Etiqueta>}
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  {/* <a> y no <Link>: Next precarga los <Link>, y abrir un CV nuevo gasta cupo del mes. */}
+                  <a href={`/talento/${inv.candidatoId}`} className="boton-cristal tono-neutro text-[13.5px] px-3">Ver CV</a>
+                  {inv.respuestas ? (
+                    <button type="button" onClick={() => abrir(inv)} aria-expanded={abiertaEsta}
+                      className={`${valorada || abiertaEsta ? "boton-cristal tono-verde" : "boton-neon"} text-[13.5px] px-3`}>
+                      {abiertaEsta ? "Cerrar" : valorada ? "Ver respuestas" : "Leer y valorar"}
+                    </button>
+                  ) : (
+                    <span className="inline-flex items-center justify-center text-[12.5px] text-center" style={{ color: "var(--texto-tenue)" }}>Aún no ha contestado</span>
+                  )}
+                </div>
 
-        <section>
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-lg font-bold" style={{ color: "#f1f5f9" }}>Tus entrevistas</h2>
-            {!borrador && <button onClick={() => setBorrador(vacio(entrevistas[0]?.empresa))} className="btn-game text-xs px-4 py-2">+ Nueva entrevista</button>}
+                {abiertaEsta && inv.respuestas && m && (
+                  <div className="mt-4 pt-4 space-y-4" style={{ borderTop: "1px solid rgba(148,163,184,0.16)" }}>
+                    {inv.preguntas.map((p, i) => (
+                      <div key={i} className="space-y-2">
+                        <p className="text-[13.5px] font-bold" style={{ color: "#99f6e4" }}>{i + 1}. {p.texto}</p>
+                        <blockquote className="rounded-xl p-3.5 text-[14.5px] leading-relaxed whitespace-pre-wrap" style={{ background: "rgba(6,9,11,0.7)", borderLeft: "3px solid rgba(45,212,191,0.6)", color: "#f1f5f9" }}>
+                          {inv.respuestas![i]}
+                        </blockquote>
+                        <div className="flex flex-wrap gap-1.5">
+                          {p.puntos.map((pt, k) => {
+                            const si = !!m[i]?.[k];
+                            return (
+                              <button key={k} type="button" aria-pressed={si} onClick={() => alternarMarca(inv.id, i, k)}
+                                className="inline-flex items-center gap-1.5 text-left text-[13px] px-3 min-h-[36px] rounded-full"
+                                style={si
+                                  ? { background: "rgba(34,197,94,0.16)", color: "#bbf7d0", border: "1px solid rgba(34,197,94,0.55)" }
+                                  : { background: "rgba(255,255,255,0.03)", color: "#a7b3c6", border: "1px solid rgba(148,163,184,0.25)" }}>
+                                {si ? <Check size={14} aria-hidden="true" /> : <Plus size={13} aria-hidden="true" />}{pt}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-3 rounded-2xl p-3.5" style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.25)" }}>
+                      <p className="flex-1 text-[13px]" style={{ color: "#cbd5e1" }}>La nota la pones tú: lo que dice, no cómo lo dice.</p>
+                      <p className="shrink-0 text-[22px] font-extrabold tabular-nums" style={{ color: "#86efac" }}>{total ? Math.round((marcados / total) * 100) : 0}<span className="text-[11px]" style={{ color: "var(--texto-tenue)" }}>/100</span></p>
+                    </div>
+                    {error && <p role="alert" className="text-[13px]" style={{ color: "#fca5a5" }}>{error}</p>}
+                    <button type="button" onClick={() => void valorar(inv)} className="boton-neon w-full">Guardar valoración</button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </section>
+      )}
+
+      {/* Las entrevistas de la empresa */}
+      {entrevistas.length > 0 && (
+        <section aria-labelledby="titulo-entrevistas" className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="titulo-entrevistas" className="flex items-center gap-2 text-[18px] font-bold" style={{ color: "#f8fafc" }}>
+              <Mic size={20} style={{ color: "#99f6e4" }} aria-hidden="true" />Tus entrevistas
+            </h2>
+            <button type="button" onClick={() => nueva(razonSocial, sectorPlantilla)} className="boton-neon text-[14px]" style={{ minHeight: 42 }}>
+              <Plus size={17} aria-hidden="true" />Nueva
+            </button>
           </div>
-          <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
-            Las preguntas que haces en tus entrevistas y, en cada una, qué esperas oír. El candidato verá esos puntos después de contestar en su ensayo, para saber qué buscas.
-          </p>
-
-          {borrador && (
-            <div className="rounded-xl p-5 mb-5 space-y-4" style={caja}>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <label className="block"><span className="block text-[11px] font-semibold mb-1" style={{ color: "#94a3b8" }}>Empresa</span>
-                  <input type="text" value={borrador.empresa} maxLength={120} onChange={(e) => setBorrador({ ...borrador, empresa: e.target.value })} className="w-full text-sm" /></label>
-                <label className="block"><span className="block text-[11px] font-semibold mb-1" style={{ color: "#94a3b8" }}>Puesto</span>
-                  <input type="text" value={borrador.puesto} maxLength={120} placeholder="Ej.: Camarero/a de sala" onChange={(e) => setBorrador({ ...borrador, puesto: e.target.value })} className="w-full text-sm" /></label>
-              </div>
-              {/* Las preguntas habituales del sector, con lo que conviene oír: se cambian a gusto. */}
-              <div className="flex flex-wrap items-center gap-2 rounded-lg p-3" style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.18)" }}>
-                <span className="text-[11px] font-semibold" style={{ color: "#4ade80" }}>Rellenar con las preguntas habituales de</span>
-                <select value={sectorPlantilla} onChange={(e) => setSectorPlantilla(e.target.value as SectorEmpresa)} className="text-xs" aria-label="Sector de las preguntas">
-                  {SECTORES_EMPRESA.map((s) => <option key={s.id} value={s.id}>{s.id === "otro" ? "cualquier puesto" : s.label}</option>)}
-                </select>
-                <button type="button" onClick={usarPlantilla} className="text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>Usar</button>
-                <span className="text-[10px] w-full" style={{ color: "#8b98ad" }}>Se añaden detrás de las que ya tengas escritas; luego cambia, quita o añade lo que quieras.</span>
-              </div>
-              {borrador.preguntas.map((p, i) => (
-                <div key={i} className="rounded-lg p-3 space-y-2" style={{ background: "#0f1117", border: "1px solid rgba(148,163,184,0.18)" }}>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-semibold" style={{ color: "#22c55e" }}>Pregunta {i + 1}</span>
-                    {borrador.preguntas.length > 1 && (
-                      <button onClick={() => setBorrador({ ...borrador, preguntas: borrador.preguntas.filter((_, k) => k !== i) })} className="text-[11px]" style={{ color: "#94a3b8" }}>Quitar</button>
-                    )}
-                  </div>
-                  <textarea rows={2} maxLength={300} value={p.texto} placeholder="Ej.: ¿Cómo atenderías una mesa que se queja de la espera?"
-                    onChange={(e) => setBorrador({ ...borrador, preguntas: borrador.preguntas.map((q, k) => (k === i ? { ...q, texto: e.target.value } : q)) })} className="w-full text-sm" />
-                  <textarea rows={3} value={p.puntos} placeholder={"Qué esperas oír, una cosa por línea. Ej.:\nPide disculpas y explica el retraso\nOfrece algo mientras esperan\nAvisa al encargado si hace falta"}
-                    onChange={(e) => setBorrador({ ...borrador, preguntas: borrador.preguntas.map((q, k) => (k === i ? { ...q, puntos: e.target.value } : q)) })} className="w-full text-xs" />
-                  {(() => {
-                    const tema = preguntaDiscriminatoria(`${p.texto}\n${p.puntos}`);
-                    return tema ? <p className="text-[11px]" style={{ color: "#ef4444" }}>Esto trata {deTema(tema)}: no se puede preguntar en una entrevista. Cámbialo por algo del puesto.</p> : null;
-                  })()}
+          <div className="grid sm:grid-cols-2 gap-3">
+            {entrevistas.map((e) => (
+              <article key={e.id} className="cristal tono-cian p-4 flex items-center gap-3">
+                <span className="icono-circulo" style={{ width: 44, height: 44 }} aria-hidden="true"><MessagesSquare size={20} /></span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-bold truncate" style={{ color: "#f8fafc" }}>{e.puesto}</p>
+                  <p className="text-[12.5px]" style={{ color: "#a7b3c6" }}>{e.preguntas.length} {e.preguntas.length === 1 ? "pregunta" : "preguntas"}</p>
                 </div>
-              ))}
-              {borrador.preguntas.length < 8 && (
-                <button onClick={() => setBorrador({ ...borrador, preguntas: [...borrador.preguntas, { texto: "", puntos: "" }] })} className="text-xs font-semibold" style={{ color: "#22c55e" }}>+ Añadir pregunta</button>
-              )}
-              <p className="text-[11px] leading-relaxed" style={{ color: "#f59e0b" }}>
-                Pregunta solo por el puesto. Nada de edad, origen, religión, salud, embarazo o hijos: además de no decir nada del trabajo, es discriminación.
-              </p>
-              {error && <p className="text-xs" style={{ color: "#ef4444" }}>{error}</p>}
-              <div className="flex gap-2">
-                <button onClick={() => void guardar()} disabled={guardando} className="btn-game text-xs px-4 py-2">{guardando ? "Guardando…" : "Guardar"}</button>
-                <button onClick={() => { setBorrador(null); setError(""); }} className="text-xs px-4 py-2 rounded-lg" style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>Cancelar</button>
-              </div>
-            </div>
-          )}
-
-          {entrevistas.length === 0 && !borrador ? (
-            <p className="text-sm" style={{ color: "#94a3b8" }}>Todavía no tienes ninguna. Crea la primera para poder invitar a candidatos.</p>
-          ) : (
-            <div className="grid sm:grid-cols-2 gap-3">
-              {entrevistas.map((e) => (
-                <div key={e.id} className="rounded-xl p-4" style={caja}>
-                  <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>{e.puesto}</p>
-                  <p className="text-xs mb-3" style={{ color: "#8b98ad" }}>{e.empresa} · {e.preguntas.length} {e.preguntas.length === 1 ? "pregunta" : "preguntas"}</p>
-                  <div className="flex gap-4">
-                    <button onClick={() => setBorrador({ id: e.id, empresa: e.empresa, puesto: e.puesto, preguntas: e.preguntas.map((p) => ({ texto: p.texto, puntos: p.puntos.join("\n") })) })}
-                      className="text-xs font-semibold" style={{ color: "#22c55e" }}>Editar</button>
-                    <button onClick={() => void quitar(e.id)} className="text-xs" style={{ color: "#94a3b8" }}>Quitar</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                <button type="button" aria-label={`Editar la entrevista de ${e.puesto}`}
+                  onClick={() => { setBorrador({ id: e.id, empresa: e.empresa, puesto: e.puesto, preguntas: e.preguntas.map((p) => ({ texto: p.texto, puntos: p.puntos.join("\n") })) }); setCambiarNombre(false); setError(""); }}
+                  className="w-11 h-11 inline-flex items-center justify-center rounded-full" style={{ color: "#99f6e4", background: "rgba(45,212,191,0.08)" }}>
+                  <PenLine size={18} />
+                </button>
+                <button type="button" onClick={() => void quitar(e.id)} aria-label={`Quitar la entrevista de ${e.puesto}`}
+                  className="w-11 h-11 inline-flex items-center justify-center rounded-full" style={{ color: "#a7b3c6" }}>
+                  <Trash2 size={18} />
+                </button>
+              </article>
+            ))}
+          </div>
         </section>
-      </div>
-    </div>
+      )}
+    </MarcoContratacion>
   );
 }

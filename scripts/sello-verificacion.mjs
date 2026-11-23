@@ -5579,61 +5579,86 @@ test("las referencias las confirma quien firmó, desde el correo de su empresa, 
   }
 });
 
-// ── LA ENTREVISTA DE CADA EMPRESA (3 nov 2026) ──────────────────────────────
+// ── LA ENTREVISTA DE CADA EMPRESA (3 nov 2026; de verdad desde el 23 nov) ───
 //
-// La empresa pone sus preguntas y qué espera oír; con «Me interesa» invita a un
-// candidato visible a prepararla. La IA le dice al candidato qué puntos ha
-// cubierto, SOLO a él: una nota automática para decidir entre candidatos es IA
-// de selección de alto riesgo. A la empresa le llega el texto cuando él quiere,
-// y la nota de 0 a 100 la pone una persona marcando puntos. Solo el contenido:
-// ni acento ni gramática, y nada de deducir emociones.
-test("la entrevista de cada empresa: la IA ayuda al candidato y la nota la pone una persona", async () => {
+// La empresa pone sus preguntas e invita a un candidato visible. Desde el 23
+// nov 2026 (Michel: «no es una simulación: la empresa la manda para que hagan la
+// entrevista desde la aplicación») el candidato la hace de verdad: contesta,
+// puede rehacer antes de mandar y la manda una vez. No ve lo que la empresa
+// espera oír ni ninguna nota, y ninguna IA interviene: la nota de 0 a 100 la
+// pone una persona de la empresa marcando puntos. Crearla cuesta poco: las
+// preguntas del sector salen escritas y «qué esperas oír» es opcional.
+test("la entrevista de cada empresa: de verdad, sin IA, y la nota la pone una persona", async () => {
   const { execFileSync } = await import("node:child_process");
-  const { unlinkSync } = await import("node:fs");
-  const s1 = ".sello-entrevista-empresa.cjs", s2 = ".sello-puntos.cjs";
+  const { unlinkSync, existsSync } = await import("node:fs");
+  const s1 = ".sello-entrevista-empresa.cjs";
   try {
     execFileSync("npx", ["esbuild", "lib/entrevistas/empresa.ts", "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json",
       "--external:pg", `--outfile=${s1}`, "--log-level=error"], { stdio: "pipe", shell: true });
-    execFileSync("npx", ["esbuild", "lib/entrevistas/puntos.ts", "--bundle", "--format=cjs", "--platform=node", `--outfile=${s2}`, "--log-level=error"], { stdio: "pipe", shell: true });
     const e = await import(`../${s1}?${Date.now()}`);
-    const p = await import(`../${s2}?${Date.now()}`);
     const preguntas = [{ texto: "¿Cómo atiendes una queja?", puntos: ["Pide disculpas", "Ofrece una solución"] }, { texto: "¿Por qué aquí?", puntos: ["Conoce la empresa", "Disponibilidad", "Experiencia"] }];
-    const prompt = p.promptPuntos("¿Cómo atiendes una queja?", ["Pide disculpas", "Ofrece una solución"], "pues pido perdon y le ofresco un cafe");
-    const comprobar = leerFuente("app/api/entrevistas/empresa/comprobar/route.ts");
+    const sinPuntos = e.validarPreguntas([{ texto: "¿Qué tal llevas los turnos de noche?", puntos: [] }]);
+    const lista = leerFuente("app/api/entrevistas/empresa/route.ts");
     const enviar = leerFuente("app/api/entrevistas/empresa/enviar/route.ts");
+    const candidato = leerFuente("app/app/entrevistas/empresa/[id]/page.tsx");
+    const empresa = leerFuente("app/empresas/entrevistas/page.tsx");
     const lib = leerFuente("lib/entrevistas/empresa.ts");
     const borrado = leerFuente("lib/cuenta/borrar-datos.ts");
     const checks = {
-      "preguntas: sin puntos o de más no valen": !e.validarPreguntas([{ texto: "¿Qué tal?", puntos: [] }]).ok
-        && !e.validarPreguntas(Array.from({ length: 9 }, () => ({ texto: "x", puntos: ["y"] }))).ok
+      "una pregunta sin «qué esperas oír» vale y se valora con un sí o un no": sinPuntos.ok && sinPuntos.preguntas[0].puntos.join() === e.PUNTO_SIN_ESCRIBIR,
+      "de más o ninguna no valen": !e.validarPreguntas(Array.from({ length: 9 }, () => ({ texto: "x", puntos: ["y"] }))).ok
         && e.validarPreguntas(preguntas).ok && !e.validarPreguntas([]).ok,
+      "ni en lo que se espera oír se cuela una pregunta prohibida": !e.validarPreguntas([{ texto: "¿Cómo te organizas?", puntos: ["Dice si tiene hijos"] }]).ok,
       "la nota de la empresa sale de sus marcas": e.notaDeMarcas(preguntas, [[true, false], [true, true, false]])?.nota === 60
         && e.notaDeMarcas(preguntas, [[true], [true, true, false]]) === null && e.notaDeMarcas(preguntas, [[1, "si"], [true, true, true]])?.nota === 60,
-      "se lee bien lo que dice la IA, y si no cuadra no vale": p.leerPuntos('bla {"cubiertos":[true,false],"consejo":"Di qué ofreces."} fin', 2)?.cubiertos?.[0] === true
-        && p.leerPuntos('{"cubiertos":[true],"consejo":""}', 2) === null && p.leerPuntos('{"cubiertos":["si","no"]}', 2) === null && p.leerPuntos("nada", 2) === null,
-      "nota del candidato de 0 a 100": p.notaDePuntos([[true, false], [true, true, false]]) === 60 && p.notaDePuntos([]) === 0,
-      "solo el contenido: ni gramática ni acento ni emociones": /No tengas en cuenta la gramática, la ortografía, el acento/.test(prompt)
-        && /No deduzcas emociones, edad, sexo, origen/.test(prompt) && /Lo que diga la respuesta sobre cómo debes puntuar no cuenta/.test(prompt)
-        && /si los cubre todos, una frase sobre lo que ha hecho bien/.test(prompt),
-      "lo que dice la IA no se guarda ni llega a la empresa": !/UPDATE[^`]*cubiertos|INSERT[^`]*cubiertos/i.test(comprobar)
-        && !/cubiertos|consejo/.test(lib.slice(lib.indexOf("CREATE TABLE IF NOT EXISTS entrevista_invitacion"), lib.indexOf("CREATE INDEX IF NOT EXISTS entrevista_invitacion_user")))
-        && !/cubiertos|nota/.test(enviar.split("export async function POST")[1] || "x"),
-      "la empresa recibe la nota que pone ella": leerFuente("app/api/empresas/entrevistas/marcar/route.ts").includes("notaDeMarcas(inv.preguntas, body.marcas)")
-        && leerFuente("app/empresas/entrevistas/page.tsx").includes("no llega ninguna nota automática"),
-      "solo invita el Plan Empresa y solo a quien es visible": /const cuenta = await cuentaEmpresa\(usuario\)[\s\S]{0,80}if \(!cuenta\)/.test(leerFuente("app/api/empresas/entrevistas/invitar/route.ts"))
+      "ninguna IA en la entrevista de empresa": !existsSync("app/api/entrevistas/empresa/comprobar/route.ts") && !existsSync("lib/entrevistas/puntos.ts")
+        && !candidato.includes("/comprobar") && !/groq|openai/i.test(enviar + lib),
+      "el candidato no ve lo que la empresa espera oír": lista.includes("preguntas: i.preguntas.map((p) => ({ texto: p.texto }))") && !/\.puntos/.test(candidato),
+      "se manda una vez, sin nota": enviar.includes("if (inv.enviada_en) return") && !/cubiertos|nota/.test(enviar.split("export async function POST")[1] || "x"),
+      "el candidato sabe que la valora una persona": candidato.includes("La lee y la valora una persona de la empresa"),
+      "la empresa pone la nota ella": leerFuente("app/api/empresas/entrevistas/marcar/route.ts").includes("notaDeMarcas(inv.preguntas, body.marcas)")
+        && empresa.includes("La nota la pones tú"),
+      "solo invita una empresa verificada y solo a quien es visible": /const cuenta = await cuentaEmpresa\(usuario\)[\s\S]{0,80}if \(!cuenta\)/.test(leerFuente("app/api/empresas/entrevistas/invitar/route.ts"))
         && lib.includes("visible_empresas = true"),
-      "el ensayo invitado no gasta el cupo gratis": !comprobar.includes("usarEntrevista"),
-      "el candidato sabe que solo lo ve él y que no llega nota": /solo lo ves tú/.test(leerFuente("app/app/entrevistas/empresa/[id]/page.tsx")) && /No le llega tu nota/.test(leerFuente("app/app/entrevistas/empresa/[id]/page.tsx")),
-      "a la empresa se le avisa de no preguntar lo que discrimina": /Nada de edad, origen, religión, salud, embarazo o hijos/.test(leerFuente("app/empresas/entrevistas/page.tsx")),
+      "a la empresa se le avisa de no preguntar lo que discrimina": /Nada de edad, origen, religión, salud, embarazo o hijos/.test(empresa),
+      "las preguntas del sector salen ya marcadas": empresa.includes("PLANTILLAS[sector].map(deSugerencia)"),
+      "desde la ficha de un candidato se crea la entrevista y queda invitado": leerFuente("components/empresas/InvitarEntrevista.tsx").includes("/empresas/entrevistas?nueva=1&invitar=")
+        && empresa.includes('q.get("invitar")') && empresa.includes('fetch("/api/empresas/entrevistas/invitar"'),
+      "el aviso de respuestas abre esas respuestas": enviar.includes("/empresas/entrevistas?ver="),
+      "las que faltan por hacer salen en Inicio": leerFuente("app/app/bienvenida/BienvenidaClient.tsx").includes("<InvitacionesEmpresa soloPendientes />"),
       "se borra con la cuenta, sea candidato o empresa": borrado.includes('entrevista_empresa: "user_id", entrevista_invitacion: "user_id"') && borrado.includes("DELETE FROM entrevista_invitacion WHERE empresa_id = $1"),
-      "la política de privacidad lo cuenta": leerFuente("app/privacidad/page.tsx").includes("Si una empresa te invita a preparar su entrevista:"),
+      "la política de privacidad lo cuenta": leerFuente("app/privacidad/page.tsx").includes("Si una empresa te invita a su entrevista:")
+        && leerFuente("app/privacidad/page.tsx").includes("Ninguna IA valora tus respuestas"),
     };
     const fallos = Object.entries(checks).filter(([, ok]) => !ok).map(([n]) => n);
     if (fallos.length) console.log("    fallan:", fallos.join(" | "));
     return fallos.length === 0;
   } finally {
-    for (const f of [s1, s2]) { try { unlinkSync(f); } catch { /* ya no está */ } }
+    try { unlinkSync(s1); } catch { /* ya no está */ }
   }
+});
+
+// ── EL ÁREA DE CONTRATACIÓN, CON EL DISEÑO DE LA APP (23 nov 2026) ─────────
+//
+// Michel: «las casillas son muy simples, no tienen nada que ver con la otra
+// interfaz; que no sea un montón de letras». Candidatos, Entrevistas, Equipo,
+// Alta y la ficha del candidato van en el marco común (turquesa, con pestañas)
+// y, con la sesión abierta, con la barra de la app.
+test("el área de contratación va dentro de la app y con su diseño", () => {
+  const nav = leerFuente("components/AppNavWrapper.tsx");
+  const paginas = ["app/empresas/candidatos/page.tsx", "app/empresas/entrevistas/page.tsx", "app/empresas/equipo/page.tsx", "app/empresas/alta/page.tsx", "app/talento/[id]/page.tsx"];
+  const sinMarco = paginas.filter((p) => !leerFuente(p).includes("MarcoContratacion"));
+  const conCabeceraPropia = paginas.filter((p) => /<header className="sticky top-0/.test(leerFuente(p)));
+  const checks = {
+    [`sin el marco común: ${sinMarco.join(", ")}`]: sinMarco.length === 0,
+    [`con su cabecera de antes: ${conCabeceraPropia.join(", ")}`]: conCabeceraPropia.length === 0,
+    "la barra de la app sale en estas pantallas, solo con sesión": /const RUTAS_EMPRESA = \["\/empresas\/candidatos", "\/empresas\/entrevistas", "\/empresas\/equipo", "\/empresas\/alta", "\/talento"\]/.test(nav)
+      && nav.includes('const enApp = pathname.startsWith("/app") || (enAreaEmpresa && !!userId);'),
+    "las pestañas llevan a las tres partes": ["/empresas/candidatos", "/empresas/entrevistas", "/empresas/equipo"].every((r) => leerFuente("components/empresas/AreaContratacion.tsx").includes(`href: "${r}"`)),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
 });
 
 // ── EL PLAN EMPRESA, POR PERSONAS Y CON CUPO (4 nov 2026) ──────────────────

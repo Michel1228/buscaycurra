@@ -1,9 +1,8 @@
 /**
  * POST /api/empresas/entrevistas/invitar { candidatoId, entrevistaId }
  *
- * «Me interesa»: la empresa invita a un candidato visible a preparar su
- * entrevista. Al candidato le llega un aviso en la app que le abre el ensayo
- * de esa empresa (lib/entrevistas/empresa.ts). Solo para empresas verificadas (lib/empresas/verificacion.ts).
+ * La empresa invita a un candidato visible a hacer su entrevista desde la app.
+ * Al candidato le llega un aviso que se la abre (lib/entrevistas/empresa.ts). Solo para empresas verificadas (lib/empresas/verificacion.ts).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -45,8 +44,8 @@ export async function POST(req: NextRequest) {
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
       await sb.from("notificaciones").insert({
         user_id: candidatoId, tipo: "entrevista_empresa", leida: false,
-        titulo: `${r.empresa} se ha interesado por tu perfil`,
-        mensaje: `Te invita a preparar su entrevista de ${r.puesto}. Ensaya con sus preguntas: tus ensayos son solo para ti, y tú decides si les mandas tus respuestas.`,
+        titulo: `${r.empresa} te invita a su entrevista`,
+        mensaje: `Para el puesto de ${r.puesto}. Hazla desde la app cuando quieras, hablando o escribiendo.`,
         datos: { url: `/app/entrevistas/empresa/${r.id}` },
       });
     }

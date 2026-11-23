@@ -193,7 +193,7 @@ const sinTildes = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-�
 
 const PROHIBIDAS: [string, RegExp][] = [
   ["la edad", /que edad tienes|cuantos anos tienes|\btu edad\b|fecha de nacimiento|en que ano naciste/],
-  ["el embarazo o los hijos", /embaraz|tienes hijos|vas a tener hijos|piensas tener hijos|quieres tener hijos|planes de (ser madre|ser padre|tener familia|formar una familia)|hijos a tu cargo/],
+  ["el embarazo o los hijos", /embaraz|tienes? hijos|tenga hijos|sin hijos|cargas familiares|vas a tener hijos|piensas tener hijos|quieres tener hijos|planes de (ser madre|ser padre|tener familia|formar una familia)|hijos a tu cargo/],
   ["el estado civil", /estado civil|estas casad|eres casad|estas solter|eres solter|tienes pareja|estas divorciad/],
   ["el origen o la nacionalidad", /de donde eres|tu nacionalidad|que nacionalidad|tu origen|tu pais de origen|tu raza|tu etnia/],
   ["la religión", /religion|religios|eres practicante|tu fe\b/],

@@ -1,10 +1,19 @@
 "use client";
 
+/**
+ * /empresas/candidatos — Los candidatos que una empresa verificada puede ver.
+ *
+ * 23 nov 2026 (Michel): con el diseño de la app y sin bloques de texto. Cada
+ * candidato es una tarjeta con su inicial, su puntuación grande y un botón; la
+ * búsqueda va en una sola tarjeta. Ver components/empresas/AreaContratacion.tsx.
+ */
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { BadgeCheck, Briefcase, Building2, Lock, Mail, MapPin, MessagesSquare, Phone, Search, Unlock, Users } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { LIMITES_EMPRESA } from "@/lib/plan-limits";
-import FondoOleaje from "@/components/FondoOleaje";
+import { CifraGrande, Etiqueta } from "@/components/neon/Neon";
+import { AvatarPersona, AvisoContratacion, MarcoContratacion } from "@/components/empresas/AreaContratacion";
 
 interface Candidato {
   id: string;
@@ -38,16 +47,6 @@ const SECTORES = [
   "Sanidad", "Limpieza", "Administración", "Industria", "Educación",
 ];
 
-function iniciales(nombre: string): string {
-  return nombre.split(" ").slice(0, 2).map(n => n[0] || "").join("").toUpperCase() || "?";
-}
-
-function colorAvatar(id: string): string {
-  const colores = ["#22c55e", "#3b82f6", "#f59e0b", "#a855f7", "#ef4444", "#14b8a6"];
-  const idx = id.charCodeAt(0) % colores.length;
-  return colores[idx];
-}
-
 export default function CandidatosPage() {
   const [candidatos, setCandidatos] = useState<Candidato[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -61,11 +60,19 @@ export default function CandidatosPage() {
   const [keyword, setKeyword] = useState("");
   const [pagina, setPagina] = useState(1);
   const [busquedaActiva, setBusquedaActiva] = useState({ ciudad: "", keyword: "" });
+  // Lo de las entrevistas, para las cifras de arriba y el aviso de la pestaña.
+  const [entrevistas, setEntrevistas] = useState<{ invitados: number; porValorar: number } | null>(null);
 
   useEffect(() => {
     async function init() {
-      const { data: { user } } = await getSupabaseBrowser().auth.getUser();
-      if (user) setUserId(user.id);
+      const { data: { session } } = await getSupabaseBrowser().auth.getSession();
+      if (!session) return;
+      setUserId(session.user.id);
+      const r = await fetch("/api/empresas/entrevistas", { headers: { Authorization: `Bearer ${session.access_token}` } }).catch(() => null);
+      if (!r?.ok) return;
+      const j = await r.json().catch(() => ({})) as { invitaciones?: { respuestas: unknown; nota: number | null }[] };
+      const inv = j.invitaciones || [];
+      setEntrevistas({ invitados: inv.length, porValorar: inv.filter((i) => i.respuestas && i.nota === null).length });
     }
     init();
   }, []);
@@ -77,7 +84,6 @@ export default function CandidatosPage() {
       if (busquedaActiva.ciudad) params.set("ciudad", busquedaActiva.ciudad);
       if (busquedaActiva.keyword) params.set("q", busquedaActiva.keyword);
       if (userId) params.set("userId", userId);
-
       const res = await fetch(`/api/empresas/candidatos?${params}`);
       setNecesitaEntrar(res.status === 401);
       const data = await res.json() as { candidatos: Candidato[]; esEmpresa: boolean; cupo?: { candidatos: Cupo } | null; alcance?: Alcance | null };
@@ -96,277 +102,168 @@ export default function CandidatosPage() {
     setBusquedaActiva({ ciudad, keyword });
   }
 
+  if (!cargando && necesitaEntrar) {
+    return <AvisoContratacion titulo="Entra para ver candidatos" texto="Con la cuenta de tu empresa."
+      enlace="/auth/login?redirect=%2Fempresas%2Fcandidatos" boton="Entrar" secundario={{ href: "/empresas/alta", texto: "Dar de alta mi empresa" }} />;
+  }
+
+  const lleno = !!cupo && cupo.usados >= cupo.maximo;
+
   return (
-    <div className="min-h-screen" style={{ background: "#0f1117" }}>
-      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
-      <FondoOleaje />
+    <MarcoContratacion seccion="candidatos" titulo="Candidatos" Icono={Users} empresa={alcance?.razonSocial} porValorar={entrevistas?.porValorar ?? 0}>
 
-      {/* Header */}
-      <header className="sticky top-0 z-50" style={{ background: "rgba(15,17,23,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(45,49,66,0.4)" }}>
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/empresas" className="flex items-center gap-2.5">
-            <img src="/icon-192.png" alt="Guzzi" width={24} height={24} style={{ borderRadius: "50%", objectFit: "cover" }} />
-            <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
-            <span className="hidden sm:inline text-xs" style={{ color: "#8b98ad" }}>/ Candidatos</span>
-          </Link>
-          {!esEmpresa && (
-            <Link href="/empresas/alta"
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:opacity-90"
-              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
-              Dar de alta mi empresa (gratis)
-            </Link>
-          )}
-          {esEmpresa && (
-            <div className="flex items-center gap-3">
-              <Link href="/empresas/entrevistas" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tus entrevistas</Link>
-              <Link href="/empresas/equipo" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Tu equipo</Link>
-              <span className="hidden sm:inline text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-                ✓ Empresa verificada
-              </span>
-            </div>
-          )}
-        </div>
-      </header>
+      {/* Las cifras de la empresa: lo abierto este mes y lo que espera en Entrevistas. */}
+      {esEmpresa && cupo && (
+        <section className="grid grid-cols-2 gap-3" aria-label="Este mes">
+          <CifraGrande tono={lleno ? "ambar" : "cian"} Icono={Unlock} valor={`${cupo.usados}/${cupo.maximo}`} etiqueta="Abiertos este mes" href="/empresas/equipo" />
+          <CifraGrande tono={entrevistas?.porValorar ? "ambar" : "morado"} Icono={MessagesSquare}
+            valor={entrevistas?.porValorar ? entrevistas.porValorar : entrevistas?.invitados ?? 0}
+            etiqueta={entrevistas?.porValorar ? "Respuestas por valorar" : "Invitados a entrevista"} href="/empresas/entrevistas" />
+        </section>
+      )}
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
-
-        {/* Título + búsqueda */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Candidatos disponibles</h1>
-          <p className="text-xs mb-6" style={{ color: "#8b98ad" }}>
-            Personas que buscan trabajo y han pedido que las empresas las encuentren.
-            {!esEmpresa && <> <Link href="/empresas/alta" style={{ color: "#22c55e" }}>Da de alta tu empresa</Link> para ver quién es cada uno y su contacto.</>}
-          </p>
-          {esEmpresa && alcance && (
-            <p className="text-xs -mt-3 mb-2" style={{ color: "#94a3b8" }}>
-              {alcance.razonSocial}: {alcance.tipo === "empresa"
-                ? <>veis candidatos de {alcance.sectores.map((s) => NOMBRE_SECTOR[s] || s).join(", ")}.</>
-                : <>como {alcance.tipo === "ett" ? "ETT" : "agencia de colocación"}, veis todos los sectores.</>}
-              {" "}Salen primero los de más puntuación: cartas de recomendación confirmadas, CV completo y al día.
-            </p>
-          )}
-          {esEmpresa && cupo && (
-            <p className="text-xs -mt-3 mb-5" style={{ color: cupo.usados >= cupo.maximo ? "#f59e0b" : "#94a3b8" }}>
-              Este mes habéis abierto <strong className="tabular-nums">{cupo.usados} de {cupo.maximo}</strong> candidatos.
-              Los ya abiertos no vuelven a contar, y el cupo se renueva el día 1.
-            </p>
-          )}
-
-          <div className="flex flex-wrap gap-3">
-            <input
-              type="text" value={ciudad} onChange={e => setCiudad(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && buscar()}
-              placeholder="Ciudad (ej: Madrid, Valencia...)"
-              className="text-sm flex-1 min-w-[160px]" style={{ maxWidth: "220px" }}
-            />
-            <input
-              type="text" value={keyword} onChange={e => setKeyword(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && buscar()}
-              placeholder="Perfil (ej: electricista, camarero...)"
-              className="text-sm flex-1 min-w-[200px]"
-            />
-            <button onClick={buscar}
-              className="px-5 py-2 text-sm font-semibold rounded-lg transition hover:opacity-90"
-              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
-              Buscar
-            </button>
+      {/* Quien no es empresa verificada ve perfiles sin nombre. */}
+      {!esEmpresa && !cargando && (
+        <div className="cristal tono-cian p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <span className="icono-circulo" style={{ width: 48, height: 48 }} aria-hidden="true"><Lock size={22} /></span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[15px] font-bold" style={{ color: "#f1f5f9" }}>Perfiles sin nombre</p>
+            <p className="text-[13px]" style={{ color: "#a7b3c6" }}>Las empresas verificadas ven nombre, contacto y CV. Gratis.</p>
           </div>
+          <Link href="/empresas/alta" className="boton-neon shrink-0"><Building2 size={18} aria-hidden="true" /> Dar de alta mi empresa</Link>
+        </div>
+      )}
 
-          {/* Sectores rápidos */}
-          <div className="flex flex-wrap gap-2 mt-3">
-            {SECTORES.map(s => (
-              <button key={s} onClick={() => { setKeyword(s); setBusquedaActiva(prev => ({ ...prev, keyword: s })); }}
-                className="text-[10px] px-2.5 py-1 rounded-full transition hover:opacity-80"
-                style={{
-                  background: busquedaActiva.keyword === s ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.03)",
-                  border: busquedaActiva.keyword === s ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(45,49,66,0.5)",
-                  color: busquedaActiva.keyword === s ? "#22c55e" : "#64748b",
-                }}>
+      {/* La búsqueda, en una sola tarjeta. */}
+      <section className="cristal tono-cian p-4 sm:p-5 space-y-3" aria-label="Buscar candidatos">
+        <div className="grid sm:grid-cols-[1fr_1.4fr_auto] gap-2.5">
+          <label className="relative block">
+            <span className="sr-only">Ciudad</span>
+            <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#99f6e4" }} aria-hidden="true" />
+            <input type="search" value={ciudad} onChange={(e) => setCiudad(e.target.value)} onKeyDown={(e) => e.key === "Enter" && buscar()}
+              placeholder="Ciudad" className="input-con-icono w-full" />
+          </label>
+          <label className="relative block">
+            <span className="sr-only">Perfil</span>
+            <Briefcase size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#99f6e4" }} aria-hidden="true" />
+            <input type="search" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && buscar()}
+              placeholder="Perfil: camarero, carretillero…" className="input-con-icono w-full" />
+          </label>
+          <button type="button" onClick={buscar} className="boton-neon"><Search size={18} aria-hidden="true" /> Buscar</button>
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+          {SECTORES.map((s) => {
+            const activo = busquedaActiva.keyword === s;
+            return (
+              <button key={s} type="button" aria-pressed={activo}
+                onClick={() => { setKeyword(activo ? "" : s); setBusquedaActiva((prev) => ({ ...prev, keyword: activo ? "" : s })); }}
+                className="shrink-0 text-[13px] font-semibold px-3.5 min-h-[36px] rounded-full transition-colors"
+                style={activo
+                  ? { background: "rgba(45,212,191,0.18)", color: "#99f6e4", border: "1px solid rgba(45,212,191,0.55)" }
+                  : { background: "rgba(255,255,255,0.03)", color: "#a7b3c6", border: "1px solid rgba(148,163,184,0.2)" }}>
                 {s}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
+        {esEmpresa && alcance && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {alcance.tipo === "empresa"
+              ? alcance.sectores.map((s) => <Etiqueta key={s} tono="cian">{NOMBRE_SECTOR[s] || s}</Etiqueta>)
+              : <Etiqueta tono="cian">{alcance.tipo === "ett" ? "ETT" : "Agencia de colocación"}: todos los sectores</Etiqueta>}
+            <span className="text-[12px] ml-1" style={{ color: "var(--texto-tenue)" }}>Primero, los de más puntuación</span>
+          </div>
+        )}
+      </section>
 
-        {/* Aviso plan empresa */}
-        {!esEmpresa && (
-          <div className="mb-6 rounded-xl px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between"
-            style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)" }}>
-            <div>
-              <p className="text-sm font-semibold" style={{ color: "#22c55e" }}>Estás viendo perfiles sin nombre</p>
-              <p className="text-xs mt-0.5" style={{ color: "#8b98ad" }}>Las empresas, ETT y agencias de colocación verificadas ven quién es cada candidato, su puntuación y su CV entero con el contacto. Es gratis: comprobamos vuestro NIF y os mandamos un código.</p>
+      {/* Los candidatos */}
+      {cargando ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="cristal p-5 animate-pulse space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full" style={{ background: "rgba(148,163,184,0.15)" }} />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 rounded" style={{ background: "rgba(148,163,184,0.15)", width: "60%" }} />
+                  <div className="h-2.5 rounded" style={{ background: "rgba(148,163,184,0.1)", width: "40%" }} />
+                </div>
+              </div>
+              <div className="h-9 rounded-full" style={{ background: "rgba(148,163,184,0.08)" }} />
             </div>
-            <Link href="/empresas/alta"
-              className="flex-shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition hover:opacity-90"
-              style={{ background: "linear-gradient(180deg, #d9f99d, #a3e635 55%, #84cc16)", color: "#0b1406" }}>
-              Dar de alta mi empresa →
-            </Link>
-          </div>
-        )}
-
-        {/* Grid de candidatos */}
-        {cargando ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="card-game p-5 animate-pulse">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-11 h-11 rounded-full" style={{ background: "#252836" }} />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 rounded" style={{ background: "#252836", width: "60%" }} />
-                    <div className="h-2.5 rounded" style={{ background: "rgba(12,15,22,0.86)", width: "40%" }} />
-                  </div>
+          ))}
+        </div>
+      ) : candidatos.length === 0 ? (
+        <div className="cristal p-8 text-center flex flex-col items-center gap-2">
+          <span className="icono-circulo tono-neutro" style={{ width: 52, height: 52 }} aria-hidden="true"><Search size={24} /></span>
+          <p className="text-[15px] font-bold" style={{ color: "#f1f5f9" }}>Sin resultados</p>
+          <p className="text-[13px]" style={{ color: "#a7b3c6" }}>Prueba con otra ciudad o perfil.</p>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {candidatos.map((c) => (
+            <article key={c.id} className="cristal tono-neutro p-4 sm:p-5 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <AvatarPersona id={c.id} nombre={c.nombre} />
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-[16px] font-bold leading-tight truncate" style={{ color: "#f8fafc" }}>{c.nombre}</h2>
+                  {c.ciudad && <p className="flex items-center gap-1 text-[12.5px] mt-0.5 truncate" style={{ color: "#a7b3c6" }}><MapPin size={12} aria-hidden="true" />{c.ciudad}</p>}
                 </div>
-                <div className="h-2.5 rounded mb-2" style={{ background: "rgba(12,15,22,0.86)" }} />
-                <div className="h-2.5 rounded" style={{ background: "rgba(12,15,22,0.86)", width: "70%" }} />
-              </div>
-            ))}
-          </div>
-        ) : necesitaEntrar ? (
-          <div className="text-center py-20">
-            <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Entra con tu cuenta para ver los perfiles</p>
-            <p className="text-xs mb-4" style={{ color: "#8b98ad" }}>Los perfiles de candidatos solo se enseñan a usuarios registrados.</p>
-            <Link href="/auth/login?redirect=%2Fempresas%2Fcandidatos" className="btn-game text-sm px-5 py-2.5 rounded-lg inline-block">
-              Entrar
-            </Link>
-          </div>
-        ) : candidatos.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-4xl mb-3">🔍</div>
-            <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Sin resultados</p>
-            <p className="text-xs" style={{ color: "#8b98ad" }}>Prueba con otra ciudad o perfil diferente.</p>
-          </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {candidatos.map(c => (
-              <div key={c.id} className="card-game p-5 flex flex-col gap-3 relative">
-
-                {/* Avatar + nombre */}
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{ background: `${colorAvatar(c.id)}22`, color: colorAvatar(c.id), border: `1.5px solid ${colorAvatar(c.id)}44` }}>
-                    {iniciales(c.nombre)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: "#f1f5f9" }}>{c.nombre}</p>
-                    <p className="text-[11px]" style={{ color: "#8b98ad" }}>{c.ciudad}</p>
-                  </div>
-                </div>
-
                 {c.puntuacion !== null && (
-                  <p className="text-[11px] self-start tabular-nums" style={{ color: "#cbd5e1" }}
-                    title="Por hechos comprobables: cartas de recomendación confirmadas, CV completo y al día. Sin IA.">
-                    <strong style={{ color: "#22c55e" }}>{c.puntuacion}</strong>/100 · {c.nivel}
-                  </p>
-                )}
-
-                {c.referencias > 0 && (
-                  <p className="text-[10px] font-semibold self-start px-2 py-0.5 rounded-full"
-                    style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }}
-                    title="Quien firmó la carta lo ha confirmado desde el correo de su empresa">
-                    ✓ {c.referencias > 1 ? `${c.referencias} referencias verificadas` : "Referencia verificada"}
-                  </p>
-                )}
-
-                {/* Puesto */}
-                {c.puesto && (
-                  <p className="text-[11px] font-medium" style={{ color: "#94a3b8" }}>{c.puesto}</p>
-                )}
-
-                {/* Aptitudes */}
-                {c.aptitudes.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {c.aptitudes.map((a, i) => (
-                      <span key={i} className="text-[9px] px-2 py-0.5 rounded-full"
-                        style={{ background: "rgba(34,197,94,0.08)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.15)" }}>
-                        {a}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Contacto / lock */}
-                {/* Enlaces <a> y no <Link>: Next precarga los <Link>, y abrir un
-                    CV gasta cupo del mes. Así solo cuenta el que se abre. */}
-                {esEmpresa && c.abierto ? (
-                  <div className="mt-auto space-y-1 pt-2" style={{ borderTop: "1px solid rgba(45,49,66,0.5)" }}>
-                    {c.email && (
-                      <a href={`mailto:${c.email}`} className="flex items-center gap-2 text-[11px] hover:opacity-80 transition"
-                        style={{ color: "#22c55e" }}>{c.email}
-                      </a>
-                    )}
-                    {c.telefono && (
-                      <a href={`tel:${c.telefono}`} className="flex items-center gap-2 text-[11px] hover:opacity-80 transition"
-                        style={{ color: "#94a3b8" }}>
-                        📞 {c.telefono}
-                      </a>
-                    )}
-                    {!c.email && !c.telefono && (
-                      <p className="text-[10px]" style={{ color: "#8b98ad" }}>Sin contacto en CV</p>
-                    )}
-                    <a href={`/talento/${c.id}`} className="inline-block text-[11px] font-semibold pt-1 hover:opacity-80 transition"
-                      style={{ color: "#22c55e" }}>
-                      Ver CV completo →
-                    </a>
-                  </div>
-                ) : esEmpresa ? (
-                  <div className="mt-auto pt-2" style={{ borderTop: "1px solid rgba(45,49,66,0.5)" }}>
-                    {cupo && cupo.usados >= cupo.maximo ? (
-                      <p className="text-[10px]" style={{ color: "#f59e0b" }}>Cupo del mes completo: se renueva el día 1.</p>
-                    ) : (
-                      <>
-                        <a href={`/talento/${c.id}`} className="inline-block text-[11px] font-semibold hover:opacity-80 transition"
-                          style={{ color: "#22c55e" }}>
-                          Abrir contacto y CV →
-                        </a>
-                        <p className="text-[10px] mt-0.5" style={{ color: "#8b98ad" }}>Cuenta como 1 de los {cupo?.maximo ?? LIMITES_EMPRESA.candidatosMes} de este mes.</p>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="mt-auto pt-2" style={{ borderTop: "1px solid rgba(45,49,66,0.5)" }}>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px]">🔒</span>
-                          <div className="h-2 w-28 rounded" style={{ background: "rgba(45,49,66,0.8)", filter: "blur(2px)" }} />
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px]">🔒</span>
-                          <div className="h-2 w-20 rounded" style={{ background: "rgba(45,49,66,0.8)", filter: "blur(2px)" }} />
-                        </div>
-                      </div>
-                      <Link href="/empresas/alta"
-                        className="text-[10px] font-semibold px-2.5 py-1 rounded-lg transition hover:opacity-90"
-                        style={{ background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-                        Ver →
-                      </Link>
-                    </div>
+                  <div className="text-right shrink-0" title="Por hechos comprobables: cartas de recomendación confirmadas, CV completo y al día. Sin IA.">
+                    <p className="text-[26px] font-extrabold leading-none tabular-nums" style={{ color: "#99f6e4" }}>{c.puntuacion}</p>
+                    <p className="text-[10.5px] mt-0.5" style={{ color: "var(--texto-tenue)" }}>de 100</p>
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        )}
 
-        {/* Paginación */}
-        {candidatos.length === 24 && (
-          <div className="flex justify-center gap-3 mt-8">
-            {pagina > 1 && (
-              <button onClick={() => cargar(pagina - 1)}
-                className="px-4 py-2 text-xs rounded-lg transition hover:opacity-80"
-                style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
-                ← Anterior
-              </button>
-            )}
-            <button onClick={() => cargar(pagina + 1)}
-              className="px-4 py-2 text-xs rounded-lg transition hover:opacity-80"
-              style={{ border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8" }}>
-              Siguiente →
-            </button>
-          </div>
-        )}
+              {c.puesto && <p className="text-[13.5px] font-semibold line-clamp-2" style={{ color: "#dbe3ee" }}>{c.puesto}</p>}
 
-      </div>
-    </div>
+              <div className="flex flex-wrap gap-1.5">
+                {c.nivel && <Etiqueta tono="cian">{c.nivel}</Etiqueta>}
+                {c.referencias > 0 && (
+                  <Etiqueta tono="verde"><BadgeCheck size={12} aria-hidden="true" />{c.referencias > 1 ? `${c.referencias} referencias verificadas` : "Referencia verificada"}</Etiqueta>
+                )}
+                {c.aptitudes.slice(0, 3).map((a, i) => <Etiqueta key={i} tono="neutro">{a}</Etiqueta>)}
+              </div>
+
+              {/* Enlaces <a> y no <Link>: Next precarga los <Link>, y abrir un
+                  CV gasta cupo del mes. Así solo cuenta el que se abre. */}
+              <div className="mt-auto pt-1 space-y-2">
+                {esEmpresa && c.abierto ? (
+                  <>
+                    {(c.email || c.telefono) && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {c.email && <a href={`mailto:${c.email}`} className="boton-cristal tono-cian text-[13px] px-3"><Mail size={15} aria-hidden="true" />Escribir</a>}
+                        {c.telefono && <a href={`tel:${c.telefono}`} className="boton-cristal tono-cian text-[13px] px-3"><Phone size={15} aria-hidden="true" />Llamar</a>}
+                      </div>
+                    )}
+                    <a href={`/talento/${c.id}`} className="boton-neon w-full">Ver CV · Invitar</a>
+                  </>
+                ) : esEmpresa ? (
+                  lleno ? (
+                    <p className="text-[12.5px] text-center py-2" style={{ color: "#fcd34d" }}>Cupo del mes completo. Se renueva el día 1.</p>
+                  ) : (
+                    <>
+                      <a href={`/talento/${c.id}`} className="boton-cristal tono-cian w-full"><Unlock size={16} aria-hidden="true" />Abrir CV y contacto</a>
+                      <p className="text-[11.5px] text-center" style={{ color: "var(--texto-tenue)" }}>Usa 1 de los {cupo?.maximo ?? LIMITES_EMPRESA.candidatosMes} del mes</p>
+                    </>
+                  )
+                ) : (
+                  <Link href="/empresas/alta" className="boton-cristal tono-cian w-full"><Lock size={15} aria-hidden="true" />Ver contacto</Link>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {/* Paginación */}
+      {!cargando && (pagina > 1 || candidatos.length === 24) && (
+        <div className="flex justify-center gap-3">
+          {pagina > 1 && <button type="button" onClick={() => cargar(pagina - 1)} className="boton-cristal tono-neutro">← Anterior</button>}
+          {candidatos.length === 24 && <button type="button" onClick={() => cargar(pagina + 1)} className="boton-cristal tono-neutro">Siguiente →</button>}
+        </div>
+      )}
+    </MarcoContratacion>
   );
 }

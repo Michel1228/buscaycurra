@@ -4,6 +4,9 @@
  * El candidato manda a la empresa sus respuestas, cuando él quiere. Solo el
  * texto: ninguna nota de la IA (lib/entrevistas/empresa.ts). A la empresa le
  * llega un aviso en la app para que las lea y las valore una persona.
+ *
+ * Una sola vez (23 nov 2026): es una entrevista de verdad, y la empresa compara
+ * a todos con las mismas reglas. Antes de mandarla puede rehacer lo que quiera.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -22,6 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     const inv = await invitacionPorId(String(body.id || ""));
     if (!inv || inv.user_id !== userId) return NextResponse.json({ error: "Esta invitación no está" }, { status: 404 });
+    if (inv.enviada_en) return NextResponse.json({ error: "Esta entrevista ya la mandaste." }, { status: 409 });
     const respuestas = Array.isArray(body.respuestas) ? body.respuestas.map((r) => String(r ?? "").trim().slice(0, 1500)) : [];
     if (respuestas.length !== inv.preguntas.length || respuestas.some((r) => r.length < 2)) {
       return NextResponse.json({ error: "Contesta todas las preguntas antes de mandarlas." }, { status: 400 });
@@ -36,8 +40,8 @@ export async function POST(req: NextRequest) {
     await sb.from("notificaciones").insert({
       user_id: inv.empresa_id, tipo: "entrevista_respuestas", leida: false,
       titulo: `${quien} ha mandado sus respuestas`,
-      mensaje: `Para tu entrevista de ${inv.puesto}. Léelas y marca lo que ha cubierto.`,
-      datos: { url: "/empresas/entrevistas" },
+      mensaje: `Para tu entrevista de ${inv.puesto}. Léelas y valóralas.`,
+      datos: { url: `/empresas/entrevistas?ver=${encodeURIComponent(inv.id)}` },
     });
     return NextResponse.json({ ok: true });
   } catch (e) {

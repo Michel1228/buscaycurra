@@ -2,21 +2,28 @@
  * lib/entrevistas/empresa.ts — La entrevista de cada empresa.
  *
  * POR QUÉ (3 nov 2026). Idea de Michel: que la empresa ponga lo que pregunta en
- * sus entrevistas y, cuando le interesa un candidato, se le avise y se le abra el
- * ensayo de esa empresa, con una nota de 0 a 100 de lo cerca que está de lo que
- * busca. Hecho con el orden acordado ese día:
+ * sus entrevistas y, cuando le interesa un candidato, le invite a hacerla.
  *
- *   1. El candidato ensaya con las preguntas de la empresa y ve, SOLO ÉL, qué
- *      puntos de los que busca la empresa ha cubierto. Esa comprobación con IA
- *      no llega a la empresa ni se guarda: una nota automática para decidir entre
- *      candidatos es IA de selección de personal, «alto riesgo» en la ley europea
- *      de IA, y antes pide evaluación de impacto y pruebas de sesgo.
- *   2. Cuando él quiere, manda las respuestas de su último ensayo. La empresa las
- *      lee y marca qué puntos ha cubierto: la nota de 0 a 100 la pone una persona.
+ * 23 NOV 2026, ENTREVISTA DE VERDAD (Michel: «no es una simulación: la empresa
+ * la manda para que hagan la entrevista desde la aplicación»). Hasta ese día el
+ * candidato «ensayaba» y una IA le decía qué puntos de los que busca la empresa
+ * había cubierto, para que los corrigiera antes de mandarlos: casi todos
+ * acababan mandando respuestas «perfectas» y la empresa no podía distinguir.
+ * Ahora:
+ *
+ *   1. El candidato contesta desde la app, hablando o escribiendo; puede rehacer
+ *      sus respuestas antes de mandarlas y las manda una vez. No ve lo que la
+ *      empresa espera oír ni ninguna nota. Para ensayar está el simulador normal.
+ *   2. La empresa las lee y marca qué puntos ha cubierto: la nota de 0 a 100 la
+ *      pone una persona. Ninguna IA valora a nadie (una nota automática para
+ *      elegir entre candidatos es IA de selección de «alto riesgo» en la ley
+ *      europea, y pide evaluación de impacto y pruebas de sesgo).
  *   3. La referencia verificada se enseña al lado, como sello, sin sumar a la nota.
  *
- * Solo cuenta el contenido: ni acento, ni gramática, ni tono. Inferir emociones
- * en un proceso de selección está prohibido desde febrero de 2025.
+ * Crear la entrevista cuesta poco: las preguntas del sector salen ya escritas
+ * (lib/empresas/plantillas-entrevista.ts) y «qué esperas oír» es opcional.
+ *
+ * Las columnas intentos y ultima_sesion son de los ensayos de antes: ya no se usan.
  *
  * Tablas en la base propia, creadas al primer uso. La invitación lleva una copia
  * de las preguntas: si la empresa las cambia después, el candidato ensaya y
@@ -29,6 +36,11 @@ import { deTema, preguntaDiscriminatoria } from "@/lib/empresas/reglas";
 
 export const MAX_PREGUNTAS = 8;
 export const MAX_PUNTOS = 5;
+/**
+ * Si la empresa no escribe qué espera oír, la pregunta se valora con un sí o un
+ * no: «¿me convence?». Así no tiene que escribir nada más que la pregunta.
+ */
+export const PUNTO_SIN_ESCRIBIR = "Me convence la respuesta";
 export const INVITACIONES_AL_DIA = 30;
 
 /** El día 1 de este mes, a las 00:00 de Madrid: ahí empieza el cupo de la empresa. */
@@ -108,7 +120,7 @@ export function validarPreguntas(v: unknown): { ok: true; preguntas: Pregunta[] 
   })).filter((p) => p.texto);
   if (!preguntas.length) return { ok: false, error: "Escribe al menos una pregunta." };
   if (preguntas.length > MAX_PREGUNTAS) return { ok: false, error: `Como mucho ${MAX_PREGUNTAS} preguntas.` };
-  if (preguntas.some((p) => !p.puntos.length)) return { ok: false, error: "En cada pregunta, escribe al menos una cosa que esperas oír." };
+  for (const p of preguntas) if (!p.puntos.length) p.puntos = [PUNTO_SIN_ESCRIBIR];
   // Nada de edad, familia, origen, salud… ni en la pregunta ni en lo que se espera oír (21 nov 2026).
   for (const [i, p] of preguntas.entries()) {
     const tema = [p.texto, ...p.puntos].map(preguntaDiscriminatoria).find(Boolean);
@@ -245,15 +257,6 @@ export async function invitacionesDeCandidato(userId: string): Promise<Invitacio
     `SELECT ${COLUMNAS} FROM entrevista_invitacion WHERE user_id = $1 ORDER BY creado DESC`, [userId]
   );
   return rows;
-}
-
-/** Cuenta un ensayo nuevo la primera vez que llega una sesión distinta. */
-export async function apuntarEnsayo(id: string, userId: string, sesion: string): Promise<void> {
-  await getPool().query(
-    `UPDATE entrevista_invitacion SET intentos = intentos + 1, ultima_sesion = $3
-      WHERE id = $1 AND user_id = $2 AND ultima_sesion IS DISTINCT FROM $3`,
-    [id, userId, sesion.slice(0, 64)]
-  );
 }
 
 /** El candidato manda sus respuestas. Se borran las marcas de antes: hay que volver a leerlas. */

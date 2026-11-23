@@ -68,6 +68,8 @@ const BARRA_ABAJO = ["/app/bienvenida", "/app/explorar", "GUZZI", "/app/curricul
 // Donde la barra de abajo estorba: el chat de Guzzi tiene su propia caja de
 // escribir abajo (como WhatsApp dentro de una conversación).
 const SIN_BARRA_ABAJO = ["/app/gusi", "/app/admin"];
+/** Las pantallas de empresa (components/empresas/AreaContratacion.tsx). */
+const RUTAS_EMPRESA = ["/empresas/candidatos", "/empresas/entrevistas", "/empresas/equipo", "/empresas/alta", "/talento"];
 
 /** Iconos SVG premium con color — paleta BuscayCurra */
 const ICON_COLORS: Record<string, string> = {
@@ -230,7 +232,12 @@ export default function AppNavWrapper() {
   const { lang, t, setLang } = useLanguage();
   const navLabel = (key: string) => t(key);
 
-  const enApp = pathname.startsWith("/app");
+  // EL ÁREA DE CONTRATACIÓN, DENTRO DE LA APP (23 nov 2026, Michel: «no tienen
+  // nada que ver con la otra interfaz»). Con la sesión abierta, las pantallas de
+  // empresa llevan la misma barra que el resto; sin sesión no, porque a ellas
+  // también llega de fuera una empresa sin cuenta (desde /empresas).
+  const enAreaEmpresa = RUTAS_EMPRESA.some((r) => pathname === r || pathname.startsWith(r + "/"));
+  const enApp = pathname.startsWith("/app") || (enAreaEmpresa && !!userId);
   const conBarraAbajo = enApp && !SIN_BARRA_ABAJO.some((r) => pathname === r || pathname.startsWith(r + "/"));
 
   // FIX: Forzar scroll al top al montar — evita que la nav quede oculta en móviles

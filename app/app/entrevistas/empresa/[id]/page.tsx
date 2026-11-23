@@ -1,29 +1,32 @@
 "use client";
 
 /**
- * /app/entrevistas/empresa/[id] — Ensayar la entrevista de una empresa que se ha
- * interesado por mí (lib/entrevistas/empresa.ts).
+ * /app/entrevistas/empresa/[id] — La entrevista que una empresa te ha mandado.
  *
- * Después de cada respuesta, la IA dice qué puntos de los que busca la empresa
- * ha cubierto, para mejorarla. Eso solo lo ve el candidato. Cuando quiere, manda
- * a la empresa el texto de sus respuestas, sin ninguna nota: las valora una
- * persona de la empresa.
+ * 23 nov 2026 (Michel): «no es una simulación: la empresa la manda para que
+ * hagan la entrevista desde la aplicación». Es una entrevista de verdad: el
+ * candidato contesta cada pregunta hablando o escribiendo, puede rehacer sus
+ * respuestas antes de mandarlas y las manda una vez. No ve qué espera oír la
+ * empresa ni ninguna nota: todos con las mismas reglas, y la valora una persona
+ * de la empresa (lib/entrevistas/empresa.ts). Para ensayar antes está el
+ * simulador de siempre, con preguntas de su sector.
+ *
+ * Lo que va contestando se guarda en este móvil u ordenador, por si sale y vuelve.
  */
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, CheckCircle2, Clock, Dumbbell, MessagesSquare, Mic, PenLine, Send, Volume2 } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import VoiceRecorder from "@/components/VoiceInterview/VoiceRecorder";
-import { Building2, Check, Lock, Volume2, X } from "lucide-react";
-import { notaDePuntos } from "@/lib/entrevistas/puntos";
+import LogoEmpresa from "@/components/neon/LogoEmpresa";
+import { Etiqueta } from "@/components/neon/Neon";
 
-interface Pregunta { texto: string; puntos: string[] }
 interface Invitacion {
-  id: string; empresa: string; puesto: string; preguntas: Pregunta[];
-  intentos: number; respuestas: string[] | null; enviadaEn: string | null; leida: boolean;
+  id: string; empresa: string; puesto: string; preguntas: { texto: string }[];
+  respuestas: string[] | null; enviadaEn: string | null; leida: boolean;
 }
-interface Resultado { cubiertos: boolean[]; consejo: string }
-
-const nuevaSesion = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+type Fase = "inicio" | "preguntas" | "repaso";
 
 function leerEnVoz(texto: string) {
   try {
@@ -36,6 +39,8 @@ function leerEnVoz(texto: string) {
   } catch { /* sin voz en este navegador */ }
 }
 
+const contestada = (r: string | undefined) => (r || "").trim().length >= 2;
+
 export default function EntrevistaEmpresaPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -43,17 +48,12 @@ export default function EntrevistaEmpresaPage() {
   const [inv, setInv] = useState<Invitacion | null>(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
-  const [sesion, setSesion] = useState("");
+  const [fase, setFase] = useState<Fase>("inicio");
   const [idx, setIdx] = useState(0);
   const [respuestas, setRespuestas] = useState<string[]>([]);
-  const [resultados, setResultados] = useState<(Resultado | null)[]>([]);
-  const [comprobando, setComprobando] = useState(false);
   const [aviso, setAviso] = useState("");
-  const [terminado, setTerminado] = useState(false);
   const [mandando, setMandando] = useState(false);
   const [confirmar, setConfirmar] = useState(false);
-  // El servidor cuenta un ensayo por sesión; esto evita contarlo dos veces en pantalla.
-  const [contada, setContada] = useState("");
 
   const clave = `bc_entrevista_empresa_${id}`;
 
@@ -67,57 +67,23 @@ export default function EntrevistaEmpresaPage() {
       if (!r.ok || !j.invitacion) { setError(j.error || "No se ha podido abrir esta entrevista."); setCargando(false); return; }
       const i: Invitacion = j.invitacion;
       setInv(i);
-      // Se retoma el ensayo a medias (solo en este móvil u ordenador).
+      // Lo que llevaba contestado, si salió a medias (solo en este aparato).
       try {
         const g = JSON.parse(localStorage.getItem(clave) || "null");
         if (g && Array.isArray(g.respuestas) && g.respuestas.length === i.preguntas.length) {
-          setRespuestas(g.respuestas); setResultados(g.resultados || []); setIdx(Math.min(g.idx || 0, i.preguntas.length - 1));
-          setSesion(g.sesion || nuevaSesion()); setTerminado(!!g.terminado); setContada(g.contada || "");
-        } else {
-          setRespuestas(i.preguntas.map(() => "")); setResultados(i.preguntas.map(() => null)); setSesion(nuevaSesion());
-        }
-      } catch {
-        setRespuestas(i.preguntas.map(() => "")); setResultados(i.preguntas.map(() => null)); setSesion(nuevaSesion());
-      }
+          setRespuestas(g.respuestas); setIdx(Math.min(g.idx || 0, i.preguntas.length - 1));
+        } else setRespuestas(i.preguntas.map(() => ""));
+      } catch { setRespuestas(i.preguntas.map(() => "")); }
       setCargando(false);
     })();
   }, [id, router, clave]);
 
   useEffect(() => {
-    if (!inv) return;
-    try { localStorage.setItem(clave, JSON.stringify({ respuestas, resultados, idx, sesion, terminado, contada })); } catch { /* da igual */ }
-  }, [inv, respuestas, resultados, idx, sesion, terminado, contada, clave]);
+    if (!inv || inv.enviadaEn) return;
+    try { localStorage.setItem(clave, JSON.stringify({ respuestas, idx })); } catch { /* da igual */ }
+  }, [inv, respuestas, idx, clave]);
 
-  const ponerRespuesta = useCallback((t: string) => {
-    setRespuestas((r) => r.map((x, i) => (i === idx ? t : x)));
-    setResultados((r) => r.map((x, i) => (i === idx ? null : x)));
-  }, [idx]);
-
-  async function comprobar() {
-    if (!inv || !respuestas[idx]?.trim()) return;
-    setComprobando(true); setAviso("");
-    try {
-      const r = await fetch("/api/entrevistas/empresa/comprobar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ id: inv.id, indice: idx, respuesta: respuestas[idx], sesion }),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok || !Array.isArray(j.cubiertos)) { setAviso(j.error || "No se ha podido comprobar ahora."); return; }
-      setResultados((res) => res.map((x, i) => (i === idx ? { cubiertos: j.cubiertos, consejo: j.consejo || "" } : x)));
-      if (contada !== sesion) { setContada(sesion); setInv({ ...inv, intentos: inv.intentos + 1 }); }
-    } catch {
-      setAviso("No se ha podido comprobar ahora. Inténtalo de nuevo en un momento.");
-    } finally {
-      setComprobando(false);
-    }
-  }
-
-  function otraVez() {
-    if (!inv) return;
-    setRespuestas(inv.preguntas.map(() => "")); setResultados(inv.preguntas.map(() => null));
-    setIdx(0); setTerminado(false); setSesion(nuevaSesion()); setConfirmar(false);
-  }
+  const ponerRespuesta = useCallback((t: string) => setRespuestas((r) => r.map((x, i) => (i === idx ? t : x))), [idx]);
 
   async function mandar() {
     if (!inv) return;
@@ -129,157 +95,176 @@ export default function EntrevistaEmpresaPage() {
         body: JSON.stringify({ id: inv.id, respuestas }),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) { setAviso(j.error || "No se pudieron mandar."); return; }
+      if (!r.ok) { setAviso(j.error || "No se pudo mandar. Inténtalo de nuevo."); return; }
       setInv({ ...inv, respuestas, enviadaEn: new Date().toISOString(), leida: false });
+      try { localStorage.removeItem(clave); } catch { /* da igual */ }
       setConfirmar(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setMandando(false);
     }
   }
 
   async function quitar() {
-    if (!inv || !window.confirm(`¿Quitar la invitación de ${inv.empresa}? Si les mandaste tus respuestas, se borran también.`)) return;
+    if (!inv || !window.confirm(`¿Quitar la entrevista de ${inv.empresa}? Si les mandaste tus respuestas, se borran también.`)) return;
     const r = await fetch(`/api/entrevistas/empresa?id=${encodeURIComponent(inv.id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
     if (r.ok) { try { localStorage.removeItem(clave); } catch { /* da igual */ } router.push("/app/entrevistas"); }
   }
 
-  const caja = { background: "#1e212b", border: "1px solid #2d3142" };
-
-  if (cargando) return <div className="min-h-screen pt-24 text-center text-sm" style={{ background: "#0f1117", color: "#6b7280" }}>Cargando la entrevista…</div>;
+  if (cargando) return <div className="ui-neon min-h-screen pt-24 text-center text-sm" style={{ color: "#a7b3c6" }}>Cargando la entrevista…</div>;
   if (error || !inv) {
     return (
-      <div className="min-h-screen pt-24 px-4 text-center" style={{ background: "#0f1117" }}>
-        <p className="text-sm mb-4" style={{ color: "#94a3b8" }}>{error}</p>
-        <button onClick={() => router.push("/app/entrevistas")} className="btn-game px-5 py-2.5 text-sm">Ir al simulador</button>
+      <div className="ui-neon min-h-screen pt-24 px-4 text-center space-y-4">
+        <p className="text-sm" style={{ color: "#cbd5e1" }}>{error}</p>
+        <Link href="/app/entrevistas" className="boton-neon">Ir a entrevistas</Link>
       </div>
     );
   }
 
-  const p = inv.preguntas[idx];
-  const res = resultados[idx];
-  const todas = resultados.every(Boolean);
-  const nota = todas ? notaDePuntos(resultados.map((r) => r!.cubiertos)) : null;
+  const n = inv.preguntas.length;
+  const hechas = respuestas.filter(contestada).length;
+  const empezada = hechas > 0;
+
+  // La empresa y el puesto, arriba de todo, en cada fase.
+  const cabecera = (grande: boolean) => (
+    <div className={`flex items-center ${grande ? "gap-4" : "gap-3"}`}>
+      <LogoEmpresa empresa={inv.empresa} tono="cian" size={grande ? 64 : 44} />
+      <div className="min-w-0">
+        <p className="text-[11px] font-bold tracking-[0.22em] uppercase" style={{ color: "#99f6e4" }}>Entrevista</p>
+        <h1 className={`${grande ? "text-[26px]" : "text-[19px]"} font-extrabold leading-tight truncate`} style={{ color: "#f8fafc" }}>{inv.empresa}</h1>
+        <p className="text-[13.5px] truncate" style={{ color: "#a7b3c6" }}>{inv.puesto}</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen pt-16 pb-10 px-4" style={{ background: "#0f1117" }}>
-      <div className="max-w-2xl mx-auto space-y-5">
-        <div className="text-center pt-2">
-          <div className="flex justify-center mb-2"><Building2 size={32} strokeWidth={1.3} style={{ color: "#22c55e" }} /></div>
-          <h1 className="text-xl font-bold text-white">{inv.empresa}</h1>
-          <p className="text-sm mt-0.5" style={{ color: "#94a3b8" }}>Entrevista de {inv.puesto}</p>
-        </div>
+    <div className="ui-neon min-h-screen pt-16">
+      <div className="max-w-2xl mx-auto px-4 pt-5 pb-12 space-y-5">
+        <Link href="/app/entrevistas" className="inline-flex items-center gap-1.5 text-[13px] min-h-[40px]" style={{ color: "#a7b3c6" }}>
+          <ArrowLeft size={16} aria-hidden="true" /> Entrevistas
+        </Link>
 
-        <div className="rounded-xl px-4 py-3 text-xs leading-relaxed flex gap-2.5" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", color: "#cbd5e1" }}>
-          <Lock size={15} strokeWidth={1.8} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
-          <span>
-            Se ha interesado por tu perfil y te invita a preparar su entrevista. Ensaya las veces que quieras: lo que practiques <b>solo lo ves tú</b>.
-            Cuando estés listo, puedes mandarle tus respuestas. Las leerá y valorará una persona de la empresa: <b>no le llega ninguna nota automática</b>.
-          </span>
-        </div>
-
-        {inv.enviadaEn && (
-          <p className="text-xs text-center" style={{ color: "#22c55e" }}>
-            ✓ Mandaste tus respuestas el {new Date(inv.enviadaEn).toLocaleDateString("es-ES", { day: "numeric", month: "long" })}.
-            {inv.leida ? " La empresa ya las ha leído." : " La empresa todavía no las ha leído."}
-          </p>
-        )}
-
-        {!terminado ? (
+        {inv.enviadaEn ? (
+          // ── Ya mandada ────────────────────────────────────────────────
           <>
-            <div>
-              <div className="flex justify-between text-xs mb-1" style={{ color: "#64748b" }}>
-                <span>Pregunta {idx + 1} de {inv.preguntas.length}</span>
-              </div>
-              <div className="h-1.5 rounded-full" style={{ background: "#1e212b" }}>
-                <div className="h-1.5 rounded-full transition-all" style={{ background: "#22c55e", width: `${(idx / inv.preguntas.length) * 100}%` }} />
-              </div>
-            </div>
-
-            <div className="rounded-2xl p-5 flex items-start justify-between gap-3" style={caja}>
-              <p className="text-base font-medium text-white leading-relaxed flex-1">{p.texto}</p>
-              <button onClick={() => leerEnVoz(p.texto)} className="p-2 rounded-lg shrink-0" style={{ background: "#0f1117", color: "#22c55e" }} aria-label="Escuchar la pregunta">
-                <Volume2 size={18} strokeWidth={1.8} />
-              </button>
-            </div>
-
-            <VoiceRecorder value={respuestas[idx] || ""} onChange={ponerRespuesta} disabled={comprobando} />
-
-            {res && (
-              <div className="rounded-2xl p-4 space-y-3" style={caja}>
-                <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color: "#22c55e" }}>
-                  Lo que busca la empresa · {res.cubiertos.filter(Boolean).length} de {res.cubiertos.length}
-                </p>
-                <ul className="space-y-1.5">
-                  {p.puntos.map((pt, i) => (
-                    <li key={i} className="flex gap-2 text-sm" style={{ color: res.cubiertos[i] ? "#e2e8f0" : "#94a3b8" }}>
-                      {res.cubiertos[i] ? <Check size={16} className="shrink-0 mt-0.5" style={{ color: "#22c55e" }} /> : <X size={16} className="shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />}
-                      {pt}
+            <section className="cristal tono-cian p-5 sm:p-6">{cabecera(true)}</section>
+            <section className="cristal tono-verde p-6 text-center flex flex-col items-center gap-2" role="status">
+              <span className="icono-circulo" style={{ width: 64, height: 64 }} aria-hidden="true"><CheckCircle2 size={32} /></span>
+              <h2 className="text-[20px] font-extrabold" style={{ color: "#f8fafc" }}>Entrevista mandada</h2>
+              <p className="text-[13.5px]" style={{ color: "#a7b3c6" }}>El {new Date(inv.enviadaEn).toLocaleDateString("es-ES", { day: "numeric", month: "long" })}</p>
+              <Etiqueta tono={inv.leida ? "verde" : "ambar"}>{inv.leida ? "La empresa ya la ha leído" : "Pendiente de leer"}</Etiqueta>
+            </section>
+            {inv.respuestas && (
+              <details className="cristal tono-neutro p-5">
+                <summary className="cursor-pointer text-[15px] font-bold" style={{ color: "#f1f5f9" }}>Tus respuestas</summary>
+                <ol className="mt-4 space-y-4">
+                  {inv.preguntas.map((p, i) => (
+                    <li key={i}>
+                      <p className="text-[13.5px] font-bold mb-1" style={{ color: "#99f6e4" }}>{i + 1}. {p.texto}</p>
+                      <p className="text-[14px] whitespace-pre-wrap" style={{ color: "#cbd5e1" }}>{inv.respuestas![i]}</p>
                     </li>
                   ))}
-                </ul>
-                {res.consejo && <p className="text-sm leading-relaxed" style={{ color: "#cbd5e1" }}>{res.consejo}</p>}
-                <p className="text-[11px]" style={{ color: "#64748b" }}>Si quieres, cambia tu respuesta y vuelve a comprobarla. Esto solo lo ves tú.</p>
-              </div>
+                </ol>
+              </details>
             )}
-
-            {aviso && <p role="alert" className="text-sm" style={{ color: "#f59e0b" }}>{aviso}</p>}
-
-            <div className="flex gap-3">
-              <button onClick={() => void comprobar()} disabled={!respuestas[idx]?.trim() || comprobando || !!res}
-                className="flex-1 py-3 rounded-xl font-semibold text-sm"
-                style={{ background: respuestas[idx]?.trim() && !comprobando && !res ? "#22c55e" : "#1e212b", color: respuestas[idx]?.trim() && !comprobando && !res ? "#fff" : "#64748b" }}>
-                {comprobando ? "Comprobando…" : "Comprobar"}
-              </button>
-              <button onClick={() => (idx < inv.preguntas.length - 1 ? setIdx(idx + 1) : setTerminado(true))} disabled={!res}
-                className="flex-1 py-3 rounded-xl font-semibold text-sm"
-                style={{ background: res ? "#1e212b" : "#0f1117", color: res ? "#e5e7eb" : "#2d3142", border: `1px solid ${res ? "#2d3142" : "#1e212b"}` }}>
-                {idx < inv.preguntas.length - 1 ? "Siguiente →" : "Terminar"}
-              </button>
-            </div>
-            {idx > 0 && <button onClick={() => setIdx(idx - 1)} className="text-xs" style={{ color: "#64748b" }}>← Pregunta anterior</button>}
           </>
-        ) : (
-          <>
-            <div className="rounded-2xl p-5 text-center" style={caja}>
-              <p className="text-[10px] uppercase tracking-wide font-semibold mb-1" style={{ color: "#64748b" }}>Tu preparación · solo la ves tú</p>
-              <p className="text-4xl font-bold" style={{ color: "#22c55e" }}>{nota ?? "–"}<span className="text-lg" style={{ color: "#64748b" }}>/100</span></p>
-              <p className="text-xs mt-2" style={{ color: "#94a3b8" }}>Son los puntos que busca la empresa que has cubierto en tus respuestas. Llevas {inv.intentos} {inv.intentos === 1 ? "ensayo" : "ensayos"}.</p>
+        ) : fase === "inicio" ? (
+          // ── Portada ───────────────────────────────────────────────────
+          <section className="cristal tono-cian p-5 sm:p-7 space-y-5">
+            {cabecera(true)}
+            <ul className="grid grid-cols-3 gap-2">
+              {[
+                { Icono: MessagesSquare, texto: `${n} ${n === 1 ? "pregunta" : "preguntas"}` },
+                { Icono: Clock, texto: `Unos ${Math.max(3, n * 2)} min` },
+                { Icono: Mic, texto: "Hablando o escribiendo" },
+              ].map(({ Icono, texto }) => (
+                <li key={texto} className="rounded-2xl p-3 flex flex-col items-center gap-1.5 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(45,212,191,0.22)" }}>
+                  <Icono size={20} style={{ color: "#99f6e4" }} aria-hidden="true" />
+                  <span className="text-[12.5px] font-semibold leading-tight" style={{ color: "#e2e8f0" }}>{texto}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-[13px] leading-relaxed" style={{ color: "#a7b3c6" }}>
+              Puedes rehacer cada respuesta antes de mandarla. La lee y la valora una persona de la empresa.
+            </p>
+            <div className="grid gap-2.5">
+              <button type="button" onClick={() => setFase(empezada && hechas === n ? "repaso" : "preguntas")} className="boton-neon w-full">
+                <Mic size={18} aria-hidden="true" />{empezada ? `Seguir (${hechas} de ${n})` : "Empezar la entrevista"}
+              </button>
+              <Link href="/app/entrevistas" className="boton-cristal tono-cian w-full"><Dumbbell size={17} aria-hidden="true" />Ensayar antes</Link>
             </div>
-
-            <div className="space-y-3">
-              {inv.preguntas.map((q, i) => (
-                <div key={i} className="rounded-xl p-4" style={caja}>
-                  <p className="text-xs font-semibold mb-1" style={{ color: "#22c55e" }}>{i + 1}. {q.texto}</p>
-                  <p className="text-sm" style={{ color: "#cbd5e1" }}>{respuestas[i]}</p>
-                  {resultados[i] && <p className="text-[11px] mt-1" style={{ color: "#64748b" }}>{resultados[i]!.cubiertos.filter(Boolean).length} de {q.puntos.length} puntos</p>}
-                </div>
+          </section>
+        ) : fase === "preguntas" ? (
+          // ── Pregunta a pregunta ───────────────────────────────────────
+          <>
+            {cabecera(false)}
+            <div className="flex gap-1.5" aria-label={`Pregunta ${idx + 1} de ${n}`}>
+              {inv.preguntas.map((_, i) => (
+                <span key={i} className="h-1.5 flex-1 rounded-full" style={{ background: i === idx ? "#2dd4bf" : contestada(respuestas[i]) ? "rgba(45,212,191,0.5)" : "rgba(148,163,184,0.2)" }} />
               ))}
             </div>
+            <section className="cristal tono-cian p-5">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <p className="text-[12px] font-bold tracking-[0.15em] uppercase" style={{ color: "#99f6e4" }}>Pregunta {idx + 1} de {n}</p>
+                <button type="button" onClick={() => leerEnVoz(inv.preguntas[idx].texto)} className="w-11 h-11 inline-flex items-center justify-center rounded-full"
+                  style={{ background: "rgba(45,212,191,0.12)", color: "#99f6e4" }} aria-label="Escuchar la pregunta">
+                  <Volume2 size={19} />
+                </button>
+              </div>
+              <p className="text-[19px] font-bold leading-snug" style={{ color: "#f8fafc" }}>{inv.preguntas[idx].texto}</p>
+            </section>
 
-            {aviso && <p role="alert" className="text-sm" style={{ color: "#f59e0b" }}>{aviso}</p>}
+            <VoiceRecorder value={respuestas[idx] || ""} onChange={ponerRespuesta} placeholder="Contesta aquí, o pulsa el micrófono y habla" />
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <button type="button" onClick={() => (idx > 0 ? setIdx(idx - 1) : setFase("inicio"))} className="boton-cristal tono-neutro">Anterior</button>
+              <button type="button" disabled={!contestada(respuestas[idx])}
+                onClick={() => (idx < n - 1 ? setIdx(idx + 1) : setFase("repaso"))} className="boton-neon disabled:opacity-40">
+                {idx < n - 1 ? "Siguiente" : "Repasar"}
+              </button>
+            </div>
+          </>
+        ) : (
+          // ── Repaso y envío ────────────────────────────────────────────
+          <>
+            {cabecera(false)}
+            <h2 className="text-[20px] font-extrabold" style={{ color: "#f8fafc" }}>Repasa tus respuestas</h2>
+            <ol className="space-y-3">
+              {inv.preguntas.map((p, i) => (
+                <li key={i} className="cristal tono-neutro p-4">
+                  <div className="flex items-start gap-3">
+                    <p className="flex-1 text-[13.5px] font-bold" style={{ color: "#99f6e4" }}>{i + 1}. {p.texto}</p>
+                    <button type="button" onClick={() => { setIdx(i); setFase("preguntas"); }} aria-label={`Cambiar la respuesta ${i + 1}`}
+                      className="shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-full" style={{ background: "rgba(45,212,191,0.1)", color: "#99f6e4" }}>
+                      <PenLine size={17} />
+                    </button>
+                  </div>
+                  <p className="text-[14px] mt-1.5 whitespace-pre-wrap" style={{ color: contestada(respuestas[i]) ? "#e2e8f0" : "#fca5a5" }}>
+                    {contestada(respuestas[i]) ? respuestas[i] : "Sin contestar"}
+                  </p>
+                </li>
+              ))}
+            </ol>
+
+            {aviso && <p role="alert" className="text-[13.5px]" style={{ color: "#fca5a5" }}>{aviso}</p>}
 
             {!confirmar ? (
-              <div className="flex flex-col gap-2.5">
-                <button onClick={() => setConfirmar(true)} className="btn-game w-full py-3 text-sm">
-                  {inv.enviadaEn ? "Mandar estas respuestas en lugar de las anteriores" : `Mandar mis respuestas a ${inv.empresa}`}
-                </button>
-                <button onClick={otraVez} className="w-full py-3 rounded-xl text-sm" style={{ border: "1px solid #2d3142", color: "#e5e7eb" }}>Ensayar otra vez</button>
-              </div>
+              <button type="button" onClick={() => setConfirmar(true)} disabled={hechas < n} className="boton-neon w-full disabled:opacity-40">
+                <Send size={18} aria-hidden="true" />Mandar a {inv.empresa}
+              </button>
             ) : (
-              <div className="rounded-2xl p-4 space-y-3" style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)" }}>
-                <p className="text-sm leading-relaxed" style={{ color: "#e2e8f0" }}>
-                  A {inv.empresa} le llegará lo que has contestado en cada pregunta y cuántas veces has ensayado. <b>No le llega tu nota</b>: tus respuestas las valora una persona.
-                </p>
-                <div className="flex gap-2">
-                  <button onClick={() => void mandar()} disabled={mandando} className="btn-game flex-1 py-2.5 text-sm">{mandando ? "Mandando…" : "Sí, mandarlas"}</button>
-                  <button onClick={() => setConfirmar(false)} className="flex-1 py-2.5 rounded-xl text-sm" style={{ border: "1px solid #2d3142", color: "#94a3b8" }}>Todavía no</button>
+              <div className="cristal tono-lima p-5 space-y-3">
+                <p className="text-[14px] font-semibold" style={{ color: "#f1f5f9" }}>Una vez mandada, no se puede cambiar.</p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button type="button" onClick={() => void mandar()} disabled={mandando} className="boton-neon">{mandando ? "Mandando…" : "Sí, mandar"}</button>
+                  <button type="button" onClick={() => setConfirmar(false)} className="boton-cristal tono-neutro">Todavía no</button>
                 </div>
               </div>
             )}
           </>
         )}
 
-        <button onClick={() => void quitar()} className="block mx-auto text-xs pt-2" style={{ color: "#64748b" }}>Quitar esta invitación</button>
+        <button type="button" onClick={() => void quitar()} className="block mx-auto text-[12.5px] min-h-[40px]" style={{ color: "var(--texto-tenue)" }}>Quitar esta entrevista</button>
       </div>
     </div>
   );

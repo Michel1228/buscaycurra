@@ -6,9 +6,10 @@
  * cuenta; quien la dio de alta añade a las demás por su correo.
  */
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { MessagesSquare, Unlock, UserPlus, UsersRound, X } from "lucide-react";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import FondoOleaje from "@/components/FondoOleaje";
+import { Etiqueta } from "@/components/neon/Neon";
+import { AvatarPersona, AvisoContratacion, MarcoContratacion } from "@/components/empresas/AreaContratacion";
 
 interface Cupo { usados: number; maximo: number }
 interface Estado {
@@ -18,18 +19,20 @@ interface Estado {
   cupo: { candidatos: Cupo; invitaciones: Cupo };
 }
 
-const caja = { background: "rgba(12,15,22,0.86)", border: "1px solid rgba(148,163,184,0.18)" };
-
-function Barra({ titulo, c }: { titulo: string; c: Cupo }) {
+/** Lo gastado del mes, con su barra. Ámbar cuando se acaba. */
+function Barra({ titulo, c, Icono }: { titulo: string; c: Cupo; Icono: typeof Unlock }) {
   const lleno = c.usados >= c.maximo;
   return (
-    <div className="rounded-xl p-4" style={caja}>
-      <p className="text-[10px] uppercase tracking-wide font-semibold mb-1" style={{ color: "#8b98ad" }}>{titulo}</p>
-      <p className="text-xl font-bold tabular-nums" style={{ color: lleno ? "#f59e0b" : "#f1f5f9" }}>
-        {c.usados} <span className="text-xs font-normal" style={{ color: "#8b98ad" }}>de {c.maximo}</span>
+    <div className={`cristal ${lleno ? "tono-ambar" : "tono-cian"} p-4 sm:p-5`}>
+      <div className="flex items-center gap-3">
+        <span className="icono-circulo" style={{ width: 40, height: 40 }} aria-hidden="true"><Icono size={19} /></span>
+        <p className="text-[13.5px] font-semibold" style={{ color: "#cbd5e1" }}>{titulo}</p>
+      </div>
+      <p className="mt-3 text-[30px] font-extrabold leading-none tabular-nums" style={{ color: "var(--tono-texto)" }}>
+        {c.usados}<span className="text-[14px] font-semibold" style={{ color: "var(--texto-tenue)" }}> de {c.maximo}</span>
       </p>
-      <div className="w-full h-1.5 rounded-full mt-2" style={{ background: "#0f1117" }}>
-        <div className="h-full rounded-full" style={{ width: `${Math.min(100, (100 * c.usados) / c.maximo)}%`, background: lleno ? "#f59e0b" : "#22c55e" }} />
+      <div className="w-full h-2 rounded-full mt-3" style={{ background: "rgba(255,255,255,0.06)" }}>
+        <div className="h-full rounded-full" style={{ width: `${Math.min(100, (100 * c.usados) / c.maximo)}%`, background: "rgb(var(--tono))", boxShadow: "0 0 12px rgba(var(--tono),0.6)" }} />
       </div>
     </div>
   );
@@ -84,103 +87,65 @@ export default function EquipoEmpresaPage() {
     if (r.ok) setDatos(j); else setError(j.error || "No se pudo quitar.");
   }
 
-  const cabecera = (
-    <header className="sticky top-0 z-50" style={{ background: "rgba(15,17,23,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(45,49,66,0.4)" }}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link href="/empresas" className="flex items-center gap-2.5">
-          <img src="/icon-192.png" alt="Guzzi" width={24} height={24} style={{ borderRadius: "50%" }} />
-          <span className="font-bold text-sm" style={{ color: "#22c55e" }}>BuscayCurra</span>
-          <span className="hidden sm:inline text-xs" style={{ color: "#8b98ad" }}>/ Tu equipo</span>
-        </Link>
-        <Link href="/empresas/candidatos" className="text-xs font-semibold" style={{ color: "#22c55e" }}>Candidatos →</Link>
-      </div>
-    </header>
-  );
-
-  if (fase !== "listo" || !datos) {
-    const textos = {
-      cargando: ["Cargando…", "", ""],
-      entrar: ["Entra con tu cuenta de empresa", "/auth/login?redirect=%2Fempresas%2Fcandidatos", "Entrar"],
-      plan: ["El equipo es para empresas verificadas (gratis)", "/empresas/alta", "Dar de alta mi empresa"],
-      listo: ["No se pudo cargar tu equipo", "", ""],
-    }[fase];
-    return (
-      <div className="min-h-screen" style={{ background: "#0f1117" }}>{cabecera}
-        <div className="text-center py-24 px-4">
-          <p className="text-sm font-semibold mb-4" style={{ color: "#f1f5f9" }}>{textos[0]}</p>
-          {textos[1] && <Link href={textos[1]} className="btn-game text-sm px-5 py-2.5 rounded-lg inline-block">{textos[2]}</Link>}
-        </div>
-      </div>
-    );
-  }
+  if (fase === "cargando") return <AvisoContratacion titulo="Cargando tu equipo…" />;
+  if (fase === "entrar") return <AvisoContratacion titulo="Entra con tu cuenta de empresa" enlace="/auth/login?redirect=%2Fempresas%2Fcandidatos" boton="Entrar" />;
+  if (fase === "plan") return <AvisoContratacion titulo="Para empresas verificadas" texto="Es gratis: comprobamos vuestro NIF y os mandamos un código." enlace="/empresas/alta" boton="Dar de alta mi empresa" />;
+  if (!datos) return <AvisoContratacion titulo="No se pudo cargar tu equipo" texto="Prueba otra vez en un momento." />;
 
   const lleno = datos.usuarios.usados !== null && datos.usuarios.usados >= datos.usuarios.maximo;
 
   return (
-    <div className="min-h-screen pb-16" style={{ background: "#0f1117" }}>
-      {/* El fondo de oleaje de toda la aplicación (diseño de neón, 8 nov 2026) */}
-      <FondoOleaje />
-      {cabecera}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-10">
-        <section>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: "#f8fafc" }}>Este mes</h1>
-          <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
-            El cupo es de toda la empresa, lo use quien lo use, y se renueva el día 1. Un candidato que ya habéis abierto sigue abierto y no vuelve a contar.
-          </p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <Barra titulo="Candidatos abiertos (contacto y CV)" c={datos.cupo.candidatos} />
-            <Barra titulo="Invitaciones «Me interesa»" c={datos.cupo.invitaciones} />
+    <MarcoContratacion seccion="equipo" titulo="Equipo" Icono={UsersRound}>
+      <section className="grid sm:grid-cols-2 gap-3" aria-label="Este mes">
+        <Barra titulo="Candidatos abiertos este mes" c={datos.cupo.candidatos} Icono={Unlock} />
+        <Barra titulo="Invitaciones a entrevista este mes" c={datos.cupo.invitaciones} Icono={MessagesSquare} />
+      </section>
+      <p className="text-[12.5px] -mt-2" style={{ color: "var(--texto-tenue)" }}>De toda la empresa. Se renueva el día 1.</p>
+
+      {datos.titular ? (
+        <section className="cristal tono-neutro p-5 space-y-4" aria-labelledby="titulo-equipo">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="titulo-equipo" className="text-[18px] font-bold" style={{ color: "#f8fafc" }}>Quién entra</h2>
+            <Etiqueta tono="cian">{datos.usuarios.usados} de {datos.usuarios.maximo}</Etiqueta>
           </div>
-        </section>
 
-        {datos.titular ? (
-          <section>
-            <h2 className="text-lg font-bold mb-1" style={{ color: "#f1f5f9" }}>
-              Tu equipo <span className="text-sm font-normal" style={{ color: "#8b98ad" }}>· {datos.usuarios.usados} de {datos.usuarios.maximo} personas</span>
-            </h2>
-            <p className="text-xs mb-5 max-w-2xl" style={{ color: "#8b98ad" }}>
-              Cada persona entra con su propia cuenta de BuscayCurra, registrada con el correo que pongas aquí, y ve los candidatos y las entrevistas de la empresa.
-              Así nadie tiene que pasarse la contraseña. Para entrar, que abra buscaycurra.es/empresas/candidatos.
-            </p>
+          <ul className="space-y-2">
+            <li className="flex items-center gap-3 rounded-2xl px-3.5 py-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(148,163,184,0.16)" }}>
+              <AvatarPersona id="titular" nombre="Tú" size={38} />
+              <span className="flex-1 text-[14.5px] font-semibold" style={{ color: "#f1f5f9" }}>Tú</span>
+              <Etiqueta tono="verde">Titular</Etiqueta>
+            </li>
+            {datos.miembros.map((m) => (
+              <li key={m.email} className="flex items-center gap-3 rounded-2xl px-3.5 py-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(148,163,184,0.16)" }}>
+                <AvatarPersona id={m.email} nombre={m.email} size={38} />
+                <span className="flex-1 min-w-0 text-[14px] truncate" style={{ color: "#cbd5e1" }}>{m.email}</span>
+                <button type="button" onClick={() => void quitar(m.email)} aria-label={`Quitar el acceso a ${m.email}`}
+                  className="shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-full" style={{ color: "#a7b3c6" }}><X size={18} /></button>
+              </li>
+            ))}
+          </ul>
 
-            <div className="space-y-2 mb-5">
-              <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={caja}>
-                <span className="text-sm" style={{ color: "#f1f5f9" }}>Tú</span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e" }}>Quien paga</span>
-              </div>
-              {datos.miembros.map((m) => (
-                <div key={m.email} className="rounded-xl px-4 py-3 flex items-center justify-between gap-3" style={caja}>
-                  <span className="text-sm truncate" style={{ color: "#cbd5e1" }}>{m.email}</span>
-                  <button onClick={() => void quitar(m.email)} className="text-xs shrink-0" style={{ color: "#94a3b8" }}>Quitar</button>
-                </div>
-              ))}
+          {lleno ? (
+            <p className="text-[13px]" style={{ color: "#fcd34d" }}>Ya sois {datos.usuarios.maximo}. Para dar acceso a otra persona, quita antes a alguien.</p>
+          ) : (
+            <div className="grid sm:grid-cols-[1fr_auto] gap-2.5">
+              <label className="sr-only" htmlFor="correo-equipo">Correo de la persona</label>
+              <input id="correo-equipo" type="email" value={correo} maxLength={200} placeholder="correo@tuempresa.es"
+                onChange={(e) => setCorreo(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && correo.trim()) void anadir(); }}
+                className="w-full" />
+              <button type="button" onClick={() => void anadir()} disabled={guardando || !correo.trim()} className="boton-neon disabled:opacity-50">
+                <UserPlus size={18} aria-hidden="true" />{guardando ? "Añadiendo…" : "Dar acceso"}
+              </button>
             </div>
-
-            {lleno ? (
-              <p className="text-xs" style={{ color: "#f59e0b" }}>
-                Tu plan incluye {datos.usuarios.maximo} personas, contándote a ti. Para dar acceso a otra, quita antes a alguien.
-              </p>
-            ) : (
-              <div className="flex flex-col sm:flex-row gap-2">
-                <label className="sr-only" htmlFor="correo-equipo">Correo de la persona</label>
-                <input id="correo-equipo" type="email" value={correo} maxLength={200} placeholder="correo@tuempresa.es"
-                  onChange={(e) => setCorreo(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && correo.trim()) void anadir(); }}
-                  className="flex-1 text-sm" />
-                <button onClick={() => void anadir()} disabled={guardando || !correo.trim()} className="btn-game text-xs px-4 py-2">
-                  {guardando ? "Añadiendo…" : "Dar acceso"}
-                </button>
-              </div>
-            )}
-            {error && <p className="text-xs mt-2" style={{ color: "#ef4444" }}>{error}</p>}
-          </section>
-        ) : (
-          <section>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>
-              Entras con la cuenta de tu empresa verificada. Quien la dio de alta es quien añade o quita personas.
-            </p>
-          </section>
-        )}
-      </div>
-    </div>
+          )}
+          <p className="text-[12.5px]" style={{ color: "var(--texto-tenue)" }}>Cada persona entra con su propia cuenta, registrada con ese correo.</p>
+          {error && <p role="alert" className="text-[13px]" style={{ color: "#fca5a5" }}>{error}</p>}
+        </section>
+      ) : (
+        <section className="cristal tono-neutro p-5">
+          <p className="text-[14px]" style={{ color: "#cbd5e1" }}>Entras con la cuenta de tu empresa. Quien la dio de alta añade o quita personas.</p>
+        </section>
+      )}
+    </MarcoContratacion>
   );
 }
