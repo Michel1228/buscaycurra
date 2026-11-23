@@ -131,7 +131,7 @@ export default function EntrevistaEmpresaPage() {
       <LogoEmpresa empresa={inv.empresa} tono="cian" size={grande ? 64 : 44} />
       <div className="min-w-0">
         <p className="text-[11px] font-bold tracking-[0.22em] uppercase" style={{ color: "#99f6e4" }}>Entrevista</p>
-        <h1 className={`${grande ? "text-[26px]" : "text-[19px]"} font-extrabold leading-tight truncate`} style={{ color: "#f8fafc" }}>{inv.empresa}</h1>
+        <h1 className={`${grande ? "text-[24px] line-clamp-2" : "text-[19px] truncate"} font-extrabold leading-tight`} style={{ color: "#f8fafc" }}>{inv.empresa}</h1>
         <p className="text-[13.5px] truncate" style={{ color: "#a7b3c6" }}>{inv.puesto}</p>
       </div>
     </div>

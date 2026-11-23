@@ -123,7 +123,7 @@ export default async function TalentoPage({ params }: Props) {
   // El editor guarda idiomas y aptitudes como listas (CVData); los CV antiguos, como texto.
   const idiomas = Array.isArray(cv.idiomas)
     ? cv.idiomas.map((i: Record<string, unknown>) => texto(i?.nombre)).filter(Boolean).join(", ")
-    : texto(cv.idiomas);
+    : texto(cv.idiomas).replace(/\s*:\s*\d+/g, ""); // «Español:100» de los CV antiguos → «Español»
   const aptitudes = (Array.isArray(cv.aptitudes) ? cv.aptitudes.map(texto) : texto(cv.aptitudes).split(/[,;]/))
     .map((h) => h.trim()).filter(Boolean);
   const nota = ficha.puntuacion;

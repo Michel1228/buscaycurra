@@ -231,7 +231,7 @@ export default function EntrevistasEmpresaPage() {
         </section>
 
         <section className="cristal tono-neutro p-5">
-          <Paso n={2} titulo="Preguntas sugeridas" />
+          <Paso n={2} titulo="Preguntas sugeridas" extra={`${llenas}/${MAXIMO}`} />
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" role="radiogroup" aria-label="Sector de las preguntas" style={{ scrollbarWidth: "none" }}>
             {SECTORES_EMPRESA.map((s) => {
               const si = s.id === sectorPlantilla;
@@ -270,29 +270,25 @@ export default function EntrevistasEmpresaPage() {
         </section>
 
         <section className="cristal tono-neutro p-5">
-          <Paso n={3} titulo="Tu entrevista" extra={`${llenas}/${MAXIMO}`} />
-          {borrador.preguntas.length === 0 && (
-            <p className="text-[13.5px] mb-3" style={{ color: "#a7b3c6" }}>Marca preguntas arriba o escribe las tuyas.</p>
-          )}
+          {/* Solo las propias: las sugeridas se marcan arriba y no se repiten aquí. */}
+          <Paso n={3} titulo="Añade las tuyas" extra={`${llenas}/${MAXIMO}`} />
           <ol className="space-y-2.5">
             {borrador.preguntas.map((p, i) => {
+              if (sugeridas.some((s) => s.texto === p.texto)) return null;
               const tema = preguntaDiscriminatoria(`${p.texto}\n${p.puntos}`);
               return (
                 <li key={i} className="rounded-2xl p-3.5" style={{ background: "rgba(6,9,11,0.6)", border: `1px solid ${tema ? "rgba(239,68,68,0.5)" : "rgba(148,163,184,0.18)"}` }}>
-                  <div className="flex items-start gap-2.5">
-                    <span className="shrink-0 mt-2 text-[13px] font-extrabold tabular-nums w-5 text-center" style={{ color: "#99f6e4" }}>{i + 1}</span>
-                    <label className="flex-1 min-w-0">
-                      <span className="sr-only">Pregunta {i + 1}</span>
-                      <textarea id={`pregunta-${i}`} rows={2} maxLength={300} value={p.texto} placeholder="Escribe tu pregunta"
-                        onChange={(e) => cambiarPregunta(i, { texto: e.target.value })} className="w-full" />
-                    </label>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <label htmlFor={`pregunta-${i}`} className="text-[12.5px] font-bold" style={{ color: "#99f6e4" }}>Tu pregunta</label>
                     <button type="button" onClick={() => setBorrador({ ...borrador, preguntas: borrador.preguntas.filter((_, k) => k !== i) })}
-                      className="shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-full" style={{ color: "#a7b3c6" }} aria-label={`Quitar la pregunta ${i + 1}`}>
+                      className="shrink-0 w-10 h-10 -my-2 -mr-2 inline-flex items-center justify-center rounded-full" style={{ color: "#a7b3c6" }} aria-label="Quitar esta pregunta">
                       <X size={18} />
                     </button>
                   </div>
+                  <textarea id={`pregunta-${i}`} rows={Math.max(2, Math.ceil(p.texto.length / 36))} maxLength={300} value={p.texto} placeholder="Escribe tu pregunta"
+                    onChange={(e) => cambiarPregunta(i, { texto: e.target.value })} className="w-full" />
                   <button type="button" onClick={() => cambiarPregunta(i, { abierta: !p.abierta })} aria-expanded={!!p.abierta}
-                    className="ml-7 mt-1 inline-flex items-center gap-1 text-[12.5px] min-h-[32px]" style={{ color: "#a7b3c6" }}>
+                    className="mt-1 inline-flex items-center gap-1 text-[12.5px] min-h-[32px]" style={{ color: "#a7b3c6" }}>
                     <ChevronDown size={14} className={p.abierta ? "rotate-180" : ""} aria-hidden="true" />
                     Qué esperas oír {p.puntos.trim() ? `(${p.puntos.split("\n").filter((x) => x.trim()).length})` : "(opcional)"}
                   </button>
@@ -300,13 +296,13 @@ export default function EntrevistasEmpresaPage() {
                     <textarea rows={3} value={p.puntos} placeholder={"Una cosa por línea. Ej.:\nPide disculpas\nOfrece una solución"}
                       onChange={(e) => cambiarPregunta(i, { puntos: e.target.value })} className="w-full mt-1.5 text-sm" aria-label={`Qué esperas oír en la pregunta ${i + 1}`} />
                   )}
-                  {tema && <p className="ml-7 mt-1.5 text-[12.5px]" style={{ color: "#fca5a5" }}>Esto trata {deTema(tema)}: no se puede preguntar. Pregunta por el puesto.</p>}
+                  {tema && <p className="mt-1.5 text-[12.5px]" style={{ color: "#fca5a5" }}>Esto trata {deTema(tema)}: no se puede preguntar. Pregunta por el puesto.</p>}
                 </li>
               );
             })}
           </ol>
           {borrador.preguntas.length < MAXIMO && (
-            <button type="button" onClick={escribirUna} className="boton-cristal tono-cian w-full mt-3"><Plus size={17} aria-hidden="true" />Escribir una pregunta</button>
+            <button type="button" onClick={escribirUna} className="boton-cristal tono-cian w-full mt-1"><Plus size={17} aria-hidden="true" />Escribir una pregunta</button>
           )}
           <p className="text-[12px] mt-3 leading-relaxed" style={{ color: "#fcd34d" }}>
             Pregunta solo por el puesto. Nada de edad, origen, religión, salud, embarazo o hijos: es discriminación.
@@ -472,7 +468,7 @@ export default function EntrevistasEmpresaPage() {
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
             {entrevistas.map((e) => (
-              <article key={e.id} className="cristal tono-cian p-4 flex items-center gap-3">
+              <article key={e.id} className="cristal tono-cian p-4 flex items-center gap-3 min-w-0">
                 <span className="icono-circulo" style={{ width: 44, height: 44 }} aria-hidden="true"><MessagesSquare size={20} /></span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[15px] font-bold truncate" style={{ color: "#f8fafc" }}>{e.puesto}</p>

@@ -87,7 +87,7 @@ export default function InvitarEntrevista({ candidatoId, nombre }: { candidatoId
           <Link href="/empresas/entrevistas" className="text-[13px] font-semibold shrink-0" style={{ color: "#86efac" }}>Ver</Link>
         </div>
       ) : entrevistas.length === 0 ? (
-        <Link href={crear} className="boton-neon w-full"><Sparkles size={18} aria-hidden="true" />Crear la entrevista e invitar a {primerNombre}</Link>
+        <Link href={crear} className="boton-neon w-full"><Sparkles size={18} aria-hidden="true" />Crear entrevista e invitar</Link>
       ) : (
         <>
           {entrevistas.length > 1 && (
