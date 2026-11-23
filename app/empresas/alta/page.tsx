@@ -124,7 +124,7 @@ export default function AltaEmpresaPage() {
   const mostrarFormulario = !solicitud || editando || estado === "rechazada";
 
   return (
-    <MarcoContratacion seccion={estado === "activa" ? "candidatos" : undefined} titulo="Alta de empresa" Icono={Building2}
+    <MarcoContratacion titulo="Alta de empresa" Icono={Building2}
       empresa={solicitud?.razonSocial} pestanas={estado === "activa"}>
       {!estado && (
         <div className="flex flex-wrap gap-2">
