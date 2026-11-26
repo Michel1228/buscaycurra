@@ -18,6 +18,7 @@ import { asegurarColumnaOficio } from "@/lib/onboarding/oficio";
 import { fichasDePlaza } from "@/lib/cursos/plazas/emparejar";
 import { buscarPlazas } from "@/lib/cursos/plazas/db";
 import { patronesDelCv, regexDePatrones, exclusionesDelCv, puestosDelCv } from "@/lib/job-search/puestos-del-cv";
+import { consultaConMargen } from "@/lib/consulta-guardada";
 
 export const dynamic = "force-dynamic";
 
@@ -284,11 +285,15 @@ export async function GET(request: NextRequest) {
       ).join(" UNION ALL ");
 
       try {
-        const batchResult = await pool.query<{ id: string; title: string; company: string; city: string; sourceUrl: string; alerta_idx: number }>(
+        // 45 s de margen (27 nov 2026): con los 15 s del pool se cortaba 8 veces al
+        // día y entonces cada alerta lanzaba su propia consulta, que pesa más que
+        // esta. Esto lo corre la tarea programada, no espera ninguna persona.
+        const batchRows = await consultaConMargen<{ id: string; title: string; company: string; city: string; sourceUrl: string; alerta_idx: number }>(
           unionQuery,
-          batchParams
+          batchParams,
+          45000
         );
-        for (const row of batchResult.rows) {
+        for (const row of batchRows) {
           const idx = row.alerta_idx;
           if (!jobsMap.has(idx)) jobsMap.set(idx, []);
           jobsMap.get(idx)!.push(row);

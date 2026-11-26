@@ -6,35 +6,34 @@
  * contaban sus ofertas cada una por su lado. En Alemania la cuenta tardaba
  * 15,5 s, la conexión corta a los 15, el error se tragaba y la página enseñaba
  * "0 Ofertas activas" (y lo guardaba en caché una hora). Una sola consulta
- * agrupada da todos los países en unos 12 s; se guarda 6 horas en Redis.
+ * agrupada da todos los países; se guarda en Redis.
+ *
+ * 27 NOV 2026: esa consulta ya pasaba de los 15 s, fallaba y no se guardaba
+ * nada, así que cada visita la repetía (131 cortes en un día). Ahora va por
+ * lib/consulta-guardada.ts: 90 s de margen, se recalcula por detrás una sola
+ * vez a la vez y, si falla, se sigue con la última cuenta buena (48 h).
+ * Guzzi usa esta misma cuenta en vez de hacer la suya.
  *
  * Devuelve null si no se ha podido calcular: quien la use NO debe enseñar un 0.
  */
-import { getPool } from "@/lib/db";
-import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
+import { consultaConMargen, consultaGuardada } from "@/lib/consulta-guardada";
 
-const CLAVE = "ofertas-por-pais";
+const CLAVE = "ofertas-por-pais:v2";
 
 export async function ofertasPorPais(): Promise<Record<string, number> | null> {
-  try {
-    const guardado = await cacheGet(CLAVE);
-    if (guardado) return JSON.parse(guardado);
-  } catch { /* se calcula */ }
-  try {
-    const { rows } = await getPool().query(
+  return consultaGuardada(CLAVE, async () => {
+    const rows = await consultaConMargen<{ code: string; total: number }>(
       `SELECT UPPER(country) AS code, COUNT(*)::int AS total
          FROM "JobListing"
         WHERE "isActive" = true AND country IS NOT NULL AND country != ''
-        GROUP BY UPPER(country)`
+        GROUP BY UPPER(country)`,
+      [],
+      90000
     );
     const mapa: Record<string, number> = {};
-    for (const r of rows as Array<{ code: string; total: number }>) mapa[r.code] = r.total;
-    await cacheSet(CLAVE, mapa, 6 * 3600).catch(() => false);
+    for (const r of rows) mapa[r.code] = r.total;
     return mapa;
-  } catch (e) {
-    console.error("[ofertas-por-pais]", (e as Error).message);
-    return null;
-  }
+  }, { frescoMs: 6 * 3600 * 1000, ttlS: 48 * 3600 });
 }
 
 /** Ofertas de un país. Reino Unido aparece como "UK" y como "GB" según la fuente. */

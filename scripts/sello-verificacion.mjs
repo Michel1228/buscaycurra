@@ -7341,7 +7341,12 @@ test("Guzzi: «¿cuántas ofertas tenemos en Suiza?» no se convierte en un pues
     // Y el recuento no puede caer por tiempo: Alemania pasaba de 15 s, daba 0
     // y Guzzi preguntaba por el puesto en vez de contestar.
     const ruta = leerFuente("app/api/gusi/chat/route.ts");
-    const recuento = ruta.includes('consultaGuardada("guzzi:ofertas-por-pais"') && ruta.includes('SET LOCAL statement_timeout = 60000')
+    // 27 nov 2026: Guzzi usa la cuenta común (lib/job-search/ofertas-por-pais.ts), y lo
+    // guardado y con margen está en lib/consulta-guardada.ts, con candado.
+    const guardada = leerFuente("lib/consulta-guardada.ts");
+    const comun = leerFuente("lib/job-search/ofertas-por-pais.ts");
+    const recuento = ruta.includes("await ofertasPorPaisComun()") && comun.includes("consultaGuardada(CLAVE,") && comun.includes("90000")
+      && guardada.includes("SET LOCAL statement_timeout") && guardada.includes("(await incrementar(candado, 300)) > 1")
       && ruta.includes("consultaGuardada(`guzzi:ciudades-top:");
     if (!recuento) console.log("     ↳ el recuento por país no está guardado ni tiene margen de tiempo");
     return malos.length === 0 && recuento && m.detectarPais("¿Cuántas ofertas contamos en Suiza?")?.codigo === "ch";
@@ -8033,6 +8038,30 @@ test("consultas desde la app: correos oficiales, destino del servidor, topes y p
   } finally {
     try { unlinkSync(salida); } catch { /* da igual */ }
   }
+});
+
+// ── LO CARO NO SE REPITE (27 nov 2026) ─────────────────────────────────────
+//
+// 832 usuarios y creciendo, en un servidor de 2 núcleos con la carga en 3. En
+// un día: 131 cortes contando ofertas por país (fallaba, no se guardaba y cada
+// visita lo repetía), 18 en el lote de alertas (y entonces cada alerta lanzaba
+// la suya) y el centinela dando «país vacío» cuando lo que pasó es que no pudo
+// mirar. Lo caro se guarda, se recalcula una vez a la vez y con margen.
+test("lo caro de contar se guarda, se recalcula una vez a la vez y con margen", () => {
+  const g = leerFuente("lib/consulta-guardada.ts");
+  const pais = leerFuente("lib/job-search/ofertas-por-pais.ts");
+  const checks = {
+    "con más margen que el pool": /SET LOCAL statement_timeout = \$\{Math\.max\(1000, Math\.floor\(ms\)\)\}/.test(g),
+    "uno a la vez, y sin Redis se calcula igual": g.includes("(await incrementar(candado, 300)) > 1") && g.includes("cacheDel(candado)"),
+    "contesta con lo guardado y refresca por detrás": g.includes("if (Date.now() - t > frescoMs) void refrescar();"),
+    "la cuenta por país va guardada 48 h con 90 s de margen": pais.includes("consultaGuardada(CLAVE,") && pais.includes("90000") && pais.includes("ttlS: 48 * 3600"),
+    "Guzzi usa la misma cuenta": leerFuente("app/api/gusi/chat/route.ts").includes("await ofertasPorPaisComun()") && !leerFuente("app/api/gusi/chat/route.ts").includes("async function consultaGuardada"),
+    "el lote de alertas tiene margen": /consultaConMargen<[^>]*>\(\s*unionQuery,\s*batchParams,\s*45000/.test(leerFuente("app/api/push/send-alerts/route.ts")),
+    "el centinela cuenta los países con margen": /consultaConMargen<\{ pais: string; n: number \}>\([\s\S]{0,400}60000/.test(leerFuente("app/api/admin/centinela/route.ts")),
+  };
+  const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
 });
 
 await Promise.all(pendientes);

@@ -44,6 +44,7 @@ import { recorridoDeUsuario } from "@/lib/centinela/recorrido";
 import { limitesDeCorreo } from "@/lib/centinela/limites-correo";
 import { getCvSenderQueue } from "@/lib/cv-sender/queue";
 import { salarioMinimoSql, CASOS_SALARIO } from "@/lib/job-search/salario-sql";
+import { consultaConMargen } from "@/lib/consulta-guardada";
 
 const supabaseAdmin = () =>
   createClient(
@@ -133,12 +134,16 @@ export async function GET(req: NextRequest) {
     // (idx_joblisting_country_lower_vivas, por eso `lower(country)` y
     // `"isActive" = true` tal cual) y para en la 500. Contarlas todas tardaba
     // más de un minuto el 4 nov 2026; así, 3 s con el servidor cargado.
-    const { rows } = await pool.query(
+    // 60 s de margen (27 nov 2026): el 26 a las 7:31 falló sin que ningún país
+    // estuviera vacío; coincidía con la sincronización de las 7:15 y la consulta
+    // se cortó a los 15 s. Un «no he podido mirar» no debe parecer un país vacío.
+    const rows = await consultaConMargen<{ pais: string; n: number }>(
       `SELECT c AS pais,
               (SELECT count(*) FROM (SELECT 1 FROM "JobListing"
                                       WHERE "isActive" = true AND lower(country) = c LIMIT ${UMBRAL}) t)::int AS n
          FROM unnest($1::text[]) AS c`,
-      [codigos]
+      [codigos],
+      60000
     );
     const flacos = rows.filter((x: { n: number }) => x.n < UMBRAL);
     anota(

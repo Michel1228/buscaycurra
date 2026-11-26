@@ -31,6 +31,8 @@ import { callGroq, callOpenAI } from "@/lib/guzzi/llm";
 import { checkRateLimit } from "@/lib/guzzi/rate-limit";
 import { empresaVisible } from "@/lib/job-search/empresa-visible";
 import { correoSinVerificar } from "@/lib/auth-server";
+import { consultaConMargen, consultaGuardada } from "@/lib/consulta-guardada";
+import { ofertasPorPais as ofertasPorPaisComun } from "@/lib/job-search/ofertas-por-pais";
 
 // Llamadas del servidor a sí mismo. 127.0.0.1 y no "localhost": en Node,
 // localhost puede resolverse primero a ::1 (IPv6) y el servidor escucha en IPv4.
@@ -2421,54 +2423,9 @@ ${cartaIA}
 }
 
 
-/**
- * LO CARO DE CONTAR, GUARDADO UNAS HORAS (14 oct 2026). Contar las ofertas de
- * un país recorre cientos de miles de filas: Alemania pasaba de los 15 s del
- * pool, el recuento fallaba, devolvía 0 y Guzzi contestaba "¿qué tipo de
- * trabajo buscas?" a quien preguntaba cuántas ofertas había en Alemania.
- * Ahora se cuenta con más margen, se guarda en Redis y se contesta al momento
- * con lo guardado; si tiene más de 3 horas, se recalcula por detrás.
- */
-async function consultaGuardada<T>(clave: string, consulta: () => Promise<T>): Promise<T | null> {
-  const { get: cacheGet, set: cacheSet } = await import("@/lib/cache/redis-client");
-  const refrescar = async (): Promise<T | null> => {
-    try {
-      const valor = await consulta();
-      await cacheSet(clave, JSON.stringify({ t: Date.now(), valor }), 12 * 3600);
-      return valor;
-    } catch (e) {
-      console.error(`[Guzzi] ${clave}:`, (e as Error).message);
-      return null;
-    }
-  };
-  const guardado = await cacheGet(clave).catch(() => null);
-  if (guardado) {
-    try {
-      const { t, valor } = JSON.parse(guardado) as { t: number; valor: T };
-      if (Date.now() - t > 3 * 3600 * 1000) void refrescar();
-      return valor;
-    } catch { /* guardado roto: se recalcula */ }
-  }
-  return refrescar();
-}
-
-/** Una consulta con 60 s de margen en vez de los 15 s del pool. */
-async function consultaConMargen<R extends Record<string, unknown>>(sql: string, params: unknown[]): Promise<R[]> {
-  const { getPool } = await import("@/lib/db");
-  const cliente = await getPool().connect();
-  try {
-    await cliente.query("BEGIN");
-    await cliente.query("SET LOCAL statement_timeout = 60000");
-    const r = await cliente.query<R>(sql, params);
-    await cliente.query("COMMIT");
-    return r.rows;
-  } catch (e) {
-    await cliente.query("ROLLBACK").catch(() => {});
-    throw e;
-  } finally {
-    cliente.release();
-  }
-}
+// LO CARO DE CONTAR (14 oct 2026): consultaGuardada y consultaConMargen están
+// desde el 27 nov 2026 en lib/consulta-guardada.ts, con un candado para que no
+// se recalcule lo mismo varias veces a la vez.
 
 /**
  * Cuántas ofertas VIVAS hay en un país. Guzzi nunca debe decir "no hay ofertas
@@ -2489,17 +2446,10 @@ function contarFalloGuzzi(tipo: "groq-413" | "respaldo-openai" | "sin-ia" | "lun
 }
 
 async function ofertasPorPais(): Promise<Record<string, number> | null> {
-  return consultaGuardada("guzzi:ofertas-por-pais", async () => {
-    const filas = await consultaConMargen<{ pais: string; n: string }>(
-      `SELECT lower(country) AS pais, count(*)::text AS n FROM "JobListing"
-        WHERE "isActive" = true
-          AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)
-          AND country IS NOT NULL
-        GROUP BY 1`,
-      []
-    );
-    return Object.fromEntries(filas.map(f => [f.pais, parseInt(f.n, 10)])) as Record<string, number>;
-  });
+  // La misma cuenta que el resto de la app (27 nov 2026): antes Guzzi hacía la
+  // suya, otra consulta de 15 s sobre las mismas filas.
+  const mapa = await ofertasPorPaisComun();
+  return mapa ? Object.fromEntries(Object.entries(mapa).map(([k, v]) => [k.toLowerCase(), v])) : null;
 }
 
 async function contarOfertasPais(codigoPais: string): Promise<number> {
