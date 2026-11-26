@@ -3010,6 +3010,7 @@ const RUTAS_SIN_CORREO_VERIFICADO = {
     "company/extract POST", "company/foto GET",
     "cursos/aviso GET", "cursos/carnes GET", "cursos/plazas GET", "cursos/progreso GET", "cursos/sugerencias GET",
     "cursos/ir GET", // lleva al curso y suma un clic sin datos de la persona
+    "consultas GET", // la lista oficial de organismos y las consultas que ha mandado él; mandar (POST) sí lo exige
     "metricas/visita-ficha POST", "metricas/visita-ficha GET", // suma 1 vista o clic de la ficha pública, sin datos de la persona (GET, con x-admin-secret)
     "cv-cartas GET", "cv-sender/envios-hoy GET", "cv-sender/status GET",
     "cv/descargar GET", "cv/lista GET", "cv/lista POST" /* leer un CV por id */, "cv/obtener GET",
@@ -4984,7 +4985,8 @@ test("el centinela vigila que la aplicacion llega a Redis", () => {
 test("la carta del envio no puede salir en blanco", () => {
   const p = leerFuente("lib/cv-sender/cv-personalizer.ts");
   return p.includes('reasoning_effort: "low"') &&
-    p.includes("cartaMatch?.[1]?.trim() || generateGenericLetter") &&
+    // 26 nov 2026: entre medias puede ir la de respaldo de la presentación sin oferta; sigue con ||.
+    /cartaMatch\?\.\[1\]\?\.trim\(\) \|\| (respaldo\?\.coverLetter \|\| )?generateGenericLetter/.test(p) &&
     !p.includes("cartaMatch?.[1]?.trim() ?? generateGenericLetter");
 });
 
@@ -5418,7 +5420,8 @@ test("con los rebotes altos se frena lo deducido, y la empresa se busca en la ci
       "reconoce lo genérico": m.esDireccionGenerica("empleo@x.es") && m.esDireccionGenerica("INFO@x.es") && m.esDireccionGenerica("rrhh@x.es") && !m.esDireccionGenerica("ana.garcia@x.es") && !m.esDireccionGenerica("info.madrid@x.es"),
       "frena al mismo 3 % en que avisa el centinela": m.UMBRAL_FRENO_REBOTES === 3 && leerFuente("lib/cv-sender/freno-rebotes.ts").includes("UMBRAL_FRENO_REBOTES"),
       "cuenta solo la semana y sin las pruebas de Resend": r.rebotes === 1 && r.total === 2 && r.pct === 50,
-      "el freno solo mira lo genérico y respeta lo que ya llegó": /esDireccionGenerica\(email\)[\s\S]*frenoDeRebotesActivo\(\)[\s\S]*direccionQueYaLlego\(email\)/.test(motivo),
+      // 26 nov 2026: lo que ya llegó sale antes de preguntar al buzón y antes del freno.
+      "el freno solo mira lo genérico y respeta lo que ya llegó": /if \(await direccionQueYaLlego\(email\)\) return null;[\s\S]*esDireccionGenerica\(email\) && await frenoDeRebotesActivo\(\)/.test(motivo),
       "ciudad limpia para buscar": m.ciudadParaBuscarEmpresa("Madrid, Comunidad de Madrid") === "Madrid" && m.ciudadParaBuscarEmpresa("Vitoria-Gasteiz (Álava)") === "Vitoria-Gasteiz",
       "sin ciudad si no es un sitio": m.ciudadParaBuscarEmpresa("España") === undefined && m.ciudadParaBuscarEmpresa("Remoto") === undefined && m.ciudadParaBuscarEmpresa("") === undefined && m.ciudadParaBuscarEmpresa(undefined) === undefined,
       "las pantallas de ofertas pasan la ciudad": ["components/JobCard.tsx", "components/ChatSendPanel.tsx", "components/GusiChat.tsx", "app/app/ofertas/[id]/OfertaDetalleClient.tsx"].every((f) => leerFuente(f).includes("ciudadParaBuscarEmpresa(") && leerFuente(f).includes("deOferta: true")),
@@ -7929,6 +7932,106 @@ test("la ficha del envío enseña el CV con su plantilla y la clásica sin foto 
     return false;
   } finally {
     try { unlinkSync(salida); } catch {}
+  }
+});
+
+// ── CV QUE NO REBOTAN Y PRESENTACIÓN SIN OFERTA (26 nov 2026) ─────────────────
+//
+// Los CV rebotaban casi un 30 % y llevaban la cuenta de Resend al 3,2 % (al 4 %
+// puede parar también las confirmaciones de registro). Michel decidió preguntar
+// al servidor de correo de la empresa si el buzón existe antes de mandar; solo
+// se para cuando lo afirma, y la pregunta se hace desde el VPS por IPv6 porque
+// el puerto 25 por IPv4 está cortado. Y sin oferta, la persona se presenta:
+// «Hola, soy…», no «Candidatura espontánea»; la carta que aprueba es la que sale.
+test("los CV no se mandan a buzones que no existen y sin oferta la persona se presenta", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-buzon.cjs", salida2 = "scripts/.tmp-presentacion.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/cv-sender/buzon-existe.ts", "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json",
+      `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    execFileSync("npx", ["esbuild", "lib/cv-sender/email-sender.ts", "--bundle", "--format=cjs", "--platform=node", "--tsconfig=tsconfig.json",
+      `--outfile=${salida2}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const b = await import(`../${salida}?${Date.now()}`);
+    const e = await import(`../${salida2}?${Date.now()}`);
+    const no = b.respuestaDeBuzonInexistente;
+    const datos = { userName: "Ana López", userEmail: "ana@correo.es", cvPdfBuffer: Buffer.from("x") };
+    const sin = e.buildCVEmailHTML(datos, "Hola, soy Ana López", "Bar Pepe", undefined, { puesto: "Camarera" });
+    const con = e.buildCVEmailHTML(datos, "Hola", "Bar Pepe");
+    const personalizador = leerFuente("lib/cv-sender/cv-personalizer.ts");
+    const worker = leerFuente("lib/cv-sender/worker.ts");
+    const send = leerFuente("app/api/cv-sender/send/route.ts");
+    const checks = {
+      // Respuestas reales: Gmail, Microsoft 365 (bloqueo por directorio), Postfix.
+      "«no existe» solo cuando el servidor lo dice": no("550 5.1.1 The email account that you tried to reach does not exist") && no("550 5.4.1 Recipient address rejected: Access denied. AS(201806281)")
+        && no("550 5.1.1 <x@y.es>: Recipient address rejected: User unknown in virtual mailbox table"),
+      "un rechazo por política, una espera o un sí no son «no existe»": !no("550 5.7.1 Service unavailable, Client host blocked using Spamhaus") && !no("450 4.2.0 Greylisted, try again")
+        && !no("250 2.1.5 Recipient OK") && !no("553 5.1.8 <>: Sender address rejected: Domain not found") && !no("554 5.7.1 Relay access denied"),
+      "la pregunta va al servicio del VPS (IPv6) y sin él se manda": leerFuente("lib/cv-sender/buzon-existe.ts").includes("COMPROBADOR_BUZON_URL") && leerFuente("lib/cv-sender/buzon-existe.ts").includes('if (!r) return "no-se-sabe";')
+        && leerFuente("scripts/vps/comprobador-buzon.py").includes("socket.AF_INET6") && !/sendall\(b"DATA/.test(leerFuente("scripts/vps/comprobador-buzon.py")),
+      "se comprueba antes de mandar y no gasta envío": /comprobarBuzon\(email\)\) === "no-existe"/.test(leerFuente("lib/cv-sender/direccion-segura.ts")),
+      "sin oferta, el correo dice «Hola, soy …» y que escribe por su cuenta": sin.includes("Hola, soy Ana López") && sin.includes("os escribe por su cuenta") && !sin.includes("Candidatura —"),
+      "con oferta, como siempre": con.includes("Candidatura — Bar Pepe") && !con.includes("os escribe por su cuenta"),
+      "la presentación no habla de ofertas ni de «candidatura espontánea»": personalizador.includes("NO ha publicado ninguna oferta") && personalizador.includes('EVITA A TODA COSTA: "candidatura espontánea"')
+        && personalizador.includes("if (/candidatura|oferta|vacante/i.test(r.subjectLine)) r.subjectLine = respaldo.subjectLine;"),
+      "el worker elige la presentación sin oferta": worker.includes("const espontanea = !!sinOferta || !jobTitle || /^candidatura espont/i.test(jobTitle);") && worker.includes("await presentacionEspontanea("),
+      "la carta que se aprueba es la que sale": worker.includes("coverLetter = cartaAprobada;") && send.includes("cartaAprobada: typeof cartaPersonalizada === \"string\""),
+      "las pantallas sin oferta lo dicen": leerFuente("components/AutoSendSetup.tsx").includes("sinOferta: true") && leerFuente("app/app/empresas/page.tsx").includes("sinOferta: true")
+        && leerFuente("app/api/gusi/send-cv-local/route.ts").includes("sinOferta: true"),
+      "un buzón que no existe se apunta para siempre": leerFuente("app/api/cv-sender/entrega/route.ts").includes(String.raw`5\.1\.1|does ?n[o']t exist`),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (err) {
+    console.log(`     ↳ no se pudo probar: ${err.message?.slice(0, 120)}`);
+    return false;
+  } finally {
+    for (const f of [salida, salida2]) { try { unlinkSync(f); } catch { /* da igual */ } }
+  }
+});
+
+// ── CONSULTAS DESDE LA APP (26 nov 2026) ───────────────────────────────────
+//
+// Michel: «somos el intermediario; tener nosotros el correo y mandarlo desde
+// aquí». La persona manda su consulta al organismo de acreditación de su
+// comunidad o pide la plaza al centro de un curso, a su nombre y con su CV si
+// quiere. Ningún correo deducido: cada uno sale de una página oficial. Y el
+// destino lo pone el servidor: si no, servía para escribir a cualquiera.
+test("consultas desde la app: correos oficiales, destino del servidor, topes y privacidad", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { unlinkSync } = await import("node:fs");
+  const salida = "scripts/.tmp-destinos.cjs";
+  try {
+    execFileSync("npx", ["esbuild", "lib/consultas/destinos.ts", "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
+    const d = await import(`../${salida}?${Date.now()}`);
+    const lista = d.ACREDITACION_CCAA;
+    const OFICIAL = /@(juntadeandalucia\.es|aragon\.es|asturias\.org|gobiernodecanarias\.org|madrid\.org|navarra\.es|acreditalarioja\.org|[a-z.]*\.gob\.es|[a-z.]*gva\.es|[a-z.]*gencat\.cat|[a-z.]*xunta\.gal|[a-z.]*caib\.es|[a-z.]*jcyl\.es|[a-z.]*jccm\.es|[a-z.]*cantabria\.es|[a-z.]*carm\.es|[a-z.]*euskadi\.eus|[a-z.]*juntaex\.es)$/;
+    const ruta = leerFuente("app/api/consultas/route.ts");
+    const lib = leerFuente("lib/consultas/consultas.ts");
+    const checks = {
+      "las 17 comunidades, Ceuta y Melilla": lista.length === 19 && new Set(lista.map((o) => o.id)).size === 19,
+      "cada correo con su fuente oficial, y ninguno sin ella": lista.every((o) => (o.email ? !!o.fuente && /^https:\/\//.test(o.fuente) : o.fuente === null)),
+      "solo correos de la administración": lista.filter((o) => o.email).every((o) => OFICIAL.test(o.email)),
+      "toda comunidad tiene su web oficial": lista.every((o) => /^https?:\/\//.test(o.web)),
+      "el destino lo pone el servidor, no el navegador": ruta.includes("await destinoDe(tipo,") && !/body\.(email|destino|to)\b/.test(ruta) && lib.includes("to: [d.email]"),
+      "exige sesión y correo verificado para mandar": ruta.includes("correoSinVerificar(req)") && ruta.includes("await getUsuario(req)"),
+      "topes: 5 al día y una al mismo sitio cada 7 días": lib.includes("export const AL_DIA = 5;") && lib.includes("export const DIAS_ENTRE_REPETIDAS = 7;"),
+      "no escribe a un correo que rebota, y la respuesta va a la persona": lib.includes("FROM correos_rebotados") && lib.includes("reply_to: cv.email"),
+      "lo que escribe la persona va escapado": lib.includes("escapeHtml(l)") && lib.includes("escapeHtml(cv.email)"),
+      "se borra con la cuenta y lo cuenta la privacidad": leerFuente("lib/cuenta/borrar-datos.ts").includes('consulta: "user_id"')
+        && leerFuente("app/privacidad/page.tsx").includes("Si mandas una consulta desde la app"),
+      "sale en acreditación y en las plazas, sin el mailto de antes": leerFuente("components/cursos/Acreditacion.tsx").includes('<MandarConsulta tipo="acreditacion" />')
+        && leerFuente("components/cursos/PlazasCurso.tsx").includes('<MandarConsulta tipo="plaza" plazaId={p.id} compacto />') && !leerFuente("components/cursos/PlazasCurso.tsx").includes("mailto:${p.email}"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (err) {
+    console.log(`     ↳ no se pudo probar: ${err.message?.slice(0, 120)}`);
+    return false;
+  } finally {
+    try { unlinkSync(salida); } catch { /* da igual */ }
   }
 });
 

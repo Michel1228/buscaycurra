@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 import { getUserId, correoSinVerificar } from "@/lib/auth-server";
 import { checkUserRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit-user";
+import { presentacionEspontanea } from "@/lib/cv-sender/cv-personalizer";
 
 export const dynamic = "force-dynamic";
 
@@ -41,11 +42,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { companyName, companyEmail, jobTitle, cvId } = await req.json() as {
+    const { companyName, companyEmail, jobTitle, cvId, sinOferta } = await req.json() as {
       companyName?: string;
       companyEmail?: string;
       jobTitle?: string;
       cvId?: string;
+      sinOferta?: boolean;
     };
 
     if (!companyName) {
@@ -72,6 +74,16 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = cvResult.rows[0].form_data as Record<string, unknown> || {};
+
+    // SIN OFERTA: la presentación «Hola, soy…» (26 nov 2026), escrita con lo
+    // mismo que usa el envío (lib/cv-sender/cv-personalizer.ts). Así lo que se
+    // ve aquí es lo que sale; y si la aprueba, sale tal cual.
+    if (sinOferta || /^candidatura espont/i.test(jobTitle || "")) {
+      const nombre = [formData.nombre, formData.apellidos].filter(Boolean).join(" ").trim() || "Candidato";
+      const puesto = jobTitle && !/^candidatura espont/i.test(jobTitle) ? jobTitle : String(formData.subtitulo || "").trim() || undefined;
+      const p = await presentacionEspontanea(JSON.stringify(formData), { name: companyName }, { nombre, puesto });
+      return NextResponse.json({ carta: p.coverLetter, subject: p.subjectLine, generatedBy: "presentacion" });
+    }
 
     // Construir texto del CV desde form_data
     const cvParts: string[] = [];

@@ -194,6 +194,8 @@ export default function AutoSendSetup({ userId, onJobScheduled, onRateLimitUpdat
             companyEmail: companyEmail.trim().toLowerCase(),
             companyUrl: companyUrl.trim() || undefined,
             jobTitle: jobTitle.trim() || undefined,
+            // Una empresa elegida a mano, sin oferta: se presenta por su cuenta.
+            sinOferta: true,
             priority: "normal",
             useAIPersonalization: useAI,
             strategy: estrategia,

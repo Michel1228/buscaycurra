@@ -65,6 +65,9 @@ export interface CVEmailData {
   cvFileName?: string; // Nombre del archivo PDF (ej: "CV_Juan_Garcia.pdf")
 }
 
+/** Envío sin oferta: quién se presenta y a qué se dedica. */
+export interface Espontanea { puesto?: string }
+
 /** Resultado del envío de email */
 export interface EmailResult {
   success: boolean;
@@ -91,7 +94,9 @@ export async function sendCVEmail(
   coverLetter: string,
   subject: string,
   companyName: string,
-  tracking?: { sendId: string; userId: string }
+  tracking?: { sendId: string; userId: string },
+  /** Sin oferta: la persona se presenta por su cuenta (ver buildCVEmailHTML). */
+  espontanea?: Espontanea
 ): Promise<EmailResult> {
   console.log(`[EmailSender] Enviando CV de ${cvData.userName} a ${to} (${companyName})...`);
 
@@ -118,7 +123,7 @@ export async function sendCVEmail(
       to: [to],
       reply_to: cvData.userEmail,
       subject: sanitizeEmailHeader(subject),
-      html: buildCVEmailHTML(cvData, coverLetter, companyName, tracking),
+      html: buildCVEmailHTML(cvData, coverLetter, companyName, tracking, espontanea),
       ...(cvData.cvPdfBuffer?.length ? {
         attachments: [{
           filename: cvData.cvFileName ?? `CV_${cvData.userName.replace(/\s+/g, "_")}.pdf`,
@@ -188,7 +193,14 @@ export function buildCVEmailHTML(
   cvData: CVEmailData,
   coverLetter: string,
   companyName: string,
-  tracking?: { sendId: string; userId: string }
+  tracking?: { sendId: string; userId: string },
+  /**
+   * SIN OFERTA (26 nov 2026, Michel): «que no se vea como spam, sino como una
+   * presentación». La cabecera dice «Hola, soy …» en vez de «Candidatura —
+   * empresa», y abajo consta que la persona escribe por su cuenta. La marca de
+   * BuscayCurra se queda como está.
+   */
+  espontanea?: Espontanea
 ): string {
   // Todo lo que escribe la persona (o la IA) va escapado. Sin esto, un nombre
   // de empresa o un puesto con etiquetas se pintaba como HTML en un correo que
@@ -231,10 +243,10 @@ export function buildCVEmailHTML(
           <tr>
             <td style="background:linear-gradient(135deg,#16a34a,#15803d);padding:32px 40px;text-align:center;">
               <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">
-                Candidatura — ${empresa}
+                ${espontanea ? `Hola, soy ${nombre}` : `Candidatura — ${empresa}`}
               </h1>
               <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">
-                Enviado a través de BuscayCurra
+                ${espontanea && espontanea.puesto ? `${escapeHtml(espontanea.puesto)} · ` : ""}Enviado a través de BuscayCurra
               </p>
             </td>
           </tr>
@@ -269,7 +281,7 @@ export function buildCVEmailHTML(
           <tr>
             <td style="padding:0 40px 24px;">
               <p style="color:#6b7280;font-size:13px;margin:0;text-align:center;">
-                📎 CV adjunto en formato PDF
+                ${espontanea ? "📎 Mi currículum va adjunto en PDF" : "📎 CV adjunto en formato PDF"}
               </p>
             </td>
           </tr>
@@ -277,6 +289,9 @@ export function buildCVEmailHTML(
           <!-- Footer -->
           <tr>
             <td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
+              ${espontanea ? `<p style="color:#6b7280;font-size:12px;margin:0 0 8px;line-height:1.5;">
+                ${nombre} os escribe por su cuenta para presentarse. Si no os interesa, no hace falta que respondáis.
+              </p>` : ""}
               <p style="color:#9ca3af;font-size:12px;margin:0;">
                 Enviado con <a href="https://buscaycurra.es" style="color:#22c55e;text-decoration:none;font-weight:600;">BuscayCurra</a>
                 — Plataforma de búsqueda de empleo con IA

@@ -20,7 +20,7 @@
 import { Worker, Job } from "bullmq";
 import { createClient } from "@supabase/supabase-js";
 import { getRedisConnection, CVJobData } from "./queue";
-import { personalizeForCompany } from "./cv-personalizer";
+import { personalizeForCompany, presentacionEspontanea, presentacionSinIA } from "./cv-personalizer";
 import { sendCVEmail, sendConfirmationToUser } from "./email-sender";
 import { recordSent, updateSendStatus, getSendIdByJobId } from "./tracker";
 import { getPool } from "../db";
@@ -71,7 +71,11 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   }
   const jobId = job.id;
 
-  const { userId, companyName, companyEmail, companyUrl, jobTitle, useAIPersonalization } = job.data;
+  const { userId, companyName, companyEmail, companyUrl, jobTitle, useAIPersonalization, sinOferta, cartaAprobada } = job.data;
+
+  // SIN OFERTA (26 nov 2026, Michel): la persona se presenta por su cuenta, con
+  // su nombre, por si la empresa tiene hueco algún día. Con oferta, como siempre.
+  const espontanea = !!sinOferta || !jobTitle || /^candidatura espont/i.test(jobTitle);
 
   console.log(`[Worker] Procesando job ${job.id}: ${userId} → ${companyName} (${companyEmail})`);
 
@@ -131,6 +135,8 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   let cvBuffer: Buffer;
   let cvFileName = `CV_BuscayCurra_${nombreFichero}.pdf`;
   let cvSnapshot = "";
+  // A qué se dedica según su CV: para presentarse cuando no hay oferta.
+  let puestoDelCv = "";
 
   try {
     const pool = getPool();
@@ -148,6 +154,7 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       : cvDataResult.rows[0].form_data;
     
     cvSnapshot = JSON.stringify(rawData);
+    puestoDelCv = String(rawData?.subtitulo || "").trim().slice(0, 80);
 
     const cvData = normalizar(rawData);
     const html = generarCV(cvData);
@@ -180,8 +187,26 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
   // ── Paso 3: Personalizar la carta con IA (Groq) ────────────────────────────────
   let coverLetter: string;
   let subjectLine: string;
+  // Sin oferta: el puesto que eligió al enviar (si no es el «Candidatura espontánea» de siempre) o el de su CV.
+  const puestoBuscado = espontanea
+    ? (jobTitle && !/^candidatura espont/i.test(jobTitle) ? jobTitle : puestoDelCv) || undefined
+    : undefined;
 
-  if (useAIPersonalization) {
+  if (cartaAprobada) {
+    // La que vio y aprobó: sale tal cual. Solo se pone el asunto.
+    console.log(`[Worker] Paso 3/6: Carta aprobada por la persona para ${companyName}`);
+    coverLetter = cartaAprobada;
+    subjectLine = espontanea
+      ? presentacionSinIA({ name: companyName }, { nombre, puesto: puestoBuscado }).subjectLine
+      : `Candidatura para ${jobTitle} — ${nombre}`;
+  } else if (espontanea) {
+    console.log(`[Worker] Paso 3/6: Presentación sin oferta para ${companyName}...`);
+    const p = useAIPersonalization
+      ? await presentacionEspontanea(cvSnapshot, { name: companyName, url: companyUrl }, { nombre, puesto: puestoBuscado })
+      : presentacionSinIA({ name: companyName }, { nombre, puesto: puestoBuscado });
+    coverLetter = p.coverLetter;
+    subjectLine = p.subjectLine;
+  } else if (useAIPersonalization) {
     console.log(`[Worker] Paso 3/6: Personalizando carta con IA (Groq) para ${companyName}...`);
 
     try {
@@ -194,18 +219,28 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
       subjectLine = personalizacion.subjectLine;
     } catch (aiError) {
       console.warn(`[Worker] IA de cartas no disponible, usando carta genérica:`, (aiError as Error).message);
-      coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nQuedo a su disposición para cualquier consulta.\n\nUn cordial saludo,\n${nombre}`;
-      subjectLine = jobTitle
-        ? `Candidatura para ${jobTitle} — ${nombre}`
-        : `Candidatura espontánea — ${nombre}`;
+      coverLetter = `Estimado equipo de ${companyName},
+
+Me pongo en contacto con ustedes para enviarles mi candidatura al puesto de ${jobTitle}.
+
+Quedo a su disposición para cualquier consulta.
+
+Un cordial saludo,
+${nombre}`;
+      subjectLine = `Candidatura para ${jobTitle} — ${nombre}`;
     }
   } else {
     // Sin personalización IA
     console.log(`[Worker] Paso 3/6: Usando carta genérica (sin IA)...`);
-    coverLetter = `Estimado equipo de ${companyName},\n\nMe pongo en contacto con ustedes para enviarles mi candidatura${jobTitle ? ` al puesto de ${jobTitle}` : " espontánea"}.\n\nAdjunto mi CV para su consideración.\n\nUn cordial saludo,\n${nombre}`;
-    subjectLine = jobTitle
-      ? `Candidatura para ${jobTitle} — ${nombre}`
-      : `Candidatura espontánea — ${nombre}`;
+    coverLetter = `Estimado equipo de ${companyName},
+
+Me pongo en contacto con ustedes para enviarles mi candidatura al puesto de ${jobTitle}.
+
+Adjunto mi CV para su consideración.
+
+Un cordial saludo,
+${nombre}`;
+    subjectLine = `Candidatura para ${jobTitle} — ${nombre}`;
   }
 
   await job.updateProgress(60);
@@ -246,7 +281,8 @@ async function processCVJob(job: Job<CVJobData>): Promise<void> {
     coverLetter,
     subjectLine,
     companyName,
-    recordId ? { sendId: recordId, userId } : undefined
+    recordId ? { sendId: recordId, userId } : undefined,
+    espontanea ? { puesto: puestoBuscado } : undefined
   );
 
   if (!emailResult.success) {

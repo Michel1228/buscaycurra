@@ -393,8 +393,11 @@ export default function EmpresasPage() {
           companyEmail: previewEmail,
           companyUrl: emp.urlWeb,
           jobTitle: activeTab === "ett" ? "Candidatura espontánea ETT" : "Candidatura espontánea",
+          sinOferta: true,
           strategy: sendStrategy,
           useAIPersonalization: true,
+          // La presentación que acaba de ver: sale esa (hasta el 26 nov 2026 se escribía otra al enviar).
+          cartaPersonalizada: previewCarta && !previewCarta.startsWith("No se pudo generar") ? previewCarta : undefined,
         }),
       });
 

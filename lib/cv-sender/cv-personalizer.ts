@@ -137,6 +137,84 @@ SKILLS_DESTACADAS:
 }
 
 /**
+ * SIN OFERTA: la persona se presenta por su cuenta (26 nov 2026, Michel).
+ *
+ * «Hola, soy fulano, te envío mi currículum»: que no parezca spam sino una
+ * presentación bien escrita, como quien deja el currículum en el local, para
+ * que cuenten con él si algún día tienen hueco. Cada una sale de su CV. Con
+ * oferta se sigue usando personalizeForCompany, como siempre.
+ */
+export async function presentacionEspontanea(
+  cvText: string,
+  companyInfo: CompanyInfo,
+  quien: { nombre: string; puesto?: string }
+): Promise<PersonalizationResult> {
+  const respaldo = presentacionSinIA(companyInfo, quien);
+  const prompt = `
+Ayudas a una persona real de España a presentarse a una empresa que NO ha publicado ninguna oferta. No contesta a ningún anuncio: se presenta por su cuenta, como quien deja su currículum en el local, para que cuenten con ella si algún día tienen un hueco.
+
+EMPRESA:
+- Nombre: ${companyInfo.name}
+- Sector: ${companyInfo.sector ?? "No especificado"}
+- Descripción: ${companyInfo.description ?? "No disponible"}
+
+QUIÉN ESCRIBE: ${quien.nombre}${quien.puesto ? `, que busca trabajo de ${quien.puesto}` : ""}
+
+CV DE LA PERSONA:
+${cvText}
+
+CÓMO EMPIEZA: con un saludo y presentándose por su nombre ("Hola, soy ${quien.nombre}" o "Hola, equipo de ${companyInfo.name}: soy ${quien.nombre}"). En esa primera frase dice a qué se dedica, según su CV.
+
+QUÉ DICE:
+- Que os escribe para presentarse por si en algún momento necesitáis a alguien${quien.puesto ? ` de ${quien.puesto}` : ""}, y que os deja su currículum. Sin dar a entender que hay una oferta ni pedir que le contraten ya.
+- Una o dos cosas REALES del CV que os pueden servir. Si se sabe a qué se dedica la empresa, conéctalas con eso.
+- Un cierre sencillo: que le gustaría que contarais con su currículum si surge un hueco, y que le podéis contestar a este correo cuando queráis.
+- Breve: 2 o 3 párrafos cortos, entre 90 y 140 palabras. Que se lea en medio minuto.
+- Firma SOLO con el nombre.
+
+LO MÁS IMPORTANTE: NO INVENTES NADA. Usa SOLO lo que aparece en el CV: empresas, puestos, tareas, estudios, carnets e idiomas. Ni anécdotas, ni cifras, ni logros, ni destrezas que el CV no nombra. Si el oficio de la empresa no tiene que ver con su experiencia, dilo con naturalidad y cuenta qué cosas reales del CV le sirven.
+
+CÓMO DEBE SONAR: como una persona con ganas de verdad, no como una IA ni como publicidad. Tono de España, cálido y respetuoso. Primera persona, frases sencillas. Trata a la empresa siempre de "vosotros" ("os escribo", "vuestro equipo"), nunca de "tú".
+
+EVITA A TODA COSTA: "candidatura espontánea", "me dirijo a ustedes", "me complace", "considero que mi perfil", "adjunto mi CV" ("os dejo mi currículum" sí vale), "oferta", "vacante", "proceso de selección", mayúsculas o exclamaciones de más, y cualquier cosa que suene a correo masivo.
+
+ASUNTO: empieza por su nombre y dice a qué se dedica, como lo escribiría una persona. Ejemplo: "Ana López, camarera: me presento por si necesitáis a alguien". Máximo 80 caracteres, sin mayúsculas de más ni emojis.
+
+Responde SOLO con:
+CARTA:
+[la presentación]
+
+ASUNTO:
+[el asunto]
+
+SKILLS_DESTACADAS:
+[3-5 cosas del CV, separadas por coma]
+`.trim();
+
+  try {
+    const r = parseOpenClawResponse(await askGroq(prompt), companyInfo, undefined, respaldo);
+    // Si la IA se cuela con el asunto de siempre, se usa el de la persona.
+    if (/candidatura|oferta|vacante/i.test(r.subjectLine)) r.subjectLine = respaldo.subjectLine;
+    return r;
+  } catch (error) {
+    console.warn(`[Personalizador] Groq no disponible, presentación sin IA:`, (error as Error).message);
+    return respaldo;
+  }
+}
+
+/** La presentación sin oferta cuando no hay IA: corta, en primera persona y con su nombre. */
+export function presentacionSinIA(companyInfo: CompanyInfo, quien: { nombre: string; puesto?: string }): PersonalizationResult {
+  const coverLetter = [
+    `Hola, equipo de ${companyInfo.name}:`,
+    `Soy ${quien.nombre}${quien.puesto ? `, ${quien.puesto.toLowerCase()}` : ""}. Os escribo para presentarme por si en algún momento necesitáis a alguien, y os dejo mi currículum.`,
+    "Me gustaría que contarais conmigo si surge un hueco. Podéis contestarme a este mismo correo cuando queráis.",
+    `Un saludo,\n${quien.nombre}`,
+  ].join("\n\n");
+  const subjectLine = `${quien.nombre}${quien.puesto ? `, ${quien.puesto.toLowerCase()}` : ""}: me presento por si necesitáis a alguien`.slice(0, 80);
+  return { coverLetter, subjectLine };
+}
+
+/**
  * Genera solo el asunto del email personalizado.
  * Más ligero que la personalización completa.
  *
@@ -165,7 +243,9 @@ export async function generateSubjectLine(
 function parseOpenClawResponse(
   response: string,
   companyInfo: CompanyInfo,
-  jobTitle?: string
+  jobTitle?: string,
+  /** Lo que se usa si la IA no devuelve carta o asunto (la presentación sin oferta trae el suyo). */
+  respaldo?: PersonalizationResult
 ): PersonalizationResult {
   // Extraemos las secciones usando expresiones regulares
   const cartaMatch = response.match(/CARTA:\s*([\s\S]*?)(?=ASUNTO:|$)/i);
@@ -175,9 +255,9 @@ function parseOpenClawResponse(
   // `||` y no `??`: si la IA devuelve "CARTA:" sin nada detrás, el texto es ""
   // (no null) y con `??` el CV salía con la carta VACÍA. Una carta en blanco a
   // una empresa es peor que la genérica.
-  const coverLetter = cartaMatch?.[1]?.trim() || generateGenericLetter(companyInfo, jobTitle).coverLetter;
+  const coverLetter = cartaMatch?.[1]?.trim() || respaldo?.coverLetter || generateGenericLetter(companyInfo, jobTitle).coverLetter;
   const subjectLine =
-    asuntoMatch?.[1]?.trim() ||
+    asuntoMatch?.[1]?.trim() || respaldo?.subjectLine ||
     `Candidatura ${jobTitle ? `para ${jobTitle}` : "espontánea"} — ${companyInfo.name}`;
   const cvHighlights = skillsMatch?.[1]
     ?.split(",")

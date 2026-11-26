@@ -162,6 +162,19 @@ function condiciones(f: FiltroPlazas): { where: string; params: unknown[] } {
   return { where: partes.join(" AND "), params };
 }
 
+/** Una plaza por su id, aunque no salga en la búsqueda (para mandar la solicitud al centro). */
+export async function plazaPorId(id: string): Promise<PlazaPublica | null> {
+  await asegurarTabla();
+  const { rows } = await getPool().query(
+    `SELECT id, fuente, titulo, familia, provincia, municipio, centro, direccion, telefono,
+            email, web, url, to_char(inicio, 'YYYY-MM-DD') AS inicio,
+            to_char(fin, 'YYYY-MM-DD') AS fin, horas, modalidad, dirigido, certificado
+       FROM curso_plaza WHERE id = $1`,
+    [id]
+  );
+  return (rows[0] as PlazaPublica) ?? null;
+}
+
 export async function buscarPlazas(f: FiltroPlazas): Promise<{ total: number; plazas: PlazaPublica[] }> {
   await asegurarTabla();
   const { where, params } = condiciones(f);

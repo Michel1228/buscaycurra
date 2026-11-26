@@ -61,3 +61,21 @@ seguía sin ellos.
 - Los demás `/root/sync-*.sh` — no están en el crontab. Entre ellos
   `sync-fuentes-extra.sh` y `sync-nocturno.sh`, que eran los únicos que
   sincronizaban **Arbeitnow**: por eso lleva parado desde el 19 de agosto de 2026.
+
+## Servicio: comprobador de buzones (26 nov 2026)
+
+`comprobador-buzon.py` + `comprobador-buzon.service` (systemd, no cron). Antes de
+mandar un CV, la app pregunta si el buzón existe (`lib/cv-sender/buzon-existe.ts`).
+La pregunta se hace aquí y no en el contenedor porque el proveedor corta el
+puerto 25 saliente por IPv4 (medido: pasan 2-3 conexiones y luego ninguna en
+9 minutos) y el contenedor no tiene IPv6. Escucha solo en la puerta de la red
+de Docker de la app (`busca-y-curra_default`, puerto 8919), pide el
+`ADMIN_SECRET` y nunca manda DATA. La app lo encuentra por
+`COMPROBADOR_BUZON_URL` en `.env.local`; sin esa variable, o si el servicio no
+contesta, se manda igual.
+
+```
+scp scripts/vps/comprobador-buzon.py root@<VPS>:/root/
+scp scripts/vps/comprobador-buzon.service root@<VPS>:/etc/systemd/system/
+ssh ... "systemctl daemon-reload && systemctl enable --now comprobador-buzon"
+```

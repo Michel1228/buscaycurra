@@ -169,6 +169,8 @@ export async function POST(request: NextRequest) {
       strategy?: "ahora" | "optimo" | "personalizada";
       scheduledFor?: string; // ISO string cuando strategy="personalizada"
       cartaPersonalizada?: string;
+      /** Sin oferta: a una empresa que no ha publicado nada (Enviar CV a empresas). */
+      sinOferta?: boolean;
     };
 
     const { companyUrl, companyEmail, companyName, jobTitle, priority, useAIPersonalization, frecuencia, strategy, scheduledFor, cartaPersonalizada } = body;
@@ -321,6 +323,11 @@ export async function POST(request: NextRequest) {
         email: companyEmail,
         url: companyUrl ?? "",
         jobTitle,
+        sinOferta: body.sinOferta === true || /^candidatura espont/i.test(jobTitle || ""),
+        // La carta que vio y aprobó en la vista previa. Hasta el 26 nov 2026 se
+        // recibía y se tiraba: la IA escribía otra distinta al enviar.
+        cartaAprobada: typeof cartaPersonalizada === "string" && cartaPersonalizada.trim().length >= 40
+          ? cartaPersonalizada.trim().slice(0, 4000) : undefined,
       },
       {
         priority: priority ?? "normal",

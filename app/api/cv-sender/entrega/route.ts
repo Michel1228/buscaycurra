@@ -159,9 +159,12 @@ export async function POST(req: NextRequest) {
   // al 29 sep 2026) y lib/email/smtp-sender.ts no vuelve a escribir a una
   // dirección que rebota en firme, se queja de spam o rebota dos veces.
   if (rebote && destinatario) {
+    // «El buzón no existe» también es para siempre, aunque Resend no lo marque
+    // como permanente (26 nov 2026: confirmaciones a Gmail mal escritos volvían
+    // a rebotar con el recordatorio de «te falta confirmar»).
     const permanente = tipo === "email.complained" ||
       /permanent/i.test(aviso.data?.bounce?.type || "") ||
-      /hard bounce/i.test(aviso.data?.bounce?.message || "");
+      /hard bounce|5\.1\.1|does ?n[o']t exist|no such user|nosuchuser|user unknown|unknown user|recipient not found|address not found|mailbox unavailable/i.test(aviso.data?.bounce?.message || "");
     try {
       await getPool().query(
         `INSERT INTO correos_rebotados (email, permanente, motivo)

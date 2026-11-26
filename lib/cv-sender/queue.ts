@@ -77,6 +77,10 @@ export interface CVJobData {
   companyEmail: string;
   companyUrl: string;
   jobTitle?: string;
+  /** Sin oferta: la persona se presenta por su cuenta (lib/cv-sender/worker.ts). Con jobTitle, el puesto que busca. */
+  sinOferta?: boolean;
+  /** La carta que la persona vio y aprobó antes de enviar: sale esa, no otra. */
+  cartaAprobada?: string;
   priority: "normal" | "prioritario";
   useAIPersonalization: boolean;
   scheduledFor: number;

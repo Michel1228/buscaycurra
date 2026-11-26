@@ -111,6 +111,8 @@ export async function POST(req: NextRequest) {
       companyEmail,
       companyUrl: body.website || "",
       jobTitle,
+      // Negocios de la zona: no han publicado ninguna oferta, se presenta por su cuenta.
+      sinOferta: true,
       priority: "normal",
       useAIPersonalization: true,
       scheduledFor: Date.now(),

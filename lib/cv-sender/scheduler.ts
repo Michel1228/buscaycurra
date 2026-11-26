@@ -103,6 +103,10 @@ export interface CompanyData {
   email: string;
   url?: string;
   jobTitle?: string;
+  /** Sin oferta: se presenta por su cuenta (ver CVJobData). */
+  sinOferta?: boolean;
+  /** La carta que vio y aprobó (ver CVJobData). */
+  cartaAprobada?: string;
 }
 
 /** Resultado de programar un envío */
@@ -244,6 +248,8 @@ export async function scheduleCV(
     companyEmail: companyData.email,
     companyUrl: companyData.url ?? "",
     jobTitle: companyData.jobTitle,
+    sinOferta: companyData.sinOferta,
+    cartaAprobada: companyData.cartaAprobada,
     priority: preferences.priority ?? "normal",
     useAIPersonalization: preferences.useAIPersonalization ?? true,
     scheduledFor: fechaEnvio.getTime(),

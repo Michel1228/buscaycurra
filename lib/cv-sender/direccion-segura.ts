@@ -21,6 +21,7 @@ import { esCorreoDeServicioOficial } from "@/lib/job-search/fuente-oficial";
 import { motivoPortalDeEmpleo } from "@/lib/job-search/portales-empleo";
 import { esDireccionGenerica } from "@/lib/cv-sender/direccion-generica";
 import { frenoDeRebotesActivo } from "@/lib/cv-sender/freno-rebotes";
+import { comprobarBuzon } from "@/lib/cv-sender/buzon-existe";
 
 // Dominios reservados para ejemplos o que aparecen como plantilla en webs.
 const DOMINIOS_DE_RELLENO = new Set([
@@ -126,8 +127,15 @@ export async function motivoParaNoEnviar(email: string): Promise<string | null> 
   if (await direccionQueYaRebota(email)) {
     return `El correo «${email}» ya rebotó antes: esa dirección no recibe mensajes. Busca otro en la web de la empresa o en la oferta.`;
   }
+  // Si ya llegó un CV a esta dirección, existe: no hace falta preguntar nada más.
+  if (await direccionQueYaLlego(email)) return null;
+  // El servidor de correo de la empresa dice que ese buzón no existe (26 nov 2026,
+  // lib/cv-sender/buzon-existe.ts). Si no lo dice claro, se manda.
+  if ((await comprobarBuzon(email)) === "no-existe") {
+    return `El correo «${email}» no existe: el servidor de la empresa dice que ese buzón no está, así que el CV rebotaría. Busca otro correo en su web o en la oferta. No te ha gastado ningún envío.`;
+  }
   // Rebotes cerca del límite de Resend: se para lo que más rebota (lib/cv-sender/freno-rebotes.ts).
-  if (esDireccionGenerica(email) && await frenoDeRebotesActivo() && !(await direccionQueYaLlego(email))) {
+  if (esDireccionGenerica(email) && await frenoDeRebotesActivo()) {
     return `No sabemos si «${email}» existe y ahora mismo no enviamos a correos sin confirmar, para que tu CV no se pierda. Busca el correo en la web de la empresa o en la oferta, o vuelve a intentarlo en unos días. No te ha gastado ningún envío.`;
   }
   return null;

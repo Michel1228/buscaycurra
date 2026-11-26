@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useState } from "react";
+import MandarConsulta from "@/components/consultas/MandarConsulta";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { provinciaEnTexto } from "@/lib/cursos/plazas/provincias";
 import Link from "next/link";
@@ -85,6 +86,8 @@ function centroLegible(centro: string): string {
 }
 
 function TarjetaPlaza({ p }: { p: Plaza }) {
+  // Pedir la plaza desde la app, al correo del centro (26 nov 2026, lib/consultas).
+  const [pedir, setPedir] = useState(false);
   const lugar = p.modalidad === "online"
     ? "Online"
     : [p.municipio, p.provinciaNombre && p.provinciaNombre.toLowerCase() !== (p.municipio ?? "").toLowerCase() ? p.provinciaNombre : null]
@@ -152,12 +155,14 @@ function TarjetaPlaza({ p }: { p: Plaza }) {
           </a>
         )}
         {p.email && (
-          <a href={`mailto:${p.email}`} className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg hover:opacity-90"
-             style={{ background: "#151821", border: "1px solid rgba(148,163,184,0.18)", color: "#94a3b8", textDecoration: "none" }}>
-            <Mail size={11} strokeWidth={2} /> Escribir al centro
-          </a>
+          <button type="button" onClick={() => setPedir(!pedir)} aria-expanded={pedir}
+             className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90"
+             style={{ background: "rgba(163,230,53,0.1)", border: "1px solid rgba(163,230,53,0.45)", color: "#d9f99d" }}>
+            <Mail size={11} strokeWidth={2} /> {pedir ? "Cerrar" : "Pedir plaza al centro"}
+          </button>
         )}
       </div>
+      {pedir && <MandarConsulta tipo="plaza" plazaId={p.id} compacto />}
     </article>
   );
 }

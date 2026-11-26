@@ -1,0 +1,15 @@
+# Comprobador de buzones para los envíos de CV (scripts/vps/comprobador-buzon.py).
+# Instalar: cp comprobador-buzon.py /root/ && cp comprobador-buzon.service /etc/systemd/system/
+#           systemctl daemon-reload && systemctl enable --now comprobador-buzon
+[Unit]
+Description=BuscayCurra - comprobador de buzones (SMTP sin enviar, por IPv6)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /root/comprobador-buzon.py
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

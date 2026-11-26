@@ -48,6 +48,8 @@ export const TABLAS_VPS: Record<string, string> = {
   entrevista_empresa: "user_id", entrevista_invitacion: "user_id",
   // 21 nov 2026: el alta de la empresa para ver candidatos (lib/empresas/verificacion.ts).
   empresa_verificacion: "user_id",
+  // 26 nov 2026: las consultas que manda desde la app (lib/consultas/consultas.ts).
+  consulta: "user_id",
 };
 
 /** Supabase: tabla → columna con el id de la persona. "profiles" va aparte, al final. */

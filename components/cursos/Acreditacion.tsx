@@ -17,6 +17,7 @@ import {
   REQUISITOS, FASES, DOCUMENTOS, ADVERTENCIAS, ENLACES, FUENTES, ACTUALIZADO,
 } from "@/lib/cursos/acreditacion";
 import AvisoNacionalidad from "@/components/origen/AvisoNacionalidad";
+import MandarConsulta from "@/components/consultas/MandarConsulta";
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -155,6 +156,8 @@ export default function Acreditacion({ base }: { base: string }) {
       {/* ── Adónde va de verdad ── */}
       <Seccion titulo="Por dónde se empieza">
         <div className="flex flex-col gap-3">
+          {/* Mandar la consulta desde aquí, al organismo de su comunidad (26 nov 2026). */}
+          <MandarConsulta tipo="acreditacion" />
           <a href={ENLACES.porComunidad.url} target="_blank" rel="noopener noreferrer"
              className="rounded-xl p-4 block hover:opacity-90"
              style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", textDecoration: "none" }}>
