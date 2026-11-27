@@ -8112,7 +8112,7 @@ test("consultas desde la app: correos oficiales, destino del servidor, topes y p
     execFileSync("npx", ["esbuild", "lib/consultas/destinos.ts", "--bundle", "--format=cjs", "--platform=node", `--outfile=${salida}`, "--log-level=error"], { stdio: "pipe", shell: true });
     const d = await import(`../${salida}?${Date.now()}`);
     const lista = d.ACREDITACION_CCAA;
-    const OFICIAL = /@(juntadeandalucia\.es|aragon\.es|asturias\.org|gobiernodecanarias\.org|madrid\.org|navarra\.es|acreditalarioja\.org|[a-z.]*\.gob\.es|[a-z.]*gva\.es|[a-z.]*gencat\.cat|[a-z.]*xunta\.gal|[a-z.]*caib\.es|[a-z.]*jcyl\.es|[a-z.]*jccm\.es|[a-z.]*cantabria\.es|[a-z.]*carm\.es|[a-z.]*euskadi\.eus|[a-z.]*juntaex\.es)$/;
+    const OFICIAL = /@(juntadeandalucia\.es|aragon\.es|asturias\.org|gobiernodecanarias\.org|madrid\.org|navarra\.es|acreditalarioja\.org|[a-z.]*\.gob\.es|[a-z.]*gva\.es|[a-z.]*gencat\.cat|[a-z.]*xunta\.gal|[a-z.]*caib\.es|ibeducacio\.eu|[a-z.]*jcyl\.es|[a-z.]*jccm\.es|[a-z.]*cantabria\.es|[a-z.]*carm\.es|[a-z.]*euskadi\.eus|[a-z.]*juntaex\.es)$/;
     const ruta = leerFuente("app/api/consultas/route.ts");
     const lib = leerFuente("lib/consultas/consultas.ts");
     const checks = {

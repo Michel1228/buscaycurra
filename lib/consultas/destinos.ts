@@ -39,8 +39,10 @@ export const ACREDITACION_CCAA: OrganismoAcreditacion[] = [
     web: "https://www.peacaragon.es/", fuente: "https://www.peacaragon.es/" },
   { id: "asturias", ccaa: "Asturias", organismo: "Servicio Público de Empleo del Principado de Asturias", email: "acredita@asturias.org",
     web: "https://trabajastur.asturias.es/acredita-tus-competencias", fuente: "https://trabajastur.asturias.es/acredita-tus-competencias" },
-  { id: "baleares", ccaa: "Illes Balears", organismo: "Institut de les Qualificacions Professionals de les Illes Balears (IQPIB)", email: null,
-    web: "https://www.caib.es/sites/iqpib/es/preguntas_frecuentes/", fuente: null },
+  // 27 nov 2026: el correo general del IQPIB, de su página de contacto en caib.es
+  // (el de las preguntas frecuentes, secretariatecnicaiqpib@, es solo para reclamar el resultado).
+  { id: "baleares", ccaa: "Illes Balears", organismo: "Institut de les Qualificacions Professionals de les Illes Balears (IQPIB)", email: "iqpib@ibeducacio.eu",
+    web: "https://www.caib.es/sites/iqpib/es/preguntas_frecuentes/", fuente: "https://www.caib.es/sites/iqpib/es/contacto/" },
   { id: "canarias", ccaa: "Canarias", organismo: "Dirección General de Cualificaciones Profesionales (Consejería de Educación)", email: "acreditafp.educacion@gobiernodecanarias.org",
     web: "https://www.gobiernodecanarias.org/empleo/sce/principal/areas_tematicas/formacion_acreditacion/acreditacion_exp_profesional.html",
     fuente: "https://www.gobiernodecanarias.org/educacion/web/contacto/datos_consejeria/direcciones_generales/dg_cualificaciones_profesionales/" },
