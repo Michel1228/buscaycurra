@@ -7345,8 +7345,8 @@ test("Guzzi: «¿cuántas ofertas tenemos en Suiza?» no se convierte en un pues
     // guardado y con margen está en lib/consulta-guardada.ts, con candado.
     const guardada = leerFuente("lib/consulta-guardada.ts");
     const comun = leerFuente("lib/job-search/ofertas-por-pais.ts");
-    const recuento = ruta.includes("await ofertasPorPaisComun()") && comun.includes("consultaGuardada(CLAVE,") && comun.includes("90000")
-      && guardada.includes("SET LOCAL statement_timeout") && guardada.includes("if (turno > 1) return null;")
+    const recuento = ruta.includes("await ofertasPorPaisComun()") && comun.includes("consultaGuardada(CLAVE,") && comun.includes("300000")
+      && guardada.includes("SET LOCAL statement_timeout") && guardada.includes("if (turno > 1 || (turno === 0 && !esperar)) return null;")
       && ruta.includes("consultaGuardada(`guzzi:ciudades-top:");
     if (!recuento) console.log("     ↳ el recuento por país no está guardado ni tiene margen de tiempo");
     return malos.length === 0 && recuento && m.detectarPais("¿Cuántas ofertas contamos en Suiza?")?.codigo === "ch";
@@ -8052,13 +8052,17 @@ test("lo caro de contar se guarda, se recalcula una vez a la vez y con margen", 
   const pais = leerFuente("lib/job-search/ofertas-por-pais.ts");
   const checks = {
     "con más margen que el pool": /SET LOCAL statement_timeout = \$\{Math\.max\(1000, Math\.floor\(ms\)\)\}/.test(g),
-    "uno a la vez, y sin Redis se calcula igual": g.includes("const turno = await incrementar(candado, 300);") && g.includes("if (turno > 1) return null;"),
+    "uno a la vez, y sin Redis se calcula igual": g.includes("const turno = await incrementar(candado, candadoS);") && g.includes("if (turno > 1 || (turno === 0 && !esperar)) return null;"),
+    // 27 nov 2026 (tarde): la cuenta por país tarda 129 s. Lo que tarda minutos
+    // no lo espera nadie, y sin Redis (sin candado) no se lanza: cada visita
+    // lanzaría la suya y se repetiría el atasco de esa mañana.
+    "lo que tarda minutos va por detrás y solo con candado": g.includes("if (!esperar) { void refrescar(); return null; }") && /turno === 0 && !esperar/.test(g),
     // 27 nov 2026: sin esto, al compilar cada página esperaba ~52 s a Redis y
     // la compilación fallaba en /trabajar-en/<país> (más de 60 s por página).
     "al compilar no se espera a Redis ni a la base": /^\s*if \(process\.env\.NEXT_PHASE === "phase-production-build"\) return null;/m.test(g),
     "el candado solo se quita si se puso": g.includes("if (turno === 1) await cacheDel(candado)"),
     "contesta con lo guardado y refresca por detrás": g.includes("if (Date.now() - t > frescoMs) void refrescar();"),
-    "la cuenta por país va guardada 48 h con 90 s de margen": pais.includes("consultaGuardada(CLAVE,") && pais.includes("90000") && pais.includes("ttlS: 48 * 3600"),
+    "la cuenta por país va por detrás, con 300 s de margen y un candado más largo": pais.includes("consultaGuardada(CLAVE,") && pais.includes("300000") && /esperar: false, candadoS: 360/.test(pais),
     "Guzzi usa la misma cuenta": leerFuente("app/api/gusi/chat/route.ts").includes("await ofertasPorPaisComun()") && !leerFuente("app/api/gusi/chat/route.ts").includes("async function consultaGuardada"),
     "el lote de alertas tiene margen": /consultaConMargen<[^>]*>\(\s*unionQuery,\s*batchParams,\s*45000/.test(leerFuente("app/api/push/send-alerts/route.ts")),
     "el centinela cuenta los países con margen": /consultaConMargen<\{ pais: string; n: number \}>\([\s\S]{0,400}60000/.test(leerFuente("app/api/admin/centinela/route.ts")),

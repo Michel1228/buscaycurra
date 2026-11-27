@@ -14,6 +14,12 @@
  * vez a la vez y, si falla, se sigue con la última cuenta buena (48 h).
  * Guzzi usa esta misma cuenta en vez de hacer la suya.
  *
+ * 27 NOV (tarde): ni con 90 s terminaba. Recorre la tabla entera (5,5 GB; el
+ * índice de países no sirve porque solo el 36 % de la tabla está marcada como
+ * visible) y medida a mano tardó 129 s con el servidor cargado. Ahora nadie la
+ * espera: sin dato guardado se devuelve null y se calcula por detrás, con 300 s
+ * de margen, cada 12 h y solo una a la vez.
+ *
  * Devuelve null si no se ha podido calcular: quien la use NO debe enseñar un 0.
  */
 import { consultaConMargen, consultaGuardada } from "@/lib/consulta-guardada";
@@ -28,12 +34,12 @@ export async function ofertasPorPais(): Promise<Record<string, number> | null> {
         WHERE "isActive" = true AND country IS NOT NULL AND country != ''
         GROUP BY UPPER(country)`,
       [],
-      90000
+      300000
     );
     const mapa: Record<string, number> = {};
     for (const r of rows) mapa[r.code] = r.total;
     return mapa;
-  }, { frescoMs: 6 * 3600 * 1000, ttlS: 48 * 3600 });
+  }, { frescoMs: 12 * 3600 * 1000, ttlS: 72 * 3600, esperar: false, candadoS: 360 });
 }
 
 /** Ofertas de un país. Reino Unido aparece como "UK" y como "GB" según la fuente. */

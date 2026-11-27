@@ -40,12 +40,17 @@ export async function consultaConMargen<R extends Record<string, unknown>>(sql: 
 /**
  * El valor guardado en `clave`, o el recién calculado si no había ninguno.
  * `frescoMs`: a partir de cuándo se recalcula por detrás. `ttlS`: cuánto dura lo guardado.
- * Devuelve null solo si no hay nada guardado y no se ha podido calcular.
+ * `esperar: false` es para lo que tarda minutos: si no hay nada guardado se
+ * devuelve null al momento y se calcula por detrás, y solo con candado (sin
+ * Redis no se lanza, o cada visita lanzaría la suya). `candadoS` debe pasar
+ * del tiempo que puede tardar `calcular`.
+ * Devuelve null si no hay nada guardado y no se ha podido (o no se espera a) calcular.
  */
 export async function consultaGuardada<T>(
   clave: string,
   calcular: () => Promise<T>,
-  { frescoMs = 3 * 3600 * 1000, ttlS = 48 * 3600 }: { frescoMs?: number; ttlS?: number } = {}
+  { frescoMs = 3 * 3600 * 1000, ttlS = 48 * 3600, esperar = true, candadoS = 300 }:
+    { frescoMs?: number; ttlS?: number; esperar?: boolean; candadoS?: number } = {}
 ): Promise<T | null> {
   // Al compilar (next build) no hay base ni Redis, y cada llamada a Redis tarda
   // ~16 s en rendirse: tres seguidas pasaban de los 60 s que Next da a cada
@@ -56,8 +61,8 @@ export async function consultaGuardada<T>(
   const refrescar = async (): Promise<T | null> => {
     // Uno a la vez: si ya lo está calculando otro, no se repite. Sin Redis
     // (devuelve 0) no hay candado posible y se calcula igual.
-    const turno = await incrementar(candado, 300);
-    if (turno > 1) return null;
+    const turno = await incrementar(candado, candadoS);
+    if (turno > 1 || (turno === 0 && !esperar)) return null;
     try {
       const valor = await calcular();
       await cacheSet(clave, JSON.stringify({ t: Date.now(), valor }), ttlS);
@@ -78,5 +83,6 @@ export async function consultaGuardada<T>(
       return valor;
     } catch { /* guardado roto: se recalcula */ }
   }
+  if (!esperar) { void refrescar(); return null; }
   return refrescar();
 }
