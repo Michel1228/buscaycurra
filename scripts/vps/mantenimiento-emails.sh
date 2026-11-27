@@ -24,6 +24,10 @@ log "descartados por no fiables: ${N2:-0} + ${N3:-0} de empresas sin nombre real
 
 TOTAL=0
 for i in $(seq 1 12); do
+  # 27 nov 2026: con la base lenta, las pasadas llegaron hasta las 9:12 UTC y
+  # la web dejo de contestar. Pasadas las 6:30 UTC no se empieza otra: lo que
+  # quede se propaga la noche siguiente.
+  if (( 10#$(date -u +%H%M) >= 630 )); then log "pasadas las 6:30 UTC: el resto, manana"; break; fi
   N=$(docker exec buscaycurra-db psql -U buscaycurra -d buscaycurra -f /prop.sql 2>&1 | grep -oP 'UPDATE \K[0-9]+' | tail -1)
   N=${N:-0}; TOTAL=$((TOTAL+N)); [ "$N" -lt 100 ] && break
 done

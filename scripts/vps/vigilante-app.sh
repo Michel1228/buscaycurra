@@ -28,7 +28,17 @@ ahora() { date -u '+%Y-%m-%d %H:%M UTC'; }
 
 # Solo el proceso del despliegue ("bash build-deploy.sh", lanzado tal cual o con
 # ruta), no cualquier orden que mencione el nombre del fichero.
-if pgrep -f "^bash (.*/)?build-deploy\.sh" > /dev/null; then exit 0; fi
+# 27 nov 2026: un despliegue se quedó colgado 8 horas en los candados y, como
+# aquí se salía sin mirar, la web estuvo sin responder por la mañana sin que
+# nadie se enterara. Solo se espera a un despliegue de menos de 100 minutos
+# (compilar aquí tarda 35-60); uno más largo se da por colgado y la web se mira
+# igual, pero sin tocar el contenedor, que el despliegue puede estar cambiando.
+DESPLIEGUE=$(pgrep -of "^bash (.*/)?build-deploy\.sh")
+COLGADO=""
+if [ -n "$DESPLIEGUE" ]; then
+  [ "$(ps -o etimes= -p "$DESPLIEGUE" | tr -d ' ')" -lt 6000 ] && exit 0
+  COLGADO="un despliegue lleva más de 100 minutos (proceso $DESPLIEGUE) y parece colgado; "
+fi
 
 web() { curl -s -o /dev/null -w '%{http_code}' --max-time 20 http://localhost:8892/; }
 
@@ -62,20 +72,33 @@ PY
 CODIGO=$(web)
 ANTES=$(cat "$ESTADO" 2>/dev/null || echo bien)
 
+# 27 nov 2026: el contenedor que se quedó sin responder llevaba 3,7 días en
+# marcha y llegó a 1,7 GB (recién arrancado usa unos 450 MB). Se apunta la
+# memoria en cada vuelta para ver si crece sin parar.
+echo "$(date -u '+%F %H:%M') $CODIGO $(timeout 15 docker stats --no-stream --format '{{.MemUsage}} {{.CPUPerc}}' buscaycurra-nextjs 2>/dev/null)" >> /root/memoria-app.log
+
 if [ "$CODIGO" = "200" ]; then
   if [ "$ANTES" != "bien" ]; then
     echo "$(ahora)  vuelve a responder (estaba: $ANTES)"
     avisar "BuscayCurra vuelve a funcionar" "La web vuelve a responder con normalidad ($(ahora)). Estaba caída desde: ${ANTES#caida:}."
   fi
-  echo bien > "$ESTADO"
+  echo bien > "$ESTADO"; rm -f "$ESTADO.reiniciado"
   exit 0
 fi
 
 ESTADO_CONTENEDOR=$(docker inspect -f '{{.State.Status}}' buscaycurra-nextjs 2>/dev/null || echo "no-existe")
 ACCION="ninguna (el contenedor está en marcha pero no responde; no se reinicia a ciegas)"
 
-if [ "$ESTADO_CONTENEDOR" = "no-existe" ]; then
+if [ -n "$COLGADO" ]; then
+  ACCION="ninguna: ${COLGADO}no se toca el contenedor"
+elif [ "$ESTADO_CONTENEDOR" = "running" ] && [ "${ANTES%%:*}" = "caida" ] && [ ! -f "$ESTADO.reiniciado" ]; then
+  # 27 nov 2026: la app estaba en marcha y no contestaba ni a /robots.txt; se
+  # levantó reiniciándola. Si a la segunda vuelta (5 minutos después) sigue
+  # igual, ya no es un pico: se reinicia, una sola vez por caída.
+  docker restart buscaycurra-nextjs > /dev/null && touch "$ESTADO.reiniciado"   && ACCION="se ha reiniciado el contenedor: llevaba más de 5 minutos en marcha sin responder"
+elif [ "$ESTADO_CONTENEDOR" = "no-existe" ]; then
   cd "$REPO" && docker run -d --name buscaycurra-nextjs \
+    --init \
     --restart unless-stopped \
     --network busca-y-curra_default \
     --env-file .env.local \
@@ -97,11 +120,14 @@ echo "$(ahora)  web HTTP $CODIGO, contenedor $ESTADO_CONTENEDOR, acción: $ACCIO
 
 if [ "$CODIGO2" = "200" ]; then
   avisar "BuscayCurra se había caído y se ha levantado sola" "A las $(ahora) la web no respondía (HTTP $CODIGO, contenedor: $ESTADO_CONTENEDOR). Acción: $ACCION. Ya responde con normalidad."
-  echo bien > "$ESTADO"
+  echo bien > "$ESTADO"; rm -f "$ESTADO.reiniciado"
   exit 0
 fi
 
 # Sigue caída: aviso solo la primera vez.
+if [ "$ANTES" != "bien" ] && [[ "$ACCION" == "se ha reiniciado"* ]]; then
+  avisar "BuscayCurra sigue caída después de reiniciarla" "A las $(ahora) se ha reiniciado la aplicación, que no respondía desde ${ANTES#caida:}, y sigue sin responder (HTTP $CODIGO2). Hace falta mirarlo: registro en /root/vigilante-app.log y 'docker logs buscaycurra-nextjs'."
+fi
 if [ "$ANTES" = "bien" ]; then
   avisar "BuscayCurra está caída" "A las $(ahora) la web no responde (HTTP $CODIGO2). Contenedor: $ESTADO_CONTENEDOR. Acción: $ACCION. Hace falta mirarlo: registro en /root/vigilante-app.log y 'docker logs buscaycurra-nextjs'."
   echo "caida:$(ahora)" > "$ESTADO"

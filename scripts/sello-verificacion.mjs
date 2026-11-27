@@ -6951,12 +6951,34 @@ test("la app vuelve sola tras un reinicio y un vigilante externo avisa si cae", 
   const deploy = leerFuente("build-deploy.sh");
   const vig = leerFuente("scripts/vps/vigilante-app.sh");
   const run = (deploy.match(/docker run -d --name buscaycurra-nextjs[\s\S]*?buscaycurra:latest/) || [""])[0];
-  return run.includes("--restart unless-stopped")
+  return run.includes("--restart unless-stopped") && run.includes("--init")
     && /^[^#].*vigilante-app\.sh/m.test(leerFuente("scripts/vps/crontab.txt"))
-    && vig.includes('pgrep -f "^bash (.*/)?build-deploy\\.sh"')
-    && vig.includes("--restart unless-stopped")
+    && vig.includes('pgrep -of "^bash (.*/)?build-deploy\\.sh"')
+    && vig.includes("--restart unless-stopped") && vig.includes("--init")
     && vig.includes("docker network connect easypanel-buscaycurra buscaycurra-nextjs")
     && vig.includes("ADMIN_EMAILS");
+});
+
+// 27 NOV 2026: un despliegue colgado 8 horas dejó callado al vigilante (salía
+// sin mirar mientras hubiera uno), la app se quedó sin responder por la mañana
+// y solo se levantó reiniciándola a mano. Y el mantenimiento de correos llegó
+// hasta las 9:12 UTC con la base al 300 %. Probado en el servidor con una copia
+// que miraba un puerto muerto: avisa, reinicia una vez y no repite.
+test("el vigilante no se calla con un despliegue colgado, reinicia una vez y el mantenimiento para a las 6:30", () => {
+  const vig = leerFuente("scripts/vps/vigilante-app.sh");
+  const mant = leerFuente("scripts/vps/mantenimiento-emails.sh");
+  const ok = {
+    "solo espera a un despliegue de menos de 100 min": vig.includes('[ "$(ps -o etimes= -p "$DESPLIEGUE" | tr -d \' \')" -lt 6000 ] && exit 0'),
+    "con el despliegue colgado no toca el contenedor": /if \[ -n "\$COLGADO" \]; then\r?\n {2}ACCION="ninguna:/.test(vig),
+    "reinicia a la segunda vuelta y una sola vez": vig.includes('[ "${ANTES%%:*}" = "caida" ] && [ ! -f "$ESTADO.reiniciado" ]')
+      && vig.includes("docker restart buscaycurra-nextjs") && (vig.match(/rm -f "\$ESTADO\.reiniciado"/g) || []).length === 2,
+    "avisa si sigue caída tras reiniciar": vig.includes("BuscayCurra sigue caída después de reiniciarla"),
+    "apunta la memoria": vig.includes(">> /root/memoria-app.log"),
+    "el mantenimiento no empieza pasadas las 6:30 UTC": mant.includes("if (( 10#$(date -u +%H%M) >= 630 )); then"),
+  };
+  const malos = Object.entries(ok).filter(([, v]) => !v).map(([k]) => k);
+  if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+  return malos.length === 0;
 });
 
 // ── ALERTAS DE CURSOS QUE LLEGAN DE VERDAD (8 oct 2026) ───────────────

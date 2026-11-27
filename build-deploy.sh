@@ -53,7 +53,12 @@ docker rm buscaycurra-nextjs 2>/dev/null || true
 # actualización del núcleo (10:22 UTC) y la aplicación no volvió: 7 horas con
 # "Bad Gateway" y nadie se enteró, porque el centinela vive dentro de ella. La
 # base de datos y Redis sí volvieron porque tenían esta política.
+# --init (27 nov 2026): docker-start.sh acaba en "exec node server.js", así que
+# Node era el proceso 1 del contenedor y no recogía los procesos huérfanos del
+# Chromium de los PDF: se quedaban zombis (10 en dos horas). Con --init el
+# proceso 1 es docker-init, que los recoge.
 docker run -d --name buscaycurra-nextjs \
+  --init \
   --restart unless-stopped \
   --network busca-y-curra_default \
   --env-file .env.local \
