@@ -4792,14 +4792,23 @@ test("la búsqueda cruza ciudad y título, la descripción no se come las del t�
     g.consultas = []; g.memoria = new Map();
     g.responder = (sql) => (sql.includes("count(*) OVER()") ? cancelada() : []);
     const avisar = console.error; console.error = () => {};
-    let primera, segunda;
+    let primera, segunda, pagina, lanzadasTrasFallo;
     try {
       primera = await m.ofertasParecidas("Camarero de sala", "Lugo").then(() => "dio", () => "fallo");
       segunda = await m.ofertasParecidas("Camarero de sala", "Lugo").then(() => "dio", () => "fallo");
+      lanzadasTrasFallo = reales().filter((c) => c.sql.includes("count(*) OVER()")).length;
+      // La página /empleo/camarero/lugo es lo principal: lo intenta igual, con 15 s, y lo deja guardado.
+      g.responder = (sql) => (sql.includes("count(*) OVER()") ? [{ id: "l1", title: "Camarero", company: "Bar", city: "Lugo", salary: null, n: 1 }] : []);
+      const antes = reales().length;
+      pagina = await m.ofertasParecidas("camarero", "Lugo", { limite: 50, principal: true }).then((r) => r?.ofertas?.length ?? -1, () => "fallo");
+      const tercera = await m.ofertasParecidas("Camarero de sala", "Lugo").then((r) => r?.ofertas?.length ?? -1, () => "fallo");
+      checks["la página de puesto y ciudad no hace caso del fallo, tiene 15 s y lo deja para las fichas"] = pagina === 1 && tercera === 1
+        && reales().length === antes + 1 && g.consultas.some((c) => c.sql === "SET LOCAL statement_timeout = 15000")
+        && leerFuente("app/empleo/[puesto]/[ciudad]/page.tsx").includes("{ limite: 50, principal: true }");
     } finally { console.error = avisar; g.memoria = null; }
     checks["fichas: cada consulta se corta a los 8 s"] = g.consultas.some((c) => c.sql === "SET LOCAL statement_timeout = 8000");
     checks["fichas: lo que se corta se apunta y la siguiente ficha no lo repite"] = primera === "fallo" && segunda === "fallo"
-      && reales().filter((c) => c.sql.includes("count(*) OVER()")).length === 1;
+      && lanzadasTrasFallo === 1;
     // Los primeros avisos de producción: "ciudad" Deutschland y Bélgica, que es el país entero.
     g.consultas = [];
     const enPais = [await m.ofertasParecidas("Chef de cocina", "Deutschland"), await m.ofertasParecidas("Arbeider", "Bélgica")];

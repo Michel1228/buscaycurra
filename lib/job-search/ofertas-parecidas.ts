@@ -81,8 +81,13 @@ export interface Parecidas {
 const DURACION = 24 * 3600;
 const A_LA_VEZ = 3;
 const ESPERA_MAXIMA_MS = 8000;
-/** Lo más que puede tardar cada consulta de aquí. */
+/** Lo más que puede tardar cada consulta: 8 s en el recuadro de la ficha. En
+ * /empleo/[puesto]/[ciudad] es lo principal de la página (se guarda 6 h), y
+ * ahí tiene los 15 s de siempre y no hace caso de la marca de fallo: con 8 s
+ * salían 31 páginas vacías en 40 minutos (27 nov 2026). Si sale bien, lo deja
+ * guardado también para las fichas. */
 const TOPE_MS = 8000;
+const TOPE_PRINCIPAL_MS = 15000;
 /** Lo que dura apuntado un fallo, y la marca que lo apunta. */
 const DURACION_FALLO = 12 * 3600;
 const FALLO = "sin-dato";
@@ -111,10 +116,10 @@ function soltarTurno(): void {
 
 // Lo que ya se está calculando: quien pida lo mismo espera a ese cálculo.
 const calculando = new Map<string, Promise<unknown>>();
-async function guardado<T>(clave: string, calcular: () => Promise<T>): Promise<T> {
+async function guardado<T>(clave: string, calcular: () => Promise<T>, principal = false): Promise<T> {
   const enRedis = await cacheGet(clave).catch(() => null);
-  if (enRedis === FALLO) throw new Error("ofertas-parecidas: falló hace poco");
-  if (enRedis) {
+  if (enRedis === FALLO && !principal) throw new Error("ofertas-parecidas: falló hace poco");
+  if (enRedis && enRedis !== FALLO) {
     try { return JSON.parse(enRedis) as T; } catch { /* se calcula otra vez */ }
   }
   const yaEnCamino = calculando.get(clave);
@@ -148,8 +153,10 @@ const VIVAS = `"isActive" AND ("expiresAt" > NOW() OR "expiresAt" IS NULL)`;
 export async function ofertasParecidas(
   puestoOTitulo: string,
   ciudad: string | null | undefined,
-  opciones: { excluirId?: string; limite?: number } = {}
+  opciones: { excluirId?: string; limite?: number; principal?: boolean } = {}
 ): Promise<Parecidas | null> {
+  const principal = !!opciones.principal;
+  const tope = principal ? TOPE_PRINCIPAL_MS : TOPE_MS;
   if (!ciudad) return null;
   const c = ciudadParaBuscar(ciudad);
   if (c.length < 3) return null;
@@ -170,13 +177,13 @@ export async function ofertasParecidas(
             WHERE ${VIVAS} AND ${CIUDAD_SIN_TILDES} ILIKE $1 AND title ~* $2
             ORDER BY "scrapedAt" DESC LIMIT 60`,
           [`%${c}%`, regexDePatrones(patrones)],
-          TOPE_MS
+          tope
         );
         return {
           de_ese_puesto: rows[0]?.n ?? 0,
           ofertas: rows.map(({ id, title, company, city, salary }) => ({ id, title, company, city, salary })),
         };
-      })
+      }, principal)
     : { de_ese_puesto: 0, ofertas: [] as OfertaCorta[] };
 
   const limite = opciones.limite ?? 5;
@@ -197,10 +204,10 @@ export async function ofertasParecidas(
                   (SELECT coalesce(json_agg(t), '[]'::json) FROM (
                      SELECT id, title, company, city, salary FROM zona ORDER BY "scrapedAt" DESC LIMIT 30) t) AS de_la_ciudad`,
           [`%${c}%`],
-          TOPE_MS
+          tope
         );
         return rows[0];
-      });
+      }, principal);
 
   return {
     ofertas,

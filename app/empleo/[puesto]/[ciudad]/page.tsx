@@ -78,7 +78,8 @@ export default async function EmpleoPage({
   let total: number | null = null;
   let soloDeLaCiudad = false;
   try {
-    const r = await ofertasParecidas(puestoFmt, ciudadFmt, { limite: 50 });
+    // principal: aquí es el contenido de la página (15 s y sin la marca de fallo de las fichas).
+    const r = await ofertasParecidas(puestoFmt, ciudadFmt, { limite: 50, principal: true });
     if (r) {
       if (r.ofertas.length) { ofertas = r.ofertas; total = r.deEsePuesto; }
       else { ofertas = r.deLaCiudad; total = r.enLaCiudad; soloDeLaCiudad = r.deLaCiudad.length > 0; }
