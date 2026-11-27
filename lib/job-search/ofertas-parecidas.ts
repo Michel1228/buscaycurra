@@ -23,17 +23,22 @@
  *   - Lo de la ciudad entera (cuántas hay y las 30 últimas) solo hace falta
  *     cuando no hay ninguna del puesto, y se guarda por ciudad, no por ciudad
  *     y puesto: se calcula una vez para todas las fichas de esa ciudad.
- *   - Se guarda 6 horas en Redis (lo mismo que dura la página de puesto y
- *     ciudad), como mucho 3 cálculos a la vez y uno solo por clave: si llegan
+ *   - Se guarda en Redis (6 horas entonces; un día desde el 27 nov, ver abajo),
+ *     como mucho 3 cálculos a la vez y uno solo por clave: si llegan
  *     diez fichas de Madrid juntas, la ciudad se calcula una vez.
  *
  * LO QUE FALLA TAMBIÉN SE APUNTA (27 nov 2026). Era lo que más cortaba la base:
  * 2.217 consultas cortadas a los 15 s en 21 horas. Lo que fallaba no se
  * guardaba, así que la siguiente ficha de esa ciudad y ese puesto lo volvía a
  * intentar, y otra vez 15 s. Ahora se corta a los 8 s (es un recuadro, no la
- * ficha) y el fallo se apunta 3 horas: mientras, la ficha sale sin recuadro,
+ * ficha) y el fallo se apunta 12 horas: mientras, la ficha sale sin recuadro,
  * que es lo que ya pasaba, pero sin gastar la base. El aviso dice qué ciudad y
  * qué puesto, para ver cuáles son lentos.
+ *
+ * UN DÍA, NO SEIS HORAS (27 nov, tarde). En Redis había 20.849 combinaciones
+ * de ciudad y puesto guardadas en 6 horas: unas 3.500 consultas a la hora,
+ * casi todas de rastreadores, que vuelven a pasar cada día. Guardado un día, la
+ * vuelta siguiente no repite la consulta. Cada una ocupa unos 2 KB.
  */
 import { consultaConMargen } from "@/lib/consulta-guardada";
 import { patronesDelCv, regexDePatrones, palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
@@ -73,13 +78,13 @@ export interface Parecidas {
   puesto: string | null;
 }
 
-const DURACION = 6 * 3600;
+const DURACION = 24 * 3600;
 const A_LA_VEZ = 3;
 const ESPERA_MAXIMA_MS = 8000;
 /** Lo más que puede tardar cada consulta de aquí. */
 const TOPE_MS = 8000;
 /** Lo que dura apuntado un fallo, y la marca que lo apunta. */
-const DURACION_FALLO = 3 * 3600;
+const DURACION_FALLO = 12 * 3600;
 const FALLO = "sin-dato";
 
 // Turnos: como mucho A_LA_VEZ consultas de esto en marcha. El que termina le

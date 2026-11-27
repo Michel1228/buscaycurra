@@ -4804,6 +4804,10 @@ test("la búsqueda cruza ciudad y título, la descripción no se come las del t�
     g.consultas = [];
     const enPais = [await m.ofertasParecidas("Chef de cocina", "Deutschland"), await m.ofertasParecidas("Arbeider", "Bélgica")];
     checks["fichas: si la ciudad es un país, sin recuadro y sin consulta"] = enPais.every((p) => p === null) && reales().length === 0;
+    // 3.500 consultas a la hora de rastreadores que vuelven cada día: se guarda un día.
+    const fuenteParecidas = leerFuente("lib/job-search/ofertas-parecidas.ts");
+    checks["fichas: lo calculado dura un día y el fallo medio"] = fuenteParecidas.includes("const DURACION = 24 * 3600;")
+      && fuenteParecidas.includes("const DURACION_FALLO = 12 * 3600;");
 
     const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
     if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
