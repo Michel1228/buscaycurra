@@ -38,6 +38,7 @@
 import { consultaConMargen } from "@/lib/consulta-guardada";
 import { patronesDelCv, regexDePatrones, palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
 import { ciudadSinAlias } from "@/lib/job-search/ciudad-busqueda";
+import { paisPorNombre } from "@/lib/paises";
 import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
 
 const CIUDAD_SIN_TILDES = `translate(city, 'áéíóúñüÁÉÍÓÚÑÜàèìòùÀÈÌÒÙ', 'aeiounuAEIOUNUaeiouAEIOU')`;
@@ -147,6 +148,10 @@ export async function ofertasParecidas(
   if (!ciudad) return null;
   const c = ciudadParaBuscar(ciudad);
   if (c.length < 3) return null;
+  // Muchas ofertas traen el país como ciudad ("Deutschland", "Bélgica"): eso no
+  // es "en su ciudad" y la consulta recorría el país entero hasta cortarse
+  // (27 nov 2026, en los avisos de abajo). Sin recuadro y sin tocar la base.
+  if (paisPorNombre(c)) return null;
   const puesto = palabraPrincipal(puestoOTitulo);
   const patrones = puesto ? patronesDelCv({ subtitulo: puesto }) : [];
 

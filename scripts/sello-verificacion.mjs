@@ -4800,6 +4800,10 @@ test("la búsqueda cruza ciudad y título, la descripción no se come las del t�
     checks["fichas: cada consulta se corta a los 8 s"] = g.consultas.some((c) => c.sql === "SET LOCAL statement_timeout = 8000");
     checks["fichas: lo que se corta se apunta y la siguiente ficha no lo repite"] = primera === "fallo" && segunda === "fallo"
       && reales().filter((c) => c.sql.includes("count(*) OVER()")).length === 1;
+    // Los primeros avisos de producción: "ciudad" Deutschland y Bélgica, que es el país entero.
+    g.consultas = [];
+    const enPais = [await m.ofertasParecidas("Chef de cocina", "Deutschland"), await m.ofertasParecidas("Arbeider", "Bélgica")];
+    checks["fichas: si la ciudad es un país, sin recuadro y sin consulta"] = enPais.every((p) => p === null) && reales().length === 0;
 
     const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
     if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
