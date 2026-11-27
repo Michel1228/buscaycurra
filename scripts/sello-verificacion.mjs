@@ -7347,7 +7347,9 @@ test("plazas: no dice que solo publiquen las que hoy tienen plazas; la carta cie
   return plazas.includes("Ahora hay plazas por empezar en {cobertura")
     && !/\}: son las comunidades\s+que publican sus cursos/.test(plazas)
     && carta.includes("Un cierre sencillo en DOS frases cortas y separadas")
-    && carta.includes('No las juntes en una sola con "y".');
+    && carta.includes('No las juntes en una sola con "y".')
+    // Probado en producción: salía "por si necesitáis a alguien de camarero".
+    && carta.includes("necesitáis a alguien${quien.puesto ? ` que trabaje de ${quien.puesto.toLowerCase()}` : \"\"}");
 });
 
 // 27 NOV 2026: "ORDER BY createdAt LIMIT 20" recorría las ofertas de la más
