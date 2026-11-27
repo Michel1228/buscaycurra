@@ -4206,12 +4206,16 @@ test("si el navegador bloquea la voz de la entrevista, se pide un toque y sigue 
     globalThis.Audio = AudioFalso; globalThis.window = { speechSynthesis: { cancel() {} } };
     const v = await import(`../${salida}`);
     let reintentar = null; let fin = false;
+    // Se espera a que pase (2 s como mucho), no un tiempo fijo: con 20 y 50 ms
+    // fallaba a veces en el servidor cargado y paró un despliegue (27 nov 2026).
+    const esperarA = async (cond) => { const limite = Date.now() + 2000; while (!cond() && Date.now() < limite) await new Promise(r => setTimeout(r, 10)); };
     v.siLaVozSeBloquea((r) => { reintentar = r; });
     v.hablar([{ id: "bienvenida", texto: "a" }, { id: "p1", texto: "b" }], () => { fin = true; });
-    await new Promise(r => setTimeout(r, 20));
+    await esperarA(() => typeof reintentar === "function");
     const avisado = typeof reintentar === "function" && sonados.length === 0 && !fin;
+    if (!avisado) return false;
     bloquear = false; reintentar();
-    await new Promise(r => setTimeout(r, 50));
+    await esperarA(() => fin);
     const pagina = leerFuente("app/app/entrevistas/page.tsx");
     return avisado && fin && sonados.length === 2 && sonados[0].endsWith("/bienvenida.mp3") && sonados[1].endsWith("/p1.mp3")
       && pagina.includes("siLaVozSeBloquea(") && pagina.includes("Pulsa para oír al entrevistador");
