@@ -47,11 +47,17 @@ export async function consultaGuardada<T>(
   calcular: () => Promise<T>,
   { frescoMs = 3 * 3600 * 1000, ttlS = 48 * 3600 }: { frescoMs?: number; ttlS?: number } = {}
 ): Promise<T | null> {
+  // Al compilar (next build) no hay base ni Redis, y cada llamada a Redis tarda
+  // ~16 s en rendirse: tres seguidas pasaban de los 60 s que Next da a cada
+  // página y la compilación fallaba (27 nov 2026). Sin dato; la página se
+  // rehace con datos de verdad en cuanto la pide alguien.
+  if (process.env.NEXT_PHASE === "phase-production-build") return null;
   const candado = `${clave}:calculando`;
   const refrescar = async (): Promise<T | null> => {
     // Uno a la vez: si ya lo está calculando otro, no se repite. Sin Redis
     // (devuelve 0) no hay candado posible y se calcula igual.
-    if ((await incrementar(candado, 300)) > 1) return null;
+    const turno = await incrementar(candado, 300);
+    if (turno > 1) return null;
     try {
       const valor = await calcular();
       await cacheSet(clave, JSON.stringify({ t: Date.now(), valor }), ttlS);
@@ -60,7 +66,8 @@ export async function consultaGuardada<T>(
       console.error(`[consulta-guardada] ${clave}:`, (e as Error).message);
       return null;
     } finally {
-      await cacheDel(candado).catch(() => false);
+      // Solo se quita si se puso: sin Redis sería otra espera para nada.
+      if (turno === 1) await cacheDel(candado).catch(() => false);
     }
   };
   const guardado = await cacheGet(clave).catch(() => null);
