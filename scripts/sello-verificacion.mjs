@@ -4649,11 +4649,17 @@ const SIMULADOS_RENDIMIENTO = {
     };
     return { query, connect: async () => ({ query, release() {} }) };
   }`,
-  "@/lib/cache/redis-client": `export async function get() { return null; } export async function set() { return true; }`,
+  // Sin memoria salvo que la prueba la pida (g.memoria): las búsquedas no guardan nada entre una y otra.
+  "@/lib/cache/redis-client": `export async function get(k) { const m = globalThis.__selloRend.memoria; return m ? (m.get(k) ?? null) : null; }
+    export async function set(k, v) { const m = globalThis.__selloRend.memoria; if (m) m.set(k, typeof v === "object" ? JSON.stringify(v) : v); return true; }
+    export async function incrementar(k) { const m = globalThis.__selloRend.memoria; if (!m) return 0; const n = (Number(m.get(k)) || 0) + 1; m.set(k, String(n)); return n; }
+    export async function del(k) { const m = globalThis.__selloRend.memoria; if (m) m.delete(k); return true; }`,
   "@/lib/job-search/oferta-viva": `export function comprobarEnSegundoPlano() {}`,
   "@/lib/job-search/real-search": `export async function buscarOfertasReales() { return []; }`,
 };
-async function compilarRendimiento(nombre, codigo) {
+// `estado`: el nombre de la base simulada. Las pruebas van a la vez, y dos que
+// usen la misma se pisan las consultas y las respuestas.
+async function compilarRendimiento(nombre, codigo, estado = "__selloRend") {
   const { build } = await import("esbuild");
   const { writeFileSync, unlinkSync } = await import("node:fs");
   const entrada = `.sello-rend-${nombre}.ts`, salida = `.sello-rend-${nombre}.cjs`;
@@ -4665,7 +4671,7 @@ async function compilarRendimiento(nombre, codigo) {
       plugins: [{ name: "simulados", setup(b) {
         const filtro = new RegExp("^(" + Object.keys(SIMULADOS_RENDIMIENTO).map((n) => n.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")).join("|") + ")$");
         b.onResolve({ filter: filtro }, (a) => ({ path: a.path, namespace: "simulado" }));
-        b.onLoad({ filter: /.*/, namespace: "simulado" }, (a) => ({ contents: SIMULADOS_RENDIMIENTO[a.path], loader: "js" }));
+        b.onLoad({ filter: /.*/, namespace: "simulado" }, (a) => ({ contents: SIMULADOS_RENDIMIENTO[a.path].replaceAll("__selloRend", estado), loader: "js" }));
       } }],
     });
     return await import(`../${salida}?${Date.now()}`);
@@ -4768,16 +4774,32 @@ test("la búsqueda cruza ciudad y título, la descripción no se come las del t�
     const varias = await Promise.all(ciudades.map((c) => m.ofertasParecidas("Camarero de sala", c)));
     checks["fichas: como mucho 3 consultas a la vez"] = g.maxActivas <= 3 && varias.every((p) => p?.ofertas.length === 1 && p.deEsePuesto === 4);
     checks["fichas: con ofertas del puesto no se lee la ciudad entera"] = !g.consultas.some((c) => c.sql.includes("WITH zona"));
+    // Sin el BEGIN / SET LOCAL / COMMIT de cada consulta con tope.
+    const reales = () => g.consultas.filter((c) => !/^(BEGIN|COMMIT|ROLLBACK|SET LOCAL)/.test(c.sql.trim()));
     g.consultas = [];
     await Promise.all(Array.from({ length: 10 }, () => m.ofertasParecidas("Camarero de sala", "Palencia")));
-    checks["fichas: diez a la vez de lo mismo, una sola consulta"] = g.consultas.length === 1;
+    checks["fichas: diez a la vez de lo mismo, una sola consulta"] = reales().length === 1;
     g.consultas = []; g.puestoVacio = true;
     const sinPuesto = await m.ofertasParecidas("Camarero de sala", "Tudela", { excluirId: "p1" });
     checks["fichas: sin nada del puesto, la ciudad (una consulta)"] = g.consultas.filter((c) => c.sql.includes("WITH zona")).length === 1
       && sinPuesto?.enLaCiudad === 7 && sinPuesto.deLaCiudad.length === 1;
     g.consultas = []; g.puestoVacio = false;
     await m.ofertasParecidas("Vendedor", "cdmx");
-    checks["fichas: cdmx busca Ciudad de México"] = g.consultas[0]?.params?.[0] === "%Ciudad de Mexico%";
+    checks["fichas: cdmx busca Ciudad de México"] = reales()[0]?.params?.[0] === "%Ciudad de Mexico%";
+
+    // 27 nov 2026: 2.217 cortes de 15 s en 21 horas, porque lo que se cortaba
+    // no se guardaba y la siguiente ficha lo repetía.
+    g.consultas = []; g.memoria = new Map();
+    g.responder = (sql) => (sql.includes("count(*) OVER()") ? cancelada() : []);
+    const avisar = console.error; console.error = () => {};
+    let primera, segunda;
+    try {
+      primera = await m.ofertasParecidas("Camarero de sala", "Lugo").then(() => "dio", () => "fallo");
+      segunda = await m.ofertasParecidas("Camarero de sala", "Lugo").then(() => "dio", () => "fallo");
+    } finally { console.error = avisar; g.memoria = null; }
+    checks["fichas: cada consulta se corta a los 8 s"] = g.consultas.some((c) => c.sql === "SET LOCAL statement_timeout = 8000");
+    checks["fichas: lo que se corta se apunta y la siguiente ficha no lo repite"] = primera === "fallo" && segunda === "fallo"
+      && reales().filter((c) => c.sql.includes("count(*) OVER()")).length === 1;
 
     const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
     if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
@@ -7242,6 +7264,46 @@ test("el sitemap de ofertas no da ofertas que vayan a caducar antes de que Googl
   return sinCaida && /VIVA_AL_RASTREAR = `\("expiresAt" IS NULL OR "expiresAt" > NOW\(\) \+ INTERVAL '\d+ days'\)`/.test(s)
     && (s.match(/AND \$\{VIVA_AL_RASTREAR\}/g) || []).length === 1
     && /ORDER BY "createdAt" DESC NULLS LAST/.test(s.slice(s.indexOf("AND ${VIVA_AL_RASTREAR}")));
+});
+
+// 27 NOV 2026: cada página del mapa leía las 199.000 ofertas de España para
+// quedarse con 25.000, y con la base cargada se cortaba (156 veces en un día).
+test("el mapa de ofertas sale de una lista guardada y calculada por detrás, no de una consulta por página", async () => {
+  const g = globalThis.__selloMapa = { consultas: [], activas: 0, maxActivas: 0, espera: 0, responder: () => [], memoria: new Map() };
+  try {
+    const m = await compilarRendimiento("mapa", 'export { GET } from "./app/sitemap-ofertas.xml/route";\n', "__selloMapa");
+    g.responder = (sql) => (sql.includes("extract(epoch")
+      ? Array.from({ length: 30000 }, (_, i) => ({ id: `o${i}`, f: String(1764000000000 - i * 1000) })) : []);
+    const pedir = async (q) => { const r = await m.GET(new Request(`https://buscaycurra.es/sitemap-ofertas.xml${q}`)); return { status: r.status, texto: await r.text() }; };
+    const antes = await pedir("?page=0");
+    for (let i = 0; i < 100 && !g.memoria.has("sitemap-ofertas:es:v1"); i++) await new Promise((r) => setTimeout(r, 10));
+    const p0 = await pedir("?page=0"), p1 = await pedir("?page=1"), indice = await pedir("");
+    const urls = (t) => (t.match(/<url>/g) || []).length;
+    const checks = {
+      "sin lista todavía, 503 al momento": antes.status === 503,
+      "la página 0, las 25.000 más nuevas": p0.status === 200 && urls(p0.texto) === 25000 && p0.texto.includes("/empleo/oferta/o0<"),
+      "la página 1, el resto": urls(p1.texto) === 5000 && p1.texto.includes("/empleo/oferta/o25000<"),
+      "el índice sale de la lista: 2 páginas": (indice.texto.match(/<sitemap>/g) || []).length === 2,
+      "la base se lee una sola vez para todo": g.consultas.filter((c) => c.sql.includes("extract(epoch")).length === 1,
+      "con 3 minutos de margen": g.consultas.some((c) => c.sql === "SET LOCAL statement_timeout = 180000"),
+    };
+    const malos = Object.entries(checks).filter(([, ok]) => !ok).map(([k]) => k);
+    if (malos.length) console.log(`     ↳ ${malos.join(" · ")}`);
+    return malos.length === 0;
+  } catch (e) {
+    console.log(`     ↳ no se pudo compilar o falló: ${e.message?.slice(0, 160)}`);
+    return false;
+  } finally {
+    g.memoria = null;
+  }
+});
+
+// 27 NOV 2026: "ORDER BY createdAt LIMIT 20" recorría las ofertas de la más
+// nueva a la más vieja buscando 20 que casaran (EE. UU. + developer: >40 s).
+test("trabajar-en/país/oficio filtra antes de ordenar y se guarda en Redis", () => {
+  const p = leerFuente("app/trabajar-en/[pais]/[keyword]/page.tsx");
+  return /WITH casan AS MATERIALIZED \([\s\S]*?"title" ILIKE \$2\s*\)\s*SELECT \* FROM casan ORDER BY "createdAt" DESC LIMIT 20/.test(p)
+    && p.includes("consultaGuardada(`trabajar-en:v1:${codigo}:") && !p.includes("getPool()");
 });
 
 // "Veo en tu CV que has trabajado de camarera…": el curso que le falta para lo

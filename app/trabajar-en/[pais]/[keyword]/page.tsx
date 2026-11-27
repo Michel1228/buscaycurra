@@ -4,7 +4,7 @@
  *           /trabajar-en/francia/camarero → ofertas de camarero en Francia
  */
 import { Metadata } from "next";
-import { getPool } from "@/lib/db";
+import { consultaConMargen, consultaGuardada } from "@/lib/consulta-guardada";
 import { PAISES, LISTA_PAISES, SLUG_A_CODIGO, formatearSalario } from "@/lib/paises";
 import Link from "next/link";
 import FondoOleaje from "@/components/FondoOleaje";
@@ -107,19 +107,29 @@ export default async function TrabajarEnKeywordPage({ params }: Props) {
   // encontraba roto. Ahora la columna country (con índice) y el título (índice
   // trigram): entre 0,1 y 0,7 s. Y si la base falla, la página sale sin
   // ofertas en vez de con un error.
-  let ofertas: Array<{ id: string; title: string; company: string; city: string; salary: string; sourceUrl: string; sourceName: string; createdAt: Date }> = [];
+  //
+  // PRIMERO LAS QUE CASAN, LUEGO EL ORDEN (27 nov 2026). Con "ORDER BY
+  // createdAt LIMIT 20" Postgres recorría las ofertas de la más nueva a la más
+  // vieja buscando 20 que casaran: Estados Unidos + developer pasaba de los
+  // 40 s (96 cortes en un día). Filtrando antes (MATERIALIZED) cruza los dos
+  // índices: 6 s. Y se guarda en Redis, que dura más que cada despliegue: la
+  // caché de la página se pierde al desplegar y se rehacían todas a la vez.
+  type Oferta = { id: string; title: string; company: string; city: string; salary: string; sourceUrl: string; sourceName: string; createdAt: Date | string };
+  let ofertas: Oferta[] = [];
   try {
-    const result = await getPool().query(
-      `SELECT "id", "title", "company", "city", "salary", "sourceUrl", "sourceName", "createdAt"
-       FROM "JobListing"
-       WHERE "isActive" = true
-         AND LOWER(country) = $1
-         AND "title" ILIKE $2
-       ORDER BY "createdAt" DESC
-       LIMIT 20`,
-      [codigo.toLowerCase(), `%${keywordFmt}%`]
-    );
-    ofertas = result.rows;
+    ofertas = (await consultaGuardada(`trabajar-en:v1:${codigo}:${keywordFmt.toLowerCase()}`, () =>
+      consultaConMargen<Oferta>(
+        `WITH casan AS MATERIALIZED (
+           SELECT "id", "title", "company", "city", "salary", "sourceUrl", "sourceName", "createdAt"
+             FROM "JobListing"
+            WHERE "isActive" = true
+              AND LOWER(country) = $1
+              AND "title" ILIKE $2
+         )
+         SELECT * FROM casan ORDER BY "createdAt" DESC LIMIT 20`,
+        [codigo.toLowerCase(), `%${keywordFmt}%`],
+        20000
+      ), { frescoMs: 6 * 3600 * 1000, ttlS: 48 * 3600 })) ?? [];
   } catch (e) {
     console.error(`[trabajar-en] ${codigo}/${keywordFmt}:`, (e as Error).message);
   }

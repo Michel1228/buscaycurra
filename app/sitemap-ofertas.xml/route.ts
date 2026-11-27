@@ -32,8 +32,8 @@
  * emigra nuestra gente. No al revés.
  */
 
-import { getPool } from "@/lib/db";
 import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
+import { consultaConMargen, consultaGuardada } from "@/lib/consulta-guardada";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -55,10 +55,8 @@ const PAIS = "es";
  * tres días: Google tarda días en pasar por cada URL.
  */
 const VIVA_AL_RASTREAR = `("expiresAt" IS NULL OR "expiresAt" > NOW() + INTERVAL '3 days')`;
-// Solo en las URLs, no en el recuento de páginas del índice: con el filtro,
-// el recuento tiene que leer cada fila y, recién arrancado el servidor, pasó
-// de los 15 s y el sitemap devolvió 503 (12 oct 2026). Sin él sale del índice.
-// Contar alguna de más solo puede dejar la última página algo más corta.
+// Desde el 27 nov 2026 el índice no cuenta aparte: el total es lo larga que es
+// la lista guardada, que ya lleva el filtro.
 
 function xml(cuerpo: string) {
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n${cuerpo}`, {
@@ -70,30 +68,43 @@ function xml(cuerpo: string) {
   });
 }
 
+/**
+ * UNA SOLA LISTA, GUARDADA (27 nov 2026). Cada página del mapa leía todas las
+ * ofertas de España (199.000) para ordenarlas y quedarse con 25.000; con la
+ * base cargada pasaba de los 15 s: 156 cortes en un día, y Google se llevaba
+ * un 503. Ahora la lista entera ([id, fecha]) se calcula por detrás una vez
+ * cada 12 horas, solo una a la vez, y cada página es un trozo de ella. Si
+ * todavía no hay lista, 503 («vuelve luego»), como antes cuando fallaba.
+ */
+const CLAVE = "sitemap-ofertas:es:v1";
+async function ofertasDelMapa(): Promise<Array<[string, number]> | null> {
+  return consultaGuardada(CLAVE, async () => {
+    const rows = await consultaConMargen<{ id: string; f: string | null }>(
+      `SELECT id, (extract(epoch from coalesce("createdAt", "updatedAt")) * 1000)::bigint AS f
+         FROM "JobListing"
+        WHERE "isActive" = true AND lower(country) = $1 AND ${VIVA_AL_RASTREAR}
+        ORDER BY "createdAt" DESC NULLS LAST`,
+      [PAIS],
+      180000
+    );
+    await cacheSet("sitemap-ofertas:total", String(rows.length), 7 * 86400);
+    return rows.map((r): [string, number] => [r.id, Number(r.f) || 0]);
+  }, { frescoMs: 12 * 3600 * 1000, ttlS: 72 * 3600, esperar: false, candadoS: 240 });
+}
+
 export async function GET(req: Request) {
   const pagina = new URL(req.url).searchParams.get("page");
-  const pool = getPool();
 
   try {
     // ── Índice: cuántos hijos hacen falta ──────────────────────────────────
     if (pagina === null) {
-      // NUNCA UN 503 POR CONTAR. Recién arrancado el servidor (cada despliegue)
-      // el recuento pasaba de los 15 s y el índice entero fallaba, aunque las
-      // páginas funcionaran (12 oct 2026). Se guarda el último recuento bueno y,
-      // si contar falla, se usa ese; sin ninguno, 4 páginas (unas 100.000
-      // ofertas). Una página de más solo sale vacía.
-      let total: number | null = null;
-      try {
-        const { rows } = await pool.query(
-          `SELECT count(*)::int AS total
-             FROM "JobListing"
-            WHERE "isActive" = true AND lower(country) = $1`,
-          [PAIS]
-        );
-        total = rows[0]?.total ?? 0;
-        await cacheSet("sitemap-ofertas:total", String(total), 7 * 86400);
-      } catch (e) {
-        console.warn("[sitemap-ofertas] recuento:", (e as Error).message, "— uso el último guardado");
+      // NUNCA UN 503 POR CONTAR (12 oct 2026). Desde el 27 nov no se cuenta:
+      // el total es lo larga que es la lista guardada. Sin lista todavía, el
+      // último total bueno, y sin ninguno, 4 páginas (unas 100.000 ofertas).
+      // Una página de más solo sale vacía.
+      const lista = await ofertasDelMapa();
+      let total: number | null = lista ? lista.length : null;
+      if (total === null) {
         total = Number(await cacheGet("sitemap-ofertas:total")) || null;
       }
       const paginas = total === null ? 4 : Math.max(1, Math.ceil(total / POR_PAGINA));
@@ -114,23 +125,21 @@ export async function GET(req: Request) {
       return new Response("Página no válida", { status: 400 });
     }
 
-    // NULLS LAST importa: hay 237.000 ofertas sin createdAt por el INSERT roto
-    // del extractor alemán, y sin esto encabezarían la lista las más rotas.
-    const { rows } = await pool.query(
-      `SELECT id, "createdAt", "updatedAt"
-         FROM "JobListing"
-        WHERE "isActive" = true AND lower(country) = $1 AND ${VIVA_AL_RASTREAR}
-        ORDER BY "createdAt" DESC NULLS LAST
-        LIMIT $2 OFFSET $3`,
-      [PAIS, POR_PAGINA, n * POR_PAGINA]
-    );
+    // NULLS LAST importa (va en la consulta de arriba): hay 237.000 ofertas sin
+    // createdAt por el INSERT roto del extractor alemán, y sin esto encabezarían
+    // la lista las más rotas.
+    const lista = await ofertasDelMapa();
+    if (!lista) {
+      return new Response("No disponible", { status: 503, headers: { "Retry-After": "900" } });
+    }
 
-    const urls = rows
-      .map(r => {
-        const fecha = r.createdAt || r.updatedAt || new Date();
+    const urls = lista
+      .slice(n * POR_PAGINA, (n + 1) * POR_PAGINA)
+      .map(([id, f]) => {
+        const fecha = f ? new Date(f) : new Date();
         return (
-          `  <url>\n    <loc>${BASE_URL}/empleo/oferta/${r.id}</loc>\n` +
-          `    <lastmod>${new Date(fecha).toISOString()}</lastmod>\n` +
+          `  <url>\n    <loc>${BASE_URL}/empleo/oferta/${id}</loc>\n` +
+          `    <lastmod>${fecha.toISOString()}</lastmod>\n` +
           `    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>`
         );
       })

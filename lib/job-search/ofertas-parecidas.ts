@@ -26,8 +26,16 @@
  *   - Se guarda 6 horas en Redis (lo mismo que dura la página de puesto y
  *     ciudad), como mucho 3 cálculos a la vez y uno solo por clave: si llegan
  *     diez fichas de Madrid juntas, la ciudad se calcula una vez.
+ *
+ * LO QUE FALLA TAMBIÉN SE APUNTA (27 nov 2026). Era lo que más cortaba la base:
+ * 2.217 consultas cortadas a los 15 s en 21 horas. Lo que fallaba no se
+ * guardaba, así que la siguiente ficha de esa ciudad y ese puesto lo volvía a
+ * intentar, y otra vez 15 s. Ahora se corta a los 8 s (es un recuadro, no la
+ * ficha) y el fallo se apunta 3 horas: mientras, la ficha sale sin recuadro,
+ * que es lo que ya pasaba, pero sin gastar la base. El aviso dice qué ciudad y
+ * qué puesto, para ver cuáles son lentos.
  */
-import { getPool } from "@/lib/db";
+import { consultaConMargen } from "@/lib/consulta-guardada";
 import { patronesDelCv, regexDePatrones, palabraPrincipal } from "@/lib/job-search/puestos-del-cv";
 import { ciudadSinAlias } from "@/lib/job-search/ciudad-busqueda";
 import { get as cacheGet, set as cacheSet } from "@/lib/cache/redis-client";
@@ -45,13 +53,13 @@ export function slug(t: string): string {
   return sinTildes(t).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-export interface OfertaCorta {
+export type OfertaCorta = {
   id: string;
   title: string;
   company: string | null;
   city: string | null;
   salary: string | null;
-}
+};
 
 export interface Parecidas {
   /** Las del mismo puesto en la ciudad (sin la de la ficha). */
@@ -67,6 +75,11 @@ export interface Parecidas {
 const DURACION = 6 * 3600;
 const A_LA_VEZ = 3;
 const ESPERA_MAXIMA_MS = 8000;
+/** Lo más que puede tardar cada consulta de aquí. */
+const TOPE_MS = 8000;
+/** Lo que dura apuntado un fallo, y la marca que lo apunta. */
+const DURACION_FALLO = 3 * 3600;
+const FALLO = "sin-dato";
 
 // Turnos: como mucho A_LA_VEZ consultas de esto en marcha. El que termina le
 // pasa su turno al primero que espera; el que espera más de 8 s se rinde (la
@@ -94,17 +107,24 @@ function soltarTurno(): void {
 const calculando = new Map<string, Promise<unknown>>();
 async function guardado<T>(clave: string, calcular: () => Promise<T>): Promise<T> {
   const enRedis = await cacheGet(clave).catch(() => null);
+  if (enRedis === FALLO) throw new Error("ofertas-parecidas: falló hace poco");
   if (enRedis) {
     try { return JSON.parse(enRedis) as T; } catch { /* se calcula otra vez */ }
   }
   const yaEnCamino = calculando.get(clave);
   if (yaEnCamino) return yaEnCamino as Promise<T>;
   const calculo = (async () => {
+    // Sin turno no se ha tocado la base: eso no se apunta como fallo.
     await pedirTurno();
+    const inicio = Date.now();
     try {
       const datos = await calcular();
       await cacheSet(clave, datos as object, DURACION).catch(() => false);
       return datos;
+    } catch (e) {
+      await cacheSet(clave, FALLO, DURACION_FALLO).catch(() => false);
+      console.error(`[ofertas-parecidas] ${clave} (${Date.now() - inicio} ms): ${(e as Error).message}`);
+      throw e;
     } finally {
       soltarTurno();
     }
@@ -129,18 +149,18 @@ export async function ofertasParecidas(
   if (c.length < 3) return null;
   const puesto = palabraPrincipal(puestoOTitulo);
   const patrones = puesto ? patronesDelCv({ subtitulo: puesto }) : [];
-  const pool = getPool();
 
   // Las 60 más nuevas del puesto en la ciudad, y cuántas son (el recuento va
   // antes del LIMIT).
   const delPuesto = patrones.length
     ? await guardado(`parecidas:v2:puesto:${slug(c)}:${patrones.join(",")}`, async () => {
-        const { rows } = await pool.query<OfertaCorta & { n: number }>(
+        const rows = await consultaConMargen<OfertaCorta & { n: number }>(
           `SELECT id, title, company, city, salary, count(*) OVER()::int AS n
              FROM "JobListing"
             WHERE ${VIVAS} AND ${CIUDAD_SIN_TILDES} ILIKE $1 AND title ~* $2
             ORDER BY "scrapedAt" DESC LIMIT 60`,
-          [`%${c}%`, regexDePatrones(patrones)]
+          [`%${c}%`, regexDePatrones(patrones)],
+          TOPE_MS
         );
         return {
           de_ese_puesto: rows[0]?.n ?? 0,
@@ -158,7 +178,7 @@ export async function ofertasParecidas(
   const deLaCiudad = ofertas.length
     ? null
     : await guardado(`parecidas:v2:ciudad:${slug(c)}`, async () => {
-        const { rows } = await pool.query<{ en_ciudad: number; de_la_ciudad: OfertaCorta[] }>(
+        const rows = await consultaConMargen<{ en_ciudad: number; de_la_ciudad: OfertaCorta[] }>(
           `WITH zona AS MATERIALIZED (
              SELECT id, title, company, city, salary, "scrapedAt" FROM "JobListing"
               WHERE ${VIVAS} AND ${CIUDAD_SIN_TILDES} ILIKE $1
@@ -166,7 +186,8 @@ export async function ofertasParecidas(
            SELECT (SELECT count(*) FROM zona)::int AS en_ciudad,
                   (SELECT coalesce(json_agg(t), '[]'::json) FROM (
                      SELECT id, title, company, city, salary FROM zona ORDER BY "scrapedAt" DESC LIMIT 30) t) AS de_la_ciudad`,
-          [`%${c}%`]
+          [`%${c}%`],
+          TOPE_MS
         );
         return rows[0];
       });
