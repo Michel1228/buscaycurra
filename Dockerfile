@@ -32,8 +32,12 @@ ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
 ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
 ENV STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
 
+# nice 19: se compila en el mismo servidor de 2 núcleos que sirve la web. El
+# 27 nov 2026 la compilación se llevaba la CPU y la web dejaba de contestar;
+# bajándole la prioridad a mano volvió a contestar en menos de 1 s. Compilar
+# puede tardar algo más cuando hay muchas visitas: es lo que se quiere.
 RUN echo "BUILD: SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:0:30}..." && \
-    npm run build
+    nice -n 19 npm run build
 
 # Production stage
 FROM node:20.19.0-alpine AS runner
