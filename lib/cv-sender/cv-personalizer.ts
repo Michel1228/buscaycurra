@@ -168,7 +168,7 @@ CÓMO EMPIEZA: con un saludo y presentándose por su nombre ("Hola, soy ${quien.
 QUÉ DICE:
 - Que os escribe para presentarse por si en algún momento necesitáis a alguien${quien.puesto ? ` de ${quien.puesto}` : ""}, y que os deja su currículum. Sin dar a entender que hay una oferta ni pedir que le contraten ya.
 - Una o dos cosas REALES del CV que os pueden servir. Si se sabe a qué se dedica la empresa, conéctalas con eso.
-- Un cierre sencillo: que le gustaría que contarais con su currículum si surge un hueco, y que le podéis contestar a este correo cuando queráis.
+- Un cierre sencillo en DOS frases cortas y separadas: en una, que le gustaría que contarais con su currículum si surge un hueco; en otra, que le podéis contestar a este correo cuando queráis. No las juntes en una sola con "y".
 - Breve: 2 o 3 párrafos cortos, entre 90 y 140 palabras. Que se lea en medio minuto.
 - Firma SOLO con el nombre.
 

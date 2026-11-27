@@ -7298,6 +7298,19 @@ test("el mapa de ofertas sale de una lista guardada y calculada por detrás, no 
   }
 });
 
+// 27 NOV 2026, auditoría de textos: las plazas decían que solo publican datos
+// las comunidades que hoy tienen plazas (el pie nombra cinco), y la carta sin
+// oferta juntaba el cierre en una frase ("…cuando surja un hueco y podéis
+// responder a este correo cuando queráis").
+test("plazas: no dice que solo publiquen las que hoy tienen plazas; la carta cierra en dos frases", () => {
+  const plazas = leerFuente("components/cursos/PlazasCurso.tsx");
+  const carta = leerFuente("lib/cv-sender/cv-personalizer.ts");
+  return plazas.includes("Ahora hay plazas por empezar en {cobertura")
+    && !/\}: son las comunidades\s+que publican sus cursos/.test(plazas)
+    && carta.includes("Un cierre sencillo en DOS frases cortas y separadas")
+    && carta.includes('No las juntes en una sola con "y".');
+});
+
 // 27 NOV 2026: "ORDER BY createdAt LIMIT 20" recorría las ofertas de la más
 // nueva a la más vieja buscando 20 que casaran (EE. UU. + developer: >40 s).
 test("trabajar-en/país/oficio filtra antes de ordenar y se guarda en Redis", () => {

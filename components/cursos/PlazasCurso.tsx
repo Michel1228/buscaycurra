@@ -171,8 +171,12 @@ function Cobertura({ cobertura }: { cobertura: string[] }) {
   if (cobertura.length === 0) return null;
   return (
     <p className="text-[11px] leading-relaxed" style={{ color: "#8b98ad" }}>
-      De momento tenemos las plazas de {cobertura.join(", ").replace(/, ([^,]*)$/, " y $1")}: son las comunidades
-      que publican sus cursos como datos abiertos. Si vives en otra, búscalos en el{" "}
+      {/* 27 nov 2026: decía que estas eran "las comunidades que publican sus
+          cursos como datos abiertos", y la lista solo trae las que tienen plazas
+          por empezar: Castilla y León y Navarra también los publican (lo dice
+          el pie) y se quedaban fuera cuando no tenían ninguna. */}
+      Ahora hay plazas por empezar en {cobertura.join(", ").replace(/, ([^,]*)$/, " y $1")}. Salen de los
+      servicios de empleo que publican sus cursos como datos abiertos. Si vives en otra comunidad, búscalos en el{" "}
       <a href="https://experienciafundae.es/buscador" target="_blank" rel="noopener noreferrer"
          className="underline" style={{ color: "#94a3b8" }}>buscador oficial de FUNDAE</a>{" "}
       o en tu servicio de empleo autonómico.
